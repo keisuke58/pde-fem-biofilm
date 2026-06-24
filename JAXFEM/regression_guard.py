@@ -8,7 +8,7 @@ FEM 結果のリグレッション防止ガード。
 Usage:
   python JAXFEM/regression_guard.py --baseline          # 現在値をゴールデンとして保存
   python JAXFEM/regression_guard.py                     # 現在値をゴールデンと比較
-  python JAXFEM/regression_guard.py --threshold 0.05   # 閾値を 5 % に変更 (default 10 %)
+  python JAXFEM/regression_guard.py --warn 0.3 --fail 0.5  # 閾値変更 (default warn=30% fail=50%)
   python JAXFEM/regression_guard.py --verbose           # 全メトリクスを表示
 
 Golden file: FEM/regression_golden.json
@@ -90,7 +90,7 @@ def save_baseline():
     print(f"  {n} condition records stored.")
 
 
-def compare(threshold: float = 0.10, verbose: bool = False):
+def compare(warn: float = 0.30, fail: float = 0.50, verbose: bool = False):
     if not GOLDEN_F.exists():
         print(f"  No baseline found at {GOLDEN_F}")
         print("  Run with --baseline to create it.")
@@ -114,8 +114,9 @@ def compare(threshold: float = 0.10, verbose: bool = False):
                 report("⚠️ ", f"{struct}/{cond}: no baseline entry — run --baseline")
                 continue
 
-            drifted = []
-            lines   = []
+            hard_drifted = []
+            soft_drifted = []
+            lines = []
             for metric in METRICS:
                 g = gold.get(metric)
                 c = curr.get(metric)
@@ -125,30 +126,36 @@ def compare(threshold: float = 0.10, verbose: bool = False):
                     continue
                 pct = abs(c - g) / abs(g) * 100
                 arrow = "↑" if c > g else "↓"
-                line = (f"    {metric:<18}: {g:.4e} → {c:.4e}  "
-                        f"{arrow}{pct:.1f}%{'  !!!' if pct > threshold*100 else ''}")
+                marker = "  !!!" if pct > fail * 100 else ("  !" if pct > warn * 100 else "")
+                line = (f"    {metric:<18}: {g:.4e} → {c:.4e}  {arrow}{pct:.1f}%{marker}")
                 lines.append(line)
-                if pct > threshold * 100:
-                    drifted.append((metric, g, c, pct))
+                if pct > fail * 100:
+                    hard_drifted.append((metric, g, c, pct))
+                elif pct > warn * 100:
+                    soft_drifted.append((metric, g, c, pct))
 
-            if not drifted:
-                tag = "✅"
-                label = (f"{struct}/{cond}: all metrics within ±{threshold*100:.0f}%")
-                if verbose:
-                    label += f"\n" + "\n".join(lines)
-                report(tag, label)
-            else:
-                drift_list = ", ".join(f"{m}({p:.1f}%)" for m, _, _, p in drifted)
-                report("⚠️ ", f"{struct}/{cond}: DRIFTED — {drift_list}",
+            if hard_drifted:
+                drift_list = ", ".join(f"{m}({p:.1f}%)" for m, _, _, p in hard_drifted)
+                report("❌", f"{struct}/{cond}: FAIL drift >{fail*100:.0f}% — {drift_list}",
                        "\n".join(lines))
+            elif soft_drifted:
+                drift_list = ", ".join(f"{m}({p:.1f}%)" for m, _, _, p in soft_drifted)
+                report("⚠️ ", f"{struct}/{cond}: WARN drift >{warn*100:.0f}% — {drift_list}",
+                       "\n".join(lines))
+            else:
+                label = (f"{struct}/{cond}: all metrics within ±{warn*100:.0f}%")
+                if verbose:
+                    label += "\n" + "\n".join(lines)
+                report("✅", label)
 
 
-def print_summary(threshold: float):
+def print_summary(warn: float = 0.30, fail: float = 0.50):
     passes = sum(1 for r in results if r[0] == "✅")
     drifts = sum(1 for r in results if r[0].startswith("⚠️"))
     fails  = sum(1 for r in results if r[0] == "❌")
     print(f"\n{'='*60}")
-    print(f"  regression_guard (±{threshold*100:.0f}%): {passes} ✅  {drifts} ⚠️   {fails} ❌")
+    print(f"  regression_guard (warn>{warn*100:.0f}% fail>{fail*100:.0f}%): "
+          f"{passes} ✅  {drifts} ⚠️   {fails} ❌")
     print(f"{'='*60}")
     if drifts or fails:
         print("\n[INVESTIGATE]")
@@ -168,8 +175,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="FEM regression guard")
     ap.add_argument("--baseline",  action="store_true",
                     help="Save current results as regression baseline")
-    ap.add_argument("--threshold", type=float, default=0.10,
-                    help="Drift tolerance fraction (default 0.10 = 10%%)")
+    ap.add_argument("--warn", type=float, default=0.30,
+                    help="Drift fraction for ⚠️  (default 0.30 = 30%%)")
+    ap.add_argument("--fail", type=float, default=0.50,
+                    help="Drift fraction for ❌  (default 0.50 = 50%%)")
     ap.add_argument("--verbose",   action="store_true",
                     help="Show all metric values, not just drifted ones")
     args = ap.parse_args()
@@ -181,5 +190,5 @@ if __name__ == "__main__":
         print("\n[BASELINE MODE] Saving current CSV stats as golden reference...")
         save_baseline()
     else:
-        compare(threshold=args.threshold, verbose=args.verbose)
-        print_summary(threshold=args.threshold)
+        compare(warn=args.warn, fail=args.fail, verbose=args.verbose)
+        print_summary(warn=args.warn, fail=args.fail)

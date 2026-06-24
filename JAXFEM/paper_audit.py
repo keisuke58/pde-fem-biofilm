@@ -58,6 +58,32 @@ PAPERS = [
         ],
     },
     {
+        "name":    "klempt2024_hamilton_biofilm_JP",
+        "tex":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_hamilton_biofilm_JP.tex"),
+        "bib":     None,
+        "log":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_hamilton_biofilm_JP.log"),
+        "pdf":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_hamilton_biofilm_JP.pdf"),
+        "required_cites": [],
+        "required_content": [
+            (r"Hamilton|変分原理", "Hamilton 原理への言及"),
+            (r"biofilm|バイオフィルム|成長", "バイオフィルム成長への言及"),
+            (r"Klempt|klempt", "Klempt への言及"),
+        ],
+    },
+    {
+        "name":    "klempt2024_slides",
+        "tex":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_slides.tex"),
+        "bib":     None,
+        "log":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_slides.log"),
+        "pdf":     Path("/home/nishioka/LUHsummer26/1030_Masterarbeit/notes/klempt2024_slides.pdf"),
+        "required_cites": [],
+        "required_content": [
+            (r"Hamilton|変分原理", "Hamilton 原理への言及"),
+            (r"biofilm|バイオフィルム|拡散", "バイオフィルム/拡散への言及"),
+            (r"Klempt|klempt", "Klempt への言及"),
+        ],
+    },
+    {
         "name":    "nishioka_heine_paper",
         "tex":     Path("/home/nishioka/IKM_Hiwi/nife/heine_paper/nishioka_heine_paper.tex"),
         "bib":     Path("/home/nishioka/IKM_Hiwi/nife/heine_paper/references_ikm.bib"),
@@ -190,6 +216,8 @@ def check_bib(paper: dict):
     """Check bib for placeholder TODO entries."""
     bib = paper["bib"]
     name = paper["name"]
+    if bib is None:
+        return
     if not bib.exists():
         report(WARN, f"[{name}] bib file not found: {bib}")
         return

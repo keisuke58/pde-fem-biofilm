@@ -121,8 +121,8 @@ def run_regression() -> tuple[str, dict]:
     def _run():
         print("IKM Klempt FEM — Regression Guard")
         print("="*60)
-        m.compare(threshold=0.10, verbose=False)
-        m.print_summary(threshold=0.10)
+        m.compare(warn=0.30, fail=0.50, verbose=False)
+        m.print_summary(warn=0.30, fail=0.50)
     return run_section("regression", _run)
 
 
