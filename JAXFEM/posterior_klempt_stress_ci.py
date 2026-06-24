@@ -48,7 +48,11 @@ _OUT.mkdir(exist_ok=True)
 
 # ── species constants (same as gen_tooth/gen_implant) ────────────────────────
 SPECIES  = ["So", "An", "Vd", "Fn", "Pg"]
-E_SPEC   = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa]
+# E_SPEC: assumed scaling — no per-species literature source.
+# Klempt 2024 Table 2: single-species E=10 Pa (=1e-5 MPa, used for Pg here).
+# Klempt 2025 / Heine 2025: no species-specific E values reported.
+# Thesis §5.2 must disclose as modelling assumption requiring AFM validation.
+E_SPEC   = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa]: So, An, Vd, Fn, Pg
 K_ALPHA  = np.array([1.0, 0.8, 0.4, 0.6, 0.3])
 
 # ── condition → CI-0D folder name mapping ────────────────────────────────────

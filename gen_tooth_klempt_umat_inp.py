@@ -46,7 +46,15 @@ N_LAYERS          = 4
 
 # ── species ────────────────────────────────────────────────────────────────────
 SPECIES    = ["So", "An", "Vd", "Fn", "Pg"]
-E_SPEC_MPa = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa] = Pa × 1e-6
+# E_SPEC_MPa: species-specific elastic moduli [MPa]
+# ASSUMED SCALING — no direct literature source for per-species values.
+# Klempt 2024 (Table 2) gives a single-species reference E = 10 Pa (= 1e-5 MPa).
+# The ranking So > An > Vd > Fn > Pg follows expected commensal-to-pathogen
+# stiffness ordering (Streptococcus oralis stiffer than Porphyromonas gingivalis).
+# Klempt 2025 (Tables 1-3) defines only interaction/growth params — no E_i values.
+# Heine 2025 (Front. Oral Health) reports species composition only — no mechanics.
+# THESIS §5.2 MUST disclose this as a modelling assumption requiring AFM validation.
+E_SPEC_MPa = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa]: So, An, Vd, Fn, Pg
 K_ALPHA    = np.array([1.0, 0.8, 0.4, 0.6, 0.3])          # growth accumulation rates (matches klempt_pde_multispecies.py)
 
 # ── conditions ─────────────────────────────────────────────────────────────────

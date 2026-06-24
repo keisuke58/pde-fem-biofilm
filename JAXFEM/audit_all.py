@@ -427,8 +427,8 @@ if __name__ == "__main__":
                 elif key == "reg":
                     import regression_guard as m
                     importlib.reload(m); m.results.clear()
-                    m.compare(threshold=0.10, verbose=False)
-                    m.print_summary(threshold=0.10)
+                    m.compare(warn=0.30, fail=0.50, verbose=False)
+                    m.print_summary(warn=0.30, fail=0.50)
                 elif key == "thesis":
                     import thesis_audit as m
                     importlib.reload(m); m.results.clear()

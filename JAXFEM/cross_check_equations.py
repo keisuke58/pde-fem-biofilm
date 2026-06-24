@@ -233,6 +233,21 @@ def check_predef():
     else:
         report(FAIL, "E_SPEC_MPa array not found in gen_tooth_klempt_umat_inp.py")
 
+    # E_SPEC disclosure: confirm "ASSUMED SCALING" comment exists in gen_tooth
+    if re.search(r"ASSUMED SCALING", gen_txt):
+        report(PASS, "E_SPEC_MPa: 'ASSUMED SCALING' disclosure comment present in gen_tooth")
+    else:
+        report(FAIL, "E_SPEC_MPa: missing 'ASSUMED SCALING' disclosure — thesis §5.2 requires it")
+
+    # Same check for posterior_klempt_stress_ci.py
+    ci_path = Path(__file__).parent / "posterior_klempt_stress_ci.py"
+    if ci_path.exists():
+        ci_txt = ci_path.read_text()
+        if re.search(r"ASSUMED SCALING|assumed scaling", ci_txt):
+            report(PASS, "E_SPEC: disclosure comment present in posterior_klempt_stress_ci.py")
+        else:
+            report(FAIL, "E_SPEC: missing disclosure in posterior_klempt_stress_ci.py")
+
     # Mode C alpha rate-weighted split — exact (derived from per-species PDE)
     # Formula: α_s = α_total × (K_ALPHA_s × φ_s) / k_alpha_eff
     # Derivation: dα_s/dt = K_ALPHA_s × φ_s → at steady-state φ, α_s/α_total = K_ALPHA_s·φ_s/Σ_j K_ALPHA_j·φ_j
