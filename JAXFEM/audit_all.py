@@ -146,6 +146,18 @@ def run_thesis() -> tuple[str, dict]:
     return run_section("thesis", _run)
 
 
+def run_papers() -> tuple[str, dict]:
+    """Audit the two submission papers (paper_audit.py)."""
+    import paper_audit as m
+    importlib.reload(m)
+    m.results.clear()
+    def _run():
+        print("IKM Paper Audit (hamilton_biofilm_nishioka + nishioka_heine_paper)")
+        print("="*65)
+        m.run()
+    return run_section("papers", _run)
+
+
 def run_ci() -> tuple[str, dict]:
     """Check posterior CI output files (--strict level)."""
     _FEM = HERE.parent
@@ -305,6 +317,7 @@ SECTIONS = {
     "fig":    ("FEM Figures",            run_figures),
     "reg":    ("FEM Regression",         run_regression),
     "thesis": ("Thesis LaTeX Audit",     run_thesis),
+    "papers": ("Paper LaTeX Audit",      run_papers),
     "ci":     ("Posterior CI Files",     run_ci),
     "rag":    ("RAG Coverage",           run_rag),
 }
@@ -312,8 +325,8 @@ SECTIONS = {
 # Which sections each top-level mode runs
 MODE_SECTIONS = {
     "quick":  ["eq", "fig", "reg", "thesis"],
-    "strict": ["eq", "fig", "reg", "thesis", "ci"],
-    "submit": ["eq", "fig", "reg", "thesis", "ci", "rag"],
+    "strict": ["eq", "fig", "reg", "thesis", "papers", "ci"],
+    "submit": ["eq", "fig", "reg", "thesis", "papers", "ci", "rag"],
 }
 
 
@@ -338,6 +351,7 @@ def _parse_args_and_mode(argv=None):
     ap.add_argument("--fig",    action="store_true")
     ap.add_argument("--reg",    action="store_true")
     ap.add_argument("--thesis", action="store_true")
+    ap.add_argument("--papers", action="store_true")
     ap.add_argument("--ci",     action="store_true")
     ap.add_argument("--rag",    action="store_true")
     args = ap.parse_args(argv)
@@ -426,6 +440,11 @@ if __name__ == "__main__":
                         m.check_approx_coverage(texts)
                         m.check_klempt_attribution(texts)
                         m.print_summary()
+                elif key == "papers":
+                    import paper_audit as pm; importlib.reload(pm); pm.results.clear()
+                    print("IKM Paper Audit (hamilton_biofilm_nishioka + nishioka_heine_paper)")
+                    print("="*65)
+                    pm.run()
                 elif key == "ci":
                     run_ci()[0]   # run_ci() captures its own output
                     # Re-run without capture so output appears live
