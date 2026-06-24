@@ -213,7 +213,7 @@ def print_master_summary(section_results: dict[str, tuple[str, dict]]):
     else:
         print("  ✅ STATUS: ALL CLEAR")
         if total["info"] > 0:
-            print("     ℹ️  Known approximations acknowledged — add §5.2 thesis note.")
+            print("     ℹ️  Known approximations acknowledged — thesis note at eq:alpha_proportional_split confirmed.")
         rc = 0
 
     print()
