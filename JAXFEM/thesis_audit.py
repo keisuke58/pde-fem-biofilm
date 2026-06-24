@@ -98,11 +98,11 @@ EQ_MAP = [
 # ── Known approximations that MUST appear in thesis §5.x ────────────────────
 REQUIRED_APPROX = [
     (
-        "alpha_proportional_split",
-        r"proportion|α_s\s*≈|alpha.*split|per.species.*growth.*approx",
+        "alpha_rate_weighted_split",
+        r"rate.weight|k_\{\\alpha,s\}|k_\\alpha.*phi_s|dalpha.*K_ALPHA|per.species.*PDE|accumulation rate",
         "§5.2",
-        "Mode C per-species α_s = α_total × φ_s/Σφ_i  [Nishioka approx, no paper source]",
-        "Must state: 'α_s ≈ α_total · φ_s/Σφ_i (proportional approximation)'",
+        "Mode C per-species α_s = α_total × (K_ALPHA_s·φ_s)/k_alpha_eff  [exact from per-species PDE]",
+        "Must state rate-weighted formula with K_ALPHA_s and derivation from per-species PDE.",
     ),
     (
         "isotropic_growth_modelling_choice",

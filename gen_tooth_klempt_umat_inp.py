@@ -47,6 +47,7 @@ N_LAYERS          = 4
 # ── species ────────────────────────────────────────────────────────────────────
 SPECIES    = ["So", "An", "Vd", "Fn", "Pg"]
 E_SPEC_MPa = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa] = Pa × 1e-6
+K_ALPHA    = np.array([1.0, 0.8, 0.4, 0.6, 0.3])          # growth accumulation rates (matches klempt_pde_multispecies.py)
 
 # ── conditions ─────────────────────────────────────────────────────────────────
 CONDITIONS = [
@@ -365,15 +366,19 @@ def main(mode: str):
             write_mode_A(out, blocks, alpha_nodes, phi_nodes, phi_vec, cond)
 
         elif mode == "C":
-            phi_total = phi_vec.sum()
-            alpha_nodes_per_sp = {}
             alpha_total_nodes = np.array([
                 alpha_at_depth(depth_norm(nid0), alpha2d)
                 for nid0 in range(N_NODES)
             ])
-            for sp_idx, sp in enumerate(SPECIES):
-                sp_frac = phi_vec[sp_idx] / (phi_total + 1e-12)
-                alpha_nodes_per_sp[sp] = alpha_total_nodes * sp_frac
+            # Rate-weighted split: α_s = α_total × (K_ALPHA_s × φ_s) / k_alpha_eff
+            # Exact analytical result of dα_s/dt = K_ALPHA_s × φ_s at steady-state φ.
+            # Matches gen_implant_klempt_inp.py. Simple φ_s/Σφ_j is a degenerate case.
+            k_alpha_eff = float(phi_vec @ K_ALPHA)
+            weights = (phi_vec * K_ALPHA) / (k_alpha_eff + 1e-15)
+            alpha_nodes_per_sp = {
+                sp: alpha_total_nodes * weights[sp_idx]
+                for sp_idx, sp in enumerate(SPECIES)
+            }
             out = HERE / f"p23_klempt_C_{cond}.inp"
             write_mode_C(out, blocks, alpha_nodes_per_sp, phi_nodes, phi_vec, cond)
 

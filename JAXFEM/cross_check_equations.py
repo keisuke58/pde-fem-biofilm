@@ -233,13 +233,13 @@ def check_predef():
     else:
         report(FAIL, "E_SPEC_MPa array not found in gen_tooth_klempt_umat_inp.py")
 
-    # Mode C alpha proportional split — INFO (documented approximation)
-    if re.search(r"sp_frac\s*=\s*phi_vec\[sp_idx\]\s*/\s*\(phi_total", gen_txt):
-        report(INFO, "Mode C alpha split: α_s = α_total × φ_s/Σφ_i  [NISHIOKA APPROX, documented]",
-               "Source: no Klempt paper has per-species alpha PDE.\n"
-               "  Justification: at composition equilibrium, alpha_s ∝ phi_s.\n"
-               "  Thesis §5.2 text: 'α_s ≈ α_total · φ_s/Σφ_i (proportional split approx)'\n"
-               "  UMAT header & code body comments corrected 2026-06-25.")
+    # Mode C alpha rate-weighted split — exact (derived from per-species PDE)
+    # Formula: α_s = α_total × (K_ALPHA_s × φ_s) / k_alpha_eff
+    # Derivation: dα_s/dt = K_ALPHA_s × φ_s → at steady-state φ, α_s/α_total = K_ALPHA_s·φ_s/Σ_j K_ALPHA_j·φ_j
+    if re.search(r"weights\s*=\s*\(phi_vec\s*\*\s*K_ALPHA\)\s*/", gen_txt):
+        report(PASS, "Mode C alpha split: α_s = α_total × (K_ALPHA_s·φ_s)/k_alpha_eff  [exact from per-species PDE]")
+    elif re.search(r"sp_frac\s*=\s*phi_vec\[sp_idx\]\s*/\s*\(phi_total", gen_txt):
+        report(INFO, "Mode C alpha split: old φ_s/Σφ_i formula still present — update to rate-weighted")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
