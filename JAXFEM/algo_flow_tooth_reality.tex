@@ -1,0 +1,184 @@
+% algo_flow_tooth_reality.tex — As-implemented pipeline (no fictional nodes)
+%
+% Ph.−1  TMCMC  →  φ_total per condition (ref_0d_*.json)
+% Ph. 0  Hamilton → PDE Eq.34-36
+% Ph. 1  JAXFEM FD solver → klempt_alpha_final.npy
+% Ph. 2  gen_tooth_klempt_umat_inp.py  (read p23 INP + α mapping + 4 INPs)
+% Ph. 3  Abaqus × 4 conditions  →  σ_vm comparison
+% [Future Work — dashed]  Implant FEM / clinical
+%
+% Usage: \resizebox{\linewidth}{!}{\input{algo_flow_tooth_reality.tex}}
+% ─────────────────────────────────────────────────────────────────────
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=4.8cm, minimum height=0.85cm, inner sep=4pt},
+  Nt/.style = {N, fill=teal!12},
+  Ng/.style = {N, fill=gray!12},
+  Nc/.style = {N, fill=cyan!12},
+  Nj/.style = {N, fill=blue!10},
+  Np/.style = {N, fill=purple!10},
+  Na/.style = {N, fill=orange!15},
+  Nab/.style= {N, fill=orange!25},
+  Nf/.style = {draw, rounded corners=3pt, align=center, thick, dashed,
+               text width=4.8cm, minimum height=0.85cm, inner sep=4pt,
+               fill=gray!6, draw=gray!50},
+  dec/.style= {draw, diamond, aspect=2.6, align=center, thick,
+               text width=3.2cm, fill=yellow!20, inner sep=2pt, font=\small},
+  ar/.style  = {-Stealth, thick},
+  dar/.style = {-Stealth, thick, dashed, red!60!black},
+  tar/.style = {-Stealth, thick, teal!60!black},
+  far/.style = {-Stealth, thick, dashed, gray!60},
+  lbl/.style = {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+%%══════════════════════════════════════════════════════════════════════
+%% TOP ROW — Ph.−1  TMCMC
+%%══════════════════════════════════════════════════════════════════════
+\node[Nt] (td) {%
+  \textbf{Heine 2025} — experimental data:\\[2pt]
+  multi-species growth curves $\{(t_i,y_i)\}$\\
+  5 organisms, meas.\ noise $\sigma_{\rm obs}$};
+
+\node[Nt, right=0.7cm of td] (tp) {%
+  Prior $p(\boldsymbol\theta)$:\\[2pt]
+  $\boldsymbol\theta{=}(\beta,k_\alpha,r,g,\ldots)$\\
+  uniform — biological bounds};
+
+\node[Nt, right=0.7cm of tp] (tt) {%
+  TMCMC (Ching \& Chen 2007):\\[2pt]
+  $J$ levels,\; $p_j\!\propto\!p(\boldsymbol\theta)\,L^{\beta_j}$\\
+  GPU (4$\times$RTX\,4090)};
+
+\node[Nt, right=0.7cm of tt] (tmap) {%
+  $\phi_{total}$ per condition:\\[2pt]
+  \texttt{ref\_0d\_commensal\_static.json}\\
+  \texttt{ref\_0d\_commensal\_hobic.json}\\
+  \texttt{ref\_0d\_dysbiotic\_*.json}};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL A  Ph.0–1  Hamilton → JAXFEM FD
+%%══════════════════════════════════════════════════════════════════════
+\node[Ng, below=2.2cm of td] (H) {%
+  Hamilton principle (Junker 2021):\\[2pt]
+  $\delta\mathcal{H}{=}0 \;\Rightarrow$ Eq.\,34--36\\
+  Table\,2: $E{=}10$,\; $\nu{=}0.49$,\; $\beta{=}2$,\; $k_\alpha{=}10^{-3}$};
+
+\node[Nc, below=0.6cm of H] (fd) {%
+  JAXFEM FD solver (Eq.\,34--36):\\[2pt]
+  $60{\times}60$ grid,\; explicit Euler\\
+  $\phi^n\!\to\!\phi^{n+1}$,\; $\alpha^n\!\to\!\alpha^{n+1}$};
+
+\node[Nj, below=0.6cm of fd] (npy) {%
+  \texttt{klempt\_alpha\_final.npy}\\[2pt]
+  1-D depth profile $\alpha(d)$\\
+  $\alpha_{\max}^{\rm K}=\max_d\alpha(d)$ extracted};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL B  Ph.2  gen_tooth pipeline
+%%══════════════════════════════════════════════════════════════════════
+\node[Np, right=1.0cm of H] (p23) {%
+  Read existing geometry:\\[2pt]
+  {\scriptsize\texttt{p23\_biofilm\_commensal\_static.inp}}\\
+  (NODE / ELEMENT / NSET / ELSET)};
+
+\node[Np, below=0.6cm of p23] (amap) {%
+  $\alpha$ mapping per node (4 cond.):\\[2pt]
+  $\alpha(n){=}\alpha_{\max}^{\rm K}
+    \times\phi_{total}\times\alpha_{\rm profile}(d_n)$\\
+  {\scriptsize $\phi_{total}\!\approx\!0.91{-}0.99$\; (TMCMC)}};
+
+\node[Np, below=0.6cm of amap] (inp4) {%
+  Write 4 INPs\;
+  \texttt{p23\_klempt\_\{cond\}.inp}:\\[2pt]
+  \texttt{*USER MATERIAL} KLEMPT\_BIOFILM\\
+  \texttt{*DEPVAR\,3}\;
+  \texttt{*INITIAL CONDITIONS, FIELD=1} ($\alpha$)\\
+  \texttt{*STEP nlgeom=YES, *STATIC}};
+
+%%── Ph.3 Abaqus ─────────────────────────────────────────────────────
+\node[Na, below=1.6cm of inp4] (abq) {%
+  Abaqus + \texttt{umat\_klempt\_alpha.f}\\[2pt]
+  4 conditions\; $\times$\; 1\,CPU (QSD\,50 token)\\
+  SDV:\; $\lambda_z$,\; $J_e$,\; $\alpha$};
+
+\node[Nab, below=0.6cm of abq] (cmp) {%
+  \textbf{Stress comparison} (4 conditions):\\[2pt]
+  $\sigma_{vm}^{\rm commensal}$ vs $\sigma_{vm}^{\rm dysbiotic}$\\
+  static vs hobic loading};
+
+%%── Future Work (dashed) ─────────────────────────────────────────────
+\node[Nf, below=1.6cm of cmp] (fw1) {%
+  \textit{[Future]} Implant FEM setup:\\[2pt]
+  自作 Ti スクリュー形状 (parametric CAD)\\
+  + p23 tooth geometry → combined INP};
+
+\node[Nf, below=0.6cm of fw1] (fw2) {%
+  \textit{[Future]} Bone-implant interface:\\[2pt]
+  cortical/cancellous contact, $\mu_f{=}0.3$\\
+  osseointegration index, $F_{pull}$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — TMCMC row
+%%══════════════════════════════════════════════════════════════════════
+\draw[tar] (td)   -- (tp);
+\draw[tar] (tp)   -- (tt);
+\draw[tar] (tt)   -- (tmap);
+% φ_total → α mapping
+\draw[tar, thick] (tmap.south) -- ++(0,-0.6) coordinate (tm)
+  -- (tm -| amap.east) -- (amap.east)
+  node[lbl, pos=0.55, above=2pt]{$\phi_{total}(\mathrm{cond})$};
+
+%%── Col A ───────────────────────────────────────────────────────────
+\draw[ar] (H)  -- (fd);
+\draw[ar] (fd) -- (npy);
+
+%%── Col B ───────────────────────────────────────────────────────────
+\draw[ar] (p23)  -- (amap);
+\draw[ar] (amap) -- (inp4);
+\draw[ar] (inp4) -- node[lbl,right]{run Abaqus} (abq);
+\draw[ar] (abq)  -- (cmp);
+\draw[far](cmp)  -- node[lbl,right]{\textit{extension}} (fw1);
+\draw[far](fw1)  -- (fw2);
+
+%%── Cross-column ────────────────────────────────────────────────────
+% Hamilton → p23 (params)
+\draw[dar] (H.east) -- ++(0.3,0) |- (p23.west)
+  node[lbl, pos=0.3, above=1pt]{material params};
+% npy → α mapping
+\draw[dar] (npy.east) -- ++(0.3,0) |- (amap.west)
+  node[lbl, pos=0.35, above=1pt]{$\alpha_{\max}^{\rm K}$,\;$\alpha_{\rm profile}$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% BACKGROUND BOXES + LABELS
+%%══════════════════════════════════════════════════════════════════════
+\begin{scope}[on background layer]
+  \node[draw=teal!50,  fill=teal!4,   rounded corners=7pt, inner sep=7pt,
+        fit=(td)(tp)(tt)(tmap)]             (bxt) {};
+  \node[draw=gray!45,  fill=gray!5,   rounded corners=7pt, inner sep=7pt,
+        fit=(H)(fd)(npy)]                   (bxA) {};
+  \node[draw=purple!40,fill=purple!4, rounded corners=7pt, inner sep=7pt,
+        fit=(p23)(amap)(inp4)]              (bxG) {};
+  \node[draw=orange!50,fill=orange!4, rounded corners=7pt, inner sep=7pt,
+        fit=(abq)(cmp)]                     (bxB) {};
+  \node[draw=gray!35,  fill=gray!4,   rounded corners=7pt, inner sep=7pt,
+        dashed, fit=(fw1)(fw2)]             (bxF) {};
+\end{scope}
+
+\node[font=\scriptsize\bfseries, text=teal!60!black,
+      above=4pt of bxt.north, anchor=south]
+  {\textbf{Ph.\,--1}\; TMCMC Bayesian Calibration\enspace(\texttt{Tmcmc202601})};
+\node[font=\scriptsize\bfseries, text=gray!65,
+      above=4pt of bxA.north, anchor=south]
+  {\textbf{Ph.\,0--1}\; Hamilton $\delta\mathcal{H}{=}0$ \& JAXFEM FD Solver};
+\node[font=\scriptsize\bfseries, text=purple!70,
+      above=4pt of bxG.north, anchor=south]
+  {\textbf{Ph.\,2}\; \texttt{gen\_tooth\_klempt\_umat\_inp.py}};
+\node[font=\scriptsize\bfseries, text=orange!80!black,
+      above=4pt of bxB.north, anchor=south]
+  {\textbf{Ph.\,3}\; Abaqus $\times$ 4 conditions\enspace(\texttt{umat\_klempt\_alpha.f})};
+\node[font=\scriptsize\itshape, text=gray!55,
+      above=4pt of bxF.north, anchor=south]
+  {Future Work (not yet implemented)};
+
+\end{tikzpicture}

@@ -1,0 +1,12 @@
+{"job": "tier2b_crown_lc0p55", "lc": 0.55, "kind": "crown", "order": "C3D4", "n_el": 265316, "n_disk_el": 5777, "crestal_p95_MPa": 14.059931394560575}
+{"job": "tier2b_generic_lc0p55", "lc": 0.55, "kind": "generic", "order": "C3D4", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 17.181249204217487}
+{"job": "tier2b_generic_lc0p55_q", "lc": 0.55, "kind": "generic", "order": "C3D10", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 18.889015020565616}
+{"job": "tier2b_crown_lc0p40", "lc": 0.4, "kind": "crown", "order": "C3D4", "n_el": 274567, "n_disk_el": 5777, "crestal_p95_MPa": 14.225469567253453}
+{"job": "tier2b_generic_lc0p40", "lc": 0.4, "kind": "generic", "order": "C3D4", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 17.181249204217487}
+{"job": "tier2b_generic_lc0p40_q", "lc": 0.4, "kind": "generic", "order": "C3D10", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 18.889015020565616}
+{"job": "tier2b_crown_lc0p30", "lc": 0.3, "kind": "crown", "order": "C3D4", "n_el": 294024, "n_disk_el": 5777, "crestal_p95_MPa": 14.118859813539117}
+{"job": "tier2b_generic_lc0p30", "lc": 0.3, "kind": "generic", "order": "C3D4", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 17.181249204217487}
+{"job": "tier2b_generic_lc0p30_q", "lc": 0.3, "kind": "generic", "order": "C3D10", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 18.889015020565616}
+{"job": "tier2b_crown_lc0p22", "lc": 0.22, "kind": "crown", "order": "C3D4", "n_el": 345960, "n_disk_el": 5777, "crestal_p95_MPa": 14.11439946554663}
+{"job": "tier2b_generic_lc0p22", "lc": 0.22, "kind": "generic", "order": "C3D4", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 17.181249204217487}
+{"job": "tier2b_generic_lc0p22_q", "lc": 0.22, "kind": "generic", "order": "C3D10", "n_el": 265034, "n_disk_el": 5777, "crestal_p95_MPa": 18.889015020565616}

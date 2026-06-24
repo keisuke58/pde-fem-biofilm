@@ -1,0 +1,26 @@
+{
+  "commensal_static": {
+    "alpha_max": 1.648526998351214,
+    "phi_max": 1.0,
+    "k_alpha_eff": 0.8262842664829804,
+    "mu_eff": 1.7014260039869362
+  },
+  "commensal_hobic": {
+    "alpha_max": 1.9228396899315923,
+    "phi_max": 1.0,
+    "k_alpha_eff": 0.966701806800011,
+    "mu_eff": 1.9426512303889083
+  },
+  "dysbiotic_static": {
+    "alpha_max": 1.9160645400924643,
+    "phi_max": 1.0,
+    "k_alpha_eff": 0.967313604714889,
+    "mu_eff": 1.9436721419811906
+  },
+  "dysbiotic_hobic": {
+    "alpha_max": 0.957975176556727,
+    "phi_max": 1.0,
+    "k_alpha_eff": 0.4838629998230607,
+    "mu_eff": 1.2007435852395965
+  }
+}

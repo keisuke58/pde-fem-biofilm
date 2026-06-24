@@ -1,0 +1,10 @@
+{"tag": "base", "D": 4.1, "L": 10.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "D35", "D": 3.5, "L": 10.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "D48", "D": 4.8, "L": 10.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "L8", "D": 4.1, "L": 8.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "L12", "D": 4.1, "L": 12.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "P06", "D": 4.1, "L": 10.0, "pitch": 0.6, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "P10", "D": 4.1, "L": 10.0, "pitch": 1.0, "taper": 0.0, "order": 2, "angle": 30.0}
+{"tag": "TP3", "D": 4.1, "L": 10.0, "pitch": 0.8, "taper": 0.3, "order": 2, "angle": 30.0}
+{"tag": "A0", "D": 4.1, "L": 10.0, "pitch": 0.8, "taper": 0.0, "order": 2, "angle": 0.0}
+{"tag": "C3D4", "D": 4.1, "L": 10.0, "pitch": 0.8, "taper": 0.0, "order": 1, "angle": 30.0}

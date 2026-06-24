@@ -1,0 +1,103 @@
+% algo_flow.tex — Algorithm flowchart: Klempt 2024 Eq.34-36 + UMAT coupling
+% v2: fixed text overlaps (label positions, loop arrow note, coupling note)
+%
+% Usage (thesis or Beamer):
+%   \resizebox{\linewidth}{!}{\input{algo_flow.tex}}
+% ─────────────────────────────────────────────────────────────────────
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  box/.style   = {draw, rounded corners=4pt, minimum width=7.2cm,
+                  minimum height=0.9cm, align=center, thick},
+  init/.style  = {box, fill=gray!15},
+  pde/.style   = {box, fill=blue!12},
+  mech/.style  = {box, fill=orange!18},
+  pass/.style  = {box, fill=green!18},
+  arrow/.style = {-Stealth, thick},
+  loopnote/.style = {font=\scriptsize\itshape, text width=2.6cm, align=right},
+  cnote/.style    = {font=\scriptsize\itshape, text width=3.0cm, align=center,
+                     fill=white, inner sep=1.5pt},
+]
+
+%% ── Column A: PDE time loop ──────────────────────────────────────────
+\node[init] (init)
+  {Initialise \;$\phi^0$,\; $c^0$,\; $\alpha^0 = 0$};
+
+\node[pde, below=0.55cm of init] (pois)
+  {Solve nutrient (quasi-static), Eq.\,35:\\
+   $-D\,\Delta c + g\,\phi = 0$};
+
+\node[pde, below=0.55cm of pois] (phi)
+  {Update $\phi$ (Eq.\,34, explicit Euler):\\[1pt]
+   $\phi^{n+1} = \phi^n + \Delta t\!\left[\,
+     \beta\Delta\phi
+     - k_\alpha\alpha
+     + \frac{rc}{k{+}c}\,(\nabla\phi\cdot\hat n_c)
+   \right]$};
+
+\node[pde, below=0.55cm of phi] (alp)
+  {Update growth variable (Eq.\,36):\\[1pt]
+   $\alpha^{n+1} = \alpha^n + \Delta t\,k_\alpha\,\phi$};
+
+\node[init, below=0.55cm of alp] (loop)
+  {$t \leftarrow t + \Delta t$ \quad Repeat until $t = T_{\max}$};
+
+%% ── Column B: UMAT / Gauss-point coupling ────────────────────────────
+\node[mech, right=2.8cm of pois, yshift=-1.6cm] (growth)
+  {Growth split \;$\mathbf{F} = \mathbf{F}_e\cdot\mathbf{F}_g$\\[1pt]
+   $\mathbf{F}_g = \mathrm{diag}(1,1,\lambda_z)$,\;
+   $\mathbf{F}_e = \mathbf{F}\,\mathbf{F}_g^{-1}$\\[-1pt]
+   {\footnotesize$\lambda_z = 1 + \max(0,\,\beta_d\,\phi_{Pg} + b)$}};
+
+\node[mech, below=0.55cm of growth] (stress)
+  {neo-Hookean Cauchy stress,\; $J{=}\det\mathbf{F}_e$\\[1pt]
+   $\boldsymbol\sigma
+     = \dfrac{\mu}{J}(\mathbf{b}_e - \mathbf{I})
+     + \dfrac{\lambda}{J}\ln J\;\mathbf{I}$};
+
+\node[mech, below=0.55cm of stress] (tang)
+  {Consistent spatial tangent (Bonet \& Wood §6.5)\\[1pt]
+   $\mathbb{C}_{ijkl}
+     = \dfrac{\lambda}{J}\delta_{ij}\delta_{kl}
+     + \dfrac{\mu {-} \lambda\ln J}{J}
+       (\delta_{ik}\delta_{jl} + \delta_{il}\delta_{jk})$};
+
+\node[pass, below=0.55cm of tang] (ret)
+  {\textbf{Return} $(\boldsymbol\sigma,\,\mathbb{C})$ to Abaqus Newton loop};
+
+%% ── Arrows: PDE loop ─────────────────────────────────────────────────
+\draw[arrow] (init) -- (pois);
+\draw[arrow] (pois) -- (phi);
+\draw[arrow] (phi)  -- (alp);
+\draw[arrow] (alp)  -- (loop);
+% back-edge: place label on the LEFT stub, not on the bend
+\draw[arrow] (loop.west) -- ++(-0.85,0) coordinate (lstub)
+             |- (pois.west);
+\node[loopnote, left=0.05cm of lstub] {every $C_{\mathrm{solve}}$ steps};
+
+%% ── Arrow: PDE → UMAT coupling ───────────────────────────────────────
+% go right from phi, then down-right to growth; label on a white bg node
+\draw[arrow, dashed, red!70!black, thick]
+  (phi.east) -- ++(0.5,0) coordinate (pmid)
+             |- (growth.west);
+\node[cnote] at ($(pmid)!0.5!(growth.west -| pmid)$)
+  {$\phi_{Pg}(x)$ to each\\ Gauss point};
+
+%% ── Arrows: UMAT internal ────────────────────────────────────────────
+\draw[arrow] (growth) -- (stress);
+\draw[arrow] (stress) -- (tang);
+\draw[arrow] (tang)   -- (ret);
+
+%% ── Background boxes (labels placed BELOW top border, inside the box) ─
+\begin{scope}[on background layer]
+  \node[draw=blue!40, rounded corners=6pt, fill=blue!4,
+        fit=(init)(pois)(phi)(alp)(loop), inner sep=8pt] (pdeBox) {};
+  \node[draw=orange!50, rounded corners=6pt, fill=orange!4,
+        fit=(growth)(stress)(tang)(ret), inner sep=8pt] (umatBox) {};
+\end{scope}
+% labels outside the box (above, centred), no overlap with content
+\node[font=\footnotesize\bfseries, text=blue!60,
+      above=3pt of pdeBox.north] {PDE loop\enspace(\texttt{felix\_complete\_reproduction.py})};
+\node[font=\footnotesize\bfseries, text=orange!80!black,
+      above=3pt of umatBox.north] {UMAT / Gauss-point\enspace(\texttt{umat\_server\_nsp\_fs.py})};
+
+\end{tikzpicture}

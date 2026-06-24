@@ -1,0 +1,16 @@
+{"job": "tier2b_crown_sens_pdl_m0p5", "mat": "PDL", "mul": 0.5, "kind": "crown", "crestal_p95_MPa": 13.526471372052049}
+{"job": "tier2b_generic_sens_pdl_m0p5", "mat": "PDL", "mul": 0.5, "kind": "generic", "crestal_p95_MPa": 16.96888788512998}
+{"job": "tier2b_crown_sens_pdl_m2p0", "mat": "PDL", "mul": 2.0, "kind": "crown", "crestal_p95_MPa": 14.523292415619148}
+{"job": "tier2b_generic_sens_pdl_m2p0", "mat": "PDL", "mul": 2.0, "kind": "generic", "crestal_p95_MPa": 17.339953502777117}
+{"job": "tier2b_crown_sens_biofilm_m0p5", "mat": "BIOFILM", "mul": 0.5, "kind": "crown", "crestal_p95_MPa": 14.10049084927774}
+{"job": "tier2b_generic_sens_biofilm_m0p5", "mat": "BIOFILM", "mul": 0.5, "kind": "generic", "crestal_p95_MPa": 17.181818853144666}
+{"job": "tier2b_crown_sens_biofilm_m2p0", "mat": "BIOFILM", "mul": 2.0, "kind": "crown", "crestal_p95_MPa": 14.138932051276607}
+{"job": "tier2b_generic_sens_biofilm_m2p0", "mat": "BIOFILM", "mul": 2.0, "kind": "generic", "crestal_p95_MPa": 17.180110285133917}
+{"job": "tier2b_crown_sens_gingiva_m0p5", "mat": "GINGIVA", "mul": 0.5, "kind": "crown", "crestal_p95_MPa": 14.117832365347114}
+{"job": "tier2b_generic_sens_gingiva_m0p5", "mat": "GINGIVA", "mul": 0.5, "kind": "generic", "crestal_p95_MPa": 17.17835837169328}
+{"job": "tier2b_crown_sens_gingiva_m2p0", "mat": "GINGIVA", "mul": 2.0, "kind": "crown", "crestal_p95_MPa": 14.108936564017581}
+{"job": "tier2b_generic_sens_gingiva_m2p0", "mat": "GINGIVA", "mul": 2.0, "kind": "generic", "crestal_p95_MPa": 17.193772584915926}
+{"job": "tier2b_crown_sens_cementum_m0p5", "mat": "CEMENTUM", "mul": 0.5, "kind": "crown", "crestal_p95_MPa": 14.125642956121455}
+{"job": "tier2b_generic_sens_cementum_m0p5", "mat": "CEMENTUM", "mul": 0.5, "kind": "generic", "crestal_p95_MPa": 17.299861672610337}
+{"job": "tier2b_crown_sens_cementum_m2p0", "mat": "CEMENTUM", "mul": 2.0, "kind": "crown", "crestal_p95_MPa": 13.990330078392995}
+{"job": "tier2b_generic_sens_cementum_m2p0", "mat": "CEMENTUM", "mul": 2.0, "kind": "generic", "crestal_p95_MPa": 17.058047935488435}

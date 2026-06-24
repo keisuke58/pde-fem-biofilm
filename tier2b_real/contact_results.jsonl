@@ -1,0 +1,3 @@
+{"tag": "c_e4", "z_bone_top": 6.0, "micromotion_max_um": 6.858142670755627, "micromotion_p95_um": 5.406124007121006, "brunski_150um_exceeded": false, "n_pairs": 232}
+{"tag": "c_e6", "z_bone_top": 4.0, "micromotion_max_um": 8.125274512070598, "micromotion_p95_um": 5.541155456328265, "brunski_150um_exceeded": false, "n_pairs": 140}
+{"tag": "c_e8", "z_bone_top": 2.0, "micromotion_max_um": 8.405983572626335, "micromotion_p95_um": 7.727571306829779, "brunski_150um_exceeded": false, "n_pairs": 52}

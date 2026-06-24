@@ -1,0 +1,263 @@
+% algo_flow_tooth_implant.tex — Extended pipeline: TMCMC → conformal tooth FEM → implant
+%
+% Ph.−1  TMCMC Bayesian calibration (Heine 2025 data → MAP θ)
+% Ph. 0  Hamilton principle → PDE system (Eq.34-36)
+% Ph. 1  gen_tooth_klempt_umat_inp.py (conformal tooth mesh + INP generation)
+% Ph. 2  FD solver: φ_total field on tooth geometry
+% Ph. 3  Klempt α mapping: φ_total → growth variable α (Gauss-pt)
+% Ph. 4  UMAT + FEM Newton-Raphson (tooth/implant mechanics)
+% Ph. 5  Implant FEM: bone-implant interface, osseointegration prediction
+%
+% Usage: \resizebox{\linewidth}{!}{\input{algo_flow_tooth_implant.tex}}
+% ─────────────────────────────────────────────────────────────────────
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=4.6cm, minimum height=0.85cm, inner sep=4pt},
+  Nt/.style = {N, fill=teal!12},
+  Ng/.style = {N, fill=gray!12},
+  Np/.style = {N, fill=purple!10},
+  Nc/.style = {N, fill=cyan!12},
+  Nk/.style = {N, fill=blue!10},
+  Nm/.style = {N, fill=orange!15},
+  Nv/.style = {N, fill=violet!10},
+  Ni/.style = {N, fill=red!10},
+  No/.style = {N, fill=green!14},
+  dec/.style= {draw, diamond, aspect=2.6, align=center, thick,
+               text width=3.2cm, fill=yellow!20, inner sep=2pt, font=\small},
+  ar/.style  = {-Stealth, thick},
+  dar/.style = {-Stealth, thick, dashed, red!70!black},
+  tar/.style = {-Stealth, thick, teal!60!black},
+  par/.style = {-Stealth, thick, purple!60!black},
+  lbl/.style = {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+%%══════════════════════════════════════════════════════════════════════
+%% ROW 0 (top): Ph.−1  TMCMC  (horizontal, 4 nodes)
+%%══════════════════════════════════════════════════════════════════════
+\node[Nt] (td) {%
+  \textbf{Heine 2025} — experimental data:\\[2pt]
+  multi-species growth curves $\{(t_i,y_i)\}$\\
+  5 organisms, meas.\ noise $\sigma_{\rm obs}$};
+
+\node[Nt, right=0.7cm of td] (tp) {%
+  Prior $p(\boldsymbol\theta)$:\\[2pt]
+  $\boldsymbol\theta{=}(\mu,E,\nu,\beta,k_\alpha,r,g,\ldots)$\\
+  uniform — biological bounds};
+
+\node[Nt, right=0.7cm of tp] (tt) {%
+  TMCMC (Ching \& Chen 2007):\\[2pt]
+  $J$ levels,\; $0{=}\beta_0{<}\cdots{<}\beta_J{=}1$\\
+  $p_j\!\propto\!p(\boldsymbol\theta)\,L^{\beta_j}$,\;
+  GPU (4$\times$RTX\,4090)};
+
+\node[Nt, right=0.7cm of tt] (tmap) {%
+  Posterior $p(\boldsymbol\theta|\mathcal{D})$:\\[2pt]
+  MAP $\hat{\boldsymbol\theta}$ + uncertainty $\Sigma_\theta$\\
+  $\to$ Table\,2 parameters};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL A (x=0): Ph.0 Hamilton → PDE
+%%══════════════════════════════════════════════════════════════════════
+\node[Ng, below=2.2cm of td] (H) {%
+  Hamilton principle (Junker 2021):\\[2pt]
+  $\mathcal{H}{=}\!\int_\tau\!(G{+}C{-}B{+}D)\,\mathrm{d}t$,\;
+  $\delta\mathcal{H}{=}0$};
+
+\node[Ng, below=0.5cm of H] (par2) {%
+  Table\,2 params ($\hat{\boldsymbol\theta}$)\\
+  + posterior uncertainty $\Sigma_\theta$};
+
+\node[Nk, below=1.8cm of par2] (e34) {%
+  \textbf{Eq.\,34} — biofilm $\phi_{total}$:\\[2pt]
+  $\dot\phi{=}\beta\Delta\phi{-}k_\alpha\alpha
+    {+}\tfrac{rc}{k+c}(\nabla\phi{\cdot}\hat{n}_c)$};
+
+\node[Nk, below=0.5cm of e34] (e35) {%
+  \textbf{Eq.\,35} — nutrient $c$:\\[2pt]
+  $\dot c = D\Delta c - g\,\phi_{total}$};
+
+\node[Nk, below=0.5cm of e35] (e36) {%
+  \textbf{Eq.\,36} — growth $\alpha$:\\[2pt]
+  $\dot\alpha = k_\alpha\phi_{total}$\quad (local ODE)};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL B: Ph.1  gen_tooth_klempt_umat_inp.py
+%%══════════════════════════════════════════════════════════════════════
+\node[Np, right=0.8cm of H] (tooth) {%
+  \texttt{gen\_tooth\_klempt\_umat\_inp.py}\\[2pt]
+  Conformal tooth/implant geometry\\
+  (from CT scan or parametric CAD)};
+
+\node[Np, below=0.5cm of tooth] (mesh) {%
+  C3D8 mesh on tooth domain $\Omega_t$:\\[2pt]
+  boundary conditions (fixed root,\\
+  occlusal load, biofilm surface $\Gamma_b$)};
+
+\node[Np, below=0.5cm of mesh] (inp) {%
+  Abaqus INP generation:\\[2pt]
+  \texttt{*Node}, \texttt{*Element}, \texttt{*Nset}\\
+  \texttt{*Elset}, \texttt{*Material}, \texttt{*Step}};
+
+%%── Ph.2 FD solver on tooth geometry ──────────────────────────────
+\node[Nc, below=1.8cm of inp] (fdtooth) {%
+  FD solver on $\Omega_t$ (Eq.\,34--36):\\[2pt]
+  $\phi_{total}(x,t)$ on tooth surface\\
+  time-stepping $\Delta t{=}8{\times}10^{-4}$};
+
+\node[Nc, below=0.5cm of fdtooth] (snaphit) {%
+  Snapshot $\phi_{total}(x,y,z)$\\
+  at $t{=}t_1,\ldots,t_4$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL C: Ph.3 Klempt α mapping  +  Ph.4 UMAT/FEM
+%%══════════════════════════════════════════════════════════════════════
+\node[Nm, right=0.8cm of tooth] (alpmap) {%
+  $\phi_{total}\!\to\!\alpha$ mapping (Klempt Eq.\,36):\\[2pt]
+  $\alpha(x){=}\int_0^T k_\alpha\phi_{total}\,\mathrm{d}t$\\
+  interpolated to Gauss points};
+
+\node[Nm, below=0.5cm of alpmap] (Fsplit) {%
+  Growth kinematics\; $\mathbf{F}{=}\mathbf{F}_e\mathbf{F}_g$:\\[2pt]
+  $\lambda_z{=}1{+}\max(0,\beta_d\phi_{Pg}{+}b)$\\
+  $\mathbf{F}_e{=}\mathbf{F}\mathbf{F}_g^{-1}$,\; $J{=}\det\mathbf{F}_e$};
+
+\node[Nm, below=0.5cm of Fsplit] (nhS) {%
+  neo-Hookean $\boldsymbol\sigma$ + consistent $\mathbb{C}$:\\[2pt]
+  $\boldsymbol\sigma{=}\tfrac{\mu}{J}(\mathbf{b}_e{-}\mathbf{I})
+    {+}\tfrac{\lambda}{J}\ln J\,\mathbf{I}$};
+
+%%── Ph.4 FEM NR ───────────────────────────────────────────────────
+\node[Nv, below=1.8cm of nhS] (umatcall) {%
+  UMAT \texttt{umat\_klempt\_alpha.f}\\[2pt]
+  In: $\mathbf{F}$,\;$\phi_{Pg}$,\;PROPS\quad
+  Out: $(\boldsymbol\sigma,\mathbb{C})$};
+
+\node[Nv, below=0.5cm of umatcall] (KT) {%
+  FEM assembly + Newton-Raphson:\\[2pt]
+  $\mathbf{K}_T\delta\mathbf{u}{=}{-}\mathbf{R}$,\;
+  until $\|\mathbf{R}\|/\|\mathbf{R}_0\|{<}\varepsilon$};
+
+%%── Ph.5 Implant FEM ──────────────────────────────────────────────
+\node[Ni, below=1.8cm of KT] (imFEM) {%
+  \textbf{Implant FEM} (bone-implant interface):\\[2pt]
+  Ti-6Al-4V implant + cortical/cancellous bone\\
+  contact: friction $\mu_f{=}0.3$, cohesive zone};
+
+\node[Ni, below=0.5cm of imFEM] (osseo) {%
+  Osseointegration prediction:\\[2pt]
+  interface $\sigma_{vm}$,\; pull-out force $F_{pull}$\\
+  SED-based bone remodelling index};
+
+\node[No, below=0.5cm of osseo] (clinic) {%
+  \textbf{Clinical output}:\\[2pt]
+  biofilm-driven stress hot spots\\
+  implant survival probability\\
+  $\to$ treatment planning guidance};
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — TMCMC row
+%%══════════════════════════════════════════════════════════════════════
+\draw[tar] (td) -- (tp);
+\draw[tar] (tp) -- (tt);
+\draw[tar] (tt) -- (tmap);
+\draw[tar, thick] (tmap.south) -- ++(0,-0.6) coordinate (tmid)
+  -- (tmid -| par2.east) -- (par2.east)
+  node[lbl, pos=0.55, above=2pt]{$\hat{\boldsymbol\theta}$\;(MAP)};
+
+%%── Col A ───────────────────────────────────────────────────────────
+\draw[ar] (H) -- (par2);
+\draw[ar] (par2) -- node[lbl,right]{var.\ deriv.} (e34);
+\draw[ar] (e34) -- (e35);
+\draw[ar] (e35) -- (e36);
+
+%%── Col B ───────────────────────────────────────────────────────────
+\draw[par] (tooth) -- (mesh);
+\draw[par] (mesh)  -- (inp);
+\draw[par] (inp)   -- node[lbl,right]{$\Omega_t$ mesh} (fdtooth);
+\draw[par] (fdtooth) -- (snaphit);
+
+%%── Col C ───────────────────────────────────────────────────────────
+\draw[ar] (alpmap) -- (Fsplit);
+\draw[ar] (Fsplit) -- (nhS);
+\draw[ar] (nhS) -- node[lbl,right]{$\alpha$,\;$\mathbf{F}$} (umatcall);
+\draw[ar] (umatcall) -- (KT);
+\draw[ar] (KT)  -- node[lbl,right]{converged} (imFEM);
+\draw[ar] (imFEM) -- (osseo);
+\draw[ar] (osseo) -- (clinic);
+
+%%── Cross-column couplings (dashed) ─────────────────────────────────
+% PDE → FD tooth
+\draw[dar] (e34.east) -- ++(0.25,0) |- (fdtooth.west)
+  node[lbl,pos=0.3,above=1pt]{on $\Omega_t$};
+\draw[dar] (e35.east) -- ++(0.25,0) |- (fdtooth.west);
+
+% phi_total snapshot → alpha mapping
+\draw[dar] (snaphit.east) -- ++(0.25,0) |- (alpmap.west)
+  node[lbl,pos=0.4,above=1pt]{$\phi_{total}$};
+
+% INP → FEM
+\draw[dar] (inp.east) -- ++(0.25,0) |- (umatcall.west)
+  node[lbl,pos=0.35,above=1pt]{INP};
+
+% Klempt UMAT result → Implant FEM
+\draw[dar] (KT.east) -- ++(0.25,0) |- (imFEM.west)
+  node[lbl,pos=0.4,above=1pt]{$\mathbf{u}$,\;$\boldsymbol\sigma$};
+
+% params → tooth generator
+\draw[dar] (par2.east) -- ++(0.25,0) |- (tooth.west)
+  node[lbl,pos=0.3,above=1pt]{$\hat{\boldsymbol\theta}$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% BACKGROUND BOXES + LABELS
+%%══════════════════════════════════════════════════════════════════════
+\begin{scope}[on background layer]
+  \node[draw=teal!50,  fill=teal!4,   rounded corners=7pt, inner sep=7pt,
+        fit=(td)(tp)(tt)(tmap)]                        (bxt)  {};
+  \node[draw=gray!45,  fill=gray!5,   rounded corners=7pt, inner sep=7pt,
+        fit=(H)(par2)]                                  (bx0)  {};
+  \node[draw=blue!40,  fill=blue!4,   rounded corners=7pt, inner sep=7pt,
+        fit=(e34)(e35)(e36)]                            (bx1)  {};
+  \node[draw=purple!40,fill=purple!4, rounded corners=7pt, inner sep=7pt,
+        fit=(tooth)(mesh)(inp)]                         (bxg)  {};
+  \node[draw=cyan!50,  fill=cyan!4,   rounded corners=7pt, inner sep=7pt,
+        fit=(fdtooth)(snaphit)]                         (bx2)  {};
+  \node[draw=orange!50,fill=orange!4, rounded corners=7pt, inner sep=7pt,
+        fit=(alpmap)(Fsplit)(nhS)]                      (bx3)  {};
+  \node[draw=violet!45,fill=violet!4, rounded corners=7pt, inner sep=7pt,
+        fit=(umatcall)(KT)]                             (bx4)  {};
+  \node[draw=red!40,   fill=red!4,    rounded corners=7pt, inner sep=7pt,
+        fit=(imFEM)(osseo)]                             (bx5)  {};
+  \node[draw=green!50, fill=green!4,  rounded corners=7pt, inner sep=7pt,
+        fit=(clinic)]                                   (bx6)  {};
+\end{scope}
+
+\node[font=\scriptsize\bfseries, text=teal!60!black,
+      above=4pt of bxt.north, anchor=south]
+  {\textbf{Ph.\,--1}\; TMCMC Bayesian Calibration\enspace(\texttt{Tmcmc202601})};
+\node[font=\scriptsize\bfseries, text=gray!70,
+      above=4pt of bx0.north, anchor=south]
+  {\textbf{Ph.\,0}\; Hamilton Principle};
+\node[font=\scriptsize\bfseries, text=blue!60,
+      above=4pt of bx1.north, anchor=south]
+  {\textbf{Ph.\,1}\; PDE System\enspace($\delta\mathcal{H}{=}0$, Eq.\,34--36)};
+\node[font=\scriptsize\bfseries, text=purple!70,
+      above=4pt of bxg.north, anchor=south]
+  {\textbf{Ph.\,2}\; Tooth/Implant Mesh\enspace(\texttt{gen\_tooth\_klempt\_umat\_inp.py})};
+\node[font=\scriptsize\bfseries, text=cyan!60!black,
+      above=4pt of bx2.north, anchor=south]
+  {\textbf{Ph.\,3}\; FD Solver on $\Omega_t$};
+\node[font=\scriptsize\bfseries, text=orange!80!black,
+      above=4pt of bx3.north, anchor=south]
+  {\textbf{Ph.\,4}\; Klempt $\alpha$ Mapping + Growth Mech.};
+\node[font=\scriptsize\bfseries, text=violet!70,
+      above=4pt of bx4.north, anchor=south]
+  {\textbf{Ph.\,5}\; UMAT + FEM / Newton--Raphson};
+\node[font=\scriptsize\bfseries, text=red!60,
+      above=4pt of bx5.north, anchor=south]
+  {\textbf{Ph.\,6}\; Implant FEM\enspace(bone-implant interface)};
+\node[font=\scriptsize\bfseries, text=green!50!black,
+      above=4pt of bx6.north, anchor=south]
+  {\textbf{Ph.\,7}\; Clinical Output\enspace\&\; Osseointegration};
+
+\end{tikzpicture}

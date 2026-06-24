@@ -1,0 +1,48 @@
+{"tag": "e2", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0}
+{"tag": "e4", "expose": 4.0, "iface": "bond", "order": 2, "z_bone_top": 6.0}
+{"tag": "e6", "expose": 6.0, "iface": "bond", "order": 2, "z_bone_top": 4.0}
+{"tag": "e8", "expose": 8.0, "iface": "bond", "order": 2, "z_bone_top": 2.0}
+{"tag": "ci_test", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0, "crown_h": 7.0}
+{"tag": "ci_c0_e0", "expose": 0.0, "iface": "bond", "order": 2, "z_bone_top": 10.0, "crown_h": 0.0}
+{"tag": "ci_c0_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 0.0}
+{"tag": "ci_c0_e2", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0, "crown_h": 0.0}
+{"tag": "ci_c0_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 0.0}
+{"tag": "ci_c0_e4", "expose": 4.0, "iface": "bond", "order": 2, "z_bone_top": 6.0, "crown_h": 0.0}
+{"tag": "ci_c7_e0", "expose": 0.0, "iface": "bond", "order": 2, "z_bone_top": 10.0, "crown_h": 7.0}
+{"tag": "ci_c7_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0}
+{"tag": "ci_c7_e2", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0, "crown_h": 7.0}
+{"tag": "ci_c7_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 7.0}
+{"tag": "ci_c7_e4", "expose": 4.0, "iface": "bond", "order": 2, "z_bone_top": 6.0, "crown_h": 7.0}
+{"tag": "ci_c0_e0", "expose": 0.0, "iface": "bond", "order": 2, "z_bone_top": 10.0, "crown_h": 0.0}
+{"tag": "ci_c0_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 0.0}
+{"tag": "ci_c0_e2", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0, "crown_h": 0.0}
+{"tag": "ci_c0_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 0.0}
+{"tag": "ci_c0_e4", "expose": 4.0, "iface": "bond", "order": 2, "z_bone_top": 6.0, "crown_h": 0.0}
+{"tag": "ci_c7_e0", "expose": 0.0, "iface": "bond", "order": 2, "z_bone_top": 10.0, "crown_h": 7.0}
+{"tag": "ci_c7_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0}
+{"tag": "ci_c7_e2", "expose": 2.0, "iface": "bond", "order": 2, "z_bone_top": 8.0, "crown_h": 7.0}
+{"tag": "ci_c7_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 7.0}
+{"tag": "ci_c7_e4", "expose": 4.0, "iface": "bond", "order": 2, "z_bone_top": 6.0, "crown_h": 7.0}
+{"tag": "dz_h0", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 0.0, "ecc": 0.0}
+{"tag": "dz_h2", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 2.0, "ecc": 0.0}
+{"tag": "dz_h4", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 4.0, "ecc": 0.0}
+{"tag": "dz_h6", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 6.0, "ecc": 0.0}
+{"tag": "dz_h8", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 8.0, "ecc": 0.0}
+{"tag": "dz_h10", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 10.0, "ecc": 0.0}
+{"tag": "ecc_0", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0, "ecc": 0.0}
+{"tag": "ecc_1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0, "ecc": 1.0}
+{"tag": "ecc_2", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0, "ecc": 2.0}
+{"tag": "ecc_3", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0, "ecc": 3.0}
+{"tag": "ecc_4", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 7.0, "ecc": 4.0}
+{"tag": "t1_h0_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 0.0, "ecc": 0.0}
+{"tag": "t1_h0_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 0.0, "ecc": 0.0}
+{"tag": "t1_h0_e5", "expose": 5.0, "iface": "bond", "order": 2, "z_bone_top": 5.0, "crown_h": 0.0, "ecc": 0.0}
+{"tag": "t1_h0_e7", "expose": 7.0, "iface": "bond", "order": 2, "z_bone_top": 3.0, "crown_h": 0.0, "ecc": 0.0}
+{"tag": "t1_h4_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 4.0, "ecc": 0.0}
+{"tag": "t1_h4_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 4.0, "ecc": 0.0}
+{"tag": "t1_h4_e5", "expose": 5.0, "iface": "bond", "order": 2, "z_bone_top": 5.0, "crown_h": 4.0, "ecc": 0.0}
+{"tag": "t1_h4_e7", "expose": 7.0, "iface": "bond", "order": 2, "z_bone_top": 3.0, "crown_h": 4.0, "ecc": 0.0}
+{"tag": "t1_h8_e1", "expose": 1.0, "iface": "bond", "order": 2, "z_bone_top": 9.0, "crown_h": 8.0, "ecc": 0.0}
+{"tag": "t1_h8_e3", "expose": 3.0, "iface": "bond", "order": 2, "z_bone_top": 7.0, "crown_h": 8.0, "ecc": 0.0}
+{"tag": "t1_h8_e5", "expose": 5.0, "iface": "bond", "order": 2, "z_bone_top": 5.0, "crown_h": 8.0, "ecc": 0.0}
+{"tag": "t1_h8_e7", "expose": 7.0, "iface": "bond", "order": 2, "z_bone_top": 3.0, "crown_h": 8.0, "ecc": 0.0}

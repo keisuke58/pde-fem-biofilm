@@ -1,0 +1,262 @@
+% algo_flow_tmcmc_4col.tex — 0→100 + TMCMC, 4-column layout
+% Col0: TMCMC Bayesian calibration
+% Col1: Ph.0 INPUT + Ph.1 PDE SYSTEM
+% Col2: Ph.2 FD SOLVER + Ph.3 GROWTH MECH
+% Col3: Ph.4 FEM/NR + Ph.5 OUTPUT
+%
+% Usage: \resizebox{\linewidth}{!}{\input{algo_flow_tmcmc_4col.tex}}
+% ─────────────────────────────────────────────────────────────────────
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=4.1cm, minimum height=0.82cm, inner sep=3.5pt},
+  Ng/.style = {N, fill=gray!12},
+  Nb/.style = {N, fill=blue!10},
+  Nc/.style = {N, fill=cyan!12},
+  Nm/.style = {N, fill=orange!15},
+  Nv/.style = {N, fill=violet!10},
+  No/.style = {N, fill=green!14},
+  Nt/.style = {N, fill=teal!12},
+  dec/.style= {draw, diamond, aspect=2.4, align=center, thick,
+               text width=3.0cm, fill=yellow!20, inner sep=2pt, font=\small},
+  ar/.style  = {-Stealth, thick},
+  dar/.style = {-Stealth, thick, dashed, red!70!black},
+  tar/.style = {-Stealth, thick, teal!60!black},
+  lbl/.style = {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL 0  TMCMC (Bayesian parameter calibration)
+%%══════════════════════════════════════════════════════════════════════
+\node[Nt] (td) {%
+  \textbf{Heine 2025} — experimental data:\\[2pt]
+  biofilm growth curves $\{(t_i,\,y_i)\}$\\
+  multi-species, meas.\ noise $\sigma_{\rm obs}$};
+
+\node[Nt, below=0.45cm of td] (tp) {%
+  Prior $p(\boldsymbol\theta)$:\\[2pt]
+  $\boldsymbol\theta{=}(\mu,E,\nu,\beta,k_\alpha,r,g,\ldots)$\\
+  uniform on biological bounds};
+
+\node[Nt, below=0.45cm of tp] (tt) {%
+  TMCMC (Ching \& Chen 2007):\\[2pt]
+  $J$ levels,\; $0{=}\beta_0{<}\cdots{<}\beta_J{=}1$\\
+  $p_j \!\propto\! p(\boldsymbol\theta)\,L(\mathcal{D}|\boldsymbol\theta)^{\beta_j}$\\
+  MH at each level — GPU (4$\times$RTX\,4090)};
+
+\node[Nt, below=0.45cm of tt] (tmap) {%
+  Posterior $p(\boldsymbol\theta|\mathcal{D})$:\\[2pt]
+  samples $\{\boldsymbol\theta^{(s)}\}_{s=1}^S$\\
+  MAP: $\hat{\boldsymbol\theta}=\arg\max_\theta\,p(\boldsymbol\theta|\mathcal{D})$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL 1  Ph.0 INPUT  +  Ph.1 PDE SYSTEM
+%%══════════════════════════════════════════════════════════════════════
+\node[Ng, right=1.5cm of td] (H) {%
+  Hamilton functional (Junker 2021):\\[2pt]
+  $\mathcal{H}{=}\!\int_\tau\!(G{+}C{-}B{+}D)\,\mathrm{d}t$,\;
+  $\delta\mathcal{H}{=}0$};
+
+\node[Ng, below=0.45cm of H] (par) {%
+  Table\,2 parameters ($\hat{\boldsymbol\theta}$):\\[2pt]
+  $\mu{=}3.356$,\; $E{=}10$,\; $\nu{=}0.49$\\
+  $\beta{=}2$,\; $k_\alpha{=}10^{-3}$,\;
+  $r{=}100$,\; $g{=}10^8$};
+
+\node[Nb, below=2.0cm of par] (e34) {%
+  \textbf{Eq.\,34} — biofilm $\phi$:\\[2pt]
+  $\dot\phi{=}\beta\Delta\phi{-}k_\alpha\alpha$\\
+  $\phantom{{}=}{+}\tfrac{rc}{k+c}(\nabla\phi{\cdot}\hat{n}_c)$};
+
+\node[Nb, below=0.45cm of e34] (e35) {%
+  \textbf{Eq.\,35} — nutrient $c$:\\[2pt]
+  $\dot{c} = D\Delta c - g\,\phi$};
+
+\node[Nb, below=0.45cm of e35] (e36) {%
+  \textbf{Eq.\,36} — growth $\alpha$:\\[2pt]
+  $\dot\alpha = k_\alpha\phi$\quad (Gauss-pt local)};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL 2  Ph.2 FD SOLVER  +  Ph.3 GROWTH MECH
+%%══════════════════════════════════════════════════════════════════════
+\node[Nc, right=1.5cm of H] (ini) {%
+  Init: $\phi^0$,\;$c^0$,\;$\alpha^0{=}0$\\
+  $60{\times}60$ grid, $20\,\mu\mathrm{m}^2$};
+
+\node[Nc, below=0.45cm of ini] (sc) {%
+  Solve $c$ (quasi-static):\\[2pt]
+  $-D\Delta c + g\phi = 0$};
+
+\node[Nc, below=0.45cm of sc] (up) {%
+  Update $\phi$ (Eq.\,34, explicit Euler):\\[2pt]
+  $\phi \mathrel{+}= \Delta t[\beta\nabla^2\phi
+    {-}k_\alpha\alpha$\\
+  $\phantom{{}+}{+}\tfrac{rc}{k+c}
+    \nabla\phi{\cdot}\hat{n}_c]$};
+
+\node[Nc, below=0.45cm of up] (ua) {%
+  $\alpha \mathrel{+}= \Delta t\,k_\alpha\,\phi$};
+
+\node[dec, below=0.45cm of ua] (tc) {$t{+}{=}\Delta t$\\$t<T_{\max}$?};
+
+\node[Nc, below=0.55cm of tc] (sn) {%
+  Snapshot $\alpha(x,y)$\\at 4 time points};
+
+\node[Nm, below=1.8cm of sn] (kg) {%
+  Growth split\; $\mathbf{F}{=}\mathbf{F}_e\mathbf{F}_g$:\\[2pt]
+  $\mathbf{F}_g{=}\mathrm{diag}(1,1,\lambda_z)$,\;
+  $\lambda_z{=}1{+}\max(0,\beta_d\phi_{Pg}{+}b)$\\
+  $\mathbf{F}_e{=}\mathbf{F}\mathbf{F}_g^{-1}$,\; $J{=}\det\mathbf{F}_e$};
+
+\node[Nm, below=0.45cm of kg] (nh) {%
+  neo-Hookean Cauchy stress:\\[2pt]
+  $\boldsymbol\sigma{=}\tfrac{\mu}{J}(\mathbf{b}_e{-}\mathbf{I})
+    {+}\tfrac{\lambda}{J}\ln J\;\mathbf{I}$};
+
+\node[Nm, below=0.45cm of nh] (ct) {%
+  Consistent tangent (B\&W §6.5):\\[2pt]
+  $\mathbb{C}_{ijkl}
+    {=}\tfrac{\lambda}{J}\delta_{ij}\delta_{kl}$\\[1pt]
+  $\phantom{{}=}{+}\tfrac{\mu{-}\lambda\ln J}{J}
+    (\delta_{ik}\delta_{jl}{+}\delta_{il}\delta_{jk})$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% COL 3  Ph.4 FEM/NR  +  Ph.5 OUTPUT
+%%══════════════════════════════════════════════════════════════════════
+\node[Nv, right=1.5cm of ini] (inp) {%
+  Abaqus INP (C3D8 mesh):\\
+  $\alpha(x,y)$ via \texttt{*Temperature}};
+
+\node[Nv, below=0.45cm of inp] (gp) {%
+  Nodal DOF $\to$ Gauss pts:\\
+  $\mathbf{F}_{n+1}$,\quad $\phi_{Pg}$};
+
+\node[Nv, below=0.45cm of gp] (um) {%
+  UMAT \texttt{umat\_klempt\_alpha.f}\\[2pt]
+  In: $\mathbf{F}$,\;$\phi_{Pg}$,\;PROPS\\
+  Out: STRESS $\boldsymbol\sigma$,\;DDSDDE $\mathbb{C}$\\
+  SDV: $\lambda_z$,\;$J_e$,\;$\alpha$};
+
+\node[Nv, below=0.45cm of um] (as) {%
+  FEM assembly:\\[2pt]
+  $\mathbf{K}_T\,\delta\mathbf{u} = -\mathbf{R}$};
+
+\node[dec, below=0.45cm of as] (nr) {$\|\mathbf{R}\|/\|\mathbf{R}_0\|$\\$<\varepsilon$?};
+
+\node[Nv, right=0.8cm of nr] (it) {%
+  $\delta\mathbf{u}{\leftarrow}\mathbf{K}_T^{-1}\mathbf{R}$\\
+  update $\mathbf{u}$};
+
+\node[No, below=1.5cm of nr] (os) {%
+  Stress: $\sigma_{vm}$,\;
+  $p{=}{-}\tfrac{1}{3}\mathrm{tr}\,\boldsymbol\sigma$};
+
+\node[No, below=0.45cm of os] (og) {%
+  Growth: $\alpha$,\;$\lambda_z$,\;$J_e$};
+
+\node[No, below=0.45cm of og] (ov) {%
+  Validation (\textbf{rung 1--3c PASS}):\\[2pt]
+  biofilm $\sigma_{vm}>$ matrix \checkmark\quad $p>0$ \checkmark};
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — Col 0 (TMCMC)
+%%══════════════════════════════════════════════════════════════════════
+\draw[tar] (td) -- (tp);
+\draw[tar] (tp) -- (tt);
+\draw[tar] (tt) -- (tmap);
+% MAP → params (right then up via |- )
+\draw[tar, thick] (tmap.east) |- (par.west)
+  node[lbl, pos=0.3, above=1pt] {$\hat{\boldsymbol\theta}$\;(MAP)};
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — Col 1
+%%══════════════════════════════════════════════════════════════════════
+\draw[ar] (H) -- (par);
+\draw[ar] (par) -- node[lbl,right]{variational\\derivation} (e34);
+\draw[ar] (e34) -- (e35);
+\draw[ar] (e35) -- (e36);
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — Col 2
+%%══════════════════════════════════════════════════════════════════════
+\draw[ar] (ini) -- (sc);
+\draw[ar] (sc)  -- (up);
+\draw[ar] (up)  -- (ua);
+\draw[ar] (ua)  -- (tc);
+\draw[ar] (tc.west) -- ++(-0.65,0) coordinate (lb) |- (sc.west);
+\node[lbl, left=2pt of lb] {Yes};
+\draw[ar] (tc)  -- node[lbl,right]{No} (sn);
+\draw[ar] (sn)  -- node[lbl,right]{$\alpha(x,y)$} (kg);
+\draw[ar] (kg)  -- (nh);
+\draw[ar] (nh)  -- (ct);
+
+%%══════════════════════════════════════════════════════════════════════
+%% ARROWS — Col 3
+%%══════════════════════════════════════════════════════════════════════
+\draw[ar] (inp) -- (gp);
+\draw[ar] (gp)  -- (um);
+\draw[ar] (um)  -- (as);
+\draw[ar] (as)  -- (nr);
+\draw[ar] (nr.east) -- node[lbl,above]{No} (it.west);
+\draw[ar] (it.north) -- ++(0,0.3) -| (as.east);
+\draw[ar] (nr)  -- node[lbl,right]{Yes} (os);
+\draw[ar] (os)  -- (og);
+\draw[ar] (og)  -- (ov);
+
+%%══════════════════════════════════════════════════════════════════════
+%% CROSS-COLUMN coupling (red dashed)
+%%══════════════════════════════════════════════════════════════════════
+\draw[dar] (e34.east) -- ++(0.2,0) |- (up.west)
+  node[lbl,pos=0.3,above=1pt]{discretise};
+\draw[dar] (e35.east) -- ++(0.2,0) |- (sc.west);
+\draw[dar] (e36.east) -- ++(0.2,0) |- (ua.west);
+\draw[dar] (up.east)  -- ++(0.2,0) |- (gp.west)
+  node[lbl,pos=0.4,above=1pt]{$\phi_{Pg}$};
+\draw[dar] (sn.east)  -- ++(0.2,0) |- (inp.west)
+  node[lbl,pos=0.35,above=1pt]{$\alpha(x,y)$};
+\draw[dar] (ct.east)  -- ++(0.2,0) |- (um.west)
+  node[lbl,pos=0.4,above=1pt]{$(\boldsymbol\sigma,\mathbb{C})$};
+
+%%══════════════════════════════════════════════════════════════════════
+%% BACKGROUND BOXES + LABELS
+%%══════════════════════════════════════════════════════════════════════
+\begin{scope}[on background layer]
+  \node[draw=teal!50,  fill=teal!4,   rounded corners=6pt, inner sep=6pt,
+        fit=(td)(tp)(tt)(tmap)]               (bxt) {};
+  \node[draw=gray!45,  fill=gray!5,   rounded corners=6pt, inner sep=6pt,
+        fit=(H)(par)]                          (bx0) {};
+  \node[draw=blue!40,  fill=blue!4,   rounded corners=6pt, inner sep=6pt,
+        fit=(e34)(e35)(e36)]                   (bx1) {};
+  \node[draw=cyan!50,  fill=cyan!4,   rounded corners=6pt, inner sep=6pt,
+        fit=(ini)(sc)(up)(ua)(tc)(sn)]         (bx2) {};
+  \node[draw=orange!50,fill=orange!4, rounded corners=6pt, inner sep=6pt,
+        fit=(kg)(nh)(ct)]                      (bx3) {};
+  \node[draw=violet!45,fill=violet!4, rounded corners=6pt, inner sep=6pt,
+        fit=(inp)(gp)(um)(as)(nr)(it)]         (bx4) {};
+  \node[draw=green!50, fill=green!4,  rounded corners=6pt, inner sep=6pt,
+        fit=(os)(og)(ov)]                      (bx5) {};
+\end{scope}
+
+\node[font=\scriptsize\bfseries, text=teal!60!black,
+      above=4pt of bxt.north, anchor=south]
+  {\textbf{Ph.--1}\; TMCMC Bayesian Calibration};
+\node[font=\scriptsize\bfseries, text=gray!70,
+      above=4pt of bx0.north, anchor=south]
+  {\textbf{Ph.0}\; INPUT};
+\node[font=\scriptsize\bfseries, text=blue!60,
+      above=4pt of bx1.north, anchor=south]
+  {\textbf{Ph.1}\; PDE SYSTEM\;($\delta\mathcal{H}{=}0$)};
+\node[font=\scriptsize\bfseries, text=cyan!60!black,
+      above=4pt of bx2.north, anchor=south]
+  {\textbf{Ph.2}\; FD SOLVER};
+\node[font=\scriptsize\bfseries, text=orange!80!black,
+      above=4pt of bx3.north, anchor=south]
+  {\textbf{Ph.3}\; GROWTH MECH};
+\node[font=\scriptsize\bfseries, text=violet!70,
+      above=4pt of bx4.north, anchor=south]
+  {\textbf{Ph.4}\; FEM / NR};
+\node[font=\scriptsize\bfseries, text=green!50!black,
+      above=4pt of bx5.north, anchor=south]
+  {\textbf{Ph.5}\; OUTPUT};
+
+\end{tikzpicture}

@@ -1,0 +1,101 @@
+# バイナリ・計算結果を除外、ソースのみ追跡
+
+# Abaqus 結果
+*.odb
+*.dat
+*.msg
+*.sta
+*.com
+*.prt
+*.lck
+*.fil
+*.sim
+*.mdl
+*.stt
+*.abq
+
+# 数値データ
+*.npy
+*.npz
+*.pkl
+*.h5
+*.hdf5
+*.nc
+*.mat
+
+# PDF / 画像 / 動画
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mov
+*.avi
+
+# CSV (抽出結果)
+*.csv
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+.venv*/
+*.egg-info/
+.env
+
+# 結果ディレクトリ
+_3model_bayes_factor/
+_3model_comparison/
+_4model_bayes_factor/
+_abaqus_1kpa_jobs/
+_abaqus_extracted/
+_abaqus_fields/
+_abaqus_input/
+_adjoint_poc/
+_alpha_field_results/
+_ci_0d_results/
+_di_alternatives_comparison/
+_di_credible/
+figures/
+docs/
+DocuGenius/
+external_tooth_models/
+FEM/
+regression_golden.json
+
+# ChromaDB
+*.sqlite3
+*.db
+chroma_db/
+db/
+
+# 結果ディレクトリ(_プレフィックス)
+_growth_job_runs/
+_growth_job_runs_t30/
+_growth_job_runs_t31/
+_klempt_benchmark/
+_multiscale_2d_results/
+_neohookean_comparison/
+_results_2d/
+_results_2d_nutrient/
+_stress_2d_hybrid/
+_stress_2d_results/
+_uncertainty_propagation/
+_viscoelastic_results/
+
+# Abaqus input
+*.inp
+abaqus_inp/
+
+# LaTeX intermediate files
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+*.out
+*.bbl
+*.blg
