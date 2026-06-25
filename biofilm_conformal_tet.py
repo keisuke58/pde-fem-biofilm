@@ -49,7 +49,7 @@ USAGE
       [--bc-mode      inner_fixed]  inner_fixed | bot_fixed | none
       [--smooth-iter  3]       Laplacian smoothing iterations (0 = off)
       [--validate]             write validation report alongside INP
-      [--growth-eigenstrain 0.0]  alpha_final from ODE: eps_growth = alpha/3
+      [--growth-eigenstrain 0.0]  alpha_final from ODE: eps_growth = alpha (per dir)
                                → thermal-analogy eigenstrain (GROWTH step)
                                *Expansion alpha_T=1.0 + *Temperature T=eps_growth
                                = Klempt 2024 F_g=(1+α)I constrained by tooth BC
@@ -690,7 +690,7 @@ def write_abaqus_inp(
         # Stiffness gradient is captured by different E per bin.
         # When growth_eigenstrain > 0: add *Expansion (thermal analogy for eigenstrain).
         #   alpha_T = 1.0  →  thermal strain per direction = 1.0 * T
-        #   In GROWTH step: T = eps_growth = alpha_final/3
+        #   In GROWTH step: T = eps_growth = alpha_final (per direction, Klempt Fg=(1+a)I)
         #   → isotropic strain = eps_growth per direction (= Klempt F_g = (1+α)I at small α)
         f.write("** =====  MATERIALS (isotropic per DI bin, E in MPa = N/mm²)  =====\n")
         if growth_eigenstrain > 0.0:
@@ -698,12 +698,12 @@ def write_abaqus_inp(
             if T_nodes is not None:
                 f.write(
                     "** SPATIAL: T_node(x)=T_mean*DI(x)/DI_mean, T_mean=%.6g\n"
-                    % (growth_eigenstrain / 3.0)
+                    % (growth_eigenstrain)
                 )
             else:
                 f.write(
                     "** UNIFORM: alpha_T=1.0, T_growth=%.6g => eps_growth=%.6g per direction\n"
-                    % (growth_eigenstrain / 3.0, growth_eigenstrain / 3.0)
+                    % (growth_eigenstrain, growth_eigenstrain)
                 )
         for b in range(n_bins):
             E_MPa = bin_E_stiff[b] * 1e-6  # Pa → MPa (Abaqus mm/N/MPa system)
@@ -846,7 +846,7 @@ def write_abaqus_inp(
         # ── Step 1 (optional): GROWTH — thermal-analogy eigenstrain ─────────────
         # Thermal analogy for growth eigenstrain (Klempt 2024, α̇ = k_α φ):
         #   *Expansion, alpha_T=1.0  →  eps_thermal = 1.0 * T (per direction)
-        #   T_growth = eps_growth = alpha_final / 3
+        #   T_growth = eps_growth = alpha_final (per direction)
         #   → Isotropic expansion eps_growth per direction when T = T_growth
         #   → Volumetric strain = 3 * eps_growth = alpha_final  (matches F_g = (1+α)I)
         #   → Inner face (ENCASTRE) constrains expansion → compressive stress builds up
@@ -854,14 +854,14 @@ def write_abaqus_inp(
         # NOT an initial stress hack: Abaqus solves the constrained growth properly.
         nlgeom_str = "YES" if nlgeom else "NO"
         if growth_eigenstrain > 0.0:
-            eps_growth = growth_eigenstrain / 3.0
+            eps_growth = growth_eigenstrain  # per-direction = alpha (was /3, fixed a39a531)
             spatial_mode = T_nodes is not None
             f.write("** =====  STEP 1: GROWTH EIGENSTRAIN (thermal analogy)  =====\n")
             f.write(
                 "** alpha_final=%.4g  eps_growth=%.4g per direction\n"
                 % (growth_eigenstrain, eps_growth)
             )
-            f.write("** F_g = (1+alpha)I  →  T_growth = eps_growth = alpha/3\n")
+            f.write("** F_g = (1+alpha)I  →  T_growth = eps_growth = alpha (per direction)\n")
             f.write("** alpha_T=1.0 → eps_thermal = T = eps_growth  (isotropic, stress-free)\n")
             if spatial_mode:
                 T_mean = T_nodes.mean()
@@ -1098,7 +1098,7 @@ def parse_args():
         help=(
             "alpha_final from 0D ODE integration: alpha_final = k_alpha * "
             "integral(phi_avg, 0, t_end). Thermal analogy: *Expansion alpha_T=1.0 "
-            "+ *Temperature T=eps_growth (=alpha/3) in GROWTH step. "
+            "+ *Temperature T=eps_growth (=alpha, per direction) in GROWTH step. "
             "Compute from compute_alpha_eigenstrain.py. Default 0.0 = no eigenstrain."
         ),
     )
@@ -1345,7 +1345,7 @@ def main():
     T_nodes = None  # uniform mode by default
 
     if args.growth_eigenstrain > 0.0:
-        eps_growth_eff = alpha_eff / 3.0
+        eps_growth_eff = alpha_eff  # per-direction, Klempt Fg=(1+a)I (was /3, fixed a39a531)
         print("[7b] Growth eigenstrain:")
         print("    alpha_final    = %.4g" % args.growth_eigenstrain)
         if abs(args.nutrient_factor - 1.0) > 1e-9:
@@ -1382,7 +1382,7 @@ def main():
                 _, idx_di = tree_di.query(nodes_norm)  # (N_nodes,)
 
                 # T_node(x) = T_mean * DI(x) / DI_mean
-                T_mean = eps_growth_eff  # = alpha_eff / 3
+                T_mean = eps_growth_eff  # = alpha_eff (per direction)
                 T_nodes = T_mean * (di_p50[idx_di] / di_mean)
 
                 print("    SPATIAL eigenstrain from _di_credible/%s" % cond)
@@ -1399,7 +1399,7 @@ def main():
         )
         print(
             "  Eigenstrain: alpha_eff=%.4g  eps_growth=%.4g  mode=%s"
-            % (alpha_eff, alpha_eff / 3.0, mode_str)
+            % (alpha_eff, alpha_eff, mode_str)
         )
     write_abaqus_inp(
         args.out,

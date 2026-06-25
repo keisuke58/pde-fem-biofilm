@@ -179,9 +179,11 @@ def compute_alpha_final(run_dir, k_alpha=0.05, dt=0.01, maxtimestep=2500, verbos
     # and is INCONSISTENT with the Klempt/UMAT path. It affects only the
     # secondary biofilm-mode/eigenstrain comparison, NOT the headline stress
     # CI (which is built from the UMAT MAP stresses). Kept for backward-compat;
-    # prefer eps_growth_klempt for Klempt-faithful runs.
-    eps_growth_klempt = alpha_final          # per-direction, Klempt-consistent
-    eps_growth = alpha_final / 3.0           # legacy volumetric/3 (inconsistent)
+    # eps_growth (=alpha) is now the Klempt-faithful primary value.
+    # Validated 2026-06-26 (a39a531): eps = alpha (per direction) is correct;
+    # the legacy /3 under-applied growth 2.4x. Primary value is now alpha.
+    eps_growth = alpha_final                 # per-direction, Klempt Fg=(1+a)I (correct)
+    eps_growth_legacy = alpha_final / 3.0    # deprecated volumetric/3 (wrong)
 
     if verbose:
         print("  ODE: %d steps  t_end=%.2f T*" % (len(t_arr), t_arr[-1]))
@@ -191,8 +193,8 @@ def compute_alpha_final(run_dir, k_alpha=0.05, dt=0.01, maxtimestep=2500, verbos
         )
         print("  k_alpha   : %.4f" % k_alpha)
         print("  alpha_final: %.4f" % alpha_final)
-        print("  eps_growth : %.4f  (= alpha/3, isotropic expansion strain)" % eps_growth)
-        print("  eps_growth_klempt: %.4f  (= alpha, per-direction, Klempt Fg=(1+a)I)" % eps_growth_klempt)
+        print("  eps_growth : %.4f  (= alpha, per-direction, Klempt Fg=(1+a)I)" % eps_growth)
+        print("  eps_growth_legacy: %.4f  (= alpha/3, DEPRECATED wrong)" % eps_growth_legacy)
         print("  sigma/E    : %.1f%%  (compressive prestress ratio)" % (-eps_growth * 100))
 
     return alpha_final, eps_growth, t_arr, phi_total

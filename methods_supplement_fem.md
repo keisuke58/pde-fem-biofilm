@@ -131,7 +131,7 @@ python3 compute_alpha_eigenstrain.py \
 
 # 出力例:
 #   alpha_final : 0.5615
-#   eps_growth  : 0.1872  (= alpha/3, per direction)
+#   eps_growth  : 0.5615  (= alpha, per direction; Klempt Fg=(1+a)I. was alpha/3, corrected 2026-06-26 a39a531)
 #
 # → biofilm_conformal_tet.py に渡す（GROWTH + LOAD の 2 step INP を生成）:
 python3 biofilm_conformal_tet.py \
@@ -142,7 +142,7 @@ python3 biofilm_conformal_tet.py \
     --growth-eigenstrain 0.5615
 # → 生成 INP の構造:
 #   *Material ... *Elastic ... *Expansion, alpha_T=1.0   (全 DI ビン)
-#   *Step, name=GROWTH  →  *Temperature ALL_NODES, 0.1872  (成長固有ひずみ)
+#   *Step, name=GROWTH  →  *Temperature ALL_NODES, 0.5615  (成長固有ひずみ = alpha, per direction)
 #   *End Step
 #   *Step, name=LOAD    →  *Cload (GCF 100 Pa 外部荷重)
 #   *End Step
@@ -153,7 +153,7 @@ python3 biofilm_conformal_tet.py \
 | 観点 | 旧実装 (`*INITIAL CONDITIONS, TYPE=STRESS`) | 新実装（温度類似法） |
 |---|---|---|
 | 固有ひずみの性質 | ❌ 初期残留応力（Abaqus が平衡化しようとして消える） | ✅ 真の応力ゼロ参照配置変更 |
-| Klempt F_g = (1+α)I との対応 | 近似的 | ✅ alpha_T=1, T=eps_growth で完全対応 |
+| Klempt F_g = (1+α)I との対応 | 近似的 | ✅ alpha_T=1, T=eps_growth=α(方向あたり)。free-expansion で stretch=1+α を厳密確認(a39a531)。旧 α/3 は誤(2.4×過小)で修正済 |
 | 実装複雑度 | 低 | 低（2 step + *Expansion のみ） |
 | Abaqus ソルバー動作 | 平衡ステップで初期応力が変形として解放 | GROWTH step で拘束された成長を正確に解く |
 
