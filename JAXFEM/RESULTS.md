@@ -11,7 +11,7 @@
 | 0a | **PASS ✓** | `klempt_pde_jax.py` | φ-c-α PDE JAX実装（Klempt 2024 支配方程式） |
 | 1  | **PASS ✓** | `phase1_klempt_stress.py` | α→eigenstrain→FEM応力（力学連成確認） |
 | 0b | **実装済 ✓** (2026-06-26 確認) | `phase0b_nsp_klempt_connection.py` | NSP Hamilton ODE（5菌種版）φ_i(x,y)→α接続 |
-| 2  | **実装済 ✓** (2026-06-26, commit 83660be) | `umat_biofilm_visco.f` (BIOFILM_STRESS_CORE + F摂動), `umat_tangent_test/`, `phase2_patch_test.py` | consistent tangent DDSDDE（exact, Sun et al. 2008 摂動法。Fortran 検証: 弾性 vs FD 2.5e-8 / 粘弾性 2.9e-8） |
+| 2  | **実装済 ✓** (2026-06-26, commit 83660be) | `umat_biofilm_visco.f` (BIOFILM_STRESS_CORE + F摂動), `umat_tangent_test/`, `phase2_patch_test.py` | consistent tangent DDSDDE（exact, Sun et al. 2008 摂動法。Fortran/Python 検証 13/13: 弾性/粘弾性/MR とも vs FD ~2.4-2.9e-8。実 Abaqus 1要素ジョブ COMPLETED: maxIter2/cutback0/増分自動拡大。PNEWDT cutback・MR 対応済） |
 | 3  | **実装済 ✓** (2026-06-26 確認) | `phase3_5species_stress.py`, `phase3b_voigt_stress.py` | TMCMC posterior θ_MAP → DI(x,y) → E(x,y) → 5菌種版応力 |
 
 ---
