@@ -149,10 +149,10 @@ alpha_corrected = k_alpha * integral_phi * nutrient_factor
 | 栄養補正 | nutrient_factor パラメータ | 不確実性 ±20% |
 | **総合** | **90%** | |
 
-残り 10% のギャップ（将来）:
-- Neo-Hookean UHYPER（Abaqus Fortran）/ FEniCS 実装 → 現在は Abaqus 組み込み Neo-Hookean（`--neo-hookean`）で応力誤差 ~2-3% まで低減済み。UHYPER/FEniCS はより一般的な成長 PDE 連成用。
-- 栄養 PDE の完全解（FEniCS）→ 栄養補正の正確化
-- 完全空間 PDE（Option D）
+残り 10% のギャップ（一部は実装で解消済み・2026-06-26 更新）:
+- ~~Neo-Hookean UHYPER（Abaqus Fortran）~~ → **UMAT で実装済み** (`umat_biofilm_visco.f`, F=Fe·Fv·Fg 粘弾性, commit 43cd36a)。Abaqus 組み込み Neo-Hookean（`--neo-hookean`）でも応力誤差 ~2-3%。UHYPER 書き下ろし自体は未（UMAT で代替）。
+- 栄養 PDE の完全解 → **JAX-FEM で実装** (`hamilton_pde_jaxfem.py`)。FEniCS 版は未。
+- ~~完全空間 PDE（Option D）~~ → **JAX-FEM で実装済み** (`hamilton_pde_jaxfem.py` + `multiscale_coupling_2d.py`, commit 43cd36a)
 
 ---
 

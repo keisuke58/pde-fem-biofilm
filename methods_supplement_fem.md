@@ -176,7 +176,7 @@ python3 biofilm_conformal_tet.py \
 | `compute_alpha_eigenstrain.py` | TMCMC ODE → alpha_final 0D 計算 | ✅ 実装済 |
 | `plot_biofilm_nlgeom_enhanced.py` | 4条件比較プロット強化版 | ✅ 実装済 |
 | `_biofilm_mode_runs/biofilm_nlgeom_enhanced_combined.png` | 2×2 複合比較図 | ✅ 生成済 |
-| Option C (二層 Tie モデル) | biofilm_3tooth_assembly.py 参考に実装 | 将来 |
+| Option C (二層 Tie モデル) | `biofilm_tooth_tie_assembly.py` (*Tie で biofilm C3D4 + tooth S3 shell) + `two_layer_T23.inp`, `p7_tie_diagnostic.py` | ✅ 実装済 (commit 43cd36a) |
 
 ---
 
