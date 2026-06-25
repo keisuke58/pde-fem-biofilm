@@ -1,0 +1,4 @@
+# keep only the results json; ignore the 173 huge INPs + Abaqus artifacts
+*
+!.gitignore
+!direct_propagation_ci.json
