@@ -164,7 +164,24 @@ def compute_alpha_final(run_dir, k_alpha=0.05, dt=0.01, maxtimestep=2500, verbos
     # 0D integral: ∫ phi_total dt  using trapezoidal rule
     integral_phi = np.trapz(phi_total, t_arr)
     alpha_final = k_alpha * integral_phi
-    eps_growth = alpha_final / 3.0
+
+    # -- GROWTH-STRAIN DEFINITION (rigor note, 2026-06-26) ------------------
+    # Klempt 2024 Sec.2.1: Fg = alpha*I (alpha = local expansion param, =1 at
+    # no growth). The accumulation variable here is alpha_acc = alpha-1, so
+    # Fg = (1+alpha_acc)*I  =>  alpha_acc is the PER-DIRECTION (engineering)
+    # growth strain. The production UMAT (umat_klempt_voigt/2025) uses exactly
+    # this: s_iso = 1 + alpha_acc.  => Klempt-consistent isotropic eigenstrain
+    # is eps = alpha_acc (per direction); applied via Abaqus *Expansion
+    # (alpha_T=1) it gives stretch 1+alpha_acc = exact finite-strain match to
+    # Fg, no linearization needed.
+    # The legacy value (alpha/3) instead treats alpha_acc as a VOLUMETRIC
+    # strain split over 3 directions -> under-applies growth ~3x per direction
+    # and is INCONSISTENT with the Klempt/UMAT path. It affects only the
+    # secondary biofilm-mode/eigenstrain comparison, NOT the headline stress
+    # CI (which is built from the UMAT MAP stresses). Kept for backward-compat;
+    # prefer eps_growth_klempt for Klempt-faithful runs.
+    eps_growth_klempt = alpha_final          # per-direction, Klempt-consistent
+    eps_growth = alpha_final / 3.0           # legacy volumetric/3 (inconsistent)
 
     if verbose:
         print("  ODE: %d steps  t_end=%.2f T*" % (len(t_arr), t_arr[-1]))
@@ -175,6 +192,7 @@ def compute_alpha_final(run_dir, k_alpha=0.05, dt=0.01, maxtimestep=2500, verbos
         print("  k_alpha   : %.4f" % k_alpha)
         print("  alpha_final: %.4f" % alpha_final)
         print("  eps_growth : %.4f  (= alpha/3, isotropic expansion strain)" % eps_growth)
+        print("  eps_growth_klempt: %.4f  (= alpha, per-direction, Klempt Fg=(1+a)I)" % eps_growth_klempt)
         print("  sigma/E    : %.1f%%  (compressive prestress ratio)" % (-eps_growth * 100))
 
     return alpha_final, eps_growth, t_arr, phi_total
