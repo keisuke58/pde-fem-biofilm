@@ -63,7 +63,7 @@ klempt_alpha_final.npy  (50,50) — 固化変数 α
 | 0a | `klempt_pde_jax.py` | ✅ PASS |
 | 1 | `phase1_klempt_stress.py` | ✅ PASS |
 | 0b | `phase0b_nsp_klempt_connection.py` | ✅ 実装済 (2026-06-26 確認) |
-| 2 | `umat_biofilm_visco.f` + `phase2_patch_test.py` | 🟡 部分（UMAT実装済・approx tangent / exact DDSDDE は未, Soleimani会議後） |
+| 2 | `umat_biofilm_visco.f` + `umat_tangent_test/` + `phase2_patch_test.py` | ✅ 実装済 (2026-06-26, exact consistent tangent, Fortran検証 vs FD ~2.9e-8) |
 | 3 | `phase3_5species_stress.py`, `phase3b_voigt_stress.py` | ✅ 実装済 (2026-06-26 確認) |
 
 詳細な結果ログ → [RESULTS.md](RESULTS.md)

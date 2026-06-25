@@ -235,6 +235,8 @@ _biofilm_mode_runs/
 > 「未着手/将来」としていた Option C（二層 Tie）・Neo-Hookean 材料・Option D（5菌種 Hamilton PDE）・
 > 二スケール連成が**すべて実装済み**。実装手段は計画から変更: 超弾性は UHYPER → **UMAT**（粘弾性 F=Fe·Fv·Fg まで拡張）、
 > 5菌種 Hamilton は FEniCS → **JAX-FEM**。下表の該当行も更新済み。§6 の M1/M2/L1/L2 の本文は計画時の記述のまま（参考）。
+>
+> **【2026-06-26 追記】** Phase 2 の exact consistent tangent (DDSDDE) も `umat_biofilm_visco.f` に実装完了 (commit 83660be)。Sun et al. 2008 の変形勾配摂動法で、各摂動評価が backward-Euler 粘性更新を再実行→粘性 Jacobian を捕捉。`umat_tangent_test/` で検証（弾性/粘弾性とも vs 中心差分 ~2.5e-8）。
 
 | 優先度 | タスク | 状態 |
 |---|---|---|
