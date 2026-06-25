@@ -1,0 +1,64 @@
+*HEADING
+ Single-element verification of umat_klempt_voigt.f (Option A, mode A).
+ Same elastic kernel + analytic Jaumann tangent as umat_klempt2025.f.
+ Growth via PREDEF(1)=alpha ramped against a clamped face; NLGEOM.
+ Confirms the hand-derived consistent tangent gives clean implicit
+ convergence in a real Abaqus increment loop (Abaqus = ground truth).
+**
+*NODE
+1,  0.0, 0.0, 0.0
+2,  1.0, 0.0, 0.0
+3,  1.0, 1.0, 0.0
+4,  0.0, 1.0, 0.0
+5,  0.0, 0.0, 1.0
+6,  1.0, 0.0, 1.0
+7,  1.0, 1.0, 1.0
+8,  0.0, 1.0, 1.0
+*ELEMENT, TYPE=C3D8, ELSET=EALL
+1, 1, 2, 3, 4, 5, 6, 7, 8
+*NSET, NSET=NALL, GENERATE
+1, 8, 1
+*NSET, NSET=BOT
+1, 2, 3, 4
+*SOLID SECTION, ELSET=EALL, MATERIAL=KLEMPT
+**
+** PROPS(1)=nu ; CONSTANTS=1 ; DEPVAR 5
+*MATERIAL, NAME=KLEMPT
+*USER MATERIAL, CONSTANTS=1
+0.49
+*DEPVAR
+5
+**
+** Field variables (PREDEF): 1=alpha, 2..6=phi_So..Pg, 7=phi_local_total
+** Use phi_So=1, phi_local=1 -> E_gated = E_So = 1e-3 MPa ; alpha ramps 0->0.1
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=1
+NALL, 0.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=2
+NALL, 1.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=3
+NALL, 0.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=4
+NALL, 0.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=5
+NALL, 0.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=6
+NALL, 0.0
+*INITIAL CONDITIONS, TYPE=FIELD, VARIABLE=7
+NALL, 1.0
+**
+*STEP, NLGEOM=YES, INC=100
+ Growth to alpha=0.1 against clamped base
+*STATIC
+0.1, 1.0, 1.0e-6, 0.2
+*BOUNDARY
+BOT, ENCASTRE
+*FIELD, VARIABLE=1
+NALL, 0.1
+*FIELD, VARIABLE=2
+NALL, 1.0
+*FIELD, VARIABLE=7
+NALL, 1.0
+*OUTPUT, FIELD
+*ELEMENT OUTPUT
+S, SDV
+*END STEP

@@ -1,0 +1,24 @@
+# Abaqus build/run artifacts -- keep only .inp and run script
+*.odb
+*.dat
+*.msg
+*.com
+*.prt
+*.sta
+*.sim
+*.lck
+*.log
+*.fil
+*.ipm
+*.mdl
+*.stt
+*.res
+*.abq
+*.pac
+*.sel
+*.1
+*.023
+*.o
+*.SMABulk
+explorer.*
+abaqus.rpy*
