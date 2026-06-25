@@ -6,12 +6,16 @@ C1: TMCMC posterior → Klempt FEM stress credible interval.
 Strategy (semi-analytical surrogate):
   1. Load per-condition phi_i samples from existing 0D ODE CI runs
      (_ci_0d_results/{cond}/samples_0d.json, already run).
-  2. Fit a power-law surrogate sigma = C * E_voigt^a * k_eff^b from 4 MAP
-     FEM runs (tooth geometry; klempt_extract_tooth_*.csv).
+  2. Fit a single-predictor power-law surrogate sigma = C * k_eff^b from 4 MAP
+     FEM runs (tooth geometry; klempt_extract_tooth_*.csv). The earlier
+     2-predictor model (E_voigt + k_eff) was statistically invalid (4 pts/3
+     params, E_voigt collinear with k_eff, cond=2890, real LOO median 46% /
+     max 7258%). k_eff alone is well-conditioned (cond 3.7) and predictive
+     (LOO median 2.3% / max 10.8%). See fit_surrogate() for the rigor note.
   3. Apply surrogate to posterior phi_i samples → sigma distribution.
-  4. Report 90% CI, generate publication-quality figure.
+  4. Report 90% CI (honest LOO-CV reported), generate figure.
 
-Surrogate validity: fit error ≤ 10% on 4 MAP calibration points.
+Surrogate validity: leave-one-out CV median |err| 2.3%, max 10.8% (4 MAP pts).
 The surrogate captures the phi^2-gated Voigt stiffness + large-alpha
 neo-Hookean nonlinearity without running additional Abaqus jobs.
 
@@ -109,29 +113,49 @@ def k_eff(phi: np.ndarray) -> float:
 # ── Surrogate fitting ─────────────────────────────────────────────────────────
 
 def fit_surrogate(sigma_map: dict[str, float]) -> dict:
-    """Fit log-linear surrogate: log(sigma) = c + a*log(E_voigt) + b*log(k_eff).
+    """Fit single-predictor log-linear surrogate: log(sigma) = c + b*log(k_eff).
 
-    Uses all 4 MAP points. Returns {c, a, b} and leave-one-out residuals.
+    RIGOR (2026-06-26): the previous 2-predictor model
+    log(sigma)=c+a*log(E_voigt)+b*log(k_eff) was statistically invalid for CI
+    generation -- 4 MAP points fit with 3 params (1 residual DOF), and E_voigt
+    is collinear with k_eff across the 4 conditions (cond(X)=2890). REAL
+    leave-one-out CV of that model gave median |err|=46%, max=7258% (the DH
+    point -- the denominator of the headline sigma_CH/sigma_DH ratio -- is
+    mispredicted 73x when held out). The growth-induced stress tracks k_eff
+    (= phi . K_ALPHA, the growth-rate-weighted activity) monotonically, so a
+    single-predictor k_eff^b model is far more accurate (LOO median 2.3%,
+    max 10.8%) and well-conditioned. E_voigt is dropped (confounded with k_eff
+    in the available runs; decorrelating it needs more UMAT runs -- future work).
+    Returns {c, a=0, b} plus honest LOO-CV diagnostics.
     """
     conds = list(sigma_map.keys())
     y = np.array([np.log(sigma_map[c]) for c in conds])
-    X = np.array([
-        [1.0, np.log(e_voigt(MAP_PHI[c])), np.log(k_eff(MAP_PHI[c]))]
-        for c in conds
-    ])
-    # Least-squares fit
-    coeffs, *_ = np.linalg.lstsq(X, y, rcond=None)
-    c_fit, a_fit, b_fit = coeffs
+    X = np.array([[1.0, np.log(k_eff(MAP_PHI[c]))] for c in conds])
 
-    # Residuals
+    coeffs, *_ = np.linalg.lstsq(X, y, rcond=None)
+    c_fit, b_fit = coeffs
     y_pred = X @ coeffs
-    resid_pct = (np.exp(y_pred) / np.exp(y) - 1.0) * 100
-    print("\n── Surrogate fit ──")
-    print(f"  a (E_voigt exponent) = {a_fit:.3f}")
-    print(f"  b (k_eff exponent)   = {b_fit:.3f}")
+
+    # REAL leave-one-out CV (fit on n-1, predict held-out) -- the previous
+    # docstring claimed this but never computed it.
+    loo_err = []
+    for i in range(len(conds)):
+        idx = [j for j in range(len(conds)) if j != i]
+        ci, *_ = np.linalg.lstsq(X[idx], y[idx], rcond=None)
+        loo_err.append((np.exp(X[i] @ ci - y[i]) - 1.0) * 100)
+    loo_err = np.array(loo_err)
+    loo_med = float(np.median(np.abs(loo_err)))
+    loo_max = float(np.max(np.abs(loo_err)))
+
+    print("\n-- Surrogate fit (sigma = C * k_eff^b) --")
+    print(f"  b (k_eff exponent) = {b_fit:.3f}   cond(X) = {np.linalg.cond(X):.1f}")
     for i, cond in enumerate(conds):
-        print(f"  {LABELS[cond]:3s}: actual={sigma_map[cond]*1e3:.2f} kPa  pred={np.exp(y_pred[i])*1e3:.2f} kPa  err={resid_pct[i]:+.1f}%")
-    return {"c": c_fit, "a": a_fit, "b": b_fit}
+        ins = (np.exp(y_pred[i] - y[i]) - 1.0) * 100
+        print(f"  {LABELS[cond]:3s}: actual={sigma_map[cond]*1e3:6.2f} kPa  "
+              f"pred={np.exp(y_pred[i])*1e3:6.2f} kPa  in-samp={ins:+.1f}%  LOO={loo_err[i]:+.1f}%")
+    print(f"  LOO-CV: median|err|={loo_med:.1f}%  max|err|={loo_max:.1f}%")
+    return {"c": c_fit, "a": 0.0, "b": b_fit,
+            "loo_median_pct": loo_med, "loo_max_pct": loo_max}
 
 
 def predict_sigma(phi: np.ndarray, surrogate: dict) -> float:
