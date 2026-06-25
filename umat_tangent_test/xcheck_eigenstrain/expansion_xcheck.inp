@@ -1,0 +1,43 @@
+*HEADING
+ Eigenstrain cross-check: Abaqus built-in Neo-Hooke + *Expansion growth
+ vs the Klempt UMAT (Fg=(1+alpha)I).  Same cube/BC/E/nu/alpha as kv1.
+ Growth applied as isotropic thermal stretch via *Expansion (alpha_T=1),
+ temperature field = EPS_PLACEHOLDER (= alpha for Klempt-consistent, or
+ alpha/3 for the legacy volumetric mis-scaling).
+**  E=1e-3 MPa, nu=0.49 -> mu=E/(2(1+nu))=3.356e-4, C10=mu/2=1.678e-4
+**                         K=E/(3(1-2nu))=0.016667, D1=2/K=120.0
+*NODE
+1,  0.0, 0.0, 0.0
+2,  1.0, 0.0, 0.0
+3,  1.0, 1.0, 0.0
+4,  0.0, 1.0, 0.0
+5,  0.0, 0.0, 1.0
+6,  1.0, 0.0, 1.0
+7,  1.0, 1.0, 1.0
+8,  0.0, 1.0, 1.0
+*ELEMENT, TYPE=C3D8, ELSET=EALL
+1, 1, 2, 3, 4, 5, 6, 7, 8
+*NSET, NSET=NALL, GENERATE
+1, 8, 1
+*NSET, NSET=BOT
+1, 2, 3, 4
+*SOLID SECTION, ELSET=EALL, MATERIAL=BIOFILM_NH
+*MATERIAL, NAME=BIOFILM_NH
+*HYPERELASTIC, NEO HOOKE
+ 1.678524e-4, 120.0
+*EXPANSION
+ 1.0
+*INITIAL CONDITIONS, TYPE=TEMPERATURE
+NALL, 0.0
+*STEP, NLGEOM=YES, INC=100
+ Growth via thermal expansion to eps = EPS_PLACEHOLDER
+*STATIC
+0.1, 1.0, 1.0e-6, 0.2
+*BOUNDARY
+BOT, ENCASTRE
+*TEMPERATURE
+NALL, EPS_PLACEHOLDER
+*OUTPUT, FIELD
+*ELEMENT OUTPUT
+S
+*END STEP
