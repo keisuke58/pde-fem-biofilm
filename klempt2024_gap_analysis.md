@@ -231,6 +231,11 @@ _biofilm_mode_runs/
 
 ## 5. アクションリスト
 
+> **【2026-06-26 更新】** 本ドキュメントは 2026-02-23 時点の計画。その後 commit `43cd36a` で
+> 「未着手/将来」としていた Option C（二層 Tie）・Neo-Hookean 材料・Option D（5菌種 Hamilton PDE）・
+> 二スケール連成が**すべて実装済み**。実装手段は計画から変更: 超弾性は UHYPER → **UMAT**（粘弾性 F=Fe·Fv·Fg まで拡張）、
+> 5菌種 Hamilton は FEniCS → **JAX-FEM**。下表の該当行も更新済み。§6 の M1/M2/L1/L2 の本文は計画時の記述のまま（参考）。
+
 | 優先度 | タスク | 状態 |
 |---|---|---|
 | ~~今すぐ~~ | ~~`--mode biofilm` を `biofilm_conformal_tet.py` に追加~~ | ✅ 完了 (2026-02-23) |
@@ -240,9 +245,9 @@ _biofilm_mode_runs/
 | ~~近期~~ | ~~α 固有ひずみの 0D 近似 → Abaqus `*INITIAL CONDITIONS` eigenstrain 追加~~ | ✅ 完了 (2026-02-23) → `biofilm_conformal_tet.py --growth-eigenstrain` + `compute_alpha_eigenstrain.py` |
 | ~~近期~~ | ~~TMCMC 成長率 → Monod r の変換式を文書化~~ | ✅ 完了 (2026-02-23) → `methods_supplement_fem.md` § 3 |
 | ~~近期~~ | ~~U_max 差分の条件間比較プロット強化（誤差棒 + DI-E 散布 + 複合図）~~ | ✅ 完了 (2026-02-23) → `plot_biofilm_nlgeom_enhanced.py` (5図) |
-| **近期** | Option C: 二層 Tie モデル（biofilm 層 + tooth 層 統合） | 未着手 |
-| **将来** | Neo-Hookean 材料モデル（UHYPER or FEniCS）→ 大変形で物理的に正確（現状は Abaqus 組み込み Neo-Hookean `--neo-hookean` により biofilm モードのみ対応済み） | 将来 |
-| **将来** | Option D: 5 菌種 Hamilton PDE 定式化・FEniCS 実装 | 将来 |
+| ~~近期~~ | ~~Option C: 二層 Tie モデル（biofilm 層 + tooth 層 統合）~~ | ✅ 実装済み (commit 43cd36a) → `biofilm_tooth_tie_assembly.py` (542行, *Tie で biofilm C3D4 + tooth S3 shell 結合) + `two_layer_T23.inp`, `p7_tie_diagnostic.py` |
+| ~~将来~~ | ~~Neo-Hookean 材料モデル（UHYPER or FEniCS）~~ | ✅ 実装済み (commit 43cd36a) → **UMAT** で実装（UHYPER ではなく）。`umat_biofilm_visco.f` (433行, **F=Fe·Fv·Fg** 乗算分解 = Klempt の Fe·Fg に粘性 dashpot 追加, Neo-Hookean/Mooney-Rivlin base, 5菌種 DI 駆動) + `umat_biofilm_visco_phase2.f`, `usdfld_biofilm.f`。Klempt 2024 の単一種超弾性を**超える**拡張。 |
+| ~~将来~~ | ~~Option D: 5 菌種 Hamilton PDE 定式化・FEniCS 実装~~ | ✅ 実装済み (commit 43cd36a) → **JAX-FEM** で実装（FEniCS ではなく）。`hamilton_pde_jaxfem.py` (854行, jax_fem Problem subclass, フル変分定式) + `jax_hamilton_{0d,1d}_5species_demo.py`, `JAXFEM/core_hamilton_2d_nutrient.py`, `JAXFEM/phase3_5species_stress.py`。二スケール連成: `multiscale_coupling_1d.py` / `multiscale_coupling_2d.py` (1013行) + `_multiscale_2d_results/`。 |
 
 ---
 
