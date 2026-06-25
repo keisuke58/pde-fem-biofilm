@@ -1,0 +1,51 @@
+*HEADING
+ Single-element verification of umat_biofilm_visco.f (F=Fe*Fv*Fg)
+ Growth (TEMP=alpha) against a clamped face, viscoelastic relaxation.
+ Exercises Fg/Fv/Fe paths + the exact consistent tangent in a real
+ Abaqus implicit increment loop.  UNSYMM=YES for the Jaumann tangent.
+**
+*NODE
+1,  0.0, 0.0, 0.0
+2,  1.0, 0.0, 0.0
+3,  1.0, 1.0, 0.0
+4,  0.0, 1.0, 0.0
+5,  0.0, 0.0, 1.0
+6,  1.0, 0.0, 1.0
+7,  1.0, 1.0, 1.0
+8,  0.0, 1.0, 1.0
+*ELEMENT, TYPE=C3D8, ELSET=EALL
+1, 1, 2, 3, 4, 5, 6, 7, 8
+*NSET, NSET=NALL, GENERATE
+1, 8, 1
+*NSET, NSET=BOT
+1, 2, 3, 4
+**
+*SOLID SECTION, ELSET=EALL, MATERIAL=BIOFILM
+**
+** E=300 Pa, nu=0.45 ->  C10=E/(4(1+nu)), D1=2(1-2nu)/E
+** PROPS: C10, C01, D1, eta, type(0=NeoHooke)
+*MATERIAL, NAME=BIOFILM
+*USER MATERIAL, CONSTANTS=5
+51.72414, 0.0, 6.666667e-4, 1000.0, 0.0
+*DEPVAR
+9
+**
+** alpha_growth enters via the temperature field (TEMP+DTEMP)
+*INITIAL CONDITIONS, TYPE=TEMPERATURE
+NALL, 0.0
+**
+*STEP, NLGEOM=YES, UNSYMM=YES, INC=100
+ Growth to alpha=0.2 against clamped base; eta=1000 -> viscous relaxation
+*STATIC
+0.1, 1.0, 1.0e-6, 0.2
+*BOUNDARY
+BOT, ENCASTRE
+*TEMPERATURE
+NALL, 0.2
+*OUTPUT, FIELD
+*ELEMENT OUTPUT
+S, SDV
+*OUTPUT, HISTORY
+*ELEMENT OUTPUT, ELSET=EALL
+S11, S22, S33, MISES
+*END STEP

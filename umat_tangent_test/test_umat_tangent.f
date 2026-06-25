@@ -73,6 +73,14 @@ C     Case 3: viscoelastic
       CALL CHECK_CASE('Case 3 viscoelastic eta=1e3',
      1                F3, FV3, AG, DT, PROPS)
 
+C     Case 5: Mooney-Rivlin viscoelastic (mtype=1, C01>0)
+      PROPS(1)=0.7D0*C10
+      PROPS(2)=0.3D0*C10
+      PROPS(4)=ETAV
+      PROPS(5)=1.0D0
+      CALL CHECK_CASE('Case 5 Mooney-Rivlin visco  ',
+     1                F3, FV3, AG, DT, PROPS)
+
       END
 
 C======================================================================
@@ -192,7 +200,7 @@ C======================================================================
       DIMENSION FP(3,3), FM(3,3), SVP(6), SVM(6)
       DIMENSION FVD(3,3)
       INTEGER VI(6), VJ(6)
-      DOUBLE PRECISION PERT, DT, SDUM, PDUM
+      DOUBLE PRECISION PERT, DT, SDUM, PDUM, DDUM
       DATA VI /1,2,3,1,1,2/
       DATA VJ /1,2,3,2,3,3/
 
@@ -220,9 +228,11 @@ C======================================================================
           END DO
         END IF
         CALL BIOFILM_STRESS_CORE(FP, FGINV, FVOLD, PROPS(1), PROPS(2),
-     1       PROPS(3), PROPS(4), PROPS(5), DT, SVP, FVD, SDUM, PDUM)
+     1       PROPS(3), PROPS(4), PROPS(5), DT, SVP, FVD, SDUM, PDUM,
+     2       DDUM)
         CALL BIOFILM_STRESS_CORE(FM, FGINV, FVOLD, PROPS(1), PROPS(2),
-     1       PROPS(3), PROPS(4), PROPS(5), DT, SVM, FVD, SDUM, PDUM)
+     1       PROPS(3), PROPS(4), PROPS(5), DT, SVM, FVD, SDUM, PDUM,
+     2       DDUM)
         DO IQ=1,6
           DFD(IQ,IP)=(SVP(IQ)-SVM(IQ))/PERT
         END DO

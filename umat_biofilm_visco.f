@@ -64,6 +64,7 @@ C     --- Local variables ---
       DOUBLE PRECISION SV0(6), SVP(6)
       DOUBLE PRECISION ALPHA_GROWTH, FG_SCALE
       DOUBLE PRECISION SSE0, SPD0, SSE_D, SPD_D, EPS, TMP1
+      DOUBLE PRECISION DETFE0, DETFE_D
       INTEGER I, J, K, M, IP, JP, IQ, IPERT
       INTEGER VOIGT_I(6), VOIGT_J(6)
 
@@ -127,7 +128,15 @@ C     3. Base stress: full algorithmic update at the actual DFGRD1.
 C        Returns Cauchy stress (Voigt), updated F_v, SSE, SPD.
 C     ================================================================
       CALL BIOFILM_STRESS_CORE(DFGRD1, FG_INV, FV_OLD,
-     1     C10, C01, D1, ETA, MTYPE, DTIME, SV0, FV_NEW, SSE0, SPD0)
+     1     C10, C01, D1, ETA, MTYPE, DTIME, SV0, FV_NEW, SSE0, SPD0,
+     2     DETFE0)
+
+C     Robustness: if the elastic volume ratio J_e is non-physical,
+C     request a time-increment cutback instead of returning garbage.
+      IF (DETFE0 .LT. 0.05D0 .OR. DETFE0 .GT. 20.0D0) THEN
+        PNEWDT = 0.5D0
+        RETURN
+      END IF
 
       DO I = 1, NTENS
         STRESS(I) = SV0(I)
@@ -164,7 +173,8 @@ C     ================================================================
         END IF
 
         CALL BIOFILM_STRESS_CORE(DFG_P, FG_INV, FV_OLD,
-     1       C10, C01, D1, ETA, MTYPE, DTIME, SVP, FV_DUM, SSE_D, SPD_D)
+     1       C10, C01, D1, ETA, MTYPE, DTIME, SVP, FV_DUM, SSE_D, SPD_D,
+     2       DETFE_D)
 
         DO IQ = 1, NTENS
           DDSDDE(IQ,IPERT) = (SVP(IQ) - SV0(IQ)) / EPS
@@ -199,12 +209,13 @@ C     phase2_patch_test.py exactly (same algebra, same conventions).
 C======================================================================
       SUBROUTINE BIOFILM_STRESS_CORE(DFG, FG_INV, FV_OLD,
      1     C10, C01, D1, ETA, MTYPE, DTIME, SV, FV_NEW,
-     2     SSE_OUT, SPD_OUT)
+     2     SSE_OUT, SPD_OUT, DETFE_OUT)
 
       INCLUDE 'ABA_PARAM.INC'
 
       DIMENSION DFG(3,3), FG_INV(3,3), FV_OLD(3,3), FV_NEW(3,3), SV(6)
       DOUBLE PRECISION C10, C01, D1, ETA, MTYPE, DTIME, SSE_OUT, SPD_OUT
+      DOUBLE PRECISION DETFE_OUT
 
       DOUBLE PRECISION FTRIAL(3,3), FV_INV(3,3), FE(3,3), BE(3,3)
       DOUBLE PRECISION TAU_DEV(3,3), SIGMA(3,3), IDEN(3,3), TEMP3(3,3)
@@ -327,6 +338,8 @@ C     --- Cauchy stress in Abaqus Voigt order: 11,22,33,12,13,23 ---
       SV(4) = SIGMA(1,2)
       SV(5) = SIGMA(1,3)
       SV(6) = SIGMA(2,3)
+
+      DETFE_OUT = DETFE
 
 C     --- Energies ---
       SSE_OUT = C10*(I1_BAR - 3.0D0) + (1.0D0/D1)*(DETFE - 1.0D0)**2

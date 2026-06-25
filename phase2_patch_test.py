@@ -311,6 +311,23 @@ def run(verbose=False):
     results.append(ok4)
 
     # ----------------------------------------
+    # Case 5: Mooney-Rivlin viscoelastic (mtype=1, C01>0)
+    # ----------------------------------------
+    print("\nCase 5: Mooney-Rivlin viscoelastic (mtype=1, C01>0)")
+    C10_mr = 0.7*C10
+    C01_mr = 0.3*C10
+    D5c, sv5 = compute_ddsdde(F3, Fv3, alpha_g, dt,
+                              C10_mr, C01_mr, D1, eta_v, mtype=1)
+    D5r      = compute_ddsdde_fd(F3, Fv3, alpha_g, dt,
+                                 C10_mr, C01_mr, D1, eta_v, mtype=1)
+    if verbose:
+        print(f"  Cauchy stress: {sv5[:4]}")
+    ok5a = test_symmetry(D5c, "MR-visco symm")
+    ok5b = test_vs_fd(D5c, D5r, "MR-visco vs FD")
+    ok5c = test_posdef(D5c, "MR-visco posdef")
+    results.extend([ok5a, ok5b, ok5c])
+
+    # ----------------------------------------
     # Summary
     # ----------------------------------------
     n_pass = sum(results)
