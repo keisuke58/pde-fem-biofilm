@@ -45,6 +45,9 @@ N_VERTS_PER_LAYER = 1797   # 8985 / 5
 N_LAYERS          = 4
 
 # ── species ────────────────────────────────────────────────────────────────────
+# So/An/Vd/Pg: 4-species selection from Kommerein et al. 2018 HOBIC in-vitro model
+#   (PLoS ONE, doi:10.1371/journal.pone.0196967; Kommerein, Doll, Stumpp, Stiesch).
+# Fn: 5th species introduced by Heine et al. 2025 (Front. Oral Health).
 SPECIES    = ["So", "An", "Vd", "Fn", "Pg"]
 # E_SPEC_MPa: species-specific elastic moduli [MPa]
 # ASSUMED SCALING — no direct literature source for per-species values.
@@ -58,6 +61,10 @@ E_SPEC_MPa = np.array([1e-3, 8e-4, 6e-4, 2e-4, 1e-5])   # [MPa]: So, An, Vd, Fn,
 K_ALPHA    = np.array([1.0, 0.8, 0.4, 0.6, 0.3])          # growth accumulation rates (matches klempt_pde_multispecies.py)
 
 # ── conditions ─────────────────────────────────────────────────────────────────
+# *_static : static-culture biofilm (96-well plate inoculation, no flow)
+# *_hobic  : HOBIC flow-chamber conditions (Kommerein et al. 2018, Debener et al. 2024)
+#            HOBIC = Hannover Oral BIofilm Chamber; shear flow mimics oral environment
+# phi_final for each condition loaded from TMCMC posterior (ref_0d_<cond>.json)
 CONDITIONS = [
     "commensal_static",
     "commensal_hobic",

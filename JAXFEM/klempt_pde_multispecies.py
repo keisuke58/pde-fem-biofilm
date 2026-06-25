@@ -55,6 +55,9 @@ _FEM   = _HERE.parent
 _MSCL  = _FEM / "_multiscale_2d_results"
 
 # ── species parameters ────────────────────────────────────────────────────────
+# So/An/Vd/Pg: 4-species selection from Kommerein et al. 2018 HOBIC model
+#   (PLoS ONE doi:10.1371/journal.pone.0196967; CFU inoculum OD600=0.5).
+#   Fn: 5th species introduced by Heine et al. 2025 (Front. Oral Health).
 SPECIES  = ["So", "An", "Vd", "Fn", "Pg"]
 K_ALPHA  = np.array([1.0, 0.8, 0.4, 0.6, 0.3])  # growth accumulation rate
 MU_SP    = np.array([2.0, 1.6, 1.2, 1.4, 0.8])  # max growth rate
@@ -67,6 +70,8 @@ K_M      = 0.3    # Monod half-saturation k
 GAMMA_AC = 8.0    # Allen-Cahn double-well stabilizer Γ (Eq.34, felix v4)
 R_CHEMO  = 10.0   # chemotaxis strength R (Eq.34; paper=100 → dissolution; felix=10)
 
+# *_static : static-culture (no flow); *_hobic : HOBIC flow-chamber
+#   HOBIC = Hannover Oral BIofilm Chamber (Kommerein 2018, Debener 2024)
 CONDITIONS = [
     "commensal_static",
     "commensal_hobic",

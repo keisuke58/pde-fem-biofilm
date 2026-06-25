@@ -47,6 +47,8 @@ _OUT  = _HERE / "_posterior_ci"
 _OUT.mkdir(exist_ok=True)
 
 # ── species constants (same as gen_tooth/gen_implant) ────────────────────────
+# So/An/Vd/Pg: 4-species HOBIC experimental model (Kommerein et al. 2018,
+#   PLoS ONE doi:10.1371/journal.pone.0196967). Fn added by Heine et al. 2025.
 SPECIES  = ["So", "An", "Vd", "Fn", "Pg"]
 # E_SPEC: assumed scaling — no per-species literature source.
 # Klempt 2024 Table 2: single-species E=10 Pa (=1e-5 MPa, used for Pg here).
