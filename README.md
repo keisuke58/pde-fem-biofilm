@@ -106,12 +106,12 @@ TikZ flowcharts of the pipeline live in `JAXFEM/algo_flow*.tex` (each with a
 (`assets/algo_flow_tooth_reality.png`) is rendered from
 `algo_flow_tooth_reality.tex`. Variants:
 
-| Source | Shows |
-|---|---|
-| `algo_flow_tooth_reality.tex` | as-implemented tooth pipeline (embedded above) |
-| `algo_flow_full.tex` | full PDE (Eq. 34–36) + UMAT + FEM detail |
-| `algo_flow_tmcmc_toprow.tex` · `algo_flow_tmcmc_4col.tex` | with the TMCMC calibration phase |
-| `algo_flow_tooth_implant.tex` · `algo_flow_tooth_roadmap.tex` | implant extension / roadmap |
+| Source | Rendered | Shows |
+|---|---|---|
+| `algo_flow_tooth_reality.tex` | [PNG](assets/algo_flow_tooth_reality.png) (embedded above) | as-implemented tooth pipeline |
+| `algo_flow_full.tex` | [PNG](assets/algo_flow_full.png) | full PDE (Eq. 34–36) + UMAT + FEM detail |
+| `algo_flow_tmcmc_toprow.tex` | [PNG](assets/algo_flow_tmcmc_toprow.png) | TMCMC calibration phase + pipeline |
+| `algo_flow_tmcmc_4col.tex` · `algo_flow_tooth_implant.tex` · `algo_flow_tooth_roadmap.tex` | — | 4-column / implant / roadmap variants |
 
 Build (and regenerate the PNG) with the intended engine:
 
