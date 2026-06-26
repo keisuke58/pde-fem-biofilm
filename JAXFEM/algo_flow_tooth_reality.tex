@@ -51,10 +51,10 @@
   GPU (4$\times$RTX\,4090)};
 
 \node[Nt, right=0.7cm of tt] (tmap) {%
-  $\phi_{total}$ per condition:\\[2pt]
-  \texttt{ref\_0d\_commensal\_static.json}\\
-  \texttt{ref\_0d\_commensal\_hobic.json}\\
-  \texttt{ref\_0d\_dysbiotic\_*.json}};
+  Per-condition composition $\phi^{\rm CLSM}$:\\[2pt]
+  \texttt{ref\_0d\_*.json} (CLSM-anchored)\\
+  TMCMC calibrates interaction $A$\\
+  \& rates --- \emph{not} composition};
 
 %%══════════════════════════════════════════════════════════════════════
 %% COL A  Ph.0–1  Hamilton → JAXFEM FD
@@ -86,7 +86,7 @@
   $\alpha$ mapping per node (4 cond.):\\[2pt]
   $\alpha(n){=}\alpha_{\max}^{\rm K}
     \times\phi_{total}\times\alpha_{\rm profile}(d_n)$\\
-  {\scriptsize $\phi_{total}\!\approx\!0.91{-}0.99$\; (TMCMC)}};
+  {\scriptsize $\phi_{total}\!\approx\!0.91{-}0.99$\; (CLSM-anchored)}};
 
 \node[Np, below=0.6cm of amap] (inp4) {%
   Write 4 INPs\;
@@ -100,7 +100,7 @@
 \node[Na, below=1.6cm of inp4] (abq) {%
   Abaqus + \texttt{umat\_klempt\_alpha.f}\\[2pt]
   4 conditions\; $\times$\; 1\,CPU (QSD\,50 token)\\
-  SDV:\; $\lambda_z$,\; $J_e$,\; $\alpha$};
+  SDV:\; $\alpha$,\; $J_e$};
 
 \node[Nab, below=0.6cm of abq] (cmp) {%
   \textbf{Stress comparison} (4 conditions):\\[2pt]
@@ -167,7 +167,7 @@
 
 \node[font=\scriptsize\bfseries, text=teal!60!black,
       above=4pt of bxt.north, anchor=south]
-  {\textbf{Ph.\,--1}\; TMCMC Bayesian Calibration\enspace(\texttt{Tmcmc202601})};
+  {\textbf{Ph.\,--1}\; Calibration: CLSM composition $+$ TMCMC dynamics ($A$, rates)\enspace(\texttt{Tmcmc202601})};
 \node[font=\scriptsize\bfseries, text=gray!65,
       above=4pt of bxA.north, anchor=south]
   {\textbf{Ph.\,0--1}\; Hamilton $\delta\mathcal{H}{=}0$ \& JAXFEM FD Solver};

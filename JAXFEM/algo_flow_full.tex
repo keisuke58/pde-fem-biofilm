@@ -83,8 +83,7 @@
 %% ── Phase 3 (below snapshot, same column) ────────────────────────────
 \node[Nm, below=1.2cm of sn] (kg) {%
   Growth kinematics:\\[2pt]
-  $\mathbf{F}_g{=}\mathrm{diag}(1,1,\lambda_z)$\quad
-  $\lambda_z{=}1{+}\max(0,\beta_d\phi_{Pg}{+}b)$\\
+  $\mathbf{F}_g{=}(1{+}\alpha)\mathbf{I}$\quad (isotropic, Klempt 2024)\\
   $\mathbf{F}_e{=}\mathbf{F}\mathbf{F}_g^{-1}$,\quad
   $J{=}\det\mathbf{F}_e$};
 
@@ -111,13 +110,13 @@
 
 \node[Nv, below=0.5cm of inp] (gp) {%
   Nodal DOF $\to$ Gauss pts:\\
-  $\mathbf{F}_{n+1}$,\quad $\phi_{Pg}$};
+  $\mathbf{F}_{n+1}$,\quad $\alpha$};
 
 \node[Nv, below=0.5cm of gp] (um) {%
   UMAT \texttt{umat\_klempt\_alpha.f}\\[2pt]
-  In: $\mathbf{F}$, $\phi_{Pg}$, PROPS, STATEV\\
+  In: $\mathbf{F}$, $\alpha$, PROPS, STATEV\\
   Out: STRESS $\boldsymbol\sigma$, DDSDDE $\mathbb{C}$\\
-  SDV: $\lambda_z$,\;$J_e$,\;$\alpha$};
+  SDV: $\alpha$,\;$J_e$};
 
 \node[Nv, below=0.5cm of um] (as) {%
   FEM assembly:\\[2pt]
@@ -135,8 +134,7 @@
   $p{=}{-}\tfrac{1}{3}\mathrm{tr}\,\boldsymbol\sigma$};
 
 \node[No, below=0.5cm of os] (og) {%
-  Growth: $\alpha(x,y,z)$,\;
-  $\lambda_z$,\; $J_e$};
+  Growth: $\alpha(x,y,z)$,\; $J_e$};
 
 \node[No, below=0.5cm of og] (ov) {%
   Validation (rung 1--3c \textbf{PASS}):\\[2pt]
@@ -190,7 +188,7 @@
 
 % phi_Pg: FD→UMAT (Gauss pt)
 \draw[dar] (up.east) -- ++(0.25,0) coordinate (pa) |- (gp.west)
-  node[lbl,pos=0.45,above=1pt]{$\phi_{Pg}$};
+  node[lbl,pos=0.45,above=1pt]{$\phi\!\to\!E(\phi)$};
 
 % alpha: snapshot→INP
 \draw[dar] (sn.east) -- ++(0.25,0) |- (inp.west)

@@ -56,7 +56,7 @@
   GPU (4$\times$RTX\,4090)};
 
 \node[Nt, right=0.65cm of tt] (tmap) {%
-  $\phi_{total}$ per condition:\\[2pt]
+  Per-condition $\phi$ (CLSM-anchored):\\[2pt]
   commensal\_static / \_hobic\\
   dysbiotic\_static / \_hobic};
 
@@ -109,7 +109,7 @@
 \node[Na, below=1.6cm of inp4] (abq) {%
   Abaqus + \texttt{umat\_klempt\_alpha.f}\\[2pt]
   4 conditions,\; 1\,CPU,\; frontale\\
-  SDV:\; $\lambda_z$,\; $J_e$,\; $\alpha$};
+  SDV:\; $\alpha$,\; $J_e$};
 
 \node[Nab, below=0.55cm of abq] (cmp) {%
   \textbf{Stress comparison} (4 conditions):\\[2pt]
@@ -211,7 +211,7 @@
 %% Implemented labels
 \node[font=\scriptsize\bfseries, text=teal!60!black,
       above=4pt of bxt.north,  anchor=south]
-  {\textbf{Ph.\,--1}\; TMCMC \textbf{[実装済み]}};
+  {\textbf{Ph.\,--1}\; Calibration: CLSM $\phi$ $+$ TMCMC dynamics\; \textbf{[実装済み]}};
 \node[font=\scriptsize\bfseries, text=gray!65,
       above=4pt of bxA.north,  anchor=south]
   {\textbf{Ph.\,0--1}\; Hamilton $\to$ JAXFEM FD \textbf{[実装済み]}};

@@ -104,8 +104,7 @@
 
 \node[Nm, below=1.0cm of sn] (kg) {%
   Growth split\; $\mathbf{F}{=}\mathbf{F}_e\mathbf{F}_g$:\\[2pt]
-  $\mathbf{F}_g{=}\mathrm{diag}(1,1,\lambda_z)$,\;
-  $\lambda_z{=}1{+}\max(0,\beta_d\phi_{Pg}{+}b)$\\
+  $\mathbf{F}_g{=}(1{+}\alpha)\mathbf{I}$\; (isotropic, Klempt 2024)\\
   $\mathbf{F}_e{=}\mathbf{F}\mathbf{F}_g^{-1}$,\; $J{=}\det\mathbf{F}_e$};
 
 \node[Nm, below=0.45cm of kg] (nh) {%
@@ -130,13 +129,13 @@
 
 \node[Nv, below=0.45cm of inp] (gp) {%
   Nodal DOF $\to$ Gauss pts:\\
-  $\mathbf{F}_{n+1}$,\quad $\phi_{Pg}$};
+  $\mathbf{F}_{n+1}$,\quad $\alpha$};
 
 \node[Nv, below=0.45cm of gp] (um) {%
   UMAT \texttt{umat\_klempt\_alpha.f}\\[2pt]
-  In: $\mathbf{F}$,\;$\phi_{Pg}$,\;PROPS,\;STATEV\\
+  In: $\mathbf{F}$,\;$\alpha$,\;PROPS,\;STATEV\\
   Out: STRESS $\boldsymbol\sigma$,\;DDSDDE $\mathbb{C}$\\
-  SDV: $\lambda_z$,\;$J_e$,\;$\alpha$};
+  SDV: $\alpha$,\;$J_e$};
 
 \node[Nv, below=0.45cm of um] (as) {%
   FEM assembly:\\[2pt]
@@ -153,7 +152,7 @@
   $p{=}{-}\tfrac{1}{3}\mathrm{tr}\,\boldsymbol\sigma$};
 
 \node[No, below=0.45cm of os] (og) {%
-  Growth: $\alpha(x,y,z)$,\; $\lambda_z$,\; $J_e$};
+  Growth: $\alpha(x,y,z)$,\; $J_e$};
 
 \node[No, below=0.45cm of og] (ov) {%
   Validation (\textbf{rung 1--3c PASS}):\\[2pt]
@@ -213,7 +212,7 @@
 \draw[dar] (e35.east) -- ++(0.25,0) |- (sc.west);
 \draw[dar] (e36.east) -- ++(0.25,0) |- (ua.west);
 \draw[dar] (up.east)  -- ++(0.25,0) |- (gp.west)
-  node[lbl,pos=0.4,above=1pt]{$\phi_{Pg}$};
+  node[lbl,pos=0.4,above=1pt]{$\phi\!\to\!E(\phi)$};
 \draw[dar] (sn.east)  -- ++(0.25,0) |- (inp.west)
   node[lbl,pos=0.35,above=1pt]{$\alpha(x,y)$};
 \draw[dar] (ct.east)  -- ++(0.25,0) |- (um.west)

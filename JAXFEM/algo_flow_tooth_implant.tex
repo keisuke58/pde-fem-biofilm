@@ -119,7 +119,7 @@
 
 \node[Nm, below=0.5cm of alpmap] (Fsplit) {%
   Growth kinematics\; $\mathbf{F}{=}\mathbf{F}_e\mathbf{F}_g$:\\[2pt]
-  $\lambda_z{=}1{+}\max(0,\beta_d\phi_{Pg}{+}b)$\\
+  $\mathbf{F}_g{=}(1{+}\alpha)\mathbf{I}$\; (isotropic, Klempt 2024)\\
   $\mathbf{F}_e{=}\mathbf{F}\mathbf{F}_g^{-1}$,\; $J{=}\det\mathbf{F}_e$};
 
 \node[Nm, below=0.5cm of Fsplit] (nhS) {%
@@ -130,7 +130,7 @@
 %%── Ph.4 FEM NR ───────────────────────────────────────────────────
 \node[Nv, below=1.8cm of nhS] (umatcall) {%
   UMAT \texttt{umat\_klempt\_alpha.f}\\[2pt]
-  In: $\mathbf{F}$,\;$\phi_{Pg}$,\;PROPS\quad
+  In: $\mathbf{F}$,\;$\alpha$,\;PROPS\quad
   Out: $(\boldsymbol\sigma,\mathbb{C})$};
 
 \node[Nv, below=0.5cm of umatcall] (KT) {%

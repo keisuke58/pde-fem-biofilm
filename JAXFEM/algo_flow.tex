@@ -44,9 +44,9 @@
 %% ── Column B: UMAT / Gauss-point coupling ────────────────────────────
 \node[mech, right=2.8cm of pois, yshift=-1.6cm] (growth)
   {Growth split \;$\mathbf{F} = \mathbf{F}_e\cdot\mathbf{F}_g$\\[1pt]
-   $\mathbf{F}_g = \mathrm{diag}(1,1,\lambda_z)$,\;
+   $\mathbf{F}_g = (1+\alpha)\,\mathbf{I}$,\;
    $\mathbf{F}_e = \mathbf{F}\,\mathbf{F}_g^{-1}$\\[-1pt]
-   {\footnotesize$\lambda_z = 1 + \max(0,\,\beta_d\,\phi_{Pg} + b)$}};
+   {\footnotesize Klempt 2024 --- isotropic growth $s=1+\alpha$}};
 
 \node[mech, below=0.55cm of growth] (stress)
   {neo-Hookean Cauchy stress,\; $J{=}\det\mathbf{F}_e$\\[1pt]
@@ -77,10 +77,10 @@
 %% ── Arrow: PDE → UMAT coupling ───────────────────────────────────────
 % go right from phi, then down-right to growth; label on a white bg node
 \draw[arrow, dashed, red!70!black, thick]
-  (phi.east) -- ++(0.5,0) coordinate (pmid)
+  (alp.east) -- ++(0.5,0) coordinate (pmid)
              |- (growth.west);
 \node[cnote] at ($(pmid)!0.5!(growth.west -| pmid)$)
-  {$\phi_{Pg}(x)$ to each\\ Gauss point};
+  {$\alpha(x)$ to each\\ Gauss point};
 
 %% ── Arrows: UMAT internal ────────────────────────────────────────────
 \draw[arrow] (growth) -- (stress);
