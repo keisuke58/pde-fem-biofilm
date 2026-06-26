@@ -48,3 +48,19 @@ Tmcmc202601 reads expected_species_volumes). So:
    hence the ratio. The recompute_with_clsm.py timepoint result (6.2x@D3 -> ~2x
    mature) used expected_species_volumes (the MAP_PHI-consistent convention); a
    fig3-based recompute would differ for dysbiotic (no V.dispar).
+
+## RETRACTION of the Vd "discrepancy" (extraction bug, caught by author)
+The earlier "fig3 has V.dispar~=0 / disagrees with expected" was MY species-name
+mapping error: dysbiotic uses **V. parvula** and **P. gingivalis_W83**, commensal
+uses V. dispar and P. gingivalis_20709. With correct mapping, fig3 (the TMCMC
+input) and expected_species_volumes AGREE, and MAP_PHI (Vd-dominant dysbiotic) is
+consistent with fig3 EARLY-MID timepoints (dysbiotic is V.parvula-dominant at
+D1-6). There is NO data contradiction; the composition IS traceable to the CLSM
+data at early-mid timepoints.
+
+## NET (robust) finding
+The ONLY substantive point is the TIMEPOINT: sigma_CH/sigma_DH = ~6x at D3 (early,
+So-peak commensal / Vd-dominant dysbiotic) -> ~2x at mature D10-21 (same with
+fig3 or expected). The headline 6.44x is an early-biofilm value; the claim must
+be scoped to the timepoint the stress analysis represents. (TMCMC convergence OK;
+posterior multimodal due to sparse data, as the paper discloses.)
