@@ -27,6 +27,13 @@ CLSM species fractions ──▶ composition φ (per species, per condition)
         max von Mises  σ   ──▶   stress ratio  σ_CH / σ_DH
 ```
 
+![As-implemented pipeline flow](assets/algo_flow_tooth_reality.png)
+
+*As-implemented method flow (`JAXFEM/algo_flow_tooth_reality.tex`): per-condition
+CLSM composition + TMCMC-calibrated dynamics (interaction matrix A) → JAXFEM PDE
+α-field → tooth Abaqus UMAT (isotropic `Fg=(1+α)I`) → 4-condition von Mises
+comparison.*
+
 - **Composition φ is CLSM-measured.** TMCMC calibrates the species **interaction
   matrix A** and rate parameters — *not* the composition (the 15-D inverse
   problem is under-identified; see the audit below).
@@ -108,12 +115,27 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 | [research_goals_1_2.md](research_goals_1_2.md) | Research goals (levels 1–4) |
 
 ### Method-flow figures
-`JAXFEM/algo_flow*.tex` (+ `*_standalone.tex`) — TikZ flowcharts of the pipeline.
-Build a figure with the intended engine:
+
+TikZ flowcharts of the pipeline live in `JAXFEM/algo_flow*.tex` (each with a
+`*_standalone.tex` wrapper). The figure embedded above
+(`assets/algo_flow_tooth_reality.png`) is rendered from
+`algo_flow_tooth_reality.tex`. Variants:
+
+| Source | Shows |
+|---|---|
+| `algo_flow_tooth_reality.tex` | as-implemented tooth pipeline (embedded above) |
+| `algo_flow_full.tex` | full PDE (Eq. 34–36) + UMAT + FEM detail |
+| `algo_flow_tmcmc_toprow.tex` · `algo_flow_tmcmc_4col.tex` | with the TMCMC calibration phase |
+| `algo_flow_tooth_implant.tex` · `algo_flow_tooth_roadmap.tex` | implant extension / roadmap |
+
+Build (and regenerate the PNG) with the intended engine:
 
 ```bash
 cd JAXFEM
-xelatex algo_flow_tooth_reality_standalone.tex   # CJK content → xelatex/lualatex
+xelatex algo_flow_tooth_reality_standalone.tex          # CJK content → xelatex/lualatex
+gs -dBATCH -dNOPAUSE -sDEVICE=png16m -r200 \
+   -sOutputFile=../assets/algo_flow_tooth_reality.png \
+   algo_flow_tooth_reality_standalone.pdf
 ```
 
 ---
