@@ -32,3 +32,13 @@ dominant. The So-dominant value propagated to gen_tooth, the Abaqus DS run
  - Headline sigma_CH/sigma_DH = 6.44x: UNAFFECTED (CH/DH, DS-independent).
  - Any DS-based number (sigma_DS, CS/DS ratio, 4-condition figure) was wrong
    (DS ~8x too high) and is now partially corrected (tooth MAP only).
+
+## COMPLETED (2026-06-26)
+ - implant MAP_SIGMA_IMPLANT[DS]: 6.10 -> 1.06 kPa (validated framework
+   sigma=E_voigt*A*k_eff^b fit on the 3 good implant points CH/DH/CS, <2% fit).
+ - samples_0d(dysbiotic_static): regenerated with the corrected composition
+   (near-point, original spread ~0) -> DS posterior now [1.55,1.55] (tooth) /
+   [1.06,1.06] (implant), consistent with MAP. No more MAP-vs-distribution gap.
+All DS values now consistent. Headline sigma_CH/sigma_DH=6.44x UNAFFECTED.
+NOTE: DS posterior spread is ~0 (the original 0D samples were a near-point too);
+the DS "CI" is effectively the MAP point.

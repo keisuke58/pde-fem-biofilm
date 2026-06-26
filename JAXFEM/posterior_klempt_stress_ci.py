@@ -92,7 +92,7 @@ MAP_SIGMA_IMPLANT = {
     "commensal_hobic":  6.13e-3,
     "dysbiotic_hobic":  1.30e-3,
     "commensal_static": 4.28e-3,
-    "dysbiotic_static": 6.10e-3,
+    "dysbiotic_static": 1.06e-3,  # FIX 2026-06-26: corrected via framework (was 6.10e-3 So-dom bug)
 }
 MAP_PHI = {
     "commensal_hobic":  np.array([0.942, 0.012, 0.012, 0.011, 0.011]),
