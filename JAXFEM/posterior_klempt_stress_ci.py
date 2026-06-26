@@ -86,7 +86,7 @@ MAP_SIGMA_TOOTH = {
     "commensal_hobic":  13.72e-3,   # MPa
     "dysbiotic_hobic":   2.13e-3,
     "commensal_static":  8.77e-3,
-    "dysbiotic_static": 13.63e-3,
+    "dysbiotic_static": 1.55e-3,  # FIX 2026-06-26: corrected Abaqus run w/ raw CLSM DS comp (was 13.63e-3 from So-dom bug)
 }
 MAP_SIGMA_IMPLANT = {
     "commensal_hobic":  6.13e-3,
@@ -98,7 +98,7 @@ MAP_PHI = {
     "commensal_hobic":  np.array([0.942, 0.012, 0.012, 0.011, 0.011]),
     "dysbiotic_hobic":  np.array([0.097, 0.119, 0.474, 0.123, 0.093]),
     "commensal_static": np.array([0.698, 0.061, 0.062, 0.063, 0.059]),
-    "dysbiotic_static": np.array([0.944, 0.011, 0.011, 0.011, 0.011]),
+    "dysbiotic_static": np.array([0.0360, 0.0571, 0.5686, 0.1291, 0.2092]),  # FIX 2026-06-26: was So-dom copy bug; raw CLSM DS D10 (Vd-dom)
 }
 
 

@@ -1,0 +1,12 @@
+{
+ "phi_final": [
+  0.036036036036036036,
+  0.05705705705705707,
+  0.5685685685685686,
+  0.12912912912912916,
+  0.2092092092092092
+ ],
+ "di_0d": 0.2570110468329637,
+ "phi_total": 0.98875712955273,
+ "_fix_note": "2026-06-26: phi_final was commensal-like So-dominant [0.944,...] (copy bug); replaced with raw CLSM dysbiotic-static D10 (V.dispar-dominant). di_0d recomputed."
+}
