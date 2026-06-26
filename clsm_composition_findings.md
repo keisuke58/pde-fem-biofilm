@@ -31,3 +31,20 @@ mature timepoints (D10-21) the commensal community shifts away from So-dominance
 
 Tools: experiment_data/clsm_composition.py, experiment_data/recompute_with_clsm.py
 (in Tmcmc202601/data_5species/).
+
+## CORRECTION (provenance, verified in TMCMC code)
+The TMCMC estimation code (Tmcmc202601/data_5species/main/estimate_reduced_
+nishioka.py L1688) loads **fig3_species_distribution_summary.csv** (or
+species_distribution_data.csv) -- NOT expected_species_volumes.csv (no code in
+Tmcmc202601 reads expected_species_volumes). So:
+ - TMCMC INPUT = fig3_summary  (dysbiotic HOBIC: V.dispar ~= 0, An/Fn-dominant)
+ - expected_species_volumes.csv (V.dispar-dominant) is an UNUSED auxiliary file.
+ - The downstream stress MAP_PHI (V.dispar-dominant, Vd=0.47) matches the UNUSED
+   expected_species_volumes, NOT the TMCMC input (fig3, Vd~=0). The two Heine
+   CSVs disagree on V.dispar.
+=> The stress composition is consistent with neither (a) the 15-D TMCMC posterior
+   nor (b) the data the TMCMC was fit to (fig3). Which Heine CSV is authoritative
+   for composition must be resolved by the author; it changes E_voigt(phi) and
+   hence the ratio. The recompute_with_clsm.py timepoint result (6.2x@D3 -> ~2x
+   mature) used expected_species_volumes (the MAP_PHI-consistent convention); a
+   fig3-based recompute would differ for dysbiotic (no V.dispar).
