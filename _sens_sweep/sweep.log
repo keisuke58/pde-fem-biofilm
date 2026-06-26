@@ -1,0 +1,19 @@
+Lp[mm]  Lp/L   CH[kPa]  DH[kPa]  ratio   (headline linear-ramp ratio=6.44x)
+  [A] s_co_Lp003.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp003.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+0.03    0.15      7.20     1.28    5.6x
+  [A] s_co_Lp005.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp005.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+0.05    0.25      7.06     1.33    5.3x
+  [A] s_co_Lp010.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp010.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+0.10    0.50      7.60     1.38    5.5x
+  [A] s_co_Lp020.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp020.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+0.20    1.00     10.22     1.63    6.3x
+  [A] s_co_Lp050.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp050.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+0.50    2.50     13.30     2.03    6.6x
+  [A] s_co_Lp200.inp  (70365 lines)  E_Voigt=9.611e-04 MPa
+  [A] s_dy_Lp200.inp  (70365 lines)  E_Voigt=5.021e-04 MPa
+2.00    10.00     13.83     2.09    6.6x
