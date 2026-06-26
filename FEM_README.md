@@ -1,5 +1,8 @@
 # Biofilm FEM Pipeline — Reference Documentation
 
+> **Entry point:** see [README.md](README.md) for the repository overview and the verified Klempt growth-stress pipeline.
+> This file is the detailed reference for the **DI-bridge FEM lineage** (DI → E(DI), transverse isotropy; nominal GPa scale).
+
 **Updated**: 2026-02-21
 **Author**: Nishioka (Tmcmc202601 project)
 
