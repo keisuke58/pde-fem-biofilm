@@ -95,24 +95,9 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 | [FEM_README.md](FEM_README.md) | DI / FEM / anisotropy reference (the second lineage) |
 | [JAXFEM/README.md](JAXFEM/README.md) | JAX PDE reproduction suite (Klempt Eq. 34–36) |
 
-### Audit & findings (2026-06-26)
-| File | What |
-|---|---|
-| [rigor_audit_growth_2026-06-26.md](rigor_audit_growth_2026-06-26.md) | Growth kinematics & numerics audit |
-| [DS_composition_fix.md](DS_composition_fix.md) | Dysbiotic-static composition bug fix |
-| [clsm_composition_findings.md](clsm_composition_findings.md) | Composition provenance, raw-CLSM recomputation |
-| [espec_sensitivity_findings.md](espec_sensitivity_findings.md) | `E_SPEC` sensitivity of σ_CH/σ_DH |
-| [pde3d_rigor_findings.md](pde3d_rigor_findings.md) | 3D growth-PDE depth/nutrient robustness |
-| [eigenstrain_theory_roadmap.md](eigenstrain_theory_roadmap.md) | α-eigenstrain theory consistency |
-
-### Planning / background
-| File | What |
-|---|---|
-| [klempt2024_gap_analysis.md](klempt2024_gap_analysis.md) | Klempt 2024 gap analysis & response |
-| [BENCHMARK_PLAN.md](BENCHMARK_PLAN.md) · [FEM_PLAN.md](FEM_PLAN.md) | Benchmark / FEM plans |
-| [overview2602_en.md](overview2602_en.md) · [overview_tmcmc_fem_en.md](overview_tmcmc_fem_en.md) | Narrative overviews |
-| [related_work_jaw_biofilm.md](related_work_jaw_biofilm.md) | Jaw-biofilm / digital-twin literature |
-| [research_goals_1_2.md](research_goals_1_2.md) | Research goals (levels 1–4) |
+> The rigor-audit findings (2026-06-26), methods, plans and overviews are
+> catalogued in **[DOCS.md](DOCS.md)** — the complete, categorized documentation
+> index. Historical working notes are under [`archive/`](archive/).
 
 ### Method-flow figures
 
