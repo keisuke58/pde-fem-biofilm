@@ -1,0 +1,54 @@
+*HEADING
+ Single-element verification of umat_biofilm_visco_2ch.f (F=Fe*Fv1*Fv2*Fg)
+ Two-channel Prony: tau_1=5 s (fast), tau_2=50 s (slow), a1=a2=0.3, e_inf=0.4.
+ Growth (TEMP=alpha=0.1) against clamped base; relax to t=200 s.
+ UNSYMM=YES for non-symmetric Jaumann tangent.
+**
+*NODE
+1,  0.0, 0.0, 0.0
+2,  1.0, 0.0, 0.0
+3,  1.0, 1.0, 0.0
+4,  0.0, 1.0, 0.0
+5,  0.0, 0.0, 1.0
+6,  1.0, 0.0, 1.0
+7,  1.0, 1.0, 1.0
+8,  0.0, 1.0, 1.0
+*ELEMENT, TYPE=C3D8, ELSET=EALL
+1, 1, 2, 3, 4, 5, 6, 7, 8
+*NSET, NSET=NALL, GENERATE
+1, 8, 1
+*NSET, NSET=BOT
+1, 2, 3, 4
+**
+*SOLID SECTION, ELSET=EALL, MATERIAL=BIOFILM
+**
+** E=300 Pa, nu=0.45 -> C10=51.72414 Pa, D1=6.667e-4 Pa^-1
+** Prony 2-channel: a1=0.3 tau1=5s  -> eta1=2*C10*a1*tau1=155.172 Pa.s
+**                  a2=0.3 tau2=50s -> eta2=2*C10*a2*tau2=1551.72 Pa.s
+**                  e_inf=0.4 (long-time spring)
+** PROPS: C10, C01, D1, eta1, eta2, a1, a2, mtype(0=NeoHooke)
+*MATERIAL, NAME=BIOFILM
+*USER MATERIAL, CONSTANTS=8
+51.72414, 0.0, 6.666667e-4, 155.172, 1551.72, 0.3, 0.3, 0.0
+*DEPVAR
+18
+**
+** alpha_growth via temperature field
+*INITIAL CONDITIONS, TYPE=TEMPERATURE
+NALL, 0.0
+**
+*STEP, NLGEOM=YES, UNSYMM=YES, INC=500
+ Growth alpha=0.1 vs clamped base; dt0=0.5s dt_max=5s covers 4*tau2=200s
+*STATIC
+0.5, 200.0, 1.0e-4, 5.0
+*BOUNDARY
+BOT, ENCASTRE
+*TEMPERATURE
+NALL, 0.1
+*OUTPUT, FIELD
+*ELEMENT OUTPUT
+S, SDV
+*OUTPUT, HISTORY
+*ELEMENT OUTPUT, ELSET=EALL
+S11, S22, S33, MISES
+*END STEP
