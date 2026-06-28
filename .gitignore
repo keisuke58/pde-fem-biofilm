@@ -103,3 +103,7 @@ abaqus_inp/
 # tracked README assets (override blanket *.png ignore)
 !assets/
 !assets/*.png
+
+_abaqus_runs/
+_espec_test/
+_pde3d_umat/
