@@ -102,14 +102,38 @@ def make_figure(t_exp=None, t_exp_std=None, condition="CH", k_eff_phys=None,
     use()
     import matplotlib.pyplot as plt
 
-    gc_arr, tc_ch, tc_dh = sweep()
+    gc_arr, tc_ch, tc_dh = sweep(gc_lo=1e-8, gc_hi=1e-0)
     PURPLE = "#8B6BB1"
+
+    # Literature calibration values (eLife 43920 / eLife 76027)
+    G_LIT_LO, G_LIT_HI = 5e-3, 1e-2           # Γ [J/m²]
+    T_LIT_LO, T_LIT_HI = 48 * 3600, 72 * 3600  # t_crit [s]
+    k_eff_lit = math.sqrt(
+        0.5 * (G_LIT_LO + G_LIT_HI) / (E_BIO * ELL)
+    ) / (0.5 * (T_LIT_LO + T_LIT_HI))          # ≈ 5.7e-6 /s
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(TEXTWIDTH_IN, TEXTWIDTH_IN * 0.42))
 
     # ── left panel: G_c vs t_crit identification curve ──────────────────────
-    ax1.loglog(tc_ch, gc_arr, color=PALETTE["ch"], lw=1.8, label="CH")
-    ax1.loglog(tc_dh, gc_arr, color=PALETTE["dh"], lw=1.8, ls="--", label="DH-unif")
+    ax1.loglog(tc_ch, gc_arr, color=PALETTE["ch"], lw=1.8, label="CH (num.)")
+    ax1.loglog(tc_dh, gc_arr, color=PALETTE["dh"], lw=1.8, ls="--", label="DH-unif (num.)")
+
+    # Physical k_eff curve derived from literature calibration
+    tc_lit = np.array([tcrit_from_gc(g, k_eff_lit) for g in gc_arr])
+    ax1.loglog(tc_lit, gc_arr, color=PURPLE, lw=1.2, ls=":",
+               label=r"$k_\mathrm{eff}^\mathrm{phys}\approx5.7\!\times\!10^{-6}$ s$^{-1}$")
+
+    # Literature Γ band (horizontal)
+    ax1.axhspan(G_LIT_LO, G_LIT_HI, alpha=0.13, color="0.7", zorder=0)
+    ax1.text(6, G_LIT_LO * 1.3,
+             r"$\Gamma_\mathrm{lit}=5\text{--}10\ \mathrm{mJ\,m}^{-2}$",
+             fontsize=5.0, color="0.40")
+
+    # Literature t_crit band (vertical)
+    ax1.axvspan(T_LIT_LO, T_LIT_HI, alpha=0.10, color=PURPLE, zorder=0)
+    ax1.text(T_LIT_LO * 1.06, 3e-8,
+             r"$48$--$72\ \mathrm{h}$", fontsize=5.0, color=PURPLE,
+             rotation=90, va="bottom")
 
     # current model reference
     ax1.axhline(GC_MODEL, color="0.65", lw=0.8, ls=":")
@@ -120,10 +144,11 @@ def make_figure(t_exp=None, t_exp_std=None, condition="CH", k_eff_phys=None,
     ax1.text(tcrit_from_gc(GC_MODEL, K_EFF_CH) * 1.12, GC_MODEL * 1.5,
              r"model ($G_c={10^{-5}}$)", fontsize=5.5, color="0.45")
 
-    # physical k_eff identification curve (if provided)
+    # user-provided physical k_eff identification curve
     if k_eff_phys is not None:
         tc_phys = np.array([tcrit_from_gc(g, k_eff_phys) for g in gc_arr])
-        ax1.loglog(tc_phys, gc_arr, color=PURPLE, lw=1.2, ls=":", label="phys $k$")
+        ax1.loglog(tc_phys, gc_arr, color="C3", lw=1.2, ls="-.",
+                   label=r"$k_\mathrm{eff}^\mathrm{phys}$ (user)")
 
     # experimental point
     if t_exp is not None:
@@ -148,7 +173,9 @@ def make_figure(t_exp=None, t_exp_std=None, condition="CH", k_eff_phys=None,
 
     ax1.set_xlabel(r"$t_\mathrm{crit}$ [s]")
     ax1.set_ylabel(r"$G_c$ [J\,m$^{-2}$]")
-    ax1.legend(fontsize=6, loc="upper left")
+    ax1.set_xlim(5, 5e5)
+    ax1.set_ylim(1e-8, 5e-2)
+    ax1.legend(fontsize=5.5, loc="upper left")
     ax1.set_title(r"(a) $G_c$–$t_\mathrm{crit}$ identification", fontsize=7, pad=4)
 
     # ── right panel: uncertainty propagation ΔGc/Gc = 2 Δt/t ─────────────
