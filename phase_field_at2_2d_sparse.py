@@ -26,13 +26,15 @@ from scipy.sparse.linalg import spsolve
 # Physical parameters (SI)
 # ────────────────────────────────────────────────────────────────────────────
 E_BIO  = 1.0e3     # Young's modulus [Pa]
+NU     = 0.45       # Poisson ratio (quasi-incompressible biofilm)
 G_C    = 1.0e-5    # Fracture energy [J/m²]
 ELL    = 5.0e-6    # Phase-field length scale [m]
 W      = 100.0e-6  # Domain width [m]
 L      = 60.0e-6   # Film thickness [m]
 
 K_RATIO  = 6.44 ** (1.0 / 2.68)   # k_eff^b(CH)/k_eff^b(DH) ≈ 2.00
-ALPHA_C  = math.sqrt(G_C / (E_BIO * ELL))   # critical eigenstrain ≈ 0.045
+# alpha_c: from psi_e(alpha_c)=G_c/(2*ell), with psi_e=E/(1-nu)*alpha^2 (biaxial plane-stress)
+ALPHA_C  = math.sqrt(G_C * (1.0 - NU) / (2.0 * E_BIO * ELL))  # ~0.0235
 N_STEPS  = 120
 K_EFF_CH = ALPHA_C / N_STEPS * 1.6
 K_EFF_DH = K_EFF_CH / K_RATIO
@@ -137,7 +139,11 @@ def run(k_base: float, profile: str,
         t = step * (ALPHA_C * 1.6 / n_steps) / k_base
 
         alpha   = k_field * t
-        psi_e   = 0.5 * E_BIO * alpha**2
+        # psi_e = E/(1-nu)*alpha^2: biaxial plane-stress elastic energy density
+        # (sigma_biax=-E/(1-nu)*alpha, eps_mech_11=eps_mech_22=-alpha, sigma_33=0)
+        # Prescribed-eigenstrain approx: mechanical equilibrium not re-solved with
+        # degraded stiffness. H uses undegraded energy -- standard AT2 staggered.
+        psi_e   = E_BIO / (1.0 - NU) * alpha**2
         H       = np.maximum(H, psi_e)
 
         # System: (A_fixed + diag(G_c/ℓ + 2H)) d = 2H
@@ -199,7 +205,7 @@ def main():
     print("=" * 62)
     print(f"  E={E_BIO:.0f} Pa  G_c={G_C:.1e} J/m²  ℓ={ELL*1e6:.0f} µm")
     print(f"  Domain {W*1e6:.0f}×{L*1e6:.0f} µm  grid {Nx}×{Nz}={Nx*Nz} nodes")
-    print(f"  α_c={ALPHA_C:.4f}  k_ratio={K_RATIO:.2f}")
+    print(f"  α_c={ALPHA_C:.4f} (biaxial, ν={NU})  k_ratio={K_RATIO:.2f}")
     print()
 
     cases = [
@@ -316,7 +322,7 @@ def main():
         "AT2 Phase-Field 2-D — Biofilm growth fracture: CH vs DH\n"
         f"CH (z-gradient, k_CH): surface damage, fast  |  "
         f"DH-Pg (Pg@substrate, k_DH): interface damage\n"
-        f"E={E_BIO:.0f} Pa · G_c={G_C:.1e} J/m^2 · l={ELL*1e6:.0f} um · "
+        f"E={E_BIO:.0f} Pa · ν={NU} · G_c={G_C:.1e} J/m^2 · l={ELL*1e6:.0f} um · "
         f"k_ratio={K_RATIO:.2f} · t_crit(DH-base/CH)={ratio_str} · "
         f"t_crit(DH-Pg/CH)={pg_str}",
         fontsize=9
