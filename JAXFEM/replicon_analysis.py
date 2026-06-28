@@ -165,7 +165,8 @@ def make_figure(results_dict: dict, out="fig_replicon.pdf"):
     cols = []
     alphas = []
     for lbl in labels:
-        base = "ch" if lbl.upper().startswith("CH") else "dh"
+        # CH/CS (commensal variants) → teal; DH/DS (dysbiotic variants) → orange
+        base = "ch" if lbl.upper().startswith("C") else "dh"
         cols.append(PALETTE[base])
         alphas.append(0.25 if "10k" in lbl else 0.45)
 
@@ -218,6 +219,8 @@ ULTIMATE_BASE = Path.home() / "IKM_Hiwi" / "nife" / "results" / "ultimate_10000p
 # should not be used for inference — kept only for comparison via --compare-300p.
 CH_10K = str(ULTIMATE_BASE / "commensal_hobic")
 DH_10K = str(ULTIMATE_BASE / "dh_baseline")
+CS_10K = str(ULTIMATE_BASE / "commensal_static")
+DS_10K = str(ULTIMATE_BASE / "dysbiotic_static")
 CH_300P = "commensal_hobic_posterior"
 DH_300P = "dh_baseline"
 
@@ -229,6 +232,10 @@ def main():
                     help="CH run dir (default: ultimate_10000p/commensal_hobic)")
     ap.add_argument("--dh-run", default=DH_10K,
                     help="DH run dir (default: ultimate_10000p/dh_baseline)")
+    ap.add_argument("--cs-run", default=None,
+                    help="CS run dir (default: ultimate_10000p/commensal_static); omit to skip")
+    ap.add_argument("--ds-run", default=None,
+                    help="DS run dir (default: ultimate_10000p/dysbiotic_static); omit to skip")
     ap.add_argument("--compare-300p", action="store_true",
                     help="Also load 300-sample posteriors for comparison")
     ap.add_argument("--n-ss",   type=int, default=50,
@@ -238,17 +245,20 @@ def main():
 
     results = {}
 
-    print(f"Loading CH: {args.ch_run}")
-    ch = load_samples(args.ch_run)
-    print(f"  {ch.shape[0]} samples")
-    print("Analyzing CH ...")
-    results["CH"] = analyze_samples(ch, n_ss=args.n_ss)
+    # Load all requested conditions; insert in monotone σ order: CH < CS < DS < DH
+    load_queue = [("CH", args.ch_run)]
+    if args.cs_run:
+        load_queue.append(("CS", args.cs_run))
+    if args.ds_run:
+        load_queue.append(("DS", args.ds_run))
+    load_queue.append(("DH", args.dh_run))
 
-    print(f"Loading DH: {args.dh_run}")
-    dh = load_samples(args.dh_run)
-    print(f"  {dh.shape[0]} samples")
-    print("Analyzing DH ...")
-    results["DH"] = analyze_samples(dh, n_ss=args.n_ss)
+    for label, run in load_queue:
+        print(f"Loading {label}: {run}")
+        s = load_samples(run)
+        print(f"  {s.shape[0]} samples")
+        print(f"Analyzing {label} ...")
+        results[label] = analyze_samples(s, n_ss=args.n_ss)
 
     if args.compare_300p:
         print(f"Loading CH-300p: {CH_300P}")
