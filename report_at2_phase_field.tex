@@ -1,0 +1,329 @@
+%% report_at2_phase_field.tex
+%% Standalone technical report: AT2 phase-field fracture of growing biofilms
+%% Compile: lualatex (x3) report_at2_phase_field.tex
+%%
+\documentclass[11pt, a4paper]{article}
+
+% ── Packages ─────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath, amssymb, bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[colorlinks=true, linkcolor=blue!60!black, citecolor=blue!60!black,
+            urlcolor=blue!60!black]{hyperref}
+\usepackage{cleveref}
+
+% ── Macros ───────────────────────────────────────────────────────────────────
+\newcommand{\Gc}{G_c}
+\newcommand{\ac}{\alpha_c}
+\newcommand{\psiE}{\psi_e}
+\newcommand{\divop}{\operatorname{div}}
+\newcommand{\Hfield}{H}
+\newcommand{\um}{$\mu$m}        % micro-meter without siunitx
+\newcommand{\invsec}{s$^{-1}$}
+
+% ── Title ────────────────────────────────────────────────────────────────────
+\title{\textbf{AT2 Phase-Field Fracture of Growing Biofilms}\\[4pt]
+       \large Fully Coupled 2-D Q4 FEM Implementation and Parameter Sensitivity}
+\author{K.\ Nishioka \\ Keio University / IKM Stuttgart}
+\date{\today}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\maketitle
+\tableofcontents
+\bigskip
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+\label{sec:intro}
+
+Biofilm detachment from surfaces is a clinically relevant fracture process:
+commensal and dysbiotic oral biofilms differ in growth kinetics
+($k_{\mathrm{eff}}^{b}$, s$^{-1}$), and the pathogen
+\textit{Porphyromonas gingivalis} (\textit{Pg}) colonises preferentially at the
+biofilm--substrate interface.
+This report documents the implementation of a variational AT2 phase-field fracture
+model for a biaxially constrained thin biofilm growing on a rigid substrate,
+together with a material-parameter sensitivity study.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Variational Formulation}
+\label{sec:theory}
+
+\subsection{Energy functional (AT2, Miehe et al.\ 2010)}
+
+The total free energy of the coupled system \((d, \bm{u})\) reads
+\begin{equation}
+  \mathcal{E}(d, \bm{u})
+  = \int_\Omega \Bigl[
+      g(d)\,\psiE
+      + \frac{\Gc}{2\ell}\bigl(d^2 + \ell^2\,|\nabla d|^2\bigr)
+    \Bigr]\,\mathrm{d}\Omega,
+  \label{eq:energy}
+\end{equation}
+where $g(d) = (1-d)^2 + k_{\mathrm{res}}$ is the quadratic degradation function
+($k_{\mathrm{res}} = 10^{-8}$ prevents singularity at $d=1$),
+$\Gc$ [J/m$^2$] is the fracture energy, and $\ell$ [m] is the
+phase-field length scale controlling the diffuse crack width.
+
+\subsection{Plane-strain mechanical energy}
+
+The film is modelled in plane strain ($\varepsilon_{yy} = 0$ in the
+out-of-plane direction).  With isotropic growth eigenstrain
+$\bm{\varepsilon}^0 = \alpha(x,z,t)\,\bm{I}$ the mechanical strain is
+$\bm{\varepsilon}^m = \bm{\varepsilon} - \bm{\varepsilon}^0$ and
+\begin{equation}
+  \psiE = \tfrac12\,\bm{\sigma}^0 : \bm{\varepsilon}^m,
+  \qquad
+  \bm{\sigma}^0 = \mathbb{C} : \bm{\varepsilon}^m,
+  \label{eq:psi}
+\end{equation}
+where $\mathbb{C}$ is the plane-strain elasticity tensor
+($\lambda = \nu E / [(1+\nu)(1-2\nu)]$, $\mu = E/[2(1+\nu)]$).
+
+\subsection{Damage evolution PDE}
+
+The Euler--Lagrange equation for $d$ with the irreversibility constraint
+$\dot{d} \ge 0$ (via the history field $\Hfield = \max_{s\le t}\psiE$) is
+\begin{equation}
+  -\Gc\ell\,\Delta d
+  + \Bigl(\frac{\Gc}{\ell} + 2\Hfield\Bigr)d = 2\Hfield,
+  \qquad
+  \nabla d \cdot \bm{n} = 0 \text{ on } \partial\Omega.
+  \label{eq:pde}
+\end{equation}
+
+\subsection{Critical eigenstrain}
+
+Setting $\psiE = \Gc/(2\ell)$ in the prescribed-eigenstrain limit
+(infinite film, no mechanical coupling) gives the analytic critical strain
+\begin{equation}
+  \ac
+  = \sqrt{\frac{\Gc(1-\nu)}{2E\ell}}.
+  \label{eq:alphac}
+\end{equation}
+This is the key scaling parameter for the sensitivity study in
+\cref{sec:sensitivity}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Numerical Method}
+\label{sec:method}
+
+\subsection{Staggered scheme}
+
+At each time step, given $d^{k-1}$:
+\begin{enumerate}
+  \item Solve 2-D plane-strain elasticity with degraded stiffness $g(d^{k-1})$:
+        \begin{equation}
+          \divop\bigl[g(d)\,\mathbb{C}:(\bm{\varepsilon}-\bm{\varepsilon}^0)\bigr]
+          = \bm{0}, \quad \bm{u}=\bm{0}\ \text{at substrate},\
+          \bm{t}=\bm{0}\ \text{elsewhere}.
+        \end{equation}
+  \item Compute $\psiE$ from the actual (undegraded) strain field;
+        update $\Hfield = \max(\Hfield, \psiE)$.
+  \item Solve \cref{eq:pde} for $d^k$; enforce irreversibility
+        $d^k \ge d^{k-1}$.
+\end{enumerate}
+
+\subsection{Spatial discretisation}
+
+\begin{itemize}
+  \item \textbf{Mechanics}: bilinear Q4 FEM on $(N_x-1)\times(N_z-1)$ cells,
+        one-point Gauss quadrature (reduced integration avoids volumetric
+        locking at $\nu=0.45$).
+  \item \textbf{Phase field}: 5-point FD on $N_x\times N_z$ nodes;
+        Neumann ghost-node operator (Kronecker product).
+  \item \textbf{Mesh adequacy}: $h \le \ell/2$ required; at
+        $N_x=120$, $N_z=80$ and $\ell=5$\,\um: $h/\ell = 0.17$.
+  \item \textbf{Linear algebra}: \texttt{scipy.sparse.linalg.spsolve} with CSR
+        matrices; Dirichlet BCs via in-place row zeroing (no format conversion).
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Simulation Cases and Eigenstrain Profiles}
+\label{sec:cases}
+
+Three cases model distinct biofilm phenotypes
+(\cref{tab:cases}).
+
+\begin{table}[h]
+  \centering
+  \caption{Simulation cases.  $k_{\mathrm{eff}}^{\mathrm{CH}} = \ac\cdot1.6/120$\,s$^{-1}$,
+           $k_{\mathrm{eff}}^{\mathrm{DH}} = k_{\mathrm{eff}}^{\mathrm{CH}}/k_{\mathrm{ratio}}$.}
+  \label{tab:cases}
+  \begin{tabular}{lll}
+    \toprule
+    Label & $k_{\mathrm{eff}}$ & Profile $k(x,z)$ \\
+    \midrule
+    CH & $k_{\mathrm{eff}}^{\mathrm{CH}}$ & z-gradient (higher at film surface) \\
+    DH-base & $k_{\mathrm{eff}}^{\mathrm{DH}}$ & z-gradient \\
+    DH$+$\textit{Pg} & $k_{\mathrm{eff}}^{\mathrm{DH}}$ & Pg substrate (concentrated at $z=0$) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent
+The theoretical growth-rate ratio
+$k_{\mathrm{ratio}} = [k_{\mathrm{eff}}^b(\text{CH})/k_{\mathrm{eff}}^b(\text{DH})]
+= 6.44^{1/2.68} \approx 2.004$
+directly predicts $t_{\mathrm{crit}}(\text{DH-base})/t_{\mathrm{crit}}(\text{CH})$.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Coupled Simulation Results}
+\label{sec:coupled}
+
+\cref{fig:coupled} shows the fully-coupled AT2 results at
+$N_x=120$, $N_z=80$ ($h/\ell=0.17$, domain $100\,\um\times60\,\um$).
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{phase_field_at2_2d_thesis.pdf}
+  \caption{Fully-coupled AT2 phase-field fracture (\texttt{inferno} colormap:
+           dark~=~intact, bright~=~fractured; white dashed: $d=0.5$ fracture front).
+           \textbf{Top row} (CH): damage initiates at substrate corners and
+           propagates as a substrate-level delamination band.
+           \textbf{Bottom row} (DH$+$\textit{Pg}): substrate-concentrated eigenstrain
+           drives uniform delamination across the full width.
+           Effect~1: $t_{\mathrm{crit}}^{\mathrm{DH}}/t_{\mathrm{crit}}^{\mathrm{CH}}
+           = 2.004$ (exact match with $k_{\mathrm{ratio}}$).
+           Effect~2 varies with domain width (\cref{sec:wide}).}
+  \label{fig:coupled}
+\end{figure}
+
+\subsection{Key numerical results}
+
+\begin{table}[h]
+  \centering
+  \caption{Fracture time $t_{\mathrm{crit}}$ ($d_{\max}>0.5$) and final maximum
+           damage for the baseline domain ($W=100$\,\um).}
+  \label{tab:results}
+  \begin{tabular}{lccc}
+    \toprule
+    Case & $t_{\mathrm{crit}}$ [s] & $d_{\max}^{\mathrm{final}}$ & Ratio \\
+    \midrule
+    CH       & 56.0 & 0.955 & -- \\
+    DH-base  & 112.2 & 0.955 & $2.004$ \\
+    DH$+$\textit{Pg} & 38.1 & 0.958 & $0.680$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Effect~2 ($t_{\mathrm{crit}}^{\mathrm{DH}+Pg}/t_{\mathrm{crit}}^{\mathrm{CH}} = 0.680$):
+despite a $2\times$ slower growth rate, the \textit{Pg}-substrate eigenstrain
+concentration drives delamination \emph{faster} than CH in the narrow domain
+where edge effects amplify substrate stresses.
+
+\subsection{Wide domain ($W = 300$\,\um)}
+\label{sec:wide}
+
+\begin{table}[h]
+  \centering
+  \caption{Same cases with $W=300$\,\um, $N_x=300$, $N_z=80$.}
+  \label{tab:wide}
+  \begin{tabular}{lccc}
+    \toprule
+    Case & $t_{\mathrm{crit}}$ [s] & $d_{\max}^{\mathrm{final}}$ & Ratio \\
+    \midrule
+    CH       & 27.0 & 0.966 & -- \\
+    DH-base  & 54.1 & 0.966 & $2.004$ \\
+    DH$+$\textit{Pg} & 34.1 & 0.956 & $1.262$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+In the wider domain, the interior is shielded from edge effects.
+Effect~2 reverses ($1.262 > 1$): the slower DH growth rate now
+dominates over the \textit{Pg} substrate concentration.
+\emph{Domain width is therefore a key model parameter.}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Parameter Sensitivity ($\ell$, $G_c$)}
+\label{sec:sensitivity}
+
+\cref{fig:params} shows how the critical eigenstrain $\ac$ and the fracture
+time $t_{\mathrm{crit}}$ depend on the length scale $\ell$ and fracture energy $\Gc$
+at a fixed physical growth rate $\dot\alpha = K_{\mathrm{eff}}^{\mathrm{CH,base}}
+= 3.13\times10^{-4}$\,\invsec\ (prescribed-eigenstrain mode, CH case,
+$N_x=120$, $N_z=80$).
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{param_study_thesis.pdf}
+  \caption{\textbf{Left}: $\ac = \sqrt{\Gc(1-\nu)/(2E\ell)}$ over the
+           $(\Gc, \ell)$ grid.
+           \textbf{Centre}: resulting fracture time $t_{\mathrm{crit}}$
+           (numbers in cells, seconds); $t_{\mathrm{crit}} \propto \ac$.
+           \textbf{Right}: $d_{\max}(t)$ curves for varying $\ell$ at fixed
+           $\Gc = 10^{-5}$\,J/m$^2$.
+           Dashed box marks the baseline parameters.}
+  \label{fig:params}
+\end{figure}
+
+\subsection{Scaling law}
+
+From \cref{eq:alphac} and \cref{eq:pde} and the prescribed-eigenstrain limit:
+\begin{equation}
+  t_{\mathrm{crit}} \propto \ac = \sqrt{\frac{\Gc(1-\nu)}{2E\ell}},
+  \label{eq:scaling}
+\end{equation}
+confirmed numerically over the full $4\times4$ grid (\cref{fig:params}, centre).
+
+\subsection{Length-scale effect}
+
+Larger $\ell$ lowers $\ac$ and therefore \emph{accelerates} fracture at fixed
+growth rate --- a counterintuitive result that arises because a wider diffuse
+damage zone reaches the AT2 activation threshold at a smaller eigenstrain.
+In the limit $\ell \to 0$ (sharp crack), $\ac \to \infty$ and the model
+predicts no fracture for finite eigenstrains, consistent with the sharp-crack
+Griffith theory.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Summary and Open Points}
+\label{sec:summary}
+
+\begin{itemize}
+  \item Fully-coupled AT2/Q4-FEM staggered solver implemented and verified:
+        $t_{\mathrm{crit}}^{\mathrm{DH}}/t_{\mathrm{crit}}^{\mathrm{CH}}
+        = 2.004$ (exact, \cref{eq:alphac} and \cref{eq:scaling}).
+  \item Dominant fracture mode is \emph{substrate delamination}
+        (compressive lateral eigenstrain drives interfacial failure), not
+        channeling.
+  \item Effect~2 (\textit{Pg} substrate) is geometry-dependent: $0.680$ at
+        $W/L=1.67$, $1.262$ at $W/L=5$; domain width must be matched to
+        experiment.
+  \item Scaling law $t_{\mathrm{crit}} \propto \sqrt{\Gc/\ell}$ provides a
+        direct experimental handle: measuring fracture time under controlled
+        growth rates constrains the ratio $\Gc/\ell$.
+\end{itemize}
+
+\noindent\textbf{Open points:}
+\begin{enumerate}
+  \item Spatial heterogeneity in $\alpha(x,z,t)$ to nucleate multiple
+        substrate cracks and predict crack spacing.
+  \item Tensile/compressive split of $\psiE$ (Miehe et al.\ 2010) for mixed-mode
+        fracture near the substrate corners.
+  \item Experimental calibration of $\Gc$ and $\ell$ from biofilm
+        detachment assays (AFM-based adhesion energy).
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Code Availability}
+
+All simulation and plotting scripts are in the
+\texttt{pde-fem-biofilm} repository (\href{https://github.com/keisuke58/pde-fem-biofilm}{keisuke58/pde-fem-biofilm}):
+\begin{itemize}
+  \item \texttt{phase\_field\_at2\_2d\_sparse.py} --- solver (prescribed + coupled modes)
+  \item \texttt{plot\_at2\_thesis.py} --- produces \cref{fig:coupled}
+  \item \texttt{plot\_param\_study\_thesis.py} --- produces \cref{fig:params}
+\end{itemize}
+Run environment: Python~3.12, \texttt{scipy}~1.13, \texttt{matplotlib}~3.9,
+TeX~Live~2025 (lmodern).
+
+\end{document}
