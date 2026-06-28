@@ -415,11 +415,19 @@ def main():
     parser.add_argument("--plot",    action="store_true")
     parser.add_argument("--coupled", action="store_true",
                         help="full 2-D mechanical coupling via Q4 FEM each step")
-    parser.add_argument("--nx",      type=int, default=120)
-    parser.add_argument("--nz",      type=int, default=80)
-    parser.add_argument("--n-steps", type=int, default=N_STEPS)
+    parser.add_argument("--nx",      type=int,   default=120)
+    parser.add_argument("--nz",      type=int,   default=80)
+    parser.add_argument("--n-steps", type=int,   default=N_STEPS)
     parser.add_argument("--save",    default="phase_field_at2_2d_coupled.pdf")
+    parser.add_argument("--width",   type=float, default=None,
+                        help="domain width [m] (default 100e-6)")
+    parser.add_argument("--length",  type=float, default=None,
+                        help="film thickness [m] (default 60e-6)")
     args = parser.parse_args()
+
+    global W, L
+    if args.width:  W = args.width
+    if args.length: L = args.length
 
     Nx, Nz = args.nx, args.nz
     hx = W / (Nx - 1);  hz = L / (Nz - 1)
