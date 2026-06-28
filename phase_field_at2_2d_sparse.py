@@ -2,16 +2,23 @@
 phase_field_at2_2d_sparse.py
 ============================
 2-D AT2 phase-field fracture using scipy.sparse (structured FD grid).
-Same physics as phase_field_at2_2d.py but no FEniCSx dependency.
 
-PDE (damage field d, scalar):
-  -G_c·ℓ·Δd + (G_c/ℓ + 2H)·d = 2H     Neumann on all boundaries
-  H(x,z,t) = max_{s≤t} ½E·α(x,z,s)²    irreversibility
+Variational energy functional (AT2, Miehe et al. 2010):
+  E(u,d) = ∫ [g(d)ψ_e + G_c/(2ℓ)(d² + ℓ²|∇d|²)] dΩ
+  g(d)   = (1-d)²  (quadratic degradation)
+  ψ_e    = E/(1-ν)·α²  (biaxial plane-stress: ε_11=ε_22=0, σ_33=0)
 
-Discretisation: 5-point FD on structured Nx×Nz grid.
-2-D Laplacian via Kronecker product of 1-D Neumann operators.
+Euler–Lagrange PDE for d (with irreversibility via history field H):
+  -G_c·ℓ·Δd + (G_c/ℓ + 2H)·d = 2H     Neumann BCs: ∇d·n=0
+  H(x,z,t) = max_{s≤t} E/(1-ν)·α(x,z,s)²    (undegraded energy, standard staggered)
+
+Critical eigenstrain (analytic):
+  α_c = sqrt(G_c(1-ν) / (2Eℓ))    from ψ_e(α_c) = G_c/(2ℓ)
+
+Discretisation: 5-point FD, Nx×Nz grid, h ≤ ℓ/2 required for accuracy.
+2-D Laplacian via Kronecker product of 1-D Neumann ghost-node operators.
 System matrix = G_c·ℓ·LAP (fixed) + diag(G_c/ℓ + 2H) (updated each step).
-Solve with scipy.sparse.linalg.spsolve (direct, exact for moderate grids).
+Solve: scipy.sparse.linalg.spsolve (direct, exact for moderate grids).
 """
 from __future__ import annotations
 
@@ -204,8 +211,12 @@ def main():
     print("=" * 62)
     print("AT2 Phase-Field 2-D: Biofilm (scipy.sparse FD)")
     print("=" * 62)
+    hx = W / (Nx - 1);  hz = L / (Nz - 1)
     print(f"  E={E_BIO:.0f} Pa  G_c={G_C:.1e} J/m²  ℓ={ELL*1e6:.0f} µm")
     print(f"  Domain {W*1e6:.0f}×{L*1e6:.0f} µm  grid {Nx}×{Nz}={Nx*Nz} nodes")
+    print(f"  h_x={hx*1e6:.2f} µm  h_z={hz*1e6:.2f} µm  h/ℓ_x={hx/ELL:.2f}  h/ℓ_z={hz/ELL:.2f}")
+    if max(hx, hz) > ELL / 2:
+        print("  WARNING: h > ell/2 -- increase --nx/--nz for accuracy")
     print(f"  α_c={ALPHA_C:.4f} (biaxial, ν={NU})  k_ratio={K_RATIO:.2f}")
     print()
 
