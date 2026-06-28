@@ -141,8 +141,9 @@ def run(k_base: float, profile: str,
         alpha   = k_field * t
         # psi_e = E/(1-nu)*alpha^2: biaxial plane-stress elastic energy density
         # (sigma_biax=-E/(1-nu)*alpha, eps_mech_11=eps_mech_22=-alpha, sigma_33=0)
-        # Prescribed-eigenstrain approx: mechanical equilibrium not re-solved with
-        # degraded stiffness. H uses undegraded energy -- standard AT2 staggered.
+        # No tensile/compressive split: thin-film channeling fracture is energy-driven
+        # (Hutchinson & Suo 1991); full psi_e is standard for growth-mismatch problems.
+        # Prescribed-eigenstrain approx: H uses undegraded energy -- AT2 staggered std.
         psi_e   = E_BIO / (1.0 - NU) * alpha**2
         H       = np.maximum(H, psi_e)
 
