@@ -253,7 +253,7 @@ def run_rag() -> tuple[str, dict]:
 def print_master_summary(section_results: dict[str, tuple[str, dict]]):
     banner("MASTER SUMMARY")
 
-    total = {"pass": 0, "info": 0, "warn": 0, "fail": 0}
+    total = {"pass": 0, "info": 0, "warn": 0, "fail": 0, "skip": 0}
     rows  = []
 
     for name, (_, counts) in section_results.items():
@@ -261,13 +261,17 @@ def print_master_summary(section_results: dict[str, tuple[str, dict]]):
         i = counts.get("info",  0)
         w = counts.get("warn",  0) + counts.get("drift", 0)
         f = counts.get("fail",  0)
+        sk = counts.get("skip", 0)
         t = counts.get("elapsed", 0)
         total["pass"] += p
         total["info"] += i
         total["warn"] += w
         total["fail"] += f
+        total["skip"] += sk
 
-        if f > 0:
+        if sk > 0 and (p + i + w + f) == 0:
+            status = "⏭️ "
+        elif f > 0:
             status = "❌"
         elif w > 0:
             status = "⚠️ "
@@ -284,6 +288,9 @@ def print_master_summary(section_results: dict[str, tuple[str, dict]]):
     print(f"  {'-'*55}")
     print(f"  {'TOTAL':<18} {total['pass']:>4} {total['info']:>4} "
           f"{total['warn']:>4} {total['fail']:>4}")
+    if total["skip"] > 0:
+        print(f"  ⏭️  {total['skip']} section(s) SKIPPED — external inputs absent "
+              f"(Abaqus extracts / sibling repos / author workspace).")
 
     print()
     if total["fail"] > 0:
@@ -293,7 +300,7 @@ def print_master_summary(section_results: dict[str, tuple[str, dict]]):
         print("  🟡 STATUS: WARN — investigate ⚠️ items before submission")
         rc = 1
     else:
-        print("  ✅ STATUS: ALL CLEAR")
+        print("  ✅ STATUS: ALL CLEAR" + (" (runnable subset)" if total["skip"] else ""))
         if total["info"] > 0:
             print(f"     ℹ️  {total['info']} info item(s) — review cross_check output above.")
         rc = 0
@@ -329,6 +336,39 @@ MODE_SECTIONS = {
     "submit": ["eq", "fig", "reg", "thesis", "papers", "ci", "rag"],
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Environment preflight
+# ─────────────────────────────────────────────────────────────────────────────
+# Several sections consume inputs produced outside this repository — Abaqus ODB
+# extracts (gitignored), sibling repos (../nife UMAT sources), a regression
+# baseline (run --baseline), and the thesis/paper LaTeX + RAG index in the
+# author's workspace (/home/nishioka/...). In an isolated checkout or CI those
+# inputs are legitimately absent: the section can be neither PASS nor FAIL, so it
+# is reported as SKIPPED (neutral) rather than crashing to a misleading ❌ FAIL.
+# Use --strict-env to force every requested section to run regardless.
+_FEM = HERE.parent
+_NIFE_ABQ = _FEM.parent / "nife" / "masterarbeit_ansys_fem" / "coupling_prototype" / "abaqus"
+_THESIS = Path("/home/nishioka/LUHsummer26/1030_Masterarbeit")
+_KEIO = Path("/home/nishioka/LUHsummer26/1050_Keio/kadaikenkyu2026")
+_RAG = Path("/home/nishioka/LUHsummer26/tools/ikm_rag")
+
+# section-key → list of (path, human reason). ALL must exist for the section to run.
+SECTION_PREREQS: dict[str, list[tuple[Path, str]]] = {
+    "eq":     [(_NIFE_ABQ / "umat_klempt_voigt.f", "nife UMAT sources (sibling repo)")],
+    "fig":    [(_FEM / "klempt_extract_tooth_commensal_hobic.csv", "Abaqus ODB extract CSVs (run FEM jobs)")],
+    "reg":    [(_FEM / "regression_golden.json", "regression baseline (run regression_guard.py --baseline)")],
+    "thesis": [(_THESIS / "chapters", "thesis LaTeX chapters (author workspace)")],
+    "papers": [(_KEIO / "hamilton_biofilm_nishioka.tex", "paper LaTeX sources (author workspace)")],
+    "rag":    [(_RAG, "RAG index (author workspace)")],
+    # "ci" prerequisites are committed in-repo (_posterior_ci/*.json) → always runs.
+}
+
+
+def missing_prereqs(section: str) -> list[str]:
+    """Return human reasons for any absent prerequisite of a section ([] if ok)."""
+    return [f"{reason} — {path}" for path, reason in SECTION_PREREQS.get(section, [])
+            if not path.exists()]
+
 
 def _parse_args_and_mode(argv=None):
     """Parse args and return (to_run: dict[key→bool], mode_label: str)."""
@@ -354,27 +394,30 @@ def _parse_args_and_mode(argv=None):
     ap.add_argument("--papers", action="store_true")
     ap.add_argument("--ci",     action="store_true")
     ap.add_argument("--rag",    action="store_true")
+    ap.add_argument("--strict-env", action="store_true",
+                    help="Run sections even if external inputs are absent (default: SKIP them)")
     args = ap.parse_args(argv)
+    se = args.strict_env
 
     # Mode flags take priority over individual flags
     if args.submit:
-        return {k: True for k in MODE_SECTIONS["submit"]}, "--submit"
+        return {k: True for k in MODE_SECTIONS["submit"]}, "--submit", se
     if args.strict:
-        return {k: True for k in MODE_SECTIONS["strict"]}, "--strict"
+        return {k: True for k in MODE_SECTIONS["strict"]}, "--strict", se
     if args.quick:
-        return {k: True for k in MODE_SECTIONS["quick"]}, "--quick"
+        return {k: True for k in MODE_SECTIONS["quick"]}, "--quick", se
 
     # Individual flags
     individual = {k: getattr(args, k) for k in SECTIONS if hasattr(args, k)}
     if any(individual.values()):
-        return {k: v for k, v in individual.items() if v}, "custom"
+        return {k: v for k, v in individual.items() if v}, "custom", se
 
     # Default: strict (quick + CI) when no args given
-    return {k: True for k in MODE_SECTIONS["strict"]}, "--strict (default)"
+    return {k: True for k in MODE_SECTIONS["strict"]}, "--strict (default)", se
 
 
 def main():
-    to_run, mode_label = _parse_args_and_mode()
+    to_run, mode_label, strict_env = _parse_args_and_mode()
 
     section_results = {}
     for key in SECTIONS:
@@ -382,6 +425,12 @@ def main():
             continue
         label, fn = SECTIONS[key]
         banner(label)
+        miss = [] if strict_env else missing_prereqs(key)
+        if miss:
+            for r in miss:
+                print(f"⏭️  SKIP  {r}")
+            section_results[key] = ("", {"skip": 1, "elapsed": 0.0})
+            continue
         out, counts = fn()
         section_results[key] = (out, counts)
 
@@ -392,7 +441,7 @@ def main():
 
 if __name__ == "__main__":
     # Live output: don't redirect, just run each section directly
-    to_run, mode_label = _parse_args_and_mode()
+    to_run, mode_label, strict_env = _parse_args_and_mode()
 
     import warnings; warnings.filterwarnings("ignore")
     import os
@@ -407,6 +456,14 @@ if __name__ == "__main__":
             continue
         label, fn = SECTIONS[key]
         banner(label)
+        miss = [] if strict_env else missing_prereqs(key)
+        if miss:
+            for r in miss:
+                print(f"⏭️  SKIP  {r}")
+            print("      (external input absent — use --strict-env to force)")
+            section_outputs[key] = ("", {"skip": 1, "elapsed": 0.0})
+            timings[key] = 0.0
+            continue
         t0 = time.time()
         buf = io.StringIO()
         try:
