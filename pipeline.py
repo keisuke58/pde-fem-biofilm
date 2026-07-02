@@ -76,7 +76,7 @@ CONDITION_RUNS: dict[str, Path] = {
     "dysbiotic_static": _DATA_ROOT / "Dysbiotic_Static_20260207_203752",
 }
 
-STAGE_ORDER = ["posterior", "forward", "stress_ci", "risk"]
+STAGE_ORDER = ["posterior", "forward", "stress_ci", "risk", "risk_field"]
 
 
 # ── config ────────────────────────────────────────────────────────────────────
@@ -86,6 +86,7 @@ class PipelineConfig:
     geom: str = "tooth"
     stages: list[str] = field(default_factory=lambda: ["stress_ci", "risk"])
     risk: dict = field(default_factory=dict)
+    risk_field: dict = field(default_factory=dict)
     posterior: dict = field(default_factory=dict)
     forward: dict = field(default_factory=dict)
     stress_ci: dict = field(default_factory=dict)
@@ -235,11 +236,39 @@ def stage_risk(cfg: PipelineConfig, out_dir: Path, dry_run: bool) -> StageResult
     return StageResult("risk", "ran", f"summary -> {summary_path}")
 
 
+def stage_risk_field(cfg: PipelineConfig, out_dir: Path, dry_run: bool) -> StageResult:
+    """Fig4 per-location risk field — needs a posterior stress stack (ensemble output)."""
+    rfcfg = cfg.risk_field
+    stack_dir = rfcfg.get("stack_dir")
+    if not stack_dir:
+        return StageResult("risk_field", "skipped", "no risk_field.stack_dir in config (needs FEM ensemble)")
+    stack_dir = Path(stack_dir)
+    if not (stack_dir / "sigma_stack.npy").exists():
+        return StageResult("risk_field", "skipped", f"stack absent: {stack_dir}/sigma_stack.npy")
+    if dry_run:
+        return StageResult("risk_field", "dry-run", f"risk_field on {stack_dir}")
+
+    import risk_field as rfmod
+
+    sigma, coords, line = rfmod.load_stack(stack_dir)
+    summary = rfmod.build_fig4(
+        sigma, coords,
+        tag=rfcfg.get("tag", f"{cfg.geom}_{cfg.condition}"),
+        threshold_kpa=rfcfg.get("threshold_kpa", cfg.risk.get("threshold_kpa", 5.0)),
+        line_nodes=line,
+        out_dir=out_dir,
+        make_plots=not rfcfg.get("no_plot", False),
+    )
+    rfmod._print_summary(summary)
+    return StageResult("risk_field", "ran", f"summary -> {out_dir}/risk_field_summary_{summary['tag']}.json")
+
+
 STAGES = {
     "posterior": stage_posterior,
     "forward": stage_forward,
     "stress_ci": stage_stress_ci,
     "risk": stage_risk,
+    "risk_field": stage_risk_field,
 }
 
 

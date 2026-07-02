@@ -123,9 +123,16 @@ runs the committed-input stages through to a risk summary + figures.
       `JAXFEM/risk_metric.py` (empirical posterior exceedance + 90% bootstrap CI +
       threshold-sweep survival curve). Unit-tested (`tests/test_risk_metric.py`,
       8 passing). See [PIPELINE.md](PIPELINE.md).
-- [ ] Produce Fig4 (credible-band along a pocket line + jaw-surface risk map) —
-      the per-location field version; the current metric is on the scalar
-      peak-Mises posterior (per condition/geometry).
+- [x] Fig4 machinery implemented in `JAXFEM/risk_field.py`: per-location stress
+      credible band along a pocket line + jaw-surface risk map `P[σ_node > τ]`,
+      consuming a `sigma_stack (n_samples,n_nodes)` + `coords` ensemble stack
+      (same contract as `aggregate_di_credible.py`). Unit-tested
+      (`tests/test_risk_field.py`, 9 passing) and wired as the pipeline
+      `risk_field` stage; `--demo` runs end-to-end on synthetic data. See
+      [PIPELINE.md](PIPELINE.md).
+- [ ] **Remaining (needs your workspace):** run the real posterior FEM ensemble
+      to produce `sigma_stack.npy` per condition, then generate the actual Fig4.
+      The machinery is ready; only the Abaqus ensemble run is missing here.
 
 ### T2.4 — Report generation
 - [ ] Auto-generate a per-condition PDF/figure set (no full UI needed) —

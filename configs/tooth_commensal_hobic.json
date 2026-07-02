@@ -1,8 +1,10 @@
 {
   "condition": "commensal_hobic",
   "geom": "tooth",
-  "stages": ["posterior", "forward", "stress_ci", "risk"],
+  "stages": ["posterior", "forward", "stress_ci", "risk", "risk_field"],
   "risk": {"threshold_kpa": 5.0, "reference_kpa": [2.5, 5.0, 10.0]},
+  "risk_field": {"stack_dir": "_di_credible/commensal_hobic", "threshold_kpa": 5.0, "tag": "tooth_commensal_hobic"},
   "posterior": {"n_samples": 20, "nx": 15, "ny": 15, "nz": 15},
-  "forward": {"quick": false, "no_inp": true}
+  "forward": {"quick": false, "no_inp": true},
+  "stress_ci": {"recompute": false}
 }

@@ -46,6 +46,7 @@ whose inputs are committed.
 | `forward` | `run_end_to_end_pipeline.py` | PDE α → eigenstrain → INP | `theta_MAP.json` (sibling repo) |
 | `stress_ci` | `JAXFEM/posterior_klempt_stress_ci.py` | `_posterior_ci/klempt_stress_ci_{geom}.json` | 0D samples (`_ci_0d_results`, gitignored) |
 | `risk` | `JAXFEM/risk_metric.py` | `risk_summary_{geom}.json` + figures | the CI json above (**committed**) |
+| `risk_field` | `JAXFEM/risk_field.py` | Fig4: `risk_field_summary_*.json` + CSV + figures | posterior stress **stack** (`sigma_stack.npy`, FEM ensemble) |
 
 The `risk` stage runs fully in a fresh checkout because the posterior stress
 samples are committed in `JAXFEM/_posterior_ci/`.
@@ -102,6 +103,25 @@ Example (tooth, τ = 5 kPa): CH (commensal-HOBIC, early So-dominant biofilm)
 carries the highest growth-stress exceedance (P ≈ 1.0), consistent with the
 headline `σ_CH/σ_DH` result; DS ≈ 0. Outputs go to `JAXFEM/_risk/` (gitignored;
 regenerate on demand — the summary json is the durable artifact).
+
+### Fig4 — per-location risk field (`JAXFEM/risk_field.py`)
+
+Lifts the scalar metric to a **spatial field** for the paper's Fig4, consuming a
+posterior stress stack `sigma_stack.npy (n_samples, n_nodes)` + `coords.npy
+(n_nodes, 3)` (same layout as `aggregate_di_credible.py`). Produces:
+
+- **(a)** a stress **credible band** (mean + p05/p95) along a periodontal-pocket
+  line (auto-extracted as a thin slab along the point-cloud principal axis, or
+  from an explicit `line_nodes.npy`);
+- **(b)** a jaw-surface **risk map** `P[σ_node > τ]` per node (PNG + a per-node
+  `x,y,z,mean,p05,p50,p95,risk` CSV for overlay on the mesh).
+
+Because the threshold is uncalibrated, the map is a **relative** (condition-to-
+condition) read-out and the credible band is the primary uncertainty display.
+Try it with no ensemble data: `python JAXFEM/risk_field.py --demo` runs
+end-to-end on a synthetic pocket-ridge stack. As a pipeline stage it consumes
+`risk_field.stack_dir` (default `_di_credible/{condition}`) and SKIPs until the
+ensemble has written `sigma_stack.npy` there.
 
 ---
 
