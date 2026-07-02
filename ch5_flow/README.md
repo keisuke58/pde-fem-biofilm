@@ -34,8 +34,12 @@ gs -dBATCH -dNOPAUSE -sDEVICE=png16m -r200 -dTextAlphaBits=4 -dGraphicsAlphaBits
 
 Packages: `amsmath, amssymb, mathptmx` (Times), `bm`, TikZ libraries
 `shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc`.
-Embed in the thesis with
-`\resizebox{\linewidth}{!}{\input{ch5_flow/flow_operator_splitting.tex}}`.
+
+**For print / submission, embed the vector source, not the PNG** —
+`\resizebox{\linewidth}{!}{\input{ch5_flow/flow_operator_splitting.tex}}` (or the
+`*_standalone.pdf`). The `assets/*.png` are 300 dpi rasters for on-screen preview
+(GitHub / slides); the `.tex`/PDF is resolution-independent and matches the
+thesis body font when `\input`.
 
 > Labels are in English to match `umat_flow/` and the `Times` font (a Latin
 > serif). Ask if Japanese (CJK) versions are needed — those require `xelatex`
