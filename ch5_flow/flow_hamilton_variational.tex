@@ -1,0 +1,55 @@
+% flow_hamilton_variational.tex — extended Hamilton principle: energy/variational structure
+% One functional Pi -> stationarity delta Pi = 0 -> mechanics (left) & material-point (right).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_hamilton_variational.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=5.0cm, minimum height=0.85cm, inner sep=4pt},
+  Ntop/.style= {N, fill=purple!12, text width=8.6cm},
+  Nen/.style = {N, fill=cyan!12},
+  Nop/.style = {draw, ellipse, align=center, thick, fill=yellow!22,
+                inner sep=3pt, font=\small, text width=4.6cm},
+  Nmech/.style={N, fill=orange!15, text width=5.4cm},
+  Nbio/.style ={N, fill=teal!14, text width=5.4cm},
+  ar/.style = {-Stealth, thick},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Ntop] (pi) {%
+  \textbf{Total potential functional} $\Pi[\mathbf u,\bm\phi,\alpha]$\\[1pt]
+  {\scriptsize the system's total (free) energy — one scalar}};
+
+\node[Nen, below left=1.2cm and 0.2cm of pi] (el) {%
+  \textbf{elastic strain energy}\\ $\Pi_{\mathrm{el}}(\mathbf F_e)$};
+\node[Nen, below=1.2cm of pi] (ch) {%
+  \textbf{chemical / growth potential}\\ $\Pi_{\mathrm{ch}}(\bm\phi,\alpha)$};
+\node[Nen, below right=1.2cm and 0.2cm of pi] (di) {%
+  \textbf{dissipation}\\ $\mathcal{D}$ (interface damage, viscosity)};
+
+\node[Nop, below=1.15cm of ch] (var) {%
+  first variation / stationarity\\ $\delta\Pi=0$\;\;(one operation)};
+
+\node[Nmech, below left=1.15cm and -0.2cm of var] (mech) {%
+  \textbf{Mechanical balance}\\[1pt]
+  $\nabla\!\cdot\bm\sigma=\mathbf 0$\;
+  (Cauchy stress, $\mathbf F=\mathbf F_e\mathbf F_g$)};
+\node[Nbio, below right=1.15cm and -0.2cm of var] (bio) {%
+  \textbf{Material-point equations}\\[1pt]
+  growth $\dot\alpha=k_\alpha\phi$ \& cross-diffusion evolution of $\bm\phi$};
+
+\draw[ar] (pi.south) -- ++(0,-0.3) coordinate (s1);
+\draw[ar] (s1) -| (el.north);
+\draw[ar] (s1) -- (ch.north);
+\draw[ar] (s1) -| (di.north);
+\draw[ar] (el.south) |- (var.west);
+\draw[ar] (ch.south) -- (var.north);
+\draw[ar] (di.south) |- (var.east);
+\draw[ar] (var.south) -- ++(0,-0.3) coordinate (s2);
+\draw[ar] (s2) -| (mech.north) node[lbl,pos=0.25,above]{$\delta_{\mathbf u}\Pi$};
+\draw[ar] (s2) -| (bio.north)  node[lbl,pos=0.25,above]{$\delta_{\bm\phi,\alpha}\Pi$};
+
+\node[font=\scriptsize\itshape, text=gray!55, align=center, text width=8cm]
+      at ($(mech.south)!0.5!(bio.south) + (0,-0.45)$)
+  {mechanics and biology fall out of the \emph{same} energy — simultaneously};
+
+\end{tikzpicture}

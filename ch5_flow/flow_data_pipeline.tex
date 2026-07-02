@@ -1,0 +1,48 @@
+% flow_data_pipeline.tex — end-to-end data pipeline: in-vitro images -> inference -> CAE
+% Usage: \resizebox{\linewidth}{!}{\input{flow_data_pipeline.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=4pt, align=center, thick,
+               text width=3.55cm, minimum height=2.5cm, inner sep=5pt},
+  S1/.style = {N, fill=teal!13},
+  S2/.style = {N, fill=cyan!13},
+  S3/.style = {N, fill=orange!14},
+  S4/.style = {N, fill=purple!12},
+  ar/.style = {-Stealth, very thick, gray!55!black},
+  hd/.style = {font=\footnotesize\bfseries},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[S1] (s1) {%
+  {\footnotesize\bfseries Step 1 — Observation}\\[3pt]
+  confocal (FISH) $Z$-stack raw images\\[3pt]
+  $\Rightarrow$ extract depth composition $\phi(z)$};
+
+\node[S2, right=1.3cm of s1] (s2) {%
+  {\footnotesize\bfseries Step 2 — Inference}\\[3pt]
+  Bayesian TMCMC,\\ JAX / GPU-parallel\\[3pt]
+  $\Rightarrow$ identify 15-D parameters $\bm\theta$};
+
+\node[S3, right=1.3cm of s2] (s3) {%
+  {\footnotesize\bfseries Step 3 — Mapping}\\[3pt]
+  transcribe composition rule onto the FEM 3-D mesh\\[3pt]
+  $\Rightarrow$ initial conditions $+$ UMAT growth driver};
+
+\node[S4, right=1.3cm of s3] (s4) {%
+  {\footnotesize\bfseries Step 4 — Prediction}\\[3pt]
+  stress concentration at the implant interface\\[3pt]
+  $\Rightarrow$ cohesive-element delamination growth};
+
+\draw[ar] (s1) -- node[lbl,above]{$\phi(z)$} (s2);
+\draw[ar] (s2) -- node[lbl,above]{$\bm\theta$} (s3);
+\draw[ar] (s3) -- node[lbl,above]{$\alpha$-field} (s4);
+
+\node[hd, above=0.15cm of s1.north, anchor=south, text=teal!45!black] {DATA};
+\node[hd, above=0.15cm of s2.north, anchor=south, text=cyan!45!black] {INFERENCE};
+\node[hd, above=0.15cm of s3.north, anchor=south, text=orange!70!black] {MODEL};
+\node[hd, above=0.15cm of s4.north, anchor=south, text=purple!60!black] {CAE};
+
+\node[font=\scriptsize\itshape, text=gray!55, below=0.3cm of s2.south, xshift=2.3cm]
+  {data-driven modelling: from in-vitro raw data $\to$ inference $\to$ simulation \& life prediction};
+
+\end{tikzpicture}

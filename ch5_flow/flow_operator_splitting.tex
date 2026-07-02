@@ -1,0 +1,84 @@
+% flow_operator_splitting.tex — §5.3.2 Lie operator-splitting RD-PDE solver
+% phi^{n+1} = T_{dt} ∘ R_{dt}(phi^n): stiff reaction sub-step + conservative transport
+% Usage: \resizebox{\linewidth}{!}{\input{flow_operator_splitting.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=8.2cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nr/.style = {N, fill=orange!14},   % reaction (stiff)
+  Nt/.style = {N, fill=cyan!12},     % transport
+  Ns/.style = {N, fill=gray!12},     % stability
+  Nout/.style={N, fill=purple!10},
+  dec/.style= {draw, diamond, aspect=2.3, align=center, thick,
+               text width=3.1cm, fill=yellow!22, inner sep=1pt, font=\footnotesize},
+  ar/.style = {-Stealth, thick},
+  lar/.style= {-Stealth, thick, orange!60!black},
+  bar/.style= {-Stealth, thick, red!60!black},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{Input} — state at $t^{n}$:\;
+  volume-fraction field $\bm\phi^{n}=\{\phi_i(z)\}$ on all grid points\\[1pt]
+  {\scriptsize Lie split:\; $\bm\phi^{n+1}=\mathcal{T}_{\Delta t}\circ\mathcal{R}_{\Delta t}(\bm\phi^{n})$}};
+
+% ── Reaction sub-step ──────────────────────────────────────────────
+\node[Nr, below=1.15cm of in] (r1) {%
+  \textbf{Reaction sub-step $\mathcal{R}_{\Delta t}$} — pointwise (0-D per grid point)\\[2pt]
+  extract NSP / Hamilton material-point equations $\dot{\bm\phi}=\bm r(\bm\phi)$};
+
+\node[Nr, below=0.45cm of r1] (r2) {%
+  \textbf{implicit (backward) Euler} for the \emph{stiff} system,\\
+  incl.\ log-barrier penalty $\Psi_{\mathrm{bar}}(\bm\phi)$ (keeps $\phi_i>0$)};
+
+\node[dec, below=0.7cm of r2] (rconv) {Newton\\ converged?};
+
+\node[Nr, below=0.7cm of rconv] (rout) {$\bm\phi^{\ast}=\mathcal{R}_{\Delta t}(\bm\phi^{n})$ \;(post-reaction)};
+
+% ── Transport sub-step ─────────────────────────────────────────────
+\node[Nt, below=1.15cm of rout] (t1) {%
+  \textbf{Transport sub-step $\mathcal{T}_{\Delta t}$} — initial value $\bm\phi^{\ast}$\\[2pt]
+  volume-filling (size-exclusion) cross-diffusion flux $J_i$\\
+  conservative finite-volume cell-face evaluation ($I\pm\tfrac12$)};
+
+\node[Nt, below=0.45cm of t1] (t2) {%
+  advection term — first-order \textbf{upwind};\;
+  $\phi_i^{\ast\ast}=\phi_i^{\ast}-\tfrac{\Delta t}{\Delta z}\big(J_{i,I+\frac12}-J_{i,I-\frac12}\big)$};
+
+% ── Stability / advance ────────────────────────────────────────────
+\node[Ns, below=1.0cm of t2] (cfl) {%
+  \textbf{Stability check} — CFL for diffusion $+$ advection (Eq.\,5.5)};
+
+\node[dec, below=0.65cm of cfl] (cfld) {$\Delta t$ within\\ CFL bound?};
+
+\node[Nout, below=0.7cm of cfld] (out) {%
+  advance $t^{n+1}=t^{n}+\Delta t$,\quad $\bm\phi^{n+1}=\bm\phi^{\ast\ast}$
+  \;$\to$ next step};
+
+% ── arrows ─────────────────────────────────────────────────────────
+\draw[ar] (in) -- (r1);
+\draw[ar] (r1) -- (r2);
+\draw[ar] (r2) -- (rconv);
+\draw[lar] (rconv.east) -- ++(2.4,0) node[lbl,above]{no: iterate} |- (r2.east);
+\draw[ar] (rconv) -- node[lbl,right]{yes} (rout);
+\draw[ar] (rout) -- node[lbl,right]{$\bm\phi^{\ast}$ as IC} (t1);
+\draw[ar] (t1) -- (t2);
+\draw[ar] (t2) -- (cfl);
+\draw[ar] (cfl) -- (cfld);
+\draw[bar] (cfld.west) -- ++(-2.4,0) node[lbl,above]{no: clamp $\Delta t\!\downarrow$, redo step} |- (in.west);
+\draw[ar] (cfld) -- node[lbl,right]{yes} (out);
+
+% ── grouping boxes ─────────────────────────────────────────────────
+\begin{scope}[on background layer]
+  \node[draw=orange!45, fill=orange!4, rounded corners=7pt, inner sep=7pt,
+        fit=(r1)(r2)(rconv)(rout)] (bxR) {};
+  \node[draw=cyan!45, fill=cyan!4, rounded corners=7pt, inner sep=7pt,
+        fit=(t1)(t2)] (bxT) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=orange!70!black, above=2pt of bxR.north, anchor=south]
+  {$\mathcal{R}_{\Delta t}$ — stiff biochemical reaction (implicit, barrier-regularised)};
+\node[font=\scriptsize\bfseries, text=cyan!45!black, above=2pt of bxT.north, anchor=south]
+  {$\mathcal{T}_{\Delta t}$ — conservative transport (cross-diffusion $+$ upwind advection)};
+
+\end{tikzpicture}
