@@ -1,8 +1,10 @@
 {
   "condition": "commensal_static",
   "geom": "implant",
-  "stages": ["posterior", "forward", "stress_ci", "risk"],
+  "stages": ["posterior", "forward", "stress_ci", "risk", "risk_field"],
   "risk": {"threshold_kpa": 5.0, "reference_kpa": [2.5, 5.0, 10.0]},
+  "risk_field": {"stack_dir": "_di_credible/commensal_static", "threshold_kpa": 5.0, "tag": "implant_commensal_static"},
   "posterior": {"n_samples": 20, "nx": 15, "ny": 15, "nz": 15},
-  "forward": {"quick": false, "no_inp": true}
+  "forward": {"quick": false, "no_inp": true},
+  "stress_ci": {"recompute": false}
 }
