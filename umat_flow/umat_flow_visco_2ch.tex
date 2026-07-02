@@ -1,0 +1,102 @@
+% umat_flow_visco_2ch.tex — algorithm flow of umat_biofilm_visco_2ch.f
+% 2-channel Prony viscoelastic biofilm UMAT + isotropic growth.
+%   F = Fe_inf * Fg           (equilibrium spring)
+%   F = Fe_k * Fv_k * Fg      (k = 1,2  Maxwell branches)
+% Usage: \resizebox{\linewidth}{!}{\input{umat_flow_visco_2ch.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=7.2cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},          % Abaqus I/O
+  Nk/.style = {N, fill=gray!12},          % kinematics
+  Ne/.style = {N, fill=cyan!12},          % equilibrium branch
+  Nv/.style = {N, fill=blue!10},          % viscous branch
+  Nt/.style = {N, fill=orange!15},        % tangent
+  Ns/.style = {N, fill=purple!10},        % state store
+  dec/.style= {draw, diamond, aspect=2.2, align=center, thick,
+               text width=3.0cm, fill=yellow!20, inner sep=1pt, font=\footnotesize},
+  ar/.style = {-Stealth, thick},
+  lar/.style= {-Stealth, thick, blue!55!black},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{UMAT entry} (per integration point / increment)\\[2pt]
+  Abaqus $\to$ \texttt{DFGRD1}$=\mathbf F$,\; \texttt{STATEV(1:18)},\;
+  \texttt{TEMP},\,\texttt{DTEMP},\; \texttt{PROPS(1:8)},\; \texttt{DTIME}};
+
+\node[Nio, below=0.5cm of in] (props) {%
+  Read \texttt{PROPS}: $C_{10},C_{01},D_1,\eta_1,\eta_2,\alpha_1,\alpha_2,$ \texttt{mtype}\\[2pt]
+  Read \texttt{STATEV}: $\mathbf F_{v1}(1{:}9),\;\mathbf F_{v2}(10{:}18)$\;\;
+  $\to$ \texttt{INIT\_FV\_IF\_ZERO} ($\mathbf F_v\!\gets\!\mathbf I$ if $\mathrm{tr}\!\approx\!0$)};
+
+\node[Nk, below=0.5cm of props] (grow) {%
+  \textbf{Growth kinematics} \;$\alpha_g=\max(\texttt{TEMP}+\texttt{DTEMP},0)$\\[2pt]
+  $\mathbf F_g=(1+\alpha_g)\,\mathbf I$,\qquad
+  $\mathbf F_{\rm mech}=\mathbf F\,\mathbf F_g^{-1}=\mathbf F/(1+\alpha_g)$};
+
+% ── STRESS CORE ────────────────────────────────────────────────────
+\node[Ne, below=1.7cm of grow] (eq) {%
+  \textbf{Equilibrium spring} \;$C_{10}^{\infty}=C_{10}(1-\alpha_1-\alpha_2)$\\[2pt]
+  $\mathbf b_e=\mathbf F_{\rm mech}\mathbf F_{\rm mech}^{\!\top}$,\;
+  $J_e=\det\mathbf F_{\rm mech}$\\
+  $\boldsymbol\sigma_\infty=\tfrac1{J_e}\!\big[2C_{10}^{\infty}J_e^{-2/3}\mathrm{dev}\,\mathbf b_e
+   +\tfrac{2}{D_1}(J_e{-}1)J_e\,\mathbf I\big]$\;
+  {\scriptsize(+MR if \texttt{mtype})}};
+
+\node[Nv, below=0.5cm of eq] (b1) {%
+  \textbf{Maxwell branch $k{=}1$} \;$C_{10}^{1}=C_{10}\alpha_1$\;
+  (\texttt{MAXWELL\_BRANCH})\\[2pt]
+  trial $\mathbf F_{e1}=\mathbf F_{\rm mech}\mathbf F_{v1}^{-1}$;\;
+  $\boldsymbol\tau^{\rm dev}_1=2C_{10}^{1}J_e^{-2/3}\mathrm{dev}\,\mathbf b_{e1}$\\
+  backward Euler:\; $\mathbf F_{v1}^{\rm new}
+   =\big(\mathbf I+\tfrac{\Delta t}{2\eta_1 J_{e1}}\boldsymbol\tau^{\rm dev}_1\big)\mathbf F_{v1}$\;
+  $\to$ recompute $\boldsymbol\sigma_1=\boldsymbol\tau^{\rm dev}_1/J_{e1}$};
+
+\node[Nv, below=0.5cm of b1] (b2) {%
+  \textbf{Maxwell branch $k{=}2$} \;$C_{10}^{2}=C_{10}\alpha_2,\ \eta_2$\\[2pt]
+  same as branch 1 with $(\alpha_2,\eta_2)\to\mathbf F_{v2}^{\rm new},\ \boldsymbol\sigma_2$};
+
+\node[Ne, below=0.5cm of b2] (sum) {%
+  $\boldsymbol\sigma=\boldsymbol\sigma_\infty+\boldsymbol\sigma_1+\boldsymbol\sigma_2$
+  \;$\to$\; \texttt{STRESS} (Voigt);\quad
+  \texttt{SSE},\;\texttt{SPD}$=\sum_k$ dissipation $\ge 0$};
+
+% ── TANGENT ────────────────────────────────────────────────────────
+\node[Nt, below=1.05cm of sum] (tan) {%
+  \textbf{Consistent tangent} (Sun et al.\ 2008 perturbation)\\[2pt]
+  for $P=1..$\texttt{NTENS}: symmetric $\Delta\mathbf F^{(P)}=\tfrac12(\mathbf e_i\mathbf e_j^{\!\top}{+}\mathbf e_j\mathbf e_i^{\!\top})\mathbf F$,\;
+  $\varepsilon{=}10^{-7}$\\
+  re-run stress core with \emph{same} $\mathbf F_v^{\rm old}$ (frozen)\;$\to$
+  captures $\partial\mathbf F_v^{\rm new}/\partial\boldsymbol\varepsilon$\\
+  $\texttt{DDSDDE}(Q,P)=\big(\sigma_Q^{\rm pert}-\sigma_Q^{\rm base}\big)/\varepsilon$};
+
+\node[dec, below=0.7cm of tan] (loop) {$P<$\,\texttt{NTENS}?};
+
+\node[Ns, below=0.7cm of loop] (store) {%
+  \textbf{Store state}\; \texttt{STATEV(1:9)}$\gets\mathbf F_{v1}^{\rm new}$,\;
+  \texttt{STATEV(10:18)}$\gets\mathbf F_{v2}^{\rm new}$\\[2pt]
+  \texttt{RETURN}\; \texttt{STRESS},\,\texttt{DDSDDE},\,\texttt{SSE},\,\texttt{SPD}};
+
+% ── arrows ─────────────────────────────────────────────────────────
+\draw[ar] (in)   -- (props);
+\draw[ar] (props)-- (grow);
+\draw[ar] (grow) -- node[lbl,right]{$\mathbf F_{\rm mech}$} (eq);
+\draw[ar] (eq)   -- (b1);
+\draw[ar] (b1)   -- (b2);
+\draw[ar] (b2)   -- (sum);
+\draw[ar] (sum)  -- node[lbl,right]{base $\boldsymbol\sigma$} (tan);
+\draw[ar] (tan)  -- (loop);
+\draw[lar] (loop.east) -- ++(1.7,0) node[lbl,above]{yes: next $P$}
+             |- (tan.east);
+\draw[ar] (loop) -- node[lbl,right]{no} (store);
+
+\begin{scope}[on background layer]
+  \node[draw=cyan!45, fill=cyan!4, rounded corners=7pt, inner sep=8pt,
+        fit=(eq)(b1)(b2)(sum)] (core) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=cyan!45!black,
+      above=3pt of core.north, anchor=south]
+  {\texttt{BIOFILM\_STRESS\_CORE\_2CH}\; ($\boldsymbol\sigma=\boldsymbol\sigma_\infty+\boldsymbol\sigma_1+\boldsymbol\sigma_2$)};
+
+\end{tikzpicture}

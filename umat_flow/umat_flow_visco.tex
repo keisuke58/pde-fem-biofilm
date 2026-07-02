@@ -1,0 +1,83 @@
+% umat_flow_visco.tex — algorithm flow of umat_biofilm_visco.f
+% 1-channel viscoelastic biofilm UMAT + isotropic growth.
+%   F = Fe * Fv * Fg   (single Maxwell dashpot + equilibrium pressure)
+% Usage: \resizebox{\linewidth}{!}{\input{umat_flow_visco.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=7.2cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nk/.style = {N, fill=gray!12},
+  Ne/.style = {N, fill=cyan!12},
+  Nt/.style = {N, fill=orange!15},
+  Ns/.style = {N, fill=purple!10},
+  dec/.style= {draw, diamond, aspect=2.2, align=center, thick,
+               text width=3.0cm, fill=yellow!20, inner sep=1pt, font=\footnotesize},
+  ar/.style = {-Stealth, thick},
+  lar/.style= {-Stealth, thick, blue!55!black},
+  rar/.style= {-Stealth, thick, red!60!black},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{UMAT entry} (per integration point / increment)\\[2pt]
+  Abaqus $\to$ \texttt{DFGRD1}$=\mathbf F$,\; \texttt{STATEV(1:9)},\;
+  \texttt{TEMP},\,\texttt{DTEMP},\; \texttt{PROPS(1:5)},\; \texttt{DTIME}};
+
+\node[Nio, below=0.5cm of in] (props) {%
+  Read \texttt{PROPS}: $C_{10},C_{01},D_1,\eta,$ \texttt{mtype}\\[2pt]
+  Read \texttt{STATEV(1:9)}$=\mathbf F_v$\;
+  ($\to\mathbf I$ on first increment)};
+
+\node[Nk, below=0.5cm of props] (grow) {%
+  \textbf{Growth kinematics} \;$\alpha_g=\max(\texttt{TEMP}+\texttt{DTEMP},0)$\\[2pt]
+  $\mathbf F_g=(1+\alpha_g)\mathbf I$,\quad
+  $\mathbf F_{\rm mech}=\mathbf F/(1+\alpha_g)$};
+
+% ── STRESS CORE ────────────────────────────────────────────────────
+\node[Ne, below=1.0cm of grow] (core) {%
+  \textbf{Stress core} \;(\texttt{BIOFILM\_STRESS\_CORE})\\[2pt]
+  trial $\mathbf F_e=\mathbf F_{\rm mech}\mathbf F_v^{-1}$,\;
+  $\mathbf b_e=\mathbf F_e\mathbf F_e^{\!\top}$,\; $J_e=\det\mathbf F_e$\\
+  Kirchhoff $\boldsymbol\tau^{\rm dev}=2C_{10}J_e^{-2/3}\mathrm{dev}\,\mathbf b_e$
+  \;{\scriptsize(+MR $C_{01}$ if \texttt{mtype})}};
+
+\node[Ne, below=0.5cm of core] (visc) {%
+  \textbf{Viscous update} (backward Euler)\\[2pt]
+  $\mathbf F_v^{\rm new}=\big(\mathbf I+\tfrac{\Delta t}{2\eta J_e}\boldsymbol\tau^{\rm dev}\big)\mathbf F_v$\;
+  $\to$ recompute $\mathbf F_e,\mathbf b_e,J_e$\\
+  $\boldsymbol\sigma=\tfrac1{J_e}\big[\boldsymbol\tau^{\rm dev}
+   +\tfrac{2}{D_1}(J_e{-}1)J_e\,\mathbf I\big]$\; $\to$ \texttt{STRESS}};
+
+\node[dec, below=0.7cm of visc] (ok) {stress core\\ valid?};
+
+\node[Ns, right=1.4cm of ok] (cut) {%
+  \texttt{PNEWDT}$=0.5$\\[2pt] request cut-back};
+
+% ── TANGENT ────────────────────────────────────────────────────────
+\node[Nt, below=0.8cm of ok] (tan) {%
+  \textbf{Consistent tangent} (perturbation, Sun et al.\ 2008)\\[2pt]
+  for $P=1..$\texttt{NTENS}: $\Delta\mathbf F^{(P)}=\tfrac12(\mathbf e_i\mathbf e_j^{\!\top}{+}\mathbf e_j\mathbf e_i^{\!\top})\mathbf F$,\;$\varepsilon{=}10^{-7}$\\
+  re-run core with \emph{frozen} $\mathbf F_v^{\rm old}$\;$\Rightarrow$
+  \texttt{DDSDDE}$(Q,P)=(\sigma_Q^{\rm pert}-\sigma_Q^{\rm base})/\varepsilon$};
+
+\node[dec, below=0.7cm of tan] (loop) {$P<$\,\texttt{NTENS}?};
+
+\node[Ns, below=0.7cm of loop] (store) {%
+  \textbf{Store state}\; \texttt{STATEV(1:9)}$\gets\mathbf F_v^{\rm new}$\\[2pt]
+  \texttt{RETURN}\; \texttt{STRESS},\,\texttt{DDSDDE},\,\texttt{SSE},\,\texttt{SPD}};
+
+% ── arrows ─────────────────────────────────────────────────────────
+\draw[ar] (in)   -- (props);
+\draw[ar] (props)-- (grow);
+\draw[ar] (grow) -- node[lbl,right]{$\mathbf F_{\rm mech}$} (core);
+\draw[ar] (core) -- (visc);
+\draw[ar] (visc) -- (ok);
+\draw[rar] (ok)  -- node[lbl,above]{no ($J_e\!\le\!0$)} (cut);
+\draw[rar] (cut.north) |- ([yshift=6pt]in.east) node[lbl,pos=0.25,right]{retry increment};
+\draw[ar] (ok)   -- node[lbl,right]{yes} (tan);
+\draw[ar] (tan)  -- (loop);
+\draw[lar] (loop.west) -- ++(-1.7,0) node[lbl,above]{yes: next $P$} |- (tan.west);
+\draw[ar] (loop) -- node[lbl,right]{no} (store);
+
+\end{tikzpicture}

@@ -1,0 +1,80 @@
+% umat_flow_visco_phase2.tex — algorithm flow of umat_biofilm_visco_phase2.f
+% 1-channel viscoelastic biofilm UMAT with the EXACT algorithmic tangent
+% (numerical perturbation of F). Phase 1 used an approximate elastic tangent;
+% Phase 2 recovers quadratic Newton convergence.
+%   F = Fe * Fv * Fg
+% Usage: \resizebox{\linewidth}{!}{\input{umat_flow_visco_phase2.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=7.4cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nk/.style = {N, fill=gray!12},
+  Ne/.style = {N, fill=cyan!12},
+  Nt/.style = {N, fill=orange!18},
+  Ns/.style = {N, fill=purple!10},
+  dec/.style= {draw, diamond, aspect=2.2, align=center, thick,
+               text width=3.0cm, fill=yellow!20, inner sep=1pt, font=\footnotesize},
+  ar/.style = {-Stealth, thick},
+  lar/.style= {-Stealth, thick, orange!60!black},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{UMAT entry} \;(Phase 2 — exact consistent tangent)\\[2pt]
+  Abaqus $\to$ \texttt{DFGRD1}$=\mathbf F$,\;\texttt{STATEV(1:9)}$=\mathbf F_v$,\;
+  \texttt{TEMP/DTEMP},\;\texttt{PROPS(1:5)}};
+
+\node[Nk, below=0.5cm of in] (grow) {%
+  \textbf{Growth} \;$\alpha_g=\max(\texttt{TEMP}+\texttt{DTEMP},0)$,\;
+  $\mathbf F_{\rm mech}=\mathbf F/(1+\alpha_g)$};
+
+\node[Ne, below=0.6cm of grow] (base) {%
+  \textbf{Base stress} \;$\boldsymbol\sigma^{\rm base}=$
+  \texttt{CORE}$(\mathbf F,\mathbf F_v^{\rm old})$\\[2pt]
+  $\mathbf F_e=\mathbf F_{\rm mech}\mathbf F_v^{-1}$;\;
+  $\boldsymbol\tau^{\rm dev}=2C_{10}J_e^{-2/3}\mathrm{dev}\,\mathbf b_e$;\;
+  backward-Euler $\mathbf F_v^{\rm new}$;\\
+  $\boldsymbol\sigma=[\boldsymbol\tau^{\rm dev}+\tfrac{2}{D_1}(J_e{-}1)J_e\mathbf I]/J_e$};
+
+% ── perturbation loop ──────────────────────────────────────────────
+\node[Nt, below=1.7cm of base] (pert) {%
+  \textbf{Perturbation column} $B=1..$\texttt{NTENS} \;(Voigt $11,22,33,12,13,23$)\\[2pt]
+  $\mathbf F_B=(\mathbf I+h\,\mathbf N_B)\mathbf F$,\;
+  $\mathbf N_B=\mathrm{sym}(\mathbf e_I\!\otimes\!\mathbf e_J)$,\;
+  shear factor $h/2$ (engineering)};
+
+\node[Ne, below=0.5cm of pert] (recore) {%
+  $\boldsymbol\sigma_B=$ \texttt{CORE}$(\mathbf F_B,\ \mathbf F_v^{\rm old})$\;
+  \emph{(same frozen $\mathbf F_v^{\rm old}$, full viscous update inside)}\\[2pt]
+  $\Rightarrow$ tangent captures $\mathrm d\mathbf F_v^{\rm new}/\mathrm d\boldsymbol\varepsilon$ automatically};
+
+\node[Nt, below=0.5cm of recore] (col) {%
+  $\texttt{DDSDDE}(:,B)=\big(\boldsymbol\sigma_B-\boldsymbol\sigma^{\rm base}\big)/h$
+  \quad(exact $\mathrm d\boldsymbol\sigma/\mathrm d\boldsymbol\varepsilon$)};
+
+\node[dec, below=0.7cm of col] (loop) {$B<$\,\texttt{NTENS}?};
+
+\node[Ns, below=0.7cm of loop] (store) {%
+  \textbf{Store} \texttt{STATEV(1:9)}$\gets\mathbf F_v^{\rm new}$ (from base eval);\;
+  \texttt{RETURN}\\[2pt]
+  {\scriptsize verified vs FD in \texttt{phase2\_patch\_test.py}: rel.\ err $\sim2.4\times10^{-8}$, 13/13}};
+
+\draw[ar] (in)    -- (grow);
+\draw[ar] (grow)  -- (base);
+\draw[ar] (base)  -- node[lbl,right,pos=0.35]{$\boldsymbol\sigma^{\rm base}$ fixed} (pert);
+\draw[ar] (pert)  -- (recore);
+\draw[ar] (recore)-- (col);
+\draw[ar] (col)   -- (loop);
+\draw[lar] (loop.east) -- ++(1.8,0) node[lbl,above]{yes: next $B$} |- (pert.east);
+\draw[ar] (loop)  -- node[lbl,right]{no} (store);
+
+\begin{scope}[on background layer]
+  \node[draw=orange!50, fill=orange!5, rounded corners=7pt, inner sep=8pt,
+        fit=(pert)(recore)(col)(loop)] (bx) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=orange!70!black,
+      above=3pt of bx.north, anchor=south]
+  {Numerical consistent tangent — one full constitutive re-evaluation per Voigt column};
+
+\end{tikzpicture}
