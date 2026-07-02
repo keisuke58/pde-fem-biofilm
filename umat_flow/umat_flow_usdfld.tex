@@ -1,0 +1,57 @@
+% umat_flow_usdfld.tex — algorithm flow of usdfld_biofilm.f
+% USDFLD: maps the biofilm field variables (total density phi, P. gingivalis
+% fraction r_Pg) to local elastic moduli E(DI), nu(DI) for the DI-bridge
+% material lineage. (Field routine, not a UMAT — runs before the material.)
+% Usage: \resizebox{\linewidth}{!}{\input{umat_flow_usdfld.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=7.6cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nk/.style = {N, fill=gray!12},
+  Ne/.style = {N, fill=cyan!12},
+  Ns/.style = {N, fill=purple!10},
+  Nx/.style = {N, fill=gray!6, draw=gray!55, dashed},
+  ar/.style = {-Stealth, thick},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{USDFLD entry} (per integration point / increment)\\[2pt]
+  Abaqus $\to$ \texttt{FIELD(1:NFIELD)},\; \texttt{STATEV},\; \texttt{NOEL},\,\texttt{NPT}};
+
+\node[Nio, below=0.5cm of in] (read) {%
+  Read field variables\\[2pt]
+  $\varphi_{\rm tot}=\texttt{FIELD(1)}$,\quad $r_{\rm Pg}=\texttt{FIELD(2)}$};
+
+\node[Nk, below=0.5cm of read] (clamp) {%
+  \textbf{Clamp inputs to physical range}\\[2pt]
+  $\varphi_{\rm tot}\in[0,1]$,\qquad $r_{\rm Pg}\in[0,1]$};
+
+\node[Ne, below=0.6cm of clamp] (emap) {%
+  \textbf{Modulus map} \;($E_0{=}2\,\mathrm{GPa}$, $\nu_0{=}0.30$)\\[2pt]
+  $E_{\rm loc}=E_0\,(1-A\,\varphi_{\rm tot}-B\,r_{\rm Pg})$,\quad $A{=}0.5,\,B{=}0.8$\\
+  $\nu_{\rm loc}=\nu_0+C\,\varphi_{\rm tot}$,\qquad $C{=}0.05$};
+
+\node[Nk, below=0.5cm of emap] (bound) {%
+  \textbf{Bound outputs}\\[2pt]
+  $E_{\rm loc}\ge 0.1\,E_0$,\qquad $\nu_{\rm loc}\in[0.20,\,0.49]$};
+
+\node[Ns, below=0.6cm of bound] (out) {%
+  Write back \texttt{FIELD(1)}$=\varphi_{\rm tot}$,\;\texttt{FIELD(2)}$=r_{\rm Pg}$\\[2pt]
+  \texttt{STATEV(1)}$=E_{\rm loc}$,\; \texttt{STATEV(2)}$=\nu_{\rm loc}$
+  \;{\scriptsize(diagnostic output)};\quad \texttt{RETURN}};
+
+\node[Nx, below=0.7cm of out] (note) {%
+  \textit{Coupling note:} the \emph{applied} stiffness comes from the
+  field-dependent \texttt{*ELASTIC} table via \texttt{FIELD(1)},\texttt{FIELD(2)};\\
+  the $E_{\rm loc}$ formula here mirrors that table (verify they agree in the INP)};
+
+\draw[ar] (in)    -- (read);
+\draw[ar] (read)  -- (clamp);
+\draw[ar] (clamp) -- node[lbl,right]{$\varphi_{\rm tot},r_{\rm Pg}$} (emap);
+\draw[ar] (emap)  -- (bound);
+\draw[ar] (bound) -- (out);
+\draw[ar, dashed, gray!60] (out) -- (note);
+
+\end{tikzpicture}
