@@ -91,6 +91,8 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 | File | What |
 |---|---|
 | [VERIFICATION_SENSITIVITY_LIMITATIONS.md](VERIFICATION_SENSITIVITY_LIMITATIONS.md) | Consolidated rigor audit (Verification / Sensitivity / Limitations) — read this first |
+| [PLAN_NEXT.md](PLAN_NEXT.md) | Prioritized next-steps roadmap (thesis freeze / first paper / continuation) |
+| [PIPELINE.md](PIPELINE.md) | Config-driven pipeline entry point (`pipeline.py`) + `P[σ>τ]` risk metric |
 | [methods_supplement_fem.md](methods_supplement_fem.md) | Methods supplement (DI timepoint, E(φ), TMCMC→Monod) |
 | [FEM_README.md](FEM_README.md) | DI / FEM / anisotropy reference (the second lineage) |
 | [JAXFEM/README.md](JAXFEM/README.md) | JAX PDE reproduction suite (Klempt Eq. 34–36) |
@@ -99,21 +101,19 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 > catalogued in **[DOCS.md](DOCS.md)** — the complete, categorized documentation
 > index. Historical working notes are under [`archive/`](archive/).
 
-### Method-flow figures
+### Figures
 
-TikZ flowcharts of the pipeline live in `JAXFEM/algo_flow*.tex` (each with a
-`*_standalone.tex` wrapper). The figure embedded above
-(`assets/algo_flow_tooth_reality.png`) is rendered from
-`algo_flow_tooth_reality.tex`. Variants:
+Three TikZ figure libraries — each figure is an `\input`-able body with a
+`*_standalone.tex` wrapper; rendered PNGs live in `assets/`.
 
-| Source | Rendered | Shows |
+| Directory | What | Engine |
 |---|---|---|
-| `algo_flow_tooth_reality.tex` | [PNG](assets/algo_flow_tooth_reality.png) (embedded above) | as-implemented tooth pipeline |
-| `algo_flow_full.tex` | [PNG](assets/algo_flow_full.png) | full PDE (Eq. 34–36) + UMAT + FEM detail |
-| `algo_flow_tmcmc_toprow.tex` | [PNG](assets/algo_flow_tmcmc_toprow.png) | TMCMC calibration phase + pipeline |
-| `algo_flow_tmcmc_4col.tex` · `algo_flow_tooth_implant.tex` · `algo_flow_tooth_roadmap.tex` | — | 4-column / implant / roadmap variants |
+| `JAXFEM/algo_flow*.tex` | Pipeline flowcharts (the one embedded above + full-PDE / TMCMC / implant / roadmap variants) | xelatex/lualatex (CJK) |
+| [`umat_flow/`](umat_flow/README.md) | UMAT algorithm flows (viscoelastic 1-ch / 2-ch / phase-2 exact tangent, USDFLD) | pdflatex (Times) |
+| [`ch5_flow/`](ch5_flow/README.md) | Chapter-5 concept figures — operator splitting, cross-diffusion FV, VE-vs-poro, 5-species Voigt UMAT, Hamilton variational, data pipeline, CZM traction–separation, boundary conditions, impl architecture, V&V convergence + hierarchy, time-scale separation, growth kinematics `F=Fe·Fg`, mixed-mode fracture | pdflatex (Times) |
 
-Build (and regenerate the PNG) with the intended engine:
+Build a figure (regenerating its PNG) with the engine noted above, e.g. the
+embedded pipeline figure:
 
 ```bash
 cd JAXFEM
@@ -123,12 +123,18 @@ gs -dBATCH -dNOPAUSE -sDEVICE=png16m -r200 \
    algo_flow_tooth_reality_standalone.pdf
 ```
 
+The `umat_flow/` and `ch5_flow/` figures build with plain `pdflatex` (see each
+directory's README for the per-figure list and build commands). **For print,
+embed the vector `.tex`/PDF, not the PNG.**
+
 ---
 
 ## Key entry points
 
 | Script / dir | Role |
 |---|---|
+| `pipeline.py` + `configs/*.json` | **Config-driven entry point**: posterior → PDE α → stress CI → risk, staged (see [PIPELINE.md](PIPELINE.md)) |
+| `JAXFEM/risk_metric.py` · `risk_field.py` | Clinical risk metric `P[σ>τ]` — scalar (per condition) and per-location field (Fig. 4) |
 | `JAXFEM/` | JAX FD forward solver for φ–c–α; `posterior_klempt_stress_ci.py` (stress credible interval); algo_flow figures |
 | `gen_tooth_klempt_umat_inp.py` | Generate the 4-condition tooth Abaqus INPs (α field + Klempt UMAT) |
 | `biofilm_conformal_tet.py` | Conformal-tet biofilm growth (`--mode substrate|biofilm`, `--neo-hookean`) |
