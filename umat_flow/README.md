@@ -12,6 +12,22 @@ in the same visual style as `JAXFEM/algo_flow*.tex`.
 | `umat_flow_visco_2ch.tex` | `umat_flow_visco_2ch_standalone.tex` | `umat_biofilm_visco_2ch.f` | 2-channel Prony (`σ=σ∞+σ₁+σ₂`) + isotropic growth |
 | `umat_flow_usdfld.tex` | `umat_flow_usdfld_standalone.tex` | `usdfld_biofilm.f` | DI-bridge field routine `E(DI), ν(DI)` |
 
+## Preview
+
+Rendered (Times, `pdflatex` → PNG). Regenerate with the Build commands below.
+
+### `umat_biofilm_visco_2ch.f` — 2-channel Prony viscoelastic + growth
+![2-channel viscoelastic UMAT flow](../assets/umat_flow_visco_2ch.png)
+
+### `umat_biofilm_visco.f` — 1-channel viscoelastic (with `PNEWDT` cut-back)
+![1-channel viscoelastic UMAT flow](../assets/umat_flow_visco.png)
+
+### `umat_biofilm_visco_phase2.f` — 1-channel, exact algorithmic tangent
+![phase-2 exact-tangent UMAT flow](../assets/umat_flow_visco_phase2.png)
+
+### `usdfld_biofilm.f` — DI-bridge field routine `E(DI), ν(DI)`
+![USDFLD DI-to-E field routine flow](../assets/umat_flow_usdfld.png)
+
 ## Build
 
 ```bash
