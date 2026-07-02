@@ -1,0 +1,53 @@
+% flow_timescale_separation.tex — biology (days) vs mechanics (ms-s) time-scale separation
+% Macroscopic bio timeline drives an inner mechanical Newton loop each step (gear coupling).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_timescale_separation.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  tl/.style = {-Stealth, very thick},
+  tstep/.style = {draw, rounded corners=2pt, thick, align=center, inner sep=3pt,
+                 minimum height=0.75cm, font=\footnotesize},
+  bio/.style  = {tstep, fill=teal!14, text width=2.5cm},
+  mech/.style = {tstep, fill=orange!14, text width=1.0cm},
+  ar/.style = {-Stealth, thick},
+  dl/.style = {font=\scriptsize},
+  gear/.style={thick, gray!55},
+]
+
+% ── macroscopic (biology) timeline ─────────────────────────────────
+\node[dl, anchor=east, text=teal!45!black, font=\footnotesize\bfseries]
+  at (-0.4,3.3) {Macroscopic time\\ (biology)};
+\draw[tl, teal!55!black] (0,3.3) -- (11.2,3.3) node[right, dl]{$t_{\mathrm{bio}}$};
+\foreach \idx/\lab/\x in {0/{n}/1.4, 1/{n{+}1}/5.2, 2/{n{+}2}/9.0}
+  \node[bio] (B\idx) at (\x,3.3) {PDE step $\lab$\\ $\phi(z)$, $\Delta t_{\mathrm{bio}}\!\sim$ days};
+\node[dl, teal!45!black, anchor=south] at (5.6,3.75)
+  {TMCMC-calibrated growth \& cross-diffusion};
+
+% ── microscopic (mechanics) timeline ───────────────────────────────
+\node[dl, anchor=east, text=orange!70!black, font=\footnotesize\bfseries]
+  at (-0.4,0.5) {Microscopic time\\ (mechanics)};
+\draw[tl, orange!65!black] (0,0.5) -- (11.2,0.5) node[right, dl]{$t_{\mathrm{mech}}$};
+% inner Newton loop for the step at x=5.2
+\foreach \k/\x in {0/3.6, 1/5.0, 2/6.4, 3/7.8}
+  \node[mech] (M\k) at (\x,0.5) {it.\,\k};
+\draw[ar, orange!65!black] (M0) -- (M1);
+\draw[ar, orange!65!black] (M1) -- (M2);
+\draw[ar, orange!65!black] (M2) -- (M3);
+\node[dl, orange!70!black, anchor=north] at (5.5,-0.15)
+  {UMAT: composition $\to$ initial strain; implicit Newton–Raphson to equilibrium ($\sim$ms–s)};
+
+% coupling: each bio step spawns the inner loop (down) and returns stress (up)
+\draw[ar, blue!55!black, thick] (B1.south) to[out=-90,in=90] (M0.north);
+\node[dl, blue!55!black, anchor=east] at (4.5,1.75) {$\phi\!\to$ eigenstrain};
+\draw[ar, blue!55!black, thick] (M3.north) to[out=90,in=-90] (B1.south east);
+\node[dl, blue!55!black, anchor=west] at (7.0,1.75) {$\bm\sigma$ back};
+
+% ── gear-coupling motif ────────────────────────────────────────────
+\begin{scope}[shift={(1.4,1.9)}]
+  \draw[gear] (0,0) circle (0.42);
+  \foreach \a in {0,40,...,320} \draw[gear] (\a:0.42) -- (\a:0.56);
+  \draw[gear] (0.95,0) circle (0.30);
+  \foreach \a in {20,60,...,340} \draw[gear] ($(0.95,0)+(\a:0.30)$) -- ($(0.95,0)+(\a:0.42)$);
+  \node[dl, gray!55, anchor=north] at (0.45,-0.7) {scales mesh like gears};
+\end{scope}
+
+\end{tikzpicture}

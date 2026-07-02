@@ -1,0 +1,59 @@
+% flow_czm_traction_separation.tex — §5 cohesive zone model: traction-separation law
+% Interface delamination: elastic -> peak t^0 (damage init) -> softening (D:0->1) -> separated.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_czm_traction_separation.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  ax/.style = {-Stealth, thick},
+  law/.style= {ultra thick, blue!55!black},
+  gc/.style = {fill=orange!18},
+  dl/.style = {font=\scriptsize},
+  note/.style={draw, rounded corners=3pt, align=left, thick, inner sep=4pt,
+               text width=4.3cm, fill=gray!8, font=\footnotesize},
+]
+
+% ── traction–separation graph ───────────────────────────────────────
+\begin{scope}
+  \coordinate (O) at (0,0);
+  \coordinate (P) at (2.1,3.4);    % peak (delta_0, t^0)
+  \coordinate (F) at (7.2,0);      % full separation (delta_f)
+  % G_c area
+  \fill[gc] (O) -- (P) -- (F) -- cycle;
+  % axes
+  \draw[ax] (-0.2,0) -- (8.4,0) node[right]{separation $\delta$};
+  \draw[ax] (0,-0.2) -- (0,4.2) node[above]{traction $t$};
+  % law
+  \draw[law] (O) -- (P) -- (F);
+  % peak markers
+  \draw[dashed, gray!60] (P) -- (P |- O) node[below, dl]{$\delta_0$};
+  \draw[dashed, gray!60] (P) -- (P -| O) node[left, dl]{$t^{0}$};
+  \node[dl] at (F) [below]{$\delta_f$};
+  \fill (P) circle (1.6pt);
+  % region labels
+  \node[dl, align=center, blue!55!black] at (1.05,1.05) {elastic\\ $D{=}0$};
+  \node[dl, align=center, blue!55!black] at (4.4,1.35) {softening\\ $0{<}D{<}1$};
+  \node[dl, align=center, text=orange!70!black] at (3.0,0.5) {$G_c=\!\int t\,\mathrm d\delta$};
+  \node[dl, align=center] at (7.2,0.6) {separated\\ $D{=}1$};
+  % damage-initiation callout
+  \node[dl, align=center, anchor=south] at (2.1,3.55) {damage initiation\\ (peak, \texttt{QUADSCRT}/\texttt{MAXS})};
+\end{scope}
+
+% ── interface schematic (right) ─────────────────────────────────────
+\begin{scope}[shift={(9.6,0.2)}]
+  \fill[gray!25] (0,0) rectangle (4.2,0.9);
+  \node[dl] at (2.1,0.45) {Titanium implant};
+  \fill[teal!18] (0,1.15) rectangle (4.2,2.35);
+  \node[dl] at (2.1,1.75) {biofilm};
+  % cohesive interface with a crack front
+  \draw[very thick, orange!70!black] (0,1.02) -- (2.2,1.02);
+  \draw[very thick, orange!70!black, dashed] (2.2,1.02) -- (4.2,1.02);
+  \node[dl, anchor=west] at (0.05,1.02) [yshift=-8pt] {\;bonded};
+  \node[dl, anchor=east, orange!70!black] at (4.15,1.02) [yshift=8pt] {delaminated $\to$};
+  % crack-tip arrow
+  \draw[-Stealth, thick, red!65!black] (2.0,1.02) -- (3.0,1.02)
+     node[midway, above, dl, red!65!black]{crack front};
+  \node[note, below=0.35cm of {(2.1,0)}] {%
+    damage variable $D:0\!\to\!1$ degrades the interface stiffness; the crack
+    propagates along the face, output as a \textbf{delamination fraction}.};
+\end{scope}
+
+\end{tikzpicture}
