@@ -1,0 +1,61 @@
+% flow_boundary_conditions.tex — §5 multiscale (mechanical/chemical/geometric) BCs
+% Layered domain: Ti base / biofilm / external fluid, with edge BCs.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_boundary_conditions.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  lay/.style = {draw, thick, minimum width=6.4cm, align=center},
+  bc/.style  = {draw, rounded corners=3pt, align=left, thick, inner sep=4pt,
+                text width=5.2cm, fill=gray!8, font=\footnotesize},
+  ar/.style  = {-Stealth, thick},
+  con/.style = {-Stealth, very thick, red!60!black},
+  dl/.style  = {font=\scriptsize},
+]
+
+% ── layers ──────────────────────────────────────────────────────────
+\node[lay, fill=teal!12, minimum height=1.4cm] (fluid) at (0,4.2)
+  {External fluid\\ (saliva / blood)};
+\node[lay, fill=cyan!12, minimum height=1.9cm] (bio) at (0,2.2)
+  {Biofilm layer\\ {\scriptsize $\phi(z)$, growth $\mathbf F_g$}};
+\node[lay, fill=gray!22, minimum height=1.3cm] (ti) at (0,0.35)
+  {Titanium implant base};
+
+% cohesive interface line
+\draw[very thick, orange!70!black] (-3.2,1.0) -- (3.2,1.0);
+\node[dl, orange!70!black, anchor=west] at (-3.15,1.0) [yshift=7pt]{cohesive interface};
+
+% ── BC callouts ─────────────────────────────────────────────────────
+\node[bc, right=1.0cm of fluid] (topbc) {%
+  \textbf{Top surface (biofilm)}\\
+  mech: stress-free $\Rightarrow$ free swelling\\
+  chem: Dirichlet $c=c_0$ (nutrient held)};
+
+\node[bc, right=1.0cm of bio, fill=orange!10, draw=orange!55] (intbc) {%
+  \textbf{Interface (Ti / biofilm)}\\
+  cohesive elements inserted;\\
+  contact before / after delamination};
+
+\node[bc, right=1.0cm of ti] (botbc) {%
+  \textbf{Bottom (implant base)}\\
+  mech: fully fixed $\mathbf u=\mathbf 0$\\
+  chem: no-flux $\partial_n c=0$};
+
+\node[bc, left=1.0cm of bio] (latbc) {%
+  \textbf{Lateral (sides)}\\
+  confinement / periodic BC\\
+  $\Rightarrow$ in-plane constraint\\
+  {\itshape drives vertical growth-stress concentration}};
+
+% arrows from callouts to edges
+\draw[ar] (topbc.west) -- (fluid.east);
+\draw[ar] (intbc.west) -- (2.6,1.0);
+\draw[ar] (botbc.west) -- (ti.east);
+\draw[ar] (latbc.east) -- (bio.west);
+
+% lateral confinement arrows on the domain sides
+\draw[con] (-3.9,2.2) -- (-3.25,2.2);
+\draw[con] (3.9,2.2) -- (3.25,2.2);
+
+% free-swell (up) arrow on top
+\draw[con, red!60!black] (0,5.05) -- (0,5.7) node[above, dl]{free swell};
+
+\end{tikzpicture}

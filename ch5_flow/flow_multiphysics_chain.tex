@@ -1,0 +1,57 @@
+% flow_multiphysics_chain.tex — §5.4 biochemical -> UMAT growth -> cohesive delamination
+% "energy chain": 16S/FISH dysbiosis -> continuum mechanics -> implant-interface risk
+% Usage: \resizebox{\linewidth}{!}{\input{flow_multiphysics_chain.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=8.4cm, minimum height=0.8cm, inner sep=4pt},
+  Nbio/.style= {N, fill=teal!14},    % biochemistry
+  Nkin/.style= {N, fill=cyan!12},    % kinematics / stress
+  Nbc/.style = {N, fill=gray!12},    % boundary constraint
+  Nfr/.style = {N, fill=orange!16},  % fracture
+  Nout/.style= {N, fill=purple!10},
+  ar/.style = {-Stealth, thick},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nbio] (bio) {%
+  \textbf{Biochemical field} — compositional dysbiosis\\[2pt]
+  depth-resolved $\phi_{\mathrm{Pg}}(z)$ decoded from FISH / 16S rRNA data};
+
+\node[Nkin, below=1.05cm of bio] (kin) {%
+  \textbf{Kinematics (inside UMAT)}\\[2pt]
+  CLSM-calibrated growth stretch $\lambda_z(\phi_{\mathrm{Pg}})$\;$\to$\;
+  multiplicative split $\mathbf F=\mathbf F_e\mathbf F_g$\\
+  Neo-Hookean Cauchy stress $\bm\sigma(\mathbf F_e)$ from the stress-carrying elastic part};
+
+\node[Nbc, below=1.0cm of kin] (bc) {%
+  \textbf{Boundary constraint}\\[2pt]
+  substrate adhesion $+$ lateral confinement inhibit free swelling\\
+  $\Rightarrow$ in-plane residual stress $\sigma_{xx}(z)$ concentrates in the substrate layer};
+
+\node[Nfr, below=1.0cm of bc] (fr) {%
+  \textbf{Fracture / delamination}\\[2pt]
+  cohesive interface — traction–separation law\\
+  quadratic-stress damage initiation criterion (\texttt{SDEG})};
+
+\node[Nout, below=0.95cm of fr] (out) {%
+  \textbf{Output} — damage-front propagation $\to$ delamination fraction\\[1pt]
+  {\scriptsize mechanical risk at the implant interface}};
+
+\draw[ar] (bio) -- node[lbl,right]{$\phi_{\mathrm{Pg}}(z)$} (kin);
+\draw[ar] (kin) -- node[lbl,right]{$\bm\sigma$} (bc);
+\draw[ar] (bc)  -- node[lbl,right]{$\sigma_{xx}(z)$} (fr);
+\draw[ar] (fr)  -- node[lbl,right]{$\mathrm{SDEG}\!\ge\!1$} (out);
+
+% closed "energy chain" back-annotation
+\draw[ar, dashed, gray!55] (out.east) -- ++(0.7,0)
+  node[lbl, midway, right, text width=2.4cm]{closed\\ energy chain} |- (bio.east);
+
+\begin{scope}[on background layer]
+  \node[draw=purple!35, fill=purple!3, rounded corners=8pt, inner sep=9pt,
+        fit=(bio)(kin)(bc)(fr)(out)] (bx) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=purple!60!black, above=3pt of bx.north, anchor=south]
+  {16S/FISH compositional dysbiosis $\longrightarrow$ continuum mechanics $\longrightarrow$ implant-interface mechanical risk};
+
+\end{tikzpicture}

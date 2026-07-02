@@ -1,0 +1,57 @@
+% flow_crossdiffusion_fv.tex — §5.3.3 volume-filling (size-exclusion) cross-diffusion
+% Finite-volume face flux; simplex-exact conservation without clipping.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_crossdiffusion_fv.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  cell/.style = {draw, thick, minimum width=3.2cm, minimum height=2.1cm,
+                 align=center, fill=cyan!7},
+  face/.style = {red!65!black, thick, dashed},
+  Jar/.style  = {-Stealth, very thick, blue!60!black},
+  note/.style = {draw, rounded corners=3pt, align=left, thick, inner sep=5pt,
+                 text width=8.9cm, fill=gray!8},
+  clab/.style = {font=\footnotesize},
+  lbl/.style  = {font=\scriptsize\itshape, inner sep=1pt},
+]
+
+% ── control volumes ─────────────────────────────────────────────────
+\node[cell] (Cl) at (0,0)   {$\text{cell } I{-}1$\\[3pt]
+  $\phi_i^{I-1}$\\ $\rho^{I-1}{=}\!\sum_j\phi_j$};
+\node[cell] (Cc) at (3.4,0) {$\text{cell } I$\\[3pt]
+  $\phi_i^{I}$\\ $\rho^{I}{=}\!\sum_j\phi_j$};
+\node[cell] (Cr) at (6.8,0) {$\text{cell } I{+}1$\\[3pt]
+  $\phi_i^{I+1}$\\ $\rho^{I+1}{=}\!\sum_j\phi_j$};
+
+% face markers
+\draw[face] (1.7,-1.35) -- (1.7,1.35) node[above, clab, red!65!black]{$I{-}\tfrac12$};
+\draw[face] (5.1,-1.35) -- (5.1,1.35) node[above, clab, red!65!black]{$I{+}\tfrac12$};
+
+% face fluxes
+\draw[Jar] (1.15,-1.75) -- (2.25,-1.75) node[midway, below, lbl, blue!60!black]{$J_{i,\,I-\frac12}$};
+\draw[Jar] (4.55,-1.75) -- (5.65,-1.75) node[midway, below, lbl, blue!60!black]{$J_{i,\,I+\frac12}$};
+
+% z axis
+\draw[-Stealth, thick] (-1.7,-2.35) -- (8.5,-2.35) node[right]{$z$};
+
+% update rule
+\node[below=2.9cm of Cc, align=center, font=\footnotesize] (upd)
+  {finite-volume update:\quad
+   $\phi_i^{I,\,n+1}=\phi_i^{I,\,n}-\dfrac{\Delta t}{\Delta z}\big(J_{i,I+\frac12}-J_{i,I-\frac12}\big)$};
+
+% ── flux definition ─────────────────────────────────────────────────
+\node[note, right=1.1cm of Cr, yshift=0.2cm] (fdef) {%
+  \textbf{Face flux (Eq.\,5.4)} — cross-diffusion couples \emph{all} species\\[3pt]
+  $J_i\big|_{I+\frac12}=-D_i\big[(1-\rho)\,\partial_z\phi_i + \phi_i\,\partial_z\rho\big]_{I+\frac12}$\\[3pt]
+  {\footnotesize own diffusion gradient $\partial_z\phi_i$ \;+\; shared congestion gradient
+  $\partial_z\rho$ (the size-exclusion coupling — a common physical barrier for every species)}};
+
+% ── degeneracy / clamp mechanism ────────────────────────────────────
+\node[note, below=0.7cm of upd, fill=yellow!12, draw=orange!55] (clamp) {%
+  \textbf{Self-clamping (simplex-exact, no clipping)}\\[3pt]
+  mobility $(1-\rho)\!\to\!0$ as $\rho\!\to\!1$\quad and\quad prefactor $\phi_i\!\to\!0$ as $\phi_i\!\to\!0$
+  \;$\Rightarrow$\; $J_i\!\to\!0$.\\[2pt]
+  {\footnotesize The flux degenerates at the simplex boundary, so $\sum_i\phi_i=\rho\le1$ is preserved
+  exactly — no post-hoc clipping (which the diagonal / independent-diffusion scheme would need).}};
+
+\draw[-Stealth, thick, gray!55] (fdef.south) |- (clamp.east);
+
+\end{tikzpicture}
