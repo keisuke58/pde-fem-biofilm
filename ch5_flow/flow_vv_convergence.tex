@@ -1,0 +1,54 @@
+% flow_vv_convergence.tex — Appendix C: PDE verification & error convergence
+% Left: analytic (Neumann cosine) vs finite-volume points + ghost node.
+% Right: log-log error vs mesh size, slope 2.00 (2nd order).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_vv_convergence.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  ax/.style = {-Stealth, thick},
+  dl/.style = {font=\scriptsize},
+]
+
+% ── LEFT: qualitative — analytic vs FV ──────────────────────────────
+\begin{scope}
+  \draw[ax] (-1.1,0) -- (6.6,0) node[right]{$z$};
+  \draw[ax] (0,-0.3) -- (0,3.1) node[above]{$\phi(z)$};
+  % wall at z=0
+  \draw[very thick, gray!55] (0,-0.3) -- (0,3.0);
+  \node[dl, gray!55, anchor=north] at (0,-0.3) {wall};
+  % analytic cosine (Neumann mode)
+  \draw[domain=0:6, smooth, samples=60, blue!55!black, thick]
+    plot (\x, {1.4+1.0*cos(\x*30)});
+  \node[dl, blue!55!black, anchor=west] at (3.1,2.15) {analytic (Neumann $\cos$ mode)};
+  % FV points on the curve
+  \foreach \x/\y in {0/2.40, 1/2.266, 2/1.90, 3/1.40, 4/0.90, 5/0.534, 6/0.40}
+    \fill[red!70!black] (\x,\y) circle (2.0pt);
+  \node[dl, red!70!black, anchor=west] at (3.4,0.75) {finite-volume cell values};
+  % ghost node beyond wall
+  \fill[red!70!black, opacity=0.5] (-0.7,2.266) circle (2.0pt);
+  \draw[dashed, gray!60] (-0.7,2.266) -- (0,2.266);
+  \node[dl, anchor=east] at (-0.75,2.266) {ghost\\ node};
+  \node[dl, font=\footnotesize\bfseries] at (2.8,-1.0)
+    {(a) exact match to the analytic solution};
+\end{scope}
+
+% ── RIGHT: quantitative — log-log convergence ───────────────────────
+\begin{scope}[shift={(10.2,0)}]
+  \draw[ax] (0,0) -- (4.6,0) node[right]{$\log \Delta z$};
+  \draw[ax] (0,0) -- (0,3.4) node[above]{$\log \|\text{error}\|$};
+  % slope-2 line
+  \draw[blue!55!black, very thick] (0.5,0.4) -- (4.0,3.4);
+  \foreach \x/\y in {0.7/0.57, 1.5/1.26, 2.4/2.03, 3.4/2.89}
+    \fill[red!70!black] (\x,\y) circle (2.0pt);
+  % slope triangle
+  \draw[gray!60] (2.4,2.03) -- (3.4,2.03) -- (3.4,2.89);
+  \node[dl, gray!60] at (2.9,1.85) {$1$};
+  \node[dl, gray!60, anchor=west] at (3.45,2.46) {$2.00$};
+  \node[dl, blue!55!black, anchor=north west] at (0.7,3.2)
+    {slope $=2.00$\\ $O(\Delta z^{2})$ — 2nd-order accurate};
+  % coarse->fine annotation
+  \node[dl, anchor=north] at (2.3,-0.15) {(coarse $\to$ fine mesh refinement)};
+  \node[dl, font=\footnotesize\bfseries] at (2.3,-1.0)
+    {(b) verified 2nd-order convergence};
+\end{scope}
+
+\end{tikzpicture}

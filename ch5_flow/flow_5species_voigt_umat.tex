@@ -1,0 +1,55 @@
+% flow_5species_voigt_umat.tex — §5.4.6 5-species Voigt mixing + species-specific growth UMAT
+% Gauss-point internal loop; same rigor as umat_flow_visco_phase2.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_5species_voigt_umat.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=8.6cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nstiff/.style= {N, fill=cyan!12},
+  Ngrow/.style = {N, fill=orange!15},
+  Nt/.style = {N, fill=blue!10},
+  Nout/.style={N, fill=purple!10},
+  ar/.style = {-Stealth, thick},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (in) {%
+  \textbf{Gauss-point input} — local 5-species volume fractions\\[2pt]
+  $(\phi_{\mathrm{So}},\,\phi_{\mathrm{An}},\,\phi_{\mathrm{Vd}},\,\phi_{\mathrm{Fn}},\,\phi_{\mathrm{Pg}})$
+  \;(from the TMCMC 15-D posterior, not a single driver $\phi_{\mathrm{Pg}}$)};
+
+\node[Nstiff, below=0.8cm of in] (stiff) {%
+  \textbf{Effective stiffness — Voigt mixing rule}\\[2pt]
+  $E_{\mathrm{eff}}=\phi_{\mathrm{local}}^{2}\,\dfrac{\sum_s E_s\,\phi_s}{\sum_s \phi_s}$
+  \quad with species moduli $E_s$ (AFM force-spectroscopy)\\
+  {\scriptsize contrast: stiff commensal So \; vs \; soft pathogen Pg}};
+
+\node[Ngrow, below=0.8cm of stiff] (grow) {%
+  \textbf{Species-resolved growth split}\\[2pt]
+  rate-weighted split of the growth stretch by accumulation rate $k_{\alpha,s}$ (Eq.\,5.9)\\
+  $\to$ build the (an)isotropic growth tensor $\mathbf F_g$};
+
+\node[Nt, below=0.8cm of grow] (stress) {%
+  \textbf{Stress \& tangent} — $\mathbf F=\mathbf F_e\mathbf F_g$,\;
+  $\bm\sigma=\bm\sigma(E_{\mathrm{eff}},\mathbf F_e)$\\
+  consistent tangent by $\mathbf F$-perturbation (as in \texttt{umat\_biofilm\_visco\_phase2})};
+
+\node[Nout, below=0.8cm of stress] (out) {%
+  \textbf{Output} — stiffness contrast $\times$ growth contrast act as a lever\\[1pt]
+  von Mises stress ratio $\gg$ single-species model
+  \;($\approx\!6.1\times$ on the real tooth geometry)};
+
+\draw[ar] (in)   -- node[lbl,right]{$\{\phi_s\}$} (stiff);
+\draw[ar] (stiff)-- node[lbl,right]{$E_{\mathrm{eff}}$} (grow);
+\draw[ar] (grow) -- node[lbl,right]{$\mathbf F_g$} (stress);
+\draw[ar] (stress)-- node[lbl,right]{$\bm\sigma,\ \texttt{DDSDDE}$} (out);
+
+\begin{scope}[on background layer]
+  \node[draw=purple!35, fill=purple!3, rounded corners=8pt, inner sep=8pt,
+        fit=(stiff)(grow)(stress)] (bx) {};
+\end{scope}
+\node[font=\scriptsize\bfseries, text=purple!60!black, above=2pt of bx.north, anchor=south]
+  {UMAT internal loop per Gauss point (5-species $\to$ $E_{\mathrm{eff}}$, $\mathbf F_g$, $\bm\sigma$)};
+
+\end{tikzpicture}

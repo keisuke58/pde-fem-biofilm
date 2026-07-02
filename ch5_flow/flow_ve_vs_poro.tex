@@ -1,0 +1,59 @@
+% flow_ve_vs_poro.tex — §5.4.6 two long-time stress-relaxation channels
+% Viscoelastic (Prony/Burgers) vs poroelastic (Terzaghi consolidation), common input & goal.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_ve_vs_poro.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=6.4cm, minimum height=0.8cm, inner sep=4pt},
+  Nin/.style= {N, fill=cyan!12, text width=8.4cm},
+  Nve/.style= {N, fill=blue!10},
+  Npo/.style= {N, fill=teal!14},
+  Nout/.style={N, fill=purple!10, text width=8.4cm},
+  ar/.style = {-Stealth, thick},
+  var/.style= {-Stealth, thick, blue!55!black},
+  par/.style= {-Stealth, thick, teal!55!black},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nin] (in) {%
+  \textbf{Common input} — instantaneous elastic interface stress ($t\!\to\!0$ limit from the UMAT)\\[1pt]
+  $\sigma_{xx}^{0}$ (growth-induced residual stress, undrained / unrelaxed)};
+
+% Route A — viscoelastic
+\node[Nve, below left=1.15cm and -1.0cm of in] (a1) {%
+  \textbf{Route A — viscoelastic channel}\\ (Burgers / Prony series)};
+\node[Nve, below=0.45cm of a1] (a2) {%
+  stress relaxation by sliding of the\\ polymer-chain (EPS) network};
+\node[Nve, below=0.45cm of a2] (a3) {%
+  time scale $\tau_{\mathrm{VE}}$\;$\to$\;
+  decays to $\sim\!10\%$ of $\sigma_{xx}^{0}$};
+
+% Route B — poroelastic
+\node[Npo, below right=1.15cm and -1.0cm of in] (b1) {%
+  \textbf{Route B — poroelastic channel}\\ (Terzaghi 1-D consolidation)};
+\node[Npo, below=0.45cm of b1] (b2) {%
+  growth-pressure gradient drives pore-fluid\\ drainage from the bulk surface};
+\node[Npo, below=0.45cm of b2] (b3) {%
+  consolidation scale $\tau=H^{2}/c_{v}$\;$\to$\\
+  effective-stress halving \& dissipation};
+
+\node[Nout, below=1.15cm of in |- a3.south, yshift=-0.7cm] (out) {%
+  \textbf{Long-time steady state} ($t\!\to\!\infty$) — pressure-limited field\\[1pt]
+  {\scriptsize set by the ratio of the two channels (Eq.\,5.7 long-time completion; Figs.\,5.19–5.20)}};
+
+\draw[ar] (in.south) -- ++(0,-0.35) coordinate (split);
+\draw[var] (split) -| (a1.north);
+\draw[par] (split) -| (b1.north);
+\draw[var] (a1) -- (a2);
+\draw[var] (a2) -- (a3);
+\draw[par] (b1) -- (b2);
+\draw[par] (b2) -- (b3);
+\draw[var] (a3.south) |- (out.west);
+\draw[par] (b3.south) |- (out.east);
+
+\begin{scope}[on background layer]
+  \node[draw=blue!40, fill=blue!3, rounded corners=7pt, inner sep=6pt, fit=(a1)(a2)(a3)] {};
+  \node[draw=teal!45, fill=teal!3, rounded corners=7pt, inner sep=6pt, fit=(b1)(b2)(b3)] {};
+\end{scope}
+
+\end{tikzpicture}

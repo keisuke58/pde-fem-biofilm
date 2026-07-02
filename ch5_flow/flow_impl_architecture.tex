@@ -1,0 +1,55 @@
+% flow_impl_architecture.tex — implementation architecture / tech stack
+% Python(JAX) <-> bridge (socket / ISO_C_BINDING) <-> Fortran UMAT <-> commercial FEM.
+% Usage: \resizebox{\linewidth}{!}{\input{flow_impl_architecture.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=4.6cm, minimum height=0.8cm, inner sep=4pt},
+  Npy/.style= {N, fill=cyan!13},
+  Nbr/.style= {N, fill=orange!15},
+  Nfe/.style= {N, fill=teal!13},
+  ar/.style = {-Stealth, thick},
+  bi/.style = {Stealth-Stealth, very thick, orange!65!black},
+  hd/.style = {font=\footnotesize\bfseries},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+% ── left: Python / AI side ──────────────────────────────────────────
+\node[Npy] (py1) {JAX — GPU-compiled forward model\\ ($\phi$–$c$–$\alpha$ PDE, \texttt{vmap}/\texttt{jit})};
+\node[Npy, below=0.5cm of py1] (py2) {TMCMC inference engine\\ (15-D posterior $\bm\theta$)};
+\node[Npy, below=0.5cm of py2] (py3) {composition rule $\phi(z)$,\\ growth driver $\alpha(\mathbf x)$};
+
+% ── center: bridge ──────────────────────────────────────────────────
+\node[Nbr, right=1.7cm of py2, text width=4.0cm] (br) {%
+  \textbf{Bridge}\\[2pt]
+  local socket / \texttt{ISO\_C\_BINDING}\\
+  memory passing \& messaging\\
+  (Python $\leftrightarrow$ Fortran)};
+
+% ── right: mechanics solver ─────────────────────────────────────────
+\node[Nfe, right=1.7cm of py1, xshift=4.0cm] (fe1) {%
+  Commercial FEM main routine\\ (Abaqus / ANSYS)};
+\node[Nfe, below=0.5cm of fe1] (fe2) {%
+  \texttt{UMAT} (Fortran) — called per element};
+\node[Nfe, below=0.5cm of fe2] (fe3) {%
+  integration-point loop:\\ stress $\bm\sigma$ \& Jacobian \texttt{DDSDDE}};
+
+% arrows
+\draw[ar] (py1) -- (py2);
+\draw[ar] (py2) -- (py3);
+\draw[ar] (fe1) -- (fe2);
+\draw[ar] (fe2) -- (fe3);
+\draw[bi] (py3.east) -- (br.west);
+\draw[bi] (br.east) -- (fe2.west) node[lbl,pos=0.68,above=1pt]{$\alpha$ / SDV \& $\bm\sigma$};
+
+% column headers
+\node[hd, above=0.35cm of py1.north, text=cyan!45!black] {AI / DATA (Python)};
+\node[hd, above=0.9cm of br.north, text=orange!70!black, anchor=south] at (br.north) {BRIDGE};
+\node[hd, above=0.35cm of fe1.north, text=teal!45!black] {MECHANICS SOLVER (Fortran)};
+
+\begin{scope}[on background layer]
+  \node[draw=cyan!40, fill=cyan!3, rounded corners=7pt, inner sep=7pt, fit=(py1)(py2)(py3)] {};
+  \node[draw=teal!40, fill=teal!3, rounded corners=7pt, inner sep=7pt, fit=(fe1)(fe2)(fe3)] {};
+\end{scope}
+
+\end{tikzpicture}
