@@ -46,11 +46,11 @@
   % cohesive interface with a crack front
   \draw[very thick, orange!70!black] (0,1.02) -- (2.2,1.02);
   \draw[very thick, orange!70!black, dashed] (2.2,1.02) -- (4.2,1.02);
-  \node[dl, anchor=west] at (0.05,1.02) [yshift=-8pt] {\;bonded};
-  \node[dl, anchor=east, orange!70!black] at (4.15,1.02) [yshift=8pt] {delaminated $\to$};
-  % crack-tip arrow
-  \draw[-Stealth, thick, red!65!black] (2.0,1.02) -- (3.0,1.02)
-     node[midway, above, dl, red!65!black]{crack front};
+  \node[dl, anchor=west] at (0.15,1.02) [yshift=10pt] {bonded};
+  \node[dl, anchor=east, orange!70!black] at (4.15,1.02) [yshift=10pt] {delaminated $\to$};
+  % crack-tip arrow (label below the interface to clear the "delaminated" label)
+  \draw[-Stealth, thick, red!65!black] (1.6,1.02) -- (2.5,1.02);
+  \node[dl, red!65!black, anchor=north] at (2.05,0.92) {crack front};
   \node[note, below=0.35cm of {(2.1,0)}] {%
     damage variable $D:0\!\to\!1$ degrades the interface stiffness; the crack
     propagates along the face, output as a \textbf{delamination fraction}.};

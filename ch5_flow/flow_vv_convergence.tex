@@ -26,7 +26,7 @@
   % ghost node beyond wall
   \fill[red!70!black, opacity=0.5] (-0.7,2.266) circle (2.0pt);
   \draw[dashed, gray!60] (-0.7,2.266) -- (0,2.266);
-  \node[dl, anchor=east] at (-0.75,2.266) {ghost\\ node};
+  \node[dl, align=right, anchor=east] at (-0.78,2.266) {ghost\\ node};
   \node[dl, font=\footnotesize\bfseries] at (2.8,-1.0)
     {(a) exact match to the analytic solution};
 \end{scope}
@@ -43,8 +43,8 @@
   \draw[gray!60] (2.4,2.03) -- (3.4,2.03) -- (3.4,2.89);
   \node[dl, gray!60] at (2.9,1.85) {$1$};
   \node[dl, gray!60, anchor=west] at (3.45,2.46) {$2.00$};
-  \node[dl, blue!55!black, anchor=north west] at (0.7,3.2)
-    {slope $=2.00$\\ $O(\Delta z^{2})$ — 2nd-order accurate};
+  \node[dl, blue!55!black, align=left, anchor=north west] at (0.35,3.45)
+    {slope $=2.00$\\ $O(\Delta z^{2})$};
   % coarse->fine annotation
   \node[dl, anchor=north] at (2.3,-0.15) {(coarse $\to$ fine mesh refinement)};
   \node[dl, font=\footnotesize\bfseries] at (2.3,-1.0)
