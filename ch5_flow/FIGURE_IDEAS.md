@@ -23,7 +23,7 @@ plus the 4 `umat_flow/` UMAT algorithm flows.
 | 3 | **TMCMC** tempering ladder + multimodal 15-D posterior (corner plot) | ♻️ | `generate_corner_plot_paper.py`, `plot_posterior_uncertainty.py`; posteriors in `../data_5species/_runs/*/samples.npy`, `../Tmcmc202601`. Corner plots almost certainly already produced for the TMCMC paper. |
 | 4 | 5-species **gLV interaction network** (A-matrix), commensal vs dysbiotic | ♻️/🆕 | A-matrix stats from `JAXFEM/replicon_analysis.py`, `replicon_species_contrib.py`, `plot_species_competition.py` (posterior A in `../data_5species`). A *node-graph* rendering may be new — small TikZ/networkx on top of existing A. |
 | 5 | **Uncertainty propagation** schematic + credible band / risk map | ♻️ | Result figures: `posterior_uncertainty_propagation.py`, `plot_posterior_uncertainty.py`, `aggregate_di_credible.py`, `run_posterior_abaqus_ensemble.py`; plus this session's `JAXFEM/risk_metric.py` / `risk_field.py`. A one-box *schematic* could complement, but the plots exist. |
-| 7 | **V&V hierarchy pyramid** (code/solution verification, validation) | 🆕 | No existing asset — generic concept. Worth a fresh TikZ; complements `flow_vv_convergence`. |
+| 7 | **V&V hierarchy pyramid** (code/solution verification, validation) | ✅ built | `flow_vv_hierarchy.tex` — pyramid mapped to this project's rigor evidence; complements `flow_vv_convergence`. |
 | 8 | **Stress-relaxation / creep** master curves σ(t) | ♻️ | `generate_fig25_stress_relaxation.py`, `generate_fig26_creep.py`, `plot_visco_2ch.py`, `run_full_viscoelastic_analysis.py`. Already generated (fig25/fig26). |
 | 9 | Anisotropy from ∇φ (transverse isotropy, DI lineage) | ♻️ | `run_aniso_comparison.py`, `fem_aniso_analysis.py`. |
 | 11 | Percolation threshold / connectivity | ♻️ | `percolation_justification.tex` (already a LaTeX figure/derivation). |
@@ -33,5 +33,5 @@ plus the 4 `umat_flow/` UMAT algorithm flows.
 ## Suggested next actions
 - If a figure is ♻️, **first look for the existing output/script** (this repo or
   `../data_5species` / `../Tmcmc202601` / `../nife`) before drawing anything.
-- Genuinely new schematic worth adding: **7 (V&V pyramid)**, and optionally the
-  **4 interaction-network graph** as a TikZ on top of the existing A-matrix.
+- **7 (V&V pyramid) done.** The one remaining genuinely-new schematic is the
+  **4 interaction-network graph** (TikZ on top of the existing A-matrix).

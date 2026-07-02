@@ -24,6 +24,7 @@ high-resolution PNGs (Times, 200 dpi) live in `../assets/`.
 | 15 | `flow_timescale_separation` | 5.x | Biology (days) vs mechanics (ms–s) time-scale separation (gear-meshed loops) |
 | 1 | `flow_growth_kinematics` | theory | Multiplicative growth split `F=Fe·Fg`: reference → grown (incompatible) → current (residual stress) |
 | 6 | `flow_mixed_mode_fracture` | 5.x | Mixed-mode interface fracture: mode I/II decomposition, energy release rate, Benzeggagh–Kenane `Gc(B)` |
+| 7 | `flow_vv_hierarchy` | App. C / rigor | V&V hierarchy pyramid (code → solution verification → validation → prediction/UQ) mapped to this project's evidence |
 
 ## Build
 
@@ -90,3 +91,6 @@ thesis body font when `\input`.
 
 ### Mixed-mode interface fracture (energy release rate, Benzeggagh–Kenane)
 ![mixed-mode fracture](../assets/flow_mixed_mode_fracture.png)
+
+### Verification & Validation (V&V) hierarchy
+![V&V hierarchy](../assets/flow_vv_hierarchy.png)
