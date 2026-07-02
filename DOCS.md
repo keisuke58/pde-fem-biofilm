@@ -33,6 +33,8 @@ consolidated document first; the others are the underlying investigations.
 
 | Doc | What |
 |---|---|
+| [PLAN_NEXT.md](PLAN_NEXT.md) | **Consolidated next-steps roadmap (2026-07-02)** — T1 thesis / T2 first paper / T3 continuation, prioritized |
+| [PIPELINE.md](PIPELINE.md) | Config-driven pipeline entry point (T2.1) + `P[σ>threshold]` risk metric (T2.3); isolated-checkout audit notes |
 | [klempt2024_gap_analysis.md](klempt2024_gap_analysis.md) | Klempt et al. (2024) gap analysis & response |
 | [BENCHMARK_PLAN.md](BENCHMARK_PLAN.md) | Klempt 2024 → 5-species benchmark roadmap |
 | [FEM_PLAN.md](FEM_PLAN.md) | FEM pipeline plan — 3-tooth biofilm assembly |
