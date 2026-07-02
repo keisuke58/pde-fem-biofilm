@@ -1,0 +1,62 @@
+% flow_growth_kinematics.tex — multiplicative growth kinematics F = Fe.Fg
+% Three configurations: reference -> grown (incompatible, stress-free) -> current (residual stress).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_growth_kinematics.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  cfg/.style  = {font=\footnotesize\bfseries},
+  ccap/.style = {font=\scriptsize, align=center},
+  map/.style  = {-Stealth, very thick, black},
+  tot/.style  = {-Stealth, very thick, blue!55!black},
+  note/.style = {draw, rounded corners=3pt, align=left, thick, inner sep=6pt,
+                 fill=gray!8, font=\footnotesize, text width=12.6cm},
+  gcell/.style= {draw, thick, fill=teal!14},
+]
+
+% ── (0) reference : 2x2 unit grid ───────────────────────────────────
+\begin{scope}[shift={(0,0)}]
+  \foreach \i in {0,1} \foreach \j in {0,1}
+    \node[gcell, minimum size=0.95cm] at (\i*0.95,\j*0.95) {};
+  \node[cfg] at (0.475,2.15) {Reference $\;\Omega_0$};
+  \node[ccap] at (0.475,-0.95) {undeformed,\\ stress-free};
+\end{scope}
+
+% ── (g) grown intermediate : each element x(1+alpha), pulled apart ──
+\begin{scope}[shift={(4.55,0)}]
+  \foreach \i in {0,1} \foreach \j in {0,1}
+    \node[gcell, fill=orange!16, minimum size=1.2cm] at ({\i*1.5},{\j*1.5}) {};
+  \node[cfg] at (0.75,2.55) {Grown $\;\mathcal{B}_g$};
+  \node[ccap] at (0.75,-1.05) {incompatible,\\ locally stress-free};
+\end{scope}
+
+% ── (current) elastically reassembled : compatible, residual stress ─
+\begin{scope}[shift={(9.4,0)}]
+  \shade[shading=radial, inner color=red!22, outer color=blue!14] (-0.1,-0.1) rectangle (2.5,2.5);
+  \foreach \i in {0,1,2} \draw[gray!45] (\i*1.2,-0.1) -- (\i*1.2,2.5);
+  \foreach \j in {0,1,2} \draw[gray!45] (-0.1,\j*1.2) -- (2.5,\j*1.2);
+  \draw[black, thick] (-0.1,-0.1) rectangle (2.5,2.5);
+  \node[cfg] at (1.2,2.85) {Current $\;\Omega$};
+  \node[ccap] at (1.2,-0.95) {compatible,\\ \textbf{residual stress} $\bm\sigma$};
+\end{scope}
+
+% ── mapping arrows ──────────────────────────────────────────────────
+\draw[map] (1.7,0.7) -- (3.35,0.7)
+  node[midway, above]{$\mathbf F_g=(1+\alpha)\mathbf I$}
+  node[midway, below, font=\scriptsize]{growth (stress-free)};
+\draw[map] (7.05,0.7) -- (8.75,0.7)
+  node[midway, above]{$\mathbf F_e=\mathbf F\,\mathbf F_g^{-1}$}
+  node[midway, below, font=\scriptsize]{elastic (stress-carrying)};
+\draw[tot] (0.5,-1.7) to[out=-32,in=-148] (10.6,-1.7);
+\node[tot, draw=none, fill=white, inner sep=1pt] at (5.55,-2.75)
+  {$\mathbf F=\mathbf F_e\,\mathbf F_g$ \;(total deformation gradient)};
+
+% ── constitutive note ───────────────────────────────────────────────
+\node[note, anchor=north west] at (-0.3,-3.35) {%
+  \textbf{Multiplicative split} (Rodriguez et al.\ 1994; Klempt 2024):
+  isotropic growth $\mathbf F_g=(1+\alpha)\mathbf I$, $\det\mathbf F_g=(1+\alpha)^3$ (volume added);
+  the intermediate $\mathcal{B}_g$ is a locally relaxed, \emph{incompatible} state.
+  Compatibility is restored by the elastic part $\mathbf F_e$, which alone carries stress
+  ($\bm\sigma=J_e^{-1}\,\partial_{\mathbf F_e}\psi\,\mathbf F_e^{\!\top}$, Neo-Hookean).
+  Under geometric constraint (substrate adhesion / confinement) the growth incompatibility
+  yields \textbf{growth-induced residual stress} — the quantity the UMAT returns.};
+
+\end{tikzpicture}
