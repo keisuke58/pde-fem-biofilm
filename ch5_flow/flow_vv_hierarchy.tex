@@ -1,0 +1,61 @@
+% flow_vv_hierarchy.tex — Verification & Validation (V&V) hierarchy pyramid
+% Code verification -> solution verification -> validation -> prediction/UQ,
+% mapped to the concrete rigor evidence in this project (ASME V&V 10 / Oberkampf-Roy).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_vv_hierarchy.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  band/.style = {thick, draw=black},
+  blab/.style = {font=\footnotesize\bfseries, align=center},
+  call/.style = {draw, rounded corners=3pt, align=left, thick, inner sep=4pt,
+                 fill=gray!8, font=\scriptsize, text width=5.0cm},
+  lead/.style = {-Stealth, thick, gray!55},
+  qbox/.style = {draw, rounded corners=3pt, align=center, thick, inner sep=5pt,
+                 font=\footnotesize, text width=5.6cm},
+]
+
+% ── pyramid bands (trapezoids), foundation -> apex ──────────────────
+\fill[cyan!16, band]   (-5,0)     -- (5,0)     -- (3.75,1.75) -- (-3.75,1.75) -- cycle;
+\fill[teal!16, band]   (-3.75,1.75) -- (3.75,1.75) -- (2.5,3.5) -- (-2.5,3.5) -- cycle;
+\fill[orange!17, band] (-2.5,3.5) -- (2.5,3.5) -- (1.25,5.25) -- (-1.25,5.25) -- cycle;
+\fill[purple!16, band] (-1.25,5.25) -- (1.25,5.25) -- (0,7) -- cycle;
+
+\node[blab] at (0,0.75) {Code verification};
+\node[blab] at (0,2.55) {Solution verification};
+\node[blab] at (0,4.25) {Validation};
+\node[blab, font=\scriptsize\bfseries] at (0,5.75) {Prediction\\/ UQ};
+
+% ── project-specific evidence callouts (alternating) ────────────────
+\node[call, anchor=west] at (5.6,0.85) (c1) {%
+  \textbf{``solving the equations right''}\\
+  MMS / analytic Neumann-$\cos$; order-of-accuracy $O(\Delta z^2)$;
+  UMAT tangent vs FD $2.4\times10^{-8}$; single-element patch tests; dual-UMAT cross-check ($0.1\%$)};
+\draw[lead] (3.4,0.85) -- (c1.west);
+
+\node[call, anchor=east] at (-5.6,2.6) (c2) {%
+  \textbf{numerical error of \emph{this} solve}\\
+  mesh convergence (domain-avg $<0.03\%$; $N_z\,5\!\to\!101$ $<3\%$);
+  tooth-stress mesh study; quadratic Newton (0 cut-backs)};
+\draw[lead] (-2.9,2.6) -- (c2.east);
+
+\node[call, anchor=west] at (5.6,4.3) (c3) {%
+  \textbf{``solving the right equations''}\\
+  vs Klempt (2024) benchmark; vs CLSM thickness ($\alpha$ range) \&
+  composition (data-anchored, not fit)};
+\draw[lead] (2.0,4.3) -- (c3.west);
+
+\node[call, anchor=east] at (-5.6,5.7) (c4) {%
+  \textbf{intended-use prediction}\\
+  posterior $\sigma$ credible interval; sensitivity bands ($E_{\rm SPEC}$ $3.7\!-\!12\times$);
+  $P[\sigma\!>\!\tau]$ risk — limitations disclosed};
+\draw[lead] (-0.9,5.7) -- (c4.east);
+
+% ── the two V&V questions (bottom) ──────────────────────────────────
+\node[qbox, fill=cyan!6, anchor=north] at (-3.0,-1.0)
+  {\textbf{Verification} (mathematics)\\ \emph{are we solving the equations right?}};
+\node[qbox, fill=orange!6, anchor=north] at (3.0,-1.0)
+  {\textbf{Validation} (physics / experiment)\\ \emph{are we solving the right equations?}};
+
+\node[font=\scriptsize\itshape, text=gray!60, anchor=north] at (0,-2.5)
+  {each level rests on those below — you cannot validate before you verify};
+
+\end{tikzpicture}
