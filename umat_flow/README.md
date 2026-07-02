@@ -22,9 +22,11 @@ gs -dBATCH -dNOPAUSE -sDEVICE=png16m -r150 \
    -sOutputFile=umat_flow_visco_2ch.png umat_flow_visco_2ch_standalone.pdf
 ```
 
-All four use only `amsmath, amssymb, bm` and the TikZ libraries
-`shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc` — plain
-`pdflatex` (no CJK, unlike the `algo_flow` figures which need `xelatex`).
+All four use `amsmath, amssymb, mathptmx` (**Times** text + math), `bm`, and the
+TikZ libraries `shapes.geometric, arrows.meta, positioning, fit, backgrounds,
+calc` — plain `pdflatex` (no CJK, unlike the `algo_flow` figures which need
+`xelatex`). To match a different report font, swap the `mathptmx` line in each
+`*_standalone.tex` wrapper (or drop it to fall back to Computer Modern).
 
 ## Embed in a report
 
