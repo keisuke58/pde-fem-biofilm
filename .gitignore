@@ -107,3 +107,5 @@ abaqus_inp/
 _abaqus_runs/
 _espec_test/
 _pde3d_umat/
+_pipeline/
+_risk/
