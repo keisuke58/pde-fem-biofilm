@@ -62,7 +62,7 @@
 \draw[ar] (r2) -- (rconv);
 \draw[lar] (rconv.east) -- ++(2.4,0) node[lbl,above]{no: iterate} |- (r2.east);
 \draw[ar] (rconv) -- node[lbl,right]{yes} (rout);
-\draw[ar] (rout) -- node[lbl,right]{$\bm\phi^{\ast}$ as IC} (t1);
+\draw[ar] (rout) -- (t1);
 \draw[ar] (t1) -- (t2);
 \draw[ar] (t2) -- (cfl);
 \draw[ar] (cfl) -- (cfld);
