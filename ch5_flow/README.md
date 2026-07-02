@@ -22,6 +22,8 @@ high-resolution PNGs (Times, 200 dpi) live in `../assets/`.
 | 13 | `flow_impl_architecture` | impl | Python(JAX) ↔ bridge (socket / `ISO_C_BINDING`) ↔ Fortran UMAT ↔ commercial FEM |
 | 14 | `flow_vv_convergence` | App. C | PDE V&V: analytic vs finite-volume + log-log 2nd-order (`O(Δz²)`) convergence |
 | 15 | `flow_timescale_separation` | 5.x | Biology (days) vs mechanics (ms–s) time-scale separation (gear-meshed loops) |
+| 1 | `flow_growth_kinematics` | theory | Multiplicative growth split `F=Fe·Fg`: reference → grown (incompatible) → current (residual stress) |
+| 6 | `flow_mixed_mode_fracture` | 5.x | Mixed-mode interface fracture: mode I/II decomposition, energy release rate, Benzeggagh–Kenane `Gc(B)` |
 
 ## Build
 
@@ -82,3 +84,9 @@ thesis body font when `\input`.
 
 ### Biology / mechanics time-scale separation
 ![timescale separation](../assets/flow_timescale_separation.png)
+
+### Multiplicative growth kinematics `F = Fe·Fg`
+![growth kinematics](../assets/flow_growth_kinematics.png)
+
+### Mixed-mode interface fracture (energy release rate, Benzeggagh–Kenane)
+![mixed-mode fracture](../assets/flow_mixed_mode_fracture.png)
