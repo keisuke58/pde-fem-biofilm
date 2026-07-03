@@ -5,6 +5,10 @@ name: Deploy GitHub Pages
 # One-time setup (only a repo admin can do this — the Actions token cannot):
 #   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
 # After that this workflow deploys automatically on every push to docs/.
+#
+# Note: the very first deploy after enabling Pages can fail with
+# "Deployment failed, try again later" while GitHub provisions the site;
+# re-running the workflow once the site is provisioned succeeds.
 
 on:
   push:
