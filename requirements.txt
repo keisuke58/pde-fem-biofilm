@@ -1,0 +1,9 @@
+# Core dependencies for the tests, figures and data-analysis scripts.
+# (No JAX needed for these.)  JAX — required by the PDE / ecology model
+# scripts — is intentionally not pinned here; install separately with:
+#   pip install "jax[cpu]"
+numpy==2.4.6
+scipy==1.17.1
+matplotlib==3.11.0
+openpyxl==3.1.5
+pytest==9.1.1
