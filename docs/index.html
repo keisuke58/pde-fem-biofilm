@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pde-fem-biofilm — 3D FEM stress analysis of oral biofilms</title>
+<meta name="description" content="3D finite-element stress analysis of oral biofilms on the Klempt (2024) continuum growth model — TMCMC-calibrated ecology, CLSM composition, verified UMAT/USERMAT constitutive core.">
+<style>
+  :root{
+    --bg:#fbfbf9; --panel:#ffffff; --ink:#1c1d1a; --muted:#5c5f57;
+    --line:#e7e6df; --accent:#0072B2; --accent2:#009E73; --warn:#D55E00;
+    --code-bg:#f3f3ee;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#16171a; --panel:#1e2024; --ink:#e9e9e4; --muted:#a2a59c;
+      --line:#2c2f34; --accent:#56B4E9; --accent2:#4bbf97; --warn:#e8875a;
+      --code-bg:#23262b;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.65;font-size:17px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  code,kbd{font-family:var(--mono);font-size:.86em;background:var(--code-bg);
+    padding:.1em .38em;border-radius:5px}
+
+  /* hero */
+  header.hero{padding:74px 0 40px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:clamp(30px,5.4vw,46px);margin:0 0 10px}
+  .jp{color:var(--muted);font-size:clamp(15px,2.5vw,18px);font-family:var(--serif)}
+  .lede{font-size:clamp(17px,2.6vw,20px);color:var(--muted);max-width:44ch;margin:20px 0 26px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+  .tag{font-family:var(--mono);font-size:12px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--panel)}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+  .btn{display:inline-block;font-weight:600;font-size:15px;padding:10px 18px;border-radius:9px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{text-decoration:none;filter:brightness(1.06)}
+
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(22px,3.6vw,30px);margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 26px;font-size:15px}
+  p{margin:0 0 16px}
+  .muted{color:var(--muted)}
+
+  /* pipeline / result split */
+  .figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .figure img{display:block;width:100%;height:auto}
+  .figure figcaption{font-size:13.5px;color:var(--muted);padding:12px 16px;border-top:1px solid var(--line)}
+  .result{display:grid;grid-template-columns:1.35fr .9fr;gap:26px;align-items:center;margin-top:24px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px}
+  .stat .big{font-family:var(--serif);font-size:44px;font-weight:600;color:var(--accent);line-height:1}
+  .stat .big small{font-size:18px;color:var(--ink);font-weight:400}
+  .stat p{font-size:14px;color:var(--muted);margin:12px 0 0}
+
+  /* highlight grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  .grid .figure figcaption strong{color:var(--ink);font-weight:600}
+
+  /* verify callout */
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent2);
+    border-radius:10px;padding:22px 24px}
+  .callout .mono{font-family:var(--mono);font-size:13.5px;color:var(--accent2);font-weight:600}
+
+  /* tech list */
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .col h3{font-size:15px;margin:0 0 8px;font-family:var(--sans);text-transform:uppercase;
+    letter-spacing:.06em;color:var(--muted)}
+  .col ul{margin:0;padding-left:18px}
+  .col li{margin:4px 0;font-size:15px}
+
+  footer{padding:40px 0 60px;color:var(--muted);font-size:14px}
+  footer a{color:var(--muted);text-decoration:underline}
+
+  @media(max-width:720px){
+    .result{grid-template-columns:1fr}
+    .grid,.cols{grid-template-columns:1fr}
+    header.hero{padding:52px 0 32px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Computational biomechanics · master's thesis code</p>
+    <h1>3D FEM stress analysis of oral biofilms</h1>
+    <p class="jp">口腔バイオフィルムの連続体成長モデル（Klempt 2024）に基づく 3D 有限要素応力解析</p>
+    <p class="lede">A reproducible pipeline that turns TMCMC-calibrated 5-species
+      ecology and CLSM-measured composition into condition-resolved mechanical
+      stress on tooth &amp; implant geometry.</p>
+    <div class="tags">
+      <span class="tag">Python · JAX</span>
+      <span class="tag">Fortran UMAT / USERMAT</span>
+      <span class="tag">Abaqus · ANSYS</span>
+      <span class="tag">Bayesian calibration</span>
+      <span class="tag">finite-strain growth</span>
+      <span class="tag">image / data analysis</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/keisuke58/pde-fem-biofilm">View the code on GitHub →</a>
+      <a class="btn" href="#pipeline">How it works</a>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <h2>What this is</h2>
+    <p class="sub">Companion code for the LUH / IKM master's thesis and the Nishioka–Heine biofilm paper.</p>
+    <p>Dental biofilms grow, and growth builds mechanical stress at the
+      tooth interface. This project models that chain end to end: a calibrated
+      ecological model gives the species composition over time, composition sets
+      a spatial <em>growth field</em>, and a finite-element solver with a custom
+      constitutive law turns growth into a resolved von&nbsp;Mises stress —
+      compared across four clinical conditions (commensal / dysbiotic ×
+      HOBIC&nbsp;/&nbsp;static).</p>
+    <p class="muted">The emphasis throughout is <strong>rigor</strong>: every
+      constitutive claim is verified (consistent tangents, mesh convergence, a
+      dual-solver cross-check), and every uncertain input is reported as a
+      sensitivity band rather than a single number.</p>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="wrap">
+    <h2>The pipeline</h2>
+    <p class="sub">CLSM composition → growth field → FEM with the Klempt growth UMAT → stress ratio.</p>
+    <figure class="figure">
+      <img src="assets/algo_flow_tooth_reality.png" alt="Method flow: per-condition CLSM composition and TMCMC-calibrated dynamics feed a JAXFEM PDE growth field into a tooth Abaqus UMAT, producing a four-condition von Mises comparison.">
+      <figcaption>As-implemented method flow — per-condition CLSM composition +
+        TMCMC-calibrated interaction dynamics → JAXFEM PDE α-field → tooth Abaqus
+        UMAT with isotropic growth <code>F = Fe·Fg, Fg = (1+α)I</code> → four-condition
+        von Mises stress comparison.</figcaption>
+    </figure>
+
+    <div class="result">
+      <figure class="figure">
+        <img src="assets/sigma_trajectory_4cond.png" alt="Von Mises stress trajectories over time for the four conditions.">
+        <figcaption>Stress trajectory σ(t) across the four conditions — the full
+          curve is reported, not a single headline number.</figcaption>
+      </figure>
+      <div class="stat">
+        <div class="big">≈ 6.4<small>×</small></div>
+        <p>early-biofilm stress ratio σ<sub>CH</sub>/σ<sub>DH</sub>. Robust to the
+          depth/nutrient model (5.3–6.6× via 3D reaction–diffusion), reported with
+          its sensitivity band to per-species stiffness.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="highlights">
+  <div class="wrap">
+    <h2>Selected work</h2>
+    <p class="sub">Mechanics, image/data analysis, and verification figures from the repository.</p>
+    <div class="grid">
+      <figure class="figure">
+        <img src="assets/flow_growth_kinematics.png" alt="Multiplicative growth kinematics decomposition F = Fe Fg.">
+        <figcaption><strong>Growth kinematics.</strong> Multiplicative split
+          <code>F = Fe·Fg</code> with isotropic growth <code>Fg = (1+α)I</code> —
+          the mechanical basis of the model.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/heine_phi_psi_joint.png" alt="Joint plot of composition times viability with marginal boxplots.">
+        <figcaption><strong>Composition × viability.</strong> Living-cell
+          composition <code>L = φ·ψ</code> from CLSM data — log–log joint plot with
+          constant-product diagonals and marginal IQR boxplots per species.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/heine_species_composition.png" alt="Stacked-bar species composition over time across conditions.">
+        <figcaption><strong>Species composition.</strong> Mean CLSM composition of
+          the 5-species biofilm over time, per condition — the measured input φ.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/umat_flow_visco.png" alt="Viscoelastic UMAT algorithm flow chart.">
+        <figcaption><strong>Constitutive core.</strong> Backward-Euler viscoelastic
+          UMAT algorithm flow with an F-perturbation consistent tangent.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/flow_impl_architecture.png" alt="Implementation architecture linking Python/JAX to the USERMAT Gauss-point loop.">
+        <figcaption><strong>Coupling architecture.</strong> Python (JAX) material
+          model ↔ USERMAT ↔ solver Gauss-point loop — the proposed continuation.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/flow_vv_hierarchy.png" alt="Verification and validation hierarchy pyramid.">
+        <figcaption><strong>V&amp;V hierarchy.</strong> How unit-level verification
+          builds up to a validated stress prediction.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="verification">
+  <div class="wrap">
+    <h2>Verified, not asserted</h2>
+    <p class="sub">The constitutive law is proven — including across two independent solvers.</p>
+    <div class="callout">
+      <p>The biofilm material model was ported from a verified Abaqus <code>UMAT</code>
+        to an ANSYS <code>USERMAT</code>. An adversarial harness compiles both real
+        Fortran cores and hunts for any deformation / parameter state where they
+        disagree — across a pathological battery plus thousands of random
+        finite-strain cases.</p>
+      <p class="mono">Result: |Δσ| = |ΔFv| = |ΔJe| = 0.00e+00 (0 ULP) across 8017 cases · frame-indifference residual 4.9e-17</p>
+      <p class="muted" style="margin-bottom:0">The hunt caught a real bug on the way
+        (a Mooney–Rivlin term missing from the viscous flow driver), then confirmed
+        bit-identical equivalence. This is the confidence needed to hand the port to
+        the FEM group and for the thesis verification chapter.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <h2>Under the hood</h2>
+    <p class="sub">A research codebase spanning ecology, PDEs, finite-element mechanics and verification.</p>
+    <div class="cols">
+      <div class="col">
+        <h3>Modeling</h3>
+        <ul>
+          <li>TMCMC Bayesian calibration (5-species interaction matrix)</li>
+          <li>JAX reaction–diffusion PDE testbed (Klempt Eq. 34–36)</li>
+          <li>Neo-Hookean / Mooney–Rivlin + backward-Euler viscoelasticity</li>
+          <li>Finite-strain growth <code>Fg = (1+α)I</code></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Implementation</h3>
+        <ul>
+          <li>Python · JAX · NumPy · matplotlib</li>
+          <li>Fortran UMAT / USERMAT (Abaqus &amp; ANSYS)</li>
+          <li>Config-driven pipeline + <code>P[σ&gt;τ]</code> risk metric</li>
+          <li>Image / data analysis of CLSM composition</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Verification</h3>
+        <ul>
+          <li>Consistent tangent vs finite difference (~1e-8)</li>
+          <li>Mesh-convergence &amp; patch tests</li>
+          <li>Dual-solver adversarial cross-check (0 ULP)</li>
+          <li>Sensitivity bands on every assumed input</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Companion code for the LUH / IKM master's thesis and the Nishioka–Heine
+      biofilm paper. Source, documentation and full figure libraries:
+      <a href="https://github.com/keisuke58/pde-fem-biofilm">github.com/keisuke58/pde-fem-biofilm</a>.</p>
+    <p class="muted">Built with Python, JAX and Fortran · figures rendered from TikZ and matplotlib.</p>
+  </div>
+</footer>
+
+</body>
+</html>

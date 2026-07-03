@@ -59,7 +59,12 @@ _ci_0d_results/
 _di_alternatives_comparison/
 _di_credible/
 figures/
-docs/
+# docs/ holds generated documentation output (ignored), except the
+# hand-authored GitHub Pages site below.
+docs/*
+!docs/index.html
+!docs/assets
+!docs/assets/*.png
 DocuGenius/
 external_tooth_models/
 FEM/
