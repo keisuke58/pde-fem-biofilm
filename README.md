@@ -4,6 +4,8 @@
 continuum growth model.**
 口腔バイオフィルムの連続体成長モデル（Klempt 2024）に基づく 3D FEM 応力解析。
 
+**🌐 Project site & figure gallery:** https://keisuke58.github.io/pde-fem-biofilm/
+
 Companion code for the LUH / IKM master's thesis and the Nishioka–Heine biofilm
 paper. The pipeline turns a TMCMC-calibrated 5-species ecology model and
 CLSM-measured composition into condition-resolved mechanical stress on
