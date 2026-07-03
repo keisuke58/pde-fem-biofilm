@@ -89,6 +89,9 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 
 ## Repository map
 
+> New here? [`REPO_MAP.md`](REPO_MAP.md) is a categorized guide to the whole
+> tree (entry points, constitutive model, PDE/JAX, plotting, data, tests/CI).
+
 ### Start here
 | File | What |
 |---|---|
