@@ -68,10 +68,10 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
 ## Verification status
 
 - ✅ **Compiles** clean with `gfortran` (`-fsyntax-only`, no warnings).
-- ✅ **Constitutive core numerically verified** (Python replica): isotropic
-  growth patch (`α>0, F=I` → isotropic compressive stress, zero shear);
-  consistent tangent vs central difference **2.97e-8**; ANSYS shear ordering
-  (`s12,s23,s13`) confirmed.
+- ✅ **Bit-identical to the verified Abaqus UMAT** across 20 deformation states
+  (`|Δσ|=|ΔFv|=|ΔJe|=0`) — see `crosscheck/` (compiles both real Fortran cores
+  and compares). Also: isotropic growth patch; consistent tangent vs central
+  difference **2.97e-8**; ANSYS shear ordering (`s12,s23,s13`) confirmed.
 - ⚠️ **Not yet run inside ANSYS.** The interface (arg list, `keycut`/`cutFactor`,
   `dsdePl` convention) follows the standard `usermat` spec but should be checked
   against the target ANSYS version; the per-version argument list can vary

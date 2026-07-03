@@ -51,7 +51,10 @@ into a single-element ANSYS model.
        stress·time) — and the **growth `α` field**: how the JAXFEM α-field is
        delivered to each integration point (`TB,STATE` init vs user field).
 3. [ ] **A single-element smoke test** in ANSYS (uniaxial / simple shear) to
-       confirm interface wiring before touching the full model.
+       confirm interface wiring before touching the full model. (The
+       constitutive law is already proven **bit-identical to the Abaqus UMAT**
+       — `crosscheck/`, 20/20 cases — so any mismatch would be interface, not
+       physics.)
 
 ## Suggested sequence
 

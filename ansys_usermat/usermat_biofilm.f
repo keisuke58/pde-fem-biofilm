@@ -236,6 +236,27 @@ C     trial Fe = F_mech . inv(Fv_old)
         end do
       end do
 
+C     Mooney-Rivlin C01 correction to the viscous flow driver (trial
+C     state) — matches umat_biofilm_visco.f so Fv evolves identically.
+      if (MTYPE .gt. 0.5d0) then
+        do I = 1, 3
+          do J = 1, 3
+            TMP2 = 0.0d0
+            do K = 1, 3
+              TMP2 = TMP2 + BE(I,K)*BE(K,J)
+            end do
+            T3(I,J) = I1B*TMP1*BE(I,J) - TMP1**2*TMP2
+          end do
+        end do
+        TMP2 = (T3(1,1)+T3(2,2)+T3(3,3))/3.0d0
+        do I = 1, 3
+          do J = 1, 3
+            TAU(I,J) = TAU(I,J)
+     &        + 2.0d0*C01*(T3(I,J)-TMP2*IDEN(I,J))
+          end do
+        end do
+      end if
+
 C     viscous update (backward Euler)
       DTS = max(DT, 1.0d-20)
       if (ETA .gt. 1.0d-20) then
