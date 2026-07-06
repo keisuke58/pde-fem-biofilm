@@ -1,10 +1,24 @@
 # pde-fem-biofilm
 
+[![CI](https://github.com/keisuke58/pde-fem-biofilm/actions/workflows/ci.yml/badge.svg)](https://github.com/keisuke58/pde-fem-biofilm/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **3D finite-element stress analysis of oral biofilms, built on the Klempt (2024)
 continuum growth model.**
 口腔バイオフィルムの連続体成長モデル（Klempt 2024）に基づく 3D FEM 応力解析。
 
 **🌐 Project site & figure gallery:** https://keisuke58.github.io/pde-fem-biofilm/
+
+## Quickstart
+
+```bash
+pip install -r requirements.txt   # core deps (JAX optional; see requirements.txt)
+./reproduce.sh                    # regenerate figures + metrics, run the test suite
+pytest tests/                     # unit tests only
+```
+
+See [`REPO_MAP.md`](REPO_MAP.md) for a guided tour, and cite via
+[`CITATION.cff`](CITATION.cff). Released under the [MIT License](LICENSE).
 
 Companion code for the LUH / IKM master's thesis and the Nishioka–Heine biofilm
 paper. The pipeline turns a TMCMC-calibrated 5-species ecology model and

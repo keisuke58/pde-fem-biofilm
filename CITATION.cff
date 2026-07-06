@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "pde-fem-biofilm: 3D FEM stress analysis of oral biofilms"
+abstract: >-
+  A reproducible pipeline for 3D finite-element stress analysis of oral
+  biofilms built on the Klempt (2024) continuum growth model. It turns
+  TMCMC-calibrated 5-species ecology and CLSM-measured composition into
+  condition-resolved mechanical stress on tooth and implant geometry, with a
+  dual-solver-verified (Abaqus UMAT / ANSYS USERMAT) constitutive core.
+  Companion code for a Leibniz University Hannover (IKM) master's thesis and
+  the Nishioka-Heine biofilm paper.
+type: software
+authors:
+  - family-names: Nishioka
+    given-names: Keisuke
+version: "0.1.0"
+date-released: "2026-07-06"
+license: MIT
+url: "https://keisuke58.github.io/pde-fem-biofilm/"
+repository-code: "https://github.com/keisuke58/pde-fem-biofilm"
+keywords:
+  - biofilm
+  - finite element method
+  - continuum growth mechanics
+  - Bayesian calibration
+  - computational biomechanics
