@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Figure gallery — pde-fem-biofilm</title>
+<meta name="description" content="Full figure library for the pde-fem-biofilm project: method flows, constitutive/UMAT algorithms, PDE numerics, fracture, verification, and data/results.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A0%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#fbfbf9; --panel:#ffffff; --ink:#1c1d1a; --muted:#5c5f57;
+    --line:#e7e6df; --accent:#0072B2;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#16171a; --panel:#1e2024; --ink:#e9e9e4; --muted:#a2a59c;
+      --line:#2c2f34; --accent:#56B4E9;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  h1,h2{font-family:var(--serif);font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  code{font-family:var(--mono);font-size:.85em;background:var(--line);padding:.08em .34em;border-radius:5px}
+
+  header.top{padding:48px 0 26px;border-bottom:1px solid var(--line)}
+  .back{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  h1{font-size:clamp(26px,4.4vw,38px);margin:12px 0 8px}
+  .lede{color:var(--muted);max-width:60ch;margin:0}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0}
+  .toc a{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--panel)}
+  .toc a:hover{text-decoration:none;border-color:var(--accent);color:var(--accent)}
+
+  section{padding:44px 0 8px;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(19px,3vw,25px);margin:0 0 4px;scroll-margin-top:16px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px;padding-bottom:36px}
+  figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);
+    display:flex;flex-direction:column}
+  figure a{display:block;background:#fff}
+  @media (prefers-color-scheme:dark){figure a{background:#f4f4ef}}
+  figure img{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--muted);padding:12px 15px;border-top:1px solid var(--line)}
+  figcaption b{color:var(--ink);font-weight:600;font-family:var(--serif);display:block;margin-bottom:3px;font-size:14px}
+
+  footer{padding:34px 0 60px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="back" href="./">&larr; back to overview</a>
+    <h1>Figure gallery</h1>
+    <p class="lede">The full figure library behind the project — method and pipeline
+      flows, the constitutive / UMAT algorithms, PDE numerics, fracture and boundary
+      conditions, verification, and the data &amp; stress results. Click any figure to
+      open it full size.</p>
+    <nav class="toc">
+      <a href="#flows">Method flows</a>
+      <a href="#umat">Constitutive / UMAT</a>
+      <a href="#numerics">PDE numerics</a>
+      <a href="#fracture">Fracture &amp; BCs</a>
+      <a href="#vv">Verification</a>
+      <a href="#results">Data &amp; results</a>
+    </nav>
+  </div>
+</header>
+
+<section id="results">
+  <div class="wrap">
+    <h2>Data &amp; results</h2>
+    <p class="sub">The measured input composition and the resolved mechanical output.</p>
+    <div class="grid">
+      <figure><a href="assets/sigma_trajectory_4cond.png" target="_blank"><img loading="lazy" src="assets/sigma_trajectory_4cond.png" alt="von Mises stress trajectory across four conditions"></a>
+        <figcaption><b>Stress trajectory σ(t)</b>Growth-induced von Mises stress over
+          biofilm age for the four conditions (CH / DH / CS / DS) — the headline result,
+          σ<sub>CH</sub>/σ<sub>DH</sub> ≈ 6.4× early.</figcaption></figure>
+      <figure><a href="assets/heine_species_composition.png" target="_blank"><img loading="lazy" src="assets/heine_species_composition.png" alt="Stacked-bar species composition over time"></a>
+        <figcaption><b>Species composition</b>Mean CLSM composition of the 5-species
+          biofilm over time, per condition — the measured input φ.</figcaption></figure>
+      <figure><a href="assets/heine_phi_psi_joint.png" target="_blank"><img loading="lazy" src="assets/heine_phi_psi_joint.png" alt="Composition times viability joint plot with marginal boxplots"></a>
+        <figcaption><b>Composition × viability</b>Living-cell composition
+          <code>L = φ·ψ</code> — log–log joint plot with constant-product diagonals and
+          marginal IQR boxplots per species.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="flows">
+  <div class="wrap">
+    <h2>Method &amp; pipeline flows</h2>
+    <p class="sub">How composition and calibration turn into a finite-element stress prediction.</p>
+    <div class="grid">
+      <figure><a href="assets/algo_flow_tooth_reality.png" target="_blank"><img loading="lazy" src="assets/algo_flow_tooth_reality.png" alt="As-implemented pipeline flow"></a>
+        <figcaption><b>As-implemented pipeline</b>Per-condition CLSM composition +
+          TMCMC dynamics → JAXFEM α-field → tooth UMAT → four-condition von Mises.</figcaption></figure>
+      <figure><a href="assets/algo_flow_full.png" target="_blank"><img loading="lazy" src="assets/algo_flow_full.png" alt="Full-PDE pipeline variant"></a>
+        <figcaption><b>Full-PDE variant</b>The complete pipeline including the PDE
+          growth-field solve and the FEM stress stage.</figcaption></figure>
+      <figure><a href="assets/algo_flow_tmcmc_toprow.png" target="_blank"><img loading="lazy" src="assets/algo_flow_tmcmc_toprow.png" alt="TMCMC calibration stage"></a>
+        <figcaption><b>TMCMC calibration</b>The Bayesian calibration stage that fits
+          the 5-species interaction matrix and rate parameters.</figcaption></figure>
+      <figure><a href="assets/flow_data_pipeline.png" target="_blank"><img loading="lazy" src="assets/flow_data_pipeline.png" alt="Data pipeline"></a>
+        <figcaption><b>Data pipeline</b>From CLSM measurements to the composition and
+          growth inputs consumed by the model.</figcaption></figure>
+      <figure><a href="assets/flow_multiphysics_chain.png" target="_blank"><img loading="lazy" src="assets/flow_multiphysics_chain.png" alt="Multiphysics coupling chain"></a>
+        <figcaption><b>Multiphysics chain</b>The coupling from ecology → growth →
+          mechanics that the pipeline realises.</figcaption></figure>
+      <figure><a href="assets/flow_impl_architecture.png" target="_blank"><img loading="lazy" src="assets/flow_impl_architecture.png" alt="Implementation architecture"></a>
+        <figcaption><b>Coupling architecture</b>Python (JAX) material model ↔ USERMAT ↔
+          solver Gauss-point loop — the proposed continuation.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="umat">
+  <div class="wrap">
+    <h2>Constitutive model &amp; UMAT algorithms</h2>
+    <p class="sub">The growth / viscoelastic material law and its subroutine implementations.</p>
+    <div class="grid">
+      <figure><a href="assets/flow_growth_kinematics.png" target="_blank"><img loading="lazy" src="assets/flow_growth_kinematics.png" alt="Growth kinematics"></a>
+        <figcaption><b>Growth kinematics</b>Multiplicative split <code>F = Fe·Fg</code>
+          with isotropic growth <code>Fg = (1+α)I</code>.</figcaption></figure>
+      <figure><a href="assets/umat_flow_visco.png" target="_blank"><img loading="lazy" src="assets/umat_flow_visco.png" alt="Viscoelastic UMAT flow"></a>
+        <figcaption><b>Viscoelastic UMAT</b>Backward-Euler viscoelastic update with an
+          F-perturbation consistent tangent (single channel).</figcaption></figure>
+      <figure><a href="assets/umat_flow_visco_2ch.png" target="_blank"><img loading="lazy" src="assets/umat_flow_visco_2ch.png" alt="Two-channel viscoelastic UMAT flow"></a>
+        <figcaption><b>Two-channel viscoelastic UMAT</b>The two-relaxation-channel
+          generalisation of the viscoelastic law.</figcaption></figure>
+      <figure><a href="assets/umat_flow_visco_phase2.png" target="_blank"><img loading="lazy" src="assets/umat_flow_visco_phase2.png" alt="Phase-2 exact-tangent UMAT flow"></a>
+        <figcaption><b>Phase-2 exact tangent</b>The exact-tangent viscoelastic UMAT
+          (patch tests 13/13, tangent vs FD ~2.4e-8).</figcaption></figure>
+      <figure><a href="assets/umat_flow_usdfld.png" target="_blank"><img loading="lazy" src="assets/umat_flow_usdfld.png" alt="USDFLD driver flow"></a>
+        <figcaption><b>USDFLD field driver</b>The user field-variable routine that
+          feeds the growth driver α to each integration point.</figcaption></figure>
+      <figure><a href="assets/flow_5species_voigt_umat.png" target="_blank"><img loading="lazy" src="assets/flow_5species_voigt_umat.png" alt="5-species Voigt UMAT stress assembly"></a>
+        <figcaption><b>5-species Voigt UMAT</b>Per-species stiffness combined by a Voigt
+          average into the composite stress response.</figcaption></figure>
+      <figure><a href="assets/flow_ve_vs_poro.png" target="_blank"><img loading="lazy" src="assets/flow_ve_vs_poro.png" alt="Viscoelastic vs poroelastic comparison"></a>
+        <figcaption><b>Viscoelastic vs poroelastic</b>Contrasting the two time-dependent
+          modelling routes for the biofilm.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="numerics">
+  <div class="wrap">
+    <h2>PDE numerics</h2>
+    <p class="sub">The reaction–diffusion growth model and how it is discretised and solved.</p>
+    <div class="grid">
+      <figure><a href="assets/flow_operator_splitting.png" target="_blank"><img loading="lazy" src="assets/flow_operator_splitting.png" alt="Operator splitting scheme"></a>
+        <figcaption><b>Operator splitting</b>Splitting reaction and diffusion (transport)
+          substeps in the time integration.</figcaption></figure>
+      <figure><a href="assets/flow_crossdiffusion_fv.png" target="_blank"><img loading="lazy" src="assets/flow_crossdiffusion_fv.png" alt="Cross-diffusion finite-volume scheme"></a>
+        <figcaption><b>Cross-diffusion (FV)</b>Finite-volume treatment of the
+          cross-diffusion coupling between species fields.</figcaption></figure>
+      <figure><a href="assets/flow_hamilton_variational.png" target="_blank"><img loading="lazy" src="assets/flow_hamilton_variational.png" alt="Hamilton variational formulation"></a>
+        <figcaption><b>Hamilton / variational</b>The variational formulation
+          underlying the JAX reaction–diffusion testbed.</figcaption></figure>
+      <figure><a href="assets/flow_timescale_separation.png" target="_blank"><img loading="lazy" src="assets/flow_timescale_separation.png" alt="Time-scale separation"></a>
+        <figcaption><b>Time-scale separation</b>Fast ecological dynamics vs slow
+          mechanical growth — the basis for the staged solve.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="fracture">
+  <div class="wrap">
+    <h2>Fracture &amp; boundary conditions</h2>
+    <p class="sub">Interface debonding and the domain's mechanical boundary treatment.</p>
+    <div class="grid">
+      <figure><a href="assets/flow_czm_traction_separation.png" target="_blank"><img loading="lazy" src="assets/flow_czm_traction_separation.png" alt="Cohesive zone traction-separation law"></a>
+        <figcaption><b>Cohesive zone law</b>The traction–separation response governing
+          biofilm–substrate debonding.</figcaption></figure>
+      <figure><a href="assets/flow_mixed_mode_fracture.png" target="_blank"><img loading="lazy" src="assets/flow_mixed_mode_fracture.png" alt="Mixed-mode fracture"></a>
+        <figcaption><b>Mixed-mode fracture</b>Mode-I/II interaction via the
+          Benzeggagh–Kenane criterion.</figcaption></figure>
+      <figure><a href="assets/flow_boundary_conditions.png" target="_blank"><img loading="lazy" src="assets/flow_boundary_conditions.png" alt="Boundary conditions"></a>
+        <figcaption><b>Boundary conditions</b>The constraints applied on the
+          tooth / biofilm domain in the FE model.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="vv">
+  <div class="wrap">
+    <h2>Verification &amp; validation</h2>
+    <p class="sub">How correctness is established from unit checks up to the stress prediction.</p>
+    <div class="grid">
+      <figure><a href="assets/flow_vv_hierarchy.png" target="_blank"><img loading="lazy" src="assets/flow_vv_hierarchy.png" alt="V&V hierarchy pyramid"></a>
+        <figcaption><b>V&amp;V hierarchy</b>How unit-level verification builds up to a
+          validated stress prediction.</figcaption></figure>
+      <figure><a href="assets/flow_vv_convergence.png" target="_blank"><img loading="lazy" src="assets/flow_vv_convergence.png" alt="Convergence study"></a>
+        <figcaption><b>Convergence</b>Mesh / solver convergence underpinning the
+          reported stresses.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Figures rendered from TikZ (pdflatex / xelatex) and matplotlib. Sources and full
+      documentation: <a href="https://github.com/keisuke58/pde-fem-biofilm">github.com/keisuke58/pde-fem-biofilm</a>
+      · <a href="./">back to overview</a>.</p>
+  </div>
+</footer>
+
+</body>
+</html>
