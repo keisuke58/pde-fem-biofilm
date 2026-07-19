@@ -63,6 +63,7 @@ figures/
 # hand-authored GitHub Pages site below.
 docs/*
 !docs/index.html
+!docs/gallery.html
 !docs/assets
 !docs/assets/*.png
 DocuGenius/
