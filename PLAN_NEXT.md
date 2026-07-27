@@ -15,6 +15,44 @@ valid as subsystem references but are dated (Feb 2026).
 
 ---
 
+## Update — 2026-07 (engineering hardening done; freeze for thesis)
+
+Since the 2026-07-02 plan below, the repository was hardened into a
+**citable, reproducible, CI-verified artifact**. That work is complete; the
+scientific frontier (§1–§4 below) is unchanged and largely gated on the full
+Abaqus/JAX workspace.
+
+**Done (merged):**
+- **CI** (`.github/workflows/ci.yml`) — unit tests + the Fortran UMAT↔USERMAT
+  cross-check + adversarial hunt + `audit_all --quick`, green on every push.
+- **Model↔experiment validation** (`validate_composition.py`) — dysbiotic-static
+  composition vs Heine CLSM (MAE ≈ 4.2 pp, TVD ≈ 0.11), with a regression test.
+- **Golden-value guard** (`tests/test_golden_stress.py`) — freezes the headline
+  σ_CH/σ_DH ≈ 6.44× and per-condition stresses; a self-clearing xfail tracks the
+  stale DS artifact.
+- **Reproducibility & citability** — `reproduce.sh`, pinned `requirements.txt`,
+  `LICENSE` (MIT), `CITATION.cff`, `REPO_MAP.md`, CI badge.
+- **Public project site + figure gallery** (`docs/`, GitHub Pages).
+- **Coupling skeleton** (`ansys_usermat/coupling/`) — runnable Python-side
+  material bridge + wire protocol + syntax-checked Fortran hook stub + round-trip
+  test (the T2/continuation scaffolding, see §2/§3).
+
+**Recommended near-term = FREEZE (thesis submission window).** Do *not* widen
+scope. The only remaining must-dos require the author's full workspace:
+1. **Regenerate the stale DS artifact** (`tooth_klempt_comparison.json` `_flat_golden`)
+   via the Abaqus run — clears the xfail tracker.
+2. Run **`audit_all.py --strict-env`** on the complete workspace (confirm every
+   thesis figure regenerates).
+3. Confirm the **Klempt citation** — published as Klempt, Geisler, Soleimani
+   et al. (2026), *Arch. Appl. Mech.* 96, 164, doi:10.1007/s00419-026-03160-y —
+   and that the referenced "Eq. 34–36" match that version.
+
+**Mid-term (Keio M2, from 2027-04)** = the science below: T2 first paper
+(jaw-level twin), the Python↔Fortran coupling (skeleton already in place),
+and closing the `E_SPEC` / `α` measurement gaps.
+
+---
+
 ## 0. Where we are (snapshot)
 
 | Component | Status |
