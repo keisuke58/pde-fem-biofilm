@@ -1,5 +1,7 @@
 # ANSYS USERMAT port — biofilm growth / viscoelastic law
 
+**English** | [日本語](README.ja.md)
+
 `usermat_biofilm.f` is an **ANSYS Mechanical APDL `USERMAT`** port of the verified
 Abaqus UMAT (`umat_biofilm_visco.f` / `umat_biofilm_visco_phase2.f`). It lets
 Felix/IKM's existing ANSYS FE model call the *same* growth/viscoelastic
@@ -48,6 +50,11 @@ model at each Gauss point — has an explicit extension point marked
 dTime, prop)` to Python and receives `(stress, Fv_new, dsdePl)`. The inline
 Fortran core is the reference/fallback used for verification. (Architecture:
 `ch5_flow/flow_impl_architecture`.)
+
+A runnable **skeleton** of this bridge lives in [`coupling/`](coupling/README.md):
+the Python side (`material_server.py`, NumPy core + tangent + socket server), the
+wire protocol, and a syntax-checked Fortran hook stub (`usermat_py_hook.f`), with
+an end-to-end round-trip test (`tests/test_coupling.py`).
 
 ## Build & use in ANSYS (outline)
 

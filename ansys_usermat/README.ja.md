@@ -1,0 +1,91 @@
+# UMAT／USERMAT 解説 ― バイオフィルム成長・粘弾性構成則（ANSYS 移植版）
+
+[English](README.md) | **日本語**
+
+`ansys_usermat/usermat_biofilm.f` は、検証済みの **Abaqus UMAT**
+（`umat_biofilm_visco.f` / `umat_biofilm_visco_phase2.f`）を **ANSYS Mechanical APDL
+の `USERMAT`** へ移植したものです。Felix／IKM が持つ既存の ANSYS FE モデルの
+現象論的な材料則を置き換え、**同一の成長・粘弾性構成則** を各ガウス点で
+呼び出せるようにします（提案する修論テーマの出発点）。
+
+- 構成則：`F = Fe·Fv·Fg`、成長は等方 `Fg = (1+α)I`
+- **構成則の代数（式）は Abaqus 版の一行一行の写し**：Neo-Hookean 偏差応力 +
+  `D1` 圧力項、後退オイラーの粘性更新、F 摂動による整合接線。
+- **ANSYS 固有なのは「インターフェイス」だけ**。物理・アルゴリズムは同一。
+
+## Abaqus UMAT ↔ ANSYS USERMAT 対応表
+
+| Abaqus | ANSYS `usermat` | 意味 |
+|---|---|---|
+| `DFGRD1` / `DFGRD0` | `defGrad` / `defGrad_t` | 3×3 変形勾配テンソル |
+| `STRESS(NTENS)` | `stress(ncomp)` | Cauchy 応力 |
+| `DDSDDE` | `dsdePl(ncomp,ncomp)` | 材料接線（ヤコビアン） |
+| `STATEV` | `ustatev(nStatev)` | 状態変数 |
+| `PROPS` | `prop(nProp)` | 材料プロパティ |
+| `DTIME` | `dTime` | 時間増分 |
+| `PNEWDT < 1` | `keycut = 1`（+ `cutFactor`） | 増分カットバック要求 |
+| `SSE` / `SPD` | `sedEl` / `sedPl` | ひずみエネルギー／散逸 |
+| 並び `11,22,33,12,13,23` | 並び **`11,22,33,12,23,13`** | ⚠️ せん断の 5↔6 が入れ替わり |
+
+**最大の落とし穴は応力成分の並び順**。ここでは `VI/VJ` の Voigt マップ
+（`data VI /1,2,3,1,2,1/`, `VJ /1,2,3,2,3,3/`）で吸収しています。
+
+## プロパティと状態変数
+
+```
+prop(1)=C10  prop(2)=C01  prop(3)=D1  prop(4)=eta  prop(5)=mtype  prop(6)=kUsePy
+ustatev(1:9)=Fv（行優先の 3×3）   ustatev(10)=alpha（成長ドライバ）
+```
+
+- **成長ドライバ `alpha`** は JAXFEM の α 場を各積分点へ写像したもの
+  （`TB,STATE` やユーザ場で初期化、あるいは時間発展）。
+- `kUsePy=1` にすると、インライン Fortran 則の代わりに
+  **Python マテリアルフック**（後述）を選択します。
+
+## Python マテリアルフック（ガウス点ごと）
+
+修論の核心的な成果 ― 論文で較正した **Python** 材料モデルを各ガウス点で
+呼び出す ― のための拡張点が、ソース中に `PYTHON MATERIAL HOOK` として
+明示されています。想定する仕組みは `ISO_C_BINDING` ／ローカルソケット橋渡しで、
+`(defGrad, Fv_old, alpha, dTime, prop)` を Python へ送り、
+`(stress, Fv_new, dsdePl)` を受け取る形です。インラインの Fortran コアは
+検証用の基準・フォールバックとして残します
+（アーキ図：`ch5_flow/flow_impl_architecture`）。
+
+## ANSYS でのビルド・使用（概略）
+
+```
+! ANSYS のユーザプログラマブル機能ツールチェーン（ANSUSERSHARED / usermat ビルド）
+! でコンパイル・リンクし、モデル内で：
+TB, USER, 1, 1, 6         ! プロパティ 6 個
+TBDATA, 1, C10, C01, D1, eta, mtype, kUsePy
+TB, STATE, 1, , 10        ! 状態変数 10 個（Fv 1:9, alpha 10）
+```
+
+ANSYS なしでの構文チェック：
+
+```
+gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
+```
+
+## 検証状況
+
+- ✅ `gfortran`（`-fsyntax-only`）で警告なくコンパイル。
+- ✅ **検証済み Abaqus UMAT とビット単位で一致**（20 変形状態で
+  `|Δσ|=|ΔFv|=|ΔJe|=0`）。`crosscheck/` が両方の実 Fortran コアをコンパイルして比較。
+  さらに敵対的スイープ 8017 ケースでも 0 ULP、フレーム不変性残差 4.9e-17。
+  等方成長パッチ、整合接線 vs 中心差分 **2.97e-8**、ANSYS のせん断並び
+  （`s12,s23,s13`）も確認済み。
+- ⚠️ **ANSYS 内での実行はまだ**。インターフェイス（引数リスト、
+  `keycut`/`cutFactor`、`dsdePl` の規約）は標準 `usermat` 仕様に従うが、
+  対象 ANSYS バージョンで要確認（`var1..var8`, `tsstif`, `epsZZ` 等は版で異なる）。
+- 元となる Abaqus コアは検証済み（接線 vs FD ~2.4e-8、パッチ試験 13/13）。
+
+## 注意点／次のステップ
+
+1. 対象 ANSYS リリースの正確な `usermat` 引数リストを確認する。
+2. ここでの `dsdePl` は F 摂動による `∂σ/∂ε` 型。ANSYS が同じ規約の
+   Cauchy／Jaumann 材料ヤコビアンを期待するか確認（対称化や `NLGEOM` の
+   回転 `rotateM` が必要な場合あり）。
+3. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
+   本来の修論作業。インラインコアは検証基準として残す。
