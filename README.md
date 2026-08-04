@@ -109,6 +109,7 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 ### Start here
 | File | What |
 |---|---|
+| [THESIS_PLAYBOOK.md](THESIS_PLAYBOOK.md) | **Systematised guide** — what's built, how to advance/check the thesis, and the go-forward plan (start here) |
 | [VERIFICATION_SENSITIVITY_LIMITATIONS.md](VERIFICATION_SENSITIVITY_LIMITATIONS.md) | Consolidated rigor audit (Verification / Sensitivity / Limitations) — read this first |
 | [PLAN_NEXT.md](PLAN_NEXT.md) | Prioritized next-steps roadmap (thesis freeze / first paper / continuation) |
 | [PIPELINE.md](PIPELINE.md) | Config-driven pipeline entry point (`pipeline.py`) + `P[σ>τ]` risk metric |
