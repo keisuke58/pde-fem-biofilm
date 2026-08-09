@@ -83,6 +83,28 @@ CI runs all of the above on every push.
 — what is Verified vs Sensitive vs a disclosed Limitation. Keep the thesis claims
 inside what it supports.
 
+### Recorded state — full `./reproduce.sh` run (2026-08, clean checkout)
+
+| Check | Result |
+|---|---|
+| `./reproduce.sh` | **exit 0** — all steps completed |
+| Figures regenerated | `heine_species_composition`, `heine_phi_psi_joint`, `validation_composition_dysbiotic` — **pixel-identical** to the committed PNGs (max pixel diff 0) |
+| `audit_all.py --quick` | **ALL CLEAR** (runnable subset); 4 sections SKIPPED — external inputs absent (Abaqus extracts / sibling repos / author workspace) |
+| Test suite | **142 collected → 139 passed, 3 xfailed** (the 3 xfails are intentional trackers: `E_di` bounds + the two stale-DS artifact entries) |
+| Model↔experiment validation | MAE **4.216 pp**, TVD **0.1054**, worst species 10.54 pp (dysbiotic/static) |
+| Coupling equivalence | Python core ≡ Fortran core, worst **6.8e-14** relative over 28 states |
+
+**Reproducibility note.** The figures regenerate *pixel-identically*, but the PNG
+bytes also carry matplotlib's version string, so byte-level identity additionally
+requires the pinned toolchain (`pip install -r requirements.txt` — matplotlib
+3.11.0). Running with a different patch release leaves `git status` showing the
+figures as modified even though the rendered content is unchanged; verify with a
+pixel comparison, not `git diff`, before assuming a real change.
+
+**Still gated on the full workspace** (cannot be closed here): the 4 SKIPPED audit
+sections and the stale DS artifact both need the author's Abaqus environment —
+see the checklist below.
+
 **Pre-submission checklist (the 3 must-dos + closure):**
 - [ ] **Regenerate the stale DS artifact** (`tooth_klempt_comparison.json` `_flat_golden`)
       via the Abaqus run → clears the `test_golden_stress.py` xfail tracker.
