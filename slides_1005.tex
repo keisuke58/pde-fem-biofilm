@@ -165,6 +165,33 @@ Single \texttt{SOLID185}, unit cube, \textbf{all 8 nodes fully fixed}.
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Caveat: this cube is a math check, not the biofilm's actual shape}
+\small
+The single constrained cube isolates the \textbf{growth law itself} --- it
+says nothing about real geometry. Real oral biofilms are considerably more
+structured:
+\vspace{4pt}
+\begin{itemize}
+  \item \textbf{Mushroom/pillar + water channels} --- typical under flow
+        (rivers, catheters); the textbook confocal image
+  \item \textbf{Flat, layered mat} (tens--hundreds of \textmu m thick) ---
+        typical of static, nutrient-rich, diffusion-limited conditions ---
+        \textbf{closer to dental plaque}
+  \item Tooth/implant surfaces are \textbf{curved, heterogeneous substrates},
+        not flat or cubic --- early colonizers (\emph{S.\ oralis},
+        \emph{A.\ naeslundii}) form a thin base layer, late pathogens
+        (\emph{P.\ gingivalis}) colonize \textbf{patchily} on top
+        (the composition variability CLSM measures)
+  \item Gingival sulcus / peri-implant gap geometry itself constrains the
+        mechanics --- not captured by a free cube
+\end{itemize}
+\vspace{4pt}
+{\scriptsize The real geometry path (patient-specific STL/CT $\to$ conformal
+mesh) is separate machinery (\texttt{biofilm\_conformal\_tet.py},
+\texttt{openjaw\_*.py}) --- not run for tonight's verification.}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Update: the growth branch now runs inside real ANSYS}
 \textbf{Since the benchmark slide:} built the custom ANSYS 2022 R2 executable
 with \texttt{usermat\_biofilm.f} linked in, and ran the closed-form
