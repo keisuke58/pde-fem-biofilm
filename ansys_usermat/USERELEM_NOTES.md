@@ -78,8 +78,61 @@ something else (e.g. calls the material routine directly, bypassing
 the *documented sample* pattern, not Felix's code — diff against his source
 once it arrives per §4.2.
 
+## What the shipped example does NOT cover
+
+Read the full 725 lines end to end (2026-08-19), not just the `ElemGetMat`
+call. Correcting the framing above: this is **not** a template for the
+diffusion-reaction / extra-field-DOF part of our problem. What's actually in
+the file, section by section:
+
+1. **Header/argument doc** (lines 1–211) — the full contract, as above.
+2. **Setup** (~213–300) — declares work arrays, zeroes `eStiff`/`eMass`/
+   `fExt`/`fInt` per what `keyMtx(:)` requests.
+3. **Shape functions & B-matrix** (~300–500) — `ElemShpFn` gives isoparametric
+   shape derivatives; these get assembled into a standard small-strain
+   `BMat` (strain–displacement matrix) via the element Jacobian. This part is
+   pure solid-mechanics kinematics — displacement DOFs only, `nUsrDof` here
+   equals `nDim` per node, nothing else.
+4. **Material call** (~500–533) — the `ElemGetMat`/`keyAnsMat` dispatch
+   documented above.
+5. **Stiffness/mass assembly** (~535–601) — `matba(BMat, cMat, eStiff, ...)`
+   (the standard $\mathbf{B}^T\mathbf{C}\mathbf{B}$ integration), `ElemMass`
+   for a consistent mass matrix. Nothing beyond textbook FE assembly.
+6. **Result output** (~603–725) — extrapolate Gauss-point stress/strain to
+   corner nodes for `PRESOL`/`OUTPR`; no physics here, just post-processing.
+
+**Not present anywhere in this file:**
+- Any non-mechanical field DOF (concentration/volume-fraction/whatever the
+  ecology state would be) — `nUsrDof` in the whole example is sized purely
+  off displacement components. `USRDOF` (the APDL command that would attach
+  extra DOFs to nodes) is configured outside this file entirely and never
+  referenced from it.
+- Any diffusion or reaction term, any residual assembly beyond
+  $\mathbf{f}_{int} = \int \mathbf{B}^T\boldsymbol{\sigma}\,dV$, and no
+  boundary-condition handling — BCs (`D`, `F`, `SF` commands) are applied by
+  ANSYS's standard DOF-constraint machinery *outside* `UserElem`; the element
+  never sees a BC as such, only the DOF values ANSYS hands it each iteration
+  (`TotValDofs`/`IncValDofs`).
+
+**Conclusion for the open question (§4.1 of THESIS_ASSIGNMENT.md):** ANSYS's
+own shipped example gives a solid, reusable template for "keep doing
+mechanics as before, call out to the verified USERMAT for stress" — that part
+is close to free. It gives **zero** template for the actual new piece under
+option (a): a coupled residual that adds a diffusion-reaction equation for
+the ecology field over the same element, with its own weak form, its own
+contribution to `eStiff`/`fInt` (added to, not replacing, the mechanical
+block), and its own entries in `saveVars`/`nSaveVars` for field-history state.
+That has to be derived and coded from scratch (weak form → Galerkin residual
+→ Newton tangent, the standard reaction-diffusion FE pattern used already in
+`JAXFEM/`, just re-expressed in this Fortran contract) — it is **not** a
+matter of finding the right ANSYS example to copy. Felix's version, once it
+arrives, is the reference for how he actually did this same step; that is the
+single most valuable thing to look at in his code, more than the material
+dispatch (which we've already independently confirmed matches the documented
+pattern).
+
 ## Source
 
 `C:\Program Files\ANSYS Inc\v222\ansys\customize\user\UserElem.F` (ships with
-every ANSYS 2022 R2 install; header comments + a complete worked example are
-in the file itself, ~700 lines). Read on IKMHIWI03, 2026-08-19.
+every ANSYS 2022 R2 install; header comments + a complete worked example, 725
+lines total, read in full). Read on IKMHIWI03, 2026-08-19.
