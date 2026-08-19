@@ -91,7 +91,9 @@
   \tikz[baseline=-0.5ex]\draw[proto](0,0)--(0.7,0);\ \ dashed: in-the-loop prototype — verified, not yet used for results};
 
 \node[note, anchor=north, text=gray!55!black] at (leg.south)
-  {verified: Abaqus \texttt{UMAT} $\equiv$ ANSYS \texttt{USERMAT} to 0\,ULP (8017 cases)\ \ $\cdot$\ \
+  {verified: Abaqus \texttt{USERMAT} runs and converges in ANSYS MAPDL 2022\,R2
+   (\texttt{SOLID185}, \texttt{NLGEOM,ON})\ \ $\cdot$\ \
+   Abaqus \texttt{UMAT} $\equiv$ ANSYS \texttt{USERMAT} to 0\,ULP (8017 cases)\ \ $\cdot$\ \
    Python core $\equiv$ Fortran core to $6.8{\times}10^{-14}$ rel.\ \ $\cdot$\ \
    consistent tangent vs.\ FD $\approx 3{\times}10^{-8}$};
 
