@@ -3,6 +3,9 @@
 # Abaqus 結果
 *.odb
 *.dat
+# ...except the committed ANSYS verification decks: *.dat is meant to catch
+# solver scratch output, but APDL input decks share the extension.
+!ansys_usermat/apdl/*.dat
 *.msg
 *.sta
 *.com
