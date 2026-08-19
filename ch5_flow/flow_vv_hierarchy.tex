@@ -29,8 +29,10 @@
   \textbf{``solving the equations right''}\\
   MMS / analytic Neumann-$\cos$; order-of-accuracy $O(\Delta z^2)$;
   UMAT tangent vs FD $2.4\times10^{-8}$; single-element patch tests (13/13);
-  Abaqus \texttt{UMAT} $\equiv$ ANSYS \texttt{USERMAT} to \textbf{0\,ULP} over 8017
-  adversarial cases; Python core $\equiv$ Fortran core to $6.8\times10^{-14}$ rel.};
+  two \emph{independent constitutive} UMATs (Klempt--Hencky vs neo-Hookean)
+  agree to $0.1\%$; the \emph{same} law ported Abaqus \texttt{UMAT}
+  $\to$ ANSYS \texttt{USERMAT} agrees to \textbf{0\,ULP} over 8017 adversarial
+  cases, and to the Python core to $6.8\times10^{-14}$ rel.};
 \draw[lead] (3.4,0.85) -- (c1.west);
 
 \node[call, anchor=east] at (-5.6,2.6) (c2) {%
