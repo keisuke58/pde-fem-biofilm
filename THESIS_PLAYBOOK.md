@@ -29,6 +29,7 @@ them:
 | Physics | Growth kinematics `F=Fe·Fg`, `Fg=(1+α)I` | 🟢 verified | production UMAT; `VERIFICATION…` V1 |
 | Physics | Consistent tangent (DDSDDE) | 🟢 verified | analytic + F-perturbation vs FD 2.4–2.9e-8; `phase2_patch_test.py` 13/13 |
 | Physics | Dual-solver port (Abaqus↔ANSYS) | 🟢 bit-identical | `ansys_usermat/crosscheck/` — 0 ULP over 8017 cases |
+| Physics | USERMAT **in ANSYS 2022 R2** | 🟢 runs & converges | `SOLID185`/`NLGEOM,ON` uniaxial benchmark; interface args, `keycut`/`cutFactor`, `dsdePl` validated in-solver |
 | Physics | Mesh convergence | 🟢 verified | `VERIFICATION…` V-series |
 | Result | Headline `σ_CH/σ_DH ≈ 6.44×` (early) | 🟢 frozen | `tests/test_golden_stress.py`; `JAXFEM/_posterior_ci/` |
 | Result | Model ↔ experiment (dysbiotic/static) | 🟢 validated | `validate_composition.py` — MAE 4.2 pp, TVD 0.11 |
