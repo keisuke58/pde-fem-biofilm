@@ -111,6 +111,29 @@ Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Verification setup: what's actually being checked}
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+  \includegraphics[width=\linewidth]{assets/growth_bc_3d.png}
+\end{column}
+\begin{column}{0.45\textwidth}
+\small
+Single \texttt{SOLID185}, unit cube, \textbf{all 8 nodes fully fixed}.
+\vspace{4pt}
+\begin{itemize}
+  \item Constraint forces $\mathbf F=\mathbf I$ exactly at every Gauss point
+        --- no FE solve needed to know the deformation
+  \item $\mathbf F_g=(1{+}\alpha)\mathbf I$ makes the material want to grow
+        isotropically and it can't $\Rightarrow$ pure hydrostatic compression,
+        \textbf{known in closed form}
+  \item The 4 cases (next slide): elastic/viscous $\times$
+        $\alpha{=}0.05/0.20$ --- same cube, same BCs, different growth/viscosity
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Update: the growth branch now runs inside real ANSYS}
 \textbf{Since the benchmark slide:} built the custom ANSYS 2022 R2 executable
 with \texttt{usermat\_biofilm.f} linked in, and ran the closed-form
