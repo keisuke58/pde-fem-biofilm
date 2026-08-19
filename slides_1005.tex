@@ -43,20 +43,15 @@
 \begin{frame}{Thesis in one slide}
 \textbf{Title:} \emph{Hamilton-Principle Models of Oral Biofilm Dysbiosis:\\
 GPU-Accelerated Inference, Metabolic Priors, and Spatial Stratification}
-\vspace{4pt}
-\begin{columns}[T]
-\begin{column}{0.6\textwidth}
+\vspace{6pt}
 Three pillars, all under the extended Hamilton principle:
 \begin{enumerate}
   \item \textbf{ch.\,3} GPU Bayesian inference (TMCMC) on \emph{in vitro} data
   \item \textbf{ch.\,4} Metabolic-prior replicator dynamics \emph{in vivo}
   \item \textbf{ch.\,5} Spatial reaction--diffusion + 3-D FISH validation
 \end{enumerate}
-\end{column}
-\begin{column}{0.4\textwidth}
-  \includegraphics[width=\linewidth]{fig_hamilton_vs_comstat.pdf}
-\end{column}
-\end{columns}
+\vspace{4pt}
+{\scriptsize \TODO{figure: Hamilton principle vs.\ comparison-statics --- pending}}
 \end{frame}
 
 % --------------------------------------------------------
@@ -215,20 +210,14 @@ diff against it the moment it arrives.}
 
 % --------------------------------------------------------
 \begin{frame}{Validation on the 2-D mesh}
-\begin{columns}[T]
-\begin{column}{0.5\textwidth}
 \begin{itemize}
   \item Stress--strain relation checked at Gauss-point level
   \item Equilibrium $\operatorname{div}\boldsymbol{\sigma}=\mathbf{0}$:
         patch test / manufactured solution
   \item Residual convergence under mesh refinement
 \end{itemize}
-\end{column}
-\begin{column}{0.5\textwidth}
-  \includegraphics[width=\linewidth]{pde_verify_convergence.pdf}\\
-  {\scriptsize \TODO{replace with the FEM residual plot if newer}}
-\end{column}
-\end{columns}
+\vspace{4pt}
+{\scriptsize \TODO{figure: FEM residual convergence plot --- pending}}
 \end{frame}
 
 % --------------------------------------------------------
