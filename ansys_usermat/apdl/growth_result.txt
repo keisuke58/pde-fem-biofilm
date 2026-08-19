@@ -1,0 +1,299 @@
+
+ PRINT S    ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT NODAL STRESS LISTING *****                                
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  THE FOLLOWING X,Y,Z VALUES ARE IN GLOBAL COORDINATES                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+       2 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000       0.0000       0.0000     
+       4 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000       0.0000     -0.12852E-019
+       3 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000     -0.12852E-019  0.0000     
+       1 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000       0.0000       0.0000     
+       5 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000       0.0000       0.0000     
+       6 -0.10193E-003-0.10193E-003-0.10193E-003 0.89180E-037-0.16065E-019-0.12852E-019
+       7 -0.10193E-003-0.10193E-003-0.10193E-003 0.14269E-035-0.25704E-019-0.51409E-019
+       8 -0.10193E-003-0.10193E-003-0.10193E-003  0.0000       0.0000       0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     1       
+       2   1.0000     
+       4   1.0000     
+       3   1.0000     
+       1   1.0000     
+       5   1.0000     
+       6   1.0000     
+       7   1.0000     
+       8   1.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     2       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     3       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     4       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     5       
+       2   1.0000     
+       4   1.0000     
+       3   1.0000     
+       1   1.0000     
+       5   1.0000     
+       6   1.0000     
+       7   1.0000     
+       8   1.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     6       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     7       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     8       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     9       
+       2   0.0000     
+       4   0.0000     
+       3   0.0000     
+       1   0.0000     
+       5   0.0000     
+       6   0.0000     
+       7   0.0000     
+       8   0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+
+  biofilm USERMAT - constrained isotropic growth (closed-form check)           
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=    5.0000      LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     10      
+       2  0.50000E-001
+       4  0.50000E-001
+       3  0.50000E-001
+       1  0.50000E-001
+       5  0.50000E-001
+       6  0.50000E-001
+       7  0.50000E-001
+       8  0.50000E-001

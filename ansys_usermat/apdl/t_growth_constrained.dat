@@ -1,4 +1,4 @@
-! t_growth_constrained.dat — growth-path verification for usermat_biofilm.f
+! t_growth_constrained.dat ??? growth-path verification for usermat_biofilm.f
 ! ANSYS Mechanical APDL.  See RUNBOOK.md for the full Windows procedure.
 !   Windows (IKMHIWI03, v222), from a writable working directory:
 !     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
@@ -67,6 +67,7 @@ NLGEOM,ON
 TIME,5.0                     ! must match dt used for the viscous reference
 NSUBST,1,10,1
 OUTRES,ALL,ALL
+OUTRES,SVAR,ALL               ! state vars need their own OUTRES flag -- ALL,ALL alone omits them
 SOLVE
 FINISH
 
@@ -76,6 +77,15 @@ SET,LAST
 ESEL,S,ELEM,,1
 /OUTPUT,growth_result,txt
 PRESOL,S,COMP                ! SX SY SZ SXY SYZ SXZ at the integration points
-PRESOL,SVAR                  ! state: Fv (1..9) and alpha (10)
+PRESOL,SVAR,1                 ! Fv(1,1)
+PRESOL,SVAR,2                 ! Fv(1,2)
+PRESOL,SVAR,3                 ! Fv(1,3)
+PRESOL,SVAR,4                 ! Fv(2,1)
+PRESOL,SVAR,5                 ! Fv(2,2)
+PRESOL,SVAR,6                 ! Fv(2,3)
+PRESOL,SVAR,7                 ! Fv(3,1)
+PRESOL,SVAR,8                 ! Fv(3,2)
+PRESOL,SVAR,9                 ! Fv(3,3)
+PRESOL,SVAR,10                ! alpha
 /OUTPUT
 FINISH

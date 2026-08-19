@@ -95,38 +95,54 @@ ANSCUST.BAT
 
 This should produce `ANSYS.exe` in `C:\work\biofilm_upf`.
 
-> ❌ **Attempted 2026-08-19 on IKMHIWI03, blocked at link time.** Only one
-> interactive prompt appeared (Wind Turbine Aeroelastic — answered `Y`) and
-> the compile of `usermat_biofilm.f` succeeded. The link step then failed:
+> ✅ **Resolved 2026-08-19 on IKMHIWI03 — link error fixed without installing
+> classic ifort, no admin/UAC needed.** The first attempt hit:
 > ```
 > ifmodintr.lib(iso_c_binding.obj) : error LNK2001: unresolved external symbol for_deallocate_handle
 > ifmodintr.lib(iso_c_binding.obj) : error LNK2001: unresolved external symbol for_alloc_allocatable_handle
 > ANSYS.exe : fatal error LNK1120: 2 unresolved externals
 > ```
-> Root cause, consistent with the version-mismatch concern flagged in step
-> 0b: the installed oneAPI (2025.3) ships the newer LLVM-based `ifx` runtime
-> under the `ifort` name; ANSYS 2022 R2's prebuilt libraries were linked
-> against the **classic** Intel Fortran runtime, and the two unresolved
-> symbols are classic-runtime-only entry points. This oneAPI install has no
-> classic `ifort` fallback. Note that this is an ANSYS-Windows platform
-> requirement, not a preference — `ANSCUST.BAT` links against ANSYS's
-> prebuilt `.lib`s via MSVC `link.exe` with Intel Fortran's ABI; a
-> non-Intel Fortran compiler (e.g. `gfortran`) would fail with a different
-> set of unresolved symbols, not fewer.
+> The instinct was "this needs the old classic ifort" (oneAPI 2024.2.1, last
+> version to ship it) — but `winget install --id Intel.FortranCompiler
+> --version 2024.2.1` needs elevation with no `--scope user` option, and the
+> UAC consent prompt can't be approved from a non-interactive session. That
+> path is a dead end without a human physically at the machine.
 >
-> **Attempted fix 2026-08-19, blocked on UAC, not yet completed.** Classic
-> `ifort` was last shipped in oneAPI **2024.2.1** (Intel Fortran Compiler
-> Classic 2021.13; 2025.0 dropped it entirely). `winget install --id
-> Intel.FortranCompiler --version 2024.2.1` finds and verifies the package,
-> but the installer requires elevation (per-machine only — `--scope user`
-> returns "No applicable installer found") and the resulting UAC consent
-> prompt cannot be approved from a non-interactive/remote session. Needs a
-> human physically at IKMHIWI03 to click through UAC, then:
-> ```powershell
-> winget install --id Intel.FortranCompiler --version 2024.2.1 --source winget --accept-source-agreements --accept-package-agreements --silent
+> **The actual fix needs neither.** `dumpbin /symbols` on oneAPI 2025.3's own
+> `ifmodintr.lib` confirms `for_alloc_allocatable_handle`/
+> `for_deallocate_handle` are referenced there as `UNDEF` (i.e. `ifmodintr.lib`
+> expects something else to supply them) — but they're **not** missing from
+> 2025.3 as a whole: `dumpbin /symbols` on `libifcoremt.lib` (same 2025.3
+> install) shows both as real, defined (`SECTB`/`SECTD`) symbols. ANSYS's
+> shipped `ansys.lrf` link-response-file simply never lists
+> `libifcoremt.lib` among its ~150 `-defaultlib:` entries. Adding one line
+> fixes it — edit the **copy** of `ansys.lrf` in your working folder (never
+> the template under `Program Files`), immediately before the `ansysexe.res`
+> line:
 > ```
-> Once installed, retry the env-init sequence above pointing at the 2024.2.1
-> `compiler\...\env\vars.bat` instead of `2025.3`'s, and re-run `ANSCUST.BAT`.
+> -defaultlib:libifcoremt.lib
+> ```
+> Two more snags surfaced re-running just `link @ansys.lrf` directly (to
+> avoid re-doing `ANSCUST.BAT`'s interactive prompt each time) — both are
+> artifacts of that shortcut, not real problems, and don't come up if you run
+> the full `ANSCUST.BAT`:
+> - `LINK1181: cannot open ansysexe.res` — `ANSCUST.BAT` sets `LIB` to
+>   include `%AWP_ROOT222%\ansys\Custom\Lib\winx64` (where `ansysexe.res` and
+>   `WinAnsys.res` actually live) before linking; a bare `link @ansys.lrf`
+>   run outside that context doesn't have it on `LIB`. Set
+>   `LIB=%AWP_ROOT222%\ansys\Custom\Lib\winx64;%LIB%` first if you do this.
+> - `LNK1149: output filename identical to input` — a stale `ANSYS.lib`/
+>   `ANSYS.exp` left over from a prior failed link attempt gets swept up by
+>   the response file's `*.lib` wildcard and collides with the new output of
+>   the same name. Delete `ANSYS.lib`/`.exp`/`.exe`/`.map` from the working
+>   folder before relinking (`ANSCUST.BAT` only auto-deletes `ANSYS.exe`,
+>   not the `.lib`/`.exp`).
+>
+> With those three things in place, `link @ansys.lrf` (or the full
+> `ANSCUST.BAT`, answering `Y`/`N` to Wind Turbine Aeroelastic as you
+> prefer — it's unrelated) exits 0 and produces a 370 MB `ANSYS.exe`, only
+> `LNK4286`/`LNK4199` warnings (duplicate-symbol-import and unused-delayload
+> noise, harmless).
 
 > ⚠️ **Confirmed 2026-08-19 that this script runs and is genuinely
 > interactive** — it prompts `Do you want to link the Wind Turbine Aeroelastic
@@ -159,6 +175,28 @@ The `-custom` argument is essential. Without it ANSYS runs its **own** material
 and the whole exercise silently means nothing.
 
 Results land in `growth_result.txt` (`PRESOL,S,COMP` and `PRESOL,SVAR`).
+
+> ✅ **Ran successfully 2026-08-19 on IKMHIWI03**, once past two more Step-1-
+> adjacent snags:
+> - `ANSYS222.exe -custom .\ANSYS.exe` first failed with
+>   `EXIT STATUS: -1073741515 (0xc0000135)` — `STATUS_DLL_NOT_FOUND`.
+>   `ANSCUST.BAT` has its own late prompt ("Do you want to copy the runtime
+>   DLLs?") that a bare `link @ansys.lrf` shortcut skips; copy them manually:
+>   `copy "%AWP_ROOT222%\ansys\Bin\winx64\*.dll" .` and
+>   `copy "%AWP_ROOT222%\commonfiles\AAS\bin\winx64\*.dll" .`
+> - `PRESOL,SVAR` (bare, as originally committed in this deck) failed with
+>   `*** WARNING *** No components are specified for the SVAR item.` — it
+>   needs an explicit component number per call
+>   (`PRESOL,SVAR,1` … `PRESOL,SVAR,10`, one call per state variable — the
+>   deck below is already fixed). Even with that fixed, the state variables
+>   weren't in the results file at all (`The requested SVAR data is not
+>   available`) until `OUTRES,SVAR,ALL` was added before `SOLVE` —
+>   `OUTRES,ALL,ALL` does **not** imply it.
+>
+> With those two fixed (both now baked into the committed
+> [`t_growth_constrained.dat`](t_growth_constrained.dat)), the run exits 0,
+> `RUN COMPLETED`, and produces exactly the closed-form answer — see Step 3.
+> Evidence committed: [`out.txt`](out.txt), [`growth_result.txt`](growth_result.txt).
 
 ### If the solve refuses to run
 
@@ -193,6 +231,26 @@ With the deck as committed (`α = 0.05`, `η = 0`, `TIME = 5.0`):
 Full precision and the other three cases (α = 0.20, and the viscous rows with
 `η = 8e−3`) are in [`reference_values.json`](reference_values.json). To run
 another row, edit `TBDATA,10,<α>` and keep `TIME` equal to the `dt` in that file.
+
+> ✅ **PASS, 2026-08-19 on IKMHIWI03** — real ANSYS 2022 R2 output, custom
+> `usermat_biofilm.f` build, `elastic_a005` case (α=0.05, η=0):
+>
+> | Quantity | Expected | Got |
+> |---|---|---|
+> | `SX=SY=SZ` | −1.019275856e−04 | **−0.10193E−003** |
+> | `SXY=SYZ=SXZ` | exactly 0 | **0** (to ~1e−19–1e−37, i.e. machine noise) |
+> | `SVAR(1..9)` (Fv) | identity | **[1,0,0, 0,1,0, 0,0,1]** exactly |
+> | `SVAR(10)` (α) | 0.05 | **0.050000** exactly |
+>
+> No nonzero shear (Voigt map correct), compressive not tensile (`Fg` applied
+> the right way round), nonzero stress (real build, not the stock stub) — all
+> four failure-mode checks below pass by construction. This is the first time
+> the growth branch has been exercised end-to-end inside a real ANSYS solve,
+> not just the crosscheck harness's standalone driver. Full output in
+> [`out.txt`](out.txt) / [`growth_result.txt`](growth_result.txt).
+>
+> Not yet done: the other three `reference_values.json` cases (α=0.20 elastic,
+> and the two viscous η=8e−3 rows) and the Step 4 `KEYOPT` sweep.
 
 ### What each failure mode means
 
