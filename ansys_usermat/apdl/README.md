@@ -8,6 +8,45 @@ That benchmark ran with `alpha = 0`, so `Fg = I` and **the growth branch was
 never entered**. The mechanical path is confirmed; the growth path is not. This
 directory closes that gap.
 
+> **Status, 2026-08-19 (IKMHIWI03): all four rows PASS, plus the `KEYOPT`
+> sweep.** Ran inside a real custom-built ANSYS 2022 R2, matching the closed
+> form to displayed precision for elastic and viscous, α=0.05 and α=0.20, and
+> across `KEYOPT(1,2)` ∈ {0,1,3} (B-bar / enhanced / simplified enhanced
+> strain — no volumetric locking detected). Evidence:
+> [`out.txt`](out.txt), [`growth_result.txt`](growth_result.txt); full table
+> and build/run procedure in [`RUNBOOK.md`](RUNBOOK.md).
+>
+> Getting the viscous rows to match required fixing a real deck bug first:
+> `TBDATA` only accepts 6 values per call, and the deck's original
+> `TBDATA,1,<9 values>` for `Fv` silently dropped values 7–9, leaving `Fv`
+> singular rather than identity. Harmless for `η=0` (elastic doesn't use
+> `Fv`), but for `η>0` it made the material silently return the elastic
+> answer — a genuinely deceptive failure signature (bit-identical to the
+> elastic row, not just "off"). Fixed in the committed deck by splitting
+> across two `TBDATA` calls; see `RUNBOOK.md` Step 3 for the full story. This
+> is a general APDL gotcha, not specific to this material — any state/property
+> table needing more than 6 values needs multiple `TBDATA` calls.
+
+## Algorithm flow
+
+[`growth_verify_flow.tex`](growth_verify_flow.tex) /
+[`growth_verify_flow_standalone.tex`](growth_verify_flow_standalone.tex) —
+TikZ diagram of the check below (closed-form prediction branch vs. the actual
+ANSYS solve branch, converging on a pass/fail comparison with the diagnostic
+table). Same style/build convention as [`umat_flow/`](../../umat_flow/README.md):
+
+```bash
+cd ansys_usermat/apdl
+pdflatex growth_verify_flow_standalone.tex
+```
+
+```latex
+\begin{figure}[t]\centering
+  \resizebox{0.7\linewidth}{!}{\input{ansys_usermat/apdl/growth_verify_flow.tex}}
+  \caption{Closed-form verification of the ANSYS growth branch.}
+\end{figure}
+```
+
 ## The check
 
 `t_growth_constrained.dat` fixes **every** node of a single hex. The deformation
@@ -39,7 +78,7 @@ The point of a closed-form case is that each failure mode is diagnostic:
 | **Nonzero shear** (`SXY`/`SYZ`/`SXZ` ≠ 0) | the `VI/VJ` Voigt map is mis-wired — the Abaqus↔ANSYS 5↔6 shear swap |
 | **Tensile** hydrostatic stress | `Fg` applied inverted (`Fg` where `Fg⁻¹` belongs) |
 | `Je ≈ 1`, stress ≈ 0 | `alpha` never reached the material — check `TB,STATE` initialisation and `nStatev ≥ 10` |
-| Elastic case matches, viscous does not | `dTime` mismatch — the deck's `TIME` must equal the `dt` in the reference |
+| Elastic case matches, viscous does not | `dTime` mismatch — the deck's `TIME` must equal the `dt` in the reference. **Or**, if the viscous answer lands *exactly* on the elastic one (not just close): a `TBDATA` call set more than 6 values — APDL silently drops the tail, so `Fv`/whatever state came after value 6 never got set. Split into multiple `TBDATA` calls. |
 | Right magnitude, wrong sign throughout | stress-sign convention on the `dsdePl`/`stress` return |
 
 ## Running
@@ -82,7 +121,9 @@ guards them in CI.
 
 `KEYOPT(1,2)` selects the `SOLID185` formulation. The deck uses the default
 B-bar. Because constrained growth is a **volumetric** load on a near-incompressible
-law, this is exactly the case where formulation choice bites — worth running the
-sweep (`0` B-bar, `2` enhanced strain, `3` simplified enhanced strain) and
-recording whether the closed-form stress is recovered in each. A formulation that
-misses it here will also distort the tooth-shell results.
+law, this is exactly the case where formulation choice bites.
+
+**Swept 2026-08-19 on IKMHIWI03: all three formulations (`0` B-bar, `2`
+enhanced strain, `3` simplified enhanced strain) recover the closed-form
+stress exactly** — no volumetric locking detected for this load case on
+`SOLID185`. See `RUNBOOK.md` Step 4.

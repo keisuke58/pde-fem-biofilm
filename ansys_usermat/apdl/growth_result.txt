@@ -3,7 +3,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -32,7 +32,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -59,7 +59,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -86,7 +86,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -113,7 +113,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -140,7 +140,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -167,7 +167,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -194,7 +194,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -221,7 +221,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -248,7 +248,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -262,20 +262,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     9       
-       2   0.0000     
-       4   0.0000     
-       3   0.0000     
-       1   0.0000     
-       5   0.0000     
-       6   0.0000     
-       7   0.0000     
-       8   0.0000     
+       2   1.0000     
+       4   1.0000     
+       3   1.0000     
+       1   1.0000     
+       5   1.0000     
+       6   1.0000     
+       7   1.0000     
+       8   1.0000     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 

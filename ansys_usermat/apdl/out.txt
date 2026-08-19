@@ -96,10 +96,10 @@
   BATCH MODE REQUESTED (-b)    = LIST
   INPUT FILE COPY MODE (-c)    = COPY
   INPUT FILE NAME              = C:\Users\nishioka\work\biofilm_upf\t_growth_constrained.dat
-  OUTPUT FILE NAME             = C:\Users\nishioka\work\biofilm_upf\out_final.txt
+  OUTPUT FILE NAME             = C:\Users\nishioka\work\biofilm_upf\out_final2.txt
 
  RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
- CURRENT JOBNAME=file0  21:46:00  AUG 19, 2026 CP=      0.094
+ CURRENT JOBNAME=file0  22:02:27  AUG 19, 2026 CP=      0.078
  Note - This MAPDL version was linked by Licensee
      1  ! t_growth_constrained.dat ??? growth-path verification for usermat_biofilm.f   
      2  ! ANSYS Mechanical APDL.  See RUNBOOK.md for the full Windows procedure.
@@ -152,46 +152,47 @@
     49      
     50  ! state: ustatev(1:9)=Fv (row-major, initialised to I), ustatev(10)=alpha   
     51  TB,STATE,1,,10  
-    52  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0  
-    53  TBDATA,10,0.05                          ! <-- alpha (growth driver) 
-    54      
-    55  ! ---- fully constrained: forces F = I at every integration point ------------  
-    56  NSEL,ALL
-    57  D,ALL,UX,0  
-    58  D,ALL,UY,0  
-    59  D,ALL,UZ,0  
-    60  NSEL,ALL
-    61  FINISH  
-    62      
-    63  ! ---- solve -----------------------------------------------------------------  
-    64  /SOLU   
-    65  ANTYPE,STATIC   
-    66  NLGEOM,ON   
-    67  TIME,5.0                     ! must match dt used for the viscous reference 
-    68  NSUBST,1,10,1   
-    69  OUTRES,ALL,ALL  
-    70  OUTRES,SVAR,ALL               ! state vars need their own OUTRES flag -- ALL,ALL alone omits them   
-    71  SOLVE   
-    72  FINISH  
-    73      
-    74  ! ---- report ----------------------------------------------------------------  
-    75  /POST1  
-    76  SET,LAST
-    77  ESEL,S,ELEM,,1  
-    78  /OUTPUT,growth_result,txt   
-    79  PRESOL,S,COMP                ! SX SY SZ SXY SYZ SXZ at the integration points   
-    80  PRESOL,SVAR,1                 ! Fv(1,1) 
-    81  PRESOL,SVAR,2                 ! Fv(1,2) 
-    82  PRESOL,SVAR,3                 ! Fv(1,3) 
-    83  PRESOL,SVAR,4                 ! Fv(2,1) 
-    84  PRESOL,SVAR,5                 ! Fv(2,2) 
-    85  PRESOL,SVAR,6                 ! Fv(2,3) 
-    86  PRESOL,SVAR,7                 ! Fv(3,1) 
-    87  PRESOL,SVAR,8                 ! Fv(3,2) 
-    88  PRESOL,SVAR,9                 ! Fv(3,3) 
-    89  PRESOL,SVAR,10                ! alpha   
-    90  /OUTPUT 
-    91  FINISH  
+    52  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0        ! Fv(1,1..3), Fv(2,1..3) -- TBDATA takes max 6 values/call 
+    53  TBDATA,7,0.0,0.0,1.0                     ! Fv(3,1..3) -- easy to lose the tail if you cram >6 into one line 
+    54  TBDATA,10,0.05                          ! <-- alpha (growth driver) 
+    55      
+    56  ! ---- fully constrained: forces F = I at every integration point ------------  
+    57  NSEL,ALL
+    58  D,ALL,UX,0  
+    59  D,ALL,UY,0  
+    60  D,ALL,UZ,0  
+    61  NSEL,ALL
+    62  FINISH  
+    63      
+    64  ! ---- solve -----------------------------------------------------------------  
+    65  /SOLU   
+    66  ANTYPE,STATIC   
+    67  NLGEOM,ON   
+    68  TIME,5.0                     ! must match dt used for the viscous reference 
+    69  NSUBST,1,10,1   
+    70  OUTRES,ALL,ALL  
+    71  OUTRES,SVAR,ALL               ! state vars need their own OUTRES flag -- ALL,ALL alone omits them   
+    72  SOLVE   
+    73  FINISH  
+    74      
+    75  ! ---- report ----------------------------------------------------------------  
+    76  /POST1  
+    77  SET,LAST
+    78  ESEL,S,ELEM,,1  
+    79  /OUTPUT,growth_result,txt   
+    80  PRESOL,S,COMP                ! SX SY SZ SXY SYZ SXZ at the integration points   
+    81  PRESOL,SVAR,1                 ! Fv(1,1) 
+    82  PRESOL,SVAR,2                 ! Fv(1,2) 
+    83  PRESOL,SVAR,3                 ! Fv(1,3) 
+    84  PRESOL,SVAR,4                 ! Fv(2,1) 
+    85  PRESOL,SVAR,5                 ! Fv(2,2) 
+    86  PRESOL,SVAR,6                 ! Fv(2,3) 
+    87  PRESOL,SVAR,7                 ! Fv(3,1) 
+    88  PRESOL,SVAR,8                 ! Fv(3,2) 
+    89  PRESOL,SVAR,9                 ! Fv(3,3) 
+    90  PRESOL,SVAR,10                ! alpha   
+    91  /OUTPUT 
+    92  FINISH  
 
  RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
 
@@ -211,7 +212,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.203
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.156
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -267,6 +268,9 @@
  LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
 
  DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
  LOC= 10 0.50000E-01
 
  ALL SELECT   FOR ITEM=NODE COMPONENT=    
@@ -289,7 +293,7 @@
           8  NODES (OF          8  DEFINED) SELECTED BY NSEL  COMMAND.
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.203
+ ***** ROUTINE COMPLETED *****  CP =         0.156
 
 
 
@@ -314,7 +318,7 @@
  WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
    FOR ALL APPLICABLE ENTITIES
 
- *** NOTE ***                            CP =       0.328   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.281   TIME= 22:02:28
  The automatic domain decomposition logic has selected the MESH domain   
  decomposition method with 4 processes per solution.                     
 
@@ -330,7 +334,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.328
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.281
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -346,24 +350,24 @@
    NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
    GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
 
- *** WARNING ***                         CP =       0.328   TIME= 21:46:00
+ *** WARNING ***                         CP =       0.281   TIME= 22:02:28
  ANSYS,INC.-supplied version of coding for USERCK has been used.         
 
- *** NOTE ***                            CP =       0.328   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.281   TIME= 22:02:28
  The step data was checked and warning messages were found.              
   Please review output or errors file (                                  
  C:\Users\nishioka\work\biofilm_upf\file0.err ) for these warning        
  messages.                                                               
 
- *** NOTE ***                            CP =       0.328   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.281   TIME= 22:02:28
  This nonlinear analysis defaults to using the full Newton-Raphson       
  solution procedure.  This can be modified using the NROPT command.      
 
- *** NOTE ***                            CP =       0.328   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.281   TIME= 22:02:28
  The conditions for direct assembly have been met.  No .emat or .erot    
  files will be produced.                                                 
 
- *** NOTE ***                            CP =       0.328   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.281   TIME= 22:02:28
  The number of distributed memory parallel processes specified is        
  greater than the number of elements selected in the model.  The number  
  of distributed memory parallel processes will be reduced to 1 for this  
@@ -402,19 +406,19 @@
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
         1         1  SOLID185      0.000   0.000000
- Time at end of element matrix formulation CP = 0.609375.                
+ Time at end of element matrix formulation CP = 0.59375.                 
 
  ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
   FOR POSSIBLE RESUME FROM THIS POINT
      FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5102E-04
 
- *** WARNING ***                         CP =       0.609   TIME= 21:46:00
+ *** WARNING ***                         CP =       0.594   TIME= 22:02:28
  There are no active degrees of freedom.                                 
      DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
     EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
      FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5206E-04 <<< CONVERGED
 
- *** WARNING ***                         CP =       0.609   TIME= 21:46:00
+ *** WARNING ***                         CP =       0.594   TIME= 22:02:28
  A reference force value times the tolerance is used by the              
  Newton-Raphson method for checking convergence.  The calculated         
  reference FORCE CONVERGENCE VALUE = 1.248352877E-04 is less than a      
@@ -445,17 +449,17 @@
 
  FINISH SOLUTION PROCESSING
 
- *** NOTE ***                            CP =       0.750   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.844   TIME= 22:02:28
  Distributed parallel processing has been reactivated.                   
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.750
+ ***** ROUTINE COMPLETED *****  CP =         0.844
 
 
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   21:46:00  AUG 19, 2026 CP=      0.750
+ 00000000  VERSION=WINDOWS x64   22:02:28  AUG 19, 2026 CP=      0.844
 
   biofilm USERMAT - constrained isotropic growth (closed-form check)           
 
@@ -463,7 +467,7 @@
 
           ***** MAPDL RESULTS INTERPRETATION (POST1) *****
 
- *** NOTE ***                            CP =       0.750   TIME= 21:46:00
+ *** NOTE ***                            CP =       0.844   TIME= 22:02:28
  Reading results into the database (SET command) will update the current 
  displacement and force boundary conditions in the database with the     
  values from the results file for that load set.  Note that any          
@@ -487,7 +491,7 @@
  EXIT THE MAPDL POST1 DATABASE PROCESSOR
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.781
+ ***** ROUTINE COMPLETED *****  CP =         0.844
 
 
 
@@ -506,7 +510,7 @@
 +--------------------- M A P D L   S T A T I S T I C S ------------------------+
 
 Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
-Date Run: 08/19/2026   Time: 21:46     Process ID: 30208
+Date Run: 08/19/2026   Time: 22:02     Process ID: 12080
 Operating System: Windows 10  (Build: 26200)
 
 Processor Model: Intel(R) Core(TM) Ultra 5 235
@@ -538,16 +542,16 @@ Input File: t_growth_constrained.dat
      2                   ikmhiwi03   C:\Users\nishioka\work\biofilm_upf
      3                   ikmhiwi03   C:\Users\nishioka\work\biofilm_upf
  
-Latency time from master to core     1 =    3.318 microseconds
-Latency time from master to core     2 =    3.185 microseconds
-Latency time from master to core     3 =    2.667 microseconds
+Latency time from master to core     1 =    3.537 microseconds
+Latency time from master to core     2 =    4.747 microseconds
+Latency time from master to core     3 =    2.599 microseconds
  
-Communication speed from master to core     1 = 12383.90 MB/sec
-Communication speed from master to core     2 = 14108.35 MB/sec
-Communication speed from master to core     3 = 12818.87 MB/sec
+Communication speed from master to core     1 = 11944.76 MB/sec
+Communication speed from master to core     2 = 13867.70 MB/sec
+Communication speed from master to core     3 = 13049.08 MB/sec
 
-Total CPU time for main thread                    :        0.6 seconds
-Total CPU time summed for all threads             :        1.3 seconds
+Total CPU time for main thread                    :        0.5 seconds
+Total CPU time summed for all threads             :        1.4 seconds
 
 Elapsed time spent obtaining a license            :        1.6 seconds
 Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
@@ -583,7 +587,7 @@ Total amount of I/O read from disk                :        0.0 GB
  |                                                                           |
  |---------------------------------------------------------------------------|
  |                                                                           |
- |        CP Time      (sec) =          1.312       Time  =  21:46:01        |
+ |        CP Time      (sec) =          1.422       Time  =  22:02:29        |
  |        Elapsed Time (sec) =          5.000       Date  =  08/19/2026      |
  |                                                                           |
  *---------------------------------------------------------------------------*

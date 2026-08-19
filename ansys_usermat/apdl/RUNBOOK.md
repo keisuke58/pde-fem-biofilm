@@ -248,9 +248,47 @@ another row, edit `TBDATA,10,<α>` and keep `TIME` equal to the `dt` in that fil
 > the growth branch has been exercised end-to-end inside a real ANSYS solve,
 > not just the crosscheck harness's standalone driver. Full output in
 > [`out.txt`](out.txt) / [`growth_result.txt`](growth_result.txt).
+
+> 🐛 **Bug found and fixed, 2026-08-19: the viscous rows silently didn't match
+> until this deck bug was fixed.** `TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0,
+> 0.0,0.0,1.0` tries to set all 9 `Fv` components in **one** `TBDATA` call —
+> but APDL's `TBDATA` only accepts **6 data values per call**
+> (`TBDATA,STLOC,C1,...,C6`). Values 7–9 (the last row of `Fv`, including the
+> `Fv(3,3)=1` diagonal entry) silently never got set, leaving `ustatev(9)=0`
+> by default — i.e. the material actually received a **singular** prior `Fv`
+> (`[[1,0,0],[0,1,0],[0,0,0]]`), not the identity `TBDATA` claimed to set.
 >
-> Not yet done: the other three `reference_values.json` cases (α=0.20 elastic,
-> and the two viscous η=8e−3 rows) and the Step 4 `KEYOPT` sweep.
+> Confirmed by instrumenting `usermat_biofilm.f` with debug `WRITE` statements
+> (temporary, not committed) showing `FV_OLD` diag `= (1, 1, 0)` at the actual
+> call site. For `η=0` (elastic) this happened to not matter — the elastic
+> branch's answer doesn't depend on `Fv`. For `η>0` (viscous) it made the
+> material silently return the **same answer as the elastic case**, which is
+> what the two viscous rows below showed before the fix (bit-identical to
+> their elastic counterparts — a genuinely deceptive failure signature, now
+> added to the table below). **Fixed in the committed deck** by splitting
+> into two `TBDATA` calls (`TBDATA,1,...` for components 1–6,
+> `TBDATA,7,0.0,0.0,1.0` for 7–9) — this is a general APDL gotcha, not
+> specific to this material: **any `TB,STATE`/`TB,USER` table needing more
+> than 6 values must be split across multiple `TBDATA` calls with the right
+> `STLOC`.**
+>
+> **Full result after the fix — all four `reference_values.json` cases and the
+> Step 4 `KEYOPT` sweep, all PASS:**
+>
+> | Case | α | η | `KEYOPT(1,2)` | Expected `SX` | Got |
+> |---|---|---|---|---|---|
+> | elastic | 0.05 | 0 | 0 (B-bar) | −1.019275856e−04 | **−0.10193E−003** |
+> | elastic | 0.05 | 0 | 2 (enh. strain) | −1.019275856e−04 | **−0.10193E−003** |
+> | elastic | 0.05 | 0 | 3 (simpl. enh.) | −1.019275856e−04 | **−0.10193E−003** |
+> | viscous | 0.05 | 8e−3 | 0 | −6.963159875e−05 | **−0.69632E−004** |
+> | elastic | 0.20 | 0 | 0 | −4.726465185e−04 | **−0.47265E−003** |
+> | viscous | 0.20 | 8e−3 | 0 | −1.795039360e−04 | **−0.17950E−003** |
+>
+> Element formulation is a non-issue here — B-bar, enhanced strain, and
+> simplified enhanced strain all recover the closed-form hydrostatic stress
+> exactly (residual shear noise ~1e−20, i.e. zero). `out.txt`/
+> `growth_result.txt` reflect the `elastic_a005`/`KEYOPT=0` row, regenerated
+> against the fixed deck.
 
 ### What each failure mode means
 
@@ -263,7 +301,7 @@ not mysterious:
 | **Tensile** (positive) hydrostatic stress | `Fg` applied inverted — `Fg` used where `Fg⁻¹` belongs |
 | `Je ≈ 1`, stress ≈ 0 | `α` never reached the material — check `TB,STATE` and that `nStatev ≥ 10` |
 | Stress exactly 0 everywhere | the build did not pick up `usermat_biofilm.f` — stock stub still linked |
-| Elastic row matches, viscous does not | `TIME` ≠ the reference `dt` |
+| Elastic row matches, viscous does not | `TIME` ≠ the reference `dt` — **or** check every `TBDATA` call sets ≤6 values; see the 2026-08-19 bug above (viscous answer lands exactly on the elastic one, not just "close") |
 
 ---
 
@@ -284,6 +322,11 @@ closed-form value here will also distort results on the real tooth-shell mesh �
 this is the cheapest possible way to find that out, and it bears directly on a
 volumetric-locking question that is currently open on the Abaqus side too
 (linear tets, `C3D4`, no hybrid formulation).
+
+> ✅ **Done, 2026-08-19 on IKMHIWI03** — all three formulations (`0`, `2`, `3`)
+> recover `SX=SY=SZ=-1.0193e-04` exactly, on the `elastic_a005` case. No
+> volumetric locking detected for this constrained-growth load on `SOLID185`.
+> See the results table in Step 3 above.
 
 ---
 

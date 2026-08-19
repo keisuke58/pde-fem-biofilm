@@ -1,0 +1,85 @@
+% growth_verify_flow.tex — algorithm flow of the closed-form growth-branch
+% verification (RUNBOOK.md Steps 0-3): a fully constrained SOLID185 element
+% under isotropic growth Fg=(1+alpha)I forces F=I exactly, so the Cauchy
+% stress is known analytically with no FE solve needed to predict it -- the
+% FE solve becomes a check, not a black box.
+% Usage: \resizebox{\linewidth}{!}{\input{growth_verify_flow.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style  = {draw, rounded corners=3pt, align=center, thick,
+               text width=7.2cm, minimum height=0.8cm, inner sep=4pt},
+  Nio/.style= {N, fill=teal!12},
+  Nk/.style = {N, fill=gray!12},
+  Ne/.style = {N, fill=cyan!12},
+  Nb/.style = {N, fill=blue!10},
+  No/.style = {N, fill=orange!12},
+  Ns/.style = {N, fill=purple!10},
+  Nx/.style = {N, fill=gray!6, draw=gray!55, dashed},
+  Dm/.style = {draw, diamond, aspect=2.2, fill=yellow!15, thick,
+               align=center, inner sep=2pt, font=\small},
+  ar/.style = {-Stealth, thick},
+  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+]
+
+\node[Nio] (setup) {%
+  \textbf{Deck setup} (\texttt{t\_growth\_constrained.dat})\\[2pt]
+  \texttt{SOLID185}, unit cube, \texttt{TB,USER} $(C_{10},C_{01},D_1,\eta)$,
+  \texttt{TB,STATE} $(F_v{=}I,\alpha)$};
+
+\node[Nk, below=0.5cm of setup] (constrain) {%
+  \textbf{Fully constrain every node}\\[2pt]
+  \texttt{D,ALL,UX/UY/UZ,0} $\Rightarrow$ deformation gradient
+  $\mathbf F=\mathbf I$ exactly at every integration point};
+
+\node[Dm, below=0.7cm of constrain, text width=3.4cm] (branch) {%
+  \small two independent\\routes to $\boldsymbol\sigma$};
+
+\node[Ne, below left=0.9cm and -2.0cm of branch, xshift=-1.1cm] (closed) {%
+  \textbf{Closed-form prediction} (no FE solve)\\[2pt]
+  $\mathbf F_e=\mathbf F_g^{-1}=\big[(1{+}\alpha)^{-1}\big]\mathbf I$\\
+  $\boldsymbol\sigma_{\rm pred}=$ constitutive law$(\mathbf F_e)$, evaluated by hand /
+  \texttt{make\_reference.py}};
+
+\node[Nb, below right=0.9cm and -2.0cm of branch, xshift=1.1cm] (solve) {%
+  \textbf{ANSYS solve} (the actual check)\\[2pt]
+  \texttt{SOLVE} $\to$ at each Gauss point ANSYS calls
+  \texttt{usermat\_biofilm.f} with $(\mathbf F,\mathbf F_g,\mathbf F_v,\alpha,\eta,\dots)$\\
+  returns $\boldsymbol\sigma_{\rm actual}$, tangent, updated $\mathbf F_v$};
+
+\node[Ns, below=2.6cm of branch] (extract) {%
+  \textbf{Extract} via \texttt{PRESOL,S,COMP} and
+  \texttt{PRESOL,SVAR,1..10}\\[2pt]
+  (each \texttt{SVAR} component needs its own call;
+  \texttt{OUTRES,SVAR,ALL} required -- \texttt{OUTRES,ALL,ALL} alone omits state vars)};
+
+\node[Dm, below=0.7cm of extract, text width=3.2cm] (pass) {%
+  \small $|\boldsymbol\sigma_{\rm pred}-\boldsymbol\sigma_{\rm actual}|$\\ within tol?};
+
+\node[Ns, below=0.7cm of pass] (ok) {%
+  \textbf{PASS} --- growth branch verified end-to-end\\[2pt]
+  evidence: \texttt{out.txt}, \texttt{growth\_result.txt}};
+
+\node[Nx, below=0.6cm of ok, text width=9.4cm] (diag) {%
+  \textbf{If it fails, the signature is diagnostic:}\\[3pt]
+  \begin{tabular}{@{}p{4.0cm}p{5.0cm}@{}}
+  nonzero shear & Voigt \texttt{VI/VJ} map mis-wired (Abaqus$\leftrightarrow$ANSYS 5$\leftrightarrow$6 swap)\\
+  tensile (not compressive) & $\mathbf F_g$ applied inverted\\
+  $J_e{\approx}1$, $\sigma{\approx}0$ & $\alpha$ never reached the material (\texttt{TB,STATE}, \texttt{nStatev}) \\
+  stress exactly 0 & stock \texttt{usermat} stub still linked, not ours\\
+  elastic row ok, viscous not & \texttt{TIME}$\neq$ref.\ \texttt{dt} --
+    \emph{or} viscous lands exactly on the elastic answer: a
+    \texttt{TBDATA} call set $>6$ values (APDL silently drops the tail)
+  \end{tabular}};
+
+\draw[ar] (setup) -- (constrain);
+\draw[ar] (constrain) -- (branch);
+\draw[ar] (branch) -- (closed);
+\draw[ar] (branch) -- (solve);
+\draw[ar] (closed) |- ($(extract.north)+(-2.4,0)$) -- (extract);
+\draw[ar] (solve)  |- ($(extract.north)+(2.4,0)$)  -- (extract);
+\draw[ar] (extract) -- (pass);
+\draw[ar] (pass) -- node[lbl,right]{yes} (ok);
+\draw[ar, dashed, gray!60] (ok) -- (diag);
+\draw[ar] (pass.west) -- ++(-1.6,0) node[lbl,above,pos=0.5]{no} |- (diag.west);
+
+\end{tikzpicture}
