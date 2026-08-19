@@ -28,6 +28,26 @@ python -m pytest ansys_usermat/crosscheck/            # both, as tests
 
 Requires `gfortran` + `numpy`. No Abaqus/ANSYS needed.
 
+## Comparing against a third implementation (e.g. Felix's)
+
+`crosscheck.py` isn't hardwired to the Abaqus/ANSYS pair — pass `--right-src`
+etc. to compare any two Fortran cores that share the stdin/stdout contract:
+
+```bash
+python ansys_usermat/crosscheck/crosscheck.py \
+    --right-src path/to/felix_core.f \
+    --right-driver ansys_usermat/crosscheck/xcheck_driver_felix.f \
+    --right-voigt 11,22,33,12,13,23 --right-name "Felix's core"
+```
+
+There is no working driver for a third source yet — copy
+[`xcheck_driver_template.f`](xcheck_driver_template.f) to
+`xcheck_driver_<name>.f` and fill in the TODOs (the real entry-point name and
+argument list, which can't be known until the source arrives). See
+[`ansys_usermat/USERELEM_NOTES.md`](../USERELEM_NOTES.md) for what's expected
+to differ (the field-DOF residual, almost certainly) versus what should carry
+over unchanged (the material dispatch, per the same doc).
+
 ## Adversarial hunt (`adversarial.py`)
 
 `crosscheck.py` confirms 20 nice states. `adversarial.py` instead *hunts* for a
