@@ -26,6 +26,16 @@ directory closes that gap.
 > across two `TBDATA` calls; see `RUNBOOK.md` Step 3 for the full story. This
 > is a general APDL gotcha, not specific to this material — any state/property
 > table needing more than 6 values needs multiple `TBDATA` calls.
+>
+> **Added 2026-08-19: a second, complementary closed-form check.**
+> `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1
+> constraint) instead of fixing every node, so the element is free to grow
+> under zero traction. Closed form: stress ≡ 0 for any α, η. **PASS** —
+> ANSYS returned stress ~1.9e−10 (shear ~1e−14), nine orders of magnitude
+> below the constrained case's ~1e−4 scale, i.e. zero to solver tolerance.
+> This catches sign/transpose errors in `Fg`/`Fg⁻¹` that full kinematic
+> constraint can mask. Evidence: [`out_free.txt`](out_free.txt),
+> [`growth_free_result.txt`](growth_free_result.txt).
 
 ## Algorithm flow
 
@@ -68,6 +78,25 @@ cannot), all three shear components exactly zero.
 Properties `C10 = 2e−4`, `C01 = 0`, `D1 = 5e3`, `mtype = 0`; the viscous rows use
 `dt = 5.0`, which the deck's `TIME` must match. Full precision:
 [`reference_values.json`](reference_values.json).
+
+### Complementary check: free (traction-free) growth
+
+`t_growth_free.dat` is the opposite extreme: only a minimal 3-2-1 rigid-body
+constraint (6 DOF, by node *location* so it's mesher-numbering-agnostic), not
+a full fix. With zero traction, equilibrium has no elastic stretch at all —
+the element just grows into the shape `Fg` already wants, so `F = Fg`,
+`Fe = I`, and stress is **exactly zero**, independent of `α` and `η` (no
+stress ⇒ no driving force for viscous flow either, so `Fv` stays at `I`).
+
+| Case | α | η | `Je` | stress |
+|---|---|---|---|---|
+| free | 0.05 | 0 | 1.0 | 0 (ANSYS: ~1.9e−10, shear ~1e−14) |
+
+Why bother, given `t_growth_constrained.dat` already passes: full kinematic
+constraint can *mask* a sign or transpose error in how `Fg`/`Fg⁻¹` enters
+`Fe = F·Fg⁻¹` — cancellation under `F = I` doesn't prove the sign is right,
+only that the two errors (if any) cancel. Letting the element actually move
+removes that cover.
 
 ## Reading a failure
 

@@ -330,6 +330,29 @@ volumetric-locking question that is currently open on the Abaqus side too
 
 ---
 
+## Step 4.5 — Free-growth complementary check (added 2026-08-19)
+
+`t_growth_constrained.dat` fixes every node, so `F = I` is forced regardless
+of whether `Fg`/`Fg⁻¹` are wired with the right sign — a sign error and its
+inverse could in principle cancel under that much kinematic constraint.
+`t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1, by
+node location) and lets the element actually grow under zero traction.
+Closed form: `Fe = I`, stress ≡ 0, for **any** `α`, `η` — there is no
+external resistance to relax against, so this isn't a new numeric target,
+just a second independent way to be wrong.
+
+```bat
+"%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+    -i t_growth_free.dat -o out_free.txt
+```
+
+> ✅ **Done, 2026-08-19 on IKMHIWI03** — `SX=SY=SZ` ≈ **−1.9234e−10**, shear
+> ≈ **1.8e−14**, `Fv` diagonal = 1 (identity). Nine orders of magnitude below
+> the constrained case's ~1e−4 stress scale — zero to solver tolerance.
+> Evidence: `out_free.txt`, `growth_free_result.txt`.
+
+---
+
 ## Step 5 — Report back
 
 Paste or send:

@@ -63,6 +63,19 @@
         0.0
       ],
       "hydrostatic": -0.00017950393600060172
+    },
+    "free_a005": {
+      "alpha": 0.05,
+      "eta": 0.0,
+      "note": "minimal 3-2-1 rigid-body constraint only, not fully fixed -- see t_growth_free.dat. Closed form is exact zero stress / Je=1 for ANY alpha, eta (Fe=I always since there is no traction to resist growth).",
+      "Je": 1.0,
+      "stress": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      "hydrostatic": 0.0,
+      "ansys_result": {
+        "stress": [-1.9234e-10, -1.9234e-10, -1.9234e-10, 1.8e-14, 1.8e-14, 1.8e-14],
+        "Fv_diag": [1.0, 1.0, 1.0],
+        "note": "matches closed-form zero to solver tolerance; ~9 orders of magnitude below the constrained-case stress scale (~1e-4)"
+      }
     }
   }
 }
