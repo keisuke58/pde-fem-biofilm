@@ -44,12 +44,26 @@ The point of a closed-form case is that each failure mode is diagnostic:
 
 ## Running
 
-```bash
-ansys222 -b -i t_growth_constrained.dat -o out.txt
-# results land in growth_result.txt (PRESOL,S,COMP and PRESOL,SVAR)
+**Step-by-step for the ANSYS machine (Windows, v222): [`RUNBOOK.md`](RUNBOOK.md).**
+It covers licence check-out, the Intel Fortran toolchain, building the custom
+executable, and what each failure mode means.
+
+```bat
+REM Windows, from the directory holding the custom ANSYS.exe
+"%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+    -i t_growth_constrained.dat -o out.txt
 ```
 
-Change `α` at the `TBDATA,10` line and `TIME` to pick another row of the table.
+```bash
+# Linux
+ansys222 -b -custom ./ansys.e -i t_growth_constrained.dat -o out.txt
+```
+
+`-custom` must point at the executable built with `usermat_biofilm.f`. Without
+it ANSYS runs its own stock material and the check silently means nothing.
+
+Results land in `growth_result.txt`. Change `α` at the `TBDATA,10` line and keep
+`TIME` equal to the `dt` in `reference_values.json` to pick another row.
 
 ## Regenerating the reference
 
