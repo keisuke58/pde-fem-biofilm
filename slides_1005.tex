@@ -1,0 +1,188 @@
+% 3者MTG (Muramatsu x Soleimani x Nishioka) 2026-10-05 9:00 CEST / 16:00 JST
+% pdflatex でビルド（研究室PCの lualatex+metropolis 環境なら theme を差し替え可）
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\graphicspath{{../figures/}}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{todo}{RGB}{200,30,30}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\newcommand{\TODO}[1]{\textcolor{todo}{\textbf{[TODO: #1]}}}
+
+\title{Master's Thesis --- Status and Plan}
+\subtitle{Joint kickoff meeting: Prof.\ Muramatsu $\times$ Dr.\ Soleimani}
+\author{Keisuke Nishioka\\[4pt]
+\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
+\small Keio University}
+\date{5 October 2026}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{Where we stand (administration)}
+\begin{itemize}
+  \item \textbf{Admission (Zulassung) granted} by the examination office --- 18 Aug 2026
+  \item Examiners fixed:\quad first: \textbf{Prof.\ Junker (IKM)}\quad second: \textbf{Dr.\ Wangenheim (IDS)}
+  \item Supervisors: Dr.\ Soleimani, Dr.\ Geisler (IKM)
+  \item Thesis written in \textbf{English} (approved on the admission form)
+  \item Topic issue (Themenausgabe): \TODO{date, expected end of Sep} \quad
+        $\Rightarrow$ submission planned \textbf{December 2026}, presentation in December
+  \item 12-week internship at NIFE completed (04.05--24.07); report submitted
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Thesis in one slide}
+\textbf{Title:} \emph{Hamilton-Principle Models of Oral Biofilm Dysbiosis:\\
+GPU-Accelerated Inference, Metabolic Priors, and Spatial Stratification}
+\vspace{4pt}
+\begin{columns}[T]
+\begin{column}{0.6\textwidth}
+Three pillars, all under the extended Hamilton principle:
+\begin{enumerate}
+  \item \textbf{ch.\,3} GPU Bayesian inference (TMCMC) on \emph{in vitro} data
+  \item \textbf{ch.\,4} Metabolic-prior replicator dynamics \emph{in vivo}
+  \item \textbf{ch.\,5} Spatial reaction--diffusion + 3-D FISH validation
+\end{enumerate}
+\end{column}
+\begin{column}{0.4\textwidth}
+  \includegraphics[width=\linewidth]{fig_hamilton_vs_comstat.pdf}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{New since August: coupling the model into the IKM FEM framework}
+\textbf{Goal:} call the Hamilton-principle biofilm constitutive law at
+\emph{every Gauss point} of a 2-D FEM mesh (state $\varphi$, internal variables $\psi$).
+\vspace{4pt}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Route & Mechanism & Call cost & Effort\\
+\midrule
+1. FEM $\leftrightarrow$ Python & inter-process & highest & lowest\\
+2. User element (UEL) & native & lowest & highest\\
+3. \textbf{User material (UMAT)} & Fortran + C-binding & low & medium\\
+\bottomrule
+\end{tabular}
+\end{table}
+\vspace{2pt}
+Cost driver: $>400$ Gauss-point calls per form per time step.\\
+\textbf{Decision:} route \textbf{3 (UMAT)} --- ANSYS USERMAT already verified
+bit-identical to the Abaqus UMAT reference (0 ULP over 8017 states, \texttt{SOLID185}),
+with an optional embedded Python hook at the Gauss point rather than a separate IPC layer.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Benchmark: cost per Gauss-point call}
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Route & $\mu$s / call & s / 1000 steps\\
+\midrule
+Python IPC (socket)     & 27.6 & 11.0\\
+ctypes (in-process)     & 0.30 & 0.12\\
+Fortran (native, direct)& 0.00068 & 0.00027\\
+\bottomrule
+\end{tabular}
+\end{table}
+{\scriptsize Toy law, own machine (IKMHIWI03), measured 19 Aug 2026 --- not yet
+inside ANSYS/UMAT itself (ANSYS link blocked, see backup slide); native Fortran
+number is a lower-bound proxy for the in-process UMAT call path.}
+\end{column}
+\begin{column}{0.45\textwidth}
+IPC is $\sim$40,000$\times$ slower than a native call; ctypes closes most of
+that gap but still $\sim$440$\times$ slower than native --- confirms UMAT
+(route 3) over both alternatives.
+\end{column}
+\end{columns}
+\vspace{4pt}
+Setup: toy constitutive law, 400 elements $\times$ 1 Gauss point (i.e.\ 400
+Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Validation on the 2-D mesh}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\begin{itemize}
+  \item Stress--strain relation checked at Gauss-point level
+  \item Equilibrium $\operatorname{div}\boldsymbol{\sigma}=\mathbf{0}$:
+        patch test / manufactured solution
+  \item Residual convergence under mesh refinement
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+  \includegraphics[width=\linewidth]{pde_verify_convergence.pdf}\\
+  {\scriptsize \TODO{replace with the FEM residual plot if newer}}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Species count: keeping the full 5-species model}
+\begin{itemize}
+  \item Full model: 5 oral species (\emph{S.\ oralis}, \emph{A.\ naeslundii},
+        \emph{Veillonella}, \emph{F.\ nucleatum}, \emph{P.\ gingivalis}) --- early
+        colonizers through the late pathogen
+  \item Decision: \textbf{no reduction} --- keep all 5 inside the Gauss-point
+        loop; the UMAT coupling (route 3) keeps the per-call cost low enough
+        that a cut is not needed
+  \item Outlook: scale back up further (100+ species, clinical metagenomes)
+        once the coupling is efficient
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Timeline to submission}
+\centering
+\begin{tikzpicture}[x=3.0cm, y=-0.75cm]
+  % month gridlines
+  \foreach \m/\lbl in {0/Oct, 1/Nov, 2/Dec} {
+    \draw[gray!40] (\m,0) -- (\m,3.6);
+    \node[above] at (\m+0.5,0) {\lbl};
+  }
+  \draw[gray!40] (3,0) -- (3,3.6);
+  % row 1: UMAT/FEM coupling
+  \draw[fill=c3!70] (0,0.7) rectangle (1.15,1.3);
+  \node[white,font=\scriptsize] at (0.575,1.0) {FEM coupling (UMAT)};
+  % row 2: ch.5 experiments / validation
+  \draw[fill=c3!45] (0.5,1.7) rectangle (1.8,2.3);
+  \node[font=\scriptsize] at (1.15,2.0) {Ch.\,5 experiments / validation};
+  % row 3: writing
+  \draw[fill=c3!25] (1.0,2.7) rectangle (2.7,3.3);
+  \node[font=\scriptsize] at (1.85,3.0) {Writing};
+  % row 4: submit + present
+  \draw[fill=todo!70] (2.7,0.7) rectangle (3.0,1.3);
+  \node[font=\scriptsize,anchor=west] at (3.05,1.0) {Submit + present};
+\end{tikzpicture}
+\vspace{6pt}
+\begin{itemize}
+  \item Submission: early--mid December (before returning to Japan)
+  \item Presentation: December, date to be fixed with both examiners
+  \item Keio side: credit transfer / DD paperwork \TODO{ask Prof.\ Muramatsu}
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Questions for this meeting}
+\begin{enumerate}
+  \item Keio: anything needed from the Keio side for the DD requirements this term?
+  \item Scope check: is the 2-species reduction acceptable for the thesis claims?
+  \item Presentation: online attendance from Japan possible for Prof.\ Muramatsu?
+\end{enumerate}
+\end{frame}
+
+\end{document}

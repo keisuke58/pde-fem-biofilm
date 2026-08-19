@@ -25,20 +25,39 @@ on it.
 network or VPN.
 
 ```bat
-"C:\Program Files\ANSYS Inc\Shared Files\Licensing\winx64\ansysli_util.exe" -checkout ansys
+"C:\Program Files\ANSYS Inc\v222\licensingclient\winx64\ansysli_util.exe" -checkout ansys
 ```
 
-**0b. Fortran toolchain present.** This is the step most likely to be missing —
-the environment report lists no Intel Fortran or Visual Studio. ANSYS 2022 R2 on
-Windows needs **Intel Fortran (oneAPI) plus a matching Visual Studio** to build a
-custom executable; the version pairing is specified in the ANSYS 2022 R2
-Installation Guide's platform-support table, and a mismatched pair fails at link
-time with unhelpful errors.
+> The path above is corrected from an earlier version of this doc — on
+> IKMHIWI03 there is no `Shared Files\Licensing\winx64\ansysli_util.exe`; the
+> real one lives under `v222\licensingclient\winx64\`. Verified 2026-08-19:
+> checkout succeeds and resolves `Ansys Mechanical Enterprise` — but locally
+> (`server=55206@ikmhiwi03...`), not via the RRZN address configured in
+> `ansyslmd.ini`. Worth investigating if a checkout ever fails unexpectedly.
 
-Open the **"Intel oneAPI command prompt for Intel 64 for Visual Studio"** from
-the Start Menu and run:
+**0b. Fortran toolchain present.** Verified 2026-08-19 on IKMHIWI03 — both are
+present, contrary to what the original environment report said:
+`ifort.exe` (Intel Fortran 2025.3.3) is at
+`C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\bin\ifort.exe`, and
+Visual Studio **18** (2026 Developer) is at
+`C:\Program Files\Microsoft Visual Studio\18\Community\`. VS18 is newer than
+the VS2019-era pairing ANSYS 2022 R2's Installation Guide expects for this
+compiler version — a link-time version mismatch is still possible and has not
+been ruled out, only the toolchain's mere presence.
+
+Plain `ifort --version` from a bare shell, and even the Start Menu's "Intel
+oneAPI command prompt for Intel 64 for Visual Studio" via `setvars.bat`, do
+**not** reliably work here: `setvars.bat` shells out to a bare `vswhere.exe`
+that isn't itself on `PATH`
+(`C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`), so
+VS init warns/fails, and the per-component `compiler`/`mpi`/`umf`
+`env\vars.bat` calls then fail with "command not found" — `ifort` never lands
+on `PATH`. The init sequence that actually works calls the two relevant env
+scripts directly, skipping `setvars.bat` entirely:
 
 ```bat
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+call "C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\env\vars.bat"
 ifort --version
 ```
 
@@ -66,20 +85,60 @@ copy <repo>\ansys_usermat\usermat_biofilm.f C:\work\biofilm_upf\
 cd /d C:\work\biofilm_upf
 ```
 
-Then run the ANSYS customisation script from the **Intel oneAPI command prompt**
-(not a plain `cmd`, or `ifort` will not be found):
+Then, with the env from step 0b active in the same shell (`vcvars64.bat` +
+Intel `compiler\...\env\vars.bat`, not `setvars.bat`), run the ANSYS
+customisation script — it is named `ANSCUST.BAT` (uppercase) in v222:
 
 ```bat
-ANSCUST.bat
+ANSCUST.BAT
 ```
 
 This should produce `ANSYS.exe` in `C:\work\biofilm_upf`.
 
-> ⚠️ **This build command is written from the documented UPF procedure, not from
-> a run on this machine** — nobody has recorded the Windows build here yet. If
-> the script has a different name in v222, or needs arguments, check
-> `C:\Program Files\ANSYS Inc\v222\ansys\custom\user\winx64\` for what is
-> actually there and **tell me what worked** so this file can be corrected.
+> ❌ **Attempted 2026-08-19 on IKMHIWI03, blocked at link time.** Only one
+> interactive prompt appeared (Wind Turbine Aeroelastic — answered `Y`) and
+> the compile of `usermat_biofilm.f` succeeded. The link step then failed:
+> ```
+> ifmodintr.lib(iso_c_binding.obj) : error LNK2001: unresolved external symbol for_deallocate_handle
+> ifmodintr.lib(iso_c_binding.obj) : error LNK2001: unresolved external symbol for_alloc_allocatable_handle
+> ANSYS.exe : fatal error LNK1120: 2 unresolved externals
+> ```
+> Root cause, consistent with the version-mismatch concern flagged in step
+> 0b: the installed oneAPI (2025.3) ships the newer LLVM-based `ifx` runtime
+> under the `ifort` name; ANSYS 2022 R2's prebuilt libraries were linked
+> against the **classic** Intel Fortran runtime, and the two unresolved
+> symbols are classic-runtime-only entry points. This oneAPI install has no
+> classic `ifort` fallback. Note that this is an ANSYS-Windows platform
+> requirement, not a preference — `ANSCUST.BAT` links against ANSYS's
+> prebuilt `.lib`s via MSVC `link.exe` with Intel Fortran's ABI; a
+> non-Intel Fortran compiler (e.g. `gfortran`) would fail with a different
+> set of unresolved symbols, not fewer.
+>
+> **Attempted fix 2026-08-19, blocked on UAC, not yet completed.** Classic
+> `ifort` was last shipped in oneAPI **2024.2.1** (Intel Fortran Compiler
+> Classic 2021.13; 2025.0 dropped it entirely). `winget install --id
+> Intel.FortranCompiler --version 2024.2.1` finds and verifies the package,
+> but the installer requires elevation (per-machine only — `--scope user`
+> returns "No applicable installer found") and the resulting UAC consent
+> prompt cannot be approved from a non-interactive/remote session. Needs a
+> human physically at IKMHIWI03 to click through UAC, then:
+> ```powershell
+> winget install --id Intel.FortranCompiler --version 2024.2.1 --source winget --accept-source-agreements --accept-package-agreements --silent
+> ```
+> Once installed, retry the env-init sequence above pointing at the 2024.2.1
+> `compiler\...\env\vars.bat` instead of `2025.3`'s, and re-run `ANSCUST.BAT`.
+
+> ⚠️ **Confirmed 2026-08-19 that this script runs and is genuinely
+> interactive** — it prompts `Do you want to link the Wind Turbine Aeroelastic
+> library with Mechanical APDL? (Y or N):` and likely further Y/N questions
+> after that. The prompts are read by a bundled `ASK.EXE` that reads the
+> console directly, **not stdin** — piping answers into a redirected
+> `cmd.exe` does not work (it just loops "Please answer Y or N" until it gives
+> up). This step must be run interactively by a human at the machine; it
+> cannot be scripted or driven by an agent. Answer `N` to Wind Turbine
+> Aeroelastic unless you specifically need it — it's unrelated to this
+> USERMAT. **Tell me what the remaining prompts were and what you answered**
+> so this file can be corrected with the full prompt sequence.
 
 **Sanity check before going further:** confirm the build picked up *your* source
 and not the stock stub. The simplest evidence is that step 2 produces nonzero

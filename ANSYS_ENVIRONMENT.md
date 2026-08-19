@@ -95,3 +95,36 @@ This is effectively the **full ANSYS 2022 R2 simulation suite** (structural, flu
 - Licensing depends on network access to the Uni Hannover RRZN license server; if working off-campus, VPN is likely required.
 - GPU is an NVIDIA RTX A400 (entry-level workstation GPU, 4 GB) — fine for Discovery/SpaceClaim viewport and light GPU-accelerated solves, but a constraint for large GPU-solver workloads (e.g. Fluent GPU solver, LS-DYNA GPU) compared to higher-tier RTX Ada cards.
 - 31.5 GB RAM / 14 logical cores is a reasonable mid-range workstation spec — worth keeping in mind when sizing mesh counts or parallel domain decomposition for Fluent/Mechanical solves.
+- **Update 2026-08-19 (custom UMAT build toolchain, verified):** Intel Fortran
+  and Visual Studio are both present, contrary to the original report above.
+  - `ifort.exe`: `C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\bin\ifort.exe`
+    (Intel Fortran Compiler 2025.3.3, "ifort (IFX)" build 20260319).
+  - Visual Studio: version **18** (2026 Developer), at
+    `C:\Program Files\Microsoft Visual Studio\18\Community\`. This is newer
+    than what ANSYS 2022 R2's platform-support table expects (historically
+    VS2019-era) — a version mismatch is possible at link time; not yet
+    confirmed either way since the build itself could not be completed
+    non-interactively (see `ansys_usermat/apdl/RUNBOOK.md` Step 1).
+  - `C:\Program Files (x86)\Intel\oneAPI\setvars.bat` (run with no args, or
+    `intel64 vs2022`) does **not** reliably put `ifort` on `PATH`: it shells
+    out to a bare `vswhere.exe` which isn't on `PATH` either
+    (`C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`),
+    causing the VS init to warn/fail, which in turn makes the per-component
+    `env\vars.bat` calls for `compiler`/`mpi`/`umf` fail with "command not
+    found". Working init sequence instead calls the two env scripts directly:
+    ```bat
+    call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+    call "C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\env\vars.bat"
+    ```
+  - `ansysli_util.exe` is not at the path RUNBOOK.md originally guessed
+    (`Shared Files\Licensing\winx64\`); it's at
+    `C:\Program Files\ANSYS Inc\v222\licensingclient\winx64\ansysli_util.exe`.
+    License checkout from this machine succeeded and resolved locally
+    (`server=55206@ikmhiwi03...`, academic `Ansys Mechanical Enterprise`),
+    not via the RRZN server address in `ansyslmd.ini` — worth re-checking
+    that config file if a checkout ever fails unexpectedly.
+  - `ANSCUST.BAT` (v222's UPF link script) is interactive and its Y/N prompts
+    are read via a bundled `ASK.EXE` that reads the real console directly,
+    not stdin — it cannot be driven by piping answers into a redirected
+    `cmd.exe`. It must be run from an actual interactive terminal by a human
+    sitting at the machine.

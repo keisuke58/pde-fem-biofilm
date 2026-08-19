@@ -108,6 +108,9 @@ abaqus_inp/
 *.out
 *.bbl
 *.blg
+*.nav
+*.snm
+*.vrb
 
 # tracked README assets (override blanket *.png ignore)
 !assets/
