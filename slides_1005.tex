@@ -8,6 +8,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
 \graphicspath{{../figures/}}
 
 \definecolor{c3}{RGB}{30,80,160}
@@ -98,9 +99,10 @@ Fortran (native, direct)& 0.00068 & 0.00027\\
 \bottomrule
 \end{tabular}
 \end{table}
-{\scriptsize Toy law, own machine (IKMHIWI03), measured 19 Aug 2026 --- not yet
-inside ANSYS/UMAT itself (ANSYS link blocked, see backup slide); native Fortran
-number is a lower-bound proxy for the in-process UMAT call path.}
+{\scriptsize Toy law, own machine (IKMHIWI03), measured 19 Aug 2026, before the
+custom ANSYS build succeeded; native Fortran number is a lower-bound proxy for
+the in-process UMAT call path. The real UMAT now builds and runs inside ANSYS
+itself --- next slide.}
 \end{column}
 \begin{column}{0.45\textwidth}
 IPC is $\sim$40,000$\times$ slower than a native call; ctypes closes most of
@@ -111,6 +113,74 @@ that gap but still $\sim$440$\times$ slower than native --- confirms UMAT
 \vspace{4pt}
 Setup: toy constitutive law, 400 elements $\times$ 1 Gauss point (i.e.\ 400
 Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Update: the growth branch now runs inside real ANSYS}
+\textbf{Since the benchmark slide:} built the custom ANSYS 2022 R2 executable
+with \texttt{usermat\_biofilm.f} linked in, and ran the closed-form
+growth-branch check (element fully constrained, $\mathbf F=\mathbf I$, so
+$\boldsymbol\sigma$ is known analytically --- no FE solve needed to predict it).
+\vspace{4pt}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Case & \texttt{KEYOPT(1,2)} & Expected $\sigma$ & Got\\
+\midrule
+elastic, $\alpha{=}0.05$ & 0 / 2 / 3 & $-1.0193\times10^{-4}$ & \textbf{match, all 3}\\
+viscous, $\alpha{=}0.05$ & 0 & $-6.9632\times10^{-5}$ & \textbf{match}\\
+elastic, $\alpha{=}0.20$ & 0 & $-4.7265\times10^{-4}$ & \textbf{match}\\
+viscous, $\alpha{=}0.20$ & 0 & $-1.7950\times10^{-4}$ & \textbf{match}\\
+\bottomrule
+\end{tabular}
+\end{table}
+All 4 reference cases \emph{and} the element-formulation sweep (B-bar /
+enhanced strain / simplified enhanced strain) match exactly --- no volumetric
+locking on this load. First time the growth branch has run end-to-end inside
+ANSYS, not just the standalone crosscheck driver.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two real bugs found along the way (both fixed)}
+\begin{enumerate}
+  \item \textbf{Link error} (\texttt{for\_alloc\_allocatable\_handle} unresolved) ---
+        looked like a compiler-version mismatch (chased installing an older
+        Intel Fortran as a dead end). Actual cause: ANSYS's own link script
+        was missing one library. One line fixed it, no reinstall needed.
+  \item \textbf{Silent viscous-state bug} --- APDL's \texttt{TBDATA} command
+        only accepts \textbf{6 values per call}; the deck's 9-value viscous-state
+        initializer silently dropped the last 3, leaving the prior state singular
+        instead of identity. Harmless for the elastic case, but made every
+        \emph{viscous} run silently return the elastic answer instead ---
+        deceptive because it looked like a match, not a crash.
+\end{enumerate}
+\vspace{4pt}
+{\scriptsize Full writeup: \texttt{ansys\_usermat/apdl/RUNBOOK.md}. Diagnosed
+by instrumenting the UMAT with temporary debug output and tracing exactly what
+ANSYS was actually passing to the material at the call site.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{UserElement vs.\ UserMat: narrowed, not settled}
+The assignment names \emph{UserElement/UserMat}; this repo has a UserMat only
+--- it can't by itself transport the ecology field spatially.
+\vspace{4pt}
+\begin{itemize}
+  \item Read ANSYS's own \texttt{UserElem.F} example end to end: confirmed a
+        UserElement can call our \emph{existing, verified} UserMat unchanged
+        for the mechanical response (\texttt{KEYANSMAT=1} $\to$
+        \texttt{ElemGetMat}) --- so today's verification work transfers either way
+  \item What has \emph{no} template in ANSYS's own example: the field-DOF
+        residual for the ecology transport itself --- genuinely new code either way
+  \item \textbf{Working assumption, pending Oliver/Meisam:} extra nodal DOFs
+        inside a UserElement (not precomputed externally, as this repo does today)
+\end{itemize}
+\vspace{4pt}
+{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}. Also still
+waiting on Felix's actual implementation from Oliver --- our crosscheck
+harness (\texttt{crosscheck.py}) is now generalized to diff against it the
+moment it arrives.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -180,7 +250,8 @@ Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
 \begin{frame}{Questions for this meeting}
 \begin{enumerate}
   \item Keio: anything needed from the Keio side for the DD requirements this term?
-  \item Scope check: is the 2-species reduction acceptable for the thesis claims?
+  \item UserElement vs.\ UserMat: does the working assumption on the previous
+        slide look right, or is there a reason to prefer the other route?
   \item Presentation: online attendance from Japan possible for Prof.\ Muramatsu?
 \end{enumerate}
 \end{frame}
