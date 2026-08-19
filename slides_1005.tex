@@ -111,6 +111,37 @@ Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Model parameters, at a glance}
+\small
+Multiplicative split $\mathbf F = \mathbf F_e \mathbf F_g$ (elastic $\times$ growth)
+--- standard finite-growth kinematics (Rodriguez et al.\ 1994; Klempt 2024 for this
+biofilm law specifically).
+\vspace{4pt}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}clr@{}}
+\toprule
+Symbol & Meaning & Used here\\
+\midrule
+$\mathbf F$ & total deformation gradient & $=\mathbf I$ (fully constrained)\\
+$\alpha$ & growth stretch parameter (dimensionless) & $0.05$ or $0.20$\\
+$\mathbf F_g=(1{+}\alpha)\mathbf I$ & growth part --- how much the material & ---\\
+ & \emph{wants} to expand, isotropically & \\
+$\mathbf F_e=\mathbf F\mathbf F_g^{-1}$ & elastic part --- what actually stretches & determines $\boldsymbol\sigma$\\
+$J_e=\det\mathbf F_e$ & elastic volume ratio & $<1$ = compressed\\
+$C_{10}, C_{01}$ & Mooney--Rivlin constants (Neo-Hookean & $2\times10^{-4}, 0$\\
+ & if $C_{01}{=}0$) --- shear stiffness [stress] & \\
+$D_1$ & compressibility (large $\Rightarrow$ near-incompressible) & $5\times10^{3}$\\
+$\eta$ & viscosity [stress$\cdot$time] --- $0$ = purely elastic & $0$ or $8\times10^{-3}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+{\scriptsize $\alpha$ is the biological growth driver from the ecology model
+(ch.\,4/5); $C_{10},C_{01},D_1,\eta$ are calibrated tissue-mechanics
+constants (Klempt 2024) --- both feed the same constitutive law.}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Verification setup: what's actually being checked}
 \begin{columns}[T]
 \begin{column}{0.55\textwidth}
