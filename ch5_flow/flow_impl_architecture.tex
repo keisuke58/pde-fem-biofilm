@@ -1,55 +1,108 @@
 % flow_impl_architecture.tex — implementation architecture / tech stack
 % Python(JAX) <-> bridge (socket / ISO_C_BINDING) <-> Fortran UMAT <-> commercial FEM.
+%
+% Two coupling paths are distinguished deliberately:
+%   SOLID  = production path used for the thesis results (offline / one-way:
+%            the alpha field is precomputed and baked into the INP).
+%   DASHED = in-the-loop prototype (ansys_usermat/coupling/) — verified against
+%            the Fortran core, but not used to produce any reported number.
+%
 % Usage: \resizebox{\linewidth}{!}{\input{flow_impl_architecture.tex}}
+% Requires: amsmath, bm; tikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
 \begin{tikzpicture}[
   every node/.style = {font=\small},
-  N/.style  = {draw, rounded corners=3pt, align=center, thick,
-               text width=4.6cm, minimum height=0.8cm, inner sep=4pt},
-  Npy/.style= {N, fill=cyan!13},
-  Nbr/.style= {N, fill=orange!15},
-  Nfe/.style= {N, fill=teal!13},
-  ar/.style = {-Stealth, thick},
-  bi/.style = {Stealth-Stealth, very thick, orange!65!black},
-  hd/.style = {font=\footnotesize\bfseries},
-  lbl/.style= {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+  % --- column geometry (single source of truth) ---
+  N/.style   = {draw, rounded corners=3pt, align=center, thick,
+                text width=4.7cm, minimum height=1.0cm, inner sep=4pt},
+  Npy/.style = {N, fill=cyan!13,   draw=cyan!55!black},
+  Nbr/.style = {N, fill=orange!15, draw=orange!65!black, text width=4.1cm},
+  Nfe/.style = {N, fill=teal!13,   draw=teal!55!black},
+  % --- arrows ---
+  ar/.style  = {-Stealth, thick, gray!55!black},
+  prod/.style= {-Stealth, very thick, cyan!50!black},
+  proto/.style={Stealth-Stealth, very thick, orange!70!black, dashed, dash pattern=on 4pt off 2.5pt},
+  hd/.style  = {font=\footnotesize\bfseries},
+  lbl/.style = {font=\scriptsize, inner sep=2pt, align=center, text width=2.9cm,
+                rounded corners=1.5pt},
+  note/.style= {font=\scriptsize\itshape, align=center, text=gray!45!black},
 ]
 
-% ── left: Python / AI side ──────────────────────────────────────────
-\node[Npy] (py1) {JAX — GPU-compiled forward model\\ ($\phi$–$c$–$\alpha$ PDE, \texttt{vmap}/\texttt{jit})};
-\node[Npy, below=0.5cm of py1] (py2) {TMCMC inference engine\\ (15-D posterior $\bm\theta$)};
-\node[Npy, below=0.5cm of py2] (py3) {composition rule $\phi(z)$,\\ growth driver $\alpha(\mathbf x)$};
+% ══ column x-centres (single source of truth; gutters > 3cm so no label collides) ══
+\def\cA{0}\def\cB{7.4}\def\cC{15.6}
+% ══ row y-centres ══
+\def\rI{0}\def\rII{-2.0}\def\rIII{-4.0}
 
-% ── center: bridge ──────────────────────────────────────────────────
-\node[Nbr, right=1.7cm of py2, text width=4.0cm] (br) {%
-  \textbf{Bridge}\\[2pt]
-  local socket / \texttt{ISO\_C\_BINDING}\\
-  memory passing \& messaging\\
-  (Python $\leftrightarrow$ Fortran)};
+% ── left: data / inference side (Python) ────────────────────────────
+\node[Npy] (py1) at (\cA,\rI)  {JAX forward model, GPU\\
+  \scriptsize $\phi$--$c$--$\alpha$ PDE, \texttt{jit}/\texttt{vmap}};
+\node[Npy] (py2) at (\cA,\rII) {TMCMC inference\\
+  \scriptsize 15-D posterior $\bm\theta$ (interaction matrix $\mathbf A$)};
+\node[Npy] (py3) at (\cA,\rIII){growth driver $\alpha(\mathbf x)$,\\
+  \scriptsize stiffness rule $E(\phi)$};
 
-% ── right: mechanics solver ─────────────────────────────────────────
-\node[Nfe, right=1.7cm of py1, xshift=4.0cm] (fe1) {%
-  Commercial FEM main routine\\ (Abaqus / ANSYS)};
-\node[Nfe, below=0.5cm of fe1] (fe2) {%
-  \texttt{UMAT} (Fortran) — called per element};
-\node[Nfe, below=0.5cm of fe2] (fe3) {%
-  integration-point loop:\\ stress $\bm\sigma$ \& Jacobian \texttt{DDSDDE}};
+% ── centre: the bridge ──────────────────────────────────────────────
+\node[Nbr] (br) at (\cB,\rII) {\textbf{coupling layer}\\[1pt]
+  \scriptsize \texttt{material\_server.py} (NumPy core)\\
+  \scriptsize $\updownarrow$ TCP, newline-JSON\\
+  \scriptsize \texttt{biofilm\_py\_eval.c} + \texttt{ISO\_C\_BINDING}};
 
-% arrows
+% offline hand-off (production): a plain artifact, not a live channel
+\node[Nbr, fill=cyan!8, draw=cyan!55!black, text width=4.1cm] (off) at (\cB,\rIII+0.05)
+  {\textbf{offline hand-off}\\[1pt]
+   \scriptsize $\alpha$ field $\to$ nodal/SDV table\\
+   \scriptsize baked into the Abaqus \texttt{.inp}};
+
+% ── right: mechanics solver (Fortran) ───────────────────────────────
+\node[Nfe] (fe1) at (\cC,\rI)  {FEM main routine\\
+  \scriptsize Abaqus/Standard $\cdot$ ANSYS APDL --- global Newton};
+\node[Nfe] (fe2) at (\cC,\rII) {\texttt{UMAT} / \texttt{USERMAT} (Fortran)\\
+  \scriptsize called per integration point};
+\node[Nfe] (fe3) at (\cC,\rIII){$\mathbf F=\mathbf F_e\mathbf F_v\mathbf F_g$,\ $\mathbf F_g=(1{+}\alpha)\mathbf I$\\
+  \scriptsize returns $\bm\sigma$ and \texttt{DDSDDE}};
+
+% ── intra-column flow ───────────────────────────────────────────────
 \draw[ar] (py1) -- (py2);
 \draw[ar] (py2) -- (py3);
 \draw[ar] (fe1) -- (fe2);
 \draw[ar] (fe2) -- (fe3);
-\draw[bi] (py3.east) -- (br.west);
-\draw[bi] (br.east) -- (fe2.west) node[lbl,pos=0.68,above=1pt]{$\alpha$ / SDV \& $\bm\sigma$};
+\draw[ar] (fe3.east) -- ++(0.55,0) |- (fe1.east)
+  node[note, pos=0.5, right=2pt, anchor=west]{global\\Newton};
 
-% column headers
-\node[hd, above=0.35cm of py1.north, text=cyan!45!black] {AI / DATA (Python)};
-\node[hd, above=0.9cm of br.north, text=orange!70!black, anchor=south] at (br.north) {BRIDGE};
-\node[hd, above=0.35cm of fe1.north, text=teal!45!black] {MECHANICS SOLVER (Fortran)};
+% ── production path: py3 -> offline -> fe3 (solid) ──────────────────
+\draw[prod] (py3.east) -- (off.west);
+\draw[prod] (off.east) -- (fe3.west);
+\node[lbl, text=cyan!45!black, anchor=south, yshift=3pt] at ($(off.east)!0.5!(fe3.west)$)
+  {\textbf{one-way}\\ per element};
 
+% ── prototype path: br <-> fe2 (dashed, bidirectional) ──────────────
+\draw[proto] (py2.east) -- (br.west);
+\draw[proto] (br.east)  -- (fe2.west);
+\node[lbl, text=orange!60!black, anchor=south, yshift=3pt] at ($(br.east)!0.5!(fe2.west)$)
+  {$\mathbf F,\mathbf F_v,\alpha \Rightarrow$\\ $\bm\sigma,\ \partial\bm\sigma/\partial\bm\varepsilon$};
+
+% ── column headers ──────────────────────────────────────────────────
+\node[hd, text=cyan!45!black] (hA) at (\cA,\rI+1.35) {DATA / INFERENCE \textnormal{(Python, JAX)}};
+\node[hd, text=orange!70!black](hB) at (\cB,\rI+1.35) {COUPLING};
+\node[hd, text=teal!45!black]  (hC) at (\cC,\rI+1.35) {MECHANICS \textnormal{(Fortran + commercial FEM)}};
+
+% ── legend / verification strip ─────────────────────────────────────
+\node[note, anchor=north] (leg) at (\cB,\rIII-1.35) {%
+  \tikz[baseline=-0.5ex]\draw[prod](0,0)--(0.7,0);\ \ solid: production path — every reported result\qquad
+  \tikz[baseline=-0.5ex]\draw[proto](0,0)--(0.7,0);\ \ dashed: in-the-loop prototype — verified, not yet used for results};
+
+\node[note, anchor=north, text=gray!55!black] at (leg.south)
+  {verified: Abaqus \texttt{UMAT} $\equiv$ ANSYS \texttt{USERMAT} to 0\,ULP (8017 cases)\ \ $\cdot$\ \
+   Python core $\equiv$ Fortran core to $6.8{\times}10^{-14}$ rel.\ \ $\cdot$\ \
+   consistent tangent vs.\ FD $\approx 3{\times}10^{-8}$};
+
+% ── background panels (headers included in the fit) ─────────────────
 \begin{scope}[on background layer]
-  \node[draw=cyan!40, fill=cyan!3, rounded corners=7pt, inner sep=7pt, fit=(py1)(py2)(py3)] {};
-  \node[draw=teal!40, fill=teal!3, rounded corners=7pt, inner sep=7pt, fit=(fe1)(fe2)(fe3)] {};
+  \node[draw=cyan!40,   fill=cyan!3,   rounded corners=7pt, inner sep=8pt,
+        fit=(hA)(py1)(py2)(py3)] {};
+  \node[draw=orange!40, fill=orange!3, rounded corners=7pt, inner sep=8pt,
+        fit=(hB)(br)(off)] {};
+  \node[draw=teal!40,   fill=teal!3,   rounded corners=7pt, inner sep=8pt,
+        fit=(hC)(fe1)(fe2)(fe3)] {};
 \end{scope}
 
 \end{tikzpicture}
