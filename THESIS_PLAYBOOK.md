@@ -114,6 +114,10 @@ see the checklist below.
       *Arch. Appl. Mech.* 96, 164, doi:10.1007/s00419-026-03160-y; confirm any
       referenced equation numbers match this published version. *(Soleimani is a
       co-author — get this exactly right.)*
+- [ ] **Capture the computational cost** — run `extract_abaqus_cost.py` over the
+      Abaqus scratch directories (the `.sta`/`.msg`/`.dat` files are still on the
+      workstation) and commit `runs/abaqus_cost.json`. Currently the repo records
+      stress results but no timings, so the cost section has no measured basis.
 - [ ] Every quoted number traces to a committed script (grep the thesis, check each).
 - [ ] Limitations section carries `E_SPEC`-assumed / `α`-magnitude-anchored /
       composition-CLSM-anchored verbatim in intent.
