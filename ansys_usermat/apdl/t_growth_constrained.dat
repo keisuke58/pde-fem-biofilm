@@ -1,0 +1,81 @@
+! t_growth_constrained.dat — growth-path verification for usermat_biofilm.f
+! ANSYS Mechanical APDL.  See RUNBOOK.md for the full Windows procedure.
+!   Windows (IKMHIWI03, v222), from a writable working directory:
+!     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!         -i t_growth_constrained.dat -o out.txt
+!   Linux:
+!     ansys222 -b -custom ./ansys.e -i t_growth_constrained.dat -o out.txt
+! The -custom argument must point at the executable built with usermat_biofilm.f;
+! without it ANSYS runs its own stock material and the check is meaningless.
+!
+! WHY THIS CASE
+! -------------
+! The SOLID185 uniaxial benchmark that validated the USERMAT interface on
+! 2022 R2 ran with alpha = 0, so Fg = I and the growth branch was never
+! entered.  This deck exercises growth in isolation.
+!
+! Every node is fully fixed, so the deformation gradient is F = I exactly at
+! every integration point.  With Fg = (1+alpha) I the elastic part is
+! Fe = Fg^-1, and the Cauchy stress follows in closed form -- no FE solve is
+! needed to know the answer.  Expected: pure hydrostatic COMPRESSION (the
+! element wants to grow and cannot), with all three shear components exactly
+! zero.
+!
+! EXPECTED (alpha = 0.05, eta = 0 -> elastic; see reference_values.json)
+!   Je       =  0.863837599
+!   SX=SY=SZ = -1.019275856E-04
+!   SXY=SYZ=SXZ = 0
+!
+! A nonzero shear component means the VI/VJ Voigt map is mis-wired.
+! A positive (tensile) hydrostatic stress means Fg is being applied inverted.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - constrained isotropic growth (closed-form check)
+/PREP7
+
+! ---- single 8-node hex, unit cube -----------------------------------------
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar (default); see README for the KEYOPT sweep
+
+BLOCK,0,1,0,1,0,1
+ESIZE,1
+VMESH,1
+
+! ---- user material ---------------------------------------------------------
+! prop: C10, C01, D1, eta, mtype, kUsePy
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+
+! state: ustatev(1:9)=Fv (row-major, initialised to I), ustatev(10)=alpha
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0
+TBDATA,10,0.05                          ! <-- alpha (growth driver)
+
+! ---- fully constrained: forces F = I at every integration point ------------
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+! ---- solve -----------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,5.0                     ! must match dt used for the viscous reference
+NSUBST,1,10,1
+OUTRES,ALL,ALL
+SOLVE
+FINISH
+
+! ---- report ----------------------------------------------------------------
+/POST1
+SET,LAST
+ESEL,S,ELEM,,1
+/OUTPUT,growth_result,txt
+PRESOL,S,COMP                ! SX SY SZ SXY SYZ SXZ at the integration points
+PRESOL,SVAR                  ! state: Fv (1..9) and alpha (10)
+/OUTPUT
+FINISH
