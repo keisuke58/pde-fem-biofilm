@@ -5,9 +5,12 @@ ANSYS FE model with the paper's calibrated biofilm growth / viscoelastic law,
 called at each Gauss point (eventually via a Python material model). This sheet
 lists **what to hand over, in what order, and what is needed back** to run it.
 
-Status of the deliverable: the ANSYS `USERMAT` is **syntax-checked (gfortran) and
-numerically verified against a Python replica**, but **not yet run inside ANSYS**.
-Treat it as a validated starting point, not a drop-in black box.
+Status of the deliverable: the ANSYS `USERMAT` **runs and converges in ANSYS
+MAPDL 2022 R2 (v222)** — interface arguments, `keycut`/`cutFactor` substepping
+and the `dsdePl` Jacobian validated on a `SOLID185` / `NLGEOM,ON` uniaxial
+benchmark — and its constitutive core is **bit-identical to the verified Abaqus
+UMAT** (0 ULP over 8017 states). Still to check in-solver: the **growth** path
+(`α > 0`), for which `apdl/` carries a closed-form single-element case.
 
 ---
 
