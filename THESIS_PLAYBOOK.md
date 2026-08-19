@@ -30,7 +30,8 @@ them:
 | Physics | Growth kinematics `F=Fe·Fg`, `Fg=(1+α)I` | 🟢 verified | production UMAT; `VERIFICATION…` V1 |
 | Physics | Consistent tangent (DDSDDE) | 🟢 verified | analytic + F-perturbation vs FD 2.4–2.9e-8; `phase2_patch_test.py` 13/13 |
 | Physics | Dual-solver port (Abaqus↔ANSYS) | 🟢 bit-identical | `ansys_usermat/crosscheck/` — 0 ULP over 8017 cases |
-| Physics | USERMAT **in ANSYS 2022 R2** | 🟢 runs & converges | `SOLID185`/`NLGEOM,ON` uniaxial benchmark; interface args, `keycut`/`cutFactor`, `dsdePl` validated in-solver |
+| Physics | USERMAT **in ANSYS 2022 R2**, mechanical branch | 🟢 runs & converges | `SOLID185`/`NLGEOM,ON` uniaxial benchmark; interface args, `keycut`/`cutFactor`, `dsdePl` validated in-solver |
+| Physics | USERMAT **in ANSYS 2022 R2**, growth branch (`Fg=(1+α)I`, `α≠0`) | 🟢 verified 2026-08-19 | closed-form check, `ansys_usermat/apdl/`: all 4 `reference_values.json` cases (elastic/viscous × α=0.05/0.20) + the `KEYOPT` formulation sweep match exactly; see `RUNBOOK.md` |
 | Physics | Mesh convergence | 🟢 verified | `VERIFICATION…` V-series |
 | Result | Headline `σ_CH/σ_DH ≈ 6.44×` (early) | 🟢 frozen | `tests/test_golden_stress.py`; `JAXFEM/_posterior_ci/` |
 | Result | Model ↔ experiment (dysbiotic/static) | 🟢 validated | `validate_composition.py` — MAE 4.2 pp, TVD 0.11 |
@@ -129,15 +130,35 @@ see the checklist below.
 ## 3.5 Blocking questions for the supervisors
 
 Two items from [`THESIS_ASSIGNMENT.md`](THESIS_ASSIGNMENT.md) sit on the critical
-path and cannot be resolved by working harder here:
+path and cannot be resolved by working harder here — **status as of
+2026-08-19, narrowed but not settled:**
 
 - **UserElement or UserMat?** The assignment names *UserElement/UserMat*; this
   repo has a `USERMAT` only. Whether the spatial field is solved as extra DOFs in
   a UserElement or precomputed and passed in per integration point determines the
-  entire coupling architecture. Settle it before implementing.
+  entire coupling architecture. **Still open** — but no longer a blind guess:
+  [`ansys_usermat/USERELEM_NOTES.md`](ansys_usermat/USERELEM_NOTES.md) works
+  through ANSYS's own `UserElem.F` example and confirms a UserElement can call
+  our *existing, verified* USERMAT unchanged for the mechanical response
+  (`KEYANSMAT=1` → `ElemGetMat`) — so the constitutive-core verification work
+  above transfers either way. The genuinely new, un-templated work is the
+  field-DOF residual/stiffness for spatial ecology transport itself. A
+  deadline-based default assumption (extra DOFs in a UserElement) has been
+  proposed to Oliver/Meisam; proceeding on it if no objection lands.
 - **Felix's final implementation** (via Oliver) is the stated starting point and
   is not in this repo. Request it early, then diff its constitutive core against
   ours — if they agree, the whole verification chain transfers to it.
+  [`ansys_usermat/crosscheck/crosscheck.py`](ansys_usermat/crosscheck/crosscheck.py)
+  now supports diffing against a third source (`--right-src` etc.) specifically
+  for this; only a driver for Felix's actual entry point is still needed once
+  the files arrive (template: `xcheck_driver_template.f`). **Still waiting on
+  the files themselves.**
+
+Separately, **the build/toolchain blocker that RUNBOOK.md flagged Timo for is
+resolved** (not classic-ifort, as first suspected — ANSYS's shipped
+`ansys.lrf` was just missing one `-defaultlib` line) — see `RUNBOOK.md` for
+the full story, including a real APDL deck bug (`TBDATA`'s 6-value-per-call
+limit) found and fixed along the way.
 
 ## 4. 今後の方針 — go-forward (systematised)
 
