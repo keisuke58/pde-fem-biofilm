@@ -121,24 +121,31 @@ Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
 with \texttt{usermat\_biofilm.f} linked in, and ran the closed-form
 growth-branch check (element fully constrained, $\mathbf F=\mathbf I$, so
 $\boldsymbol\sigma$ is known analytically --- no FE solve needed to predict it).
-\vspace{4pt}
+\vspace{2pt}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
 \begin{table}
-\centering\small
-\begin{tabular}{@{}llrr@{}}
+\centering\scriptsize
+\begin{tabular}{@{}llr@{}}
 \toprule
-Case & \texttt{KEYOPT(1,2)} & Expected $\sigma$ & Got\\
+Case & \texttt{KEYOPT} & \\
 \midrule
-elastic, $\alpha{=}0.05$ & 0 / 2 / 3 & $-1.0193\times10^{-4}$ & \textbf{match, all 3}\\
-viscous, $\alpha{=}0.05$ & 0 & $-6.9632\times10^{-5}$ & \textbf{match}\\
-elastic, $\alpha{=}0.20$ & 0 & $-4.7265\times10^{-4}$ & \textbf{match}\\
-viscous, $\alpha{=}0.20$ & 0 & $-1.7950\times10^{-4}$ & \textbf{match}\\
+elastic, $\alpha{=}0.05$ & 0/2/3 & \textbf{match, all 3}\\
+viscous, $\alpha{=}0.05$ & 0 & \textbf{match}\\
+elastic, $\alpha{=}0.20$ & 0 & \textbf{match}\\
+viscous, $\alpha{=}0.20$ & 0 & \textbf{match}\\
 \bottomrule
 \end{tabular}
 \end{table}
-All 4 reference cases \emph{and} the element-formulation sweep (B-bar /
-enhanced strain / simplified enhanced strain) match exactly --- no volumetric
-locking on this load. First time the growth branch has run end-to-end inside
-ANSYS, not just the standalone crosscheck driver.
+All 4 reference cases \emph{and} the \texttt{KEYOPT} formulation sweep
+(B-bar / enhanced / simplified enhanced strain) match exactly --- no
+volumetric locking on this load. First time the growth branch has run
+end-to-end inside ANSYS, not just the standalone crosscheck driver.
+\end{column}
+\begin{column}{0.5\textwidth}
+  \includegraphics[width=\linewidth]{ansys_usermat/apdl/growth_verify_parity.pdf}
+\end{column}
+\end{columns}
 \end{frame}
 
 % --------------------------------------------------------
