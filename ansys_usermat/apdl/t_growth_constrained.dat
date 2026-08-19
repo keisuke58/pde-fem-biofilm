@@ -1,5 +1,12 @@
 ! t_growth_constrained.dat — growth-path verification for usermat_biofilm.f
-! ANSYS Mechanical APDL.  Run:  ansys222 -b -i t_growth_constrained.dat -o out.txt
+! ANSYS Mechanical APDL.  See RUNBOOK.md for the full Windows procedure.
+!   Windows (IKMHIWI03, v222), from a writable working directory:
+!     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!         -i t_growth_constrained.dat -o out.txt
+!   Linux:
+!     ansys222 -b -custom ./ansys.e -i t_growth_constrained.dat -o out.txt
+! The -custom argument must point at the executable built with usermat_biofilm.f;
+! without it ANSYS runs its own stock material and the check is meaningless.
 !
 ! WHY THIS CASE
 ! -------------
