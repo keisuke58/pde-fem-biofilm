@@ -112,6 +112,7 @@ A standalone JAX PDE testbed for the Klempt equations lives in
 ### Start here
 | File | What |
 |---|---|
+| [THESIS_ASSIGNMENT.md](THESIS_ASSIGNMENT.md) | **Scope as set by the supervisor** — the task in one sentence, roles, and the open questions that gate the coupling design |
 | [THESIS_PLAYBOOK.md](THESIS_PLAYBOOK.md) | **Systematised guide** — what's built, how to advance/check the thesis, and the go-forward plan (start here) |
 | [RESEARCH_MODEL.md](RESEARCH_MODEL.md) | **Research content systematised** — the model chain, equations, and what is measured / calibrated / assumed |
 | [CITATION_AUDIT.md](CITATION_AUDIT.md) | Citation audit — the corrected primary reference and what to fix |

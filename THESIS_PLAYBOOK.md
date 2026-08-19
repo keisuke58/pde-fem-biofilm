@@ -4,6 +4,7 @@ A single systematised view of **what exists, how to advance it, how to verify it
 and where it goes next.** It ties together the detailed docs rather than repeating
 them:
 
+- **scope as set by the supervisor** → [`THESIS_ASSIGNMENT.md`](THESIS_ASSIGNMENT.md) (roles, deliverables, open questions)
 - rigor audit → [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md) (read first)
 - roadmap → [`PLAN_NEXT.md`](PLAN_NEXT.md) · research ladder → [`research_goals_1_2.md`](research_goals_1_2.md)
 - methods → [`methods_supplement_fem.md`](methods_supplement_fem.md) · code map → [`REPO_MAP.md`](REPO_MAP.md) · doc index → [`DOCS.md`](DOCS.md)
@@ -124,6 +125,19 @@ see the checklist below.
       composition-CLSM-anchored verbatim in intent.
 
 ---
+
+## 3.5 Blocking questions for the supervisors
+
+Two items from [`THESIS_ASSIGNMENT.md`](THESIS_ASSIGNMENT.md) sit on the critical
+path and cannot be resolved by working harder here:
+
+- **UserElement or UserMat?** The assignment names *UserElement/UserMat*; this
+  repo has a `USERMAT` only. Whether the spatial field is solved as extra DOFs in
+  a UserElement or precomputed and passed in per integration point determines the
+  entire coupling architecture. Settle it before implementing.
+- **Felix's final implementation** (via Oliver) is the stated starting point and
+  is not in this repo. Request it early, then diff its constitutive core against
+  ours — if they agree, the whole verification chain transfers to it.
 
 ## 4. 今後の方針 — go-forward (systematised)
 
