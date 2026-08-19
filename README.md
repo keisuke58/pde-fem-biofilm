@@ -50,9 +50,12 @@ CLSM composition + TMCMC-calibrated dynamics (interaction matrix A) → JAXFEM P
 α-field → tooth Abaqus UMAT (isotropic `Fg=(1+α)I`) → 4-condition von Mises
 comparison.*
 
-- **Composition φ is CLSM-measured.** TMCMC calibrates the species **interaction
-  matrix A** and rate parameters — *not* the composition (the 15-D inverse
-  problem is under-identified; see the audit below).
+- **Composition φ is CLSM-measured.** TMCMC calibrates the 15 entries of the
+  symmetric species **interaction matrix A** — *not* the composition (the 15-D
+  inverse problem is under-identified; see the audit below). The viability ψ is
+  fixed to the measured membrane-intact ratio in Phase 1 and **released into the
+  posterior in Phase 2** under a soft constraint; φ̄ = φ·ψ is the living volume
+  fraction that drives the interactions. Details: [`RESEARCH_MODEL.md`](RESEARCH_MODEL.md) §1.
 - **Growth is isotropic** `Fg = (1+α) I` (Klempt 2024), implemented in the
   production UMAT `umat_klempt_alpha.f` (`Fg = s·I, s = 1+α`).
 
@@ -177,4 +180,5 @@ embed the vector `.tex`/PDF, not the PNG.**
 - **Wriggers & Junker (2024)** — Hamilton-principle diffusion-driven biofilm growth, *CMAME*
 - **Junker & Balzani (2021)** — Hamilton model for biofilm mechanics
 - **Sun, Chaikof & Levenston (2008)** — consistent algorithmic tangent by perturbation
-- **Nishioka–Heine (2025)** — TMCMC 5-species oral biofilm calibration (companion paper)
+- **Nishioka et al.** — *GPU-accelerated Bayesian inference of multi-species biofilm interaction parameters via TMCMC* (companion paper; supplies the posterior over **A** and **ψ** consumed here)
+- **Heine et al. (2025)** — in-vitro 5-species peri-implant biofilm, *Front. Oral Health* (the CLSM composition and viability data)
