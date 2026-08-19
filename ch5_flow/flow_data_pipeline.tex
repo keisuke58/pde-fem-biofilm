@@ -15,13 +15,13 @@
 
 \node[S1] (s1) {%
   {\footnotesize\bfseries Step 1 — Observation}\\[3pt]
-  confocal (FISH) $Z$-stack raw images\\[3pt]
+  confocal (FISH)\slash CLSM $Z$-stack raw images\\[3pt]
   $\Rightarrow$ extract depth composition $\phi(z)$};
 
 \node[S2, right=1.3cm of s1] (s2) {%
   {\footnotesize\bfseries Step 2 — Inference}\\[3pt]
   Bayesian TMCMC,\\ JAX / GPU-parallel\\[3pt]
-  $\Rightarrow$ identify 15-D parameters $\bm\theta$};
+  $\Rightarrow$ identify the 15\nobreakdash-D\\ interaction matrix $\bm\theta$};
 
 \node[S3, right=1.3cm of s2] (s3) {%
   {\footnotesize\bfseries Step 3 — Mapping}\\[3pt]
