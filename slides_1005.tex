@@ -143,51 +143,74 @@ volumetric locking on this load. First time the growth branch has run
 end-to-end inside ANSYS, not just the standalone crosscheck driver.
 \end{column}
 \begin{column}{0.5\textwidth}
-  \includegraphics[width=\linewidth]{ansys_usermat/apdl/growth_verify_parity.pdf}
+  \includegraphics[width=\linewidth]{assets/growth_verify_parity.png}
 \end{column}
 \end{columns}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Two real bugs found along the way (both fixed)}
-\begin{enumerate}
-  \item \textbf{Link error} (\texttt{for\_alloc\_allocatable\_handle} unresolved) ---
-        looked like a compiler-version mismatch (chased installing an older
-        Intel Fortran as a dead end). Actual cause: ANSYS's own link script
-        was missing one library. One line fixed it, no reinstall needed.
-  \item \textbf{Silent viscous-state bug} --- APDL's \texttt{TBDATA} command
-        only accepts \textbf{6 values per call}; the deck's 9-value viscous-state
-        initializer silently dropped the last 3, leaving the prior state singular
-        instead of identity. Harmless for the elastic case, but made every
-        \emph{viscous} run silently return the elastic answer instead ---
-        deceptive because it looked like a match, not a crash.
-\end{enumerate}
-\vspace{4pt}
-{\scriptsize Full writeup: \texttt{ansys\_usermat/apdl/RUNBOOK.md}. Diagnosed
-by instrumenting the UMAT with temporary debug output and tracing exactly what
-ANSYS was actually passing to the material at the call site.}
+\begin{frame}{Two real bugs found along the way --- both fixed}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{center}
+\colorbox{c3!12}{\parbox{0.95\linewidth}{\centering
+\textbf{\textcolor{c3}{Bug 1 --- link error}}\\[3pt]
+\footnotesize
+\textbf{Symptom:} unresolved symbol\\[2pt]
+\textbf{Looked like:} compiler mismatch\\[2pt]
+\textbf{Actually:} 1 line missing from\\ ANSYS's own link script\\[2pt]
+\textbf{Fix:} 1 line, no reinstall
+}}
+\end{center}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{center}
+\colorbox{todo!10}{\parbox{0.95\linewidth}{\centering
+\textbf{\textcolor{todo}{Bug 2 --- silent state bug}}\\[3pt]
+\footnotesize
+\textbf{Symptom:} viscous case = elastic\\ case, no crash\\[2pt]
+\textbf{Cause:} \texttt{TBDATA} caps at\\ 6 values/call --- deck's 9-value\\
+init silently dropped the tail\\[2pt]
+\textbf{Fix:} split into 2 calls
+}}
+\end{center}
+\end{column}
+\end{columns}
+\vspace{10pt}
+\centering
+{\scriptsize Full writeup: \texttt{ansys\_usermat/apdl/RUNBOOK.md} ---
+diagnosed by instrumenting the UMAT with debug output and tracing exactly
+what ANSYS passed to the material.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{UserElement vs.\ UserMat: narrowed, not settled}
-The assignment names \emph{UserElement/UserMat}; this repo has a UserMat only
---- it can't by itself transport the ecology field spatially.
+\small The assignment says \emph{UserElement/UserMat}; this repo has a
+UserMat only --- it can't transport the ecology field spatially by itself.
+\vspace{6pt}
+\begin{table}
+\centering\small
+\begin{tabular}{@{}p{4.6cm}p{4.6cm}@{}}
+\toprule
+\textcolor{c3}{\textbf{Carries over either way}} & \textcolor{todo}{\textbf{Genuinely new work}}\\
+\midrule
+Our verified UMAT, unchanged --- a UserElement can call it directly
+(\texttt{KEYANSMAT=1} $\to$ \texttt{ElemGetMat}, confirmed from ANSYS's own
+example) &
+Field-DOF residual for the ecology transport --- \textbf{no template} in
+ANSYS's own example, either way\\
+\bottomrule
+\end{tabular}
+\end{table}
 \vspace{4pt}
-\begin{itemize}
-  \item Read ANSYS's own \texttt{UserElem.F} example end to end: confirmed a
-        UserElement can call our \emph{existing, verified} UserMat unchanged
-        for the mechanical response (\texttt{KEYANSMAT=1} $\to$
-        \texttt{ElemGetMat}) --- so today's verification work transfers either way
-  \item What has \emph{no} template in ANSYS's own example: the field-DOF
-        residual for the ecology transport itself --- genuinely new code either way
-  \item \textbf{Working assumption, pending Oliver/Meisam:} extra nodal DOFs
-        inside a UserElement (not precomputed externally, as this repo does today)
-\end{itemize}
-\vspace{4pt}
-{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}. Also still
-waiting on Felix's actual implementation from Oliver --- our crosscheck
-harness (\texttt{crosscheck.py}) is now generalized to diff against it the
-moment it arrives.}
+\centering
+\colorbox{c3!12}{\parbox{0.9\linewidth}{\centering\small
+\textbf{Working assumption, pending Oliver/Meisam:} extra nodal DOFs inside a
+UserElement --- not precomputed externally, as this repo does today}}
+\vspace{6pt}
+{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}. Still waiting
+on Felix's implementation from Oliver --- \texttt{crosscheck.py} is ready to
+diff against it the moment it arrives.}
 \end{frame}
 
 % --------------------------------------------------------
