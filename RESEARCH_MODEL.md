@@ -131,7 +131,7 @@ The single most important table for the Limitations section.
 | Interaction matrix **A** (15 entries) | 🟢 **calibrated** | TMCMC, MAP + 95 % CI |
 | Viability **ψ** | 🟢 **measured, then calibrated** | membrane-intact ratio fixes it in Phase 1; Phase 2 releases it under a soft constraint and returns a posterior |
 | Growth kinematics, tangent, mesh | 🟢 **verified** | consistent tangent vs FD ≈ 2.4–3.0e-8; patch tests 13/13; mesh convergence |
-| Constitutive implementation | 🟢 **verified across 3 codes** | Abaqus UMAT ≡ ANSYS USERMAT (0 ULP) ≡ Python core (6.8e-14 rel.) |
+| Constitutive implementation | 🟢 **verified across 3 codes** | Abaqus UMAT ≡ ANSYS USERMAT (0 ULP) ≡ Python core (6.8e-14 rel.); the USERMAT additionally **runs and converges in ANSYS MAPDL 2022 R2** (`SOLID185`, `NLGEOM,ON`) |
 | Growth magnitude **α** | 🟡 **magnitude-anchored** | thickness 1.5–3.5× → α ≈ 0.5–2.5; **not** calibrated per condition |
 | Per-species stiffness **E_SPEC** | 🟡 **assumed** | order-of-magnitude only; needs species-level AFM |
 | Depth / nutrient model | 🟢 **result robust to it** | 5.3–6.6× via 3-D reaction–diffusion |

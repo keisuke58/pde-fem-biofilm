@@ -18,9 +18,13 @@ C  A clearly-marked hook (see "PYTHON MATERIAL HOOK") shows where the
 C  per-Gauss-point call to the Python material model would replace the
 C  inline Fortran law (via ISO_C_BINDING / local socket).
 C
-C  STATUS: syntax-checked with gfortran; NOT yet run inside ANSYS.
-C  The constitutive core it reproduces IS verified (tangent vs FD
-C  ~2.4e-8; patch tests 13/13 in phase2_patch_test.py).
+C  STATUS: RUNS AND CONVERGES IN ANSYS MAPDL 2022 R2 (v222).
+C  Confirmed in-solver: the argument list above (incl. var0, var1..var8,
+C  tsstif, epsZZ), the keycut/cutFactor adaptive-substepping path, and the
+C  dsdePl material Jacobian — via a SOLID185 uniaxial-tension benchmark
+C  with NLGEOM,ON.  The constitutive core is separately verified against
+C  the Abaqus UMAT (0 ULP over 8017 states) and a Python replica
+C  (tangent vs FD ~2.4e-8; patch tests 13/13 in phase2_patch_test.py).
 C
 C  ABAQUS UMAT  <->  ANSYS USERMAT  mapping (key porting knowledge)
 C  ---------------------------------------------------------------
@@ -56,10 +60,15 @@ C=======================================================================
      &   Time, dTime, Temp, dTemp,
      &   stress, ustatev, dsdePl, sedEl, sedPl, epseq,
      &   Strain, dStrain, epsPl, prop, coords,
-     &   defGrad_t, defGrad, tsstif, epsZZ, cutFactor)
+     &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
+     &   var1, var2, var3, var4, var5, var6, var7, var8)
 
       implicit none
 C     --- ANSYS USERMAT argument list (3-D / plane-strain solid) ---
+C     Signature confirmed against ANSYS MAPDL 2022 R2 (v222): var0 sits
+C     between coords and defGrad_t, and var1..var8 trail cutFactor.  The
+C     per-release variation in this list is the first thing to re-check
+C     when moving to another ANSYS version.
       integer          matId, elemId, kDomIntPt, kLayer, kSectPt,
      &                 ldstep, isubst, keycut,
      &                 nDirect, nShear, ncomp, nStatev, nProp
@@ -70,6 +79,8 @@ C     --- ANSYS USERMAT argument list (3-D / plane-strain solid) ---
      &                 dStrain(ncomp), epsPl(ncomp), prop(nProp),
      &                 coords(3), defGrad_t(3,3), defGrad(3,3),
      &                 tsstif(2)
+      double precision var0, var1, var2, var3, var4, var5, var6,
+     &                 var7, var8
 
 C     --- locals ---
       double precision C10, C01, D1, ETA, MTYPE, KUSEPY

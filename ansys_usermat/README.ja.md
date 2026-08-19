@@ -76,16 +76,25 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
   さらに敵対的スイープ 8017 ケースでも 0 ULP、フレーム不変性残差 4.9e-17。
   等方成長パッチ、整合接線 vs 中心差分 **2.97e-8**、ANSYS のせん断並び
   （`s12,s23,s13`）も確認済み。
-- ⚠️ **ANSYS 内での実行はまだ**。インターフェイス（引数リスト、
-  `keycut`/`cutFactor`、`dsdePl` の規約）は標準 `usermat` 仕様に従うが、
-  対象 ANSYS バージョンで要確認（`var1..var8`, `tsstif`, `epsZZ` 等は版で異なる）。
+- ✅ **ANSYS MAPDL 2022 R2 (v222) にて動作・収束確認済み。**
+  インターフェイス引数（`var0`, `var1..var8`, `tsstif`, `epsZZ`）、自動時間刻み
+  制御（`keycut`/`cutFactor`）、および接線剛性（`dsdePl`）の整合性を、
+  `SOLID185` + `NLGEOM,ON` の一軸引張ベンチマークで実機検証。
+  **引数リストはリリース依存**なので、別バージョンへ移る際はここを最初に
+  確認すること（`var0` は `coords` と `defGrad_t` の間、`var1..var8` は
+  `cutFactor` の後ろ）。
 - 元となる Abaqus コアは検証済み（接線 vs FD ~2.4e-8、パッチ試験 13/13）。
 
 ## 注意点／次のステップ
 
-1. 対象 ANSYS リリースの正確な `usermat` 引数リストを確認する。
-2. ここでの `dsdePl` は F 摂動による `∂σ/∂ε` 型。ANSYS が同じ規約の
-   Cauchy／Jaumann 材料ヤコビアンを期待するか確認（対称化や `NLGEOM` の
-   回転 `rotateM` が必要な場合あり）。
-3. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
+1. ~~対象 ANSYS リリースの正確な `usermat` 引数リストを確認する。~~
+   **2022 R2 (v222) で完了。** 他リリースへ移る際は再確認。
+2. ~~ANSYS が F 摂動による `∂σ/∂ε` と同じ規約を期待するか確認。~~
+   **収束したことで確認済み** ― ヤコビアンの規約が違えば Newton 収束が
+   悪化または失敗するが、実際に収束している。
+3. **成長項のソルバ内検証。** 上記ベンチマークが確認したのは力学経路
+   （一軸引張）まで。次は成長固有の確認として、`α > 0` の完全拘束
+   単一要素で閉形式の応力を再現する（[`apdl/`](apdl/README.md)）。
+   この状態は `F = I` なので FE 求解なしに答えが予測できる。
+4. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
    本来の修論作業。インラインコアは検証基準として残す。
