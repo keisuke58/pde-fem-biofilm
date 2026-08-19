@@ -33,21 +33,49 @@ Four clinical conditions: **CH** commensal-HOBIC · **DH** dysbiotic-HOBIC ·
 **Five species** (early coloniser → pathogen):
 *S. oralis, A. naeslundii, Veillonella, F. nucleatum, P. gingivalis*, with Σφᵢ = 1.
 
-**Model.** A 0-D ODE on the volume fractions,
+**State variables.** Two fields per species — they are *not* interchangeable:
+
+| Symbol | Meaning | Range |
+|---|---|---|
+| **φᵢ** | volume fraction occupied by species i | ∈[0,1], with a void fraction φ₀ closing Σₗ₌₀ⁿ φₗ = 1 |
+| **ψᵢ** | **viability** — the living fraction within species i | ∈[0,1], measured as the membrane-intact ratio |
+| **φ̄ᵢ = φᵢψᵢ** | **living volume fraction** — the quantity that actually drives the interactions | — |
+
+**Model.** Evolution equations derived from the extended Hamilton principle
+(Junker & Balzani 2021; Klempt et al.), i.e. a 0-D coupled ODE system in
+(φ, φ₀, ψ, γ):
 
 $$\dot{\boldsymbol\varphi} = f(\boldsymbol\varphi, \boldsymbol\psi; \boldsymbol\theta)$$
 
-with **20 parameters** θ: the species **interaction matrix A**, viability ψᵢ,
-decay bᵢ, and Hill-function gating for the *F. nucleatum → P. gingivalis*
-pathway (the dysbiotic cascade).
+The dissipation potential couples the two fields non-linearly through
+`φ̄̇ᵢ = φ̇ᵢψᵢ + φᵢψ̇ᵢ`, so φ and ψ cannot be solved independently. The free
+parameters θ are the **15 independent entries of the symmetric interaction
+matrix A** (symmetry `Aᵢⱼ = Aⱼᵢ` follows from the variational derivation);
+the antibiotic decay vector b is inactive here (α\* = 0, no antibiotic in the
+Heine experiments) and c\* is fixed at 25 because only the product c\*Aᵢⱼ is
+identifiable.
 
-**Calibration.** TMCMC (β: 0→1, 8 stages, 150 particles) against the measured
-time series (6 timepoints × 5 species) → MAP + 95 % CI.
+**Calibration — two phases** (Nishioka et al., TMCMC paper):
 
-> **Provenance, stated precisely:** TMCMC calibrates **A and the rates** — *not*
-> the composition. φ is **CLSM-measured** and enters as an input. The full 15-D
-> inverse problem is under-identified; this separation is a deliberate, audited
-> choice (see the rigor audit).
+| Phase | ψ | What is inferred |
+|---|---|---|
+| **1 (fix-ψ)** | **fixed** to the measured membrane-intact ratios | A only — halves the Jacobian (2n+2 → n+2) and removes ψ-related posterior modes |
+| **2 (free ψ)** | **released**, measured ψ enters the likelihood as a soft constraint `−Σ(ψᵢ−ψᵢ^exp)²/2σ_ψ²` | a **self-consistent joint posterior over A *and* ψ** (10 000 particles) |
+
+TMCMC tempers β: 0→1 with adaptive stage selection; the forward model is
+JIT-compiled in JAX and the particle ensemble evaluated by `vmap` on GPU
+(≈200× over the CPU baseline).
+
+> **Provenance, stated precisely:** TMCMC calibrates the **interaction matrix A**
+> (and, in Phase 2, **ψ**) — *not* the composition. **φ is CLSM-measured** and
+> enters as data/initial condition. The 15-D inverse problem is under-identified
+> against 5 usable timepoints × 5 species, which is exactly why ψ is pinned in
+> Phase 1 before being released; this separation is a deliberate, audited choice
+> (see the rigor audit).
+
+> **Do not write "TMCMC does not calibrate ψ".** That is true of Phase 1 only.
+> Phase 2 reports a posterior over ψ, and M. Soleimani and P. Junker are
+> co-authors on both the TMCMC paper and the constitutive paper.
 
 **For the FEM**, the TMCMC growth parameters map to a Monod rate,
 `r ≈ maxᵢ(aᵢᵢ) / t_scale` (derivation in `methods_supplement_fem.md` §3).
@@ -99,8 +127,9 @@ The single most important table for the Limitations section.
 
 | Quantity | Status | Basis |
 |---|---|---|
-| Composition **φ** | 🟢 **measured** | CLSM, 5 species × 6 timepoints |
-| Interaction matrix **A**, rates | 🟢 **calibrated** | TMCMC, MAP + 95 % CI |
+| Composition **φ** | 🟢 **measured** | CLSM, 5 species × 6 timepoints (Day 1 consumed as the initial condition) |
+| Interaction matrix **A** (15 entries) | 🟢 **calibrated** | TMCMC, MAP + 95 % CI |
+| Viability **ψ** | 🟢 **measured, then calibrated** | membrane-intact ratio fixes it in Phase 1; Phase 2 releases it under a soft constraint and returns a posterior |
 | Growth kinematics, tangent, mesh | 🟢 **verified** | consistent tangent vs FD ≈ 2.4–3.0e-8; patch tests 13/13; mesh convergence |
 | Constitutive implementation | 🟢 **verified across 3 codes** | Abaqus UMAT ≡ ANSYS USERMAT (0 ULP) ≡ Python core (6.8e-14 rel.) |
 | Growth magnitude **α** | 🟡 **magnitude-anchored** | thickness 1.5–3.5× → α ≈ 0.5–2.5; **not** calibrated per condition |
