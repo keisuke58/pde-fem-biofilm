@@ -9,6 +9,12 @@ the full guided tour; `RESEARCH_MODEL.md` for the modeling details.
 
 This machine (host `IKMHIWI03`) is the primary **ANSYS** work environment —
 prefer ANSYS/APDL workflows here over Abaqus when both are viable for a task.
+**Abaqus 2024 is also actually installed and licensed here** (confirmed
+2026-08-20: `C:\SIMULIA\Commands\abaqus.bat`, `abaqus information=release`
+completes with a valid Site ID) — earlier session notes assumed otherwise
+and were wrong. What genuinely is NOT on this machine is any *prior Abaqus
+run output* (no `.odb`/`.sta`/`.msg`/`.dat` anywhere on `C:`), so a fresh
+Abaqus run is possible here but nothing has been run here yet.
 
 ## Key directories
 

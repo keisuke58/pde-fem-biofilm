@@ -105,9 +105,22 @@ requires the pinned toolchain (`pip install -r requirements.txt` — matplotlib
 figures as modified even though the rendered content is unchanged; verify with a
 pixel comparison, not `git diff`, before assuming a real change.
 
-**Still gated on the full workspace** (cannot be closed here): the 4 SKIPPED audit
-sections and the stale DS artifact both need the author's Abaqus environment —
-see the checklist below.
+**Still gated on the full workspace** (cannot be closed here without further
+work): the 4 SKIPPED audit sections and the stale DS artifact both need an
+Abaqus run — see the checklist below.
+
+> **Correction, 2026-08-20:** earlier text here (and elsewhere this session)
+> assumed IKMHIWI03 has no Abaqus at all, on the strength of "this machine is
+> the primary ANSYS environment" in CLAUDE.md. That's wrong — **Abaqus 2024
+> is actually installed and licensed on IKMHIWI03**
+> (`C:\SIMULIA\Commands\abaqus.bat`, confirmed working:
+> `abaqus information=release` completes, valid Site ID). What's genuinely
+> missing here is the *prior run output* — no `.odb`/`.sta`/`.msg`/`.dat`
+> scratch files exist anywhere on this machine (checked the whole `C:` drive)
+> — not Abaqus itself. So a **fresh** regeneration of the DS artifact and a
+> fresh cost-timing run are technically possible on IKMHIWI03 now, *if* the
+> job-generation pipeline (`tier2b_real/`, `configs/`) and its required input
+> data are also available here — that has not yet been checked.
 
 **Pre-submission checklist (the 3 must-dos + closure):**
 - [ ] **Regenerate the stale DS artifact** (`tooth_klempt_comparison.json` `_flat_golden`)
