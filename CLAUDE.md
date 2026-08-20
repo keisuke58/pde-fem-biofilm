@@ -40,13 +40,31 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
 - License: floating, via RRZN Uni Hannover server
   (`1055@ansys-lic.rrzn.uni-hannover.de` / `2325@...` for ANSYSLI) — needs
   campus network or VPN to check out.
-- Custom UMAT build location: `C:\Program Files\ANSYS Inc\v222\ansys\custom\user\winx64\` —
-  **not yet verified**; the RUNBOOK's `ANSCUST.bat` build steps are
-  doc-derived, not confirmed against what's actually on this machine.
+- Custom UMAT build/run: **confirmed working** as of 2026-08-19/20 — the
+  custom `ANSYS.exe` (linked against `usermat_biofilm.f`) builds and runs
+  real decks successfully via `run_apdl.ps1` (below), working directory
+  `F:\biofilm_upf`. See `ansys_usermat/apdl/RUNBOOK.md` for the build steps
+  if it ever needs rebuilding from scratch.
 - **Intel Fortran (ifort) / Visual Studio presence: unconfirmed.** Not found
   via plain `where ifort`; must check from the "Intel oneAPI command prompt
   for Intel 64 for Visual Studio" Start Menu entry, not a bare cmd/PowerShell.
   Do this before assuming the USERMAT build will work.
+
+## Helper scripts (repo root, Windows/IKMHIWI03-specific)
+
+All built and tested this session; all default to `F:\` for ANSYS/Abaqus
+work, never `C:` (see the disk-space history in the `ansys_environment_disk_space`
+memory). None of these are needed on a non-Windows clone — they exist for
+this machine's specific workflow.
+
+| Script | What it does |
+|---|---|
+| `dev-env.ps1` | Dot-source (`. .\dev-env.ps1`) to put MSYS64 git, per-user Python, and portable gfortran on `PATH` for the current PowerShell call — shell state doesn't persist between tool calls in this harness, so this must be re-sourced every time a fresh call needs those tools. |
+| `run_apdl.ps1` | Wraps the ANSYS run checklist: clean scratch, check/enforce free disk space, run a deck via the custom `ANSYS.exe`, summarize errors/warnings, clean scratch again. `.\run_apdl.ps1 -Deck <name>.dat`. |
+| `run_abaqus.ps1` | Same idea for Abaqus jobs: runs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. |
+| `run_tests.ps1` | `pytest tests/`, excluding the two confirmed environment-limited cases (missing `scipy`, missing POSIX headers). `-All` also runs the ANSYS/Abaqus crosscheck harness. |
+| `build_slides.ps1` | `pdflatex` a given `.tex` (default `slides_1005.tex`), checks the page count against a cap, cleans up LaTeX build artifacts. |
+| `push.ps1` | Pushes to `origin` using the PAT from `.env` without ever printing the token, then refreshes the local tracking ref. Works around this harness's `2>&1` + `$ErrorActionPreference="Stop"` quirk (git's normal stderr progress output otherwise reads as a terminating error). |
 
 ## Git on this machine — important quirks
 
