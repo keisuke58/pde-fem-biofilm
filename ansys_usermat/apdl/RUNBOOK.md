@@ -13,6 +13,16 @@ closed form.
 Budget roughly an hour, most of it in step 0 if the build environment needs
 setting up.
 
+> **2026-08-20: on IKMHIWI03 specifically, use `F:\biofilm_upf`, not
+> `C:\work\biofilm_upf`.** `C:` on this machine is chronically near-full
+> (likely VSS retaining deleted blocks — see the disk-space memory / draft
+> email to Timo) and has hit 0 bytes free before. `F:\` is a separate local
+> data drive with ~3.7 TB free, confirmed to run the built executable
+> identically. The already-built environment was copied there; new builds
+> on this machine should go straight to `F:\biofilm_upf` instead of
+> following the `C:\work\biofilm_upf` paths below literally.
+> `ansys_usermat/apdl/run_apdl.ps1`'s default already points at `F:`.
+
 ---
 
 ## Step 0 — Pre-flight (do these before anything else)

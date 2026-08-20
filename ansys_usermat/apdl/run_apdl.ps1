@@ -8,8 +8,15 @@
 .DESCRIPTION
     This machine (IKMHIWI03) hit 0 bytes free mid-session more than once from
     ANSYS scratch files (file*.esav/.full/.db/.rdb/.rst/.err) left behind by a
-    crashed or completed run. This script is the checklist that grew out of
-    that, made repeatable instead of re-typed by hand each time:
+    crashed or completed run -- all on C:, which turned out to be chronically
+    near-full and, per a same-day investigation, not reliably recoverable by
+    deleting things (looks like VSS retaining the blocks; see the disk-space
+    memory / draft email to Timo). Fixed properly on 2026-08-20 by moving the
+    whole build (ANSYS.exe + runtime DLLs) to F:\biofilm_upf -- an otherwise
+    untouched local data drive with ~3.7 TB free, confirmed working (same
+    t_growth_free.dat result as the C: copy: 0 errors, 2 benign warnings).
+    The disk-hygiene steps below are kept as defense in depth, not because
+    F: is expected to fill up:
       1. clean scratch from any previous run
       2. report free space; ABORT if it is below -MinFreeGB (default 0.3 GB)
          rather than let a run crash mid-solve from disk-full
@@ -24,8 +31,9 @@
 
 .PARAMETER WorkDir
     The writable ANSYS working directory holding the custom-built ANSYS.exe
-    and its runtime DLLs. Defaults to this machine's actual build location
-    (see RUNBOOK.md) but can be overridden for a different machine/user.
+    and its runtime DLLs. Defaults to F:\biofilm_upf (moved off C: on
+    2026-08-20 -- see DESCRIPTION) but can be overridden for a different
+    machine/user.
 
 .PARAMETER MinFreeGB
     Refuse to run if free space on the WorkDir's drive is below this many GB.
@@ -37,7 +45,7 @@
 #>
 param(
     [Parameter(Mandatory=$true)][string]$Deck,
-    [string]$WorkDir = "C:\Users\nishioka\work\biofilm_upf",
+    [string]$WorkDir = "F:\biofilm_upf",
     [double]$MinFreeGB = 0.3
 )
 
