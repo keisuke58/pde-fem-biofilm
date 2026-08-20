@@ -77,6 +77,19 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   Verified 2026-08-20: none of the ~20 commits made this session carry any
   such trailer, and there's no commit template/hook in this repo that would
   add one — keep it that way.
+- **Incident, 2026-08-20: 46 commits (2026-07-02 to 2026-08-19) had author
+  `Claude <noreply@anthropic.com>`**, visible on GitHub's Contributors page
+  — traced to a Claude Code environment other than this machine (no global
+  `.gitconfig` exists here, so it wasn't this machine's default; likely a
+  cloud/remote session). Fixed via `git filter-branch` (author/committer
+  rewritten to Keisuke Nishioka, content byte-identical, verified) + force
+  push — see the `git-history-rewrite-2026-08-20` memory for the full
+  incident and what it means for other clones (e.g. the Keio server one
+  needs re-cloning, not pulling). A local `pre-commit` hook now blocks any
+  commit with an `anthropic.com`/`Claude`-looking identity on this clone;
+  install it in any fresh clone with:
+  `cp scripts/pre-commit-no-ai-identity.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
+  — this only protects clones where it's installed, not every environment.
 
 ## This PC vs. claude.ai (web) — don't mix them up
 
