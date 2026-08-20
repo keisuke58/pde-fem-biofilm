@@ -121,7 +121,20 @@ Abaqus run — see the checklist below.
 > — not Abaqus itself. So a **fresh** regeneration of the DS artifact and a
 > fresh cost-timing run are technically possible on IKMHIWI03 now, *if* the
 > job-generation pipeline (`tier2b_real/`, `configs/`) and its required input
-> data are also available here — that has not yet been checked.
+> data are also available here.
+>
+> **Checked, 2026-08-20:** `tier2b_real/` and `configs/` themselves ARE
+> present on IKMHIWI03 (build scripts, field JSONs, geometry STL, `.env`
+> job configs). But the specific jobs `compare_tooth_klempt.py` needs —
+> `p23_klempt_{A,C}_{commensal,dysbiotic}_{static,hobic}.odb` (8 jobs) — have
+> only their `.env` launch configs here, no `.inp` decks and no prior `.odb`
+> output. Building those `.inp` decks from `tier2b_real/`'s generation
+> scripts and running all 8 is real tooth/implant-scale production work, the
+> same category the user has directed to the Keio server (see
+> [[abaqus_compute_location]]) rather than IKMHIWI03's small-comparison-job
+> role. **Conclusion: this checklist item stays a Keio-side task, not
+> something to attempt on IKMHIWI03** — the "not yet checked" gap above is
+> now closed with a definite answer, not an open question.
 
 **Pre-submission checklist (the 3 must-dos + closure):**
 - [ ] **Regenerate the stale DS artifact** (`tooth_klempt_comparison.json` `_flat_golden`)
