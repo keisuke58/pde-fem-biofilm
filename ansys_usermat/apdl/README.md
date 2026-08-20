@@ -27,7 +27,22 @@ directory closes that gap.
 > is a general APDL gotcha, not specific to this material — any state/property
 > table needing more than 6 values needs multiple `TBDATA` calls.
 >
-> **Added 2026-08-20, UNRESOLVED: `t_growth_cylinder_shell.dat`, a two-layer
+> **Update 2026-08-20: converges cleanly at α=0.01, and the result is
+> physically interesting.** With disk no longer a constraint (ANSYS work
+> moved to F:, see below), an α sweep found this deck's convergence
+> threshold sits between α=0.01 (0 errors) and α=0.015 (6 errors, same
+> corner-distortion pattern documented below). At the converged α=0.01,
+> the outer growth-layer surface does **not** bulge uniformly — plotting
+> radial displacement across the 60° arc
+> (`ansys_usermat/apdl/extract_cylinder_bulge.py`, [`assets/growth_cylinder_bulge.png`](../../assets/growth_cylinder_bulge.png))
+> shows a **two-lobe pattern**, near zero at both free theta-edges and at
+> mid-arc. That's consistent with an early buckling mode rather than
+> simple uniform expansion — and plausibly *why* higher α fails to
+> converge (genuine post-buckling distortion, not just a meshing
+> artifact). Not confirmed against a true buckling/eigenvalue analysis;
+> flagged as an interesting result to check, not a settled conclusion.
+>
+> **Added 2026-08-20, UNRESOLVED (at α≥0.015): `t_growth_cylinder_shell.dat`, a two-layer
 > curved-shell smoke test** (bonded substrate + growth layer, tooth-surface
 > proxy geometry — a step toward realism beyond the unit cube; see
 > `slides_1005.tex`'s caveat frame). Two real input bugs found and fixed on

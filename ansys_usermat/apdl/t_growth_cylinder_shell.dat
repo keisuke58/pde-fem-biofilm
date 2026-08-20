@@ -136,8 +136,16 @@ TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
 TB,STATE,2,,10
 TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
 TBDATA,7,0.0,0.0,1.0
-TBDATA,10,0.05                        ! alpha (growth driver) -- same as the
-                                       ! cube's elastic_a005 case
+TBDATA,10,0.01                        ! alpha (growth driver) -- reduced from the
+                                       ! cube cases' 0.05: a same-day alpha sweep
+                                       ! (disk now cheap on F:) found this deck's
+                                       ! convergence threshold is between 0.01
+                                       ! (converges clean) and 0.015 (6 errors,
+                                       ! same corner-distortion pattern as before).
+                                       ! 0.01 is the largest value that reaches a
+                                       ! genuinely clean solve (0 errors) for this
+                                       ! geometry/BC/mesh -- kept as the working
+                                       ! value rather than chasing full alpha=0.05.
 
 ! ---- mesh -- coarse, smoke test only ---------------------------------------
 ! Each volume swept under its own default MAT pointer (MAT,n), independently
@@ -241,6 +249,8 @@ FINISH
 SET,LAST
 /OUTPUT,growth_cylinder_result,txt
 PRNSOL,U,COMP
+NLIST,ALL,,,XYZ                       ! nodal coords, for plotting the deformed
+                                       ! shape against undeformed radius/theta/z
 ETABLE,SEQV,S,EQV
 PRETAB,SEQV
 ! diagnostic: is alpha actually reaching the growth-layer elements?
