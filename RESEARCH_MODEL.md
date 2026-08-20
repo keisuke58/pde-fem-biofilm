@@ -103,6 +103,17 @@ $$\mathbf{F} = \mathbf{F}_e\,\mathbf{F}_g, \qquad \mathbf{F}_g = (1+\alpha)\,\ma
 Growth is **isotropic**. The viscoelastic extension inserts a viscous factor,
 $\mathbf{F} = \mathbf{F}_e\mathbf{F}_v\mathbf{F}_g$, integrated by backward Euler.
 
+**Note on the `(1+α)` vs. the source paper's `α`.** Klempt et al. (2024,
+Sec. 2.1) write $\mathbf{F}_g = \alpha\mathbf{I}$ directly. Taken literally at
+the natural initial condition $\alpha=0$ ("no growth accumulated yet" — the
+same initial condition this repo's own α-evolution PDE uses, `JAXFEM/klempt_pde_jax.py`,
+and structurally the paper's own Eq. 36), that formula is singular
+($\mathbf{F}_g=\mathbf{0}$). This work instead uses $\mathbf{F}_g=(1+\alpha)\mathbf{I}$
+so that $\alpha=0$ maps to the identity ($\mathbf{F}_g=\mathbf{I}$),
+well-posed throughout; the accumulation dynamics of α are otherwise
+unchanged from the cited source. See `CITATION_AUDIT.md` (F1c) for the full
+reasoning.
+
 **Elastic response — Mooney–Rivlin with a volumetric term:**
 
 $$\Psi = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$$

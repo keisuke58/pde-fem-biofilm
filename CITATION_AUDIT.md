@@ -132,15 +132,13 @@ explicit α(0). This repo's `Fg = (1+α)I` resolves exactly that: `α = 0` maps
 to `Fg = I` (identity, well-posed), and the accumulation dynamics are
 otherwise untouched.
 
-**Still not written down anywhere as an intentional departure** — that's
-the one remaining actionable gap. A single sentence in `RESEARCH_MODEL.md`
-(or wherever the growth kinematics are first introduced) stating *"we use
-Fg=(1+α)I rather than the paper's Fg=αI so that α=0 (no growth yet) maps to
-the identity Fg=I, avoiding the singularity the paper's literal formula has
-at its own natural initial condition"* would close this cleanly for the
-defense. Recommend confirming with whoever owns the UMAT derivation (or
-directly with Felix) that this reading is correct before writing it into
-the thesis text, since the paper itself never states its own α(0).
+**Closed 2026-08-20** — the explanatory sentence now lives in
+`RESEARCH_MODEL.md` §3, right where `Fg=(1+α)I` is first introduced.
+**Still recommended, not yet done:** confirm this reading with whoever owns
+the UMAT derivation (or directly with Felix) before the thesis text leans
+on it, since the paper itself never states its own α(0) — the note in
+`RESEARCH_MODEL.md` is this repo's best inference, not a confirmed fact from
+the source.
 
 ---
 
