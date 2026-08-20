@@ -31,8 +31,9 @@ them:
 | Physics | Consistent tangent (DDSDDE) | 🟢 verified | analytic + F-perturbation vs FD 2.4–2.9e-8; `phase2_patch_test.py` 13/13 |
 | Physics | Dual-solver port (Abaqus↔ANSYS) | 🟢 bit-identical | `ansys_usermat/crosscheck/` — 0 ULP over 8017 cases |
 | Physics | USERMAT **in ANSYS 2022 R2**, mechanical branch | 🟢 runs & converges | `SOLID185`/`NLGEOM,ON` uniaxial benchmark; interface args, `keycut`/`cutFactor`, `dsdePl` validated in-solver |
-| Physics | USERMAT **in ANSYS 2022 R2**, growth branch (`Fg=(1+α)I`, `α≠0`) | 🟢 verified 2026-08-19 | closed-form check, `ansys_usermat/apdl/`: all 4 `reference_values.json` cases (elastic/viscous × α=0.05/0.20) + the `KEYOPT` formulation sweep match exactly; see `RUNBOOK.md` |
+| Physics | USERMAT **in ANSYS 2022 R2**, growth branch (`Fg=(1+α)I`, `α≠0`) | 🟢 verified 2026-08-19/20 | closed-form checks, `ansys_usermat/apdl/`: constrained cube (all 4 `reference_values.json` cases + `KEYOPT` sweep) **and** the complementary free/traction-free cube (`t_growth_free.dat`, stress≡0 confirmed) both match exactly; see `RUNBOOK.md` |
 | Physics | Mesh convergence | 🟢 verified | `VERIFICATION…` V-series |
+| Physics | Geometric realism beyond the unit cube (curved, bonded two-layer shell) | 🔴 unresolved | `ansys_usermat/apdl/t_growth_cylinder_shell.dat` — two real input bugs found & fixed (VGLUE attribute loss, undersized mesh in the thin layer), but the solve still hits element distortion regardless of α/substeps; parked pending disk headroom (see §5 risk table) |
 | Result | Headline `σ_CH/σ_DH ≈ 6.44×` (early) | 🟢 frozen | `tests/test_golden_stress.py`; `JAXFEM/_posterior_ci/` |
 | Result | Model ↔ experiment (dysbiotic/static) | 🟢 validated | `validate_composition.py` — MAE 4.2 pp, TVD 0.11 |
 | Input | Composition φ (CLSM-measured) | 🟢 anchored | TMCMC calibrates interaction matrix A, not φ |
@@ -189,6 +190,7 @@ Do **not** interleave T1/T2/T3 on one branch. See `PLAN_NEXT.md` §1 for sequenc
 | A number silently changes | golden-value + validation regression tests fail CI |
 | Citation wrong before a co-author | §3 checklist; correct Klempt 2026 recorded |
 | Scope creep before submission | FREEZE principle; continuation work is scaffolded, not started |
+| IKMHIWI03's `C:` drive hitting 0 bytes free mid-build | hit once, 2026-08-20 (killed an ANSYS run outright); scratch-file cleanup is a working stopgap, but evidence points to VSS/System Restore retaining deleted blocks even after cleanup — needs admin, flagged to Timo (draft email, not yet sent) |
 
 ---
 
