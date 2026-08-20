@@ -80,6 +80,9 @@ if ($pushExit -ne 0) {
 
 # Keep the local origin/<branch> tracking ref in sync so `git status` doesn't
 # report stale "ahead by N commits" after a push done via this inline URL
-# instead of the configured 'origin' remote.
+# instead of the configured 'origin' remote. Same stderr caveat as the push
+# above -- fetch's progress output is stderr too.
+$ErrorActionPreference = "Continue"
 git -C $repoRoot fetch origin $Branch 2>&1 | Out-Null
+$ErrorActionPreference = $prevEAP
 Write-Output "Done -- origin/$Branch tracking ref refreshed."
