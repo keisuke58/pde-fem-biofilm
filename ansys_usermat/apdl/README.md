@@ -82,6 +82,17 @@ directory closes that gap.
 > constraint can mask. Evidence: [`out_free.txt`](out_free.txt),
 > [`growth_free_result.txt`](growth_free_result.txt).
 
+## Notebooks
+
+- [`growth_closed_form_verification.ipynb`](growth_closed_form_verification.ipynb) —
+  runs the closed-form check (below) and the free-growth complementary check
+  live against the committed reference and the real ANSYS output, bilingual
+  EN/JA.
+- [`cylinder_shell_bulge_analysis.ipynb`](cylinder_shell_bulge_analysis.ipynb) —
+  the two-layer curved-shell smoke test's converged α=0.01 result: outer-
+  surface displacement plot, 3D geometry/BC view, two-layer cross-section,
+  alpha-sweep convergence summary, bilingual EN/JA.
+
 ## Algorithm flow
 
 [`growth_verify_flow.tex`](growth_verify_flow.tex) /

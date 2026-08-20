@@ -71,6 +71,10 @@ Abaqus UMAT  ==  ANSYS USERMAT  ==  Python material core
    (0 ULP, crosscheck/)        (6.8e-14 relative, this dir)
 ```
 
+Reproduced live in [`python_core_vs_fortran_verification.ipynb`](python_core_vs_fortran_verification.ipynb)
+(bilingual EN/JA) — same 28-case battery as `test_coupling_vs_fortran.py`, run
+against a freshly-compiled Fortran core rather than restated from this file.
+
 - ✅ **Python core ≡ Fortran core.** `test_coupling_vs_fortran.py` compiles the
   real `BIOFILM_STRESS_CORE` and drives both over 28 states (named corner cases +
   random finite strains). **Worst relative discrepancy 6.8e-14** on stress, `Fv`

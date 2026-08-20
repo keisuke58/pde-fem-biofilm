@@ -33,6 +33,14 @@ into a single-element ANSYS model.
       vs FD ~2.4e-8. (The ANSYS port reproduces the same algebra → 2.97e-8.)
 - [ ] **`VERIFICATION_SENSITIVITY_LIMITATIONS.md`** — what is verified vs assumed.
 - [ ] *(optional)* `umat_flow/` — UMAT algorithm-flow figures.
+- [ ] **Notebooks (bilingual EN/JA, reproduce all of the above live)**:
+      [`crosscheck/crosscheck_analysis.ipynb`](crosscheck/crosscheck_analysis.ipynb),
+      [`coupling/python_core_vs_fortran_verification.ipynb`](coupling/python_core_vs_fortran_verification.ipynb),
+      [`apdl/growth_closed_form_verification.ipynb`](apdl/growth_closed_form_verification.ipynb),
+      [`../umat_tangent_test/abaqus_1elem/abaqus_visco_1elem_analysis.ipynb`](../umat_tangent_test/abaqus_1elem/abaqus_visco_1elem_analysis.ipynb)
+      (a real single-element Abaqus 2024 run of the production UMAT, not just
+      the crosscheck driver — the closest existing analog to the "single-
+      element smoke test" asked for below, on Abaqus rather than ANSYS).
 
 ## ③ Coupling plan — the Python-at-Gauss-point step (the thesis work)
 

@@ -17,6 +17,13 @@ comparing stress, viscous state `Fv`, and `Je`.
 | `fuzz_driver_abq.f` / `fuzz_driver_ans.f` | batch drivers: loop over stdin until EOF, one output line per case (so thousands of cases stream through a single process) |
 | `adversarial.py` | **tries to break the equivalence** — wide random fuzz + pathological battery + a physical frame-indifference probe |
 
+## Notebook
+
+[`crosscheck_analysis.ipynb`](crosscheck_analysis.ipynb) — runs the curated
+20-case battery and a real adversarial sweep (17 pathological + a wide fuzz)
+live, bilingual EN/JA, this is the "evidence" package handed to Felix (see
+`../HANDOFF.md`).
+
 ## Run
 
 ```bash
