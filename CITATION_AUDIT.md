@@ -62,12 +62,15 @@ state variables `φ` (volume fraction) and `ψ` (living fraction), derived via
 Hamilton's principle, strong-form ODEs at Eqs. 16–18. It contains **no
 deformation gradient, no `Fg`, no growth kinematics of any kind.**
 
-This repo's UMAT constitutive basis — `F = Fe·Fg`, `Fg = (1+α)I` — is **not
-in this paper**. It is this paper's own reference **[11]**:
+This repo's UMAT constitutive basis — `F = Fe·Fg` — is **not in this paper**.
+It is this paper's own reference **[11]**, now confirmed 2026-08-20 directly
+against the published PDF (not just secondhand via the AAM paper's
+bibliography):
 
 > Klempt, F., Soleimani, M., Wriggers, P., Junker, P. *A Hamilton
-> principle-based model for diffusion-driven biofilm growth.* Biomech. Model.
-> Mechanobiol. 1, 1–23 (2024).
+> principle-based model for diffusion-driven biofilm growth.* Biomechanics
+> and Modeling in Mechanobiology 23, 2091–2113 (2024).
+> doi:[10.1007/s10237-024-01883-x](https://doi.org/10.1007/s10237-024-01883-x)
 
 — a different journal, a different (though overlapping) author list
 (Wriggers instead of Geisler), genuinely published in 2024 (not a
@@ -90,11 +93,31 @@ species-interaction model.**
 
 **Not yet done:** the ~77 inline "Klempt 2024" mentions across the repo
 haven't been individually re-pointed at the correct one of the two papers —
-that still needs a pass with both PDFs open (the 2024 Biomech Model
-Mechanobiol paper hasn't been supplied yet, only referenced secondhand via
-the AAM 2026 paper's own bibliography). The page range `1–23` for the 2024
-paper is likewise taken from that secondhand reference, not confirmed
-against the publisher record directly.
+that still needs a pass with both PDFs open (both now confirmed available).
+
+## 🔴 F1c. New discrepancy found while confirming F1b: `Fg = αI`, not `Fg = (1+α)I`
+
+Reading the confirmed 2024 paper directly (Sec. 2.1, kinematics of growth)
+turned up a second, independent problem: **the paper's own definition is
+`Fg = α·I`**, isotropic growth scaled directly by the local expansion
+parameter — quote: *"The growth part is constructed with the local expansion
+parameter α in the form of Fg = αI, where I is the identity tensor."*
+
+This repo's UMAT and every doc (`RESEARCH_MODEL.md`, `HANDOFF.md`, README,
+etc.) consistently uses **`Fg = (1+α)I`** instead. These are not the same
+convention — under the paper's own `Fg = αI`, `α = 0` gives a singular,
+non-invertible growth tensor (`Fg = 0`), which cannot be what's intended at
+zero growth. Two explanations are possible: (a) this repo's `α` is defined
+as "the paper's α minus 1" (a shifted variable, undocumented as such), or
+(b) `Fg = (1+α)I` is a deliberate, sensible fix for well-posedness at zero
+growth that was never written down as a departure from the cited source.
+
+**Not fixed — flagged for a decision.** This is a modeling-convention
+question, not a typo, and needs whoever owns the UMAT derivation to confirm
+which explanation is correct (and if (a), that the shift is stated
+explicitly wherever `Fg=(1+α)I` appears; if (b), that the departure from the
+cited paper is documented as intentional). Surfaced to the user 2026-08-20;
+unresolved.
 
 ---
 

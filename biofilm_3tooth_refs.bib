@@ -52,21 +52,33 @@
              Klempt2024DiffusionDrivenGrowth for F=Fe*Fg, Fg=(1+alpha)I}
 }
 
-% The actual growth-kinematics source (F=Fe*Fg, Fg=(1+alpha)I) that this
-% repo's UMAT implements -- was previously uncited in this file; found via
-% reference [11] of Klempt2026ContinuumBacterialGrowth above. Full page range
-% not yet confirmed against the publisher record.
+% The actual growth-kinematics source (F=Fe*Fg) that this repo's UMAT
+% implements -- was previously uncited in this file. Confirmed 2026-08-20
+% directly against the published PDF (10.1007/s10237-024-01883-x), not just
+% the secondhand reference-list mention.
+%
+% OPEN DISCREPANCY, flagged not fixed: this paper's own kinematics (Sec. 2.1)
+% define Fg = alpha*I (not (1+alpha)*I -- see Eq. right after "The growth
+% part is constructed with the local expansion parameter alpha in the form
+% of Fg = alpha*I"). This repo's UMAT/docs consistently use Fg=(1+alpha)*I.
+% The two are not the same convention (e.g. alpha=0 gives Fg=0, a singular
+% growth tensor, in the paper's own Fg=alpha*I -- so either the repo's alpha
+% is defined as "paper's alpha minus 1", or the repo's ansatz is a
+% deliberate, undocumented departure from this paper for well-posedness at
+% zero growth). This needs a decision from whoever owns the UMAT derivation,
+% not a silent bib fix -- surfaced to the user 2026-08-20, not yet resolved.
 @article{Klempt2024DiffusionDrivenGrowth,
   author  = {Klempt, F. and Soleimani, M. and Wriggers, P. and Junker, P.},
   title   = {A {H}amilton principle-based model for diffusion-driven biofilm growth},
   journal = {Biomechanics and Modeling in Mechanobiology},
+  volume  = {23},
   year    = {2024},
-  pages   = {1--23},
-  note    = {Growth kinematics constitutive basis of this work: $F=F_e F_g$,
-             $F_g=(1+\alpha)I$. Page/volume range taken from
-             Klempt2026ContinuumBacterialGrowth's own reference list (ref.
-             [11]); confirm directly against the publisher record before
-             quoting equation numbers}
+  pages   = {2091--2113},
+  doi     = {10.1007/s10237-024-01883-x},
+  note    = {Growth kinematics constitutive basis of this work: $F=F_e F_g$
+             (Sec. 2.1). NOTE: this paper's own $F_g=\alpha I$, not
+             $F_g=(1+\alpha)I$ as used elsewhere in this repo -- see the
+             comment above; unresolved as of 2026-08-20}
 }
 
 % Superseded by the entry above — kept because older text refers to the
