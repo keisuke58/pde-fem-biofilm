@@ -166,6 +166,12 @@ CSYS,0
 ! UZ=0 at Z=0 and Z=LEN. The flat theta-edges (also free-standing artifacts)
 ! are NOT addressed yet -- that needs a rotated nodal CS and is a separate
 ! next step if this alone is not enough.
+! Tried excluding the R_MID interface node row from this constraint (the
+! element that was distorting, 5101, sat right where this BC met that
+! interface) -- made it WORSE (3 errors/1 element -> 6 errors/2 elements,
+! now in the substrate). So that corner needed MORE support, not less;
+! the interface row's Z-constraint was stabilizing, not the cause. Reverted
+! to the plain, uniform Z=0/Z=LEN constraint below.
 NSEL,S,LOC,Z,0
 D,ALL,UZ,0
 NSEL,S,LOC,Z,LEN
