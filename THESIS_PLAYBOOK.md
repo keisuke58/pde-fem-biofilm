@@ -33,7 +33,8 @@ them:
 | Physics | USERMAT **in ANSYS 2022 R2**, mechanical branch | 🟢 runs & converges | `SOLID185`/`NLGEOM,ON` uniaxial benchmark; interface args, `keycut`/`cutFactor`, `dsdePl` validated in-solver |
 | Physics | USERMAT **in ANSYS 2022 R2**, growth branch (`Fg=(1+α)I`, `α≠0`) | 🟢 verified 2026-08-19/20 | closed-form checks, `ansys_usermat/apdl/`: constrained cube (all 4 `reference_values.json` cases + `KEYOPT` sweep) **and** the complementary free/traction-free cube (`t_growth_free.dat`, stress≡0 confirmed) both match exactly; see `RUNBOOK.md` |
 | Physics | Mesh convergence | 🟢 verified | `VERIFICATION…` V-series |
-| Physics | Geometric realism beyond the unit cube (curved, bonded two-layer shell) | 🔴 unresolved | `ansys_usermat/apdl/t_growth_cylinder_shell.dat` — two real input bugs found & fixed (VGLUE attribute loss, undersized mesh in the thin layer), but the solve still hits element distortion regardless of α/substeps; parked pending disk headroom (see §5 risk table) |
+| Physics | Single-element, partial-constraint (non-closed-form) smoke test on both solvers | 🟢 verified 2026-08-20 | real Abaqus 2024 run (`umat_tangent_test/abaqus_1elem/`, completed successfully) and real ANSYS run (`ansys_usermat/apdl/t_growth_baseclamped.dat`, 0 errors) — base fixed, top free, growth+viscosity, qualitatively sensible on both; prep ahead of Felix's UserElement code per `HANDOFF.md` |
+| Physics | Geometric realism beyond the unit cube (curved, bonded two-layer shell) | 🟡 partial, 2026-08-20 | `ansys_usermat/apdl/t_growth_cylinder_shell.dat` — two real input bugs found & fixed (VGLUE attribute loss, undersized mesh in the thin layer); **converges cleanly at α=0.01** (target α=0.05 does not; threshold between 0.01 and 0.015, four targeted BC/mesh attempts to push past it all reverted). At converged α, outer surface shows a two-lobe displacement pattern, consistent with early buckling but not confirmed against a real eigenvalue analysis; see `cylinder_shell_bulge_analysis.ipynb` |
 | Result | Headline `σ_CH/σ_DH ≈ 6.44×` (early) | 🟢 frozen | `tests/test_golden_stress.py`; `JAXFEM/_posterior_ci/` |
 | Result | Model ↔ experiment (dysbiotic/static) | 🟢 validated | `validate_composition.py` — MAE 4.2 pp, TVD 0.11 |
 | Input | Composition φ (CLSM-measured) | 🟢 anchored | TMCMC calibrates interaction matrix A, not φ |
@@ -96,7 +97,7 @@ inside what it supports.
 | `audit_all.py --quick` | **ALL CLEAR** (runnable subset); 4 sections SKIPPED — external inputs absent (Abaqus extracts / sibling repos / author workspace) |
 | Test suite | **142 collected → 139 passed, 3 xfailed** (the 3 xfails are intentional trackers: `E_di` bounds + the two stale-DS artifact entries) |
 | Model↔experiment validation | MAE **4.216 pp**, TVD **0.1054**, worst species 10.54 pp (dysbiotic/static) |
-| Coupling equivalence | Python core ≡ Fortran core, worst **6.8e-14** relative over 28 states |
+| Coupling equivalence | Python core ≡ Fortran core, worst **6.8e-14** relative over 28 states; live-reproducible in `ansys_usermat/coupling/python_core_vs_fortran_verification.ipynb` |
 
 **Reproducibility note.** The figures regenerate *pixel-identically*, but the PNG
 bytes also carry matplotlib's version string, so byte-level identity additionally
@@ -159,14 +160,19 @@ path and cannot be resolved by working harder here — **status as of
   field-DOF residual/stiffness for spatial ecology transport itself. A
   deadline-based default assumption (extra DOFs in a UserElement) has been
   proposed to Oliver/Meisam; proceeding on it if no objection lands.
-- **Felix's final implementation** (via Oliver) is the stated starting point and
-  is not in this repo. Request it early, then diff its constitutive core against
-  ours — if they agree, the whole verification chain transfers to it.
-  [`ansys_usermat/crosscheck/crosscheck.py`](ansys_usermat/crosscheck/crosscheck.py)
-  now supports diffing against a third source (`--right-src` etc.) specifically
-  for this; only a driver for Felix's actual entry point is still needed once
-  the files arrive (template: `xcheck_driver_template.f`). **Still waiting on
-  the files themselves.**
+- **Felix's final implementation** is the stated starting point and is not in
+  this repo. **Update, 2026-08-20:** Felix replied — he has left IKM and can
+  only give informal input going forward, not a detailed USERMAT review (that
+  now routes to Oliver/Meisam/Hendrik instead). He also confirmed his own
+  approach has no viscoelastic split (`F_v`); this repo's model provably
+  reduces to exactly his `F=F_eF_g` at `η=0` (proven live over a 50-step
+  chained load history, see the appendix in
+  `python_core_vs_fortran_verification.ipynb`), and that `η=0` slice is
+  already inside the closed three-way verification chain, not a hypothetical
+  reduction. [`ansys_usermat/crosscheck/crosscheck.py`](ansys_usermat/crosscheck/crosscheck.py)
+  still supports diffing against a third source (`--right-src` etc.) once his
+  actual code arrives (template: `xcheck_driver_template.f`). **Code itself
+  still not received; timeline now uncertain given his departure.**
 
 Separately, **the build/toolchain blocker that RUNBOOK.md flagged Timo for is
 resolved** (not classic-ifort, as first suspected — ANSYS's shipped
@@ -203,7 +209,7 @@ Do **not** interleave T1/T2/T3 on one branch. See `PLAN_NEXT.md` §1 for sequenc
 | A number silently changes | golden-value + validation regression tests fail CI |
 | Citation wrong before a co-author | §3 checklist; correct Klempt 2026 recorded |
 | Scope creep before submission | FREEZE principle; continuation work is scaffolded, not started |
-| IKMHIWI03's `C:` drive hitting 0 bytes free mid-build | hit once, 2026-08-20 (killed an ANSYS run outright); scratch-file cleanup is a working stopgap, but evidence points to VSS/System Restore retaining deleted blocks even after cleanup — needs admin, flagged to Timo (draft email, not yet sent) |
+| IKMHIWI03's `C:` drive hitting 0 bytes free mid-build | hit once, 2026-08-20 (killed an ANSYS run outright). **Resolved same day**: all ANSYS/Abaqus work (build + run + scratch) moved to `F:\` (~3.7 TB free, essentially unused), via `run_apdl.ps1`/`run_abaqus.ps1` which default there and refuse to run below a free-space threshold. `C:`'s underlying VSS/System-Restore retention issue itself is still unresolved (needs admin) but is now moot for this workflow — flagged to Timo separately |
 
 ---
 
