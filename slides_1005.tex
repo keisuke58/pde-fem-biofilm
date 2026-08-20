@@ -1,5 +1,8 @@
 % 3者MTG (Muramatsu x Soleimani x Nishioka) 2026-10-05 9:00 CEST / 16:00 JST
 % pdflatex でビルド（研究室PCの lualatex+metropolis 環境なら theme を差し替え可）
+% CONSTRAINT: keep total page count <= 20 (currently 18). Check the built
+% PDF's page count before adding another frame; trim an existing frame
+% before growing past the cap rather than just tacking more on.
 \documentclass[aspectratio=169,11pt]{beamer}
 \usetheme{Madrid}
 \usecolortheme{seahorse}
