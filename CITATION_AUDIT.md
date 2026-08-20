@@ -36,28 +36,65 @@ The published entry has been added to `biofilm_3tooth_refs.bib` as
 `Klempt2026ContinuumBacterialGrowth` (the preprint entry is retained and
 cross-noted, since older text refers to the preprint's numbering).
 
-### ⚠️ Two things to verify at the publisher page before submitting
+### ✅ Resolved 2026-08-20 — the user supplied the published PDF directly
 
-Both are **unverifiable from this environment** — `doi.org`, `arxiv.org` and
-`link.springer.com` are all blocked by the network egress proxy, and web-search
-summaries for this paper proved unreliable (they returned unrelated hits). So:
+The two items below are no longer blocked on network access; the full text of
+`10.1007/s00419-026-03160-y` was read end-to-end. **This surfaced a bigger
+problem than either item anticipated — see the new §F1b below.**
 
-1. **The title changed between preprint and publication.** The arXiv preprint
-   (2509.01274, Sep 2025, confirmed via search) is *"A continuum multi-species
-   **biofilm** model…"*; the published citation above reads *"A continuum
-   multi-species **bacterial growth** model…"*. One search hit still showed
-   "biofilm model" for the journal version. **Confirm the published title
-   verbatim** and fix the `.bib` if needed.
-2. **Equation and section numbers.** Text and figures cite specifics —
-   "Klempt Eq. 34–36", "Klempt 2024, Sec. 2.1". Those numbers came from the
-   version that was current when the text was written. **Re-check them against
-   the published paper**; a right year pointing at wrong equation numbers is
-   worse than the current state.
+1. **Title, confirmed.** The published title is verbatim *"A continuum
+   multi-species bacterial growth model with a novel interaction scheme"* —
+   matches the `.bib` entry exactly. No fix needed; the "biofilm model" vs
+   "bacterial growth model" wording concern was unfounded (that was the
+   *preprint's* title only).
+2. **Equation/section numbers — worse than "stale", actually wrong-paper.**
+   See §F1b: the growth-kinematics equations these numbers were meant to
+   point at (`Fg=(1+α)I`, `F=Fe·Fg`) **do not exist in this paper at all**.
+   Any inline citation of the form "Klempt Eq. N" for growth kinematics needs
+   to be redirected to a *different* Klempt paper (below), not merely
+   renumbered against this one.
 
-**Deliberately not done:** a blanket find-and-replace of the ~77 inline
-"Klempt 2024" mentions. The year is only half the citation — the section and
-equation numbers must be checked against the published PDF at the same time, and
-that requires the paper itself. Fix them together, in one pass, with the PDF open.
+## 🔴 F1b. The growth-kinematics citation has been pointing at the wrong paper
+
+The published AAM 2026 paper (`Klempt2026ContinuumBacterialGrowth` in the
+`.bib`) is a **0-D material-point model for species population dynamics** —
+state variables `φ` (volume fraction) and `ψ` (living fraction), derived via
+Hamilton's principle, strong-form ODEs at Eqs. 16–18. It contains **no
+deformation gradient, no `Fg`, no growth kinematics of any kind.**
+
+This repo's UMAT constitutive basis — `F = Fe·Fg`, `Fg = (1+α)I` — is **not
+in this paper**. It is this paper's own reference **[11]**:
+
+> Klempt, F., Soleimani, M., Wriggers, P., Junker, P. *A Hamilton
+> principle-based model for diffusion-driven biofilm growth.* Biomech. Model.
+> Mechanobiol. 1, 1–23 (2024).
+
+— a different journal, a different (though overlapping) author list
+(Wriggers instead of Geisler), genuinely published in 2024 (not a
+preprint-to-2026 story like the other one). **This paper was not in the
+`.bib` files at all before today** — added as `Klempt2024DiffusionDrivenGrowth`
+in `biofilm_3tooth_refs.bib`, with the `Klempt2026ContinuumBacterialGrowth`
+entry's note corrected to say what it actually contains.
+
+**Why this matters:** every doc/figure/UMAT comment in the repo that cites
+"Klempt 2024" for growth kinematics (`RESEARCH_MODEL.md`, `HANDOFF.md`,
+`README.md`, `VERIFICATION_SENSITIVITY_LIMITATIONS.md`, ~19 files touch this
+— see the search below) was *coincidentally* using the right year, but if any
+of them were ever repointed at the AAM 2026 DOI (the natural thing to do once
+"the paper got published"), that would make it definitively wrong, not just
+year-stale. Most docs already hedge with "see CITATION_AUDIT.md before
+quoting equation numbers" (good practice already in place), so the exposure
+is contained — but the fix is: **cite `Klempt2024DiffusionDrivenGrowth` for
+growth kinematics, `Klempt2026ContinuumBacterialGrowth` only for the φ/ψ
+species-interaction model.**
+
+**Not yet done:** the ~77 inline "Klempt 2024" mentions across the repo
+haven't been individually re-pointed at the correct one of the two papers —
+that still needs a pass with both PDFs open (the 2024 Biomech Model
+Mechanobiol paper hasn't been supplied yet, only referenced secondhand via
+the AAM 2026 paper's own bibliography). The page range `1–23` for the 2024
+paper is likewise taken from that secondhand reference, not confirmed
+against the publisher record directly.
 
 ---
 
