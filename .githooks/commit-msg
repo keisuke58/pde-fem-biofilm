@@ -1,0 +1,24 @@
+#!/bin/sh
+# Strip AI-assistant attribution trailers from commit messages.
+#
+# The repository owner is the sole author of this work. Tooling that appends
+# "Co-Authored-By: Claude ..." or "Claude-Session: ..." trailers would otherwise
+# put a non-human co-author on commits and in GitHub's contributor list.
+#
+# Enable (once per clone):  git config core.hooksPath .githooks
+#
+# This only removes those specific trailers; every other line is untouched.
+MSG="$1"
+[ -f "$MSG" ] || exit 0
+
+sed -i \
+  -e '/^[Cc]o-[Aa]uthored-[Bb]y:.*[Cc]laude/d' \
+  -e '/^[Cc]o-[Aa]uthored-[Bb]y:.*anthropic\.com/d' \
+  -e '/^[Cc]o-[Aa]uthored-[Bb]y:.*[Nn]oreply@anthropic/d' \
+  -e '/^Claude-Session:/d' \
+  -e '/^🤖 Generated with \[Claude Code\]/d' \
+  "$MSG"
+
+# collapse any trailing blank lines left behind
+perl -0pi -e 's/\n{3,}\z/\n/' "$MSG" 2>/dev/null || true
+exit 0
