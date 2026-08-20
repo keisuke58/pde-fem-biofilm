@@ -11,8 +11,11 @@ Complete catalogue of the prose documentation in this repository. Start from
 | Doc | What |
 |---|---|
 | [README.md](README.md) | Repository entry point: pipeline, verified-vs-assumed, two lineages, key scripts |
+| [THESIS_PLAYBOOK.md](THESIS_PLAYBOOK.md) | **Systematised drive-to-submission view** — inventory, write-up order, QA loop, blocking questions, go-forward. Start here for "what's left." |
+| [THESIS_ASSIGNMENT.md](THESIS_ASSIGNMENT.md) | Supervisor-set scope (PR #30) — roles, deliverables, open questions |
 | [FEM_README.md](FEM_README.md) | DI-bridge FEM lineage reference (DI → E(DI), transverse isotropy; nominal GPa scale) |
 | [methods_supplement_fem.md](methods_supplement_fem.md) | Methods supplement: DI timepoint, E(φ) physics, TMCMC → Monod coupling |
+| [CITATION_AUDIT.md](CITATION_AUDIT.md) | Reference/citation audit (years, equation numbers, duplicate BibTeX keys) |
 
 ## Rigor audit (2026-06-26)
 
@@ -55,6 +58,12 @@ consolidated document first; the others are the underlying investigations.
 |---|---|
 | [JAXFEM/README.md](JAXFEM/README.md) | JAX PDE reproduction suite (Klempt Eq. 34–36) |
 | [JAXFEM/RESULTS.md](JAXFEM/RESULTS.md) | JAXFEM result notes |
+| [ansys_usermat/README.md](ansys_usermat/README.md) | ANSYS USERMAT port overview |
+| [ansys_usermat/apdl/RUNBOOK.md](ansys_usermat/apdl/RUNBOOK.md) | Step-by-step: build the custom ANSYS UPF executable on Windows, run the growth-branch closed-form checks |
+| [ansys_usermat/apdl/README.md](ansys_usermat/apdl/README.md) | ANSYS growth-branch verification decks — status, results table, how to read a failure |
+| [ansys_usermat/USERELEM_NOTES.md](ansys_usermat/USERELEM_NOTES.md) | UserElement vs.\ UserMat architecture notes (reading ANSYS's own `UserElem.F`) |
+| [ansys_usermat/crosscheck/README.md](ansys_usermat/crosscheck/README.md) | Dual-solver (Abaqus↔ANSYS) crosscheck harness, incl.\ diffing against a third implementation |
+| [ansys_usermat/coupling/README.md](ansys_usermat/coupling/README.md) | Python↔Fortran coupling shim (continuation-work skeleton) |
 
 ## Archived
 
