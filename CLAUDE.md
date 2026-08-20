@@ -64,3 +64,26 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
   this user is cost-conscious about agent/token usage.
+
+## This PC vs. claude.ai (web) — don't mix them up
+
+The user also discusses this repo with Claude on claude.ai (browser, no file/
+tool access). Ground rules so nothing said there gets mistaken for verified
+fact here, or vice versa:
+
+- **claude.ai has no access to this repo, ANSYS, or git.** Anything it says
+  about specific files, line numbers, current test/build status, or "what the
+  code currently does" is inference from whatever was pasted into that chat —
+  not a live read of the repository. Treat it as a source of ideas/drafts to
+  bring back here and verify, never as a substitute for actually checking.
+- **This machine (Claude Code) is the only place that can confirm anything** —
+  build success, test results, ANSYS output, git state. If a claude.ai
+  conversation concluded something works, re-verify it here before relying on
+  it (see the 2026-08-20 incident: an unverified change to
+  `reference_values.json` silently broke 5 tests for a while).
+- **Never paste `.env`, the GitHub PAT, or other secrets into claude.ai.**
+  This PC's push workflow already isolates the token to local PowerShell
+  calls with redacted output — keep it that way.
+- If the user brings a plan or code snippet over from a claude.ai chat,
+  treat file paths/API shapes/current-state claims in it as unverified until
+  checked against the actual repo, the same as any other secondhand claim.
