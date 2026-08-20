@@ -260,6 +260,57 @@ what ANSYS passed to the material.}
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{A second, independent closed-form check: free growth}
+\small The constrained cube forces $\mathbf F=\mathbf I$ regardless of
+whether $\mathbf F_g$/$\mathbf F_g^{-1}$ are wired with the right sign --- a
+sign error and its inverse could in principle cancel out under that much
+kinematic constraint. So: same cube, opposite extreme. Only the 6 rigid-body
+modes removed, everything else traction-free --- the element is free to
+actually grow.
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+& Closed form & ANSYS (custom UMAT)\\
+\midrule
+stress & $\equiv 0$ (any $\alpha,\eta$) & $\sim\!1.9\times10^{-10}$\\
+shear & $0$ & $\sim\!1.8\times10^{-14}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
+Zero to solver tolerance --- nine orders of magnitude below the constrained
+case's stress scale. Two independent closed-form checks now agree, from
+opposite kinematic extremes.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Next: moving past the cube (in progress, not yet converged)}
+\small Direct response to the caveat a few slides back --- a first attempt
+at a shape closer to a tooth surface: a curved \textbf{substrate}
+(no growth) bonded to a thin \textbf{growth layer} (biofilm) on top.
+\vspace{4pt}
+\begin{itemize}
+  \item Not closed-form (two bonded curved layers have no simple analytic
+        answer) --- a qualitative smoke test, not a pass/fail check
+  \item Found and fixed two real input bugs on the way: \texttt{VGLUE}
+        silently drops material assignment across its own volume
+        renumbering; a mesh size coarser than the thin layer's own
+        thickness produces degenerate elements regardless of load
+  \item \textbf{Current status: does not converge yet} --- the solve hits
+        element distortion independent of growth magnitude or substep
+        count. Smells like a genuine bending/near-incompressibility
+        difficulty with the current boundary conditions, not a leftover
+        input bug, but that is not confirmed
+\end{itemize}
+\vspace{4pt}
+{\scriptsize Parked, not abandoned: further debugging needs disk headroom
+this workstation is currently short on (unrelated IT issue, being chased
+separately). Deck and full diagnosis:
+\texttt{ansys\_usermat/apdl/t\_growth\_cylinder\_shell.dat}.}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{UserElement vs.\ UserMat: narrowed, not settled}
 \small The assignment says \emph{UserElement/UserMat}; this repo has a
 UserMat only --- it can't transport the ecology field spatially by itself.
