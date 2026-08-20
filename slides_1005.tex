@@ -1,8 +1,8 @@
 % 3者MTG (Muramatsu x Soleimani x Nishioka) 2026-10-05 9:00 CEST / 16:00 JST
 % pdflatex でビルド（研究室PCの lualatex+metropolis 環境なら theme を差し替え可）
-% CONSTRAINT: keep total page count <= 20 (currently 18). Check the built
-% PDF's page count before adding another frame; trim an existing frame
-% before growing past the cap rather than just tacking more on.
+% CONSTRAINT: keep total page count <= 20 (currently 20, at the cap). Check
+% the built PDF's page count before adding another frame; trim an existing
+% frame before growing past the cap rather than just tacking more on.
 \documentclass[aspectratio=169,11pt]{beamer}
 \usetheme{Madrid}
 \usecolortheme{seahorse}
@@ -295,29 +295,84 @@ opposite kinematic extremes.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Next: moving past the cube (in progress, not yet converged)}
-\small Direct response to the caveat a few slides back --- a first attempt
-at a shape closer to a tooth surface: a curved \textbf{substrate}
+\begin{frame}{Verification chain closed: Abaqus $\equiv$ ANSYS $\equiv$ Python core}
+\small Three independent implementations of the same growth constitutive
+law, checked directly against each other rather than each just against
+itself:
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Pair & Battery & Result\\
+\midrule
+Abaqus UMAT $\equiv$ ANSYS USERMAT & 2037 cases (curated + adversarial fuzz) & \textbf{0 ULP}\\
+Abaqus UMAT $\equiv$ Python core & 28 cases (named + random finite-strain) & \textbf{6.8e--14 rel.}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+$\Rightarrow$ transitively, ANSYS USERMAT $\equiv$ Python core too --- the
+adversarial sweep includes a physical frame-indifference probe
+($\sigma(QF)=Q\sigma(F)Q^\top$) and deliberately drives the \texttt{detFe}
+clamp (near-singular states), not just nice cases.
+\vspace{4pt}
+{\scriptsize All reproducible, bilingual (EN/JA) Jupyter notebooks under
+version control: \texttt{ansys\_usermat/crosscheck/crosscheck\_analysis.ipynb},
+\texttt{ansys\_usermat/coupling/python\_core\_vs\_fortran\_verification.ipynb}.
+This is the evidence package for Felix / Olli / Meisam / Hendrik that the
+USERMAT port is trustworthy before it replaces the phenomenological law in
+the existing ANSYS model.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Real solver runs: single element, partial constraint, both solvers}
+\small Beyond the closed-form cube: does the interface actually converge
+under a load a real mesh would produce (base fixed, top free, growth +
+viscosity together, no analytic answer to check against)?
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+& Abaqus 2024 (production UMAT) & ANSYS 2022 R2 (USERMAT)\\
+\midrule
+Constraint & \texttt{BOT} face \texttt{ENCASTRE} & \texttt{Z=0} face fixed\\
+Result & \textbf{completed successfully}, 7 increments & \textbf{0 errors}, 2 benign warnings\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
+Both: base-clamped growth resisted (higher stress near the fixed face),
+free face spreads outward under its own growth drive --- qualitatively
+sensible, real solver convergence, on both solvers independently.
+\vspace{4pt}
+{\scriptsize \texttt{umat\_tangent\_test/abaqus\_1elem/abaqus\_visco\_1elem\_analysis.ipynb},
+\texttt{ansys\_usermat/apdl/growth\_baseclamped\_smoke\_test.ipynb} --- the
+ANSYS one done ahead of Felix's UserElement code, as the smoke test
+\texttt{HANDOFF.md} asks him for.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Next: moving past the cube --- now converges}
+Direct response to the caveat a few slides back: a curved \textbf{substrate}
 (no growth) bonded to a thin \textbf{growth layer} (biofilm) on top.
 \vspace{4pt}
 \begin{itemize}
   \item Not closed-form (two bonded curved layers have no simple analytic
         answer) --- a qualitative smoke test, not a pass/fail check
-  \item Found and fixed two real input bugs on the way: \texttt{VGLUE}
-        silently drops material assignment across its own volume
-        renumbering; a mesh size coarser than the thin layer's own
-        thickness produces degenerate elements regardless of load
-  \item \textbf{Current status: does not converge yet} --- the solve hits
-        element distortion independent of growth magnitude or substep
-        count. Smells like a genuine bending/near-incompressibility
-        difficulty with the current boundary conditions, not a leftover
-        input bug, but that is not confirmed
+  \item \textbf{Converges cleanly at $\alpha{=}0.01$} --- narrower than the
+        cube's target $\alpha{=}0.05$; threshold sits between $0.01$ (clean)
+        and $0.015$ (element distortion). Four targeted BC/mesh attempts to
+        push past that threshold, all reverted --- documented, not solved
+  \item At the converged $\alpha$, the outer surface does \textbf{not} bulge
+        uniformly: a \textbf{two-lobe} radial-displacement pattern across
+        the arc --- consistent with an early buckling mode, though not
+        confirmed against a real eigenvalue analysis
 \end{itemize}
 \vspace{4pt}
-{\scriptsize Parked, not abandoned: further debugging needs disk headroom
-this workstation is currently short on (unrelated IT issue, being chased
-separately). Deck and full diagnosis:
-\texttt{ansys\_usermat/apdl/t\_growth\_cylinder\_shell.dat}.}
+{\scriptsize Disk constraint since resolved (ANSYS/Abaqus work moved to a
+3.7\,TB local drive). Deck, full diagnosis, and the bulge notebook:
+\texttt{ansys\_usermat/apdl/t\_growth\_cylinder\_shell.dat},
+\texttt{ansys\_usermat/apdl/cylinder\_shell\_bulge\_analysis.ipynb}.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -345,9 +400,14 @@ ANSYS's own example, either way\\
 \textbf{Working assumption, pending Oliver/Meisam:} extra nodal DOFs inside a
 UserElement --- not precomputed externally, as this repo does today}}
 \vspace{6pt}
-{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}. Still waiting
-on Felix's implementation from Oliver --- \texttt{crosscheck.py} is ready to
-diff against it the moment it arrives.}
+{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}.
+\textbf{Update:} Felix replied 20 Aug --- he has left IKM and can only give
+informal input, not a detailed USERMAT review; that now goes to
+Oliver/Meisam/Hendrik. He also flagged that his own approach has no viscous
+split ($F_v$) --- confirmed to reduce exactly to his $F=F_eF_g$ at
+$\eta{=}0$, and that slice is already inside the verified chain above.
+\texttt{crosscheck.py} is still ready to diff against his implementation
+once it arrives.}
 \end{frame}
 
 % --------------------------------------------------------
