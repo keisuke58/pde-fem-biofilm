@@ -27,6 +27,18 @@ directory closes that gap.
 > is a general APDL gotcha, not specific to this material — any state/property
 > table needing more than 6 values needs multiple `TBDATA` calls.
 >
+> **Added 2026-08-20, UNRESOLVED: `t_growth_cylinder_shell.dat`, a two-layer
+> curved-shell smoke test** (bonded substrate + growth layer, tooth-surface
+> proxy geometry — a step toward realism beyond the unit cube; see
+> `slides_1005.tex`'s caveat frame). Two real input bugs found and fixed on
+> the way (VGLUE drops MAT attributes across its own renumbering; a
+> per-volume element size coarser than the thin layer's own thickness
+> produces a degenerate mesh) — but the solve still hits "element highly
+> distorted" regardless of α or substep count. Not a closed-form case to
+> begin with (no simple analytic answer for two bonded curved layers), so
+> this is left as an open, documented next step rather than a pass/fail
+> result. Full story and next ideas in the deck's own header comment.
+>
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1
 > constraint) instead of fixing every node, so the element is free to grow

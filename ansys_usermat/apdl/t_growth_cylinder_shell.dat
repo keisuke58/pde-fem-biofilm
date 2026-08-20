@@ -1,0 +1,176 @@
+! t_growth_cylinder_shell.dat --- two-layer curved-shell smoke test for usermat_biofilm.f
+! ANSYS Mechanical APDL.  See RUNBOOK.md for the full Windows procedure.
+!   Windows (IKMHIWI03, v222), from a writable working directory:
+!     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!         -i t_growth_cylinder_shell.dat -o out_cyl.txt
+!
+! STATUS, 2026-08-20 (IKMHIWI03): UNRESOLVED -- does not converge yet.
+! Two real bugs on the way to a running deck were found and fixed (see the
+! "geometry" and "mesh" comments below): (1) VGLUE silently drops MAT
+! attributes across its own volume renumbering, (2) a per-volume element
+! size that is coarser than the thinner layer's own thickness produces a
+! degenerate mesh regardless of load. After both fixes the deck builds,
+! meshes, and material assignment is confirmed correct (ESEL,S,MAT,,2 now
+! selects the right elements) -- but the solve still hits "element highly
+! distorted" (different elements each mesh refinement: 1216/1461/2 at
+! ESIZE=0.033, then 6061/1298/6232/6182 at ESIZE=0.05), independent of
+! alpha magnitude (failed at both 0.05 and 0.02) and of substep count
+! (failed with NSUBST up to 200 and AUTOTS,ON). This smells like a genuine
+! bending/near-incompressibility difficulty for this BC (only the inner
+! radius fixed, nothing preventing the free edges from rotating), not a
+! leftover input bug -- but that is not confirmed. Left as-is, un-debugged
+! further: iterating on this was eating real disk margin on a machine that
+! hit 0 bytes free mid-session (see RUNBOOK.md's disk-space notes). Next
+! attempt should try a softer/more distributed BC (e.g. also restrain the
+! flat theta edges) and a proper mesh-convergence sweep once disk headroom
+! is comfortable again.
+!
+! WHY THIS CASE
+! -------------
+! t_growth_constrained.dat and t_growth_free.dat are both a UNIT CUBE with a
+! UNIFORM alpha field -- closed-form-checkable, but geometrically nothing
+! like a tooth surface (see slides_1005.tex, "this cube is a math check, not
+! the biofilm's actual shape"). This deck is one step toward geometric
+! realism: a curved SUBSTRATE (tooth-surface proxy, no growth) bonded to a
+! thin GROWTH LAYER (biofilm, alpha != 0) on top of it.
+!
+! THIS IS NOT A CLOSED-FORM VERIFICATION. Two curved, bonded, differently-
+! loaded layers have no simple analytic answer the way F=I does. Treat this
+! as a SMOKE TEST / qualitative capability check: does the two-material,
+! curved-geometry, bonded-interface case (a) build, mesh, and solve without
+! error, and (b) produce a physically sensible pattern -- growth layer in
+! compression (it wants to expand and is bonded down), substrate picking up
+! bending/hoop stress from being pushed on non-uniformly by the curved growth
+! layer. A real mesh-convergence study (refine ESIZE, check stress
+! stabilizes) is NOT done here and should precede using this for anything
+! quantitative -- see README.md.
+!
+! GEOMETRY (cylindrical coords, CSYS,1: X=radius, Y=theta[deg], Z=axial)
+!   substrate:    R_IN  = 4.0  ->  R_MID = 4.3   (tooth-proxy, alpha = 0)
+!   growth layer: R_MID = 4.3  ->  R_OUT = 4.4   (biofilm,     alpha = 0.05)
+!   axial length LEN = 3.0, arc ARC = 60 deg (an open patch, not a full ring
+!   -- a tooth surface is not a closed cylinder, so don't mesh it like one)
+!
+! BOUNDARY CONDITIONS
+!   Inner radius (R_IN, the substrate's root-facing surface): fully bonded/
+!   fixed, D,ALL,ALL,0 -- stands in for "attached to the rest of the tooth".
+!   Everything else (outer growth surface, flat axial ends, flat theta
+!   edges) is traction-free. This is deliberately the crudest BC that still
+!   lets the growth layer push against something -- not meant to model a
+!   real periodontal support.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - two-layer cylindrical shell (tooth-surface smoke test)
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar; see t_growth_constrained.dat's KEYOPT sweep
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 3.0
+ARC   = 60
+
+! ---- geometry: two radial layers of a partial hollow cylinder --------------
+! No VGLUE. Two prior attempts both failed to get MAT to stick through it:
+!   (1) VATT by volume ID before VGLUE -- VGLUE renumbers its output (input
+!       volumes 1,2 come out as 1,3; confirmed via out_cyl.txt) and the
+!       glued replacement volume 3 is evidently a NEW entity that does not
+!       inherit volume 2's attribute, so everything silently fell back to
+!       the default material (ESEL,S,MAT,,2 selected zero elements).
+!   (2) VATT by centroid radius (CSYS,1, VSEL,LOC,X) after VGLUE -- selected
+!       zero volumes too; APDL's LOC selection for a volume apparently
+!       checks its defining keypoints, not a true centroid, and this
+!       curved wedge's keypoints sit exactly at R_IN/R_MID/R_MID/R_OUT (the
+!       corners), not at any in-between radius.
+! Simplest robust path: skip VGLUE, mesh each volume independently under
+! its own default material pointer (MAT,n before VSWEEP), then bond the two
+! independently-meshed volumes by merging their coincident interface nodes
+! with NUMMRG -- ordinary technique for two structured sweep-meshes sharing
+! one geometrically (not topologically) identical face.
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm)
+
+! ---- substrate material (mat 1): same hyperelastic law, alpha = 0 (no growth)
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0     ! Fv(1,1..3), Fv(2,1..3) -- max 6 values/TBDATA call
+TBDATA,7,0.0,0.0,1.0                  ! Fv(3,1..3)
+TBDATA,10,0.0                         ! alpha = 0: substrate does not grow
+
+! ---- growth-layer material (mat 2): same law, alpha = 0.05 (biofilm growth)
+TB,USER,2,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,2,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.05                        ! alpha (growth driver) -- same as the
+                                       ! cube's elastic_a005 case
+
+! ---- mesh -- coarse, smoke test only ---------------------------------------
+! Each volume swept under its own default MAT pointer (MAT,n), independently
+! -- not VATT. Interface nodes bonded afterwards with NUMMRG (see note above).
+! Separate ESIZE per volume: the growth layer is only 0.1 thick (R_MID to
+! R_OUT), so the substrate's ESIZE=0.15 would be LARGER than the layer it's
+! meshing -- a guaranteed degenerate, near-flat single element through the
+! thickness. That is almost certainly what the persistent "element highly
+! distorted" failures (always the same 3 elements, independent of alpha)
+! actually were: a bad element at t=0, not a load-ramping problem.
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15                            ! substrate: 0.3 thick -> 2 elements through
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05                            ! growth layer: 0.1 thick -> 2 elements through
+VSWEEP,2
+
+ALLSEL
+NUMMRG,NODE,1.0E-4                    ! bond the two layers: merge coincident
+                                       ! nodes at the shared R_MID interface
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary condition: bond the substrate's inner (root-facing) surface --
+CSYS,1                                ! cylindrical: X=radius, Y=theta, Z=axial
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+FINISH
+
+! ---- solve -------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,5.0                     ! eta=0 in both materials here, so TIME is just a
+                              ! pseudo-time for substepping, not a real dt
+AUTOTS,ON                     ! let the solver bisect/ramp -- alpha applied in
+NSUBST,10,80,2                 ! one shot at full substep count distorted elements
+OUTRES,ALL,LAST                ! disk is critically low -- only keep the final
+OUTRES,SVAR,LAST                ! substep's results, not every intermediate one
+SOLVE
+FINISH
+
+! ---- report --------------------------------------------------------------
+/POST1
+SET,LAST
+/OUTPUT,growth_cylinder_result,txt
+PRNSOL,U,COMP
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+! diagnostic: is alpha actually reaching the growth-layer elements?
+ESEL,S,MAT,,2
+PRESOL,SVAR,10                ! alpha, growth-layer elements only
+PRESOL,SVAR,1                  ! Fv(1,1), growth-layer elements only
+PRESOL,S,COMP
+ALLSEL
+/OUTPUT
+FINISH
