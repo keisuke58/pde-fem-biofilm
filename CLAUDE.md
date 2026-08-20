@@ -70,6 +70,13 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
   this user is cost-conscious about agent/token usage.
+- **Never add a `Co-Authored-By: Claude` (or similar AI-attribution) trailer
+  to commit messages, and don't otherwise mark commits as AI-assisted.**
+  Commits should read as the user's own work (git identity is already set
+  locally to Keisuke Nishioka <kei128608@gmail.com> — see `.git/config`).
+  Verified 2026-08-20: none of the ~20 commits made this session carry any
+  such trailer, and there's no commit template/hook in this repo that would
+  add one — keep it that way.
 
 ## This PC vs. claude.ai (web) — don't mix them up
 
