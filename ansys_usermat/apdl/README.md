@@ -144,6 +144,20 @@ The point of a closed-form case is that each failure mode is diagnostic:
 It covers licence check-out, the Intel Fortran toolchain, building the custom
 executable, and what each failure mode means.
 
+**On IKMHIWI03, once the custom executable is built: [`run_apdl.ps1`](run_apdl.ps1)**
+wraps the manual checklist that grew out of a session that twice hit 0 bytes
+free from leftover ANSYS scratch files — clean stale scratch, check free
+space and refuse to run below a threshold, run the deck, summarize
+errors/warnings from the log, clean scratch again:
+
+```powershell
+.\run_apdl.ps1 -Deck t_growth_free.dat
+.\run_apdl.ps1 -Deck t_growth_cylinder_shell.dat -MinFreeGB 0.5
+```
+
+Manual invocation (what the script above wraps), e.g. for a different
+machine or a one-off case not worth scripting:
+
 ```bat
 REM Windows, from the directory holding the custom ANSYS.exe
 "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
