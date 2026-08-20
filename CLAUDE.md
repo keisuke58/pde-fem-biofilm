@@ -63,6 +63,7 @@ this machine's specific workflow.
 | `run_apdl.ps1` | Wraps the ANSYS run checklist: clean scratch, check/enforce free disk space, run a deck via the custom `ANSYS.exe`, summarize errors/warnings, clean scratch again. `.\run_apdl.ps1 -Deck <name>.dat`. |
 | `run_abaqus.ps1` | Same idea for Abaqus jobs: runs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. |
 | `run_tests.ps1` | `pytest tests/`, excluding the two confirmed environment-limited cases (missing `scipy`, missing POSIX headers). `-All` also runs the ANSYS/Abaqus crosscheck harness. |
+| `run_notebooks.ps1` | Re-executes every `*.ipynb` in the repo (`nbconvert --execute --inplace`) and reports pass/fail — catches a verification notebook silently going stale when code/data under it changes. |
 | `build_slides.ps1` | `pdflatex` a given `.tex` (default `slides_1005.tex`), checks the page count against a cap, cleans up LaTeX build artifacts. |
 | `push.ps1` | Pushes to `origin` using the PAT from `.env` without ever printing the token, then refreshes the local tracking ref. Works around this harness's `2>&1` + `$ErrorActionPreference="Stop"` quirk (git's normal stderr progress output otherwise reads as a terminating error). |
 
