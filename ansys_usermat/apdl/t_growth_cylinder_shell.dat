@@ -4,10 +4,10 @@
 !     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
 !         -i t_growth_cylinder_shell.dat -o out_cyl.txt
 !
-! STATUS, 2026-08-20 (IKMHIWI03): UNRESOLVED -- does not converge yet.
-! Two real bugs on the way to a running deck were found and fixed (see the
-! "geometry" and "mesh" comments below): (1) VGLUE silently drops MAT
-! attributes across its own volume renumbering, (2) a per-volume element
+! STATUS, 2026-08-20 (IKMHIWI03): UNRESOLVED -- does not converge yet, but
+! narrowing. Two real bugs on the way to a running deck were found and fixed
+! (see the "geometry" and "mesh" comments below): (1) VGLUE silently drops
+! MAT attributes across its own volume renumbering, (2) a per-volume element
 ! size that is coarser than the thinner layer's own thickness produces a
 ! degenerate mesh regardless of load. After both fixes the deck builds,
 ! meshes, and material assignment is confirmed correct (ESEL,S,MAT,,2 now
@@ -15,14 +15,26 @@
 ! distorted" (different elements each mesh refinement: 1216/1461/2 at
 ! ESIZE=0.033, then 6061/1298/6232/6182 at ESIZE=0.05), independent of
 ! alpha magnitude (failed at both 0.05 and 0.02) and of substep count
-! (failed with NSUBST up to 200 and AUTOTS,ON). This smells like a genuine
-! bending/near-incompressibility difficulty for this BC (only the inner
-! radius fixed, nothing preventing the free edges from rotating), not a
-! leftover input bug -- but that is not confirmed. Left as-is, un-debugged
+! (failed with NSUBST up to 200 and AUTOTS,ON).
+!
+! Added a symmetry-style UZ=0 constraint at the two flat axial-end faces
+! (Z=0, Z=LEN) -- see the "boundary condition" section below -- and errors
+! dropped from 12 to 3, now all on a SINGLE element (5101) instead of 4
+! different ones. Diagnosed via a throwaway mesh-only deck (ELIST/NLIST,
+! no solve, no disk cost): element 5101 sits exactly at the intersection of
+! three things at once -- the R_MID bonded interface with the substrate,
+! the new Z=0 axial-end constraint, and the growth layer's innermost
+! through-thickness element (only 2 elements span the 0.1 layer). That
+! triple coincidence -- interface + new BC + thin/high-aspect-ratio element,
+! all on the aggressively-growing material -- reads like a local
+! over-constraint/singularity, not a load-ramping problem. Not a leftover
+! input bug -- but that is not confirmed either. Left as-is, un-debugged
 ! further: iterating on this was eating real disk margin on a machine that
 ! hit 0 bytes free mid-session (see RUNBOOK.md's disk-space notes). Next
-! attempt should try a softer/more distributed BC (e.g. also restrain the
-! flat theta edges) and a proper mesh-convergence sweep once disk headroom
+! attempt should either refine the through-thickness mesh in just the
+! growth layer near that corner, or relax the Z=0 constraint to exclude the
+! R_MID-interface node row specifically, plus a proper mesh-convergence
+! sweep once disk headroom
 ! is comfortable again.
 !
 ! WHY THIS CASE
@@ -144,6 +156,21 @@ NSLA,S,1
 D,ALL,ALL,0
 ALLSEL
 CSYS,0
+
+! ---- added 2026-08-20, first distortion-fix attempt: restrain the two flat
+! axial-end faces against out-of-plane (Z) motion. A real biofilm patch on a
+! tooth surface continues past what this deck models -- it is not a free-
+! standing island in the axial direction -- so a free-flapping Z edge here is
+! an artifact of the finite patch, not the physics. This is the simplest,
+! axis-aligned (no local-CS rotation needed) piece of that: symmetry-style
+! UZ=0 at Z=0 and Z=LEN. The flat theta-edges (also free-standing artifacts)
+! are NOT addressed yet -- that needs a rotated nodal CS and is a separate
+! next step if this alone is not enough.
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
 FINISH
 
 ! ---- solve -------------------------------------------------------------

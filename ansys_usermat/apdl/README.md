@@ -37,7 +37,16 @@ directory closes that gap.
 > distorted" regardless of α or substep count. Not a closed-form case to
 > begin with (no simple analytic answer for two bonded curved layers), so
 > this is left as an open, documented next step rather than a pass/fail
-> result. Full story and next ideas in the deck's own header comment.
+> result.
+>
+> **Narrowed further, same day:** adding a symmetry-style `UZ=0` constraint
+> at the two flat axial-end faces cut the errors from 12 to 3, all on a
+> single element now. A throwaway mesh-only diagnostic (no solve, no disk
+> cost) located it exactly at the intersection of the `R_MID` bonded
+> interface, the new axial-end constraint, and the growth layer's
+> innermost through-thickness element — a local over-constraint/corner
+> effect, not (apparently) a broad instability. Full story and next ideas
+> in the deck's own header comment.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1
