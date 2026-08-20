@@ -26,7 +26,9 @@
 ! deform (e.g. Fg applied with the wrong sign inside Fe = F Fg^-1 could still
 ! cancel out under full kinematic constraint but will NOT cancel out here).
 !
-! EXPECTED (any alpha, any eta -- see reference_values.json "free_a005")
+! EXPECTED (any alpha, any eta -- see README.md's "free (traction-free)
+! growth" section; NOT in reference_values.json, whose schema/tests assume
+! every case is the F=I constrained scenario -- see the note there)
 !   Je       =  1.0                          (elastic volume ratio: unchanged)
 !   J        =  (1+alpha)^3                  (all volume change is growth)
 !   SX=SY=SZ=SXY=SYZ=SXZ = 0                  (exactly, to solver tolerance)

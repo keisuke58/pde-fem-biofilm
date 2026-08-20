@@ -158,6 +158,16 @@ relative), so these numbers are not an independent hand-derivation — they are 
 committed constitutive law evaluated at `F = I`. `tests/test_apdl_reference.py`
 guards them in CI.
 
+**Every entry in `reference_values.json` must be the `F = I` fully-constrained
+scenario** — `test_apdl_reference.py` assumes it (e.g. asserts `stress[0] < 0`,
+and keys dicts by `(alpha, eta)` alone, so a second case sharing an
+`(alpha, eta)` pair silently overwrites the first in those dict comprehensions).
+The complementary free/traction-free case above (stress ≡ 0 for any α, η) does
+**not** belong in this file — it was added there once (2026-08-20, since
+reverted) and broke 5 tests by colliding with `elastic_a005` on
+`(alpha=0.05, eta=0.0)`. Keep that data in `t_growth_free.dat`'s own header
+and in this README instead.
+
 ## Element formulation
 
 `KEYOPT(1,2)` selects the `SOLID185` formulation. The deck uses the default
