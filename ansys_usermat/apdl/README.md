@@ -47,13 +47,15 @@ directory closes that gap.
 > innermost through-thickness element — a local over-constraint/corner
 > effect, not (apparently) a broad instability.
 >
-> Two targeted follow-ups tried the same day both made it **worse**
-> (excluding the interface row from the constraint; refining just the
-> through-thickness mesh) — reverted, findings kept. **Paused, not
-> resolved**, after 3 targeted attempts: the best result stands at 3
-> errors on a single element. Iterating further was costing real disk
-> margin each time. Full story and next ideas in the deck's own header
-> comment.
+> Three targeted follow-ups tried, all **worse** than the plain Z=0/Z=LEN
+> constraint (excluding the interface row from it; refining just the
+> through-thickness mesh; also constraining the flat theta-edges via
+> NROTAT once disk headroom made that cheap to try) — all reverted,
+> findings kept. **Paused, not resolved**, after 4 targeted attempts: the
+> best result stands at 3 errors on a single element. Pattern across all
+> 4: constraining a face broadly helps, constraining specifically at a
+> corner where interface + BC + thin element coincide hurts, every time.
+> Full story and next ideas in the deck's own header comment.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1

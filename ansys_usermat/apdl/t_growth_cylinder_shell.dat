@@ -41,12 +41,18 @@
 !     0.14 GB free.
 ! So: the plain uniform Z=0/Z=LEN constraint (no exclusion, no local
 ! refinement) remains the best result reached -- 3 errors, all on element
-! 5101. Three targeted attempts without reaching convergence; the next one
-! should probably not be another guess-and-check BC/mesh tweak but either a
-! fundamentally different constraint scheme or a second pair of eyes.
-! Iterating on this has repeatedly eaten real disk margin on a machine
-! that hit 0 bytes free mid-session once already (see RUNBOOK.md's
-! disk-space notes). Pausing this deck here as of 2026-08-20.
+! 5101. Disk fixed later the same day (ANSYS work moved to F:, ~3.7 TB
+! free -- see RUNBOOK.md), so a 4th attempt was cheap to try: also
+! constrain the flat theta-edges via NROTAT + D,,UY,0. Also worse (3->12
+! errors, 4 new elements at the theta-edge corners). Reverted -- see the
+! "boundary condition" section's own note for the detail and the pattern
+! across all 4 attempts: constraining a face broadly (Z=0/Z=LEN) helped,
+! but constraining specifically AT a corner where interface + BC + thin
+! element coincide has hurt every time it's been tried. Four targeted
+! attempts without reaching convergence; the next one should probably not
+! be another blanket face constraint but either a corner-specific
+! (mid-edge-only) condition, a fundamentally different constraint scheme,
+! or a second pair of eyes.
 !
 ! WHY THIS CASE
 ! -------------
@@ -197,6 +203,23 @@ NSEL,S,LOC,Z,0
 D,ALL,UZ,0
 NSEL,S,LOC,Z,LEN
 D,ALL,UZ,0
+
+! Tried 2026-08-20, second session (disk fixed, so this was cheap to try):
+! also constrain the flat theta-edges (theta=0, theta=ARC) the same way,
+! via NROTAT to align each edge's nodal CS with the active cylindrical
+! CSYS then D,,UY,0 (circumferential = 0). Same reasoning as the Z=0/Z=LEN
+! fix above -- but the RESULT was the opposite: WORSE, not better. Errors
+! went 3 -> 12, with 4 NEW distorting elements (1501/6454/1537/6422), all
+! at the theta-edge corners in both materials. Reverted.
+!
+! Pattern emerging across all 4 targeted attempts so far (this one, the
+! two from the first session): adding a constraint AT a corner where
+! material interface + boundary condition + thin/aggressive-growth
+! elements coincide tends to make THAT corner worse, even when the same
+! kind of constraint elsewhere (the plain Z=0/Z=LEN faces, away from the
+! theta-edge corners) helped. Worth trying a softer condition at corners
+! specifically (e.g. only constrain mid-edge nodes, not corner nodes) next
+! time, rather than another blanket face constraint.
 ALLSEL
 FINISH
 
