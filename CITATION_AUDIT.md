@@ -61,7 +61,7 @@ that requires the paper itself. Fix them together, in one pass, with the PDF ope
 
 ---
 
-## 🟡 F2. Five duplicate BibTeX keys with conflicting content
+## 🟢 F2. Five duplicate BibTeX keys with conflicting content — fixed 2026-08-20
 
 The same key is defined in two files with **different fields** — if both are ever
 passed to BibTeX, one silently wins and the citation may lose its DOI:
@@ -81,6 +81,14 @@ It becomes a real bug the moment a document loads two of them.
 **Recommended fix:** keep the DOI-bearing version as canonical (that is
 `biofilm_3tooth_refs.bib` in 3 of the 5 cases), and have the other files either
 drop the duplicate or use a distinct key.
+
+**Done:** all 5 duplicates in `jaw_biofilm_related.bib` / `refs_openjaw.bib`
+renamed with a `_jbr` / `_openjaw` suffix and a comment pointing at the
+canonical entry (no content deleted — both files are informal reading lists,
+not currently `\bibliography{}`-loaded by anything, so nothing was live-broken
+either way). `gholamalizadeh2022open`'s `publisher` field, present only in the
+`refs_openjaw.bib` copy, was folded into the canonical entry in
+`biofilm_3tooth_refs.bib`.
 
 ---
 
