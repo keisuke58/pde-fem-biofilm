@@ -112,12 +112,35 @@ as "the paper's α minus 1" (a shifted variable, undocumented as such), or
 (b) `Fg = (1+α)I` is a deliberate, sensible fix for well-posedness at zero
 growth that was never written down as a departure from the cited source.
 
-**Not fixed — flagged for a decision.** This is a modeling-convention
-question, not a typo, and needs whoever owns the UMAT derivation to confirm
-which explanation is correct (and if (a), that the shift is stated
-explicitly wherever `Fg=(1+α)I` appears; if (b), that the departure from the
-cited paper is documented as intentional). Surfaced to the user 2026-08-20;
-unresolved.
+**Update 2026-08-20 — evidence points to (b), not a bug.** Checked how this
+repo's own α is actually defined and evolved:
+
+- `JAXFEM/klempt_pde_jax.py`: docstring calls α *"local expansion parameter
+  (cumulative growth)"*; initial condition `alpha = jnp.zeros(...)`
+  ("α: 0 everywhere"); evolution `dalpha/dt = k_alpha * phi * monod`.
+- The paper's own evolution equation (Eq. 36, simplified form) is
+  `α̇ − k̄α·φ = 0`, i.e. `dα/dt = kα·φ` — **structurally identical** to what
+  this repo implements (pure accumulation from φ, no consumption term).
+
+So the growth-*rate* ODE is a faithful port of the paper's Eq. 36. The
+mismatch is only in the α→Fg kinematic mapping, and it looks like a
+necessary consequence, not an independent error: taken literally, the
+paper's own `Fg = αI` is singular (`Fg = 0`) at the natural initial
+condition `α = 0` ("no growth has happened yet") — the paper's text doesn't
+state that α starts at 1 instead, and none of the parameter tables give an
+explicit α(0). This repo's `Fg = (1+α)I` resolves exactly that: `α = 0` maps
+to `Fg = I` (identity, well-posed), and the accumulation dynamics are
+otherwise untouched.
+
+**Still not written down anywhere as an intentional departure** — that's
+the one remaining actionable gap. A single sentence in `RESEARCH_MODEL.md`
+(or wherever the growth kinematics are first introduced) stating *"we use
+Fg=(1+α)I rather than the paper's Fg=αI so that α=0 (no growth yet) maps to
+the identity Fg=I, avoiding the singularity the paper's literal formula has
+at its own natural initial condition"* would close this cleanly for the
+defense. Recommend confirming with whoever owns the UMAT derivation (or
+directly with Felix) that this reading is correct before writing it into
+the thesis text, since the paper itself never states its own α(0).
 
 ---
 
