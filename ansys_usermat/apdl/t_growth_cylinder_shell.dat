@@ -27,15 +27,26 @@
 ! through-thickness element (only 2 elements span the 0.1 layer). That
 ! triple coincidence -- interface + new BC + thin/high-aspect-ratio element,
 ! all on the aggressively-growing material -- reads like a local
-! over-constraint/singularity, not a load-ramping problem. Not a leftover
-! input bug -- but that is not confirmed either. Left as-is, un-debugged
-! further: iterating on this was eating real disk margin on a machine that
-! hit 0 bytes free mid-session (see RUNBOOK.md's disk-space notes). Next
-! attempt should either refine the through-thickness mesh in just the
-! growth layer near that corner, or relax the Z=0 constraint to exclude the
-! R_MID-interface node row specifically, plus a proper mesh-convergence
-! sweep once disk headroom
-! is comfortable again.
+! over-constraint/singularity, not a load-ramping problem.
+!
+! Tried both follow-ups the same day, each a small, targeted change (see
+! git history for the exact diffs -- both were reverted, not left in):
+!   - Exclude the R_MID interface node row from the Z=0/Z=LEN constraint
+!     (theory: relax the over-constrained corner) -> WORSE: 3 errors/1
+!     element became 6 errors/2 elements, now in the substrate (1261/1299).
+!   - Local through-thickness refinement (LSEL by LENGTH~0.1 to grab just
+!     the growth layer's 4 radial lines, LESIZE,,,6 instead of the implicit
+!     2, circumferential/axial ESIZE untouched) -> ALSO WORSE: 6 errors/2
+!     elements (1531/1556, substrate again), and it ate disk down to
+!     0.14 GB free.
+! So: the plain uniform Z=0/Z=LEN constraint (no exclusion, no local
+! refinement) remains the best result reached -- 3 errors, all on element
+! 5101. Three targeted attempts without reaching convergence; the next one
+! should probably not be another guess-and-check BC/mesh tweak but either a
+! fundamentally different constraint scheme or a second pair of eyes.
+! Iterating on this has repeatedly eaten real disk margin on a machine
+! that hit 0 bytes free mid-session once already (see RUNBOOK.md's
+! disk-space notes). Pausing this deck here as of 2026-08-20.
 !
 ! WHY THIS CASE
 ! -------------
@@ -138,6 +149,16 @@ VSEL,S,VOLU,,1
 ESIZE,0.15                            ! substrate: 0.3 thick -> 2 elements through
 VSWEEP,1
 
+! Tried local refinement: LSEL by LENGTH (~0.1) to grab just the growth
+! layer's 4 through-thickness lines, LESIZE,,,6 for 6 divisions instead of
+! 2, leaving circumferential/axial ESIZE untouched. Result: no better --
+! 3 errors/1 element (5101) became 6 errors/2 elements (1531, 1556, now
+! back in the substrate), and it ate disk down to 0.14 GB free (the mesh
+! more than doubled in element count). Reverted. Three BC/mesh directions
+! tried today (axial-end UZ=0: helped; excluding the interface row from
+! it: hurt; local through-thickness refinement: hurt) without reaching
+! convergence -- worth a fundamentally different BC or a real FE person's
+! eyes rather than more guessing, next time this is picked up.
 MAT,2
 VSEL,S,VOLU,,2
 ESIZE,0.05                            ! growth layer: 0.1 thick -> 2 elements through

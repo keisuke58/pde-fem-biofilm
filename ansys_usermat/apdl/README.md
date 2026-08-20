@@ -45,8 +45,15 @@ directory closes that gap.
 > cost) located it exactly at the intersection of the `R_MID` bonded
 > interface, the new axial-end constraint, and the growth layer's
 > innermost through-thickness element — a local over-constraint/corner
-> effect, not (apparently) a broad instability. Full story and next ideas
-> in the deck's own header comment.
+> effect, not (apparently) a broad instability.
+>
+> Two targeted follow-ups tried the same day both made it **worse**
+> (excluding the interface row from the constraint; refining just the
+> through-thickness mesh) — reverted, findings kept. **Paused, not
+> resolved**, after 3 targeted attempts: the best result stands at 3
+> errors on a single element. Iterating further was costing real disk
+> margin each time. Full story and next ideas in the deck's own header
+> comment.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1
