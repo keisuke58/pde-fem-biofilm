@@ -60,10 +60,26 @@ if (-not $token) {
 $pushUrl = "https://x-access-token:$token@github.com/$Remote.git"
 
 Write-Output "Pushing branch '$Branch' to $Remote ..."
+
+# git's normal progress output goes to stderr. Redirecting stderr (2>&1)
+# under $ErrorActionPreference="Stop" turns each of those lines into a
+# terminating NativeCommandError even on success ($LASTEXITCODE 0) -- so
+# this push actually succeeds while the script throws before printing the
+# confirmation or running the fetch below. Drop to Continue just for this
+# call and check $LASTEXITCODE explicitly instead of trusting exceptions.
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 $result = git -C $repoRoot push $pushUrl $Branch 2>&1 | Out-String
+$pushExit = $LASTEXITCODE
+$ErrorActionPreference = $prevEAP
+
 Write-Output ($result -replace [regex]::Escape($token), '***')
+if ($pushExit -ne 0) {
+    throw "git push exited $pushExit -- see output above (token already redacted)."
+}
 
 # Keep the local origin/<branch> tracking ref in sync so `git status` doesn't
 # report stale "ahead by N commits" after a push done via this inline URL
 # instead of the configured 'origin' remote.
 git -C $repoRoot fetch origin $Branch 2>&1 | Out-Null
+Write-Output "Done -- origin/$Branch tracking ref refreshed."
