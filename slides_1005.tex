@@ -5,6 +5,7 @@
 \usecolortheme{seahorse}
 \usepackage{booktabs}
 \usepackage{amsmath,amssymb}
+\usepackage{bm}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -76,6 +77,12 @@ Cost driver: $>400$ Gauss-point calls per form per time step.\\
 \textbf{Decision:} route \textbf{3 (UMAT)} --- ANSYS USERMAT already verified
 bit-identical to the Abaqus UMAT reference (0 ULP over 8017 states, \texttt{SOLID185}),
 with an optional embedded Python hook at the Gauss point rather than a separate IPC layer.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Implementation architecture: where Python meets the FEM solver}
+\centering
+\resizebox{\linewidth}{!}{\input{ch5_flow/flow_impl_architecture.tex}}
 \end{frame}
 
 % --------------------------------------------------------
