@@ -1,0 +1,89 @@
+! t_growth_baseclamped.dat --- ANSYS single-element smoke test, base-face-only
+! constraint (mirrors the Abaqus umat_visco_1elem.inp interface-wiring smoke
+! test: umat_tangent_test/abaqus_1elem/, run via a real licensed Abaqus 2024).
+! ANSYS Mechanical APDL. See RUNBOOK.md for the full Windows procedure.
+!   Windows (IKMHIWI03, v222), from a writable working directory:
+!     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!         -i t_growth_baseclamped.dat -o out_baseclamped.txt
+! The -custom argument must point at the executable built with
+! usermat_biofilm.f; without it ANSYS runs its own stock material and the
+! check is meaningless.
+!
+! WHY THIS CASE
+! -------------
+! t_growth_constrained.dat (F=I, every node fixed) and t_growth_free.dat
+! (only the 3-2-1 rigid-body minimum) are both closed-form-checkable but
+! neither matches what Felix's UserElement will actually see: a real element
+! with SOME faces constrained and others free, growing against a partial
+! boundary. This deck is the ANSYS-side analog of the Abaqus single-element
+! smoke test already run on this machine (umat_visco_1elem.inp,
+! F:\abaqus_work\umat_visco_1elem, "THE ANALYSIS HAS COMPLETED SUCCESSFULLY"):
+! bottom face (Z=0) fully fixed, everything else free, growth + viscous law
+! active. No closed-form answer is expected here -- the point is confirming
+! the interface converges cleanly under a partial-constraint load case before
+! Felix's actual code arrives, per HANDOFF.md's "Needed back from Felix" #3
+! ("A single-element smoke test in ANSYS ... to confirm interface wiring").
+!
+! Uses this suite's own property convention (C10=2e-4, D1=5000, matching
+! t_growth_constrained.dat / t_growth_free.dat) rather than the Abaqus deck's
+! separate E=300Pa/nu=0.45 set -- the two decks are not meant to be numerically
+! compared node-for-node (different geometry constraint AND different
+! material scale), only to both demonstrate "partial constraint + growth +
+! viscosity converges cleanly" on their respective solvers.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - base-clamped single-element smoke test
+/PREP7
+
+! ---- single 8-node hex, unit cube -----------------------------------------
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar (default)
+
+BLOCK,0,1,0,1,0,1
+ESIZE,1
+VMESH,1
+
+! ---- user material ---------------------------------------------------------
+! prop: C10, C01, D1, eta, mtype, kUsePy
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.008,0.0,0.0
+
+! state: ustatev(1:9)=Fv (row-major, initialised to I), ustatev(10)=alpha
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.2                          ! alpha=0.2 -- matches the Abaqus deck's target
+
+! ---- base-face-only constraint (Z=0 face fully fixed, everything else free)
+NSEL,S,LOC,Z,0
+D,ALL,ALL,0
+NSEL,ALL
+FINISH
+
+! ---- solve -----------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,5.0
+NSUBST,4,20,1
+AUTOTS,ON
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+! ---- report ----------------------------------------------------------------
+/POST1
+SET,LAST
+ESEL,S,ELEM,,1
+/OUTPUT,growth_baseclamped_result,txt
+PRESOL,S,COMP                ! SX SY SZ SXY SYZ SXZ at the integration points
+PRESOL,SVAR,1                 ! Fv(1,1)
+PRESOL,SVAR,5                 ! Fv(2,2)
+PRESOL,SVAR,9                 ! Fv(3,3)
+PRESOL,SVAR,10                ! alpha
+NLIST,ALL,,,XYZ
+PRNSOL,U,COMP
+/OUTPUT
+FINISH
