@@ -73,9 +73,13 @@ def stress_core(F, Fv_old, alpha, C10, C01, D1, eta, mtype, dt):
     return sv, Fv_new, detFe
 
 
-def dsde_perturbation(F, Fv_old, params, h=1e-6):
+def dsde_perturbation(F, Fv_old, params, h=1.0e-7):
     """6x6 material Jacobian dσ/dε via symmetric spatial perturbations of F
-    (the same F-perturbation scheme the verified UMAT uses)."""
+    (the same F-perturbation scheme the verified UMAT uses, same step size
+    PERT=1.0d-7 as usermat_biofilm.f, and deliberately NOT symmetrised --
+    the inline Fortran core's unsymmetrised numerical tangent is the one
+    that was confirmed to converge under SOLID185/NLGEOM,ON, so this path
+    reproduces that behaviour rather than a different-but-plausible one)."""
     sv0, _, _ = stress_core(F, Fv_old, *params)
     D = np.zeros((6, 6))
     for k, (a, b) in enumerate(VOIGT):
@@ -84,7 +88,7 @@ def dsde_perturbation(F, Fv_old, params, h=1e-6):
         dE[b, a] += h / 2.0
         sv, _, _ = stress_core((I3 + dE) @ F, Fv_old, *params)
         D[:, k] = (sv - sv0) / h
-    return 0.5 * (D + D.T)                             # symmetrise (minor asym = truncation)
+    return D
 
 
 def evaluate(req: dict) -> bytes:

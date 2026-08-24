@@ -105,6 +105,27 @@ ANSCUST.BAT
 
 This should produce `ANSYS.exe` in `C:\work\biofilm_upf`.
 
+> ⚠️ **New build dependency if `kUsePy=1` is used (not yet exercised on real
+> ANSYS — only the gfortran standalone driver in `coupling/`, see
+> `tests/test_usermat_kusepy_e2e.py`).** The growth-verification build above
+> only ever needed `usermat_biofilm.f` alone. The `PYTHON MATERIAL HOOK`
+> branch additionally needs `usermat_py_hook.f` and `biofilm_py_eval.c`
+> copied into `C:\work\biofilm_upf` and compiled/linked together:
+> ```bat
+> copy <repo>\ansys_usermat\coupling\usermat_py_hook.f C:\work\biofilm_upf\
+> copy <repo>\ansys_usermat\coupling\biofilm_py_eval.c C:\work\biofilm_upf\
+> ```
+> `usermat_py_hook.f` defines the `biofilm_py_bridge` module that
+> `usermat_biofilm.f` now `use`s, so it must compile **first** to produce its
+> `.mod` file — check `ANSCUST.BAT`/the link-response-file picks up the
+> `.f`/`.c` in that order (or compile the module manually into a `.obj` and
+> add it to `ansys.lrf` if the customisation script only globs `.f`). The
+> `.c` file also needs a C compiler on the link path (`cl.exe` from the same
+> `vcvars64.bat` env used for the Fortran side) — untested whether
+> `ANSCUST.BAT` invokes one automatically. This whole path defaults to
+> `kUsePy=0` (inline core) if not built, so it is safe to skip and revisit
+> later; it is not required for anything already verified in this file.
+
 > ✅ **Resolved 2026-08-19 on IKMHIWI03 — link error fixed without installing
 > classic ifort, no admin/UAC needed.** The first attempt hit:
 > ```

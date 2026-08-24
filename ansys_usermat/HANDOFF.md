@@ -44,11 +44,22 @@ into a single-element ANSYS model.
 
 ## ③ Coupling plan — the Python-at-Gauss-point step (the thesis work)
 
+**Code-side wiring is done** — `kUsePy=1` calls the Python material hook end
+to end through the real `usermat()` subroutine (`MAP6` Voigt reindex,
+fallback to the inline core on failure) and is verified against `kUsePy=0`
+in `tests/test_usermat_kusepy_e2e.py`. Still open: an actual ANSYS build/link
+of this path (`apdl/RUNBOOK.md` has the new build-dependency note) and
+swapping in the calibrated JAX model in place of the current NumPy mirror.
+
 - [ ] **`ch5_flow/flow_impl_architecture.png`** — Python(JAX) ↔ ISO_C_BINDING /
       socket ↔ USERMAT ↔ ANSYS Gauss-point loop.
+- [ ] **`ch5_flow/flow_python_material_hook`** — the wire protocol and
+      per-Gauss-point payload, grounded in the actual `protocol.py`/
+      `material_server.py` implementation.
 - [ ] **`ch5_flow/flow_growth_kinematics.png`** — `F=Fe·Fg` kinematics (the model's basis).
 - [ ] **`material_models.py`**, **`JAXFEM/`** — the Python material model that the
-      `PYTHON MATERIAL HOOK` in the USERMAT will call.
+      `PYTHON MATERIAL HOOK` in the USERMAT will call (currently a NumPy mirror
+      of the verified Fortran law, not yet the calibrated JAX model).
 
 ---
 
@@ -74,8 +85,10 @@ into a single-element ANSYS model.
    (same F, same params) — should match to machine precision.
 3. Plug into the full model with the α-field (item 2 above), phenomenological
    law removed.
-4. Wire the `PYTHON MATERIAL HOOK` (③) — the thesis' core contribution; keep the
-   inline Fortran core as the verification reference / fallback.
+4. ~~Wire the `PYTHON MATERIAL HOOK` (③)~~ — the thesis' core contribution;
+   **code-side done**, verified against the inline Fortran core (kept as the
+   verification reference / fallback) via `tests/test_usermat_kusepy_e2e.py`.
+   Still needed: an ANSYS build/link smoke test and the JAX model swap-in.
 
 ---
 
