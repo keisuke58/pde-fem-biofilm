@@ -91,13 +91,38 @@ def dsde_perturbation(F, Fv_old, params, h=1.0e-7):
     return D
 
 
+# Tangent backend. "fd" is the finite difference above, matching
+# usermat_biofilm.f's PERT=1e-7 exactly -- that equality is what makes
+# kUsePy=1 vs kUsePy=0 a clean equivalence proof, so it stays the default.
+# "jax" serves the exact AD tangent from material_jax instead (opt-in, since
+# it deliberately breaks that bit-level equality at the ~3e-8 truncation
+# level the FD tangent carries).
+TANGENT_BACKEND = "fd"
+
+
+def set_tangent_backend(name: str) -> None:
+    global TANGENT_BACKEND
+    if name not in ("fd", "jax"):
+        raise ValueError(f"unknown tangent backend {name!r} (fd|jax)")
+    if name == "jax":
+        import material_jax  # noqa: F401  -- fail here, not per request
+    TANGENT_BACKEND = name
+
+
+def _tangent(F, Fv, params):
+    if TANGENT_BACKEND == "jax":
+        import material_jax
+        return np.asarray(material_jax.dsde_exact(F, Fv, params), dtype=float)
+    return dsde_perturbation(F, Fv, params)
+
+
 def evaluate(req: dict) -> bytes:
     F = np.asarray(req["F"], float).reshape(3, 3)
     Fv = np.asarray(req["Fv"], float).reshape(3, 3)
     params = (req["alpha"], req["C10"], req["C01"], req["D1"],
               req["eta"], req["mtype"], req["dt"])
     sv, Fv_new, detFe = stress_core(F, Fv, *params)
-    D = dsde_perturbation(F, Fv, params)
+    D = _tangent(F, Fv, params)
     return encode_response(sv, Fv_new.reshape(9), detFe, D.reshape(36))
 
 
@@ -123,5 +148,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--tangent", choices=("fd", "jax"), default="fd",
+                    help="dsdePl backend: fd = finite difference matching the "
+                         "USERMAT's PERT=1e-7 (default, keeps kUsePy=1 vs "
+                         "kUsePy=0 an exact equivalence check); jax = exact "
+                         "forward-mode AD (requires jax)")
     a = ap.parse_args()
+    set_tangent_backend(a.tangent)
     serve(a.host, a.port)
