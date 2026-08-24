@@ -42,6 +42,22 @@ _ROOT = _HERE.parents[1]
 _ABQ_SRC = _ROOT / "umat_biofilm_visco.f"
 _ANS_SRC = _ROOT / "ansys_usermat" / "usermat_biofilm.f"
 _ABA_INC = _ROOT / "umat_tangent_test"          # holds ABA_PARAM.INC
+_COUP = _ROOT / "ansys_usermat" / "coupling"
+_PY_HOOK = _COUP / "usermat_py_hook.f"
+_PY_SHIM = _COUP / "biofilm_py_eval.c"
+
+
+def _compile_ansys_extras(tmp: Path) -> tuple[list[str], list[str]]:
+    """usermat_biofilm.f now `use`s biofilm_py_bridge (usermat_py_hook.f), so
+    any build linking it needs that module's object first (for its .mod) and
+    biofilm_py_eval.c linked in too (the module references that C symbol,
+    and the linker must resolve it even though kUsePy=0 never calls it at
+    runtime). Returns (include_flags, extra_objects)."""
+    hook_o, shim_o = tmp / "py_hook.o", tmp / "py_shim.o"
+    subprocess.run(["gfortran", "-c", "-ffixed-line-length-132", "-J", str(tmp),
+                    str(_PY_HOOK), "-o", str(hook_o)], check=True)
+    subprocess.run(["cc", "-c", "-fPIC", str(_PY_SHIM), "-o", str(shim_o)], check=True)
+    return [f"-I{tmp}"], [str(hook_o), str(shim_o)]
 
 # Voigt (0-based (i,j)) reconstruction maps
 ABQ_MAP = [(0, 0), (1, 1), (2, 2), (0, 1), (0, 2), (1, 2)]   # 11,22,33,12,13,23
@@ -60,9 +76,11 @@ def build(tmp: Path) -> tuple[Path, Path]:
         ["gfortran", "-ffixed-line-length-132", f"-I{_ABA_INC}",
          str(_HERE / "fuzz_driver_abq.f"), str(_ABQ_SRC), "-o", str(xabq)],
         check=True)
+    inc_flags, extra_objs = _compile_ansys_extras(tmp)
     subprocess.run(
-        ["gfortran", "-ffixed-line-length-132",
-         str(_HERE / "fuzz_driver_ans.f"), str(_ANS_SRC), "-o", str(xans)],
+        ["gfortran", "-ffixed-line-length-132", *inc_flags,
+         str(_HERE / "fuzz_driver_ans.f"), str(_ANS_SRC), *extra_objs,
+         "-o", str(xans)],
         check=True)
     return xabq, xans
 
