@@ -19,6 +19,7 @@ high-resolution PNGs (Times, 200 dpi) live in `../assets/`.
 | 8 | `flow_data_pipeline` | overview | End-to-end: CLSM/FISH images → TMCMC inference → FEM mapping → prediction |
 | 10 | `flow_czm_traction_separation` | 5.x | Cohesive zone model: traction–separation law, damage `D:0→1`, delamination |
 | 12 | `flow_boundary_conditions` | 5.x | Multiscale BCs on Ti / biofilm / fluid layers (mech + chem + lateral) |
+| — | `flow_python_material_hook` | impl | Zoom-in on the coupling layer: the exact `protocol.py` request/response of one Fortran↔Python Gauss-point call, the 5-step local integration, and the global Newton–Raphson loop it returns into |
 | 13 | `flow_impl_architecture` | impl | Python(JAX) ↔ coupling layer ↔ Fortran `UMAT`/`USERMAT` ↔ commercial FEM. **Solid** = the offline production path behind every reported result; **dashed** = the in-the-loop socket prototype (verified, not yet used for results) |
 | 14 | `flow_vv_convergence` | App. C | PDE V&V: analytic vs finite-volume + log-log 2nd-order (`O(Δz²)`) convergence |
 | 15 | `flow_timescale_separation` | 5.x | Biology (days) vs mechanics (ms–s) time-scale separation (gear-meshed loops) |
