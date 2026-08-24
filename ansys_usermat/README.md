@@ -49,6 +49,34 @@ ustatev(11:14)=C10,C01,D1,eta     (per-IP, used only when kStateMat=1)
 
 ## Composition-dependent stiffness E(φ) (`kStateMat=1`)
 
+> ⚠️ **Verified to work, but NOT cleared for the headline σ_CH/σ_DH ratio.**
+> `RESEARCH_MODEL.md` §6 keeps two analysis lineages deliberately apart —
+> (1) Klempt growth-stress, composition → α → stress, *the thesis headline*, and
+> (2) DI-bridge FEM, composition → DI → E(DI) → stress. The E(DI) power law this
+> path leans on **is lineage 2's bridge**, so `kStateMat=1` runs both lineages in
+> one solve. That may be the more physical model, but it is a modelling decision
+> with a specific trap: §4 records that α is *"not calibrated per condition"*, so
+> if α is uniform across CH/DH/CS/DS then **all** the condition contrast in a
+> combined run comes from the stiffness leg — a lineage-2 answer wearing
+> lineage-1 clothes, with the ratio amplified by construction since one measured
+> composition drives both legs. Settle this before reporting combined numbers.
+>
+> Measured on a single Gauss point (fixed deformation, α = 0.2 for every
+> condition) to show the mechanism, **not** a claim about a full FE solve:
+>
+> | | lineage 1 only (uniform α, constant E) | lineage 2 only (E varies) |
+> |---|---|---|
+> | CH | 566.5 | 566.5 |
+> | CS | 566.5 | 554.7 |
+> | DH | 566.5 | 177.1 |
+> | DS | 566.5 | 20.5 |
+> | **σ_CH/σ_DH** | **1.000** | **3.199** |
+>
+> With α uniform the growth leg contributes *no* condition contrast at all. In a
+> real solve the α *field* does vary per condition (the ecology PDE drives it),
+> so lineage 1 is not literally flat there — but its **magnitude** is uncalibrated
+> per condition (§4), which is exactly the gap this table exposes.
+
 The second leg of the model (`RESEARCH_MODEL.md` §3): stiffness runs
 *alongside* the growth field α rather than through it. With constants pinned in
 `prop(1:4)` every Gauss point shares one stiffness, so α was the only thing
