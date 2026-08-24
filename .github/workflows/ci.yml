@@ -39,6 +39,15 @@ jobs:
       - name: Unit tests
         run: pytest tests/
 
+      # JAX is deliberately not in requirements.txt (see the note there), so
+      # the JAX-dependent tests importorskip out of the step above. Installing
+      # it here means they actually run instead of silently always skipping.
+      - name: Install JAX (CPU)
+        run: pip install "jax[cpu]"
+
+      - name: JAX tests (ecology ODE, exact AD tangent)
+        run: pytest tests/test_hamilton_ode_jax.py tests/test_material_jax.py
+
       - name: UMAT <-> USERMAT cross-check + adversarial hunt (Fortran)
         run: pytest ansys_usermat/crosscheck/crosscheck.py ansys_usermat/crosscheck/adversarial.py
 
