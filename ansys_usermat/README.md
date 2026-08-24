@@ -99,9 +99,21 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
    F-perturbation.~~ **Confirmed by the converging `SOLID185` benchmark** — a
    wrong Jacobian convention shows up as poor or failed Newton convergence, and
    the run converges.
-3. **Growth verification in-solver.** The benchmark exercised the mechanical
-   path (uniaxial tension). The next check is growth-specific: a constrained
-   single element with `α > 0` reproducing the closed-form stress in
-   [`apdl/`](apdl/README.md), which needs no FE solve to predict.
+3. ~~Growth verification in-solver.~~ **Done 2026-08-19/20.** All four
+   constrained-single-element cases (elastic/viscous × α=0.05/0.20, `F = I`,
+   no FE solve needed to predict the answer) matched the closed form, plus a
+   `KEYOPT(1,2)` ∈ {0,1,3} sweep (B-bar/enhanced/simplified enhanced strain)
+   with no volumetric locking detected. Details and measured values:
+   [`apdl/README.md`](apdl/README.md), [`apdl/RUNBOOK.md`](apdl/RUNBOOK.md).
+   - Side finding: a preliminary cylinder-shell (two-layer, tooth-surface
+     proxy) constrained-growth check converges at α=0.01 but not α=0.015, and
+     even at the converged α the outer surface displacement is **not**
+     uniform — a **two-lobe pattern**
+     ([`assets/growth_cylinder_bulge.png`](../assets/growth_cylinder_bulge.png),
+     `apdl/extract_cylinder_bulge.py`). Consistent with early buckling, not
+     confirmed against a true eigenvalue analysis — flagged as interesting,
+     not yet a settled conclusion.
 4. Wire the `PYTHON MATERIAL HOOK` (ISO_C_BINDING/socket) — the actual thesis
-   work; the inline core stays as the verification reference.
+   work; the inline core stays as the verification reference. The wire
+   protocol and per-call payload are diagrammed in
+   [`ch5_flow/flow_python_material_hook`](../ch5_flow/README.md).

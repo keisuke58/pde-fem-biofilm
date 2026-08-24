@@ -92,9 +92,19 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
 2. ~~ANSYS が F 摂動による `∂σ/∂ε` と同じ規約を期待するか確認。~~
    **収束したことで確認済み** ― ヤコビアンの規約が違えば Newton 収束が
    悪化または失敗するが、実際に収束している。
-3. **成長項のソルバ内検証。** 上記ベンチマークが確認したのは力学経路
-   （一軸引張）まで。次は成長固有の確認として、`α > 0` の完全拘束
-   単一要素で閉形式の応力を再現する（[`apdl/`](apdl/README.md)）。
-   この状態は `F = I` なので FE 求解なしに答えが予測できる。
+3. ~~成長項のソルバ内検証。~~ **2026-08-19/20 に完了。** 完全拘束単一要素
+   （`F = I`、FE 求解なしに答えが予測できる）の4ケース（弾性/粘性 ×
+   α=0.05/0.20）が閉形式と一致、加えて `KEYOPT(1,2)` ∈ {0,1,3}（B-bar／
+   enhanced／simplified enhanced strain）のスイープでも体積ロッキングなし。
+   詳細・実測値は [`apdl/README.md`](apdl/README.md) と
+   [`apdl/RUNBOOK.md`](apdl/RUNBOOK.md)。
+   - 副産物として、円筒シェル（歯表面を模した二層構造）での拘束成長の
+     予備検討で **α=0.01 は収束、α=0.015 から歪みエラー**、収束する
+     α=0.01 でも外周変位が一様でなく**2山パターン**を示すことを確認
+     （[`assets/growth_cylinder_bulge.png`](../assets/growth_cylinder_bulge.png)、
+     `apdl/extract_cylinder_bulge.py`）。座屈的挙動の可能性があるが、
+     真の固有値解析では未確認 ― 興味深い所見として記録、結論はまだ。
 4. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
-   本来の修論作業。インラインコアは検証基準として残す。
+   本来の修論作業。インラインコアは検証基準として残す。プロトコルと
+   ガウス点1回あたりの通信内容は
+   [`ch5_flow/flow_python_material_hook`](../ch5_flow/README.md) に図解。
