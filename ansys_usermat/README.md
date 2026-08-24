@@ -35,13 +35,52 @@ here by the `VI/VJ` Voigt map (`data VI /1,2,3,1,2,1/`, `VJ /1,2,3,2,3,3/`).
 
 ```
 prop(1)=C10  prop(2)=C01  prop(3)=D1  prop(4)=eta  prop(5)=mtype  prop(6)=kUsePy
+prop(7)=kStateMat
 ustatev(1:9)=Fv (row-major 3×3)   ustatev(10)=alpha (growth driver)
+ustatev(11:14)=C10,C01,D1,eta     (per-IP, used only when kStateMat=1)
 ```
 
 - **Growth driver `alpha`** comes from the JAXFEM α-field mapped to each
   integration point (initialised via `TB,STATE` / a user field, or evolved).
 - `kUsePy=1` selects the **Python material hook** (see below) instead of the
   inline Fortran law.
+- `kStateMat=1` takes the material constants **per integration point** from
+  `ustatev(11:14)` instead of `prop(1:4)` — see below.
+
+## Composition-dependent stiffness E(φ) (`kStateMat=1`)
+
+The second leg of the model (`RESEARCH_MODEL.md` §3): stiffness runs
+*alongside* the growth field α rather than through it. With constants pinned in
+`prop(1:4)` every Gauss point shares one stiffness, so α was the only thing
+separating the four clinical conditions — leaving out the largest mechanical
+difference in the study, an **E spread of ~995 Pa (commensal) to 32 Pa
+(dysbiotic), ≈31×**.
+
+Composition is CLSM-*measured* input, not something the solve evolves, so these
+constants are known before the run starts. [`coupling/composition_to_material.py`](coupling/composition_to_material.py)
+computes them once (φ → `E(φ)`/`DI` via `material_models.py` →
+`C10, C01, D1, eta`) and emits the `TB,USER`/`TB,STATE` block that delivers
+them as initial state. **No per-increment Python call is involved** — this path
+is entirely inside the fast inline Fortran core. (The socket bridge, `kUsePy=1`,
+solves the different problem of swapping the constitutive *law*, not its
+coefficients.)
+
+```bash
+python ansys_usermat/coupling/composition_to_material.py --phi 0.2,0.2,0.2,0.2,0.2
+python ansys_usermat/coupling/composition_to_material.py --E 32 --di 0.85 --apdl
+```
+
+`ustatev(11) <= 0` reads as "not initialised" and falls back to `prop(1:4)` —
+the same zero-means-unset idiom `INIT_FV_IF_ZERO` already uses for `Fv` — so a
+mis-set model degrades to the prop material instead of silently running at zero
+stiffness. ANSYS applies `TB,STATE` per *material*, so spatially varying
+composition means one material per composition bin.
+
+Verified end to end in [`tests/test_composition_material.py`](../tests/test_composition_material.py):
+running material A's constants through `prop` equals running them through state
+while `prop` carries material B (i.e. state genuinely overrides), and the four
+conditions come out at **566 / 177 / 555 / 20 Pa** max |σ| for CH / DH / CS / DS
+on a fixed deformation — a contrast a prop-constant model cannot represent.
 
 ## Python material hook (per Gauss point)
 

@@ -46,12 +46,22 @@ C    prop(3) = D1    compressibility [1/stress]
 C    prop(4) = eta   viscosity [stress*time]  (0 = elastic)
 C    prop(5) = mtype 0=Neo-Hookean, 1=Mooney-Rivlin
 C    prop(6) = kUsePy 0=inline Fortran law, 1=call Python material hook
+C    prop(7) = kStateMat 0=material constants come from prop(1:4) (default),
+C                   1=they come per-integration-point from ustatev(11:14)
 C
-C  STATE (ustatev), NSTATV = 10:
+C  STATE (ustatev), NSTATV = 10 (14 when kStateMat=1):
 C    ustatev(1:9) = Fv  (row-major 3x3)
 C    ustatev(10)  = alpha  (accumulated volumetric growth; growth driver,
 C                   set from the JAXFEM alpha-field mapped to this IP, or
 C                   evolved via a user field / TB,STATE table)
+C    ustatev(11)  = C10   ) per-IP material constants, used only when
+C    ustatev(12)  = C01   ) kStateMat=1.  These carry the composition
+C    ustatev(13)  = D1    ) dependence E(phi) -> (C10,C01,D1,eta) computed
+C    ustatev(14)  = eta   ) by material_models.py; see
+C                   ansys_usermat/coupling/composition_to_material.py.
+C                   ustatev(11) <= 0 is read as "not initialised" and falls
+C                   back to prop(1:4), the same zero-means-unset idiom
+C                   INIT_FV_IF_ZERO already uses for Fv.
 C=======================================================================
       subroutine usermat(
      &   matId, elemId, kDomIntPt, kLayer, kSectPt,
@@ -84,7 +94,7 @@ C     when moving to another ANSYS version.
      &                 var7, var8
 
 C     --- locals ---
-      double precision C10, C01, D1, ETA, MTYPE, KUSEPY
+      double precision C10, C01, D1, ETA, MTYPE, KUSEPY, KSTMAT
       double precision ALPHA, FGSC, FG_INV(3,3)
       double precision FV_OLD(3,3), FV_NEW(3,3), FV_DUM(3,3)
       double precision SV0(6), SVP(6), DFP(3,3)
@@ -111,11 +121,32 @@ C     --- material properties ---
       MTYPE  = prop(5)
       KUSEPY = 0.0d0
       if (nProp .ge. 6) KUSEPY = prop(6)
+      KSTMAT = 0.0d0
+      if (nProp .ge. 7) KSTMAT = prop(7)
 
 C     --- growth driver + viscous state from ustatev ---
       ALPHA = 0.0d0
       if (nStatev .ge. 10) ALPHA = ustatev(10)
       if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
+
+C     --- per-integration-point material constants (composition-dependent) ---
+C     With kStateMat=1 the stiffness/viscosity carried in ustatev(11:14)
+C     overrides prop(1:4), so E(phi) can vary from Gauss point to Gauss
+C     point instead of being one constant for the whole material. The
+C     composition itself is CLSM-measured input, so these are computed
+C     once up front (composition_to_material.py) and delivered as initial
+C     state -- no per-increment Python call is involved.
+C     ustatev(11) <= 0 means "not initialised" (C10 is never validly zero
+C     or negative), and falls back to prop(1:4) rather than silently
+C     running with a zero-stiffness material.
+      if (KSTMAT .gt. 0.5d0 .and. nStatev .ge. 14) then
+        if (ustatev(11) .gt. 0.0d0) then
+          C10 = ustatev(11)
+          C01 = ustatev(12)
+          D1  = ustatev(13)
+          ETA = ustatev(14)
+        end if
+      end if
       K = 0
       do I = 1, 3
         do J = 1, 3

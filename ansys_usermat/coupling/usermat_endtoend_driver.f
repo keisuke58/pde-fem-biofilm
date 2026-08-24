@@ -11,6 +11,10 @@ C     dummy -- this driver exists to exercise the real ABI, not to model an
 C     element.
 C
 C     stdin: F(3x3), Fv_old(3x3), alpha, C10, C01, D1, eta, mtype, dt, kUsePy
+C            kStateMat, C10s, C01s, D1s, etas
+C              (the trailing line drives prop(7)/ustatev(11:14), the
+C               composition-dependent per-IP material path; pass
+C               "0 0 0 0 0" to leave it disabled)
 C     stdout: stress(6) [ANSYS order], Fv_new(3x3, from ustatev), keycut,
 C             cutFactor, dsdePl(6x6) [ANSYS order, row-major]
 C
@@ -20,7 +24,7 @@ C           ../usermat_biofilm.f biofilm_py_eval.c -o driver
       USE biofilm_py_bridge, only: biofilm_py_hook
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 
-      INTEGER, PARAMETER :: NCOMP=6, NSTATEV=10, NPROP=6
+      INTEGER, PARAMETER :: NCOMP=6, NSTATEV=14, NPROP=7
       DOUBLE PRECISION STRESS(NCOMP), USTATEV(NSTATEV),
      &                 DSDEPL(NCOMP,NCOMP), STRAIN(NCOMP),
      &                 DSTRAIN(NCOMP), EPSPL(NCOMP), PROP(NPROP),
@@ -33,11 +37,13 @@ C           ../usermat_biofilm.f biofilm_py_eval.c -o driver
       DOUBLE PRECISION TIME, DTIME, TEMP, DTEMP, SEDEL, SEDPL, EPSEQ,
      &                 EPSZZ, CUTFACTOR
       DOUBLE PRECISION ALPHA, C10, C01, D1, ETA, MTYPE, DT, KUSEPY
+      DOUBLE PRECISION KSTMAT, C10S, C01S, D1S, ETAS
       INTEGER I, J, K
 
       READ(*,*) ((DEFGRAD(I,J),J=1,3),I=1,3)
       READ(*,*) ((FV_OLD(I,J),J=1,3),I=1,3)
       READ(*,*) ALPHA, C10, C01, D1, ETA, MTYPE, DT, KUSEPY
+      READ(*,*) KSTMAT, C10S, C01S, D1S, ETAS
 
       MATID=1; ELEMID=1; KDOMINTPT=1; KLAYER=1; KSECTPT=1
       LDSTEP=1; ISUBST=1; KEYCUT=0
@@ -64,10 +70,11 @@ C           ../usermat_biofilm.f biofilm_py_eval.c -o driver
       TSSTIF(1)=0.0D0; TSSTIF(2)=0.0D0
 
       PROP(1)=C10; PROP(2)=C01; PROP(3)=D1; PROP(4)=ETA
-      PROP(5)=MTYPE; PROP(6)=KUSEPY
+      PROP(5)=MTYPE; PROP(6)=KUSEPY; PROP(7)=KSTMAT
 
 C     ustatev(1:9) = Fv_old (row-major); ustatev(10) = alpha. usermat()
 C     reads these on entry and overwrites 1:9 with Fv_new on return.
+C     ustatev(11:14) = per-IP C10,C01,D1,eta, read only when prop(7)>0.5.
       K=0
       DO I=1,3
         DO J=1,3
@@ -76,6 +83,7 @@ C     reads these on entry and overwrites 1:9 with Fv_new on return.
         END DO
       END DO
       USTATEV(10)=ALPHA
+      USTATEV(11)=C10S; USTATEV(12)=C01S; USTATEV(13)=D1S; USTATEV(14)=ETAS
 
       CALL USERMAT(
      &   MATID, ELEMID, KDOMINTPT, KLAYER, KSECTPT,
