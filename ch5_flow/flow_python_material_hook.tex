@@ -22,12 +22,12 @@
 \node[Nio] (in) {%
   \textbf{Fortran call} — one Gauss point, one increment\\
   \texttt{UMAT} (Abaqus) / \texttt{USERMAT} (ANSYS), \texttt{kUsePy=1}\\[4pt]
-  \begin{tabular}{@{}ll@{}}
+  \begin{tabular}{@{}p{2.85cm}p{5.85cm}@{}}
   \texttt{F} & total deformation gradient $\mathbf F$ (3$\times$3), $d\mathbf x=\mathbf F\,d\mathbf X$\\
   \texttt{Fv} & converged viscous grad.\ $\mathbf F_v^n$ from step $t_n$ (3$\times$3)\\
   \texttt{alpha} & growth driver $\alpha$ — \emph{prescribed}, from the JAXFEM field\\
   \texttt{dt} & increment $\Delta t=t_{n+1}-t_n$\\[2pt]
-  \texttt{C10,C01,D1,eta,mtype} & Mooney--Rivlin / viscosity constants (\texttt{prop})
+  \texttt{C10, C01,}\newline\texttt{D1, eta, mtype} & Mooney--Rivlin / viscosity constants (ANSYS \texttt{prop} array)
   \end{tabular}};
 
 \node[below=0.5cm of in] (req) {\textit{ISO\_C\_BINDING / local socket — newline-JSON request}};
