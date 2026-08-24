@@ -115,12 +115,20 @@ def server():
 
 
 def _run(exe, F, Fv, alpha, c10, c01, d1, eta, mtype, dt, kusepy,
-         host=None, port=None, timeout=20):
+         host=None, port=None, timeout=20, state_mat=None):
+    """state_mat: None leaves the per-IP material path disabled (prop(7)=0);
+    otherwise a (C10, C01, D1, eta) tuple written to ustatev(11:14) with
+    prop(7)=1, so the USERMAT takes its constants from state instead of prop."""
+    if state_mat is None:
+        kstmat, sm = 0.0, (0.0, 0.0, 0.0, 0.0)
+    else:
+        kstmat, sm = 1.0, state_mat
     stdin = (
         " ".join(f"{F[i, j]:.17e}" for i in range(3) for j in range(3)) + "\n" +
         " ".join(f"{Fv[i, j]:.17e}" for i in range(3) for j in range(3)) + "\n" +
         f"{alpha:.17e} {c10:.17e} {c01:.17e} {d1:.17e} {eta:.17e} "
-        f"{mtype:.1f} {dt:.17e} {kusepy:.1f}\n"
+        f"{mtype:.1f} {dt:.17e} {kusepy:.1f}\n" +
+        f"{kstmat:.1f} " + " ".join(f"{v:.17e}" for v in sm) + "\n"
     )
     env = {"PATH": "/usr/bin:/bin"}
     if host is not None:

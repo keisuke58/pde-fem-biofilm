@@ -34,13 +34,50 @@
 
 ```
 prop(1)=C10  prop(2)=C01  prop(3)=D1  prop(4)=eta  prop(5)=mtype  prop(6)=kUsePy
+prop(7)=kStateMat
 ustatev(1:9)=Fv（行優先の 3×3）   ustatev(10)=alpha（成長ドライバ）
+ustatev(11:14)=C10,C01,D1,eta     （積分点ごと、kStateMat=1 のときのみ使用）
 ```
 
 - **成長ドライバ `alpha`** は JAXFEM の α 場を各積分点へ写像したもの
   （`TB,STATE` やユーザ場で初期化、あるいは時間発展）。
 - `kUsePy=1` にすると、インライン Fortran 則の代わりに
   **Python マテリアルフック**（後述）を選択します。
+- `kStateMat=1` にすると、材料定数を `prop(1:4)` ではなく
+  **積分点ごとの `ustatev(11:14)`** から読みます（後述）。
+
+## 組成依存剛性 E(φ)（`kStateMat=1`）
+
+モデルの第2の脚（`RESEARCH_MODEL.md` §3）。剛性は成長場 α を*経由せず並列に*
+効きます。定数を `prop(1:4)` に固定していると全ガウス点が同じ剛性になるため、
+4条件を区別するのが α だけになり、**本研究で最大の力学的差 ―
+E が約 995 Pa（健全）〜 32 Pa（病的）の約31倍 ―** が丸ごと抜け落ちていました。
+
+組成は CLSM の**測定値**であって解析中に発展する量ではないので、これらの定数は
+計算開始前に確定しています。[`coupling/composition_to_material.py`](coupling/composition_to_material.py)
+が一度だけ計算し（φ → `material_models.py` の `E(φ)`/`DI` → `C10, C01, D1, eta`）、
+初期状態として配る `TB,USER`／`TB,STATE` ブロックを出力します。
+**増分ごとの Python 呼び出しは一切発生しません** ― この経路は高速なインライン
+Fortran コアの内側で完結します。（ソケットブリッジ `kUsePy=1` は、係数ではなく
+構成則**そのもの**を差し替えるという別の問題を解くものです。）
+
+```bash
+python ansys_usermat/coupling/composition_to_material.py --phi 0.2,0.2,0.2,0.2,0.2
+python ansys_usermat/coupling/composition_to_material.py --E 32 --di 0.85 --apdl
+```
+
+`ustatev(11) <= 0` は「未初期化」と解釈して `prop(1:4)` にフォールバックします
+（`Fv` に対して `INIT_FV_IF_ZERO` が既に使っている「ゼロ＝未設定」イディオムと同じ）。
+設定ミス時に剛性ゼロで黙って走るのではなく prop の材料に縮退します。
+なお ANSYS の `TB,STATE` は**材料ごと**に効くので、空間的に組成が変わる場合は
+組成ビンごとに材料を分ける必要があります。
+
+[`tests/test_composition_material.py`](../tests/test_composition_material.py)
+で end-to-end 検証済み: 材料 A の定数を `prop` 経由で流した結果と、`prop` に
+材料 B を置いたまま状態変数経由で A を流した結果が一致すること（＝状態側が
+確実に上書きしていること）、および固定変形で4条件が
+**CH / DH / CS / DS = 566 / 177 / 555 / 20 Pa**（max |σ|）になること ―
+prop 定数モデルでは表現できない差です。
 
 ## Python マテリアルフック（ガウス点ごと）
 
