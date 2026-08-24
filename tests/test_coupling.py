@@ -38,13 +38,19 @@ def test_core_is_finite_and_reasonable():
     assert np.linalg.det(fvn) > 0            # viscous update stays invertible
 
 
-def test_tangent_shape_and_symmetry():
+def test_tangent_shape_and_approximate_symmetry():
     params = (PARAMS["alpha"], PARAMS["C10"], PARAMS["C01"], PARAMS["D1"],
               PARAMS["eta"], PARAMS["mtype"], PARAMS["dt"])
     D = ms.dsde_perturbation(np.array(F).reshape(3, 3), np.array(FV).reshape(3, 3), params)
     assert D.shape == (6, 6)
     assert np.all(np.isfinite(D))
-    assert np.allclose(D, D.T, atol=1e-9)    # symmetrised by construction
+    # dsde_perturbation deliberately does NOT symmetrise (see its docstring):
+    # it mirrors usermat_biofilm.f's own unsymmetrised forward-difference
+    # tangent, which was the one confirmed to converge under SOLID185/
+    # NLGEOM,ON. So only approximate (truncation-level) symmetry holds here;
+    # exact agreement with the Fortran core -- including this same asymmetry
+    # -- is what tests/test_usermat_kusepy_e2e.py checks end to end.
+    assert np.max(np.abs(D - D.T)) < 0.2 * max(np.max(np.abs(D)), 1e-12)
 
 
 def test_socket_roundtrip():

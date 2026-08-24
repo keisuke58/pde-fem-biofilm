@@ -46,17 +46,36 @@ ustatev(1:9)=Fv (row-major 3×3)   ustatev(10)=alpha (growth driver)
 ## Python material hook (per Gauss point)
 
 The thesis' core deliverable — calling the paper's calibrated **Python** material
-model at each Gauss point — has an explicit extension point marked
-`PYTHON MATERIAL HOOK` in the source. Intended mechanism: an
+model at each Gauss point — is **wired and confirmed working end to end**
+through the `PYTHON MATERIAL HOOK` in the source. Mechanism: an
 `ISO_C_BINDING` / local-socket bridge that ships `(defGrad, Fv_old, alpha,
-dTime, prop)` to Python and receives `(stress, Fv_new, dsdePl)`. The inline
-Fortran core is the reference/fallback used for verification. (Architecture:
-`ch5_flow/flow_impl_architecture`.)
+dTime, prop)` to Python and receives `(stress, Fv_new, dsdePl)` back into
+`usermat()`'s own `stress`/`ustatev`/`dsdePl` outputs, with the
+Abaqus↔ANSYS Voigt reindex (`MAP6`) applied on the way in. `kUsePy=1` runs
+this path; if the Python server is unreachable or returns something invalid,
+`usermat()` falls back to the verified inline core rather than failing the
+solve. (Architecture: `ch5_flow/flow_python_material_hook`.)
 
-A runnable **skeleton** of this bridge lives in [`coupling/`](coupling/README.md):
-the Python side (`material_server.py`, NumPy core + tangent + socket server), the
-wire protocol, and a syntax-checked Fortran hook stub (`usermat_py_hook.f`), with
-an end-to-end round-trip test (`tests/test_coupling.py`).
+The bridge lives in [`coupling/`](coupling/README.md): the Python side
+(`material_server.py`, NumPy core + F-perturbation tangent + socket server),
+the wire protocol, and the Fortran hook (`usermat_py_hook.f`). It is exercised
+through the *real* `usermat()` entry point (not a bypass driver) by
+`tests/test_usermat_kusepy_e2e.py`, which compiles `usermat_biofilm.f` +
+`usermat_py_hook.f` + `biofilm_py_eval.c` into a standalone driver and checks
+`kUsePy=1` against `kUsePy=0` across elastic/viscous/Mooney-Rivlin cases —
+stress and the updated viscous state agree to numerical precision, and the
+consistent tangent (`dsdePl`) agrees to floating-point-noise precision (both
+sides use the same F-perturbation scheme, `PERT=1e-7`). That test also covers
+the fallback path (server unreachable → `PYOK=.false.` → inline core, not a
+crash).
+
+This closes a real bug found while adding that dsdePl comparison: the wire
+carries the Python side's 6×6 Jacobian as a row-major (NumPy/C-order) flatten,
+but Fortran's `RESHAPE` fills column-major, so a plain `reshape(d36,[6,6])`
+in `usermat_py_hook.f` silently returned the tangent's **transpose**. It was
+invisible for near-symmetric elastic cases and only showed up (large,
+sign-flipping discrepancies) once viscous/Mooney-Rivlin cases were checked —
+fixed with an explicit `transpose(...)`.
 
 ## Build & use in ANSYS (outline)
 
@@ -113,7 +132,13 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
      `apdl/extract_cylinder_bulge.py`). Consistent with early buckling, not
      confirmed against a true eigenvalue analysis — flagged as interesting,
      not yet a settled conclusion.
-4. Wire the `PYTHON MATERIAL HOOK` (ISO_C_BINDING/socket) — the actual thesis
-   work; the inline core stays as the verification reference. The wire
-   protocol and per-call payload are diagrammed in
+4. ~~Wire the `PYTHON MATERIAL HOOK` (ISO_C_BINDING/socket).~~ **Done** — see
+   above; verified end to end through the real `usermat()` entry point via
+   `tests/test_usermat_kusepy_e2e.py`. The inline core stays as the
+   verification reference and the automatic fallback. The wire protocol and
+   per-call payload are diagrammed in
    [`ch5_flow/flow_python_material_hook`](../ch5_flow/README.md).
+5. The Python-side material model is still the NumPy mirror of the verified
+   Fortran law (`material_server.py`'s `stress_core`), not yet the calibrated
+   JAX model (`JAXFEM/`/`material_models.py`) — swapping that in is a local
+   change behind the same interface, not a wiring change.

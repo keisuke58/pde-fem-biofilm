@@ -64,6 +64,14 @@ C                             double* Fvnew9, double* dsde36);
           params7(7) = dt
           ierr  = biofilm_py_eval(F9, Fv9, params7, stress, Fvnew, d36)
           ok    = (ierr .eq. 0)
-          dsde  = reshape(d36, [6, 6])
+C         d36 is a row-major flatten of the Python side's 6x6 Jacobian
+C         (numpy D.reshape(36), C order: d36(6*(row)+col+1) = D(row,col)).
+C         Fortran's RESHAPE fills column-major, so a plain reshape(d36,[6,6])
+C         silently returns D transposed -- the extra transpose below undoes
+C         that mismatch. (Found via the caseA2/B/C/D dsdePl cross-check:
+C         kUsePy=1's tangent came out as the exact row/column transpose of
+C         kUsePy=0's, symmetric-looking cases masked it, viscous/MR cases
+C         didn't.)
+          dsde  = transpose(reshape(d36, [6, 6]))
         end subroutine biofilm_py_hook
       end module biofilm_py_bridge

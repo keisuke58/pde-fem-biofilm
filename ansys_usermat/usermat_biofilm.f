@@ -63,6 +63,7 @@ C=======================================================================
      &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
      &   var1, var2, var3, var4, var5, var6, var7, var8)
 
+      use biofilm_py_bridge, only: biofilm_py_hook
       implicit none
 C     --- ANSYS USERMAT argument list (3-D / plane-strain solid) ---
 C     Signature confirmed against ANSYS MAPDL 2022 R2 (v222): var0 sits
@@ -93,6 +94,14 @@ C     ANSYS Voigt map (11,22,33,12,23,13)
       integer          VI(6), VJ(6)
       data VI /1, 2, 3, 1, 2, 1/
       data VJ /1, 2, 3, 2, 3, 3/
+C     Python-hook path: biofilm_py_hook returns Abaqus Voigt order
+C     (11,22,33,12,13,23); reindex to ANSYS order (11,22,33,12,23,13) by
+C     swapping positions 5<->6 -- MAP6(k) is the Abaqus position holding
+C     ANSYS position k's component.
+      double precision SV0_PY(6), DSDE_PY(6,6), FV9_PY(9)
+      integer          MAP6(6)
+      logical          PYOK
+      data MAP6 /1, 2, 3, 4, 6, 5/
 
 C     --- material properties ---
       C10    = prop(1)
@@ -128,20 +137,43 @@ C     --- Fg = (1+alpha) I ;  inv(Fg) ---
 C=======================================================================
 C  PYTHON MATERIAL HOOK  (per Gauss point)
 C  ---------------------------------------
-C  When kUsePy=1 the constitutive response would be delegated to the
-C  Python material model (the paper's calibrated law) instead of the
-C  inline Fortran core below.  Intended mechanism: an ISO_C_BINDING /
-C  local-socket bridge that sends (defGrad, FV_OLD, alpha, dTime, prop)
-C  and receives (Cauchy stress, FV_NEW, dsdePl).  Left as an explicit
-C  extension point for the thesis; the inline core is the reference /
-C  fallback used for verification.
+C  When kUsePy=1 the constitutive response is delegated to the Python
+C  material model (the paper's calibrated law) instead of the inline
+C  Fortran core below, via the ISO_C_BINDING bridge in usermat_py_hook.f
+C  (biofilm_py_bridge -> biofilm_py_eval.c -> material_server.py over a
+C  local socket, wire format in ansys_usermat/coupling/protocol.py).
+C  The inline core stays the verification reference and the automatic
+C  fallback if the Python side is unreachable (PYOK = .false.) -- a
+C  socket failure must not silently return zero stress.
 C
-C      if (KUSEPY .gt. 0.5d0) then
-C        call BIOFILM_PY_MATERIAL(defGrad, FV_OLD, ALPHA, dTime, prop,
-C     &                           nProp, SV0, FV_NEW, dsdePl, ncomp,
-C     &                           VI, VJ, keycut)
-C        goto 900
-C      end if
+      if (KUSEPY .gt. 0.5d0) then
+        call biofilm_py_hook(defGrad, FV_OLD, ALPHA, C10, C01, D1,
+     &                        ETA, MTYPE, dTime,
+     &                        SV0_PY, FV9_PY, DSDE_PY, PYOK)
+        if (PYOK) then
+          do I = 1, ncomp
+            stress(I) = SV0_PY(MAP6(I))
+          end do
+          do P = 1, ncomp
+            do Q = 1, ncomp
+              dsdePl(Q,P) = DSDE_PY(MAP6(Q), MAP6(P))
+            end do
+          end do
+C         sedEl/sedPl are not returned by the Python-hook path (protocol.py
+C         carries stress/Fv_new/dsdePl only, no energies); left at their
+C         ANSYS-initialised default rather than fabricated.
+          K = 0
+          do I = 1, 3
+            do J = 1, 3
+              K = K + 1
+              ustatev(K) = FV9_PY(K)
+            end do
+          end do
+          return
+        end if
+C       PYOK = .false. (server unreachable, bad response, ...): fall
+C       through to the verified inline core below rather than fail silent.
+      end if
 C=======================================================================
 
 C     --- base stress (ANSYS Voigt order) ---

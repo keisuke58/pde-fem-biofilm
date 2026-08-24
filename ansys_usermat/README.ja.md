@@ -45,12 +45,34 @@ ustatev(1:9)=Fv（行優先の 3×3）   ustatev(10)=alpha（成長ドライバ�
 ## Python マテリアルフック（ガウス点ごと）
 
 修論の核心的な成果 ― 論文で較正した **Python** 材料モデルを各ガウス点で
-呼び出す ― のための拡張点が、ソース中に `PYTHON MATERIAL HOOK` として
-明示されています。想定する仕組みは `ISO_C_BINDING` ／ローカルソケット橋渡しで、
+呼び出す ― は、ソース中の `PYTHON MATERIAL HOOK` として**実装・end-to-end
+検証済み**です。仕組みは `ISO_C_BINDING` ／ローカルソケット橋渡しで、
 `(defGrad, Fv_old, alpha, dTime, prop)` を Python へ送り、
-`(stress, Fv_new, dsdePl)` を受け取る形です。インラインの Fortran コアは
-検証用の基準・フォールバックとして残します
-（アーキ図：`ch5_flow/flow_impl_architecture`）。
+`(stress, Fv_new, dsdePl)` を受け取り、Abaqus→ANSYS の Voigt 並び替え
+（`MAP6`）を経て `usermat()` 自身の `stress`/`ustatev`/`dsdePl` へ書き戻し
+ます。`kUsePy=1` でこの経路が有効になり、Python サーバへ接続できない・
+応答が不正な場合は求解を失敗させず検証済みのインラインコアへフォール
+バックします（アーキ図：`ch5_flow/flow_python_material_hook`）。
+
+ブリッジ本体は [`coupling/`](coupling/README.md) にあります：Python 側
+（`material_server.py` ― NumPy コア＋F摂動接線＋ソケットサーバ）、通信
+プロトコル、Fortran 側フック（`usermat_py_hook.f`）。バイパス用ドライバ
+ではなく**実際の `usermat()` エントリポイント**を通して
+`tests/test_usermat_kusepy_e2e.py` が検証しており、`usermat_biofilm.f` +
+`usermat_py_hook.f` + `biofilm_py_eval.c` をスタンドアロンドライバへ
+ビルドし、弾性／粘性／Mooney-Rivlin の各ケースで `kUsePy=1` と
+`kUsePy=0` を突き合わせます ― 応力と更新後の粘性状態は数値精度で一致、
+整合接線（`dsdePl`）は浮動小数点誤差レベルで一致します（両側とも同じ
+F摂動方式、`PERT=1e-7`、を使うため）。サーバ未接続時のフォールバック
+経路（`PYOK=.false.` → インラインコア、クラッシュしない）も同テストで
+確認しています。
+
+この `dsdePl` 突き合わせを追加する過程で実際のバグを1件発見・修正しました：
+Python 側の 6×6 ヤコビアンは行優先（NumPy／C 順）でワイヤに乗りますが、
+Fortran の `RESHAPE` は列優先で詰めるため、`usermat_py_hook.f` の単純な
+`reshape(d36,[6,6])` は**転置行列**を黙って返していました。対称に近い
+弾性ケースでは見えず、粘性・Mooney-Rivlin ケースで初めて（符号反転を
+伴う）大きな食い違いとして露見 ― 明示的な `transpose(...)` で修正済みです。
 
 ## ANSYS でのビルド・使用（概略）
 
@@ -104,7 +126,13 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
      （[`assets/growth_cylinder_bulge.png`](../assets/growth_cylinder_bulge.png)、
      `apdl/extract_cylinder_bulge.py`）。座屈的挙動の可能性があるが、
      真の固有値解析では未確認 ― 興味深い所見として記録、結論はまだ。
-4. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
-   本来の修論作業。インラインコアは検証基準として残す。プロトコルと
-   ガウス点1回あたりの通信内容は
+4. ~~`PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する。~~
+   **完了** ― 上記のとおり、実際の `usermat()` エントリポイントを通した
+   `tests/test_usermat_kusepy_e2e.py` で end-to-end 検証済み。インライン
+   コアは検証基準・自動フォールバックとして残す。プロトコルとガウス点
+   1回あたりの通信内容は
    [`ch5_flow/flow_python_material_hook`](../ch5_flow/README.md) に図解。
+5. Python 側の材料モデルは、いまも検証済み Fortran 則の NumPy 写し
+   （`material_server.py` の `stress_core`）であり、較正済み JAX モデル
+   （`JAXFEM/` ／ `material_models.py`）ではまだない ― 同じインターフェイス
+   の裏側を差し替えるだけなので、配線の話ではなくローカルな置き換え。
