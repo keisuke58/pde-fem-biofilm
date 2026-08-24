@@ -140,6 +140,25 @@ on it, since the paper itself never states its own α(0) — the note in
 `RESEARCH_MODEL.md` is this repo's best inference, not a confirmed fact from
 the source.
 
+**Addendum 2026-08-24 — the paper's numerical examples are not 3D-only.**
+Came up answering an unrelated question ("is this 3D-only?"); worth recording
+since it bears on whether the `α`/`Fg` formulation generalises. §4 has three
+examples, mixing dimensionality under the *same* `Fg=αI` formulation:
+
+| Example | Geometry | Dimensionality |
+|---|---|---|
+| §4.1 Test case 1 (directional growth) | 20×20×20 μm cube, 1 μm mesh | genuine 3D |
+| Maze | one element thick | **semi-2D** — paper's own words: *"no three-dimensional effects can be captured"* |
+| Square grate (last example) | one element thick | **semi-2D**, same as the maze |
+
+So the kinematics are dimension-agnostic in the source too, not just in this
+repo's ANSYS port. Separately: the discretized local-Newton residual at Gauss
+points (pseudocode Step 3a, before Eq. 36) *does* contain a `(1+α_{n+1})`
+term in a denominator — that's a rate-form detail inside the time
+integration, not the `Fg` definition itself, so it doesn't reopen the
+`Fg=αI` vs `Fg=(1+α)I` question above. Flagging only so it isn't confused
+with it later.
+
 ---
 
 ## 🟢 F2. Five duplicate BibTeX keys with conflicting content — fixed 2026-08-20
