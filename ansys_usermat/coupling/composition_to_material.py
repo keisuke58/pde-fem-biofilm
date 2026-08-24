@@ -17,6 +17,35 @@ deliberately no per-increment Python call on this path. The socket bridge
 (material_server.py / kUsePy=1) solves a different problem: swapping the
 constitutive *law*, not its coefficients.
 
+!! LINEAGE WARNING -- read before using this for thesis numbers !!
+--------------------------------------------------------------------
+RESEARCH_MODEL.md sec.6 keeps two analysis lineages deliberately apart:
+
+  1. Klempt growth-stress (the thesis headline): composition -> alpha -> stress
+  2. DI-bridge FEM (alternative bridging variable): composition -> DI -> E(DI)
+     -> stress
+
+The E(DI) power law this module leans on (material_models.compute_E_di,
+E = E_max(1-r)^n + E_min*r) IS lineage 2's bridge, and the condition-level
+moduli usually paired with it (995/942/279/32 Pa for CH/CS/DH/DS, from
+run_ve_twin_experiment.py) are lineage-2 numbers. Feeding them into the
+growth UMAT via kStateMat=1 therefore runs BOTH lineages in one solve, which
+sec.6 explicitly warns against for the write-up.
+
+That may well be the more physical model -- composition really does drive
+both growth and stiffness -- but it is a modelling decision, not a wiring
+detail, and it has a specific trap: RESEARCH_MODEL.md sec.4 records that
+alpha is "not calibrated per condition". If alpha is uniform across CH/DH/CS/DS
+then every bit of condition contrast in a combined run comes from the
+stiffness leg, i.e. the result is a lineage-2 answer wearing lineage-1
+clothes, and the CH/DH ratio is amplified by construction because the same
+measured composition drives both legs.
+
+So: kStateMat=1 is verified to work (tests/test_composition_material.py) but
+is NOT cleared for the headline sigma_CH/sigma_DH ratio. Settle the lineage
+question first -- ideally with the supervisor, since it changes what the
+reported number means.
+
     python composition_to_material.py --phi 0.2,0.2,0.2,0.2,0.2
     python composition_to_material.py --E 995 --di 0.05 --matid 1
 
