@@ -31,7 +31,7 @@ work. Report which one.
 
 ## 1. What has to change for v222
 
-### 1.1 The `usermat` argument list — mandatory
+### 1.1 The `usermat` argument list — mandatory, and already scripted
 
 Counted from both sources:
 
@@ -41,38 +41,44 @@ Counted from both sources:
 | **v222 (this PC)** | **42** | `var1, var2, var3, var4, var5, var6, var7, var8` |
 
 In 2024 R2 the reserved slots `var1`/`var2` became named arguments `pVolDer(3)`
-and `hrmflg`, and `var8` was dropped. So in
-`Usermat_P21-V21_Conection_Test.F`, change the subroutine statement to the
-v222 form:
+and `hrmflg`, and `var8` was dropped.
 
-```fortran
-      subroutine usermat(
-     &   matId, elemId, kDomIntPt, kLayer, kSectPt,
-     &   ldstep, isubst, keycut,
-     &   nDirect, nShear, ncomp, nStatev, nProp,
-     &   Time, dTime, Temp, dTemp,
-     &   stress, ustatev, dsdePl, sedEl, sedPl, epseq,
-     &   Strain, dStrain, epsPl, prop, coords,
-     &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
-     &   var1, var2, var3, var4, var5, var6, var7, var8)
-```
-
-and declare `var1, var2, var8` as unused `double precision` scalars alongside
-the existing `var3..var7`. **Do not** keep `pVolDer`/`hrmflg`: v222 does not
-pass them, and `pVolDer` is an array where `var1` is a scalar.
-
-Take the exact v222 list from
-[`../usermat_biofilm.f`](../usermat_biofilm.f), which is the version verified
-against this machine's ANSYS.
-
-Check the routine body does not *use* `pVolDer` or `hrmflg` before deleting
-them:
+**You do not have to make this edit by hand.** Run:
 
 ```bat
-findstr /n "pVolDer hrmflg" Usermat_P21-V21_Conection_Test.F
+python patch_usermat_to_v222.py Usermat_P21-V21_Conection_Test.F -o Usermat_P21-V21_v222.F
 ```
 
-If they are only in the signature, the edit is purely mechanical.
+([`patch_usermat_to_v222.py`](patch_usermat_to_v222.py) lives in this folder.)
+It applies six changes and prints each one. The output has been syntax-checked
+here and compiles clean.
+
+Four of the six are the obvious ones — the argument list, dropping the
+`pVolDer(3)` entry and the `DOUBLE PRECISION hrmflg` declaration (both are
+declared but never used in the body; the script refuses to run if a future
+version starts using them), and adding `var8`.
+
+**The other two are the ones worth knowing about**, because they fail in a way
+that points at the wrong thing:
+
+```fortran
+      data             var1/0.0d0/
+      data             var2/0.0d0/
+```
+
+Under 2024 R2 `var1`/`var2` are not arguments, so they are locals and
+initialising them with `DATA` is legal. Under v222 they **become dummy
+arguments**, and `DATA` on a dummy argument is a hard error:
+
+```
+Error: DATA attribute conflicts with DUMMY attribute in 'var1'
+```
+
+(verified here by deliberately reintroducing them). The script removes both.
+
+If you prefer to edit by hand, take the exact v222 list from
+[`../usermat_biofilm.f`](../usermat_biofilm.f) — the version verified in-solver
+on this machine — and remember the two `DATA` lines.
 
 ### 1.2 Build mechanism — likely
 
@@ -102,6 +108,99 @@ Both ship with ANSYS, but the paths differ by release. If the link fails on
 the MPI part; PARDISO is still needed.
 
 ---
+
+## 1.5 Pre-flight — already checked here, so you know what is expected
+
+Every source in the pool was syntax-checked with `gfortran` before you start,
+with the ANSYS-supplied includes stubbed. This does not prove it builds under
+`ifort`/v222, but it separates "expected noise" from "a real problem", which is
+the hard part when a first build throws a hundred errors.
+
+Reproduce with:
+
+```bash
+gfortran -fsyntax-only -cpp -fcray-pointer -ffixed-line-length-132 -I. <file>
+```
+
+### ✅ The six AceGen constitutive routines are clean
+
+`AceGenNeoHookV02/03/04.f`, `AceGenElastoAirV08.f`, `AGPhaseViskoP21V07.f`,
+`AGStressP21V07.f` — all pass with no errors. **The material code is not the
+risk.** So is `MySubroutines_userData_V04.F`. Whatever goes wrong tomorrow will
+be in the three `P21-V21` glue files or in the build flags.
+
+### ⚠️ Finding 1 — `userdata_*.f` needs forced preprocessing (most likely first failure)
+
+`userdata_P21-V21_Conection_Test.f` uses C-preprocessor `#include` directives:
+
+```fortran
+#include "usercm.inc"
+#include "impcom.inc"
+```
+
+but is named with a **lowercase `.f`**, which most compilers do *not*
+preprocess. Without preprocessing the common block is never declared, and you
+get a cascade of unrelated-looking syntax errors (78 of them here) that
+completely hide the real cause.
+
+**Do this before the first build**: add Intel's preprocessing flag —
+`/fpp` on Windows, `-fpp` on Linux — or rename the file to `.F`. Their Linux
+`ANSUSERSHARED` script evidently already handles it; a different build path
+may not.
+
+Related, and worth checking at the same time: the ANSUSERSHARED log notes it
+compiles `userdata.F`/`userdata.f` **first** to support the common-block
+feature. Their file is `userdata_P21-V21_Conection_Test.f`, which does **not**
+match that special-cased name. If the common block comes out empty or
+undefined, this ordering is the reason — compile that file first by hand.
+
+### ⚠️ Finding 2 — an 8-byte integer passed to a 4-byte argument
+
+`usercm.inc` line ~197 declares
+
+```fortran
+      INTEGER(KIND=8) :: sGi_nnz_T
+```
+
+and it is passed as the `sz` argument of the pool routines, which take a
+default `INTEGER`:
+
+```fortran
+      Si_Kerr = SetNEM(ofs_i_ColID_T, sGi_nnz_T, vLdp_Tmp)   ! NEM_..., ~line 400
+```
+
+`ifort` will not reject this (F77-style implicit interfaces are not type
+checked), and on little-endian hardware it reads the low half, so it works as
+long as `nnz` stays under 2³¹ — which it does at this mesh size (~18750
+elements × 8 GP × 30 neighbours ≈ 4.5M non-zeros). **It is latent, not
+currently broken.**
+
+Two things follow. If you build with a global 8-byte-integer flag
+(`/integer_size:64`, `-i8`) the mismatch flips direction, so **match whatever
+integer size the v222 UPF build uses** rather than picking one. And it is
+worth mentioning to Oliver, since a substantially larger mesh would silently
+truncate.
+
+### ℹ️ Expected noise — not problems
+
+- **Cray pointers** (~30 sites in `NEM_UserData_P21_V05.F`). The traditional
+  ANSYS-UPF way of doing dynamic memory. `ifort` supports them natively;
+  only `gfortran` needs `-fcray-pointer`. No action.
+- **`parevl` called with mixed argument types** (~20 sites). Classic F77
+  practice, tolerated by `ifort`. No action.
+- **`mpif.h` not found / undefined symbols from the stubbed includes** — an
+  artifact of checking outside an ANSYS install. Will resolve on the real
+  machine.
+
+### Summary of what to expect
+
+| | expected tomorrow |
+|---|---|
+| AceGen material files | compile clean |
+| `userdata_*.f` | **fails unless `/fpp` is set** — fix first |
+| `NEM_*`, `USolBeg_*`, `Ussfin_*` | compile once preprocessing and the signature edit are in |
+| `Usermat_*` | needs the §1.1 signature edit |
+| integer size | must match the v222 UPF build convention |
 
 ## 2. The actual try, in order
 
