@@ -222,4 +222,6 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
    viscous and growth parts of our law are what would be added, at that call
    site. Full findings, the
    compatibility table, and the open questions:
-   [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md).
+   [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md). The agreed way forward —
+   their NEM solves the field, we contribute the material law, built locally
+   against v222 — is [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md).
