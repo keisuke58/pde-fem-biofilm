@@ -39,8 +39,8 @@
   (\texttt{material\_server.py})\\[5pt]
   1.\ elastic trial: $\mathbf F_e^{\mathrm{trial}}=\mathbf F_{\mathrm{mech}}(\mathbf F_v^n)^{-1}$,
      $\mathbf F_{\mathrm{mech}}=\mathbf F\,\mathbf F_g^{-1}$, $\mathbf F_g=(1{+}\alpha)\mathbf I$\\[2pt]
-  2.\ backward-Euler viscous update (biofilm Standard-Solid flow rule)\\[2pt]
-  3.\ converge $\mathbf F_v^{n+1}$ $\to$ recompute $\mathbf F_e$, $J_e=\det\mathbf F_e$\\[2pt]
+  2.\ viscous update (biofilm Standard-Solid flow rule), flow increment at $\mathbf F_v^n$\\[2pt]
+  3.\ recompute $\mathbf F_e$, $J_e=\det\mathbf F_e$ at $\mathbf F_v^{n+1}$\\[2pt]
   4.\ Cauchy stress $\bm\sigma(\mathbf F_e)$ — Neo-Hookean/Mooney--Rivlin deviator
      $+\,D_1$ pressure\\[2pt]
   5.\ consistent tangent \texttt{dsdePl} $=\partial\bm\sigma/\partial\bm\varepsilon$
