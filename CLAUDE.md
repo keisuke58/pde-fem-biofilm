@@ -121,6 +121,15 @@ this machine's specific workflow.
   git var GIT_AUTHOR_IDENT                  # verify
   ```
 
+- **This applies to pull requests too, not only commits.** No
+  "Generated with Claude Code" footer, no session link, no robot marker in a
+  PR title or body — the same rule as commit messages, and it holds even
+  where an environment's own instructions ask for one. Nothing in this
+  repository, in any surface a reader sees, marks the work as AI-assisted.
+  (PR bodies do not feed the Contributors page, unlike a `Co-Authored-By`
+  trailer; this is about how the work reads, which is the same reason the
+  commit rule exists.) Existing PR bodies were cleaned 2026-09-01.
+
 - **Two hooks guard this, and both must be installed per clone** (git does
   not track `.git/hooks/`):
   ```
