@@ -65,6 +65,15 @@ swapping in the calibrated JAX model in place of the current NumPy mirror.
 
 ## Needed back from Felix (blocks an actual ANSYS run)
 
+> **Partly answered, 2026-09-01.** Oliver sent the Workbench archive
+> `BiofilmImplementation.wbpz`, which answers item 1 (it targets **ANSYS 2024
+> R2**, not the v222 this repo is verified on) and shows a working, converging
+> `SOLID185`/`NLGEOM,ON` model. It does **not** answer item 2 or 3, and it
+> arrived **without its USERMAT Fortran source**, so it cannot be run as
+> received. It is also a *nonlocal* material routine — a different scope from
+> this local law. Full findings and the follow-up questions:
+> [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md).
+
 1. [ ] **Target ANSYS version + exact `usermat` argument list** (`var1..var8`,
        `tsstif`, `epsZZ`, `cutFactor` vary by release), and whether **`dsdePl`**
        is expected as the Jaumann material Jacobian (may need rotation `rotateM`
