@@ -1,8 +1,9 @@
 # Finding — the deviatoric split is mis-scaled under growth
 
-Found 2026-09-01. **Not fixed.** The fix is one line in each of two files, but
-it changes headline stress numbers by ~1.9–2.8× and invalidates the viscous
-reference values, so it is a decision, not a patch. See §5.
+Found 2026-09-01. **Not fixed, and not urgent** — see §3 for why. The
+expression is genuinely inconsistent, but its effect is a pure pressure error:
+**von Mises stress at a fixed deformation gradient is exactly unaffected**, and
+von Mises is what this thesis reports. Recommendation in §7.
 
 ## 1. The expression
 
@@ -36,39 +37,71 @@ The two agree **exactly when J = 1** and only then.
 ## 2. Why growth is what exposes it
 
 Under `F = Fe·Fv·Fg` with `Fg = (1+α)I`, the elastic Jacobian `Je` departs
-from 1 by construction — that is what growth *is*. So the error is not a
-corner case here; it is switched on by the model's central mechanism, and it
-grows with α.
+from 1 by construction — that is what growth *is*. So the discrepancy is not a
+corner case here; it is switched on by the model's central mechanism.
 
-Measured on the reference configuration (`C10=2e-4, D1=5000, F=I`, i.e. fully
-constrained growth), against the analytic answer (the deviator vanishes for an
-isotropic elastic state, so only the volumetric term `(2/D1)(J−1)` survives):
+## 3. What it actually changes — and what it does not
 
-| α | Je | correct σ₁₁ | code σ₁₁ | ratio |
-|---|---|---|---|---|
-| 0.05 | 0.8638 | −5.446e−5 | −1.019e−4 | **1.87×** |
-| 0.20 | 0.5787 | −1.685e−4 | −4.726e−4 | **2.81×** |
+**The error is purely spherical.** Subtracting the correct form from the coded
+one leaves
 
-## 3. It also drives spurious viscous flow
+```
+  τ_code − τ_correct = 2·C10·J^(-2/3)·( tr(b)/3 )·( 1 − J^(-2/3) )·I
+```
 
-For `F = I`, `Fv = I` and isotropic growth, `Be` is isotropic, so the
-deviatoric flow driver must vanish and `Fv` must stay `I` for **any** η.
-`ansys_usermat/apdl/t_growth_free.dat:22` states exactly that expectation:
+which is proportional to `I` for **any** deformation, not just isotropic ones.
+Measured against an independently written isochoric-split reference over
+general non-isotropic states (shear + stretch, strong shear, `F = I`; α = 0.05
+and 0.20): the difference has zero deviatoric part to machine precision
+(normal-component spread ≤ 5e−20, shear components exactly 0).
 
-> *"…independent of eta (there is no stress to drive viscous flow…)"*
+Therefore, at a fixed deformation gradient:
 
-Measured instead:
+| quantity | affected? |
+|---|---|
+| hydrostatic pressure | **yes** — e.g. −4.75e−5 spurious at α=0.05 on the reference material |
+| deviatoric stress | **no** — exactly zero difference |
+| **von Mises stress** | **no** — Δ ≤ 4e−20, i.e. exactly unaffected |
 
-| α | σ₁₁ (η=0) | σ₁₁ (η=8e−3) | Δ | `Fv` drift off I |
-|---|---|---|---|---|
-| 0.05 | −1.019e−4 | −6.963e−5 | 32% | 1.48e−2 |
-| 0.20 | −4.726e−4 | −1.795e−4 | 62% | 9.50e−2 |
+**This matters because von Mises is the headline metric of this thesis.** At a
+fixed `F` the reported quantity is untouched.
 
-The drift is **purely spherical** — a volumetric viscous flow out of a model
-documented as a deviatoric Newtonian dashpot. That is the signature of the
-same mis-scaling: the "deviator" has a non-zero trace.
+Through the viscous path the error does reach the deviator, because a spherical
+flow driver moves `Fv` volumetrically — `det(Fv)` drifts off 1, which a
+deviatoric dashpot must never do. Measured over 40 steps at `dt = 1e−3`:
 
-## 4. Why none of the three verifications caught it
+| η | `det(Fv)` code / correct | Mises difference |
+|---|---|---|
+| 5.0 | 0.999999 / 1.000000 | 0.00% |
+| 0.05 | 0.999870 / 1.000000 | 0.01% |
+
+Real, but small in these conditions.
+
+**Not measurable at fixed F, and not yet measured:** in an actual FEM solve a
+wrong hydrostatic stress changes equilibrium, hence displacements, hence Mises
+indirectly. The cross-check in
+[`umat_tangent_test/xcheck_eigenstrain/XCHECK_RESULTS.md`](umat_tangent_test/xcheck_eigenstrain/XCHECK_RESULTS.md)
+suggests this is small where it has been looked at — two UMATs with *different
+elastic potentials* agree on constrained growth Mises to 0.1% at ν = 0.49 —
+but near-incompressibility is the friendliest case for a pressure error, since
+the material resists the volumetric strain it would cause. Lower ν is untested.
+
+## 3b. Is it wrong, or a different potential?
+
+Derived, not assumed. For an isotropic elastic state `b = J^(2/3) I` the coded
+form reduces to
+
+```
+  σ_code,iso = (2·C10/J)·( 1 − J^(-2/3) )·I
+```
+
+The two standard compressible neo-Hookean forms give, for the same state,
+`0` (isochoric split, `W = C10(Ī₁−3) + (1/D1)(J−1)²`) and
+`(2·C10/J)(J^(2/3) − 1)·I` (unsplit, `W = C10(I₁−3) − 2·C10·ln J + …`). The
+coded form is the unsplit one scaled by `J^(-2/3)` — it matches neither. It is
+an inconsistent hybrid rather than an alternative potential.
+
+## 4. Why the verifications do not catch it
 
 This is the part worth carrying into the thesis, independently of the fix.
 
@@ -77,24 +110,27 @@ This is the part worth carrying into the thesis, independently of the fix.
 | **ANSYS ↔ Abaqus, 0 ULP over 8017 states** (`crosscheck/`, `adversarial.py`) | Both implementations carry the *same* expression. Cross-validation establishes agreement between two codes, never the correctness of either. |
 | **Free-growth deck** (`t_growth_free.dat`) | Traction-free isotropic growth gives `Fe = I` exactly, so `Je = 1` — precisely the one case where the wrong and right expressions coincide. Verified numerically: peak &#124;σ&#124; = 0 for both α. |
 | **Constrained-growth references** (`reference_values.json`) | Generated by `make_reference.py`, which calls `stress_core` — the implementation itself. The file's own header calls these "Closed-form Cauchy stress"; they are a snapshot of the code, so they enshrine the behaviour rather than test it. |
+| **Dual-UMAT growth cross-check** (`XCHECK_RESULTS.md`, agreement to 0.1%) | Compares **von Mises**, and the error is purely spherical — so this check is blind to it by construction, not by accident. It remains a valid check of what it was built for. |
 
 Three independent-looking checks, none of which can see this. Worth stating
 plainly in the verification section: the crosscheck's strength is that it
 rules out transcription and Voigt-ordering errors between two ports, and its
 limit is that a shared modelling error passes it untouched.
 
-## 5. What is NOT settled — read before fixing
+## 5. What is NOT settled
 
-**Does Klempt's published formulation use this expression?** If the original
-model defines its split this way, then "fixing" it makes this code disagree
-with the paper it implements, which is a different and larger decision than a
-bug fix. This cannot be settled from the repository alone — it needs the
-Klempt formulation (Archive of Applied Mechanics 96, 164 (2026),
-doi:10.1007/s00419-026-03160-y) checked directly.
+**Does Klempt's published formulation use this expression?** §3b shows it
+matches no standard potential, but that is an argument about standard forms,
+not a reading of the paper. If the published model defines its split this way,
+changing it is a disagreement with the paper rather than a bug fix — a
+different and larger decision. Needs the Klempt formulation (Archive of Applied
+Mechanics 96, 164 (2026), doi:10.1007/s00419-026-03160-y) read directly.
 
-**How far does it propagate?** The headline cross-condition comparisons are
-ratios between runs that all share the term, so it may partly cancel. "May"
-is doing real work in that sentence — it has not been measured.
+**How large is the indirect FEM effect at lower ν?** §3 measures the direct
+effect (zero on Mises) and the viscous one (≤0.01%). The equilibrium effect —
+wrong pressure → different displacements → different Mises — can only be
+measured by running the same job both ways. Cheap to do once a v222 or Abaqus
+run is available; not done.
 
 ## 6. If it is fixed
 
@@ -113,3 +149,21 @@ number.
 
 Reproduction script for everything above:
 `ansys_usermat/crosscheck/check_deviator_scaling.py`.
+
+## 7. Recommendation
+
+**Do not fix it before submission.** The reported quantity is von Mises and it
+is provably untouched at fixed `F`; the fix would invalidate every golden value
+and reference for a change that does not move the headline results. That is a
+bad trade eleven weeks out.
+
+**Do write it into the verification section.** It is a genuinely useful
+limitation to state, and it is more interesting than a typo: it shows the
+cross-checks were characterised rather than trusted, and it makes the honest
+point that agreement between two implementations of the same expression is not
+correctness. The Mises-blindness of the dual-UMAT check is worth one sentence.
+
+**Do measure the equilibrium effect once** a run is available (§5), so the
+limitation can be stated with a number instead of an argument.
+
+**Revisit the fix at Keio**, together with whatever the Klempt paper says.
