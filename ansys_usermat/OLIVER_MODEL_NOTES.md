@@ -1,29 +1,34 @@
-# Oliver's ANSYS model (`BiofilmImplementation.wbpz`) — what is in it
+# Oliver's ANSYS model — what is in it
 
-Notes from inspecting the Workbench project archive received from Oliver
-(2026-09-01). The archive itself is **not committed** — it is a ~10 MB binary
-that is not ours to redistribute. This file records what it contains so the
-integration question can be discussed without re-opening it.
+Notes from inspecting two deliveries received from Oliver on 2026-09-01: the
+Workbench project archive `BiofilmImplementation.wbpz`, and then the UPF source
+pool `Nishioka_Hoechel.zip`. **Neither is committed** — together they are ~26 MB
+of binaries and of another group's source, not ours to redistribute. This file
+records what they contain so the integration question can be discussed without
+re-opening them.
 
-Everything under "Verified" was read directly out of the archive
-(`ds.dat`, `solve.out`, the file listing). Everything under "Inferred" is
-read *from* those facts and is flagged as such — the Fortran that would settle
-it is not in the archive.
+Everything here was read directly from those files — the project deck
+(`ds.dat`, `solve.out`) and the Fortran. Where a statement is an interpretation
+rather than something the code states outright, it says so.
 
 ---
 
-## ⚠️ The blocking gap: the USERMAT source is not included
+> **Update 2026-09-01 (later the same day): the source arrived.** A second
+> delivery (`Nishioka_Hoechel.zip`) contains the full UPF source pool plus the
+> same `.wbpz`. The blocking gap below is closed, and everything previously
+> marked "Inferred" is now confirmed from the code. See
+> **[Source pool](#source-pool-nishioka_hoechelzip)** onwards — that section
+> also records the finding that matters most for us: **the ANSYS 2024 R2
+> `usermat` signature is not the v222 one this repo is built against.**
 
-`Biofilm-Implementation_files/user_files/` is **empty**, and the archive
-contains no `.f`, `.for`, `.f90`, `.c`, `.obj`, `.dll` or `.bat` anywhere.
+## ~~The blocking gap: the USERMAT source is not included~~ (resolved)
 
-The project calls a user material (`TB,USER` + `USRCAL,USOLBEG,USSFIN`), so
-**it cannot be run as shipped**: without the custom `ANSYS.exe` built from that
-Fortran, ANSYS falls back to its own stub and the run is meaningless. (The
-stock-stub failure mode is already catalogued in
-[`apdl/RUNBOOK.md`](apdl/RUNBOOK.md): "Stress exactly 0 everywhere".)
-
-**This is the first thing to ask Oliver for.**
+The `.wbpz` alone has an **empty** `user_files/` and no `.f`, `.for`, `.f90`,
+`.c`, `.obj`, `.dll` or `.bat` anywhere, so the project could not be run from
+that archive by itself: without the UPF binary, ANSYS falls back to its own
+stub and the run is meaningless (the "stress exactly 0 everywhere" failure
+catalogued in [`apdl/RUNBOOK.md`](apdl/RUNBOOK.md)). The follow-up zip supplies
+it.
 
 ---
 
@@ -96,21 +101,215 @@ with an export folder named `120W_Mesh_Dependence`.
 
 ---
 
-## Inferred — consistent with the above, but not confirmable without the source
+## Source pool (`Nishioka_Hoechel.zip`)
 
-1. **The USERMAT is nonlocal: it solves field PDEs at the integration points.**
-   A neighbour search with a Laplace assemble key, a weighted W-matrix, node
-   normals, boundary flags, and analytic test fields for a gradient/Laplacian
-   operator only make sense if a diffusion-type equation is being solved
-   *inside* the material routine. 100 state variables and the
-   `USOLBEG`/`USSFIN` global hooks fit the same reading.
+Received 2026-09-01. Contents: the same `.wbpz`, plus an `ANSYS-Pool/`
+directory with the complete UPF source, the objects, the built
+`libansuser.so` / `userlib.a`, and the build script. **Not committed** — it is
+Oliver's group's code, not ours to redistribute.
 
-2. **It is a glass/laser-processing framework with biofilm work grafted on.**
-   Soda-lime glass as the Workbench material, melt and glass-transition
-   temperatures, latent heat, amorphous/crystalline kinetics, a viscosity
-   ladder up to 1e15, and a `120W` (laser power) export folder are not
-   biofilm quantities. The biofilm parameters look like a newer layer on an
-   existing codebase.
+### Build mechanism differs from ours
+
+```bash
+module load ANSYS/2024.2
+module load intel/2023b
+export ANS_PATH=.../ANSYS/2024.2/v242/ansys/
+./ANSUSERSHARED_Userdata_Linux_V03_SMP
+```
+
+**`ANSUSERSHARED` on Linux, producing a shared library** (`libansuser.so`) —
+not `ANSCUST.BAT` producing a custom `ANSYS.exe` on Windows, which is what
+[`apdl/RUNBOOK.md`](apdl/RUNBOOK.md) documents for this repo. Built cleanly
+(`ansusershared.log`: no compiler or linker errors) with `ifx` / `icc` from
+Intel 2023.2.1, on what the module paths show to be an HPC cluster.
+
+Compile order (the log notes ANSUSERSHARED compiles `userdata.F`/`userdata.f`
+first to support the common-block feature — worth remembering, since their
+file is named `userdata_P21-V21_Conection_Test.f` and so does **not** match
+that special-cased name):
+
+```
+AceGenElastoAirV08.f  AceGenNeoHookV02.f  AceGenNeoHookV03.f  AceGenNeoHookV04.f
+AGPhaseViskoP21V07.f  AGStressP21V07.f    MySubroutines_userData_V04.F
+NEM_UserData_P21_V05.F  userdata_P21-V21_Conection_Test.f
+Usermat_P21-V21_Conection_Test.F  USolBeg_P21-V21_Conection_Test.F
+Ussfin_P21-V21_Conection_Test.F
+```
+
+Constitutive routines are **AceGen-generated** (Mathematica symbolic → Fortran;
+`sms.h` is the AceGen runtime header).
+
+### ⚠️ The `usermat` signature is release-specific — and it changed
+
+Counted directly from both sources:
+
+| | args | trailing arguments after `cutFactor` |
+|---|---|---|
+| **2024 R2** (Oliver) | **41** | `pVolDer, hrmflg, var3, var4, var5, var6, var7` |
+| **v222** (this repo) | **42** | `var1, var2, var3, var4, var5, var6, var7, var8` |
+
+In 2024 R2 the two reserved slots `var1`/`var2` became named arguments —
+`pVolDer(3)` (derivatives of the volumetric potential w.r.t. J: dU/dJ,
+d²U/dJ², d³U/dJ³) and `hrmflg` (harmonic-analysis flag) — and `var8` was
+**dropped entirely**.
+
+So `usermat_biofilm.f` **cannot be built against 2024 R2 as it stands**: it
+declares one argument more than the solver passes, and `var8` would read past
+the end of the actual argument list. This is exactly the hazard
+[`README.md`](README.md) flags ("the argument list is release-specific — recheck
+it first when moving to another ANSYS version"), now confirmed concretely
+rather than in principle. Adapting it is a small, mechanical edit, but it must
+be done deliberately and the result cannot then run on v222 unchanged.
+
+### Confirmed: the routine is nonlocal, with a parallel data pool
+
+What was inferred from the APDL deck is visible in the source:
+
+- `NEM_UserData_P21_V05.F` (72 kB) — the meshless neighbour/Laplacian machinery.
+- `Usermat_*.F` includes `mpif.h` and declares an interface to a global data
+  pool: `GetVals` / `SetVals` / `GetTMP` / `SetTMP` / `SetNEM`, all indexed by
+  a location `iloc`. State therefore lives partly in `ustatev` and partly in
+  this **MPI-shared pool** — hence the directory name `ANSYS-Pool`.
+- `USolBeg_*.F` (40 kB) and `Ussfin_*.F` (166 kB) do the per-solution-step
+  field work around the per-Gauss-point material call.
+
+### `prop` is unused; state layout
+
+`prop(...)` never appears in the executable body — consistent with
+`TB,USER,1,1,1` carrying no `TBDATA`. **All model parameters arrive as APDL
+parameters** through the pool, not through the standard material-constant
+array.
+
+The state vector in this build:
+
+| slot | meaning |
+|---|---|
+| `ustatev(2)` | `Sdp_Phi` — **the φ field** |
+| `ustatev(3)` | temperature |
+| `ustatev(4:6)` | `Vdp_L_n(1:3)` |
+| `ustatev(7:9)` | viscosities of the crystalline / amorphous / liquid phases |
+| `ustatev(10)` | `Vdp_Cv_n(1)` — right Cauchy–Green of the **viscous part** |
+| `ustatev(11)` | density |
+| `ustatev(12)` | mechanical viscosity |
+
+A viscous kinematic split is therefore already anticipated in the layout —
+`Vdp_Cv_n` plays the role this repo's `Fv` (`ustatev(1:9)`) plays.
+
+### The material slot is currently a placeholder
+
+In `Usermat_P21-V21_Conection_Test.F` the only **active** constitutive call is
+
+```fortran
+CALL AceGenNeoHookV04(Vdp_AceGen, defGrad, stress, ...)     ! line ~554
+```
+
+while the phase/viscous routines are commented out:
+
+```fortran
+!  CALL AceGenElastoAirV08(...)                              ! line ~562
+!  CALL AGStressP21V07(Vdp_AceGen, Vdp_L_n, Vdp_L_n0, Vdp_Cv_n, ...)   ! line ~592
+```
+
+The file name says as much — `Conection_Test` — so this build exercises the
+plumbing (NEM, pool, MPI) with a plain Neo-Hookean stand-in rather than the
+full material.
+
+**That call site is where this repo's verified law would go.** It is the
+concrete form of option (A) below.
+
+### The phase/viscous material itself (`AGPhaseViskoP21V07.f`)
+
+The routine currently commented out of the call chain — 161 kB of Fortran
+generated by **AceGen 8.103** from a Mathematica notebook of the same name
+(2398 formulae, generated 2026-06-09). Its interface:
+
+```fortran
+SUBROUTINE AGPhaseViskoP21V07(v, vChiN(3), vChiN1(3), vLambdaInit(3),
+     vRCGviscoN(6), vRCGviscoN1(6), sPhi, TempN, TempRef, TempMelt, TempG,
+     mDefGradN(3,3), mDefGradN1(3,3), mEtaLambda(3,3), mEtaVisco(3,3),
+     vYoung(4), vNu(4), vAlphaTh(3), vHeatCapacity(4), vRhoInit(4),
+     sKthres, sKpen, sDt, OffsetCal, LatentHeat,
+     sNRTolAbs, sNRTolRel, sNRTolStep, sNRResidual, sNRLoops, sNRConverged,
+     sRHSTemp, vDebug(100), sNRNmax, sNLSMax, sDebug)
+```
+
+Reading it against `BIOFILM_STRESS_CORE`:
+
+| | `AGPhaseViskoP21V07` | `BIOFILM_STRESS_CORE` (this repo) |
+|---|---|---|
+| Elastic law | E, ν per phase (`vYoung(4)`, `vNu(4)`) | Mooney–Rivlin `C10`, `C01` + `D1` |
+| Viscous variable | `vRCGvisco(6)` — right Cauchy–Green of the viscous part, Voigt | `Fv(3,3)` — viscous deformation gradient |
+| Viscous update | **local Newton with line search** (`sNRTol*`, `sNRLoops`, `sNRConverged`, `sNLSMax`) | **backward Euler, closed form** — no local iteration |
+| Bounded internal vars | `χ` unbounded, mapped through a logistic sigmoid `1/(1+exp(-χ))` | φ, ψ kept in (0,1) by a log-barrier (`hamilton_ode_jax.py`) |
+| Volumetric driver | thermal expansion `vAlphaTh` + phase change (melt/glass-transition) | **growth** `Fg = (1+α)I` |
+| φ | enters as scalar `sPhi` | not part of the local law |
+
+Two things follow, and they set the size of the porting job:
+
+1. **There is no growth kinematics in his material.** Volume change comes from
+   thermal expansion and phase transition, not from a growth tensor. The
+   thesis' central mechanism, `F = Fe·Fv·Fg` with `Fg=(1+α)I`, is simply not
+   there and would have to be added — this is the substantive part of option
+   (A), not a rename.
+2. **It is machine-generated, so the edit belongs in the notebook.** Adding
+   `Fg` means changing the AceGen source and regenerating; hand-patching
+   161 kB of generated Fortran would be overwritten on the next generation and
+   is not a maintainable route. Whether we can get the notebook is therefore a
+   real prerequisite, not a nicety.
+
+Encouragingly, the *shape* matches: a multiplicative viscous split with the
+viscous state carried as a Cauchy–Green tensor is the same kinematic family
+this repo verified, and `vRCGvisco` maps to `Fv` through `C_v = Fv^T Fv`.
+
+---
+
+### How the whole thing runs — the solution loop
+
+Traced through `USolBeg`, `Usermat` and `Ussfin`. This is the part worth
+understanding first, because it decides where our work can attach.
+
+```
+ANSYS solve  (SOLID185, NLGEOM,ON)
+ │
+ ├─ USolBeg ......... once, at solution start
+ │     · ~150 parevl calls: pull every APDL parameter into the
+ │       /usercm/ common block   (this is why prop() is unused)
+ │     · InitVals            — allocate the shared data arena
+ │     · NEM_CreateData_Init — build the meshless neighbour operator
+ │     · Mapping_Node_ID, Initial_Values
+ │
+ ├─ usermat ......... per Gauss point, per equilibrium iteration
+ │     · GetVals / GetTMP    — read this point's state from the pool
+ │     · CALL AceGenNeoHookV04 → stress, dsdePl     <<< our law would go here
+ │     · SetVals             — write state back
+ │
+ └─ USSFin .......... after each substep
+       · assemble + PARDISO solve  →  temperature field
+       · assemble + PARDISO solve  →  "Nut1" field
+       · assemble + PARDISO solve  →  "Nut2" field
+       · (AGPhaseViskoP21V07 — commented out here too)
+       · CalcLaserIntegralOMP / CALCPYRO — laser & pyrometer (glass process)
+```
+
+So it is a **staggered / operator-split scheme**: ANSYS solves the mechanics,
+`USSFin` solves the transport fields on the NEM operator with Intel MKL's
+PARDISO sparse direct solver, and the two alternate substep by substep. The
+transport fields are *not* ANSYS degrees of freedom — they live entirely in
+the UPF's own data pool.
+
+*Interpretation, not something the code states:* the two "Nut" systems are
+most likely the biofilm and nutrient fields rather than two nutrients — the
+deck carries both `MY_BIOSTART1/2` and `MY_NUTSTART1/2`, with two diffusion
+coefficients and two rates, and there are exactly two such solves besides
+temperature. The naming looks inherited from the glass code. Worth confirming
+rather than assuming.
+
+**Why this matters for us.** `JAXFEM/` solves φ–c–α by finite differences in
+JAX; this solves its fields by NEM + PARDISO inside ANSYS. Same operator-split
+idea, different discretisation and solver. The mechanical answer is still
+produced one Gauss point at a time in `usermat`, which is exactly the shape our
+verified law has — so the attachment point is clean even though the surrounding
+field machinery is completely different from ours.
 
 ---
 
@@ -127,31 +326,46 @@ The two are **not drop-in compatible** — they cover different scopes.
 | Gradients | Meshless neighbour operator (NEM) | none needed — point-local |
 | ANSYS release | 2024 R2 | verified on 2022 R2 (v222) |
 
-Two ways they could meet, both of which are a supervisor-level decision rather
-than a coding one:
+Two ways they could meet. Now that the source is in hand, (A) has a concrete
+address — the `CALL AceGenNeoHookV04(...)` site — but which one is right is
+still a supervisor-level decision, not a coding one:
 
 - **(A) Port the constitutive law into Oliver's framework.** His NEM machinery
   supplies φ; this repo contributes the verified `Fg=(1+α)I` growth +
-  Mooney-Rivlin/`D1` + viscous response as the mechanical answer. The
-  0-ULP Abaqus↔ANSYS equivalence (`crosscheck/`) travels with it.
+  Mooney-Rivlin/`D1` + viscous response as the mechanical answer, replacing the
+  Neo-Hookean stand-in. The 0-ULP Abaqus↔ANSYS equivalence (`crosscheck/`)
+  travels with it, and `Vdp_Cv_n` already reserves the viscous state. Under
+  this option `usermat_biofilm.f` stops being the deliverable and becomes the
+  reference implementation the ported law is checked against.
 - **(B) Keep them separate.** This repo's USERMAT stays a local law taking a
   prescribed α from `JAXFEM/`; Oliver's computes its own. They then answer
   different questions and should not be compared directly.
 
 ## Open questions for Oliver
 
-1. **The USERMAT Fortran source** — nothing runs without it.
-2. **Will it build under 2022 R2 (v222)?** IKMHIWI03 has v222 only, and the
-   `usermat` argument list is release-specific — see the warning in
-   [`README.md`](README.md), which this repo already had to pin down for v222.
-3. **Who computes φ?** If his NEM solves the field, this repo's α-field mapping
-   (`ustatev(10)`) is redundant and option (A) above is the real integration
-   path. If not, (B) applies.
-4. **Is the biofilm layer finished or in progress?** The parameters are present
-   and the run converges, but the surrounding glass/crystallisation machinery
-   suggests the biofilm path may not yet be the primary code path.
+1. ~~**The USERMAT Fortran source**~~ — **received** (`Nishioka_Hoechel.zip`).
+2. **Which ANSYS release do we target?** His pool is built for **2024 R2 on
+   Linux** via `ANSUSERSHARED`; IKMHIWI03 has **v222 on Windows** via
+   `ANSCUST.BAT`. The `usermat` signatures differ (41 vs 42 arguments — see
+   above), so the two cannot share one source file unguarded. Either we adapt
+   to 2024 R2 and work on the cluster, or he confirms a v222 build is viable.
+3. **Who computes φ?** His NEM solves the field, which makes this repo's
+   α-field mapping (`ustatev(10)`) redundant under option (A) and points at
+   (A) as the real integration path — but that is his call, not an inference
+   we should act on unilaterally.
+4. **Is the biofilm layer finished or in progress?** The build is named
+   `Conection_Test`, the phase/viscous material calls (`AGStressP21V07`,
+   `AceGenElastoAirV08`) are **commented out**, and only a Neo-Hookean
+   stand-in is active — so the biofilm path looks unfinished. Worth asking what
+   state `AGPhaseViskoP21V07` is in and whether it is meant to be the biofilm
+   material or still the glass one.
+5. **Is AceGen required to modify the material?** The constitutive routines are
+   machine-generated from Mathematica. If the `.nb` source is the real master,
+   hand-editing the generated `.f` would be overwritten — we would need either
+   the notebook or an agreed hand-written call-out point.
 
 ---
 
-*Archive inspected 2026-09-01. Internal file paths and cluster usernames in
-the original are deliberately not reproduced here — this repository is public.*
+*Both deliveries inspected 2026-09-01. Internal file paths and cluster
+usernames from the originals are deliberately not reproduced here — this
+repository is public, and the source pool is another group's code.*

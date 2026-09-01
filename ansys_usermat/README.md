@@ -209,10 +209,15 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
    Fortran law (`material_server.py`'s `stress_core`), not yet the calibrated
    JAX model (`JAXFEM/`/`material_models.py`) — swapping that in is a local
    change behind the same interface, not a wiring change.
-6. **Integration with Oliver's ANSYS model** — the Workbench archive received
-   2026-09-01 turns out to be a *nonlocal* USERMAT (it solves the φ/nutrient
-   fields itself via a meshless neighbour operator, 100 state variables),
-   which is a different scope from this local constitutive law. It also ships
-   **without its Fortran source**, so it cannot be run as received. Findings,
-   the compatibility table, and the questions to put to Oliver:
+6. **Integration with Oliver's ANSYS model** (received 2026-09-01, project
+   archive + UPF source pool) — a *nonlocal* USERMAT: it solves the φ/nutrient
+   fields itself via a meshless neighbour operator (NEM) over an MPI-shared
+   data pool, with 100 state variables. Different scope from this local law.
+   Two things to know before planning against it: its `usermat` signature is
+   **ANSYS 2024 R2's, which takes 41 arguments where v222 takes 42** (`var1`/
+   `var2` became `pVolDer`/`hrmflg`, `var8` was dropped), so this file will not
+   build there unchanged; and its active constitutive call is currently a
+   Neo-Hookean stand-in with the phase/viscous routines commented out — which
+   is exactly the slot our verified law would occupy. Full findings, the
+   compatibility table, and the open questions:
    [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md).
