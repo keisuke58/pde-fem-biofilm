@@ -72,9 +72,40 @@ pool is acceptable to them, which is in the draft to him.
 2. **Wrap `BIOFILM_STRESS_CORE` to their calling convention** — the same shape
    as `AceGenNeoHookV04`, plus arguments for the growth variable and the
    viscous state (`Vdp_Cv_n` already reserves a slot for the latter).
+   **Done:** [`biofilm_material_v01.f`](biofilm_material_v01.f),
+   `BIOFILM_GROWTH_VISCO_V01`.
 3. **Verify the wrapper** against the existing crosscheck battery, so the
-   0-ULP Abaqus equivalence travels with it.
+   0-ULP Abaqus equivalence travels with it. **Done:**
+   [`tests/test_material_wrapper.py`](../tests/test_material_wrapper.py), 13
+   tests, driven through [`crosscheck/wrapper_driver.f`](crosscheck/wrapper_driver.f).
+   The load-bearing one is `test_wrapper_is_only_an_adapter`: fed (E, ν), the
+   wrapper's stress and viscous update must equal the core's fed the
+   (C10, C01, D1) they map to, at `rtol=0, atol=0`. It does, so the core's
+   0-ULP Abaqus equivalence applies to the wrapper unchanged.
 4. **Hand it over** and let them wire it at the `AceGenNeoHookV04` call site.
+
+### Two things step 3 pinned down, worth passing on with the routine
+
+- **`sDt` must resolve the viscous relaxation time `η/(2·C10)`.** The core
+  advances `Fv` with the flow increment evaluated at the old state, so the step
+  is only accurate while `dt ≪ τ`. Measured at η=5, C10≈167 (τ≈0.015 s): σ₁₁
+  goes from −513 Pa at dt=1e−4 to +347 Pa at dt=1e−2 — it crosses zero near
+  `dt/τ ≈ 0.5` and diverges past `dt/τ ≈ 1`. This is a property of the existing
+  verified core, not of the wrapper, and it is not something to fix here: the
+  core is locked 0 ULP to the Abaqus UMAT, so changing its integrator is a
+  separate decision carrying its own re-verification. It matters because in the
+  handover case *their* framework picks the time step. `sEta = 0` selects the
+  elastic path and removes the limit.
+- **Cut-backs return defined outputs.** On `sKeyCut = 1` the stress and tangent
+  are zeroed and `mFvN1` is restored to `mFvN` rather than left at the core's
+  update off a collapsed configuration. Their framework passes work arrays that
+  are not zeroed between calls, so "left untouched" would have meant returning
+  uninitialised memory.
+
+Note on terminology: the repo calls this update "backward Euler" throughout
+(`umat_biofilm_visco.f`, `rigor_audit_growth_2026-06-26.md`), but the flow
+increment is evaluated at `Fv_n`, which is what creates the step limit above.
+The label was left alone rather than renamed across the six files that use it.
 
 Steps 2 and 3 do not depend on step 1 succeeding — the routine is plain
 Fortran and can be tested with the existing gfortran harness. Step 1 buys a
