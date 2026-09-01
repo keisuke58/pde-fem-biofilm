@@ -216,8 +216,10 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
    Two things to know before planning against it: its `usermat` signature is
    **ANSYS 2024 R2's, which takes 41 arguments where v222 takes 42** (`var1`/
    `var2` became `pVolDer`/`hrmflg`, `var8` was dropped), so this file will not
-   build there unchanged; and its active constitutive call is currently a
-   Neo-Hookean stand-in with the phase/viscous routines commented out — which
-   is exactly the slot our verified law would occupy. Full findings, the
+   build there unchanged; and its live constitutive call is a
+   biofilm-specific but purely **elastic** Neo-Hookean (blending biofilm
+   against void stiffness), with a separate glass model commented out — so the
+   viscous and growth parts of our law are what would be added, at that call
+   site. Full findings, the
    compatibility table, and the open questions:
    [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md).
