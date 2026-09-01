@@ -54,12 +54,25 @@ information. `mFvN` / `mFvN1` are full 3×3.
 `Sdp_sumLocal`, a local biofilm average, and is not a growth variable at all.
 Reusing that name here would invite exactly the wrong wiring.
 
-**3. `sDt` must resolve the viscous relaxation time `η/(2·C10)`.** The flow
-increment is evaluated at the old state, so accuracy degrades as `Δt`
-approaches that time — past `Δt/τ ≈ 0.5` the stress changes sign, and past
-`Δt/τ ≈ 1` it diverges. Setting `sEta = 0` selects the purely elastic path and
-removes the constraint entirely. Since your side controls the time step, this
-one is yours to respect rather than ours.
+**3. `sDt` must resolve the viscous relaxation time `η/(2·C10)` — and the
+routine enforces this rather than trusting you to read it.** The flow increment
+is evaluated at the old state, so accuracy degrades as `Δt` approaches that
+time; past `Δt/τ ≈ 0.5` the stress changes sign and past `Δt/τ ≈ 1` it
+diverges. Because a wrong step would otherwise return a plausible-looking wrong
+stress, `Δt/τ > 0.5` sets `sKeyCut = 1` and returns without computing one, so
+the solver cuts the increment and retries. **You may therefore see cut-backs
+you did not expect** — that is this check, not an instability.
+
+Two things follow. Growth shrinks `τ` as `C10` rises, so a step that is fine
+early in a solve can stop being fine later; it is checked every call for that
+reason. And `sEta = 0` selects the purely elastic path, which has no relaxation
+time and is never restricted.
+
+The threshold is the `DTMAX_RATIO` parameter at the top of
+`biofilm_material_v01.f`. It is set at the sign-flip rather than tighter,
+deliberately: below it the answer loses accuracy but stays qualitatively right,
+and trading accuracy against step size is your engineering choice, not ours to
+force. Lower it if you want the routine to insist on more resolution.
 
 On a cut-back (`sKeyCut = 1`) every output is defined: stress and tangent are
 zeroed and `mFvN1` is returned unchanged, so reading them before checking the
