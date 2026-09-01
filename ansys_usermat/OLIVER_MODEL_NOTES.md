@@ -362,6 +362,62 @@ field machinery is completely different from ours.
 
 ---
 
+### What the NEM operator actually is (`NEM_UserData_P21_V05.F`)
+
+Despite the name, this is not the Natural Element Method — it is a **weighted
+least-squares (moving-least-squares) derivative operator** on scattered
+integration points, i.e. a generalised finite difference. Worth knowing
+precisely, since it is Felix's method and the thing the field solve rests on.
+
+`CalcDMat` builds, for each point, a `mD(9, NeighCnt)` matrix of derivative
+weights over its ~30 neighbours (`NEIGHBOR_CNT`):
+
+```fortran
+! Gaussian kernel, bandwidth BETA_STAR, sparsified at WMAT_THRESHOLD
+mW(ii,ii) = EXP(-0.5*((4.0*SQRT(dx**2+dy**2+dz**2))/BETA_STAR)**2)
+if (mW(ii,ii) <= WMAT_THRESHOLD) mW(ii,ii) = 0.0
+...
+CALL InversGauss(mResult3, 9)      ! invert the 9x9 moment matrix
+```
+
+so: fit a second-order Taylor polynomial through the neighbourhood, weighted
+by a Gaussian, and invert the 9×9 moment matrix. The nine rows come out as
+
+| rows | meaning | confirmed by |
+|---|---|---|
+| 1–3 | ∂xx, ∂yy, ∂zz | `mD(1,ii) + mD(2,ii) + mD(3,ii)` assembled as the Laplacian |
+| 4–6 | mixed second derivatives | (unused under `ASSEMBLE_KEY=1`) |
+| 7–9 | ∂x, ∂y, ∂z | assembled into `Vdp_Dx_T`, `Vdp_Dy_T`, `Vdp_Dz_T` |
+
+which is what `ASSEMBLE_KEY` selects between (`1: Laplace`, `2: Dx+Dy+Dz`,
+otherwise all).
+
+`AssembleSparse` then writes them into the global sparse matrix with the
+self-coefficient set as minus the sum of the neighbour coefficients:
+
+```fortran
+Vdp_Dx_T(1)    = Vdp_Dx_T(1) - mD(7,ii)
+Vdp_Dx_T(1+ii) = mD(7,ii)
+```
+
+which makes the operator annihilate constants — zeroth-order consistency,
+the usual correctness condition for this class of scheme. That, together with
+the analytic test fields wired to `DEBUG_KEY` (`phi=(x²+y²+z²)/6`, cosines,
+`sin(πx)`, `exp(2x)`, and a boundary-gradient check), is how they verify it.
+
+Boundaries are handled separately: `ComputeSurfaceNormal` derives outward
+normals from the neighbourhood where `MY_COMP_NORMAL` asks for it, otherwise
+they come in from APDL as `VGLBNODENORMX/Y/Z` with `VGBOUNDARYNODE` flagging
+which nodes are on the surface.
+
+**Compared with ours:** `JAXFEM/` gets its derivatives from a structured
+finite-difference grid. This gets them from a weighted least-squares fit over
+scattered points, which is what lets the field live on the FE integration
+points directly instead of a separate grid. Same differential operators, very
+different route to them.
+
+---
+
 ## How this relates to `usermat_biofilm.f`
 
 The two are **not drop-in compatible** — they cover different scopes.
