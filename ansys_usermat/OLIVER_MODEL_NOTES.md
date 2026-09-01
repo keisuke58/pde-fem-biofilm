@@ -263,6 +263,56 @@ this repo verified, and `vRCGvisco` maps to `Fv` through `C_v = Fv^T Fv`.
 
 ---
 
+### How the whole thing runs — the solution loop
+
+Traced through `USolBeg`, `Usermat` and `Ussfin`. This is the part worth
+understanding first, because it decides where our work can attach.
+
+```
+ANSYS solve  (SOLID185, NLGEOM,ON)
+ │
+ ├─ USolBeg ......... once, at solution start
+ │     · ~150 parevl calls: pull every APDL parameter into the
+ │       /usercm/ common block   (this is why prop() is unused)
+ │     · InitVals            — allocate the shared data arena
+ │     · NEM_CreateData_Init — build the meshless neighbour operator
+ │     · Mapping_Node_ID, Initial_Values
+ │
+ ├─ usermat ......... per Gauss point, per equilibrium iteration
+ │     · GetVals / GetTMP    — read this point's state from the pool
+ │     · CALL AceGenNeoHookV04 → stress, dsdePl     <<< our law would go here
+ │     · SetVals             — write state back
+ │
+ └─ USSFin .......... after each substep
+       · assemble + PARDISO solve  →  temperature field
+       · assemble + PARDISO solve  →  "Nut1" field
+       · assemble + PARDISO solve  →  "Nut2" field
+       · (AGPhaseViskoP21V07 — commented out here too)
+       · CalcLaserIntegralOMP / CALCPYRO — laser & pyrometer (glass process)
+```
+
+So it is a **staggered / operator-split scheme**: ANSYS solves the mechanics,
+`USSFin` solves the transport fields on the NEM operator with Intel MKL's
+PARDISO sparse direct solver, and the two alternate substep by substep. The
+transport fields are *not* ANSYS degrees of freedom — they live entirely in
+the UPF's own data pool.
+
+*Interpretation, not something the code states:* the two "Nut" systems are
+most likely the biofilm and nutrient fields rather than two nutrients — the
+deck carries both `MY_BIOSTART1/2` and `MY_NUTSTART1/2`, with two diffusion
+coefficients and two rates, and there are exactly two such solves besides
+temperature. The naming looks inherited from the glass code. Worth confirming
+rather than assuming.
+
+**Why this matters for us.** `JAXFEM/` solves φ–c–α by finite differences in
+JAX; this solves its fields by NEM + PARDISO inside ANSYS. Same operator-split
+idea, different discretisation and solver. The mechanical answer is still
+produced one Gauss point at a time in `usermat`, which is exactly the shape our
+verified law has — so the attachment point is clean even though the surrounding
+field machinery is completely different from ours.
+
+---
+
 ## How this relates to `usermat_biofilm.f`
 
 The two are **not drop-in compatible** — they cover different scopes.
