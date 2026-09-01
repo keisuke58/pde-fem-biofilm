@@ -1,11 +1,18 @@
 # Oliver's ANSYS model — what is in it
 
+**English** | [日本語](OLIVER_MODEL_NOTES.ja.md)
+
 Notes from inspecting two deliveries received from Oliver on 2026-09-01: the
 Workbench project archive `BiofilmImplementation.wbpz`, and then the UPF source
 pool `Nishioka_Hoechel.zip`. **Neither is committed** — together they are ~26 MB
 of binaries and of another group's source, not ours to redistribute. This file
 records what they contain so the integration question can be discussed without
 re-opening them.
+
+Companion pieces: [`oliver_model_analysis.ipynb`](oliver_model_analysis.ipynb)
+re-derives every number below from the files themselves, and
+[`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_PORT_INSTRUCTIONS.md) is the
+step-by-step for trying the build on this PC's ANSYS v222.
 
 Everything here was read directly from those files — the project deck
 (`ds.dat`, `solve.out`) and the Fortran. Where a statement is an interpretation
@@ -415,6 +422,92 @@ finite-difference grid. This gets them from a weighted least-squares fit over
 scattered points, which is what lets the field live on the FE integration
 points directly instead of a separate grid. Same differential operators, very
 different route to them.
+
+---
+
+### The ecology in the code is the published paper's, at n = 2
+
+The common block (`usercm.inc`) and the field update in `Ussfin` together spell
+out the model. It is **two bacterial species on two nutrients**, not one
+biofilm field and two nutrients as first assumed here:
+
+```
+sGdp_Bio1start,  sGdp_Bio2start        ! two species
+sGdp_Nut1start,  sGdp_Nut2start        ! two nutrients
+sGdp_MaxGrowth11, sGdp_MaxGrowth21     ! 2x2 max-growth matrix
+sGdp_MaxGrowth12, sGdp_MaxGrowth22     !   (species x nutrient)
+sGdp_HalfVelo11 ... sGdp_HalfVelo22    ! 2x2 half-velocity constants
+sGdp_Interaction12, sGdp_Interaction21 ! pairwise species interaction
+```
+
+and the growth term itself (`Ussfin`, ~line 1900):
+
+```fortran
+GrowthBio1 = SQRT(Sdp_LapBio1**2) *
+     &(  ( (sGdp_MaxGrowth11 + sGdp_Interaction12 * vGdp_Bio2_n(ID))
+     &      * vGdp_Nut1_n(ID) ) / (sGdp_HalfVelo11 + vGdp_Nut1_n(ID))
+     &  + ( (sGdp_MaxGrowth21 + sGdp_Interaction12 * vGdp_Bio2_n(ID))
+     &      * vGdp_Nut2_n(ID) ) / (sGdp_HalfVelo21 + vGdp_Nut2_n(ID)) )
+```
+
+Reading it term by term:
+
+- **Monod kinetics** per nutrient — `μ_max·S/(K_s + S)`, with `HalfVelo` as `K_s`.
+- **A pairwise interaction that shifts the growth rate itself** —
+  `MaxGrowth + Interaction12·Bio2`, i.e. the other species modifies *how fast*
+  this one grows rather than adding a separate term. That is the "novel
+  interaction scheme" of the published paper (Klempt, Geisler, Soleimani et
+  al., *Archive of Applied Mechanics* **96**, 164 (2026),
+  doi:10.1007/s00419-026-03160-y — already in `biofilm_3tooth_refs.bib` as
+  `Klempt2026ContinuumBacterialGrowth`).
+- **`|∇²Bio|` as a prefactor** — growth is proportional to the magnitude of the
+  Laplacian, so it localises at the front where the field is curved, playing
+  the role the Allen–Cahn interface term plays in `JAXFEM/`.
+- **Chemotaxis-like orientation** — `OriBio = Σ_j OriWeight_j · NormDot(∇Nut_j, ∇Bio)`,
+  the normalised dot product of the nutrient and biofilm gradients.
+- **Penalty bounds** keeping the fields in [0,1]:
+  `-Penalty·( max(0, Bio-1) + min(0, Bio) )`. Three codes, three ways to do
+  this: penalty here, a log-barrier in `hamilton_ode_jax.py`, a logistic
+  sigmoid in the glass model.
+
+The biofilm update is marked `!Biofilm / lokales Biofilm Update (explizit, TEST)`
+— explicit time stepping, flagged as provisional.
+
+**This is the most useful single finding for the integration.** The framework
+is not a generic PDE solver we would have to teach biology to: it already
+implements the paper's ecology, just at **n = 2** where this repo works at
+**n = 5** and, in `JAXFEM/hamilton_ode_jax_nsp.py`, at general **n**. The
+interaction constants `Interaction12`/`Interaction21` are the off-diagonal of
+what this repo carries as the calibrated matrix `A`.
+
+So the gap to close is narrower than "port a model": generalise 2 → 5 species,
+supply the TMCMC-calibrated interaction matrix, and add the growth kinematics.
+
+### The Mathematica notebook is the model's reference implementation
+
+`BiofilmTSMMathematica20250117_4species__changing.nb` (Mathematica 12.2,
+2025-01-17) is **not** the AceGen source for the Fortran routines — it contains
+no `SMS*` calls at all. It is a **direct Mathematica implementation of the same
+growth model**, structured as:
+
+```
+TSM-Growth
+  ├── Aufstellen der Gleichungen     (set up the equations)
+  ├── Speichern der Variablen
+  ├── Newton-Raphson                 (the solve)
+  ├── Ausgabe
+  └── Speichern der Ergebnisse
+```
+
+It shares this repo's parameter vocabulary — `Kp1` (26 occurrences) and `Eta`
+(96) are both parameter names in `JAXFEM/hamilton_ode_jax.py`, where `Kp1` is
+the log-barrier constant — and works at **4 species**.
+
+So the lineage is: **paper → this Mathematica notebook (n=4) → Oliver's Fortran
+(n=2, inside ANSYS)**, with this repo's `hamilton_ode_jax.py` (n=5) and
+`hamilton_ode_jax_nsp.py` (general n) as the JAX branch of the same tree. That
+also means the notebook is the better reference for *what the equations are*,
+and Oliver's Fortran the better reference for *how they are solved in ANSYS*.
 
 ---
 
