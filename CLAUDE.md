@@ -97,18 +97,42 @@ this machine's specific workflow.
   such trailer, and there's no commit template/hook in this repo that would
   add one — keep it that way.
 - **Incident, 2026-08-20: 46 commits (2026-07-02 to 2026-08-19) had author
-  `Claude <noreply@anthropic.com>`**, visible on GitHub's Contributors page
-  — traced to a Claude Code environment other than this machine (no global
-  `.gitconfig` exists here, so it wasn't this machine's default; likely a
-  cloud/remote session). Fixed via `git filter-branch` (author/committer
-  rewritten to Keisuke Nishioka, content byte-identical, verified) + force
-  push — see the `git-history-rewrite-2026-08-20` memory for the full
-  incident and what it means for other clones (e.g. the Keio server one
-  needs re-cloning, not pulling). A local `pre-commit` hook now blocks any
-  commit with an `anthropic.com`/`Claude`-looking identity on this clone;
-  install it in any fresh clone with:
-  `cp scripts/pre-commit-no-ai-identity.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
-  — this only protects clones where it's installed, not every environment.
+  `Claude <noreply@anthropic.com>`**, visible on GitHub's Contributors page.
+  Fixed via `git filter-branch` (author/committer rewritten to Keisuke
+  Nishioka, content byte-identical, verified) + force push — see the
+  `git-history-rewrite-2026-08-20` memory for the full incident and what it
+  means for other clones (e.g. the Keio server one needs re-cloning, not
+  pulling).
+
+- **Root cause identified 2026-09-01, confirming the guess above.** In a
+  Claude Code *cloud* session the container ships a global
+  `/root/.gitconfig` containing `user.name=Claude` and
+  `user.email=noreply@anthropic.com`. It is not this machine's config and
+  not in the repo — it is the remote environment's default, and it applies
+  to any clone in that container that lacks a local `user.*`. Observed
+  live: after a mid-session container restart the repo's local identity was
+  gone and `git var GIT_AUTHOR_IDENT` resolved to
+  `Claude <noreply@anthropic.com>` again. **In any cloud session, set the
+  local identity before committing and re-check it after a restart:**
+  ```
+  git config --local user.name  "keisuke nishioka"
+  git config --local user.email "128669518+keisuke58@users.noreply.github.com"
+  git config --local commit.gpgsign false   # the global points at a signing key we do not have
+  git var GIT_AUTHOR_IDENT                  # verify
+  ```
+
+- **Two hooks guard this, and both must be installed per clone** (git does
+  not track `.git/hooks/`):
+  ```
+  cp scripts/pre-commit-no-ai-identity.sh .git/hooks/pre-commit  && chmod +x .git/hooks/pre-commit
+  cp scripts/commit-msg-no-ai-trailer.sh  .git/hooks/commit-msg  && chmod +x .git/hooks/commit-msg
+  ```
+  The first blocks an AI-looking author/committer. The second is needed
+  because the first cannot see it: a `Co-Authored-By: Claude
+  <noreply@anthropic.com>` trailer is neither author nor committer, yet
+  **GitHub counts co-authors as contributors**, so such a trailer puts
+  Claude on the Contributors page just as surely. `pre-commit` does not
+  receive the commit message; only `commit-msg` does.
 
 ## This PC vs. claude.ai (web) — don't mix them up
 
