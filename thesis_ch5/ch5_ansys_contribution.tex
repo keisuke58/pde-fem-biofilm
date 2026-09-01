@@ -1,0 +1,234 @@
+%=======================================================================
+% Chapter 5 — skeleton.
+%
+% Scope decision (ROADMAP_2026.md §1): this chapter is the ANSYS
+% material-law contribution. The JAXFEM material is held back for Keio and
+% does NOT appear here.
+%
+% HOW TO USE THIS FILE
+%   Every \TierA block is writable today -- the claim is already true and the
+%   evidence is named in the comment above it. Every \TierB block waits on
+%   runs (ROADMAP_2026.md §2-3). Prose is deliberately terse: this is a frame
+%   with the facts pinned in place, not finished text.
+%
+%   Copy into the thesis tree and delete the two \newcommand definitions
+%   below once the markers have served their purpose.
+%
+% PACKAGES: amsmath, amssymb, bm, xcolor, graphicx, tikz (+ the libraries the
+%   figure uses). Numbers are written out rather than via siunitx so that this
+%   file drops into any tree without adding a dependency.
+%
+% CITATION WARNING, from biofilm_3tooth_refs.bib:
+%   growth kinematics F = Fe.Fg, Fg = (1+alpha)I  -> Klempt2024DiffusionDrivenGrowth
+%   the 5-species phi/psi interaction dynamics    -> Klempt2026ContinuumBacterialGrowth
+%   These are different papers. Citing the 2026 one for the kinematics is the
+%   easy mistake here.
+%=======================================================================
+\newcommand{\TierA}[1]{\marginpar{\footnotesize A}#1}   % writable now
+\newcommand{\TierB}[1]{\marginpar{\footnotesize B}\textcolor{gray}{#1}} % needs runs
+
+\chapter{A growth constitutive law for an existing FEM framework}
+\label{ch:ansys}
+
+%-----------------------------------------------------------------------
+\section{Scope and contribution}
+\label{sec:ch5-scope}
+
+% TierA. The assignment is THESIS_ASSIGNMENT.md §1; open the chapter from it.
+\TierA{%
+The task set for this thesis is that the pointwise TMCMC model captures the
+temporal evolution at a material point but not its spatial variation, and that
+it should be integrated into an existing, working FEM framework so that spatial
+effects are represented as well.
+
+This chapter contributes the constitutive half of that integration: a growth
+and viscoelastic material law, implemented against the ANSYS user-material
+interface, verified against an independent implementation, and packaged so that
+it can be called from the partner framework at the point where that framework
+already calls its own elastic law. The field solution itself remains with the
+partner framework; \S\ref{sec:ch5-integration} makes that division explicit.}
+
+%-----------------------------------------------------------------------
+\section{The constitutive model}
+\label{sec:ch5-model}
+
+% TierA. Kinematics: cite Klempt2024DiffusionDrivenGrowth, NOT the 2026 paper.
+\TierA{%
+Growth enters multiplicatively, $\mathbf F = \mathbf F_e \mathbf F_v \mathbf F_g$
+with $\mathbf F_g = (1+\alpha)\mathbf I$ \cite{Klempt2024DiffusionDrivenGrowth},
+where $\alpha$ is supplied as a field rather than evolved locally. The elastic
+response is compressible Mooney--Rivlin, reducing to neo-Hookean at $C_{01}=0$,
+and the viscous branch is a deviatoric Newtonian dashpot carrying
+$\mathbf F_v$.}
+
+% TODO(prose): state W, the flow rule, and the update in the order the code
+% evaluates them, so §5.3 can be read against it. Keep the growth driver
+% prescribed -- the ecology that produces alpha is Chapter <N>.
+
+%-----------------------------------------------------------------------
+\section{Implementation}
+\label{sec:ch5-impl}
+
+% TierA. ansys_usermat/usermat_biofilm.f + README.md.
+\TierA{%
+The law is implemented as an ANSYS \texttt{USERMAT}
+(\texttt{ansys\_usermat/usermat\_biofilm.f}). Two implementation points are
+worth stating because they are where ports of this kind usually fail. First,
+the Voigt convention differs between the two solvers used here --- ANSYS orders
+the shear components $12,23,13$ and Abaqus $12,13,23$ --- so the two
+implementations cannot share an index map. Second, the consistent tangent is
+obtained by perturbation of $\mathbf F$ rather than in closed form.}
+
+% TODO(prose): say why F-perturbation and not an analytic tangent, and give the
+% step. Measured: the exact AD tangent and the FD tangent agree to ~3e-8 at
+% PERT=1e-7, so the FD choice is not costing convergence -- that measurement is
+% worth one sentence because it forecloses an obvious question.
+
+%-----------------------------------------------------------------------
+\section{Verification}
+\label{sec:ch5-verification}
+
+\subsection{Equivalence of two independent implementations}
+% TierA. ansys_usermat/crosscheck/README.md -- 0 ULP over 8017 states.
+\TierA{%
+The same law was implemented twice, independently, against the two solvers'
+user-material interfaces. Agreement was then hunted rather than sampled: an
+adversarial search over deformation states looked for any state on which the
+two disagree. Over 8017 states --- identity and growth, uniaxial, shear,
+elastic ($\eta=0$), frozen ($\eta\to\infty$), large growth, both
+neo-Hookean and Mooney--Rivlin, and random finite-strain states --- the two
+agree to $0$ ULP in stress, viscous state and elastic Jacobian.}
+
+\subsection{Growth kinematics against a closed form}
+% TierA. ansys_usermat/apdl/ -- free and constrained growth decks.
+\TierA{%
+Traction-free isotropic growth admits a closed form: the body expands to
+$\mathbf F = (1+\alpha)\mathbf I$ and the stress vanishes identically. The
+deck reproduces this.}
+
+% TODO(numbers): pull the constrained-growth comparison from
+% ansys_usermat/apdl/reference_values.json and the RUNBOOK once the v222 run
+% exists, so this subsection reports solver output rather than the mirror.
+
+\subsection{What these verifications establish, and what they do not}
+\label{sec:ch5-verification-limits}
+% TierA. DEVIATOR_SCALING_FINDING.md. This subsection is the most valuable
+% one in the chapter and the one most likely to be asked about in the viva.
+\TierA{%
+Cross-implementation agreement establishes that two ports of the same
+expression compute that expression identically. It does not establish that the
+expression is right, and the distinction is not hypothetical here.
+
+The isochoric split in both implementations applies $J^{-2/3}$ to the
+subtracted trace but not to the tensor beside it. The coded and correct forms
+coincide exactly at $J=1$ and nowhere else --- and growth, by construction,
+moves $J_e$ away from $1$. The resulting discrepancy is
+\emph{purely spherical} for any deformation, so it is a pressure error: the
+deviatoric stress, and hence the von Mises stress reported throughout this
+work, is unaffected to machine precision. Its indirect route --- a spherical
+term in the viscous flow driver, which makes $\det\mathbf F_v$ drift from
+unity --- was measured at $\le 0.01\,\%$ in von Mises over 40 steps.
+
+The point worth drawing out is why none of the three checks above sees it. The
+cross-implementation hunt compares two ports carrying the same expression. The
+free-growth deck lands on $J_e=1$ exactly, the single case where both forms
+agree. And the constrained-growth reference values are generated by calling the
+implementation, so they record its behaviour rather than test it. A fourth
+check, a growth cross-comparison against a second material model, compares von
+Mises and is therefore blind to a spherical term by construction.}
+
+% TODO(numbers): the one unmeasured route is the equilibrium effect -- a wrong
+% pressure changes displacements and so reaches von Mises indirectly. Measure it
+% once a run exists (same job, both expressions) and replace this sentence with
+% the number. See DEVIATOR_SCALING_FINDING.md §5.
+
+%-----------------------------------------------------------------------
+\section{Integration into the partner framework}
+\label{sec:ch5-integration}
+
+\subsection{The framework}
+% TierA. Figure already built: assets/flow_oliver_solution_loop.png
+\TierA{%
+The partner framework solves the mechanics in ANSYS and the transport fields in
+its own user-programmable routines, alternating substep by substep
+(Figure~\ref{fig:partner-loop}). The transport fields are not ANSYS degrees of
+freedom; they live in the framework's own data pool, assembled on a meshless
+neighbour operator and solved with a sparse direct solver.}
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\linewidth}{!}{\input{flow_oliver_solution_loop.tex}}
+  \caption[Partner framework solution loop]{%
+    Solution loop of the partner framework, traced from source, and the point
+    at which the law of this chapter attaches. Solid boxes are read directly
+    from the code; the single inference is marked as such in the figure.}
+  \label{fig:partner-loop}
+\end{figure}
+
+\subsection{The delivered routine}
+% TierA. ansys_usermat/biofilm_material_v01.f + tests/test_material_wrapper.py
+\TierA{%
+The law is delivered as a routine matching the shape of the framework's own
+constitutive calls, taking per-phase $(E,\nu)$ blended by a biofilm fraction
+and returning Cauchy stress and consistent tangent. Like the routine it
+replaces it uses no solver includes, no common block and no
+user-programmable-feature calls, so it is independent of the ANSYS release it
+is linked into; only the surrounding glue is release-specific.
+
+It is deliberately an adapter around the verified core rather than a
+reimplementation, and this is tested rather than asserted: fed $(E,\nu)$, the
+delivered routine must reproduce the core fed the $(C_{10},C_{01},D_1)$ those
+map to, at zero tolerance. It does, so the equivalence of
+\S\ref{sec:ch5-verification} carries over to the delivered routine unchanged.}
+
+\subsection{Interface constraints}
+% TierA. Both measured, not assumed. biofilm_material_v01.f header notes 2-3.
+\TierA{%
+Two constraints were established by measurement and must travel with the
+routine, because the caller controls both.
+
+The viscous state must be stored as a full $\mathbf F_v$, not as a
+six-component Cauchy--Green tensor: $\mathbf F_v$ does not remain symmetric
+under this update, measured at $\sim 6\times10^{-5}$ relative asymmetry after 20
+steps over 200 random states, so nine state slots are required where six might
+be expected.
+
+The time step must resolve the viscous relaxation time $\eta/(2C_{10})$. The
+flow increment is evaluated at the old state, so accuracy degrades as
+$\Delta t$ approaches that time; past $\Delta t/\tau \approx 0.5$ the stress
+changes sign and past $\Delta t/\tau \approx 1$ it diverges. Setting $\eta=0$
+selects the elastic path and removes the constraint.}
+
+%-----------------------------------------------------------------------
+\section{Results}
+\label{sec:ch5-results}
+
+\TierB{%
+[Awaiting runs. Comparison of von Mises fields across conditions, produced with
+the law of this chapter. Reachable through the local v222 build alone --- it
+does not depend on the partner framework wiring the routine in
+(ROADMAP\_2026.md §3).]}
+
+% TODO(runs): before reporting anything here, confirm dt is inside the stable
+% range of §5.5.3 for the actual job. This is cheap to check and expensive to
+% discover afterwards.
+
+%-----------------------------------------------------------------------
+\section{Limitations}
+\label{sec:ch5-limitations}
+
+\TierA{%
+The growth driver $\alpha$ is prescribed rather than solved here; the
+verification of \S\ref{sec:ch5-verification} therefore covers the constitutive
+response to a given field, not the field itself.}
+
+\TierA{%
+The pressure discrepancy of \S\ref{sec:ch5-verification-limits} is documented
+rather than corrected. Correcting it would invalidate every reference value in
+the verification chain for a change that does not move the reported von Mises
+results, and it is not yet established whether the published formulation
+defines the split as implemented --- in which case the change would be a
+disagreement with that formulation rather than a correction.}
+
+% TODO(prose): E_SPEC sensitivity is reported as a band elsewhere; cross-refer
+% rather than repeat. See VERIFICATION_SENSITIVITY_LIMITATIONS.md.

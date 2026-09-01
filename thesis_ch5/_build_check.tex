@@ -1,0 +1,16 @@
+% Syntax/compile check only -- not part of the thesis. Confirms the skeleton
+% builds, its citations resolve and the figure input works.
+\documentclass[11pt,a4paper]{report}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
+\graphicspath{{../ch5_flow/}}
+\makeatletter\def\input@path{{../ch5_flow/}}\makeatother
+\begin{document}
+\input{ch5_ansys_contribution.tex}
+\bibliographystyle{plain}
+\bibliography{../biofilm_3tooth_refs}
+\end{document}
