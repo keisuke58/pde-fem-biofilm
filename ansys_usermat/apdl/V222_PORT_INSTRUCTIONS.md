@@ -31,7 +31,7 @@ work. Report which one.
 
 ## 1. What has to change for v222
 
-### 1.1 The `usermat` argument list — mandatory
+### 1.1 The `usermat` argument list — mandatory, and already scripted
 
 Counted from both sources:
 
@@ -41,38 +41,44 @@ Counted from both sources:
 | **v222 (this PC)** | **42** | `var1, var2, var3, var4, var5, var6, var7, var8` |
 
 In 2024 R2 the reserved slots `var1`/`var2` became named arguments `pVolDer(3)`
-and `hrmflg`, and `var8` was dropped. So in
-`Usermat_P21-V21_Conection_Test.F`, change the subroutine statement to the
-v222 form:
+and `hrmflg`, and `var8` was dropped.
 
-```fortran
-      subroutine usermat(
-     &   matId, elemId, kDomIntPt, kLayer, kSectPt,
-     &   ldstep, isubst, keycut,
-     &   nDirect, nShear, ncomp, nStatev, nProp,
-     &   Time, dTime, Temp, dTemp,
-     &   stress, ustatev, dsdePl, sedEl, sedPl, epseq,
-     &   Strain, dStrain, epsPl, prop, coords,
-     &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
-     &   var1, var2, var3, var4, var5, var6, var7, var8)
-```
-
-and declare `var1, var2, var8` as unused `double precision` scalars alongside
-the existing `var3..var7`. **Do not** keep `pVolDer`/`hrmflg`: v222 does not
-pass them, and `pVolDer` is an array where `var1` is a scalar.
-
-Take the exact v222 list from
-[`../usermat_biofilm.f`](../usermat_biofilm.f), which is the version verified
-against this machine's ANSYS.
-
-Check the routine body does not *use* `pVolDer` or `hrmflg` before deleting
-them:
+**You do not have to make this edit by hand.** Run:
 
 ```bat
-findstr /n "pVolDer hrmflg" Usermat_P21-V21_Conection_Test.F
+python patch_usermat_to_v222.py Usermat_P21-V21_Conection_Test.F -o Usermat_P21-V21_v222.F
 ```
 
-If they are only in the signature, the edit is purely mechanical.
+([`patch_usermat_to_v222.py`](patch_usermat_to_v222.py) lives in this folder.)
+It applies six changes and prints each one. The output has been syntax-checked
+here and compiles clean.
+
+Four of the six are the obvious ones — the argument list, dropping the
+`pVolDer(3)` entry and the `DOUBLE PRECISION hrmflg` declaration (both are
+declared but never used in the body; the script refuses to run if a future
+version starts using them), and adding `var8`.
+
+**The other two are the ones worth knowing about**, because they fail in a way
+that points at the wrong thing:
+
+```fortran
+      data             var1/0.0d0/
+      data             var2/0.0d0/
+```
+
+Under 2024 R2 `var1`/`var2` are not arguments, so they are locals and
+initialising them with `DATA` is legal. Under v222 they **become dummy
+arguments**, and `DATA` on a dummy argument is a hard error:
+
+```
+Error: DATA attribute conflicts with DUMMY attribute in 'var1'
+```
+
+(verified here by deliberately reintroducing them). The script removes both.
+
+If you prefer to edit by hand, take the exact v222 list from
+[`../usermat_biofilm.f`](../usermat_biofilm.f) — the version verified in-solver
+on this machine — and remember the two `DATA` lines.
 
 ### 1.2 Build mechanism — likely
 
