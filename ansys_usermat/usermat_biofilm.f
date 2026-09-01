@@ -331,7 +331,8 @@ C     state) — matches umat_biofilm_visco.f so Fv evolves identically.
         end do
       end if
 
-C     viscous update (backward Euler)
+C     viscous update: explicit flow increment (VISCOUS_UPDATE_SCHEME.md),
+C     stress re-evaluated at FV_NEW below
       DTS = max(DT, 1.0d-20)
       if (ETA .gt. 1.0d-20) then
         TMP1 = DTS/(2.0d0*ETA*DETFE)

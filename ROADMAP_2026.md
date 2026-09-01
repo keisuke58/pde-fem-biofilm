@@ -133,3 +133,16 @@ Three things to raise early rather than late:
 | Production runs use `dt` past `η/(2·C10)` | Now a known, pinned constraint — **check it on the first real run**, not after the results are in |
 | Scope creep back into JAXFEM | It is held for Keio by decision, not by accident. Any JAXFEM work before submission needs a reason to exist in Ch5. |
 | Silent regression in the verified core | CI: golden values, crosscheck, adversarial hunt |
+
+## Later, not now
+
+Two continuation ideas are written up rather than started, so the weeks to
+November stay on the ANSYS contribution:
+
+- [`PINN_DESIGN.md`](PINN_DESIGN.md) — a physics-informed surrogate for the
+  biofilm field. Lands in the JAXFEM material held back for Keio.
+- Option (D) in [`OLIVER_MODEL_NOTES.md`](ansys_usermat/OLIVER_MODEL_NOTES.md)
+  — borrowing the NEM derivative operator to strengthen `JAXFEM/`.
+
+They compete for the same slot; §6 of the PINN note says why, and the choice
+belongs at Keio, not now.

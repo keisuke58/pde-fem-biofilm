@@ -45,14 +45,23 @@ C     relative asymmetry after 20 steps over 200 random states -- so it
 C     cannot be reconstructed from Cv(6) without losing information.
 C     That means 9 state slots where Vdp_Cv_n currently reserves 6.
 C
-C  3. sDt must resolve the viscous relaxation time eta/(2*C10). The core
-C     advances Fv explicitly, so the step is only accurate while dt is
-C     small against that time; past dt/tau ~ 0.5 the elastic strain
-C     overshoots through zero and the stress changes sign, and past
-C     dt/tau ~ 1 it diverges. Whoever sets the time step owns this
-C     constraint -- it is pinned in tests/test_material_wrapper.py
-C     (test_the_viscous_step_must_resolve_the_relaxation_time). Setting
-C     sEta = 0 selects the purely elastic path and removes the limit.
+C  3. sDt must resolve the viscous relaxation time eta/(2*C10), and this
+C     routine ENFORCES it rather than only documenting it. The core
+C     advances Fv with the flow increment evaluated at the old state, so
+C     the step is only accurate while dt is small against that time; past
+C     dt/tau ~ 0.5 the elastic strain overshoots through zero and the
+C     stress changes sign, and past dt/tau ~ 1 it diverges.
+C
+C     Because the caller sets dt, leaving this to a comment would mean a
+C     wrong step returns a plausible-looking wrong stress. Instead
+C     dt/tau > DTMAX_RATIO sets sKeyCut = 1 and returns without computing
+C     a stress, so the solver cuts the increment and retries. Note that
+C     growth shrinks tau as C10 rises: a step that is fine at the start
+C     of a solve can stop being fine later, so it is checked every call.
+C
+C     sEta = 0 selects the purely elastic path and removes the limit
+C     entirely. Behaviour inside the valid range is unchanged.
+C     Pinned in tests/test_material_wrapper.py.
 C
 C  On a cut-back (sKeyCut = 1) every output is still defined: stress and
 C  tangent are zeroed and mFvN1 is returned unchanged, so a caller that
@@ -99,7 +108,22 @@ C     --- locals ----------------------------------------------------
       double precision FG_INV(3,3), FGSC
       double precision SV0(6), SVP(6), DFP(3,3), FV_DUM(3,3)
       double precision SSE_C, SPD_C, DETFE, PERT, SYMF
+      double precision TRELAX, DTRAT
       integer          I, J, K, P, Q, IP, JP
+
+C     Largest dt/tau_relax this routine will answer for. Past this the
+C     explicit flow increment overshoots through zero and the stress comes
+C     back with the wrong sign (see note 3 in the header), so returning a
+C     number would be worse than asking the solver to cut back.
+C
+C     0.5 is where the sign flip sets in, measured. It is deliberately not
+C     tighter: below it the answer degrades in accuracy but stays
+C     qualitatively right, and how much accuracy to buy with step size is
+C     the caller's engineering choice, not ours to force. Cutting back on
+C     merely-inaccurate steps would also risk stalling a solve. Lower it
+C     here if you want the routine to insist on more resolution.
+      double precision DTMAX_RATIO
+      parameter       (DTMAX_RATIO = 0.5d0)
       integer          VI(6), VJ(6)
       data VI /1, 2, 3, 1, 2, 1/
       data VJ /1, 2, 3, 2, 3, 3/
@@ -150,6 +174,30 @@ C     --- Fg = (1+alpha) I ; inv(Fg) ---
         end do
         FG_INV(I,I) = 1.0d0 / FGSC
       end do
+
+C     --- refuse a step that does not resolve the viscous relaxation time.
+C         The caller sets dt, so this cannot be left to documentation: the
+C         failure is silent and severe -- the stress changes sign rather
+C         than erroring. sKeyCut is exactly the channel for this; the
+C         solver cuts the increment and retries at a step that works.
+C
+C         Elastic runs (sEta = 0) have no relaxation time and are never
+C         restricted. Growth shrinks tau as C10 rises, so a step that was
+C         fine early in a solve can stop being fine later -- which is why
+C         this is checked every call rather than once.
+      if (sEta .gt. 1.0d-20 .and. C10 .gt. 1.0d-20) then
+        TRELAX = sEta / (2.0d0 * C10)
+        DTRAT  = sDt / TRELAX
+        if (DTRAT .gt. DTMAX_RATIO) then
+          sKeyCut = 1
+          do I = 1, 3
+            do J = 1, 3
+              mFvN1(I,J) = mFvN(I,J)
+            end do
+          end do
+          return
+        end if
+      end if
 
 C     --- base stress and the updated viscous state ---
       call BIOFILM_STRESS_CORE(mDefGrad, FG_INV, mFvN,

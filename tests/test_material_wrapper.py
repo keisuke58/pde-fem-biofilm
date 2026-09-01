@@ -80,8 +80,13 @@ def exes():
     return wrap, core
 
 
+# The default step is chosen to resolve the viscous relaxation time. At
+# biofilm=1 and c01_ratio=0.15, C10 is about 167, so with eta=5 the relaxation
+# time is ~0.015 s; dt=1e-4 puts dt/tau at ~0.007. The earlier default of
+# dt=0.01 sat at dt/tau=0.67, i.e. inside the regime the routine now refuses --
+# which is how the step limit came to light in the first place.
 def _run_wrapper(exe, *, F=F_TEST, Fv=I3, biofilm=1.0, growth=0.2,
-                 eta=5.0, dt=0.01, c01_ratio=0.15, mtype=1.0,
+                 eta=5.0, dt=1.0e-4, c01_ratio=0.15, mtype=1.0,
                  E=E_BIO, EL=E_VOID, nu=NU_BIO, nuL=NU_VOID):
     stdin = (
         " ".join(f"{F[i, j]:.17e}" for i in range(3) for j in range(3)) + "\n" +
@@ -123,7 +128,7 @@ def test_wrapper_is_only_an_adapter(exes):
     if core is None:
         pytest.skip("xcheck_driver_ans.f not present")
 
-    c01r, mtype, alpha, eta, dt = 0.15, 1.0, 0.2, 5.0, 0.01
+    c01r, mtype, alpha, eta, dt = 0.15, 1.0, 0.2, 5.0, 1.0e-4
     c10, c01, d1 = _mr_from_E_nu(E_BIO, NU_BIO, c01r)
 
     w = _run_wrapper(wrap, biofilm=1.0, growth=alpha, eta=eta, dt=dt,
@@ -159,6 +164,62 @@ def test_blend_is_monotone_in_the_biofilm_fraction(exes, eta, dt):
     assert all(a < b for a, b in zip(peaks, peaks[1:])), peaks
 
 
+def test_an_unresolved_step_is_refused_rather_than_answered(exes):
+    """The guard. The caller sets dt, so the constraint below cannot be left
+    to documentation: an over-long step returns a plausible-looking wrong
+    stress, sign and all. sKeyCut is the channel the solver already has for
+    'I cannot do this increment', so use it."""
+    wrap, _ = exes
+    eta, c01r = 5.0, 0.15
+    # C10 from the same map the wrapper implements, at biofilm=1.
+    c10, _, _ = _mr_from_E_nu(E_BIO, NU_BIO, c01r)
+    tau = eta / (2.0 * c10)
+
+    for ratio in (0.6, 1.0, 5.0):
+        r = _run_wrapper(wrap, biofilm=1.0, eta=eta, dt=ratio * tau,
+                         c01_ratio=c01r)
+        assert r["keycut"] == 1, f"dt/tau={ratio} was answered, not refused"
+        # a refusal must still return defined outputs and an unadvanced state
+        np.testing.assert_allclose(r["stress"], 0.0, rtol=0.0, atol=0.0)
+        np.testing.assert_allclose(r["fv"], I3, rtol=0.0, atol=0.0)
+
+    for ratio in (0.001, 0.1, 0.4):
+        r = _run_wrapper(wrap, biofilm=1.0, eta=eta, dt=ratio * tau,
+                         c01_ratio=c01r)
+        assert r["keycut"] == 0, f"dt/tau={ratio} was refused, not answered"
+
+
+def test_the_guard_never_fires_on_an_elastic_run(exes):
+    """eta = 0 has no relaxation time, so no step is too long for it. If the
+    guard fired here it would stall solves that are perfectly well posed."""
+    wrap, _ = exes
+    for dt in (1.0e-4, 1.0, 1.0e6):
+        r = _run_wrapper(wrap, biofilm=1.0, eta=0.0, dt=dt)
+        assert r["keycut"] == 0, f"elastic run refused at dt={dt}"
+
+
+def test_the_guard_does_not_change_answers_inside_the_valid_range(exes):
+    """A guard that perturbed the accepted regime would invalidate the
+    equivalence the whole routine rests on. Held against the core, which has
+    no guard, at zero tolerance."""
+    wrap, core = exes
+    if core is None:
+        pytest.skip("xcheck_driver_ans.f not present")
+    c01r, mtype, alpha, eta = 0.15, 1.0, 0.2, 5.0
+    c10, c01, d1 = _mr_from_E_nu(E_BIO, NU_BIO, c01r)
+    tau = eta / (2.0 * c10)
+
+    for ratio in (0.001, 0.1, 0.45):
+        dt = ratio * tau
+        w = _run_wrapper(wrap, biofilm=1.0, growth=alpha, eta=eta, dt=dt,
+                         c01_ratio=c01r, mtype=mtype)
+        s_core, fv_core = _run_core(core, F_TEST, I3, alpha, c10, c01, d1,
+                                    eta, mtype, dt)
+        assert w["keycut"] == 0
+        np.testing.assert_allclose(w["stress"], s_core, rtol=0.0, atol=0.0)
+        np.testing.assert_allclose(w["fv"], fv_core, rtol=0.0, atol=0.0)
+
+
 def test_the_viscous_step_must_resolve_the_relaxation_time(exes):
     """Pins a real limit of the integrator this wrapper inherits.
 
@@ -175,8 +236,13 @@ def test_the_viscous_step_must_resolve_the_relaxation_time(exes):
     recorded because the caller picks dt -- in the handover case that is
     Oliver's framework, not us.
     """
-    wrap, _ = exes
-    s11 = [_run_wrapper(wrap, biofilm=1.0, eta=5.0, dt=dt)["stress"][0]
+    wrap, core = exes
+    if core is None:
+        pytest.skip("xcheck_driver_ans.f not present")
+    # Driven through the CORE, not the wrapper: the wrapper now refuses the
+    # long steps this test is about, which is the point of the guard above.
+    c10, c01, d1 = _mr_from_E_nu(E_BIO, NU_BIO, 0.15)
+    s11 = [_run_core(core, F_TEST, I3, 0.2, c10, c01, d1, 5.0, 1.0, dt)[0][0]
            for dt in (1.0e-4, 1.0e-3, 5.0e-3, 1.0e-2)]
     assert s11[0] < -100.0, f"resolved step should be compressive here: {s11}"
     assert s11[-1] > 0.0, (
@@ -200,12 +266,12 @@ def test_viscous_state_advances_and_is_not_symmetric(exes):
     3x3: it does not stay symmetric, which is why the interface needs nine
     state slots rather than a six-component Cauchy-Green."""
     wrap, _ = exes
-    fv = _run_wrapper(wrap, eta=5.0, dt=0.01)["fv"]
+    fv = _run_wrapper(wrap, eta=5.0, dt=1.0e-4)["fv"]
     assert np.max(np.abs(fv - I3)) > 1e-8, "Fv did not advance"
 
     # march it forward to let any asymmetry accumulate
-    for _ in range(20):
-        fv = _run_wrapper(wrap, Fv=fv, eta=5.0, dt=0.01)["fv"]
+    for _ in range(200):
+        fv = _run_wrapper(wrap, Fv=fv, eta=5.0, dt=1.0e-4)["fv"]
     asym = np.max(np.abs(fv - fv.T)) / max(np.max(np.abs(fv)), 1e-30)
     assert asym > 1e-9, (
         "Fv came back symmetric — if that ever holds, a 6-component Cv would "

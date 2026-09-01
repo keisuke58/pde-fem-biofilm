@@ -8,7 +8,9 @@ C     Klempt: F = Fe * Fg  (elastic + growth, single species)
 C     Here  : F = Fe * Fv * Fg  (+ viscous dashpot, 5-species DI-driven)
 C
 C     Hyperelastic base: Neo-Hookean or Mooney-Rivlin
-C     Viscous flow: deviatoric Newtonian dashpot (backward Euler)
+C     Viscous flow: deviatoric Newtonian dashpot, single-step update with
+C     the flow increment evaluated at the previous viscous state
+C     (VISCOUS_UPDATE_SCHEME.md)
 C     Growth: isotropic via thermal analogy (F_g = (1 + alpha_T*T) I)
 C       TEMP field = alpha_Monod(x) from multiscale_coupling_1d.py
 C       This corresponds to Klempt's alpha_growth (local expansion)
@@ -270,7 +272,12 @@ C     --- Trial deviatoric Kirchhoff stress (viscous flow rule) ---
         END DO
       END IF
 
-C     --- Viscous update (backward Euler): Fv_new = (I + dDv) Fv_old ---
+C     --- Viscous update: Fv_new = (I + dDv) Fv_old ---
+C     dDv is built from TAU_DEV at the TRIAL state, so this increment is
+C     explicit and carries a step limit dt << eta/(2*C10); the stress below
+C     is then re-evaluated at Fv_new. See VISCOUS_UPDATE_SCHEME.md -- the
+C     "backward Euler" this was previously labelled would imply
+C     unconditional stability, which this does not have.
       DTIME_SAFE = MAX(DTIME, 1.0D-20)
       IF (ETA .GT. 1.0D-20) THEN
         TMP1 = DTIME_SAFE / (2.0D0 * ETA * DETFE)
