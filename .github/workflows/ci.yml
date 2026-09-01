@@ -45,8 +45,14 @@ jobs:
       - name: Install JAX (CPU)
         run: pip install "jax[cpu]"
 
-      - name: JAX tests (ecology ODE, exact AD tangent)
-        run: pytest tests/test_hamilton_ode_jax.py tests/test_material_jax.py
+      # Listed explicitly rather than by directory: the step above already ran
+      # tests/, and these are the files that importorskip out of it. A new
+      # jax-dependent test that is not added here never runs anywhere.
+      - name: JAX tests (ecology ODE, exact AD tangent, tangent quality)
+        run: |
+          pytest tests/test_hamilton_ode_jax.py \
+                 tests/test_material_jax.py \
+                 tests/test_tangent_quality.py
 
       - name: UMAT <-> USERMAT cross-check + adversarial hunt (Fortran)
         run: pytest ansys_usermat/crosscheck/crosscheck.py ansys_usermat/crosscheck/adversarial.py
