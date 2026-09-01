@@ -539,6 +539,33 @@ still a supervisor-level decision, not a coding one:
   prescribed α from `JAXFEM/`; Oliver's computes its own. They then answer
   different questions and should not be compared directly.
 
+### Pre-flight syntax check of the pool
+
+Every source was run through `gfortran -fsyntax-only -cpp -fcray-pointer`
+with the ANSYS includes stubbed, before attempting a real build. Two things
+worth carrying forward, plus one piece of good news:
+
+- **All six AceGen constitutive routines are clean**, as is
+  `MySubroutines_userData_V04.F`. The material code is portable; the risk is
+  concentrated in the three `P21-V21` glue files and the build flags.
+- **`userdata_P21-V21_Conection_Test.f` uses `#include` under a lowercase
+  `.f`**, which most compilers do not preprocess. Without `/fpp` the common
+  block is never declared and 78 unrelated-looking syntax errors follow. Their
+  Linux script evidently handles it; another build path may not.
+- **`usercm.inc` declares `INTEGER(KIND=8) :: sGi_nnz_T`** and passes it as the
+  default-`INTEGER` `sz` argument of the pool routines
+  (`SetNEM(ofs_i_ColID_T, sGi_nnz_T, ...)`). `ifort` does not type-check
+  F77-style implicit interfaces, and on little-endian it reads the low half, so
+  it works while `nnz` stays under 2^31 — about 4.5M non-zeros at this mesh
+  size, comfortably inside. Latent rather than broken, but a much larger mesh
+  would truncate silently, and a global `-i8` build flips the mismatch the
+  other way.
+
+Cray pointers (~30 sites) and mixed-type `parevl` calls (~20) are expected
+noise: `ifort` handles both natively.
+
+Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_PORT_INSTRUCTIONS.md).
+
 ## Open questions for Oliver
 
 1. ~~**The USERMAT Fortran source**~~ — **received** (`Nishioka_Hoechel.zip`).
@@ -556,7 +583,10 @@ still a supervisor-level decision, not a coding one:
    growth. Is a viscous biofilm law planned (which is what we would bring), or
    is elastic the intended scope? Related: is the `Sdp_bio1_n + Sdp_bio1_n`
    above a typo?
-5. **Is AceGen required to modify the material?** The constitutive routines are
+5. **`sGi_nnz_T` is `INTEGER(KIND=8)` but reaches the pool routines as a
+   default `INTEGER` `sz`.** Works at this mesh size; would truncate on a much
+   larger one. Deliberate, or worth widening the pool API?
+6. **Is AceGen required to modify the material?** The constitutive routines are
    machine-generated from Mathematica. If the `.nb` source is the real master,
    hand-editing the generated `.f` would be overwritten — we would need either
    the notebook or an agreed hand-written call-out point.

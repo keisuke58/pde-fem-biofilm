@@ -103,6 +103,99 @@ the MPI part; PARDISO is still needed.
 
 ---
 
+## 1.5 Pre-flight — already checked here, so you know what is expected
+
+Every source in the pool was syntax-checked with `gfortran` before you start,
+with the ANSYS-supplied includes stubbed. This does not prove it builds under
+`ifort`/v222, but it separates "expected noise" from "a real problem", which is
+the hard part when a first build throws a hundred errors.
+
+Reproduce with:
+
+```bash
+gfortran -fsyntax-only -cpp -fcray-pointer -ffixed-line-length-132 -I. <file>
+```
+
+### ✅ The six AceGen constitutive routines are clean
+
+`AceGenNeoHookV02/03/04.f`, `AceGenElastoAirV08.f`, `AGPhaseViskoP21V07.f`,
+`AGStressP21V07.f` — all pass with no errors. **The material code is not the
+risk.** So is `MySubroutines_userData_V04.F`. Whatever goes wrong tomorrow will
+be in the three `P21-V21` glue files or in the build flags.
+
+### ⚠️ Finding 1 — `userdata_*.f` needs forced preprocessing (most likely first failure)
+
+`userdata_P21-V21_Conection_Test.f` uses C-preprocessor `#include` directives:
+
+```fortran
+#include "usercm.inc"
+#include "impcom.inc"
+```
+
+but is named with a **lowercase `.f`**, which most compilers do *not*
+preprocess. Without preprocessing the common block is never declared, and you
+get a cascade of unrelated-looking syntax errors (78 of them here) that
+completely hide the real cause.
+
+**Do this before the first build**: add Intel's preprocessing flag —
+`/fpp` on Windows, `-fpp` on Linux — or rename the file to `.F`. Their Linux
+`ANSUSERSHARED` script evidently already handles it; a different build path
+may not.
+
+Related, and worth checking at the same time: the ANSUSERSHARED log notes it
+compiles `userdata.F`/`userdata.f` **first** to support the common-block
+feature. Their file is `userdata_P21-V21_Conection_Test.f`, which does **not**
+match that special-cased name. If the common block comes out empty or
+undefined, this ordering is the reason — compile that file first by hand.
+
+### ⚠️ Finding 2 — an 8-byte integer passed to a 4-byte argument
+
+`usercm.inc` line ~197 declares
+
+```fortran
+      INTEGER(KIND=8) :: sGi_nnz_T
+```
+
+and it is passed as the `sz` argument of the pool routines, which take a
+default `INTEGER`:
+
+```fortran
+      Si_Kerr = SetNEM(ofs_i_ColID_T, sGi_nnz_T, vLdp_Tmp)   ! NEM_..., ~line 400
+```
+
+`ifort` will not reject this (F77-style implicit interfaces are not type
+checked), and on little-endian hardware it reads the low half, so it works as
+long as `nnz` stays under 2³¹ — which it does at this mesh size (~18750
+elements × 8 GP × 30 neighbours ≈ 4.5M non-zeros). **It is latent, not
+currently broken.**
+
+Two things follow. If you build with a global 8-byte-integer flag
+(`/integer_size:64`, `-i8`) the mismatch flips direction, so **match whatever
+integer size the v222 UPF build uses** rather than picking one. And it is
+worth mentioning to Oliver, since a substantially larger mesh would silently
+truncate.
+
+### ℹ️ Expected noise — not problems
+
+- **Cray pointers** (~30 sites in `NEM_UserData_P21_V05.F`). The traditional
+  ANSYS-UPF way of doing dynamic memory. `ifort` supports them natively;
+  only `gfortran` needs `-fcray-pointer`. No action.
+- **`parevl` called with mixed argument types** (~20 sites). Classic F77
+  practice, tolerated by `ifort`. No action.
+- **`mpif.h` not found / undefined symbols from the stubbed includes** — an
+  artifact of checking outside an ANSYS install. Will resolve on the real
+  machine.
+
+### Summary of what to expect
+
+| | expected tomorrow |
+|---|---|
+| AceGen material files | compile clean |
+| `userdata_*.f` | **fails unless `/fpp` is set** — fix first |
+| `NEM_*`, `USolBeg_*`, `Ussfin_*` | compile once preprocessing and the signature edit are in |
+| `Usermat_*` | needs the §1.1 signature edit |
+| integer size | must match the v222 UPF build convention |
+
 ## 2. The actual try, in order
 
 Work in `F:\biofilm_upf_oliver` (never `C:` — see the disk-space history).
