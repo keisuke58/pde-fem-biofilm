@@ -101,6 +101,8 @@ abaqus_inp/
 # LaTeX intermediate files
 *.aux
 *.log
+# uplatex (the Japanese figures) goes via DVI, unlike the pdflatex figures
+*.dvi
 *.fls
 *.fdb_latexmk
 *.synctex.gz
