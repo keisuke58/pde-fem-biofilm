@@ -1,0 +1,89 @@
+% flow_oliver_solution_loop.tex — the solution loop of the partner ANSYS/UPF
+% framework, and where our constitutive law attaches to it.
+%
+% Traced from the source pool (USolBeg / Usermat / USSFin), as recorded in
+% ansys_usermat/OLIVER_MODEL_NOTES.md §"How the whole thing runs". Everything
+% in solid boxes is read directly from the code; the one interpretation is
+% marked as such. Usage:
+%   \resizebox{\linewidth}{!}{\input{flow_oliver_solution_loop.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  N/.style    = {draw, rounded corners=3pt, align=left, thick,
+                 text width=9.6cm, inner sep=6pt},
+  Nonce/.style= {N, fill=gray!10},
+  Ngp/.style  = {N, fill=orange!12},
+  Nfld/.style = {N, fill=teal!12},
+  Nours/.style= {draw, rounded corners=3pt, align=left, very thick,
+                 draw=red!65!black, fill=red!8, text width=6.4cm, inner sep=6pt},
+  ar/.style   = {-Stealth, thick},
+  arb/.style  = {-Stealth, thick, dashed, gray!70},
+  lbl/.style  = {font=\scriptsize\itshape, fill=white, inner sep=1.5pt, align=center},
+  note/.style = {font=\scriptsize\itshape, align=left, text width=6.2cm, gray!45!black},
+]
+
+% ── entry ───────────────────────────────────────────────────────────
+\node[Nonce] (top) {%
+  \textbf{ANSYS solve} — \texttt{SOLID185}, \texttt{NLGEOM,ON}\\
+  custom \texttt{ANSYS.exe}, UPF routines linked in};
+
+% ── USolBeg ─────────────────────────────────────────────────────────
+\node[Nonce, below=0.55cm of top] (beg) {%
+  \textbf{\texttt{USolBeg}} \hfill \textit{once, at solution start}\\[4pt]
+  $\sim$150 \texttt{parevl} calls: every APDL parameter $\rightarrow$
+  \texttt{/usercm/} common block\\[2pt]
+  \texttt{InitVals} — allocate the shared (MPI) data arena\\[2pt]
+  \texttt{NEM\_CreateData\_Init} — build the meshless neighbour operator\\[2pt]
+  \texttt{Mapping\_Node\_ID}, \texttt{Initial\_Values}};
+\draw[ar] (top) -- (beg);
+
+% ── the staggered loop ──────────────────────────────────────────────
+\node[Ngp, below=0.95cm of beg] (gp) {%
+  \textbf{\texttt{usermat}} \hfill \textit{per Gauss point, per equilibrium iteration}\\[4pt]
+  \texttt{GetVals} / \texttt{GetTMP} — read this point's state from the pool\\[2pt]
+  \textbf{\texttt{CALL AceGenNeoHookV04}} $\rightarrow$ $\bm\sigma$, \texttt{dsdePl}\\[2pt]
+  \texttt{SetVals} — write state back};
+\draw[ar] (beg) -- node[lbl,right,xshift=2pt] {mechanics} (gp);
+
+\node[Nfld, below=0.95cm of gp] (fld) {%
+  \textbf{\texttt{USSFin}} \hfill \textit{after each substep}\\[4pt]
+  assemble $+$ PARDISO solve $\rightarrow$ temperature field\\[2pt]
+  assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut1} field\\[2pt]
+  assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut2} field\\[2pt]
+  \textcolor{gray!55!black}{\texttt{AGPhaseViskoP21V07} — commented out}\\[2pt]
+  \textcolor{gray!55!black}{\texttt{CalcLaserIntegralOMP} / \texttt{CALCPYRO}
+    — laser \& pyrometer (inherited glass process)}};
+\draw[ar] (gp) -- node[lbl,right,xshift=2pt] {transport} (fld);
+
+% staggered feedback
+\draw[arb] (fld.west) -- ++(-0.85,0) |- node[lbl,pos=0.25,left,xshift=-2pt]
+  {next substep} (gp.west);
+
+% ── our attachment point ────────────────────────────────────────────
+\node[Nours, right=1.15cm of gp] (ours) {%
+  \textbf{our contribution attaches here}\\[4pt]
+  \texttt{BIOFILM\_GROWTH\_VISCO\_V01}\\
+  \scriptsize(\texttt{ansys\_usermat/biofilm\_material\_v01.f})\\[4pt]
+  \scriptsize same signature shape as \texttt{AceGenNeoHookV04}, plus the
+  growth variable $\alpha$ and the viscous state $\mathbf F_v$\\[2pt]
+  \scriptsize adds $\mathbf F=\mathbf F_e\mathbf F_v\mathbf F_g$,
+  $\mathbf F_g=(1{+}\alpha)\mathbf I$ over their purely elastic law};
+\draw[ar, draw=red!65!black, very thick] (ours) -- (gp);
+
+% ── annotations ─────────────────────────────────────────────────────
+\node[note, right=1.15cm of fld, yshift=0.1cm] (n1) {%
+  Staggered / operator-split: ANSYS solves the mechanics, \texttt{USSFin}
+  solves the transport fields on the NEM operator with MKL PARDISO, and the
+  two alternate substep by substep.\\[3pt]
+  The transport fields are \textbf{not} ANSYS degrees of freedom --- they live
+  entirely in the UPF's own data pool.\\[3pt]
+  \textcolor{red!55!black}{Interpretation, not stated by the code:} the two
+  \texttt{Nut} systems are most likely the biofilm and nutrient fields rather
+  than two nutrients.};
+
+\node[note, right=1.15cm of beg, yshift=0.05cm] {%
+  Because every parameter arrives through \texttt{parevl} into
+  \texttt{/usercm/}, the ANSYS \texttt{prop()} array is unused --- material
+  constants do \emph{not} come in through \texttt{TB,USER} here, unlike our
+  own deck.};
+
+\end{tikzpicture}

@@ -195,6 +195,12 @@ limit) found and fixed along the way.
 
 ## 4. 今後の方針 — go-forward (systematised)
 
+**Dates and the week-by-week schedule now live in
+[`ROADMAP_2026.md`](ROADMAP_2026.md) ([日本語](ROADMAP_2026.ja.md))**:
+submission November 2026, defence December 2026, and the decision that **Ch5
+is the ANSYS material-law contribution** while the JAXFEM material is held
+back for Keio. The T1/T3 split below is what that decision follows from.
+
 ```
   now ──────────────► thesis submission ──────────► Keio M2 (2027-04) ──────────►
   FREEZE the core        3 must-dos (§3)             T2 first paper (jaw-level twin)

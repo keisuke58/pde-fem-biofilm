@@ -20,6 +20,7 @@ high-resolution PNGs (Times, 200 dpi) live in `../assets/`.
 | 10 | `flow_czm_traction_separation` | 5.x | Cohesive zone model: traction–separation law, damage `D:0→1`, delamination |
 | 12 | `flow_boundary_conditions` | 5.x | Multiscale BCs on Ti / biofilm / fluid layers (mech + chem + lateral) |
 | — | `flow_python_material_hook` | impl | Zoom-in on the coupling layer: the exact `protocol.py` request/response of one Fortran↔Python Gauss-point call, the 5-step local integration, and the global Newton–Raphson loop it returns into |
+| — | `flow_oliver_solution_loop` | impl | The **partner ANSYS/UPF framework's** solution loop (`USolBeg` → `usermat` → `USSFin`), traced from the source pool, and where `BIOFILM_GROWTH_VISCO_V01` attaches. Staggered/operator-split: ANSYS does the mechanics, `USSFin` solves the transport fields on the NEM operator via MKL PARDISO. Source: [`OLIVER_MODEL_NOTES.md`](../ansys_usermat/OLIVER_MODEL_NOTES.md). 日本語版: `flow_oliver_solution_loop_ja` |
 | 13 | `flow_impl_architecture` | impl | Python(JAX) ↔ coupling layer ↔ Fortran `UMAT`/`USERMAT` ↔ commercial FEM. **Solid** = the offline production path behind every reported result; **dashed** = the in-the-loop socket prototype (verified, not yet used for results) |
 | 14 | `flow_vv_convergence` | App. C | PDE V&V: analytic vs finite-volume + log-log 2nd-order (`O(Δz²)`) convergence |
 | 15 | `flow_timescale_separation` | 5.x | Biology (days) vs mechanics (ms–s) time-scale separation (gear-meshed loops) |
@@ -95,3 +96,22 @@ thesis body font when `\input`.
 
 ### Verification & Validation (V&V) hierarchy
 ![V&V hierarchy](../assets/flow_vv_hierarchy.png)
+
+### Partner framework — solution loop
+
+![partner framework solution loop](../assets/flow_oliver_solution_loop.png)
+
+Everything in a solid box is read directly from the source pool; the one
+inference (what the two `Nut` systems are) is marked as an interpretation in
+the figure itself rather than left to the reader.
+
+A Japanese version of the same figure is `flow_oliver_solution_loop_ja.tex`
+(`../assets/flow_oliver_solution_loop_ja.png`). **It needs a different engine** —
+this TeX Live has no `luaotfload`, so `lualatex` fails; build it with
+
+```
+uplatex flow_oliver_solution_loop_ja_standalone.tex
+dvipdfmx flow_oliver_solution_loop_ja_standalone.dvi
+```
+
+Content is identical to the English figure, so change both together.
