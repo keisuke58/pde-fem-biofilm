@@ -65,13 +65,15 @@ swapping in the calibrated JAX model in place of the current NumPy mirror.
 
 ## Needed back from Felix (blocks an actual ANSYS run)
 
-> **Partly answered, 2026-09-01.** Oliver sent the Workbench archive
-> `BiofilmImplementation.wbpz`, which answers item 1 (it targets **ANSYS 2024
-> R2**, not the v222 this repo is verified on) and shows a working, converging
-> `SOLID185`/`NLGEOM,ON` model. It does **not** answer item 2 or 3, and it
-> arrived **without its USERMAT Fortran source**, so it cannot be run as
-> received. It is also a *nonlocal* material routine — a different scope from
-> this local law. Full findings and the follow-up questions:
+> **Item 1 answered, 2026-09-01.** Oliver sent the Workbench archive
+> `BiofilmImplementation.wbpz` and then the UPF source pool
+> `Nishioka_Hoechel.zip`. Between them: the target is **ANSYS 2024 R2 on Linux**
+> (built via `ANSUSERSHARED` into a shared library, not `ANSCUST.BAT` into a
+> custom `ANSYS.exe` on Windows), and its `usermat` signature takes **41
+> arguments where v222 takes 42** — so this repo's file will not build there
+> unchanged. Items 2 and 3 are still open. The routine is also *nonlocal* (it
+> solves the φ/nutrient fields itself), a different scope from this local law.
+> Full findings and the follow-up questions:
 > [`OLIVER_MODEL_NOTES.md`](OLIVER_MODEL_NOTES.md).
 
 1. [ ] **Target ANSYS version + exact `usermat` argument list** (`var1..var8`,
