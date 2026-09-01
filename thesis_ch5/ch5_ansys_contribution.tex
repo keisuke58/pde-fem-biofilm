@@ -14,9 +14,14 @@
 %   Copy into the thesis tree and delete the two \newcommand definitions
 %   below once the markers have served their purpose.
 %
-% PACKAGES: amsmath, amssymb, bm, xcolor, graphicx, tikz (+ the libraries the
-%   figure uses). Numbers are written out rather than via siunitx so that this
-%   file drops into any tree without adding a dependency.
+% PORTING (see PORTING.md). A chapter 5 already exists in the thesis
+%   repository, so this is material to MERGE INTO it, not a file to drop in
+%   whole. It is written to survive that:
+%     - packages: amsmath, amssymb, bm, xcolor, graphicx. Nothing else.
+%       Numbers are written out rather than via siunitx, and the figure comes
+%       in as a PNG, so TikZ is NOT required in the host tree.
+%     - every label is namespaced ch5-* so it cannot collide.
+%     - one path to set: \ansysfigdir below. Nothing else refers to this repo.
 %
 % CITATION WARNING, from biofilm_3tooth_refs.bib:
 %   growth kinematics F = Fe.Fg, Fg = (1+alpha)I  -> Klempt2024DiffusionDrivenGrowth
@@ -24,8 +29,14 @@
 %   These are different papers. Citing the 2026 one for the kinematics is the
 %   easy mistake here.
 %=======================================================================
-\newcommand{\TierA}[1]{\marginpar{\footnotesize A}#1}   % writable now
-\newcommand{\TierB}[1]{\marginpar{\footnotesize B}\textcolor{gray}{#1}} % needs runs
+% ---- the one thing to set when porting -------------------------------
+% Directory holding flow_oliver_solution_loop.png (with trailing slash).
+\providecommand{\ansysfigdir}{../assets/}
+% ----------------------------------------------------------------------
+
+% Drafting markers. Delete both once the chapter is written.
+\providecommand{\TierA}[1]{\marginpar{\footnotesize A}#1}   % writable now
+\providecommand{\TierB}[1]{\marginpar{\footnotesize B}\textcolor{gray}{#1}} % needs runs
 
 \chapter{A growth constitutive law for an existing FEM framework}
 \label{ch:ansys}
@@ -157,7 +168,11 @@ neighbour operator and solved with a sparse direct solver.}
 
 \begin{figure}[htbp]
   \centering
-  \resizebox{\linewidth}{!}{\input{flow_oliver_solution_loop.tex}}
+  \includegraphics[width=\linewidth]{\ansysfigdir flow_oliver_solution_loop.png}
+  % Vector alternative, if the host tree already loads TikZ with
+  % shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc:
+  %   \resizebox{\linewidth}{!}{\input{flow_oliver_solution_loop.tex}}
+  % Japanese version: flow_oliver_solution_loop_ja.png (uplatex only).
   \caption[Partner framework solution loop]{%
     Solution loop of the partner framework, traced from source, and the point
     at which the law of this chapter attaches. Solid boxes are read directly

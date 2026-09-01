@@ -8,6 +8,12 @@ Scope is fixed by [`ROADMAP_2026.md`](../ROADMAP_2026.md) §1: **Ch5 is the
 ANSYS material-law contribution**, and the JAXFEM material is held back for
 Keio.
 
+**Porting:** the thesis lives in a different repository and already has a
+chapter 5, so this is material to merge into it. See
+[`PORTING.md`](PORTING.md) — the short version is that it needs no package the
+host tree does not already have (no siunitx, no TikZ), all labels are
+namespaced `ch5-*`, and there is exactly one path to set.
+
 ## Tier A / Tier B
 
 Sections are marked in the margin. **A** = the claim is already true and
@@ -59,6 +65,6 @@ pdflatex _build_check && bibtex _build_check && pdflatex _build_check && pdflate
 
 Currently: builds clean, zero undefined citations or references.
 
-The skeleton needs only amsmath, amssymb, bm, xcolor, graphicx and tikz —
-numbers are written out rather than via siunitx so the file drops into any
-tree without adding a dependency.
+The skeleton needs only amsmath, amssymb, bm, xcolor and graphicx. Numbers are
+written out rather than via siunitx, and the figure enters as a PNG rather than
+TikZ source, so it adds no dependency to the tree it is merged into.

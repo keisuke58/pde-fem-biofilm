@@ -5,10 +5,9 @@
 \usepackage{amsmath,amssymb,bm}
 \usepackage{xcolor}
 \usepackage{graphicx}
-\usepackage{tikz}
-\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
-\graphicspath{{../ch5_flow/}}
-\makeatletter\def\input@path{{../ch5_flow/}}\makeatother
+% Deliberately does NOT load TikZ: the skeleton must build without it, since
+% the thesis tree may not have it. The figure comes in as a PNG.
+\newcommand{\ansysfigdir}{../assets/}
 \begin{document}
 \input{ch5_ansys_contribution.tex}
 \bibliographystyle{plain}
