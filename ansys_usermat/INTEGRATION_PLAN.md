@@ -113,9 +113,16 @@ realistic test bed, not a prerequisite.
 
 ## Timeline note
 
-Thesis submission is early December — about 13 weeks from this decision. The
-plan is scoped so that the deliverable (steps 2–3) is under our own control
-and testable here; only step 4 depends on someone else's schedule.
+**Submission is November 2026, defence December 2026** — 12 weeks from this
+decision. (An earlier draft of this section said "early December submission";
+that was wrong.) Full schedule: [`../ROADMAP_2026.md`](../ROADMAP_2026.md).
+
+The plan is scoped so that the deliverable (steps 2–3) is under our own control
+and testable here; only step 4 depends on someone else's schedule. **With the
+November date, that makes step 1 more important than it looks above.** A
+working local v222 build lets us produce results with the wrapper without step
+4 landing at all, so it is the move that takes Oliver's calendar off the
+critical path — see `ROADMAP_2026.md` §3.
 
 ## Later, not now
 
