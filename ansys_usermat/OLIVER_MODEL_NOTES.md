@@ -528,7 +528,9 @@ Two ways they could meet. Now that the source is in hand, (A) has a concrete
 address — the `CALL AceGenNeoHookV04(...)` site — but which one is right is
 still a supervisor-level decision, not a coding one:
 
-- **(A) Port the constitutive law into Oliver's framework.** His NEM machinery
+- **(A) Port the constitutive law into Oliver's framework.** — **this is the
+  agreed direction as of 2026-09-01; see
+  [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md).** His NEM machinery
   supplies φ; this repo contributes the verified `Fg=(1+α)I` growth +
   Mooney-Rivlin/`D1` + viscous response as the mechanical answer, replacing the
   Neo-Hookean stand-in. The 0-ULP Abaqus↔ANSYS equivalence (`crosscheck/`)
