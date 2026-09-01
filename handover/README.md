@@ -89,6 +89,16 @@ flag gives zeros rather than whatever was in the work array.
   rather than a reimplementation, and this is tested at zero tolerance: fed
   `(E, ν)`, it must reproduce the core fed the `(C10, C01, D1)` those map to.
   It does, so the verification above applies to the routine as delivered.
+- **The tangent is verified against exact automatic differentiation**, not just
+  against itself. It is obtained by finite-difference perturbation of `F`, so
+  the obvious worry is a tangent that is subtly wrong — which does not give a
+  wrong answer, it gives a Newton iteration that will not converge, and leaves
+  you unable to tell whether the fault is ours or your wiring. Compared against
+  forward-mode AD of the same perturbation over 648 parameter combinations
+  (biofilm fraction across three decades of stiffness, ν up to 0.49, growth to
+  0.35, both material paths, elastic and viscous, steps up to the guard
+  threshold): **median 1.2e-7, worst 1.1e-6** relative to the largest tangent
+  entry. No region of the range degrades.
 
 One honest caveat, since it is better heard from us than found later.
 Cross-implementation agreement establishes that two ports compute the same

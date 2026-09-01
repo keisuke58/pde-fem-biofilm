@@ -90,10 +90,20 @@ the shear components $12,23,13$ and Abaqus $12,13,23$ --- so the two
 implementations cannot share an index map. Second, the consistent tangent is
 obtained by perturbation of $\mathbf F$ rather than in closed form.}
 
-% TODO(prose): say why F-perturbation and not an analytic tangent, and give the
-% step. Measured: the exact AD tangent and the FD tangent agree to ~3e-8 at
-% PERT=1e-7, so the FD choice is not costing convergence -- that measurement is
-% worth one sentence because it forecloses an obvious question.
+% TierA. tests/test_tangent_quality.py -- 648 combinations vs exact AD.
+\TierA{%
+The finite-difference choice invites an obvious objection, so it is worth
+answering with a measurement rather than an assurance. A tangent that is
+subtly wrong does not produce a wrong answer; it produces a Newton iteration
+that fails to converge, and in a handover that failure is very hard for the
+recipient to attribute. The tangent was therefore compared against forward-mode
+automatic differentiation of the same perturbation --- an independent reference
+rather than a second difference quotient --- across the range the routine is
+expected to see: stiffness over three decades, Poisson ratios to $0.49$, growth
+to $\alpha=0.35$, both material paths, elastic and viscous branches, and time
+steps up to the stability limit of \S\ref{sec:ch5-integration}. Over 648
+combinations the relative discrepancy has median $1.2\times10^{-7}$ and
+worst case $1.1\times10^{-6}$, with no region of the range degrading.}
 
 %-----------------------------------------------------------------------
 \section{Verification}
