@@ -202,6 +202,84 @@ truncate.
 | `Usermat_*` | needs the §1.1 signature edit |
 | integer size | must match the v222 UPF build convention |
 
+## 1.6 Update 2026-09-02 — compiled clean, 10/11 files, on IKMHIWI03
+
+Ran the compile-only step for real. Two more real blockers surfaced beyond
+what §1 anticipated, both now resolved:
+
+**`ifort` invoked via `setvars.bat` never lands on PATH** (same failure
+already documented in `RUNBOOK.md` 0b — `vswhere.exe` not found, the
+per-component `env\vars.bat` calls then fail silently). Confirmed the
+`RUNBOOK.md` fix works: call `vcvars64.bat` then the compiler's own
+`env\vars.bat` directly, in that order, in the same shell/process:
+
+```bat
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+call "C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\env\vars.bat"
+```
+
+**A bare `ifort /c /fpp <files>` is not enough — it needs ANSYS's own macro
+set, or `computer.h`/`impcom.inc` don't compile.** Two failures, both fixed
+by the same missing piece:
+
+1. Without `/DFORTRAN`, `computer.h`'s C-only branch (guarded by
+   `#if !defined(FORTRAN)`) is taken even though the including file is
+   Fortran, which walks into `#include <math.h>` and floods the log with
+   hundreds of errors from Intel's `/fpp` (a Fortran-oriented preprocessor,
+   not a full C preprocessor) choking on `sal.h`'s SAL annotation macros.
+2. Without `/DPCWINNT_SYS`, `impcom.inc`'s own `#if defined(PCWINNT_SYS) ...
+   #else / implicit undefined (a-z) / #endif` falls through to the `#else`
+   branch, and `IMPLICIT UNDEFINED (A-Z)` — a legacy VAX/DEC Fortran
+   extension — is not accepted by `ifort` under any flag combination tried
+   (`/fpscomp:general` did not help). The `#if defined(PCWINNT_SYS)` branch
+   uses plain `IMPLICIT NONE` instead, which is standard and compiles fine.
+
+**The fix for both: don't hand-pick macros — use ANSYS's own, read straight
+out of `ANSCUST.BAT`** (`%AWP_ROOT222%\ansys\custom\user\winx64\ANSCUST.BAT`,
+search for `CUSTMACROS`/`FMACS`/`FSWITCH`):
+
+```bat
+set "CUSTMACROS=/DNOSTDCALL /DARGTRAIL /DPCWIN64_SYS /DPCWINX64_SYS /DPCWINNT_SYS /DCADOE_ANSYS"
+set "FMACS=/D__EFL /DFORTRAN"
+set "FSWITCH=/O2 /fpp /4Yportlib /auto /c /Fo.\ /MD /watch:source"
+ifort /nologo %CUSTMACROS% %FMACS% %FSWITCH% /I"<ansys>\ansys\customize\include" /I"<ansys>\commonfiles\MPI\Intel\2021.6.0\winx64\include" <files>
+```
+
+With that exact set, **10 of the 11 pool source files compile with zero
+errors** — only the pre-flagged Finding 2 warning (`#6075`, the
+`sGi_nnz_T` 8-byte-into-4-byte argument mismatch) appears, exactly as
+predicted in §1.5. The one file that does not compile is
+`Ussfin_P21-V21_Conection_Test.F`, blocked on a separate, unrelated issue:
+
+### New blocker — MKL is not installed anywhere on this machine
+
+`Ussfin_P21-V21_Conection_Test.F` needs `mkl_sparse_handle.fi`,
+`mkl_spblas.fi`, `mkl_pardiso.fi`, `mkl_service.fi` (Intel MKL PARDISO
+Fortran interfaces). Checked exhaustively: this oneAPI install has only
+`compiler`, `compiler_ide`, `mpi`, `tcm`, `umf` components — no `mkl`
+directory — and ANSYS v222's own tree has no `mkl_pardiso.fi` anywhere
+either (checked as thoroughly as `syspar.inc`/`mpif.h`, which *are* both
+present under ANSYS's tree). This is the risk §1.3 flagged in advance,
+now confirmed real rather than hypothetical. Getting `Ussfin` to compile
+needs the Intel MKL component added to this oneAPI install (a system
+change, not attempted without asking first) — everything else in the pool
+is unblocked without it.
+
+**Tried and confirmed blocked, 2026-09-02:** `winget install --id
+Intel.oneMKL` — no applicable installer under `--scope user` (machine-scope
+only), and the machine-scope installer download succeeds (internet access
+and hash verification both fine, so this isn't a network problem) but the
+install itself fails with `0x800704c7` ("the operation was canceled by the
+user") the moment it needs to elevate — the UAC prompt has nobody to answer
+it in a non-interactive session, the same wall as every other admin-gated
+action found on this account this session (VS Code tunnel service
+installation, classic ifort 2024.2.1). **Not a bug to keep working around —
+a hard requirement for admin rights on this machine**, same category as the
+`C:` VSS/disk-space issue. Getting `Ussfin`/MKL compiling here needs either
+admin rights (IT/Timo) or building that one file elsewhere (the cluster
+Oliver already uses, per §4's fallback) and treating the local v222 port as
+covering the other 10 files only.
+
 ## 2. The actual try, in order
 
 Work in `F:\biofilm_upf_oliver` (never `C:` — see the disk-space history).
