@@ -381,6 +381,74 @@ to Oliver is still worth making (one build environment beats two, per the
 paragraph above), but it is no longer blocking further local progress the
 way it looked earlier today.
 
+### Superseded again, same day — linking does not actually need a human
+
+`ANSCUST.BAT` itself is genuinely interactive and still cannot be scripted.
+But **the link step it drives can be reproduced directly**, without going
+through `ANSCUST.BAT` at all — `RUNBOOK.md` already found this once
+(`link @ansys.lrf` after setting `LIB`), for the *original* `usermat_biofilm.f`
+build. Today the same approach was retried, this time linking Oliver's full
+11-file pool, and it succeeded: **a fresh 388 MB `ANSYS.exe` linked
+end-to-end, zero fatal errors, only the same benign `LNK4286`/`LNK4199`
+warnings `RUNBOOK.md` already catalogs as harmless.**
+
+Two new environment bugs had to be found and worked around to get there —
+neither specific to Oliver's pool, both general to this machine's toolchain
+setup, now baked into [`link_v222.ps1`](link_v222.ps1) so nobody has to
+rediscover them:
+
+1. **`vcvars64.bat` silently no-ops on this machine, the same way
+   `setvars.bat` does (§0b/RUNBOOK.md), for the same reason.** It shells
+   out to a bare `vswhere.exe` to auto-detect the VS install, which isn't
+   on `PATH`
+   (`C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`).
+   Without it, `vcvars64.bat` still prints
+   `[vcvarsall.bat] Environment initialized for: 'x64'` — looking
+   successful — but `LIB`/`LIBPATH` are left completely unset, which is
+   exactly why the very first link attempt today failed with
+   `LNK1104: cannot open file 'user32.lib'` (a standard Windows SDK
+   library, just never on the search path). Fix: put `vswhere.exe`'s
+   directory on `PATH` *before* calling `vcvars64.bat`.
+2. **`cmd /c "call vcvars64.bat && set LIB=...;%LIB%&& ..."` as one line
+   does not do what it looks like it does.** `cmd.exe` expands every `%VAR%`
+   reference in a compound line at *parse* time, before any of the `call`s
+   in that same line have actually run — so `%LIB%` in the `set LIB=...`
+   assignment silently expands to empty text (LIB isn't set yet at parse
+   time), and the `set` command overwrites whatever `vcvars64.bat` was
+   about to establish with a value that never included it. This produced
+   the exact same `user32.lib` error a second time even after fix 1 was
+   in place, which is what exposed it. Fix: write the sequence to an actual
+   `.bat` **file** instead of one chained `cmd /c` line — each line's
+   variables then expand only when that line executes, after the previous
+   line's `call` has already run.
+3. **A stale `ANSYS.exe`/`.lib`/`.exp`/`.map` from a previous link attempt
+   breaks the next one** — `ansys.lrf`'s own `*.lib` wildcard picks up the
+   old `ANSYS.lib` and collides with the new output
+   (`LNK1149: output filename identical to input`). `ANSCUST.BAT` only
+   auto-deletes `ANSYS.exe` between runs, not the other three — this bit on
+   the very first *re-run* of the new script. Fix: delete all four before
+   every link, which `link_v222.ps1` now does unconditionally.
+
+**New script:** [`link_v222.ps1`](link_v222.ps1) wraps compile + link with
+all of the above (plus the `/DFORTRAN`/`/DPCWINNT_SYS`/etc. macro set from
+§1.6 and the MKL include/lib paths from the resolved-blocker section
+above), parameterized on a working directory. Tested reproducible: ran
+twice back-to-back, byte-identical-shaped `ANSYS.exe` both times once the
+stale-file fix was in.
+
+**Smoke test, same run:** `ANSYS222.exe -custom .\ANSYS.exe -i
+t_growth_free.dat -o out.txt` against this linked pool exits 0, "NUMBER OF
+ERROR MESSAGES ENCOUNTERED = 0". Stress comes back exactly zero — **this is
+expected, not a failure**: `t_growth_free.dat` was written for this repo's
+own `usermat_biofilm.f` state-variable layout (§3's own caveat already
+covers this), and `AceGenNeoHookV04` at the pool's actual call site is
+still purely elastic (`INTEGRATION_PLAN.md`) — our growth routine hasn't
+been wired into their call site yet, so there is no growth kinematics for
+this deck to exercise regardless of the solver working correctly. The
+result that matters here is that Oliver's entire pool now builds, links,
+and runs cleanly end-to-end on v222, non-interactively, on this machine —
+not that the biofilm physics is on display in this particular smoke test.
+
 ---
 
 ## 5. Reporting back
