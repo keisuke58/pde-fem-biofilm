@@ -63,6 +63,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/biofilm_material_v01.f` | `BIOFILM_GROWTH_VISCO_V01` — the routine handed over, an adapter around the verified core |
 | `ansys_usermat/growth_law_verification.ipynb` | Executable walkthrough of what the verifications establish and what they do not |
 | `ansys_usermat/apdl/closed_form_reference.py` | Closed form for the two growth cases, derived independently of the implementation |
+| `ansys_usermat/apdl/check_deck_timestep.py` | Pre-flight for any deck whose stress will be reported: reads C10/eta and the step range, reports `dt/tau` and the expected von Mises error |
 
 ## Pre-existing directories the tour had not listed
 

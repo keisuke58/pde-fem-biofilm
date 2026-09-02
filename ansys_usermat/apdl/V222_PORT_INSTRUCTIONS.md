@@ -202,6 +202,39 @@ truncate.
 | `Usermat_*` | needs the §1.1 signature edit |
 | integer size | must match the v222 UPF build convention |
 
+## 1.9 Before any solve whose numbers you will report
+
+Run this first. It takes a second and it catches something the routine's own
+guard deliberately does not:
+
+```
+python ansys_usermat/apdl/check_deck_timestep.py ansys_usermat/apdl/*.dat
+```
+
+The guard in `biofilm_material_v01.f` refuses only `dt/tau > 0.5`, where the
+stress changes sign. Below that the answer stays qualitatively right, and how
+much accuracy to buy with step size is the analyst's call rather than
+something a material routine should force. But "qualitatively right" leaves a
+lot of room, and **`t_growth_baseclamped.dat` is currently inside it**:
+
+| step | dt/tau | von Mises error |
+|---|---|---|
+| initial (`NSUBST` 1st arg = 4) | 0.06 | **−7.5 %** |
+| coarsest AUTOTS may take (3rd arg = 1) | 0.25 | **−30 %** |
+
+Nothing warns about either. The third `NSUBST` argument is the *fewest*
+substeps, so it sets the **largest** step AUTOTS is allowed to take — the
+opposite of the intuitive reading, which is why this is easy to miss.
+
+The deck has not been changed here: its results are compared against stored
+output, so tightening it is a decision to take with the comparison in front of
+you rather than a silent edit. **For any run whose stress goes into the
+thesis, tighten it first** — `NSUBST,200,500,200` puts every permitted step
+under 1 % error on this material.
+
+Worth holding next to the deviator-split finding, which does *not* touch von
+Mises at all: this one does, and by far more.
+
 ## 2. The actual try, in order
 
 Work in `F:\biofilm_upf_oliver` (never `C:` — see the disk-space history).
