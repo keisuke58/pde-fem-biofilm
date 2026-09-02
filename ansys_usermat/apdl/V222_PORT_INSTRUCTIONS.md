@@ -493,6 +493,43 @@ v222 solve — not just the gfortran unit tests
 [`wrapper_v01_smoketest_result.txt`](wrapper_v01_smoketest_result.txt),
 [`out_wrapper.txt`](out_wrapper.txt).
 
+### Same day, beyond the single element — real multi-element geometry matches too
+
+[`ROADMAP_2026.md`](../../ROADMAP_2026.md) §5's Week 4–5 target is "real
+geometry runs — coupon, then tooth/implant... von Mises fields out." Rather
+than building a new geometry from scratch, the already-characterised
+two-layer curved-shell case
+([`t_growth_cylinder_shell.dat`](t_growth_cylinder_shell.dat) — a curved
+substrate bonded to a thin growth layer, 12240 elements, known to converge
+cleanly at `α=0.01` after a documented multi-day BC/mesh investigation) was
+re-run unchanged except for the material block, through the wrapper build:
+[`t_growth_cylinder_shell_wrapper.dat`](t_growth_cylinder_shell_wrapper.dat)
+(same `E=0.9E-3, ν=0.125` conversion as the single-element case above).
+
+| | Original (`usermat_biofilm.f`) | Wrapper (`BIOFILM_GROWTH_VISCO_V01`) |
+|---|---|---|
+| Errors | 0 | 0 |
+| SEQV element count | 12240 | 12240 |
+| SEQV min | 4.3523e-09 | 4.3523e-09 |
+| SEQV max | 1.1862e-05 | 1.1862e-05 |
+| SEQV mean | 9.14434842156836e-06 | 9.14434842156836e-06 |
+
+Identical to the digits printed, across all 12240 elements of a real
+multi-material curved geometry — not just the single-element closed-form
+case. This is real evidence for the roadmap's Week 4–5 "coupon" milestone,
+reached ahead of schedule on 2026-09-02: the handover routine reproduces
+the verified core's behavior on a non-trivial geometry, not only in
+isolation. Evidence:
+[`growth_cylinder_wrapper_result.txt`](growth_cylinder_wrapper_result.txt),
+[`out_cyl_wrapper.txt`](out_cyl_wrapper.txt).
+
+Caveats carried over unchanged from `t_growth_cylinder_shell.dat` itself:
+this is a qualitative smoke test, not a closed-form check (two curved
+bonded layers have no simple analytic answer), no mesh-convergence study
+has been done, and `α=0.01` (not the cube cases' `0.05`) is this
+geometry/BC/mesh combination's characterised convergence limit — see that
+deck's own extensive comments before using it for anything quantitative.
+
 ---
 
 ## 5. Reporting back

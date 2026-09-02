@@ -116,7 +116,7 @@ Three things to raise early rather than late:
 |---|---|---|
 | **1** (Sep 7) | v222 build on IKMHIWI03 (step 1) — ✅ done 2026-09-02, ahead of schedule. Still open: confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked — ✅ exact closed-form match |
 | **2–3** (Sep 14, 21) | Handover package to Oliver + call. First smoke runs with the wrapper on v222. | Oliver has the routine; a single-element run gives sane stress |
-| **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. | von Mises fields out, `dt` inside the stable range and shown to be |
+| **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. **Coupon-scale piece done 2026-09-02** (re-ran the existing two-layer curved-shell case through the wrapper — identical SEQV to the original build across all 12240 elements, see `V222_PORT_INSTRUCTIONS.md`). Tooth/implant scale still open. | von Mises fields out, `dt` inside the stable range and shown to be |
 | **6–8** (Oct 12, 19, 26) | Condition comparison, the actual Ch5 results. Figures. | the comparison table and figures Ch5 needs exist |
 | **9–10** (Nov 2, 9) | **Write Ch5.** FREEZE — no new physics from here. | full draft to Meisam |
 | **11** (Nov 16) | Revise on his comments. Citations, numbers, consistency checks. | `audit_all.py` clean, no loose claims |
