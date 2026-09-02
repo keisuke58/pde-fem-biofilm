@@ -153,7 +153,9 @@ expected to see: stiffness over three decades, Poisson ratios to $0.49$, growth
 to $\alpha=0.35$, both material paths, elastic and viscous branches, and time
 steps up to the stability limit of \S\ref{sec:ch5-integration}. Over 648
 combinations the relative discrepancy has median $1.2\times10^{-7}$ and
-worst case $1.1\times10^{-6}$, with no region of the range degrading.}
+worst case $1.1\times10^{-6}$, with no region of the range degrading.
+That is a statement about the tangent in isolation; what it does inside a
+solver is shown in Figure~\ref{fig:ch5-convergence}.}
 
 %-----------------------------------------------------------------------
 \section{Verification}
@@ -251,6 +253,40 @@ bonded curved layers have no simple analytic answer; and no mesh-convergence
 study has been performed on it. It establishes that the repackaging survives
 contact with a real solver on a non-trivial mesh. It does not validate the
 mesh.}
+
+\TierA{%
+That run also settles the question left open in
+\S\ref{sec:ch5-impl}. An
+inexact tangent does not corrupt the answer --- the residual it is driven
+against is the true one --- so it shows up as iteration count, not as error:
+the solve takes more equilibrium iterations per substep, and under automatic
+stepping the solver bisects to recover. Both are visible in the log, and
+Figure~\ref{fig:ch5-convergence} shows what actually happened. Every substep
+reaches the convergence criterion in between one and four equilibrium
+iterations, and \texttt{AUTOTS}, free to bisect throughout, instead enlarged
+the increment at every opportunity, from $0.5$ to $1.6875$; the load step
+completed in six substeps and thirteen cumulative iterations with no cut-back.
+The finite-difference tangent is therefore not merely accurate in isolation but
+accurate enough that the solver never has to work around it.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.png}
+  \caption[Newton convergence with the finite-difference tangent]{%
+    Convergence of the $12\,240$-element solve with the delivered routine, read
+    from the solver's own listing. Left: force residual against equilibrium
+    iteration, one curve per substep, with the ANSYS criterion dashed and
+    converged states ringed. The fall is not strictly monotone --- substep~1
+    rises once between its second and third iterations --- which is ordinary
+    under an inexact tangent and is shown rather than smoothed. Right: the time
+    increment the solver chose for each substep, annotated with the iterations
+    that substep needed. The increment grows monotonically; the short final
+    substep is the remainder to the end of the load step, not a cut-back. The
+    single-element case is deliberately absent: it is fully constrained, so it
+    has no free degrees of freedom and its residual is identically zero in both
+    builds, which would look like agreement while carrying no information.}
+  \label{fig:ch5-convergence}
+\end{figure}
 
 \subsection{What these verifications establish, and what they do not}
 \label{sec:ch5-verification-limits}
