@@ -5,14 +5,16 @@
     flags by hand each time.
 
 .DESCRIPTION
-    Two tests are excluded here, both confirmed environment limitations of
-    THIS machine, not code bugs (see CLAUDE.md / memory for the
-    investigation): tests/test_coupling_shim.py needs POSIX socket headers
-    (arpa/inet.h) that this machine's native-Windows mingw toolchain does
-    not ship, and tests/test_viscoelastic*.py need scipy, which is not
-    installed here (installing it was judged too disk-risky on a machine
-    that has hit 0 bytes free -- see the disk-space memory). Both run fine
-    in CI (ubuntu-latest, full requirements.txt).
+    Two environment limitations of THIS machine are excluded here, not code
+    bugs (see CLAUDE.md / memory for the investigation): several tests need
+    POSIX socket headers (arpa/inet.h, via ansys_usermat/coupling/biofilm_py_eval.c)
+    that this machine's native-Windows mingw toolchain does not ship, and
+    tests/test_viscoelastic*.py need scipy, which is not installed here
+    (installing it was judged too disk-risky on a machine that has hit 0
+    bytes free -- see the disk-space memory). All run fine in CI
+    (ubuntu-latest, full requirements.txt). The POSIX-header list grew on
+    2026-09-02 after a merge brought in three new test files that compile
+    the same C shim.
 
     -All also runs the dual-solver equivalence suite
     (ansys_usermat/crosscheck/), which is otherwise easy to forget since
@@ -38,6 +40,11 @@ try {
     Write-Output "== pytest tests/ (skipping scipy- and POSIX-socket-limited tests) =="
     python -m pytest tests/ -q --tb=short --continue-on-collection-errors `
         --ignore=tests/test_coupling_shim.py `
+        --ignore=tests/test_closed_form_reference.py `
+        --ignore=tests/test_material_wrapper.py `
+        --ignore=tests/test_usermat_kusepy_e2e.py `
+        --ignore=tests/test_composition_material.py `
+        --ignore=tests/test_handover_package.py `
         --deselect=tests/test_viscoelastic.py::test_2d_viscoelastic_relaxation `
         --deselect=tests/test_viscoelastic.py::test_2d_viscoelastic_time_history `
         --ignore=tests/test_viscoelastic_2d.py

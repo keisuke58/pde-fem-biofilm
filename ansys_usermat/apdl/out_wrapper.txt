@@ -1,0 +1,572 @@
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+
+ *------------------------------------------------------------------*
+ |                                                                  |
+ |   W E L C O M E   T O   T H E   A N S Y S (R)  P R O G R A M     |
+ |                                                                  |
+ *------------------------------------------------------------------*
+
+
+
+
+ ***************************************************************
+ *         ANSYS MAPDL 2022 R2          LEGAL NOTICES          *
+ ***************************************************************
+ *                                                             *
+ * Copyright 1971-2022 Ansys, Inc.  All rights reserved.       *
+ * Unauthorized use, distribution or duplication is            *
+ * prohibited.                                                 *
+ *                                                             *
+ * Ansys is a registered trademark of Ansys, Inc. or its       *
+ * subsidiaries in the United States or other countries.       *
+ * See the Ansys, Inc. online documentation or the Ansys, Inc. *
+ * documentation CD or online help for the complete Legal      *
+ * Notice.                                                     *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * THIS ANSYS SOFTWARE PRODUCT AND PROGRAM DOCUMENTATION       *
+ * INCLUDE TRADE SECRETS AND CONFIDENTIAL AND PROPRIETARY      *
+ * PRODUCTS OF ANSYS, INC., ITS SUBSIDIARIES, OR LICENSORS.    *
+ * The software products and documentation are furnished by    *
+ * Ansys, Inc. or its subsidiaries under a software license    *
+ * agreement that contains provisions concerning               *
+ * non-disclosure, copying, length and nature of use,          *
+ * compliance with exporting laws, warranties, disclaimers,    *
+ * limitations of liability, and remedies, and other           *
+ * provisions.  The software products and documentation may be *
+ * used, disclosed, transferred, or copied only in accordance  *
+ * with the terms and conditions of that software license      *
+ * agreement.                                                  *
+ *                                                             *
+ * Ansys, Inc. is a UL registered                              *
+ * ISO 9001:2015 company.                                      *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * This product is subject to U.S. laws governing export and   *
+ * re-export.                                                  *
+ *                                                             *
+ * For U.S. Government users, except as specifically granted   *
+ * by the Ansys, Inc. software license agreement, the use,     *
+ * duplication, or disclosure by the United States Government  *
+ * is subject to restrictions stated in the Ansys, Inc.        *
+ * software license agreement and FAR 12.212 (for non-DOD      *
+ * licenses).                                                  *
+ *                                                             *
+ ***************************************************************
+
+ 2022 R2 
+     
+ Point Releases and Patches installed:   
+     
+ ANSYS, Inc. License Manager 2022 R2 
+ Discovery 2022 R2   
+ Autodyn 2022 R2 
+ SpaceClaim 2022 R2  
+ LS-DYNA 2022 R2 
+ CFX (includes CFD-Post) 2022 R2 
+ Fluent (includes CFD-Post) 2022 R2  
+ Polyflow (includes CFD-Post) 2022 R2
+ TurboGrid 2022 R2   
+ ICEM CFD 2022 R2
+ Aqwa 2022 R2
+ optiSLang 2022 R2   
+ Customization Files for User Programmable Features 2022 R2  
+ Mechanical Products 2022 R2 
+ Icepak (includes CFD-Post) 2022 R2  
+ ACIS Geometry Interface 2022 R2 
+ AutoCAD Geometry Interface 2022 R2  
+ Catia, Version 4 Geometry Interface 2022 R2 
+ Catia, Version 5 Geometry Interface 2022 R2 
+ Catia, Version 6 Geometry Interface 2022 R2 
+ Creo Elements/Direct Modeling Geometry Interface 2022 R2
+ Creo Parametric Geometry Interface 2022 R2  
+ Inventor Geometry Interface 2022 R2 
+ JTOpen Geometry Interface 2022 R2   
+ NX Geometry Interface 2022 R2   
+ Parasolid Geometry Interface  2022 R2   
+ Solid Edge Geometry Interface 2022 R2   
+ SOLIDWORKS Geometry Interface 2022 R2   
+
+
+          *****  MAPDL COMMAND LINE ARGUMENTS  *****
+  BATCH MODE REQUESTED (-b)    = LIST
+  INPUT FILE COPY MODE (-c)    = COPY
+  INPUT FILE NAME              = F:\biofilm_upf_wrapper\t_growth_wrapper_v01_smoketest.dat
+  OUTPUT FILE NAME             = F:\biofilm_upf_wrapper\out_wrapper.txt
+
+ RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
+ CURRENT JOBNAME=file0  14:33:25  SEP 02, 2026 CP=      0.125
+ Note - This MAPDL version was linked by Licensee
+     1  ! t_growth_wrapper_v01_smoketest.dat --- real-ANSYS smoke test for  
+     2  ! BIOFILM_GROWTH_VISCO_V01 (biofilm_material_v01.f), the routine actually   
+     3  ! meant for handover to Oliver's framework, via 
+     4  ! usermat_wrapper_v01_smoketest.f (a harness-only usermat() entry point --  
+     5  ! see that file's header). Confirms the (E,nu)-parameterized deliverable
+     6  ! reproduces the same closed-form answer as the (C10,C01,D1)-parameterized  
+     7  ! usermat_biofilm.f, on real ANSYS v222, not just the gfortran unit tests.  
+     8  !   
+     9  ! E, nu below are chosen so that after biofilm_material_v01.f's internal
+    10  ! (E,nu) -> (C10,C01,D1) map (mu=E/2(1+nu), K=E/3(1-2nu), C10=mu/2 at   
+    11  ! C01Ratio=0, D1=2/K), they reproduce EXACTLY the C10=0.2E-3, D1=5.0E3  
+    12  ! material in t_growth_constrained.dat's elastic_a005 case: 
+    13  !   mu = 0.4E-3, K = 4.0E-4  =>  mu/K = 1  =>  nu = 0.125, E = 0.9E-3   
+    14  ! (worked by hand: 3(1-2nu) = 2(1+nu) at mu=K, i.e. nu=1/8; E = 2*mu*(1+nu))
+    15  !   
+    16  ! EXPECTED (alpha=0.05, eta=0 -- same case as reference_values.json's   
+    17  ! elastic_a005, RUNBOOK.md Step 3): 
+    18  !   SX=SY=SZ = -1.019275856E-04 
+    19  !   SXY=SYZ=SXZ = 0 
+    20  !   
+    21  ! A match confirms: the (E,nu)->(C10,C01,D1) conversion, the growth 
+    22  ! kinematics, and BIOFILM_STRESS_CORE all thread correctly through the  
+    23  ! actual handover-shaped routine, inside a real ANSYS solve.
+    24      
+    25  FINISH  
+    26  /CLEAR  
+    27  /TITLE, wrapper v01 smoketest -- constrained growth, closed-form check  
+    28  /PREP7  
+    29      
+    30  ET,1,SOLID185   
+    31  KEYOPT,1,2,0
+    32      
+    33  BLOCK,0,1,0,1,0,1   
+    34  ESIZE,1 
+    35  VMESH,1 
+    36      
+    37  ! prop: sYoung, sNu, sEta, sC01Ratio, sMtype
+    38  TB,USER,1,1,5   
+    39  TBDATA,1,0.9E-3,0.125,0.0,0.0,0.0   
+    40      
+    41  ! state: ustatev(1:9)=Fv (row-major, init to I), ustatev(10)=alpha  
+    42  TB,STATE,1,,10  
+    43  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
+    44  TBDATA,7,0.0,0.0,1.0
+    45  TBDATA,10,0.05  
+    46      
+    47  ! fully constrained: forces F = I at every integration point
+    48  NSEL,ALL
+    49  D,ALL,UX,0  
+    50  D,ALL,UY,0  
+    51  D,ALL,UZ,0  
+    52  NSEL,ALL
+    53  FINISH  
+    54      
+    55  /SOLU   
+    56  ANTYPE,STATIC   
+    57  NLGEOM,ON   
+    58  TIME,5.0
+    59  NSUBST,1,10,1   
+    60  OUTRES,ALL,ALL  
+    61  OUTRES,SVAR,ALL 
+    62  SOLVE   
+    63  FINISH  
+    64      
+    65  /POST1  
+    66  SET,LAST
+    67  ESEL,S,ELEM,,1  
+    68  /OUTPUT,wrapper_v01_smoketest_result,txt
+    69  PRESOL,S,COMP   
+    70  PRESOL,SVAR,10  
+    71  /OUTPUT 
+    72  FINISH  
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ CLEAR DATABASE AND RERUN START.ANS
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ TITLE= 
+  wrapper v01 smoketest -- constrained growth, closed-form check               
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   14:33:25  SEP 02, 2026 CP=      0.219
+
+  wrapper v01 smoketest -- constrained growth, closed-form check               
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL ANALYSIS DEFINITION (PREP7) *****
+
+ ELEMENT TYPE          1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ ELEMENT TYPE       1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ CREATE A HEXAHEDRAL VOLUME WITH
+ X-DISTANCES FROM      0.000000000     TO      1.000000000    
+ Y-DISTANCES FROM      0.000000000     TO      1.000000000    
+ Z-DISTANCES FROM      0.000000000     TO      1.000000000    
+
+      OUTPUT VOLUME =     1
+
+ DEFAULT ELEMENT DIVISIONS PER LINE BASED ON ELEMENT SIZE =   1.00    
+
+ GENERATE NODES AND ELEMENTS
+       IN VOLUMES       1  TO      1  IN STEPS OF      1
+
+ NUMBER OF VOLUMES MESHED   =         1
+ MAXIMUM NODE NUMBER        =         8
+ MAXIMUM ELEMENT NUMBER     =         1
+
+ DEFINE DATA TABLE USER FOR MATERIAL 1 
+ USER MATERIALS OPTION 
+ WITH A MAXIMUM OF 5 DATA ITEMS
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  1 9.00000e-04     1.25000e-01     0.00000e+00     0.00000e+00     0.00000e+00    
+
+
+ DEFINE DATA TABLE  STAT  FOR MATERIAL     1
+   USER DEFINED STATE VARIABLES OPTION                                             
+   Number of state variables is      10
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      10 DATA POINTS
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC= 10 0.50000E-01
+
+ ALL SELECT   FOR ITEM=NODE COMPONENT=    
+  IN RANGE         1 TO          8 STEP          1
+
+          8  NODES (OF          8  DEFINED) SELECTED BY NSEL  COMMAND.
+
+ SPECIFIED CONSTRAINT UX   FOR SELECTED NODES            1 TO           8 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SPECIFIED CONSTRAINT UY   FOR SELECTED NODES            1 TO           8 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SPECIFIED CONSTRAINT UZ   FOR SELECTED NODES            1 TO           8 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ ALL SELECT   FOR ITEM=NODE COMPONENT=    
+  IN RANGE         1 TO          8 STEP          1
+
+          8  NODES (OF          8  DEFINED) SELECTED BY NSEL  COMMAND.
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.219
+
+
+
+ *****  MAPDL SOLUTION ROUTINE  *****
+
+
+ PERFORM A STATIC ANALYSIS
+  THIS WILL BE A NEW ANALYSIS
+
+ LARGE DEFORMATION ANALYSIS
+
+ TIME=  5.0000    
+
+ USE       1 SUBSTEPS INITIALLY THIS LOAD STEP FOR ALL  DEGREES OF FREEDOM
+ FOR AUTOMATIC TIME STEPPING:
+   USE     10 SUBSTEPS AS A MAXIMUM
+   USE      1 SUBSTEPS AS A MINIMUM
+
+ WRITE ALL  ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
+   FOR ALL APPLICABLE ENTITIES
+
+ WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
+   FOR ALL APPLICABLE ENTITIES
+
+ *** NOTE ***                            CP =       0.281   TIME= 14:33:25
+ The automatic domain decomposition logic has selected the MESH domain   
+ decomposition method with 4 processes per solution.                     
+
+ *****  MAPDL SOLVE    COMMAND  *****
+
+ *** SELECTION OF ELEMENT TECHNOLOGIES FOR APPLICABLE ELEMENTS ***
+                ---GIVE SUGGESTIONS ONLY---
+
+ ELEMENT TYPE         1 IS SOLID185. IT IS ASSOCIATED WITH ELASTOPLASTIC MATERIALS
+ ONLY. KEYOPT(2)=2 IS SUGGESTED.
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   14:33:25  SEP 02, 2026 CP=      0.344
+
+  wrapper v01 smoketest -- constrained growth, closed-form check               
+
+ Note - This MAPDL version was linked by Licensee
+
+                       S O L U T I O N   O P T I O N S
+
+   PROBLEM DIMENSIONALITY. . . . . . . . . . . . .3-D                  
+   DEGREES OF FREEDOM. . . . . . UX   UY   UZ  
+   ANALYSIS TYPE . . . . . . . . . . . . . . . . .STATIC (STEADY-STATE)
+   NONLINEAR GEOMETRIC EFFECTS . . . . . . . . . .ON
+   PLASTIC MATERIAL PROPERTIES INCLUDED. . . . . .YES
+   NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
+   GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
+
+ *** WARNING ***                         CP =       0.344   TIME= 14:33:25
+ ANSYS,INC.-supplied version of coding for USERCK has been used.         
+
+ *** NOTE ***                            CP =       0.344   TIME= 14:33:25
+ The step data was checked and warning messages were found.              
+  Please review output or errors file (                                  
+ F:\biofilm_upf_wrapper\file0.err ) for these warning messages.          
+
+ *** NOTE ***                            CP =       0.344   TIME= 14:33:25
+ This nonlinear analysis defaults to using the full Newton-Raphson       
+ solution procedure.  This can be modified using the NROPT command.      
+
+ *** NOTE ***                            CP =       0.344   TIME= 14:33:25
+ The conditions for direct assembly have been met.  No .emat or .erot    
+ files will be produced.                                                 
+
+ *** NOTE ***                            CP =       0.344   TIME= 14:33:25
+ The number of distributed memory parallel processes specified is        
+ greater than the number of elements selected in the model.  The number  
+ of distributed memory parallel processes will be reduced to 1 for this  
+ solution.                                                               
+
+                      L O A D   S T E P   O P T I O N S
+
+   LOAD STEP NUMBER. . . . . . . . . . . . . . . .     1
+   TIME AT END OF THE LOAD STEP. . . . . . . . . .  5.0000    
+   AUTOMATIC TIME STEPPING . . . . . . . . . . . .    ON
+      INITIAL NUMBER OF SUBSTEPS . . . . . . . . .     1
+      MAXIMUM NUMBER OF SUBSTEPS . . . . . . . . .    10
+      MINIMUM NUMBER OF SUBSTEPS . . . . . . . . .     1
+   MAXIMUM NUMBER OF EQUILIBRIUM ITERATIONS. . . .    15
+   STEP CHANGE BOUNDARY CONDITIONS . . . . . . . .    NO
+   STRESS-STIFFENING . . . . . . . . . . . . . . .    ON
+   TERMINATE ANALYSIS IF NOT CONVERGED . . . . . .YES (EXIT)  
+   CONVERGENCE CONTROLS. . . . . . . . . . . . . .USE DEFAULTS
+   COPY INTEGRATION POINT VALUES TO NODE . . . . .YES, FOR ELEMENTS WITH
+                                                  ACTIVE MAT. NONLINEARITIES
+   PRINT OUTPUT CONTROLS . . . . . . . . . . . . .NO PRINTOUT
+   DATABASE OUTPUT CONTROLS
+      ITEM     FREQUENCY   COMPONENT
+       ALL        ALL               
+      SVAR        ALL               
+
+
+ SOLUTION MONITORING INFO IS WRITTEN TO FILE= file.mntr                                                                                                                                                                                                                                                           
+
+
+ Range of element maximum matrix coefficients in global coordinates
+ Maximum = 2.286589902E-04 at element 1.                                 
+ Minimum = 2.286589902E-04 at element 1.                                 
+
+   *** ELEMENT MATRIX FORMULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         1  SOLID185      0.000   0.000000
+ Time at end of element matrix formulation CP = 0.59375.                 
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
+  FOR POSSIBLE RESUME FROM THIS POINT
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5102E-04
+
+ *** WARNING ***                         CP =       0.641   TIME= 14:33:25
+ There are no active degrees of freedom.                                 
+     DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5206E-04 <<< CONVERGED
+
+ *** WARNING ***                         CP =       0.641   TIME= 14:33:25
+ A reference force value times the tolerance is used by the              
+ Newton-Raphson method for checking convergence.  The calculated         
+ reference FORCE CONVERGENCE VALUE = 1.248352877E-04 is less than a      
+ threshold.  This threshold is internally calculated.  You can           
+ overwrite it by specifying MINREF on the CNVTOL command.  Check         
+ results carefully.                                                      
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5312E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   2
+
+   *** ELEMENT RESULT CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         1  SOLID185      0.000   0.000000
+
+   *** NODAL LOAD CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         1  SOLID185      0.000   0.000000
+ *** LOAD STEP     1   SUBSTEP     1  COMPLETED.    CUM ITER =      2
+ *** TIME =   5.00000         TIME INC =   5.00000    
+
+
+ *** MAPDL BINARY FILE STATISTICS
+  BUFFER SIZE USED= 16384
+        0.062 MB WRITTEN ON ELEMENT SAVED DATA FILE: file.esav
+        0.062 MB WRITTEN ON ASSEMBLED MATRIX FILE: file.full
+        0.312 MB WRITTEN ON RESULTS FILE: file.rst
+
+ FINISH SOLUTION PROCESSING
+
+ *** NOTE ***                            CP =       0.781   TIME= 14:33:25
+ Distributed parallel processing has been reactivated.                   
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.781
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   14:33:25  SEP 02, 2026 CP=      0.781
+
+  wrapper v01 smoketest -- constrained growth, closed-form check               
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL RESULTS INTERPRETATION (POST1) *****
+
+ *** NOTE ***                            CP =       0.781   TIME= 14:33:25
+ Reading results into the database (SET command) will update the current 
+ displacement and force boundary conditions in the database with the     
+ values from the results file for that load set.  Note that any          
+ subsequent solutions will use these values unless action is taken to    
+ either SAVE the current values or not overwrite them (/EXIT,NOSAVE).    
+
+
+ USE LAST SUBSTEP ON RESULT FILE  FOR LOAD CASE 0 
+
+ SET COMMAND GOT LOAD STEP=     1  SUBSTEP=     1  CUMULATIVE ITERATION=     2
+   TIME/FREQUENCY=  5.0000    
+ TITLE=  wrapper v01 smoketest -- constrained growth, closed-form check         
+
+ SELECT       FOR ITEM=ELEM COMPONENT=    
+  IN RANGE         1 TO          1 STEP          1
+
+          1  ELEMENTS (OF          1  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ /OUTPUT FILE= wrapper_v01_smoketest_result.txt
+
+ EXIT THE MAPDL POST1 DATABASE PROCESSOR
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.781
+
+
+
+ ***** END OF INPUT ENCOUNTERED *****
+
+ PURGE ALL SOLUTION AND POST DATA
+ SAVE ALL MODEL DATA
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.db
+  FOR POSSIBLE RESUME FROM THIS POINT
+
+
+ NUMBER OF WARNING MESSAGES ENCOUNTERED=          3
+ NUMBER OF ERROR   MESSAGES ENCOUNTERED=          0
+
++--------------------- M A P D L   S T A T I S T I C S ------------------------+
+
+Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
+Date Run: 09/02/2026   Time: 14:33     Process ID: 3588
+Operating System: Windows 10  (Build: 26200)
+
+Processor Model: Intel(R) Core(TM) Ultra 5 235
+
+Compiler: Intel(R) Fortran Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) C/C++ Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191125
+          BLAS Library supplied by Intel(R) MKL
+
+Number of machines requested            :    1
+Total number of cores available         :   14
+Number of physical cores available      :   14
+Number of processes requested           :    4
+Number of threads per process requested :    1
+Total number of cores requested         :    4 (Distributed Memory Parallel)               
+MPI Type: INTELMPI
+MPI Version: Intel(R) MPI Library 2021.5 for Windows* OS
+
+
+GPU Acceleration: Not Requested
+
+Job Name: file0
+Input File: t_growth_wrapper_v01_smoketest.dat
+
+  Core                Machine Name   Working Directory
+ -----------------------------------------------------
+     0                   ikmhiwi03   F:\biofilm_upf_wrapper
+     1                   ikmhiwi03   F:\biofilm_upf_wrapper
+     2                   ikmhiwi03   F:\biofilm_upf_wrapper
+     3                   ikmhiwi03   F:\biofilm_upf_wrapper
+ 
+Latency time from master to core     1 =    3.890 microseconds
+Latency time from master to core     2 =    3.904 microseconds
+Latency time from master to core     3 =    3.320 microseconds
+ 
+Communication speed from master to core     1 = 12033.33 MB/sec
+Communication speed from master to core     2 = 14451.39 MB/sec
+Communication speed from master to core     3 =  8701.61 MB/sec
+
+Total CPU time for main thread                    :        0.6 seconds
+Total CPU time summed for all threads             :        0.9 seconds
+
+Elapsed time spent obtaining a license            :        1.5 seconds
+Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
+Elapsed time spent solution - preprocessing       :        0.0 seconds
+Elapsed time spent computing solution             :        0.1 seconds
+Elapsed time spent solution - postprocessing      :        0.0 seconds
+Elapsed time spent post-processing model (/POST1) :        0.0 seconds
+ 
+Equation solver used                              :            Sparse (symmetric)
+
+Sum of memory used on all processes               :       24.0 MB
+Sum of memory allocated on all processes          :     5184.0 MB
+Physical memory available                         :         31 GB
+
+Total amount of I/O written to disk               :        0.0 GB
+Total amount of I/O read from disk                :        0.0 GB
+
++------------------ E N D   M A P D L   S T A T I S T I C S -------------------+
+
+
+ *---------------------------------------------------------------------------*
+ |                                                                           |
+ |                               RUN COMPLETED                               |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |  Ansys MAPDL 2022 R2         Build 22.2         UP20220516    WINDOWS x64 |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ | Database Requested(-db)  1024 MB    Scratch Memory Requested      1024 MB |
+ | Maximum Database Used       1 MB    Maximum Scratch Memory Used      8 MB |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |        CP Time      (sec) =          0.891       Time  =  14:33:25        |
+ |        Elapsed Time (sec) =          3.000       Date  =  09/02/2026      |
+ |                                                                           |
+ *---------------------------------------------------------------------------*

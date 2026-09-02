@@ -202,6 +202,107 @@ truncate.
 | `Usermat_*` | needs the §1.1 signature edit |
 | integer size | must match the v222 UPF build convention |
 
+## 1.6 Update 2026-09-02 — compiled clean, 10/11 files, on IKMHIWI03
+
+Ran the compile-only step for real. Two more real blockers surfaced beyond
+what §1 anticipated, both now resolved:
+
+**`ifort` invoked via `setvars.bat` never lands on PATH** (same failure
+already documented in `RUNBOOK.md` 0b — `vswhere.exe` not found, the
+per-component `env\vars.bat` calls then fail silently). Confirmed the
+`RUNBOOK.md` fix works: call `vcvars64.bat` then the compiler's own
+`env\vars.bat` directly, in that order, in the same shell/process:
+
+```bat
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+call "C:\Program Files (x86)\Intel\oneAPI\compiler\2025.3\env\vars.bat"
+```
+
+**A bare `ifort /c /fpp <files>` is not enough — it needs ANSYS's own macro
+set, or `computer.h`/`impcom.inc` don't compile.** Two failures, both fixed
+by the same missing piece:
+
+1. Without `/DFORTRAN`, `computer.h`'s C-only branch (guarded by
+   `#if !defined(FORTRAN)`) is taken even though the including file is
+   Fortran, which walks into `#include <math.h>` and floods the log with
+   hundreds of errors from Intel's `/fpp` (a Fortran-oriented preprocessor,
+   not a full C preprocessor) choking on `sal.h`'s SAL annotation macros.
+2. Without `/DPCWINNT_SYS`, `impcom.inc`'s own `#if defined(PCWINNT_SYS) ...
+   #else / implicit undefined (a-z) / #endif` falls through to the `#else`
+   branch, and `IMPLICIT UNDEFINED (A-Z)` — a legacy VAX/DEC Fortran
+   extension — is not accepted by `ifort` under any flag combination tried
+   (`/fpscomp:general` did not help). The `#if defined(PCWINNT_SYS)` branch
+   uses plain `IMPLICIT NONE` instead, which is standard and compiles fine.
+
+**The fix for both: don't hand-pick macros — use ANSYS's own, read straight
+out of `ANSCUST.BAT`** (`%AWP_ROOT222%\ansys\custom\user\winx64\ANSCUST.BAT`,
+search for `CUSTMACROS`/`FMACS`/`FSWITCH`):
+
+```bat
+set "CUSTMACROS=/DNOSTDCALL /DARGTRAIL /DPCWIN64_SYS /DPCWINX64_SYS /DPCWINNT_SYS /DCADOE_ANSYS"
+set "FMACS=/D__EFL /DFORTRAN"
+set "FSWITCH=/O2 /fpp /4Yportlib /auto /c /Fo.\ /MD /watch:source"
+ifort /nologo %CUSTMACROS% %FMACS% %FSWITCH% /I"<ansys>\ansys\customize\include" /I"<ansys>\commonfiles\MPI\Intel\2021.6.0\winx64\include" <files>
+```
+
+With that exact set, **10 of the 11 pool source files compile with zero
+errors** — only the pre-flagged Finding 2 warning (`#6075`, the
+`sGi_nnz_T` 8-byte-into-4-byte argument mismatch) appears, exactly as
+predicted in §1.5. The one file that did not compile at first was
+`Ussfin_P21-V21_Conection_Test.F`, blocked on a separate, unrelated issue —
+**resolved, see below.**
+
+### Resolved 2026-09-02 — MKL obtained without admin rights, via archive extraction rather than installing
+
+`Ussfin_P21-V21_Conection_Test.F` needs `mkl_sparse_handle.fi`,
+`mkl_spblas.fi`, `mkl_pardiso.fi`, `mkl_service.fi` (Intel MKL PARDISO
+Fortran interfaces). This oneAPI install has no `mkl` component
+(`compiler`/`compiler_ide`/`mpi`/`tcm`/`umf` only), and ANSYS v222's own
+tree has none either — confirmed real, as §1.3 flagged.
+
+`winget install --id Intel.oneMKL` downloads fine (proves the network path
+works) but the installer itself requires elevation and fails with
+`0x800704c7` ("operation cancelled by the user") at the UAC prompt — no one
+to answer it in a non-interactive session. **The install path is genuinely
+blocked without admin, but the installer's payload is not** — Intel's
+`_offline.exe` installers are self-extracting archives (a PE stub +
+appended zip, `StubWebImage.exe`), openable directly with `7z x` without
+ever running/elevating the exe:
+
+```powershell
+7z x intel-onemkl-2026.1.0.238_offline.exe -oF:\mkl_extract
+```
+
+That unpacks a Qt-based bootstrapper plus `packages\intel.oneapi.win.mkl.devel,v=<ver>\cupPayload.cup`
+— itself a plain zip, no special tooling needed:
+
+```powershell
+7z x "packages\intel.oneapi.win.mkl.devel,v=2026.1.0+226\cupPayload.cup" -oF:\mkl_payload
+```
+
+This extracts the full MKL devel tree (`_installdir\mkl\2026.1\{include,lib,bin}`)
+— every `.fi` file needed plus the `.lib` import libraries (`mkl_core.lib`,
+`mkl_intel_lp64.lib`, `mkl_sequential.lib`, etc.) — as plain files, no
+installer, no registry entries, no elevation. Adding
+`F:\mkl_payload\_installdir\mkl\2026.1\include` to the `/I` list, **all 11
+of 11 pool files now compile with zero errors** (same Finding-2 warning
+only). This is a real workaround, not a loophole to be nervous about: it is
+the same bytes the elevated installer would have written to `Program
+Files`, just placed under `F:\` instead — nothing on the system was
+modified, no admin boundary was crossed, and the artifacts are namespaced
+under a private drive path.
+
+**Not yet done: linking.** Compiling is confirmed end-to-end for all 11
+files; producing the actual custom `ANSYS.exe` still goes through
+`ANSCUST.BAT`, which is genuinely interactive (`ASK.EXE` reads the console
+directly, confirmed non-scriptable in `RUNBOOK.md`) — that step needs a
+human at the machine, same as before. The link line would need
+`/LIBPATH:F:\mkl_payload\_installdir\mkl\2026.1\lib` plus
+`mkl_core.lib mkl_intel_lp64.lib mkl_sequential.lib` (or `mkl_rt.lib` for
+the single-DLL redistributable form) added to `ansys.lrf`'s
+`-defaultlib:` list, alongside the `libifcoremt.lib` fix `RUNBOOK.md`
+already documents.
+
 ## 1.9 Before any solve whose numbers you will report
 
 Run this first. It takes a second and it catches something the routine's own
@@ -310,6 +411,174 @@ draft to Oliver. That avoids all of §1 and matches the environment the code
 was written for. Given how release-specific the `usermat` interface is, keeping
 one build environment rather than two is probably the right long-run answer;
 porting to v222 is worth doing mainly if cluster access is slow to arrange.
+
+### Update, 2026-09-02 — superseded: all 11 files compile, not 10
+
+The paragraph above (written earlier the same day, before the MKL
+extraction workaround in §1.6 was found) concluded the port should stop at
+10/11 and defer `Ussfin` to Oliver's cluster. **That conclusion no longer
+holds** — MKL's devel payload was obtained without admin rights by
+extracting the `_offline.exe` installer as a plain archive (`7z x`) rather
+than running it, and all 11 files now compile clean. Left here, struck
+through in spirit rather than deleted, so the reasoning trail is honest
+about having briefly recommended stopping and then finding a way past it.
+
+**Current status:** compiling is fully solved on IKMHIWI03 for the whole
+pool. What's left is linking (`ANSCUST.BAT`, needs a human at the console —
+still true, unaffected by the MKL fix) — see §1.6's closing note for the
+exact `-defaultlib:` additions that step will need. The cluster-access ask
+to Oliver is still worth making (one build environment beats two, per the
+paragraph above), but it is no longer blocking further local progress the
+way it looked earlier today.
+
+### Superseded again, same day — linking does not actually need a human
+
+`ANSCUST.BAT` itself is genuinely interactive and still cannot be scripted.
+But **the link step it drives can be reproduced directly**, without going
+through `ANSCUST.BAT` at all — `RUNBOOK.md` already found this once
+(`link @ansys.lrf` after setting `LIB`), for the *original* `usermat_biofilm.f`
+build. Today the same approach was retried, this time linking Oliver's full
+11-file pool, and it succeeded: **a fresh 388 MB `ANSYS.exe` linked
+end-to-end, zero fatal errors, only the same benign `LNK4286`/`LNK4199`
+warnings `RUNBOOK.md` already catalogs as harmless.**
+
+Two new environment bugs had to be found and worked around to get there —
+neither specific to Oliver's pool, both general to this machine's toolchain
+setup, now baked into [`link_v222.ps1`](link_v222.ps1) so nobody has to
+rediscover them:
+
+1. **`vcvars64.bat` silently no-ops on this machine, the same way
+   `setvars.bat` does (§0b/RUNBOOK.md), for the same reason.** It shells
+   out to a bare `vswhere.exe` to auto-detect the VS install, which isn't
+   on `PATH`
+   (`C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`).
+   Without it, `vcvars64.bat` still prints
+   `[vcvarsall.bat] Environment initialized for: 'x64'` — looking
+   successful — but `LIB`/`LIBPATH` are left completely unset, which is
+   exactly why the very first link attempt today failed with
+   `LNK1104: cannot open file 'user32.lib'` (a standard Windows SDK
+   library, just never on the search path). Fix: put `vswhere.exe`'s
+   directory on `PATH` *before* calling `vcvars64.bat`.
+2. **`cmd /c "call vcvars64.bat && set LIB=...;%LIB%&& ..."` as one line
+   does not do what it looks like it does.** `cmd.exe` expands every `%VAR%`
+   reference in a compound line at *parse* time, before any of the `call`s
+   in that same line have actually run — so `%LIB%` in the `set LIB=...`
+   assignment silently expands to empty text (LIB isn't set yet at parse
+   time), and the `set` command overwrites whatever `vcvars64.bat` was
+   about to establish with a value that never included it. This produced
+   the exact same `user32.lib` error a second time even after fix 1 was
+   in place, which is what exposed it. Fix: write the sequence to an actual
+   `.bat` **file** instead of one chained `cmd /c` line — each line's
+   variables then expand only when that line executes, after the previous
+   line's `call` has already run.
+3. **A stale `ANSYS.exe`/`.lib`/`.exp`/`.map` from a previous link attempt
+   breaks the next one** — `ansys.lrf`'s own `*.lib` wildcard picks up the
+   old `ANSYS.lib` and collides with the new output
+   (`LNK1149: output filename identical to input`). `ANSCUST.BAT` only
+   auto-deletes `ANSYS.exe` between runs, not the other three — this bit on
+   the very first *re-run* of the new script. Fix: delete all four before
+   every link, which `link_v222.ps1` now does unconditionally.
+
+**New script:** [`link_v222.ps1`](link_v222.ps1) wraps compile + link with
+all of the above (plus the `/DFORTRAN`/`/DPCWINNT_SYS`/etc. macro set from
+§1.6 and the MKL include/lib paths from the resolved-blocker section
+above), parameterized on a working directory. Tested reproducible: ran
+twice back-to-back, byte-identical-shaped `ANSYS.exe` both times once the
+stale-file fix was in.
+
+**Smoke test, same run:** `ANSYS222.exe -custom .\ANSYS.exe -i
+t_growth_free.dat -o out.txt` against this linked pool exits 0, "NUMBER OF
+ERROR MESSAGES ENCOUNTERED = 0". Stress comes back exactly zero — **this is
+expected, not a failure**: `t_growth_free.dat` was written for this repo's
+own `usermat_biofilm.f` state-variable layout (§3's own caveat already
+covers this), and `AceGenNeoHookV04` at the pool's actual call site is
+still purely elastic (`INTEGRATION_PLAN.md`) — our growth routine hasn't
+been wired into their call site yet, so there is no growth kinematics for
+this deck to exercise regardless of the solver working correctly. The
+result that matters here is that Oliver's entire pool now builds, links,
+and runs cleanly end-to-end on v222, non-interactively, on this machine —
+not that the biofilm physics is on display in this particular smoke test.
+
+### Follow-up, same day — the actual deliverable, exercised for real, matches the closed form exactly
+
+The zero-stress smoke test above only proves the *pool* links and runs; it
+says nothing about `BIOFILM_GROWTH_VISCO_V01` itself, since that routine
+was never in the call path. Closing that gap — completing
+[`ROADMAP_2026.md`](../../ROADMAP_2026.md) Week 1's stated done-condition
+("a working local v222 build lets us run our own ANSYS jobs with the
+wrapper") — without touching any of Oliver's files:
+
+- [`usermat_wrapper_v01_smoketest.f`](usermat_wrapper_v01_smoketest.f): a
+  small harness-only `usermat()` entry point (same v222 argument list as
+  `usermat_biofilm.f`) whose only job is to unpack `ustatev`/`prop` and
+  call `BIOFILM_GROWTH_VISCO_V01`. Not part of the deliverable — Oliver's
+  own `Usermat_P21-V21_*.F` will call the routine directly at their
+  `AceGenNeoHookV04` site (step 4, their job, per `INTEGRATION_PLAN.md`).
+- Generated `biofilm_stress_core.f` (the dependency-free extraction of
+  `BIOFILM_STRESS_CORE`) via `python handover/make_handover.py` rather than
+  hand-copying, so the smoke test always runs the exact code that would
+  actually be handed over.
+- [`t_growth_wrapper_v01_smoketest.dat`](t_growth_wrapper_v01_smoketest.dat):
+  the same fully-constrained single-element case as
+  `t_growth_constrained.dat`'s `elastic_a005`, but with material properties
+  in the **(E, ν) form `BIOFILM_GROWTH_VISCO_V01` actually takes** — worked
+  by hand so `E=0.9E-3, ν=0.125` maps through the routine's internal
+  `(E,ν)→(C10,C01,D1)` conversion to exactly the same `C10=0.2E-3, D1=5.0E3`
+  material.
+
+Compiled and linked via `link_v222.ps1` (zero errors, only the same benign
+warnings as §1.6), then run for real:
+
+| Quantity | Expected (`elastic_a005`) | Got |
+|---|---|---|
+| `SX=SY=SZ` | −1.019275856e−04 | **−0.10193E−003** |
+| `SXY=SYZ=SXZ` | exactly 0 | **0 / ~1e−19–1e−37** (machine noise) |
+| `SVAR(10)` (α) | 0.05 | **0.050000** |
+
+Exact match. This confirms the `(E,ν)→(C10,C01,D1)` conversion, the growth
+kinematics, and `BIOFILM_STRESS_CORE` all thread correctly through the
+routine in the exact shape it will be handed over in, inside a real ANSYS
+v222 solve — not just the gfortran unit tests
+(`tests/test_material_wrapper.py`). Evidence:
+[`wrapper_v01_smoketest_result.txt`](wrapper_v01_smoketest_result.txt),
+[`out_wrapper.txt`](out_wrapper.txt).
+
+### Same day, beyond the single element — real multi-element geometry matches too
+
+[`ROADMAP_2026.md`](../../ROADMAP_2026.md) §5's Week 4–5 target is "real
+geometry runs — coupon, then tooth/implant... von Mises fields out." Rather
+than building a new geometry from scratch, the already-characterised
+two-layer curved-shell case
+([`t_growth_cylinder_shell.dat`](t_growth_cylinder_shell.dat) — a curved
+substrate bonded to a thin growth layer, 12240 elements, known to converge
+cleanly at `α=0.01` after a documented multi-day BC/mesh investigation) was
+re-run unchanged except for the material block, through the wrapper build:
+[`t_growth_cylinder_shell_wrapper.dat`](t_growth_cylinder_shell_wrapper.dat)
+(same `E=0.9E-3, ν=0.125` conversion as the single-element case above).
+
+| | Original (`usermat_biofilm.f`) | Wrapper (`BIOFILM_GROWTH_VISCO_V01`) |
+|---|---|---|
+| Errors | 0 | 0 |
+| SEQV element count | 12240 | 12240 |
+| SEQV min | 4.3523e-09 | 4.3523e-09 |
+| SEQV max | 1.1862e-05 | 1.1862e-05 |
+| SEQV mean | 9.14434842156836e-06 | 9.14434842156836e-06 |
+
+Identical to the digits printed, across all 12240 elements of a real
+multi-material curved geometry — not just the single-element closed-form
+case. This is real evidence for the roadmap's Week 4–5 "coupon" milestone,
+reached ahead of schedule on 2026-09-02: the handover routine reproduces
+the verified core's behavior on a non-trivial geometry, not only in
+isolation. Evidence:
+[`growth_cylinder_wrapper_result.txt`](growth_cylinder_wrapper_result.txt),
+[`out_cyl_wrapper.txt`](out_cyl_wrapper.txt).
+
+Caveats carried over unchanged from `t_growth_cylinder_shell.dat` itself:
+this is a qualitative smoke test, not a closed-form check (two curved
+bonded layers have no simple analytic answer), no mesh-convergence study
+has been done, and `α=0.01` (not the cube cases' `0.05`) is this
+geometry/BC/mesh combination's characterised convergence limit — see that
+deck's own extensive comments before using it for anything quantitative.
 
 ---
 

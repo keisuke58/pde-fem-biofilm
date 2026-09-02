@@ -20,6 +20,14 @@
 # Idempotent and non-interactive; safe to re-run.
 set -uo pipefail
 
+# Cloud sessions only. IKMHIWI03 is Windows, has its own toolchain and its own
+# git identity in .git/config, and needs none of this; apt-get and the POSIX
+# paths below would fail there. settings.json is shared between both, so the
+# guard belongs here rather than in the registration.
+if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+    exit 0
+fi
+
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 
 log() { echo "[session-start] $*"; }

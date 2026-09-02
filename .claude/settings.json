@@ -1,4 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(. .\\dev-env.ps1)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(python -m pytest tests/*)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(.\\run_tests.ps1)",
+      "PowerShell(curl.exe -s \"https://api.github.com/*\")"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

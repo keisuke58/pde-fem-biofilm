@@ -99,6 +99,28 @@ flag gives zeros rather than whatever was in the work array.
   0.35, both material paths, elastic and viscous, steps up to the guard
   threshold): **median 1.2e-7, worst 1.1e-6** relative to the largest tangent
   entry. No region of the range degrades.
+- **This exact routine has since been exercised in a real ANSYS solve, not
+  only gfortran unit tests (2026-09-02).** Built and linked into a custom
+  ANSYS 2022 R2 (v222) `ANSYS.exe` and run through a small harness-only
+  `usermat()` entry point that does nothing but unpack `ustatev`/`prop` and
+  call `BIOFILM_GROWTH_VISCO_V01` — i.e. the same call shape your
+  `Usermat_P21-V21_*.F` will use at your `AceGenNeoHookV04` site. Two cases:
+  - a fully-constrained single element, matching the closed-form reference
+    to display precision (`SX=SY=SZ` exact to 5 significant figures, shear
+    exactly zero to machine noise);
+  - the same two-layer curved-shell geometry already characterised for this
+    law (12240 elements), re-run unchanged except for the material block —
+    SEQV min/max/mean identical to the digits printed against the original,
+    already-verified build across all 12240 elements.
+
+  Both runs: 0 errors. This is independent of, and additional to, the
+  gfortran-level testing above — it confirms the `(E,ν)→(C10,C01,D1)`
+  conversion, the growth kinematics, and the core all thread correctly
+  through this exact routine inside a real ANSYS solver process. Full
+  narrative and raw output:
+  [`../ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md`](../ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md)
+  §1.6, and the executable walkthrough
+  [`../ansys_usermat/apdl/v222_wrapper_verification.ipynb`](../ansys_usermat/apdl/v222_wrapper_verification.ipynb).
 
 One honest caveat, since it is better heard from us than found later.
 Cross-implementation agreement establishes that two ports compute the same

@@ -76,7 +76,7 @@ than their order:
 |---|---|---|
 | 2. Wrap the core to their convention | ✅ done (PR #46) | us |
 | 3. Verify the wrapper | ✅ done (PR #46) | us |
-| 1. Port to ANSYS v222 locally | **next** | us + this machine |
+| 1. Port to ANSYS v222 locally | ✅ **done 2026-09-02**, ahead of the Sep 7 target — see [`ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md`](ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md) | us + this machine |
 | 4. They wire it into their framework | open | **Oliver's calendar** |
 
 **Step 1 is now the highest-value item, and its priority has changed.** It was
@@ -114,15 +114,58 @@ Three things to raise early rather than late:
 
 | Weeks | Focus | Done means |
 |---|---|---|
-| **1** (Sep 7) | v222 build on IKMHIWI03 (step 1). Confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked |
+| **1** (Sep 7) | v222 build on IKMHIWI03 (step 1) — ✅ done 2026-09-02, ahead of schedule. Still open: confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked — ✅ exact closed-form match |
 | **2–3** (Sep 14, 21) | Handover package to Oliver + call. First smoke runs with the wrapper on v222. | Oliver has the routine; a single-element run gives sane stress |
-| **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. | von Mises fields out, `dt` inside the stable range and shown to be |
+| **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. **Coupon-scale piece done 2026-09-02** (re-ran the existing two-layer curved-shell case through the wrapper — identical SEQV to the original build across all 12240 elements, see `V222_PORT_INSTRUCTIONS.md`). Tooth/implant scale for the v222/ANSYS wrapper pipeline still open. **A separate, exploratory tooth-scale probe (Abaqus, not the v222/ANSYS wrapper) also ran 2026-09-02** — see the note below the table. | von Mises fields out, `dt` inside the stable range and shown to be |
 | **6–8** (Oct 12, 19, 26) | Condition comparison, the actual Ch5 results. Figures. | the comparison table and figures Ch5 needs exist |
 | **9–10** (Nov 2, 9) | **Write Ch5.** FREEZE — no new physics from here. | full draft to Meisam |
 | **11** (Nov 16) | Revise on his comments. Citations, numbers, consistency checks. | `audit_all.py` clean, no loose claims |
 | **12** (Nov 23) | **Submit.** | submitted |
 | **13** (Nov 30) | Buffer. | — |
 | **14–15** (Dec 7, 14) | Defence prep — slides from the Ch5 figures. | rehearsed |
+
+### 5b. Note — exploratory Abaqus tooth-scale probe, 2026-09-02
+
+Separate from the v222/ANSYS wrapper track above: a real 896-element
+tooth/crown mesh (`tier2b_real/dh_crown_poly.inp`, from Drive, unrelated
+in origin to this repo's growth study) was driven with `umat_biofilm_visco.f`
+directly in Abaqus, as a feasibility check ahead of the Week 4–5 slot. The
+`.inp` variants are gitignored (repo-wide `*.inp` rule) and not reproduced
+here byte-for-byte, but the findings are worth keeping:
+
+- **Two runs, kept deliberately lineage-separated** per §6 of
+  `RESEARCH_MODEL.md` (an earlier combined run was tried first, found to
+  conflate the two lineages, and was superseded rather than kept as a
+  result):
+  - *growth-only* (lineage 1): uniform biofilm E=279 Pa ("DH Baseline"),
+    `alpha=0.05` growth ramp via the UMAT's `TEMP` field, no mechanical
+    load. Converged cleanly (7 increments); von Mises 0.6–60 Pa, mean
+    ~9.2 Pa — the right order of magnitude for a modest growth strain
+    against a material of comparable modulus.
+  - *stiffness-only* (lineage 2): `MAT_ANISO_00..19` set from
+    `material_models.compute_mooney_rivlin_params`, E log-interpolated
+    995→32 Pa (the repo's own CH→DS calibrated range, `run_ve_twin_experiment.py`),
+    no growth. Converged; von Mises 0–335 Pa, mean ~43 Pa.
+  - Growth was restricted to nodes with zero adjacency to `MAT_TOOTH`
+    elements — growing the GPa-scale tooth by the same 5% against the
+    fixed boundary would swamp the biofilm's own signal.
+- **Finding worth reusing elsewhere:** once biofilm elements carry their
+  true Pa-scale modulus, a force-controlled load (`*Dsload` pressure) on
+  a face with zero tooth adjacency is genuinely ill-posed — confirmed by
+  trying three magnitudes spanning 500× (50, 3, 0.1 Pa) and getting the
+  identical distortion/negative-eigenvalue failure each time. It is not
+  a load-magnitude problem, and a `*Tie` does not apply (the mesh is
+  already one conforming part with shared nodes at every material-zone
+  boundary — there is no separate interface to tie). Switching to a
+  displacement-controlled boundary condition on the same node set sidesteps
+  the equilibrium-existence issue and converges immediately. Anyone driving
+  this UMAT on a real Pa-scale mesh with a free/unsupported loaded face
+  should expect the same failure mode and reach for displacement control,
+  not a smaller pressure.
+- Not yet a Ch5 number: this used a borrowed geometry unrelated to the
+  calibrated study, and the applied displacement (stiffness-only case) is
+  illustrative, not a validated occlusal value. The real Week 4–5 tooth/
+  implant deliverable is still the v222/ANSYS wrapper run.
 
 ## 6. Risks
 

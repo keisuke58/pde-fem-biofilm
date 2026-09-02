@@ -1,0 +1,72 @@
+! t_growth_wrapper_v01_smoketest.dat --- real-ANSYS smoke test for
+! BIOFILM_GROWTH_VISCO_V01 (biofilm_material_v01.f), the routine actually
+! meant for handover to Oliver's framework, via
+! usermat_wrapper_v01_smoketest.f (a harness-only usermat() entry point --
+! see that file's header). Confirms the (E,nu)-parameterized deliverable
+! reproduces the same closed-form answer as the (C10,C01,D1)-parameterized
+! usermat_biofilm.f, on real ANSYS v222, not just the gfortran unit tests.
+!
+! E, nu below are chosen so that after biofilm_material_v01.f's internal
+! (E,nu) -> (C10,C01,D1) map (mu=E/2(1+nu), K=E/3(1-2nu), C10=mu/2 at
+! C01Ratio=0, D1=2/K), they reproduce EXACTLY the C10=0.2E-3, D1=5.0E3
+! material in t_growth_constrained.dat's elastic_a005 case:
+!   mu = 0.4E-3, K = 4.0E-4  =>  mu/K = 1  =>  nu = 0.125, E = 0.9E-3
+! (worked by hand: 3(1-2nu) = 2(1+nu) at mu=K, i.e. nu=1/8; E = 2*mu*(1+nu))
+!
+! EXPECTED (alpha=0.05, eta=0 -- same case as reference_values.json's
+! elastic_a005, RUNBOOK.md Step 3):
+!   SX=SY=SZ = -1.019275856E-04
+!   SXY=SYZ=SXZ = 0
+!
+! A match confirms: the (E,nu)->(C10,C01,D1) conversion, the growth
+! kinematics, and BIOFILM_STRESS_CORE all thread correctly through the
+! actual handover-shaped routine, inside a real ANSYS solve.
+
+FINISH
+/CLEAR
+/TITLE, wrapper v01 smoketest -- constrained growth, closed-form check
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+BLOCK,0,1,0,1,0,1
+ESIZE,1
+VMESH,1
+
+! prop: sYoung, sNu, sEta, sC01Ratio, sMtype
+TB,USER,1,1,5
+TBDATA,1,0.9E-3,0.125,0.0,0.0,0.0
+
+! state: ustatev(1:9)=Fv (row-major, init to I), ustatev(10)=alpha
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.05
+
+! fully constrained: forces F = I at every integration point
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,5.0
+NSUBST,1,10,1
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+ESEL,S,ELEM,,1
+/OUTPUT,wrapper_v01_smoketest_result,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10
+/OUTPUT
+FINISH

@@ -106,6 +106,21 @@ L5. **Surrogate vs direct solve.** The CI uses the validated k_eff^b surrogate;
     a surrogate-free direct UMAT propagation pipeline exists (V5) and can replace
     it for the final tables if desired.
 
+L6. **5 species, not the full oral community.** Real dental biofilms contain
+    upwards of 500 species (Klempt et al. 2026, citing Marsh 2005); this work
+    models 5 (S. oralis, A. naeslundii, Veillonella, F. nucleatum,
+    P. gingivalis), chosen as a representative early-to-late colonizer /
+    commensal-to-pathogen succession panel matching the Heine et al. in vitro
+    co-culture data this work calibrates against, not the full community.
+    This is not an incidental simplification: the interaction matrix A has
+    n(n+1)/2 parameters for n species (15 at n=5), and L3 already discloses
+    that even 5 species is under-identified against the available CLSM
+    timepoints (25 observations for 15 parameters, >=4 posterior modes).
+    Scaling to the real species count is not viable with current
+    observation density; 5 species is the largest panel the identifiability
+    constraint supports, not an arbitrary cutoff. Klempt et al.'s own
+    numerical studies use 2-4 species for the same reason.
+
 ## Bottom line
 The constitutive/FEM core is verified to continuum-mechanics (IKM) standard. The
 qualitative claim -- commensal biofilm carries several-fold higher growth-induced
