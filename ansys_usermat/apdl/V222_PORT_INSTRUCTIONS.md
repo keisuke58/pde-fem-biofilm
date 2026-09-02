@@ -449,6 +449,50 @@ result that matters here is that Oliver's entire pool now builds, links,
 and runs cleanly end-to-end on v222, non-interactively, on this machine —
 not that the biofilm physics is on display in this particular smoke test.
 
+### Follow-up, same day — the actual deliverable, exercised for real, matches the closed form exactly
+
+The zero-stress smoke test above only proves the *pool* links and runs; it
+says nothing about `BIOFILM_GROWTH_VISCO_V01` itself, since that routine
+was never in the call path. Closing that gap — completing
+[`ROADMAP_2026.md`](../../ROADMAP_2026.md) Week 1's stated done-condition
+("a working local v222 build lets us run our own ANSYS jobs with the
+wrapper") — without touching any of Oliver's files:
+
+- [`usermat_wrapper_v01_smoketest.f`](usermat_wrapper_v01_smoketest.f): a
+  small harness-only `usermat()` entry point (same v222 argument list as
+  `usermat_biofilm.f`) whose only job is to unpack `ustatev`/`prop` and
+  call `BIOFILM_GROWTH_VISCO_V01`. Not part of the deliverable — Oliver's
+  own `Usermat_P21-V21_*.F` will call the routine directly at their
+  `AceGenNeoHookV04` site (step 4, their job, per `INTEGRATION_PLAN.md`).
+- Generated `biofilm_stress_core.f` (the dependency-free extraction of
+  `BIOFILM_STRESS_CORE`) via `python handover/make_handover.py` rather than
+  hand-copying, so the smoke test always runs the exact code that would
+  actually be handed over.
+- [`t_growth_wrapper_v01_smoketest.dat`](t_growth_wrapper_v01_smoketest.dat):
+  the same fully-constrained single-element case as
+  `t_growth_constrained.dat`'s `elastic_a005`, but with material properties
+  in the **(E, ν) form `BIOFILM_GROWTH_VISCO_V01` actually takes** — worked
+  by hand so `E=0.9E-3, ν=0.125` maps through the routine's internal
+  `(E,ν)→(C10,C01,D1)` conversion to exactly the same `C10=0.2E-3, D1=5.0E3`
+  material.
+
+Compiled and linked via `link_v222.ps1` (zero errors, only the same benign
+warnings as §1.6), then run for real:
+
+| Quantity | Expected (`elastic_a005`) | Got |
+|---|---|---|
+| `SX=SY=SZ` | −1.019275856e−04 | **−0.10193E−003** |
+| `SXY=SYZ=SXZ` | exactly 0 | **0 / ~1e−19–1e−37** (machine noise) |
+| `SVAR(10)` (α) | 0.05 | **0.050000** |
+
+Exact match. This confirms the `(E,ν)→(C10,C01,D1)` conversion, the growth
+kinematics, and `BIOFILM_STRESS_CORE` all thread correctly through the
+routine in the exact shape it will be handed over in, inside a real ANSYS
+v222 solve — not just the gfortran unit tests
+(`tests/test_material_wrapper.py`). Evidence:
+[`wrapper_v01_smoketest_result.txt`](wrapper_v01_smoketest_result.txt),
+[`out_wrapper.txt`](out_wrapper.txt).
+
 ---
 
 ## 5. Reporting back
