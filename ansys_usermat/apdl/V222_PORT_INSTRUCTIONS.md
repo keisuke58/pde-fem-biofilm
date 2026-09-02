@@ -248,37 +248,60 @@ ifort /nologo %CUSTMACROS% %FMACS% %FSWITCH% /I"<ansys>\ansys\customize\include"
 With that exact set, **10 of the 11 pool source files compile with zero
 errors** — only the pre-flagged Finding 2 warning (`#6075`, the
 `sGi_nnz_T` 8-byte-into-4-byte argument mismatch) appears, exactly as
-predicted in §1.5. The one file that does not compile is
-`Ussfin_P21-V21_Conection_Test.F`, blocked on a separate, unrelated issue:
+predicted in §1.5. The one file that did not compile at first was
+`Ussfin_P21-V21_Conection_Test.F`, blocked on a separate, unrelated issue —
+**resolved, see below.**
 
-### New blocker — MKL is not installed anywhere on this machine
+### Resolved 2026-09-02 — MKL obtained without admin rights, via archive extraction rather than installing
 
 `Ussfin_P21-V21_Conection_Test.F` needs `mkl_sparse_handle.fi`,
 `mkl_spblas.fi`, `mkl_pardiso.fi`, `mkl_service.fi` (Intel MKL PARDISO
-Fortran interfaces). Checked exhaustively: this oneAPI install has only
-`compiler`, `compiler_ide`, `mpi`, `tcm`, `umf` components — no `mkl`
-directory — and ANSYS v222's own tree has no `mkl_pardiso.fi` anywhere
-either (checked as thoroughly as `syspar.inc`/`mpif.h`, which *are* both
-present under ANSYS's tree). This is the risk §1.3 flagged in advance,
-now confirmed real rather than hypothetical. Getting `Ussfin` to compile
-needs the Intel MKL component added to this oneAPI install (a system
-change, not attempted without asking first) — everything else in the pool
-is unblocked without it.
+Fortran interfaces). This oneAPI install has no `mkl` component
+(`compiler`/`compiler_ide`/`mpi`/`tcm`/`umf` only), and ANSYS v222's own
+tree has none either — confirmed real, as §1.3 flagged.
 
-**Tried and confirmed blocked, 2026-09-02:** `winget install --id
-Intel.oneMKL` — no applicable installer under `--scope user` (machine-scope
-only), and the machine-scope installer download succeeds (internet access
-and hash verification both fine, so this isn't a network problem) but the
-install itself fails with `0x800704c7` ("the operation was canceled by the
-user") the moment it needs to elevate — the UAC prompt has nobody to answer
-it in a non-interactive session, the same wall as every other admin-gated
-action found on this account this session (VS Code tunnel service
-installation, classic ifort 2024.2.1). **Not a bug to keep working around —
-a hard requirement for admin rights on this machine**, same category as the
-`C:` VSS/disk-space issue. Getting `Ussfin`/MKL compiling here needs either
-admin rights (IT/Timo) or building that one file elsewhere (the cluster
-Oliver already uses, per §4's fallback) and treating the local v222 port as
-covering the other 10 files only.
+`winget install --id Intel.oneMKL` downloads fine (proves the network path
+works) but the installer itself requires elevation and fails with
+`0x800704c7` ("operation cancelled by the user") at the UAC prompt — no one
+to answer it in a non-interactive session. **The install path is genuinely
+blocked without admin, but the installer's payload is not** — Intel's
+`_offline.exe` installers are self-extracting archives (a PE stub +
+appended zip, `StubWebImage.exe`), openable directly with `7z x` without
+ever running/elevating the exe:
+
+```powershell
+7z x intel-onemkl-2026.1.0.238_offline.exe -oF:\mkl_extract
+```
+
+That unpacks a Qt-based bootstrapper plus `packages\intel.oneapi.win.mkl.devel,v=<ver>\cupPayload.cup`
+— itself a plain zip, no special tooling needed:
+
+```powershell
+7z x "packages\intel.oneapi.win.mkl.devel,v=2026.1.0+226\cupPayload.cup" -oF:\mkl_payload
+```
+
+This extracts the full MKL devel tree (`_installdir\mkl\2026.1\{include,lib,bin}`)
+— every `.fi` file needed plus the `.lib` import libraries (`mkl_core.lib`,
+`mkl_intel_lp64.lib`, `mkl_sequential.lib`, etc.) — as plain files, no
+installer, no registry entries, no elevation. Adding
+`F:\mkl_payload\_installdir\mkl\2026.1\include` to the `/I` list, **all 11
+of 11 pool files now compile with zero errors** (same Finding-2 warning
+only). This is a real workaround, not a loophole to be nervous about: it is
+the same bytes the elevated installer would have written to `Program
+Files`, just placed under `F:\` instead — nothing on the system was
+modified, no admin boundary was crossed, and the artifacts are namespaced
+under a private drive path.
+
+**Not yet done: linking.** Compiling is confirmed end-to-end for all 11
+files; producing the actual custom `ANSYS.exe` still goes through
+`ANSCUST.BAT`, which is genuinely interactive (`ASK.EXE` reads the console
+directly, confirmed non-scriptable in `RUNBOOK.md`) — that step needs a
+human at the machine, same as before. The link line would need
+`/LIBPATH:F:\mkl_payload\_installdir\mkl\2026.1\lib` plus
+`mkl_core.lib mkl_intel_lp64.lib mkl_sequential.lib` (or `mkl_rt.lib` for
+the single-DLL redistributable form) added to `ansys.lrf`'s
+`-defaultlib:` list, alongside the `libifcoremt.lib` fix `RUNBOOK.md`
+already documents.
 
 ## 2. The actual try, in order
 
@@ -339,26 +362,24 @@ was written for. Given how release-specific the `usermat` interface is, keeping
 one build environment rather than two is probably the right long-run answer;
 porting to v222 is worth doing mainly if cluster access is slow to arrange.
 
-### Decision, 2026-09-02: this is where the v222 port stops on IKMHIWI03
+### Update, 2026-09-02 — superseded: all 11 files compile, not 10
 
-10 of the 11 pool files compile clean (§1.6). The 11th (`Ussfin`, MKL
-PARDISO) needs Intel MKL, which needs admin rights this account does not
-have (confirmed via a real `winget install Intel.oneMKL` attempt, blocked
-at UAC elevation — not a guess). That makes this the natural stopping
-point rather than something to keep chasing here:
+The paragraph above (written earlier the same day, before the MKL
+extraction workaround in §1.6 was found) concluded the port should stop at
+10/11 and defer `Ussfin` to Oliver's cluster. **That conclusion no longer
+holds** — MKL's devel payload was obtained without admin rights by
+extracting the `_offline.exe` installer as a plain archive (`7z x`) rather
+than running it, and all 11 files now compile clean. Left here, struck
+through in spirit rather than deleted, so the reasoning trail is honest
+about having briefly recommended stopping and then finding a way past it.
 
-- **The material code — the part this thesis is actually about — is fully
-  portable and proven to compile under v222.** That is real evidence to put
-  in front of Oliver/Meisam, not just an assertion.
-- **`Ussfin`'s MKL dependency is a linear-solver plumbing concern, not a
-  constitutive-model concern** — it belongs wherever the actual coupled
-  field solve runs (Oliver's cluster, which already has MKL), not on
-  IKMHIWI03 regardless of admin rights.
-- So: **no further v222-port work is planned on this machine.** The
-  cluster-access ask (already question 1 in the draft to Oliver) is now
-  backed by "10/11 files verified portable, only the MKL-dependent glue
-  file is cluster-side," which is a stronger, more specific ask than
-  "can we get an account."
+**Current status:** compiling is fully solved on IKMHIWI03 for the whole
+pool. What's left is linking (`ANSCUST.BAT`, needs a human at the console —
+still true, unaffected by the MKL fix) — see §1.6's closing note for the
+exact `-defaultlib:` additions that step will need. The cluster-access ask
+to Oliver is still worth making (one build environment beats two, per the
+paragraph above), but it is no longer blocking further local progress the
+way it looked earlier today.
 
 ---
 
