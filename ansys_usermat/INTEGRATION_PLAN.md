@@ -65,10 +65,27 @@ pool is acceptable to them, which is in the draft to him.
 
 ## Work items
 
-1. **Port the pool to v222 locally** so there is a test bed.
-   `apdl/patch_usermat_to_v222.py` does the signature retarget; the rest is in
+1. **Port the pool to v222 locally** so there is a test bed. **Done, 2026-09-02:**
+   all 11 pool source files compile clean under v222 (see
+   `apdl/V222_PORT_INSTRUCTIONS.md` §1.6) — `apdl/patch_usermat_to_v222.py`
+   does the signature retarget; the rest is in
    `apdl/V222_PORT_INSTRUCTIONS.md`, including the pre-flight findings
-   (`/fpp` on `userdata_*.f`, the integer-width question).
+   (`/fpp` on `userdata_*.f`, the integer-width question). Linking (a full
+   custom `ANSYS.exe`) is not done yet — needs `ANSCUST.BAT`, which is
+   interactive and needs a human at the console.
+
+   **Also confirmed, same day: the actual deliverable compiles too, not just
+   the stock pool.** `biofilm_material_v01.f` + `usermat_biofilm.f` (as
+   `BIOFILM_STRESS_CORE`) + `usermat_py_hook.f` (the `biofilm_py_bridge`
+   module it `use`s) all compile with zero errors under the identical v222
+   flag set — the "release-independent, drops in unchanged" claim two
+   paragraphs up is now backed by a real compile, not just an argument from
+   the call signature. One real fixup needed along the way:
+   `usermat_py_hook.f` is fixed-form Fortran with lines past column 72
+   (the `bind(C, name=...)` declarations), which needs
+   `/extend-source:132` — the same flag class as gfortran's
+   `-ffixed-line-length-132` used elsewhere in this repo's syntax checks,
+   just not needed for the other pool files, which stay under 72 columns.
 2. **Wrap `BIOFILM_STRESS_CORE` to their calling convention** — the same shape
    as `AceGenNeoHookV04`, plus arguments for the growth variable and the
    viscous state (`Vdp_Cv_n` already reserves a slot for the latter).
