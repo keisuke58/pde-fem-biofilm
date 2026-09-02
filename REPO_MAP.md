@@ -67,6 +67,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/apdl/check_deck.py` | Pre-flight for any deck whose stress will be reported. Catches only failures that are **silent in ANSYS**: a step too coarse for the viscous relaxation time, too few `TB,STATE` slots (which leaves α unread, so the solve runs purely elastic), α declared but never written, and an over-long `TBDATA` whose tail APDL drops. Handles Abaqus `.inp` too, where growth arrives as the temperature field instead |
 | `ansys_usermat/apdl/make_layered_material.py` | Turns a depth-resolved α(x) field into ANSYS layered materials, and reports what the binning costs against the field — the ANSYS route takes α per material, so a spatial field has to be discretised |
 | `ansys_usermat/apdl/MESH_STUDY.md`, `make_mesh_levels.py` | The light mesh study: show the **ratio** Ch5 reports is mesh-stable, rather than converging absolute stress. The helper halves `ESIZE` and changes nothing else |
+| `ansys_usermat/apdl/plot_cylinder_3d.py` | Draws the v222 curved-shell run from the solver's own listing — geometry, a section showing the two layers and the interface, and the SEQV distribution. Validated against the listing's own min/max/mean |
 
 ## Pre-existing directories the tour had not listed
 
