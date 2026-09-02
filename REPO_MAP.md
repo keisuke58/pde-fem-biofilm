@@ -59,6 +59,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `reports/` | Written progress updates to the supervisors, kept next to the work they describe |
 | `DEVIATOR_SCALING_FINDING.md` | A mis-scaled isochoric split in the verified core: a pure pressure error, von Mises unaffected. Documented, not fixed — with the reasoning |
 | `VISCOUS_UPDATE_SCHEME.md` | What the `Fv` update actually is, why "backward Euler" is the wrong name for it, and the step limit that follows |
+| `E_SATURATION_FINDING.md` | The production φ→E bridge clips to [10, 1000] Pa, and at the current calibration that bound is active over much of the healthy composition space — so distinct conditions can report identical stiffness |
 | `PINN_DESIGN.md` | A physics-informed surrogate, written up as a Keio design rather than started |
 | `ansys_usermat/biofilm_material_v01.f` | `BIOFILM_GROWTH_VISCO_V01` — the routine handed over, an adapter around the verified core |
 | `ansys_usermat/growth_law_verification.ipynb` | Executable walkthrough of what the verifications establish and what they do not |
