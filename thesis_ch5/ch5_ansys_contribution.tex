@@ -72,9 +72,58 @@ response is compressible Mooney--Rivlin, reducing to neo-Hookean at $C_{01}=0$,
 and the viscous branch is a deviatoric Newtonian dashpot carrying
 $\mathbf F_v$.}
 
-% TODO(prose): state W, the flow rule, and the update in the order the code
-% evaluates them, so §5.3 can be read against it. Keep the growth driver
-% prescribed -- the ecology that produces alpha is Chapter <N>.
+\TierA{%
+Written out in the order the implementation evaluates it, a step takes the
+total deformation gradient $\mathbf F$ and the viscous state
+$\mathbf F_v^{\,n}$ and returns the Cauchy stress and $\mathbf F_v^{\,n+1}$:
+
+\begin{enumerate}
+\item the mechanical part removes the growth,
+      $\mathbf F_{\mathrm{mech}} = \mathbf F\,\mathbf F_g^{-1}$, and a trial
+      elastic gradient follows from the viscous state at the start of the step,
+      $\mathbf F_e^{\mathrm{tr}} = \mathbf F_{\mathrm{mech}}(\mathbf F_v^{\,n})^{-1}$;
+\item with $\mathbf b_e = \mathbf F_e \mathbf F_e^{\mathsf T}$ and
+      $J_e = \det \mathbf F_e$, the deviatoric Kirchhoff stress follows from
+      $W = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$,
+      which reduces to neo-Hookean at $C_{01}=0$;
+\item the viscous state advances by one step of the deviatoric Newtonian flow
+      rule,
+      \begin{equation}
+        \mathbf F_v^{\,n+1} =
+        \Bigl( \mathbf I + \frac{\Delta t}{2\,\eta\,J_e}\,
+        \bm\tau_{\mathrm{dev}} \Bigr)\mathbf F_v^{\,n},
+        \label{eq:ch5-flow}
+      \end{equation}
+      with $\bm\tau_{\mathrm{dev}}$ taken at the trial state;
+\item the elastic gradient and the stress are recomputed at
+      $\mathbf F_v^{\,n+1}$, the volumetric term $\tfrac{2}{D_1}(J_e-1)$ is
+      added, and the result is returned in the solver's Voigt ordering.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\ansysfigdir flow_growth_kinematics.png}
+  \caption[Multiplicative growth kinematics]{%
+    The three configurations the decomposition introduces: growth carries the
+    reference state to an intermediate one that is stress-free but generally
+    incompatible, and the elastic part restores compatibility, which is where
+    the residual stress comes from. Drawn for $\mathbf F = \mathbf F_e\mathbf F_g$;
+    the viscous factor of \S\ref{sec:ch5-model} sits between the two and adds a
+    further intermediate configuration without changing the argument.}
+  \label{fig:ch5-kinematics}
+\end{figure}
+
+Two properties of \eqref{eq:ch5-flow} matter later. It is a single step with no
+iteration and no residual: the increment is formed at $\mathbf F_v^{\,n}$ and
+applied, so the update is explicit in the flow direction even though the stress
+is reported at the end of the step. And $\eta/(2C_{10})$ is a relaxation time
+the step has to resolve --- \S\ref{sec:ch5-integration} gives the consequence
+and the bound.
+
+The growth driver $\alpha$ is \emph{prescribed}, not evolved: it is supplied
+per material point by the ecology model. This chapter is therefore about the
+constitutive response to a given growth field, and the verification below
+should be read in that light.}
 
 %-----------------------------------------------------------------------
 \section{Implementation}
@@ -82,8 +131,9 @@ $\mathbf F_v$.}
 
 % TierA. ansys_usermat/usermat_biofilm.f + README.md.
 \TierA{%
-The law is implemented as an ANSYS \texttt{USERMAT}
-(\texttt{ansys\_usermat/usermat\_biofilm.f}). Two implementation points are
+The law is implemented as an ANSYS \texttt{USERMAT}.%
+\footnote{\texttt{ansys\_usermat/usermat\_biofilm.f} in the accompanying
+repository.} Two implementation points are
 worth stating because they are where ports of this kind usually fail. First,
 the Voigt convention differs between the two solvers used here --- ANSYS orders
 the shear components $12,23,13$ and Abaqus $12,13,23$ --- so the two
@@ -103,11 +153,25 @@ expected to see: stiffness over three decades, Poisson ratios to $0.49$, growth
 to $\alpha=0.35$, both material paths, elastic and viscous branches, and time
 steps up to the stability limit of \S\ref{sec:ch5-integration}. Over 648
 combinations the relative discrepancy has median $1.2\times10^{-7}$ and
-worst case $1.1\times10^{-6}$, with no region of the range degrading.}
+worst case $1.1\times10^{-6}$, with no region of the range degrading.
+That is a statement about the tangent in isolation; what it does inside a
+solver is shown in Figure~\ref{fig:ch5-convergence}.}
 
 %-----------------------------------------------------------------------
 \section{Verification}
 \label{sec:ch5-verification}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{\ansysfigdir flow_vv_hierarchy.png}
+  \caption[Where this chapter's checks sit]{%
+    The verification and validation hierarchy, with this chapter's evidence
+    placed on it. Everything in \S\ref{sec:ch5-verification} is \emph{code}
+    verification --- does the implementation solve the equations it claims to
+    --- and none of it is validation against measurement, which belongs to a
+    different chapter and a different kind of evidence.}
+  \label{fig:ch5-vv}
+\end{figure}
 
 \subsection{Equivalence of two independent implementations}
 % TierA. ansys_usermat/crosscheck/README.md -- 0 ULP over 8017 states.
@@ -125,7 +189,11 @@ agree to $0$ ULP in stress, viscous state and elastic Jacobian.}
 \TierA{%
 Traction-free isotropic growth admits a closed form: the body expands to
 $\mathbf F = (1+\alpha)\mathbf I$ and the stress vanishes identically. The
-deck reproduces this.}
+deck reproduces this, at a largest component of $1.9\times10^{-11}$ against a
+constrained answer of $1.0\times10^{-4}$. The case is not redundant beside the
+constrained one: full kinematic constraint can mask a sign error in
+$\mathbf F_e = \mathbf F\mathbf F_g^{-1}$, because the wrong sign cancels
+when the element cannot move at all, and only the free case exposes it.}
 
 % TierA. closed_form_reference.py + tests/test_closed_form_reference.py.
 \TierA{%
@@ -143,8 +211,119 @@ implementation differs by exactly the spherical term of
 \S\ref{sec:ch5-verification-limits}, at a relative agreement of $10^{-12}$
 between the measured discrepancy and its predicted value.}
 
-% TODO(numbers): once the v222 run exists, report solver output here rather
-% than the mirror, and keep the closed form as the thing it is compared to.
+\TierA{%
+That agreement of $10^{-12}$ is between the closed form and the Fortran routine
+called directly. Figure~\ref{fig:ch5-closedform} shows the same comparison one
+level up, where ANSYS is the one calling: the same element and material, solved
+under the two boundary conditions, against the same closed form. Two things are
+worth reading off it. The free and constrained answers are separated by seven
+decades, which is what the growth kinematics being wired correctly looks like.
+And the constrained number the solver returns is reproduced by the ideal
+volumetric term \emph{plus} the predicted spurious term of
+\S\ref{sec:ch5-verification-limits} --- to every digit MAPDL prints, with that
+term accounting for $47\,\%$ of the reported stress. Predicting the
+discrepancy rather than absorbing it into a tolerance is what makes this a test
+of the analysis and not only of the arithmetic.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.png}
+  \caption[The two growth cases, solved in ANSYS]{%
+    The growth verification pair as ANSYS 2022~R2 solved it: one SOLID185,
+    $\alpha=0.05$, identical material, differing only in the boundary
+    conditions. Left: every stress component of both solves. Under free growth
+    the closed form is exactly zero and what remains is solver noise, seven
+    decades below the constrained answer; the constrained solve puts its three
+    normal components on the closed-form line and its shears at machine noise.
+    Right: the constrained value decomposed. The ideal continuum term does
+    \emph{not} on its own reproduce the solver --- the sum of it and the
+    spherical artefact predicted in closed form does. Because the artefact is
+    purely spherical it does not enter the von Mises stress this work reports,
+    but it is close to half of the hydrostatic number and the figure shows it
+    rather than hiding it in a residual.}
+  \label{fig:ch5-closedform}
+\end{figure}
+
+\TierA{%
+Both checks above are made outside any solver: they compare implementations
+against each other and against an analytic answer, built with an ordinary
+Fortran compiler. That leaves the gap a reviewer should ask about --- whether
+the routine behaves the same way once a commercial solver is calling it, with
+its own argument conventions, state storage and step control in between.
+
+That gap is closed. The routine was linked into a custom ANSYS 2022~R2
+executable and driven through a harness entry point whose only task is to
+unpack the state and property arrays and call it, which is the call shape the
+partner framework will use. On the fully constrained single element the solver
+returns $\sigma_{xx}=\sigma_{yy}=\sigma_{zz} = -1.0193\times10^{-4}$ against a
+closed-form $-1.019276\times10^{-4}$, shear components at machine noise, and
+the growth variable read back unchanged.
+
+Beyond one element, an already characterised two-layer curved shell of
+$12\,240$ elements was re-run unchanged except for the material block. Against
+the same geometry solved with the verified core, the delivered routine
+reproduces the von Mises field to every digit reported --- minimum
+$4.3523\times10^{-9}$, maximum $1.1862\times10^{-5}$, mean
+$9.14434842156836\times10^{-6}$ --- on both runs, with no solver errors.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir cylinder_wrapper_3d.png}
+  \caption[The curved-shell case, as solved]{%
+    The two-layer curved patch the delivered routine was run on, drawn from the
+    solver's own listing. Left: the geometry, with the non-growing substrate in
+    grey and the growth layer in red --- the layer is on the outside, so it
+    hides the substrate from this direction. Centre: a section at mid-length,
+    where the interface at $r = 4.3$ and the two node rows through each layer
+    are unmistakable; two rows means two elements through the thickness, which
+    is why \S\ref{sec:ch5-limitations} treats this mesh as a floor rather than a
+    baseline. Right: the distribution of element von Mises stress, bimodal
+    because the substrate does not grow. The stress is shown as a distribution
+    rather than mapped onto the geometry because the listing carries no element
+    connectivity, so there is no honest way to place it in space.}
+  \label{fig:ch5-cylinder}
+\end{figure}
+
+Two qualifications belong with that second result. It is a consistency check
+between two builds rather than a comparison with a closed form, since two
+bonded curved layers have no simple analytic answer; and no mesh-convergence
+study has been performed on it. It establishes that the repackaging survives
+contact with a real solver on a non-trivial mesh. It does not validate the
+mesh.}
+
+\TierA{%
+That run also settles the question left open in
+\S\ref{sec:ch5-impl}. An
+inexact tangent does not corrupt the answer --- the residual it is driven
+against is the true one --- so it shows up as iteration count, not as error:
+the solve takes more equilibrium iterations per substep, and under automatic
+stepping the solver bisects to recover. Both are visible in the log, and
+Figure~\ref{fig:ch5-convergence} shows what actually happened. Every substep
+reaches the convergence criterion in between one and four equilibrium
+iterations, and \texttt{AUTOTS}, free to bisect throughout, instead enlarged
+the increment at every opportunity, from $0.5$ to $1.6875$; the load step
+completed in six substeps and thirteen cumulative iterations with no cut-back.
+The finite-difference tangent is therefore not merely accurate in isolation but
+accurate enough that the solver never has to work around it.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.png}
+  \caption[Newton convergence with the finite-difference tangent]{%
+    Convergence of the $12\,240$-element solve with the delivered routine, read
+    from the solver's own listing. Left: force residual against equilibrium
+    iteration, one curve per substep, with the ANSYS criterion dashed and
+    converged states ringed. The fall is not strictly monotone --- substep~1
+    rises once between its second and third iterations --- which is ordinary
+    under an inexact tangent and is shown rather than smoothed. Right: the time
+    increment the solver chose for each substep, annotated with the iterations
+    that substep needed. The increment grows monotonically; the short final
+    substep is the remainder to the end of the load step, not a cut-back. The
+    single-element case is deliberately absent: it is fully constrained, so it
+    has no free degrees of freedom and its residual is identically zero in both
+    builds, which would look like agreement while carrying no information.}
+  \label{fig:ch5-convergence}
+\end{figure}
 
 \subsection{What these verifications establish, and what they do not}
 \label{sec:ch5-verification-limits}
@@ -165,6 +344,18 @@ work, is unaffected to machine precision. Its indirect route --- a spherical
 term in the viscous flow driver, which makes $\det\mathbf F_v$ drift from
 unity --- was measured at $\le 0.01\,\%$ in von Mises over 40 steps.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir flow_vv_blindspot.png}
+  \caption[What the checks cover, and what they miss]{%
+    Four checks that look independent, and the one error none of them can see.
+    In each case the reason is structural rather than a matter of tolerance:
+    two ports of the same expression, a case that lands exactly where both
+    forms agree, reference values generated by the implementation itself, and a
+    metric that cannot represent a spherical term.}
+  \label{fig:ch5-blindspot}
+\end{figure}
+
 The point worth drawing out is why none of the three checks above sees it. The
 cross-implementation hunt compares two ports carrying the same expression. The
 free-growth deck lands on $J_e=1$ exactly, the single case where both forms
@@ -173,10 +364,16 @@ implementation, so they record its behaviour rather than test it. A fourth
 check, a growth cross-comparison against a second material model, compares von
 Mises and is therefore blind to a spherical term by construction.}
 
-% TODO(numbers): the one unmeasured route is the equilibrium effect -- a wrong
-% pressure changes displacements and so reaches von Mises indirectly. Measure it
-% once a run exists (same job, both expressions) and replace this sentence with
-% the number. See DEVIATOR_SCALING_FINDING.md §5.
+\TierA{%
+One route is left unmeasured, and is stated as such. The discrepancy is a
+pressure error, and in an equilibrium solve a wrong pressure changes the
+displacement field, which reaches the von Mises stress indirectly even though
+it cannot touch it at a fixed deformation gradient. Bounding that would mean
+solving the same problem both ways. The one place it has been looked at ---
+two routines with different elastic potentials agreeing to $0.1\,\%$ on
+constrained growth --- was at $\nu = 0.49$, the most forgiving case for a
+pressure error, since a nearly incompressible material resists the volumetric
+strain such an error would produce. Lower Poisson ratios are untested.}
 
 %-----------------------------------------------------------------------
 \section{Integration into the partner framework}
@@ -239,6 +436,39 @@ $\Delta t$ approaches that time; past $\Delta t/\tau \approx 0.5$ the stress
 changes sign and past $\Delta t/\tau \approx 1$ it diverges. Setting $\eta=0$
 selects the elastic path and removes the constraint.}
 
+% TierA. ansys_usermat/apdl/plot_state_roundtrip.py -- SVAR read-back.
+\TierA{%
+Those nine slots, and the tenth carrying $\alpha$, are the whole growth
+mechanism in ANSYS: with no \texttt{INISTATE} available for a
+\texttt{USERMAT}, $\alpha$ cannot be supplied as a field and is written per
+material with \texttt{TBDATA} instead. That makes the state array a single
+point of failure, and one that fails silently in both of its modes ---
+\texttt{TBDATA} accepts at most six values per call and discards the rest
+without an error, and \texttt{TB,STATE} declared too short has the same
+effect. Either leaves $\alpha$ at zero, which is a completely successful,
+completely elastic run that reports no problem. Reading the slots back is the
+only direct evidence the write survived, and
+Figure~\ref{fig:ch5-stateroundtrip} does so for the three runs that printed
+them.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_state_roundtrip.png}
+  \caption[State slots read back out of the solve]{%
+    Every \texttt{TB,STATE} slot the three v222 runs printed, compared with
+    what the deck wrote. All $176\,800$ samples agree to the five digits MAPDL
+    lists. Two limits are marked on the figure rather than left to be assumed:
+    $\eta=0$ in all three decks, so $\mathbf F_v$ has nothing to evolve and
+    what is shown is the round trip rather than the viscous update; and the
+    curved shell lists state under \texttt{ESEL,S,MAT,,2}, so it evidences the
+    growth layer alone and the substrate's $\alpha=0$ is not read back
+    anywhere. That selection is itself informative --- an earlier version of
+    the deck put both volumes on the default material, where the same
+    \texttt{ESEL} selected no elements at all, so the $11\,040$ it selects
+    here is the check that the two-material assignment took.}
+  \label{fig:ch5-stateroundtrip}
+\end{figure}
+
 %-----------------------------------------------------------------------
 \section{Results}
 \label{sec:ch5-results}
@@ -270,5 +500,26 @@ results, and it is not yet established whether the published formulation
 defines the split as implemented --- in which case the change would be a
 disagreement with that formulation rather than a correction.}
 
-% TODO(prose): E_SPEC sensitivity is reported as a band elsewhere; cross-refer
-% rather than repeat. See VERIFICATION_SENSITIVITY_LIMITATIONS.md.
+\TierA{%
+Two further limitations bound what the comparison in
+\S\ref{sec:ch5-results} can be read to mean.
+
+The first is a step restriction rather than a modelling choice. Because the
+viscous increment of \eqref{eq:ch5-flow} is formed at the previous state, the
+time step must resolve $\eta/(2C_{10})$. The routine refuses a step past half
+that time, but accuracy degrades continuously below the refusal threshold, so
+an accepted step is not thereby an accurate one. Any reported stress is
+conditional on the step used, which is recorded with the results rather than
+left implicit.
+
+The second concerns the material constants rather than the mechanics. The
+composition-to-stiffness bridge that supplies $(E,\nu)$ clips its output to a
+physical range, and at the present calibration that bound is reached over much
+of the commensal half of composition space rather than at its edge. Two
+compositions the model separates can therefore enter the mechanics with the
+same stiffness and leave it with the same stress. Where that happens, a
+reported difference between conditions is a lower bound on the difference the
+model predicts, not an estimate of it.
+
+Sensitivity to the species-stiffness assignment is reported elsewhere as a band
+rather than a point value and is not repeated here.}

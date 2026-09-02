@@ -6,7 +6,7 @@ what was reported, and when, is on the record alongside the work it describes.
 
 | Date | To | Subject |
 |---|---|---|
-| 2026-09-01 | Soleimani | [First update](2026-09-01_soleimani.md) — law packaged and verified; deviator-split finding; three things to settle (submission date, Ch5 scope, handover timing) |
+| 2026-09-02 | Soleimani | [First update](2026-09-02_soleimani.md) — law packaged, verified, and now run inside ANSYS; deviator-split finding; three things to settle (submission date, Ch5 scope, handover timing) |
 
 These are drafts to send from the author's own account — nothing here sends
 anything. Two habits worth keeping:
