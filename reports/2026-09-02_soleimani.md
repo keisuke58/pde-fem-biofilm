@@ -1,4 +1,4 @@
-# Progress update — 1 September 2026
+# Progress update — 2 September 2026
 
 First of the fortnightly updates set out in
 [`ROADMAP_2026.md`](../ROADMAP_2026.md) §4. Kept to one page by design; the
@@ -31,6 +31,29 @@ having to be redone.
 no dependencies, generated from the sources under test so it cannot drift from
 them.
 
+**The routine now runs inside ANSYS.** The custom v222 executable builds and
+solves here, so the law has been exercised by a commercial solver and not only
+by a compiler — which closes the gap a reviewer would reasonably ask about,
+since everything before this was checked outside any solver. Four things
+came out of that, each one a claim a reviewer would otherwise have to take on
+trust:
+
+- Free and constrained growth, solved in ANSYS, against the closed form — and
+  the constrained answer is reproduced by the ideal term *plus* the spherical
+  discrepancy below, predicted rather than observed.
+- Newton convergence on a 12,240-element two-layer shell. An inexact tangent
+  shows up as iteration count, not as error; every substep converged in one to
+  four iterations and automatic stepping never cut back.
+- The state slots read back out of the solve. Growth has to travel in a state
+  slot here, which fails silently if the write is short; all 176,800 samples
+  came back as written.
+- The same shell solved with the delivered routine and with the verified core,
+  agreeing to every digit reported.
+
+The decks, the solver listings and the scripts that read them are in
+[`ansys_usermat/apdl/`](../ansys_usermat/apdl/); each figure is regenerated
+from the listing rather than transcribed.
+
 ## Found, and I would value your view
 
 Cross-implementation agreement establishes that two ports compute the same
@@ -60,9 +83,12 @@ Details, with a script that reproduces every number from source:
 
 ## Next
 
-Building the pool locally on our v222 this week. That is the step that lets me
-produce results without waiting for Oliver's side to wire the routine in, so I
-am treating it as the priority rather than as a convenience.
+Chapter 5 is drafted as far as it can go without results, with the
+verification above written into it. The remaining piece is the results
+section, which needs runs on the real geometry rather than the verification
+cases — that is what I am moving to now. Producing them here rather than
+waiting on Oliver's side to wire the routine in is what the local build was
+for, so that dependency is gone.
 
 ## Three things to settle
 
