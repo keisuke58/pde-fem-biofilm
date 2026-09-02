@@ -104,9 +104,15 @@ for, so that dependency is gone.
    verified. I would rather have your agreement on this now than surprise you
    with it in November.
 
-3. **The handover to Oliver.** I would like to send him the package this
-   month, so that wiring it in is possible at all before submission rather than
-   arriving too late to be useful.
+3. **The handover to Oliver — and specifically what Chapter 5 should claim
+   about it.** The package is ready to send whenever you think best. Since the
+   local build works I no longer need his side wired in to produce results, so
+   my inclination is to send it with the finished chapter rather than now, and
+   to have Chapter 5 claim the law is *packaged for* their framework, which is
+   provable from the code alone. If you would rather it claimed the law
+   *running inside* their framework, that does depend on his calendar and I
+   should send it immediately — so it is really a decision about the claim,
+   and I would follow your preference.
 
 With best regards,
 Keisuke Nishioka

@@ -91,31 +91,44 @@ the chapter must not be written assuming it will.
 
 ## 4. Communication with M. Soleimani and Oliver
 
-Regular, short, online. The point is that neither of them is ever surprised,
-and that step 4 has been asked for early enough to be possible.
+Regular, short, online. The point is that neither of them is ever surprised.
 
 | Cadence | With | Form |
 |---|---|---|
 | **Every 2 weeks** | Meisam | Short written update — what landed, what is next, anything blocking. 5 lines. |
 | **Monthly** | Meisam | Online call — scope, chapter structure, results as they appear |
 | **On a concrete milestone** | Oliver | Written, one topic at a time — the handover package, then the interface notes, then the wiring |
-| **Once, early** | Oliver | Online call when handing over the routine, so the interface notes get discussed rather than just read |
+| **Once, at handover** | Oliver | Online call when the routine is handed over, so the interface notes get discussed rather than just read. Timing follows the note below, not the calendar. |
 
-Three things to raise early rather than late:
+Two things to raise early rather than late:
 
 1. **Confirm the exact submission date** with Meisam (week 1).
-2. **Send Oliver the handover package** (week 2–3) — the routine plus the two
-   interface constraints. He needs lead time if step 4 is to happen at all.
-3. **Agree the Ch5 scope with Meisam explicitly** (week 1–2), including that
+2. **Agree the Ch5 scope with Meisam explicitly** (week 1–2), including that
    the JAXFEM material is held back. Better as a decision he signs off on now
    than as a surprise in November.
+
+**The handover to Oliver is deliberately not on that list any more, revised
+2026-09-02.** It was, and it was scoped for week 2–3 on the reasoning that he
+needed lead time for step 4. That reasoning died when step 1 landed: §3 above
+concludes that Tier B must be reachable through step 1 alone and that the
+chapter must not be written assuming step 4, so nothing we owe the submission
+waits on his calendar. Sending it early buys the thesis nothing and puts his
+schedule on our critical path; the package itself is ready whenever we want to
+send it.
+
+Send it once the Ch5 results are in — as the contribution back that it is,
+alongside a finished chapter. The one thing that would change this is the
+scope decision above: if Ch5 is to claim the law *running inside* the partner
+framework rather than *packaged for* it, that does need Oliver's lead time,
+and then the handover becomes urgent the moment Meisam agrees to that scope.
+Decide the claim first, send second — not the other way round.
 
 ## 5. Week by week
 
 | Weeks | Focus | Done means |
 |---|---|---|
 | **1** (Sep 7) | v222 build on IKMHIWI03 (step 1) — ✅ done 2026-09-02, ahead of schedule. Still open: confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked — ✅ exact closed-form match |
-| **2–3** (Sep 14, 21) | Handover package to Oliver + call. First smoke runs with the wrapper on v222. | Oliver has the routine; a single-element run gives sane stress |
+| **2–3** (Sep 14, 21) | First smoke runs with the wrapper on v222. (Handover to Oliver moved out — see §4.) | a single-element run gives sane stress |
 | **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. **Coupon-scale piece done 2026-09-02** (re-ran the existing two-layer curved-shell case through the wrapper — identical SEQV to the original build across all 12240 elements, see `V222_PORT_INSTRUCTIONS.md`). Tooth/implant scale for the v222/ANSYS wrapper pipeline still open. **A separate, exploratory tooth-scale probe (Abaqus, not the v222/ANSYS wrapper) also ran 2026-09-02** — see the note below the table. | von Mises fields out, `dt` inside the stable range and shown to be |
 | **6–8** (Oct 12, 19, 26) | Condition comparison, the actual Ch5 results. Figures. | the comparison table and figures Ch5 needs exist |
 | **9–10** (Nov 2, 9) | **Write Ch5.** FREEZE — no new physics from here. | full draft to Meisam |
