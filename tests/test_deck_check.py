@@ -125,3 +125,45 @@ def test_a_well_formed_deck_passes_all_of_the_above(tmp_path):
     assert code == 0, out
     for phrase in ("PURELY ELASTIC", "past the array", "no growth", "drops the rest"):
         assert phrase not in out
+
+
+# --------------------------------------------------------------------------- #
+# Abaqus decks. Same silent failure, different route: growth arrives as
+# temperature (ALPHA_GROWTH = TEMP + DTEMP), not as a state variable.
+
+_ABQ_HEAD = "*MATERIAL, NAME=BIO\n*USER MATERIAL, CONSTANTS=5\n2e-4,0.,5e3,8e-3,0.\n*DEPVAR\n9\n"
+ABQ_OK = _ABQ_HEAD + "*INITIAL CONDITIONS, TYPE=TEMPERATURE\nALL,0.0\n*STEP\n*TEMPERATURE\nALL,0.05\n*END STEP\n"
+ABQ_NO_TEMPERATURE = _ABQ_HEAD + "*STEP\n*STATIC\n*END STEP\n"
+ABQ_INITIAL_ONLY = _ABQ_HEAD + "*INITIAL CONDITIONS, TYPE=TEMPERATURE\nALL,0.05\n*STEP\n*STATIC\n*END STEP\n"
+ABQ_NOT_OURS = "*MATERIAL, NAME=STEEL\n*ELASTIC\n210000.,0.3\n"
+
+
+def test_an_abaqus_deck_without_a_temperature_field_grows_by_zero(tmp_path):
+    """The Abaqus counterpart of too-few state slots: the UMAT reads growth
+    from TEMP, so a job with no temperature field is purely elastic and says
+    nothing about it."""
+    code, out = _run(ABQ_NO_TEMPERATURE, tmp_path, name="d.inp")
+    assert code == 1, out
+    assert "PURELY ELASTIC" in out
+
+
+def test_a_well_formed_abaqus_deck_passes(tmp_path):
+    code, out = _run(ABQ_OK, tmp_path, name="d.inp")
+    assert code == 0, out
+
+
+def test_initial_temperature_alone_is_called_out(tmp_path):
+    """Not an error -- a constant alpha is a legitimate job -- but worth
+    saying, because it is indistinguishable from a missing step field until
+    the results come out flat."""
+    code, out = _run(ABQ_INITIAL_ONLY, tmp_path, name="d.inp")
+    assert code == 0, out
+    assert "never changes" in out
+
+
+def test_a_deck_that_is_not_ours_is_not_flagged(tmp_path):
+    """False positives are how a checker stops being read. A deck with no
+    *USER MATERIAL is somebody else's problem."""
+    code, out = _run(ABQ_NOT_OURS, tmp_path, name="d.inp")
+    assert code == 0, out
+    assert "not one of ours" in out

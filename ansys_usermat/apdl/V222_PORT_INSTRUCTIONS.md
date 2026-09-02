@@ -209,6 +209,7 @@ guard deliberately does not:
 
 ```
 python ansys_usermat/apdl/check_deck.py ansys_usermat/apdl/*.dat
+python ansys_usermat/apdl/check_deck.py path/to/*.inp     # Abaqus too
 ```
 
 It checks only things that are **silent in ANSYS** — no error, no warning, a
@@ -221,6 +222,11 @@ growth run**; α declared but never written, same outcome; and an over-long
 `TBDATA` whose tail APDL drops without saying so. The repository's own decks
 pass all of these — but they are the decks that will be copied to make new
 ones.
+
+Abaqus decks are checked as well, because the same failure reaches them by a
+different route: there the growth driver is not a state variable at all but the
+*temperature* field (`ALPHA_GROWTH = TEMP + DTEMP`), so an `.inp` with a
+`*USER MATERIAL` and no temperature grows by zero, just as quietly.
 
 The guard in `biofilm_material_v01.f` refuses only `dt/tau > 0.5`, where the
 stress changes sign. Below that the answer stays qualitatively right, and how

@@ -27,6 +27,13 @@ no-growth outcome.
 
 **TBDATA value count.** TBDATA takes at most six values per call and drops the
 rest without complaint -- a real deck bug in this repository's history.
+
+**Abaqus decks (.inp) are checked too**, because the same failure reaches them
+by a different route. There the growth driver is not a state variable at all:
+umat_biofilm_visco.f reads `ALPHA_GROWTH = TEMP + DTEMP`, so a deck with a
+*USER MATERIAL but no temperature field grows by zero -- purely elastic, and
+just as quiet. DEPVAR is reported rather than enforced, since how many slots
+are needed depends on which UMAT the job is run with and the .inp does not say.
 """
 import argparse
 import re
@@ -129,6 +136,45 @@ def parse_deck(path):
                                  if s_ <= STATEV_FOR_GROWTH)}
 
 
+ABQ_STATEV_VISCO = 9    # umat_biofilm_visco.f: STATEV(1:9) is Fv
+ABQ_STATEV_2CH = 18     # the two-channel variant
+
+
+def check_abaqus(path):
+    """Returns (lines, ok). The growth driver arrives as temperature here."""
+    text = path.read_text(errors="replace")
+    out, ok = [], True
+
+    if not re.search(r"^\s*\*USER\s+MATERIAL", text, re.M | re.I):
+        return ["  no *USER MATERIAL — not one of ours, skipped"], True
+
+    dep = re.search(r"^\s*\*DEPVAR\s*$\s*^\s*(\d+)", text, re.M | re.I)
+    n = int(dep.group(1)) if dep else None
+    if n is None:
+        out.append("  no *DEPVAR — the UMAT has no state storage at all")
+        ok = False
+    else:
+        out.append(f"  *DEPVAR = {n}  (umat_biofilm_visco needs "
+                   f"{ABQ_STATEV_VISCO}, the 2-channel variant "
+                   f"{ABQ_STATEV_2CH}; which one applies depends on the job, "
+                   "not on this file)")
+
+    init = re.search(r"^\s*\*INITIAL\s+CONDITIONS[^\n]*TEMPERATURE", text, re.M | re.I)
+    step = re.search(r"^\s*\*(TEMPERATURE|FIELD)\b", text, re.M | re.I)
+    if not init and not step:
+        out.append("  no temperature field — the UMAT reads growth as "
+                   "TEMP + DTEMP, so alpha is 0 and this job is PURELY "
+                   "ELASTIC with no warning")
+        ok = False
+    else:
+        out.append(f"  growth driver: initial temperature "
+                   f"{'yes' if init else 'no'}, step temperature "
+                   f"{'yes' if step else 'no'}")
+        if not step:
+            out.append("    (initial only: alpha never changes during the step)")
+    return out, ok
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("decks", nargs="+", type=Path)
@@ -136,8 +182,13 @@ def main(argv=None):
 
     worst_ok = True
     for deck in args.decks:
-        d = parse_deck(deck)
         print(f"\n{deck.name}")
+        if deck.suffix.lower() == ".inp":
+            lines, ok = check_abaqus(deck)
+            print("\n".join(lines))
+            worst_ok = worst_ok and ok
+            continue
+        d = parse_deck(deck)
         if d is None:
             print("  no TBDATA line found — skipped")
             continue

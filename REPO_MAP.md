@@ -64,7 +64,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/biofilm_material_v01.f` | `BIOFILM_GROWTH_VISCO_V01` — the routine handed over, an adapter around the verified core |
 | `ansys_usermat/growth_law_verification.ipynb` | Executable walkthrough of what the verifications establish and what they do not |
 | `ansys_usermat/apdl/closed_form_reference.py` | Closed form for the two growth cases, derived independently of the implementation |
-| `ansys_usermat/apdl/check_deck.py` | Pre-flight for any deck whose stress will be reported. Catches only failures that are **silent in ANSYS**: a step too coarse for the viscous relaxation time, too few `TB,STATE` slots (which leaves α unread, so the solve runs purely elastic), α declared but never written, and an over-long `TBDATA` whose tail APDL drops |
+| `ansys_usermat/apdl/check_deck.py` | Pre-flight for any deck whose stress will be reported. Catches only failures that are **silent in ANSYS**: a step too coarse for the viscous relaxation time, too few `TB,STATE` slots (which leaves α unread, so the solve runs purely elastic), α declared but never written, and an over-long `TBDATA` whose tail APDL drops. Handles Abaqus `.inp` too, where growth arrives as the temperature field instead |
 
 ## Pre-existing directories the tour had not listed
 
