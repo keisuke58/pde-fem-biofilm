@@ -14,8 +14,9 @@ That is a discretisation, and its error is controllable rather than unknown:
 itself, so N is chosen from a number instead of a guess.
 
 Input is the CSV written by `JAXFEM/extract_alpha_field_1d.py`
-(`x_norm, x_mm, c_final, phi_total_final, alpha_x, eps_growth_x`), or any CSV
-with a depth column and an alpha column.
+(`x_norm, x_mm, c_final, phi_total_final, alpha_x_monod, eps_growth_x_monod`),
+or any CSV with a depth column and an alpha column. Both names are reported on
+the first line of the output, so a wrong column is visible rather than silent.
 
     python ansys_usermat/apdl/make_layered_material.py alpha_field_1d.csv -n 8
 
@@ -38,12 +39,53 @@ N_STATE = 10          # ustatev(1:9)=Fv, ustatev(10)=alpha
 TBDATA_MAX = 6        # APDL drops values past the sixth, silently
 
 
+# Depth candidates are the same quantity in different units, so the order is a
+# deliberate preference (mm before normalised) and picking the first is right.
+# Alpha candidates are NOT interchangeable -- `alpha_x_monod` is the
+# Monod-weighted field the extractor actually solves for, `alpha_x` the
+# unweighted one -- so a file carrying both is ambiguous and is refused rather
+# than resolved by list order. Choosing silently between two different physical
+# fields is exactly the kind of failure this repository tries not to ship.
+# Two producers feed this, and they do not agree on names:
+#   extract_alpha_field_1d.py            x_mm / x_norm      alpha_x_monod
+#   macro_eigenstrain_<condition>*.csv   depth_mm / _norm   alpha_monod
+# The second is the per-condition field the results chapter needs, so both
+# spellings have to be here; neither is a hypothetical.
+DEPTH_COLS = ("x_mm", "depth_mm", "x_norm", "depth_norm", "x", "depth")
+ALPHA_COLS = ("alpha_x_monod", "alpha_monod", "alpha_x", "alpha")
+
+
+def _skip_comment_block(path):
+    """Number of leading `#` lines before the header.
+
+    The per-condition files carry a comment block, and genfromtxt cannot be
+    left to handle it: with `names=True` it takes the first line as the header
+    *after* stripping `#`, so a comment containing commas becomes the column
+    names and the read fails with a column-count error that says nothing about
+    the real cause. Counting the block and skipping it is unambiguous.
+    """
+    n = 0
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if not line.lstrip().startswith("#"):
+                break
+            n += 1
+    return n
+
+
 def load_field(path, depth_col=None, alpha_col=None):
-    rows = np.genfromtxt(path, delimiter=",", names=True)
+    rows = np.genfromtxt(path, delimiter=",", names=True,
+                         skip_header=_skip_comment_block(path))
     names = list(rows.dtype.names)
-    depth = depth_col or next((c for c in ("x_mm", "x_norm", "x", "depth")
-                               if c in names), None)
-    alpha = alpha_col or next((c for c in ("alpha_x", "alpha") if c in names), None)
+    depth = depth_col or next((c for c in DEPTH_COLS if c in names), None)
+    alpha = alpha_col
+    if alpha is None:
+        found = [c for c in ALPHA_COLS if c in names]
+        if len(found) > 1:
+            raise SystemExit(
+                f"{path.name} carries more than one alpha column {found}; "
+                f"they are different fields, so pass --alpha-col to say which")
+        alpha = found[0] if found else None
     if depth is None or alpha is None:
         raise SystemExit(f"cannot find depth/alpha columns in {names}")
     x = np.asarray(rows[depth], dtype=float)
@@ -100,9 +142,14 @@ def main(argv=None):
                     help="emit material 1 as a non-growing substrate")
     ap.add_argument("--convergence", action="store_true",
                     help="report binning error against N and stop")
+    ap.add_argument("--depth-col", default=None,
+                    help=f"depth column name; default the first of {DEPTH_COLS} present")
+    ap.add_argument("--alpha-col", default=None,
+                    help=f"alpha column name; required if the CSV carries "
+                         f"more than one of {ALPHA_COLS}")
     a = ap.parse_args(argv)
 
-    x, alpha, dcol, acol = load_field(a.csv)
+    x, alpha, dcol, acol = load_field(a.csv, a.depth_col, a.alpha_col)
     print(f"! generated from {a.csv.name} ({dcol} vs {acol}), "
           f"{len(x)} nodes, alpha in [{alpha.min():.4G}, {alpha.max():.4G}]")
 
