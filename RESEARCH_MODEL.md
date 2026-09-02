@@ -180,6 +180,15 @@ structure reproduced; largest single miss *F. nucleatum* (10.5 pp).
 > dips ~1 % below `E_min` near `r ≈ 1 − E_min/(2E_max)`, i.e. E(DI) is *not*
 > bounded below by `E_min` (`tests/test_di_e_mapping.py`, strict xfail).
 
+**This warning is not hypothetical** — a real tooth-scale Abaqus probe
+2026-09-02 mixed the two lineages first, then was split into clean
+`growth-only` / `stiffness-only` cases once the conflation was noticed. See
+[`ROADMAP_2026.md`](ROADMAP_2026.md) §5b for the split results and an
+unrelated but real finding from the same runs: on a mesh where biofilm
+carries its true Pa-scale modulus, a force-controlled load on an
+unsupported face is ill-posed regardless of magnitude — displacement
+control is required.
+
 ---
 
 ## 7. Open scientific questions (the continuation)
