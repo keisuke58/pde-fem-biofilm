@@ -47,6 +47,32 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | [`configs/`](configs/) | Pipeline configs |
 | [`tests/`](tests/) | Unit suite (`pytest tests/`) |
 | `pytest.ini`, `requirements.txt`, `.github/workflows/ci.yml` | Test scoping, pinned deps, CI |
+| `.claude/hooks/session-start.sh` | Restores what a cloud container loses on restart: git identity, the two anti-attribution hooks, pytest deps, gfortran |
+
+## Thesis, plan and handover (added 2026-09-01)
+
+| Path | What it is |
+|---|---|
+| `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
+| `thesis_ch5/` | Chapter 5 skeleton with an evidence map, plus `PORTING.md` for merging it into the thesis repository |
+| `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
+| `reports/` | Written progress updates to the supervisors, kept next to the work they describe |
+| `DEVIATOR_SCALING_FINDING.md` | A mis-scaled isochoric split in the verified core: a pure pressure error, von Mises unaffected. Documented, not fixed — with the reasoning |
+| `VISCOUS_UPDATE_SCHEME.md` | What the `Fv` update actually is, why "backward Euler" is the wrong name for it, and the step limit that follows |
+| `E_SATURATION_FINDING.md` | The production φ→E bridge clips to [10, 1000] Pa, and at the current calibration that bound is active over much of the healthy composition space — so distinct conditions can report identical stiffness |
+| `PINN_DESIGN.md` | A physics-informed surrogate, written up as a Keio design rather than started |
+| `ansys_usermat/biofilm_material_v01.f` | `BIOFILM_GROWTH_VISCO_V01` — the routine handed over, an adapter around the verified core |
+| `ansys_usermat/growth_law_verification.ipynb` | Executable walkthrough of what the verifications establish and what they do not |
+| `ansys_usermat/apdl/closed_form_reference.py` | Closed form for the two growth cases, derived independently of the implementation |
+| `ansys_usermat/apdl/check_deck.py` | Pre-flight for any deck whose stress will be reported. Catches only failures that are **silent in ANSYS**: a step too coarse for the viscous relaxation time, too few `TB,STATE` slots (which leaves α unread, so the solve runs purely elastic), α declared but never written, and an over-long `TBDATA` whose tail APDL drops. Handles Abaqus `.inp` too, where growth arrives as the temperature field instead |
+
+## Pre-existing directories the tour had not listed
+
+| Path | What it is |
+|---|---|
+| `tier2b_real/` | Abaqus coupon/implant job generation and real-geometry meshing (`implant_coupon.py`, `mesh_bone_region.py`, STL/mesh assets) |
+| `umat_tangent_test/` | Single-element UMAT tangent and eigenstrain cross-check harnesses, including the dual-UMAT growth comparison in `xcheck_eigenstrain/XCHECK_RESULTS.md` |
+| `ANSYS_ENVIRONMENT.md` | Full hardware, licence and product inventory for the IKMHIWI03 ANSYS machine |
 | [`runs/`](runs/) | Per-run validation logs / env configs (provenance) |
 
 ## Documentation

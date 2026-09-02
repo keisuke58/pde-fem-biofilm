@@ -45,8 +45,24 @@ jobs:
       - name: Install JAX (CPU)
         run: pip install "jax[cpu]"
 
-      - name: JAX tests (ecology ODE, exact AD tangent)
-        run: pytest tests/test_hamilton_ode_jax.py tests/test_material_jax.py
+      # Re-run the WHOLE suite now that jax is present, rather than naming the
+      # jax-dependent files. Naming them is how a new one gets silently
+      # dropped: it importorskips out of the step above and is absent from
+      # this one, so it never executes anywhere and CI is still green.
+      #
+      # The --strict-skip guard is the real protection. With the full
+      # toolchain installed this suite skips nothing, so any skip means a
+      # test quietly did not run -- a missing compiler, an absent import, a
+      # stale marker. Passing by not running is the failure mode that hides
+      # best, so it is made loud here.
+      - name: Full suite with JAX (no test may silently skip)
+        run: |
+          pytest tests/ -q --no-header -rs | tee /tmp/full.txt
+          if grep -qE '[0-9]+ skipped' /tmp/full.txt; then
+            echo "::error::tests were skipped with the full toolchain installed --"
+            echo "::error::they passed by not running. Reasons above (-rs)."
+            exit 1
+          fi
 
       - name: UMAT <-> USERMAT cross-check + adversarial hunt (Fortran)
         run: pytest ansys_usermat/crosscheck/crosscheck.py ansys_usermat/crosscheck/adversarial.py
