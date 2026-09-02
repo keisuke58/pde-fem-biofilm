@@ -189,7 +189,11 @@ agree to $0$ ULP in stress, viscous state and elastic Jacobian.}
 \TierA{%
 Traction-free isotropic growth admits a closed form: the body expands to
 $\mathbf F = (1+\alpha)\mathbf I$ and the stress vanishes identically. The
-deck reproduces this.}
+deck reproduces this, at a largest component of $1.9\times10^{-11}$ against a
+constrained answer of $1.0\times10^{-4}$. The case is not redundant beside the
+constrained one: full kinematic constraint can mask a sign error in
+$\mathbf F_e = \mathbf F\mathbf F_g^{-1}$, because the wrong sign cancels
+when the element cannot move at all, and only the free case exposes it.}
 
 % TierA. closed_form_reference.py + tests/test_closed_form_reference.py.
 \TierA{%
@@ -206,6 +210,39 @@ therefore record its behaviour rather than test it. Against the closed form the
 implementation differs by exactly the spherical term of
 \S\ref{sec:ch5-verification-limits}, at a relative agreement of $10^{-12}$
 between the measured discrepancy and its predicted value.}
+
+\TierA{%
+That agreement of $10^{-12}$ is between the closed form and the Fortran routine
+called directly. Figure~\ref{fig:ch5-closedform} shows the same comparison one
+level up, where ANSYS is the one calling: the same element and material, solved
+under the two boundary conditions, against the same closed form. Two things are
+worth reading off it. The free and constrained answers are separated by seven
+decades, which is what the growth kinematics being wired correctly looks like.
+And the constrained number the solver returns is reproduced by the ideal
+volumetric term \emph{plus} the predicted spurious term of
+\S\ref{sec:ch5-verification-limits} --- to every digit MAPDL prints, with that
+term accounting for $47\,\%$ of the reported stress. Predicting the
+discrepancy rather than absorbing it into a tolerance is what makes this a test
+of the analysis and not only of the arithmetic.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.png}
+  \caption[The two growth cases, solved in ANSYS]{%
+    The growth verification pair as ANSYS 2022~R2 solved it: one SOLID185,
+    $\alpha=0.05$, identical material, differing only in the boundary
+    conditions. Left: every stress component of both solves. Under free growth
+    the closed form is exactly zero and what remains is solver noise, seven
+    decades below the constrained answer; the constrained solve puts its three
+    normal components on the closed-form line and its shears at machine noise.
+    Right: the constrained value decomposed. The ideal continuum term does
+    \emph{not} on its own reproduce the solver --- the sum of it and the
+    spherical artefact predicted in closed form does. Because the artefact is
+    purely spherical it does not enter the von Mises stress this work reports,
+    but it is close to half of the hydrostatic number and the figure shows it
+    rather than hiding it in a residual.}
+  \label{fig:ch5-closedform}
+\end{figure}
 
 \TierA{%
 Both checks above are made outside any solver: they compare implementations
