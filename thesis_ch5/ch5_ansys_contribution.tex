@@ -72,9 +72,45 @@ response is compressible Mooney--Rivlin, reducing to neo-Hookean at $C_{01}=0$,
 and the viscous branch is a deviatoric Newtonian dashpot carrying
 $\mathbf F_v$.}
 
-% TODO(prose): state W, the flow rule, and the update in the order the code
-% evaluates them, so §5.3 can be read against it. Keep the growth driver
-% prescribed -- the ecology that produces alpha is Chapter <N>.
+\TierA{%
+Written out in the order the implementation evaluates it, a step takes the
+total deformation gradient $\mathbf F$ and the viscous state
+$\mathbf F_v^{\,n}$ and returns the Cauchy stress and $\mathbf F_v^{\,n+1}$:
+
+\begin{enumerate}
+\item the mechanical part removes the growth,
+      $\mathbf F_{\mathrm{mech}} = \mathbf F\,\mathbf F_g^{-1}$, and a trial
+      elastic gradient follows from the viscous state at the start of the step,
+      $\mathbf F_e^{\mathrm{tr}} = \mathbf F_{\mathrm{mech}}(\mathbf F_v^{\,n})^{-1}$;
+\item with $\mathbf b_e = \mathbf F_e \mathbf F_e^{\mathsf T}$ and
+      $J_e = \det \mathbf F_e$, the deviatoric Kirchhoff stress follows from
+      $W = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$,
+      which reduces to neo-Hookean at $C_{01}=0$;
+\item the viscous state advances by one step of the deviatoric Newtonian flow
+      rule,
+      \begin{equation}
+        \mathbf F_v^{\,n+1} =
+        \Bigl( \mathbf I + \frac{\Delta t}{2\,\eta\,J_e}\,
+        \bm\tau_{\mathrm{dev}} \Bigr)\mathbf F_v^{\,n},
+        \label{eq:ch5-flow}
+      \end{equation}
+      with $\bm\tau_{\mathrm{dev}}$ taken at the trial state;
+\item the elastic gradient and the stress are recomputed at
+      $\mathbf F_v^{\,n+1}$, the volumetric term $\tfrac{2}{D_1}(J_e-1)$ is
+      added, and the result is returned in the solver's Voigt ordering.
+\end{enumerate}
+
+Two properties of \eqref{eq:ch5-flow} matter later. It is a single step with no
+iteration and no residual: the increment is formed at $\mathbf F_v^{\,n}$ and
+applied, so the update is explicit in the flow direction even though the stress
+is reported at the end of the step. And $\eta/(2C_{10})$ is a relaxation time
+the step has to resolve --- \S\ref{sec:ch5-integration} gives the consequence
+and the bound.
+
+The growth driver $\alpha$ is \emph{prescribed}, not evolved: it is supplied
+per material point by the ecology model. This chapter is therefore about the
+constitutive response to a given growth field, and the verification below
+should be read in that light.}
 
 %-----------------------------------------------------------------------
 \section{Implementation}
@@ -143,8 +179,34 @@ implementation differs by exactly the spherical term of
 \S\ref{sec:ch5-verification-limits}, at a relative agreement of $10^{-12}$
 between the measured discrepancy and its predicted value.}
 
-% TODO(numbers): once the v222 run exists, report solver output here rather
-% than the mirror, and keep the closed form as the thing it is compared to.
+\TierA{%
+Both checks above are made outside any solver: they compare implementations
+against each other and against an analytic answer, built with an ordinary
+Fortran compiler. That leaves the gap a reviewer should ask about --- whether
+the routine behaves the same way once a commercial solver is calling it, with
+its own argument conventions, state storage and step control in between.
+
+That gap is closed. The routine was linked into a custom ANSYS 2022~R2
+executable and driven through a harness entry point whose only task is to
+unpack the state and property arrays and call it, which is the call shape the
+partner framework will use. On the fully constrained single element the solver
+returns $\sigma_{xx}=\sigma_{yy}=\sigma_{zz} = -1.0193\times10^{-4}$ against a
+closed-form $-1.019276\times10^{-4}$, shear components at machine noise, and
+the growth variable read back unchanged.
+
+Beyond one element, an already characterised two-layer curved shell of
+$12\,240$ elements was re-run unchanged except for the material block. Against
+the same geometry solved with the verified core, the delivered routine
+reproduces the von Mises field to every digit reported --- minimum
+$4.3523\times10^{-9}$, maximum $1.1862\times10^{-5}$, mean
+$9.14434842156836\times10^{-6}$ --- on both runs, with no solver errors.
+
+Two qualifications belong with that second result. It is a consistency check
+between two builds rather than a comparison with a closed form, since two
+bonded curved layers have no simple analytic answer; and no mesh-convergence
+study has been performed on it. It establishes that the repackaging survives
+contact with a real solver on a non-trivial mesh. It does not validate the
+mesh.}
 
 \subsection{What these verifications establish, and what they do not}
 \label{sec:ch5-verification-limits}
@@ -173,10 +235,16 @@ implementation, so they record its behaviour rather than test it. A fourth
 check, a growth cross-comparison against a second material model, compares von
 Mises and is therefore blind to a spherical term by construction.}
 
-% TODO(numbers): the one unmeasured route is the equilibrium effect -- a wrong
-% pressure changes displacements and so reaches von Mises indirectly. Measure it
-% once a run exists (same job, both expressions) and replace this sentence with
-% the number. See DEVIATOR_SCALING_FINDING.md §5.
+\TierA{%
+One route is left unmeasured, and is stated as such. The discrepancy is a
+pressure error, and in an equilibrium solve a wrong pressure changes the
+displacement field, which reaches the von Mises stress indirectly even though
+it cannot touch it at a fixed deformation gradient. Bounding that would mean
+solving the same problem both ways. The one place it has been looked at ---
+two routines with different elastic potentials agreeing to $0.1\,\%$ on
+constrained growth --- was at $\nu = 0.49$, the most forgiving case for a
+pressure error, since a nearly incompressible material resists the volumetric
+strain such an error would produce. Lower Poisson ratios are untested.}
 
 %-----------------------------------------------------------------------
 \section{Integration into the partner framework}
@@ -270,5 +338,26 @@ results, and it is not yet established whether the published formulation
 defines the split as implemented --- in which case the change would be a
 disagreement with that formulation rather than a correction.}
 
-% TODO(prose): E_SPEC sensitivity is reported as a band elsewhere; cross-refer
-% rather than repeat. See VERIFICATION_SENSITIVITY_LIMITATIONS.md.
+\TierA{%
+Two further limitations bound what the comparison in
+\S\ref{sec:ch5-results} can be read to mean.
+
+The first is a step restriction rather than a modelling choice. Because the
+viscous increment of \eqref{eq:ch5-flow} is formed at the previous state, the
+time step must resolve $\eta/(2C_{10})$. The routine refuses a step past half
+that time, but accuracy degrades continuously below the refusal threshold, so
+an accepted step is not thereby an accurate one. Any reported stress is
+conditional on the step used, which is recorded with the results rather than
+left implicit.
+
+The second concerns the material constants rather than the mechanics. The
+composition-to-stiffness bridge that supplies $(E,\nu)$ clips its output to a
+physical range, and at the present calibration that bound is reached over much
+of the commensal half of composition space rather than at its edge. Two
+compositions the model separates can therefore enter the mechanics with the
+same stiffness and leave it with the same stress. Where that happens, a
+reported difference between conditions is a lower bound on the difference the
+model predicts, not an estimate of it.
+
+Sensitivity to the species-stiffness assignment is reported elsewhere as a band
+rather than a point value and is not repeated here.}
