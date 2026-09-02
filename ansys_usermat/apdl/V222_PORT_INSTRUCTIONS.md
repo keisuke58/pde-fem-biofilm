@@ -339,6 +339,27 @@ was written for. Given how release-specific the `usermat` interface is, keeping
 one build environment rather than two is probably the right long-run answer;
 porting to v222 is worth doing mainly if cluster access is slow to arrange.
 
+### Decision, 2026-09-02: this is where the v222 port stops on IKMHIWI03
+
+10 of the 11 pool files compile clean (§1.6). The 11th (`Ussfin`, MKL
+PARDISO) needs Intel MKL, which needs admin rights this account does not
+have (confirmed via a real `winget install Intel.oneMKL` attempt, blocked
+at UAC elevation — not a guess). That makes this the natural stopping
+point rather than something to keep chasing here:
+
+- **The material code — the part this thesis is actually about — is fully
+  portable and proven to compile under v222.** That is real evidence to put
+  in front of Oliver/Meisam, not just an assertion.
+- **`Ussfin`'s MKL dependency is a linear-solver plumbing concern, not a
+  constitutive-model concern** — it belongs wherever the actual coupled
+  field solve runs (Oliver's cluster, which already has MKL), not on
+  IKMHIWI03 regardless of admin rights.
+- So: **no further v222-port work is planned on this machine.** The
+  cluster-access ask (already question 1 in the draft to Oliver) is now
+  backed by "10/11 files verified portable, only the MKL-dependent glue
+  file is cluster-side," which is a stronger, more specific ask than
+  "can we get an account."
+
 ---
 
 ## 5. Reporting back
