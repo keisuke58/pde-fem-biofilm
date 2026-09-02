@@ -436,6 +436,39 @@ $\Delta t$ approaches that time; past $\Delta t/\tau \approx 0.5$ the stress
 changes sign and past $\Delta t/\tau \approx 1$ it diverges. Setting $\eta=0$
 selects the elastic path and removes the constraint.}
 
+% TierA. ansys_usermat/apdl/plot_state_roundtrip.py -- SVAR read-back.
+\TierA{%
+Those nine slots, and the tenth carrying $\alpha$, are the whole growth
+mechanism in ANSYS: with no \texttt{INISTATE} available for a
+\texttt{USERMAT}, $\alpha$ cannot be supplied as a field and is written per
+material with \texttt{TBDATA} instead. That makes the state array a single
+point of failure, and one that fails silently in both of its modes ---
+\texttt{TBDATA} accepts at most six values per call and discards the rest
+without an error, and \texttt{TB,STATE} declared too short has the same
+effect. Either leaves $\alpha$ at zero, which is a completely successful,
+completely elastic run that reports no problem. Reading the slots back is the
+only direct evidence the write survived, and
+Figure~\ref{fig:ch5-stateroundtrip} does so for the three runs that printed
+them.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_state_roundtrip.png}
+  \caption[State slots read back out of the solve]{%
+    Every \texttt{TB,STATE} slot the three v222 runs printed, compared with
+    what the deck wrote. All $176\,800$ samples agree to the five digits MAPDL
+    lists. Two limits are marked on the figure rather than left to be assumed:
+    $\eta=0$ in all three decks, so $\mathbf F_v$ has nothing to evolve and
+    what is shown is the round trip rather than the viscous update; and the
+    curved shell lists state under \texttt{ESEL,S,MAT,,2}, so it evidences the
+    growth layer alone and the substrate's $\alpha=0$ is not read back
+    anywhere. That selection is itself informative --- an earlier version of
+    the deck put both volumes on the default material, where the same
+    \texttt{ESEL} selected no elements at all, so the $11\,040$ it selects
+    here is the check that the two-material assignment took.}
+  \label{fig:ch5-stateroundtrip}
+\end{figure}
+
 %-----------------------------------------------------------------------
 \section{Results}
 \label{sec:ch5-results}
