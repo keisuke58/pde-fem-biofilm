@@ -129,3 +129,6 @@ _validation/
 
 # generated handover package (rebuild with handover/make_handover.py)
 handover/out/
+
+# generated mesh-study decks (rebuild with apdl/make_mesh_levels.py)
+ansys_usermat/apdl/*_mesh[0-9].dat
