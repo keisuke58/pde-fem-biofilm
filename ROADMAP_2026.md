@@ -76,7 +76,7 @@ than their order:
 |---|---|---|
 | 2. Wrap the core to their convention | ✅ done (PR #46) | us |
 | 3. Verify the wrapper | ✅ done (PR #46) | us |
-| 1. Port to ANSYS v222 locally | **next** | us + this machine |
+| 1. Port to ANSYS v222 locally | ✅ **done 2026-09-02**, ahead of the Sep 7 target — see [`ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md`](ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md) | us + this machine |
 | 4. They wire it into their framework | open | **Oliver's calendar** |
 
 **Step 1 is now the highest-value item, and its priority has changed.** It was
@@ -114,7 +114,7 @@ Three things to raise early rather than late:
 
 | Weeks | Focus | Done means |
 |---|---|---|
-| **1** (Sep 7) | v222 build on IKMHIWI03 (step 1). Confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked |
+| **1** (Sep 7) | v222 build on IKMHIWI03 (step 1) — ✅ done 2026-09-02, ahead of schedule. Still open: confirm date + Ch5 scope with Meisam. | custom `ANSYS.exe` runs a deck with the wrapper linked — ✅ exact closed-form match |
 | **2–3** (Sep 14, 21) | Handover package to Oliver + call. First smoke runs with the wrapper on v222. | Oliver has the routine; a single-element run gives sane stress |
 | **4–5** (Sep 28, Oct 5) | Real geometry runs — coupon, then tooth/implant. | von Mises fields out, `dt` inside the stable range and shown to be |
 | **6–8** (Oct 12, 19, 26) | Condition comparison, the actual Ch5 results. Figures. | the comparison table and figures Ch5 needs exist |
