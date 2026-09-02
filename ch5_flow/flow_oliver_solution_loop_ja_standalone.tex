@@ -1,0 +1,16 @@
+% 日本語版はエンジンが異なる。lualatex ではなく uplatex + dvipdfmx でビルドする:
+%   uplatex flow_oliver_solution_loop_ja_standalone.tex
+%   dvipdfmx flow_oliver_solution_loop_ja_standalone.dvi
+% (この環境の TeX Live には luaotfload が入っておらず lualatex は通らない。)
+\documentclass[dvipdfmx,tikz,border=12pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+% TikZ node text is \raggedright; pLaTeX still lets kanjiskip stretch there,
+% which shows up as stray gaps inside Japanese words. Pin it.
+\kanjiskip=0pt plus 0pt minus 0pt
+\xkanjiskip=0.25zw plus 0.1zw minus 0.05zw
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
+\begin{document}
+\input{flow_oliver_solution_loop_ja.tex}
+\end{document}

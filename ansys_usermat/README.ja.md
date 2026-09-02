@@ -34,23 +34,111 @@
 
 ```
 prop(1)=C10  prop(2)=C01  prop(3)=D1  prop(4)=eta  prop(5)=mtype  prop(6)=kUsePy
+prop(7)=kStateMat
 ustatev(1:9)=Fv（行優先の 3×3）   ustatev(10)=alpha（成長ドライバ）
+ustatev(11:14)=C10,C01,D1,eta     （積分点ごと、kStateMat=1 のときのみ使用）
 ```
 
 - **成長ドライバ `alpha`** は JAXFEM の α 場を各積分点へ写像したもの
   （`TB,STATE` やユーザ場で初期化、あるいは時間発展）。
 - `kUsePy=1` にすると、インライン Fortran 則の代わりに
   **Python マテリアルフック**（後述）を選択します。
+- `kStateMat=1` にすると、材料定数を `prop(1:4)` ではなく
+  **積分点ごとの `ustatev(11:14)`** から読みます（後述）。
+
+## 組成依存剛性 E(φ)（`kStateMat=1`）
+
+> ⚠️ **動作は検証済みだが、論文の σ_CH/σ_DH 比に使うことは未承認。**
+> `RESEARCH_MODEL.md` §6 は2つの解析系統を意図的に分離しています —
+> (1) Klempt growth-stress（組成 → α → 応力、**論文の主結果**）と
+> (2) DI-bridge FEM（組成 → DI → E(DI) → 応力）。この経路が依拠する E(DI)
+> 冪乗則は**系統2のブリッジそのもの**なので、`kStateMat=1` は2系統を1回の
+> ソルブで混ぜることになります。物理的にはその方が正しい可能性はありますが、
+> これは配線ではなく**モデリング上の判断**であり、固有の落とし穴があります:
+> §4 に α は「**条件ごとに較正されていない**」と明記されており、α が
+> CH/DH/CS/DS で一様なら、混合ソルブの条件間コントラストは**すべて剛性側
+> から来ます** — 系統1の見た目をした系統2の結果になり、しかも同一の測定組成が
+> 両方の脚を駆動するため比が構造的に増幅されます。混合結果を報告する前に
+> この点を決着させてください。
+>
+> 機構を示すための単一ガウス点での実測（固定変形、全条件 α = 0.2）。
+> 実 FE 解析の主張では**ありません**:
+>
+> | | lineage 1 のみ（α 一様・E 一定） | lineage 2 のみ（E 変化） |
+> |---|---|---|
+> | CH | 566.5 | 566.5 |
+> | CS | 566.5 | 554.7 |
+> | DH | 566.5 | 177.1 |
+> | DS | 566.5 | 20.5 |
+> | **σ_CH/σ_DH** | **1.000** | **3.199** |
+>
+> α が一様だと成長側の条件間コントラストは**ゼロ**です。実解析では α 場の
+> 空間分布が条件ごとに変わる（生態 PDE が駆動する）ので文字通りゼロには
+> なりませんが、その**大きさ**が条件ごとに未較正である（§4）ことが、
+> この表が浮き彫りにしているギャップです。
+
+モデルの第2の脚（`RESEARCH_MODEL.md` §3）。剛性は成長場 α を*経由せず並列に*
+効きます。定数を `prop(1:4)` に固定していると全ガウス点が同じ剛性になるため、
+4条件を区別するのが α だけになり、**本研究で最大の力学的差 ―
+E が約 995 Pa（健全）〜 32 Pa（病的）の約31倍 ―** が丸ごと抜け落ちていました。
+
+組成は CLSM の**測定値**であって解析中に発展する量ではないので、これらの定数は
+計算開始前に確定しています。[`coupling/composition_to_material.py`](coupling/composition_to_material.py)
+が一度だけ計算し（φ → `material_models.py` の `E(φ)`/`DI` → `C10, C01, D1, eta`）、
+初期状態として配る `TB,USER`／`TB,STATE` ブロックを出力します。
+**増分ごとの Python 呼び出しは一切発生しません** ― この経路は高速なインライン
+Fortran コアの内側で完結します。（ソケットブリッジ `kUsePy=1` は、係数ではなく
+構成則**そのもの**を差し替えるという別の問題を解くものです。）
+
+```bash
+python ansys_usermat/coupling/composition_to_material.py --phi 0.2,0.2,0.2,0.2,0.2
+python ansys_usermat/coupling/composition_to_material.py --E 32 --di 0.85 --apdl
+```
+
+`ustatev(11) <= 0` は「未初期化」と解釈して `prop(1:4)` にフォールバックします
+（`Fv` に対して `INIT_FV_IF_ZERO` が既に使っている「ゼロ＝未設定」イディオムと同じ）。
+設定ミス時に剛性ゼロで黙って走るのではなく prop の材料に縮退します。
+なお ANSYS の `TB,STATE` は**材料ごと**に効くので、空間的に組成が変わる場合は
+組成ビンごとに材料を分ける必要があります。
+
+[`tests/test_composition_material.py`](../tests/test_composition_material.py)
+で end-to-end 検証済み: 材料 A の定数を `prop` 経由で流した結果と、`prop` に
+材料 B を置いたまま状態変数経由で A を流した結果が一致すること（＝状態側が
+確実に上書きしていること）、および固定変形で4条件が
+**CH / DH / CS / DS = 566 / 177 / 555 / 20 Pa**（max |σ|）になること ―
+prop 定数モデルでは表現できない差です。
 
 ## Python マテリアルフック（ガウス点ごと）
 
 修論の核心的な成果 ― 論文で較正した **Python** 材料モデルを各ガウス点で
-呼び出す ― のための拡張点が、ソース中に `PYTHON MATERIAL HOOK` として
-明示されています。想定する仕組みは `ISO_C_BINDING` ／ローカルソケット橋渡しで、
+呼び出す ― は、ソース中の `PYTHON MATERIAL HOOK` として**実装・end-to-end
+検証済み**です。仕組みは `ISO_C_BINDING` ／ローカルソケット橋渡しで、
 `(defGrad, Fv_old, alpha, dTime, prop)` を Python へ送り、
-`(stress, Fv_new, dsdePl)` を受け取る形です。インラインの Fortran コアは
-検証用の基準・フォールバックとして残します
-（アーキ図：`ch5_flow/flow_impl_architecture`）。
+`(stress, Fv_new, dsdePl)` を受け取り、Abaqus→ANSYS の Voigt 並び替え
+（`MAP6`）を経て `usermat()` 自身の `stress`/`ustatev`/`dsdePl` へ書き戻し
+ます。`kUsePy=1` でこの経路が有効になり、Python サーバへ接続できない・
+応答が不正な場合は求解を失敗させず検証済みのインラインコアへフォール
+バックします（アーキ図：`ch5_flow/flow_python_material_hook`）。
+
+ブリッジ本体は [`coupling/`](coupling/README.md) にあります：Python 側
+（`material_server.py` ― NumPy コア＋F摂動接線＋ソケットサーバ）、通信
+プロトコル、Fortran 側フック（`usermat_py_hook.f`）。バイパス用ドライバ
+ではなく**実際の `usermat()` エントリポイント**を通して
+`tests/test_usermat_kusepy_e2e.py` が検証しており、`usermat_biofilm.f` +
+`usermat_py_hook.f` + `biofilm_py_eval.c` をスタンドアロンドライバへ
+ビルドし、弾性／粘性／Mooney-Rivlin の各ケースで `kUsePy=1` と
+`kUsePy=0` を突き合わせます ― 応力と更新後の粘性状態は数値精度で一致、
+整合接線（`dsdePl`）は浮動小数点誤差レベルで一致します（両側とも同じ
+F摂動方式、`PERT=1e-7`、を使うため）。サーバ未接続時のフォールバック
+経路（`PYOK=.false.` → インラインコア、クラッシュしない）も同テストで
+確認しています。
+
+この `dsdePl` 突き合わせを追加する過程で実際のバグを1件発見・修正しました：
+Python 側の 6×6 ヤコビアンは行優先（NumPy／C 順）でワイヤに乗りますが、
+Fortran の `RESHAPE` は列優先で詰めるため、`usermat_py_hook.f` の単純な
+`reshape(d36,[6,6])` は**転置行列**を黙って返していました。対称に近い
+弾性ケースでは見えず、粘性・Mooney-Rivlin ケースで初めて（符号反転を
+伴う）大きな食い違いとして露見 ― 明示的な `transpose(...)` で修正済みです。
 
 ## ANSYS でのビルド・使用（概略）
 
@@ -92,9 +180,25 @@ gfortran -c -fsyntax-only -ffixed-line-length-132 usermat_biofilm.f
 2. ~~ANSYS が F 摂動による `∂σ/∂ε` と同じ規約を期待するか確認。~~
    **収束したことで確認済み** ― ヤコビアンの規約が違えば Newton 収束が
    悪化または失敗するが、実際に収束している。
-3. **成長項のソルバ内検証。** 上記ベンチマークが確認したのは力学経路
-   （一軸引張）まで。次は成長固有の確認として、`α > 0` の完全拘束
-   単一要素で閉形式の応力を再現する（[`apdl/`](apdl/README.md)）。
-   この状態は `F = I` なので FE 求解なしに答えが予測できる。
-4. `PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する ― これが
-   本来の修論作業。インラインコアは検証基準として残す。
+3. ~~成長項のソルバ内検証。~~ **2026-08-19/20 に完了。** 完全拘束単一要素
+   （`F = I`、FE 求解なしに答えが予測できる）の4ケース（弾性/粘性 ×
+   α=0.05/0.20）が閉形式と一致、加えて `KEYOPT(1,2)` ∈ {0,1,3}（B-bar／
+   enhanced／simplified enhanced strain）のスイープでも体積ロッキングなし。
+   詳細・実測値は [`apdl/README.md`](apdl/README.md) と
+   [`apdl/RUNBOOK.md`](apdl/RUNBOOK.md)。
+   - 副産物として、円筒シェル（歯表面を模した二層構造）での拘束成長の
+     予備検討で **α=0.01 は収束、α=0.015 から歪みエラー**、収束する
+     α=0.01 でも外周変位が一様でなく**2山パターン**を示すことを確認
+     （[`assets/growth_cylinder_bulge.png`](../assets/growth_cylinder_bulge.png)、
+     `apdl/extract_cylinder_bulge.py`）。座屈的挙動の可能性があるが、
+     真の固有値解析では未確認 ― 興味深い所見として記録、結論はまだ。
+4. ~~`PYTHON MATERIAL HOOK`（ISO_C_BINDING／ソケット）を実装する。~~
+   **完了** ― 上記のとおり、実際の `usermat()` エントリポイントを通した
+   `tests/test_usermat_kusepy_e2e.py` で end-to-end 検証済み。インライン
+   コアは検証基準・自動フォールバックとして残す。プロトコルとガウス点
+   1回あたりの通信内容は
+   [`ch5_flow/flow_python_material_hook`](../ch5_flow/README.md) に図解。
+5. Python 側の材料モデルは、いまも検証済み Fortran 則の NumPy 写し
+   （`material_server.py` の `stress_core`）であり、較正済み JAX モデル
+   （`JAXFEM/` ／ `material_models.py`）ではまだない ― 同じインターフェイス
+   の裏側を差し替えるだけなので、配線の話ではなくローカルな置き換え。

@@ -1,0 +1,88 @@
+% flow_oliver_solution_loop_ja.tex — flow_oliver_solution_loop.tex の日本語版。
+% 内容は英語版と同一。図の構造を変えたときは両方を更新すること。
+%
+% 出典: ansys_usermat/OLIVER_MODEL_NOTES.ja.md「全体がどう動くか — 解法ループ」。
+% 実線の枠はソースコードから直接読んだ内容。唯一の推測はその旨を図中に明記。
+%
+% ビルドには日本語対応エンジンが必要:
+%   lualatex flow_oliver_solution_loop_ja_standalone.tex
+% pdflatex では通らない。
+\begin{tikzpicture}[
+  % pLaTeX re-derives kanjiskip at every font selection, so pinning it in the
+  % preamble is not enough -- it has to be re-pinned inside each node, or the
+  % ragged-right node text stretches inside Japanese words. Latin words are
+  % kept unhyphenated for the same reason ("AN-SYS" reads badly).
+  every node/.style = {font=\small,
+      execute at begin node={\kanjiskip=0pt plus 0pt minus 0pt\relax
+        \hyphenpenalty=10000\exhyphenpenalty=10000\relax}},
+  N/.style    = {draw, rounded corners=3pt, align=left, thick,
+                 text width=10.2cm, inner sep=6pt},
+  Nonce/.style= {N, fill=gray!10},
+  Ngp/.style  = {N, fill=orange!12},
+  Nfld/.style = {N, fill=teal!12},
+  Nours/.style= {draw, rounded corners=3pt, align=left, very thick,
+                 draw=red!65!black, fill=red!8, text width=6.6cm, inner sep=6pt},
+  ar/.style   = {-Stealth, thick},
+  arb/.style  = {-Stealth, thick, dashed, gray!70},
+  lbl/.style  = {font=\scriptsize\sffamily\gtfamily, fill=white, inner sep=1.5pt, align=center},
+  note/.style = {font=\scriptsize, align=left, text width=6.8cm, gray!45!black},
+]
+
+\node[Nonce] (top) {%
+  \textbf{ANSYS 求解} — \texttt{SOLID185}、\texttt{NLGEOM,ON}\\
+  カスタム \texttt{ANSYS.exe}、UPF ルーチンをリンク};
+
+\node[Nonce, below=0.55cm of top] (beg) {%
+  \textbf{\texttt{USolBeg}} \hfill {\gtfamily 求解開始時に一度だけ}\\[4pt]
+  \texttt{parevl} を約150回：APDL パラメータを全て
+  \texttt{/usercm/} 共通ブロックへ\\[2pt]
+  \texttt{InitVals} — 共有 MPI データ領域を確保\\[2pt]
+  \texttt{NEM\_CreateData\_Init} — メッシュフリー近傍作用素を構築\\[2pt]
+  \texttt{Mapping\_Node\_ID}、\texttt{Initial\_Values}};
+\draw[ar] (top) -- (beg);
+
+\node[Ngp, below=0.95cm of beg] (gp) {%
+  \textbf{\texttt{usermat}} \hfill {\gtfamily ガウス点ごと・釣り合い反復ごと}\\[4pt]
+  \texttt{GetVals} / \texttt{GetTMP} — この点の状態をプールから読む\\[2pt]
+  \textbf{\texttt{CALL AceGenNeoHookV04}} $\rightarrow$ $\bm\sigma$、\texttt{dsdePl}\\[2pt]
+  \texttt{SetVals} — 状態をプールへ書き戻す};
+\draw[ar] (beg) -- node[lbl,right,xshift=2pt] {力学} (gp);
+
+\node[Nfld, below=0.95cm of gp] (fld) {%
+  \textbf{\texttt{USSFin}} \hfill {\gtfamily 各サブステップの後}\\[4pt]
+  組み立て $+$ PARDISO 求解 $\rightarrow$ 温度場\\[2pt]
+  組み立て $+$ PARDISO 求解 $\rightarrow$ \texttt{Nut1} 場\\[2pt]
+  組み立て $+$ PARDISO 求解 $\rightarrow$ \texttt{Nut2} 場\\[2pt]
+  \textcolor{gray!55!black}{\texttt{AGPhaseViskoP21V07} — コメントアウト}\\[2pt]
+  \textcolor{gray!55!black}{\texttt{CalcLaserIntegralOMP} / \texttt{CALCPYRO}
+    — レーザー／放射温度計（ガラス加工から継承）}};
+\draw[ar] (gp) -- node[lbl,right,xshift=2pt] {輸送} (fld);
+
+\draw[arb] (fld.west) -- ++(-0.85,0) |- node[lbl,pos=0.25,left,xshift=-2pt]
+  {次のサブステップ} (gp.west);
+
+\node[Nours, right=1.15cm of gp] (ours) {%
+  \textbf{我々の寄与はここに入る}\\[4pt]
+  \texttt{BIOFILM\_GROWTH\_VISCO\_V01}\\
+  \scriptsize(\texttt{ansys\_usermat/biofilm\_material\_v01.f})\\[4pt]
+  \scriptsize \texttt{AceGenNeoHookV04} と同じ形の引数列に、
+  成長変数 $\alpha$ と粘性状態 $\mathbf F_v$ を追加\\[2pt]
+  \scriptsize 純弾性の彼らの法則に対し
+  $\mathbf F=\mathbf F_e\mathbf F_v\mathbf F_g$、
+  $\mathbf F_g=(1{+}\alpha)\mathbf I$ を足す};
+\draw[ar, draw=red!65!black, very thick] (ours) -- (gp);
+
+\node[note, right=1.15cm of fld, yshift=0.1cm] {%
+  スタガード／演算子分離：力学は ANSYS が解き、輸送場は
+  \texttt{USSFin} が NEM 作用素上で MKL PARDISO により解く。
+  両者がサブステップごとに交互に進む。\\[3pt]
+  輸送場は ANSYS の自由度では\textbf{ない} — UPF 自前のデータプール内にのみ存在する。\\[3pt]
+  \textcolor{red!55!black}{コードに書かれていない推測：}2つの
+  \texttt{Nut} 系は、2種類の栄養ではなくバイオフィルム場と栄養場である可能性が高い。};
+
+\node[note, right=1.15cm of beg, yshift=0.05cm] {%
+  全パラメータが \texttt{parevl} 経由で \texttt{/usercm/} に入るため、
+  ANSYS の \texttt{prop()} 配列は使われていない。材料定数は
+  我々のデッキと違い \texttt{TB,USER} からは入って\textbf{こない}。};
+
+\end{tikzpicture}

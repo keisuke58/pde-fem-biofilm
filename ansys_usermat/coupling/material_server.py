@@ -73,9 +73,13 @@ def stress_core(F, Fv_old, alpha, C10, C01, D1, eta, mtype, dt):
     return sv, Fv_new, detFe
 
 
-def dsde_perturbation(F, Fv_old, params, h=1e-6):
+def dsde_perturbation(F, Fv_old, params, h=1.0e-7):
     """6x6 material Jacobian dσ/dε via symmetric spatial perturbations of F
-    (the same F-perturbation scheme the verified UMAT uses)."""
+    (the same F-perturbation scheme the verified UMAT uses, same step size
+    PERT=1.0d-7 as usermat_biofilm.f, and deliberately NOT symmetrised --
+    the inline Fortran core's unsymmetrised numerical tangent is the one
+    that was confirmed to converge under SOLID185/NLGEOM,ON, so this path
+    reproduces that behaviour rather than a different-but-plausible one)."""
     sv0, _, _ = stress_core(F, Fv_old, *params)
     D = np.zeros((6, 6))
     for k, (a, b) in enumerate(VOIGT):
@@ -84,7 +88,32 @@ def dsde_perturbation(F, Fv_old, params, h=1e-6):
         dE[b, a] += h / 2.0
         sv, _, _ = stress_core((I3 + dE) @ F, Fv_old, *params)
         D[:, k] = (sv - sv0) / h
-    return 0.5 * (D + D.T)                             # symmetrise (minor asym = truncation)
+    return D
+
+
+# Tangent backend. "fd" is the finite difference above, matching
+# usermat_biofilm.f's PERT=1e-7 exactly -- that equality is what makes
+# kUsePy=1 vs kUsePy=0 a clean equivalence proof, so it stays the default.
+# "jax" serves the exact AD tangent from material_jax instead (opt-in, since
+# it deliberately breaks that bit-level equality at the ~3e-8 truncation
+# level the FD tangent carries).
+TANGENT_BACKEND = "fd"
+
+
+def set_tangent_backend(name: str) -> None:
+    global TANGENT_BACKEND
+    if name not in ("fd", "jax"):
+        raise ValueError(f"unknown tangent backend {name!r} (fd|jax)")
+    if name == "jax":
+        import material_jax  # noqa: F401  -- fail here, not per request
+    TANGENT_BACKEND = name
+
+
+def _tangent(F, Fv, params):
+    if TANGENT_BACKEND == "jax":
+        import material_jax
+        return np.asarray(material_jax.dsde_exact(F, Fv, params), dtype=float)
+    return dsde_perturbation(F, Fv, params)
 
 
 def evaluate(req: dict) -> bytes:
@@ -93,7 +122,7 @@ def evaluate(req: dict) -> bytes:
     params = (req["alpha"], req["C10"], req["C01"], req["D1"],
               req["eta"], req["mtype"], req["dt"])
     sv, Fv_new, detFe = stress_core(F, Fv, *params)
-    D = dsde_perturbation(F, Fv, params)
+    D = _tangent(F, Fv, params)
     return encode_response(sv, Fv_new.reshape(9), detFe, D.reshape(36))
 
 
@@ -119,5 +148,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--tangent", choices=("fd", "jax"), default="fd",
+                    help="dsdePl backend: fd = finite difference matching the "
+                         "USERMAT's PERT=1e-7 (default, keeps kUsePy=1 vs "
+                         "kUsePy=0 an exact equivalence check); jax = exact "
+                         "forward-mode AD (requires jax)")
     a = ap.parse_args()
+    set_tangent_backend(a.tangent)
     serve(a.host, a.port)

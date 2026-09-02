@@ -46,12 +46,22 @@ C    prop(3) = D1    compressibility [1/stress]
 C    prop(4) = eta   viscosity [stress*time]  (0 = elastic)
 C    prop(5) = mtype 0=Neo-Hookean, 1=Mooney-Rivlin
 C    prop(6) = kUsePy 0=inline Fortran law, 1=call Python material hook
+C    prop(7) = kStateMat 0=material constants come from prop(1:4) (default),
+C                   1=they come per-integration-point from ustatev(11:14)
 C
-C  STATE (ustatev), NSTATV = 10:
+C  STATE (ustatev), NSTATV = 10 (14 when kStateMat=1):
 C    ustatev(1:9) = Fv  (row-major 3x3)
 C    ustatev(10)  = alpha  (accumulated volumetric growth; growth driver,
 C                   set from the JAXFEM alpha-field mapped to this IP, or
 C                   evolved via a user field / TB,STATE table)
+C    ustatev(11)  = C10   ) per-IP material constants, used only when
+C    ustatev(12)  = C01   ) kStateMat=1.  These carry the composition
+C    ustatev(13)  = D1    ) dependence E(phi) -> (C10,C01,D1,eta) computed
+C    ustatev(14)  = eta   ) by material_models.py; see
+C                   ansys_usermat/coupling/composition_to_material.py.
+C                   ustatev(11) <= 0 is read as "not initialised" and falls
+C                   back to prop(1:4), the same zero-means-unset idiom
+C                   INIT_FV_IF_ZERO already uses for Fv.
 C=======================================================================
       subroutine usermat(
      &   matId, elemId, kDomIntPt, kLayer, kSectPt,
@@ -63,6 +73,7 @@ C=======================================================================
      &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
      &   var1, var2, var3, var4, var5, var6, var7, var8)
 
+      use biofilm_py_bridge, only: biofilm_py_hook
       implicit none
 C     --- ANSYS USERMAT argument list (3-D / plane-strain solid) ---
 C     Signature confirmed against ANSYS MAPDL 2022 R2 (v222): var0 sits
@@ -83,7 +94,7 @@ C     when moving to another ANSYS version.
      &                 var7, var8
 
 C     --- locals ---
-      double precision C10, C01, D1, ETA, MTYPE, KUSEPY
+      double precision C10, C01, D1, ETA, MTYPE, KUSEPY, KSTMAT
       double precision ALPHA, FGSC, FG_INV(3,3)
       double precision FV_OLD(3,3), FV_NEW(3,3), FV_DUM(3,3)
       double precision SV0(6), SVP(6), DFP(3,3)
@@ -93,6 +104,14 @@ C     ANSYS Voigt map (11,22,33,12,23,13)
       integer          VI(6), VJ(6)
       data VI /1, 2, 3, 1, 2, 1/
       data VJ /1, 2, 3, 2, 3, 3/
+C     Python-hook path: biofilm_py_hook returns Abaqus Voigt order
+C     (11,22,33,12,13,23); reindex to ANSYS order (11,22,33,12,23,13) by
+C     swapping positions 5<->6 -- MAP6(k) is the Abaqus position holding
+C     ANSYS position k's component.
+      double precision SV0_PY(6), DSDE_PY(6,6), FV9_PY(9)
+      integer          MAP6(6)
+      logical          PYOK
+      data MAP6 /1, 2, 3, 4, 6, 5/
 
 C     --- material properties ---
       C10    = prop(1)
@@ -102,11 +121,32 @@ C     --- material properties ---
       MTYPE  = prop(5)
       KUSEPY = 0.0d0
       if (nProp .ge. 6) KUSEPY = prop(6)
+      KSTMAT = 0.0d0
+      if (nProp .ge. 7) KSTMAT = prop(7)
 
 C     --- growth driver + viscous state from ustatev ---
       ALPHA = 0.0d0
       if (nStatev .ge. 10) ALPHA = ustatev(10)
       if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
+
+C     --- per-integration-point material constants (composition-dependent) ---
+C     With kStateMat=1 the stiffness/viscosity carried in ustatev(11:14)
+C     overrides prop(1:4), so E(phi) can vary from Gauss point to Gauss
+C     point instead of being one constant for the whole material. The
+C     composition itself is CLSM-measured input, so these are computed
+C     once up front (composition_to_material.py) and delivered as initial
+C     state -- no per-increment Python call is involved.
+C     ustatev(11) <= 0 means "not initialised" (C10 is never validly zero
+C     or negative), and falls back to prop(1:4) rather than silently
+C     running with a zero-stiffness material.
+      if (KSTMAT .gt. 0.5d0 .and. nStatev .ge. 14) then
+        if (ustatev(11) .gt. 0.0d0) then
+          C10 = ustatev(11)
+          C01 = ustatev(12)
+          D1  = ustatev(13)
+          ETA = ustatev(14)
+        end if
+      end if
       K = 0
       do I = 1, 3
         do J = 1, 3
@@ -128,20 +168,43 @@ C     --- Fg = (1+alpha) I ;  inv(Fg) ---
 C=======================================================================
 C  PYTHON MATERIAL HOOK  (per Gauss point)
 C  ---------------------------------------
-C  When kUsePy=1 the constitutive response would be delegated to the
-C  Python material model (the paper's calibrated law) instead of the
-C  inline Fortran core below.  Intended mechanism: an ISO_C_BINDING /
-C  local-socket bridge that sends (defGrad, FV_OLD, alpha, dTime, prop)
-C  and receives (Cauchy stress, FV_NEW, dsdePl).  Left as an explicit
-C  extension point for the thesis; the inline core is the reference /
-C  fallback used for verification.
+C  When kUsePy=1 the constitutive response is delegated to the Python
+C  material model (the paper's calibrated law) instead of the inline
+C  Fortran core below, via the ISO_C_BINDING bridge in usermat_py_hook.f
+C  (biofilm_py_bridge -> biofilm_py_eval.c -> material_server.py over a
+C  local socket, wire format in ansys_usermat/coupling/protocol.py).
+C  The inline core stays the verification reference and the automatic
+C  fallback if the Python side is unreachable (PYOK = .false.) -- a
+C  socket failure must not silently return zero stress.
 C
-C      if (KUSEPY .gt. 0.5d0) then
-C        call BIOFILM_PY_MATERIAL(defGrad, FV_OLD, ALPHA, dTime, prop,
-C     &                           nProp, SV0, FV_NEW, dsdePl, ncomp,
-C     &                           VI, VJ, keycut)
-C        goto 900
-C      end if
+      if (KUSEPY .gt. 0.5d0) then
+        call biofilm_py_hook(defGrad, FV_OLD, ALPHA, C10, C01, D1,
+     &                        ETA, MTYPE, dTime,
+     &                        SV0_PY, FV9_PY, DSDE_PY, PYOK)
+        if (PYOK) then
+          do I = 1, ncomp
+            stress(I) = SV0_PY(MAP6(I))
+          end do
+          do P = 1, ncomp
+            do Q = 1, ncomp
+              dsdePl(Q,P) = DSDE_PY(MAP6(Q), MAP6(P))
+            end do
+          end do
+C         sedEl/sedPl are not returned by the Python-hook path (protocol.py
+C         carries stress/Fv_new/dsdePl only, no energies); left at their
+C         ANSYS-initialised default rather than fabricated.
+          K = 0
+          do I = 1, 3
+            do J = 1, 3
+              K = K + 1
+              ustatev(K) = FV9_PY(K)
+            end do
+          end do
+          return
+        end if
+C       PYOK = .false. (server unreachable, bad response, ...): fall
+C       through to the verified inline core below rather than fail silent.
+      end if
 C=======================================================================
 
 C     --- base stress (ANSYS Voigt order) ---
@@ -268,7 +331,8 @@ C     state) — matches umat_biofilm_visco.f so Fv evolves identically.
         end do
       end if
 
-C     viscous update (backward Euler)
+C     viscous update: explicit flow increment (VISCOUS_UPDATE_SCHEME.md),
+C     stress re-evaluated at FV_NEW below
       DTS = max(DT, 1.0d-20)
       if (ETA .gt. 1.0d-20) then
         TMP1 = DTS/(2.0d0*ETA*DETFE)

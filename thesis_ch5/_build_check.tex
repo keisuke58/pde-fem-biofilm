@@ -1,0 +1,15 @@
+% Syntax/compile check only -- not part of the thesis. Confirms the skeleton
+% builds, its citations resolve and the figure input works.
+\documentclass[11pt,a4paper]{report}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{xcolor}
+\usepackage{graphicx}
+% Deliberately does NOT load TikZ: the skeleton must build without it, since
+% the thesis tree may not have it. The figure comes in as a PNG.
+\newcommand{\ansysfigdir}{../assets/}
+\begin{document}
+\input{ch5_ansys_contribution.tex}
+\bibliographystyle{plain}
+\bibliography{../biofilm_3tooth_refs}
+\end{document}

@@ -43,6 +43,22 @@ _ROOT = _HERE.parents[1]                       # repo root
 _ABQ_SRC = _ROOT / "umat_biofilm_visco.f"
 _ANS_SRC = _ROOT / "ansys_usermat" / "usermat_biofilm.f"
 _ABA_INC = _ROOT / "umat_tangent_test"         # holds ABA_PARAM.INC
+_COUP = _ROOT / "ansys_usermat" / "coupling"
+_PY_HOOK = _COUP / "usermat_py_hook.f"
+_PY_SHIM = _COUP / "biofilm_py_eval.c"
+
+
+def _compile_ansys_extras(tmp: Path) -> tuple[list[str], list[str]]:
+    """usermat_biofilm.f now `use`s biofilm_py_bridge (usermat_py_hook.f), so
+    any build linking it needs that module's object first (for its .mod) and
+    biofilm_py_eval.c linked in too (the module references that C symbol,
+    and the linker must resolve it even though kUsePy=0 never calls it at
+    runtime). Returns (include_flags, extra_objects)."""
+    hook_o, shim_o = tmp / "py_hook.o", tmp / "py_shim.o"
+    subprocess.run(["gfortran", "-c", "-ffixed-line-length-132", "-J", str(tmp),
+                    str(_PY_HOOK), "-o", str(hook_o)], check=True)
+    subprocess.run(["cc", "-c", "-fPIC", str(_PY_SHIM), "-o", str(shim_o)], check=True)
+    return [f"-I{tmp}"], [str(hook_o), str(shim_o)]
 
 # Voigt (0-based (i,j)) reconstruction maps, keyed by the same order strings
 # used on the CLI ("11,22,33,12,13,23" style).
@@ -75,10 +91,15 @@ def _build_pair(tmp: Path, left_driver: Path, left_src: Path,
         left_cmd += [f"-I{left_inc}"]
     left_cmd += [str(left_driver), str(left_src), "-o", str(xleft)]
     subprocess.run(left_cmd, check=True)
-    subprocess.run(
-        ["gfortran", "-ffixed-line-length-132",
-         str(right_driver), str(right_src), "-o", str(xright)],
-        check=True)
+
+    right_cmd = ["gfortran", "-ffixed-line-length-132"]
+    right_extra_objs: list[str] = []
+    if right_src == _ANS_SRC:
+        inc_flags, right_extra_objs = _compile_ansys_extras(tmp)
+        right_cmd += inc_flags
+    right_cmd += [str(right_driver), str(right_src), *right_extra_objs,
+                 "-o", str(xright)]
+    subprocess.run(right_cmd, check=True)
     return xleft, xright
 
 
