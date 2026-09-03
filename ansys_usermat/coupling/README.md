@@ -6,15 +6,50 @@ verified inline Fortran core kept as the reference/fallback. This lets the
 IKM-verified constitutive law and the Keio-side computational-mechanics work
 meet at a single, well-defined interface.
 
-> **Status: the bridge is wired and verified end-to-end through the real
-> `usermat()` entry point** (no Abaqus/ANSYS needed): the Python material core
-> is proven equivalent to the verified Fortran core, the C shim talks to it
-> over a socket, the Fortran hook links against the shim and falls back
-> cleanly when the server is absent, and `kUsePy=1` matches `kUsePy=0` when
-> run through `usermat_biofilm.f`'s actual `usermat()` subroutine (not a
-> bypass driver) — see `../../tests/test_usermat_kusepy_e2e.py`. What remains
-> is a live ANSYS single-element smoke test and swapping in the calibrated
-> JAX model (§ Next steps).
+> **Status: verified end-to-end through the real `usermat()` entry point,
+> now including a live ANSYS run, not only the gfortran driver.** The Python
+> material core is proven equivalent to the verified Fortran core, the C
+> shim talks to it over a socket, the Fortran hook links against the shim
+> and falls back cleanly when the server is absent, and `kUsePy=1` matches
+> `kUsePy=0` when run through `usermat_biofilm.f`'s actual `usermat()`
+> subroutine — see `../../tests/test_usermat_kusepy_e2e.py`.
+>
+> **2026-09-03, on IKMHIWI03: the single-element ANSYS smoke test from
+> Next-steps #1 is done, on real hardware.** Two blockers had to be fixed
+> first, neither specific to this material law:
+> - `biofilm_py_eval.c` used POSIX sockets (`arpa/inet.h`, `sys/socket.h`,
+>   `unistd.h`) and does not compile under MSVC. Ported to Winsock2 behind
+>   `#ifdef _WIN32` (kept the POSIX path for Linux); `send()`/`recv()`
+>   replace `write()`/`read()` on both platforms rather than maintaining
+>   two implementations of the framing helpers.
+> - `usermat_py_hook.f` needs 132-column fixed form (its own header already
+>   said so, for `gfortran -ffixed-line-length-132`) but ifort defaults to
+>   72 and misparses the overflow as a syntax error on the `bind(C,
+>   name=...)` continuation line rather than reporting a line-length
+>   problem. Fixed by adding `/extend-source:132` to `link_v222.ps1` (now
+>   permanent there — safe for the files that already fit in 72 columns).
+>
+> With both fixed, `usermat_biofilm.f` + `usermat_py_hook.f` +
+> `biofilm_py_eval.c` compiled and linked into a custom v222 `ANSYS.exe`
+> (`link_v222.ps1 -WorkDir F:\biofilm_upf_kusepy`) and run against the
+> `elastic_a005` closed-form case (`α=0.05, η=0`) with `prop(6)=kUsePy=1`
+> and `material_server.py` listening on `127.0.0.1:8765`:
+> - `NUMBER OF ERROR MESSAGES = 0`; `SX=SY=SZ=-0.10193E-003` — exact match
+>   to the closed form (`-1.019275856e-04`), `SVAR(10)=0.05000`.
+> - **The live socket path was confirmed actually taken, not a silent
+>   fallback that happens to agree**: a diagnostic per-request log line
+>   added to a scratch copy of `material_server.py` recorded real requests
+>   arriving from `127.0.0.1`, `alpha=0.05...`, one per F-perturbation
+>   tangent evaluation, across the run's substeps.
+> - Re-ran with the server killed: `NUMBER OF ERROR MESSAGES = 0`, bit-
+>   identical stress — the fallback-to-inline-core path also confirmed on
+>   real ANSYS, not only the gfortran driver.
+>
+> Not yet done: porting this same bridge to Oliver's `Usermat_P21-V21_*.F`
+> (a separate task from wiring `BIOFILM_GROWTH_VISCO_V01` there directly,
+> which was tried the same day — see `V222_PORT_INSTRUCTIONS.md` §6) and
+> replacing `stress_core` with the calibrated JAX model (§ Next steps
+> below, now down to items 2–3).
 
 ## Interface contract
 
@@ -140,15 +175,16 @@ check passes either way.
 
 ## Next steps (continuation)
 
-1. **Single-element ANSYS smoke test with `kUsePy=1`**, on real hardware
-   (Windows/`IKMHIWI03`) rather than the gfortran standalone driver used here —
-   needs `usermat_py_hook.f` and `biofilm_py_eval.c` copied into the UPF build
-   directory alongside `usermat_biofilm.f` and compiled/linked together
-   (`usermat_py_hook.f` must build first, for its `.mod` file). Not yet done;
-   the standalone-driver equivalence proven here should carry over directly,
-   so any mismatch there would be build/link, not physics.
+1. ~~Single-element ANSYS smoke test with `kUsePy=1`, on real hardware~~ —
+   done 2026-09-03 on IKMHIWI03, see the Status note above.
 2. **Replace `stress_core` with the calibrated JAX model**, keeping the inline
    Fortran core as the fallback; re-run `test_coupling_vs_fortran.py` to quantify
    the intended physical difference.
 3. Optional: switch the shim from socket to in-process `ISO_C_BINDING` embedding
    once the model is stable (lower per-Gauss-point latency).
+4. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
+   the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
+   2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6) — a live Python call per
+   Gauss point rather than a compiled-in Fortran call, useful if the growth
+   driver ends up needing something Python-side (e.g. the 0D Hamilton ODE)
+   rather than a precomputed field.

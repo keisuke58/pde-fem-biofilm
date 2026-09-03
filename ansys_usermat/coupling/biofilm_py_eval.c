@@ -19,51 +19,88 @@
  * law rather than aborting the solve.
  *
  * Build (example):
- *     cc -c -fPIC biofilm_py_eval.c -o biofilm_py_eval.o
- * then link the .o together with the USERMAT objects.
+ *     cc -c -fPIC biofilm_py_eval.c -o biofilm_py_eval.o        (Linux)
+ *     cl /c biofilm_py_eval.c                                    (Windows,
+ *         from a vcvars64 shell; links ws2_32.lib automatically via the
+ *         #pragma comment below)
+ * then link the .o/.obj together with the USERMAT objects.
  *
  * Host/port overridable via env: BIOFILM_PY_HOST, BIOFILM_PY_PORT.
+ *
+ * Windows port, 2026-09-03: the socket calls below are Winsock2 under
+ * _WIN32 and POSIX sockets otherwise, selected at compile time. send()/
+ * recv() are used uniformly instead of read()/write() -- both platforms'
+ * socket layers support them identically, so that one substitution is
+ * enough to avoid a second implementation of send_all()/recv_line().
  */
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+typedef SOCKET sock_t;
+#define SOCK_INVALID INVALID_SOCKET
+#define SOCK_CLOSE(s) closesocket(s)
+#else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <unistd.h>
+typedef int sock_t;
+#define SOCK_INVALID (-1)
+#define SOCK_CLOSE(s) close(s)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 #define RECV_CAP 65536
 
-static int g_fd = -1;              /* persistent connection, -1 = not connected */
+static sock_t g_fd = SOCK_INVALID;   /* persistent connection */
 
-static int py_connect(void)
+#ifdef _WIN32
+static int g_wsa_ready = 0;
+static void ensure_wsa(void)
+{
+    if (!g_wsa_ready) {
+        WSADATA wd;
+        WSAStartup(MAKEWORD(2, 2), &wd);
+        g_wsa_ready = 1;
+    }
+}
+#endif
+
+static sock_t py_connect(void)
 {
     const char *host = getenv("BIOFILM_PY_HOST");
     const char *port = getenv("BIOFILM_PY_PORT");
     struct sockaddr_in addr;
-    int fd, one = 1;
+    sock_t fd;
+    int one = 1;
 
+#ifdef _WIN32
+    ensure_wsa();
+#endif
     if (!host) host = "127.0.0.1";
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) return -1;
+    if (fd == SOCK_INVALID) return SOCK_INVALID;
 
     memset(&addr, 0, sizeof addr);
     addr.sin_family = AF_INET;
     addr.sin_port = htons((unsigned short)(port ? atoi(port) : 8765));
-    if (inet_pton(AF_INET, host, &addr.sin_addr) != 1) { close(fd); return -1; }
-    if (connect(fd, (struct sockaddr *)&addr, sizeof addr) != 0) { close(fd); return -1; }
+    if (inet_pton(AF_INET, host, &addr.sin_addr) != 1) { SOCK_CLOSE(fd); return SOCK_INVALID; }
+    if (connect(fd, (struct sockaddr *)&addr, sizeof addr) != 0) { SOCK_CLOSE(fd); return SOCK_INVALID; }
 
     /* per-call latency matters far more than throughput here */
-    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&one, sizeof one);
     return fd;
 }
 
-static int send_all(int fd, const char *buf, size_t n)
+static int send_all(sock_t fd, const char *buf, size_t n)
 {
     while (n > 0) {
-        ssize_t w = write(fd, buf, n);
+        int w = send(fd, buf, (int)n, 0);
         if (w <= 0) return -1;
         buf += w; n -= (size_t)w;
     }
@@ -71,11 +108,11 @@ static int send_all(int fd, const char *buf, size_t n)
 }
 
 /* Read one newline-terminated frame. */
-static int recv_line(int fd, char *buf, size_t cap)
+static int recv_line(sock_t fd, char *buf, size_t cap)
 {
     size_t used = 0;
     while (used + 1 < cap) {
-        ssize_t r = read(fd, buf + used, 1);
+        int r = recv(fd, buf + used, 1, 0);
         if (r <= 0) return -1;
         if (buf[used] == '\n') { buf[used] = '\0'; return 0; }
         used += (size_t)r;
@@ -135,15 +172,15 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
 
     /* One reconnect retry: the server may have been restarted mid-run. */
     for (attempt = 0; attempt < 2; attempt++) {
-        if (g_fd < 0) g_fd = py_connect();
-        if (g_fd < 0) return 2;
+        if (g_fd == SOCK_INVALID) g_fd = py_connect();
+        if (g_fd == SOCK_INVALID) return 2;
 
         if (send_all(g_fd, req, (size_t)n) == 0 &&
             recv_line(g_fd, resp, sizeof resp) == 0)
             break;
 
-        close(g_fd);
-        g_fd = -1;
+        SOCK_CLOSE(g_fd);
+        g_fd = SOCK_INVALID;
         if (attempt == 1) return 3;
     }
 
@@ -161,5 +198,5 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
 /* Optional: close the connection at the end of a run. */
 void biofilm_py_close(void)
 {
-    if (g_fd >= 0) { close(g_fd); g_fd = -1; }
+    if (g_fd != SOCK_INVALID) { SOCK_CLOSE(g_fd); g_fd = SOCK_INVALID; }
 }

@@ -93,7 +93,14 @@ $libAnsysCustom = Join-Path $AnsysRoot "ansys\Custom\Lib\winx64"
 
 $macros = "/DNOSTDCALL /DARGTRAIL /DPCWIN64_SYS /DPCWINX64_SYS /DPCWINNT_SYS /DCADOE_ANSYS"
 $fmacs = "/D__EFL /DFORTRAN"
-$switch = "/O2 /fpp /4Yportlib /auto /c /Fo.\ /MD /watch:source"
+# /extend-source:132: several sources in this pool (ansys_usermat/coupling/
+# usermat_py_hook.f in particular) are written for 132-column fixed form --
+# their own header comments say so (`gfortran -ffixed-line-length-132`) --
+# but ifort defaults to 72 and silently misparses the overflow as a syntax
+# error rather than a line-length error (found 2026-09-03: `bind(C,
+# name=...)` on a continuation line read as "unexpected (" ). Widening the
+# limit is backward compatible with files that already fit in 72 columns.
+$switch = "/O2 /fpp /4Yportlib /auto /c /Fo.\ /MD /watch:source /extend-source:132"
 
 $batPath = Join-Path $WorkDir "_link_v222_tmp.bat"
 $logPath = Join-Path $WorkDir "_link_v222_tmp.log"
