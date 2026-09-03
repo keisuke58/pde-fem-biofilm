@@ -20,18 +20,27 @@
  *
  * Build (example):
  *     cc -c -fPIC biofilm_py_eval.c -o biofilm_py_eval.o        (Linux)
- *     cl /c biofilm_py_eval.c                                    (Windows,
+ *     gcc -c biofilm_py_eval.c -o biofilm_py_eval.o -lws2_32     (MinGW on
+ *         Windows -- this particular MinGW-w64 build (portable WinLibs,
+ *         see dev-env.ps1) does not ship arpa/inet.h etc., so it takes the
+ *         same Winsock2 path as MSVC below, not the POSIX one; add
+ *         -lws2_32 explicitly since MinGW does not honor MSVC's #pragma
+ *         comment auto-link)
+ *     cl /c biofilm_py_eval.c                                    (MSVC,
  *         from a vcvars64 shell; links ws2_32.lib automatically via the
  *         #pragma comment below)
  * then link the .o/.obj together with the USERMAT objects.
  *
  * Host/port overridable via env: BIOFILM_PY_HOST, BIOFILM_PY_PORT.
  *
- * Windows port, 2026-09-03: the socket calls below are Winsock2 under
- * _WIN32 and POSIX sockets otherwise, selected at compile time. send()/
- * recv() are used uniformly instead of read()/write() -- both platforms'
- * socket layers support them identically, so that one substitution is
- * enough to avoid a second implementation of send_all()/recv_line().
+ * Windows port, 2026-09-03: guarded on _WIN32 (true for both MSVC and
+ * MinGW) rather than _MSC_VER, because this MinGW-w64 build lacks the
+ * POSIX socket compatibility headers other MinGW distributions ship --
+ * confirmed empirically (`arpa/inet.h: No such file or directory`), not
+ * assumed. send()/recv() are used uniformly instead of read()/write() --
+ * both platforms' socket layers support them identically, so that one
+ * substitution is enough to avoid a second implementation of
+ * send_all()/recv_line().
  */
 #ifdef _WIN32
 #include <winsock2.h>

@@ -8,6 +8,7 @@ call — works, not just the Python half.
 
 Requires a C compiler; skipped automatically if absent.
 """
+import os
 import shutil
 import socket
 import subprocess
@@ -26,6 +27,9 @@ sys.path.insert(0, str(_COUP))
 import material_server as ms                      # noqa: E402
 
 _CC = shutil.which("cc") or shutil.which("gcc")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 pytestmark = pytest.mark.skipif(
     _CC is None or not (_COUP / "biofilm_py_eval.c").exists(),
     reason="C compiler or shim source unavailable")
@@ -40,7 +44,8 @@ def shim_exe():
     tmp = tempfile.mkdtemp()
     exe = Path(tmp) / "test_shim"
     subprocess.run([_CC, str(_COUP / "test_shim_main.c"),
-                    str(_COUP / "biofilm_py_eval.c"), "-o", str(exe)], check=True)
+                    str(_COUP / "biofilm_py_eval.c"), "-o", str(exe)] + _WS2,
+                   check=True)
     return exe
 
 
@@ -58,7 +63,12 @@ def server():
 
 def _run_shim(exe, host, port, timeout=20):
     stdin = " ".join(f"{v:.17g}" for v in (*F, *FV, *PARAMS)) + "\n"
-    env = {"BIOFILM_PY_HOST": host, "BIOFILM_PY_PORT": str(port), "PATH": "/usr/bin:/bin"}
+    # Inherit the parent environment rather than a hardcoded POSIX-only
+    # PATH: on Windows the latter strips the MinGW runtime DLL directory a
+    # MinGW-built exe needs (observed 2026-09-03: STATUS_DLL_NOT_FOUND).
+    env = dict(os.environ)
+    env["BIOFILM_PY_HOST"] = host
+    env["BIOFILM_PY_PORT"] = str(port)
     return subprocess.run([str(exe)], input=stdin, capture_output=True,
                           text=True, env=env, timeout=timeout)
 

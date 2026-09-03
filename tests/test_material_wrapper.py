@@ -16,6 +16,7 @@ Requires gfortran; skipped where absent.
 """
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -33,6 +34,10 @@ _XDRV = _AU / "crosscheck" / "xcheck_driver_ans.f"
 
 _FC = shutil.which("gfortran")
 _CC = shutil.which("cc") or shutil.which("gcc")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly -- MSVC's #pragma comment(lib,...)
+# in the source only auto-links under cl.exe, not gcc/ld.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 pytestmark = pytest.mark.skipif(
     _FC is None or _CC is None or not all(
         p.exists() for p in (_WRAP, _CORE, _HOOK, _SHIM, _DRV)),
@@ -69,14 +74,14 @@ def exes():
     wrap = tmp / "wrap"
     subprocess.run([_FC, "-ffixed-line-length-132", "-I", str(tmp),
                     str(_DRV), str(_WRAP), str(o["core"]), str(o["hook"]),
-                    str(o["shim"]), "-o", str(wrap)], check=True)
+                    str(o["shim"]), "-o", str(wrap)] + _WS2, check=True)
 
     core = None
     if _XDRV.exists():
         core = tmp / "core"
         subprocess.run([_FC, "-ffixed-line-length-132", "-I", str(tmp),
                         str(_XDRV), str(o["core"]), str(o["hook"]),
-                        str(o["shim"]), "-o", str(core)], check=True)
+                        str(o["shim"]), "-o", str(core)] + _WS2, check=True)
     return wrap, core
 
 
@@ -94,8 +99,12 @@ def _run_wrapper(exe, *, F=F_TEST, Fv=I3, biofilm=1.0, growth=0.2,
         f"{E:.17e} {EL:.17e} {nu:.17e} {nuL:.17e} {biofilm:.17e} "
         f"{growth:.17e} {eta:.17e} {dt:.17e} {c01_ratio:.17e} {mtype:.1f}\n"
     )
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=stdin, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=30)
+                       timeout=30)
     assert r.returncode == 0, f"wrapper driver failed: {r.stderr}"
     t = [float(x) for x in r.stdout.split()]
     assert len(t) == 6 + 9 + 2 + 36
@@ -112,8 +121,12 @@ def _run_core(exe, F, Fv, alpha, c10, c01, d1, eta, mtype, dt):
         f"{alpha:.17e} {c10:.17e} {c01:.17e} {d1:.17e} {eta:.17e} "
         f"{mtype:.1f} {dt:.17e}\n"
     )
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=stdin, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=30)
+                       timeout=30)
     assert r.returncode == 0, f"core driver failed: {r.stderr}"
     v = [float(x) for x in r.stdout.split()]
     return np.array(v[:6]), np.array(v[6:15]).reshape(3, 3)

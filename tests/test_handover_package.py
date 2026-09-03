@@ -28,6 +28,9 @@ _MAKE = _ROOT / "handover" / "make_handover.py"
 _AU = _ROOT / "ansys_usermat"
 _FC = shutil.which("gfortran")
 _CC = shutil.which("cc") or shutil.which("gcc")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 
 pytestmark = pytest.mark.skipif(
     _FC is None or _CC is None or not _MAKE.exists(),
@@ -54,8 +57,12 @@ def _stdin(F, Fv, E, EL, nu, nuL, biofilm, growth, eta, dt, c01r, mtype):
 
 
 def _run(exe, text):
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=text, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=30)
+                       timeout=30)
     assert r.returncode == 0, f"{exe} failed: {r.stderr}"
     return np.array([float(x) for x in r.stdout.split()])
 
@@ -93,7 +100,7 @@ def exes():
                     str(_AU / "crosscheck" / "wrapper_driver.f"),
                     str(_AU / "biofilm_material_v01.f"),
                     str(o["core"]), str(o["hook"]), str(o["shim"]),
-                    "-o", str(repo_exe)], check=True)
+                    "-o", str(repo_exe)] + _WS2, check=True)
     return pkg_exe, repo_exe, pkg
 
 
@@ -101,7 +108,9 @@ def test_package_builds_with_nothing_but_its_own_files(exes):
     """The fixture proves it by linking; this states it as a test so the
     intent survives a refactor of the fixture."""
     pkg_exe, _, pkg = exes
-    assert pkg_exe.exists()
+    # gfortran's -o name on Windows still produces name.exe; Path.exists()
+    # doesn't guess extensions the way process launch does, so check both.
+    assert pkg_exe.exists() or pkg_exe.with_suffix(".exe").exists()
     shipped = {p.name for p in pkg.iterdir() if p.suffix == ".f"}
     assert shipped == {"biofilm_material_v01.f", "biofilm_stress_core.f",
                        "wrapper_driver.f"}, shipped

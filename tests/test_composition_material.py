@@ -38,6 +38,9 @@ import composition_to_material as c2m  # noqa: E402
 
 _CC = shutil.which("cc") or shutil.which("gcc")
 _FC = shutil.which("gfortran")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 
 # Condition-level moduli from run_ve_twin_experiment.py (MAP theta, 3-model
 # comparison). The commensal/dysbiotic contrast is the whole point of this
@@ -166,8 +169,8 @@ def exe():
     subprocess.run([_CC, "-c", "-fPIC", str(_SHIM_C), "-o", str(objs["shim"])],
                    check=True)
     subprocess.run(["gfortran", "-o", str(out), str(objs["driver"]),
-                    str(objs["hook"]), str(objs["core"]), str(objs["shim"])],
-                   check=True)
+                    str(objs["hook"]), str(objs["core"]), str(objs["shim"])]
+                   + _WS2, check=True)
     return out
 
 
@@ -191,8 +194,12 @@ def _run(exe, prop_mat, state_mat=None, alpha=0.2, dt=DT_TEST, F=F_TEST, Fv=I3):
         f"{mtype:.1f} {dt:.17e} 0.0\n" +
         f"{kstmat:.1f} " + " ".join(f"{v:.17e}" for v in sm) + "\n"
     )
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=stdin, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=20)
+                       timeout=20)
     assert r.returncode == 0, f"driver failed rc={r.returncode}: {r.stderr}"
     t = [float(x) for x in r.stdout.split()]
     return np.array(t[0:6]), int(t[15])            # stress, keycut

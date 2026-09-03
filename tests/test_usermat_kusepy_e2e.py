@@ -28,6 +28,7 @@ dsdePl comparisons below are what would have caught it.
 Requires gfortran, a C compiler, and the Fortran core/hook/driver sources;
 skipped automatically if any are unavailable.
 """
+import os
 import shutil
 import socket
 import subprocess
@@ -35,6 +36,11 @@ import sys
 import tempfile
 import threading
 from pathlib import Path
+
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly -- MSVC's #pragma comment(lib,...)
+# in the source only auto-links under cl.exe, not gcc/ld.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 
 import numpy as np
 import pytest
@@ -98,7 +104,7 @@ def e2e_exe():
                     str(_DRIVER), "-o", str(driver_o)], check=True, cwd=tmp)
     subprocess.run([_CC, "-c", "-fPIC", str(_SHIM_C), "-o", str(shim_o)], check=True)
     subprocess.run(["gfortran", "-o", str(exe), str(driver_o), str(hook_o),
-                    str(core_o), str(shim_o)], check=True)
+                    str(core_o), str(shim_o)] + _WS2, check=True)
     return exe
 
 
@@ -130,7 +136,10 @@ def _run(exe, F, Fv, alpha, c10, c01, d1, eta, mtype, dt, kusepy,
         f"{mtype:.1f} {dt:.17e} {kusepy:.1f}\n" +
         f"{kstmat:.1f} " + " ".join(f"{v:.17e}" for v in sm) + "\n"
     )
-    env = {"PATH": "/usr/bin:/bin"}
+    # Inherit the parent environment rather than a hardcoded POSIX-only
+    # PATH: on Windows the latter strips the MinGW runtime DLL directory a
+    # MinGW-built exe needs (observed 2026-09-03: STATUS_DLL_NOT_FOUND).
+    env = dict(os.environ)
     if host is not None:
         env["BIOFILM_PY_HOST"] = host
         env["BIOFILM_PY_PORT"] = str(port)
@@ -182,7 +191,7 @@ def test_kusepy_falls_back_when_server_unreachable():
                     str(_DRIVER), "-o", str(driver_o)], check=True, cwd=tmp)
     subprocess.run([_CC, "-c", "-fPIC", str(_SHIM_C), "-o", str(shim_o)], check=True)
     subprocess.run(["gfortran", "-o", str(exe), str(driver_o), str(hook_o),
-                    str(core_o), str(shim_o)], check=True)
+                    str(core_o), str(shim_o)] + _WS2, check=True)
 
     s0, u0, k0, d0 = _run(exe, F, Fv, alpha, c10, c01, d1, eta, mtype, dt, 0.0)
     s1, u1, k1, d1_ = _run(exe, F, Fv, alpha, c10, c01, d1, eta, mtype, dt, 1.0,

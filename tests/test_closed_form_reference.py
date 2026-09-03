@@ -31,6 +31,9 @@ _AU = _ROOT / "ansys_usermat"
 _REF = _AU / "apdl" / "closed_form_reference.py"
 _FC = shutil.which("gfortran")
 _CC = shutil.which("cc") or shutil.which("gcc")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 
 pytestmark = pytest.mark.skipif(
     _FC is None or _CC is None or not _REF.exists(),
@@ -61,7 +64,7 @@ def core_exe():
     subprocess.run([_FC, "-ffixed-line-length-132", "-I", str(tmp),
                     str(_AU / "crosscheck" / "xcheck_driver_ans.f"),
                     str(o["core"]), str(o["hook"]), str(o["shim"]),
-                    "-o", str(exe)], check=True)
+                    "-o", str(exe)] + _WS2, check=True)
     return exe
 
 
@@ -70,8 +73,12 @@ def _run(exe, F, Fv, alpha, eta):
             " ".join(f"{Fv[i, j]:.17e}" for i in range(3) for j in range(3)) + "\n" +
             f"{alpha:.17e} {C10:.17e} {C01:.17e} {D1:.17e} {eta:.17e} "
             f"{MTYPE:.1f} {DT:.17e}\n")
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=text, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=30)
+                       timeout=30)
     assert r.returncode == 0, r.stderr
     v = [float(x) for x in r.stdout.split()]
     return np.array(v[:6]), np.array(v[6:15]).reshape(3, 3)

@@ -34,6 +34,9 @@ _ROOT = Path(__file__).resolve().parents[1]
 _AU = _ROOT / "ansys_usermat"
 _FC = shutil.which("gfortran")
 _CC = shutil.which("cc") or shutil.which("gcc")
+# biofilm_py_eval.c uses Winsock2 on Windows (ported 2026-09-03); MinGW gcc
+# needs the import lib named explicitly.
+_WS2 = ["-lws2_32"] if sys.platform == "win32" else []
 jax = pytest.importorskip("jax")
 pytestmark = pytest.mark.skipif(_FC is None or _CC is None,
                                 reason="gfortran/cc unavailable")
@@ -76,7 +79,7 @@ def wrap():
     exe = tmp / "wrap"
     sh(_FC, "-ffixed-line-length-132", "-I", tmp,
        _AU / "crosscheck/wrapper_driver.f", _AU / "biofilm_material_v01.f",
-       tmp / "c.o", tmp / "h.o", tmp / "s.o", "-o", exe)
+       tmp / "c.o", tmp / "h.o", tmp / "s.o", "-o", exe, *_WS2)
     return exe
 
 
@@ -85,8 +88,12 @@ def _run(exe, F, bio, nu, alpha, eta, dt, c01r, mt):
            " ".join(f"{I3[i, j]:.17e}" for i in range(3) for j in range(3)) + "\n" +
            f"{1000.0:.17e} {1.0:.17e} {nu:.17e} {nu:.17e} {bio:.17e} "
            f"{alpha:.17e} {eta:.17e} {dt:.17e} {c01r:.17e} {mt:.1f}\n")
+    # No env= override: on Windows a MinGW-built exe needs its runtime DLLs
+    # findable on PATH, which a hardcoded POSIX-only PATH strips (observed
+    # 2026-09-03: STATUS_DLL_NOT_FOUND). Inheriting the parent environment
+    # (the default) works on both platforms.
     r = subprocess.run([str(exe)], input=txt, capture_output=True, text=True,
-                       env={"PATH": "/usr/bin:/bin"}, timeout=60)
+                       timeout=60)
     assert r.returncode == 0, r.stderr
     v = [float(x) for x in r.stdout.split()]
     return int(v[15]), np.array(v[17:53]).reshape(6, 6)
