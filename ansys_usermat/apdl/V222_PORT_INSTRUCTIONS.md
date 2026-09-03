@@ -593,3 +593,66 @@ work:
 - whether `ANSUSERSHARED.BAT` exists under `%AWP_ROOT222%`.
 
 Paste them back and the next step can be worked out from there.
+
+---
+
+## 6. 2026-09-03 — Oliver's real `ds.dat` runs on v222, no Workbench needed
+
+Found on IKMHIWI03: `C:\Users\nishioka\Downloads\Nishioka_Hoechel\Nishioka_Hoechel\
+Biofilm-Implementation.wbpz` — a Workbench project archive that was already on this
+machine (downloaded 2026-08-18/09-01), sitting alongside the already-known
+`ANSYS-Pool\` source tree. Earlier sessions (including this one, before finding
+it) assumed no Workbench project existed and that Step 4 ("they wire it into
+their framework") was blocked on that. **Wrong on the file's existence, right
+on the practical conclusion** — see below.
+
+**The archive is real but version-locked.** `dp16\SYS-31\MECH\CAERep.xml`
+records `ExternalProductVersion = "2024 R2"`. This machine has only v222.
+Workbench archives are not backward-openable, so `RunWB2.exe` on this machine
+almost certainly cannot open the `.wbpz` itself (not tested — didn't need to,
+see below). **The model inside is also not the tooth/implant geometry**: 801
+nodes, material "Glass, soda lime (common glass)", ~3.5 mm bounding-box
+diagonal — this is Oliver's own small verification specimen, the same role
+`t_growth_constrained.dat` plays for this repo, not a production run.
+
+**But the thing that actually matters — the generated APDL deck — needs no
+Workbench at all.** `dp16\SYS-31\MECH\ds.dat` (197 KB, extracted with plain
+`7z e ... ds.dat`, no Workbench, no version conversion) is ordinary APDL text:
+`ET,1,185` (SOLID185, 512 elements), the real `CMBLOCK` node components this
+doc's §2 said were required (`XMIN`, `XMAX`, `ALLSURFACENODES`,
+`EXPO_TEMP_ELEM`), `TB,USER,1,1,1,NONLINEAR`, `TB,STATE,1,,100`, and
+`USRCAL,USOLBEG,USSFIN` — i.e. it actually calls their real `USolBeg`/`Ussfin`
+routines, not a stand-in. Ran it directly against the pool build from §1.6/
+"Superseded again" (`F:\biofilm_upf_link\ANSYS.exe`, linked 2026-09-02):
+
+```
+copy ds.dat F:\biofilm_upf_link\ds_oliver_dp16.dat
+cd /d F:\biofilm_upf_link
+"%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+    -np 1 -m 512 -db 256 -i ds_oliver_dp16.dat -o out_oliver_dp16_np1.txt
+```
+
+(`-np 1 -m 512 -db 256`: forced low/single-process because a large,
+unrelated mesh-convergence job was running concurrently on this machine and
+had claimed most of the default distributed-memory allocation — the first
+attempt at ANSYS's own defaults hit `*** FATAL *** The memory (-m) size
+requested [...] is not currently available`, purely a local resource
+contention artifact, not a deck or build problem.)
+
+**Result: `RUN COMPLETED`, `NUMBER OF ERROR MESSAGES ENCOUNTERED = 0`, 2
+benign warnings, real Newton-Raphson convergence** (DOF increment 2.76e-4 →
+-1.09e-6 across equilibrium iterations — a genuine converging nonlinear
+solve, not a degenerate one).
+
+**What this does and does not establish.** This is the first time Oliver's
+own NEM/`USolBeg`/`Ussfin` machinery has run end-to-end on v222 against his
+own real input, not a harness stand-in — a meaningful chunk of Step 4's risk
+("does their real infrastructure even work in this environment") is now
+retired, independently, without needing anything further from Oliver. It does
+**not** mean the biofilm growth law is running: this deck's material
+dispatch goes through whatever `TB,USER,1,1,1,NONLINEAR` selects internally
+(their existing AceGen path, still elastic per §3), not
+`BIOFILM_GROWTH_VISCO_V01`. Actually wiring the growth law into their call
+site (editing `Usermat_P21-V21_Conection_Test.F` to call it where
+`AceGenNeoHookV04` is called now) is unchanged — still not started, still
+the real remaining work in Step 4.

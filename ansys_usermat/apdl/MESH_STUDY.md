@@ -67,3 +67,41 @@ A convergence study of absolute stress on the curved-shell deck. Its own header
 says it is a smoke test and that such a study "should precede using this for
 anything quantitative" — whether that deck becomes the quantitative vehicle at
 all is undecided, and settling it is not this study's job.
+
+## 2026-09-03 — absolute-SEQV convergence check (single condition, α=0.01)
+
+Not the ratio-between-conditions study above (still blocked on per-condition
+alpha, see `RUN_PREP.md`) — this is the "not in scope" absolute-stress check,
+done anyway because it's cheap and honest to know before anything downstream
+leans on this deck's numbers. `make_mesh_levels.py t_growth_cylinder_shell.dat
+--levels 2`, run on `F:\biofilm_upf\ANSYS.exe` (the plain `usermat_biofilm.f`
+build), `ETABLE,SEQV,S,EQV` parsed with a small Python script (element table →
+count/min/max/mean).
+
+| level | ESIZE (substrate/growth) | elements | SEQV min | SEQV max | SEQV mean |
+|---|---|---|---|---|---|
+| 0 (original) | 0.15 / 0.05 | 12,240 | 4.352e-09 | 1.1862e-05 | 9.144e-06 |
+| 1 | 0.075 / 0.025 | 58,284 | 8.763e-12 | 1.0324e-05 | 8.356e-06 |
+| 2 | 0.0375 / 0.0125 | 775,680 | — | — | — |
+
+Level 0→1: **max −13.0%, mean −8.6%**. Errors 0 both levels (4 benign warnings
+at level 1 — NUMMRG node-association note, USERCK stock-material note,
+Newton-Raphson reference-force note — none new or concerning). Confirms what
+this file already warned: **absolute SEQV is not converged at level 1**, only
+level-0→1 stability was ever claimed as weak evidence, and it doesn't hold up
+— an 8–13% swing on one halving is not small.
+
+Level 2 did **not** fail from element distortion, unlike the history in
+`t_growth_cylinder_shell.dat`'s own header — a different failure mode:
+element count jumped to 775,680 (63× level 0, far more than the ~5x from
+0→1), and the run hit `*** FATAL *** This model requires more scratch space
+than available` at ANSYS's default memory allocation. Retried with explicit
+`-m`/`-db`; still in progress as of this writing (a 775k-element nonlinear
+solve is genuinely slow, not stuck — converging substeps observed). Whether
+it finishes and what mean/max SEQV level 2 gives is open; update this table
+once it lands. Note for next time: the jump from ~58k to ~776k elements
+between one ESIZE halving suggests the free mesher is refining more than
+just the thickness direction once the growth-layer ESIZE gets small enough
+to interact with the circumferential/axial sizing — worth checking with
+`NLIST`/`ESIZE` diagnostics before assuming "elements through thickness"
+alone predicts run cost at finer levels.
