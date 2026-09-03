@@ -40,11 +40,22 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
 - License: floating, via RRZN Uni Hannover server
   (`1055@ansys-lic.rrzn.uni-hannover.de` / `2325@...` for ANSYSLI) — needs
   campus network or VPN to check out.
-- Custom UMAT build/run: **confirmed working** as of 2026-08-19/20 — the
-  custom `ANSYS.exe` (linked against `usermat_biofilm.f`) builds and runs
-  real decks successfully via `run_apdl.ps1` (below), working directory
-  `F:\biofilm_upf`. See `ansys_usermat/apdl/RUNBOOK.md` for the build steps
-  if it ever needs rebuilding from scratch.
+- Custom UMAT build/run: **confirmed working**, re-verified 2026-09-03 — the
+  custom `ANSYS.exe` (linked against `usermat_biofilm.f`) at `F:\biofilm_upf`
+  runs real decks and reproduces the closed-form reference exactly
+  (`t_growth_constrained.dat`: SX=SY=SZ=−1.0193e−04, SVAR(10)=0.05, 0 errors).
+  **There is no `run_apdl.ps1` in this repo** — despite an earlier version of
+  this doc claiming one — `git log --all -- run_apdl.ps1` finds no commit
+  that ever added it. Invoke ANSYS directly, from a writable working
+  directory (`F:\biofilm_upf`, never `C:`):
+  ```bat
+  "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+      -i <deck>.dat -o out.txt
+  ```
+  `-custom` is essential — without it ANSYS runs its own stock material and
+  the run means nothing. See `ansys_usermat/apdl/RUNBOOK.md` for the full
+  build/run procedure and `link_v222.ps1` (below) for rebuilding from
+  scratch.
 - **Intel Fortran (ifort) / Visual Studio presence: unconfirmed.** Not found
   via plain `where ifort`; must check from the "Intel oneAPI command prompt
   for Intel 64 for Visual Studio" Start Menu entry, not a bare cmd/PowerShell.
@@ -60,8 +71,7 @@ this machine's specific workflow.
 | Script | What it does |
 |---|---|
 | `dev-env.ps1` | Dot-source (`. .\dev-env.ps1`) to put MSYS64 git, per-user Python, and portable gfortran on `PATH` for the current PowerShell call — shell state doesn't persist between tool calls in this harness, so this must be re-sourced every time a fresh call needs those tools. |
-| `run_apdl.ps1` | Wraps the ANSYS run checklist: clean scratch, check/enforce free disk space, run a deck via the custom `ANSYS.exe`, summarize errors/warnings, clean scratch again. `.\run_apdl.ps1 -Deck <name>.dat`. |
-| `run_abaqus.ps1` | Same idea for Abaqus jobs: runs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. |
+| `run_abaqus.ps1` | Runs Abaqus jobs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. |
 | `ansys_usermat/apdl/link_v222.ps1` | Non-interactive compile+link of a custom v222 UPF `ANSYS.exe`, bypassing `ANSCUST.BAT`'s interactive prompts entirely (confirmed 2026-09-02 on Oliver's 11-file pool). Bakes in three environment gotchas found the hard way: `vcvars64.bat` needs `vswhere.exe` on `PATH` first or it silently leaves `LIB` unset; chained `cmd /c "call ... && set LIB=...%LIB%"` expands `%LIB%` before the `call` runs, so it must be a real multi-line `.bat` file; and a stale `ANSYS.exe`/`.lib`/`.exp`/`.map` must be deleted before every relink or `ansys.lrf`'s `*.lib` wildcard collides with the new output. `.\ansys_usermat\apdl\link_v222.ps1 -WorkDir F:\biofilm_upf_link`. |
 | `run_tests.ps1` | `pytest tests/`, excluding the two confirmed environment-limited cases (missing `scipy`, missing POSIX headers). `-All` also runs the ANSYS/Abaqus crosscheck harness. |
 | `run_notebooks.ps1` | Re-executes every `*.ipynb` in the repo (`nbconvert --execute --inplace`) and reports pass/fail — catches a verification notebook silently going stale when code/data under it changes. |
@@ -70,11 +80,22 @@ this machine's specific workflow.
 
 ## Git on this machine — important quirks
 
-- No `git` on PATH. Use the MSYS64 install directly:
-  `C:\msys64\usr\bin\git.exe`, and prepend `C:\msys64\usr\bin` to `$env:Path`
-  for that PowerShell call — otherwise git's https/credential helper
-  subprocesses fail with "shared libraries" errors (they need MSYS DLLs on
-  PATH, not just the git.exe path).
+- No `git` on PATH by default. **The working git is Portable Git at
+  `C:\Users\nishioka\git\cmd\git.exe`** (and `...\git\mingw64\bin\git.exe`) —
+  corrected 2026-09-03; an earlier version of this doc pointed at
+  `C:\msys64\usr\bin\git.exe`, which only has `git-shell.exe`/
+  `git-cvsserver`, no actual `git.exe`. Prepend
+  `C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin` to
+  `$env:Path` for that PowerShell call.
+- `.git\refs\remotes\origin\master` has a persistent rename-lock on this
+  machine — `git fetch`/`pull` reliably fails with `error: couldn't set
+  'refs/remotes/origin/master'` even though the fetch itself succeeded
+  (`FETCH_HEAD` is correct). This only corrupts the *local* tracking ref's
+  freshness, not real push/fetch success — `git status`'s "diverged" count
+  can be stale/wrong. Verify actual remote state via
+  `https://api.github.com/repos/keisuke58/pde-fem-biofilm/commits/master`
+  rather than trusting local `git status`, and merge/rebase against
+  `FETCH_HEAD` directly when the tracking ref won't update.
 - **This repo's working tree has a massive line-ending mismatch** — `git
   status` shows ~480+ files as modified with equal insertions/deletions
   (pure CRLF↔LF churn, zero real content change). **Never `git add -A` or
