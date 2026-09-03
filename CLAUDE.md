@@ -129,7 +129,17 @@ this machine's specific workflow.
   repository, in any surface a reader sees, marks the work as AI-assisted.
   (PR bodies do not feed the Contributors page, unlike a `Co-Authored-By`
   trailer; this is about how the work reads, which is the same reason the
-  commit rule exists.) Existing PR bodies were cleaned 2026-09-01.
+  commit rule exists.)
+
+  **The footer is appended by tooling after the body is written, so it comes
+  back on every new PR and a one-off cleanup does not hold.** A note here
+  claimed existing PR bodies were cleaned on 2026-09-01; on 2026-09-03,
+  nineteen of them still carried one, #31 among them — the PR whose own
+  subject is forbidding exactly this. Check the body after opening a PR, and
+  run `python scripts/strip_pr_ai_footer.py` (dry run; `--apply` to write) to
+  sweep the repository. There is no `gh` CLI and no direct API access from a
+  cloud session, so fixing them by hand means retyping each body in full,
+  which is how a historical record gets damaged — use the script.
 
 - **Two hooks guard this, and both must be installed per clone** (git does
   not track `.git/hooks/`):
