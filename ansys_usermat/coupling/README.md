@@ -45,6 +45,20 @@ meet at a single, well-defined interface.
 >   identical stress — the fallback-to-inline-core path also confirmed on
 >   real ANSYS, not only the gfortran driver.
 >
+> **Same day, follow-up: the gfortran/MinGW driver path (this file's own
+> `test_usermat_kusepy_e2e.py` etc.) was actually still broken on Windows
+> at that point** — the real-ANSYS run above used MSVC-built decks and
+> didn't exercise it. Verifying it turned up two more pre-existing,
+> Windows-specific bugs, both unrelated to sockets: (1) every test in this
+> family hardcoded a POSIX-only `PATH` for the child process env, which
+> starves a MinGW-built `.exe` of its runtime DLLs on Windows
+> (`STATUS_DLL_NOT_FOUND`) — fixed by inheriting the parent environment
+> instead; (2) this particular MinGW-w64 build lacks the POSIX socket
+> headers other MinGW distributions ship, confirmed empirically, so it
+> needs the Winsock2 path too (kept the `_WIN32` guard rather than
+> narrowing to `_MSC_VER`). With both fixed, the whole coupling e2e suite
+> passes on IKMHIWI03 — see the commit fixing `tests/test_*` for detail.
+>
 > Not yet done: porting this same bridge to Oliver's `Usermat_P21-V21_*.F`
 > (a separate task from wiring `BIOFILM_GROWTH_VISCO_V01` there directly,
 > which was tried the same day — see `V222_PORT_INSTRUCTIONS.md` §6) and
