@@ -18,6 +18,27 @@
 ! same geometry (ansys_usermat/coupling/README.md next-steps #4), which
 ! stays well under the 0.01 threshold by construction.
 !
+! 2026-09-07 UPDATE on the alpha>=0.015 question: a 5th attempt, of a
+! different KIND than the 4 below (all of which changed BC/mesh at the
+! distorting corner and made it worse every time) -- a pure solver-
+! robustness option, LNSRCH,ON (Newton-Raphson line search), touching no
+! geometry/BC/mesh at all. Tried alone at alpha=0.015: errors 3 -> 1,
+! and the run now COMPLETES (the single remaining distortion, still on a
+! different element, 2454, self-recovers via automatic bisection rather
+! than aborting). Tried combined with a higher NSUBST cap (200 instead of
+! 80): no further change, same 1 error. Tried combined with STABILIZE
+! (nonlinear stabilization): WORSE (2 errors, run did not reach /POST1) --
+! consistent with the established pattern that further intervention at
+! this specific corner tends to hurt, even a different kind of
+! intervention than BC/mesh. See t_growth_cylinder_shell_a015_lnsrch.dat
+! (the working alpha=0.015+LNSRCH deck, kept as a separate file rather than
+! changing this deck's own verified alpha=0.01 baseline) and
+! out_a015_lnsrch.txt / growth_cylinder_a015_lnsrch_result.txt for the
+! evidence. Not "genuinely clean" (0 errors) the way alpha=0.01 is, but a
+! real, substantial improvement over the 3-error hard failure alpha=0.015
+! was before -- worth trying LNSRCH,ON on other decks that hit this class
+! of failure (local distortion under an otherwise well-posed BC/mesh) too.
+!
 ! Original debugging narrative below, kept for the record. Two real bugs on
 ! the way to a running deck were found and fixed
 ! (see the "geometry" and "mesh" comments below): (1) VGLUE silently drops

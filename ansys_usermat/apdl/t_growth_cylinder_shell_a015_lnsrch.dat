@@ -1,0 +1,96 @@
+! t_growth_cylinder_shell_a015_lnsrch.dat --- throwaway diagnostic, NOT
+! committed. Same geometry/BC/mesh as t_growth_cylinder_shell.dat, alpha
+! bumped to 0.015 (the known-failing value, 3 errors on element 5101) with
+! ONE new lever: LNSRCH,ON (Newton-Raphson line search). Every prior fix
+! attempt (4 of them, see the base deck's header) changed BC or mesh
+! locally at the distorting corner and made it worse each time. This tries
+! a different kind of fix instead -- a solver-robustness option that
+! doesn't touch geometry/BC/mesh at all -- since the base deck's own
+! diagnosis is "a local over-constraint/singularity, not a load-ramping
+! problem", which is exactly the failure mode LNSRCH is meant to help with.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - cylinder shell alpha=0.015 + LNSRCH diagnostic
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 3.0
+ARC   = 60
+
+CYLIND,R_IN,R_MID,0,LEN,0,ARC
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC
+
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+TB,USER,2,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,2,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.015
+
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+ALLSEL
+NUMMRG,NODE,1.0E-4
+NUMCMP,NODE
+NUMCMP,ELEM
+
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+LNSRCH,ON                    ! the one new lever -- see header
+TIME,5.0
+AUTOTS,ON
+NSUBST,10,80,2
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+/OUTPUT,growth_cylinder_a015_lnsrch_result,txt
+PRNSOL,U,COMP
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+ESEL,S,MAT,,2
+PRESOL,SVAR,10
+ALLSEL
+/OUTPUT
+FINISH

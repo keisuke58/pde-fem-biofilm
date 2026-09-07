@@ -30,8 +30,10 @@ directory closes that gap.
 > **Update 2026-08-20: converges cleanly at α=0.01, and the result is
 > physically interesting.** With disk no longer a constraint (ANSYS work
 > moved to F:, see below), an α sweep found this deck's convergence
-> threshold sits between α=0.01 (0 errors) and α=0.015 (6 errors, same
-> corner-distortion pattern documented below). At the converged α=0.01,
+> threshold sits between α=0.01 (0 errors) and α=0.015 (3 errors after the
+> axial-end BC fix below, corrected from an earlier "6 errors" here that
+> predated that fix -- see t_growth_cylinder_shell.dat's own header for the
+> authoritative current count). At the converged α=0.01,
 > the outer growth-layer surface does **not** bulge uniformly — plotting
 > radial displacement across the 60° arc
 > (`ansys_usermat/apdl/extract_cylinder_bulge.py`, [`assets/growth_cylinder_bulge.png`](../../assets/growth_cylinder_bulge.png))
@@ -71,6 +73,28 @@ directory closes that gap.
 > 4: constraining a face broadly helps, constraining specifically at a
 > corner where interface + BC + thin element coincide hurts, every time.
 > Full story and next ideas in the deck's own header comment.
+>
+> **2026-09-07, a 5th attempt of a different kind: `LNSRCH,ON` (Newton-
+> Raphson line search), a pure solver-robustness option touching no
+> geometry/BC/mesh at all.** At α=0.015: errors 3 → 1, and the run now
+> completes (the one remaining distortion, a different element, self-
+> recovers via automatic bisection instead of aborting). Raising the
+> `NSUBST` cap further on top made no additional difference. Combining
+> with `STABILIZE` made it **worse** (2 errors, didn't reach `/POST1`) —
+> the same "further intervention at this corner hurts" pattern as the 4
+> BC/mesh attempts, extending even to a different *kind* of intervention.
+> Not "genuinely clean" the way α=0.01 is, but a real improvement over the
+> 3-error hard failure — kept as a separate deck
+> (`t_growth_cylinder_shell_a015_lnsrch.dat`) rather than changing this
+> deck's own verified α=0.01 baseline. Evidence:
+> [`out_a015_lnsrch.txt`](out_a015_lnsrch.txt) /
+> [`growth_cylinder_a015_lnsrch_result.txt`](growth_cylinder_a015_lnsrch_result.txt).
+>
+> ANSYS access on this machine is only good through 2026-09-08 (see the
+> project's `ansys_access_window_2026-09` note) — pushing this further
+> (e.g. LNSRCH combined with other options, or finding what's special
+> about element 2454) is a reasonable next real-ANSYS task if time allows,
+> otherwise it waits for the next access window.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1
