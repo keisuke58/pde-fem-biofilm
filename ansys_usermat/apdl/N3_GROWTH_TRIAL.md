@@ -33,19 +33,18 @@ lines, no array-dimension change anywhere.
 
 - `usercm.inc`: `sGdp_Beta3`, `sGdp_KLocal3`, `sGdp_MaxGrowth13/23`,
   `sGdp_HalfVelo13/23`, `sGdp_OriWeight13/23`, `sGdp_Bio3start`; offsets
-  `ofs_dp_bio3_n/n1`, `ofs_dp_bioloc3_n/n1`.
+  `ofs_dp_bio3_n/n1`.
 - `USolBeg`: `parevl` reads for the 9 new APDL scalar parameters (all
   plain-text deck constants, e.g. `MAX_GROWTH13 = 100`); offset
   registration; IC seeding that **reuses species 1's own element region**
   (`Si_Bio1_ElemList`/`sGi_Bio1_ElemCnt`) rather than requiring a new
   `ELEM_LIST_BIO3` deck parameter — a deliberate trial-only shortcut, not
-  a real per-species IC mechanism; default Bioloc3 = 1.0 fill, matching
-  Bioloc1/2.
+  a real per-species IC mechanism.
 - `Ussfin`: full mirror of the Bio1/Bio2 explicit-update block — gradient,
   Laplacian, dot-products/norms, `OriBio3`, `GrowthBio3` (Monod kinetics,
   **no** `Interaction13/31`/`Interaction23/32` term — see below), the
-  `Bio3_n` explicit update (now including `KLocal3*Bioloc3`, see below),
-  the `Bioloc3_n` local-retention update, all OMP `PRIVATE`/`SHARED`
+  `Bio3_n` explicit update (growth + diffusion + penalty, **no**
+  `KLocal3*Bioloc3` term — see below), all OMP `PRIVATE`/`SHARED`
   declarations, the n/n1 swap blocks, and the final `SetVals` write-back.
 
 **Deliberately not done in this trial**: `Interaction13/31`/`23/32`
@@ -54,35 +53,39 @@ uncoupled) and a real per-species IC deck mechanism (reuses species 1's
 element list instead of its own `ELEM_LIST_BIO3`). Both are natural next
 increments, not attempted here.
 
-## Bioloc3 was not optional (caught by the Python reference check)
+## Bioloc3: tried, found necessary for physical correctness, then reverted (real ANSYS bug found)
 
 First draft of this trial dropped the `+ KLocal3*Bioloc3` term entirely
 ("just growth + diffusion + penalty, keep it minimal"). Running
 `n3_growth_reference.py` (a pure-Python mirror of the exact Fortran
 formula, no ANSYS/ifort/MKL dependency) against the n3trial deck's real
 constants immediately showed `Bio3_n` going to -3.5 after a single
-substep from an IC of 1.0 — i.e. the simplification wasn't a safe
-minimal cut, `KLocal*Bioloc` is a load-bearing counterweight in Oliver's
-own formula, not a separable extra. Fixed by wiring Bioloc3 in fully
-(mirroring Bioloc1/Bioloc2's own allocate/GetVals/update/SetVals chain).
+substep from an IC of 1.0. A second Python pass showed this negative dip
+is actually a property of Oliver's own growth-formula/`DELTIM,0.1,0.1,0.1`
+combination at these constants -- **species 3 computes the bit-identical
+trajectory species 1 would compute under the same inputs** (same
+`MaxGrowth`, `HalfVelo`, `OriWeight`, `KLocal`, `Beta`, deliberately
+mirrored 1:1) -- so it is not a defect the n=3 extension introduces, and
+`KLocal*Bioloc` alone doesn't fix it anyway (its magnitude,
+`dt*KLocal3*Bioloc3 ~= 1e-3`, is three orders of magnitude below
+`dt*OriBio3*GrowthBio3 ~= 4.5`).
 
-**Important nuance, found on the second Python pass**: adding
-`KLocal3*Bioloc3` back does not, by itself, stop the negative dip — its
-magnitude (`dt*KLocal3*Bioloc3 ~= 1e-3`) is three orders of magnitude
-below `dt*OriBio3*GrowthBio3 ~= 4.5` at this deck's `DELTIM,0.1,0.1,0.1`.
-The critical check that resolves whether this is a real bug: the
-sanity-check block in `n3_growth_reference.py` confirms **species 3
-computes the bit-identical trajectory species 1 would compute under the
-same inputs** (same `MaxGrowth`, `HalfVelo`, `OriWeight`, `KLocal`, `Beta`
-constants — deliberately mirrored 1:1 for this comparison). So the
-negative dip is a property of Oliver's own growth-formula/`DELTIM`
-combination at these constants, reproduced faithfully by species 3, not a
-defect the n=3 extension introduced. Whether Oliver's real species-1
-field also transiently goes negative at seed-region boundaries in
-practice was not separately verified here (out of scope for this trial);
-if it matters, the fix would be the same one already flagged for the
-ecology bridge -- a substep size matched to the growth ODE's own
-stiffness, not `DELTIM,0.1`.
+Wiring Bioloc3 in fully anyway (mirroring Bioloc1/2's allocate/GetVals/
+update/SetVals chain, for structural parity with species 1/2) surfaced a
+**real, separate ANSYS runtime bug**: it made `Ussfin`'s existing NEM
+D-Matrix neighbor-search computation return `NaN` at `sID 57` --
+reproducible even by rerunning the completely unmodified
+`ds_oliver_wired_baseline.dat` against the Bioloc3-including build,
+deterministically across repeated runs. This has nothing to do with
+Bio3/Bioloc3's own math (NEM's D-Matrix is a geometry/neighbor-weighting
+computation, computed once at initialization, that never reads Bio3 or
+Bioloc3 state) -- most likely a latent, pre-existing arena-size or memory-
+layout sensitivity in Oliver's own code that the extra 2*nTot-sized
+Bioloc3 allocation happened to expose. **Reverted** back to the
+growth-only version (Bioloc3 fully removed again) once this was
+identified, restoring a clean, verified-good state -- fixing this latent
+bug is out of scope for today's trial and doesn't need an ANSYS license,
+so it's a good candidate for later.
 
 ## Verification status
 
@@ -90,10 +93,21 @@ stiffness, not `DELTIM,0.1`.
   `n3_growth_reference.py` (species 3 reproduces species 1 exactly under
   identical inputs; species 3 does not appear in `GrowthBio1`/`GrowthBio2`
   at all, confirmed by inspection -- no unintended coupling).
-- **Real ANSYS execution**: **not verified**. Blocked by a toolchain issue
-  unrelated to the n=3 code itself -- see below.
+- **Real ANSYS execution**: **verified**. `ds_oliver_wired_n3trial.dat`
+  (growth-only version, no Bioloc3) completes with 0 errors under
+  `-smp -np 1` (see "DMP hang" below for why that flag is required),
+  reproduced twice in a row for determinism. This is the actual
+  deliverable: n=3 runs end-to-end in real ANSYS today.
 
-## Toolchain blocker found: Ussfin cannot currently be recompiled cleanly here
+## Toolchain blocker found and resolved: DMP mode hangs on any rebuilt Ussfin
+
+This is the first time in this repo's ANSYS-side work that
+`Ussfin_P21-V21_Conection_Test.F` itself needed to be recompiled (every
+prior session's wiring -- growth-law, ecology bridge -- touched only
+`Usermat`, always reusing the untouched 2026-09-02 `Ussfin.obj`). Getting
+it to compile at all, and then getting the resulting build to actually
+run, surfaced two separate, real, pre-existing environment problems --
+neither one caused by the n=3 biology code:
 
 This is the first time in this repo's ANSYS-side work that
 `Ussfin_P21-V21_Conection_Test.F` itself needed to be recompiled (every
@@ -125,42 +139,44 @@ it to compile at all surfaced a real, pre-existing environment problem:
    -- **and still hangs, identically**, on the same unmodified baseline
    deck, clean single-job, no resource contention.
 
-So neither MKL-header workaround is the actual cause. The common
-denominator across every reproduction is simply "Ussfin was recompiled at
-all in this environment" -- something about how this machine's
-ifort 2025.3 + this MKL 2026.1 payload + this link_v222.ps1 flag set
-produces a `Ussfin.obj` that doesn't behave like the working
-2026-09-02 one, even for code paths (PARDISO for T/Nut1/Nut2) the n=3
-trial never touches.
+So neither MKL-header workaround was the compile-side cause -- both
+compile clean. The real cause was found by testing serial (`-smp -np 1`,
+no MPI) against the identical unmodified baseline deck: **it completed in
+17 seconds, 0 errors**, immediately after a build that had just hung for
+2+ hours under the default DMP (distributed memory parallel) launch. The
+hang is specific to running a freshly-recompiled Ussfin.obj under DMP,
+not to the MKL header fix technique, not ILP64/LP64 (that hypothesis was
+wrong -- both the raw-`.fi`-with-`FREEFORM` build and the proper
+`USE MKL_SPBLAS`/`USE MKL_PARDISO` module build hang identically under
+DMP and both run fine under `-smp -np 1`), and not the n=3 code (the
+unmodified baseline hangs under DMP too). Likely an MPI/OMP interaction
+specific to this machine's build of the freshly-compiled object that the
+untouched 2026-09-02 `Ussfin.obj` never triggered -- not investigated
+further since the workaround (`-smp -np 1`) is sufficient and free.
 
-**Leading unconfirmed hypothesis**: an MKL integer-size (LP64 vs ILP64)
-ABI mismatch between the PARDISO interface as compiled here and
-`mkl_rt.lib` as linked (`.mod` files exist under both
-`mkl\intel64\lp64\` and `mkl\intel64\ilp64\` in the payload -- not yet
-tried explicitly selecting one). Not chased further today: this is a
-toolchain problem, independent of the n=3 biology/code, and doesn't need
-an ANSYS license to investigate -- unlike everything else in this
-session, it can be worked on during the upcoming ANSYS-inaccessible
-period.
+**Resolution: always invoke this custom `ANSYS.exe` with `-smp -np 1`**
+(not the plain `-custom .\ANSYS.exe` invocation `V222_PORT_INSTRUCTIONS.md`
+documents elsewhere) whenever `Ussfin` has been recompiled. Confirmed
+working, reproducibly, for both the plain baseline and the n=3 trial
+deck.
 
-**Two clean isolation tests support "any Ussfin recompile" as the
-trigger**, both run resource-uncontended (only one ANSYS job at a time
-after killing prior stuck jobs):
-- Pristine `Ussfin.F` + `FREEFORM`/`NOFREEFORM` directive only (no n=3
-  code at all) -> hangs identically.
+The two isolation builds that established this (both hang under DMP,
+both run clean under `-smp -np 1`, against the identical unmodified
+`ds_oliver_wired_baseline.dat`):
+- Pristine `Ussfin.F` + `FREEFORM`/`NOFREEFORM` directive fix for the MKL
+  headers (no n=3 code at all).
 - Pristine `Ussfin.F` + proper `USE MKL_SPBLAS`/`USE MKL_PARDISO` module
-  fix (no n=3 code at all) -> hangs identically.
-
-Both used the exact same unmodified `ds_oliver_wired_baseline.dat`.
+  fix (no n=3 code at all) -- this is the one kept in the final build,
+  since it's the more correct fix even though both run equally well
+  under `-smp -np 1`.
 
 ## Recommended next steps (not yet started)
 
-1. Resolve the Ussfin-recompile hang (ILP64/LP64 hypothesis first) --
-   license-free work, can happen anytime.
-2. Once Ussfin can be rebuilt and actually run again, rerun
-   `ds_oliver_wired_n3trial.dat` (already created, includes the 9 new
-   deck parameters) and confirm 0 errors + the species-3 field actually
-   changes over the run.
-3. If further n-generalization is wanted: add
+1. Fix the Bioloc3 / NEM D-Matrix NaN bug found above -- license-free,
+   can happen anytime. Needed before species 3 can be physically
+   complete (matching species 1/2's own KLocal*Bioloc structure).
+2. If further n-generalization is wanted: add
    `Interaction13/31`/`23/32`, then a real per-species IC mechanism, then
-   repeat this same incremental pattern for species 4 and 5.
+   repeat this same incremental pattern for species 4 and 5 -- explicitly
+   deferred by the user for now ("n=3はできるようにしてほしい 4,5はまだ",
+   2026-09-07).
