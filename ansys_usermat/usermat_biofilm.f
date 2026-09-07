@@ -48,12 +48,27 @@ C    prop(5) = mtype 0=Neo-Hookean, 1=Mooney-Rivlin
 C    prop(6) = kUsePy 0=inline Fortran law, 1=call Python material hook
 C    prop(7) = kStateMat 0=material constants come from prop(1:4) (default),
 C                   1=they come per-integration-point from ustatev(11:14)
+C    prop(8) = kUseEcology 0=alpha taken as-is from ustatev(10) (default,
+C                   e.g. a precomputed JAXFEM alpha-field mapped to this
+C                   IP), 1=advance the 0D Hamilton ecology ODE at this
+C                   Gauss point every increment and derive alpha's
+C                   increment from it instead (coupling/ecology_jax.py).
+C                   Independent of kUsePy -- this drives the growth input
+C                   alpha, not the stress law itself.
+C    prop(9) = k_alpha  growth-reaction rate [1/time] multiplying the
+C                   living-volume-fraction driver phi_tot (RESEARCH_MODEL.md
+C                   sec.2); only read when kUseEcology=1.
+C    prop(10:29) = theta  the 20-entry ecology interaction-parameter vector
+C                   (15 independent A_ij + 5 b_i, TMCMC-calibrated, same
+C                   encoding as jax_hamilton_0d_5species_demo.theta_to_
+C                   matrices); only read when kUseEcology=1.
 C
-C  STATE (ustatev), NSTATV = 10 (14 when kStateMat=1):
+C  STATE (ustatev), NSTATV = 10 (14 when kStateMat=1, 26 when kUseEcology=1):
 C    ustatev(1:9) = Fv  (row-major 3x3)
 C    ustatev(10)  = alpha  (accumulated volumetric growth; growth driver,
 C                   set from the JAXFEM alpha-field mapped to this IP, or
-C                   evolved via a user field / TB,STATE table)
+C                   evolved via a user field / TB,STATE table, or advanced
+C                   in-solve by the ecology hook when kUseEcology=1)
 C    ustatev(11)  = C10   ) per-IP material constants, used only when
 C    ustatev(12)  = C01   ) kStateMat=1.  These carry the composition
 C    ustatev(13)  = D1    ) dependence E(phi) -> (C10,C01,D1,eta) computed
@@ -62,6 +77,14 @@ C                   ansys_usermat/coupling/composition_to_material.py.
 C                   ustatev(11) <= 0 is read as "not initialised" and falls
 C                   back to prop(1:4), the same zero-means-unset idiom
 C                   INIT_FV_IF_ZERO already uses for Fv.
+C    ustatev(15:26) = g  the 12-component 0D Hamilton ecology state at this
+C                   IP -- phi(5), phi0, psi(5), gamma (same layout as
+C                   jax_hamilton_0d_5species_demo.integrate_0d), used only
+C                   when kUseEcology=1. All-zero on entry is read as
+C                   "not initialised" and seeded from a default composition
+C                   (INIT_ECO_IF_ZERO) -- real runs should seed this from
+C                   CLSM data instead, the same way kStateMat=1 seeds
+C                   ustatev(11:14) from composition_to_material.py.
 C=======================================================================
       subroutine usermat(
      &   matId, elemId, kDomIntPt, kLayer, kSectPt,
@@ -73,7 +96,7 @@ C=======================================================================
      &   var0, defGrad_t, defGrad, tsstif, epsZZ, cutFactor,
      &   var1, var2, var3, var4, var5, var6, var7, var8)
 
-      use biofilm_py_bridge, only: biofilm_py_hook
+      use biofilm_py_bridge, only: biofilm_py_hook, biofilm_ecology_hook
       implicit none
 C     --- ANSYS USERMAT argument list (3-D / plane-strain solid) ---
 C     Signature confirmed against ANSYS MAPDL 2022 R2 (v222): var0 sits
@@ -112,6 +135,10 @@ C     ANSYS position k's component.
       integer          MAP6(6)
       logical          PYOK
       data MAP6 /1, 2, 3, 4, 6, 5/
+C     Ecology (0D Hamilton ODE) hook locals.
+      double precision KUSEECO, KALPHA, G_OLD(12), G_NEW(12),
+     &                 THETA20(20), PHITOT
+      logical          ECOOK
 
 C     --- material properties ---
       C10    = prop(1)
@@ -128,6 +155,43 @@ C     --- growth driver + viscous state from ustatev ---
       ALPHA = 0.0d0
       if (nStatev .ge. 10) ALPHA = ustatev(10)
       if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
+
+C     --- ecology (0D Hamilton ODE) hook: live per-Gauss-point composition
+C     evolution driving the growth reaction term k_alpha*phi_tot, in place
+C     of a precomputed alpha field (coupling/README.md next-steps #4). Only
+C     the local reaction is representable here -- no neighbour Gauss points
+C     means no diffusion term, hence "0D": this advances the ODE in time
+C     only, not RESEARCH_MODEL.md sec.2's full reaction-diffusion PDE.
+      KUSEECO = 0.0d0
+      if (nProp .ge. 8) KUSEECO = prop(8)
+      if (KUSEECO .gt. 0.5d0 .and. nStatev .ge. 26 .and. nProp .ge. 29)
+     &    then
+        KALPHA = prop(9)
+        do I = 1, 20
+          THETA20(I) = prop(9+I)
+        end do
+        do I = 1, 12
+          G_OLD(I) = ustatev(14+I)
+        end do
+        call INIT_ECO_IF_ZERO(G_OLD)
+        call biofilm_ecology_hook(G_OLD, THETA20, dTime, G_NEW, ECOOK)
+        if (ECOOK) then
+          do I = 1, 12
+            ustatev(14+I) = G_NEW(I)
+          end do
+          PHITOT = 0.0d0
+          do I = 1, 5
+            PHITOT = PHITOT + G_NEW(I)*G_NEW(6+I)
+          end do
+          ALPHA = ALPHA + dTime*KALPHA*PHITOT
+          if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
+          ustatev(10) = ALPHA
+        end if
+C       ECOOK = .false. (server unreachable, ...): alpha stays at its
+C       ustatev(10) value from the precomputed-field path -- the same
+C       fail-safe philosophy as the material hook's PYOK above, so a dead
+C       ecology server degrades to "field mode" rather than aborting.
+      end if
 
 C     --- per-integration-point material constants (composition-dependent) ---
 C     With kStateMat=1 the stiffness/viscosity carried in ustatev(11:14)
@@ -423,6 +487,39 @@ C=======================================================================
           end do
           FV(I,I) = 1.0d0
         end do
+      end if
+      return
+      end
+
+      subroutine INIT_ECO_IF_ZERO(G)
+C     Seeds the 0D Hamilton ecology state with a default initial composition
+C     when ustatev(15:26) arrives all-zero (an uninitialised Gauss point),
+C     mirroring ecology_jax.default_initial_state() exactly so the Fortran
+C     and Python defaults agree. Real runs should seed G from CLSM-measured
+C     composition instead (see usermat_biofilm.f's STATE doc above).
+      implicit none
+      double precision G(12), SUMABS, PHI0(5), SCALE, SUMPHI
+      integer I
+      SUMABS = 0.0d0
+      do I = 1, 12
+        SUMABS = SUMABS + abs(G(I))
+      end do
+      if (SUMABS .lt. 1.0d-10) then
+        PHI0(1) = 0.12d0
+        PHI0(2) = 0.12d0
+        PHI0(3) = 0.08d0
+        PHI0(4) = 0.05d0
+        PHI0(5) = 0.0d0
+        SUMPHI = PHI0(1)+PHI0(2)+PHI0(3)+PHI0(4)+PHI0(5)
+        SCALE = 0.999999d0/SUMPHI
+        do I = 1, 5
+          G(I) = PHI0(I)*SCALE
+        end do
+        G(6) = 1.0d0 - (G(1)+G(2)+G(3)+G(4)+G(5))
+        do I = 7, 11
+          G(I) = 0.999d0
+        end do
+        G(12) = 0.0d0
       end if
       return
       end

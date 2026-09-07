@@ -7,12 +7,23 @@ the physics). All tensors are row-major length-9 lists; Voigt vectors follow the
 
 Request  : {F:[9], Fv:[9], alpha, C10, C01, D1, eta, mtype, dt}
 Response : {stress:[6], Fv_new:[9], detFe, dsdePl:[36]}  |  {error:"..."}
+
+A second request "kind" shares the same server/socket: the 0D Hamilton
+ecology ODE step (ecology_jax.py), used to evolve a Gauss point's local
+composition state live instead of reading a precomputed alpha field
+(coupling/README.md next-steps #4). A plain material request carries no
+"kind" key, so this is backward compatible with kUsePy=1 clients that
+predate it.
+
+Ecology request  : {kind:"ecology", g:[12], theta:[20], dt_h}
+Ecology response : {g_new:[12]}  |  {error:"..."}
 """
 from __future__ import annotations
 
 import json
 
 REQ_KEYS = ("F", "Fv", "alpha", "C10", "C01", "D1", "eta", "mtype", "dt")
+ECO_REQ_KEYS = ("kind", "g", "theta", "dt_h")
 
 
 def encode_request(F, Fv, alpha, C10, C01, D1, eta, mtype, dt) -> bytes:
@@ -47,3 +58,24 @@ def encode_error(msg: str) -> bytes:
 
 def decode_response(line: bytes) -> dict:
     return json.loads(line)
+
+
+def encode_ecology_request(g, theta, dt_h) -> bytes:
+    return (json.dumps({
+        "kind": "ecology",
+        "g": list(map(float, g)),
+        "theta": list(map(float, theta)),
+        "dt_h": float(dt_h),
+    }) + "\n").encode()
+
+
+def decode_ecology_request(line: bytes) -> dict:
+    d = json.loads(line)
+    missing = [k for k in ECO_REQ_KEYS if k not in d]
+    if missing:
+        raise ValueError(f"ecology request missing keys: {missing}")
+    return d
+
+
+def encode_ecology_response(g_new) -> bytes:
+    return (json.dumps({"g_new": list(map(float, g_new))}) + "\n").encode()

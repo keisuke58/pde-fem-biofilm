@@ -20,10 +20,12 @@ Voigt order: Abaqus 11,22,33,12,13,23.
 from __future__ import annotations
 
 import argparse
+import json
 import socketserver
 import numpy as np
 
-from protocol import decode_request, encode_response, encode_error
+from protocol import (decode_request, encode_response, encode_error,
+                      decode_ecology_request, encode_ecology_response)
 
 I3 = np.eye(3)
 VOIGT = [(0, 0), (1, 1), (2, 2), (0, 1), (0, 2), (1, 2)]   # Abaqus order
@@ -126,6 +128,16 @@ def evaluate(req: dict) -> bytes:
     return encode_response(sv, Fv_new.reshape(9), detFe, D.reshape(36))
 
 
+def evaluate_ecology(req: dict) -> bytes:
+    """0D Hamilton ecology ODE step -- see ecology_jax.py. Imported lazily so
+    a plain material-bridge deployment (kUsePy=1, ecology unused) does not
+    need jax installed, the same idiom set_tangent_backend uses for the
+    optional 'jax' dsdePl backend."""
+    import ecology_jax
+    g_new = ecology_jax.ecology_step(req["g"], req["theta"], req["dt_h"])
+    return encode_ecology_response(g_new)
+
+
 class _Handler(socketserver.StreamRequestHandler):
     def handle(self):
         for line in self.rfile:
@@ -133,7 +145,15 @@ class _Handler(socketserver.StreamRequestHandler):
             if not line:
                 continue
             try:
-                self.wfile.write(evaluate(decode_request(line)))
+                kind = json.loads(line).get("kind")
+            except Exception as exc:                    # keep the server alive
+                self.wfile.write(encode_error(exc))
+                continue
+            try:
+                if kind == "ecology":
+                    self.wfile.write(evaluate_ecology(decode_ecology_request(line)))
+                else:
+                    self.wfile.write(evaluate(decode_request(line)))
             except Exception as exc:                    # keep the server alive
                 self.wfile.write(encode_error(exc))
 

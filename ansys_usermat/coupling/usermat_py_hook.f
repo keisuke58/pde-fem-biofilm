@@ -36,6 +36,24 @@ C                             double* Fvnew9, double* dsde36);
             real(c_double), intent(out) :: stress6(6), Fvnew9(9), dsde36(36)
             integer(c_int) :: ierr
           end function biofilm_py_eval
+C         0D Hamilton ecology ODE step (ecology_jax.py), same connection.
+C         int biofilm_ecology_eval(const double* g12, const double* theta20,
+C                                  double dt_h, double* g_new12);
+          function biofilm_ecology_eval(g12, theta20, dt_h, g_new12)
+     &             bind(C, name="biofilm_ecology_eval") result(ierr)
+            import :: c_int, c_double
+            real(c_double), intent(in)  :: g12(12), theta20(20)
+C           dt_h is `double dt_h` (by value) in the C prototype -- the VALUE
+C           attribute is required here, or Fortran passes its ADDRESS
+C           instead (the default for BIND(C) dummies), which mismatches the
+C           C ABI's calling convention for a by-value double argument and
+C           corrupts the whole call (found via the Fortran-driven e2e test
+C           silently taking the fallback path: ierr came back nonzero, not
+C           a wrong-but-plausible g_new).
+            real(c_double), intent(in), value :: dt_h
+            real(c_double), intent(out) :: g_new12(12)
+            integer(c_int) :: ierr
+          end function biofilm_ecology_eval
         end interface
       contains
         subroutine biofilm_py_hook(F, Fv, alpha, C10, C01, D1, eta, mtype,
@@ -74,4 +92,15 @@ C         kUsePy=0's, symmetric-looking cases masked it, viscous/MR cases
 C         didn't.)
           dsde  = transpose(reshape(d36, [6, 6]))
         end subroutine biofilm_py_hook
+
+        subroutine biofilm_ecology_hook(g, theta, dt, g_new, ok)
+C         One 0D Hamilton ODE step at this Gauss point (ecology_jax.py via
+C         biofilm_ecology_eval), reusing the material hook's connection.
+          real(c_double), intent(in)  :: g(12), theta(20), dt
+          real(c_double), intent(out) :: g_new(12)
+          logical, intent(out)        :: ok
+          integer(c_int) :: ierr
+          ierr  = biofilm_ecology_eval(g, theta, dt, g_new)
+          ok    = (ierr .eq. 0)
+        end subroutine biofilm_ecology_hook
       end module biofilm_py_bridge

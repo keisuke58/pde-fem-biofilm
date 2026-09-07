@@ -204,6 +204,53 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
     return 0;
 }
 
+/* biofilm_ecology_eval — 0D Hamilton ecology ODE step (ecology_jax.py),
+ * reusing the same persistent connection and server as biofilm_py_eval:
+ *
+ *     int biofilm_ecology_eval(const double *g12, const double *theta20,
+ *                              double dt_h, double *g_new12);
+ *
+ * g12: ecology state (phi[5], phi0, psi[5], gamma), theta20: the 15 A_ij +
+ * 5 b_i calibrated interaction parameters (see ecology_jax.py). Returns 0 on
+ * success; same failure/fallback contract as biofilm_py_eval.
+ */
+int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
+                         double *g_new12)
+{
+    char req[4096], resp[RECV_CAP];
+    int n, i, attempt, off;
+
+    off = snprintf(req, sizeof req, "{\"kind\":\"ecology\",\"g\":[");
+    for (i = 0; i < 12; i++)
+        off += snprintf(req + off, sizeof req - off, "%s%.17g", i ? "," : "", g12[i]);
+    off += snprintf(req + off, sizeof req - off, "],\"theta\":[");
+    for (i = 0; i < 20; i++)
+        off += snprintf(req + off, sizeof req - off, "%s%.17g", i ? "," : "", theta20[i]);
+    off += snprintf(req + off, sizeof req - off, "],\"dt_h\":%.17g}\n", dt_h);
+    n = off;
+    if (n <= 0 || (size_t)n >= sizeof req) return 1;
+
+    /* One reconnect retry: the server may have been restarted mid-run. */
+    for (attempt = 0; attempt < 2; attempt++) {
+        if (g_fd == SOCK_INVALID) g_fd = py_connect();
+        if (g_fd == SOCK_INVALID) return 2;
+
+        if (send_all(g_fd, req, (size_t)n) == 0 &&
+            recv_line(g_fd, resp, sizeof resp) == 0)
+            break;
+
+        SOCK_CLOSE(g_fd);
+        g_fd = SOCK_INVALID;
+        if (attempt == 1) return 3;
+    }
+
+    if (strstr(resp, "\"error\"")) return 4;
+    if (parse_array(resp, "\"g_new\"", g_new12, 12) != 0) return 5;
+
+    for (i = 0; i < 12; i++) if (g_new12[i] != g_new12[i]) return 9;   /* NaN guard */
+    return 0;
+}
+
 /* Optional: close the connection at the end of a run. */
 void biofilm_py_close(void)
 {
