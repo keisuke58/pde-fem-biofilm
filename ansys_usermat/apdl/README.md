@@ -104,16 +104,20 @@ directory closes that gap.
 > its own) this time combined with `LNSRCH,ON`, now that the theta edge is
 > specifically implicated: still **worse** (element 5941, 3 errors, did
 > not complete) — the theta-edge constraint hurts regardless of LNSRCH.
-> Six attempts beyond plain LNSRCH now, all worse; paused here for real,
-> plain `LNSRCH,ON` with the original `NSUBST,10,80,2` schedule remains
-> the best result reached.
 >
-> ANSYS access on this machine is only good through 2026-09-08 (see the
-> project's `ansys_access_window_2026-09` note) — pushing this further
-> (e.g. a softer corner-only constraint instead of a blanket edge, or
-> finding what's special about element 2454) is a reasonable next real-
-> ANSYS task if time allows, otherwise it waits for the next access
-> window.
+> **Same day, a 7th attempt: the softer version explicitly flagged as
+> worth trying** — the same theta-edge NROTAT+`D,,UY,0` + `LNSRCH,ON`,
+> but excluding the Z=0/Z=LEN corner nodes so only genuine mid-edge nodes
+> are constrained (on the theory the corner node itself, not the edge
+> condition, was the problem). Still **worse**: element 11821 — a third,
+> different element again — 3 errors, repeated bisection down to
+> dt=0.0625 without recovering, `PROBLEM TERMINATED`.
+>
+> Seven attempts beyond plain LNSRCH now, all worse, including the one
+> this section used to suggest trying next. Paused here for real — plain
+> `LNSRCH,ON` with the original `NSUBST,10,80,2` schedule stands as the
+> best result found, and further tweaking of this specific corner is not
+> a good use of the little ANSYS time left in the 2026-09-07/08 window.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1

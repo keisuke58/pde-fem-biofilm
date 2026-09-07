@@ -38,9 +38,17 @@
 ! 4th pre-LNSRCH attempt (theta-edge NROTAT+D,,UY,0), this time WITH
 ! LNSRCH,ON, now that the theta edge is specifically implicated: still
 ! WORSE (element 5941, 3 errors, did not complete) -- the theta-edge
-! constraint hurts regardless of LNSRCH. Six attempts beyond plain LNSRCH
-! now, all worse. Paused here -- plain LNSRCH,ON with the original
-! NSUBST,10,80,2 schedule stands as the best result found. See
+! constraint hurts regardless of LNSRCH. A 7th attempt tried the softer
+! version explicitly flagged as worth trying: same theta-edge NROTAT+
+! D,,UY,0 + LNSRCH,ON, but excluding the Z=0/Z=LEN corner nodes so only
+! genuine mid-edge nodes are constrained (on the theory the corner node,
+! not the edge condition itself, was the problem). Still WORSE (element
+! 11821 -- a third, different element again -- 3 errors, repeated
+! bisection down to dt=0.0625 without recovering, PROBLEM TERMINATED).
+! Seven attempts beyond plain LNSRCH now, all worse, including the
+! specific "soft corner-excluded" fix this deck's own header used to
+! suggest trying. Paused here for real -- plain LNSRCH,ON with the
+! original NSUBST,10,80,2 schedule stands as the best result found. See
 ! t_growth_cylinder_shell_a015_lnsrch.dat
 ! (the working alpha=0.015+LNSRCH deck, kept as a separate file rather than
 ! changing this deck's own verified alpha=0.01 baseline) and
