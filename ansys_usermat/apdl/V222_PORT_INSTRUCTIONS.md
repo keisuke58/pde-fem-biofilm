@@ -654,5 +654,97 @@ dispatch goes through whatever `TB,USER,1,1,1,NONLINEAR` selects internally
 (their existing AceGen path, still elastic per §3), not
 `BIOFILM_GROWTH_VISCO_V01`. Actually wiring the growth law into their call
 site (editing `Usermat_P21-V21_Conection_Test.F` to call it where
-`AceGenNeoHookV04` is called now) is unchanged — still not started, still
-the real remaining work in Step 4.
+`AceGenNeoHookV04` is called now) was unchanged as of that write-up — see
+below, same day, for that step actually done.
+
+## 7. 2026-09-07 — the growth law wired into Oliver's own call site, real NEM solve, 0 errors
+
+Step 4's last piece: `AceGenNeoHookV04(v, mDefGrad, vCauchy, mTangCC,
+sYoung, sYoungL, sNu, sNuL, sBiofilm, sAlpha, sElasticWork, sID)` is called
+once, at a single site in `Usermat_P21-V21_Conection_Test.F`
+(`!Calculate the Stiffness Matrix and the Stress Vector`). The edit made
+there, in a working copy only (`F:\biofilm_upf_wired` — **Oliver's source is
+never committed to this repo**, per the existing boundary this file and
+`INTEGRATION_PLAN.md` already keep; only this write-up travels with the
+repo):
+
+- `prop(1)` is a new `kUseBiofilm` switch. `prop(1)=0` leaves the original
+  `AceGenNeoHookV04` call completely untouched below the branch — reversible
+  by construction, and the original elastic path stays reachable for
+  side-by-side comparison. `prop(1)!=0` instead calls
+  `BIOFILM_GROWTH_VISCO_V01` (`biofilm_material_v01.f`), passing `defGrad`/
+  `stress`/`dsdePl`/`sedEl`/`ID` straight through unchanged and the same
+  `sGdp_YoungBio/YoungVoid/PoissonBio/PoissonVoid`, `Sdp_sumBio` their own
+  call already reads from the NEM parameter pool. `prop` was otherwise
+  **completely unused** in their file (confirmed by grep before touching
+  it) — the standard ANSYS `TB,USER`/`TBDATA` channel, not something that
+  collides with their own GetVals-based parameter pool.
+- `prop(2:5)` = `sEta, sC01Ratio, sMtype, sGrowth` — four new material
+  constants the growth law needs that the original elastic routine did not
+  take. **`sGrowth` is currently a per-material CONSTANT** (`Fg=(1+alpha)I`
+  with a fixed `alpha`), not yet read from a NEM-solved growth field the
+  way `Sdp_sumBio`/`Sdp_sumLocal` already are — wiring a real field through
+  their parameter pool is deliberate follow-up work, out of scope for this
+  first wiring pass (see `INTEGRATION_PLAN.md`).
+- `ustatev(63:71)` = `Fv(3,3)`, the viscous state (9 slots, not the 6 a
+  symmetric `Cv` would need — `Fv` measurably loses symmetry under this
+  update, see `biofilm_material_v01.f`'s note 2). Their own usage tops out
+  at `ustatev(62)`, confirmed by grep before picking the range. Seeded to
+  identity on an all-zero incoming state, the same convention this repo's
+  own `usermat_biofilm.f` already uses for its ecology state.
+- `sKeyCut` (the growth law's own cut-back request) propagates into the
+  real `keycut` output when nonzero.
+
+**Build.** `usermat_biofilm.f` itself was not usable directly — its own
+`usermat()` wrapper `use`s the Python-coupling bridge module, which was not
+part of this working copy, and pulling that in was unnecessary scope for a
+smoke test. Used `handover/make_handover.py`'s dependency-free
+`biofilm_stress_core.f` extraction instead (exactly what it exists for —
+see its own docstring). `Ussfin_P21-V21_Conection_Test.F` hit a new MKL
+`.fi`-header parse error under this session's `ifort`/MKL combination
+(free-form `&` continuation inside a fixed-form compile — not investigated
+further, out of scope here); reused the already-compiled
+`Ussfin_P21-V21_Conection_Test.obj` from the 2026-09-03 build in
+`F:\biofilm_upf_link` instead, since that file was not touched. Patched the
+edited `Usermat_P21-V21_Conection_Test.F` through
+`patch_usermat_to_v222_restored.py` (see the note on that filename in the
+repo's commit history — the original name is Defender-blocked on this
+machine) exactly per §1.1, then `link_v222.ps1 -WorkDir F:\biofilm_upf_wired`.
+Linked clean: `ANSYS.exe`, 388,693,504 bytes (same size class as the
+2026-09-03 build), only the same benign `LNK4286`/`LNK4199` warnings §1.6
+already catalogs.
+
+**Smoke test.** A copy of `ds_oliver_dp16.dat` (§6's own deck — real NEM
+setup, 512 elements) with `TB,USER,1,1,5,NONLINEAR` /
+`TBDATA,1,1.0,0.0,0.0,0.0,0.02` (`kUseBiofilm=1`, `sEta=0` — elastic path,
+avoiding the viscous `dt/tau` cut-back question for a first pass — neo-
+Hookean, `sGrowth=0.02`). Result: **`RUN COMPLETED`, `NUMBER OF ERROR
+MESSAGES ENCOUNTERED = 0`, 2 benign warnings, real Newton-Raphson
+convergence** — `MAX DOF INC` 0.0389 → 1.115e-3 → 7.9e-7 → converged on the
+first loaded substep, then further substeps converging in a single
+iteration each with residuals down to ~1e-15 — a genuine converging
+nonlinear solve through their real NEM/`USolBeg`/`Ussfin` machinery, not a
+degenerate or trivial one.
+
+**What this establishes.** The biofilm growth law now runs, for the first
+time, inside Oliver's own framework end-to-end: their NEM field setup,
+their `USolBeg`/`Ussfin`, calling `BIOFILM_GROWTH_VISCO_V01` (which is
+`BIOFILM_STRESS_CORE`, verified 0 ULP against the Abaqus UMAT) at the exact
+call site their own `AceGenNeoHookV04` occupies, with `Fg=(1+alpha)I`
+growth kinematics genuinely exercised (`alpha=0.02`, not 0). This is a
+local proof that the wiring in `INTEGRATION_PLAN.md`'s Step 4 is
+mechanically sound — it does **not** replace the plan's actual Step 4
+("hand it over," his agreement on the interface, his call to accept a
+hand-written routine in the pool) or mean this edit exists anywhere in
+Oliver's own tree.
+
+**Same day, the switch-off check.** Ran the same deck through the same
+wired build with `prop(1)=0` instead (`TBDATA,1,0.0,0.0,0.0,0.0,0.0` —
+back to the original `AceGenNeoHookV04` call). `RUN COMPLETED`, 0 errors,
+and the Newton-Raphson trace matches the 2026-09-03 unmodified-build run
+(`F:\biofilm_upf_link\out_oliver_dp16_np1.txt`) to displayed precision at
+every step checked (`MAX DOF INC` 0.2714E-03 → 0.2247E-06, identical in
+both) — the `kUseBiofilm` switch is confirmed non-destructive: off, this
+build is the original build. Not yet done: a nonzero-`sEta` case, to
+exercise the viscous update (not just the elastic path) through their
+machinery.
