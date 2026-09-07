@@ -324,60 +324,87 @@ interaction matrix reproduces the pre-existing uncoupled formula exactly
 the 0D/well-mixed case the Python check represents.
 
 **Real-ANSYS execution surfaced a genuine numerical instability, not a
-code defect.** `ds_oliver_wired_n5trial_inter0.dat` (all 20 interaction
-constants explicitly `0`, exercising the exact same new code path as
-every other case below) runs the complete 11 substeps cleanly -- 0
-errors, force convergence dropping to `1e-7`/`1e-8`, confirming the
-refactor is behavior-preserving when interaction is off. But **any**
-nonzero interaction constant -- `0.05`, `0.005`, even `-0.05`
-(competitive/inhibitory sign), and even restricted to a single pair like
-`Interaction34`/`Interaction43` alone (species 3 and 4 do not touch the
-mechanical DOF system at all -- ruled out a stiffness-feedback
-explanation directly) -- makes the load step fail at its *final*
-substep with `The L-2 norm of the residual force overflowed`, in every
-case tried.
+code defect -- and, after narrowing it down, a real, calibratable
+critical coupling threshold rather than "any coupling breaks it."**
+`ds_oliver_wired_n5trial_inter0.dat` (all 20 interaction constants
+explicitly `0`, exercising the exact same new code path as every other
+case below) runs the complete 11 substeps cleanly -- 0 errors, force
+convergence dropping to `1e-7`/`1e-8`, confirming the refactor is
+behavior-preserving when interaction is off.
+
+First pass made it look binary: `0.05`, `0.005`, even `-0.05`
+(competitive sign), and even a single pair alone (`Interaction34`/
+`Interaction43`, species 3/4 -- which don't touch the mechanical DOF
+system at all, ruling out a stiffness-feedback explanation) all failed
+at the load step's *final* substep with `The L-2 norm of the residual
+force overflowed`. Bisecting the magnitude (`interaction_terms
+0.05 -> 0.005 -> 0.001 -> 0.0007` fail, `0.0005 -> 0.0001 -> 0.00001 ->
+0.000001` pass) found the real answer: **there is a genuine critical
+coupling strength for this species-3<->4 pair, between `0.0005` (stable)
+and `0.0007` (diverges), under Oliver's baseline `MaxGrowth=100`/
+`dt=0.1`/`Penalty1=5`/`HalfVelo=0.1`.** This is a real nonlinear
+stability boundary, not a memory/indexing bug -- a bug would not produce
+a clean, monotonic, reproducible pass/fail split at a specific
+magnitude.
+
+This also explains why none of `dt` (10x smaller), `Penalty1` (10x
+larger), or `MaxGrowth13/14` (10x smaller) individually rescued the
+`0.05` test case (each tried once, at `0.05`, all still failed at
+essentially the same ~10-12th substep regardless): `0.05` is roughly
+70-100x above the ~`0.0006` threshold found for the baseline parameter
+set, and each of those single 10x changes reshapes the threshold rather
+than moving `0.05` below whatever the new one is. None of the three were
+retested *combined*, or at a coupling magnitude actually below their own
+(different) threshold -- that would be the natural next step if this is
+picked back up.
 
 A temporary debug write (`WRITE` gated by `ID.EQ.1`, added and reverted
 in the same session -- not left in the tree) traced `GrowthBio3/4` for
-the species-3/4-only `0.05` case substep by substep: `0.159` (substep 1)
--> `12024` (substep 2, a ~75,000x jump) -> `1.46e7` (substep 3) ->
-`-2.6e14` (substep 4) -> ... -> `-Infinity` by substep 9. The blow-up's
-speed and its complete indifference to the interaction constant's
-magnitude or sign both point to the same explanation: **species 3's own
-uncoupled trajectory is already a knife-edge case** -- this is exactly
-what `n3_growth_reference.py`'s own trace showed and annotated back when
-n=3 was built ("this dips negative and only slowly re-stabilizes via
-PenForce"), i.e. the system sits right at the boundary between a bounded
-oscillation and unbounded divergence under Oliver's own
-`MaxGrowth=100`/`dt=0.1`/`Penalty1=5` combination for a *single*
-species. Introducing *any* additional term into the growth-rate
-expression -- regardless of which species pair or which sign -- is
-enough to tip the accumulated trajectory over that edge by the last
-substep, because there's no smaller-scale regime here: the perturbation
-doesn't need to be dynamically significant on its own, it only needs to
-land on the wrong side of an already-fragile threshold.
+the species-3/4-only `0.05` case (well above the threshold found later)
+substep by substep: `0.159` (substep 1) -> `12024` (substep 2, a
+~75,000x jump) -> `1.46e7` (substep 3) -> `-2.6e14` (substep 4) -> ... ->
+`-Infinity` by substep 9 -- once past the threshold, the blow-up is fast
+and total, not a gentle drift. The underlying reason a threshold this
+low (~`0.0006`) exists at all traces back to the same thing
+`n3_growth_reference.py`'s own trace flagged when n=3 was built:
+**species 3's own *uncoupled* trajectory is already a knife-edge case**
+("this dips negative and only slowly re-stabilizes via PenForce") --
+i.e. a single species already sits close to the boundary between a
+bounded oscillation and unbounded divergence under Oliver's own
+`MaxGrowth=100`/`dt=0.1`/`Penalty1=5`, so it doesn't take much
+additional push from a coupling partner to cross it -- just more than
+this specific, now-measured amount.
 
 **Conclusion: the interaction mechanism itself is implemented correctly
 and is not the bug** -- `n5trial_inter0`'s clean 11-substep run through
-the identical code path (just multiplying by literal `0.0`) is the
-proof. **What's actually unusable as-is is Oliver's own baseline
-growth/timestep/penalty parameter set once *any* species coupling is
-introduced.** Using this interaction mechanism for a real multi-species
-study would need first re-tuning those constants (smaller `MaxGrowth`
-and/or `dt`, a stronger `Penalty1`, or a saturating nonlinearity in the
-interaction term itself) against a single species until it's no longer
-sitting at that edge -- not something to attempt within this session,
-and out of scope for "does the generalization mechanism work."
+the identical code path (just multiplying by literal `0.0`), and the
+clean monotonic pass/fail split found by bisecting the magnitude, are
+both the proof. **It is also not simply "unusable" -- coupling strengths
+up to ~`0.0005` (a ~7% shift on `MaxGrowth=100` from a partner at
+`Bio~1.0`, since `0.0005/HalfVelo=0.1` sets the scale) run cleanly, and
+only strengths above roughly `0.0006` diverge.** Anyone using this
+mechanism for a real (e.g. TMCMC-calibrated) multi-species study would
+need to know where their intended coupling magnitudes sit relative to
+this threshold *for their own parameter set* -- it will differ from
+`~0.0006` for different `MaxGrowth`/`dt`/`Penalty1` choices, since single-
+parameter 10x changes to each of those (tried once each, only at the
+already-far-above-threshold `0.05`) didn't rescue that case, meaning they
+reshape the threshold rather than trivially disable the effect. Mapping
+that threshold's dependence on the other constants is the natural next
+step if this is picked back up, not attempted this session.
 
 **Current state left in `F:\biofilm_upf_wired`** (local only, see backup
 note below): the full 20-constant interaction mechanism is wired into
 usercm.inc/USolBeg/Ussfin and verified to preserve prior behavior with
 all constants at their deck default of `0` (`n5trial_inter0`,
 reproduced clean; `n3trial`/`n4trial` regression-checked clean against
-the same rebuild). Test decks with nonzero coupling
+the same rebuild). Test decks with nonzero coupling are kept alongside as documented
+evidence, not deleted: the initial failing cases
 (`n5trial_coupled(.dat/_small.dat)`, `n5trial_inter34only.dat`,
-`n5trial_inter34neg.dat`) are kept alongside as documented failing
-cases, not deleted, since they're the evidence for this section.
+`n5trial_inter34neg.dat`, plus the `dt01`/`pen50`/`lowgrowth` single-
+parameter retries, all still failing), and the bisection series that
+found the actual threshold (`n5trial_inter_0p00001.dat` through
+`n5trial_inter_0p001.dat`, passing below ~`0.0006` and failing above).
 
 A full local backup of `F:\biofilm_upf_wired` (515 files, ~1.7 GB,
 including the built `ANSYS.exe` and every deck used across the n=3/4/5
@@ -414,9 +441,12 @@ n=3/4/5 extension would be a meaningful test of the growth mechanism --
 not a dormant copy. Coupling species 3 and 4 was therefore the **first
 time this deck's parameter scale has ever been asked to run two
 genuinely active, growing species coupled together**, and that is
-exactly where the instability appears. **This reframes the finding: it
-is not "n=5 destabilizes something n=2 handled fine" -- it is "nobody,
-including Oliver, has verified this growth-rate scale (`MaxGrowth=100`,
-`dt=0.1`, `Penalty1=5`) under real two-active-species coupling before,
-and it turns out not to hold up."** Worth raising with Oliver directly,
-independent of anything n=3/4/5-specific.
+exactly where the instability appears (this baseline+`0.05` test itself
+is also ~80x above the ~`0.0006` critical coupling strength found by the
+bisection above -- consistent, not a separate phenomenon). **This
+reframes the finding: it is not "n=5 destabilizes something n=2 handled
+fine" -- it is "nobody, including Oliver, has verified this growth-rate
+scale (`MaxGrowth=100`, `dt=0.1`, `Penalty1=5`) under real two-active-
+species coupling before, and its actual safe coupling range turns out
+to be much smaller than a value like `0.05` would suggest."** Worth
+raising with Oliver directly, independent of anything n=3/4/5-specific.
