@@ -385,3 +385,38 @@ and interaction-term work) was made to `F:\biofilm_upf_wired_backup_20260907`
 before this final round of edits, in case ANSYS access ends before
 further work resumes -- not committed here (Oliver's source), but noted
 so a future session on this machine knows where to look.
+
+### Root cause narrowed further: this is not about species count at all
+
+Natural follow-up question: did Oliver's own **unmodified n=2** deck
+(`ds_oliver_wired_baseline.dat`, `Interaction12`/`Interaction21` set
+nonzero, no n=3/4/5 code touched at all) also diverge? Tested directly
+-- **it did not**: `ds_oliver_wired_baseline_inter12.dat`
+(`INTERACTION12 = 0.05`, `INTERACTION21 = 0.05`, otherwise identical to
+the delivered baseline) completes all 11 substeps with 0 errors.
+
+The reason is visible directly in the deck, not a coincidence:
+`MY_BIOSTART2 = 0.0` (species 2 starts completely unseeded, zero
+everywhere) and `MAX_GROWTH12 = 0.1` (species 2's own growth rate is
+1000x smaller than species 1's `MAX_GROWTH11 = 100`). **Species 2 in
+Oliver's own delivered deck is a dormant placeholder for a genuinely
+"mono-species" test, not a second active species** -- with `Bio2`
+staying near zero throughout, `Interaction12 * Bio2` stays near zero
+regardless of the constant's value, so turning `Interaction12/21` on
+changes essentially nothing. Oliver's own delivery, as far as this deck
+shows, has never actually exercised two *actively growing* species
+coupled together.
+
+Species 3/4/5, by contrast, were deliberately built with `MaxGrowth=100`
+and `MY_BIOSTART=1.0` (mirroring species 1's real, active numbers, per
+this doc's own "What was added" section above) specifically so the
+n=3/4/5 extension would be a meaningful test of the growth mechanism --
+not a dormant copy. Coupling species 3 and 4 was therefore the **first
+time this deck's parameter scale has ever been asked to run two
+genuinely active, growing species coupled together**, and that is
+exactly where the instability appears. **This reframes the finding: it
+is not "n=5 destabilizes something n=2 handled fine" -- it is "nobody,
+including Oliver, has verified this growth-rate scale (`MaxGrowth=100`,
+`dt=0.1`, `Penalty1=5`) under real two-active-species coupling before,
+and it turns out not to hold up."** Worth raising with Oliver directly,
+independent of anything n=3/4/5-specific.
