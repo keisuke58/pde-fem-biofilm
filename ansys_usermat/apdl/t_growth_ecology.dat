@@ -1,0 +1,109 @@
+! t_growth_ecology.dat --- real-ANSYS smoke test for the 0D Hamilton ecology
+! Gauss-point hook (usermat_biofilm.f prop(8)=kUseEcology), the counterpart
+! of t_growth_kusepy.dat for coupling/README.md next-steps #4.
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_ecology.dat -o out_ecology.txt
+! The -custom argument must point at the executable built with this repo's
+! usermat_biofilm.f + usermat_py_hook.f + biofilm_py_eval.c; without it
+! ANSYS runs its own stock material and the check is meaningless.
+! material_server.py must be listening on 127.0.0.1:8765 (or
+! BIOFILM_PY_HOST/BIOFILM_PY_PORT set in this shell) before SOLVE runs.
+!
+! WHY THIS CASE
+! -------------
+! Same trick as t_growth_kusepy.dat: every node fully fixed, so F = I
+! exactly at the single integration point regardless of alpha. That isolates
+! the ecology hook's own math (does g advance correctly, does alpha pick up
+! the right increment) from any FE-solve effect, and lets the resulting
+! stress be predicted in closed form once alpha is known.
+!
+! ustatev(15:26) arrives all-zero, so usermat_biofilm.f's INIT_ECO_IF_ZERO
+! seeds the default composition (matching ecology_jax.default_initial_state()
+! exactly) before taking one 0D Hamilton step of dt=1e-5 with the demo
+! THETA_DEMO interaction parameters and k_alpha=50.
+!
+! EXPECTED (computed independently in Python -- see the commit message /
+! session notes for the exact script; reproducible via
+! ecology_jax.default_initial_state() -> ecology_jax.ecology_step(...,
+! THETA_DEMO, 1e-5) -> ecology_jax.living_fraction_total(...) -> alpha_new =
+! 1e-5*50*phi_tot -> material_server.stress_core(I, I, alpha_new, 1.0, 0.0,
+! 0.01, 0.0, 0.0, 1.0)):
+!   g_new(phi)   = [0.324171411, 0.324448333, 0.216890650, 0.134483987, 5.61866e-10]
+!   g_new(phi0)  = 5.61866e-06
+!   g_new(psi)   = [0.994333998, 0.994209815, 0.994242770, 0.994363341, 0.994345883]
+!   g_new(gamma) = 259.935442
+!   alpha_new    = 4.971361400e-04
+!   SX=SY=SZ     = -2.9997736e-01
+!   SXY=SYZ=SXZ  = 0
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)
+/PREP7
+
+! ---- single 8-node hex, unit cube -----------------------------------------
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar
+
+BLOCK,0,1,0,1,0,1
+ESIZE,1
+VMESH,1
+
+! ---- user material -----------------------------------------------------
+! prop: C10,C01,D1,eta,mtype,kUsePy | kStateMat,kUseEcology,k_alpha,theta(1:3)
+!       | theta(4:9) | theta(10:15) | theta(16:20)
+TB,USER,1,1,29
+TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.1,2.41,2.5
+
+! state: ustatev(1:9)=Fv (identity), ustatev(10)=alpha (0), ustatev(11:14)
+! unused (kStateMat=0), ustatev(15:26) left all-zero on purpose so
+! INIT_ECO_IF_ZERO seeds the default composition.
+TB,STATE,1,,26
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- fully constrained: forces F = I at every integration point ------------
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+! ---- solve -----------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-5                  ! must equal the dt_h used for the Python reference
+NSUBST,1,1,1                 ! exactly one substep -- one ecology step, no more
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+! ---- report ----------------------------------------------------------------
+/POST1
+SET,LAST
+ESEL,S,ELEM,,1
+/OUTPUT,growth_result_ecology,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha
+PRESOL,SVAR,15                ! g(1)  = phi(1)
+PRESOL,SVAR,16                ! g(2)  = phi(2)
+PRESOL,SVAR,17                ! g(3)  = phi(3)
+PRESOL,SVAR,18                ! g(4)  = phi(4)
+PRESOL,SVAR,19                ! g(5)  = phi(5)
+PRESOL,SVAR,20                ! g(6)  = phi0
+PRESOL,SVAR,21                ! g(7)  = psi(1)
+PRESOL,SVAR,22                ! g(8)  = psi(2)
+PRESOL,SVAR,23                ! g(9)  = psi(3)
+PRESOL,SVAR,24                ! g(10) = psi(4)
+PRESOL,SVAR,25                ! g(11) = psi(5)
+PRESOL,SVAR,26                ! g(12) = gamma
+/OUTPUT
+FINISH

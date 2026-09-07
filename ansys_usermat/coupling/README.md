@@ -65,6 +65,63 @@ meet at a single, well-defined interface.
 > replacing `stress_core` with the calibrated JAX model (§ Next steps
 > below, now down to items 2–3).
 
+> **2026-09-07: the second, independent Gauss-point bridge — the 0D
+> Hamilton ecology ODE (`ecology_jax.py`) — is wired in and verified
+> end-to-end, gfortran driver AND real ANSYS, the same rigor as the
+> material bridge above.** This is next-steps item 4 below: instead of
+> reading a precomputed alpha field, `prop(8)=kUseEcology=1` makes
+> `usermat()` advance a per-Gauss-point 0D Hamilton state
+> (`ustatev(15:26)`, the same Newton-per-step integrator as
+> `jax_hamilton_0d_5species_demo.py`) by one increment every call, and
+> derives alpha's increment from `k_alpha * sum(phi_i*psi_i)`. Same
+> connection/server as the material hook, disambiguated on the wire by a
+> `"kind":"ecology"` request field (`protocol.py`); independent of
+> `kUsePy` — this drives the growth input, not the stress law.
+>
+> **Bug found and fixed during the gfortran-driver test, before ANSYS was
+> even touched:** the `bind(C)` interface for `biofilm_ecology_eval`
+> declared `dt_h` (a plain `double`, by-value in the C prototype) without
+> the `VALUE` attribute, so Fortran passed its *address* instead — a
+> silent ABI mismatch (wrong register/stack slot for a by-value scalar)
+> that corrupted the whole call rather than crashing. It surfaced as an
+> unexplained clean fallback (`ierr != 0`) with no error message, not an
+> obvious bug — isolated by comparing a standalone C-only test (worked)
+> against the same call through the Fortran driver (silently took the
+> fallback path) until the two diverged only at the interface declaration.
+>
+> **2026-09-07, real ANSYS on IKMHIWI03** (`link_v222.ps1 -WorkDir
+> F:\biofilm_upf_kusepy`, reusing the material bridge's own working
+> directory/scaffolding): `t_growth_ecology.dat` — fully constrained
+> single element (`F=I` forced, same trick as `t_growth_kusepy.dat`),
+> `ustatev(15:26)` arriving all-zero so `INIT_ECO_IF_ZERO` seeds the
+> default composition, one step of `dt=1e-5` against `THETA_DEMO` and
+> `k_alpha=50`:
+> - `NUMBER OF ERROR MESSAGES = 0`; `SX=SY=SZ=-0.29998`, all six
+>   `SVAR(15:26)` (the full ecology state) and `SVAR(10)=0.49714E-003`
+>   (alpha) — **exact match**, to displayed precision, against the
+>   independent Python reference (`ecology_jax.default_initial_state()` →
+>   `ecology_jax.ecology_step(..., THETA_DEMO, 1e-5)` →
+>   `ecology_jax.living_fraction_total(...)` → `alpha = 1e-5*50*phi_tot` →
+>   `material_server.stress_core(...)`). Evidence:
+>   [`out_ecology.txt`](../apdl/out_ecology.txt) /
+>   [`growth_result_ecology.txt`](../apdl/growth_result_ecology.txt).
+> - **Live socket path confirmed actually taken**: `material_server.py`'s
+>   stderr shows the (benign) end-of-run `ConnectionResetError` that only
+>   happens after a request from `127.0.0.1` was received and answered —
+>   the same signature the material bridge's own 2026-09-03 verification
+>   used as proof of a live, not silently-skipped, call.
+> - Re-ran with the server killed: `NUMBER OF ERROR MESSAGES = 0`,
+>   `SX=SY=SZ=0` and every `SVAR` at its input value (alpha stays 0, the
+>   ecology state stays all-zero) — the fail-safe fallback confirmed on
+>   real ANSYS too, not just the driver. Evidence:
+>   [`out_ecology_fallback.txt`](../apdl/out_ecology_fallback.txt) /
+>   [`growth_result_ecology_fallback.txt`](../apdl/growth_result_ecology_fallback.txt).
+>
+> Not yet done for this path: feeding a TMCMC-calibrated theta (currently
+> the demo's `THETA_DEMO` placeholder in `prop(10:29)`) and a real
+> CLSM-measured initial composition (currently `INIT_ECO_IF_ZERO`'s fixed
+> default) instead of both being placeholders — see next-steps below.
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -77,6 +134,17 @@ One Gauss-point evaluation, per increment:
 | out | `stress` (Cauchy) | 6 | Voigt **11,22,33,12,13,23** (Abaqus order) |
 | out | `Fv_new` | 3×3 | updated viscous state |
 | out | `dsdePl` (material Jacobian) | 6×6 | ∂σ/∂ε, F-perturbation |
+
+A second, independent evaluation shares the same server/connection — the 0D
+Hamilton ecology ODE step (`ecology_jax.py`), disambiguated by a `"kind"`
+field on the wire (absent = the material request above, backward compatible):
+
+| direction | quantity | shape | note |
+|---|---|---|---|
+| in | `g` (ecology state) | 12 | phi(5), phi0, psi(5), gamma |
+| in | `theta` (interaction params) | 20 | 15 independent A_ij + 5 b_i, TMCMC-calibrated |
+| in | `dt_h` | scalar | increment |
+| out | `g_new` | 12 | one Newton-per-step 0D Hamilton advance |
 
 ## Files
 
@@ -94,6 +162,13 @@ One Gauss-point evaluation, per increment:
 | `../../tests/test_coupling_vs_fortran.py` | **equivalence proof** — compiles the real Fortran core and compares it against the Python core over 28 states (CI) |
 | `../../tests/test_coupling_shim.py` | **C-shim end-to-end** — compiles the shim, drives it against a live server, and checks it fails cleanly with no server (CI) |
 | `../../tests/test_usermat_kusepy_e2e.py` | **full-chain end-to-end** — compiles `usermat_biofilm.f` + `usermat_py_hook.f` + `biofilm_py_eval.c` + this driver, and checks `kUsePy=1` matches `kUsePy=0` (stress/`Fv`/`dsdePl`) through the actual `usermat()` entry point, across elastic/viscous/Mooney-Rivlin cases, plus the no-server fallback (CI) |
+| `ecology_jax.py` | 0D Hamilton ecology ODE bridge — thin wrapper around `jax_hamilton_0d_5species_demo.py`'s Newton-per-step integrator (`ecology_step`), plus `living_fraction_total` (the growth reaction driver) and `default_initial_state`. No physics duplicated: imports the demo's `newton_step_jit`/`theta_to_matrices` directly. |
+| `usermat_ecology_e2e_driver.f` | standalone driver calling the real `usermat()` subroutine with `prop(8)=kUseEcology` toggled — used by `test_usermat_ecology_e2e.py` |
+| `test_shim_ecology_main.c` | tiny C driver exercising `biofilm_ecology_eval()`, used by `test_ecology_shim.py` |
+| `../../tests/test_ecology_coupling.py` | Python-side round-trip (protocol + in-process + socket dispatch by `"kind"`) against the verified 0D reference (CI) |
+| `../../tests/test_ecology_shim.py` | **C-shim end-to-end** for the ecology path, mirrors `test_coupling_shim.py` (CI) |
+| `../../tests/test_usermat_ecology_e2e.py` | **full-chain end-to-end** — `usermat()` with `kUseEcology=1`: `g_new`/alpha match the Python reference bit-for-bit through the wire, the all-zero-state default seed, `kUseEcology=0` leaves state untouched, and the no-server fallback (CI) |
+| `../apdl/t_growth_ecology.dat` | real-ANSYS single-element smoke test for the ecology hook (fully constrained, `F=I`) — see the 2026-09-07 Status note above |
 
 ## Two integration mechanisms
 
@@ -196,9 +271,18 @@ check passes either way.
    the intended physical difference.
 3. Optional: switch the shim from socket to in-process `ISO_C_BINDING` embedding
    once the model is stable (lower per-Gauss-point latency).
-4. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
+4. ~~Live per-Gauss-point Python call for the growth driver (e.g. the 0D
+   Hamilton ODE) rather than a precomputed field~~ — done 2026-09-07 on
+   IKMHIWI03, gfortran driver AND real ANSYS, see the Status note above.
+   What's left on this specific path (not blocking, but needed before the
+   result means anything physically):
+   - **Feed the actual TMCMC-calibrated theta** into `prop(10:29)` instead
+     of the demo's `THETA_DEMO` placeholder — needs a generator analogous
+     to `composition_to_material.py`'s `apdl_state_block`.
+   - **Seed `ustatev(15:26)` from real CLSM-measured composition** per
+     Gauss point instead of `INIT_ECO_IF_ZERO`'s fixed default — the same
+     kind of `TB,STATE` block `composition_to_material.py` already emits
+     for `ustatev(11:14)`.
+5. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
    the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
-   2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6) — a live Python call per
-   Gauss point rather than a compiled-in Fortran call, useful if the growth
-   driver ends up needing something Python-side (e.g. the 0D Hamilton ODE)
-   rather than a precomputed field.
+   2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6).
