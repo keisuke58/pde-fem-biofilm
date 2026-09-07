@@ -1,4 +1,4 @@
-# n=2 -> n=3 growth-term trial (Oliver's ANSYS/NEM pipeline)
+# n=2 -> n=3/4/5 growth-term trial (Oliver's ANSYS/NEM pipeline)
 
 2026-09-07. Follow-up to `V222_PORT_INSTRUCTIONS.md` and the
 `oliver_n2_vs_n5_species_gap` memory, which established that generalizing
@@ -109,6 +109,43 @@ list before any rebuild that touches the common block.
   deliverable: n=3 runs end-to-end in real ANSYS today, physically
   complete (matching species 1/2's own KLocal*Bioloc structure).
 
+## Does this let us check correctness against the repo's own (n=5) ecology model?
+
+Investigated 2026-09-07, before starting n=4/5: no -- not as a literal
+numerical comparison. Oliver's `GrowthBio1/2` (and the mirrored
+`GrowthBio3/4/5`) and this repo's own n=5 ecology model
+(`ecology_jax.py` / `jax_hamilton_0d_5species_demo.py`) are structurally
+different formulations, not two encodings of the same equation:
+
+- Oliver's growth term is **substrate-explicit Monod kinetics**:
+  `GrowthBio1 = sqrt(Lap^2) * [(MaxGrowth11 + Interaction12*Bio2)*Nut1/
+  (HalfVelo11+Nut1) + ...]` -- two nutrient concentration fields drive
+  growth, and the interaction term `Interaction12*Bio2` **multiplicatively
+  shifts the max growth rate** applied to the Monod saturation curve.
+- This repo's n=5 model has **no nutrient field at all** (CLSM-derived,
+  closed volume-fraction simplex `phi_i`, `sum_i phi_i = 1`) and its
+  interaction term `Ia = A @ (phi*psi)` enters the (implicitly,
+  6-Newton-iteration-solved) residual **additively**:
+  `-(c/Eta_i)*psi_i*Ia_i`, a bilinear coupling including a diagonal
+  self-term `A_ii` (logistic-type self-growth) that has no Oliver-side
+  analogue at all.
+
+`OLIVER_MODEL_NOTES.md`'s "`Interaction12/21` are the off-diagonal of
+matrix A" is a **structural analogy** (both are pairwise
+growth-modulating terms), not an equation-level identity -- multiplicative
+vs. additive, nutrient-driven vs. nutrient-free, explicit vs. implicit
+time-stepping. Feeding identical inputs into both formulas would not
+produce a meaningful pass/fail signal; there is no shared unit/variable
+space to compare in. This is consistent with the "different scopes" table
+already in `OLIVER_MODEL_NOTES.md` for the constitutive-law side of this
+same integration.
+
+**What actually is a meaningful correctness check** (and what n=3's
+`n3_growth_reference.py` already did): confirming a new species block is
+a faithful, non-interfering mirror of Oliver's *own* established n=2
+pattern -- same formula shape, no accidental coupling into
+`GrowthBio1/2`. That check applies unchanged to n=4 and n=5 below.
+
 ## Toolchain blocker found and resolved: DMP mode hangs on any rebuilt Ussfin
 
 This is the first time in this repo's ANSYS-side work that
@@ -174,18 +211,32 @@ both run clean under `-smp -np 1`, against the identical unmodified
   since it's the more correct fix even though both run equally well
   under `-smp -np 1`.
 
-## n=4 / n=5 extension strategy (planned, not started — 2026-09-07)
+## n=4 / n=5 extension: done and verified in real ANSYS (2026-09-07)
 
 n=3 is complete and running (growth + diffusion + penalty + KLocal*Bioloc,
-uncoupled from species 1/2). The user's explicit instruction: plan the
-n=4/n=5 extension now, informed by n=3's lessons, but don't execute it
-yet ("4,5に拡張する作戦だけたてといていつでもできるように 3の学びから").
-Since species 3's block is now a complete, self-contained template
-(offsets, parevl reads, IC seed, gradient/Laplacian, dot-products, Ori,
-Growth, PenForce, explicit update, Bioloc update, OMP clauses, swaps,
-SetVals -- all mirroring species 1 exactly), species 4 and 5 are each a
-mechanical repeat of that same template with `3`->`4`/`5` and fresh
-constant names, not new design work. Concretely, per new species N:
+uncoupled from species 1/2). Species 4 and 5 were then added the same
+day, each a mechanical repeat of species 3's template with `3`->`4`/`5`
+and fresh constant names -- no new design work, exactly as anticipated
+below. **Both run cleanly in real ANSYS:**
+
+- `ds_oliver_wired_n4trial.dat`: 0 errors, `-smp -np 1`, reproduced twice
+  (`n4run`, `n4run2`).
+- `ds_oliver_wired_n5trial.dat`: 0 errors, `-smp -np 1`, reproduced twice
+  (`n5run`, `n5run2`).
+- Regression checks after each new build: `ds_oliver_wired_n3trial.dat`
+  still 0 errors after the n=4 build (`n3regress`); `n4trial` still
+  0 errors after the n=5 build (`n4regress`) -- confirms each new
+  species' additive-only edits didn't disturb the earlier ones.
+
+All three (n=3/4/5) reuse species 1's element region for IC seeding and
+stay uncoupled (no `InteractionN1/1N` terms) -- both "natural next
+increments" flagged below were deliberately left for a future session,
+consistent with keeping each step's edit surface small and verifiable.
+
+The original per-species template this was built from, preserved as
+reference for n=6+ (or for reproducing n=4/5 from scratch):
+
+Concretely, per new species N:
 
 1. **`usercm.inc`** (COMMON list + type-decl section, both places):
    `sGdp_BetaN`, `sGdp_KLocalN`, `sGdp_MaxGrowth1N/2N`,
@@ -229,3 +280,18 @@ Doing species 4 and 5 together (once resumed) is probably more efficient
 than one at a time, since the mechanical edits are identical in shape --
 but verify each species' Python reference independently before touching
 Fortran, the way n=3's was.
+
+## Automating steps 5/6 (build + run) after this session
+
+Steps 5 and 6 above are exactly where both real bugs this session came
+from (forgetting one of the 5 `usercm.inc`-dependent files; forgetting
+`-smp -np 1` on a freshly-rebuilt `Ussfin`) -- entirely mechanical
+mistakes, not modeling ones. `run_species_trial.ps1` (this directory)
+wraps both into one command so a future species addition (n=6+) or a
+re-run of n=3/4/5 cannot hit either mistake: it always recompiles the
+fixed list of 5 files via `link_v222.ps1`, always launches with
+`-smp -np 1`, clears stale `.lock` files first, and greps the output for
+`NUMBER OF ERROR   MESSAGES ENCOUNTERED` to report PASS/FAIL directly
+rather than requiring a manual log read. It does not automate steps 1-4
+(the actual Fortran/deck edits for a new species) -- those still require
+reading and editing Oliver's source by hand, the same as n=3/4/5 were.
