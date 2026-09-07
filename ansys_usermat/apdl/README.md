@@ -95,11 +95,25 @@ directory closes that gap.
 > [`out_a015_lnsrch.txt`](out_a015_lnsrch.txt) /
 > [`growth_cylinder_a015_lnsrch_result.txt`](growth_cylinder_a015_lnsrch_result.txt).
 >
+> **Same day, a mesh-only diagnostic (ELIST/NLIST, no solve) located the
+> remaining LNSRCH error precisely**: element 2454 sits at theta≈7.2°,
+> near the R_MID interface, away from Z=0/Z=LEN — a geometrically
+> *different* corner than element 5101 (the original α=0.015 failure, at
+> the Z=0 axial-end BC face, mid-arc). That motivated a 6th attempt,
+> retrying the theta-edge NROTAT+`D,,UY,0` constraint (previously worse on
+> its own) this time combined with `LNSRCH,ON`, now that the theta edge is
+> specifically implicated: still **worse** (element 5941, 3 errors, did
+> not complete) — the theta-edge constraint hurts regardless of LNSRCH.
+> Six attempts beyond plain LNSRCH now, all worse; paused here for real,
+> plain `LNSRCH,ON` with the original `NSUBST,10,80,2` schedule remains
+> the best result reached.
+>
 > ANSYS access on this machine is only good through 2026-09-08 (see the
 > project's `ansys_access_window_2026-09` note) — pushing this further
-> (e.g. LNSRCH combined with other options, or finding what's special
-> about element 2454) is a reasonable next real-ANSYS task if time allows,
-> otherwise it waits for the next access window.
+> (e.g. a softer corner-only constraint instead of a blanket edge, or
+> finding what's special about element 2454) is a reasonable next real-
+> ANSYS task if time allows, otherwise it waits for the next access
+> window.
 >
 > **Added 2026-08-19: a second, complementary closed-form check.**
 > `t_growth_free.dat` removes only the 6 rigid-body modes (minimal 3-2-1

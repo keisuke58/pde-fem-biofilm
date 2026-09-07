@@ -228,6 +228,20 @@ meet at a single, well-defined interface.
 > [`out_cylinder_ecology.txt`](../apdl/out_cylinder_ecology.txt) /
 > [`growth_result_cylinder_ecology.txt`](../apdl/growth_result_cylinder_ecology.txt).
 
+> **2026-09-07, same day: scale-invariance check —
+> `t_growth_cylinder_ecology_big.dat`, VERIFIED.** Same two-material patch,
+> same seeds, same theta, same fixed dt=1e-5×10 stepping, but ARC/LEN scaled
+> up from 5/0.15 to 15/0.4 (54 → 432 elements, run from a robocopy'd working
+> directory with the full custom `ANSYS.exe` + ~186 supporting DLLs, since
+> the exe alone will not launch). Result: 0 errors, 6 benign warnings,
+> both regions' alpha (`SVAR(10)`) uniform across all 432 elements and
+> identical to the small-patch result to displayed precision (region A
+> 0.45687E-002, region B 0.28868E-002) — exactly the expected outcome for a
+> 0D per-Gauss-point reaction with no inter-element coupling, confirming the
+> result is not an artifact of the shrunk-mesh smoke test's small size. See
+> [`out_cylinder_ecology_big.txt`](../apdl/out_cylinder_ecology_big.txt) /
+> [`growth_result_cylinder_ecology_big.txt`](../apdl/growth_result_cylinder_ecology_big.txt).
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -280,6 +294,7 @@ field on the wire (absent = the material request above, backward compatible):
 | `../apdl/t_growth_cylinder_ecology.dat` | real, unconstrained curved two-material geometry (extends `t_growth_cylinder_shell.dat`) with live ecology driving two spatially distinct growth-layer regions — verified; see the third 2026-09-07 Status note |
 | `../apdl/ecology_cylinder_reference.py` | independent reference for the above — chains `ecology_jax.ecology_step` 10x (matching the deck's 10 fixed dt=1e-5 substeps) for each region's seed |
 | `../apdl/ecology_theta_sensitivity.py` | checks whether the cylinder-ecology deck's region-A-grows-faster result depends on `THETA_DEMO`'s specific numbers (it doesn't, across 9 variants tried) — see the Status note |
+| `../apdl/t_growth_cylinder_ecology_big.dat` | same patch scaled ~8x (54→432 elements) — scale-invariance check, identical alpha result — see the fourth 2026-09-07 Status note |
 
 ## Two integration mechanisms
 

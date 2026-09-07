@@ -31,11 +31,17 @@
 ! Tried combined with a finer initial substep (NSUBST,20,80,4 instead of
 ! 10,80,2 -- the one remaining error hit at SUBSTEP 4, so a gentler ramp
 ! seemed worth a shot): also WORSE (element 2454 failed twice, 3 total
-! errors, PROBLEM TERMINATED, did not complete) -- consistent with the
-! established pattern that further intervention at this specific corner
-! tends to hurt, even numerical-scheme tweaks, not just BC/mesh. Paused
-! here -- plain LNSRCH,ON with the original NSUBST,10,80,2 schedule stands
-! as the best result found. See t_growth_cylinder_shell_a015_lnsrch.dat
+! errors, PROBLEM TERMINATED, did not complete). A mesh-only diagnostic
+! (ELIST/NLIST, no solve) located element 2454 precisely: theta~7.2deg
+! (near the theta=0 free edge), near the R_MID interface, away from
+! Z=0/Z=LEN -- a DIFFERENT corner than 5101 (Z=0, mid-arc). Retried the
+! 4th pre-LNSRCH attempt (theta-edge NROTAT+D,,UY,0), this time WITH
+! LNSRCH,ON, now that the theta edge is specifically implicated: still
+! WORSE (element 5941, 3 errors, did not complete) -- the theta-edge
+! constraint hurts regardless of LNSRCH. Six attempts beyond plain LNSRCH
+! now, all worse. Paused here -- plain LNSRCH,ON with the original
+! NSUBST,10,80,2 schedule stands as the best result found. See
+! t_growth_cylinder_shell_a015_lnsrch.dat
 ! (the working alpha=0.015+LNSRCH deck, kept as a separate file rather than
 ! changing this deck's own verified alpha=0.01 baseline) and
 ! out_a015_lnsrch.txt / growth_cylinder_a015_lnsrch_result.txt for the
