@@ -846,3 +846,39 @@ to use — a mismatch worth resolving deliberately (e.g. sub-stepping the
 ecology call internally per usermat call) rather than by picking a
 smaller outer `TIME`/`NSUBST` on this deck, which was not designed around
 the ecology ODE's own time scale.
+
+**Same day, the guard added and verified against the exact failure above.**
+Added a two-part guard at the wiring's ecology call: (1) refuse outright
+above `DTMAX_ECO=1.0D-4` (a Python `dt` sweep — not just this one deck —
+found the failure mode is not a clean monotonic threshold: results turn
+erratic starting around `dt≈1.5e-3`, sometimes a large-but-plausible
+`gamma`, sometimes an exact `±1e6` clamp, sometimes deceptively normal-
+looking again at a still-larger `dt`; `1e-4` sits with margin below where
+that sweep first showed trouble); (2) even under that cutoff, sanity-check
+the returned state before committing it — `phi_tot` must be a physically
+valid fraction-of-fractions (`≤1.5` with slack), `|gamma|` bounded well
+under the observed `~1e6` failure clamp, every component finite — so a bad
+result at a `dt`/`theta`/state combination this one sweep did not happen to
+probe is still caught. On failure either way: hold `alpha` at
+`ustatev(84)`'s last committed value and request a cut-back (`keycut=1`)
+instead of committing a diverged ecology state.
+
+Rerun of the same `ds_oliver_wired_ecology.dat` smoke test that produced
+§8's 1-error failure: **`NUMBER OF ERROR MESSAGES = 0`** this time —
+`***** PROBLEM TERMINATED *****`, but now via
+`"The user material routine for element 8 has set the bisection key"`
+(the same element that previously distorted) repeated across ANSYS's own
+bisection attempts, i.e. the exact case the guard was built for, correctly
+intercepted and converted from a silent bad result into an explicit,
+correctly-signalled cut-back request. ANSYS still cannot complete this
+particular run: its own bisection range does not reach the ~1000x
+reduction needed to get this deck's `TIME INC=0.1` under `DTMAX_ECO`, and
+this deck's stepping is set by Workbench-compiled solution controls, not
+an editable `NSUBST` in the `.dat` text, so loosening it from here is not
+a quick edit. That remaining gap is a **step-size mismatch between this
+specific deck and the ecology ODE's verified regime**, not a guard defect
+— the guard's job (never commit or silently pass through a divergent
+result) is confirmed done. A deck built around the ecology ODE's own time
+scale (`TIME,1.0E-4`/`NSUBST,10`, the way every `t_growth_cylinder_ecology*
+.dat` in this repo already is) is the natural next test, rather than
+retrofitting this specific elastic-scale deck further.
