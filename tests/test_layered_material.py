@@ -118,7 +118,7 @@ _MACRO = _ROOT / "generate_abaqus_eigenstrain.py"
 
 
 def _extractor_header():
-    m = re.search(r'^\s*header\s*=\s*"([^"]+)"', _EXTRACTOR.read_text(),
+    m = re.search(r'^\s*header\s*=\s*"([^"]+)"', _EXTRACTOR.read_text(encoding="utf-8"),
                   re.MULTILINE)
     assert m, f"no header literal found in {_EXTRACTOR.name}"
     return m.group(1).split(",")
@@ -171,7 +171,7 @@ def test_generator_reads_the_per_condition_macro_columns(tmp_path):
     neither -- so it could not read either producer. The names are taken from
     the consumer that defines the schema rather than restated here.
     """
-    src = _MACRO.read_text()
+    src = _MACRO.read_text(encoding="utf-8")
     block = src[src.index("result = {"):src.index('"path": path')]
     cols = re.findall(r'"(\w+)":\s*d\[', block)
     assert {"depth_mm", "alpha_monod"} <= set(cols), cols
