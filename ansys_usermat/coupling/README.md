@@ -183,6 +183,51 @@ meet at a single, well-defined interface.
 > [`out_multi_baseline.txt`](../apdl/out_multi_baseline.txt) /
 > [`growth_result_multi_baseline.txt`](../apdl/growth_result_multi_baseline.txt).
 
+> **2026-09-07, same day: extended off the synthetic F=I-forced decks onto
+> real, unconstrained geometry -- `t_growth_cylinder_ecology.dat`, VERIFIED.**
+> Everything above (`t_growth_ecology.dat`, `t_growth_ecology_multi.dat`) used
+> a fully-constrained unit cube/cube, closed-form-checkable but geometrically
+> nothing like a tooth surface. This deck reuses `t_growth_cylinder_shell.dat`'s
+> real two-layer curved-shell geometry (bonded substrate + growth layer,
+> genuinely deforming, no forced F=I) and splits the growth layer into two
+> materials by initial ecology seed -- one all-zero (the same
+> `INIT_ECO_IF_ZERO` default every other test uses), one an explicit
+> synthetic composition with more biomass up front -- standing in for a
+> spatially-varying CLSM measurement (still a placeholder; see next-steps
+> below). No TMCMC calibration either: theta stays `THETA_DEMO`, deliberately
+> -- this deck tests the *spatial/FEM* machinery, which is orthogonal to
+> calibration accuracy (RESEARCH_MODEL.md sec.7 item 3).
+>
+> First attempt reused the base deck's full ARC=60/LEN=3.0 mesh (12240
+> elements) and was killed after 14 minutes of near-zero CPU: every
+> Gauss point of every growth-layer element makes a socket round trip per
+> Newton iteration per substep, so element count costs far more here than
+> in the pure-Fortran inline core. **ANSYS access on this machine is only
+> good through 2026-09-08** (see the project's `ansys_access_window_2026-09`
+> note), so the geometry was shrunk (ARC=5, LEN=0.15, same radii/ESIZE/BCs)
+> to 54 elements -- still real, unconstrained, curved, two-material geometry,
+> just a smaller patch of it.
+>
+> Result: 0 errors, 157s solve. Both regions' final alpha (`SVAR(10)`) match
+> `ecology_cylinder_reference.py`'s independent 10-step chained
+> `ecology_step` trajectory exactly to displayed precision (mat 2/region A:
+> 4.5687e-3 vs. reference 4.568735e-3; mat 3/region B: 2.8868e-3 vs.
+> reference 2.886820e-3) -- and the two regions are genuinely different from
+> each other, a real non-uniform alpha(x) produced by live ecology on a
+> deforming geometry, not a closed-form identity. A follow-up sensitivity
+> check (`ecology_theta_sensitivity.py`) found this specific result --
+> region A's default seed growing faster than region B's synthetic seed --
+> is **stable across 9 theta variants** (weak/strong/sign-flipped/5 random),
+> B/A ratio staying in 0.62-0.63 throughout: at this short integration
+> horizon (10 steps of dt=1e-5) the outcome is dominated by the seed
+> composition, not by theta, so using the uncalibrated `THETA_DEMO`
+> placeholder here is unlikely to be hiding a qualitatively different
+> answer -- though it may also mean the model's theta-sensitivity is weak
+> at this horizon specifically, which is worth checking again over a longer
+> integration once TMCMC calibration exists. See
+> [`out_cylinder_ecology.txt`](../apdl/out_cylinder_ecology.txt) /
+> [`growth_result_cylinder_ecology.txt`](../apdl/growth_result_cylinder_ecology.txt).
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -232,6 +277,9 @@ field on the wire (absent = the material request above, backward compatible):
 | `../apdl/t_growth_ecology.dat` | real-ANSYS single-element smoke test for the ecology hook (fully constrained, `F=I`) — see the 2026-09-07 Status note above |
 | `../apdl/t_growth_ecology_multi.dat` | 8-element extension of the above — resolved (~12s, 0 errors, default MPI thread/rank count) after the two concurrency fixes; see the second 2026-09-07 Status note |
 | `../apdl/t_growth_kusepy_multi.dat`, `../apdl/t_growth_multi_baseline.dat` | diagnostic decks that isolated the two concurrency bugs (material hook only; no Python hook at all) — kept as regression evidence |
+| `../apdl/t_growth_cylinder_ecology.dat` | real, unconstrained curved two-material geometry (extends `t_growth_cylinder_shell.dat`) with live ecology driving two spatially distinct growth-layer regions — verified; see the third 2026-09-07 Status note |
+| `../apdl/ecology_cylinder_reference.py` | independent reference for the above — chains `ecology_jax.ecology_step` 10x (matching the deck's 10 fixed dt=1e-5 substeps) for each region's seed |
+| `../apdl/ecology_theta_sensitivity.py` | checks whether the cylinder-ecology deck's region-A-grows-faster result depends on `THETA_DEMO`'s specific numbers (it doesn't, across 9 variants tried) — see the Status note |
 
 ## Two integration mechanisms
 
@@ -336,9 +384,10 @@ check passes either way.
    once the model is stable (lower per-Gauss-point latency).
 4. ~~Live per-Gauss-point Python call for the growth driver (e.g. the 0D
    Hamilton ODE) rather than a precomputed field~~ — done 2026-09-07 on
-   IKMHIWI03, gfortran driver AND real ANSYS, see the Status note above.
-   What's left on this specific path (not blocking, but needed before the
-   result means anything physically):
+   IKMHIWI03, gfortran driver AND real ANSYS (single-element, multi-element,
+   AND real unconstrained curved geometry — `t_growth_cylinder_ecology.dat`),
+   see the Status notes above. What's left on this specific path (not
+   blocking, but needed before the result means anything physically):
    - **Feed the actual TMCMC-calibrated theta** into `prop(10:29)` instead
      of the demo's `THETA_DEMO` placeholder — needs a generator analogous
      to `composition_to_material.py`'s `apdl_state_block`.

@@ -4,8 +4,22 @@
 !     "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
 !         -i t_growth_cylinder_shell.dat -o out_cyl.txt
 !
-! STATUS, 2026-08-20 (IKMHIWI03): UNRESOLVED -- does not converge yet, but
-! narrowing. Two real bugs on the way to a running deck were found and fixed
+! STATUS, 2026-08-20 (IKMHIWI03): RESOLVED for the working value below
+! (alpha=0.01, converges clean, 0 errors) -- corrected 2026-09-07 after this
+! header was found stale (it still said "does not converge yet" after the
+! fix landed; only the TBDATA alpha comment and README.md had been updated).
+! What's genuinely still open is narrower than this header used to imply:
+! alpha=0.01 converges; alpha>=0.015 still fails with the same corner
+! distortion (see "WHY THIS CASE" below and README.md). That is a separate,
+! unresolved question (a real capacity/buckling limit, not a meshing bug --
+! see the "two-lobe bulge" note near the alpha TBDATA line) and is NOT what
+! blocks using this geometry at the working alpha. See
+! t_growth_cylinder_ecology.dat for a live-ecology-driven extension of this
+! same geometry (ansys_usermat/coupling/README.md next-steps #4), which
+! stays well under the 0.01 threshold by construction.
+!
+! Original debugging narrative below, kept for the record. Two real bugs on
+! the way to a running deck were found and fixed
 ! (see the "geometry" and "mesh" comments below): (1) VGLUE silently drops
 ! MAT attributes across its own volume renumbering, (2) a per-volume element
 ! size that is coarser than the thinner layer's own thickness produces a

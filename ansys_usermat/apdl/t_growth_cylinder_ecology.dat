@@ -1,0 +1,270 @@
+! t_growth_cylinder_ecology.dat --- two-layer curved-shell smoke test, LIVE
+! per-Gauss-point 0D Hamilton ecology driving alpha (kUseEcology=1), instead
+! of a prescribed alpha field -- extends t_growth_cylinder_shell.dat (real,
+! unconstrained curved geometry) with ansys_usermat/coupling/ (verified so
+! far only on synthetic F=I-forced unit-cube/cube decks:
+! t_growth_ecology.dat, t_growth_ecology_multi.dat).
+!
+! WHY THIS DECK
+! -------------
+! coupling/README.md's next-steps #4 ("live per-Gauss-point ecology, not a
+! precomputed alpha field") was verified only on fully-constrained decks
+! (F=I forced everywhere, closed-form-checkable). This deck is the next
+! step: the SAME live ecology bridge, but on a real, unconstrained,
+! multi-material curved geometry (the tooth-surface-proxy two-layer shell
+! from t_growth_cylinder_shell.dat) where stress genuinely depends on the
+! solved deformation, not a forced F=I.
+!
+! No TMCMC calibration is used here (deliberately -- direction from
+! 2026-09-07): theta stays the same THETA_DEMO placeholder every other
+! ecology test uses. This deck exercises the SPATIAL/FEM machinery -- does
+! a live per-Gauss-point ecology call under real deformation produce a
+! coherent, non-uniform growth/stress field? -- which is orthogonal to
+! calibration accuracy; see RESEARCH_MODEL.md sec.7 item 3.
+!
+! SPATIAL VARIATION: two ecology seed compositions
+! -------------------------------------------------
+! The growth layer (mat 2 in the base deck) is split into two materials by
+! initial composition, standing in for a spatially-varying CLSM measurement
+! (still a placeholder -- see coupling/README.md next-steps #4's other open
+! item):
+!   mat 2, theta in [0, ARC/2]:   all-zero ecology seed -> INIT_ECO_IF_ZERO's
+!                                 default_initial_state() (the seed every
+!                                 other ecology test uses)
+!   mat 3, theta in [ARC/2, ARC]: explicit synthetic seed, more biomass up
+!                                 front (phi sums to 0.70 instead of ~0.37)
+!                                 -- picked only to be visibly different
+!                                 from mat 2's seed, not measured data
+! Both share identical growth-layer material constants and theta -- they
+! differ ONLY in ustatev(15:26)'s initial value. See
+! ecology_cylinder_reference.py for the independent reference trajectory
+! (ecology_jax.ecology_step chained 10x, matching this deck's 10 fixed
+! dt=1e-5 substeps) each seed produces: alpha_A ~ 4.5687e-3, alpha_B ~
+! 2.8868e-3 -- confirming the two seeds DO grow at different rates (not
+! obviously predictable which is faster -- nonlinear reaction dynamics, not
+! a monotonic function of initial biomass) and that both stay well under
+! this deck's own known 0.01 convergence threshold (see
+! t_growth_cylinder_shell.dat's header) before spending a real ANSYS run
+! confirming it.
+!
+! TIME STEPPING: fixed, not ramped
+! ---------------------------------
+! Unlike the base deck (TIME is a pseudo-time for load ramping, eta=0 so no
+! real time-dependence there), TIME genuinely sets the ecology ODE's dt
+! here. TIME,1.0E-4 / NSUBST,10 (AUTOTS,OFF, no ramping) gives exactly 10
+! equal substeps of dTime=1.0E-5 each -- the same per-step magnitude
+! t_growth_ecology.dat's single-element smoke test already verified against
+! the Python reference, just chained across 10 committed increments instead
+! of one.
+!
+! MESH SIZE: deliberately much smaller footprint than t_growth_cylinder_shell.dat
+! -----------------------------------------------------------------------------
+! First attempt reused that deck's ARC=60/LEN=3.0 unchanged (same ESIZE) and
+! meshed to 12240 elements -- fine for the pure-Fortran inline core, but with
+! kUseEcology=1 every Gauss point of every growth-layer element makes a
+! socket round trip to material_server.py per Newton iteration per substep.
+! Killed after 14 minutes of near-zero CPU (I/O-bound on the socket, not
+! computing) -- ANSYS access is only good for two days
+! (see ansys_access_window_2026-09 project note), so a smoke test that can't
+! finish in that window is worse than a smaller one that can. ARC/LEN
+! shrunk ~12x/20x from the base deck (order-of-magnitude fewer elements);
+! everything else (radii, ESIZE, BCs, materials) is unchanged.
+!
+! STATUS: VERIFIED, 2026-09-07 on IKMHIWI03 (real ANSYS, link_v222.ps1
+! -WorkDir F:\biofilm_upf_kusepy, material_server.py on 127.0.0.1:8765).
+! 54 elements, 0 errors, 157s solve. Both regions' final alpha (SVAR 10)
+! match ecology_cylinder_reference.py's independent 10-step chained
+! ecology_step trajectory EXACTLY to displayed precision:
+!   mat 2 (region A, default seed):  alpha = 0.45687E-002  (ref 4.568735e-03)
+!   mat 3 (region B, synthetic seed): alpha = 0.28868E-002  (ref 2.886820e-03)
+! Each region's alpha is uniform within itself (0D, no diffusion between
+! Gauss points -- expected) but genuinely different between regions: a real
+! non-uniform alpha(x) produced by live per-Gauss-point ecology on an
+! unconstrained, curved, two-material geometry -- not the F=I-forced
+! unit-cube/cube decks this bridge was verified on before. See
+! out_cylinder_ecology.txt / growth_result_cylinder_ecology.txt.
+!
+! Run (from a writable working directory, e.g. F:\biofilm_upf_kusepy, with
+! ansys_usermat/coupling/material_server.py listening on 127.0.0.1:8765):
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_cylinder_ecology.dat -o out_cylinder_ecology.txt
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - two-layer cylindrical shell, live ecology-driven alpha
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar; see t_growth_constrained.dat's KEYOPT sweep
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 0.15                 ! shrunk from t_growth_cylinder_shell.dat's 3.0
+ARC   = 5                    ! shrunk from t_growth_cylinder_shell.dat's 60
+                              ! -- see the header's "MESH SIZE" note: keeps
+                              ! total element count tractable for the
+                              ! per-Gauss-point ecology socket bridge
+
+! ---- geometry: two radial layers of a partial hollow cylinder --------------
+! Same construction as t_growth_cylinder_shell.dat (see its header for why
+! VGLUE/VATT are avoided): mesh each volume under its own default MAT
+! pointer, then bond the interface with NUMMRG.
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm)
+
+! ---- substrate material (mat 1): unchanged from t_growth_cylinder_shell.dat
+! -- no ecology, no growth (alpha = 0; nProp=6 so usermat_biofilm.f's
+! nProp>=8 gate on KUSEECO never fires).
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0     ! Fv(1,1..3), Fv(2,1..3)
+TBDATA,7,0.0,0.0,1.0                  ! Fv(3,1..3)
+TBDATA,10,0.0                         ! alpha = 0: substrate does not grow
+
+! ---- growth-layer materials (mat 2, mat 3): same hyperelastic constants as
+! the base deck, kUseEcology=1 (prop(8)), k_alpha=50 (prop(9), same value
+! t_growth_ecology.dat verified), theta = THETA_DEMO placeholder (prop
+! (10:29) -- NOT TMCMC-calibrated, see the header note above). prop(6)=
+! kUsePy=0, prop(7)=kStateMat=0: only the growth driver goes through the
+! live bridge here, the stress law itself stays the verified inline
+! Fortran core. mat 2 and mat 3 are IDENTICAL in this block -- they differ
+! only in their TB,STATE seed below.
+TB,USER,2,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0            ! C10,C01,D1,eta,mtype,kUsePy
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79             ! kStateMat,kUseEcology,k_alpha,theta(1:3)
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10           ! theta(4:9)
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12          ! theta(10:15)
+TBDATA,25,0.32,1.49,2.10,2.41,2.50                ! theta(16:20)
+
+TB,USER,3,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+! mat 2: all-zero ecology seed -> INIT_ECO_IF_ZERO's default_initial_state()
+! (region A in ecology_cylinder_reference.py)
+TB,STATE,2,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0      ! Fv(1,1..3), Fv(2,1..3)
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0      ! Fv(3,1..3), alpha=0, ustatev(11:12)=0
+TBDATA,13,0.0,0.0,0.0,0.0,0.0,0.0     ! ustatev(13:14)=0, g phi(1:4)=0
+TBDATA,19,0.0,0.0,0.0,0.0,0.0,0.0     ! g phi(5)=0, phi0=0, psi(1:4)=0
+TBDATA,25,0.0,0.0                     ! g psi(5)=0, gamma=0
+
+! mat 3: explicit synthetic seed, more biomass up front (phi sums to 0.70)
+! -- region B in ecology_cylinder_reference.py. A stand-in for a spatially
+! varying CLSM measurement, not measured data.
+TB,STATE,3,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.05,0.05,0.15,0.25 ! ustatev(13:14)=0, g phi(1:4)=.05,.05,.15,.25
+TBDATA,19,0.20,0.30,0.999,0.999,0.999,0.999  ! g phi(5)=.20, phi0=.30, psi(1:4)=.999
+TBDATA,25,0.999,0.0                   ! g psi(5)=.999, gamma=0
+
+! ---- mesh -- coarse, smoke test only, same ESIZE as t_growth_cylinder_shell.dat
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+! ---- split the growth layer into the two ecology-seed regions --------------
+! Mesh once under MAT,2 (VSWEEP above), then reassign the upper-theta half
+! to MAT,3 by element centroid -- simpler than splitting the volume before
+! meshing, and the two materials share identical growth-layer constants so
+! there is no risk of a swept mesh landing awkwardly across the boundary.
+CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+EMODIF,ALL,MAT,3
+CSYS,0
+
+ALLSEL
+NUMMRG,NODE,1.0E-4                    ! bond the two layers: merge coincident
+                                       ! nodes at the shared R_MID interface
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary conditions -- identical to t_growth_cylinder_shell.dat: bond
+! the substrate's inner surface, restrain the two flat axial-end faces
+! against out-of-plane motion (see that deck's header for why -- reused
+! here rather than re-derived).
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+! ---- solve -------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-4                   ! sets the ecology ODE's dt this time (see
+AUTOTS,OFF                    ! header) -- fixed, not ramped, unlike the
+NSUBST,10                     ! base deck's pseudo-time. 10 equal substeps
+                               ! of dTime=1.0E-5 each, chained.
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+! ---- report --------------------------------------------------------------
+/POST1
+SET,LAST
+/OUTPUT,growth_result_cylinder_ecology,txt
+PRNSOL,U,COMP
+NLIST,ALL,,,XYZ
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+! ecology state + growth driver, split by region so the two seeds' different
+! growth rates are directly comparable in the output
+ESEL,S,MAT,,2
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha, mat 2 (region A) elements
+PRESOL,SVAR,15                ! g(1)  = phi(1)
+PRESOL,SVAR,16                ! g(2)  = phi(2)
+PRESOL,SVAR,17                ! g(3)  = phi(3)
+PRESOL,SVAR,18                ! g(4)  = phi(4)
+PRESOL,SVAR,19                ! g(5)  = phi(5)
+PRESOL,SVAR,20                ! g(6)  = phi0
+PRESOL,SVAR,21                ! g(7)  = psi(1)
+PRESOL,SVAR,22                ! g(8)  = psi(2)
+PRESOL,SVAR,23                ! g(9)  = psi(3)
+PRESOL,SVAR,24                ! g(10) = psi(4)
+PRESOL,SVAR,25                ! g(11) = psi(5)
+PRESOL,SVAR,26                ! g(12) = gamma
+ESEL,S,MAT,,3
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha, mat 3 (region B) elements
+PRESOL,SVAR,15
+PRESOL,SVAR,16
+PRESOL,SVAR,17
+PRESOL,SVAR,18
+PRESOL,SVAR,19
+PRESOL,SVAR,20
+PRESOL,SVAR,21
+PRESOL,SVAR,22
+PRESOL,SVAR,23
+PRESOL,SVAR,24
+PRESOL,SVAR,25
+PRESOL,SVAR,26
+ALLSEL
+/OUTPUT
+FINISH
