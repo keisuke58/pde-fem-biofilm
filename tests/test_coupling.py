@@ -57,7 +57,7 @@ def test_socket_roundtrip():
     """Start the server, send one request as the Fortran client would, and
     check the wire response matches the in-process evaluation."""
     try:
-        srv = ms.socketserver.TCPServer(("127.0.0.1", 0), ms._Handler)
+        srv = ms._Server(("127.0.0.1", 0), ms._Handler)
     except OSError:
         pytest.skip("cannot bind a local socket in this environment")
     host, port = srv.server_address

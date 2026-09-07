@@ -52,7 +52,7 @@ def shim_exe():
 @pytest.fixture(scope="module")
 def server():
     try:
-        srv = ms.socketserver.TCPServer(("127.0.0.1", 0), ms._Handler)
+        srv = ms._Server(("127.0.0.1", 0), ms._Handler)
     except OSError:
         pytest.skip("cannot bind a local socket in this environment")
     threading.Thread(target=srv.serve_forever, daemon=True).start()

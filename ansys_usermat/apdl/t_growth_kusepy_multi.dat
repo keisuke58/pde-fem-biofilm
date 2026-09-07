@@ -1,0 +1,71 @@
+! t_growth_kusepy_multi.dat --- diagnostic: does the MATERIAL hook
+! (kUsePy=1, no ecology at all) hang under default ANSYS threading with
+! multiple elements, the same way t_growth_ecology_multi.dat did?
+!
+! Isolates whether the unresolved default-threading hang is in the shared
+! socket-bridge infrastructure (biofilm_py_eval.c / usermat_py_hook.f,
+! used by BOTH kUsePy and kUseEcology) or specific to the ecology-only
+! Fortran logic in usermat_biofilm.f (the kUseEcology block, INIT_ECO_IF_
+! ZERO, biofilm_ecology_hook). t_growth_multi_baseline.dat already showed
+! multi-element + custom USERMAT + default threading is fine with NO
+! Python hook at all (2.5s, 0 errors) -- this deck adds back kUsePy=1
+! only, to see if that alone reproduces the hang.
+!
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_kusepy_multi.dat -o out_kusepy_multi.txt
+! material_server.py must be listening on 127.0.0.1:8765 first.
+!
+! EXPECTED if this converges: the bug is specific to the ecology code path
+! in usermat_biofilm.f, not the shared socket bridge.
+! EXPECTED if this ALSO hangs: the bug is in the shared C/Fortran bridge
+! infrastructure itself (biofilm_py_eval.c / usermat_py_hook.f), and the
+! mutex fix, while a real and necessary correctness fix, did not fully
+! solve the concurrency problem.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - kUsePy material hook, multi-element
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+BLOCK,0,1,0,1,0,1
+ESIZE,0.5
+VMESH,1
+
+! prop: C10, C01, D1, eta, mtype, kUsePy=1 -- same as t_growth_kusepy.dat's
+! elastic_a005 case, 8 elements instead of 1, no ecology involved.
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,1.0
+
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.05
+
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,5.0
+NSUBST,1,10,1
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+ESEL,ALL
+/OUTPUT,growth_result_kusepy_multi,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10
+/OUTPUT
+FINISH

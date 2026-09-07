@@ -158,8 +158,36 @@ class _Handler(socketserver.StreamRequestHandler):
                 self.wfile.write(encode_error(exc))
 
 
+class _Server(socketserver.ThreadingTCPServer):
+    """Threaded so multiple persistent client connections can be serviced
+    concurrently, not just the first one ever accepted.
+
+    Found 2026-09-07 via a multi-element real-ANSYS run: ANSYS parallelises
+    with MPI, not (only) OpenMP threads within one process -- a multi-
+    element solve spawned 4 separate ANSYS.exe ranks, each opening its own
+    persistent connection to this server (biofilm_py_eval.c's "one
+    connection, reused for the whole run" design). Plain socketserver.
+    TCPServer services one accepted connection's entire lifetime (its
+    handler's `for line in self.rfile:` loop) before ever accepting the
+    next -- so rank 0's connection monopolised the server for the rest of
+    the run, and ranks 1-3 hung forever waiting for a response that could
+    never come. This was mistaken at first for a client-side data race
+    (fixed separately, and still a real, necessary fix for same-process
+    OpenMP-style concurrency -- see biofilm_py_eval.c) because the
+    observed symptom was so similar; it took reading the MPI "BAD
+    TERMINATION ... RANK 0/1/2/3" messages from a killed hung run to find
+    the real cause here.
+
+    Python's GIL still serialises the actual evaluate()/evaluate_ecology()
+    computation across threads, so this adds no real parallelism -- it
+    only stops the server from permanently starving every client after
+    the first."""
+    daemon_threads = True
+    allow_reuse_address = True
+
+
 def serve(host="127.0.0.1", port=8765):
-    with socketserver.TCPServer((host, port), _Handler) as srv:
+    with _Server((host, port), _Handler) as srv:
         print(f"material_server listening on {host}:{port}")
         srv.serve_forever()
 

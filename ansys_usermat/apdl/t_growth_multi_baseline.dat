@@ -1,0 +1,73 @@
+! t_growth_multi_baseline.dat --- diagnostic: does a multi-element deck hang
+! under ANSYS's default thread count even WITHOUT any Python hook at all
+! (kUsePy=0, kUseEcology absent -- pure inline BIOFILM_STRESS_CORE, no
+! sockets, no biofilm_py_bridge module calls whatsoever)?
+!
+! Isolates whether t_growth_ecology_multi.dat's unresolved default-threading
+! hang (coupling/README.md, 2026-09-07) is caused by the ecology/mutex code,
+! or is a pre-existing latent issue in "custom USERMAT + multiple elements +
+! default ANSYS threading" that nothing in this repo happened to test before
+! (every prior multi-element real-ANSYS run used the STOCK material, and
+! every prior custom-USERMAT real-ANSYS run used exactly one element).
+!
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_multi_baseline.dat -o out_multi_baseline.txt
+!
+! Same geometry/BC/substep recipe as t_growth_ecology_multi.dat (8 SOLID185,
+! fully constrained, NSUBST,1,1,1, TIME=1e-5) but prop(1:5) only -- same
+! shape as the ORIGINAL t_growth_constrained.dat's material block, just with
+! alpha=0.05 baked in via TBDATA,10 the same way and 8 elements instead of 1.
+!
+! EXPECTED if this converges under default threading: the bug is specific to
+! the Python-hook code path (kUsePy/kUseEcology), not multi-element custom
+! USERMAT execution in general -- SX=SY=SZ=-1.019275856e-04 (the original
+! elastic_a005 closed form) at every element.
+! EXPECTED if this ALSO hangs: the bug predates the ecology work entirely.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - multi-element baseline, no Python hook
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+BLOCK,0,1,0,1,0,1
+ESIZE,0.5
+VMESH,1
+
+! prop: C10, C01, D1, eta, mtype, kUsePy=0 -- identical to
+! t_growth_constrained.dat's elastic_a005 case, no Python hook anywhere.
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.05
+
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-5
+NSUBST,1,1,1
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+ESEL,ALL
+/OUTPUT,growth_result_multi_baseline,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10
+/OUTPUT
+FINISH

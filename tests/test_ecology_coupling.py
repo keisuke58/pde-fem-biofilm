@@ -87,7 +87,7 @@ def test_server_dispatches_ecology_by_kind():
     must still work unchanged -- the backward-compatibility guarantee
     protocol.py's docstring makes."""
     try:
-        srv = ms.socketserver.TCPServer(("127.0.0.1", 0), ms._Handler)
+        srv = ms._Server(("127.0.0.1", 0), ms._Handler)
     except OSError:
         pytest.skip("cannot bind a local socket in this environment")
     host, port = srv.server_address

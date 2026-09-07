@@ -2,8 +2,8 @@
  PRINT S    ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -51,8 +51,8 @@
       23 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -100,8 +100,8 @@
       18 -0.29998     -0.29998     -0.29998     -0.44475E-015  0.0000       0.0000     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -140,8 +140,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -187,8 +187,8 @@
       23  0.49714E-003
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -234,8 +234,8 @@
       18  0.49714E-003
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -272,8 +272,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -319,8 +319,8 @@
       23  0.32417     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -366,8 +366,8 @@
       18  0.32417     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -404,8 +404,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -451,8 +451,8 @@
       23  0.32445     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -498,8 +498,8 @@
       18  0.32445     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -536,8 +536,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -583,8 +583,8 @@
       23  0.21689     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -630,8 +630,8 @@
       18  0.21689     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -668,8 +668,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -715,8 +715,8 @@
       23  0.13448     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -762,8 +762,8 @@
       18  0.13448     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -800,8 +800,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -847,8 +847,8 @@
       23  0.56187E-009
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -894,8 +894,8 @@
       18  0.56187E-009
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -932,8 +932,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -979,8 +979,8 @@
       23  0.56187E-005
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1026,8 +1026,8 @@
       18  0.56187E-005
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1064,8 +1064,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1111,8 +1111,8 @@
       23  0.99433     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1158,8 +1158,8 @@
       18  0.99433     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1196,8 +1196,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1243,8 +1243,8 @@
       23  0.99421     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1290,8 +1290,8 @@
       18  0.99421     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1328,8 +1328,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1375,8 +1375,8 @@
       23  0.99424     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1422,8 +1422,8 @@
       18  0.99424     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1460,8 +1460,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1507,8 +1507,8 @@
       23  0.99436     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1554,8 +1554,8 @@
       18  0.99436     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1592,8 +1592,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1639,8 +1639,8 @@
       23  0.99435     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1686,8 +1686,8 @@
       18  0.99435     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1724,8 +1724,8 @@
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1771,8 +1771,8 @@
       23   259.94     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 
@@ -1818,8 +1818,8 @@
       18   259.94     
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
- Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+ Ansys Mechanical Enterprise Academic Research     
+ 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
 
   biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
 

@@ -95,156 +95,85 @@
           *****  MAPDL COMMAND LINE ARGUMENTS  *****
   BATCH MODE REQUESTED (-b)    = LIST
   INPUT FILE COPY MODE (-c)    = COPY
-  INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_ecology_multi.dat
-  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_ecology_multi_threaded.txt
+  INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_multi_baseline.dat
+  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_multi_baseline.txt
 
  RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
- CURRENT JOBNAME=file0  13:17:23  SEP 07, 2026 CP=      0.125
+ CURRENT JOBNAME=file0  13:11:10  SEP 07, 2026 CP=      0.094
  Note - This MAPDL version was linked by Licensee
-     1  ! t_growth_ecology_multi.dat --- multi-element extension of 
-     2  ! t_growth_ecology.dat: same fully-constrained unit cube, same closed-form  
-     3  ! answer, but subdivided into 8 SOLID185 elements instead of 1. 
-     4  !   
-     5  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^  
-     6  !       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt  
-     7  ! Same -custom / material_server.py preconditions as t_growth_ecology.dat.  
-     8  !   
-     9  ! STATUS, 2026-09-07 (IKMHIWI03): PARTIAL. Under `-np 1` (forced
-    10  ! single-threaded), this deck converges cleanly (0 errors) and all 8
-    11  ! elements independently reproduce t_growth_ecology.dat's closed-form   
-    12  ! answer exactly -- proving ustatev(15:26) stays isolated per Gauss point   
-    13  ! (no cross-talk between elements) and the ecology hook survives a real 
-    14  ! multi-element mesh, not just one point.   
+     1  ! t_growth_multi_baseline.dat --- diagnostic: does a multi-element deck hang
+     2  ! under ANSYS's default thread count even WITHOUT any Python hook at all
+     3  ! (kUsePy=0, kUseEcology absent -- pure inline BIOFILM_STRESS_CORE, no  
+     4  ! sockets, no biofilm_py_bridge module calls whatsoever)?   
+     5  !   
+     6  ! Isolates whether t_growth_ecology_multi.dat's unresolved default-threading
+     7  ! hang (coupling/README.md, 2026-09-07) is caused by the ecology/mutex code,
+     8  ! or is a pre-existing latent issue in "custom USERMAT + multiple elements +
+     9  ! default ANSYS threading" that nothing in this repo happened to test before
+    10  ! (every prior multi-element real-ANSYS run used the STOCK material, and
+    11  ! every prior custom-USERMAT real-ANSYS run used exactly one element).  
+    12  !   
+    13  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^  
+    14  !       -i t_growth_multi_baseline.dat -o out_multi_baseline.txt
     15  !   
-    16  ! Under ANSYS's DEFAULT thread count it does NOT complete. First symptom
-    17  ! (before the fix below): idle-blocked forever, near-zero CPU -- classic
-    18  ! deadlock signature. Root cause found: `biofilm_py_eval.c` kept ONE
-    19  ! global, unsynchronised TCP connection (`g_fd`) shared by every caller;
-    20  ! ANSYS parallelises element/Gauss-point material evaluation across worker  
-    21  ! threads by default, so concurrent unsynchronised send()/recv() calls on   
-    22  ! the same fd interleaved requests into malformed frames and a reply could  
-    23  ! be picked up by the wrong thread, leaving another thread blocked  
-    24  ! forever. Fixed with a mutex (SRWLOCK on Windows, pthread_mutex_t  
-    25  ! elsewhere) serialising the whole request/response exchange -- see 
-    26  ! biofilm_py_eval.c's 2026-09-07 note. That fix is real, necessary, and 
-    27  ! verified (compiles clean under MinGW and MSVC, full coupling/ecology  
-    28  ! pytest regression suite passes).  
-    29  !   
-    30  ! It does NOT, however, make this specific deck complete under default  
-    31  ! threading. Symptom changed shape -- now CPU-bound (not idle) with the 
-    32  ! Fortran-side ANSYS worker process alone burning CPU continuously past 
-    33  ! "There are no active degrees of freedom" in file.err, while   
-    34  ! material_server.py's own process barely uses any CPU at all (so very  
-    35  ! few ecology-hook round trips are actually happening -- this is not
-    36  ! "many slow socket calls serialized by the mutex", it looks like ANSYS 
-    37  ! itself is stuck somewhere after that log line). Left UNRESOLVED here, 
-    38  ! deliberately not chased further this session -- the next person picking   
-    39  ! this up should instrument usermat_biofilm.f (temporary WRITE  
-    40  ! statements, the same technique that found the Fv TBDATA bug in
-    41  ! t_growth_constrained.dat's own history) to see whether usermat() is   
-    42  ! being called an unexpected number of times, or attach a debugger to the   
-    43  ! CPU-bound worker process to get a stack trace while it spins, rather  
-    44  ! than guessing further blind.  
-    45  !   
-    46  ! WHY THIS CASE 
-    47  ! ------------- 
-    48  ! t_growth_ecology.dat proves the ecology hook's own math is right at ONE   
-    49  ! Gauss point. It does not exercise anything about MANY Gauss points calling
-    50  ! the socket bridge in the same solve: does ustatev(15:26) stay isolated
-    51  ! per integration point (no cross-talk between elements), does the server   
-    52  ! hold up under several times the request volume in one substep, does   
-    53  ! nothing race or interleave badly when ANSYS's Newton loop fires calls 
-    54  ! from multiple elements. This is the first thing that would actually break 
-    55  ! going from a single-element smoke test toward a real mesh -- so verify it 
-    56  ! before spending effort on spatially-varying composition/theta per element 
-    57  ! (not done here; see coupling/README.md next-steps).   
-    58  !   
-    59  ! Every node is still fully fixed (D,ALL,UX/UY/UZ,0 on the whole selection),
-    60  ! so F = I at every one of the 8 elements' integration points regardless of 
-    61  ! mesh density -- the closed-form answer from t_growth_ecology.dat still
-    62  ! applies, now checked at all 8 elements independently. theta and the   
-    63  ! initial composition are the SAME material (matID 1) for every element, so 
-    64  ! this deliberately does NOT test spatial variation -- only isolation and   
-    65  ! scale of the per-Gauss-point coupling.
-    66  !   
-    67  ! EXPECTED (confirmed under -np 1; not yet reached under default threading):
-    68  ! identical to t_growth_ecology.dat, at every one of the 8 elements (see
-    69  ! that file's header for the exact reference numbers):  
-    70  !   alpha_new = 4.971361400e-04, SX=SY=SZ = -2.9997736e-01, shear = 0,  
-    71  !   g_new as listed there -- reproduced independently via   
-    72  !   ecology_jax.default_initial_state() -> ecology_jax.ecology_step(...,
-    73  !   THETA_DEMO, 1e-5).  
-    74  !   
-    75  ! Run with the workaround for now:  
-    76  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -np 1 -custom .\ANSYS.exe ^
-    77  !       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt  
-    78      
-    79  FINISH  
-    80  /CLEAR  
-    81  /TITLE, biofilm USERMAT - 0D Hamilton ecology hook, multi-element   
-    82  /PREP7  
-    83      
-    84  ! ---- unit cube, 2x2x2 = 8 SOLID185 elements --------------------------------  
-    85  ET,1,SOLID185   
-    86  KEYOPT,1,2,0                 ! B-bar
-    87      
-    88  BLOCK,0,1,0,1,0,1   
-    89  ESIZE,0.5   
-    90  VMESH,1 
-    91      
-    92  ! ---- user material (identical to t_growth_ecology.dat) --------------------   
-    93  TB,USER,1,1,29  
-    94  TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0   
-    95  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79   
-    96  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1  
-    97  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
-    98  TBDATA,25,0.32,1.49,2.1,2.41,2.5
-    99      
-   100  TB,STATE,1,,26  
-   101  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
-   102  TBDATA,7,0.0,0.0,1.0
-   103  TBDATA,10,0.0   
-   104      
-   105  ! ---- fully constrained: forces F = I at every element's integration points -  
-   106  NSEL,ALL
-   107  D,ALL,UX,0  
-   108  D,ALL,UY,0  
-   109  D,ALL,UZ,0  
-   110  NSEL,ALL
-   111  FINISH  
-   112      
-   113  ! ---- solve -----------------------------------------------------------------  
-   114  /SOLU   
-   115  ANTYPE,STATIC   
-   116  NLGEOM,ON   
-   117  TIME,1.0E-5 
-   118  NSUBST,1,1,1
-   119  OUTRES,ALL,ALL  
-   120  OUTRES,SVAR,ALL 
-   121  SOLVE   
-   122  FINISH  
-   123      
-   124  ! ---- report: all 8 elements, not just element 1 ----------------------------  
-   125  /POST1  
-   126  SET,LAST
-   127  ESEL,ALL
-   128  /OUTPUT,growth_result_ecology_multi,txt 
-   129  PRESOL,S,COMP   
-   130  PRESOL,SVAR,10                ! alpha   
-   131  PRESOL,SVAR,15                ! g(1)  = phi(1)  
-   132  PRESOL,SVAR,16                ! g(2)  = phi(2)  
-   133  PRESOL,SVAR,17                ! g(3)  = phi(3)  
-   134  PRESOL,SVAR,18                ! g(4)  = phi(4)  
-   135  PRESOL,SVAR,19                ! g(5)  = phi(5)  
-   136  PRESOL,SVAR,20                ! g(6)  = phi0
-   137  PRESOL,SVAR,21                ! g(7)  = psi(1)  
-   138  PRESOL,SVAR,22                ! g(8)  = psi(2)  
-   139  PRESOL,SVAR,23                ! g(9)  = psi(3)  
-   140  PRESOL,SVAR,24                ! g(10) = psi(4)  
-   141  PRESOL,SVAR,25                ! g(11) = psi(5)  
-   142  PRESOL,SVAR,26                ! g(12) = gamma   
-   143  /OUTPUT 
-   144  FINISH  
+    16  ! Same geometry/BC/substep recipe as t_growth_ecology_multi.dat (8 SOLID185,
+    17  ! fully constrained, NSUBST,1,1,1, TIME=1e-5) but prop(1:5) only -- same
+    18  ! shape as the ORIGINAL t_growth_constrained.dat's material block, just with
+    19  ! alpha=0.05 baked in via TBDATA,10 the same way and 8 elements instead of 1.   
+    20  !   
+    21  ! EXPECTED if this converges under default threading: the bug is specific to
+    22  ! the Python-hook code path (kUsePy/kUseEcology), not multi-element custom  
+    23  ! USERMAT execution in general -- SX=SY=SZ=-1.019275856e-04 (the original   
+    24  ! elastic_a005 closed form) at every element.   
+    25  ! EXPECTED if this ALSO hangs: the bug predates the ecology work entirely.  
+    26      
+    27  FINISH  
+    28  /CLEAR  
+    29  /TITLE, biofilm USERMAT - multi-element baseline, no Python hook
+    30  /PREP7  
+    31      
+    32  ET,1,SOLID185   
+    33  KEYOPT,1,2,0
+    34      
+    35  BLOCK,0,1,0,1,0,1   
+    36  ESIZE,0.5   
+    37  VMESH,1 
+    38      
+    39  ! prop: C10, C01, D1, eta, mtype, kUsePy=0 -- identical to  
+    40  ! t_growth_constrained.dat's elastic_a005 case, no Python hook anywhere.
+    41  TB,USER,1,1,6   
+    42  TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0   
+    43      
+    44  TB,STATE,1,,10  
+    45  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
+    46  TBDATA,7,0.0,0.0,1.0
+    47  TBDATA,10,0.05  
+    48      
+    49  NSEL,ALL
+    50  D,ALL,UX,0  
+    51  D,ALL,UY,0  
+    52  D,ALL,UZ,0  
+    53  NSEL,ALL
+    54  FINISH  
+    55      
+    56  /SOLU   
+    57  ANTYPE,STATIC   
+    58  NLGEOM,ON   
+    59  TIME,1.0E-5 
+    60  NSUBST,1,1,1
+    61  OUTRES,ALL,ALL  
+    62  OUTRES,SVAR,ALL 
+    63  SOLVE   
+    64  FINISH  
+    65      
+    66  /POST1  
+    67  SET,LAST
+    68  ESEL,ALL
+    69  /OUTPUT,growth_result_multi_baseline,txt
+    70  PRESOL,S,COMP   
+    71  PRESOL,SVAR,10  
+    72  /OUTPUT 
+    73  FINISH  
 
  RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
 
@@ -259,14 +188,14 @@
  /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
 
  TITLE= 
-  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+  biofilm USERMAT - multi-element baseline, no Python hook                     
 
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Research     
- 00000000  VERSION=WINDOWS x64   13:17:24  SEP 07, 2026 CP=      0.266
+ 00000000  VERSION=WINDOWS x64   13:11:10  SEP 07, 2026 CP=      0.188
 
-  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+  biofilm USERMAT - multi-element baseline, no Python hook                     
 
  Note - This MAPDL version was linked by Licensee
 
@@ -306,36 +235,24 @@
 
  DEFINE DATA TABLE USER FOR MATERIAL 1 
  USER MATERIALS OPTION 
- WITH A MAXIMUM OF 29 DATA ITEMS
+ WITH A MAXIMUM OF 6 DATA ITEMS
  DATA FOR  USER  TABLE FOR MATERIAL   1 
- LOC=  1 1.00000e+00     0.00000e+00     1.00000e-02     0.00000e+00     0.00000e+00     0.00000e+00    
-
- DATA FOR  USER  TABLE FOR MATERIAL   1 
- LOC=  7 0.00000e+00     1.00000e+00     5.00000e+01     1.34000e+00     -1.80000e-01     1.79000e+00    
-
- DATA FOR  USER  TABLE FOR MATERIAL   1 
- LOC=  13 1.17000e+00     2.58000e+00     3.51000e+00     2.73000e+00     7.10000e-01     2.10000e+00    
-
- DATA FOR  USER  TABLE FOR MATERIAL   1 
- LOC=  19 3.70000e-01     2.05000e+00     -1.50000e-01     3.56000e+00     1.60000e-01     1.20000e-01    
-
- DATA FOR  USER  TABLE FOR MATERIAL   1 
- LOC=  25 3.20000e-01     1.49000e+00     2.10000e+00     2.41000e+00     2.50000e+00    
+ LOC=  1 2.00000e-04     0.00000e+00     5.00000e+03     0.00000e+00     0.00000e+00     0.00000e+00    
 
 
  DEFINE DATA TABLE  STAT  FOR MATERIAL     1
    USER DEFINED STATE VARIABLES OPTION                                             
-   Number of state variables is      26
-   WITH A MAXIMUM OF      1 TEMPERATURES AND      26 DATA POINTS
+   Number of state variables is      10
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      10 DATA POINTS
 
  DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
  LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
 
  DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
- LOC=  7  0.0000      0.0000      1.0000      0.0000      0.0000      0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000    
 
  DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
- LOC= 10  0.0000      0.0000      0.0000      0.0000      0.0000      0.0000    
+ LOC= 10 0.50000E-01
 
  ALL SELECT   FOR ITEM=NODE COMPONENT=    
   IN RANGE         1 TO         27 STEP          1
@@ -357,7 +274,7 @@
          27  NODES (OF         27  DEFINED) SELECTED BY NSEL  COMMAND.
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.266
+ ***** ROUTINE COMPLETED *****  CP =         0.188
 
 
 
@@ -382,7 +299,7 @@
  WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
    FOR ALL APPLICABLE ENTITIES
 
- *** NOTE ***                            CP =       0.391   TIME= 13:17:24
+ *** NOTE ***                            CP =       0.188   TIME= 13:11:10
  The automatic domain decomposition logic has selected the MESH domain   
  decomposition method with 4 processes per solution.                     
 
@@ -398,9 +315,9 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Research     
- 00000000  VERSION=WINDOWS x64   13:17:24  SEP 07, 2026 CP=      0.391
+ 00000000  VERSION=WINDOWS x64   13:11:10  SEP 07, 2026 CP=      0.188
 
-  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+  biofilm USERMAT - multi-element baseline, no Python hook                     
 
  Note - This MAPDL version was linked by Licensee
 
@@ -414,19 +331,19 @@
    NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
    GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
 
- *** WARNING ***                         CP =       0.422   TIME= 13:17:24
+ *** WARNING ***                         CP =       0.188   TIME= 13:11:10
  ANSYS,INC.-supplied version of coding for USERCK has been used.         
 
- *** NOTE ***                            CP =       0.422   TIME= 13:17:24
+ *** NOTE ***                            CP =       0.188   TIME= 13:11:10
  The step data was checked and warning messages were found.              
   Please review output or errors file ( F:\biofilm_upf_kusepy\file0.err  
  ) for these warning messages.                                           
 
- *** NOTE ***                            CP =       0.422   TIME= 13:17:24
+ *** NOTE ***                            CP =       0.188   TIME= 13:11:10
  This nonlinear analysis defaults to using the full Newton-Raphson       
  solution procedure.  This can be modified using the NROPT command.      
 
- *** NOTE ***                            CP =       0.422   TIME= 13:17:24
+ *** NOTE ***                            CP =       0.188   TIME= 13:11:10
  The conditions for direct assembly have been met.  No .emat or .erot    
  files will be produced.                                                 
 
@@ -466,31 +383,39 @@
 
 
  Range of element maximum matrix coefficients in global coordinates
- Maximum = 6.67010926 at element 2.                                      
- Minimum = 6.67010926 at element 6.                                      
+ Maximum = 1.143294951E-04 at element 8.                                 
+ Minimum = 1.143294951E-04 at element 2.                                 
 
    *** ELEMENT MATRIX FORMULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         8  SOLID185      0.188   0.023438
- Time at end of element matrix formulation CP = 1.046875.                
+        1         8  SOLID185      0.078   0.009766
+ Time at end of element matrix formulation CP = 0.609375.                
 
  ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
   FOR POSSIBLE RESUME FROM THIS POINT
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1406E-02
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5102E-04
 
- *** WARNING ***                         CP =       1.062   TIME= 13:17:26
+ *** WARNING ***                         CP =       0.609   TIME= 13:11:10
  There are no active degrees of freedom.                                 
      DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
     EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1435E-02 <<< CONVERGED
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1464E-02 <<< CONVERGED
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5206E-04 <<< CONVERGED
+
+ *** WARNING ***                         CP =       0.609   TIME= 13:11:10
+ A reference force value times the tolerance is used by the              
+ Newton-Raphson method for checking convergence.  The calculated         
+ reference FORCE CONVERGENCE VALUE = 9.362646578E-05 is less than a      
+ threshold.  This threshold is internally calculated.  You can           
+ overwrite it by specifying MINREF on the CNVTOL command.  Check         
+ results carefully.                                                      
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5312E-04 <<< CONVERGED
     >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   2
 
    *** ELEMENT RESULT CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         8  SOLID185      0.047   0.005859
+        1         8  SOLID185      0.016   0.001953
 
    *** NODAL LOAD CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
@@ -509,21 +434,21 @@
  FINISH SOLUTION PROCESSING
 
 
- ***** ROUTINE COMPLETED *****  CP =         1.141
+ ***** ROUTINE COMPLETED *****  CP =         0.828
 
 
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Research     
- 00000000  VERSION=WINDOWS x64   13:17:29  SEP 07, 2026 CP=      1.156
+ 00000000  VERSION=WINDOWS x64   13:11:10  SEP 07, 2026 CP=      0.828
 
-  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+  biofilm USERMAT - multi-element baseline, no Python hook                     
 
  Note - This MAPDL version was linked by Licensee
 
           ***** MAPDL RESULTS INTERPRETATION (POST1) *****
 
- *** NOTE ***                            CP =       1.156   TIME= 13:17:29
+ *** NOTE ***                            CP =       0.828   TIME= 13:11:10
  Reading results into the database (SET command) will update the current 
  displacement and force boundary conditions in the database with the     
  values from the results file for that load set.  Note that any          
@@ -535,19 +460,19 @@
 
  SET COMMAND GOT LOAD STEP=     1  SUBSTEP=     1  CUMULATIVE ITERATION=     2
    TIME/FREQUENCY= 0.10000E-04
- TITLE=  biofilm USERMAT - 0D Hamilton ecology hook, multi-element              
+ TITLE=  biofilm USERMAT - multi-element baseline, no Python hook               
 
  ALL SELECT   FOR ITEM=ELEM COMPONENT=    
   IN RANGE         1 TO          8 STEP          1
 
           8  ELEMENTS (OF          8  DEFINED) SELECTED BY  ESEL  COMMAND.
 
- /OUTPUT FILE= growth_result_ecology_multi.txt
+ /OUTPUT FILE= growth_result_multi_baseline.txt
 
  EXIT THE MAPDL POST1 DATABASE PROCESSOR
 
 
- ***** ROUTINE COMPLETED *****  CP =         1.156
+ ***** ROUTINE COMPLETED *****  CP =         0.859
 
 
 
@@ -560,13 +485,13 @@
   FOR POSSIBLE RESUME FROM THIS POINT
 
 
- NUMBER OF WARNING MESSAGES ENCOUNTERED=          2
+ NUMBER OF WARNING MESSAGES ENCOUNTERED=          3
  NUMBER OF ERROR   MESSAGES ENCOUNTERED=          0
 
 +--------------------- M A P D L   S T A T I S T I C S ------------------------+
 
 Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
-Date Run: 09/07/2026   Time: 13:17     Process ID: 34576
+Date Run: 09/07/2026   Time: 13:11     Process ID: 19752
 Operating System: Windows 10  (Build: 26200)
 
 Processor Model: Intel(R) Core(TM) Ultra 5 235
@@ -589,7 +514,7 @@ MPI Version: Intel(R) MPI Library 2021.5 for Windows* OS
 GPU Acceleration: Not Requested
 
 Job Name: file0
-Input File: t_growth_ecology_multi.dat
+Input File: t_growth_multi_baseline.dat
 
   Core                Machine Name   Working Directory
  -----------------------------------------------------
@@ -598,21 +523,21 @@ Input File: t_growth_ecology_multi.dat
      2                   ikmhiwi03   F:\biofilm_upf_kusepy
      3                   ikmhiwi03   F:\biofilm_upf_kusepy
  
-Latency time from master to core     1 =    4.966 microseconds
-Latency time from master to core     2 =    3.342 microseconds
-Latency time from master to core     3 =    2.741 microseconds
+Latency time from master to core     1 =    3.311 microseconds
+Latency time from master to core     2 =    3.343 microseconds
+Latency time from master to core     3 =    2.636 microseconds
  
-Communication speed from master to core     1 =  9052.03 MB/sec
-Communication speed from master to core     2 = 13851.85 MB/sec
-Communication speed from master to core     3 = 10843.49 MB/sec
+Communication speed from master to core     1 = 10464.77 MB/sec
+Communication speed from master to core     2 = 13019.99 MB/sec
+Communication speed from master to core     3 = 11263.16 MB/sec
 
-Total CPU time for main thread                    :        0.8 seconds
-Total CPU time summed for all threads             :        1.4 seconds
+Total CPU time for main thread                    :        0.6 seconds
+Total CPU time summed for all threads             :        1.0 seconds
 
 Elapsed time spent obtaining a license            :        1.4 seconds
 Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
 Elapsed time spent solution - preprocessing       :        0.0 seconds
-Elapsed time spent computing solution             :        5.3 seconds
+Elapsed time spent computing solution             :        0.1 seconds
 Elapsed time spent solution - postprocessing      :        0.0 seconds
 Elapsed time spent post-processing model (/POST1) :        0.0 seconds
  
@@ -643,7 +568,7 @@ Total amount of I/O read from disk                :        0.0 GB
  |                                                                           |
  |---------------------------------------------------------------------------|
  |                                                                           |
- |        CP Time      (sec) =          1.391       Time  =  13:17:29        |
- |        Elapsed Time (sec) =         12.000       Date  =  09/07/2026      |
+ |        CP Time      (sec) =          1.000       Time  =  13:11:10        |
+ |        Elapsed Time (sec) =          2.000       Date  =  09/07/2026      |
  |                                                                           |
  *---------------------------------------------------------------------------*
