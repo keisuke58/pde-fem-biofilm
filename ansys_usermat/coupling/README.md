@@ -259,6 +259,26 @@ meet at a single, well-defined interface.
 > [`out_cylinder_ecology_4region.txt`](../apdl/out_cylinder_ecology_4region.txt) /
 > [`growth_result_cylinder_ecology_4region.txt`](../apdl/growth_result_cylinder_ecology_4region.txt).
 
+> **2026-09-07, same day: full 3D composition field —
+> `t_growth_cylinder_ecology_8region.dat`, VERIFIED.** One more axis: the
+> growth layer's radial half-split (R_MID vs R_OUT side) is not arbitrary —
+> depth from the substrate is exactly what a real CLSM z-stack profiles, so
+> this is a genuinely motivated third axis, not just "add more regions."
+> 2x2x2 (R x theta x Z) grid, 8 materials, seeds A–D reused from the
+> 4-region deck (near-substrate half), E–H new (near-surface half). Result:
+> 0 errors, 11 benign warnings, all eight regions' alpha (`SVAR(10)`) match
+> `ecology_8region_reference.py`'s independent reference exactly: A
+> 4.5687e-3, B 2.8868e-3, C 1.3122e-6, D 1.7898e-3, E 1.5979e-3, F
+> 1.6777e-3, G 1.4727e-3, H 2.1593e-6 — still spanning >3 orders of
+> magnitude, with the two lowest values (C, H) both being single-dominant-
+> species compositions, an emergent pattern under `THETA_DEMO` rather than
+> something picked for that outcome. This is the most spatially-realistic
+> configuration the live ecology bridge has been exercised on to date: a
+> genuine 3D (R, theta, Z) composition-driven alpha(x) field on real,
+> unconstrained, curved geometry. See
+> [`out_cylinder_ecology_8region.txt`](../apdl/out_cylinder_ecology_8region.txt) /
+> [`growth_result_cylinder_ecology_8region.txt`](../apdl/growth_result_cylinder_ecology_8region.txt).
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -314,6 +334,8 @@ field on the wire (absent = the material request above, backward compatible):
 | `../apdl/t_growth_cylinder_ecology_big.dat` | same patch scaled ~8x (54→432 elements) — scale-invariance check, identical alpha result — see the fourth 2026-09-07 Status note |
 | `../apdl/t_growth_cylinder_ecology_4region.dat` | growth layer split into a 2x2 (theta x Z) grid of 4 materials/seeds instead of 2 — genuine 2D spatial variation, alpha spans ~3 orders of magnitude — see the fifth 2026-09-07 Status note |
 | `../apdl/ecology_4region_reference.py` | independent reference for the above — same chained `ecology_step` logic, 4 seeds |
+| `../apdl/t_growth_cylinder_ecology_8region.dat` | full 3D (R x theta x Z) 2x2x2 grid, 8 materials/seeds — genuine depth-resolved composition field, alpha spans >3 orders of magnitude — see the sixth 2026-09-07 Status note |
+| `../apdl/ecology_8region_reference.py` | independent reference for the above — same chained `ecology_step` logic, 8 seeds |
 
 ## Two integration mechanisms
 

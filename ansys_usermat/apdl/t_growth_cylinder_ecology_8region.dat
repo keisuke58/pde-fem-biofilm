@@ -1,0 +1,236 @@
+! t_growth_cylinder_ecology_8region.dat --- extends
+! t_growth_cylinder_ecology_4region.dat: same small curved-shell patch
+! (ARC=5, LEN=0.15), but the growth layer is now split into EIGHT
+! materials, a full 2x2x2 grid (R x theta x Z) instead of the 2x2 (theta x
+! Z) grid. The new R split is not an arbitrary third axis: radial position
+! within the thin growth layer is depth from the substrate, i.e. exactly
+! the axis a real CLSM z-stack profiles -- near-substrate half (R_MID side,
+! seeds A/B/C/D, reused unchanged from the 4-region deck) stands in for
+! biofilm base composition, near-surface half (R_OUT side, new seeds
+! E/F/G/H) for composition at the exposed biofilm surface. Still
+! THETA_DEMO, still not calibrated -- this is a spatial/FEM machinery
+! test, not a physical prediction.
+!
+! STATUS: VERIFIED, 2026-09-07 on IKMHIWI03 (real ANSYS, -WorkDir
+! F:\biofilm_upf_kusepy2, material_server.py on 127.0.0.1:8765). 0 errors.
+! All eight regions' final alpha (SVAR 10) match the independent Python
+! reference (chained ecology_step, dt=1e-5 x10, THETA_DEMO) exactly:
+!   A (mat2, near-substrate): 4.5687349611e-03   E (mat6, near-surface): 1.5978960098e-03
+!   B (mat3, near-substrate): 2.8868200718e-03   F (mat7, near-surface): 1.6777078558e-03
+!   C (mat4, near-substrate): 1.3122276728e-06   G (mat8, near-surface): 1.4726633726e-03
+!   D (mat5, near-substrate): 1.7898065860e-03   H (mat9, near-surface): 2.1593302707e-06
+! spanning >3 orders of magnitude across a genuinely 3D (R, theta, Z)
+! composition field -- the two lowest values (C, H) are both single-
+! dominant-species compositions, an emergent pattern under THETA_DEMO, not
+! something picked for that outcome. See out_cylinder_ecology_8region.txt
+! / growth_result_cylinder_ecology_8region.txt.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - two-layer cylindrical shell, 8-region live ecology
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+R_SPLIT = 4.35                       ! midpoint of the growth layer (4.3-4.4)
+LEN   = 0.15
+ARC   = 5
+
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+
+! ---- substrate (mat 1): no ecology, no growth
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- growth-layer materials (mat 2..9): identical constants/theta, differ
+! only in TB,STATE seed
+*DO,IMAT,2,9
+TB,USER,IMAT,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+*ENDDO
+
+! mat 2 (region A, outer): all-zero -> INIT_ECO_IF_ZERO default
+TB,STATE,2,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.0,0.0,0.0,0.0
+TBDATA,19,0.0,0.0,0.0,0.0,0.0,0.0
+TBDATA,25,0.0,0.0
+
+! mat 3 (region B, outer): existing synthetic seed
+TB,STATE,3,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.05,0.05,0.15,0.25
+TBDATA,19,0.20,0.30,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+! mat 4 (region C, outer): sparse, uneven
+TB,STATE,4,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.10,0.02,0.02,0.02
+TBDATA,19,0.04,0.10,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 5 (region D, outer): low, uniform
+TB,STATE,5,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.02,0.02,0.02,0.02
+TBDATA,19,0.02,0.05,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 6 (region E, inner): very sparse/early colonization
+TB,STATE,6,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.01,0.01,0.01,0.01
+TBDATA,19,0.01,0.02,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 7 (region F, inner): heavy base biofilm (species 1,2 dominant)
+TB,STATE,7,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.15,0.15,0.05,0.05
+TBDATA,19,0.05,0.40,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 8 (region G, inner): alternating pattern
+TB,STATE,8,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.03,0.08,0.03,0.08
+TBDATA,19,0.03,0.15,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 9 (region H, inner): single dominant species
+TB,STATE,9,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.25,0.01,0.01,0.01
+TBDATA,19,0.01,0.05,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+! ---- split the growth layer into a 2x2x2 (R x theta x Z) grid ------------
+CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_MID,R_SPLIT
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,0,LEN/2
+EMODIF,ALL,MAT,3                       ! near-substrate, upper-theta, lower-Z -> B
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_MID,R_SPLIT
+ESEL,R,CENT,Y,0,ARC/2
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,4                       ! near-substrate, lower-theta, upper-Z -> C
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_MID,R_SPLIT
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,5                       ! near-substrate, upper-theta, upper-Z -> D
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_SPLIT,R_OUT
+ESEL,R,CENT,Y,0,ARC/2
+ESEL,R,CENT,Z,0,LEN/2
+EMODIF,ALL,MAT,6                       ! near-surface, lower-theta, lower-Z -> E
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_SPLIT,R_OUT
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,0,LEN/2
+EMODIF,ALL,MAT,7                       ! near-surface, upper-theta, lower-Z -> F
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_SPLIT,R_OUT
+ESEL,R,CENT,Y,0,ARC/2
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,8                       ! near-surface, lower-theta, upper-Z -> G
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,X,R_SPLIT,R_OUT
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,9                       ! near-surface, upper-theta, upper-Z -> H
+! (remaining MAT,2 elements: near-substrate, lower-theta, lower-Z -> region A)
+CSYS,0
+ALLSEL
+
+NUMMRG,NODE,1.0E-4
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary conditions -- identical to the base ecology deck -------------
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-4
+AUTOTS,OFF
+NSUBST,10
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+/OUTPUT,growth_result_cylinder_ecology_8region,txt
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+*DO,IMAT,2,9
+ESEL,S,MAT,,IMAT
+PRESOL,SVAR,10
+*ENDDO
+ALLSEL
+/OUTPUT
+FINISH
