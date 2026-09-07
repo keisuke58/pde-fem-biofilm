@@ -242,6 +242,23 @@ meet at a single, well-defined interface.
 > [`out_cylinder_ecology_big.txt`](../apdl/out_cylinder_ecology_big.txt) /
 > [`growth_result_cylinder_ecology_big.txt`](../apdl/growth_result_cylinder_ecology_big.txt).
 
+> **2026-09-07, same day: genuine 2D spatial variation —
+> `t_growth_cylinder_ecology_4region.dat`, VERIFIED.** The base ecology
+> deck only varies along theta (2 regions); this splits the growth layer
+> into a 2x2 (theta x Z) grid of 4 materials instead, seeds A/B reused
+> unchanged, C/D new and deliberately different-again. Result: 0 errors, 7
+> benign warnings, all four regions' alpha (`SVAR(10)`) match
+> `ecology_4region_reference.py`'s independent reference EXACTLY:
+> A 0.45687E-002, B 0.28868E-002, C 0.13122E-005, D 0.17898E-002 — spanning
+> **~3 orders of magnitude** despite identical theta and identical dt×10
+> integration, and non-monotonic in initial biomass (C's `phi` sums to
+> 0.20, higher than D's 0.10, yet C's alpha ends up ~1400x *smaller* than
+> D's) — a much stronger demonstration that the live per-Gauss-point
+> ecology bridge produces a genuinely composition-driven, non-uniform
+> alpha(x) field on real curved geometry, not just a 1D theta split. See
+> [`out_cylinder_ecology_4region.txt`](../apdl/out_cylinder_ecology_4region.txt) /
+> [`growth_result_cylinder_ecology_4region.txt`](../apdl/growth_result_cylinder_ecology_4region.txt).
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -295,6 +312,8 @@ field on the wire (absent = the material request above, backward compatible):
 | `../apdl/ecology_cylinder_reference.py` | independent reference for the above — chains `ecology_jax.ecology_step` 10x (matching the deck's 10 fixed dt=1e-5 substeps) for each region's seed |
 | `../apdl/ecology_theta_sensitivity.py` | checks whether the cylinder-ecology deck's region-A-grows-faster result depends on `THETA_DEMO`'s specific numbers (it doesn't, across 9 variants tried) — see the Status note |
 | `../apdl/t_growth_cylinder_ecology_big.dat` | same patch scaled ~8x (54→432 elements) — scale-invariance check, identical alpha result — see the fourth 2026-09-07 Status note |
+| `../apdl/t_growth_cylinder_ecology_4region.dat` | growth layer split into a 2x2 (theta x Z) grid of 4 materials/seeds instead of 2 — genuine 2D spatial variation, alpha spans ~3 orders of magnitude — see the fifth 2026-09-07 Status note |
+| `../apdl/ecology_4region_reference.py` | independent reference for the above — same chained `ecology_step` logic, 4 seeds |
 
 ## Two integration mechanisms
 

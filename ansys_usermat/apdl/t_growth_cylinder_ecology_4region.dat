@@ -1,0 +1,190 @@
+! t_growth_cylinder_ecology_4region.dat --- extends
+! t_growth_cylinder_ecology.dat: same small curved-shell patch (ARC=5,
+! LEN=0.15), but the growth layer is split into FOUR materials (2x2 grid,
+! theta x Z) instead of two, each with a distinct ecology seed, to test
+! genuine 2D spatial variation of the live per-Gauss-point ecology bridge
+! (the base deck only varies along theta). Seeds A/B reused unchanged from
+! the base deck (mat 2/mat 3); C/D are new, deliberately different-again
+! compositions (not measured data -- same status as A/B).
+!
+! STATUS: VERIFIED, 2026-09-07 on IKMHIWI03 (real ANSYS, -WorkDir
+! F:\biofilm_upf_kusepy2, material_server.py on 127.0.0.1:8765). 0 errors,
+! 7 benign warnings. All four regions' final alpha (SVAR 10) match
+! ecology_4region_reference.py's independent reference EXACTLY:
+!   A (mat2): alpha = 0.45687E-002  (ref 4.5687349611e-03)
+!   B (mat3): alpha = 0.28868E-002  (ref 2.8868200718e-03)
+!   C (mat4): alpha = 0.13122E-005  (ref 1.3122276728e-06)  <- 3 orders lower
+!   D (mat5): alpha = 0.17898E-002  (ref 1.7898065860e-03)
+! all four spanning ~3 orders of magnitude despite identical theta and
+! identical dt*10 integration -- a much stronger demonstration that the
+! result is driven by initial composition via genuinely nonlinear reaction
+! dynamics, not a trivial function of biomass sum (C's phi sums to 0.20,
+! higher than D's 0.10, yet C's alpha ends up ~1400x SMALLER than D's). See
+! out_cylinder_ecology_4region.txt / growth_result_cylinder_ecology_4region.txt.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - two-layer cylindrical shell, 4-region live ecology
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 0.15
+ARC   = 5
+
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+
+! ---- substrate (mat 1): no ecology, no growth
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- growth-layer materials (mat 2,3,4,5): identical constants/theta,
+! differ only in TB,STATE seed
+TB,USER,2,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,3,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,4,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,5,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+! mat 2 (region A): all-zero -> INIT_ECO_IF_ZERO default
+TB,STATE,2,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.0,0.0,0.0,0.0
+TBDATA,19,0.0,0.0,0.0,0.0,0.0,0.0
+TBDATA,25,0.0,0.0
+
+! mat 3 (region B): existing synthetic seed
+TB,STATE,3,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.05,0.05,0.15,0.25
+TBDATA,19,0.20,0.30,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+! mat 4 (region C): new -- sparse, uneven (one dominant species)
+TB,STATE,4,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.10,0.02,0.02,0.02
+TBDATA,19,0.04,0.10,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+! mat 5 (region D): new -- low, uniform across species
+TB,STATE,5,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.02,0.02,0.02,0.02
+TBDATA,19,0.02,0.05,0.99,0.99,0.99,0.99
+TBDATA,25,0.99,0.0
+
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+! ---- split the growth layer into a 2x2 (theta x Z) grid of 4 regions -------
+CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,0,LEN/2
+EMODIF,ALL,MAT,3                       ! upper-theta, lower-Z -> region B
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,0,ARC/2
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,4                       ! lower-theta, upper-Z -> region C
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,5                       ! upper-theta, upper-Z -> region D
+CSYS,0
+ALLSEL
+
+NUMMRG,NODE,1.0E-4
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary conditions -- identical to the base ecology deck -------------
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-4
+AUTOTS,OFF
+NSUBST,10
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+/OUTPUT,growth_result_cylinder_ecology_4region,txt
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+ESEL,S,MAT,,2
+PRESOL,SVAR,10                ! alpha, region A
+ESEL,S,MAT,,3
+PRESOL,SVAR,10                ! alpha, region B
+ESEL,S,MAT,,4
+PRESOL,SVAR,10                ! alpha, region C
+ESEL,S,MAT,,5
+PRESOL,SVAR,10                ! alpha, region D
+ALLSEL
+/OUTPUT
+FINISH
