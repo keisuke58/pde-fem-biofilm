@@ -295,3 +295,93 @@ fixed list of 5 files via `link_v222.ps1`, always launches with
 rather than requiring a manual log read. It does not automate steps 1-4
 (the actual Fortran/deck edits for a new species) -- those still require
 reading and editing Oliver's source by hand, the same as n=3/4/5 were.
+
+## Full n=5 pairwise interaction terms: implemented, and a real instability found (2026-09-07)
+
+Generalized Oliver's own `Interaction12`/`Interaction21` mechanism
+(species 1/2 only) to all 20 directed pairs among species 1-5.
+`InteractionIJ` appears in species I's growth equation, multiplying
+`Bio_J` -- exactly mirroring the existing two-species pattern, just
+summed over all `J != I` instead of a single partner:
+
+```
+InterSumI = sum_{J != I} InteractionIJ * Bio_J
+GrowthBioI = sqrt(LapBioI**2) * (
+    (MaxGrowth_nut1_I + InterSumI) * Nut1 / (HalfVelo_nut1_I + Nut1)
+  + (MaxGrowth_nut2_I + InterSumI) * Nut2 / (HalfVelo_nut2_I + Nut2)
+)
+```
+
+Added: 18 new `sGdp_InteractionIJ` scalars in `usercm.inc` (both the
+COMMON list and the type-decl section), 18 new `parevl` reads in
+`USolBeg`, `Sdp_InterSum1..5` (new PRIVATE scalars) plus the rewritten
+`GrowthBio1..5` in `Ussfin`, and matching `PRIVATE`/`SHARED` OMP clause
+additions. `interaction_terms_reference.py` (this directory) is the
+Python reference, verified before any Fortran/ANSYS work: an all-zero
+interaction matrix reproduces the pre-existing uncoupled formula exactly
+(bit-for-bit, since `0 * Bio_J = 0`), and a modest test coupling
+(`0.05` each) stays a small, bounded perturbation on `MaxGrowth=100` in
+the 0D/well-mixed case the Python check represents.
+
+**Real-ANSYS execution surfaced a genuine numerical instability, not a
+code defect.** `ds_oliver_wired_n5trial_inter0.dat` (all 20 interaction
+constants explicitly `0`, exercising the exact same new code path as
+every other case below) runs the complete 11 substeps cleanly -- 0
+errors, force convergence dropping to `1e-7`/`1e-8`, confirming the
+refactor is behavior-preserving when interaction is off. But **any**
+nonzero interaction constant -- `0.05`, `0.005`, even `-0.05`
+(competitive/inhibitory sign), and even restricted to a single pair like
+`Interaction34`/`Interaction43` alone (species 3 and 4 do not touch the
+mechanical DOF system at all -- ruled out a stiffness-feedback
+explanation directly) -- makes the load step fail at its *final*
+substep with `The L-2 norm of the residual force overflowed`, in every
+case tried.
+
+A temporary debug write (`WRITE` gated by `ID.EQ.1`, added and reverted
+in the same session -- not left in the tree) traced `GrowthBio3/4` for
+the species-3/4-only `0.05` case substep by substep: `0.159` (substep 1)
+-> `12024` (substep 2, a ~75,000x jump) -> `1.46e7` (substep 3) ->
+`-2.6e14` (substep 4) -> ... -> `-Infinity` by substep 9. The blow-up's
+speed and its complete indifference to the interaction constant's
+magnitude or sign both point to the same explanation: **species 3's own
+uncoupled trajectory is already a knife-edge case** -- this is exactly
+what `n3_growth_reference.py`'s own trace showed and annotated back when
+n=3 was built ("this dips negative and only slowly re-stabilizes via
+PenForce"), i.e. the system sits right at the boundary between a bounded
+oscillation and unbounded divergence under Oliver's own
+`MaxGrowth=100`/`dt=0.1`/`Penalty1=5` combination for a *single*
+species. Introducing *any* additional term into the growth-rate
+expression -- regardless of which species pair or which sign -- is
+enough to tip the accumulated trajectory over that edge by the last
+substep, because there's no smaller-scale regime here: the perturbation
+doesn't need to be dynamically significant on its own, it only needs to
+land on the wrong side of an already-fragile threshold.
+
+**Conclusion: the interaction mechanism itself is implemented correctly
+and is not the bug** -- `n5trial_inter0`'s clean 11-substep run through
+the identical code path (just multiplying by literal `0.0`) is the
+proof. **What's actually unusable as-is is Oliver's own baseline
+growth/timestep/penalty parameter set once *any* species coupling is
+introduced.** Using this interaction mechanism for a real multi-species
+study would need first re-tuning those constants (smaller `MaxGrowth`
+and/or `dt`, a stronger `Penalty1`, or a saturating nonlinearity in the
+interaction term itself) against a single species until it's no longer
+sitting at that edge -- not something to attempt within this session,
+and out of scope for "does the generalization mechanism work."
+
+**Current state left in `F:\biofilm_upf_wired`** (local only, see backup
+note below): the full 20-constant interaction mechanism is wired into
+usercm.inc/USolBeg/Ussfin and verified to preserve prior behavior with
+all constants at their deck default of `0` (`n5trial_inter0`,
+reproduced clean; `n3trial`/`n4trial` regression-checked clean against
+the same rebuild). Test decks with nonzero coupling
+(`n5trial_coupled(.dat/_small.dat)`, `n5trial_inter34only.dat`,
+`n5trial_inter34neg.dat`) are kept alongside as documented failing
+cases, not deleted, since they're the evidence for this section.
+
+A full local backup of `F:\biofilm_upf_wired` (515 files, ~1.7 GB,
+including the built `ANSYS.exe` and every deck used across the n=3/4/5
+and interaction-term work) was made to `F:\biofilm_upf_wired_backup_20260907`
+before this final round of edits, in case ANSYS access ends before
+further work resumes -- not committed here (Oliver's source), but noted
+so a future session on this machine knows where to look.
