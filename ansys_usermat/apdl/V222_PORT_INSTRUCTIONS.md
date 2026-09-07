@@ -745,6 +745,104 @@ and the Newton-Raphson trace matches the 2026-09-03 unmodified-build run
 (`F:\biofilm_upf_link\out_oliver_dp16_np1.txt`) to displayed precision at
 every step checked (`MAX DOF INC` 0.2714E-03 → 0.2247E-06, identical in
 both) — the `kUseBiofilm` switch is confirmed non-destructive: off, this
-build is the original build. Not yet done: a nonzero-`sEta` case, to
-exercise the viscous update (not just the elastic path) through their
-machinery.
+build is the original build.
+
+**Same day, confirming growth is actually doing something.** `0 errors`
+alone does not prove the growth kinematics are exercised — a silently
+inert `Fg` would also converge cleanly. Diffed the two runs' own
+convergence traces (no new ANSYS time needed, both already run): the first
+loaded substep's `MAX DOF INC` is `0.2714E-03` with `kUseBiofilm=0`
+(`alpha=0`) vs `0.3890E-01` with `kUseBiofilm=1, alpha=0.02` — **~143x
+larger**, consistent with `Fg=(1+alpha)I` genuinely introducing a growth
+eigenstrain the elastic-only path does not have, not a no-op that happens
+to still converge.
+
+**Same day, the nonzero-`sEta` (viscous) case, both sides of the guard.**
+`TIME INC = 0.1` at the first loaded substep (`out_wired_smoketest.txt`),
+so `sDt≈0.1` reaches the growth law each call.
+
+- `sEta=1.0`: `NUMBER OF ERROR MESSAGES = 0`, but
+  `***** PROBLEM TERMINATED *****` — repeated
+  `"The user material routine for element 157 has set the bisection key"`,
+  ANSYS re-attempting and re-hitting the same cut at the same increment
+  until it gives up. This is `sKeyCut` genuinely propagating into `keycut`
+  and genuinely driving ANSYS's own bisection machinery — the safety
+  channel works — it is just that `TRELAX = sEta/(2·C10) ≈ 1/(2·C10)` came
+  out too small relative to `sDt≈0.1` for this element's actual `C10` (an
+  NEM-pool-derived value not independently read out here), i.e. a badly-
+  scaled `sEta` for this deck, not a bug.
+- `sEta=1.0E6` (same deck, same `alpha=0.02`, same everything else): `RUN
+  COMPLETED`, `0 errors`, **no bisection at all**, `MAX DOF INC` at the
+  first substep identical to the `sEta=0` elastic-growth run
+  (`0.3890E-01`) — physically sensible: a large `eta` gives a long
+  relaxation time, so at this `dt` scale the viscous update barely moves
+  `Fv` and the response is close to the purely elastic one, not a
+  coincidence.
+
+Together these two runs exercise both branches of `biofilm_material_v01.f`
+note 3's guard (the cut-back path AND the pass-through path) through
+Oliver's real solver for the first time, each behaving as the routine's
+own documentation says it should.
+
+## 8. 2026-09-07 — the ecology bridge wired the same way; a real gap found
+
+Extended the same call site further: `prop(6)=kUseEcology` selects the
+LIVE per-Gauss-point 0D Hamilton ecology ODE (`ecology_jax.py` via
+`biofilm_ecology_hook`, the same bridge verified on
+`t_growth_cylinder_ecology*.dat` in this repo) to drive `sGrowth`, instead
+of the plain constant `prop(5)`. `ustatev(72:83)` = the 12-component
+ecology state (seeded via `INIT_ECO_IF_ZERO`, same all-zero-incoming
+convention); `ustatev(84)` = the ACCUMULATED alpha itself (unlike `Fv`,
+which only needs the current state, alpha is a running sum across every
+call — mirroring how `usermat_biofilm.f` persists `ALPHA` in its own
+`ustatev(10)` rather than recomputing it from a constant each call).
+`prop(7)=k_alpha`, `prop(8:27)=theta(1:20)`. Build: added
+`usermat_py_hook.f` (the `biofilm_py_bridge` ISO_C_BINDING module) and
+compiled `biofilm_py_eval.c` directly with `cl /c` (MSVC, from the same
+`vcvars64` shell `link_v222.ps1` sets up — the file's own header already
+documents this exact command) since `link_v222.ps1` only drives `ifort`;
+the resulting `.obj` is picked up by `ansys.lrf`'s `*.obj` wildcard like
+any other. Linked clean, one new (benign) `LNK4098` warning about mixing
+a C-compiled `LIBCMT` default with the Fortran objects.
+
+**Smoke test result: 1 error, `PROBLEM TERMINATED`** — "Element 8 ... has
+become highly distorted" — with `TB,USER,1,1,27,NONLINEAR`,
+`kUseEcology=1`, `k_alpha=50`, `theta=THETA_DEMO`, `sEta=0`, against the
+same real `ds_oliver_dp16.dat` NEM setup (`TIME INC=0.1` at the first
+substep, unlike this repo's own ecology decks which use `TIME,1.0E-4/
+NSUBST,10` for `dTime=1.0E-5`).
+
+**Diagnosed, not just observed.** Reproduced the exact same single
+`ecology_step` call in Python at `dt=0.1` instead of the verified
+`dt=1e-5` (`default_initial_state()`, `THETA_DEMO`, `k_alpha=50`): the
+resulting alpha increment is tiny (`~2.6e-9` — not the cause of a large
+eigenstrain), but **`gamma` (the ecology state's 12th component) comes
+back at `~1.0e6`** — the fixed-6-Newton-iteration solver inside
+`ecology_step` does not converge at this `dt`, four orders of magnitude
+past the regime every other verification in this repo uses. **This
+exposes a real, previously-latent gap**: `biofilm_material_v01.f`'s
+viscoelastic update has an explicit `dt/tau > DTMAX_RATIO` guard that
+sets `sKeyCut=1` and refuses to return a number outside its validated
+range (§7 above verified both branches of exactly that guard) — the
+ecology ODE step has **no equivalent guard at all**. A too-large `dt`
+does not get flagged; it silently returns a diverged internal state (and,
+here, a coincidentally-small but not necessarily always-small alpha
+increment). Whether `element 8`'s distortion is directly caused by this
+divergence, or is an unrelated sensitivity of this specific mesh/BC
+combination, is **not established** — the alpha increment itself was too
+small to be the obvious mechanical cause, so this is reported as an open
+question, not a confirmed causal chain.
+
+**Not yet done, and the natural next step before trusting this path with
+a real dt**: add a `dt`-validity guard to `ecology_step`/
+`biofilm_ecology_hook` analogous to `biofilm_material_v01.f`'s own — e.g.
+refuse (signal a cut-back) when `dt` exceeds whatever step size the fixed-
+iteration Newton solve is actually verified to converge at, rather than
+returning a silently-diverged state. Until that guard exists, the ecology
+bridge should only be driven at `dt` scales matching what
+`t_growth_cylinder_ecology*.dat` already verified (`~1e-5`), which is
+much finer than the pseudo-time steps this specific Oliver deck happens
+to use — a mismatch worth resolving deliberately (e.g. sub-stepping the
+ecology call internally per usermat call) rather than by picking a
+smaller outer `TIME`/`NSUBST` on this deck, which was not designed around
+the ecology ODE's own time scale.
