@@ -122,6 +122,49 @@ meet at a single, well-defined interface.
 > CLSM-measured initial composition (currently `INIT_ECO_IF_ZERO`'s fixed
 > default) instead of both being placeholders — see next-steps below.
 
+> **2026-09-07, same day: a multi-element extension
+> (`t_growth_ecology_multi.dat`, 8 SOLID185 elements instead of 1) found a
+> real thread-safety bug, fixed, and surfaced a second, still-open
+> problem.** Under ANSYS's default thread count the single-element deck's
+> success did not reproduce — the run hung indefinitely, near-zero CPU
+> (idle-blocked, not computing). Root cause: `biofilm_py_eval.c` keeps ONE
+> global, unsynchronised TCP connection (`g_fd`) shared by every caller;
+> ANSYS parallelises element/Gauss-point material evaluation across worker
+> threads by default (`-np 1` converges cleanly, confirming this), so
+> concurrent send()/recv() on the same fd from different threads interleave
+> requests into malformed frames, and a reply can be picked up by the wrong
+> thread, leaving another blocked forever waiting for one that already went
+> to someone else.
+>
+> **Fixed** with a mutex (`SRWLOCK` on Windows, `pthread_mutex_t`
+> elsewhere) serialising the entire request/response exchange in both
+> `biofilm_py_eval()` and `biofilm_ecology_eval()` (they share `g_fd`,
+> so one lock covers both) — see `biofilm_py_eval.c`'s own note. This does
+> not cost real parallelism: `material_server.py`'s request loop (a plain
+> `socketserver.TCPServer`, not threading) processes one line at a time
+> regardless, so serialising client-side matches what the server could do
+> anyway. Verified: compiles clean under both MinGW and MSVC, full
+> coupling/ecology pytest regression suite passes unchanged.
+>
+> **That fix is real and necessary, but does not make
+> `t_growth_ecology_multi.dat` converge under default threading either.**
+> The symptom changed shape rather than disappearing: now CPU-bound, not
+> idle — the ANSYS worker process alone burns CPU continuously past
+> `file.err`'s "There are no active degrees of freedom" line, while
+> `material_server.py` itself barely uses any CPU (so this is not "many
+> slow socket round-trips serialised by the mutex" — very few ecology-hook
+> calls appear to be happening at all). **Left unresolved** — the deck's
+> own header now documents the `-np 1` workaround and what a future
+> session should try (instrument `usermat_biofilm.f` with temporary
+> `WRITE` statements to check the actual `usermat()` call count, or attach
+> a debugger to the spinning worker process for a stack trace) rather than
+> guessing further blind. Evidence for the `-np 1` pass:
+> [`out_ecology_multi.txt`](../apdl/out_ecology_multi.txt) /
+> [`growth_result_ecology_multi.txt`](../apdl/growth_result_ecology_multi.txt)
+> — all 8 elements independently reproduce the single-element closed form
+> exactly, confirming `ustatev(15:26)` stays isolated per Gauss point (no
+> cross-talk) at least under serial execution.
+
 ## Interface contract
 
 One Gauss-point evaluation, per increment:
@@ -169,6 +212,7 @@ field on the wire (absent = the material request above, backward compatible):
 | `../../tests/test_ecology_shim.py` | **C-shim end-to-end** for the ecology path, mirrors `test_coupling_shim.py` (CI) |
 | `../../tests/test_usermat_ecology_e2e.py` | **full-chain end-to-end** — `usermat()` with `kUseEcology=1`: `g_new`/alpha match the Python reference bit-for-bit through the wire, the all-zero-state default seed, `kUseEcology=0` leaves state untouched, and the no-server fallback (CI) |
 | `../apdl/t_growth_ecology.dat` | real-ANSYS single-element smoke test for the ecology hook (fully constrained, `F=I`) — see the 2026-09-07 Status note above |
+| `../apdl/t_growth_ecology_multi.dat` | 8-element extension of the above — passes under `-np 1`, still unresolved under default (multi-threaded) ANSYS; see the second 2026-09-07 Status note |
 
 ## Two integration mechanisms
 

@@ -41,6 +41,22 @@
  * both platforms' socket layers support them identically, so that one
  * substitution is enough to avoid a second implementation of
  * send_all()/recv_line().
+ *
+ * Thread safety, 2026-09-07: `g_fd` is one connection shared by every
+ * caller. ANSYS parallelises element/Gauss-point material evaluation
+ * across worker threads by default (confirmed: a multi-element ecology
+ * deck hung indefinitely under the default thread count and completed
+ * cleanly under `-np 1`) -- concurrent unsynchronised send()/recv() calls
+ * on the same fd interleave two requests' bytes into one malformed frame,
+ * and the reply for it can be picked up by the wrong thread's recv(),
+ * leaving the other thread blocked forever waiting for a response that
+ * will never come. `g_mutex` below serialises the whole request/response
+ * exchange (including the reconnect-on-failure path, which also mutates
+ * `g_fd`) so only one thread is ever mid-conversation on the socket at a
+ * time. This does not lose real parallelism: material_server.py's request
+ * loop (a plain, non-threading socketserver.TCPServer) processes one line
+ * at a time regardless, so serialising on the client side matches what
+ * the server could do anyway.
  */
 #ifdef _WIN32
 #include <winsock2.h>
@@ -49,15 +65,24 @@
 typedef SOCKET sock_t;
 #define SOCK_INVALID INVALID_SOCKET
 #define SOCK_CLOSE(s) closesocket(s)
+typedef SRWLOCK mutex_t;
+#define MUTEX_INIT SRWLOCK_INIT
+static void mutex_lock(mutex_t *m)   { AcquireSRWLockExclusive(m); }
+static void mutex_unlock(mutex_t *m) { ReleaseSRWLockExclusive(m); }
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <pthread.h>
 typedef int sock_t;
 #define SOCK_INVALID (-1)
 #define SOCK_CLOSE(s) close(s)
+typedef pthread_mutex_t mutex_t;
+#define MUTEX_INIT PTHREAD_MUTEX_INITIALIZER
+static void mutex_lock(mutex_t *m)   { pthread_mutex_lock(m); }
+static void mutex_unlock(mutex_t *m) { pthread_mutex_unlock(m); }
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +91,7 @@ typedef int sock_t;
 #define RECV_CAP 65536
 
 static sock_t g_fd = SOCK_INVALID;   /* persistent connection */
+static mutex_t g_mutex = MUTEX_INIT; /* guards every use of g_fd -- see note above */
 
 #ifdef _WIN32
 static int g_wsa_ready = 0;
@@ -161,8 +187,8 @@ static int parse_scalar(const char *json, const char *key, double *out)
     return (end == p + 1) ? -1 : 0;
 }
 
-int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
-                    double *stress6, double *Fvnew9, double *dsde36)
+static int biofilm_py_eval_locked(const double *F9, const double *Fv9, const double *params7,
+                                  double *stress6, double *Fvnew9, double *dsde36)
 {
     char req[2048], resp[RECV_CAP];
     int n, i, attempt;
@@ -204,6 +230,16 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
     return 0;
 }
 
+int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
+                    double *stress6, double *Fvnew9, double *dsde36)
+{
+    int rc;
+    mutex_lock(&g_mutex);
+    rc = biofilm_py_eval_locked(F9, Fv9, params7, stress6, Fvnew9, dsde36);
+    mutex_unlock(&g_mutex);
+    return rc;
+}
+
 /* biofilm_ecology_eval — 0D Hamilton ecology ODE step (ecology_jax.py),
  * reusing the same persistent connection and server as biofilm_py_eval:
  *
@@ -214,8 +250,8 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
  * 5 b_i calibrated interaction parameters (see ecology_jax.py). Returns 0 on
  * success; same failure/fallback contract as biofilm_py_eval.
  */
-int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
-                         double *g_new12)
+static int biofilm_ecology_eval_locked(const double *g12, const double *theta20, double dt_h,
+                                       double *g_new12)
 {
     char req[4096], resp[RECV_CAP];
     int n, i, attempt, off;
@@ -251,8 +287,20 @@ int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
     return 0;
 }
 
+int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
+                         double *g_new12)
+{
+    int rc;
+    mutex_lock(&g_mutex);
+    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, g_new12);
+    mutex_unlock(&g_mutex);
+    return rc;
+}
+
 /* Optional: close the connection at the end of a run. */
 void biofilm_py_close(void)
 {
+    mutex_lock(&g_mutex);
     if (g_fd != SOCK_INVALID) { SOCK_CLOSE(g_fd); g_fd = SOCK_INVALID; }
+    mutex_unlock(&g_mutex);
 }

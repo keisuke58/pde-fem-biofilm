@@ -1,0 +1,144 @@
+! t_growth_ecology_multi.dat --- multi-element extension of
+! t_growth_ecology.dat: same fully-constrained unit cube, same closed-form
+! answer, but subdivided into 8 SOLID185 elements instead of 1.
+!
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt
+! Same -custom / material_server.py preconditions as t_growth_ecology.dat.
+!
+! STATUS, 2026-09-07 (IKMHIWI03): PARTIAL. Under `-np 1` (forced
+! single-threaded), this deck converges cleanly (0 errors) and all 8
+! elements independently reproduce t_growth_ecology.dat's closed-form
+! answer exactly -- proving ustatev(15:26) stays isolated per Gauss point
+! (no cross-talk between elements) and the ecology hook survives a real
+! multi-element mesh, not just one point.
+!
+! Under ANSYS's DEFAULT thread count it does NOT complete. First symptom
+! (before the fix below): idle-blocked forever, near-zero CPU -- classic
+! deadlock signature. Root cause found: `biofilm_py_eval.c` kept ONE
+! global, unsynchronised TCP connection (`g_fd`) shared by every caller;
+! ANSYS parallelises element/Gauss-point material evaluation across worker
+! threads by default, so concurrent unsynchronised send()/recv() calls on
+! the same fd interleaved requests into malformed frames and a reply could
+! be picked up by the wrong thread, leaving another thread blocked
+! forever. Fixed with a mutex (SRWLOCK on Windows, pthread_mutex_t
+! elsewhere) serialising the whole request/response exchange -- see
+! biofilm_py_eval.c's 2026-09-07 note. That fix is real, necessary, and
+! verified (compiles clean under MinGW and MSVC, full coupling/ecology
+! pytest regression suite passes).
+!
+! It does NOT, however, make this specific deck complete under default
+! threading. Symptom changed shape -- now CPU-bound (not idle) with the
+! Fortran-side ANSYS worker process alone burning CPU continuously past
+! "There are no active degrees of freedom" in file.err, while
+! material_server.py's own process barely uses any CPU at all (so very
+! few ecology-hook round trips are actually happening -- this is not
+! "many slow socket calls serialized by the mutex", it looks like ANSYS
+! itself is stuck somewhere after that log line). Left UNRESOLVED here,
+! deliberately not chased further this session -- the next person picking
+! this up should instrument usermat_biofilm.f (temporary WRITE
+! statements, the same technique that found the Fv TBDATA bug in
+! t_growth_constrained.dat's own history) to see whether usermat() is
+! being called an unexpected number of times, or attach a debugger to the
+! CPU-bound worker process to get a stack trace while it spins, rather
+! than guessing further blind.
+!
+! WHY THIS CASE
+! -------------
+! t_growth_ecology.dat proves the ecology hook's own math is right at ONE
+! Gauss point. It does not exercise anything about MANY Gauss points calling
+! the socket bridge in the same solve: does ustatev(15:26) stay isolated
+! per integration point (no cross-talk between elements), does the server
+! hold up under several times the request volume in one substep, does
+! nothing race or interleave badly when ANSYS's Newton loop fires calls
+! from multiple elements. This is the first thing that would actually break
+! going from a single-element smoke test toward a real mesh -- so verify it
+! before spending effort on spatially-varying composition/theta per element
+! (not done here; see coupling/README.md next-steps).
+!
+! Every node is still fully fixed (D,ALL,UX/UY/UZ,0 on the whole selection),
+! so F = I at every one of the 8 elements' integration points regardless of
+! mesh density -- the closed-form answer from t_growth_ecology.dat still
+! applies, now checked at all 8 elements independently. theta and the
+! initial composition are the SAME material (matID 1) for every element, so
+! this deliberately does NOT test spatial variation -- only isolation and
+! scale of the per-Gauss-point coupling.
+!
+! EXPECTED (confirmed under -np 1; not yet reached under default threading):
+! identical to t_growth_ecology.dat, at every one of the 8 elements (see
+! that file's header for the exact reference numbers):
+!   alpha_new = 4.971361400e-04, SX=SY=SZ = -2.9997736e-01, shear = 0,
+!   g_new as listed there -- reproduced independently via
+!   ecology_jax.default_initial_state() -> ecology_jax.ecology_step(...,
+!   THETA_DEMO, 1e-5).
+!
+! Run with the workaround for now:
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -np 1 -custom .\ANSYS.exe ^
+!       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - 0D Hamilton ecology hook, multi-element
+/PREP7
+
+! ---- unit cube, 2x2x2 = 8 SOLID185 elements --------------------------------
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar
+
+BLOCK,0,1,0,1,0,1
+ESIZE,0.5
+VMESH,1
+
+! ---- user material (identical to t_growth_ecology.dat) --------------------
+TB,USER,1,1,29
+TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.1,2.41,2.5
+
+TB,STATE,1,,26
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- fully constrained: forces F = I at every element's integration points -
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+! ---- solve -----------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-5
+NSUBST,1,1,1
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+! ---- report: all 8 elements, not just element 1 ----------------------------
+/POST1
+SET,LAST
+ESEL,ALL
+/OUTPUT,growth_result_ecology_multi,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha
+PRESOL,SVAR,15                ! g(1)  = phi(1)
+PRESOL,SVAR,16                ! g(2)  = phi(2)
+PRESOL,SVAR,17                ! g(3)  = phi(3)
+PRESOL,SVAR,18                ! g(4)  = phi(4)
+PRESOL,SVAR,19                ! g(5)  = phi(5)
+PRESOL,SVAR,20                ! g(6)  = phi0
+PRESOL,SVAR,21                ! g(7)  = psi(1)
+PRESOL,SVAR,22                ! g(8)  = psi(2)
+PRESOL,SVAR,23                ! g(9)  = psi(3)
+PRESOL,SVAR,24                ! g(10) = psi(4)
+PRESOL,SVAR,25                ! g(11) = psi(5)
+PRESOL,SVAR,26                ! g(12) = gamma
+/OUTPUT
+FINISH

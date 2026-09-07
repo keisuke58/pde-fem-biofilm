@@ -1,0 +1,1854 @@
+
+ PRINT S    ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT NODAL STRESS LISTING *****                                
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  THE FOLLOWING X,Y,Z VALUES ARE IN GLOBAL COORDINATES                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+       2 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+       8 -0.29998     -0.29998     -0.29998       0.0000       0.0000     -0.55594E-016
+       9 -0.29998     -0.29998     -0.29998       0.0000     -0.55594E-016  0.0000     
+       3 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      19 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      21 -0.29998     -0.29998     -0.29998      0.38576E-033-0.69492E-016-0.55594E-016
+      27 -0.29998     -0.29998     -0.29998      0.61722E-032-0.11119E-015-0.22238E-015
+      25 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+  
+  ELEMENT=       2        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+       8 -0.29998     -0.29998     -0.29998     -0.27797E-015-0.55594E-016-0.27797E-015
+       6 -0.29998     -0.29998     -0.29998      0.22238E-015  0.0000      0.11119E-015
+       7 -0.29998     -0.29998     -0.29998      0.23627E-015 0.23627E-015 0.22238E-015
+       9 -0.29998     -0.29998     -0.29998     -0.33356E-015 0.16678E-015-0.44475E-015
+      21 -0.29998     -0.29998     -0.29998       0.0000      0.22238E-015-0.33356E-015
+      20 -0.29998     -0.29998     -0.29998      0.16678E-015 0.18068E-015 0.12509E-015
+      26 -0.29998     -0.29998     -0.29998     -0.16678E-015 0.11119E-015 0.72272E-015
+      27 -0.29998     -0.29998     -0.29998     -0.44475E-015  0.0000       0.0000     
+  
+  ELEMENT=       3        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+       3 -0.29998     -0.29998     -0.29998       0.0000      0.33356E-015  0.0000     
+       9 -0.29998     -0.29998     -0.29998       0.0000      0.25017E-015  0.0000     
+       5 -0.29998     -0.29998     -0.29998       0.0000     -0.11119E-015  0.0000     
+       1 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      25 -0.29998     -0.29998     -0.29998       0.0000       0.0000      0.13898E-016
+      27 -0.29998     -0.29998     -0.29998      0.77152E-033-0.83391E-016-0.55594E-016
+      24 -0.29998     -0.29998     -0.29998      0.61722E-031-0.61153E-015-0.22238E-015
+      23 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT NODAL STRESS LISTING *****                                
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  THE FOLLOWING X,Y,Z VALUES ARE IN GLOBAL COORDINATES                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+       9 -0.29998     -0.29998     -0.29998     -0.27797E-015 0.27797E-015-0.22238E-015
+       7 -0.29998     -0.29998     -0.29998      0.22238E-015-0.19458E-015 0.23627E-015
+       4 -0.29998     -0.29998     -0.29998      0.23627E-015 0.13898E-016 0.22238E-015
+       5 -0.29998     -0.29998     -0.29998     -0.33356E-015-0.50035E-015-0.44475E-015
+      27 -0.29998     -0.29998     -0.29998     -0.74066E-031 0.55594E-015-0.44475E-015
+      26 -0.29998     -0.29998     -0.29998      0.16678E-015 0.83391E-016 0.69492E-016
+      22 -0.29998     -0.29998     -0.29998     -0.16678E-015 0.61153E-015 0.27797E-015
+      24 -0.29998     -0.29998     -0.29998     -0.44475E-015  0.0000       0.0000     
+  
+  ELEMENT=       5        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+      19 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      21 -0.29998     -0.29998     -0.29998      0.55594E-016 0.11119E-015-0.55594E-016
+      27 -0.29998     -0.29998     -0.29998      0.55594E-016-0.27797E-016 0.77152E-033
+      25 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      10 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      12 -0.29998     -0.29998     -0.29998      0.38576E-033-0.12509E-015-0.55594E-016
+      18 -0.29998     -0.29998     -0.29998      0.61722E-032-0.16678E-015-0.22238E-015
+      17 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+  
+  ELEMENT=       6        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+      21 -0.29998     -0.29998     -0.29998     -0.27797E-015-0.11119E-015-0.27797E-015
+      20 -0.29998     -0.29998     -0.29998      0.33356E-015 0.11119E-015 0.11119E-015
+      26 -0.29998     -0.29998     -0.29998      0.36136E-015 0.38916E-015 0.22238E-015
+      27 -0.29998     -0.29998     -0.29998     -0.33356E-015-0.11119E-015-0.44475E-015
+      12 -0.29998     -0.29998     -0.29998       0.0000      0.44475E-015-0.33356E-015
+      11 -0.29998     -0.29998     -0.29998      0.16678E-015 0.34746E-015 0.12509E-015
+      14 -0.29998     -0.29998     -0.29998     -0.16678E-015 0.16678E-015 0.72272E-015
+      18 -0.29998     -0.29998     -0.29998     -0.44475E-015  0.0000       0.0000     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT NODAL STRESS LISTING *****                                
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  THE FOLLOWING X,Y,Z VALUES ARE IN GLOBAL COORDINATES                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+      25 -0.29998     -0.29998     -0.29998       0.0000      0.33356E-015  0.0000     
+      27 -0.29998     -0.29998     -0.29998      0.55594E-016 0.36136E-015 0.30861E-032
+      24 -0.29998     -0.29998     -0.29998      0.55594E-016-0.83391E-016 0.77152E-033
+      23 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+      17 -0.29998     -0.29998     -0.29998       0.0000       0.0000      0.13898E-016
+      18 -0.29998     -0.29998     -0.29998      0.77152E-033-0.13898E-015-0.55594E-016
+      16 -0.29998     -0.29998     -0.29998      0.61722E-031-0.66713E-015-0.22238E-015
+      15 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+  
+  ELEMENT=       8        SOLID185
+    NODE     SX           SY           SZ           SXY          SYZ          SXZ     
+      27 -0.29998     -0.29998     -0.29998     -0.27797E-015 0.22238E-015-0.22238E-015
+      26 -0.29998     -0.29998     -0.29998      0.33356E-015-0.83391E-016 0.23627E-015
+      22 -0.29998     -0.29998     -0.29998      0.36136E-015 0.16678E-015 0.22238E-015
+      24 -0.29998     -0.29998     -0.29998     -0.33356E-015-0.77832E-015-0.44475E-015
+      18 -0.29998     -0.29998     -0.29998     -0.74066E-031 0.77832E-015-0.44475E-015
+      14 -0.29998     -0.29998     -0.29998      0.16678E-015 0.25017E-015 0.69492E-016
+      13 -0.29998     -0.29998     -0.29998     -0.16678E-015 0.66713E-015 0.27797E-015
+      16 -0.29998     -0.29998     -0.29998     -0.44475E-015  0.0000       0.0000     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     10      
+       2  0.49714E-003
+       8  0.49714E-003
+       9  0.49714E-003
+       3  0.49714E-003
+      19  0.49714E-003
+      21  0.49714E-003
+      27  0.49714E-003
+      25  0.49714E-003
+  
+  ELEMENT=       2        SOLID185
+    NODE     10      
+       8  0.49714E-003
+       6  0.49714E-003
+       7  0.49714E-003
+       9  0.49714E-003
+      21  0.49714E-003
+      20  0.49714E-003
+      26  0.49714E-003
+      27  0.49714E-003
+  
+  ELEMENT=       3        SOLID185
+    NODE     10      
+       3  0.49714E-003
+       9  0.49714E-003
+       5  0.49714E-003
+       1  0.49714E-003
+      25  0.49714E-003
+      27  0.49714E-003
+      24  0.49714E-003
+      23  0.49714E-003
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     10      
+       9  0.49714E-003
+       7  0.49714E-003
+       4  0.49714E-003
+       5  0.49714E-003
+      27  0.49714E-003
+      26  0.49714E-003
+      22  0.49714E-003
+      24  0.49714E-003
+  
+  ELEMENT=       5        SOLID185
+    NODE     10      
+      19  0.49714E-003
+      21  0.49714E-003
+      27  0.49714E-003
+      25  0.49714E-003
+      10  0.49714E-003
+      12  0.49714E-003
+      18  0.49714E-003
+      17  0.49714E-003
+  
+  ELEMENT=       6        SOLID185
+    NODE     10      
+      21  0.49714E-003
+      20  0.49714E-003
+      26  0.49714E-003
+      27  0.49714E-003
+      12  0.49714E-003
+      11  0.49714E-003
+      14  0.49714E-003
+      18  0.49714E-003
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     10      
+      25  0.49714E-003
+      27  0.49714E-003
+      24  0.49714E-003
+      23  0.49714E-003
+      17  0.49714E-003
+      18  0.49714E-003
+      16  0.49714E-003
+      15  0.49714E-003
+  
+  ELEMENT=       8        SOLID185
+    NODE     10      
+      27  0.49714E-003
+      26  0.49714E-003
+      22  0.49714E-003
+      24  0.49714E-003
+      18  0.49714E-003
+      14  0.49714E-003
+      13  0.49714E-003
+      16  0.49714E-003
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     15      
+       2  0.32417     
+       8  0.32417     
+       9  0.32417     
+       3  0.32417     
+      19  0.32417     
+      21  0.32417     
+      27  0.32417     
+      25  0.32417     
+  
+  ELEMENT=       2        SOLID185
+    NODE     15      
+       8  0.32417     
+       6  0.32417     
+       7  0.32417     
+       9  0.32417     
+      21  0.32417     
+      20  0.32417     
+      26  0.32417     
+      27  0.32417     
+  
+  ELEMENT=       3        SOLID185
+    NODE     15      
+       3  0.32417     
+       9  0.32417     
+       5  0.32417     
+       1  0.32417     
+      25  0.32417     
+      27  0.32417     
+      24  0.32417     
+      23  0.32417     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     15      
+       9  0.32417     
+       7  0.32417     
+       4  0.32417     
+       5  0.32417     
+      27  0.32417     
+      26  0.32417     
+      22  0.32417     
+      24  0.32417     
+  
+  ELEMENT=       5        SOLID185
+    NODE     15      
+      19  0.32417     
+      21  0.32417     
+      27  0.32417     
+      25  0.32417     
+      10  0.32417     
+      12  0.32417     
+      18  0.32417     
+      17  0.32417     
+  
+  ELEMENT=       6        SOLID185
+    NODE     15      
+      21  0.32417     
+      20  0.32417     
+      26  0.32417     
+      27  0.32417     
+      12  0.32417     
+      11  0.32417     
+      14  0.32417     
+      18  0.32417     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     15      
+      25  0.32417     
+      27  0.32417     
+      24  0.32417     
+      23  0.32417     
+      17  0.32417     
+      18  0.32417     
+      16  0.32417     
+      15  0.32417     
+  
+  ELEMENT=       8        SOLID185
+    NODE     15      
+      27  0.32417     
+      26  0.32417     
+      22  0.32417     
+      24  0.32417     
+      18  0.32417     
+      14  0.32417     
+      13  0.32417     
+      16  0.32417     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     16      
+       2  0.32445     
+       8  0.32445     
+       9  0.32445     
+       3  0.32445     
+      19  0.32445     
+      21  0.32445     
+      27  0.32445     
+      25  0.32445     
+  
+  ELEMENT=       2        SOLID185
+    NODE     16      
+       8  0.32445     
+       6  0.32445     
+       7  0.32445     
+       9  0.32445     
+      21  0.32445     
+      20  0.32445     
+      26  0.32445     
+      27  0.32445     
+  
+  ELEMENT=       3        SOLID185
+    NODE     16      
+       3  0.32445     
+       9  0.32445     
+       5  0.32445     
+       1  0.32445     
+      25  0.32445     
+      27  0.32445     
+      24  0.32445     
+      23  0.32445     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     16      
+       9  0.32445     
+       7  0.32445     
+       4  0.32445     
+       5  0.32445     
+      27  0.32445     
+      26  0.32445     
+      22  0.32445     
+      24  0.32445     
+  
+  ELEMENT=       5        SOLID185
+    NODE     16      
+      19  0.32445     
+      21  0.32445     
+      27  0.32445     
+      25  0.32445     
+      10  0.32445     
+      12  0.32445     
+      18  0.32445     
+      17  0.32445     
+  
+  ELEMENT=       6        SOLID185
+    NODE     16      
+      21  0.32445     
+      20  0.32445     
+      26  0.32445     
+      27  0.32445     
+      12  0.32445     
+      11  0.32445     
+      14  0.32445     
+      18  0.32445     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     16      
+      25  0.32445     
+      27  0.32445     
+      24  0.32445     
+      23  0.32445     
+      17  0.32445     
+      18  0.32445     
+      16  0.32445     
+      15  0.32445     
+  
+  ELEMENT=       8        SOLID185
+    NODE     16      
+      27  0.32445     
+      26  0.32445     
+      22  0.32445     
+      24  0.32445     
+      18  0.32445     
+      14  0.32445     
+      13  0.32445     
+      16  0.32445     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     17      
+       2  0.21689     
+       8  0.21689     
+       9  0.21689     
+       3  0.21689     
+      19  0.21689     
+      21  0.21689     
+      27  0.21689     
+      25  0.21689     
+  
+  ELEMENT=       2        SOLID185
+    NODE     17      
+       8  0.21689     
+       6  0.21689     
+       7  0.21689     
+       9  0.21689     
+      21  0.21689     
+      20  0.21689     
+      26  0.21689     
+      27  0.21689     
+  
+  ELEMENT=       3        SOLID185
+    NODE     17      
+       3  0.21689     
+       9  0.21689     
+       5  0.21689     
+       1  0.21689     
+      25  0.21689     
+      27  0.21689     
+      24  0.21689     
+      23  0.21689     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     17      
+       9  0.21689     
+       7  0.21689     
+       4  0.21689     
+       5  0.21689     
+      27  0.21689     
+      26  0.21689     
+      22  0.21689     
+      24  0.21689     
+  
+  ELEMENT=       5        SOLID185
+    NODE     17      
+      19  0.21689     
+      21  0.21689     
+      27  0.21689     
+      25  0.21689     
+      10  0.21689     
+      12  0.21689     
+      18  0.21689     
+      17  0.21689     
+  
+  ELEMENT=       6        SOLID185
+    NODE     17      
+      21  0.21689     
+      20  0.21689     
+      26  0.21689     
+      27  0.21689     
+      12  0.21689     
+      11  0.21689     
+      14  0.21689     
+      18  0.21689     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     17      
+      25  0.21689     
+      27  0.21689     
+      24  0.21689     
+      23  0.21689     
+      17  0.21689     
+      18  0.21689     
+      16  0.21689     
+      15  0.21689     
+  
+  ELEMENT=       8        SOLID185
+    NODE     17      
+      27  0.21689     
+      26  0.21689     
+      22  0.21689     
+      24  0.21689     
+      18  0.21689     
+      14  0.21689     
+      13  0.21689     
+      16  0.21689     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     18      
+       2  0.13448     
+       8  0.13448     
+       9  0.13448     
+       3  0.13448     
+      19  0.13448     
+      21  0.13448     
+      27  0.13448     
+      25  0.13448     
+  
+  ELEMENT=       2        SOLID185
+    NODE     18      
+       8  0.13448     
+       6  0.13448     
+       7  0.13448     
+       9  0.13448     
+      21  0.13448     
+      20  0.13448     
+      26  0.13448     
+      27  0.13448     
+  
+  ELEMENT=       3        SOLID185
+    NODE     18      
+       3  0.13448     
+       9  0.13448     
+       5  0.13448     
+       1  0.13448     
+      25  0.13448     
+      27  0.13448     
+      24  0.13448     
+      23  0.13448     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     18      
+       9  0.13448     
+       7  0.13448     
+       4  0.13448     
+       5  0.13448     
+      27  0.13448     
+      26  0.13448     
+      22  0.13448     
+      24  0.13448     
+  
+  ELEMENT=       5        SOLID185
+    NODE     18      
+      19  0.13448     
+      21  0.13448     
+      27  0.13448     
+      25  0.13448     
+      10  0.13448     
+      12  0.13448     
+      18  0.13448     
+      17  0.13448     
+  
+  ELEMENT=       6        SOLID185
+    NODE     18      
+      21  0.13448     
+      20  0.13448     
+      26  0.13448     
+      27  0.13448     
+      12  0.13448     
+      11  0.13448     
+      14  0.13448     
+      18  0.13448     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     18      
+      25  0.13448     
+      27  0.13448     
+      24  0.13448     
+      23  0.13448     
+      17  0.13448     
+      18  0.13448     
+      16  0.13448     
+      15  0.13448     
+  
+  ELEMENT=       8        SOLID185
+    NODE     18      
+      27  0.13448     
+      26  0.13448     
+      22  0.13448     
+      24  0.13448     
+      18  0.13448     
+      14  0.13448     
+      13  0.13448     
+      16  0.13448     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     19      
+       2  0.56187E-009
+       8  0.56187E-009
+       9  0.56187E-009
+       3  0.56187E-009
+      19  0.56187E-009
+      21  0.56187E-009
+      27  0.56187E-009
+      25  0.56187E-009
+  
+  ELEMENT=       2        SOLID185
+    NODE     19      
+       8  0.56187E-009
+       6  0.56187E-009
+       7  0.56187E-009
+       9  0.56187E-009
+      21  0.56187E-009
+      20  0.56187E-009
+      26  0.56187E-009
+      27  0.56187E-009
+  
+  ELEMENT=       3        SOLID185
+    NODE     19      
+       3  0.56187E-009
+       9  0.56187E-009
+       5  0.56187E-009
+       1  0.56187E-009
+      25  0.56187E-009
+      27  0.56187E-009
+      24  0.56187E-009
+      23  0.56187E-009
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     19      
+       9  0.56187E-009
+       7  0.56187E-009
+       4  0.56187E-009
+       5  0.56187E-009
+      27  0.56187E-009
+      26  0.56187E-009
+      22  0.56187E-009
+      24  0.56187E-009
+  
+  ELEMENT=       5        SOLID185
+    NODE     19      
+      19  0.56187E-009
+      21  0.56187E-009
+      27  0.56187E-009
+      25  0.56187E-009
+      10  0.56187E-009
+      12  0.56187E-009
+      18  0.56187E-009
+      17  0.56187E-009
+  
+  ELEMENT=       6        SOLID185
+    NODE     19      
+      21  0.56187E-009
+      20  0.56187E-009
+      26  0.56187E-009
+      27  0.56187E-009
+      12  0.56187E-009
+      11  0.56187E-009
+      14  0.56187E-009
+      18  0.56187E-009
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     19      
+      25  0.56187E-009
+      27  0.56187E-009
+      24  0.56187E-009
+      23  0.56187E-009
+      17  0.56187E-009
+      18  0.56187E-009
+      16  0.56187E-009
+      15  0.56187E-009
+  
+  ELEMENT=       8        SOLID185
+    NODE     19      
+      27  0.56187E-009
+      26  0.56187E-009
+      22  0.56187E-009
+      24  0.56187E-009
+      18  0.56187E-009
+      14  0.56187E-009
+      13  0.56187E-009
+      16  0.56187E-009
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     20      
+       2  0.56187E-005
+       8  0.56187E-005
+       9  0.56187E-005
+       3  0.56187E-005
+      19  0.56187E-005
+      21  0.56187E-005
+      27  0.56187E-005
+      25  0.56187E-005
+  
+  ELEMENT=       2        SOLID185
+    NODE     20      
+       8  0.56187E-005
+       6  0.56187E-005
+       7  0.56187E-005
+       9  0.56187E-005
+      21  0.56187E-005
+      20  0.56187E-005
+      26  0.56187E-005
+      27  0.56187E-005
+  
+  ELEMENT=       3        SOLID185
+    NODE     20      
+       3  0.56187E-005
+       9  0.56187E-005
+       5  0.56187E-005
+       1  0.56187E-005
+      25  0.56187E-005
+      27  0.56187E-005
+      24  0.56187E-005
+      23  0.56187E-005
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     20      
+       9  0.56187E-005
+       7  0.56187E-005
+       4  0.56187E-005
+       5  0.56187E-005
+      27  0.56187E-005
+      26  0.56187E-005
+      22  0.56187E-005
+      24  0.56187E-005
+  
+  ELEMENT=       5        SOLID185
+    NODE     20      
+      19  0.56187E-005
+      21  0.56187E-005
+      27  0.56187E-005
+      25  0.56187E-005
+      10  0.56187E-005
+      12  0.56187E-005
+      18  0.56187E-005
+      17  0.56187E-005
+  
+  ELEMENT=       6        SOLID185
+    NODE     20      
+      21  0.56187E-005
+      20  0.56187E-005
+      26  0.56187E-005
+      27  0.56187E-005
+      12  0.56187E-005
+      11  0.56187E-005
+      14  0.56187E-005
+      18  0.56187E-005
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     20      
+      25  0.56187E-005
+      27  0.56187E-005
+      24  0.56187E-005
+      23  0.56187E-005
+      17  0.56187E-005
+      18  0.56187E-005
+      16  0.56187E-005
+      15  0.56187E-005
+  
+  ELEMENT=       8        SOLID185
+    NODE     20      
+      27  0.56187E-005
+      26  0.56187E-005
+      22  0.56187E-005
+      24  0.56187E-005
+      18  0.56187E-005
+      14  0.56187E-005
+      13  0.56187E-005
+      16  0.56187E-005
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     21      
+       2  0.99433     
+       8  0.99433     
+       9  0.99433     
+       3  0.99433     
+      19  0.99433     
+      21  0.99433     
+      27  0.99433     
+      25  0.99433     
+  
+  ELEMENT=       2        SOLID185
+    NODE     21      
+       8  0.99433     
+       6  0.99433     
+       7  0.99433     
+       9  0.99433     
+      21  0.99433     
+      20  0.99433     
+      26  0.99433     
+      27  0.99433     
+  
+  ELEMENT=       3        SOLID185
+    NODE     21      
+       3  0.99433     
+       9  0.99433     
+       5  0.99433     
+       1  0.99433     
+      25  0.99433     
+      27  0.99433     
+      24  0.99433     
+      23  0.99433     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     21      
+       9  0.99433     
+       7  0.99433     
+       4  0.99433     
+       5  0.99433     
+      27  0.99433     
+      26  0.99433     
+      22  0.99433     
+      24  0.99433     
+  
+  ELEMENT=       5        SOLID185
+    NODE     21      
+      19  0.99433     
+      21  0.99433     
+      27  0.99433     
+      25  0.99433     
+      10  0.99433     
+      12  0.99433     
+      18  0.99433     
+      17  0.99433     
+  
+  ELEMENT=       6        SOLID185
+    NODE     21      
+      21  0.99433     
+      20  0.99433     
+      26  0.99433     
+      27  0.99433     
+      12  0.99433     
+      11  0.99433     
+      14  0.99433     
+      18  0.99433     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     21      
+      25  0.99433     
+      27  0.99433     
+      24  0.99433     
+      23  0.99433     
+      17  0.99433     
+      18  0.99433     
+      16  0.99433     
+      15  0.99433     
+  
+  ELEMENT=       8        SOLID185
+    NODE     21      
+      27  0.99433     
+      26  0.99433     
+      22  0.99433     
+      24  0.99433     
+      18  0.99433     
+      14  0.99433     
+      13  0.99433     
+      16  0.99433     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     22      
+       2  0.99421     
+       8  0.99421     
+       9  0.99421     
+       3  0.99421     
+      19  0.99421     
+      21  0.99421     
+      27  0.99421     
+      25  0.99421     
+  
+  ELEMENT=       2        SOLID185
+    NODE     22      
+       8  0.99421     
+       6  0.99421     
+       7  0.99421     
+       9  0.99421     
+      21  0.99421     
+      20  0.99421     
+      26  0.99421     
+      27  0.99421     
+  
+  ELEMENT=       3        SOLID185
+    NODE     22      
+       3  0.99421     
+       9  0.99421     
+       5  0.99421     
+       1  0.99421     
+      25  0.99421     
+      27  0.99421     
+      24  0.99421     
+      23  0.99421     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     22      
+       9  0.99421     
+       7  0.99421     
+       4  0.99421     
+       5  0.99421     
+      27  0.99421     
+      26  0.99421     
+      22  0.99421     
+      24  0.99421     
+  
+  ELEMENT=       5        SOLID185
+    NODE     22      
+      19  0.99421     
+      21  0.99421     
+      27  0.99421     
+      25  0.99421     
+      10  0.99421     
+      12  0.99421     
+      18  0.99421     
+      17  0.99421     
+  
+  ELEMENT=       6        SOLID185
+    NODE     22      
+      21  0.99421     
+      20  0.99421     
+      26  0.99421     
+      27  0.99421     
+      12  0.99421     
+      11  0.99421     
+      14  0.99421     
+      18  0.99421     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     22      
+      25  0.99421     
+      27  0.99421     
+      24  0.99421     
+      23  0.99421     
+      17  0.99421     
+      18  0.99421     
+      16  0.99421     
+      15  0.99421     
+  
+  ELEMENT=       8        SOLID185
+    NODE     22      
+      27  0.99421     
+      26  0.99421     
+      22  0.99421     
+      24  0.99421     
+      18  0.99421     
+      14  0.99421     
+      13  0.99421     
+      16  0.99421     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     23      
+       2  0.99424     
+       8  0.99424     
+       9  0.99424     
+       3  0.99424     
+      19  0.99424     
+      21  0.99424     
+      27  0.99424     
+      25  0.99424     
+  
+  ELEMENT=       2        SOLID185
+    NODE     23      
+       8  0.99424     
+       6  0.99424     
+       7  0.99424     
+       9  0.99424     
+      21  0.99424     
+      20  0.99424     
+      26  0.99424     
+      27  0.99424     
+  
+  ELEMENT=       3        SOLID185
+    NODE     23      
+       3  0.99424     
+       9  0.99424     
+       5  0.99424     
+       1  0.99424     
+      25  0.99424     
+      27  0.99424     
+      24  0.99424     
+      23  0.99424     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     23      
+       9  0.99424     
+       7  0.99424     
+       4  0.99424     
+       5  0.99424     
+      27  0.99424     
+      26  0.99424     
+      22  0.99424     
+      24  0.99424     
+  
+  ELEMENT=       5        SOLID185
+    NODE     23      
+      19  0.99424     
+      21  0.99424     
+      27  0.99424     
+      25  0.99424     
+      10  0.99424     
+      12  0.99424     
+      18  0.99424     
+      17  0.99424     
+  
+  ELEMENT=       6        SOLID185
+    NODE     23      
+      21  0.99424     
+      20  0.99424     
+      26  0.99424     
+      27  0.99424     
+      12  0.99424     
+      11  0.99424     
+      14  0.99424     
+      18  0.99424     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     23      
+      25  0.99424     
+      27  0.99424     
+      24  0.99424     
+      23  0.99424     
+      17  0.99424     
+      18  0.99424     
+      16  0.99424     
+      15  0.99424     
+  
+  ELEMENT=       8        SOLID185
+    NODE     23      
+      27  0.99424     
+      26  0.99424     
+      22  0.99424     
+      24  0.99424     
+      18  0.99424     
+      14  0.99424     
+      13  0.99424     
+      16  0.99424     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     24      
+       2  0.99436     
+       8  0.99436     
+       9  0.99436     
+       3  0.99436     
+      19  0.99436     
+      21  0.99436     
+      27  0.99436     
+      25  0.99436     
+  
+  ELEMENT=       2        SOLID185
+    NODE     24      
+       8  0.99436     
+       6  0.99436     
+       7  0.99436     
+       9  0.99436     
+      21  0.99436     
+      20  0.99436     
+      26  0.99436     
+      27  0.99436     
+  
+  ELEMENT=       3        SOLID185
+    NODE     24      
+       3  0.99436     
+       9  0.99436     
+       5  0.99436     
+       1  0.99436     
+      25  0.99436     
+      27  0.99436     
+      24  0.99436     
+      23  0.99436     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     24      
+       9  0.99436     
+       7  0.99436     
+       4  0.99436     
+       5  0.99436     
+      27  0.99436     
+      26  0.99436     
+      22  0.99436     
+      24  0.99436     
+  
+  ELEMENT=       5        SOLID185
+    NODE     24      
+      19  0.99436     
+      21  0.99436     
+      27  0.99436     
+      25  0.99436     
+      10  0.99436     
+      12  0.99436     
+      18  0.99436     
+      17  0.99436     
+  
+  ELEMENT=       6        SOLID185
+    NODE     24      
+      21  0.99436     
+      20  0.99436     
+      26  0.99436     
+      27  0.99436     
+      12  0.99436     
+      11  0.99436     
+      14  0.99436     
+      18  0.99436     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     24      
+      25  0.99436     
+      27  0.99436     
+      24  0.99436     
+      23  0.99436     
+      17  0.99436     
+      18  0.99436     
+      16  0.99436     
+      15  0.99436     
+  
+  ELEMENT=       8        SOLID185
+    NODE     24      
+      27  0.99436     
+      26  0.99436     
+      22  0.99436     
+      24  0.99436     
+      18  0.99436     
+      14  0.99436     
+      13  0.99436     
+      16  0.99436     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     25      
+       2  0.99435     
+       8  0.99435     
+       9  0.99435     
+       3  0.99435     
+      19  0.99435     
+      21  0.99435     
+      27  0.99435     
+      25  0.99435     
+  
+  ELEMENT=       2        SOLID185
+    NODE     25      
+       8  0.99435     
+       6  0.99435     
+       7  0.99435     
+       9  0.99435     
+      21  0.99435     
+      20  0.99435     
+      26  0.99435     
+      27  0.99435     
+  
+  ELEMENT=       3        SOLID185
+    NODE     25      
+       3  0.99435     
+       9  0.99435     
+       5  0.99435     
+       1  0.99435     
+      25  0.99435     
+      27  0.99435     
+      24  0.99435     
+      23  0.99435     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     25      
+       9  0.99435     
+       7  0.99435     
+       4  0.99435     
+       5  0.99435     
+      27  0.99435     
+      26  0.99435     
+      22  0.99435     
+      24  0.99435     
+  
+  ELEMENT=       5        SOLID185
+    NODE     25      
+      19  0.99435     
+      21  0.99435     
+      27  0.99435     
+      25  0.99435     
+      10  0.99435     
+      12  0.99435     
+      18  0.99435     
+      17  0.99435     
+  
+  ELEMENT=       6        SOLID185
+    NODE     25      
+      21  0.99435     
+      20  0.99435     
+      26  0.99435     
+      27  0.99435     
+      12  0.99435     
+      11  0.99435     
+      14  0.99435     
+      18  0.99435     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     25      
+      25  0.99435     
+      27  0.99435     
+      24  0.99435     
+      23  0.99435     
+      17  0.99435     
+      18  0.99435     
+      16  0.99435     
+      15  0.99435     
+  
+  ELEMENT=       8        SOLID185
+    NODE     25      
+      27  0.99435     
+      26  0.99435     
+      22  0.99435     
+      24  0.99435     
+      18  0.99435     
+      14  0.99435     
+      13  0.99435     
+      16  0.99435     
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       1        SOLID185
+    NODE     26      
+       2   259.94     
+       8   259.94     
+       9   259.94     
+       3   259.94     
+      19   259.94     
+      21   259.94     
+      27   259.94     
+      25   259.94     
+  
+  ELEMENT=       2        SOLID185
+    NODE     26      
+       8   259.94     
+       6   259.94     
+       7   259.94     
+       9   259.94     
+      21   259.94     
+      20   259.94     
+      26   259.94     
+      27   259.94     
+  
+  ELEMENT=       3        SOLID185
+    NODE     26      
+       3   259.94     
+       9   259.94     
+       5   259.94     
+       1   259.94     
+      25   259.94     
+      27   259.94     
+      24   259.94     
+      23   259.94     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       4        SOLID185
+    NODE     26      
+       9   259.94     
+       7   259.94     
+       4   259.94     
+       5   259.94     
+      27   259.94     
+      26   259.94     
+      22   259.94     
+      24   259.94     
+  
+  ELEMENT=       5        SOLID185
+    NODE     26      
+      19   259.94     
+      21   259.94     
+      27   259.94     
+      25   259.94     
+      10   259.94     
+      12   259.94     
+      18   259.94     
+      17   259.94     
+  
+  ELEMENT=       6        SOLID185
+    NODE     26      
+      21   259.94     
+      20   259.94     
+      26   259.94     
+      27   259.94     
+      12   259.94     
+      11   259.94     
+      14   259.94     
+      18   259.94     
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.266
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=     1                                             
+   TIME=   0.10000E-04  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     26      
+      25   259.94     
+      27   259.94     
+      24   259.94     
+      23   259.94     
+      17   259.94     
+      18   259.94     
+      16   259.94     
+      15   259.94     
+  
+  ELEMENT=       8        SOLID185
+    NODE     26      
+      27   259.94     
+      26   259.94     
+      22   259.94     
+      24   259.94     
+      18   259.94     
+      14   259.94     
+      13   259.94     
+      16   259.94     

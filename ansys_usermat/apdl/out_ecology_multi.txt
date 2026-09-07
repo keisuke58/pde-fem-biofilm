@@ -1,0 +1,620 @@
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+
+ *------------------------------------------------------------------*
+ |                                                                  |
+ |   W E L C O M E   T O   T H E   A N S Y S (R)  P R O G R A M     |
+ |                                                                  |
+ *------------------------------------------------------------------*
+
+
+
+
+ ***************************************************************
+ *         ANSYS MAPDL 2022 R2          LEGAL NOTICES          *
+ ***************************************************************
+ *                                                             *
+ * Copyright 1971-2022 Ansys, Inc.  All rights reserved.       *
+ * Unauthorized use, distribution or duplication is            *
+ * prohibited.                                                 *
+ *                                                             *
+ * Ansys is a registered trademark of Ansys, Inc. or its       *
+ * subsidiaries in the United States or other countries.       *
+ * See the Ansys, Inc. online documentation or the Ansys, Inc. *
+ * documentation CD or online help for the complete Legal      *
+ * Notice.                                                     *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * THIS ANSYS SOFTWARE PRODUCT AND PROGRAM DOCUMENTATION       *
+ * INCLUDE TRADE SECRETS AND CONFIDENTIAL AND PROPRIETARY      *
+ * PRODUCTS OF ANSYS, INC., ITS SUBSIDIARIES, OR LICENSORS.    *
+ * The software products and documentation are furnished by    *
+ * Ansys, Inc. or its subsidiaries under a software license    *
+ * agreement that contains provisions concerning               *
+ * non-disclosure, copying, length and nature of use,          *
+ * compliance with exporting laws, warranties, disclaimers,    *
+ * limitations of liability, and remedies, and other           *
+ * provisions.  The software products and documentation may be *
+ * used, disclosed, transferred, or copied only in accordance  *
+ * with the terms and conditions of that software license      *
+ * agreement.                                                  *
+ *                                                             *
+ * Ansys, Inc. is a UL registered                              *
+ * ISO 9001:2015 company.                                      *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * This product is subject to U.S. laws governing export and   *
+ * re-export.                                                  *
+ *                                                             *
+ * For U.S. Government users, except as specifically granted   *
+ * by the Ansys, Inc. software license agreement, the use,     *
+ * duplication, or disclosure by the United States Government  *
+ * is subject to restrictions stated in the Ansys, Inc.        *
+ * software license agreement and FAR 12.212 (for non-DOD      *
+ * licenses).                                                  *
+ *                                                             *
+ ***************************************************************
+
+ 2022 R2 
+     
+ Point Releases and Patches installed:   
+     
+ ANSYS, Inc. License Manager 2022 R2 
+ Discovery 2022 R2   
+ Autodyn 2022 R2 
+ SpaceClaim 2022 R2  
+ LS-DYNA 2022 R2 
+ CFX (includes CFD-Post) 2022 R2 
+ Fluent (includes CFD-Post) 2022 R2  
+ Polyflow (includes CFD-Post) 2022 R2
+ TurboGrid 2022 R2   
+ ICEM CFD 2022 R2
+ Aqwa 2022 R2
+ optiSLang 2022 R2   
+ Customization Files for User Programmable Features 2022 R2  
+ Mechanical Products 2022 R2 
+ Icepak (includes CFD-Post) 2022 R2  
+ ACIS Geometry Interface 2022 R2 
+ AutoCAD Geometry Interface 2022 R2  
+ Catia, Version 4 Geometry Interface 2022 R2 
+ Catia, Version 5 Geometry Interface 2022 R2 
+ Catia, Version 6 Geometry Interface 2022 R2 
+ Creo Elements/Direct Modeling Geometry Interface 2022 R2
+ Creo Parametric Geometry Interface 2022 R2  
+ Inventor Geometry Interface 2022 R2 
+ JTOpen Geometry Interface 2022 R2   
+ NX Geometry Interface 2022 R2   
+ Parasolid Geometry Interface  2022 R2   
+ Solid Edge Geometry Interface 2022 R2   
+ SOLIDWORKS Geometry Interface 2022 R2   
+
+
+          *****  MAPDL COMMAND LINE ARGUMENTS  *****
+  BATCH MODE REQUESTED (-b)    = LIST
+  INPUT FILE COPY MODE (-c)    = COPY
+       1 PARALLEL PROCESSES REQUESTED WITH SINGLE THREAD PER PROCESS
+    TOTAL OF     1 CORES REQUESTED
+  INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_ecology_multi.dat
+  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_ecology_multi.txt
+
+ RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
+ CURRENT JOBNAME=file  13:05:53  SEP 07, 2026 CP=      0.094
+ Note - This MAPDL version was linked by Licensee
+     1  ! t_growth_ecology_multi.dat --- multi-element extension of 
+     2  ! t_growth_ecology.dat: same fully-constrained unit cube, same closed-form  
+     3  ! answer, but subdivided into 8 SOLID185 elements instead of 1. 
+     4  !   
+     5  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^  
+     6  !       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt  
+     7  ! Same -custom / material_server.py preconditions as t_growth_ecology.dat.  
+     8  !   
+     9  ! STATUS, 2026-09-07 (IKMHIWI03): PARTIAL. Under `-np 1` (forced
+    10  ! single-threaded), this deck converges cleanly (0 errors) and all 8
+    11  ! elements independently reproduce t_growth_ecology.dat's closed-form   
+    12  ! answer exactly -- proving ustatev(15:26) stays isolated per Gauss point   
+    13  ! (no cross-talk between elements) and the ecology hook survives a real 
+    14  ! multi-element mesh, not just one point.   
+    15  !   
+    16  ! Under ANSYS's DEFAULT thread count it does NOT complete. First symptom
+    17  ! (before the fix below): idle-blocked forever, near-zero CPU -- classic
+    18  ! deadlock signature. Root cause found: `biofilm_py_eval.c` kept ONE
+    19  ! global, unsynchronised TCP connection (`g_fd`) shared by every caller;
+    20  ! ANSYS parallelises element/Gauss-point material evaluation across worker  
+    21  ! threads by default, so concurrent unsynchronised send()/recv() calls on   
+    22  ! the same fd interleaved requests into malformed frames and a reply could  
+    23  ! be picked up by the wrong thread, leaving another thread blocked  
+    24  ! forever. Fixed with a mutex (SRWLOCK on Windows, pthread_mutex_t  
+    25  ! elsewhere) serialising the whole request/response exchange -- see 
+    26  ! biofilm_py_eval.c's 2026-09-07 note. That fix is real, necessary, and 
+    27  ! verified (compiles clean under MinGW and MSVC, full coupling/ecology  
+    28  ! pytest regression suite passes).  
+    29  !   
+    30  ! It does NOT, however, make this specific deck complete under default  
+    31  ! threading. Symptom changed shape -- now CPU-bound (not idle) with the 
+    32  ! Fortran-side ANSYS worker process alone burning CPU continuously past 
+    33  ! "There are no active degrees of freedom" in file.err, while   
+    34  ! material_server.py's own process barely uses any CPU at all (so very  
+    35  ! few ecology-hook round trips are actually happening -- this is not
+    36  ! "many slow socket calls serialized by the mutex", it looks like ANSYS 
+    37  ! itself is stuck somewhere after that log line). Left UNRESOLVED here, 
+    38  ! deliberately not chased further this session -- the next person picking   
+    39  ! this up should instrument usermat_biofilm.f (temporary WRITE  
+    40  ! statements, the same technique that found the Fv TBDATA bug in
+    41  ! t_growth_constrained.dat's own history) to see whether usermat() is   
+    42  ! being called an unexpected number of times, or attach a debugger to the   
+    43  ! CPU-bound worker process to get a stack trace while it spins, rather  
+    44  ! than guessing further blind.  
+    45  !   
+    46  ! WHY THIS CASE 
+    47  ! ------------- 
+    48  ! t_growth_ecology.dat proves the ecology hook's own math is right at ONE   
+    49  ! Gauss point. It does not exercise anything about MANY Gauss points calling
+    50  ! the socket bridge in the same solve: does ustatev(15:26) stay isolated
+    51  ! per integration point (no cross-talk between elements), does the server   
+    52  ! hold up under several times the request volume in one substep, does   
+    53  ! nothing race or interleave badly when ANSYS's Newton loop fires calls 
+    54  ! from multiple elements. This is the first thing that would actually break 
+    55  ! going from a single-element smoke test toward a real mesh -- so verify it 
+    56  ! before spending effort on spatially-varying composition/theta per element 
+    57  ! (not done here; see coupling/README.md next-steps).   
+    58  !   
+    59  ! Every node is still fully fixed (D,ALL,UX/UY/UZ,0 on the whole selection),
+    60  ! so F = I at every one of the 8 elements' integration points regardless of 
+    61  ! mesh density -- the closed-form answer from t_growth_ecology.dat still
+    62  ! applies, now checked at all 8 elements independently. theta and the   
+    63  ! initial composition are the SAME material (matID 1) for every element, so 
+    64  ! this deliberately does NOT test spatial variation -- only isolation and   
+    65  ! scale of the per-Gauss-point coupling.
+    66  !   
+    67  ! EXPECTED (confirmed under -np 1; not yet reached under default threading):
+    68  ! identical to t_growth_ecology.dat, at every one of the 8 elements (see
+    69  ! that file's header for the exact reference numbers):  
+    70  !   alpha_new = 4.971361400e-04, SX=SY=SZ = -2.9997736e-01, shear = 0,  
+    71  !   g_new as listed there -- reproduced independently via   
+    72  !   ecology_jax.default_initial_state() -> ecology_jax.ecology_step(...,
+    73  !   THETA_DEMO, 1e-5).  
+    74  !   
+    75  ! Run with the workaround for now:  
+    76  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -np 1 -custom .\ANSYS.exe ^
+    77  !       -i t_growth_ecology_multi.dat -o out_ecology_multi.txt  
+    78      
+    79  FINISH  
+    80  /CLEAR  
+    81  /TITLE, biofilm USERMAT - 0D Hamilton ecology hook, multi-element   
+    82  /PREP7  
+    83      
+    84  ! ---- unit cube, 2x2x2 = 8 SOLID185 elements --------------------------------  
+    85  ET,1,SOLID185   
+    86  KEYOPT,1,2,0                 ! B-bar
+    87      
+    88  BLOCK,0,1,0,1,0,1   
+    89  ESIZE,0.5   
+    90  VMESH,1 
+    91      
+    92  ! ---- user material (identical to t_growth_ecology.dat) --------------------   
+    93  TB,USER,1,1,29  
+    94  TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0   
+    95  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79   
+    96  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1  
+    97  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+    98  TBDATA,25,0.32,1.49,2.1,2.41,2.5
+    99      
+   100  TB,STATE,1,,26  
+   101  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
+   102  TBDATA,7,0.0,0.0,1.0
+   103  TBDATA,10,0.0   
+   104      
+   105  ! ---- fully constrained: forces F = I at every element's integration points -  
+   106  NSEL,ALL
+   107  D,ALL,UX,0  
+   108  D,ALL,UY,0  
+   109  D,ALL,UZ,0  
+   110  NSEL,ALL
+   111  FINISH  
+   112      
+   113  ! ---- solve -----------------------------------------------------------------  
+   114  /SOLU   
+   115  ANTYPE,STATIC   
+   116  NLGEOM,ON   
+   117  TIME,1.0E-5 
+   118  NSUBST,1,1,1
+   119  OUTRES,ALL,ALL  
+   120  OUTRES,SVAR,ALL 
+   121  SOLVE   
+   122  FINISH  
+   123      
+   124  ! ---- report: all 8 elements, not just element 1 ----------------------------  
+   125  /POST1  
+   126  SET,LAST
+   127  ESEL,ALL
+   128  /OUTPUT,growth_result_ecology_multi,txt 
+   129  PRESOL,S,COMP   
+   130  PRESOL,SVAR,10                ! alpha   
+   131  PRESOL,SVAR,15                ! g(1)  = phi(1)  
+   132  PRESOL,SVAR,16                ! g(2)  = phi(2)  
+   133  PRESOL,SVAR,17                ! g(3)  = phi(3)  
+   134  PRESOL,SVAR,18                ! g(4)  = phi(4)  
+   135  PRESOL,SVAR,19                ! g(5)  = phi(5)  
+   136  PRESOL,SVAR,20                ! g(6)  = phi0
+   137  PRESOL,SVAR,21                ! g(7)  = psi(1)  
+   138  PRESOL,SVAR,22                ! g(8)  = psi(2)  
+   139  PRESOL,SVAR,23                ! g(9)  = psi(3)  
+   140  PRESOL,SVAR,24                ! g(10) = psi(4)  
+   141  PRESOL,SVAR,25                ! g(11) = psi(5)  
+   142  PRESOL,SVAR,26                ! g(12) = gamma   
+   143  /OUTPUT 
+   144  FINISH  
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ CLEAR DATABASE AND RERUN START.ANS
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ TITLE= 
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:53  SEP 07, 2026 CP=      0.125
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL ANALYSIS DEFINITION (PREP7) *****
+
+ ELEMENT TYPE          1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ ELEMENT TYPE       1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ CREATE A HEXAHEDRAL VOLUME WITH
+ X-DISTANCES FROM      0.000000000     TO      1.000000000    
+ Y-DISTANCES FROM      0.000000000     TO      1.000000000    
+ Z-DISTANCES FROM      0.000000000     TO      1.000000000    
+
+      OUTPUT VOLUME =     1
+
+ DEFAULT ELEMENT DIVISIONS PER LINE BASED ON ELEMENT SIZE =  0.500    
+
+ GENERATE NODES AND ELEMENTS
+       IN VOLUMES       1  TO      1  IN STEPS OF      1
+
+ NUMBER OF VOLUMES MESHED   =         1
+ MAXIMUM NODE NUMBER        =        27
+ MAXIMUM ELEMENT NUMBER     =         8
+
+ DEFINE DATA TABLE USER FOR MATERIAL 1 
+ USER MATERIALS OPTION 
+ WITH A MAXIMUM OF 29 DATA ITEMS
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  1 1.00000e+00     0.00000e+00     1.00000e-02     0.00000e+00     0.00000e+00     0.00000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  7 0.00000e+00     1.00000e+00     5.00000e+01     1.34000e+00     -1.80000e-01     1.79000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  13 1.17000e+00     2.58000e+00     3.51000e+00     2.73000e+00     7.10000e-01     2.10000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  19 3.70000e-01     2.05000e+00     -1.50000e-01     3.56000e+00     1.60000e-01     1.20000e-01    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  25 3.20000e-01     1.49000e+00     2.10000e+00     2.41000e+00     2.50000e+00    
+
+
+ DEFINE DATA TABLE  STAT  FOR MATERIAL     1
+   USER DEFINED STATE VARIABLES OPTION                                             
+   Number of state variables is      26
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      26 DATA POINTS
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000      0.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC= 10  0.0000      0.0000      0.0000      0.0000      0.0000      0.0000    
+
+ ALL SELECT   FOR ITEM=NODE COMPONENT=    
+  IN RANGE         1 TO         27 STEP          1
+
+         27  NODES (OF         27  DEFINED) SELECTED BY NSEL  COMMAND.
+
+ SPECIFIED CONSTRAINT UX   FOR SELECTED NODES            1 TO          27 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SPECIFIED CONSTRAINT UY   FOR SELECTED NODES            1 TO          27 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SPECIFIED CONSTRAINT UZ   FOR SELECTED NODES            1 TO          27 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ ALL SELECT   FOR ITEM=NODE COMPONENT=    
+  IN RANGE         1 TO         27 STEP          1
+
+         27  NODES (OF         27  DEFINED) SELECTED BY NSEL  COMMAND.
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.125
+
+
+
+ *****  MAPDL SOLUTION ROUTINE  *****
+
+
+ PERFORM A STATIC ANALYSIS
+  THIS WILL BE A NEW ANALYSIS
+
+ LARGE DEFORMATION ANALYSIS
+
+ TIME= 0.10000E-04
+
+ USE       1 SUBSTEPS INITIALLY THIS LOAD STEP FOR ALL  DEGREES OF FREEDOM
+ FOR AUTOMATIC TIME STEPPING:
+   USE      1 SUBSTEPS AS A MAXIMUM
+   USE      1 SUBSTEPS AS A MINIMUM
+
+ WRITE ALL  ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
+   FOR ALL APPLICABLE ENTITIES
+
+ WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
+   FOR ALL APPLICABLE ENTITIES
+
+ *****  MAPDL SOLVE    COMMAND  *****
+
+ *** SELECTION OF ELEMENT TECHNOLOGIES FOR APPLICABLE ELEMENTS ***
+                ---GIVE SUGGESTIONS ONLY---
+
+ ELEMENT TYPE         1 IS SOLID185. IT IS ASSOCIATED WITH ELASTOPLASTIC MATERIALS
+ ONLY. KEYOPT(2)=2 IS SUGGESTED.
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:53  SEP 07, 2026 CP=      0.141
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+
+                       S O L U T I O N   O P T I O N S
+
+   PROBLEM DIMENSIONALITY. . . . . . . . . . . . .3-D                  
+   DEGREES OF FREEDOM. . . . . . UX   UY   UZ  
+   ANALYSIS TYPE . . . . . . . . . . . . . . . . .STATIC (STEADY-STATE)
+   NONLINEAR GEOMETRIC EFFECTS . . . . . . . . . .ON
+   PLASTIC MATERIAL PROPERTIES INCLUDED. . . . . .YES
+   NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
+   GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
+
+ *** WARNING ***                         CP =       0.141   TIME= 13:05:53
+ ANSYS,INC.-supplied version of coding for USERCK has been used.         
+
+ *** NOTE ***                            CP =       0.141   TIME= 13:05:53
+ The step data was checked and warning messages were found.              
+  Please review output or errors file ( F:\biofilm_upf_kusepy\file.err   
+ ) for these warning messages.                                           
+
+ *** NOTE ***                            CP =       0.141   TIME= 13:05:53
+ This nonlinear analysis defaults to using the full Newton-Raphson       
+ solution procedure.  This can be modified using the NROPT command.      
+
+ *** NOTE ***                            CP =       0.141   TIME= 13:05:53
+ The conditions for direct assembly have been met.  No .emat or .erot    
+ files will be produced.                                                 
+
+                      L O A D   S T E P   O P T I O N S
+
+   LOAD STEP NUMBER. . . . . . . . . . . . . . . .     1
+   TIME AT END OF THE LOAD STEP. . . . . . . . . . 0.10000E-04
+   AUTOMATIC TIME STEPPING . . . . . . . . . . . .    ON
+      INITIAL NUMBER OF SUBSTEPS . . . . . . . . .     1
+      MAXIMUM NUMBER OF SUBSTEPS . . . . . . . . .     1
+      MINIMUM NUMBER OF SUBSTEPS . . . . . . . . .     1
+   MAXIMUM NUMBER OF EQUILIBRIUM ITERATIONS. . . .    15
+   STEP CHANGE BOUNDARY CONDITIONS . . . . . . . .    NO
+   STRESS-STIFFENING . . . . . . . . . . . . . . .    ON
+   TERMINATE ANALYSIS IF NOT CONVERGED . . . . . .YES (EXIT)  
+   CONVERGENCE CONTROLS. . . . . . . . . . . . . .USE DEFAULTS
+   COPY INTEGRATION POINT VALUES TO NODE . . . . .YES, FOR ELEMENTS WITH
+                                                  ACTIVE MAT. NONLINEARITIES
+   PRINT OUTPUT CONTROLS . . . . . . . . . . . . .NO PRINTOUT
+   DATABASE OUTPUT CONTROLS
+      ITEM     FREQUENCY   COMPONENT
+       ALL        ALL               
+      SVAR        ALL               
+
+
+ SOLUTION MONITORING INFO IS WRITTEN TO FILE= file.mntr                                                                                                                                                                                                                                                           
+
+
+ Range of element maximum matrix coefficients in global coordinates
+ Maximum = 6.67010926 at element 2.                                      
+ Minimum = 6.67010926 at element 6.                                      
+
+   *** ELEMENT MATRIX FORMULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         8  SOLID185      0.031   0.003906
+ Time at end of element matrix formulation CP = 0.1875.                  
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
+  FOR POSSIBLE RESUME FROM THIS POINT
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1406E-02
+
+ *** WARNING ***                         CP =       0.203   TIME= 13:05:55
+ There are no active degrees of freedom.                                 
+     DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1435E-02 <<< CONVERGED
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1464E-02 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   2
+
+   *** ELEMENT RESULT CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         8  SOLID185      0.000   0.000000
+
+   *** NODAL LOAD CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1         8  SOLID185      0.000   0.000000
+ *** LOAD STEP     1   SUBSTEP     1  COMPLETED.    CUM ITER =      2
+ *** TIME =  0.100000E-04     TIME INC =  0.100000E-04
+
+
+ *** MAPDL BINARY FILE STATISTICS
+  BUFFER SIZE USED= 16384
+        0.062 MB WRITTEN ON ELEMENT SAVED DATA FILE: file.esav
+        0.062 MB WRITTEN ON ASSEMBLED MATRIX FILE: file.full
+        0.312 MB WRITTEN ON RESULTS FILE: file.rst
+
+ FINISH SOLUTION PROCESSING
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.250
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   13:05:58  SEP 07, 2026 CP=      0.250
+
+  biofilm USERMAT - 0D Hamilton ecology hook, multi-element                    
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL RESULTS INTERPRETATION (POST1) *****
+
+ *** NOTE ***                            CP =       0.250   TIME= 13:05:58
+ Reading results into the database (SET command) will update the current 
+ displacement and force boundary conditions in the database with the     
+ values from the results file for that load set.  Note that any          
+ subsequent solutions will use these values unless action is taken to    
+ either SAVE the current values or not overwrite them (/EXIT,NOSAVE).    
+
+
+ USE LAST SUBSTEP ON RESULT FILE  FOR LOAD CASE 0 
+
+ SET COMMAND GOT LOAD STEP=     1  SUBSTEP=     1  CUMULATIVE ITERATION=     2
+   TIME/FREQUENCY= 0.10000E-04
+ TITLE=  biofilm USERMAT - 0D Hamilton ecology hook, multi-element              
+
+ ALL SELECT   FOR ITEM=ELEM COMPONENT=    
+  IN RANGE         1 TO          8 STEP          1
+
+          8  ELEMENTS (OF          8  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ /OUTPUT FILE= growth_result_ecology_multi.txt
+
+ EXIT THE MAPDL POST1 DATABASE PROCESSOR
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.266
+
+
+
+ ***** END OF INPUT ENCOUNTERED *****
+
+ PURGE ALL SOLUTION AND POST DATA
+ SAVE ALL MODEL DATA
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.db
+  FOR POSSIBLE RESUME FROM THIS POINT
+
+
+ NUMBER OF WARNING MESSAGES ENCOUNTERED=          2
+ NUMBER OF ERROR   MESSAGES ENCOUNTERED=          0
+
++--------------------- M A P D L   S T A T I S T I C S ------------------------+
+
+Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
+Date Run: 09/07/2026   Time: 13:05     Process ID: 33388
+Operating System: Windows 10  (Build: 26200)
+
+Processor Model: Intel(R) Core(TM) Ultra 5 235
+
+Compiler: Intel(R) Fortran Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) C/C++ Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191125
+          BLAS Library supplied by Intel(R) MKL
+
+Number of machines requested            :    1
+Total number of cores available         :   14
+Number of physical cores available      :   14
+Number of processes requested           :    1
+Number of threads per process requested :    1
+Total number of cores requested         :    1 (Shared Memory Parallel)                    
+
+GPU Acceleration: Not Requested
+
+Job Name: file
+Input File: t_growth_ecology_multi.dat
+Working Directory: F:\biofilm_upf_kusepy
+
+Total CPU time for main thread                    :        0.5 seconds
+Total CPU time summed for all threads             :        0.3 seconds
+
+Elapsed time spent obtaining a license            :        1.4 seconds
+Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
+Elapsed time spent solution - preprocessing       :        0.0 seconds
+Elapsed time spent computing solution             :        4.5 seconds
+Elapsed time spent solution - postprocessing      :        0.0 seconds
+Elapsed time spent post-processing model (/POST1) :        0.0 seconds
+ 
+Equation solver used                              :            Sparse (symmetric)
+
+Sum of memory used on all processes               :        9.0 MB
+Sum of memory allocated on all processes          :     2112.0 MB
+Physical memory available                         :         31 GB
+
+Total amount of I/O written to disk               :        0.0 GB
+Total amount of I/O read from disk                :        0.0 GB
+
++------------------ E N D   M A P D L   S T A T I S T I C S -------------------+
+
+
+ *---------------------------------------------------------------------------*
+ |                                                                           |
+ |                               RUN COMPLETED                               |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |  Ansys MAPDL 2022 R2         Build 22.2         UP20220516    WINDOWS x64 |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ | Database Requested(-db)  1024 MB    Scratch Memory Requested      1024 MB |
+ | Maximum Database Used       1 MB    Maximum Scratch Memory Used      8 MB |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |        CP Time      (sec) =          0.281       Time  =  13:05:58        |
+ |        Elapsed Time (sec) =          8.000       Date  =  09/07/2026      |
+ |                                                                           |
+ *---------------------------------------------------------------------------*
