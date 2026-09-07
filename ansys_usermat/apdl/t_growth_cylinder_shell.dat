@@ -27,10 +27,15 @@
 ! different element, 2454, self-recovers via automatic bisection rather
 ! than aborting). Tried combined with a higher NSUBST cap (200 instead of
 ! 80): no further change, same 1 error. Tried combined with STABILIZE
-! (nonlinear stabilization): WORSE (2 errors, run did not reach /POST1) --
-! consistent with the established pattern that further intervention at
-! this specific corner tends to hurt, even a different kind of
-! intervention than BC/mesh. See t_growth_cylinder_shell_a015_lnsrch.dat
+! (nonlinear stabilization): WORSE (2 errors, run did not reach /POST1).
+! Tried combined with a finer initial substep (NSUBST,20,80,4 instead of
+! 10,80,2 -- the one remaining error hit at SUBSTEP 4, so a gentler ramp
+! seemed worth a shot): also WORSE (element 2454 failed twice, 3 total
+! errors, PROBLEM TERMINATED, did not complete) -- consistent with the
+! established pattern that further intervention at this specific corner
+! tends to hurt, even numerical-scheme tweaks, not just BC/mesh. Paused
+! here -- plain LNSRCH,ON with the original NSUBST,10,80,2 schedule stands
+! as the best result found. See t_growth_cylinder_shell_a015_lnsrch.dat
 ! (the working alpha=0.015+LNSRCH deck, kept as a separate file rather than
 ! changing this deck's own verified alpha=0.01 baseline) and
 ! out_a015_lnsrch.txt / growth_cylinder_a015_lnsrch_result.txt for the

@@ -80,9 +80,14 @@ directory closes that gap.
 > completes (the one remaining distortion, a different element, self-
 > recovers via automatic bisection instead of aborting). Raising the
 > `NSUBST` cap further on top made no additional difference. Combining
-> with `STABILIZE` made it **worse** (2 errors, didn't reach `/POST1`) —
-> the same "further intervention at this corner hurts" pattern as the 4
-> BC/mesh attempts, extending even to a different *kind* of intervention.
+> with `STABILIZE` made it **worse** (2 errors, didn't reach `/POST1`);
+> combining with a finer initial substep (`NSUBST,20,80,4`, since the
+> remaining error hit at substep 4) also made it **worse** (element 2454
+> failed twice, 3 total errors, terminated without completing) — the same
+> "further intervention at this corner hurts" pattern as the 4 BC/mesh
+> attempts, extending even to numerical-scheme tweaks, not just BC/mesh.
+> Paused here — plain `LNSRCH,ON` with the original `NSUBST,10,80,2`
+> schedule stands as the best result found.
 > Not "genuinely clean" the way α=0.01 is, but a real improvement over the
 > 3-error hard failure — kept as a separate deck
 > (`t_growth_cylinder_shell_a015_lnsrch.dat`) rather than changing this
