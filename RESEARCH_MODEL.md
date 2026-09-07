@@ -198,5 +198,12 @@ control is required.
 2. **Per-condition α calibration** — currently one magnitude for all conditions.
 3. **Python-in-the-loop material model** — the equivalence is already proven
    (§4), so the calibrated JAX model can be swapped in at the Gauss point without
-   changing the physics: `ansys_usermat/coupling/`.
+   changing the physics: `ansys_usermat/coupling/`. As of 2026-09-07 the same
+   bridge also drives α itself: `kUseEcology=1` advances a per-Gauss-point 0D
+   Hamilton ecology state (the same integrator as
+   `jax_hamilton_0d_5species_demo.py`) instead of reading a precomputed field,
+   verified end-to-end including real ANSYS (single- and multi-element). Still
+   open: the interaction parameters (`theta`) are the demo's placeholder, not
+   TMCMC-calibrated, and the seed composition is a fixed default, not
+   CLSM-measured — see `ansys_usermat/coupling/README.md`'s next-steps #4.
 4. **Jaw-level, uncertainty-aware pipeline** (Level 2) — the first-paper target.

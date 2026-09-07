@@ -68,6 +68,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/apdl/make_layered_material.py` | Turns a depth-resolved α(x) field into ANSYS layered materials, and reports what the binning costs against the field — the ANSYS route takes α per material, so a spatial field has to be discretised |
 | `ansys_usermat/apdl/MESH_STUDY.md`, `make_mesh_levels.py` | The light mesh study: show the **ratio** Ch5 reports is mesh-stable, rather than converging absolute stress. The helper halves `ESIZE` and changes nothing else |
 | `ansys_usermat/apdl/plot_cylinder_3d.py` | Draws the v222 curved-shell run from the solver's own listing — geometry, a section showing the two layers and the interface, and the SEQV distribution. Validated against the listing's own min/max/mean |
+| [`ansys_usermat/coupling/`](ansys_usermat/coupling/) | Gauss-point bridge to Python: `usermat()` calls out over a socket per Gauss point instead of using the inline Fortran core, verified end-to-end (gfortran driver + real ANSYS) for both the material law (`kUsePy`) and the 0D Hamilton ecology ODE that drives α (`kUseEcology`). See `coupling/README.md` for the interface contract, verification status, and open next steps (TMCMC theta / CLSM-seeded state are still placeholders) |
 
 ## Pre-existing directories the tour had not listed
 
