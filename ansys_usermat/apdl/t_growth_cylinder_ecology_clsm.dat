@@ -1,0 +1,193 @@
+! t_growth_cylinder_ecology_clsm.dat --- two-layer curved-shell smoke test,
+! LIVE per-Gauss-point 0D Hamilton ecology driving alpha (kUseEcology=1),
+! same geometry/BCs/materials as t_growth_cylinder_ecology.dat, but region
+! B's (mat 3) ecology seed is REAL Day-1 (Tag=1) Commensal/Static CLSM
+! composition from data/heine_species_distribution_biofilm.xlsx ("all
+! cells" sheet) -- the SAME values t_growth_ecology_clsm_phi.dat already
+! verified on the single fully-constrained element, chained here through
+! this deck's real, unconstrained, curved two-material geometry instead.
+! This closes coupling/README.md next-steps #4's remaining open item one
+! step further than the single-element case did: not just "does the seeding
+! mechanism work" but "does it produce a coherent field on real geometry".
+!
+! WHAT'S DIFFERENT FROM t_growth_cylinder_ecology.dat
+! -----------------------------------------------------
+! Only mat 3's TB,STATE block changed. mat 2 (region A, all-zero ->
+! INIT_ECO_IF_ZERO default) is UNCHANGED -- kept as the same regression
+! baseline the original deck already verified, so this run cannot silently
+! diverge from that established result for region A.
+! Region B was previously an explicit SYNTHETIC seed (phi summing to 0.70,
+! "picked only to be visibly different... not measured data" -- see
+! ecology_cylinder_reference.py). It is now the real measured composition:
+!   phi = [0.118119010, 0.019459750, 0.768110310, 0.071847570, 0.022462350]
+!   (S. oralis, A. naeslundii, Veillonella, F. nucleatum, P. gingivalis)
+!   phi0 = 1.0e-06, psi = [0.999]*5 (still placeholder -- see
+!   t_growth_ecology_clsm_phi.dat's header for why the workbook's "only
+!   living cells" ratio is not used here either), gamma = 0.
+! Independent reference: ecology_cylinder_reference_clsm.py (10 chained
+! ecology_step calls, dt=1e-5 each, THETA_DEMO -- same convention as the
+! base deck's ecology_cylinder_reference.py):
+!   region A: alpha = 4.5687349611e-03  (matches the original deck's own
+!             verified region-A result exactly -- unchanged)
+!   region B (real CLSM): alpha = 4.6144769029e-03
+!   alpha ratio B/A: 1.0100 -- both well under the 0.01 convergence
+!   threshold.
+!
+! Run (from a writable working directory, e.g. F:\biofilm_upf_kusepy, with
+! ansys_usermat/coupling/material_server.py listening on 127.0.0.1:8765):
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_cylinder_ecology_clsm.dat -o out_cylinder_ecology_clsm.txt
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar; see t_growth_constrained.dat's KEYOPT sweep
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 0.15
+ARC   = 5
+
+! ---- geometry: two radial layers of a partial hollow cylinder --------------
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm)
+
+! ---- substrate material (mat 1): unchanged -- no ecology, no growth.
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0     ! Fv(1,1..3), Fv(2,1..3)
+TBDATA,7,0.0,0.0,1.0                  ! Fv(3,1..3)
+TBDATA,10,0.0                         ! alpha = 0: substrate does not grow
+
+! ---- growth-layer materials (mat 2, mat 3): identical constants/theta,
+! differ only in TB,STATE seed below.
+TB,USER,2,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0            ! C10,C01,D1,eta,mtype,kUsePy
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79             ! kStateMat,kUseEcology,k_alpha,theta(1:3)
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10           ! theta(4:9)
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12          ! theta(10:15)
+TBDATA,25,0.32,1.49,2.10,2.41,2.50                ! theta(16:20)
+
+TB,USER,3,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+! mat 2: all-zero ecology seed -> INIT_ECO_IF_ZERO's default_initial_state()
+! (region A -- UNCHANGED from t_growth_cylinder_ecology.dat)
+TB,STATE,2,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0      ! Fv(1,1..3), Fv(2,1..3)
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0      ! Fv(3,1..3), alpha=0, ustatev(11:12)=0
+TBDATA,13,0.0,0.0,0.0,0.0,0.0,0.0     ! ustatev(13:14)=0, g phi(1:4)=0
+TBDATA,19,0.0,0.0,0.0,0.0,0.0,0.0     ! g phi(5)=0, phi0=0, psi(1:4)=0
+TBDATA,25,0.0,0.0                     ! g psi(5)=0, gamma=0
+
+! mat 3: REAL Day-1 Commensal/Static CLSM seed (region B) -- see header.
+TB,STATE,3,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.118119010,0.0194597500,0.768110310,0.0718475700
+                                       ! ustatev(13:14)=0, g phi(1:4)=real CLSM
+TBDATA,19,0.0224623500,1.00000000E-06,0.999,0.999,0.999,0.999
+                                       ! g phi(5)=real CLSM, phi0, psi(1:4)=.999
+TBDATA,25,0.999,0.0                   ! g psi(5)=.999, gamma=0
+
+! ---- mesh -- coarse, smoke test only ----------------------------------
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+! ---- split the growth layer into the two ecology-seed regions --------------
+CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+EMODIF,ALL,MAT,3
+CSYS,0
+
+ALLSEL
+NUMMRG,NODE,1.0E-4                    ! bond the two layers
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary conditions -- identical to t_growth_cylinder_ecology.dat.
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+! ---- solve -------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-4
+AUTOTS,OFF
+NSUBST,10
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+! ---- report --------------------------------------------------------------
+/POST1
+SET,LAST
+/OUTPUT,growth_result_cylinder_ecology_clsm,txt
+PRNSOL,U,COMP
+NLIST,ALL,,,XYZ
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+ESEL,S,MAT,,2
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha, mat 2 (region A) elements
+PRESOL,SVAR,15
+PRESOL,SVAR,16
+PRESOL,SVAR,17
+PRESOL,SVAR,18
+PRESOL,SVAR,19
+PRESOL,SVAR,20
+PRESOL,SVAR,21
+PRESOL,SVAR,22
+PRESOL,SVAR,23
+PRESOL,SVAR,24
+PRESOL,SVAR,25
+PRESOL,SVAR,26
+ESEL,S,MAT,,3
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha, mat 3 (region B, real CLSM) elements
+PRESOL,SVAR,15
+PRESOL,SVAR,16
+PRESOL,SVAR,17
+PRESOL,SVAR,18
+PRESOL,SVAR,19
+PRESOL,SVAR,20
+PRESOL,SVAR,21
+PRESOL,SVAR,22
+PRESOL,SVAR,23
+PRESOL,SVAR,24
+PRESOL,SVAR,25
+PRESOL,SVAR,26
+/OUTPUT
+FINISH

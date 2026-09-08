@@ -1,0 +1,946 @@
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+
+ *------------------------------------------------------------------*
+ |                                                                  |
+ |   W E L C O M E   T O   T H E   A N S Y S (R)  P R O G R A M     |
+ |                                                                  |
+ *------------------------------------------------------------------*
+
+
+
+
+ ***************************************************************
+ *         ANSYS MAPDL 2022 R2          LEGAL NOTICES          *
+ ***************************************************************
+ *                                                             *
+ * Copyright 1971-2022 Ansys, Inc.  All rights reserved.       *
+ * Unauthorized use, distribution or duplication is            *
+ * prohibited.                                                 *
+ *                                                             *
+ * Ansys is a registered trademark of Ansys, Inc. or its       *
+ * subsidiaries in the United States or other countries.       *
+ * See the Ansys, Inc. online documentation or the Ansys, Inc. *
+ * documentation CD or online help for the complete Legal      *
+ * Notice.                                                     *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * THIS ANSYS SOFTWARE PRODUCT AND PROGRAM DOCUMENTATION       *
+ * INCLUDE TRADE SECRETS AND CONFIDENTIAL AND PROPRIETARY      *
+ * PRODUCTS OF ANSYS, INC., ITS SUBSIDIARIES, OR LICENSORS.    *
+ * The software products and documentation are furnished by    *
+ * Ansys, Inc. or its subsidiaries under a software license    *
+ * agreement that contains provisions concerning               *
+ * non-disclosure, copying, length and nature of use,          *
+ * compliance with exporting laws, warranties, disclaimers,    *
+ * limitations of liability, and remedies, and other           *
+ * provisions.  The software products and documentation may be *
+ * used, disclosed, transferred, or copied only in accordance  *
+ * with the terms and conditions of that software license      *
+ * agreement.                                                  *
+ *                                                             *
+ * Ansys, Inc. is a UL registered                              *
+ * ISO 9001:2015 company.                                      *
+ *                                                             *
+ ***************************************************************
+ *                                                             *
+ * This product is subject to U.S. laws governing export and   *
+ * re-export.                                                  *
+ *                                                             *
+ * For U.S. Government users, except as specifically granted   *
+ * by the Ansys, Inc. software license agreement, the use,     *
+ * duplication, or disclosure by the United States Government  *
+ * is subject to restrictions stated in the Ansys, Inc.        *
+ * software license agreement and FAR 12.212 (for non-DOD      *
+ * licenses).                                                  *
+ *                                                             *
+ ***************************************************************
+
+ 2022 R2 
+     
+ Point Releases and Patches installed:   
+     
+ ANSYS, Inc. License Manager 2022 R2 
+ Discovery 2022 R2   
+ Autodyn 2022 R2 
+ SpaceClaim 2022 R2  
+ LS-DYNA 2022 R2 
+ CFX (includes CFD-Post) 2022 R2 
+ Fluent (includes CFD-Post) 2022 R2  
+ Polyflow (includes CFD-Post) 2022 R2
+ TurboGrid 2022 R2   
+ ICEM CFD 2022 R2
+ Aqwa 2022 R2
+ optiSLang 2022 R2   
+ Customization Files for User Programmable Features 2022 R2  
+ Mechanical Products 2022 R2 
+ Icepak (includes CFD-Post) 2022 R2  
+ ACIS Geometry Interface 2022 R2 
+ AutoCAD Geometry Interface 2022 R2  
+ Catia, Version 4 Geometry Interface 2022 R2 
+ Catia, Version 5 Geometry Interface 2022 R2 
+ Catia, Version 6 Geometry Interface 2022 R2 
+ Creo Elements/Direct Modeling Geometry Interface 2022 R2
+ Creo Parametric Geometry Interface 2022 R2  
+ Inventor Geometry Interface 2022 R2 
+ JTOpen Geometry Interface 2022 R2   
+ NX Geometry Interface 2022 R2   
+ Parasolid Geometry Interface  2022 R2   
+ Solid Edge Geometry Interface 2022 R2   
+ SOLIDWORKS Geometry Interface 2022 R2   
+
+
+          *****  MAPDL COMMAND LINE ARGUMENTS  *****
+  BATCH MODE REQUESTED (-b)    = LIST
+  INPUT FILE COPY MODE (-c)    = COPY
+  SHARED MEMORY PARALLEL REQUESTED
+    SINGLE PROCESS WITH SINGLE THREAD REQUESTED
+    TOTAL OF     1 CORES REQUESTED
+  INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_cylinder_ecology_clsm.dat
+  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_cylinder_ecology_clsm.txt
+
+ RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
+ CURRENT JOBNAME=file  12:24:40  SEP 08, 2026 CP=      0.109
+ Note - This MAPDL version was linked by Licensee
+     1  ! t_growth_cylinder_ecology_clsm.dat --- two-layer curved-shell smoke test, 
+     2  ! LIVE per-Gauss-point 0D Hamilton ecology driving alpha (kUseEcology=1),   
+     3  ! same geometry/BCs/materials as t_growth_cylinder_ecology.dat, but region  
+     4  ! B's (mat 3) ecology seed is REAL Day-1 (Tag=1) Commensal/Static CLSM  
+     5  ! composition from data/heine_species_distribution_biofilm.xlsx ("all   
+     6  ! cells" sheet) -- the SAME values t_growth_ecology_clsm_phi.dat already
+     7  ! verified on the single fully-constrained element, chained here through
+     8  ! this deck's real, unconstrained, curved two-material geometry instead.
+     9  ! This closes coupling/README.md next-steps #4's remaining open item one
+    10  ! step further than the single-element case did: not just "does the seeding 
+    11  ! mechanism work" but "does it produce a coherent field on real geometry".  
+    12  !   
+    13  ! WHAT'S DIFFERENT FROM t_growth_cylinder_ecology.dat   
+    14  ! ----------------------------------------------------- 
+    15  ! Only mat 3's TB,STATE block changed. mat 2 (region A, all-zero -> 
+    16  ! INIT_ECO_IF_ZERO default) is UNCHANGED -- kept as the same regression 
+    17  ! baseline the original deck already verified, so this run cannot silently  
+    18  ! diverge from that established result for region A.
+    19  ! Region B was previously an explicit SYNTHETIC seed (phi summing to 0.70,  
+    20  ! "picked only to be visibly different... not measured data" -- see 
+    21  ! ecology_cylinder_reference.py). It is now the real measured composition:  
+    22  !   phi = [0.118119010, 0.019459750, 0.768110310, 0.071847570, 0.022462350] 
+    23  !   (S. oralis, A. naeslundii, Veillonella, F. nucleatum, P. gingivalis)
+    24  !   phi0 = 1.0e-06, psi = [0.999]*5 (still placeholder -- see   
+    25  !   t_growth_ecology_clsm_phi.dat's header for why the workbook's "only 
+    26  !   living cells" ratio is not used here either), gamma = 0.
+    27  ! Independent reference: ecology_cylinder_reference_clsm.py (10 chained 
+    28  ! ecology_step calls, dt=1e-5 each, THETA_DEMO -- same convention as the
+    29  ! base deck's ecology_cylinder_reference.py):   
+    30  !   region A: alpha = 4.5687349611e-03  (matches the original deck's own
+    31  !             verified region-A result exactly -- unchanged)
+    32  !   region B (real CLSM): alpha = 4.6144769029e-03  
+    33  !   alpha ratio B/A: 1.0100 -- both well under the 0.01 convergence 
+    34  !   threshold.  
+    35  !   
+    36  ! Run (from a writable working directory, e.g. F:\biofilm_upf_kusepy, with  
+    37  ! ansys_usermat/coupling/material_server.py listening on 127.0.0.1:8765):   
+    38  !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^  
+    39  !       -i t_growth_cylinder_ecology_clsm.dat -o out_cylinder_ecology_clsm.txt  
+    40      
+    41  FINISH  
+    42  /CLEAR  
+    43  /TITLE, biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed 
+    44  /PREP7  
+    45      
+    46  ET,1,SOLID185   
+    47  KEYOPT,1,2,0                 ! B-bar; see t_growth_constrained.dat's KEYOPT sweep   
+    48      
+    49  R_IN  = 4.0 
+    50  R_MID = 4.3 
+    51  R_OUT = 4.4 
+    52  LEN   = 0.15
+    53  ARC   = 5   
+    54      
+    55  ! ---- geometry: two radial layers of a partial hollow cylinder --------------  
+    56  CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
+    57  CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm) 
+    58      
+    59  ! ---- substrate material (mat 1): unchanged -- no ecology, no growth.  
+    60  TB,USER,1,1,6   
+    61  TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0   
+    62  TB,STATE,1,,10  
+    63  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0     ! Fv(1,1..3), Fv(2,1..3)  
+    64  TBDATA,7,0.0,0.0,1.0                  ! Fv(3,1..3)  
+    65  TBDATA,10,0.0                         ! alpha = 0: substrate does not grow  
+    66      
+    67  ! ---- growth-layer materials (mat 2, mat 3): identical constants/theta,
+    68  ! differ only in TB,STATE seed below.   
+    69  TB,USER,2,1,29  
+    70  TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0            ! C10,C01,D1,eta,mtype,kUsePy  
+    71  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79             ! kStateMat,kUseEcology,k_alpha,theta(1:3)
+    72  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10           ! theta(4:9)  
+    73  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12          ! theta(10:15)
+    74  TBDATA,25,0.32,1.49,2.10,2.41,2.50                ! theta(16:20)
+    75      
+    76  TB,USER,3,1,29  
+    77  TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0   
+    78  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79   
+    79  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10 
+    80  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+    81  TBDATA,25,0.32,1.49,2.10,2.41,2.50  
+    82      
+    83  ! mat 2: all-zero ecology seed -> INIT_ECO_IF_ZERO's default_initial_state()
+    84  ! (region A -- UNCHANGED from t_growth_cylinder_ecology.dat)
+    85  TB,STATE,2,,26  
+    86  TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0      ! Fv(1,1..3), Fv(2,1..3)  
+    87  TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0      ! Fv(3,1..3), alpha=0, ustatev(11:12)=0   
+    88  TBDATA,13,0.0,0.0,0.0,0.0,0.0,0.0     ! ustatev(13:14)=0, g phi(1:4)=0  
+    89  TBDATA,19,0.0,0.0,0.0,0.0,0.0,0.0     ! g phi(5)=0, phi0=0, psi(1:4)=0  
+    90  TBDATA,25,0.0,0.0                     ! g psi(5)=0, gamma=0 
+    91      
+    92  ! mat 3: REAL Day-1 Commensal/Static CLSM seed (region B) -- see header.
+    93  TB,STATE,3,,26  
+    94  TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+    95  TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+    96  TBDATA,13,0.0,0.0,0.118119010,0.0194597500,0.768110310,0.0718475700 
+    97                                         ! ustatev(13:14)=0, g phi(1:4)=real CLSM 
+    98  TBDATA,19,0.0224623500,1.00000000E-06,0.999,0.999,0.999,0.999   
+    99                                         ! g phi(5)=real CLSM, phi0, psi(1:4)=.999
+   100  TBDATA,25,0.999,0.0                   ! g psi(5)=.999, gamma=0  
+   101      
+   102  ! ---- mesh -- coarse, smoke test only ----------------------------------   
+   103  MSHKEY,0
+   104      
+   105  MAT,1   
+   106  VSEL,S,VOLU,,1  
+   107  ESIZE,0.15  
+   108  VSWEEP,1
+   109      
+   110  MAT,2   
+   111  VSEL,S,VOLU,,2  
+   112  ESIZE,0.05  
+   113  VSWEEP,2
+   114      
+   115  ! ---- split the growth layer into the two ecology-seed regions --------------  
+   116  CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial   
+   117  ESEL,S,MAT,,2   
+   118  ESEL,R,CENT,Y,ARC/2,ARC 
+   119  EMODIF,ALL,MAT,3
+   120  CSYS,0  
+   121      
+   122  ALLSEL  
+   123  NUMMRG,NODE,1.0E-4                    ! bond the two layers 
+   124  NUMCMP,NODE 
+   125  NUMCMP,ELEM 
+   126      
+   127  ! ---- boundary conditions -- identical to t_growth_cylinder_ecology.dat.   
+   128  CSYS,1  
+   129  ASEL,S,LOC,X,R_IN   
+   130  NSLA,S,1
+   131  D,ALL,ALL,0 
+   132  ALLSEL  
+   133  CSYS,0  
+   134      
+   135  NSEL,S,LOC,Z,0  
+   136  D,ALL,UZ,0  
+   137  NSEL,S,LOC,Z,LEN
+   138  D,ALL,UZ,0  
+   139  ALLSEL  
+   140  FINISH  
+   141      
+   142  ! ---- solve -------------------------------------------------------------  
+   143  /SOLU   
+   144  ANTYPE,STATIC   
+   145  NLGEOM,ON   
+   146  TIME,1.0E-4 
+   147  AUTOTS,OFF  
+   148  NSUBST,10   
+   149  OUTRES,ALL,LAST 
+   150  OUTRES,SVAR,LAST
+   151  SOLVE   
+   152  FINISH  
+   153      
+   154  ! ---- report --------------------------------------------------------------
+   155  /POST1  
+   156  SET,LAST
+   157  /OUTPUT,growth_result_cylinder_ecology_clsm,txt 
+   158  PRNSOL,U,COMP   
+   159  NLIST,ALL,,,XYZ 
+   160  ETABLE,SEQV,S,EQV   
+   161  PRETAB,SEQV 
+   162  ESEL,S,MAT,,2   
+   163  PRESOL,S,COMP   
+   164  PRESOL,SVAR,10                ! alpha, mat 2 (region A) elements
+   165  PRESOL,SVAR,15  
+   166  PRESOL,SVAR,16  
+   167  PRESOL,SVAR,17  
+   168  PRESOL,SVAR,18  
+   169  PRESOL,SVAR,19  
+   170  PRESOL,SVAR,20  
+   171  PRESOL,SVAR,21  
+   172  PRESOL,SVAR,22  
+   173  PRESOL,SVAR,23  
+   174  PRESOL,SVAR,24  
+   175  PRESOL,SVAR,25  
+   176  PRESOL,SVAR,26  
+   177  ESEL,S,MAT,,3   
+   178  PRESOL,S,COMP   
+   179  PRESOL,SVAR,10                ! alpha, mat 3 (region B, real CLSM) elements 
+   180  PRESOL,SVAR,15  
+   181  PRESOL,SVAR,16  
+   182  PRESOL,SVAR,17  
+   183  PRESOL,SVAR,18  
+   184  PRESOL,SVAR,19  
+   185  PRESOL,SVAR,20  
+   186  PRESOL,SVAR,21  
+   187  PRESOL,SVAR,22  
+   188  PRESOL,SVAR,23  
+   189  PRESOL,SVAR,24  
+   190  PRESOL,SVAR,25  
+   191  PRESOL,SVAR,26  
+   192  /OUTPUT 
+   193  FINISH  
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ CLEAR DATABASE AND RERUN START.ANS
+
+ RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
+
+ Ansys Mechanical Enterprise Academic Teaching     
+
+ /INPUT FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans  LINE=       0
+
+ TITLE= 
+  biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed  
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:24:40  SEP 08, 2026 CP=      0.141
+
+  biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed  
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL ANALYSIS DEFINITION (PREP7) *****
+
+ ELEMENT TYPE          1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ ELEMENT TYPE       1 IS SOLID185     3-D 8-NODE STRUCTURAL SOLID 
+  KEYOPT( 1- 6)=        0      0      0        0      0      0
+  KEYOPT( 7-12)=        0      0      0        0      0      0
+  KEYOPT(13-18)=        0      0      0        0      0      0
+
+ CURRENT NODAL DOF SET IS  UX    UY    UZ  
+  THREE-DIMENSIONAL MODEL
+
+ PARAMETER R_IN =     4.000000000    
+
+ PARAMETER R_MID =     4.300000000    
+
+ PARAMETER R_OUT =     4.400000000    
+
+ PARAMETER LEN =    0.1500000000    
+
+ PARAMETER ARC =     5.000000000    
+
+ CREATE A CYLINDRICAL VOLUME WITH
+ INNER RADIUS         =      4.000000000    
+ OUTER RADIUS         =      4.300000000    
+ STARTING THETA ANGLE =      0.000000000    
+ ENDING   THETA ANGLE =      5.000000000    
+ END Z-DISTANCES FROM        0.000000000     TO     0.1500000000    
+
+      OUTPUT VOLUME =     1
+
+ CREATE A CYLINDRICAL VOLUME WITH
+ INNER RADIUS         =      4.300000000    
+ OUTER RADIUS         =      4.400000000    
+ STARTING THETA ANGLE =      0.000000000    
+ ENDING   THETA ANGLE =      5.000000000    
+ END Z-DISTANCES FROM        0.000000000     TO     0.1500000000    
+
+      OUTPUT VOLUME =     2
+
+ DEFINE DATA TABLE USER FOR MATERIAL 1 
+ USER MATERIALS OPTION 
+ WITH A MAXIMUM OF 6 DATA ITEMS
+ DATA FOR  USER  TABLE FOR MATERIAL   1 
+ LOC=  1 2.00000e-04     0.00000e+00     5.00000e+03     0.00000e+00     0.00000e+00     0.00000e+00    
+
+
+ DEFINE DATA TABLE  STAT  FOR MATERIAL     1
+   USER DEFINED STATE VARIABLES OPTION                                             
+   Number of state variables is      10
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      10 DATA POINTS
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   1 AT TEMPERATURE=  0.0000    
+ LOC= 10  0.0000    
+
+ DEFINE DATA TABLE USER FOR MATERIAL 2 
+ USER MATERIALS OPTION 
+ WITH A MAXIMUM OF 29 DATA ITEMS
+ DATA FOR  USER  TABLE FOR MATERIAL   2 
+ LOC=  1 2.00000e-04     0.00000e+00     5.00000e+03     0.00000e+00     0.00000e+00     0.00000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   2 
+ LOC=  7 0.00000e+00     1.00000e+00     5.00000e+01     1.34000e+00     -1.80000e-01     1.79000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   2 
+ LOC=  13 1.17000e+00     2.58000e+00     3.51000e+00     2.73000e+00     7.10000e-01     2.10000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   2 
+ LOC=  19 3.70000e-01     2.05000e+00     -1.50000e-01     3.56000e+00     1.60000e-01     1.20000e-01    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   2 
+ LOC=  25 3.20000e-01     1.49000e+00     2.10000e+00     2.41000e+00     2.50000e+00    
+
+
+ DEFINE DATA TABLE USER FOR MATERIAL 3 
+ USER MATERIALS OPTION 
+ WITH A MAXIMUM OF 29 DATA ITEMS
+ DATA FOR  USER  TABLE FOR MATERIAL   3 
+ LOC=  1 2.00000e-04     0.00000e+00     5.00000e+03     0.00000e+00     0.00000e+00     0.00000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   3 
+ LOC=  7 0.00000e+00     1.00000e+00     5.00000e+01     1.34000e+00     -1.80000e-01     1.79000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   3 
+ LOC=  13 1.17000e+00     2.58000e+00     3.51000e+00     2.73000e+00     7.10000e-01     2.10000e+00    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   3 
+ LOC=  19 3.70000e-01     2.05000e+00     -1.50000e-01     3.56000e+00     1.60000e-01     1.20000e-01    
+
+ DATA FOR  USER  TABLE FOR MATERIAL   3 
+ LOC=  25 3.20000e-01     1.49000e+00     2.10000e+00     2.41000e+00     2.50000e+00    
+
+
+ DEFINE DATA TABLE  STAT  FOR MATERIAL     2
+   USER DEFINED STATE VARIABLES OPTION                                             
+   Number of state variables is      26
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      26 DATA POINTS
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   2 AT TEMPERATURE=  0.0000    
+ LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   2 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000      0.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   2 AT TEMPERATURE=  0.0000    
+ LOC= 13  0.0000      0.0000      0.0000      0.0000      0.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   2 AT TEMPERATURE=  0.0000    
+ LOC= 19  0.0000      0.0000      0.0000      0.0000      0.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   2 AT TEMPERATURE=  0.0000    
+ LOC= 25  0.0000      0.0000    
+
+ DEFINE DATA TABLE  STAT  FOR MATERIAL     3
+   USER DEFINED STATE VARIABLES OPTION                                             
+   Number of state variables is      26
+   WITH A MAXIMUM OF      1 TEMPERATURES AND      26 DATA POINTS
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   3 AT TEMPERATURE=  0.0000    
+ LOC=  1  1.0000      0.0000      0.0000      0.0000      1.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   3 AT TEMPERATURE=  0.0000    
+ LOC=  7  0.0000      0.0000      1.0000      0.0000      0.0000      0.0000    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   3 AT TEMPERATURE=  0.0000    
+ LOC= 13  0.0000      0.0000     0.11812     0.19460E-01 0.76811     0.71848E-01
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   3 AT TEMPERATURE=  0.0000    
+ LOC= 19 0.22462E-01 0.10000E-05 0.99900     0.99900     0.99900     0.99900    
+
+ DATA FOR  STAT  TABLE FOR MATERIAL   3 AT TEMPERATURE=  0.0000    
+ LOC= 25 0.99900      0.0000    
+ USE THE FREE MESHER.
+
+ MATERIAL NUMBER SET TO         1
+
+ SELECT       FOR ITEM=VOLU COMPONENT=    
+  IN RANGE         1 TO          1 STEP          1
+
+        1  VOLUMES (OF        2  DEFINED) SELECTED BY  VSEL  COMMAND.
+
+ DEFAULT ELEMENT DIVISIONS PER LINE BASED ON ELEMENT SIZE =  0.150    
+
+ GENERATE NODES AND ELEMENTS IN VOLUME      1
+ 
+        SWEEPING VOLUME 1 FROM AREA 2 TO AREA 1
+        VOLUME 1 MESHED WITH 6 HEXAHEDRA AND 0 WEDGES
+
+ Volume Sweeping Complete 
+
+ The Following Volumes Were Successfully Swept
+     1
+
+ MAXIMUM NODE NUMBER        =        24
+ MAXIMUM ELEMENT NUMBER     =         6
+
+ MATERIAL NUMBER SET TO         2
+
+ SELECT       FOR ITEM=VOLU COMPONENT=    
+  IN RANGE         2 TO          2 STEP          1
+
+        1  VOLUMES (OF        2  DEFINED) SELECTED BY  VSEL  COMMAND.
+
+ DEFAULT ELEMENT DIVISIONS PER LINE BASED ON ELEMENT SIZE =  0.500E-01
+
+ GENERATE NODES AND ELEMENTS IN VOLUME      2
+ 
+        SWEEPING VOLUME 2 FROM AREA 8 TO AREA 7
+        VOLUME 2 MESHED WITH 48 HEXAHEDRA AND 0 WEDGES
+
+ Volume Sweeping Complete 
+
+ The Following Volumes Were Successfully Swept
+     2
+
+ MAXIMUM NODE NUMBER        =       132
+ MAXIMUM ELEMENT NUMBER     =        54
+
+ ACTIVE COORDINATE SYSTEM SET TO          1  (CYLINDRICAL) Z- CYL. AXIS
+
+ SELECT       FOR ITEM=MAT  COMPONENT=    
+  IN RANGE         2 TO          2 STEP          1
+
+         48  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ RESELECT     FOR ITEM=CENT COMPONENT=Y     BETWEEN  2.5000     AND   5.0000    
+   KABS=  0.  TOLERANCE=  0.00000    
+
+         24  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ MODIFY ALL SELECTED ELEMENTS TO HAVE  MAT  =         3
+
+ ACTIVE COORDINATE SYSTEM SET TO          0  (CARTESIAN)  
+
+ SELECT ALL ENTITIES OF TYPE= ALL  AND BELOW
+
+  MERGE COINCIDENT NODES WITHIN TOLERANCE OF  0.10000E-03
+ NODE         7 USED FOR NODES        50
+ NODE        21 USED FOR NODES        82
+ NODE        10 USED FOR NODES        58
+ NODE        22 USED FOR NODES        85
+
+
+ A total of         4 nodes were merged at         4 locations.
+
+ *** WARNING ***                         CP =       0.156   TIME= 12:24:40
+ After NUMMRG,NODE, node 22 (and possibly others) is associated with     
+ more than one solid model entity.  Future commands which depend on the  
+ node to solid model connectivity (meshing, mesh clearing, solid         
+ boundary condition transfer, etc.) may not operate properly.            
+ NUMMRG,KP may correct this problem.                                     
+
+ COMPRESS NODE NUMBERS
+      MAXIMUM NODE NUMBER COMPRESSED FROM       132 TO       128
+
+ COMPRESS ELEMENT NUMBERS
+      MAXIMUM ELEMENT NUMBER COMPRESSED FROM        54 TO        54
+
+ ACTIVE COORDINATE SYSTEM SET TO          1  (CYLINDRICAL) Z- CYL. AXIS
+
+ SELECT       FOR ITEM=LOC  COMPONENT=X     BETWEEN  4.0000     AND   4.0000    
+   KABS=  0.  TOLERANCE= 0.200000E-01
+
+        1  AREAS (OF       12  DEFINED) SELECTED BY  ASEL  COMMAND.
+
+ SELECT      ALL NODES (INTERIOR TO AREA, INTERIOR TO LINES, AND AT 
+        KEYPOINTS) RELATED TO SELECTED AREA SET.
+
+          8  NODES (OF        128  DEFINED) SELECTED FROM 
+        1 SELECTED AREAS BY NSLA COMMAND.
+
+ SPECIFIED CONSTRAINT UX   FOR SELECTED NODES            1 TO         128 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+ ADDITIONAL DOFS=  UY    UZ  
+
+ SELECT ALL ENTITIES OF TYPE= ALL  AND BELOW
+
+ ACTIVE COORDINATE SYSTEM SET TO          0  (CARTESIAN)  
+
+ SELECT       FOR ITEM=LOC  COMPONENT=Z     BETWEEN  0.0000     AND   0.0000    
+   KABS=  0.  TOLERANCE= 0.100000E-05
+
+         37  NODES (OF        128  DEFINED) SELECTED BY  NSEL  COMMAND.
+
+ SPECIFIED CONSTRAINT UZ   FOR SELECTED NODES            1 TO         128 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SELECT       FOR ITEM=LOC  COMPONENT=Z     BETWEEN 0.15000     AND  0.15000    
+   KABS=  0.  TOLERANCE= 0.750000E-03
+
+         37  NODES (OF        128  DEFINED) SELECTED BY  NSEL  COMMAND.
+
+ SPECIFIED CONSTRAINT UZ   FOR SELECTED NODES            1 TO         128 BY           1
+ REAL=  0.00000000       IMAG=  0.00000000    
+
+ SELECT ALL ENTITIES OF TYPE= ALL  AND BELOW
+
+
+ ***** ROUTINE COMPLETED *****  CP =         0.156
+
+
+
+ *****  MAPDL SOLUTION ROUTINE  *****
+
+
+ PERFORM A STATIC ANALYSIS
+  THIS WILL BE A NEW ANALYSIS
+
+ LARGE DEFORMATION ANALYSIS
+
+ TIME= 0.10000E-03
+
+ DO NOT USE AUTOMATIC TIME STEPPING THIS LOAD STEP
+
+ USE    10 SUBSTEP(S) THIS LOAD STEP FOR ALL  DEGREES OF FREEDOM
+
+ WRITE ALL  ITEMS TO THE DATABASE WITH A FREQUENCY OF LAST
+   FOR ALL APPLICABLE ENTITIES
+
+ WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF LAST
+   FOR ALL APPLICABLE ENTITIES
+
+ *****  MAPDL SOLVE    COMMAND  *****
+
+ *** SELECTION OF ELEMENT TECHNOLOGIES FOR APPLICABLE ELEMENTS ***
+                ---GIVE SUGGESTIONS ONLY---
+
+ ELEMENT TYPE         1 IS SOLID185. IT IS ASSOCIATED WITH ELASTOPLASTIC MATERIALS
+ ONLY. KEYOPT(2)=2 IS SUGGESTED.
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:24:40  SEP 08, 2026 CP=      0.156
+
+  biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed  
+
+ Note - This MAPDL version was linked by Licensee
+
+                       S O L U T I O N   O P T I O N S
+
+   PROBLEM DIMENSIONALITY. . . . . . . . . . . . .3-D                  
+   DEGREES OF FREEDOM. . . . . . UX   UY   UZ  
+   ANALYSIS TYPE . . . . . . . . . . . . . . . . .STATIC (STEADY-STATE)
+   NONLINEAR GEOMETRIC EFFECTS . . . . . . . . . .ON
+   PLASTIC MATERIAL PROPERTIES INCLUDED. . . . . .YES
+   NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
+   GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
+
+ *** WARNING ***                         CP =       0.156   TIME= 12:24:40
+ ANSYS,INC.-supplied version of coding for USERCK has been used.         
+
+ *** WARNING ***                         CP =       0.156   TIME= 12:24:40
+ ANSYS,INC.-supplied version of coding for USERCK has been used.         
+
+ *** WARNING ***                         CP =       0.156   TIME= 12:24:40
+ ANSYS,INC.-supplied version of coding for USERCK has been used.         
+
+ *** NOTE ***                            CP =       0.156   TIME= 12:24:40
+ The step data was checked and warning messages were found.              
+  Please review output or errors file ( F:\biofilm_upf_kusepy\file.err   
+ ) for these warning messages.                                           
+
+ *** NOTE ***                            CP =       0.156   TIME= 12:24:40
+ This nonlinear analysis defaults to using the full Newton-Raphson       
+ solution procedure.  This can be modified using the NROPT command.      
+
+ *** NOTE ***                            CP =       0.156   TIME= 12:24:40
+ The conditions for direct assembly have been met.  No .emat or .erot    
+ files will be produced.                                                 
+
+                      L O A D   S T E P   O P T I O N S
+
+   LOAD STEP NUMBER. . . . . . . . . . . . . . . .     1
+   TIME AT END OF THE LOAD STEP. . . . . . . . . . 0.10000E-03
+   NUMBER OF SUBSTEPS. . . . . . . . . . . . . . .    10
+   MAXIMUM NUMBER OF EQUILIBRIUM ITERATIONS. . . .    15
+   STEP CHANGE BOUNDARY CONDITIONS . . . . . . . .    NO
+   STRESS-STIFFENING . . . . . . . . . . . . . . .    ON
+   TERMINATE ANALYSIS IF NOT CONVERGED . . . . . .YES (EXIT)  
+   CONVERGENCE CONTROLS. . . . . . . . . . . . . .USE DEFAULTS
+   COPY INTEGRATION POINT VALUES TO NODE . . . . .YES, FOR ELEMENTS WITH
+                                                  ACTIVE MAT. NONLINEARITIES
+   PRINT OUTPUT CONTROLS . . . . . . . . . . . . .NO PRINTOUT
+   DATABASE OUTPUT CONTROLS
+      ITEM     FREQUENCY   COMPONENT
+       ALL       LAST               
+      SVAR       LAST               
+
+
+ SOLUTION MONITORING INFO IS WRITTEN TO FILE= file.mntr                                                                                                                                                                                                                                                           
+
+
+ Range of element maximum matrix coefficients in global coordinates
+ Maximum = 3.092354617E-05 at element 5.                                 
+ Minimum = 9.585100327E-06 at element 11.                                
+
+   *** ELEMENT MATRIX FORMULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1        54  SOLID185      0.156   0.002894
+ Time at end of element matrix formulation CP = 0.328125.                
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
+  FOR POSSIBLE RESUME FROM THIS POINT
+     FORCE CONVERGENCE VALUE  =  0.1597E-07  CRITERION=  0.5102E-04
+
+ SPARSE MATRIX DIRECT SOLVER.
+  Number of equations =         294,    Maximum wavefront =     78
+  Memory allocated for solver              =     0.412 MB
+  Memory required for in-core solution     =     0.398 MB
+  Memory required for out-of-core solution =     0.282 MB
+
+ *** NOTE ***                            CP =       0.328   TIME= 12:24:44
+ The Sparse Matrix Solver is currently running in the in-core memory     
+ mode.  This memory mode uses the most amount of memory in order to      
+ avoid using the hard drive as much as possible, which most often        
+ results in the fastest solution time.  This mode is recommended if      
+ enough physical memory is present to accommodate all of the solver      
+ data.                                                                   
+ Sparse solver maximum pivot= 1.025849537E-04 at node 4 UX.              
+ Sparse solver minimum pivot= 8.408430223E-06 at node 70 UX.             
+ Sparse solver minimum pivot in absolute value= 8.408430223E-06 at node  
+ 70 UX.                                                                  
+     DISP CONVERGENCE VALUE   =  0.1403E-03  CRITERION=  0.7160E-05
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=  0.1403E-03
+     FORCE CONVERGENCE VALUE  =  0.2135E-10  CRITERION=  0.5206E-04 <<< CONVERGED
+
+ *** WARNING ***                         CP =       0.453   TIME= 12:24:48
+ A reference force value times the tolerance is used by the              
+ Newton-Raphson method for checking convergence.  The calculated         
+ reference FORCE CONVERGENCE VALUE = 5.754421471E-09 is less than a      
+ threshold.  This threshold is internally calculated.  You can           
+ overwrite it by specifying MINREF on the CNVTOL command.  Check         
+ results carefully.                                                      
+     DISP CONVERGENCE VALUE   =  0.1558E-05  CRITERION=  0.7306E-05 <<< CONVERGED
+    EQUIL ITER   2 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC = -0.1558E-05
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   2
+
+   *** ELEMENT RESULT CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1        54  SOLID185      0.016   0.000289
+
+   *** NODAL LOAD CALCULATION TIMES
+     TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
+
+        1        54  SOLID185      0.000   0.000000
+ *** LOAD STEP     1   SUBSTEP     1  COMPLETED.    CUM ITER =      2
+ *** TIME =  0.100000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.4426E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.3662E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=  0.3662E-05
+     FORCE CONVERGENCE VALUE  =  0.2039E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     2  COMPLETED.    CUM ITER =      3
+ *** TIME =  0.200000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.2989E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.2551E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.2551E-05
+     FORCE CONVERGENCE VALUE  =  0.2060E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     3  COMPLETED.    CUM ITER =      4
+ *** TIME =  0.300000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.2557E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.2177E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.2177E-05
+     FORCE CONVERGENCE VALUE  =  0.2296E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     4  COMPLETED.    CUM ITER =      5
+ *** TIME =  0.400000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.2398E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.2027E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.2027E-05
+     FORCE CONVERGENCE VALUE  =  0.2635E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     5  COMPLETED.    CUM ITER =      6
+ *** TIME =  0.500000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.2219E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.1847E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.1847E-05
+     FORCE CONVERGENCE VALUE  =  0.2847E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     6  COMPLETED.    CUM ITER =      7
+ *** TIME =  0.600000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.2078E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.1696E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.1696E-05
+     FORCE CONVERGENCE VALUE  =  0.3019E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     7  COMPLETED.    CUM ITER =      8
+ *** TIME =  0.700000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.1981E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.1587E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.1587E-05
+     FORCE CONVERGENCE VALUE  =  0.3199E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     8  COMPLETED.    CUM ITER =      9
+ *** TIME =  0.800000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.1911E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.1512E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.1512E-05
+     FORCE CONVERGENCE VALUE  =  0.3400E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP     9  COMPLETED.    CUM ITER =     10
+ *** TIME =  0.900000E-04     TIME INC =  0.100000E-04
+
+     FORCE CONVERGENCE VALUE  =  0.1857E-09  CRITERION=  0.5102E-04
+     DISP CONVERGENCE VALUE   =  0.1455E-05  CRITERION=  0.7160E-05 <<< CONVERGED
+    EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC= -0.1455E-05
+     FORCE CONVERGENCE VALUE  =  0.3610E-12  CRITERION=  0.5206E-04 <<< CONVERGED
+    >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   1
+ *** LOAD STEP     1   SUBSTEP    10  COMPLETED.    CUM ITER =     11
+ *** TIME =  0.100000E-03     TIME INC =  0.100000E-04
+
+
+ *** MAPDL BINARY FILE STATISTICS
+  BUFFER SIZE USED= 16384
+        0.438 MB WRITTEN ON ELEMENT SAVED DATA FILE: file.esav
+        0.125 MB WRITTEN ON ASSEMBLED MATRIX FILE: file.full
+        0.438 MB WRITTEN ON RESULTS FILE: file.rst
+
+ FINISH SOLUTION PROCESSING
+
+
+ ***** ROUTINE COMPLETED *****  CP =         3.734
+
+
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:26:48  SEP 08, 2026 CP=      3.734
+
+  biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM seed  
+
+ Note - This MAPDL version was linked by Licensee
+
+          ***** MAPDL RESULTS INTERPRETATION (POST1) *****
+
+ *** NOTE ***                            CP =       3.734   TIME= 12:26:48
+ Reading results into the database (SET command) will update the current 
+ displacement and force boundary conditions in the database with the     
+ values from the results file for that load set.  Note that any          
+ subsequent solutions will use these values unless action is taken to    
+ either SAVE the current values or not overwrite them (/EXIT,NOSAVE).    
+
+
+ USE LAST SUBSTEP ON RESULT FILE  FOR LOAD CASE 0 
+
+ SET COMMAND GOT LOAD STEP=     1  SUBSTEP=    10  CUMULATIVE ITERATION=    11
+   TIME/FREQUENCY= 0.10000E-03
+ TITLE=  biofilm USERMAT - two-layer cylindrical shell, live ecology, real CLSM 
+
+ /OUTPUT FILE= growth_result_cylinder_ecology_clsm.txt
+
+ EXIT THE MAPDL POST1 DATABASE PROCESSOR
+
+
+ ***** ROUTINE COMPLETED *****  CP =         3.734
+
+
+
+ ***** END OF INPUT ENCOUNTERED *****
+
+ PURGE ALL SOLUTION AND POST DATA
+ SAVE ALL MODEL DATA
+
+ ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.db
+  FOR POSSIBLE RESUME FROM THIS POINT
+
+
+ NUMBER OF WARNING MESSAGES ENCOUNTERED=          5
+ NUMBER OF ERROR   MESSAGES ENCOUNTERED=          0
+
++--------------------- M A P D L   S T A T I S T I C S ------------------------+
+
+Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
+Date Run: 09/08/2026   Time: 12:26     Process ID: 31448
+Operating System: Windows 10  (Build: 26200)
+
+Processor Model: Intel(R) Core(TM) Ultra 5 235
+
+Compiler: Intel(R) Fortran Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) C/C++ Compiler Version 19.0.5  (Build: 20190815)
+          Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191125
+          BLAS Library supplied by Intel(R) MKL
+
+Number of machines requested            :    1
+Total number of cores available         :   14
+Number of physical cores available      :   14
+Number of processes requested           :    1
+Number of threads per process requested :    1
+Total number of cores requested         :    1 (Shared Memory Parallel)                    
+
+GPU Acceleration: Not Requested
+
+Job Name: file
+Input File: t_growth_cylinder_ecology_clsm.dat
+Working Directory: F:\biofilm_upf_kusepy
+
+Total CPU time for main thread                    :        4.0 seconds
+Total CPU time summed for all threads             :        3.8 seconds
+
+Elapsed time spent obtaining a license            :        1.5 seconds
+Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
+Elapsed time spent solution - preprocessing       :        0.0 seconds
+Elapsed time spent computing solution             :      127.8 seconds
+Elapsed time spent solution - postprocessing      :        0.0 seconds
+Elapsed time spent post-processing model (/POST1) :        0.0 seconds
+ 
+Equation solver used                              :            Sparse (symmetric)
+
+Sum of memory used on all processes               :       10.0 MB
+Sum of memory allocated on all processes          :     2112.0 MB
+Physical memory available                         :         31 GB
+
+Total amount of I/O written to disk               :        0.0 GB
+Total amount of I/O read from disk                :        0.0 GB
+
++------------------ E N D   M A P D L   S T A T I S T I C S -------------------+
+
+
+ *---------------------------------------------------------------------------*
+ |                                                                           |
+ |                               RUN COMPLETED                               |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |  Ansys MAPDL 2022 R2         Build 22.2         UP20220516    WINDOWS x64 |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ | Database Requested(-db)  1024 MB    Scratch Memory Requested      1024 MB |
+ | Maximum Database Used       1 MB    Maximum Scratch Memory Used      9 MB |
+ |                                                                           |
+ |---------------------------------------------------------------------------|
+ |                                                                           |
+ |        CP Time      (sec) =          3.781       Time  =  12:26:48        |
+ |        Elapsed Time (sec) =        131.000       Date  =  09/08/2026      |
+ |                                                                           |
+ *---------------------------------------------------------------------------*

@@ -469,6 +469,20 @@ check passes either way.
      that ruled it out (two species' Day-1 ratio exceeds 1). A real
      bounded per-species viability measurement, if one exists separately
      from this workbook, would close this the rest of the way.
+   - **Extended to real, unconstrained, curved geometry, 2026-09-08**:
+     `apdl/t_growth_cylinder_ecology_clsm.dat` reuses
+     `t_growth_cylinder_ecology.dat`'s two-region curved-shell setup, but
+     replaces region B's (mat 3) synthetic "not measured data" seed with
+     the same real Day-1 CLSM composition above — region A (mat 2, the
+     default `INIT_ECO_IF_ZERO` seed) is left unchanged as a regression
+     baseline. Ran with 0 errors; both regions' `alpha` (region A
+     4.5687e-3, region B/real-CLSM 4.6145e-3) and region B's full ecology
+     state match `ecology_cylinder_reference_clsm.py`'s independent
+     10-substep-chained reference exactly — see
+     `out_cylinder_ecology_clsm.txt` / `growth_result_cylinder_ecology_clsm.txt`.
+     So the real-CLSM seed now has both a fully-constrained closed-form
+     check (`t_growth_ecology_clsm_phi.dat`) and a genuinely spatial,
+     unconstrained-deformation check on curved geometry.
 5. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
    the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
    2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6).
