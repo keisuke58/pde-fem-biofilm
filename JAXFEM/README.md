@@ -32,6 +32,7 @@ Abaqus/ANSYS のメッシュは使わず、有限差分（FD）で φ-c-α 場�
 | `core_rd.py` | 反応拡散（参照実装） |
 | `hamilton_ode_jax.py` | 0-D Hamilton ODE、θ→φ(t;θ)、`jax.grad` 対応（NUTS/HMC 用）、5菌種固定 |
 | `hamilton_ode_jax_nsp.py` | 同、N菌種汎用版（`simulate_0d_nsp(theta, n_sp=...)`）。Hill ゲート込みで5菌種固定版と数値的に同一であることを `tests/test_hamilton_ode_jax.py` で保証 |
+| `core_hamilton_1d_nutrient_ac.py` | Hamilton 1D(5菌種)+栄養場+**種ごとAllen-Cahn界面項+化学走性**。2026-09-08、Klempt 2024(Eq.34-36)とKlempt 2026(Eq.16-18)を**独自に合成**したもの — どちらの論文にもない組み合わせ。詳細・出典の切り分けはファイル冒頭のdocstring参照。`Gamma_ac=R_chemo=0`で`core_hamilton_1d_nutrient.py`とビット一致することを`tests/test_core_hamilton_1d_nutrient_ac.py`で保証 |
 
 ### 応力・逆問題
 
