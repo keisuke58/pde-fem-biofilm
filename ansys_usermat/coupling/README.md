@@ -483,6 +483,25 @@ check passes either way.
      So the real-CLSM seed now has both a fully-constrained closed-form
      check (`t_growth_ecology_clsm_phi.dat`) and a genuinely spatial,
      unconstrained-deformation check on curved geometry.
+   - **Extended to three of the four clinical conditions, 2026-09-08**:
+     `apdl/t_growth_cylinder_ecology_4region_clsm.dat` reuses
+     `t_growth_cylinder_ecology_4region.dat`'s 2×2 (theta×Z) 4-region
+     layout, replacing regions B/C/D's (mat 3/4/5) synthetic seeds with
+     real Day-1 CLSM compositions for **CS** (Commensal/Static, same seed
+     already verified above), **CH** (Commensal/HOBIC), and **DS**
+     (Dysbiotic/Static) — region A (mat 2, the default seed) stays the
+     unchanged regression baseline. **DH (Dysbiotic/HOBIC) is deliberately
+     excluded**: its Day-1 "all cells" sheet has no measurement at all
+     (confirmed by reading the raw workbook rows, not just an averaging
+     artifact) for F. nucleatum and P. gingivalis — fabricating a value
+     for missing data was ruled out the same way `psi` was above. Ran with
+     0 errors; all four regions' `alpha` (A 4.5687e-3, B/CS 4.6145e-3,
+     C/CH 4.6920e-3, D/DS 4.3557e-3) match
+     `ecology_4region_reference_clsm.py`'s independent reference exactly —
+     `out_cylinder_ecology_4region_clsm.txt` /
+     `growth_result_cylinder_ecology_4region_clsm.txt`. Three genuinely
+     different real clinical compositions now drive visibly different
+     growth on one real spatial FEM geometry.
 5. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
    the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
    2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6).
