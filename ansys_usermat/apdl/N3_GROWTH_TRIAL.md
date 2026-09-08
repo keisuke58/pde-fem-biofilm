@@ -429,6 +429,21 @@ reshape the threshold rather than trivially disable the effect. Mapping
 that threshold's dependence on the other constants is the natural next
 step if this is picked back up, not attempted this session.
 
+**Update, 2026-09-08 (real ANSYS, last access day before ~1 month
+cloud-only): this mapping done — see `threshold_param_sweep_README.md`
+(same directory) for the full table and reasoning.** Headline: `MaxGrowth13/14` 10x
+smaller raises the threshold by at least ~10x (0.0006 → ≥0.005, not
+further bisected); `Penalty1` 10x larger barely moves it (same
+`[0.0005, 0.0006)` bracket as baseline); `dt` 10x smaller makes it
+*worse* — diverges even at 0.0005 where baseline is stable, most likely
+because `TIME` was held fixed (so 10x smaller `dt` means 10x more
+explicit growth-update substeps over the same elapsed duration, not the
+same physical scenario resolved more finely) rather than a genuine
+numerical-stiffness effect — flagged, not resolved, in that file. Also
+narrowed the baseline threshold itself while at it: `0.0006` diverges
+too, so baseline's true threshold sits in `(0.0005, 0.0006)`, tighter
+than the `(0.0005, 0.0007)` bracket above.
+
 **Current state left in `F:\biofilm_upf_wired`** (local only, see backup
 note below): the full 20-constant interaction mechanism is wired into
 usercm.inc/USolBeg/Ussfin and verified to preserve prior behavior with
