@@ -425,7 +425,79 @@ different route to them.
 
 ---
 
-### The ecology in the code is the published paper's, at n = 2
+### ⚠️ Correction, 2026-09-08: this is *not* the published paper's interaction
+### scheme — it only resembles it structurally
+
+Everything below this point (written 2026-09-01) asserts that
+`sGdp_Interaction12`/`21` **is** "the novel interaction scheme" of
+Klempt/Geisler/Soleimani/Junker, *A continuum multi-species biofilm model with
+a novel interaction scheme* (arXiv:2509.01274; published as AAM 96, 164
+(2026), doi:10.1007/s00419-026-03160-y). **That claim does not survive reading
+the paper's actual equations**, checked directly against the arXiv PDF
+(identical equations to the published version per the abstract) on
+2026-09-08. The paper's real interaction term (its Eq. 10, energy density;
+Eqs. 16–18, strong-form evolution):
+
+```
+Ψ  = -½ c*  φ̄·A·φ̄  +  ½ α* ψ·B·ψ                     (Eq. 10)
+Ia_i := a_ii·φ̄_i + Σ_j a_ij·φ̄_j   = (A·φ̄)_i             (from Eq. 16/17)
+Eq. 16 (φ_i):  0 = -c*·ψ_i·Ia_i + η_i(φ̇_iψ_i²+φ̄_iψ̇_i+φ̇_i) + γ
+Eq. 17 (ψ_i):  0 = -c*·φ_i·Ia_i + α*·ψ_i·b_i + η_i(ψ̇_iφ_i²+φ̄_iφ̇_i) + γ
+```
+
+with **A explicitly stated as symmetric** ("the symmetric growth coefficient
+matrix A", including diagonal self-terms `a_ii`), and `c*` a single **scalar**
+nutrient variable entering **linearly** — no per-species Monod saturation.
+
+That is a **bilinear, additive** coupling (`Ia = A·φ̄` added into a
+dissipation-derived residual). Oliver's `Interaction12·Bio2` term is a
+**multiplicative** shift of the max-growth-rate coefficient inside a
+**Monod-saturation** curve (`(MaxGrowth + Interaction12·Bio2)·Nut/(HalfVelo+Nut)`,
+two independent nutrient fields), has **no diagonal self-term**, and — via
+`Interaction12` vs `Interaction21` being separately-named constants rather
+than one symmetric entry — is not built to enforce `A_ij = A_ji` either. These
+are two different functional forms, not the same equation in different
+notation. Oliver's growth structure (Monod kinetics × `|∇²Bio|` interface
+localisation × chemotaxis-like orientation) instead matches the description of
+the *other*, earlier Klempt paper — Klempt, Soleimani, Wriggers, Junker, *A
+Hamilton principle-based model for diffusion-driven biofilm growth*, Biomech
+Model Mechanobiol 23, 2091–2113 (2024) (`Klempt2024DiffusionDrivenGrowth`,
+see `CITATION_AUDIT.md` §F1b) — which this repo's own `JAXFEM/felix_complete_reproduction.py`
+already reproduces as "Eq.34–36" (Allen-Cahn + logistic-Monod + chemotaxis).
+The `Interaction12/21` term itself does not appear identified with an equation
+number in either paper as checked so far; it may be Oliver's/Felix's own
+addition on top of that 2024 growth structure, not a literal quote from either
+published equation set.
+
+**What this means in practice:**
+
+- **This repo's own n=5 ecology model — `hamilton_ode_jax.py` /
+  `jax_hamilton_0d_5species_demo.py` / `ecology_jax.py`, i.e. what TMCMC
+  calibrates and what `usermat_biofilm.f`'s `kUseEcology` bridge actually
+  runs — checks out as a faithful, term-by-term match to Eqs. 10/16–18**:
+  `Ia = A @ (phi*psi)` is exactly `Σ_j a_ij·φ̄_j` including the diagonal; the
+  `(c/Eta_i)*psi_i*Ia_i` residual term matches `c*·ψ_i·Ia_i/η_i`; the
+  `EtaPhi_i=Eta_i` default reduces the `η_i(φ̇_iψ_i²+φ̄_iψ̇_i+φ̇_i)` block to an
+  exact match too. This is the academically-grounded path, and it is the one
+  already wired into real ANSYS (`coupling/README.md`'s 2026-09-07 status
+  note) — not Oliver's `Ussfin`.
+- **The 2026-09-07 n=5 generalisation of `InteractionIJ` in `Ussfin`, and its
+  0.0005↔0.0007 critical-coupling threshold (re-confirmed on real ANSYS
+  2026-09-08), is a genuine, reproducible property of Oliver's own
+  growth-law extension** — but it characterises *that* (non-paper-literal)
+  formula, not the thesis's actual Hamilton-derived interaction model. Citing
+  it as "the paper's critical coupling strength" would be wrong; citing it as
+  "the ANSYS/NEM pipeline's own stability limit for this extension" is
+  correct. See `apdl/N3_GROWTH_TRIAL.md`'s matching correction.
+- The `Klempt2026ContinuumBacterialGrowth` `.bib` entry and its citations
+  elsewhere in the repo (RESEARCH_MODEL.md §1, etc.) are fine — they cite this
+  paper for the general Hamilton-principle φ/ψ derivation, which is accurate.
+  Only this file's specific identification of *Oliver's Fortran term* with
+  that paper's equation is the error being corrected here.
+
+---
+
+### The ecology in the code resembles the published paper's structure, at n = 2 (superseded framing — see correction above)
 
 The common block (`usercm.inc`) and the field update in `Ussfin` together spell
 out the model. It is **two bacterial species on two nutrients**, not one
@@ -455,11 +527,13 @@ Reading it term by term:
 - **Monod kinetics** per nutrient — `μ_max·S/(K_s + S)`, with `HalfVelo` as `K_s`.
 - **A pairwise interaction that shifts the growth rate itself** —
   `MaxGrowth + Interaction12·Bio2`, i.e. the other species modifies *how fast*
-  this one grows rather than adding a separate term. That is the "novel
-  interaction scheme" of the published paper (Klempt, Geisler, Soleimani et
+  this one grows rather than adding a separate term. **This is NOT the "novel
+  interaction scheme" of the published paper** (Klempt, Geisler, Soleimani et
   al., *Archive of Applied Mechanics* **96**, 164 (2026),
-  doi:10.1007/s00419-026-03160-y — already in `biofilm_3tooth_refs.bib` as
-  `Klempt2026ContinuumBacterialGrowth`).
+  doi:10.1007/s00419-026-03160-y) — see the correction above. That paper's
+  actual scheme is additive/bilinear (`Ia = A·φ̄`, symmetric `A`, diagonal
+  self-terms), not a multiplicative Monod-rate shift. This repo's own
+  `hamilton_ode_jax.py`/`ecology_jax.py` is the one that matches it.
 - **`|∇²Bio|` as a prefactor** — growth is proportional to the magnitude of the
   Laplacian, so it localises at the front where the field is curved, playing
   the role the Allen–Cahn interface term plays in `JAXFEM/`.
@@ -473,15 +547,21 @@ Reading it term by term:
 The biofilm update is marked `!Biofilm / lokales Biofilm Update (explizit, TEST)`
 — explicit time stepping, flagged as provisional.
 
-**This is the most useful single finding for the integration.** The framework
-is not a generic PDE solver we would have to teach biology to: it already
-implements the paper's ecology, just at **n = 2** where this repo works at
-**n = 5** and, in `JAXFEM/hamilton_ode_jax_nsp.py`, at general **n**. The
-interaction constants `Interaction12`/`Interaction21` are the off-diagonal of
-what this repo carries as the calibrated matrix `A`.
-
-So the gap to close is narrower than "port a model": generalise 2 → 5 species,
-supply the TMCMC-calibrated interaction matrix, and add the growth kinematics.
+**Superseded by the 2026-09-08 correction above.** This paragraph originally
+claimed the framework "already implements the paper's ecology" and that
+`Interaction12`/`Interaction21` "are the off-diagonal of what this repo
+carries as the calibrated matrix `A`." Neither holds up: Oliver's growth
+structure is Monod/nutrient-driven with no diagonal self-term and no
+symmetry requirement, structurally distinct from the paper's `Ia = A·φ̄`
+scheme this repo's own `A` was calibrated against — so **feeding the
+TMCMC-calibrated `A` directly into `InteractionIJ` would be a category error,
+not a drop-in substitution.** If a paper-faithful ecology needs to run inside
+ANSYS, the already-verified route is wiring `ecology_jax.py`'s own
+`Ia = A @ (phi*psi)` into the material call (done, `coupling/README.md`
+2026-09-07 status), not generalising Oliver's separate Monod-interaction
+term. Whether Oliver's own term is worth keeping as a second, deliberately
+different growth-rate heuristic (rather than as "the paper's model at n=2")
+is a question for him, not settled by this repo.
 
 ### The Mathematica notebook is the model's reference implementation
 

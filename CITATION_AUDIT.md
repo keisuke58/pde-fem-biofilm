@@ -161,6 +161,53 @@ with it later.
 
 ---
 
+## 🔴 F1d. Oliver's ANSYS interaction term was misidentified as this paper's equation
+
+Found 2026-09-08, while sanity-checking a reproducible ANSYS instability
+threshold found the day before. `ansys_usermat/OLIVER_MODEL_NOTES.md`
+(2026-09-01) asserted that Oliver's Fortran term `MaxGrowth + Interaction12·Bio2`
+(a multiplicative shift inside per-nutrient Monod kinetics) **is** "the novel
+interaction scheme" of `Klempt2026ContinuumBacterialGrowth` — i.e. this exact
+paper's own headline contribution.
+
+Reading the paper's actual equations (fetched via its arXiv preprint,
+2509.01274 — identical content to the published version per its own
+abstract) shows this is not so. The paper's real interaction term (Eq. 10,
+16–18) is **additive/bilinear** — `Ia_i = Σ_j a_ij·φ̄_j = (A·φ̄)_i` entering a
+dissipation-derived residual as `-c*·ψ_i·Ia_i`, with `A` explicitly symmetric
+and carrying diagonal self-terms, and a single scalar nutrient `c*` entering
+linearly. Oliver's term is **multiplicative**, has two independent
+Monod-saturated nutrient fields, no diagonal self-term, and no symmetry
+constraint between `Interaction12`/`21`. Different functional forms, not a
+notational restatement of the same equation.
+
+**Correctly matching this paper**: this repo's own `hamilton_ode_jax.py` /
+`jax_hamilton_0d_5species_demo.py` / `ecology_jax.py` — the TMCMC-calibrated
+model, already wired into real ANSYS via `usermat_biofilm.f`'s `kUseEcology`
+path — checks out as a term-by-term match to Eqs. 10/16–18.
+
+**Practical consequence**: the TMCMC-calibrated interaction matrix `A` cannot
+be fed directly into Oliver's `InteractionIJ` constants as a drop-in
+substitution (different equation, different units/meaning) — a mistake the
+2026-09-01 note's own "gap to close" framing implicitly invited. A
+reproducible ANSYS finding from generalizing `InteractionIJ` to n=5
+(critical coupling threshold between 0.0005 and 0.0007 for Oliver's baseline
+constants, `ansys_usermat/apdl/N3_GROWTH_TRIAL.md`) remains valid as a
+property of *Oliver's own* growth-law extension, not as a characterization
+of this paper's model.
+
+**Fixed**: `OLIVER_MODEL_NOTES.md` and its `.ja.md` companion, and
+`apdl/N3_GROWTH_TRIAL.md`, all carry a 2026-09-08 correction block at the
+point the error was introduced, rather than a silent rewrite — the original
+2026-09-01 reasoning is left in place underneath so the "why we once thought
+this" trail isn't lost. No `.bib` change needed; the citation itself
+(`Klempt2026ContinuumBacterialGrowth`) is correct wherever it is used for the
+general Hamilton-principle φ/ψ derivation — only this file's identification
+of *Oliver's specific Fortran term* with this paper's specific equation was
+wrong.
+
+---
+
 ## 🟢 F2. Five duplicate BibTeX keys with conflicting content — fixed 2026-08-20
 
 The same key is defined in two files with **different fields** — if both are ever

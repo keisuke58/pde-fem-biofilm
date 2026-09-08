@@ -23,7 +23,7 @@ Workbench プロジェクト `BiofilmImplementation.wbpz` と、UPF ソース一
 | パラメータ受け渡し | `USolBeg` の `parevl` → 共通ブロック | ✅ |
 | 微分演算子 | NEM（重み付き最小二乗） | ✅ 検証機構つき |
 | 場の求解 | `USSFin` で PARDISO ×3 | ✅ |
-| 生態モデル | **2菌種 × 2栄養**、Monod + 相互作用 | ✅ 論文のスキーム |
+| 生態モデル | **2菌種 × 2栄養**、Monod + 相互作用 | ⚠️ 論文の式ではない(§5の訂正参照) |
 | 材料（弾性） | `AceGenNeoHookV04`（バイオフィルム/空隙ブレンド） | ✅ |
 | 材料（粘性） | ガラス用のみ（コメントアウト） | ❌ バイオフィルム用は無し |
 | **成長 `Fg=(1+α)I`** | — | ❌ **こちらの貢献部分** |
@@ -148,7 +148,62 @@ CALL InversGauss(mResult3, 9)      ! 9×9 モーメント行列を反転
 
 ---
 
-## 5. 生態モデルは論文のもの、ただし n = 2
+## 5. ⚠️ 訂正(2026-09-08): 生態モデルは「論文のもの」ではなかった — 構造が似ているだけ
+
+以下(2026-09-01 時点の記述)は「`sGdp_Interaction12`/`21` が Klempt/Geisler/
+Soleimani/Junker の *A continuum multi-species biofilm model with a novel
+interaction scheme*(arXiv:2509.01274、出版版 AAM 96, 164 (2026)、
+doi:10.1007/s00419-026-03160-y)の"novel interaction scheme"そのものだ」と
+主張していますが、**2026-09-08 に arXiv PDF を直接読んで確認したところ、この
+主張は成立しません**。論文の実際の式(Eq.10 エネルギー密度、Eq.16–18 強形式):
+
+```
+Ψ  = -½ c*  φ̄·A·φ̄  +  ½ α* ψ·B·ψ                     (Eq. 10)
+Ia_i := a_ii·φ̄_i + Σ_j a_ij·φ̄_j   = (A·φ̄)_i             (Eq. 16/17 由来)
+Eq. 16 (φ_i):  0 = -c*·ψ_i·Ia_i + η_i(φ̇_iψ_i²+φ̄_iψ̇_i+φ̇_i) + γ
+Eq. 17 (ψ_i):  0 = -c*·φ_i·Ia_i + α*·ψ_i·b_i + η_i(ψ̇_iφ_i²+φ̄_iφ̇_i) + γ
+```
+
+**A は明示的に対称行列**("the symmetric growth coefficient matrix A")で
+**対角成分(自己相互作用)も含み**、c\* は栄養を表す**単一スカラー**で
+**線形**に効きます。つまり論文の相互作用は**加法的・双線形**(`Ia = A·φ̄` が
+散逸由来の残差に足し込まれる形)。
+
+対して Oliver の `Interaction12·Bio2` は、Monod飽和曲線の最大増殖率を
+**乗法的**にずらす項(`(MaxGrowth + Interaction12·Bio2)·Nut/(HalfVelo+Nut)`、
+栄養場2本、それぞれ独立にMonod飽和)で、**対角自己項がなく**、
+`Interaction12`と`Interaction21`が別々の定数として立てられていて対称性
+(`A_ij=A_ji`)も要求していません。これは記法違いの同じ式ではなく、**構造的に
+別の式**です。Oliver の増殖項の構造(Monod動力学 × `|∇²Bio|`界面局在化 ×
+走化性的配向)はむしろ、もう一つ別のKlempt論文 — Klempt, Soleimani,
+Wriggers, Junker, *A Hamilton principle-based model for diffusion-driven
+biofilm growth*, Biomech Model Mechanobiol 23, 2091–2113 (2024)
+(`Klempt2024DiffusionDrivenGrowth`、`CITATION_AUDIT.md` §F1b 参照) —
+の記述(このリポジトリの`JAXFEM/felix_complete_reproduction.py`が
+"Eq.34–36"として再現しているAllen-Cahn+logistic-Monod+走化性)に近いです。
+`Interaction12/21`自体がどちらの論文でも式番号付きで確認できたわけではなく、
+Oliver/Felixが2024論文の増殖構造に独自に足した項である可能性があります。
+
+**実務上の意味:**
+
+- **このリポジトリ自身のn=5生態モデル**(`hamilton_ode_jax.py` /
+  `jax_hamilton_0d_5species_demo.py` / `ecology_jax.py` — TMCMCが較正し、
+  `usermat_biofilm.f`の`kUseEcology`ブリッジが実際に走らせているもの)は、
+  **Eq.10/16–18と項レベルでほぼ完全一致**することを確認しました。これが
+  学術的に正しい経路であり、既に実ANSYSで動作確認済み
+  (`coupling/README.md`の2026-09-07状態記録)— Oliverの`Ussfin`ではありません。
+- 2026-09-07にOliverの`InteractionIJ`をn=5へ一般化して見つけたしきい値
+  (0.0005で安定・0.0007で発散、2026-09-08に実ANSYSで再現確認済み)は
+  **Oliver独自の(論文の式ではない)増殖則拡張の、本物で再現性のある性質**
+  ですが、これは「論文モデルの臨界結合強度」ではなく「このANSYS/NEM
+  パイプライン独自の拡張の安定限界」と呼ぶのが正確です。詳細は
+  `apdl/N3_GROWTH_TRIAL.md`の対応する訂正を参照。
+- TMCMCで較正した行列`A`をそのまま`InteractionIJ`に流用するのは
+  **カテゴリーエラー**です(較正対象の式が違うため)。
+
+---
+
+### `usercm.inc` と `Ussfin` の場の更新(以下は元の記述、上記訂正を踏まえて読んでください)
 
 `usercm.inc` と `Ussfin` の場の更新を合わせると、モデルが読み取れます。
 **2菌種 × 2栄養**です（当初「1バイオフィルム + 2栄養」と誤読していました）:
@@ -175,11 +230,13 @@ GrowthBio1 = SQRT(Sdp_LapBio1**2) *
 
 - **Monod 動力学**（栄養ごと）— `μ_max·S/(K_s + S)`、`HalfVelo` が `K_s`。
 - **相互作用が増殖速度そのものをずらす** — `MaxGrowth + Interaction12·Bio2`。
-  別項を足すのではなく「どれだけ速く増えるか」を相手菌種が変える形。これが
-  published paper の *"novel interaction scheme"* です
+  別項を足すのではなく「どれだけ速く増えるか」を相手菌種が変える形。
+  **これは published paper の *"novel interaction scheme"* ではありません**
   （Klempt, Geisler, Soleimani et al., *Archive of Applied Mechanics* **96**,
-  164 (2026), doi:10.1007/s00419-026-03160-y。`biofilm_3tooth_refs.bib` に
-  `Klempt2026ContinuumBacterialGrowth` として登録済み）。
+  164 (2026), doi:10.1007/s00419-026-03160-y — 上記§5の訂正を参照）。
+  論文の実際の式は加法的・双線形(`Ia = A·φ̄`、対称行列、対角自己項あり)で、
+  乗法的なMonodシフトではありません。一致するのはこちらの
+  `hamilton_ode_jax.py`/`ecology_jax.py`の方です。
 - **`|∇²Bio|` を前係数に** — 場が曲がっている場所＝フロントで増殖が起きる。
   `JAXFEM/` の Allen–Cahn 界面項と同じ役割。
 - **走化性的な配向** — `OriBio = Σ_j OriWeight_j · NormDot(∇Nut_j, ∇Bio)`。
@@ -191,14 +248,19 @@ GrowthBio1 = SQRT(Sdp_LapBio1**2) *
 バイオフィルムの更新には `!Biofilm / lokales Biofilm Update (explizit, TEST)`
 とあり、陽的時間積分・暫定扱いです。
 
-> **統合にとって最も重要な発見。** 彼らの枠組みは「生物学を教え込む必要のある
-> 汎用 PDF ソルバ」ではなく、**既に論文の生態モデルを実装済み**です。ただし
-> **n = 2**。こちらは **n = 5**（`hamilton_ode_jax.py`）と**一般 n**
-> （`hamilton_ode_jax_nsp.py`）。`Interaction12`/`Interaction21` は、こちらが
-> TMCMC で較正した行列 `A` の非対角成分に対応します。
->
-> つまり埋めるべき差は「モデルを移植する」より狭く、**2 → 5 菌種への一般化**、
-> **較正済み相互作用行列の供給**、**成長運動学の追加**の3点です。
+> **2026-09-08訂正により失効。** 元々この段落は「既に論文の生態モデルを
+> 実装済み」「`Interaction12`/`Interaction21`はTMCMC較正済み行列`A`の非対角
+> 成分に対応する」と主張していましたが、どちらも成立しません。Oliverの増殖
+> 構造はMonod/栄養駆動で対角自己項も対称性の要求もなく、こちらの`A`が較正
+> されている論文の`Ia = A·φ̄`式とは構造的に別物です。**したがってTMCMC較正済み
+> の`A`をそのまま`InteractionIJ`へ流用するのはカテゴリーエラーであり、単純な
+> 差し替えではありません。** 論文に忠実な生態モデルをANSYS内で走らせる必要が
+> あるなら、既に検証済みの経路は`ecology_jax.py`自身の`Ia = A @ (phi*psi)`を
+> material callへ配線すること(`coupling/README.md`2026-09-07の状態記録で
+> 完了済み)であり、Oliverの別系統のMonod相互作用項を一般化することでは
+> ありません。Oliver自身の項を「論文モデルのn=2版」としてではなく、
+> 「意図的に別の増殖率ヒューリスティック」として維持する価値があるかどうかは
+> 彼に確認すべき論点で、このリポジトリ側で決められることではありません。
 
 ---
 

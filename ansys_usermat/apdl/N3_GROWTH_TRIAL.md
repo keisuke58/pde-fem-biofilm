@@ -13,6 +13,42 @@ committed to this repo). This file and `n3_growth_reference.py` are the
 repo-side write-up/verification harness, matching the convention already
 used for the ecology-bridge work (`ecology_4region_reference.py`, etc.).
 
+> **⚠️ Correction, 2026-09-08 — the interaction term this whole file
+> generalizes is not the published paper's equation.** Everything below
+> treats `Interaction12/21` (and the `InteractionIJ` generalization) as "the
+> paper's interaction scheme," per `OLIVER_MODEL_NOTES.md`'s 2026-09-01
+> reading. That identification is wrong, found by reading the actual
+> equations (Eq. 10, 16–18) of Klempt/Geisler/Soleimani/Junker,
+> *A continuum multi-species biofilm model with a novel interaction scheme*
+> (arXiv:2509.01274 / AAM 96, 164 (2026)) directly:
+>
+> - **The paper's scheme is additive/bilinear**: `Ia_i = Σ_j a_ij·φ̄_j =
+>   (A·φ̄)_i` (φ̄=φψ) enters a dissipation-derived residual as
+>   `-c*·ψ_i·Ia_i` (Eq. 16). `A` is stated symmetric, with diagonal
+>   self-terms `a_ii` included, and the nutrient `c*` is a single scalar
+>   entering linearly.
+> - **Oliver's scheme is multiplicative**: `(MaxGrowth_I + Interaction_IJ·Bio_J)`
+>   shifts the coefficient inside a per-nutrient Monod saturation curve, two
+>   independent nutrient fields, no diagonal self-term, no symmetry
+>   constraint (`Interaction12`/`21` are separate named constants).
+>
+> These are two different functional forms, not a notational difference —
+> see `OLIVER_MODEL_NOTES.md`'s matching 2026-09-08 correction for the full
+> comparison and for why this repo's own `hamilton_ode_jax.py`/
+> `ecology_jax.py` (not this file's `InteractionIJ` work) is the one that
+> actually matches the paper term-by-term.
+>
+> **Consequence for this file's own results, re-verified 2026-09-08**: the
+> critical-coupling bisection below (0.0005 stable / 0.0007 diverges,
+> Oliver's baseline `MaxGrowth=100/dt=0.1/Penalty1=5/HalfVelo=0.1`) was
+> re-run on real ANSYS on 2026-09-08 and reproduced exactly (0 errors at
+> 0.0005; `L-2 norm of the residual force overflowed` at 0.0007) — **it is a
+> real, reproducible property**, but it characterizes Oliver's own
+> non-paper-literal growth-law extension, not "the paper's critical coupling
+> strength." Read every "the paper's interaction scheme" phrase below with
+> that caveat; the bisection/numerics themselves are unaffected by the
+> correction, only their scientific interpretation.
+
 ## Why this was tractable without touching PARDISO
 
 Confirmed by reading `Ussfin_P21-V21_Conection_Test.F` in full: Bio1/Bio2
