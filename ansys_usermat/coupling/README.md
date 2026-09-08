@@ -490,18 +490,37 @@ check passes either way.
      real Day-1 CLSM compositions for **CS** (Commensal/Static, same seed
      already verified above), **CH** (Commensal/HOBIC), and **DS**
      (Dysbiotic/Static) — region A (mat 2, the default seed) stays the
-     unchanged regression baseline. **DH (Dysbiotic/HOBIC) is deliberately
-     excluded**: its Day-1 "all cells" sheet has no measurement at all
-     (confirmed by reading the raw workbook rows, not just an averaging
-     artifact) for F. nucleatum and P. gingivalis — fabricating a value
-     for missing data was ruled out the same way `psi` was above. Ran with
-     0 errors; all four regions' `alpha` (A 4.5687e-3, B/CS 4.6145e-3,
-     C/CH 4.6920e-3, D/DS 4.3557e-3) match
-     `ecology_4region_reference_clsm.py`'s independent reference exactly —
-     `out_cylinder_ecology_4region_clsm.txt` /
-     `growth_result_cylinder_ecology_4region_clsm.txt`. Three genuinely
-     different real clinical compositions now drive visibly different
-     growth on one real spatial FEM geometry.
+     unchanged regression baseline. Ran with 0 errors; all four regions'
+     `alpha` (A 4.5687e-3, B/CS 4.6145e-3, C/CH 4.6920e-3, D/DS 4.3557e-3)
+     match `ecology_4region_reference_clsm.py`'s independent reference
+     exactly.
+     **This deck's own header originally said DH (Dysbiotic/HOBIC) had "no
+     measurement at all" for F. nucleatum/P. gingivalis and was excluded
+     for that reason — that claim was WRONG, corrected the same day after
+     being asked to double-check ("DHないっけ").** It was an artifact of a
+     real bug in `plot_heine_phi_psi.load()`: the function derived the
+     species-block column width once from a sheet's first header row and
+     reused it for every condition block in that sheet, but the Dysbiotic
+     sheet's `HOBIC ...` blocks are 9 columns/species wide while its
+     `Static ...` blocks are 18 — reusing width=18 for HOBIC didn't just
+     drop 2 species, it read species 2's real data into the "species 1"
+     slot, species 3's into "species 2", species 5's into "species 3", and
+     landed the last two slots on blank padding. **Fixed** in
+     `plot_heine_phi_psi.py` (and the same latent bug in
+     `plot_heine_composition.py` / `validate_composition.py`), figures
+     regenerated. See the next item for DH included.
+   - **All four clinical conditions, real CLSM, 2026-09-08 (same day,
+     later)**: `apdl/t_growth_cylinder_ecology_4region_all_real_clsm.dat`
+     retires the "region A = default placeholder" convention now that DH
+     is available too — mat 2/3/4/5 = CS/CH/DS/DH, all real Day-1 CLSM.
+     Ran with 0 errors; all four regions' `alpha` (CS 4.6145e-3, CH
+     4.6920e-3, DS 4.3557e-3, DH 4.8186e-3) match
+     `ecology_4region_reference_all_real_clsm.py`'s independent reference
+     exactly — `out_cylinder_ecology_4region_all_real_clsm.txt` /
+     `growth_result_cylinder_ecology_4region_all_real_clsm.txt`. All four
+     of this repo's clinical conditions now drive visibly different
+     growth, from real measured composition, on one real spatial FEM
+     geometry.
 5. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
    the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
    2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6).

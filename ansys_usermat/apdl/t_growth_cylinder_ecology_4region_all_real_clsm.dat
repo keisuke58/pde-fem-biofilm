@@ -1,0 +1,218 @@
+! t_growth_cylinder_ecology_4region_all_real_clsm.dat --- extends
+! t_growth_cylinder_ecology_4region_clsm.dat: same 2x2 (theta x Z)
+! 4-region curved-shell patch, but now ALL FOUR growth-layer materials
+! (mat 2/3/4/5) are real Day-1 (Tag=1) CLSM compositions, one per clinical
+! condition (RESEARCH_MODEL.md sec.0):
+!   mat 2 (region A) = CS  Commensal/Static
+!   mat 3 (region B) = CH  Commensal/HOBIC
+!   mat 4 (region C) = DS  Dysbiotic/Static
+!   mat 5 (region D) = DH  Dysbiotic/HOBIC
+! Retires the earlier decks' "region A = all-zero default placeholder"
+! convention now that DH's Day-1 data is available too.
+!
+! WHY DH WAS PREVIOUSLY THOUGHT UNAVAILABLE, AND WHAT CHANGED
+! ---------------------------------------------------------------
+! t_growth_cylinder_ecology_4region_clsm.dat (same day, earlier) excluded
+! DH, reporting "no measurement at all" for F. nucleatum/P. gingivalis at
+! Day-1. That was WRONG -- a real bug in plot_heine_phi_psi.load(), found
+! by re-reading the raw workbook rows directly after being asked to
+! double-check ("DHないっけ" -- "isn't there DH [data]?"). The function
+! derived the species-block column width ONCE from the sheet's first
+! header row and reused it for every condition block in that sheet. The
+! Dysbiotic sheet's "Static ..." blocks are 18 columns/species wide but
+! its "HOBIC ..." blocks are only 9 -- reusing width=18 for HOBIC didn't
+! just drop 2 species, it read species 2's real data into the "species 1"
+! slot, species 3's into "species 2", species 5's into "species 3", and
+! landed the last two slots on blank padding past the real data. Fixed in
+! plot_heine_phi_psi.py (and the same latent bug in plot_heine_composition.py
+! and validate_composition.py) by re-deriving each condition block's own
+! header/width instead of reusing the sheet's first one.
+!
+! psi(1:5) is still the 0.999 placeholder for every region -- same
+! justification as every other real-CLSM deck in this directory (the
+! workbook's "only living cells" ratio is a different, unbounded quantity;
+! see t_growth_ecology_clsm_phi.dat's header).
+!
+! Independent reference: ecology_4region_reference_all_real_clsm.py (10
+! chained ecology_step calls, dt=1e-5, THETA_DEMO):
+!   A (mat2, CS): alpha = 4.6144769029e-03
+!   B (mat3, CH): alpha = 4.6920293146e-03
+!   C (mat4, DS): alpha = 4.3556778678e-03
+!   D (mat5, DH): alpha = 4.8186255156e-03
+! all four comfortably under the 0.01 convergence threshold -- four
+! genuinely different real measured biofilm compositions, all four
+! clinical conditions this repo studies, driving different growth on one
+! real spatial FEM geometry.
+!
+! Run (from a writable working directory, e.g. F:\biofilm_upf_kusepy2, with
+! ansys_usermat/coupling/material_server.py listening on 127.0.0.1:8765):
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
+!       -i t_growth_cylinder_ecology_4region_all_real_clsm.dat -o out_cylinder_ecology_4region_all_real_clsm.txt
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions
+/PREP7
+
+ET,1,SOLID185
+KEYOPT,1,2,0
+
+R_IN  = 4.0
+R_MID = 4.3
+R_OUT = 4.4
+LEN   = 0.15
+ARC   = 5
+
+CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
+CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+
+! ---- substrate (mat 1): no ecology, no growth
+TB,USER,1,1,6
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TB,STATE,1,,10
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- growth-layer materials (mat 2,3,4,5): identical constants/theta,
+! differ only in TB,STATE seed
+TB,USER,2,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,3,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,4,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+TB,USER,5,1,29
+TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.10
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.10,2.41,2.50
+
+! mat 2 (region A): REAL CS - Commensal/Static Day-1 CLSM seed
+TB,STATE,2,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.118119009,0.0194597518,0.768110315,0.0718475718
+TBDATA,19,0.022462353,1.00000000E-06,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+! mat 3 (region B): REAL CH - Commensal/HOBIC Day-1 CLSM seed
+TB,STATE,3,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.931959147,0.0163135914,0.0230199182,0.0287063431
+TBDATA,19,0.0,1.00000000E-06,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+! mat 4 (region C): REAL DS - Dysbiotic/Static Day-1 CLSM seed
+TB,STATE,4,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.0765892716,0.0811208942,0.30272547,0.0868505178
+TBDATA,19,0.452712846,1.00000000E-06,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+! mat 5 (region D): REAL DH - Dysbiotic/HOBIC Day-1 CLSM seed (corrected --
+! see header note above)
+TB,STATE,5,,26
+TBDATA,1,1.0,0.0,0.0,0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0,0.0,0.0,0.0
+TBDATA,13,0.0,0.0,0.340900021,0.00637075863,0.642629503,0.0100987168
+TBDATA,19,0.0,1.00000000E-06,0.999,0.999,0.999,0.999
+TBDATA,25,0.999,0.0
+
+MSHKEY,0
+
+MAT,1
+VSEL,S,VOLU,,1
+ESIZE,0.15
+VSWEEP,1
+
+MAT,2
+VSEL,S,VOLU,,2
+ESIZE,0.05
+VSWEEP,2
+
+! ---- split the growth layer into a 2x2 (theta x Z) grid of 4 regions -------
+CSYS,1
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,0,LEN/2
+EMODIF,ALL,MAT,3                       ! upper-theta, lower-Z -> region B (CH)
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,0,ARC/2
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,4                       ! lower-theta, upper-Z -> region C (DS)
+
+ALLSEL
+ESEL,S,MAT,,2
+ESEL,R,CENT,Y,ARC/2,ARC
+ESEL,R,CENT,Z,LEN/2,LEN
+EMODIF,ALL,MAT,5                       ! upper-theta, upper-Z -> region D (DH)
+CSYS,0
+ALLSEL
+
+NUMMRG,NODE,1.0E-4
+NUMCMP,NODE
+NUMCMP,ELEM
+
+! ---- boundary conditions -- identical to the base ecology deck -------------
+CSYS,1
+ASEL,S,LOC,X,R_IN
+NSLA,S,1
+D,ALL,ALL,0
+ALLSEL
+CSYS,0
+
+NSEL,S,LOC,Z,0
+D,ALL,UZ,0
+NSEL,S,LOC,Z,LEN
+D,ALL,UZ,0
+ALLSEL
+FINISH
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.0E-4
+AUTOTS,OFF
+NSUBST,10
+OUTRES,ALL,LAST
+OUTRES,SVAR,LAST
+SOLVE
+FINISH
+
+/POST1
+SET,LAST
+/OUTPUT,growth_result_cylinder_ecology_4region_all_real_clsm,txt
+ETABLE,SEQV,S,EQV
+PRETAB,SEQV
+ESEL,S,MAT,,2
+PRESOL,SVAR,10                ! alpha, region A (CS)
+ESEL,S,MAT,,3
+PRESOL,SVAR,10                ! alpha, region B (CH)
+ESEL,S,MAT,,4
+PRESOL,SVAR,10                ! alpha, region C (DS)
+ESEL,S,MAT,,5
+PRESOL,SVAR,10                ! alpha, region D (DH)
+ALLSEL
+/OUTPUT
+FINISH

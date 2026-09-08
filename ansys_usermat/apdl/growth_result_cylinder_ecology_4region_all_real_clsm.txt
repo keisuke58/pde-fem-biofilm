@@ -1,0 +1,902 @@
+
+ STORE SEQV     FROM ITEM=S    COMP=EQV   FOR ALL SELECTED ELEMENTS
+
+ PRINT ELEMENT TABLE ITEMS PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+  ***** POST1 ELEMENT TABLE LISTING *****                                      
+ 
+    STAT     CURRENT 
+    ELEM     SEQV    
+       1  0.19402E-006
+       2  0.50827E-006
+       3  0.10069E-006
+       4  0.31903E-006
+       5  0.19401E-006
+       6  0.50819E-006
+       7  0.47627E-005
+       8  0.48721E-005
+       9  0.46759E-005
+      10  0.46929E-005
+      11  0.44932E-005
+      12  0.45632E-005
+      13  0.39780E-005
+      14  0.46969E-005
+      15  0.39555E-005
+      16  0.44616E-005
+      17  0.46697E-005
+      18  0.43997E-005
+      19  0.42302E-005
+      20  0.43121E-005
+      21  0.42393E-005
+      22  0.45029E-005
+      23  0.46578E-005
+      24  0.44501E-005
+      25  0.42724E-005
+      26  0.43525E-005
+      27  0.43056E-005
+      28  0.45234E-005
+      29  0.46050E-005
+      30  0.45518E-005
+      31  0.45737E-005
+      32  0.45303E-005
+      33  0.45120E-005
+      34  0.49072E-005
+      35  0.48529E-005
+      36  0.48128E-005
+      37  0.46444E-005
+      38  0.45322E-005
+      39  0.46173E-005
+      40  0.48877E-005
+      41  0.48549E-005
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+  ***** POST1 ELEMENT TABLE LISTING *****                                      
+ 
+    STAT     CURRENT 
+    ELEM     SEQV    
+      42  0.48849E-005
+      43  0.43350E-005
+      44  0.49226E-005
+      45  0.43402E-005
+      46  0.48069E-005
+      47  0.48888E-005
+      48  0.48282E-005
+      49  0.50290E-005
+      50  0.50952E-005
+      51  0.50716E-005
+      52  0.49779E-005
+      53  0.47178E-005
+      54  0.50388E-005
+
+ MINIMUM VALUES
+ ELEM          3
+ VALUE   0.10069E-006
+
+ MAXIMUM VALUES
+ ELEM         50
+ VALUE   0.50952E-005
+
+ SELECT       FOR ITEM=MAT  COMPONENT=    
+  IN RANGE         2 TO          2 STEP          1
+
+          8  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       9        SOLID185
+    NODE     10      
+      63  0.46145E-002
+     116  0.46145E-002
+     110  0.46145E-002
+      80  0.46145E-002
+      71  0.46145E-002
+      25  0.46145E-002
+     111  0.46145E-002
+      22  0.46145E-002
+  
+  ELEMENT=      12        SOLID185
+    NODE     10      
+     116  0.46145E-002
+      88  0.46145E-002
+     106  0.46145E-002
+     110  0.46145E-002
+      25  0.46145E-002
+      96  0.46145E-002
+     108  0.46145E-002
+     111  0.46145E-002
+  
+  ELEMENT=      15        SOLID185
+    NODE     10      
+      62  0.46145E-002
+     118  0.46145E-002
+     116  0.46145E-002
+      63  0.46145E-002
+      72  0.46145E-002
+      26  0.46145E-002
+      25  0.46145E-002
+      71  0.46145E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      18        SOLID185
+    NODE     10      
+     118  0.46145E-002
+      87  0.46145E-002
+      88  0.46145E-002
+     116  0.46145E-002
+      26  0.46145E-002
+      97  0.46145E-002
+      96  0.46145E-002
+      25  0.46145E-002
+  
+  ELEMENT=      21        SOLID185
+    NODE     10      
+      61  0.46145E-002
+     120  0.46145E-002
+     118  0.46145E-002
+      62  0.46145E-002
+      73  0.46145E-002
+      27  0.46145E-002
+      26  0.46145E-002
+      72  0.46145E-002
+  
+  ELEMENT=      24        SOLID185
+    NODE     10      
+     120  0.46145E-002
+      86  0.46145E-002
+      87  0.46145E-002
+     118  0.46145E-002
+      27  0.46145E-002
+      98  0.46145E-002
+      97  0.46145E-002
+      26  0.46145E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      27        SOLID185
+    NODE     10      
+      60  0.46145E-002
+     122  0.46145E-002
+     120  0.46145E-002
+      61  0.46145E-002
+      74  0.46145E-002
+      28  0.46145E-002
+      27  0.46145E-002
+      73  0.46145E-002
+  
+  ELEMENT=      30        SOLID185
+    NODE     10      
+     122  0.46145E-002
+      85  0.46145E-002
+      86  0.46145E-002
+     120  0.46145E-002
+      28  0.46145E-002
+      99  0.46145E-002
+      98  0.46145E-002
+      27  0.46145E-002
+
+ SELECT       FOR ITEM=MAT  COMPONENT=    
+  IN RANGE         3 TO          3 STEP          1
+
+          8  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      33        SOLID185
+    NODE     10      
+      59  0.46920E-002
+     124  0.46920E-002
+     122  0.46920E-002
+      60  0.46920E-002
+      75  0.46920E-002
+      29  0.46920E-002
+      28  0.46920E-002
+      74  0.46920E-002
+  
+  ELEMENT=      36        SOLID185
+    NODE     10      
+     124  0.46920E-002
+      84  0.46920E-002
+      85  0.46920E-002
+     122  0.46920E-002
+      29  0.46920E-002
+     100  0.46920E-002
+      99  0.46920E-002
+      28  0.46920E-002
+  
+  ELEMENT=      39        SOLID185
+    NODE     10      
+      58  0.46920E-002
+     126  0.46920E-002
+     124  0.46920E-002
+      59  0.46920E-002
+      76  0.46920E-002
+      30  0.46920E-002
+      29  0.46920E-002
+      75  0.46920E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      42        SOLID185
+    NODE     10      
+     126  0.46920E-002
+      83  0.46920E-002
+      84  0.46920E-002
+     124  0.46920E-002
+      30  0.46920E-002
+     101  0.46920E-002
+     100  0.46920E-002
+      29  0.46920E-002
+  
+  ELEMENT=      45        SOLID185
+    NODE     10      
+      57  0.46920E-002
+     128  0.46920E-002
+     126  0.46920E-002
+      58  0.46920E-002
+      77  0.46920E-002
+      31  0.46920E-002
+      30  0.46920E-002
+      76  0.46920E-002
+  
+  ELEMENT=      48        SOLID185
+    NODE     10      
+     128  0.46920E-002
+      82  0.46920E-002
+      83  0.46920E-002
+     126  0.46920E-002
+      31  0.46920E-002
+     102  0.46920E-002
+     101  0.46920E-002
+      30  0.46920E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      51        SOLID185
+    NODE     10      
+      78  0.46920E-002
+     113  0.46920E-002
+     128  0.46920E-002
+      57  0.46920E-002
+      21  0.46920E-002
+     114  0.46920E-002
+      31  0.46920E-002
+      77  0.46920E-002
+  
+  ELEMENT=      54        SOLID185
+    NODE     10      
+     113  0.46920E-002
+     103  0.46920E-002
+      82  0.46920E-002
+     128  0.46920E-002
+     114  0.46920E-002
+     105  0.46920E-002
+     102  0.46920E-002
+      31  0.46920E-002
+
+ SELECT       FOR ITEM=MAT  COMPONENT=    
+  IN RANGE         4 TO          4 STEP          1
+
+         16  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=       7        SOLID185
+    NODE     10      
+      50  0.43557E-002
+      38  0.43557E-002
+      40  0.43557E-002
+      10  0.43557E-002
+      70  0.43557E-002
+     115  0.43557E-002
+     109  0.43557E-002
+      81  0.43557E-002
+  
+  ELEMENT=       8        SOLID185
+    NODE     10      
+      70  0.43557E-002
+     115  0.43557E-002
+     109  0.43557E-002
+      81  0.43557E-002
+      63  0.43557E-002
+     116  0.43557E-002
+     110  0.43557E-002
+      80  0.43557E-002
+  
+  ELEMENT=      10        SOLID185
+    NODE     10      
+      38  0.43557E-002
+      42  0.43557E-002
+      49  0.43557E-002
+      40  0.43557E-002
+     115  0.43557E-002
+      95  0.43557E-002
+     107  0.43557E-002
+     109  0.43557E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      11        SOLID185
+    NODE     10      
+     115  0.43557E-002
+      95  0.43557E-002
+     107  0.43557E-002
+     109  0.43557E-002
+     116  0.43557E-002
+      88  0.43557E-002
+     106  0.43557E-002
+     110  0.43557E-002
+  
+  ELEMENT=      13        SOLID185
+    NODE     10      
+      51  0.43557E-002
+      37  0.43557E-002
+      38  0.43557E-002
+      50  0.43557E-002
+      69  0.43557E-002
+     117  0.43557E-002
+     115  0.43557E-002
+      70  0.43557E-002
+  
+  ELEMENT=      14        SOLID185
+    NODE     10      
+      69  0.43557E-002
+     117  0.43557E-002
+     115  0.43557E-002
+      70  0.43557E-002
+      62  0.43557E-002
+     118  0.43557E-002
+     116  0.43557E-002
+      63  0.43557E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      16        SOLID185
+    NODE     10      
+      37  0.43557E-002
+      43  0.43557E-002
+      42  0.43557E-002
+      38  0.43557E-002
+     117  0.43557E-002
+      94  0.43557E-002
+      95  0.43557E-002
+     115  0.43557E-002
+  
+  ELEMENT=      17        SOLID185
+    NODE     10      
+     117  0.43557E-002
+      94  0.43557E-002
+      95  0.43557E-002
+     115  0.43557E-002
+     118  0.43557E-002
+      87  0.43557E-002
+      88  0.43557E-002
+     116  0.43557E-002
+  
+  ELEMENT=      19        SOLID185
+    NODE     10      
+      52  0.43557E-002
+      36  0.43557E-002
+      37  0.43557E-002
+      51  0.43557E-002
+      68  0.43557E-002
+     119  0.43557E-002
+     117  0.43557E-002
+      69  0.43557E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      20        SOLID185
+    NODE     10      
+      68  0.43557E-002
+     119  0.43557E-002
+     117  0.43557E-002
+      69  0.43557E-002
+      61  0.43557E-002
+     120  0.43557E-002
+     118  0.43557E-002
+      62  0.43557E-002
+  
+  ELEMENT=      22        SOLID185
+    NODE     10      
+      36  0.43557E-002
+      44  0.43557E-002
+      43  0.43557E-002
+      37  0.43557E-002
+     119  0.43557E-002
+      93  0.43557E-002
+      94  0.43557E-002
+     117  0.43557E-002
+  
+  ELEMENT=      23        SOLID185
+    NODE     10      
+     119  0.43557E-002
+      93  0.43557E-002
+      94  0.43557E-002
+     117  0.43557E-002
+     120  0.43557E-002
+      86  0.43557E-002
+      87  0.43557E-002
+     118  0.43557E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      25        SOLID185
+    NODE     10      
+      53  0.43557E-002
+      35  0.43557E-002
+      36  0.43557E-002
+      52  0.43557E-002
+      67  0.43557E-002
+     121  0.43557E-002
+     119  0.43557E-002
+      68  0.43557E-002
+  
+  ELEMENT=      26        SOLID185
+    NODE     10      
+      67  0.43557E-002
+     121  0.43557E-002
+     119  0.43557E-002
+      68  0.43557E-002
+      60  0.43557E-002
+     122  0.43557E-002
+     120  0.43557E-002
+      61  0.43557E-002
+  
+  ELEMENT=      28        SOLID185
+    NODE     10      
+      35  0.43557E-002
+      45  0.43557E-002
+      44  0.43557E-002
+      36  0.43557E-002
+     121  0.43557E-002
+      92  0.43557E-002
+      93  0.43557E-002
+     119  0.43557E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      29        SOLID185
+    NODE     10      
+     121  0.43557E-002
+      92  0.43557E-002
+      93  0.43557E-002
+     119  0.43557E-002
+     122  0.43557E-002
+      85  0.43557E-002
+      86  0.43557E-002
+     120  0.43557E-002
+
+ SELECT       FOR ITEM=MAT  COMPONENT=    
+  IN RANGE         5 TO          5 STEP          1
+
+         16  ELEMENTS (OF         54  DEFINED) SELECTED BY  ESEL  COMMAND.
+
+ PRINT SVAR ELEMENT SOLUTION PER ELEMENT
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      31        SOLID185
+    NODE     10      
+      54  0.48186E-002
+      34  0.48186E-002
+      35  0.48186E-002
+      53  0.48186E-002
+      66  0.48186E-002
+     123  0.48186E-002
+     121  0.48186E-002
+      67  0.48186E-002
+  
+  ELEMENT=      32        SOLID185
+    NODE     10      
+      66  0.48186E-002
+     123  0.48186E-002
+     121  0.48186E-002
+      67  0.48186E-002
+      59  0.48186E-002
+     124  0.48186E-002
+     122  0.48186E-002
+      60  0.48186E-002
+  
+  ELEMENT=      34        SOLID185
+    NODE     10      
+      34  0.48186E-002
+      46  0.48186E-002
+      45  0.48186E-002
+      35  0.48186E-002
+     123  0.48186E-002
+      91  0.48186E-002
+      92  0.48186E-002
+     121  0.48186E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      35        SOLID185
+    NODE     10      
+     123  0.48186E-002
+      91  0.48186E-002
+      92  0.48186E-002
+     121  0.48186E-002
+     124  0.48186E-002
+      84  0.48186E-002
+      85  0.48186E-002
+     122  0.48186E-002
+  
+  ELEMENT=      37        SOLID185
+    NODE     10      
+      55  0.48186E-002
+      33  0.48186E-002
+      34  0.48186E-002
+      54  0.48186E-002
+      65  0.48186E-002
+     125  0.48186E-002
+     123  0.48186E-002
+      66  0.48186E-002
+  
+  ELEMENT=      38        SOLID185
+    NODE     10      
+      65  0.48186E-002
+     125  0.48186E-002
+     123  0.48186E-002
+      66  0.48186E-002
+      58  0.48186E-002
+     126  0.48186E-002
+     124  0.48186E-002
+      59  0.48186E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      40        SOLID185
+    NODE     10      
+      33  0.48186E-002
+      47  0.48186E-002
+      46  0.48186E-002
+      34  0.48186E-002
+     125  0.48186E-002
+      90  0.48186E-002
+      91  0.48186E-002
+     123  0.48186E-002
+  
+  ELEMENT=      41        SOLID185
+    NODE     10      
+     125  0.48186E-002
+      90  0.48186E-002
+      91  0.48186E-002
+     123  0.48186E-002
+     126  0.48186E-002
+      83  0.48186E-002
+      84  0.48186E-002
+     124  0.48186E-002
+  
+  ELEMENT=      43        SOLID185
+    NODE     10      
+      56  0.48186E-002
+      32  0.48186E-002
+      33  0.48186E-002
+      55  0.48186E-002
+      64  0.48186E-002
+     127  0.48186E-002
+     125  0.48186E-002
+      65  0.48186E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      44        SOLID185
+    NODE     10      
+      64  0.48186E-002
+     127  0.48186E-002
+     125  0.48186E-002
+      65  0.48186E-002
+      57  0.48186E-002
+     128  0.48186E-002
+     126  0.48186E-002
+      58  0.48186E-002
+  
+  ELEMENT=      46        SOLID185
+    NODE     10      
+      32  0.48186E-002
+      48  0.48186E-002
+      47  0.48186E-002
+      33  0.48186E-002
+     127  0.48186E-002
+      89  0.48186E-002
+      90  0.48186E-002
+     125  0.48186E-002
+  
+  ELEMENT=      47        SOLID185
+    NODE     10      
+     127  0.48186E-002
+      89  0.48186E-002
+      90  0.48186E-002
+     125  0.48186E-002
+     128  0.48186E-002
+      82  0.48186E-002
+      83  0.48186E-002
+     126  0.48186E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      49        SOLID185
+    NODE     10      
+       7  0.48186E-002
+      39  0.48186E-002
+      32  0.48186E-002
+      56  0.48186E-002
+      79  0.48186E-002
+     112  0.48186E-002
+     127  0.48186E-002
+      64  0.48186E-002
+  
+  ELEMENT=      50        SOLID185
+    NODE     10      
+      79  0.48186E-002
+     112  0.48186E-002
+     127  0.48186E-002
+      64  0.48186E-002
+      78  0.48186E-002
+     113  0.48186E-002
+     128  0.48186E-002
+      57  0.48186E-002
+  
+  ELEMENT=      52        SOLID185
+    NODE     10      
+      39  0.48186E-002
+      41  0.48186E-002
+      48  0.48186E-002
+      32  0.48186E-002
+     112  0.48186E-002
+     104  0.48186E-002
+      89  0.48186E-002
+     127  0.48186E-002
+
+ *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
+ Ansys Mechanical Enterprise Academic Teaching     
+ 00000000  VERSION=WINDOWS x64   12:52:51  SEP 08, 2026 CP=      3.922
+
+  biofilm USERMAT - 4-region cylindrical shell, all 4 real CLSM conditions     
+
+ Note - This MAPDL version was linked by Licensee
+ 
+ ***** POST1 ELEMENT USERMAT STATE VARIABLES *****                             
+ 
+  LOAD STEP=     1  SUBSTEP=    10                                             
+   TIME=   0.10000E-03  LOAD CASE=   0                                         
+ 
+  
+  ELEMENT=      53        SOLID185
+    NODE     10      
+     112  0.48186E-002
+     104  0.48186E-002
+      89  0.48186E-002
+     127  0.48186E-002
+     113  0.48186E-002
+     103  0.48186E-002
+      82  0.48186E-002
+     128  0.48186E-002
+
+ SELECT ALL ENTITIES OF TYPE= ALL  AND BELOW

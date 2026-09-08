@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """Independent reference for t_growth_cylinder_ecology_4region_clsm.dat's
 four growth-layer materials (mat 2/3/4/5) -- extends
-ecology_cylinder_reference_clsm.py's single-real-condition check to all
-THREE clinical conditions in data/heine_species_distribution_biofilm.xlsx
-that have complete Day-1 (Tag=1) "all cells" measurements for every
-species. Region A (mat 2) stays the pre-existing all-zero ->
-INIT_ECO_IF_ZERO default, kept unchanged as a regression baseline.
+ecology_cylinder_reference_clsm.py's single-real-condition check to THREE
+clinical conditions in data/heine_species_distribution_biofilm.xlsx
+(region A / mat 2 stays the pre-existing all-zero -> INIT_ECO_IF_ZERO
+default, kept unchanged as a regression baseline).
 
-Dysbiotic/HOBIC is NOT included: its Day-1 "all cells" sheet block has no
-measurement at all (not zero -- genuinely blank) for F. nucleatum and
-P. gingivalis, confirmed by reading the raw workbook rows directly. Making
-up a value for missing data would misrepresent the workbook, so it is
-left out rather than imputed; a later timepoint could stand in but would
-break the "Day-1 as initial condition" convention every other real-CLSM
-deck in this directory uses.
+CORRECTION, 2026-09-08 (same day, later): an earlier version of this file
+also computed DH_SEED (Dysbiotic/HOBIC) below and concluded it had to be
+left out because F. nucleatum/P. gingivalis had "no measurement at all" at
+Day-1. That conclusion was WRONG -- it was an artifact of a real bug in
+plot_heine_phi_psi.load(), now fixed: that function used to derive the
+species-block column width ONCE from the sheet's first header row and
+reuse it everywhere, but the Dysbiotic sheet's "HOBIC ..." blocks are 9
+columns/species wide while its "Static ..." blocks are 18 -- reusing
+width=18 for HOBIC didn't just drop 2 species, it read species 2's real
+data into the "species 1" slot, species 3's into "species 2", species 5's
+into "species 3", and landed the last two slots on blank padding past the
+real data. See t_growth_cylinder_ecology_4region_all_real_clsm.dat for the
+corrected DH seed and all four real conditions on one deck.
 """
 import sys
 from pathlib import Path
@@ -44,7 +49,7 @@ CONDITIONS = [
 
 def day1_seed(sheet_name, condition_key):
     wb = openpyxl.load_workbook(XLSX, data_only=True)
-    d, _ = load(wb[sheet_name])
+    d = load(wb[sheet_name])
     rows = d[condition_key][1]  # Tag == 1
     phi_pct = np.nanmean(np.array(rows, dtype=float), axis=1)
     phi = phi_pct / 100.0

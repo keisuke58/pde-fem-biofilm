@@ -45,7 +45,7 @@ def day1_phi(condition="Static all cells", sheet="Commensal"):
     """Mean of Day-1 (Tag=1) per-species composition [%], normalized to a
     fraction, from the workbook's "all cells" sheet block."""
     wb = openpyxl.load_workbook(XLSX, data_only=True)
-    d, _ = load(wb[sheet])
+    d = load(wb[sheet])
     rows = d[condition][1]  # Tag == 1
     phi_pct = np.nanmean(np.array(rows, dtype=float), axis=1)
     phi = phi_pct / 100.0

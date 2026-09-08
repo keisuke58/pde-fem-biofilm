@@ -59,22 +59,31 @@ def model_composition() -> np.ndarray:
 
 def heine_composition() -> np.ndarray:
     """(len(TAGS), 5) measured dysbiotic-static all-cells composition, %."""
+    # Only "Static all cells" is used below; other blocks in this sheet
+    # (e.g. "HOBIC ...") have a DIFFERENT column width (18 vs 9 -- see
+    # plot_heine_phi_psi.load()'s 2026-09-08 fix note), so this function
+    # re-derives sp/width from each block's own "Tag" header row rather
+    # than reusing the sheet's first one, even though only one block is
+    # actually consumed here today.
     wb = openpyxl.load_workbook(_XLSX, data_only=True, read_only=True)
     rows = list(wb["Dysbiotic"].iter_rows(values_only=True))
-    hdr = next(r for r in rows if r[1] and str(r[1]).startswith("S. oralis"))
-    sp = [j for j in range(1, len(hdr)) if hdr[j]]
-    width = sp[1] - sp[0]
-    cond, blocks = None, {}
+    cond, blocks, sp = None, {}, None
     for r in rows:
         v = r[0]
         if isinstance(v, str) and "cells" in v:
             cond = v.strip()
             blocks[cond] = {}
+            sp = None
             continue
-        if cond and v in TAGS:
+        if v == "Tag":
+            sp = [j for j in range(1, len(r)) if r[j]]
+            continue
+        if cond and sp and v in TAGS:
+            widths = [sp[k + 1] - sp[k] for k in range(len(sp) - 1)]
+            widths.append(len(r) - sp[-1])
             row = []
-            for c in sp:
-                vals = [r[c + k] for k in range(width)
+            for c, w in zip(sp, widths):
+                vals = [r[c + k] for k in range(w)
                         if isinstance(r[c + k], (int, float))]
                 row.append(np.mean(vals) if vals else np.nan)
             blocks[cond][v] = row

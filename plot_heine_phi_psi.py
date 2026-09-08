@@ -52,26 +52,62 @@ PRODUCT_LEVELS = [1, 5, 20, 50]  # phi.psi = c  (living composition, %)
 
 
 def load(ws):
-    """{condition: [[replicate values]*5 species] per tag}."""
+    """{condition: [[replicate values]*5 species] per tag}.
+
+    BUG FIX 2026-09-08: this used to determine the species-block column
+    width ONCE from the sheet's first "S. oralis" header row and reuse it
+    for every condition block. That is wrong when blocks in the same sheet
+    are laid out with different widths -- which the Dysbiotic sheet does:
+    its "Static ..." blocks are 18 columns/species, its "HOBIC ..." blocks
+    are only 9. Reusing width=18 for the HOBIC blocks read species 2's
+    real data into the "species 1" slot, species 3's into "species 2",
+    species 5's into "species 3", and landed "species 4"/"species 5" on
+    blank padding past the real data -- not merely dropping two species,
+    but a full misalignment across all five. Confirmed by reading the raw
+    worksheet rows directly; see ansys_usermat/apdl/ecology_4region_reference_clsm.py's
+    history for the investigation.
+
+    Fixed by re-deriving each condition block's own header row (the "Tag"
+    row immediately preceding its data rows) and its own per-species
+    column width from that block, rather than assuming one width for the
+    whole sheet. The old (condition -> width) contract is dropped: each
+    block may legitimately have a different number of replicate columns
+    (e.g. Commensal's blocks are all 15-wide, uniform; Dysbiotic's are
+    18/9), so a single "width" return value can no longer describe the
+    whole sheet -- callers that need it should use len() on the returned
+    per-tag/per-species list instead (see pairs_by_species below).
+    """
     rows = list(ws.iter_rows(values_only=True))
-    hdr = next(r for r in rows if r[1] and str(r[1]).startswith("S. oralis"))
-    sp = [j for j in range(1, len(hdr)) if hdr[j]]
-    width = sp[1] - sp[0]
     d: dict = {}
     cond = None
+    sp = None
     for r in rows:
         v = r[0]
         if isinstance(v, str) and "cells" in v:
             cond = v.strip()
             d[cond] = {}
+            sp = None  # this block's own header hasn't been seen yet
             continue
-        if cond and v in TAGS:
-            d[cond][v] = [[r[c + k] for k in range(width)] for c in sp]
-    return d, width
+        if v == "Tag":
+            sp = [j for j in range(1, len(r)) if r[j]]
+            continue
+        if cond and sp and v in TAGS:
+            widths = [sp[k + 1] - sp[k] for k in range(len(sp) - 1)]
+            widths.append(len(r) - sp[-1])  # last species block: to row end
+            d[cond][v] = [
+                [r[c + k] for k in range(w)] for c, w in zip(sp, widths)
+            ]
+    return d
 
 
-def pairs_by_species(d, width):
-    """Return per-species arrays of (phi, psi) pooled over base/tag/replicate."""
+def pairs_by_species(d):
+    """Return per-species arrays of (phi, psi) pooled over base/tag/replicate.
+
+    Iterates each (tag, species) replicate list to its own length rather
+    than a single sheet-wide width -- see load()'s 2026-09-08 fix note;
+    "all cells" and "only living cells" blocks for the same tag/species can
+    have a different replicate count, so the shorter of the two is used.
+    """
     phi = [[] for _ in range(5)]
     psi = [[] for _ in range(5)]
     for base in BASES:
@@ -79,9 +115,9 @@ def pairs_by_species(d, width):
         L = d[base + " only living cells"]
         for tag in TAGS:
             for si in range(5):
-                for j in range(width):
-                    a = A[tag][si][j]
-                    l = L[tag][si][j]
+                a_list, l_list = A[tag][si], L[tag][si]
+                for j in range(min(len(a_list), len(l_list))):
+                    a, l = a_list[j], l_list[j]
                     if (isinstance(a, (int, float)) and isinstance(l, (int, float))
                             and a > 1e-9 and l >= 0):
                         phi[si].append(float(a))
@@ -173,8 +209,8 @@ def main():
     fig = plt.figure(figsize=(11.6, 5.9))
     outer = fig.add_gridspec(1, len(states), wspace=0.18)
     for i, st in enumerate(states):
-        d, width = load(wb[st])
-        phi, psi = pairs_by_species(d, width)
+        d = load(wb[st])
+        phi, psi = pairs_by_species(d)
         joint_panel(fig, outer[0, i], phi, psi, st)
 
     handles = [Line2D([0], [0], marker="o", linestyle="none", markersize=7,

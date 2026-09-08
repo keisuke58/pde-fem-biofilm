@@ -33,26 +33,42 @@ SURFACE = "#fcfcfb"
 
 
 def parse_sheet(ws):
-    """Return {condition: ndarray(len(TAGS), 5)} of normalised composition (%)."""
+    """Return {condition: ndarray(len(TAGS), 5)} of normalised composition (%).
+
+    BUG FIX 2026-09-08: previously derived the species-block column width
+    ONCE from the sheet's first "S. oralis" header row and reused it for
+    every condition block below. Wrong whenever blocks in one sheet have
+    different widths -- the Dysbiotic sheet's "Static ..." blocks are
+    18 columns/species, its "HOBIC ..." blocks only 9 -- which silently
+    misaligned species labels for the narrower blocks (species 2's data
+    read into the "species 1" slot, etc.), not merely dropping columns.
+    Fixed the same way plot_heine_phi_psi.load() was: re-derive sp_cols
+    (and therefore each species block's own width) from the "Tag" header
+    row immediately preceding each condition's own data rows.
+    """
     rows = list(ws.iter_rows(values_only=True))
-    hdr = next(r for r in rows if r[1] and str(r[1]).startswith("S. oralis"))
-    sp_cols = [j for j in range(1, len(hdr)) if hdr[j]]
-    width = sp_cols[1] - sp_cols[0]
 
     out: dict[str, np.ndarray] = {}
     cond = None
+    sp_cols = None
     for r in rows:
         v0 = r[0]
         if isinstance(v0, str) and "cells" in v0:
             cond = v0.strip()
             out[cond] = np.full((len(TAGS), 5), np.nan)
+            sp_cols = None  # this block's own header hasn't been seen yet
             continue
-        if cond is None or v0 not in TAGS:
+        if v0 == "Tag":
+            sp_cols = [j for j in range(1, len(r)) if r[j]]
             continue
+        if cond is None or sp_cols is None or v0 not in TAGS:
+            continue
+        widths = [sp_cols[k + 1] - sp_cols[k] for k in range(len(sp_cols) - 1)]
+        widths.append(len(r) - sp_cols[-1])
         ti = TAGS.index(v0)
         means = []
-        for c in sp_cols:
-            vals = [r[c + k] for k in range(width)
+        for c, w in zip(sp_cols, widths):
+            vals = [r[c + k] for k in range(w)
                     if isinstance(r[c + k], (int, float))]
             means.append(np.mean(vals) if vals else np.nan)
         means = np.array(means, float)
