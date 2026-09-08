@@ -446,11 +446,29 @@ check passes either way.
    blocking, but needed before the result means anything physically):
    - **Feed the actual TMCMC-calibrated theta** into `prop(10:29)` instead
      of the demo's `THETA_DEMO` placeholder — needs a generator analogous
-     to `composition_to_material.py`'s `apdl_state_block`.
-   - **Seed `ustatev(15:26)` from real CLSM-measured composition** per
-     Gauss point instead of `INIT_ECO_IF_ZERO`'s fixed default — the same
-     kind of `TB,STATE` block `composition_to_material.py` already emits
-     for `ustatev(11:14)`.
+     to `composition_to_material.py`'s `apdl_state_block`. **Still blocked**
+     as of 2026-09-08: no `theta_MAP.json`/TMCMC posterior run output exists
+     on this machine (`tmcmc_to_fem_coupling.py`/`posterior_ci_0d.py` both
+     expect one under `../data_5species/_runs/<sweep>/`, which isn't
+     present here — the actual run lives elsewhere, e.g. the Keio server).
+   - ~~Seed `ustatev(15:26)` from real CLSM-measured composition per Gauss
+     point instead of `INIT_ECO_IF_ZERO`'s fixed default~~ — **partially
+     done 2026-09-08, real ANSYS, `phi` only**: `apdl/t_growth_ecology_clsm_phi.dat`
+     seeds `phi(1:5)`+`phi0` from the real Day-1 (Tag=1) Commensal/Static
+     composition in `data/heine_species_distribution_biofilm.xlsx`
+     ("all cells" sheet), regenerable via `apdl/clsm_phi_seed_reference.py`.
+     Ran with 0 errors; every `SVAR`/stress value matches the independent
+     Python reference to displayed precision (`apdl/growth_result_ecology_clsm_phi.txt`).
+     `psi(1:5)` is **still the 0.999 placeholder**, deliberately — the
+     workbook's "only living cells" sheet gives a ratio
+     (`plot_heine_phi_psi.py`'s own "relative viability/enrichment", values
+     up to ~30 seen) that is a *different quantity* from the model's own
+     `psi_i ∈ [0,1]` (membrane-intact fraction, RESEARCH_MODEL.md sec.1) —
+     using it directly would misrepresent measured data as something it
+     doesn't measure; see the deck's own header comment for the numbers
+     that ruled it out (two species' Day-1 ratio exceeds 1). A real
+     bounded per-species viability measurement, if one exists separately
+     from this workbook, would close this the rest of the way.
 5. Port this bridge (hook + shim + server) to Oliver's `Usermat_P21-V21_*.F`,
    the same way `BIOFILM_GROWTH_VISCO_V01` was wired in directly on
    2026-09-03 (`V222_PORT_INSTRUCTIONS.md` §6).
