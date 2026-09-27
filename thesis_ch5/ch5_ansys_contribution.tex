@@ -473,15 +473,91 @@ them.}
 \section{Results}
 \label{sec:ch5-results}
 
+% TierB. t_growth_cylinder_ecology_4region_all_real_clsm.dat + the listing it
+% produced; figures from plot_condition_comparison.py.
 \TierB{%
-[Awaiting runs. Comparison of von Mises fields across conditions, produced with
-the law of this chapter. Reachable through the local v222 build alone --- it
-does not depend on the partner framework wiring the routine in
-(ROADMAP\_2026.md §3).]}
+The law was run on a two-layer curved shell whose growth layer is divided into
+four regions, each seeded with the measured Day-1 CLSM composition of one of
+the four clinical conditions --- commensal and dysbiotic, static and HOBIC ---
+and each driven through the ecology model at the integration point rather than
+given a prescribed growth. The solve completed without error.}
 
-% TODO(runs): before reporting anything here, confirm dt is inside the stable
-% range of §5.5.3 for the actual job. This is cheap to check and expensive to
-% discover afterwards.
+\TierB{%
+Two things follow from it, and they are of very different strengths.}
+
+\TierB{%
+The first is that the four measured compositions do produce four different
+growth values, spanning a factor of $1.106$, and that each of them is
+reproduced by an independent reference implementation of the same ecology to
+the full precision the solver prints. That is a statement about the chain from
+composition to growth, and it holds.}
+
+\TierB{%
+The second concerns stress, and it is where the run stops short of what
+\S\ref{sec:ch5-scope} set out to compare.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_conditions.png}
+  \caption[The four conditions, and the comparison the geometry does not
+    permit]{%
+    Left: growth after ten substeps for each condition's measured Day-1
+    composition. Right: the mean von Mises stress of each region, drawn in the
+    physical arrangement the regions actually occupy --- the four quadrants of
+    a $2\times2$ split in $\theta$ and $Z$ --- rather than as a ranking by
+    condition, because the design does not support that ranking. The
+    high-$\theta$ column is elevated in both rows regardless of which
+    condition sits there.}
+  \label{fig:ch5-conditions}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{\ansysfigdir v222_conditions_3d.png}
+  \caption[The four conditions in place on the geometry]{%
+    The same four means, placed on the geometry they were measured on. The
+    growth layer sits on the non-growing substrate (grey) as a $5^\circ$
+    curved tile, drawn at true proportions from the deck's own defining
+    parameters --- the run reported stress and state but no nodal coordinates,
+    so the shape is reconstructed while the colour is measured. The two
+    high-arc quadrants are the warm ones whichever condition occupies them,
+    which is Figure~\ref{fig:ch5-conditions}'s arithmetic seen directly.}
+  \label{fig:ch5-conditions3d}
+\end{figure}
+
+\TierB{%
+The growth layer carries a mean von Mises stress $15.2$ times that of the
+non-growing substrate beneath it, which confirms that the reported stress is
+produced by the growth mechanism and not by the loading or the constraint. But
+the four conditions occupy four \emph{quadrants} of one shell, one condition
+each, so condition is perfectly confounded with position: every difference
+between two conditions is also a difference between two places on the
+geometry, and no analysis of these numbers can separate them.}
+
+\TierB{%
+The confounding is not a formality here. The stress ordering does not follow
+the growth ordering --- dysbiotic/static has the lowest growth of the four and
+the second-highest mean stress --- and splitting the same values by position
+rather than by condition accounts for them better: the high-$\theta$ half sits
+$7.3\,\%$ above the low-$\theta$ half, against a total spread of $8.9\,\%$
+across all four quadrants. Position explains most of the variation that a
+reader would otherwise attribute to the biology.}
+
+\TierB{%
+So this section reports a working pipeline and a growth comparison, not yet a
+stress comparison between conditions. Obtaining the latter requires solving the
+\emph{same} region four times under four seeds instead of four regions once,
+which is a single further session at the machine and no new method. Stating
+that plainly is preferable to presenting Figure~\ref{fig:ch5-conditions}'s
+right panel as a condition ranking it cannot support.}
+
+\TierB{%
+On the step size that \S\ref{sec:ch5-integration} makes a condition of
+trusting any of this: the viscous limit does not bind, since these runs set
+$\eta=0$ and take the elastic path. The binding limit is the ecology
+integrator's own, and the solve ran at $\Delta t = 10^{-5}$ against a refusal
+threshold of $10^{-4}$ --- a factor of ten inside it, and the same step the
+independent reference used.}
 
 %-----------------------------------------------------------------------
 \section{Limitations}
