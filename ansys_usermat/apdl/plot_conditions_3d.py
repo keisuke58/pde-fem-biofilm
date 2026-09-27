@@ -58,13 +58,29 @@ def _solid(ax, r0, r1, th0, th1, z0, z1, **kw):
         surf(R * np.cos(T), R * np.sin(T), np.full_like(T, zz))
 
 
-def plot(mean, out):
+def _trim(path, pad=12):
+    """Crop uniform white margins, leaving a small pad."""
+    from PIL import Image, ImageChops
+    im = Image.open(path).convert("RGB")
+    bg = Image.new("RGB", im.size, (255, 255, 255))
+    box = ImageChops.difference(im, bg).getbbox()
+    if not box:
+        return
+    l, t, r, b = box
+    im.crop((max(l - pad, 0), max(t - pad, 0),
+             min(r + pad, im.width), min(b + pad, im.height))).save(path)
+
+
+def plot(mean, out, caption=True):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig = plt.figure(figsize=(10.6, 4.8))
+    # Without the caption the canvas can be narrower, which removes the dead
+    # margin the caption's own width was forcing. Cropping the wide version
+    # instead would cut the caption text, which spans the full width.
+    fig = plt.figure(figsize=(10.6, 4.8) if caption else (7.4, 3.1))
     ax = fig.add_subplot(111, projection="3d")
 
     lo, hi = min(mean.values()), max(mean.values())
@@ -110,6 +126,12 @@ def plot(mean, out):
     cb = fig.colorbar(sm, ax=ax, fraction=0.026, pad=0.10)
     cb.set_label(r"mean von Mises per region  [$\times 10^{-6}$]", fontsize=9)
 
+    # The 3D box is very flat in x, so matplotlib centres a bounding box whose
+    # visible content sits well to one side, leaving a wide dead margin. Force
+    # the axes to fill the canvas; do it after the colorbar, which shrinks it.
+    ax.set_position([-0.06, 0.02 if caption else 0.0,
+                     0.92, 0.90 if caption else 1.0])
+
     # mplot3d does not depth-sort text against surfaces, so a 3D label sits
     # behind whichever face it lands on and zorder does not help. Project each
     # quadrant centre to display coordinates and draw the label on the figure
@@ -121,24 +143,33 @@ def plot(mean, out):
         fx, fy = fig.transFigure.inverted().transform(
             ax.transData.transform((px, py)))
         fig.text(fx, fy, f"{code}\n{v:.3e}", ha="center", va="center",
-                 fontsize=9, weight="bold", color="0.12",
+                 fontsize=9 if caption else 8, weight="bold", color="0.12",
                  bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none",
                            alpha=0.75))
 
 
-    fig.suptitle("The four clinical conditions are four quadrants of one tile",
-                 fontsize=11.5, y=0.95)
-    fig.text(0.5, 0.045,
-             f"Growth layer, r = {R_MID}--{R_OUT}, over the non-growing "
-             f"substrate (grey, r = {R_IN}--{R_MID}); arc {ARC}°, "
-             f"Z = 0--{LEN}. True proportions, no axis scaled.\n"
-             "Colour is measured; geometry is reconstructed from the deck's own "
-             "CYLIND parameters, since the run printed stress and state but no "
-             "nodal coordinates.\n"
-             "The two high-arc quadrants are the warm ones whichever condition "
-             "sits in them -- which is the confound, seen directly.",
-             ha="center", va="bottom", fontsize=8, color="0.35")
+    if caption:
+        # On a slide the frame title already says this.
+        fig.suptitle("The four clinical conditions are four quadrants of "
+                     "one tile", fontsize=11.5, y=0.95)
+    if caption:
+        fig.text(0.5, 0.045,
+                 f"Growth layer, r = {R_MID}--{R_OUT}, over the non-growing "
+                 f"substrate (grey, r = {R_IN}--{R_MID}); arc {ARC}°, "
+                 f"Z = 0--{LEN}. True proportions, no axis scaled.\n"
+                 "Colour is measured; geometry is reconstructed from the deck's own "
+                 "CYLIND parameters, since the run printed stress and state but no "
+                 "nodal coordinates.\n"
+                 "The two high-arc quadrants are the warm ones whichever condition "
+                 "sits in them -- which is the confound, seen directly.",
+                 ha="center", va="bottom", fontsize=8, color="0.35")
     fig.savefig(out, dpi=200)
+    if not caption:
+        # Safe only without the caption: the caption spans the full width, so
+        # cropping the wide version would cut its text. Here the dead margin
+        # is genuinely dead -- the flat 3D box leaves it and no axes position
+        # reclaims it.
+        _trim(out)
     print(f"wrote {out}")
 
 
@@ -149,6 +180,9 @@ def main(argv=None):
                     "growth_result_cylinder_ecology_4region_all_real_clsm.txt")
     ap.add_argument("-o", "--out", type=Path,
                     default=Path("assets/v222_conditions_3d.png"))
+    ap.add_argument("--no-caption", action="store_true",
+                    help="omit the explanatory block; for slides, where the "
+                         "speaker says it and the margin is worth more")
     a = ap.parse_args(argv)
 
     seqv, mats = parse(a.listing)
@@ -158,7 +192,7 @@ def main(argv=None):
         z = "high" if LAYOUT[m][4] else "low "
         print(f"  {LAYOUT[m][0]}  arc {t}  Z {z}  mean SEQV {mean[m]:.4e}")
     a.out.parent.mkdir(parents=True, exist_ok=True)
-    plot(mean, a.out)
+    plot(mean, a.out, caption=not a.no_caption)
     return 0
 
 
