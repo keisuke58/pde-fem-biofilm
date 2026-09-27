@@ -20,7 +20,12 @@
 
 \title{Master's Thesis --- Update for Oliver}
 \subtitle{ANSYS/NEM ecology work since early September}
-\author{Keisuke Nishioka\\[4pt]
+% Short forms matter here: beamer's footline falls back to the full author
+% and institute, so without them every slide's footer reads
+% "Keisuke Nishioka[4pt] Institute of Continuum" -- the line break rendered
+% literally and the institute truncated.
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{%
 \small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
 \small Keio University}
 \date{1 October 2026}
@@ -117,6 +122,49 @@ substituted rather than silently misused.
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{...and what that run can, and cannot, be read as}
+\small Four different growth values (spread $1.106\times$), and the growth
+layer carries $15.2\times$ the von Mises of the non-growing substrate -- the
+stress is coming from the growth mechanism.
+\vspace{1pt}
+\begin{center}
+\includegraphics[width=0.40\linewidth]{assets/v222_conditions_3d_slide.png}
+\end{center}
+\vspace{-2pt}
+{\footnotesize But the four conditions are the four \emph{quadrants} of one
+tile -- condition is confounded with position. The stress order does not
+follow the growth order (DS: lowest $\alpha$, second-highest stress), and
+high-arc sits $7.3\,\%$ above low-arc against a total spread of $8.9\,\%$.
+\textbf{Not yet a condition comparison}: that needs the same region solved
+four times, not four regions once.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{One concrete ask: a deck whose time stepping I can set}
+\small The ecology bridge is also wired into \emph{your} call site
+(\texttt{prop(6)=kUseEcology}, ecology state in
+\texttt{ustatev(72:83)}, accumulated $\alpha$ in \texttt{ustatev(84)}).
+On your real NEM deck it links and runs with \textbf{0 errors}, and the
+element that previously distorted silently now correctly triggers the
+guard's cut-back request instead.
+\vspace{4pt}
+{\footnotesize It still cannot \emph{complete}, for one reason that is not
+about the material: the ecology integrator refuses steps above
+$\Delta t = 10^{-4}$ (measured -- it diverges above that), and the deck runs
+at \texttt{TIME INC} $=0.1$. ANSYS's own bisection does not reach the
+$\sim\!1000\times$ reduction needed, and the stepping comes from
+Workbench-compiled solution controls rather than an editable
+\texttt{NSUBST}.}
+\vspace{4pt}
+\begin{center}
+\colorbox{c3!12}{\parbox{0.88\linewidth}{\centering\small
+\textbf{Ask:} the same model as an editable input deck (or the solution
+controls exposed), so the step can be set. That is the last thing between
+here and the bridge running end-to-end in your framework.}}
+\end{center}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{UserElement vs.\ UserMat: still open}
 \small The assignment says \emph{UserElement/UserMat}; this repo has a
 UserMat only -- it can't transport the ecology field spatially by itself.
@@ -144,6 +192,9 @@ residual for ecology transport, no template in ANSYS's own examples.}
         coupling-strength ceiling exists for the baseline one?
   \item UserElement vs.\ UserMat -- does the working assumption above
         still look right from your side?
+  \item Can the NEM model come as an editable deck (or with the solution
+        controls exposed)? That is the one blocker left for running the
+        ecology bridge to completion on your side.
 \end{enumerate}
 \end{frame}
 
