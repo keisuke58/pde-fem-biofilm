@@ -126,7 +126,8 @@ $\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
   \item $\varphi_i$：菌種 $i$ の体積分率、$\psi_i$：その生存率
   \item $\varphi_{\text{tot}}$ は\textbf{生きている菌の総量}。これが成長を駆動する
   \item $\varphi_i$ の時間発展は5種の相互作用モデル。
-        相互作用行列 $\bm{A}$（対称）と $\bm{b}$、計 20 成分を \textbf{TMCMC で較正}
+        パラメータ $\bm{\theta}$（20 成分、中心は相互作用行列 $\bm{A}$）を
+        \textbf{TMCMC で較正}
   \item 積分するので、\textbf{同じ組成でも時間が長ければ $\alpha$ は大きい}
 \end{itemize}
 \vspace{5pt}

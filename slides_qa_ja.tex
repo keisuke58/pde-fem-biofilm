@@ -1,0 +1,188 @@
+% 口頭試問 想定問答（日本語）— 自分用
+%
+% ビルド: lualatex slides_qa_ja.tex （2回）
+% 必要パッケージ: luatexja（Debian なら texlive-lang-japanese、
+%   加えて texlive-luatex / texlive-latex-extra）
+%
+% 方針: 答えの骨子を1行で先に置く。根拠はその下。
+%   「分からない」で終わる問いは、そう書いて練習する。
+%   数字は言い切れるものだけ載せる（曖昧な記憶で答えるより「確認します」）。
+%
+% CONSTRAINT: 8ページ以内。問いを足すなら弱いものを削る。
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{luatexja}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{cok}{RGB}{30,120,60}
+\definecolor{copen}{RGB}{190,40,40}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+
+% 問い → 答えの骨子
+\newcommand{\Q}[1]{\textbf{Q．#1}}
+\newcommand{\A}[1]{\vspace{2pt}\colorbox{c3!10}{\parbox{0.95\linewidth}{%
+  \small\textbf{→ }#1}}\vspace{3pt}}
+
+\title{想定問答}
+\subtitle{口頭試問に向けて（自分用）}
+\author[西岡佳祐]{西岡佳祐}
+\date{}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{結果について}
+\small\Q{4条件で応力が違うのは、条件のせいだとなぜ言えるのか}
+\A{1つの計算では言えない。\textbf{条件の配置がずれた2つ目の計算}と対にして初めて言える。}
+\begin{itemize}\footnotesize
+  \item 1計算では条件と位置が1対1 $\rightarrow$ どちらが効いているか分離不能
+  \item 2つの計算は\textbf{メッシュ・材料定数・時間刻みが同一}で、シードの割り当てだけ1つずれている
+  \item 同じ条件を違う象限に置いても応力は変わらない：\textbf{0.13\% と 0.11\%}
+  \item 条件間は \textbf{9.1\%} $\rightarrow$ 動かしているのは条件
+\end{itemize}
+\vspace{3pt}
+\small\Q{その2つ目は、この検証のために回したのか}
+\A{いいえ。\textbf{別目的で先に存在していた}。後から対比較に使えると気づいた。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{結果について（続き）}
+\small\Q{最初は「位置のせい」と書いていたのでは}
+\A{はい。\textbf{訂正した}。周辺平均で高$\theta$側が 7.3\% 高かったが、
+そこにたまたま応力の高い2条件が入っていた。}
+\vspace{2pt}
+\begin{itemize}\footnotesize
+  \item 条件の効果を幾何の効果として読んでいた
+  \item そもそも1計算では、どちらとも言えなかった
+\end{itemize}
+\vspace{6pt}
+\small\Q{応力が成長から来ている証拠は}
+\A{成長層の von Mises が、\textbf{成長しない基材の 15.2 倍}。}
+\begin{itemize}\footnotesize
+  \item 荷重も拘束も同じで、違うのは成長の有無だけ
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{手法について}
+\small\Q{接線剛性が数値微分なのは手抜きでは}
+\A{精度は測ってある。\textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}（648 通り）。}
+\begin{itemize}\footnotesize
+  \item さらに重要なのは、接線が甘くても\textbf{答えは狂わない}こと。残差は本物なので
+  \item 狂うのは\textbf{反復回数} $\rightarrow$ 「収束したか」が本当の試験
+  \item 実機 12240 要素、各サブステップ \textbf{1--4 反復}で収束。自動時間刻みは一度も縮まず
+\end{itemize}
+\vspace{5pt}
+\small\Q{なぜ Abaqus と ANSYS の両方を書いたのか}
+\A{Abaqus 版が先にあり、ANSYS へ移植した。\textbf{独立な2実装が検証手段になる}。}
+\begin{itemize}\footnotesize
+  \item Voigt 順序が違う（せん断の並び）ので、写像を共有できない $\rightarrow$ 実質的に独立
+  \item 8017 状態で \textbf{0 ULP} 一致
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{検証の限界（ここは正直に）}
+\small\Q{2実装が一致すれば、式は正しいのか}
+\A{\textbf{言えない}。実際に不整合を見つけた。}
+\vspace{2pt}
+\begin{itemize}\footnotesize
+  \item 等容分解で $J^{-2/3}$ を引く側のトレースにだけ掛けていた
+  \item 2つの実装は\textbf{同じ間違いを同じように}計算するので、一致しても検出できない
+  \item 影響は\textbf{純粋に静水圧成分のみ}。報告している von Mises には効かないことを確認済み
+  \item 直さずに\textbf{限界として章に明記}した（直すと参照値の連鎖が全部無効になるため）
+\end{itemize}
+\vspace{5pt}
+\small\Q{メッシュ収束性は確認したか}
+\A{\textbf{していない}。計画はあるが未実施。}
+\begin{itemize}\footnotesize
+  \item 報告しているのは条件間の\textbf{比}で、同一メッシュなので離散化誤差は大きく相殺する
+  \item ただし\textbf{絶対値の収束は示していない} $\rightarrow$ 比の安定性を示すのが次の一手
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{答えが「分からない」もの}
+\small ここは\textbf{言い切る練習}をしておく。取り繕うと必ず深掘りされる。
+\vspace{6pt}
+\small\Q{成長 $\alpha$ の順に応力が上がるのに、常在菌・静置だけ外れるのはなぜか}
+\A{\textcolor{copen}{\textbf{分かりません。}}原因を特定できていないので、限界として記録しています。}
+\vspace{3pt}
+\begin{itemize}\footnotesize
+  \item $\alpha$ から予想される値より約 \textbf{5\% 低い}
+  \item 2つの配置で 0.13\% 一致 $\rightarrow$ ばらつきではなく\textbf{再現する性質}
+  \item 4領域の物性テーブルは定数まで同一 $\rightarrow$ 剛性の違いでもない
+  \item このデッキでは成長だけが応力を決めるはずなのに、そうなっていない
+  \item \textbf{ここまでは言える}。その先は推測になるので言わない
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{データについて}
+\small\Q{$\psi$（生存率）がプレースホルダなのは問題では}
+\A{問題ではあるが、\textbf{代入するより留保が正しい}と判断した。}
+\begin{itemize}\footnotesize
+  \item 実験側の「生細胞のみ」比は\textbf{1 を超える値が出る} $\rightarrow$ モデルの $\psi\in[0,1]$ と別物
+  \item 別物と分かっていて代入するのは、データの誤用
+  \item 現状 0.999 固定であることを明記している
+\end{itemize}
+\vspace{5pt}
+\small\Q{データの扱いで見つけた問題はあるか}
+\A{あります。\textbf{読み込みのバグを1つ}。}
+\begin{itemize}\footnotesize
+  \item シート先頭の列幅を全条件で使い回していた $\rightarrow$ 列幅の違う条件で\textbf{5菌種全部がずれていた}
+  \item 「測定なし」に見えていたのは、実データの後ろの空白を読んでいたため
+  \item 修正し、図を再生成、その条件のシードを追加
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{時間刻みについて}
+\small\Q{時間刻みは妥当だったのか}
+\A{2つの制限があり、\textbf{効いているのは生態側}。}
+\vspace{2pt}
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+制限 & 由来 & 今回 \\
+\midrule
+粘性 $\eta/(2C_{10})$ & 陽解法の流れ増分 & \textcolor{cok}{効かない}（$\eta=0$） \\
+生態 ODE & 発散するので $10^{-4}$ で拒否 & $\Delta t=10^{-5}$、\textcolor{cok}{10倍の余裕} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{5pt}
+\begin{itemize}\footnotesize
+  \item 粘性側は $\Delta t/\tau \approx 0.5$ で\textbf{応力の符号が反転する}（測定済み）
+        $\rightarrow$ 納品版は刻みを検査して拒否する
+  \item 生態側は共同研究先のデッキ（$\Delta t = 0.1$）と 1000 倍ずれていた
+        $\rightarrow$ 材料呼び出しの内部で\textbf{細分化して解決}
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{答え方の方針}
+\vspace{4pt}
+\begin{itemize}\small
+  \item \textbf{数字は言い切れるものだけ}。曖昧なら「確認します」のほうが安全
+  \item \textbf{「確かめた」と「動いた」を混ぜない}。章もその方針で書いてある
+  \item \textbf{分からないものは分からないと言う}。
+        取り繕った瞬間に、そこだけ深掘りされる
+  \item 限界（静水圧の不整合、メッシュ未検証、$\psi$、CS の外れ）は
+        \textbf{こちらから先に出す}。後から指摘されるより強い
+\end{itemize}
+\vspace{8pt}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
+限界を自分から言えることが、\\
+検証を理解している証拠になる}}
+\end{center}
+\end{frame}
+
+\end{document}
