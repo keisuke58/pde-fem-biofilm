@@ -291,6 +291,41 @@ study has been performed on it. It establishes that the repackaging survives
 contact with a real solver on a non-trivial mesh. It does not validate the
 mesh.}
 
+\TierB{%
+The mesh turned out to need more than validation. Its two layers were meshed
+as separate volumes and joined by merging coincident nodes, and on these
+curved sweeps few nodes coincide: counted in mesh-only runs, $63$ of the
+$5\,673$ growth-layer interface nodes were joined in this deck --- three axial
+lines --- and only the four corner nodes in the four-region deck of
+\S\ref{sec:ch5-results}. The growth layer was held along those lines and free
+between them. The non-uniform ``two-lobe'' bulge an earlier draft read as an
+early buckling mode was the layer lifting between the bond lines, and the
+convergence limit near $\alpha=0.01$ had the same cause. Gluing the volumes so
+that they share one interface mesh removes both. On the bonded mesh the bulge
+is near-uniform and converges at second order under refinement (the
+$\theta$-profile error falls from $2.7\,\%$ to $0.58\,\%$ over $2.4$k, $19$k
+and $150$k elements, with a maximum radial displacement of
+$1.7405$/$1.7399$/$1.7398\times10^{-3}$), and the solve converges without error
+for every growth tried, up to $\alpha=0.2$
+(Figure~\ref{fig:ch5-alpha-sweep}). The Newton behaviour reported above was
+recorded on the unbonded mesh; it is a property of the tangent and the solver
+rather than of the bond, but it has not been re-recorded.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir growth_cylinder_alpha_sweep.png}
+  \caption[The bonded curved shell under increasing growth]{%
+    The bonded two-layer shell ($2.4$k elements) under prescribed growth
+    $\alpha = 0.01$ to $0.2$, every run completing without error. Left: the
+    maximum radial displacement of the outer surface against $\alpha$, with the
+    straight line through the $\alpha=0.01$ run; the grey band is where the
+    unbonded mesh stopped converging. Right: the radial displacement across the
+    arc divided by $\alpha$. The curves coincide up to $\alpha\approx0.05$;
+    beyond it the peaks near the arc ends grow slightly, the first geometric
+    non-linearity the solve shows.}
+  \label{fig:ch5-alpha-sweep}
+\end{figure}
+
 \TierA{%
 That run also settles the question left open in
 \S\ref{sec:ch5-impl}. An
@@ -483,12 +518,25 @@ and each driven through the ecology model at the integration point rather than
 given a prescribed growth. The solve completed without error.}
 
 \TierB{%
-The four measured compositions produce four different growth values, spanning
-a factor of $1.106$, each reproduced by an independent reference
-implementation of the same ecology to the full precision the solver prints.
-The growth layer then carries a mean von Mises stress $15.2$ times that of the
-non-growing substrate beneath it, so the reported stress is produced by the
-growth mechanism rather than by the loading or the constraint.}
+Two things about these runs have to be stated first, because an earlier
+version of this section rested on neither. The two layers are bonded through
+one shared interface mesh: the decks used to mesh them separately and join
+them by merging coincident nodes, which in this deck joined only the four
+corner nodes of the interface and left the growth layer essentially floating
+(\S\ref{sec:ch5-verification-limits}). And the ecology runs at the constants
+the interaction matrix was calibrated with --- $c^*=25$, no Hill gate, no
+antibiotic term. Every number below comes from the bonded mesh at those
+constants; the earlier figures ($15.2\times$, $9.1\,\%$) do not survive either
+correction and are withdrawn.}
+
+\TierB{%
+The four measured compositions produce four growth values that differ by only
+$0.6\,\%$ (a factor of $1.006$), each reproduced by an independent reference
+implementation of the same ecology at every integration point, to the
+precision the solver prints. The growth layer carries a mean von Mises stress
+$6.3$ times that of the non-growing substrate beneath it, so the reported
+stress is produced by the growth mechanism rather than by the loading or the
+constraint.}
 
 \begin{figure}[htbp]
   \centering
@@ -498,9 +546,10 @@ growth mechanism rather than by the loading or the constraint.}
     composition. Right: the mean von Mises stress of each region, drawn in the
     physical arrangement the regions occupy --- the four quadrants of a
     $2\times2$ split in $\theta$ and $Z$ --- rather than as a ranking by
-    condition. Within this one run the two arrangements cannot be told apart,
+    condition. The growth axis is zoomed: the four values differ by less than
+    $1\,\%$. Within this one run condition and position cannot be told apart,
     which is why the stresses are shown in place;
-    Figure~\ref{fig:ch5-conditions-paired} is what separates them.}
+    Figure~\ref{fig:ch5-conditions-paired} compares two placements.}
   \label{fig:ch5-conditions}
 \end{figure}
 
@@ -512,10 +561,9 @@ growth mechanism rather than by the loading or the constraint.}
     growth layer sits on the non-growing substrate (grey) as a $5^\circ$
     curved tile, drawn at true proportions from the deck's own defining
     parameters --- the run reported stress and state but no nodal coordinates,
-    so the shape is reconstructed while the colour is measured. The two
-    high-arc quadrants are the warm ones in this run; that this is a property
-    of the conditions placed there and not of the arc is established in
-    Figure~\ref{fig:ch5-conditions-paired}, not here.}
+    so the shape is reconstructed while the colour is measured. The colour
+    scale spans only the $0.4\,\%$ between the highest and lowest region, so
+    the contrast it shows is small in absolute terms.}
   \label{fig:ch5-conditions3d}
 \end{figure}
 
@@ -526,7 +574,7 @@ so the two vary together and no arithmetic on those four numbers separates
 them.}
 
 \TierB{%
-A second run does separate them, and it was already available. An earlier deck
+A second run addresses that. A companion deck
 carries the same geometry, mesh, material constants and time stepping, and
 differs only in its seeds --- the assignment is shifted by one material slot,
 so commensal/static, commensal/HOBIC and dysbiotic/static each appear in two
@@ -540,44 +588,43 @@ the deck's comments.}
   \includegraphics[width=\linewidth]{\ansysfigdir v222_conditions_paired.png}
   \caption[The same condition in two places]{%
     Each condition's two placements across the two runs, joined. Holding the
-    condition and $Z$ fixed and moving only in $\theta$ --- the only clean
-    position contrast the pair affords --- changes the mean von Mises by
-    $-0.13\,\%$ and $-0.11\,\%$. The conditions differ from each other by
-    $9.1\,\%$.}
+    condition and $Z$ fixed and moving only in $\theta$ changes the mean von
+    Mises by $+0.01\,\%$ and $-0.02\,\%$; commensal/HOBIC, moved in both
+    $\theta$ and $Z$, by $0.28\,\%$. The conditions differ from each other by
+    $0.4\,\%$.}
   \label{fig:ch5-conditions-paired}
 \end{figure}
 
 \TierB{%
-The answer is that position is worth about a tenth of a percent and the
-conditions are what separate. The two clean contrasts --- same condition, same
-$Z$, differing only in $\theta$ --- give $-0.13\,\%$ and $-0.11\,\%$, against
-a $9.1\,\%$ spread between conditions. A single run would have supported the
-opposite reading purely by accident, because the two highest-stress conditions
-happened to occupy the two high-$\theta$ quadrants; the apparent $7.3\,\%$
-difference between the arc halves is that coincidence and not a property of
-the geometry.}
+The answer is that, at these constants, the conditions cannot be said to
+separate the stress at all. The two clean contrasts --- same condition, same
+$Z$, differing only in $\theta$ --- give $+0.01\,\%$ and $-0.02\,\%$, but
+commensal/HOBIC, which the pair moves in both $\theta$ and $Z$, shifts by
+$0.28\,\%$, against a spread of only $0.4\,\%$ between the four conditions.
+Since the geometry and the constraints are mirror-symmetric in $Z$, that shift
+most likely comes from the neighbouring regions rather than from the place as
+such; either way, placement is of the same order as the condition. The
+ordering agrees with it: by growth the conditions rank dysbiotic/static,
+commensal/static, commensal/HOBIC, dysbiotic/HOBIC, and by stress the first
+two swap, by $0.07\,\%$ --- inside the placement effect.}
 
 \TierB{%
-One result in the pair is not explained, and should not be papered over.
-Ordering the five seeds by their growth, the stress rises with it in every
-step but one: commensal/static returns a stress about $5\,\%$ below where its
-$\alpha$ places it, falling under the default seed's despite a larger
-$\alpha$. That is not scatter --- its two placements agree to $0.13\,\%$, so
-it is a reproducible property of that seed. The property tables are identical
-across the four regions, constant by constant, so the stiffness is not the
-explanation; the growth alone should set the stress here. Why it does not for
-this one composition is not established, and
-\S\ref{sec:ch5-limitations} records it as open rather than guessing.}
+The reason the conditions barely differ lies upstream of the mechanics. At the
+calibration constants the four Day-1 compositions drive the ecology to growth
+values within $0.6\,\%$ of each other over the simulated interval, so there is
+little difference for the stress to carry. An earlier version of this section
+reported a $9.1\,\%$ spread and a clear condition effect; that came from the
+unbonded mesh and the uncalibrated constants together, and does not stand.
+Whether a longer growth interval, or the time scale of
+\S\ref{sec:ch5-integration}, opens the conditions up is not examined here.}
 
 \TierB{%
 Two limits on how far this comparison reaches. It rests on a single pair of
-runs with no replication, so the position contrasts are measurements rather
-than estimates with an uncertainty attached; and the regions are not all the
-same size, which is why the position effect is quoted from the two contrasts
-that hold $Z$ as well as the condition fixed rather than from marginal means.
-Neither affects the conclusion at the margin it is stated to --- a tenth of a
-percent against nine --- but both would have to be closed before a smaller
-effect could be claimed.}
+runs with no replication, so the contrasts are measurements rather than
+estimates with an uncertainty attached; and all four regions now hold the same
+number of elements (96 each), so the contrasts are not distorted by unequal
+region sizes. A condition effect smaller than the neighbour effect cannot be
+resolved by this design.}
 
 \TierB{%
 On the step size that \S\ref{sec:ch5-integration} makes a condition of
@@ -628,15 +675,13 @@ model predicts, not an estimate of it.
 Sensitivity to the species-stiffness assignment is reported elsewhere as a band
 rather than a point value and is not repeated here.}
 
-% TierB. The commensal/static anomaly of the paired runs; open.
+% TierB. The earlier commensal/static anomaly; resolved by the re-run.
 \TierB{%
-A third limitation is an open result rather than a bound. In the paired runs
-of \S\ref{sec:ch5-results} the stress follows the growth across the seeds
-except at commensal/static, which returns about $5\,\%$ less than its
-$\alpha$ implies, reproducibly across both of its placements. The property
-tables of the four regions are identical constant for constant, so the
-material is not the difference; on this deck the growth alone should determine
-the stress. The composition therefore appears to reach the stress by some
-route the present account does not contain. Until that is traced, a stress
-attributed to a condition here should be read as what this pipeline returns
-for that seed, not as a quantity the growth model alone predicts.}
+A third limitation concerns resolution rather than an open result. An earlier
+version of this chapter recorded commensal/static returning about $5\,\%$ less
+stress than its growth implied. On the bonded mesh at the calibration
+constants that anomaly is gone: the only disagreement between the growth and
+stress orderings is $0.07\,\%$, below the $0.28\,\%$ neighbour effect of
+\S\ref{sec:ch5-results}. What remains is the bound itself: differences between
+conditions smaller than the effect of what surrounds a region are not
+resolved by the four-region design.}
