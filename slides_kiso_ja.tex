@@ -9,6 +9,7 @@
 %   相手が初見ならこちらを先に挟む。
 %
 % CONSTRAINT: 基礎の2点だけ。4ページ。増やさない。
+% 箇条書きは体言止め。補足は要るところだけ。
 \documentclass[aspectratio=169,11pt]{beamer}
 \usepackage{luatexja}
 \usetheme{Madrid}
@@ -33,17 +34,15 @@
 
 % --------------------------------------------------------
 \begin{frame}{1. 成長がなぜ応力になるのか}
-\small 膨らむこと自体は応力を生みません。\textbf{膨らめないこと}が生みます。
+\small 膨らむこと自体は応力を生まない。\textbf{膨らめないこと}が生む。
 \vspace{4pt}
 \begin{center}
 \begin{tikzpicture}[font=\scriptsize]
   % --- 左：自由に膨らむ ---
   \begin{scope}[xshift=0cm]
-    % 膨らんだあと（輪郭だけ）、元のサイズ（破線）はその上に残して見せる
     \draw[fill=c3!8, draw=c3] (-0.3,-0.3) rectangle (1.9,1.9);
     \draw[gray!70, dashed, line width=0.9pt] (0,0) rectangle (1.6,1.6);
     \node[gray!70, font=\tiny, above right] at (0.02,1.62) {元の大きさ};
-    % 各辺から外向きに、等方的に広がる
     \foreach \y in {0.4,0.8,1.2} {
       \draw[-{Stealth[length=1.8mm]}, c3] (0,\y) -- ++(-0.28,0);
       \draw[-{Stealth[length=1.8mm]}, c3] (1.6,\y) -- ++(0.28,0);
@@ -58,12 +57,10 @@
   % --- 右：下がくっついている ---
   \begin{scope}[xshift=6.4cm]
     \draw[fill=cstress!12, draw=cstress] (-0.3,0) rectangle (1.9,1.9);
-    % 固着面
     \draw[line width=1.2pt, black] (-0.5,0) -- (2.1,0);
     \foreach \x in {-0.4,-0.1,...,2.0}
       \draw[black] (\x,0) -- ++(-0.18,-0.18);
     \node[below=2mm of {(0.8,-0.15)}, font=\scriptsize] {歯の表面（動かない）};
-    % 押し合いの矢印
     \foreach \y in {0.45,0.95,1.45} {
       \draw[-{Stealth[length=2mm]}, cstress, thick] (-0.05,\y) -- ++(0.45,0);
       \draw[-{Stealth[length=2mm]}, cstress, thick] (1.65,\y) -- ++(-0.45,0);
@@ -74,37 +71,34 @@
 \end{tikzpicture}
 \end{center}
 \vspace{10pt}
-{\footnotesize パン生地が型の中で膨らむのと同じです。型より大きくなろうとすると、
-型が押し返す。バイオフィルムは歯の表面に固着したまま膨らむので、
-\textbf{自由に膨らめない分が応力になります}。}
+\small パン生地が型の中で膨らむのと同じ。バイオフィルムは歯面に固着したまま膨らむので、
+\textbf{自由に膨らめない分が応力になる}。
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{$\alpha$ と $\bm{F}_g=(1+\alpha)\bm{I}$ の意味}
-\small 式は1つだけ覚えれば足ります。
+\begin{frame}{$\alpha$ と $\bm{F}_g=(1+\alpha)\bm{I}$}
+\small 覚える式は1つ。
 \vspace{6pt}
 \begin{center}
 \colorbox{c3!10}{\parbox{0.8\linewidth}{\centering
 \large $\bm{F}_g=(1+\alpha)\,\bm{I}$\\[4pt]
-\small 「全方向に $(1+\alpha)$ 倍に\textbf{膨らみたい}」}}
+\small 全方向に $(1+\alpha)$ 倍に\textbf{膨らみたい}}}
 \end{center}
 \vspace{8pt}
 \begin{itemize}\small
-  \item $\alpha$ は\textbf{膨らみたい量}。$\alpha=0.05$ なら「5\% 大きくなりたい」
+  \item $\alpha$ ：膨らみたい量。$\alpha=0.05$ で「5\% 大きくなりたい」
   \item $\alpha$ が大きいほど押し合いが強く、応力も大きい
-  \item $\bm{I}$ は単位行列。\textbf{どの方向にも同じだけ}膨らむ、という意味
-  \item $\alpha$ は細菌の組成から決まる
-        $\Rightarrow$ \textbf{菌の種類が変われば応力が変わる}
+  \item $\bm{I}$ は単位行列 $\rightarrow$ どの方向にも同じだけ
+  \item $\alpha$ は細菌の組成から決まる $\rightarrow$ \textbf{菌が変われば応力が変わる}
 \end{itemize}
-\vspace{6pt}
-{\footnotesize 「膨らみたい」と「実際に膨らんだ」は別物です。
-実際の変形は、まわりが許す分しか起きません。
-その\textbf{差}が応力になります。}
+\vspace{8pt}
+\small 「膨らみたい」と「実際に膨らんだ」は別物。実際の変形はまわりが許す分だけで、
+その\textbf{差}が応力になる。
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{2. USERMAT とは何をするものか}
-\small ANSYS は計算中、各点・各ステップで\textbf{何万回も}同じことを聞いてきます。
+\small ANSYS は各点・各ステップで\textbf{何万回も}同じことを聞いてくる。
 \vspace{4pt}
 \begin{center}
 \begin{tikzpicture}[font=\small, node distance=8mm,
@@ -117,19 +111,18 @@
   \draw[ar, gray] ([yshift=3mm]ans.east) -- node[above, font=\scriptsize, align=center]
        {この点はこれだけ\\変形している} ([yshift=3mm]um.west);
   \draw[ar, c3] ([yshift=-3mm]um.west) -- node[below, font=\scriptsize, align=center]
-       {応力はこれです} ([yshift=-3mm]ans.east);
+       {応力はこれ} ([yshift=-3mm]ans.east);
 \end{tikzpicture}
 \end{center}
 \vspace{2pt}
 \begin{itemize}\small
-  \item 普通のゴムや金属なら、ANSYS が答えを最初から持っている
-  \item しかし「\textbf{膨らもうとするゴム}」は持っていない
+  \item 普通のゴムや金属 $\rightarrow$ ANSYS が答えを持っている
+  \item 「\textbf{膨らもうとするゴム}」$\rightarrow$ 持っていない
   \item $\Rightarrow$ その答えを返す部品を自分で書いた。\textbf{これが修論の本体}
 \end{itemize}
-\vspace{4pt}
-{\footnotesize ANSYS 本体には一切手を入れていません。
-「聞かれたら答える」部品を差し替えているだけです。
-だから ANSYS のバージョンにも依存しません。}
+\vspace{6pt}
+\small ANSYS 本体には手を入れていない。「聞かれたら答える」部品の差し替えだけ。
+バージョンに依存しないのもそのため。
 \end{frame}
 
 \end{document}

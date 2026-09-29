@@ -9,6 +9,7 @@
 %   行番号は ansys_usermat/usermat_biofilm.f（591行）のもの。
 %
 % CONSTRAINT: 7ページ以内。増やすなら削る。
+% 箇条書きは体言止め。補足は要るところだけ。
 \documentclass[aspectratio=169,11pt]{beamer}
 \usepackage{luatexja}
 \usetheme{Madrid}
@@ -35,7 +36,7 @@
 
 % --------------------------------------------------------
 \begin{frame}{全体の形：窓口と、物理の本体}
-\small 591 行ありますが、役割は2つに分かれます。
+\small 591 行。役割は2つ。
 \vspace{4pt}
 \begin{center}
 \begin{tikzpicture}[font=\scriptsize, node distance=6mm,
@@ -55,18 +56,17 @@
 \end{center}
 \vspace{2pt}
 \begin{itemize}\small
-  \item \texttt{usermat}：受け取る $\rightarrow$ 準備する $\rightarrow$ 返す。
-        物理は書いていない
-  \item \texttt{BIOFILM\_STRESS\_CORE}：変形を受け取って応力を返す。ここが心臓部
+  \item \texttt{usermat}：受け取る $\rightarrow$ 準備 $\rightarrow$ 返す。物理は書いていない
+  \item \texttt{BIOFILM\_STRESS\_CORE}：変形 $\rightarrow$ 応力。ここが心臓部
   \item 残りは行列積・逆行列などの小道具
 \end{itemize}
 \vspace{3pt}
-{\footnotesize 積分点1つ・1ステップごとに呼ばれます。12240 要素なら 1 ステップで数万回。}
+\small 積分点1つ・1ステップごとに呼ばれる。12240 要素なら 1 ステップで数万回。
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{心臓部：変形を3つに分ける}
-\small 全体の変形 $\bm{F}$ のうち、\textbf{応力を生むのは一部だけ}です。
+\small 全体の変形 $\bm{F}$ のうち、\textbf{応力を生むのは一部だけ}。
 \vspace{2pt}
 \begin{center}
 \begin{tikzpicture}[font=\scriptsize,
@@ -91,17 +91,16 @@
 $\bm{F}=\bm{F}_e\,\bm{F}_v\,\bm{F}_g$}}
 \end{center}
 \vspace{4pt}
-{\footnotesize 膨らんだだけ、流れただけの分は応力を生みません。
-\textbf{残った分だけ}が押し合いを作ります。}
+\small 膨らんだだけ、流れただけの分は応力を生まない。\textbf{残った分だけ}が押し合いを作る。
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{計算は逆向きに進む}
-\small 物理の順序は左から右。\textbf{計算できる順序は逆}です。
+\small 物理の順序は左から右。\textbf{計算できる順序は逆}。
 \vspace{4pt}
 \begin{itemize}\small
   \item ANSYS がくれるのは $\bm{F}$（一番右の「今の形」）だけ
-  \item $\bm{F}_g$ は $\alpha$ から分かる、$\bm{F}_v$ は前回の記憶にある
+  \item $\bm{F}_g$ は $\alpha$ から、$\bm{F}_v$ は前回の記憶から
   \item $\Rightarrow$ \textbf{割り算で取り除けば $\bm{F}_e$ が残る}
 \end{itemize}
 \vspace{5pt}
@@ -115,9 +114,8 @@ $\bm{F}=\bm{F}_e\,\bm{F}_v\,\bm{F}_g$}}
 \end{tabular}}}
 \end{center}
 \vspace{5pt}
-{\footnotesize これが \texttt{BIOFILM\_STRESS\_CORE} の 361--372 行です。
-$\alpha$ は状態変数 \texttt{ustatev(10)} から、$\bm{F}_v$ は \texttt{ustatev(1:9)} から。
-\textbf{記憶を持ち越す}のが状態変数の役割です。}
+\small \texttt{BIOFILM\_STRESS\_CORE} の 361--372 行。$\alpha$ は \texttt{ustatev(10)}、
+$\bm{F}_v$ は \texttt{ustatev(1:9)}。\textbf{記憶を持ち越す}のが状態変数の役割。
 \end{frame}
 
 % --------------------------------------------------------
@@ -137,19 +135,18 @@ $\bm{F}_v^{\text{new}} = \bigl(\bm{I} + \tfrac{\Delta t}{2\eta J_e}\,\bm{\tau}\b
 \end{center}
 \vspace{4pt}
 \begin{itemize}\small
-  \item 応力 $\bm{\tau}$ が高いほど $\bm{F}_v$ が進む＝\textbf{応力が抜ける}
-  \item $\eta$（粘度）が大きいほどゆっくり。$\eta=0$ なら弾性のまま
+  \item $\bm{\tau}$ が高いほど $\bm{F}_v$ が進む＝\textbf{応力が抜ける}
+  \item $\eta$ が大きいほどゆっくり。$\eta=0$ で弾性のまま
 \end{itemize}
 \vspace{4pt}
-{\footnotesize \textbf{落とし穴}：$\bm{\tau}$ は\textbf{更新前}の状態で計算しています（陽解法）。
-$\Delta t$ が大きすぎると行き過ぎ、$\Delta t/\tau \approx 0.5$ で応力の符号が反転します。
-だから納品版 \texttt{biofilm\_material\_v01.f} は刻みを\textbf{検査して拒否}します。}
+\small \textbf{落とし穴}：$\bm{\tau}$ は\textbf{更新前}の状態で計算している（陽解法）。
+$\Delta t$ が大きすぎると行き過ぎ、$\Delta t/\tau \approx 0.5$ で符号が反転する。
+だから納品版 \texttt{biofilm\_material\_v01.f} は刻みを\textbf{検査して拒否}する。
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{接線剛性は数値微分で作っている}
-\small ANSYS は応力だけでなく「\textbf{変形を少し変えたら応力がどう変わるか}」も要ります
-（Newton 法に使うため）。
+\small Newton 法に使うので、ANSYS は「\textbf{変形を少し変えたら応力がどう変わるか}」も要求する。
 \vspace{5pt}
 \begin{center}
 \colorbox{gray!10}{\parbox{0.8\linewidth}{\centering\small
@@ -158,20 +155,18 @@ $\bm{F}$ を $10^{-7}$ だけずらす $\;\rightarrow\;$ 応力の変化 $/\,10^
 \end{center}
 \vspace{6pt}
 \begin{itemize}\small
-  \item 閉形式で書くこともできるが、式が長く間違えやすい
-  \item 「手抜きでは?」への答え：\textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}
-        （648 通りで測定）
-  \item さらに実機で 12240 要素を解き、各サブステップ 1--4 反復で収束。
-        自動時間刻みは一度も刻みを縮めていない
+  \item 閉形式でも書けるが、式が長く間違えやすい
+  \item 「手抜きでは?」$\rightarrow$ \textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}（648 通りで測定）
+  \item 実機 12240 要素、各サブステップ 1--4 反復で収束。自動時間刻みは一度も縮まず
 \end{itemize}
 \vspace{4pt}
-{\footnotesize 接線が少し違っても答えは狂いません（残差は本物なので）。
-狂うのは\textbf{反復回数}です。だから「収束したか」が接線の良し悪しの試験になります。}
+\small 接線が少し違っても答えは狂わない（残差は本物なので）。狂うのは\textbf{反復回数}。
+だから「収束したか」が接線の試験になる。
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{黙って間違えない作り}
-\small 一貫した方針が1つあります。\textbf{おかしくなったら、黙って値を返さない}。
+\small 方針は1つ。\textbf{おかしくなったら、黙って値を返さない}。
 \vspace{5pt}
 \begin{center}\small
 \begin{tabular}{@{}ll@{}}
@@ -187,9 +182,8 @@ $\bm{F}_v$ が未初期化 & 単位行列で初期化してから使う \\
 \end{tabular}
 \end{center}
 \vspace{6pt}
-{\footnotesize どれも「\textbf{もっともらしい間違った答え}」を返しうる場面です。
-応力ゼロが返ってきても ANSYS は気づきません。
-だから気づける形（エラー・カットバック要求）に変換しています。}
+\small どれも「\textbf{もっともらしい間違った答え}」を返しうる場面。
+応力ゼロが返っても ANSYS は気づかない。だから気づける形に変換している。
 \end{frame}
 
 \end{document}
