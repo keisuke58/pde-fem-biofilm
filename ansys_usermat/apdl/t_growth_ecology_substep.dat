@@ -1,0 +1,134 @@
+! t_growth_ecology_substep.dat --- real-ANSYS confirmation of the n_sub
+! ecology sub-stepping path (coupling/protocol.py's `n_sub`, wired through
+! usermat_biofilm.f's own DT_ECO_MAX=1e-4 split -- see the commit "Sub-step
+! the ecology inside one call" and the follow-up wiring it through the
+! Fortran call site). Counterpart of t_growth_ecology.dat, but with
+! TIME > DT_ECO_MAX so the USERMAT must split the increment into
+! ceil(TIME/1e-4) internal ecology sub-steps rather than sending it whole.
+!   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -smp -np 1 -custom .\ANSYS.exe ^
+!       -i t_growth_ecology_substep.dat -o out_ecology_substep.txt
+! The -custom argument must point at the executable built with this repo's
+! usermat_biofilm.f + usermat_py_hook.f + biofilm_py_eval.c; without it
+! ANSYS runs its own stock material and the check is meaningless. -smp -np 1
+! is required after any Ussfin/usermat recompile (DMP hangs silently).
+! material_server.py must be listening on 127.0.0.1:8765 (or
+! BIOFILM_PY_HOST/BIOFILM_PY_PORT set in this shell) before SOLVE runs.
+!
+! WHY THIS CASE
+! -------------
+! Same trick as t_growth_ecology.dat: every node fully fixed, so F = I
+! exactly at the single integration point regardless of alpha. TIME=3.0E-4
+! is 3x DT_ECO_MAX=1.0E-4, so usermat_biofilm.f computes
+! NSUB=ceiling(3.0E-4/1.0E-4)=3 and sends one ecology request with n_sub=3,
+! which material_server.py's evaluate_ecology chains internally as 3 steps
+! of dt_sub=1.0E-4 -- not one step of 3.0E-4. This isolates exactly the
+! thing that needed ANSYS to confirm: that NSUB/PHI_INT actually reach the
+! real USERMAT call (through the ISO_C_BINDING VALUE-attribute marshalling)
+! and that the resulting alpha increment uses the accumulated phi_int, not
+! dTime*phi_tot(g_final) -- the two would badly disagree here since the ODE
+! is far from linear over an increment this coarse.
+!
+! ustatev(15:26) arrives all-zero, so usermat_biofilm.f's INIT_ECO_IF_ZERO
+! seeds the default composition (matching ecology_jax.default_initial_state()
+! exactly) before taking 3 chained 0D Hamilton sub-steps of dt_sub=1e-4 each
+! with the demo THETA_DEMO interaction parameters and k_alpha=50.
+!
+! EXPECTED (computed independently in Python -- chaining
+! ecology_jax.ecology_step 3x at dt_sub=1e-4 from
+! ecology_jax.default_initial_state(), accumulating
+! phi_int += dt_sub*living_fraction_total(g_k) each sub-step, then
+! alpha_new = 50*phi_int -> material_server.stress_core(I, I, alpha_new,
+! 1.0, 0.0, 0.01, 0.0, 0.0, 1.0); see
+! scratchpad/eco_substep_reference.py this session):
+!   g_new(phi)   = [0.311235549, 0.340282056, 0.240480448, 0.107824544, 1.77377e-08]
+!   g_new(phi0)  = 1.773845e-04
+!   g_new(psi)   = [0.851949318, 0.678213136, 0.621387140, 0.800248298, 0.050617480]
+!   g_new(gamma) = 295.157939
+!   phi_int      = 2.581685177e-04
+!   alpha_new    = 1.2908425887e-02
+!   SX=SY=SZ     = -7.603328046
+!   SXY=SYZ=SXZ  = 0
+!
+! The old (pre-n_sub) build -- one ecology step of the whole 3e-4, alpha
+! from dTime*phi_tot(g_final) -- would give alpha_new = 1.4914e-02,
+! gamma = 150.70, psi(5) = 0.99435 instead, so this deck tells the two apart.
+!
+! RESULT, real ANSYS v222, 2026-09-29 (F:\biofilm_upf_kusepy, rebuilt from
+! this repo's usermat_biofilm.f + usermat_py_hook.f + biofilm_py_eval.c,
+! -smp -np 1; out_ecology_substep.txt): RUN COMPLETED, 0 errors.
+!   SX=SY=SZ = -7.6033, alpha = 0.12908E-01,
+!   phi = 0.31124 0.34028 0.24048 0.10782 0.17738E-07, phi0 = 0.17738E-03,
+!   psi = 0.85195 0.67821 0.62139 0.80025 0.50617E-01, gamma = 295.16
+! -- all equal to EXPECTED above at printed precision.
+
+FINISH
+/CLEAR
+/TITLE, biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)
+/PREP7
+
+! ---- single 8-node hex, unit cube -----------------------------------------
+ET,1,SOLID185
+KEYOPT,1,2,0                 ! B-bar
+
+BLOCK,0,1,0,1,0,1
+ESIZE,1
+VMESH,1
+
+! ---- user material -----------------------------------------------------
+! prop: C10,C01,D1,eta,mtype,kUsePy | kStateMat,kUseEcology,k_alpha,theta(1:3)
+!       | theta(4:9) | theta(10:15) | theta(16:20)
+TB,USER,1,1,29
+TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0
+TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79
+TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1
+TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+TBDATA,25,0.32,1.49,2.1,2.41,2.5
+
+! state: ustatev(1:9)=Fv (identity), ustatev(10)=alpha (0), ustatev(11:14)
+! unused (kStateMat=0), ustatev(15:26) left all-zero on purpose so
+! INIT_ECO_IF_ZERO seeds the default composition.
+TB,STATE,1,,26
+TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0
+TBDATA,7,0.0,0.0,1.0
+TBDATA,10,0.0
+
+! ---- fully constrained: forces F = I at every integration point ------------
+NSEL,ALL
+D,ALL,UX,0
+D,ALL,UY,0
+D,ALL,UZ,0
+NSEL,ALL
+FINISH
+
+! ---- solve -----------------------------------------------------------------
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,3.0E-4                  ! 3x DT_ECO_MAX=1e-4 -> usermat_biofilm.f sends n_sub=3
+NSUBST,1,1,1                 ! exactly one substep -- one biofilm_ecology_eval call
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+SOLVE
+FINISH
+
+! ---- report ----------------------------------------------------------------
+/POST1
+SET,LAST
+ESEL,S,ELEM,,1
+/OUTPUT,growth_result_ecology_substep,txt
+PRESOL,S,COMP
+PRESOL,SVAR,10                ! alpha
+PRESOL,SVAR,15                ! g(1)  = phi(1)
+PRESOL,SVAR,16                ! g(2)  = phi(2)
+PRESOL,SVAR,17                ! g(3)  = phi(3)
+PRESOL,SVAR,18                ! g(4)  = phi(4)
+PRESOL,SVAR,19                ! g(5)  = phi(5)
+PRESOL,SVAR,20                ! g(6)  = phi0
+PRESOL,SVAR,21                ! g(7)  = psi(1)
+PRESOL,SVAR,22                ! g(8)  = psi(2)
+PRESOL,SVAR,23                ! g(9)  = psi(3)
+PRESOL,SVAR,24                ! g(10) = psi(4)
+PRESOL,SVAR,25                ! g(11) = psi(5)
+PRESOL,SVAR,26                ! g(12) = gamma
+/OUTPUT
+FINISH

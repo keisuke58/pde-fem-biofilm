@@ -38,8 +38,10 @@ C                             double* Fvnew9, double* dsde36);
           end function biofilm_py_eval
 C         0D Hamilton ecology ODE step (ecology_jax.py), same connection.
 C         int biofilm_ecology_eval(const double* g12, const double* theta20,
-C                                  double dt_h, double* g_new12);
-          function biofilm_ecology_eval(g12, theta20, dt_h, g_new12)
+C                                  double dt_h, int n_sub, double* g_new12,
+C                                  double* phi_int);
+          function biofilm_ecology_eval(g12, theta20, dt_h, n_sub, g_new12,
+     &                                   phi_int)
      &             bind(C, name="biofilm_ecology_eval") result(ierr)
             import :: c_int, c_double
             real(c_double), intent(in)  :: g12(12), theta20(20)
@@ -49,9 +51,12 @@ C           instead (the default for BIND(C) dummies), which mismatches the
 C           C ABI's calling convention for a by-value double argument and
 C           corrupts the whole call (found via the Fortran-driven e2e test
 C           silently taking the fallback path: ierr came back nonzero, not
-C           a wrong-but-plausible g_new).
+C           a wrong-but-plausible g_new). n_sub is `int n_sub` by value in
+C           the C prototype, same reasoning.
             real(c_double), intent(in), value :: dt_h
+            integer(c_int), intent(in), value :: n_sub
             real(c_double), intent(out) :: g_new12(12)
+            real(c_double), intent(out) :: phi_int
             integer(c_int) :: ierr
           end function biofilm_ecology_eval
         end interface
@@ -93,14 +98,22 @@ C         didn't.)
           dsde  = transpose(reshape(d36, [6, 6]))
         end subroutine biofilm_py_hook
 
-        subroutine biofilm_ecology_hook(g, theta, dt, g_new, ok)
-C         One 0D Hamilton ODE step at this Gauss point (ecology_jax.py via
+        subroutine biofilm_ecology_hook(g, theta, dt, n_sub, g_new,
+     &                                   phi_int, ok)
+C         n_sub 0D Hamilton ODE sub-steps at this Gauss point, covering the
+C         whole increment dt in one round trip (ecology_jax.py via
 C         biofilm_ecology_eval), reusing the material hook's connection.
+C         phi_int = sum_k dt_sub*phi_tot(g_k) over the sub-steps -- the
+C         caller must use this for the alpha increment, not
+C         dt*phi_tot(g_new), once n_sub>1 (coupling/protocol.py).
           real(c_double), intent(in)  :: g(12), theta(20), dt
+          integer, intent(in)         :: n_sub
           real(c_double), intent(out) :: g_new(12)
+          real(c_double), intent(out) :: phi_int
           logical, intent(out)        :: ok
           integer(c_int) :: ierr
-          ierr  = biofilm_ecology_eval(g, theta, dt, g_new)
+          ierr  = biofilm_ecology_eval(g, theta, dt, int(n_sub, c_int),
+     &                                  g_new, phi_int)
           ok    = (ierr .eq. 0)
         end subroutine biofilm_ecology_hook
       end module biofilm_py_bridge

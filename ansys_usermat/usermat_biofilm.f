@@ -137,7 +137,14 @@ C     ANSYS position k's component.
       data MAP6 /1, 2, 3, 4, 6, 5/
 C     Ecology (0D Hamilton ODE) hook locals.
       double precision KUSEECO, KALPHA, G_OLD(12), G_NEW(12),
-     &                 THETA20(20), PHITOT
+     &                 THETA20(20), PHITOT, PHI_INT
+      integer          NSUB
+C     Per-sub-step time cap: the ODE turns erratic well above this (see
+C     coupling/protocol.py, material_server.py's evaluate_ecology), so a
+C     dTime larger than it is split into ceil(dTime/DT_ECO_MAX) sub-steps
+C     inside one biofilm_ecology_eval round trip rather than sent whole.
+      double precision DT_ECO_MAX
+      parameter (DT_ECO_MAX = 1.0d-4)
       logical          ECOOK
 
 C     --- material properties ---
@@ -174,16 +181,23 @@ C     only, not RESEARCH_MODEL.md sec.2's full reaction-diffusion PDE.
           G_OLD(I) = ustatev(14+I)
         end do
         call INIT_ECO_IF_ZERO(G_OLD)
-        call biofilm_ecology_hook(G_OLD, THETA20, dTime, G_NEW, ECOOK)
+        NSUB = 1
+        if (dTime .gt. DT_ECO_MAX)
+     &      NSUB = ceiling(dTime/DT_ECO_MAX)
+        call biofilm_ecology_hook(G_OLD, THETA20, dTime, NSUB, G_NEW,
+     &                             PHI_INT, ECOOK)
         if (ECOOK) then
           do I = 1, 12
             ustatev(14+I) = G_NEW(I)
           end do
+C         PHI_INT = sum_k dt_sub*phi_tot(g_k) over the NSUB sub-steps --
+C         at NSUB=1 this equals dTime*phi_tot(G_NEW) exactly (the old
+C         formula, kept below only as documentation of that equivalence).
           PHITOT = 0.0d0
           do I = 1, 5
             PHITOT = PHITOT + G_NEW(I)*G_NEW(6+I)
           end do
-          ALPHA = ALPHA + dTime*KALPHA*PHITOT
+          ALPHA = ALPHA + KALPHA*PHI_INT
           if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
           ustatev(10) = ALPHA
         end if
