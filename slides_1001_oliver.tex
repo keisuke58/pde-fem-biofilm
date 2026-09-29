@@ -151,6 +151,27 @@ conclusion is withdrawn.}
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Why the conditions barely differ: the model sums them away}
+\begin{center}
+\includegraphics[width=0.66\linewidth]{assets/condition_total_phi.png}
+\end{center}
+\vspace{-6pt}
+\begin{itemize}\footnotesize
+  \item The condition reaches the stress only through $\alpha$ (same material
+        constants everywhere), and $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$
+        with $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ --- \textbf{only the total}
+  \item CLSM compositions are fractions: every condition starts at
+        $\sum_i\varphi_i=1$ and relaxes to the same total (0.9635).
+        A longer growth interval closes the gap further
+  \item The remaining $\sim$0.5\,\% is the $\psi$ transient; refining the
+        ecology step \textbf{reorders the conditions}, so the ranking means nothing
+\end{itemize}
+\vspace{2pt}
+{\footnotesize For composition to matter, the model needs species-specific growth
+rates, absolute biomass instead of fractions, or composition-dependent stiffness.}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Your deck's step and the ecology's step, reconciled}
 \small The ecology bridge is also wired into \emph{your} call site
 (\texttt{prop(6)=kUseEcology}, ecology state in \texttt{ustatev(72:83)},
@@ -223,6 +244,9 @@ $\phi$, $c$ into the ecology, the time step --- I would list as
   \item What physical time does one unit of your deck's \texttt{TIME}
         stand for? $k_\alpha$ has to be set on that axis before a run at
         \texttt{TIME INC}$\,=0.1$ means anything.
+  \item In your element, does the composition reach the growth through
+        anything other than the total volume fraction? If not, the same
+        ``sum'' limit applies there too.
 \end{enumerate}
 \end{frame}
 
