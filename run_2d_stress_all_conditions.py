@@ -8,6 +8,7 @@ Usage:
     python run_2d_stress_all_conditions.py
     python run_2d_stress_all_conditions.py --quick   # 10x10 grid
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -225,8 +226,8 @@ def main():
                 dt_h=1e-5,
                 n_react_sub=20,
                 save_every=n_macro,
-                K_hill=0.05,
-                n_hill=4.0,
+                K_hill=K_HILL,
+                n_hill=N_HILL,
                 nu=0.30,
                 alpha_coeff=0.05,
                 e_model=args.e_model,

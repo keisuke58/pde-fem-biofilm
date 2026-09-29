@@ -29,6 +29,7 @@ Usage
   # Quick test:
   python jaxfem_adjoint_poc.py --quick
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -93,7 +94,7 @@ def phi_pg_to_eeff_jax(phi, e_max=E_MAX, e_min=E_MIN, phi_crit=0.05, hill_m=4.0)
     return e_max - (e_max - e_min) * sig
 
 
-def build_forward_0d(K_hill=0.05, n_hill=4.0, n_steps=500, dt=0.01):
+def build_forward_0d(K_hill=K_HILL, n_hill=N_HILL, n_steps=500, dt=0.01):
     """Build a simplified 0D forward model: theta → phi_final → DI → E_eff.
 
     Uses simplified Lotka-Volterra dynamics (not full Hamilton) for PoC:
@@ -509,8 +510,8 @@ def main():
         default="dh_baseline",
         choices=["dh_baseline", "commensal_static", "commensal_hobic", "dysbiotic_static"],
     )
-    ap.add_argument("--k-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--k-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     ap.add_argument("--lr", type=float, default=0.01)
     ap.add_argument("--n-iters", type=int, default=500)
     ap.add_argument("--quick", action="store_true")

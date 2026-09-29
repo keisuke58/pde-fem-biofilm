@@ -52,6 +52,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from ecology_constants import C_STAR, K_HILL, N_HILL
+
 jax.config.update("jax_enable_x64", True)
 
 
@@ -82,10 +84,10 @@ class Config2D:
         c_boundary: float = 1.0,
         # Hamilton physics
         Kp1: float = 1e-4,
-        c_hamilton: float = 100.0,
+        c_hamilton: float = C_STAR,
         alpha: float = 100.0,
-        K_hill: float = 0.05,
-        n_hill: float = 4.0,
+        K_hill: float = K_HILL,
+        n_hill: float = N_HILL,
         newton_iters: int = 6,
     ):
         self.Nx = Nx
@@ -1003,7 +1005,7 @@ def run_simulation_coupled(
     n_sub_c=30,
     reaction_fn=None,
     nutrient_fn=None,
-    c_hamilton_scale=1.0,
+    c_hamilton_scale=C_STAR,
 ):
     """
     Run 2D Hamilton + nutrient with two-way coupling.
@@ -1026,9 +1028,10 @@ def run_simulation_coupled(
     reaction_fn : pre-compiled reaction step (reuse across conditions)
     nutrient_fn : pre-compiled nutrient step (reuse across conditions)
     c_hamilton_scale : float
-        Scale factor for nutrient → Hamilton coupling.
-        Nutrient PDE gives c ∈ [0, 1], but Hamilton model was calibrated
-        with c = 100.  Set c_hamilton_scale = 100 to match.
+        Scale factor for nutrient → Hamilton coupling. The nutrient PDE
+        gives c ∈ [0, 1]; the reaction sees c_hamilton_scale * c. Default
+        C_STAR = 25, the value the TMCMC calibration of A used
+        (ecology_constants.py).
     """
     A, b_diag = theta_to_matrices(jnp.asarray(theta, dtype=jnp.float64))
     active_mask = jnp.ones(5, dtype=jnp.int64)

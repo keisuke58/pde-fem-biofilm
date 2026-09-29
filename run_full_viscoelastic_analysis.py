@@ -11,6 +11,7 @@ run_full_viscoelastic_analysis.py — 4条件 × 材料モデル比較 (弾性 v
 Usage:
     python run_full_viscoelastic_analysis.py
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import json
 import sys
@@ -62,11 +63,12 @@ def load_theta(cond):
     return None
 
 
-def compute_0d_di(theta, K_hill=0.05, n_hill=4.0, dt=1e-5, maxtimestep=60000):
+def compute_0d_di(theta, K_hill=K_HILL, n_hill=N_HILL, dt=1e-5, maxtimestep=60000):
     """Run 0D Hamilton ODE and return final DI."""
     from improved_5species_jit import BiofilmNewtonSolver5S
 
     solver = BiofilmNewtonSolver5S(
+        c_const=C_STAR,
         dt=dt,
         maxtimestep=maxtimestep,
         K_hill=K_hill,

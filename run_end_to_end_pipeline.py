@@ -31,6 +31,7 @@ Usage
   # Custom theta:
   python run_end_to_end_pipeline.py --theta-json /path/to/theta_MAP.json
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -325,8 +326,8 @@ def main():
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--D-c", type=float, default=0.01)
     ap.add_argument("--k-monod", type=float, default=1.0)
-    ap.add_argument("--K-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--K-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
 
     # Pipeline control
     ap.add_argument("--no-inp", action="store_true", help="Skip Abaqus INP generation")

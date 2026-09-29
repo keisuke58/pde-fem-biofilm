@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from jax_hamilton_0d_5species_demo import (  # noqa: E402
     newton_step, newton_step_jit, theta_to_matrices,
 )
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 G_DIM = 12
 THETA_DIM = 20
@@ -42,24 +43,25 @@ THETA_DIM = 20
 
 def default_hparams(dt_h: float) -> dict:
     """Fixed ecology-model hyperparameters, exactly as integrate_0d builds
-    them (Kp1, Eta, EtaPhi, c, the Hill-saturation 'alpha', K_hill, n_hill,
-    active_mask) -- everything the per-call (g, theta) pair does not carry.
+    them (Kp1, Eta, EtaPhi, c*, alpha*, K_hill, n_hill, active_mask) --
+    everything the per-call (g, theta) pair does not carry. c* and the Hill
+    gate come from ecology_constants.py (c* = 25, the TMCMC calibration
+    value; gate off).
 
-    Note: this dict's "alpha" key is the ODE's own Hill-function coefficient
-    (theta_to_matrices/residual's naming), unrelated to the mechanical
-    growth driver alpha used elsewhere in this repo (Fg=(1+alpha)I). Kept
-    under the demo module's own name for a byte-identical import rather than
-    renamed and risking drift from the verified reference.
+    Note: this dict's "alpha" key is the antibiotic concentration alpha* of
+    Klempt et al. Eq. 17 (it multiplies b_i in the psi-residual), unrelated
+    to the mechanical growth driver alpha used elsewhere in this repo
+    (Fg=(1+alpha)I). Kept under the demo module's own name.
     """
     return {
         "dt_h": dt_h,
         "Kp1": 1e-4,
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
-        "c": 100.0,
+        "c": C_STAR,
         "alpha": 100.0,
-        "K_hill": 0.05,
-        "n_hill": 4.0,
+        "K_hill": K_HILL,
+        "n_hill": N_HILL,
         "active_mask": jnp.ones(5, dtype=jnp.int64),
     }
 
@@ -108,7 +110,7 @@ def _substep_scan(g0, theta, dt_sub, steps):
 
     def body(g, _):
         g = newton_step(g, params)
-        return g, jnp.sum(g[0:5] * g[6:11])
+        return g, g
 
     return jax.lax.scan(body, g0, steps)
 
@@ -121,17 +123,19 @@ def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int):
     test_ecology_coupling.py), but the whole chain is one compiled scan:
     per-call Python/JAX dispatch was ~10 ms per step, which made the
     thousand-fold sub-stepping a coarse mechanical increment needs cost
-    ~10 s per Gauss point per call. The sum stays in Python, in step order,
-    because an in-graph reduction differs from the chained loop by an ulp.
-    The scan length is static, so each distinct n_sub compiles once.
+    ~10 s per Gauss point per call. The scan returns every sub-step's state
+    and phi_int is summed here with living_fraction_total itself, so it is
+    the same arithmetic as the chained loop by construction (an in-graph
+    reduction differed from it by an ulp). The scan length is static, so
+    each distinct n_sub compiles once.
     """
     dt_sub = float(dt_h) / n_sub
-    g, phitot = _substep_scan(jnp.asarray(g_prev, dtype=jnp.float64),
-                              jnp.asarray(theta, dtype=jnp.float64),
-                              dt_sub, jnp.arange(n_sub))
+    g, traj = _substep_scan(jnp.asarray(g_prev, dtype=jnp.float64),
+                            jnp.asarray(theta, dtype=jnp.float64),
+                            dt_sub, jnp.arange(n_sub))
     phi_int = 0.0
-    for p in np.asarray(phitot):
-        phi_int += dt_sub * float(p)
+    for gk in np.asarray(traj):
+        phi_int += dt_sub * living_fraction_total(gk)
     return g, phi_int
 
 
@@ -139,8 +143,10 @@ def living_fraction_total(g) -> float:
     """phi_tot = sum_i phi_i * psi_i -- the living-volume-fraction driver for
     the growth reaction term k_alpha * phi_tot (RESEARCH_MODEL.md sec.2), the
     only piece of that PDE representable at a single Gauss point without the
-    diffusion term."""
-    g = jnp.asarray(g, dtype=jnp.float64)
-    phi = g[0:5]
-    psi = g[6:11]
-    return float(jnp.sum(phi * psi))
+    diffusion term. Summed left to right, the order usermat_biofilm.f's
+    PHITOT loop uses, so every caller gets the same bits."""
+    g = np.asarray(g, dtype=np.float64)
+    s = 0.0
+    for i in range(5):
+        s += float(g[i]) * float(g[6 + i])
+    return s

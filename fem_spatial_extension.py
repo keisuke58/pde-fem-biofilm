@@ -38,6 +38,7 @@ Usage
 """
 
 from __future__ import annotations
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 import argparse
 import sys
 import json
@@ -798,8 +799,8 @@ def parse_args():
         default=[0.001, 0.001, 0.0008, 0.0005, 0.0002],
         help="Diffusion coefficient per species (5 values)",
     )
-    p.add_argument("--K-hill", type=float, default=0.05)
-    p.add_argument("--n-hill", type=float, default=4.0)
+    p.add_argument("--K-hill", type=float, default=K_HILL)
+    p.add_argument("--n-hill", type=float, default=N_HILL)
     p.add_argument(
         "--init-mode",
         default="gradient",
@@ -839,7 +840,7 @@ def main():
         "Kp1": 1e-4,
         "Eta": np.ones(5),
         "EtaPhi": np.ones(5),
-        "c": 100.0,
+        "c": C_STAR,
         "alpha": 100.0,
         "K_hill": args.K_hill,
         "n_hill": args.n_hill,

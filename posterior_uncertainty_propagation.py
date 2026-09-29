@@ -35,6 +35,7 @@ Usage
   python posterior_uncertainty_propagation.py --plot-only  # replot from existing data
   python posterior_uncertainty_propagation.py --quick      # 5 samples, 10x10 grid
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -639,8 +640,8 @@ def main():
     ap.add_argument("--n-react-sub", type=int, default=20)
     ap.add_argument("--dt-h", type=float, default=1e-5)
     ap.add_argument("--save-every", type=int, default=60)
-    ap.add_argument("--k-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--k-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     args = ap.parse_args()
 
     if args.quick:

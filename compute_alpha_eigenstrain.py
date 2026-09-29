@@ -56,6 +56,7 @@ t は TMCMC ODE の無次元時刻 T* (dt=0.01, 最大 2500 ステップ)
 """
 
 from __future__ import print_function, division
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 import sys
 import os
 import json
@@ -151,7 +152,7 @@ def compute_alpha_final(run_dir, k_alpha=0.05, dt=0.01, maxtimestep=2500, verbos
     if verbose:
         print("  theta (20 params): %s ..." % str(theta[:5].round(4)))
 
-    solver = BiofilmNewtonSolver5S(dt=dt, maxtimestep=maxtimestep, phi_init=0.01, use_numba=True)
+    solver = BiofilmNewtonSolver5S(c_const=C_STAR, dt=dt, maxtimestep=maxtimestep, phi_init=0.01, use_numba=True)
     # Check if run_deterministic exists, otherwise try solve
     if hasattr(solver, "run_deterministic"):
         t_arr, g_arr = solver.run_deterministic(theta)

@@ -15,6 +15,7 @@ Panel (d): 圧縮応力の条件間差
 """
 
 from __future__ import annotations
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 import json
 import os
 import sys
@@ -91,10 +92,10 @@ def solve_0d(theta_np, n_steps=2500, dt=0.01):
         "Kp1": 1e-4,
         "Eta": jnp.ones(5, dtype=jnp.float64),
         "EtaPhi": jnp.ones(5, dtype=jnp.float64),
-        "c": 100.0,
+        "c": C_STAR,
         "alpha": 100.0,
-        "K_hill": jnp.array(0.05, dtype=jnp.float64),
-        "n_hill": jnp.array(4.0, dtype=jnp.float64),
+        "K_hill": jnp.array(K_HILL, dtype=jnp.float64),
+        "n_hill": jnp.array(N_HILL, dtype=jnp.float64),
         "A": A,
         "b_diag": b_diag,
         "active_mask": active_mask,

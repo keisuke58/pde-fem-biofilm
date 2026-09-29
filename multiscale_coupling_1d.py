@@ -96,6 +96,7 @@ from JAXFEM.core_hamilton_1d import (
     newton_step,
     make_initial_state,
 )
+from ecology_constants import C_STAR, K_HILL, N_HILL
 
 OUT_DIR = os.path.join(_HERE, "_multiscale_results")
 
@@ -245,10 +246,10 @@ def solve_0d_hamilton_jax(
         "Kp1": 1e-4,
         "Eta": jnp.ones(5, dtype=jnp.float64),
         "EtaPhi": jnp.ones(5, dtype=jnp.float64),
-        "c": 100.0,  # 固定結合定数 (TMCMC ODE と同じ)
-        "alpha": 100.0,  # Lennard-Jones ポテンシャル高さ
-        "K_hill": jnp.array(0.05, dtype=jnp.float64),
-        "n_hill": jnp.array(4.0, dtype=jnp.float64),
+        "c": C_STAR,  # TMCMC 校正と同じ c* (ecology_constants.py)
+        "alpha": 100.0,  # 抗生物質濃度 alpha* (Klempt Eq.17)
+        "K_hill": jnp.array(K_HILL, dtype=jnp.float64),
+        "n_hill": jnp.array(N_HILL, dtype=jnp.float64),
         "A": A,
         "b_diag": b_diag,
         "active_mask": active_mask,

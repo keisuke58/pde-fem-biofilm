@@ -6,6 +6,7 @@ from .core_hamilton_1d import (
     reaction_step,
     make_initial_state,
 )
+from ecology_constants import C_STAR, K_HILL, N_HILL
 
 jax.config.update("jax_enable_x64", True)
 
@@ -71,10 +72,10 @@ def simulate_hamilton_2d(
         "Kp1": 1e-4,
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
-        "c": 100.0,
+        "c": C_STAR,
         "alpha": 100.0,
-        "K_hill": 0.05,
-        "n_hill": 4.0,
+        "K_hill": K_HILL,
+        "n_hill": N_HILL,
         "A": A,
         "b_diag": b_diag,
         "active_mask": active_mask,
