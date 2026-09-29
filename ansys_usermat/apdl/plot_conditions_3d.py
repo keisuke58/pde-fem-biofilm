@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """The four-condition shell in space, coloured by the stress ANSYS returned.
 
-Companion to plot_condition_comparison.py. That figure argues, in numbers, that
-this deck cannot separate condition from position. This one shows why in one
-look: the four conditions are four quadrants of a single curved tile, so
-"condition" and "where on the tile" are the same variable.
+Companion to plot_condition_comparison.py: it puts the same four means on the
+geometry they were measured on, so the 2x2 arrangement is visible as the thing
+it physically is -- four quadrants of a single curved tile.
 
-Geometry is not read from a listing -- the run printed stresses and state, not
+Geometry is not read from a listing; the run printed stresses and state, not
 nodal coordinates. It is reconstructed from the deck's own parameters, which
 define it exactly:
 
     CYLIND,4.0,4.3,0,0.15,0,5      substrate, does not grow
     CYLIND,4.3,4.4,0,0.15,0,5      growth layer, split 2x2 at ARC/2 and LEN/2
 
-so the drawing is the deck's geometry, at true proportions, with no scaling
-applied to any axis. What is measured -- the mean von Mises of each quadrant --
-is what the colour carries.
+so the drawing is the deck's geometry at true proportions, with no axis scaled.
+What is measured -- the mean von Mises of each quadrant -- is what the colour
+carries.
+
+The two high-arc quadrants come out warm here. An earlier version of this file
+read that as the arc; plot_condition_paired.py shows it follows the conditions
+that happen to sit there, the arc itself being worth about a tenth of a
+percent.
 
     python ansys_usermat/apdl/plot_conditions_3d.py -o assets/v222_conditions_3d.png
 """
@@ -160,8 +164,9 @@ def plot(mean, out, caption=True):
                  "Colour is measured; geometry is reconstructed from the deck's own "
                  "CYLIND parameters, since the run printed stress and state but no "
                  "nodal coordinates.\n"
-                 "The two high-arc quadrants are the warm ones whichever condition "
-                 "sits in them -- which is the confound, seen directly.",
+                 "The two high-arc quadrants are the warm ones in this run; the "
+                 "paired runs show that follows the conditions placed\nthere, "
+                 "not the arc.",
                  ha="center", va="bottom", fontsize=8, color="0.35")
     fig.savefig(out, dpi=200)
     if not caption:
