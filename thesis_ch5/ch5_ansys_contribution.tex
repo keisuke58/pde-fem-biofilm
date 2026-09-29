@@ -606,17 +606,49 @@ most likely comes from the neighbouring regions rather than from the place as
 such; either way, placement is of the same order as the condition. The
 ordering agrees with it: by growth the conditions rank dysbiotic/static,
 commensal/static, commensal/HOBIC, dysbiotic/HOBIC, and by stress the first
-two swap, by $0.07\,\%$ --- inside the placement effect.}
+two swap, by $0.07\,\%$ --- inside the placement effect. The growth ranking
+itself is not converged in the ecology time step either, as the next paragraph
+shows.}
 
 \TierB{%
-The reason the conditions barely differ lies upstream of the mechanics. At the
-calibration constants the four Day-1 compositions drive the ecology to growth
-values within $0.6\,\%$ of each other over the simulated interval, so there is
-little difference for the stress to carry. An earlier version of this section
-reported a $9.1\,\%$ spread and a clear condition effect; that came from the
-unbonded mesh and the uncalibrated constants together, and does not stand.
-Whether a longer growth interval, or the time scale of
-\S\ref{sec:ch5-integration}, opens the conditions up is not examined here.}
+The reason the conditions barely differ follows from the model's definition
+rather than from its parameters. The condition reaches the stress only through
+$\alpha$, since the material constants are the same in every region; and
+$\alpha$ grows as $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$ with
+$\varphi_{\mathrm{tot}} = \sum_i \varphi_i\psi_i$, the living total. Which
+species make up that total does not enter. The CLSM compositions are fractions,
+so $\sum_i\varphi_i = 1$ for every condition: the four start from the same
+total, and the ecology relaxes all four to the same value
+($\varphi_{\mathrm{tot}} = 0.9635$ by $t = 50$), however different their
+make-up (Figure~\ref{fig:ch5-total-phi}). A longer growth interval therefore
+does not open the conditions up either; it closes them further. The spread
+that remains at $t = 10^{-4}$ comes from the short initial transient of the
+vitalities $\psi_i$.
+
+Refining the ecology time step shows how little of that remaining difference
+can be ranked. The decks take one ecology step per mechanical increment, ten in
+all, and ANSYS reproduces that ten-step integration exactly. Converged in the
+step size, the growth values move by about $1\,\%$ --- more than the spread
+between the conditions --- and in a different order: the spread stays near
+$0.5\,\%$, but the ranking of the conditions given above does not survive.
+An earlier version of this section reported a $9.1\,\%$ spread and a clear
+condition effect; that came from the unbonded mesh and the uncalibrated
+constants together, and does not stand. For the composition to reach the
+stress, the model needs a route that sees more than the total: species-specific
+growth rates, an absolute biomass in place of fractions, or stiffness that
+depends on composition --- none of which the calibrated model has.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir condition_total_phi.png}
+  \caption[Different compositions, the same growth driver]{%
+    Left: the four measured Day-1 compositions. Right: the living total
+    $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ that drives $\alpha$, for
+    each condition, from the same seeds and ecology parameters as the
+    cylinder decks. The make-up differs widely; the total that reaches the
+    mechanics does not.}
+  \label{fig:ch5-total-phi}
+\end{figure}
 
 \TierB{%
 Two limits on how far this comparison reaches. It rests on a single pair of

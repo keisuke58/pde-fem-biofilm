@@ -175,21 +175,23 @@ Klempt et al.\ 2026 の数値例 14 件をすべて再現（誤植 2 か所も�
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{5. 未解決：説明できていないこと}
-\small 説明できていないものを、説明できたことにしない方針で書いています。
-\vspace{5pt}
-\begin{itemize}\small
-  \item 成長 $\alpha$ の順に応力は上がるが、\textbf{1条件だけ外れる}。
-        常在菌・静置は $\alpha$ から予想される値より約 \lv{copen}{5\% 低い}
-  \item 2つの配置で 0.13\% 一致するので、ばらつきではなく\textbf{再現する性質}
-  \item 4領域の物性テーブルは定数まで同一
-        $\Rightarrow$ 剛性の違いでもない
-  \item このデッキでは成長だけが応力を決めるはずなのに、そうなっていない
+\begin{frame}{5. なぜ条件で応力が変わらないか（モデルの定義から）}
+\begin{center}
+\includegraphics[width=0.72\linewidth]{assets/condition_total_phi.png}
+\end{center}
+\vspace{-6pt}
+\begin{itemize}\footnotesize
+  \item 条件が応力に届く経路は $\alpha$ だけ（物性は全領域で同一）。
+        $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$、
+        $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ は\textbf{合計}しか見ない
+  \item CLSM 組成は割合なので全条件 $\sum_i\varphi_i=1$ から出発し、
+        同じ値（0.9635）に収束 $\Rightarrow$ \textbf{組成の違いは足し算で消える}
+  \item 成長時間を延ばしても差は開かず、むしろ閉じる
+  \item 残る約 0.5\% の差も、生態の時間刻みを細かくすると\textbf{条件の順位が入れ替わる}
 \end{itemize}
-\vspace{5pt}
-{\footnotesize つまり組成が $\alpha$ 以外の経路で応力に届いている可能性があります。
-原因は特定できていないので、推測で埋めずに限界として記録しました。
-$-$ ここは村松研での継続と関係しうる論点だと考えています。}
+\vspace{2pt}
+{\footnotesize 以前「1条件だけ約5\%外れる」と書いた未解決点は、接着修正後の再計算で消えました。
+組成を応力に届かせるには、菌種別の成長率・絶対量（割合でなく）・組成依存の剛性のいずれかが必要です。}
 \end{frame}
 
 % --------------------------------------------------------
@@ -247,6 +249,8 @@ C は手法ではなくデータが律速で、E・F は優先度が低いと判
 \colorbox{c3!10}{\parbox{0.9\linewidth}{\small
 \textbf{ご相談したいこと}
 \begin{enumerate}\footnotesize
+  \item 「今のモデルでは組成は応力に効かない」を修論の結論としてよいか。
+        組成を効かせる経路（5.）は将来課題でよいか
   \item 継続テーマとして上記の方向で問題ないか
   \item C（状態依存 $A_{ij}$）に必要なデータの見通し
   \item 単位互換・ダブルディグリーの手続き
