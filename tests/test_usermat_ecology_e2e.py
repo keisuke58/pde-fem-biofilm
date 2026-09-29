@@ -149,6 +149,36 @@ def test_ecology_disabled_leaves_alpha_and_state_untouched(e2e_exe):
     np.testing.assert_allclose(ustatev[14:26], G0)
 
 
+def test_ecology_substeps_when_dtime_exceeds_the_cap(e2e_exe, server):
+    """usermat_biofilm.f's own dTime > DT_ECO_MAX=1e-4 branch (not exercised
+    by DT=1e-5 above): the mechanical increment must be split into
+    ceil(dTime/1e-4) ecology sub-steps in one round trip, matching the same
+    chained-ecology_step reference loop apdl/ decks and
+    test_ecology_coupling.py's test_substepping_reproduces_the_reference_loop
+    pin -- and the alpha increment must use the accumulated phi_int, not
+    dTime*phi_tot(g_final), which would be wrong once NSUB>1."""
+    host, port = server
+    dt = 3.0e-4                                    # -> NSUB = ceil(3) = 3
+    ustatev, keycut = _run(e2e_exe, alpha=0.0, kuseeco=1.0, g_old=G0, dt=dt,
+                           host=host, port=port)
+    assert keycut == 0
+
+    g, phi_int, dt_sub, n = np.asarray(G0, dtype=float), 0.0, dt / 3, 3
+    for _ in range(n):
+        g = np.asarray(ecology_jax.ecology_step(g, THETA_DEMO, dt_sub))
+        phi_int += dt_sub * float(ecology_jax.living_fraction_total(g))
+
+    np.testing.assert_allclose(ustatev[14:26], g, rtol=1e-9, atol=1e-12)
+    alpha_ref = 0.0 + K_ALPHA * phi_int
+    assert ustatev[9] == pytest.approx(alpha_ref, rel=1e-9, abs=1e-12)
+
+    # And this must differ from the pre-substepping formula -- otherwise
+    # NSUB could silently collapse to 1 and this test would still pass.
+    phi_tot_final = ecology_jax.living_fraction_total(g)
+    wrong_alpha = dt * K_ALPHA * phi_tot_final
+    assert ustatev[9] != pytest.approx(wrong_alpha, rel=1e-6)
+
+
 def test_ecology_falls_back_when_server_unreachable(e2e_exe):
     with socket.socket() as s:                    # grab a port, then free it
         s.bind(("127.0.0.1", 0))

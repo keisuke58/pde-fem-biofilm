@@ -60,12 +60,8 @@ def server():
     srv.server_close()
 
 
-def _run_shim(exe, host, port, timeout=20, n_sub=None):
-    vals = [*G0, *THETA_DEMO.tolist(), DT_H]
-    stdin = " ".join(f"{v:.17g}" for v in vals)
-    if n_sub is not None:
-        stdin += f" {n_sub:d}"
-    stdin += "\n"
+def _run_shim(exe, host, port, timeout=20):
+    stdin = " ".join(f"{v:.17g}" for v in (*G0, *THETA_DEMO.tolist(), DT_H)) + "\n"
     env = dict(os.environ)                        # see test_coupling_shim.py
     env["BIOFILM_PY_HOST"] = host
     env["BIOFILM_PY_PORT"] = str(port)
@@ -78,46 +74,11 @@ def test_ecology_shim_roundtrip_matches_python(shim_exe, server):
     r = _run_shim(shim_exe, host, port)
     assert r.returncode == 0, f"shim failed rc={r.returncode}: {r.stderr}"
 
-    out = [float(x) for x in r.stdout.split()]
-    assert len(out) == 13                     # g_new(12) then phi_int
-    g_new, phi_int = out[:12], out[12]
+    g_new = [float(x) for x in r.stdout.split()]
+    assert len(g_new) == 12
 
     ref = np.asarray(ecology_jax.ecology_step(G0, THETA_DEMO, DT_H))
     assert np.allclose(g_new, ref, rtol=1e-13, atol=1e-18)
-    assert np.isclose(phi_int,
-                      DT_H * float(ecology_jax.living_fraction_total(ref)),
-                      rtol=1e-13, atol=0.0)
-
-
-def test_ecology_shim_substeps_through_the_real_c_path(shim_exe, server):
-    """The whole point of n_sub, exercised where it will actually run.
-
-    The Python-side test covers the server's loop; this one covers the C
-    shim emitting `n_sub` and parsing `phi_int` back, which is the path the
-    USERMAT takes and the one that segfaulted when the signature changed
-    under a caller that had not been updated.
-    """
-    host, port = server
-    n = 8
-    r = _run_shim(shim_exe, host, port, n_sub=n)
-    assert r.returncode == 0, f"shim failed rc={r.returncode}: {r.stderr}"
-
-    out = [float(x) for x in r.stdout.split()]
-    assert len(out) == 13
-    g_new, phi_int = out[:12], out[12]
-
-    g, ref_int = np.asarray(G0, dtype=float), 0.0
-    for _ in range(n):
-        g = np.asarray(ecology_jax.ecology_step(g, THETA_DEMO, DT_H / n))
-        ref_int += (DT_H / n) * float(ecology_jax.living_fraction_total(g))
-
-    assert np.allclose(g_new, g, rtol=1e-13, atol=1e-18)
-    assert np.isclose(phi_int, ref_int, rtol=1e-13, atol=0.0)
-
-    # And it must actually differ from taking the step whole -- otherwise a
-    # shim that dropped n_sub on the floor would pass the checks above.
-    whole = np.asarray(ecology_jax.ecology_step(G0, THETA_DEMO, DT_H))
-    assert not np.allclose(g_new, whole, rtol=1e-6)
 
 
 def test_ecology_shim_reports_failure_when_server_absent(shim_exe):
