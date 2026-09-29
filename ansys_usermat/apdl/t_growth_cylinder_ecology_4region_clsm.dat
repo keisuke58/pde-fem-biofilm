@@ -27,6 +27,15 @@
 ! workbook's "only living cells" ratio is a different, unbounded quantity
 ! -- see t_growth_ecology_clsm_phi.dat's header).
 !
+! INTERFACE BONDING (fixed 2026-09-29, NOT YET RE-RUN): the two volumes used
+! to be bonded with NUMMRG, which merged only a few coincident nodes -- the
+! growth layer was essentially floating, so every stress this deck produced
+! before that date is invalid (incl. the condition-vs-position comparison in
+! plot_condition_paired.py). Now VGLUE + one shared mesh, same as
+! t_growth_cylinder_ecology_4region_all_real_clsm.dat. The alpha values below
+! are still from the OLD constants (c*=100, Hill on, alpha*=100); re-run
+! ecology_4region_reference_clsm.py and this deck before citing anything.
+!
 ! Independent reference: ecology_4region_reference_clsm.py (10 chained
 ! ecology_step calls, dt=1e-5, THETA_DEMO):
 !   A (mat2, default):        alpha = 4.5687349611e-03  (unchanged baseline)
@@ -58,6 +67,7 @@ ARC   = 5
 
 CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 ! ---- substrate (mat 1): no ecology, no growth
 TB,USER,1,1,6
@@ -131,15 +141,34 @@ TBDATA,25,0.999,0.0
 
 MSHKEY,0
 
+! Volumes are picked by their bounding face, not by number: VGLUE
+! renumbers its output, and VSEL,LOC by radius selects nothing.
+! One ESIZE for both volumes: they share the R_MID face, and whichever is
+! swept first fixes that face mesh for the other. ESIZE_C = LEN/6 keeps the
+! Z = LEN/2 region split on element boundaries (no centroid on the cut).
+ESIZE_C = LEN/6
+CSYS,1                                 ! circumferential lines: an even count (16),
+LSEL,S,LOC,Y,ARC/2                     ! so the theta = ARC/2 split is on element
+LESIZE,ALL,,,16                        ! boundaries too
+LSEL,ALL
+CSYS,0
+
 MAT,1
-VSEL,S,VOLU,,1
-ESIZE,0.15
-VSWEEP,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
 
 MAT,2
-VSEL,S,VOLU,,2
-ESIZE,0.05
-VSWEEP,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
+ALLSEL
 
 ! ---- split the growth layer into a 2x2 (theta x Z) grid of 4 regions -------
 CSYS,1
@@ -162,7 +191,6 @@ EMODIF,ALL,MAT,5                       ! upper-theta, upper-Z -> region D (DS)
 CSYS,0
 ALLSEL
 
-NUMMRG,NODE,1.0E-4
 NUMCMP,NODE
 NUMCMP,ELEM
 
