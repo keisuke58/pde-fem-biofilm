@@ -49,55 +49,79 @@
 
 % --------------------------------------------------------
 \begin{frame}{Headline finding: a citation mix-up in your interaction term}
-\small
-Checked \texttt{Interaction12}/\texttt{Interaction21} in your
-\texttt{Ussfin} against the actual published equations directly (both
-Klempt papers, read term-by-term) -- an earlier note of mine said this
-term \emph{was} the 2026 paper's ``novel interaction scheme.'' That
-was wrong.
+\small Read both Klempt papers term by term against your \texttt{Ussfin}. An
+earlier note of mine called your term the 2026 paper's ``novel interaction
+scheme''. That was wrong --- they are different functional forms.
 \vspace{4pt}
 \begin{center}
-\begin{tabular}{@{}p{5.3cm}p{5.3cm}@{}}
+\colorbox{gray!8}{\parbox{0.46\linewidth}{\centering\footnotesize
+\textbf{Klempt et al.\ 2026}, Eq.\ 10/16--18\\[4pt]
+$I_{a,i}=\sum_j a_{ij}\bar\varphi_j$
+\quad\text{then}\quad
+$-\,c^{*}\psi_i I_{a,i}$\\[4pt]
+\textcolor{c3}{\textbf{additive}}, inside a dissipation residual}}%
+\hspace{2mm}%
+\colorbox{gray!8}{\parbox{0.46\linewidth}{\centering\footnotesize
+\textbf{Your \texttt{Ussfin}}\\[4pt]
+$\bigl(\text{MaxGrowth}_I+\text{Interaction}_{IJ}\,\text{Bio}_J\bigr)$\\[4pt]
+\textcolor{c3}{\textbf{multiplicative}}, shifting a Monod-rate coefficient}}
+\end{center}
+\vspace{3pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Klempt et al.\ 2026 (AAM)}, Eq.\,10/16--18 &
-\textbf{Your \texttt{Ussfin} term}\\
+ & Klempt 2026 & your \texttt{Ussfin} \\
 \midrule
-Additive/bilinear: $I_{a,i}=\sum_j a_{ij}\bar\varphi_j$ added into a
-dissipation residual &
-Multiplicative: shifts a Monod-rate coefficient\\
-$A$ symmetric, diagonal self-terms included &
-No diagonal term, no symmetry constraint\\
-Single scalar nutrient, linear &
-Two independent Monod-saturated nutrient fields\\
+symmetry of $A$ & stated symmetric & \texttt{Interaction12}/\texttt{21} independent \\
+self-term $a_{ii}$ & included & none \\
+nutrient & one scalar, linear & two fields, Monod-saturated \\
 \bottomrule
 \end{tabular}
 \end{center}
-\vspace{4pt}
-Your growth structure (Monod $\times$ Laplacian interface $\times$
-chemotaxis) instead matches the \emph{other} paper, Klempt 2024 (BMMB) --
-worth confirming which one you intended it to be.
+\vspace{3pt}
+{\footnotesize Your \emph{growth} structure (Monod $\times$ Laplacian interface
+$\times$ chemotaxis) matches the \emph{other} paper, Klempt 2024 (BMMB) ---
+worth confirming which one you intended it to be.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{n=2 $\to$ n=5: generalized your interaction term, found a real limit}
-\begin{itemize}
-  \item Extended \texttt{Interaction12/21} to all 20 directed pairs among
-        5 species (\texttt{usercm.inc}, \texttt{USolBeg}, \texttt{Ussfin})
-        -- mechanical mirror of your own pattern, no formula change
-  \item Ran on real ANSYS (\texttt{-smp -np 1} after any \texttt{Ussfin}
-        recompile -- found that's required, DMP hangs silently)
-  \item \textbf{Found a genuine critical coupling threshold}: species
-        3$\leftrightarrow$4, your baseline constants
-        (\texttt{MaxGrowth=100/dt=0.1/Penalty1=5}) --
-        \textbf{0.0005 stable, 0.0007 diverges} (residual force overflow)
-  \item Re-ran both boundary cases again 2026-09-08 to confirm it's real,
-        not a fluke -- reproduced exactly
-\end{itemize}
-\vspace{4pt}
-{\scriptsize Root cause: species 3's own uncoupled trajectory is already
-close to unstable under your baseline constants -- any added coupling term
-tips it over by the last substep. Full writeup:
-\texttt{ansys\_usermat/apdl/N3\_GROWTH\_TRIAL.md}.}
+\begin{frame}{n=2 $\to$ n=5: a real coupling ceiling, and what moves it}
+\small Extended \texttt{Interaction12/21} to all 20 directed pairs among 5
+species (\texttt{usercm.inc}, \texttt{USolBeg}, \texttt{Ussfin}) --- a
+mechanical mirror of your own pattern, no formula change. Real ANSYS,
+\texttt{-smp -np 1}.
+\vspace{3pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+species 3$\leftrightarrow$4 coupling & baseline constants & result \\
+\midrule
+0.0005 & \texttt{MaxGrowth=100, dt=0.1, Penalty1=5} & passes \\
+\textbf{0.0006} & same & \textbf{diverges} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+{\footnotesize Threshold sits in $(0.0005,\,0.0006)$ --- bisected, then
+re-run on 2026-09-08 to confirm it is not a fluke.}
+\vspace{5pt}
+\small Which constant actually moves it (10$\times$ change to one at a time):
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+change & effect on the ceiling & \\
+\midrule
+\texttt{MaxGrowth} 10$\times$ smaller & raises it $\geq$10$\times$ (passes at 0.005) & \textbf{dominant lever} \\
+\texttt{Penalty1} 10$\times$ larger & same bracket as baseline & barely moves it \\
+\texttt{dt} 10$\times$ smaller & \emph{worse} --- diverges at 0.0005 & see below \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+{\footnotesize The \texttt{dt} row is flagged, not resolved: \texttt{TIME} was
+held fixed, so 10$\times$ smaller \texttt{dt} also means 10$\times$ more
+explicit growth substeps over the same elapsed duration. Read as an artifact
+of that rather than a genuine dt-stability effect.}
 \end{frame}
 
 % --------------------------------------------------------
