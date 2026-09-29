@@ -1,0 +1,195 @@
+% USERMAT プログラムの解説（日本語）
+%
+% ビルド: lualatex slides_usermat_ja.tex （2回）
+% 必要パッケージ: luatexja（Debian なら texlive-lang-japanese、
+%   加えて texlive-luatex / texlive-latex-extra）
+%
+% 位置づけ: slides_kiso_ja.tex の1段下。あちらは「なぜ成長が応力になるか」
+%   「USERMAT とは何か」まで。こちらは中で何をしているか。
+%   行番号は ansys_usermat/usermat_biofilm.f（591行）のもの。
+%
+% CONSTRAINT: 7ページ以内。増やすなら削る。
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{luatexja}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{cstress}{RGB}{200,50,40}
+\definecolor{cgrey}{RGB}{125,125,125}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+
+\title{USERMAT の中身}
+\subtitle{\texttt{usermat\_biofilm.f} は何をしているか}
+\author[西岡佳祐]{西岡佳祐}
+\date{}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{全体の形：窓口と、物理の本体}
+\small 591 行ありますが、役割は2つに分かれます。
+\vspace{4pt}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize, node distance=6mm,
+  b/.style={draw, rounded corners=3pt, minimum height=10mm, text width=33mm,
+            align=center},
+  ar/.style={-{Stealth[length=2.2mm]}, thick}]
+  \node[b, fill=gray!10] (ans) {ANSYS};
+  \node[b, fill=c3!12, draw=c3, right=16mm of ans] (um)
+       {\texttt{usermat}\\\scriptsize 窓口（89--336行）};
+  \node[b, fill=cstress!10, draw=cstress, right=16mm of um] (core)
+       {\texttt{BIOFILM\_STRESS\_CORE}\\\scriptsize 物理（338--472行）};
+  \draw[ar, gray] ([yshift=2.5mm]ans.east) -- node[above,font=\tiny]{変形 $\bm{F}$, $\Delta t$} ([yshift=2.5mm]um.west);
+  \draw[ar, c3]   ([yshift=-2.5mm]um.west) -- node[below,font=\tiny]{応力, 接線剛性} ([yshift=-2.5mm]ans.east);
+  \draw[ar, gray] ([yshift=2.5mm]um.east) -- ([yshift=2.5mm]core.west);
+  \draw[ar, cstress] ([yshift=-2.5mm]core.west) -- ([yshift=-2.5mm]um.east);
+\end{tikzpicture}
+\end{center}
+\vspace{2pt}
+\begin{itemize}\small
+  \item \texttt{usermat}：受け取る $\rightarrow$ 準備する $\rightarrow$ 返す。
+        物理は書いていない
+  \item \texttt{BIOFILM\_STRESS\_CORE}：変形を受け取って応力を返す。ここが心臓部
+  \item 残りは行列積・逆行列などの小道具
+\end{itemize}
+\vspace{3pt}
+{\footnotesize 積分点1つ・1ステップごとに呼ばれます。12240 要素なら 1 ステップで数万回。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{心臓部：変形を3つに分ける}
+\small 全体の変形 $\bm{F}$ のうち、\textbf{応力を生むのは一部だけ}です。
+\vspace{2pt}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  s/.style={draw, minimum width=11mm, minimum height=11mm},
+  ar/.style={-{Stealth[length=2.2mm]}, thick}]
+  \node[s, fill=gray!8] (a) at (0,0) {};
+  \node[s, fill=gray!8, minimum width=14mm, minimum height=14mm] (b) at (3.1,0) {};
+  \node[s, fill=gray!8, minimum width=14mm, minimum height=13mm] (c) at (6.2,0) {};
+  \node[s, fill=cstress!14, draw=cstress, very thick,
+        minimum width=12mm, minimum height=14mm] (d) at (9.3,0) {};
+  \draw[ar, cgrey] (a) -- node[above]{$\bm{F}_g$ 膨らむ} node[below,font=\tiny]{応力を生まない} (b);
+  \draw[ar, cgrey] (b) -- node[above]{$\bm{F}_v$ 流れる} node[below,font=\tiny]{応力が抜ける} (c);
+  \draw[ar, cstress] (c) -- node[above,text=cstress]{$\bm{F}_e$ 弾性}
+        node[below,font=\tiny,text=cstress]{\textbf{ここだけが応力}} (d);
+  \node[below=7mm of a, font=\tiny, align=center] {元の形};
+  \node[below=7mm of d, font=\tiny, align=center] {今の形（ANSYS が\\知っている）};
+\end{tikzpicture}
+\end{center}
+\vspace{4pt}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.62\linewidth}{\centering
+$\bm{F}=\bm{F}_e\,\bm{F}_v\,\bm{F}_g$}}
+\end{center}
+\vspace{4pt}
+{\footnotesize 膨らんだだけ、流れただけの分は応力を生みません。
+\textbf{残った分だけ}が押し合いを作ります。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{計算は逆向きに進む}
+\small 物理の順序は左から右。\textbf{計算できる順序は逆}です。
+\vspace{4pt}
+\begin{itemize}\small
+  \item ANSYS がくれるのは $\bm{F}$（一番右の「今の形」）だけ
+  \item $\bm{F}_g$ は $\alpha$ から分かる、$\bm{F}_v$ は前回の記憶にある
+  \item $\Rightarrow$ \textbf{割り算で取り除けば $\bm{F}_e$ が残る}
+\end{itemize}
+\vspace{5pt}
+\begin{center}
+\colorbox{gray!10}{\parbox{0.86\linewidth}{\small
+\begin{tabular}{@{}ll@{}}
+\texttt{F\_mech = F · Fg$^{-1}$} & 成長ぶんを取り除く \\
+\texttt{Fe~~~~~ = F\_mech · Fv$^{-1}$} & 粘性ぶんも取り除く \\
+\texttt{Be~~~~~ = Fe · Fe$^{\mathrm{T}}$} & 残った弾性の伸び \\
+\texttt{$\sigma$~~~~~~ = f(Be)} & それを応力に変える \\
+\end{tabular}}}
+\end{center}
+\vspace{5pt}
+{\footnotesize これが \texttt{BIOFILM\_STRESS\_CORE} の 361--372 行です。
+$\alpha$ は状態変数 \texttt{ustatev(10)} から、$\bm{F}_v$ は \texttt{ustatev(1:9)} から。
+\textbf{記憶を持ち越す}のが状態変数の役割です。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{応力の式と、粘性の更新}
+\vspace{2pt}
+\textbf{\small 応力}（427 行）
+\begin{center}
+\colorbox{gray!10}{\parbox{0.84\linewidth}{\centering\small
+$\sigma = \bigl[\;\underbrace{2C_{10}\,(\text{形を変えるぶん})}_{\text{歪み}}
+\;+\;\underbrace{(2/D_1)(J_e-1)J_e\,\bm{I}}_{\text{体積＝圧力}}\;\bigr] / J_e$}}
+\end{center}
+\vspace{6pt}
+\textbf{\small 粘性の更新}（400 行）
+\begin{center}
+\colorbox{gray!10}{\parbox{0.84\linewidth}{\centering\small
+$\bm{F}_v^{\text{new}} = \bigl(\bm{I} + \tfrac{\Delta t}{2\eta J_e}\,\bm{\tau}\bigr)\bm{F}_v^{\text{old}}$}}
+\end{center}
+\vspace{4pt}
+\begin{itemize}\small
+  \item 応力 $\bm{\tau}$ が高いほど $\bm{F}_v$ が進む＝\textbf{応力が抜ける}
+  \item $\eta$（粘度）が大きいほどゆっくり。$\eta=0$ なら弾性のまま
+\end{itemize}
+\vspace{4pt}
+{\footnotesize \textbf{落とし穴}：$\bm{\tau}$ は\textbf{更新前}の状態で計算しています（陽解法）。
+$\Delta t$ が大きすぎると行き過ぎ、$\Delta t/\tau \approx 0.5$ で応力の符号が反転します。
+だから納品版 \texttt{biofilm\_material\_v01.f} は刻みを\textbf{検査して拒否}します。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{接線剛性は数値微分で作っている}
+\small ANSYS は応力だけでなく「\textbf{変形を少し変えたら応力がどう変わるか}」も要ります
+（Newton 法に使うため）。
+\vspace{5pt}
+\begin{center}
+\colorbox{gray!10}{\parbox{0.8\linewidth}{\centering\small
+$\bm{F}$ を $10^{-7}$ だけずらす $\;\rightarrow\;$ 応力の変化 $/\,10^{-7}$\\[2pt]
+\footnotesize これを6方向ぶん（292--320 行）}}
+\end{center}
+\vspace{6pt}
+\begin{itemize}\small
+  \item 閉形式で書くこともできるが、式が長く間違えやすい
+  \item 「手抜きでは?」への答え：\textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}
+        （648 通りで測定）
+  \item さらに実機で 12240 要素を解き、各サブステップ 1--4 反復で収束。
+        自動時間刻みは一度も刻みを縮めていない
+\end{itemize}
+\vspace{4pt}
+{\footnotesize 接線が少し違っても答えは狂いません（残差は本物なので）。
+狂うのは\textbf{反復回数}です。だから「収束したか」が接線の良し悪しの試験になります。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{黙って間違えない作り}
+\small 一貫した方針が1つあります。\textbf{おかしくなったら、黙って値を返さない}。
+\vspace{5pt}
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+起きること & どうするか \\
+\midrule
+Python サーバーが落ちた & 内蔵 Fortran に自動で切り替え \\
+$J_e$ が潰れた（要素が潰れた） & \texttt{keycut=1} で ANSYS に刻みを半分にさせる \\
+$\bm{F}_v$ が未初期化 & 単位行列で初期化してから使う \\
+時間刻みが粗すぎる & 計算せずに拒否（納品版） \\
+生態 ODE が発散した & $\alpha$ を前の値に留め、カットバックを要求 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{6pt}
+{\footnotesize どれも「\textbf{もっともらしい間違った答え}」を返しうる場面です。
+応力ゼロが返ってきても ANSYS は気づきません。
+だから気づける形（エラー・カットバック要求）に変換しています。}
+\end{frame}
+
+\end{document}
