@@ -31,9 +31,19 @@
 
 .PARAMETER WorkDir
     The writable ANSYS working directory holding the custom-built ANSYS.exe
-    and its runtime DLLs. Defaults to F:\biofilm_upf (moved off C: on
-    2026-08-20 -- see DESCRIPTION) but can be overridden for a different
-    machine/user.
+    and its runtime DLLs. Defaults to F:\biofilm_upf_kusepy, the 2026-09-29
+    build (usermat_biofilm.f + ecology bridge), which is safe under -smp.
+    F:\biofilm_upf holds the 8/19 build: give -Np 1 with it -- it solves
+    non-deterministically under -smp -np > 1 (CLAUDE.md).
+
+.PARAMETER Np
+    Threads (shared-memory parallel, -smp -np N). Default 4. 1 = plain run.
+
+.PARAMETER Ecology
+    The deck calls the ecology bridge: start the material server
+    (ansys_usermat/coupling/material_server.py, 127.0.0.1:8765) if nothing is
+    listening there, and stop it again afterwards if this script started it.
+    Without the server the bridge silently degrades to field mode.
 
 .PARAMETER MinFreeGB
     Refuse to run if free space on the WorkDir's drive is below this many GB.
@@ -45,9 +55,14 @@
 #>
 param(
     [Parameter(Mandatory=$true)][string]$Deck,
-    [string]$WorkDir = "F:\biofilm_upf",
+    [string]$WorkDir = "F:\biofilm_upf_kusepy",
+    [int]$Np = 4,
+    [switch]$Ecology,
     [double]$MinFreeGB = 0.3
 )
+if ($Np -gt 1 -and $WorkDir.TrimEnd('\') -ieq "F:\biofilm_upf") {
+    throw "F:\biofilm_upf's ANSYS.exe is not thread-safe -- use -Np 1 with it."
+}
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -68,10 +83,15 @@ function Get-FreeGB {
 }
 
 function Clear-Scratch {
-    Remove-Item (Join-Path $WorkDir "file*.esav"), (Join-Path $WorkDir "file*.full"),
-                (Join-Path $WorkDir "file.db"), (Join-Path $WorkDir "file.rdb"),
-                (Join-Path $WorkDir "file*.rst"), (Join-Path $WorkDir "file*.err") `
-                -Force -ErrorAction SilentlyContinue
+    # file.* and, under distributed runs, file0.*, file1.* ...
+    Get-ChildItem $WorkDir -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^file\d*\.(esav|full|db|rdb|rst|err|r\d{3}|ldhi|stat|mntr|page|osav|emat|log|DSP|BCS|PCS)$' } |
+        Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
+function Test-Server {
+    $c = New-Object Net.Sockets.TcpClient
+    try { $c.Connect("127.0.0.1", 8765); $true } catch { $false } finally { $c.Close() }
 }
 
 Write-Output "== run_apdl.ps1: $Deck =="
@@ -89,12 +109,27 @@ if ($freeBefore -lt $MinFreeGB) {
 $outLog = [IO.Path]::ChangeExtension($Deck, $null).TrimEnd('.') + "_out.txt"
 Copy-Item $deckPath (Join-Path $WorkDir $Deck) -Force
 
+$server = $null
+if ($Ecology -and -not (Test-Server)) {
+    $repoRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
+    . (Join-Path $repoRoot "dev-env.ps1") | Out-Null
+    $server = Start-Process python -ArgumentList "`"$(Join-Path $repoRoot 'ansys_usermat\coupling\material_server.py')`"" `
+        -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru
+    for ($i = 0; $i -lt 60 -and -not (Test-Server); $i++) { Start-Sleep -Milliseconds 500 }
+    if (-not (Test-Server)) { $server | Stop-Process -Force; throw "material server did not come up on 8765" }
+    Write-Output "Material server started (pid $($server.Id))"
+} elseif ($Ecology) {
+    Write-Output "Material server already listening on 8765"
+}
+
+$par = if ($Np -gt 1) { @("-smp", "-np", "$Np") } else { @() }
 Push-Location $WorkDir
 try {
-    & "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe -i $Deck -o $outLog
+    & "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -b @par -custom .\ANSYS.exe -i $Deck -o $outLog
     $exitCode = $LASTEXITCODE
 } finally {
     Pop-Location
+    if ($server) { $server | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Output "Material server stopped" }
 }
 
 $logPath = Join-Path $WorkDir $outLog
