@@ -58,6 +58,14 @@ directory closes that gap.
 > - The bulge is near-uniform, 0 errors on every mesh. The floating layer
 >   had shown about 30× this displacement.
 >
+> **α sweep on the bonded mesh** (2.4k elements, 2026-09-29): α = 0.02,
+> 0.05, 0.1 and 0.2 all reach the end time with 0 errors — the old
+> "threshold between 0.01 and 0.015" was the floating layer. Maximum u_r
+> 1.740e-3 / 3.473e-3 / 8.619e-3 / 1.723e-2 / 3.560e-2 for α = 0.01 … 0.2,
+> i.e. linear in α up to NLGEOM effects. From α = 0.1 the profile is no
+> longer quite uniform (max u_r vs. u_r at θ=30°: 1 % at 0.1, 7 % at 0.2);
+> not examined further.
+>
 > One trap found on the way: the 8/19 `ANSYS.exe` in `F:\biofilm_upf` is
 > not thread-safe under `-smp -np` > 1. The runs recorded below used DMP or
 > `-np 1` and are not affected.
