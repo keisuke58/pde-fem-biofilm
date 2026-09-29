@@ -2,8 +2,11 @@
 % slides_1005.tex's structure/theme (same content style, different
 % audience: Oliver specifically, so this leads with the n=2->n=5 ANSYS/NEM
 % work and the citation-attribution finding that concerns his own code).
-% CONSTRAINT: keep this light -- aim for well under slides_1005.tex's
-% 20-page cap; trim rather than pad.
+% CONSTRAINT: keep this light. 12-page cap (build_slides.ps1 -MaxPages 12).
+% 2026-09-29: added two background frames -- the deck went straight from
+%   "where things stand" into the citation finding, which assumes both our
+%   growth split and where alpha comes from. He knows ANSYS and his own
+%   model; he does not know ours.
 \documentclass[aspectratio=169,11pt]{beamer}
 \usetheme{Madrid}
 \usecolortheme{seahorse}
@@ -12,6 +15,8 @@
 \usepackage{bm}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 
 \definecolor{c3}{RGB}{30,80,160}
 \definecolor{todo}{RGB}{200,30,30}
@@ -45,6 +50,69 @@
         pipeline) and the \textbf{USERMAT/ecology-bridge side} (this
         repo's own) since we last synced
 \end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Background (1): the law I'm bringing}
+\small Growth as a multiplicative split, so the solver never sees growth as
+load. Yours is structured differently, which is partly why the citation
+question on the next slide matters.
+\vspace{3pt}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  s/.style={draw, minimum width=9mm, minimum height=9mm, fill=gray!8},
+  ar/.style={-{Stealth[length=2mm]}, thick, gray}]
+  \node[s] (a) at (0,0) {};
+  \node[s, minimum width=12mm, minimum height=12mm] (b) at (2.9,0) {};
+  \node[s, minimum width=12mm, minimum height=11mm] (c) at (5.8,0) {};
+  \node[s, fill=red!12, draw=red!70!black, very thick,
+        minimum width=10mm, minimum height=12mm] (d) at (8.7,0) {};
+  \draw[ar] (a) -- node[above]{$\bm{F}_g=(1{+}\alpha)\bm{I}$} node[below,font=\tiny]{no stress} (b);
+  \draw[ar] (b) -- node[above]{$\bm{F}_v$} node[below,font=\tiny]{stress relaxes} (c);
+  \draw[ar, red!70!black] (c) -- node[above,text=red!70!black]{$\bm{F}_e$}
+        node[below,font=\tiny,text=red!70!black]{\textbf{this alone loads}} (d);
+\end{tikzpicture}
+\end{center}
+\vspace{2pt}
+\begin{itemize}\footnotesize
+  \item $\bm{F}=\bm{F}_e\bm{F}_v\bm{F}_g$ --- swelling and viscous flow carry no
+        stress; only what is left over does
+  \item $\alpha$ is isotropic here, one scalar per integration point, held in
+        a state variable
+  \item Consistent tangent by $\bm{F}$-perturbation, not closed form
+        ($1.1\times10^{-6}$ against AD over 648 combinations)
+  \item No solver includes, no common block --- so it is
+        ANSYS-release-independent, and drops into your call site as is
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Background (2): where $\alpha$ comes from}
+\small Not prescribed --- it accumulates from a measured composition evolving
+at the integration point.
+\vspace{4pt}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
+$\varphi_{\text{tot}}=\sum_i \varphi_i\psi_i$
+\qquad
+$\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
+\end{center}
+\vspace{4pt}
+\begin{itemize}\footnotesize
+  \item Five oral species (\textit{S.\ oralis}, \textit{A.\ naeslundii},
+        \textit{Veillonella}, \textit{F.\ nucleatum}, \textit{P.\ gingivalis}),
+        CLSM-measured over 21 days, four clinical conditions
+  \item $\varphi_i$ volume fractions, $\psi_i$ viability; interaction
+        parameters TMCMC-calibrated
+  \item $\alpha$ is an \emph{integral} --- the same composition held longer
+        gives more growth
+  \item $\psi_i$ is still a placeholder at 0.999: the experiment's
+        ``living cells only'' ratio exceeds 1, so it is a different quantity
+        and was not substituted
+\end{itemize}
+\vspace{3pt}
+{\footnotesize This is what runs through the Gauss-point bridge in the
+second half of the deck.}
 \end{frame}
 
 % --------------------------------------------------------
