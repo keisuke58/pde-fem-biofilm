@@ -49,7 +49,13 @@ try {
         ForEach-Object { Write-Output "  $($_.Trim())" }
     if ($code -ne 0) { throw "git push exited $code" }
 
-    $remote = (Invoke-RestMethod "https://api.github.com/repos/keisuke58/pde-fem-biofilm/commits/$Branch").sha
+    # The API answers from a cache for a few seconds after a push.
+    for ($i = 0; $i -lt 6; $i++) {
+        $remote = (Invoke-RestMethod -Headers @{ "Cache-Control" = "no-cache" } `
+            "https://api.github.com/repos/keisuke58/pde-fem-biofilm/commits/$Branch").sha
+        if ($remote -eq $head) { break }
+        Start-Sleep -Seconds 2
+    }
     if ($remote -eq $head) {
         Write-Output "OK: GitHub $Branch = $($remote.Substring(0,7)) (matches local HEAD)"
     } else {
