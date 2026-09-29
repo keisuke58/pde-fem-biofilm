@@ -371,9 +371,9 @@ layer} (biofilm) on top.
         4 clinical conditions: growth layer $6.3\times$ the substrate von
         Mises (not $15.2\times$), $0.4\,\%$ spread between conditions (not
         $9.1\,\%$), with placement effects of the same order, so no
-        condition effect on stress can be claimed; the $\alpha{\approx}0.01$
-        convergence limit was measured on the mis-bonded mesh and is to be
-        re-checked
+        condition effect on stress can be claimed. The old $\alpha{\approx}0.01$
+        convergence limit is gone: bonded, it converges with 0 errors up to
+        $\alpha=0.2$ (beyond the cube's target $0.05$)
 \end{itemize}
 \vspace{2pt}
 {\scriptsize Constants now match the TMCMC calibration ($c^*=25$, no Hill
