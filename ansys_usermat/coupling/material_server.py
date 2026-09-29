@@ -136,20 +136,18 @@ def evaluate_ecology(req: dict) -> bytes:
 
     `n_sub` divides the increment into that many ODE steps before returning,
     so a caller whose own time step is far coarser than the ODE's usable one
-    can still advance it correctly at one round trip. The loop is the same one
-    every reference implementation under `apdl/` runs, including how growth is
-    accumulated: per sub-step, from that sub-step's state, never from the
-    final state applied to the whole increment.
+    can still advance it correctly at one round trip. The result is
+    bit-identical to the loop every reference implementation under `apdl/`
+    runs, including how growth is accumulated: per sub-step, from that
+    sub-step's state, never from the final state applied to the whole
+    increment (ecology_jax.ecology_substeps runs it as one compiled scan).
     """
     import ecology_jax
     n_sub = int(req.get("n_sub", 1))
     if n_sub < 1:
         raise ValueError(f"n_sub must be at least 1, got {n_sub}")
-    dt_sub = float(req["dt_h"]) / n_sub
-    g, phi_int = req["g"], 0.0
-    for _ in range(n_sub):
-        g = ecology_jax.ecology_step(g, req["theta"], dt_sub)
-        phi_int += dt_sub * float(ecology_jax.living_fraction_total(g))
+    g, phi_int = ecology_jax.ecology_substeps(req["g"], req["theta"],
+                                              float(req["dt_h"]), n_sub)
     return encode_ecology_response(g, phi_int)
 
 

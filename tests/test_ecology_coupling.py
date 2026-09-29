@@ -205,6 +205,23 @@ def test_a_coarse_step_split_finely_is_not_the_same_as_taking_it_whole():
                            np.asarray(split["g_new"]), rtol=1e-6)
 
 
+@pytest.mark.parametrize("dt,n,theta_demo", [
+    (1.0e-5, 1, True), (3.0e-4, 3, True), (1.0e-1, 1000, True)])
+def test_compiled_substeps_are_bit_identical_to_chained_steps(dt, n, theta_demo):
+    """ecology_substeps runs the chain as one jitted scan for speed; it must
+    stay bit-identical to chaining ecology_step, at n=1 (the old request),
+    a few steps, and the thousand-fold split a coarse deck needs."""
+    import ecology_jax
+    g0 = np.asarray(ecology_jax.default_initial_state(), dtype=float)
+    theta = np.asarray(THETA_DEMO) if theta_demo else np.zeros(20)
+
+    g_ref, phi_ref = _chain(g0, theta, dt, n)
+    g, phi_int = ecology_jax.ecology_substeps(g0, theta, dt, n)
+
+    assert np.array_equal(np.asarray(g), g_ref)
+    assert phi_int == phi_ref
+
+
 def test_n_sub_must_be_at_least_one():
     import ecology_jax
     import protocol

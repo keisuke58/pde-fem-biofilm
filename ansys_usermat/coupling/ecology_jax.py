@@ -26,12 +26,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import jax
 import jax.numpy as jnp
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from jax_hamilton_0d_5species_demo import (  # noqa: E402
-    newton_step_jit, theta_to_matrices,
+    newton_step, newton_step_jit, theta_to_matrices,
 )
 
 G_DIM = 12
@@ -94,6 +96,43 @@ def ecology_step(g_prev, theta, dt_h: float) -> jnp.ndarray:
     params["A"] = A
     params["b_diag"] = b_diag
     return newton_step_jit(jnp.asarray(g_prev, dtype=jnp.float64), params)
+
+
+@jax.jit
+def _substep_scan(g0, theta, dt_sub, steps):
+    A, b_diag = theta_to_matrices(theta)
+    params = default_hparams(dt_sub)
+    params["A"] = A
+    params["b_diag"] = b_diag
+    params = jax.tree_util.tree_map(jnp.asarray, params)
+
+    def body(g, _):
+        g = newton_step(g, params)
+        return g, jnp.sum(g[0:5] * g[6:11])
+
+    return jax.lax.scan(body, g0, steps)
+
+
+def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int):
+    """Advance by dt_h in n_sub equal ecology_step's; return (g_new, phi_int).
+
+    phi_int = sum_k dt_sub * living_fraction_total(g_k). Bit-identical to
+    chaining ecology_step n_sub times in Python (pinned by
+    test_ecology_coupling.py), but the whole chain is one compiled scan:
+    per-call Python/JAX dispatch was ~10 ms per step, which made the
+    thousand-fold sub-stepping a coarse mechanical increment needs cost
+    ~10 s per Gauss point per call. The sum stays in Python, in step order,
+    because an in-graph reduction differs from the chained loop by an ulp.
+    The scan length is static, so each distinct n_sub compiles once.
+    """
+    dt_sub = float(dt_h) / n_sub
+    g, phitot = _substep_scan(jnp.asarray(g_prev, dtype=jnp.float64),
+                              jnp.asarray(theta, dtype=jnp.float64),
+                              dt_sub, jnp.arange(n_sub))
+    phi_int = 0.0
+    for p in np.asarray(phitot):
+        phi_int += dt_sub * float(p)
+    return g, phi_int
 
 
 def living_fraction_total(g) -> float:
