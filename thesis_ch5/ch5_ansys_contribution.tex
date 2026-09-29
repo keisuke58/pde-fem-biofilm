@@ -473,8 +473,8 @@ them.}
 \section{Results}
 \label{sec:ch5-results}
 
-% TierB. t_growth_cylinder_ecology_4region_all_real_clsm.dat + the listing it
-% produced; figures from plot_condition_comparison.py.
+% TierB. The two four-region ecology decks and the listings they produced;
+% figures from plot_condition_comparison.py and plot_condition_paired.py.
 \TierB{%
 The law was run on a two-layer curved shell whose growth layer is divided into
 four regions, each seeded with the measured Day-1 CLSM composition of one of
@@ -483,31 +483,24 @@ and each driven through the ecology model at the integration point rather than
 given a prescribed growth. The solve completed without error.}
 
 \TierB{%
-Two things follow from it, and they are of very different strengths.}
-
-\TierB{%
-The first is that the four measured compositions do produce four different
-growth values, spanning a factor of $1.106$, and that each of them is
-reproduced by an independent reference implementation of the same ecology to
-the full precision the solver prints. That is a statement about the chain from
-composition to growth, and it holds.}
-
-\TierB{%
-The second concerns stress, and it is where the run stops short of what
-\S\ref{sec:ch5-scope} set out to compare.}
+The four measured compositions produce four different growth values, spanning
+a factor of $1.106$, each reproduced by an independent reference
+implementation of the same ecology to the full precision the solver prints.
+The growth layer then carries a mean von Mises stress $15.2$ times that of the
+non-growing substrate beneath it, so the reported stress is produced by the
+growth mechanism rather than by the loading or the constraint.}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{\ansysfigdir v222_conditions.png}
-  \caption[The four conditions, and the comparison the geometry does not
-    permit]{%
+  \caption[The four conditions on one shell]{%
     Left: growth after ten substeps for each condition's measured Day-1
     composition. Right: the mean von Mises stress of each region, drawn in the
-    physical arrangement the regions actually occupy --- the four quadrants of
-    a $2\times2$ split in $\theta$ and $Z$ --- rather than as a ranking by
-    condition, because the design does not support that ranking. The
-    high-$\theta$ column is elevated in both rows regardless of which
-    condition sits there.}
+    physical arrangement the regions occupy --- the four quadrants of a
+    $2\times2$ split in $\theta$ and $Z$ --- rather than as a ranking by
+    condition. Within this one run the two arrangements cannot be told apart,
+    which is why the stresses are shown in place;
+    Figure~\ref{fig:ch5-conditions-paired} is what separates them.}
   \label{fig:ch5-conditions}
 \end{figure}
 
@@ -520,36 +513,71 @@ The second concerns stress, and it is where the run stops short of what
     curved tile, drawn at true proportions from the deck's own defining
     parameters --- the run reported stress and state but no nodal coordinates,
     so the shape is reconstructed while the colour is measured. The two
-    high-arc quadrants are the warm ones whichever condition occupies them,
-    which is Figure~\ref{fig:ch5-conditions}'s arithmetic seen directly.}
+    high-arc quadrants are the warm ones in this run; that this is a property
+    of the conditions placed there and not of the arc is established in
+    Figure~\ref{fig:ch5-conditions-paired}, not here.}
   \label{fig:ch5-conditions3d}
 \end{figure}
 
 \TierB{%
-The growth layer carries a mean von Mises stress $15.2$ times that of the
-non-growing substrate beneath it, which confirms that the reported stress is
-produced by the growth mechanism and not by the loading or the constraint. But
-the four conditions occupy four \emph{quadrants} of one shell, one condition
-each, so condition is perfectly confounded with position: every difference
-between two conditions is also a difference between two places on the
-geometry, and no analysis of these numbers can separate them.}
+Taken alone, that run cannot say whether the stress differences belong to the
+conditions or to the places they sit in: each condition occupies one quadrant,
+so the two vary together and no arithmetic on those four numbers separates
+them.}
 
 \TierB{%
-The confounding is not a formality here. The stress ordering does not follow
-the growth ordering --- dysbiotic/static has the lowest growth of the four and
-the second-highest mean stress --- and splitting the same values by position
-rather than by condition accounts for them better: the high-$\theta$ half sits
-$7.3\,\%$ above the low-$\theta$ half, against a total spread of $8.9\,\%$
-across all four quadrants. Position explains most of the variation that a
-reader would otherwise attribute to the biology.}
+A second run does separate them, and it was already available. An earlier deck
+carries the same geometry, mesh, material constants and time stepping, and
+differs only in its seeds --- the assignment is shifted by one material slot,
+so commensal/static, commensal/HOBIC and dysbiotic/static each appear in two
+different quadrants across the pair. The element sets are identical, which the
+analysis checks before comparing anything, and each region's growth is checked
+against the value the solver itself reported rather than against the label in
+the deck's comments.}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_conditions_paired.png}
+  \caption[The same condition in two places]{%
+    Each condition's two placements across the two runs, joined. Holding the
+    condition and $Z$ fixed and moving only in $\theta$ --- the only clean
+    position contrast the pair affords --- changes the mean von Mises by
+    $-0.13\,\%$ and $-0.11\,\%$. The conditions differ from each other by
+    $9.1\,\%$.}
+  \label{fig:ch5-conditions-paired}
+\end{figure}
 
 \TierB{%
-So this section reports a working pipeline and a growth comparison, not yet a
-stress comparison between conditions. Obtaining the latter requires solving the
-\emph{same} region four times under four seeds instead of four regions once,
-which is a single further session at the machine and no new method. Stating
-that plainly is preferable to presenting Figure~\ref{fig:ch5-conditions}'s
-right panel as a condition ranking it cannot support.}
+The answer is that position is worth about a tenth of a percent and the
+conditions are what separate. The two clean contrasts --- same condition, same
+$Z$, differing only in $\theta$ --- give $-0.13\,\%$ and $-0.11\,\%$, against
+a $9.1\,\%$ spread between conditions. A single run would have supported the
+opposite reading purely by accident, because the two highest-stress conditions
+happened to occupy the two high-$\theta$ quadrants; the apparent $7.3\,\%$
+difference between the arc halves is that coincidence and not a property of
+the geometry.}
+
+\TierB{%
+One result in the pair is not explained, and should not be papered over.
+Ordering the five seeds by their growth, the stress rises with it in every
+step but one: commensal/static returns a stress about $5\,\%$ below where its
+$\alpha$ places it, falling under the default seed's despite a larger
+$\alpha$. That is not scatter --- its two placements agree to $0.13\,\%$, so
+it is a reproducible property of that seed. The property tables are identical
+across the four regions, constant by constant, so the stiffness is not the
+explanation; the growth alone should set the stress here. Why it does not for
+this one composition is not established, and
+\S\ref{sec:ch5-limitations} records it as open rather than guessing.}
+
+\TierB{%
+Two limits on how far this comparison reaches. It rests on a single pair of
+runs with no replication, so the position contrasts are measurements rather
+than estimates with an uncertainty attached; and the regions are not all the
+same size, which is why the position effect is quoted from the two contrasts
+that hold $Z$ as well as the condition fixed rather than from marginal means.
+Neither affects the conclusion at the margin it is stated to --- a tenth of a
+percent against nine --- but both would have to be closed before a smaller
+effect could be claimed.}
 
 \TierB{%
 On the step size that \S\ref{sec:ch5-integration} makes a condition of
@@ -599,3 +627,16 @@ model predicts, not an estimate of it.
 
 Sensitivity to the species-stiffness assignment is reported elsewhere as a band
 rather than a point value and is not repeated here.}
+
+% TierB. The commensal/static anomaly of the paired runs; open.
+\TierB{%
+A third limitation is an open result rather than a bound. In the paired runs
+of \S\ref{sec:ch5-results} the stress follows the growth across the seeds
+except at commensal/static, which returns about $5\,\%$ less than its
+$\alpha$ implies, reproducibly across both of its placements. The property
+tables of the four regions are identical constant for constant, so the
+material is not the difference; on this deck the growth alone should determine
+the stress. The composition therefore appears to reach the stress by some
+route the present account does not contain. Until that is traced, a stress
+attributed to a condition here should be read as what this pipeline returns
+for that seed, not as a quantity the growth model alone predicts.}

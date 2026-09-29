@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
-"""The four clinical conditions, as ANSYS solved them, and what they cannot show.
+"""The four clinical conditions, as ANSYS solved them, on one shell.
 
 `t_growth_cylinder_ecology_4region_all_real_clsm.dat` seeds four regions of one
 curved shell with the four real Day-1 CLSM compositions -- CS, CH, DS, DH --
 drives each through the 0D Hamilton ecology at the Gauss point, and reports the
-resulting growth and von Mises stress. It is the run Chapter 5's results section
-was waiting for, and this reads its listing.
+resulting growth and von Mises stress.
 
-It also reads the limit the run has, which matters more than the numbers.
-The four regions are the four quadrants of a 2x2 (theta x Z) split of one
-shell, one condition per quadrant, so **condition is perfectly confounded with
-position**: every difference between two conditions is also a difference
-between two places on the geometry, and no amount of arithmetic separates them.
+The growth comparison on the left is sound on its own. The stresses are shown
+in the physical 2x2 layout rather than ranked by condition, because within this
+one run condition and position are the same variable: one condition per
+quadrant, so nothing here tells them apart.
 
-That is not a hypothetical worry here. The measured stress ordering does not
-follow the growth ordering -- DS has the lowest alpha of the four and the
-second-highest mean stress -- and splitting the same numbers by position
-instead of by condition explains them better: the high-theta half is 7.3 %
-above the low-theta half, against a total spread of 8.9 % across all four
-cells. Position is doing most of the work.
+That is as far as this run goes, and it is as far as this script claims.
+Whether the differences belong to the conditions or to the places is settled by
+`plot_condition_paired.py`, which reads a second run whose seeds are shifted by
+one material slot -- and the answer is the conditions: moving in theta at fixed
+condition costs about a tenth of a percent, against nine percent between
+conditions.
 
-So the figure reports the growth per condition, which is sound, and shows the
-stress in the physical 2x2 layout rather than as a condition ranking, which
-would invite a comparison the design cannot support. Getting a real condition
-comparison needs the same region solved four times with different seeds, not
-four regions solved once -- one ANSYS session, once the machine is available.
+An earlier version of this file asserted the reverse, that position accounted
+for most of the variation. One run could not support that either; it was read
+off marginal means whose position levels happened to hold the two
+highest-stress conditions.
 
     python ansys_usermat/apdl/plot_condition_comparison.py -o assets/v222_conditions.png
 """
@@ -138,8 +135,8 @@ def plot(seqv, mats, out):
     axR.tick_params(length=0)
     for s in axR.spines.values():
         s.set_visible(False)
-    axR.set_title("...but the same stresses split better by position\n"
-                  "than by condition", fontsize=10.5)
+    axR.set_title("...and the stresses, shown where they were measured\n"
+                  "rather than ranked by condition", fontsize=10.5)
 
     def half(idx, v):
         return st.mean(mean[m] for m in mats if LAYOUT[m][3 + idx] == v)
@@ -149,8 +146,8 @@ def plot(seqv, mats, out):
              f"mean von Mises per quadrant. high-$\\theta$ / low-$\\theta$ = "
              f"{th_r:.3f},  high-$Z$ / low-$Z$ = {z_r:.3f},\n"
              f"against a total spread of {hi / lo:.3f} across all four. One "
-             f"condition per quadrant means\ncondition and position cannot be "
-             f"separated -- this is not a condition comparison yet.",
+             f"condition per quadrant means this run\non its own cannot "
+             f"separate them; the paired runs do, and it is the condition.",
              ha="center", va="bottom", fontsize=7.8, color="0.35")
 
     fig.suptitle("Four clinical conditions on one curved shell, ANSYS 2022 R2 "
@@ -191,8 +188,10 @@ def main(argv=None):
     print(f"\nalpha order  {' < '.join(order_a)}")
     print(f"stress order {' < '.join(order_s)}")
     if order_a != order_s:
-        print("The two orders differ, which is the confound: condition and "
-              "position vary together in this deck.")
+        print("The two orders differ. That is not the condition/position "
+              "confound -- plot_condition_paired.py shows position is worth "
+              "~0.1% here -- but a reproducible property of one seed; see "
+              "that script and the chapter's limitations.")
     return 0
 
 
