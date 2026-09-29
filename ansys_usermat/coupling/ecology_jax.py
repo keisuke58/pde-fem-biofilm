@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from jax_hamilton_0d_5species_demo import (  # noqa: E402
     newton_step, newton_step_jit, theta_to_matrices,
 )
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 
 G_DIM = 12
 THETA_DIM = 20
@@ -59,7 +59,7 @@ def default_hparams(dt_h: float) -> dict:
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "active_mask": jnp.ones(5, dtype=jnp.int64),

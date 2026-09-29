@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from ecology_constants import C_STAR, K_HILL, N_HILL
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 jax.config.update("jax_enable_x64", True)
 
@@ -202,7 +202,7 @@ def integrate_0d(theta, t_final, dt_h):
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "A": A,

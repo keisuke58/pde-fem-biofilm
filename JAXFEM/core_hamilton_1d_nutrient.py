@@ -48,7 +48,7 @@ from .core_hamilton_1d import (
     diffusion_step,
     make_initial_state,
 )
-from ecology_constants import C_STAR, K_HILL, N_HILL
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 # ---------------------------------------------------------------------------
 # 残差関数: c をノードごとのスカラーとして受け取る
@@ -293,7 +293,7 @@ def simulate_hamilton_1d_nutrient(
         "Kp1": 1e-4,
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "A": A,

@@ -38,7 +38,7 @@ Usage
 """
 
 from __future__ import annotations
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 import argparse
 import sys
 import json
@@ -518,7 +518,7 @@ class FEMBiofilmSimulation:
             "Eta": solver_params.get("Eta", np.ones(5)),
             "EtaPhi": solver_params.get("EtaPhi", np.ones(5)),
             "c": solver_params.get("c", 100.0),
-            "alpha": solver_params.get("alpha", 100.0),
+            "alpha": solver_params.get("alpha", ALPHA_STAR),
             "K_hill": solver_params.get("K_hill", 0.05),
             "n_hill": solver_params.get("n_hill", 4.0),
             "active_mask": solver_params.get("active_mask", np.ones(5, dtype=np.int64)),
@@ -841,7 +841,7 @@ def main():
         "Eta": np.ones(5),
         "EtaPhi": np.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": args.K_hill,
         "n_hill": args.n_hill,
         "active_mask": np.ones(5, dtype=np.int64),

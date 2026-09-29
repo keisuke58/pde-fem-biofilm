@@ -1,4 +1,4 @@
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 import jax
 import jax.numpy as jnp
 
@@ -268,7 +268,7 @@ def run_simulation():
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "A": A,

@@ -17,8 +17,14 @@ C_STAR: the nutrient constant c* multiplying A (Klempt et al. 2026, Eq. 10).
 K_HILL, N_HILL: the Hill gate on species 5 (a repo extension, not part of
     Klempt et al.). Off (K_HILL = 0), by decision 2026-09-29. N_HILL only
     matters if the gate is switched on; 2 is the TMCMC estimation value.
+
+ALPHA_STAR: the antibiotic concentration alpha* (Klempt et al. 2026, Eq. 17).
+    0, by decision 2026-09-29: the TMCMC calibration ran with alpha* = 0 and
+    its 15-parameter A has no antibiotic coefficients b, so the b entries of
+    the repo's 20-parameter theta vectors have no effect.
 """
 
 C_STAR = 25.0
 K_HILL = 0.0
 N_HILL = 2.0
+ALPHA_STAR = 0.0

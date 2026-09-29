@@ -22,6 +22,9 @@ Usage:
 
 from __future__ import annotations
 
+import os as _os_ec, sys as _sys_ec  # noqa: E401
+_sys_ec.path.insert(0, _os_ec.path.dirname(_os_ec.path.dirname(_os_ec.path.abspath(__file__))))
+from ecology_constants import C_STAR, ALPHA_STAR  # noqa: E402
 import jax
 import jax.numpy as jnp
 
@@ -232,8 +235,8 @@ def simulate_0d_nsp(
     psi_init=0.999,
     K_hill=0.0,
     n_hill=2.0,
-    c_const=25.0,
-    alpha_const=100.0,
+    c_const=C_STAR,
+    alpha_const=ALPHA_STAR,
     hill_gate_species=None,
     perturbation=None,
 ):

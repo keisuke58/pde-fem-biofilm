@@ -25,7 +25,7 @@ Hybrid アプローチ:
 """
 
 from __future__ import annotations
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 import json
 import os
 import sys
@@ -176,7 +176,7 @@ def solve_0d_composition(theta_np: np.ndarray, n_steps: int = 2500, dt: float = 
         "Eta": jnp.ones(5, dtype=jnp.float64),
         "EtaPhi": jnp.ones(5, dtype=jnp.float64),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": jnp.array(K_HILL, dtype=jnp.float64),
         "n_hill": jnp.array(N_HILL, dtype=jnp.float64),
         "A": A,

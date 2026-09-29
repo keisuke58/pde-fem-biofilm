@@ -52,7 +52,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from ecology_constants import C_STAR, K_HILL, N_HILL
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 jax.config.update("jax_enable_x64", True)
 
@@ -85,7 +85,7 @@ class Config2D:
         # Hamilton physics
         Kp1: float = 1e-4,
         c_hamilton: float = C_STAR,
-        alpha: float = 100.0,
+        alpha: float = ALPHA_STAR,
         K_hill: float = K_HILL,
         n_hill: float = N_HILL,
         newton_iters: int = 6,

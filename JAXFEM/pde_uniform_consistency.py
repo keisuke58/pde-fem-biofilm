@@ -34,7 +34,7 @@ sys.path.insert(0, str(_HERE.parent))
 sys.path.insert(0, str(_HERE.parent / "ansys_usermat" / "coupling"))
 
 import ecology_jax  # noqa: E402
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 from jax_hamilton_0d_5species_demo import THETA_DEMO, newton_step_jit, theta_to_matrices  # noqa: E402
 from JAXFEM import core_hamilton_1d_nutrient as p1  # noqa: E402
 from JAXFEM import core_hamilton_2d_nutrient as p2  # noqa: E402
@@ -47,7 +47,7 @@ N_MACRO = 10
 def _hamilton_params(c):
     A, b = theta_to_matrices(jnp.asarray(THETA_DEMO, dtype=jnp.float64))
     return {"dt_h": DT_H, "Kp1": 1e-4, "Eta": jnp.ones(5), "EtaPhi": jnp.ones(5),
-            "c": c, "alpha": 100.0, "K_hill": K_HILL, "n_hill": N_HILL,
+            "c": c, "alpha": ALPHA_STAR, "K_hill": K_HILL, "n_hill": N_HILL,
             "A": A, "b_diag": b, "active_mask": jnp.ones(5, dtype=jnp.int64)}
 
 

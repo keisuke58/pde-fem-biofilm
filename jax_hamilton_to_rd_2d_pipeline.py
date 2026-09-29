@@ -19,7 +19,7 @@ Environment: klempt_fem (Python 3.11, jax 0.9.0.1)
 Run: ~/.pyenv/versions/miniconda3-latest/envs/klempt_fem/bin/python \\
      Tmcmc202601/FEM/jax_hamilton_to_rd_2d_pipeline.py
 """
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 
 import os
 import sys
@@ -267,7 +267,7 @@ def run_hamilton_0d(theta, t_final=0.05, dt_h=1e-5):
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": jnp.array(K_HILL),
         "n_hill": jnp.array(N_HILL),
         "A": A,

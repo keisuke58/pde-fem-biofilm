@@ -85,7 +85,7 @@ from JAXFEM.core_hamilton_2d_nutrient import (
     _make_nutrient_step_stable,
 )
 from material_models import E_MAX_PA, E_MIN_PA, DI_SCALE
-from ecology_constants import C_STAR, K_HILL, N_HILL
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 OUT_DIR = os.path.join(_HERE, "_multiscale_2d_results")
 
@@ -186,7 +186,7 @@ def solve_0d_reference(theta_np: np.ndarray) -> dict:
         "Eta": jnp.ones(5, dtype=jnp.float64),
         "EtaPhi": jnp.ones(5, dtype=jnp.float64),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": jnp.array(K_HILL, dtype=jnp.float64),
         "n_hill": jnp.array(N_HILL, dtype=jnp.float64),
         "A": A,

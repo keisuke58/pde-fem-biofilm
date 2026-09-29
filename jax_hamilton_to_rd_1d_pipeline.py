@@ -17,7 +17,7 @@ Physical interpretation:
 
 Environment: klempt_fem (Python 3.11, jax 0.9.0.1) -- JAX only, no jax-fem needed.
 """
-from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 
 import os
 
@@ -286,7 +286,7 @@ def run_hamilton_0d(theta, t_final=0.05, dt_h=1e-5):
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
         "c": C_STAR,
-        "alpha": 100.0,
+        "alpha": ALPHA_STAR,
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "A": A,

@@ -73,7 +73,7 @@ from .core_hamilton_1d_nutrient import (
     nutrient_step,
     reaction_step_c,
 )
-from ecology_constants import K_HILL, N_HILL
+from ecology_constants import K_HILL, N_HILL, ALPHA_STAR
 
 # ---------------------------------------------------------------------------
 # Spatial step: D_eff diffusion + per-species Allen-Cahn + per-species
@@ -199,7 +199,7 @@ def simulate_hamilton_1d_nutrient_ac(
         "Kp1": 1e-4,
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
-        "alpha": 100.0,  # antibiotic alpha* (Eq.17) -- NOT alpha_field below
+        "alpha": ALPHA_STAR,  # antibiotic alpha* (Eq.17) -- NOT alpha_field below
         "K_hill": K_HILL,
         "n_hill": N_HILL,
         "A": A,

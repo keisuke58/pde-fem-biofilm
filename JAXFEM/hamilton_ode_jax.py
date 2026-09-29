@@ -10,6 +10,9 @@ Based on FEM/JAXFEM/core_hamilton_1d.py, simplified for 0D (single node, no diff
 
 from __future__ import annotations
 
+import os as _os_ec, sys as _sys_ec  # noqa: E401
+_sys_ec.path.insert(0, _os_ec.path.dirname(_os_ec.path.dirname(_os_ec.path.abspath(__file__))))
+from ecology_constants import C_STAR, ALPHA_STAR  # noqa: E402
 import jax
 import jax.numpy as jnp
 
@@ -235,8 +238,8 @@ def simulate_0d_nutrient(
     phi_init=None,
     K_hill=0.0,   # Hill gate OFF by default -- opt in explicitly
     n_hill=2.0,
-    c_const=25.0,
-    alpha_const=100.0,
+    c_const=C_STAR,
+    alpha_const=ALPHA_STAR,
     S_init=1.0,
     K_S=0.5,
     g_consumption=None,
@@ -337,8 +340,8 @@ def simulate_0d(
     phi_init=None,
     K_hill=0.0,   # Hill gate OFF by default -- opt in explicitly
     n_hill=2.0,
-    c_const=25.0,
-    alpha_const=100.0,
+    c_const=C_STAR,
+    alpha_const=ALPHA_STAR,
 ):
     """
     Run 0D Hamilton ODE. Returns phi trajectory (n_steps+1, 5).
