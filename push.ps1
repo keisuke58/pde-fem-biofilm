@@ -44,7 +44,8 @@ try {
     $code = $LASTEXITCODE
     $ErrorActionPreference = $prev
     ($out -replace [regex]::Escape($tok), '***').Trim() -split "`n" |
-        Where-Object { $_ -notmatch '^\s*(\+ |In Zeile|In line|CategoryInfo|FullyQualifiedErrorId|~)' -and $_.Trim() } |
+        ForEach-Object { $_ -replace '^\s*git(\.exe)?\s*:\s*', '' } |
+        Where-Object { $_ -notmatch '^\s*(\+ |In Zeile|In line|In .*(Zeichen|char)|CategoryInfo|FullyQualifiedErrorId|~)' -and $_.Trim() } |
         ForEach-Object { Write-Output "  $($_.Trim())" }
     if ($code -ne 0) { throw "git push exited $code" }
 
