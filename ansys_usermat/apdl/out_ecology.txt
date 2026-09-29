@@ -95,11 +95,14 @@
           *****  MAPDL COMMAND LINE ARGUMENTS  *****
   BATCH MODE REQUESTED (-b)    = LIST
   INPUT FILE COPY MODE (-c)    = COPY
+  SHARED MEMORY PARALLEL REQUESTED
+    SINGLE PROCESS WITH   4 THREADS REQUESTED
+    TOTAL OF     4 CORES REQUESTED
   INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_ecology.dat
-  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_ecology_live.txt
+  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_t_growth_ecology.txt
 
  RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
- CURRENT JOBNAME=file0  11:57:49  SEP 07, 2026 CP=      0.125
+ CURRENT JOBNAME=file  20:34:36  SEP 29, 2026 CP=      0.094
  Note - This MAPDL version was linked by Licensee
      1  ! t_growth_ecology.dat --- real-ANSYS smoke test for the 0D Hamilton ecology
      2  ! Gauss-point hook (usermat_biofilm.f prop(8)=kUseEcology), the counterpart 
@@ -229,7 +232,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:49  SEP 07, 2026 CP=      0.234
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.141
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -322,7 +325,7 @@
           8  NODES (OF          8  DEFINED) SELECTED BY NSEL  COMMAND.
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.266
+ ***** ROUTINE COMPLETED *****  CP =         0.156
 
 
 
@@ -347,10 +350,6 @@
  WRITE SVAR ITEMS TO THE DATABASE WITH A FREQUENCY OF ALL 
    FOR ALL APPLICABLE ENTITIES
 
- *** NOTE ***                            CP =       0.266   TIME= 11:57:49
- The automatic domain decomposition logic has selected the MESH domain   
- decomposition method with 4 processes per solution.                     
-
  *****  MAPDL SOLVE    COMMAND  *****
 
  *** SELECTION OF ELEMENT TECHNOLOGIES FOR APPLICABLE ELEMENTS ***
@@ -363,7 +362,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:49  SEP 07, 2026 CP=      0.266
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.156
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -379,27 +378,21 @@
    NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
    GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
 
- *** WARNING ***                         CP =       0.266   TIME= 11:57:49
+ *** WARNING ***                         CP =       0.156   TIME= 20:34:37
  ANSYS,INC.-supplied version of coding for USERCK has been used.         
 
- *** NOTE ***                            CP =       0.266   TIME= 11:57:49
+ *** NOTE ***                            CP =       0.156   TIME= 20:34:37
  The step data was checked and warning messages were found.              
-  Please review output or errors file ( F:\biofilm_upf_kusepy\file0.err  
+  Please review output or errors file ( F:\biofilm_upf_kusepy\file.err   
  ) for these warning messages.                                           
 
- *** NOTE ***                            CP =       0.266   TIME= 11:57:49
+ *** NOTE ***                            CP =       0.156   TIME= 20:34:37
  This nonlinear analysis defaults to using the full Newton-Raphson       
  solution procedure.  This can be modified using the NROPT command.      
 
- *** NOTE ***                            CP =       0.266   TIME= 11:57:49
+ *** NOTE ***                            CP =       0.156   TIME= 20:34:37
  The conditions for direct assembly have been met.  No .emat or .erot    
  files will be produced.                                                 
-
- *** NOTE ***                            CP =       0.266   TIME= 11:57:49
- The number of distributed memory parallel processes specified is        
- greater than the number of elements selected in the model.  The number  
- of distributed memory parallel processes will be reduced to 1 for this  
- solution.                                                               
 
                       L O A D   S T E P   O P T I O N S
 
@@ -427,20 +420,20 @@
 
 
  Range of element maximum matrix coefficients in global coordinates
- Maximum = 13.3402185 at element 1.                                      
- Minimum = 13.3402185 at element 1.                                      
+ Maximum = 13.3402206 at element 1.                                      
+ Minimum = 13.3402206 at element 1.                                      
 
    *** ELEMENT MATRIX FORMULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         1  SOLID185      0.516   0.515625
- Time at end of element matrix formulation CP = 1.046875.                
+        1         1  SOLID185      0.016   0.015625
+ Time at end of element matrix formulation CP = 0.1875.                  
 
  ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
   FOR POSSIBLE RESUME FROM THIS POINT
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1874E-02
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.1875E-02
 
- *** WARNING ***                         CP =       1.062   TIME= 11:57:51
+ *** WARNING ***                         CP =       0.188   TIME= 20:34:37
  There are no active degrees of freedom.                                 
      DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
     EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
@@ -451,7 +444,7 @@
    *** ELEMENT RESULT CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         1  SOLID185      0.141   0.140625
+        1         1  SOLID185      0.047   0.046875
 
    *** NODAL LOAD CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
@@ -469,17 +462,14 @@
 
  FINISH SOLUTION PROCESSING
 
- *** NOTE ***                            CP =       1.766   TIME= 11:57:51
- Distributed parallel processing has been reactivated.                   
 
-
- ***** ROUTINE COMPLETED *****  CP =         1.766
+ ***** ROUTINE COMPLETED *****  CP =         0.328
 
 
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.766
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.375
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -487,7 +477,7 @@
 
           ***** MAPDL RESULTS INTERPRETATION (POST1) *****
 
- *** NOTE ***                            CP =       1.766   TIME= 11:57:51
+ *** NOTE ***                            CP =       0.375   TIME= 20:34:37
  Reading results into the database (SET command) will update the current 
  displacement and force boundary conditions in the database with the     
  values from the results file for that load set.  Note that any          
@@ -511,7 +501,7 @@
  EXIT THE MAPDL POST1 DATABASE PROCESSOR
 
 
- ***** ROUTINE COMPLETED *****  CP =         1.781
+ ***** ROUTINE COMPLETED *****  CP =         0.391
 
 
 
@@ -530,7 +520,7 @@
 +--------------------- M A P D L   S T A T I S T I C S ------------------------+
 
 Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
-Date Run: 09/07/2026   Time: 11:57     Process ID: 1580
+Date Run: 09/29/2026   Time: 20:34     Process ID: 24564
 Operating System: Windows 10  (Build: 26200)
 
 Processor Model: Intel(R) Core(TM) Ultra 5 235
@@ -543,47 +533,30 @@ Compiler: Intel(R) Fortran Compiler Version 19.0.5  (Build: 20190815)
 Number of machines requested            :    1
 Total number of cores available         :   14
 Number of physical cores available      :   14
-Number of processes requested           :    4
-Number of threads per process requested :    1
-Total number of cores requested         :    4 (Distributed Memory Parallel)               
-MPI Type: INTELMPI
-MPI Version: Intel(R) MPI Library 2021.5 for Windows* OS
-
+Number of processes requested           :    1
+Number of threads per process requested :    4
+Total number of cores requested         :    4 (Shared Memory Parallel)                    
 
 GPU Acceleration: Not Requested
 
-Job Name: file0
+Job Name: file
 Input File: t_growth_ecology.dat
+Working Directory: F:\biofilm_upf_kusepy
 
-  Core                Machine Name   Working Directory
- -----------------------------------------------------
-     0                   ikmhiwi03   F:\biofilm_upf_kusepy
-     1                   ikmhiwi03   F:\biofilm_upf_kusepy
-     2                   ikmhiwi03   F:\biofilm_upf_kusepy
-     3                   ikmhiwi03   F:\biofilm_upf_kusepy
- 
-Latency time from master to core     1 =    3.365 microseconds
-Latency time from master to core     2 =    3.274 microseconds
-Latency time from master to core     3 =    2.797 microseconds
- 
-Communication speed from master to core     1 = 10371.70 MB/sec
-Communication speed from master to core     2 = 13612.62 MB/sec
-Communication speed from master to core     3 = 11673.72 MB/sec
-
-Total CPU time for main thread                    :        0.8 seconds
-Total CPU time summed for all threads             :        1.9 seconds
+Total CPU time for main thread                    :        0.4 seconds
+Total CPU time summed for all threads             :        0.8 seconds
 
 Elapsed time spent obtaining a license            :        1.5 seconds
 Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
 Elapsed time spent solution - preprocessing       :        0.0 seconds
-Elapsed time spent computing solution             :        1.7 seconds
+Elapsed time spent computing solution             :        0.1 seconds
 Elapsed time spent solution - postprocessing      :        0.0 seconds
 Elapsed time spent post-processing model (/POST1) :        0.0 seconds
  
 Equation solver used                              :            Sparse (symmetric)
 
-Sum of memory used on all processes               :       24.0 MB
-Sum of memory allocated on all processes          :     5184.0 MB
+Sum of memory used on all processes               :        9.0 MB
+Sum of memory allocated on all processes          :     2112.0 MB
 Physical memory available                         :         31 GB
 
 Total amount of I/O written to disk               :        0.0 GB
@@ -607,7 +580,7 @@ Total amount of I/O read from disk                :        0.0 GB
  |                                                                           |
  |---------------------------------------------------------------------------|
  |                                                                           |
- |        CP Time      (sec) =          1.891       Time  =  11:57:51        |
- |        Elapsed Time (sec) =          5.000       Date  =  09/07/2026      |
+ |        CP Time      (sec) =          0.812       Time  =  20:34:37        |
+ |        Elapsed Time (sec) =          4.000       Date  =  09/29/2026      |
  |                                                                           |
  *---------------------------------------------------------------------------*

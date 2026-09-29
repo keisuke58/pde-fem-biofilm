@@ -33,6 +33,21 @@
 ! exactly) before taking 3 chained 0D Hamilton sub-steps of dt_sub=1e-4 each
 ! with the demo THETA_DEMO interaction parameters and k_alpha=50.
 !
+! EXPECTED, CURRENT (2026-09-29; c*=25, no Hill gate, alpha*=0 --
+! ecology_constants.py; from ecology_deck_reference.py). Confirmed on real
+! ANSYS the same day (F:\biofilm_upf_kusepy build, -smp -np 4): 0 errors,
+! SX and SVAR(10), SVAR(15:26) equal to these at printed precision.
+!   g_new(phi)   = [0.32271156, 0.324470299, 0.221197415, 0.131443323, 1.77376982e-08]
+!   g_new(phi0)  = 0.00017738476
+!   g_new(psi)   = [0.974978882, 0.976082797, 0.97554955, 0.965236061, 0.815483278]
+!   g_new(gamma) = 46.0358467
+!   alpha_new    = 1.473522196e-02
+!   SX=SY=SZ     = -8.64888003e+00
+!   SXY=SYZ=SXZ  = 0
+!
+! The EXPECTED block below is from the OLD constants (c*=100, Hill gate
+! K=0.05 n=4, alpha*=100) and is kept only as history.
+!
 ! EXPECTED (computed independently in Python -- chaining
 ! ecology_jax.ecology_step 3x at dt_sub=1e-4 from
 ! ecology_jax.default_initial_state(), accumulating

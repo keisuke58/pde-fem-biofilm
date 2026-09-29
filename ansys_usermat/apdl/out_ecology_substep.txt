@@ -96,13 +96,13 @@
   BATCH MODE REQUESTED (-b)    = LIST
   INPUT FILE COPY MODE (-c)    = COPY
   SHARED MEMORY PARALLEL REQUESTED
-    SINGLE PROCESS WITH SINGLE THREAD REQUESTED
-    TOTAL OF     1 CORES REQUESTED
+    SINGLE PROCESS WITH   4 THREADS REQUESTED
+    TOTAL OF     4 CORES REQUESTED
   INPUT FILE NAME              = F:\biofilm_upf_kusepy\t_growth_ecology_substep.dat
-  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_ecology_substep.txt
+  OUTPUT FILE NAME             = F:\biofilm_upf_kusepy\out_t_growth_ecology_substep.txt
 
  RELEASE= 2022 R2              BUILD= 22.2      UP20220516   VERSION=WINDOWS x64 
- CURRENT JOBNAME=file  14:57:45  SEP 29, 2026 CP=      0.125
+ CURRENT JOBNAME=file  20:34:45  SEP 29, 2026 CP=      0.078
  Note - This MAPDL version was linked by Licensee
      1  ! t_growth_ecology_substep.dat --- real-ANSYS confirmation of the n_sub 
      2  ! ecology sub-stepping path (coupling/protocol.py's `n_sub`, wired through  
@@ -155,81 +155,89 @@
     49  !   SX=SY=SZ     = -7.603328046 
     50  !   SXY=SYZ=SXZ  = 0
     51  !   
-    52  ! If instead the old (pre-n_sub) formula dTime*phi_tot(g_final) were used --
-    53  ! the regression this deck exists to catch -- alpha_new and SX/SY/SZ would  
-    54  ! come out different from the values above; see the commit message. 
-    55      
-    56  FINISH  
-    57  /CLEAR  
-    58  /TITLE, biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)
-    59  /PREP7  
-    60      
-    61  ! ---- single 8-node hex, unit cube -----------------------------------------   
-    62  ET,1,SOLID185   
-    63  KEYOPT,1,2,0                 ! B-bar
-    64      
-    65  BLOCK,0,1,0,1,0,1   
-    66  ESIZE,1 
-    67  VMESH,1 
+    52  ! The old (pre-n_sub) build -- one ecology step of the whole 3e-4, alpha
+    53  ! from dTime*phi_tot(g_final) -- would give alpha_new = 1.4914e-02, 
+    54  ! gamma = 150.70, psi(5) = 0.99435 instead, so this deck tells the two apart.   
+    55  !   
+    56  ! RESULT, real ANSYS v222, 2026-09-29 (F:\biofilm_upf_kusepy, rebuilt from  
+    57  ! this repo's usermat_biofilm.f + usermat_py_hook.f + biofilm_py_eval.c,
+    58  ! -smp -np 1; out_ecology_substep.txt): RUN COMPLETED, 0 errors.
+    59  !   SX=SY=SZ = -7.6033, alpha = 0.12908E-01,
+    60  !   phi = 0.31124 0.34028 0.24048 0.10782 0.17738E-07, phi0 = 0.17738E-03,  
+    61  !   psi = 0.85195 0.67821 0.62139 0.80025 0.50617E-01, gamma = 295.16   
+    62  ! -- all equal to EXPECTED above at printed precision.  
+    63      
+    64  FINISH  
+    65  /CLEAR  
+    66  /TITLE, biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)
+    67  /PREP7  
     68      
-    69  ! ---- user material -----------------------------------------------------  
-    70  ! prop: C10,C01,D1,eta,mtype,kUsePy | kStateMat,kUseEcology,k_alpha,theta(1:3)  
-    71  !       | theta(4:9) | theta(10:15) | theta(16:20)  
-    72  TB,USER,1,1,29  
-    73  TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0   
-    74  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79   
-    75  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1  
-    76  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
-    77  TBDATA,25,0.32,1.49,2.1,2.41,2.5
-    78      
-    79  ! state: ustatev(1:9)=Fv (identity), ustatev(10)=alpha (0), ustatev(11:14)  
-    80  ! unused (kStateMat=0), ustatev(15:26) left all-zero on purpose so  
-    81  ! INIT_ECO_IF_ZERO seeds the default composition.   
-    82  TB,STATE,1,,26  
-    83  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
-    84  TBDATA,7,0.0,0.0,1.0
-    85  TBDATA,10,0.0   
+    69  ! ---- single 8-node hex, unit cube -----------------------------------------   
+    70  ET,1,SOLID185   
+    71  KEYOPT,1,2,0                 ! B-bar
+    72      
+    73  BLOCK,0,1,0,1,0,1   
+    74  ESIZE,1 
+    75  VMESH,1 
+    76      
+    77  ! ---- user material -----------------------------------------------------  
+    78  ! prop: C10,C01,D1,eta,mtype,kUsePy | kStateMat,kUseEcology,k_alpha,theta(1:3)  
+    79  !       | theta(4:9) | theta(10:15) | theta(16:20)  
+    80  TB,USER,1,1,29  
+    81  TBDATA,1,1.0,0.0,0.01,0.0,0.0,0.0   
+    82  TBDATA,7,0.0,1.0,50.0,1.34,-0.18,1.79   
+    83  TBDATA,13,1.17,2.58,3.51,2.73,0.71,2.1  
+    84  TBDATA,19,0.37,2.05,-0.15,3.56,0.16,0.12
+    85  TBDATA,25,0.32,1.49,2.1,2.41,2.5
     86      
-    87  ! ---- fully constrained: forces F = I at every integration point ------------  
-    88  NSEL,ALL
-    89  D,ALL,UX,0  
-    90  D,ALL,UY,0  
-    91  D,ALL,UZ,0  
-    92  NSEL,ALL
-    93  FINISH  
+    87  ! state: ustatev(1:9)=Fv (identity), ustatev(10)=alpha (0), ustatev(11:14)  
+    88  ! unused (kStateMat=0), ustatev(15:26) left all-zero on purpose so  
+    89  ! INIT_ECO_IF_ZERO seeds the default composition.   
+    90  TB,STATE,1,,26  
+    91  TBDATA,1,1.0,0.0,0.0, 0.0,1.0,0.0   
+    92  TBDATA,7,0.0,0.0,1.0
+    93  TBDATA,10,0.0   
     94      
-    95  ! ---- solve -----------------------------------------------------------------  
-    96  /SOLU   
-    97  ANTYPE,STATIC   
-    98  NLGEOM,ON   
-    99  TIME,3.0E-4                  ! 3x DT_ECO_MAX=1e-4 -> usermat_biofilm.f sends n_sub=3
-   100  NSUBST,1,1,1                 ! exactly one substep -- one biofilm_ecology_eval call 
-   101  OUTRES,ALL,ALL  
-   102  OUTRES,SVAR,ALL 
-   103  SOLVE   
-   104  FINISH  
-   105      
-   106  ! ---- report ----------------------------------------------------------------  
-   107  /POST1  
-   108  SET,LAST
-   109  ESEL,S,ELEM,,1  
-   110  /OUTPUT,growth_result_ecology_substep,txt   
-   111  PRESOL,S,COMP   
-   112  PRESOL,SVAR,10                ! alpha   
-   113  PRESOL,SVAR,15                ! g(1)  = phi(1)  
-   114  PRESOL,SVAR,16                ! g(2)  = phi(2)  
-   115  PRESOL,SVAR,17                ! g(3)  = phi(3)  
-   116  PRESOL,SVAR,18                ! g(4)  = phi(4)  
-   117  PRESOL,SVAR,19                ! g(5)  = phi(5)  
-   118  PRESOL,SVAR,20                ! g(6)  = phi0
-   119  PRESOL,SVAR,21                ! g(7)  = psi(1)  
-   120  PRESOL,SVAR,22                ! g(8)  = psi(2)  
-   121  PRESOL,SVAR,23                ! g(9)  = psi(3)  
-   122  PRESOL,SVAR,24                ! g(10) = psi(4)  
-   123  PRESOL,SVAR,25                ! g(11) = psi(5)  
-   124  PRESOL,SVAR,26                ! g(12) = gamma   
-   125  /OUTPUT 
-   126  FINISH  
+    95  ! ---- fully constrained: forces F = I at every integration point ------------  
+    96  NSEL,ALL
+    97  D,ALL,UX,0  
+    98  D,ALL,UY,0  
+    99  D,ALL,UZ,0  
+   100  NSEL,ALL
+   101  FINISH  
+   102      
+   103  ! ---- solve -----------------------------------------------------------------  
+   104  /SOLU   
+   105  ANTYPE,STATIC   
+   106  NLGEOM,ON   
+   107  TIME,3.0E-4                  ! 3x DT_ECO_MAX=1e-4 -> usermat_biofilm.f sends n_sub=3
+   108  NSUBST,1,1,1                 ! exactly one substep -- one biofilm_ecology_eval call 
+   109  OUTRES,ALL,ALL  
+   110  OUTRES,SVAR,ALL 
+   111  SOLVE   
+   112  FINISH  
+   113      
+   114  ! ---- report ----------------------------------------------------------------  
+   115  /POST1  
+   116  SET,LAST
+   117  ESEL,S,ELEM,,1  
+   118  /OUTPUT,growth_result_ecology_substep,txt   
+   119  PRESOL,S,COMP   
+   120  PRESOL,SVAR,10                ! alpha   
+   121  PRESOL,SVAR,15                ! g(1)  = phi(1)  
+   122  PRESOL,SVAR,16                ! g(2)  = phi(2)  
+   123  PRESOL,SVAR,17                ! g(3)  = phi(3)  
+   124  PRESOL,SVAR,18                ! g(4)  = phi(4)  
+   125  PRESOL,SVAR,19                ! g(5)  = phi(5)  
+   126  PRESOL,SVAR,20                ! g(6)  = phi0
+   127  PRESOL,SVAR,21                ! g(7)  = psi(1)  
+   128  PRESOL,SVAR,22                ! g(8)  = psi(2)  
+   129  PRESOL,SVAR,23                ! g(9)  = psi(3)  
+   130  PRESOL,SVAR,24                ! g(10) = psi(4)  
+   131  PRESOL,SVAR,25                ! g(11) = psi(5)  
+   132  PRESOL,SVAR,26                ! g(12) = gamma   
+   133  /OUTPUT 
+   134  FINISH  
 
  RUN SETUP PROCEDURE FROM FILE= C:\Program Files\ANSYS Inc\v222\ANSYS\apdl\start.ans
 
@@ -249,7 +257,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   14:57:45  SEP 29, 2026 CP=      0.156
+ 00000000  VERSION=WINDOWS x64   20:34:46  SEP 29, 2026 CP=      0.109
 
   biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)             
 
@@ -342,7 +350,7 @@
           8  NODES (OF          8  DEFINED) SELECTED BY NSEL  COMMAND.
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.172
+ ***** ROUTINE COMPLETED *****  CP =         0.109
 
 
 
@@ -379,7 +387,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   14:57:45  SEP 29, 2026 CP=      0.172
+ 00000000  VERSION=WINDOWS x64   20:34:46  SEP 29, 2026 CP=      0.125
 
   biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)             
 
@@ -395,19 +403,19 @@
    NEWTON-RAPHSON OPTION . . . . . . . . . . . . .PROGRAM CHOSEN   
    GLOBALLY ASSEMBLED MATRIX . . . . . . . . . . .SYMMETRIC  
 
- *** WARNING ***                         CP =       0.172   TIME= 14:57:45
+ *** WARNING ***                         CP =       0.125   TIME= 20:34:46
  ANSYS,INC.-supplied version of coding for USERCK has been used.         
 
- *** NOTE ***                            CP =       0.172   TIME= 14:57:45
+ *** NOTE ***                            CP =       0.125   TIME= 20:34:46
  The step data was checked and warning messages were found.              
   Please review output or errors file ( F:\biofilm_upf_kusepy\file.err   
  ) for these warning messages.                                           
 
- *** NOTE ***                            CP =       0.172   TIME= 14:57:45
+ *** NOTE ***                            CP =       0.125   TIME= 20:34:46
  This nonlinear analysis defaults to using the full Newton-Raphson       
  solution procedure.  This can be modified using the NROPT command.      
 
- *** NOTE ***                            CP =       0.172   TIME= 14:57:45
+ *** NOTE ***                            CP =       0.125   TIME= 20:34:46
  The conditions for direct assembly have been met.  No .emat or .erot    
  files will be produced.                                                 
 
@@ -437,31 +445,31 @@
 
 
  Range of element maximum matrix coefficients in global coordinates
- Maximum = 13.735008 at element 1.                                       
- Minimum = 13.735008 at element 1.                                       
+ Maximum = 13.7918143 at element 1.                                      
+ Minimum = 13.7918143 at element 1.                                      
 
    *** ELEMENT MATRIX FORMULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         1  SOLID185      0.031   0.031250
- Time at end of element matrix formulation CP = 0.234375.                
+        1         1  SOLID185      0.000   0.000000
+ Time at end of element matrix formulation CP = 0.140625.                
 
  ALL CURRENT MAPDL DATA WRITTEN TO FILE NAME= file.rdb
   FOR POSSIBLE RESUME FROM THIS POINT
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.4751E-01
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5404E-01
 
- *** WARNING ***                         CP =       0.250   TIME= 14:57:47
+ *** WARNING ***                         CP =       0.141   TIME= 20:34:46
  There are no active degrees of freedom.                                 
      DISP CONVERGENCE VALUE   =   0.000      CRITERION=  0.5102E-13 <<< CONVERGED
     EQUIL ITER   1 COMPLETED.  NEW TRIANG MATRIX.  MAX DOF INC=   0.000    
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.4848E-01 <<< CONVERGED
-     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.4947E-01 <<< CONVERGED
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5515E-01 <<< CONVERGED
+     FORCE CONVERGENCE VALUE  =   0.000      CRITERION=  0.5627E-01 <<< CONVERGED
     >>> SOLUTION CONVERGED AFTER EQUILIBRIUM ITERATION   2
 
    *** ELEMENT RESULT CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
 
-        1         1  SOLID185      0.000   0.000000
+        1         1  SOLID185      0.047   0.046875
 
    *** NODAL LOAD CALCULATION TIMES
      TYPE    NUMBER   ENAME      TOTAL CP  AVE CP
@@ -480,13 +488,13 @@
  FINISH SOLUTION PROCESSING
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.266
+ ***** ROUTINE COMPLETED *****  CP =         0.297
 
 
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   14:57:47  SEP 29, 2026 CP=      0.266
+ 00000000  VERSION=WINDOWS x64   20:34:46  SEP 29, 2026 CP=      0.297
 
   biofilm USERMAT - ecology n_sub sub-stepping (closed-form check)             
 
@@ -494,7 +502,7 @@
 
           ***** MAPDL RESULTS INTERPRETATION (POST1) *****
 
- *** NOTE ***                            CP =       0.266   TIME= 14:57:47
+ *** NOTE ***                            CP =       0.297   TIME= 20:34:46
  Reading results into the database (SET command) will update the current 
  displacement and force boundary conditions in the database with the     
  values from the results file for that load set.  Note that any          
@@ -518,7 +526,7 @@
  EXIT THE MAPDL POST1 DATABASE PROCESSOR
 
 
- ***** ROUTINE COMPLETED *****  CP =         0.266
+ ***** ROUTINE COMPLETED *****  CP =         0.297
 
 
 
@@ -537,7 +545,7 @@
 +--------------------- M A P D L   S T A T I S T I C S ------------------------+
 
 Release: 2022 R2            Build: 22.2       Update: UP20220516   Platform: WINDOWS x64 
-Date Run: 09/29/2026   Time: 14:57     Process ID: 17652
+Date Run: 09/29/2026   Time: 20:34     Process ID: 13068
 Operating System: Windows 10  (Build: 26200)
 
 Processor Model: Intel(R) Core(TM) Ultra 5 235
@@ -551,8 +559,8 @@ Number of machines requested            :    1
 Total number of cores available         :   14
 Number of physical cores available      :   14
 Number of processes requested           :    1
-Number of threads per process requested :    1
-Total number of cores requested         :    1 (Shared Memory Parallel)                    
+Number of threads per process requested :    4
+Total number of cores requested         :    4 (Shared Memory Parallel)                    
 
 GPU Acceleration: Not Requested
 
@@ -560,13 +568,13 @@ Job Name: file
 Input File: t_growth_ecology_substep.dat
 Working Directory: F:\biofilm_upf_kusepy
 
-Total CPU time for main thread                    :        0.5 seconds
-Total CPU time summed for all threads             :        0.3 seconds
+Total CPU time for main thread                    :        0.3 seconds
+Total CPU time summed for all threads             :        0.8 seconds
 
 Elapsed time spent obtaining a license            :        1.5 seconds
 Elapsed time spent pre-processing model (/PREP7)  :        0.0 seconds
 Elapsed time spent solution - preprocessing       :        0.0 seconds
-Elapsed time spent computing solution             :        2.6 seconds
+Elapsed time spent computing solution             :        0.5 seconds
 Elapsed time spent solution - postprocessing      :        0.0 seconds
 Elapsed time spent post-processing model (/POST1) :        0.0 seconds
  
@@ -597,7 +605,7 @@ Total amount of I/O read from disk                :        0.0 GB
  |                                                                           |
  |---------------------------------------------------------------------------|
  |                                                                           |
- |        CP Time      (sec) =          0.312       Time  =  14:57:48        |
- |        Elapsed Time (sec) =          6.000       Date  =  09/29/2026      |
+ |        CP Time      (sec) =          0.812       Time  =  20:34:47        |
+ |        Elapsed Time (sec) =          4.000       Date  =  09/29/2026      |
  |                                                                           |
  *---------------------------------------------------------------------------*
