@@ -29,6 +29,18 @@ the paper's AceGen FEM, so agreement is expected at the level of the curves'
 shape and values, not digit for digit. The paper's curves are read off the
 figures by eye (+-0.01..0.02).
 
+RESULT (2026-09-29, klempt2024_results/summary.json): not reproduced.
+  - As printed (growth = transport, consumption g phi): far off on every
+    figure (Fig. 4 max |diff| phi 0.63, Fig. 7 "high" phi 0.98).
+  - growth |grad phi . n_c| + consumption g phi c: Fig. 4 close in shape and
+    within ~0.17 (phi) / 0.10 (c); Fig. 7 grows ~5-10x too slowly ("high"
+    reaches phi 0.79 at T* = 1 where the paper fills the cube by 0.2), though
+    its c(phi) relation tends to the paper's 0.49 plateau as phi -> 1, which
+    supports first-order consumption.
+  - Likely remaining causes, not pinned down: the one-node-thick initial
+    disk and the front speed of an upwind FD scheme vs. the paper's Galerkin
+    FEM. Stopped here; treat the 2024 PDE as not independently reproduced.
+
 Nothing here uses this repo's 5-species model: Klempt 2024 is a different
 (single-species, interface-growth) PDE. Only Eq. 36, alpha_dot = k_a phi, is
 shared with this repo's growth law.
