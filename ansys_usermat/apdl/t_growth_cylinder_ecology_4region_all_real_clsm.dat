@@ -33,12 +33,27 @@
 ! workbook's "only living cells" ratio is a different, unbounded quantity;
 ! see t_growth_ecology_clsm_phi.dat's header).
 !
+! INTERFACE BONDING (fixed 2026-09-29): this deck used to mesh the two
+! volumes separately and bond them with NUMMRG, which merges only
+! coincident nodes -- here only the 4 corner nodes of the interface, so
+! the growth layer was essentially floating. Every stress this deck
+! produced before that date (incl. thesis ch5 sec. 5.6: growth layer
+! 15.2x substrate von Mises, 9.1% spread between conditions) is invalid.
+! Now VGLUE shares the R_MID face, so the interface mesh is common; see
+! ansys_usermat/apdl/README.md (cylinder correction) for the bond counts
+! and the mesh-convergence check.
+!
 ! Independent reference: ecology_4region_reference_all_real_clsm.py (10
-! chained ecology_step calls, dt=1e-5, THETA_DEMO):
-!   A (mat2, CS): alpha = 4.6144769029e-03
-!   B (mat3, CH): alpha = 4.6920293146e-03
-!   C (mat4, DS): alpha = 4.3556778678e-03
-!   D (mat5, DH): alpha = 4.8186255156e-03
+! chained ecology_step calls, dt=1e-5, THETA_DEMO; c*=25, no Hill gate,
+! alpha*=0 -- ecology_constants.py, 2026-09-29):
+!   A (mat2, CS): alpha = 4.8943827130e-03
+!   B (mat3, CH): alpha = 4.9036186081e-03
+!   C (mat4, DS): alpha = 4.8772026944e-03
+!   D (mat5, DH): alpha = 4.9070523296e-03
+! Re-run 2026-09-29 (bonded mesh, 1536 elements, -smp -np 4): ANSYS SVAR(10)
+! matches these at all 768 integration points per region (5 printed
+! digits); mean SEQV growth layer / substrate = 6.27, spread between
+! conditions 0.41 %.
 ! all four comfortably under the 0.01 convergence threshold -- four
 ! genuinely different real measured biofilm compositions, all four
 ! clinical conditions this repo studies, driving different growth on one
@@ -65,6 +80,7 @@ ARC   = 5
 
 CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 ! ---- substrate (mat 1): no ecology, no growth
 TB,USER,1,1,6
@@ -139,15 +155,33 @@ TBDATA,25,0.999,0.0
 
 MSHKEY,0
 
+! Volumes are picked by their bounding face, not by number: VGLUE
+! renumbers its output, and VSEL,LOC by radius selects nothing.
+! One ESIZE for both volumes: they share the R_MID face, and whichever is
+! swept first fixes that face mesh for the other. ESIZE_C = LEN/6 keeps the
+! Z = LEN/2 region split on element boundaries (no centroid on the cut).
+ESIZE_C = LEN/6
+CSYS,1                                 ! circumferential lines: an even count (16),
+LSEL,S,LOC,Y,ARC/2                     ! so the theta = ARC/2 split is on element
+LESIZE,ALL,,,16                        ! boundaries too
+LSEL,ALL
+CSYS,0
 MAT,1
-VSEL,S,VOLU,,1
-ESIZE,0.15
-VSWEEP,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
 
 MAT,2
-VSEL,S,VOLU,,2
-ESIZE,0.05
-VSWEEP,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
+ALLSEL
 
 ! ---- split the growth layer into a 2x2 (theta x Z) grid of 4 regions -------
 CSYS,1
@@ -170,7 +204,6 @@ EMODIF,ALL,MAT,5                       ! upper-theta, upper-Z -> region D (DH)
 CSYS,0
 ALLSEL
 
-NUMMRG,NODE,1.0E-4
 NUMCMP,NODE
 NUMCMP,ELEM
 
