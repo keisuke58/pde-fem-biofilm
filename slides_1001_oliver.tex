@@ -138,28 +138,33 @@ $\sim\!0.1\,\%$, against $9.1\,\%$ between conditions.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{One concrete ask: a deck whose time stepping I can set}
+\begin{frame}{Your deck's step and the ecology's step, reconciled}
 \small The ecology bridge is also wired into \emph{your} call site
-(\texttt{prop(6)=kUseEcology}, ecology state in
-\texttt{ustatev(72:83)}, accumulated $\alpha$ in \texttt{ustatev(84)}).
-On your real NEM deck it links and runs with \textbf{0 errors}, and the
-element that previously distorted silently now correctly triggers the
-guard's cut-back request instead.
-\vspace{4pt}
-{\footnotesize It still cannot \emph{complete}, for one reason that is not
-about the material: the ecology integrator refuses steps above
-$\Delta t = 10^{-4}$ (measured -- it diverges above that), and the deck runs
-at \texttt{TIME INC} $=0.1$. ANSYS's own bisection does not reach the
-$\sim\!1000\times$ reduction needed, and the stepping comes from
-Workbench-compiled solution controls rather than an editable
-\texttt{NSUBST}.}
+(\texttt{prop(6)=kUseEcology}, ecology state in \texttt{ustatev(72:83)},
+accumulated $\alpha$ in \texttt{ustatev(84)}). On your real NEM deck it links
+and runs with \textbf{0 errors}, and the element that previously distorted
+silently now correctly triggers the guard's cut-back request instead.
+\vspace{3pt}
+{\footnotesize It could not \emph{complete}, for a reason that is not about
+the material: the ecology integrator refuses steps above
+$\Delta t = 10^{-4}$ (measured -- it diverges above that) and your deck runs
+at \texttt{TIME INC} $=0.1$. ANSYS's own bisection does not reach a
+$\sim\!1000\times$ reduction, and the stepping comes from
+Workbench-compiled solution controls rather than an editable \texttt{NSUBST}.}
 \vspace{4pt}
 \begin{center}
-\colorbox{c3!12}{\parbox{0.88\linewidth}{\centering\small
-\textbf{Ask:} the same model as an editable input deck (or the solution
-controls exposed), so the step can be set. That is the last thing between
-here and the bridge running end-to-end in your framework.}}
+\colorbox{c3!12}{\parbox{0.9\linewidth}{\small
+\textbf{I had meant to ask you for an editable deck. It turns out not to be
+needed} --- the call now sub-divides the increment internally, so one
+material call covers your step at one round trip. Not a new scheme: it is the
+same chaining every verified reference in the repo already uses, accumulating
+growth per sub-step rather than from the final state.}}
 \end{center}
+\vspace{2pt}
+{\footnotesize Verified bit-exact against that reference loop on the Python
+side. The Fortran wiring and an end-to-end run on your deck are the next
+step --- so \emph{if} that surfaces something, I may come back to you; but
+the step-size mismatch itself is no longer a reason to.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -190,9 +195,6 @@ residual for ecology transport, no template in ANSYS's own examples.}
         coupling-strength ceiling exists for the baseline one?
   \item UserElement vs.\ UserMat -- does the working assumption above
         still look right from your side?
-  \item Can the NEM model come as an editable deck (or with the solution
-        controls exposed)? That is the one blocker left for running the
-        ecology bridge to completion on your side.
 \end{enumerate}
 \end{frame}
 
