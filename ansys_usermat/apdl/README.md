@@ -27,6 +27,41 @@ directory closes that gap.
 > is a general APDL gotcha, not specific to this material — any state/property
 > table needing more than 6 values needs multiple `TBDATA` calls.
 >
+> **Correction 2026-09-29, applies to everything below about the two-layer
+> cylinder (`t_growth_cylinder*.dat`, all 12 decks): the two layers were
+> barely bonded.** Each volume is meshed on its own and bonded with
+> `NUMMRG,NODE`, which merges only coincident nodes. The interface
+> divisions of the two sweeps do not line up, so the base deck bonds 63 of
+> 5673 growth-layer interface nodes: three axial lines, at θ = 0°, 30° and
+> 60°. The mesh1 deck bonds two lines, and the 4-condition ecology deck
+> bonds only its four corner nodes. Counted with mesh-only runs.
+> - The "two-lobe bulge / early buckling mode" below is the layer lifting
+>   between those bond lines, not physics. It is two lobes where three
+>   lines hold the layer and one lobe where two do (mesh1 at half the
+>   element size).
+> - The α=0.015 corner distortions, and the finer meshes failing at their
+>   first substep, have the same cause.
+> - The stresses of the cylinder ecology decks, including the 4-condition
+>   comparison, rest on this and must be re-run before use. Their α and
+>   ecology values do not involve the mesh.
+>
+> **Fix:** `VGLUE,ALL`, then select each volume through its bounding face
+> (`CSYS,1` / `ASEL,S,LOC,X,R_IN` / `VSLA,S` for the substrate,
+> `ASEL,S,LOC,X,R_OUT` / `VSLA,S` for the growth layer) before `MAT,n` and
+> `VSWEEP`. `VSEL,LOC` by radius selects nothing, which is why VGLUE had
+> been abandoned. All 651 interface nodes are then bonded.
+>
+> **Mesh convergence on the bonded mesh** at α=0.01 (2.4k / 19k / 150k
+> elements, `cylinder_mesh_convergence.py`):
+> - Maximum radial displacement 1.7405e-3 / 1.7399e-3 / 1.7398e-3.
+> - θ-profile error vs. the finest mesh 2.7 % → 0.58 %, second order.
+> - The bulge is near-uniform, 0 errors on every mesh. The floating layer
+>   had shown about 30× this displacement.
+>
+> One trap found on the way: the 8/19 `ANSYS.exe` in `F:\biofilm_upf` is
+> not thread-safe under `-smp -np` > 1. The runs recorded below used DMP or
+> `-np 1` and are not affected.
+>
 > **Update 2026-08-20: converges cleanly at α=0.01, and the result is
 > physically interesting.** With disk no longer a constraint (ANSYS work
 > moved to F:, see below), an α sweep found this deck's convergence

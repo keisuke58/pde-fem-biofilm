@@ -30,6 +30,12 @@ Abaqus run is possible here but nothing has been run here yet.
 - `tier2b_real/`, `configs/`, `runs/` — Abaqus coupon/implant job generation,
   configs, and run logs.
 - `tests/` — pytest unit tests (`pytest tests/`).
+- `ecology_constants.py` — the one place the Hamilton ecology model's c*
+  (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
+  (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
+  hard-code `c`, `K_hill`, `n_hill` again (decision 2026-09-29). Exception:
+  reproductions of Klempt et al.'s own examples
+  (`JAXFEM/klempt2026_reproduction.py`, c* = 100 per case).
 
 ## ANSYS environment on this PC
 
@@ -56,10 +62,19 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   the run means nothing. See `ansys_usermat/apdl/RUNBOOK.md` for the full
   build/run procedure and `link_v222.ps1` (below) for rebuilding from
   scratch.
-- **Intel Fortran (ifort) / Visual Studio presence: unconfirmed.** Not found
-  via plain `where ifort`; must check from the "Intel oneAPI command prompt
-  for Intel 64 for Visual Studio" Start Menu entry, not a bare cmd/PowerShell.
-  Do this before assuming the USERMAT build will work.
+- **Which `ANSYS.exe` (2026-09-29):** `F:\biofilm_upf\ANSYS.exe` is the
+  8/19 build (inline core only). It gives **non-deterministic, broken
+  solves under `-smp -np` > 1** — use it only with `-np 1` or the default
+  DMP launch. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
+  (usermat_biofilm.f + Python/ecology bridge with n_sub, via
+  `link_v222.ps1`), safe with `-smp -np 4/8`. When relinking,
+  `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
+  ifort reads a stale `biofilm_py_bridge.mod` and link_v222.ps1 still
+  links the old object into a mixed exe.
+- **Intel Fortran (ifort) / Visual Studio: confirmed working** through
+  `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
+  `where ifort` still finds nothing — the script sets up the environment
+  itself.
 
 ## Helper scripts (repo root, Windows/IKMHIWI03-specific)
 
