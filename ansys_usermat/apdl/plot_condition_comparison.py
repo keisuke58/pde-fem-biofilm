@@ -11,6 +11,12 @@ in the physical 2x2 layout rather than ranked by condition, because within this
 one run condition and position are the same variable: one condition per
 quadrant, so nothing here tells them apart.
 
+UPDATE 2026-09-29: re-run on the bonded mesh (VGLUE; the old decks were bonded
+at 4 corner nodes) with c* = 25, no Hill gate, alpha* = 0. Growth layer /
+substrate von Mises 6.3x (was 15.2x), spread between conditions 0.4 % (was
+9.1 %). The paragraph below about "the answer is the conditions" is superseded
+-- see plot_condition_paired.py.
+
 That is as far as this run goes, and it is as far as this script claims.
 Whether the differences belong to the conditions or to the places is settled by
 `plot_condition_paired.py`, which reads a second run whose seeds are shifted by
@@ -40,8 +46,9 @@ LAYOUT = {2: ("CS", "Commensal/Static", "Comm./Static", 0, 0),
 # alpha after 10 chained substeps, from ecology_4region_reference_all_real_clsm.py
 # -- the independent reference the ANSYS run was verified against, not a
 # transcription of the run's own output.
-ALPHA = {2: 4.6144769029e-03, 3: 4.6920293146e-03,
-         4: 4.3556778678e-03, 5: 4.8186255156e-03}
+# (c* = 25, no Hill gate, alpha* = 0 -- ecology_constants.py, 2026-09-29.)
+ALPHA = {2: 4.8943827130e-03, 3: 4.9036186081e-03,
+         4: 4.8772026944e-03, 5: 4.9070523296e-03}
 
 
 def parse(path):
@@ -103,8 +110,8 @@ def plot(seqv, mats, out):
                         fontsize=8.5)
     axL.set_ylabel(r"growth $\alpha$ after 10 substeps")
     axL.set_ylim(min(vals) * 0.93, max(vals) * 1.04)
-    axL.set_title("Four real Day-1 CLSM compositions drive four\n"
-                  "different growth values", fontsize=10.5)
+    axL.set_title("Four real Day-1 CLSM compositions: growth\n"
+                  "(axis zoomed; the four differ by < 1 %)", fontsize=10.5)
     axL.grid(alpha=0.25, axis="y")
     # Anchored to the figure, not the axes: axes-fraction text moves with the
     # axes when tight_layout shrinks them, and lands back on the tick labels.
@@ -147,7 +154,8 @@ def plot(seqv, mats, out):
              f"{th_r:.3f},  high-$Z$ / low-$Z$ = {z_r:.3f},\n"
              f"against a total spread of {hi / lo:.3f} across all four. One "
              f"condition per quadrant means this run\non its own cannot "
-             f"separate them; the paired runs do, and it is the condition.",
+             f"separate them; the paired runs show placement effects of the "
+             f"same order.",
              ha="center", va="bottom", fontsize=7.8, color="0.35")
 
     fig.suptitle("Four clinical conditions on one curved shell, ANSYS 2022 R2 "
@@ -188,10 +196,10 @@ def main(argv=None):
     print(f"\nalpha order  {' < '.join(order_a)}")
     print(f"stress order {' < '.join(order_s)}")
     if order_a != order_s:
-        print("The two orders differ. That is not the condition/position "
-              "confound -- plot_condition_paired.py shows position is worth "
-              "~0.1% here -- but a reproducible property of one seed; see "
-              "that script and the chapter's limitations.")
+        print("The two orders differ. With a 0.4 % spread between conditions, "
+              "placement/neighbour effects are of the same order "
+              "(plot_condition_paired.py), so the stress order is not a "
+              "property of the conditions alone.")
     return 0
 
 
