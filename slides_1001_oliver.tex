@@ -122,19 +122,31 @@ substituted rather than silently misused.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{...and it is the condition, not where it sits, that moves it}
-\small Four different growth values (spread $1.106\times$), and the growth
-layer carries $15.2\times$ the von Mises of the non-growing substrate.
-\vspace{1pt}
+\begin{frame}{Correction: the cylinder stresses I reported were wrong}
+\small The two layers of every cylinder deck were meshed separately and
+joined with \texttt{NUMMRG}, which merges only coincident nodes --- in the
+4-condition deck, just the \textbf{4 corner nodes}. The growth layer was
+essentially floating. Fixed with \texttt{VGLUE} (one shared interface mesh);
+the bonded mesh converges at second order (profile error
+$2.7\,\% \to 0.58\,\%$). Constants now also match the TMCMC calibration
+($c^*=25$, no Hill gate, $\alpha^*=0$).
+\vspace{6pt}
 \begin{center}
-\includegraphics[width=0.86\linewidth]{assets/v222_conditions_paired_slide.png}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & \textbf{reported before} & \textbf{bonded, re-run}\\
+\midrule
+growth layer / substrate, mean von Mises & $15.2\times$ & $\mathbf{6.3\times}$\\
+stress spread between the 4 conditions & $9.1\,\%$ & $\mathbf{0.4\,\%}$\\
+growth $\alpha$ spread between the 4 conditions & $1.106\times$ & $1.006\times$\\
+\bottomrule
+\end{tabular}
 \end{center}
-\vspace{-4pt}
-{\footnotesize One run could not separate condition from position -- each
-condition sits in its own quadrant. An \emph{earlier} deck (same mesh,
-materials, stepping; seeds shifted one slot) puts three of them in a second
-quadrant, which does separate them: moving only in $\theta$ costs
-$\sim\!0.1\,\%$, against $9.1\,\%$ between conditions.}
+\vspace{6pt}
+{\footnotesize ANSYS $\alpha$ matches the independent Python reference at all
+768 integration points per region (5 printed digits). The earlier
+``condition, not position'' conclusion is withdrawn until the paired deck is
+re-run on the bonded mesh.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -161,27 +173,39 @@ same chaining every verified reference in the repo already uses, accumulating
 growth per sub-step rather than from the final state.}}
 \end{center}
 \vspace{2pt}
-{\footnotesize Verified bit-exact against that reference loop on the Python
-side. The Fortran wiring and an end-to-end run on your deck are the next
-step --- so \emph{if} that surfaces something, I may come back to you; but
-the step-size mismatch itself is no longer a reason to.}
+{\footnotesize Since then wired through this repo's own USERMAT (not yet your
+call site) and confirmed on real ANSYS: exact match to the reference at 3 and
+at 1000 sub-steps. At your step the ecology state now stays sane --- but with
+$k_\alpha=50$ one increment of $0.1$ takes $\alpha$ to $\approx 4.7$
+($5.7\times$ stretch) and a 54-element test cylinder distorts. That rate was
+set for decks spanning $\sim$1\,ms, so it needs your deck's time unit (Q4).}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{UserElement vs.\ UserMat: still open}
-\small The assignment says \emph{UserElement/UserMat}; this repo has a
-UserMat only -- it can't transport the ecology field spatially by itself.
-\vspace{6pt}
+\begin{frame}{Proposal: thesis results on my own implementation}
+\small
+\begin{itemize}
+  \item \textbf{Main path:} the paper-faithful ecology (Klempt et al.\ 2026;
+        my integrator reproduces all 14 of its numerical examples) $\to$
+        JAX PDE computes $\alpha(\mathbf x)$ $\to$ ANSYS USERMAT
+        (one-way coupling)
+  \item \textbf{Why not a full merge into your element now:} different
+        interaction term and $n=2$ (a 5-species version means rewriting
+        \texttt{Ussfin}), the time-unit question (Q4), and new verification
+        with nothing to compare against --- roughly 1--2 months
+  \item \textbf{What one-way coupling gives up} is mainly stress$\to$growth
+        feedback, which Klempt et al.\ 2024 neglect as well (Sec.\,2.4)
+  \item \textbf{Limitation:} the ANSYS side is material-point only; the
+        spatial fields live in the JAX PDE, which is not yet checked against
+        an external reference
+\end{itemize}
+\vspace{4pt}
 \begin{center}
-\colorbox{c3!12}{\parbox{0.85\linewidth}{\centering\small
-\textbf{Working assumption, pending you/Meisam:} extra nodal DOFs inside a
-UserElement -- not precomputed externally, as this repo does today}}
+\colorbox{c3!12}{\parbox{0.88\linewidth}{\centering\small
+The entry point into your element exists (runs, 0 errors). Real coupling ---
+$\phi$, $c$ into the ecology, the time step --- I would list as
+\textbf{future work}. Does that make sense to you?}}
 \end{center}
-\vspace{6pt}
-{\scriptsize Our verified UMAT carries over either way
-(\texttt{KEYANSMAT=1} $\to$ \texttt{ElemGetMat}, confirmed from ANSYS's
-own example) -- the genuinely new work either way is the field-DOF
-residual for ecology transport, no template in ANSYS's own examples.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -193,8 +217,11 @@ residual for ecology transport, no template in ANSYS's own examples.}
   \item Is a re-tuned parameter set (\texttt{MaxGrowth}/\texttt{dt}/
         \texttt{Penalty1}) worth exploring together, now that a concrete
         coupling-strength ceiling exists for the baseline one?
-  \item UserElement vs.\ UserMat -- does the working assumption above
-        still look right from your side?
+  \item Is the split above --- my own implementation for the thesis, the
+        merge into your element as future work --- fine from your side?
+  \item What physical time does one unit of your deck's \texttt{TIME}
+        stand for? $k_\alpha$ has to be set on that axis before a run at
+        \texttt{TIME INC}$\,=0.1$ means anything.
 \end{enumerate}
 \end{frame}
 

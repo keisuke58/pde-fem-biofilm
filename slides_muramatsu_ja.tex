@@ -127,9 +127,9 @@ ANSYS と Abaqus でせん断成分の並びが違います。
 成長変数が壊れずに往復する &
 状態スロット 176{,}800 サンプルすべて書いた値のまま &
 \lv{cok}{実機} \\[2pt]
-条件が応力を動かす &
-割り当てをずらした2計算の対比較。位置の効果は約 0.1\% &
-\lv{cok}{2計算} \\[2pt]
+生態系モデルが論文どおり &
+Klempt et al.\ 2026 の数値例 14 件をすべて再現（誤植 2 か所も特定） &
+\lv{cok}{外部} \\[2pt]
 式そのものが正しい &
 \textbf{言えない}。等容分解の $J^{-2/3}$ に不整合を発見 &
 \lv{cwarn}{限界に明記} \\
@@ -143,23 +143,33 @@ ANSYS と Abaqus でせん断成分の並びが違います。
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{4. 結果：4つの臨床条件で応力が変わる}
+\begin{frame}{4. 結果：4つの臨床条件（接着バグ修正後に再計算）}
 \small 実測の Day-1 CLSM 組成を4条件ぶん与え、曲面シェル上で解いた。
 \vspace{4pt}
+\begin{center}\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & 以前の報告 & \textbf{修正後} \\
+\midrule
+成長層 / 基材の von Mises & $15.2$ 倍 & $\mathbf{6.3}$ \textbf{倍} \\
+条件間の応力の広がり & $9.1\%$ & $\mathbf{0.4\%}$ \\
+条件間の成長 $\alpha$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
 \begin{itemize}\small
-  \item 4条件は $1.106$ 倍の幅で異なる成長を生む（独立実装と全桁一致）
-  \item 成長層の von Mises は、成長しない基材の \textbf{15.2 倍}
-        $\Rightarrow$ 応力は荷重ではなく\textbf{成長機構}が作っている
-  \item 条件間の応力の広がりは \textbf{9.1\%}
+  \item 応力は荷重ではなく\textbf{成長機構}が作っている点は変わらず
+  \item ANSYS の $\alpha$ は独立な参照計算と全積分点で一致
 \end{itemize}
-\vspace{5pt}
+\vspace{4pt}
 \begin{center}
 \colorbox{cwarn!12}{\parbox{0.93\linewidth}{\footnotesize
-\textbf{一度誤って解釈し、訂正しました。}当初は「位置の効果が大半」と書いて
-いましたが、1つの計算内では条件と位置が交絡しており、
-たまたま応力の高い2条件が同じ側に置かれていただけでした。
-条件の割り当てがずれた\textbf{別の計算}と対にすると、位置だけを動かした効果は
-\textbf{約 0.1\%}。\textbf{動かしているのは条件}です。}}
+\textbf{以前の数字は誤りでした。}基材と成長層を \texttt{NUMMRG}（一致する節点だけ結合）で
+つないでいたため、この計算では\textbf{角の4節点しか接着されていません}でした。
+\texttt{VGLUE} で界面を共有させて修正し、メッシュ収束（2次）を確認。定数も TMCMC の
+校正条件（$c^*=25$、Hill なし、$\alpha^*=0$）に統一しました。
+「条件が応力を動かす」という以前の結論は、修正後の再計算まで取り下げます。}}
 \end{center}
 \end{frame}
 

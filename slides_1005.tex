@@ -22,7 +22,8 @@
 
 \title{Master's Thesis --- Status and Plan}
 \subtitle{Joint kickoff meeting: Prof.\ Muramatsu $\times$ Dr.\ Soleimani}
-\author{Keisuke Nishioka\\[4pt]
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{%
 \small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
 \small Keio University}
 \date{5 October 2026}
@@ -352,62 +353,54 @@ ANSYS one done ahead of Felix's UserElement code, as the smoke test
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Next: moving past the cube --- now converges}
-Direct response to the caveat a few slides back: a curved \textbf{substrate}
-(no growth) bonded to a thin \textbf{growth layer} (biofilm) on top.
+\begin{frame}{Next: moving past the cube --- a bonding bug, found and fixed}
+\small A curved \textbf{substrate} (no growth) bonded to a thin \textbf{growth
+layer} (biofilm) on top.
 \vspace{4pt}
 \begin{itemize}
-  \item Not closed-form (two bonded curved layers have no simple analytic
-        answer) --- a qualitative smoke test, not a pass/fail check
-  \item \textbf{Converges cleanly at $\alpha{=}0.01$} --- narrower than the
-        cube's target $\alpha{=}0.05$; threshold sits between $0.01$ (clean)
-        and $0.015$ (element distortion). Four targeted BC/mesh attempts to
-        push past that threshold, all reverted --- documented, not solved
-  \item At the converged $\alpha$, the outer surface does \textbf{not} bulge
-        uniformly: a \textbf{two-lobe} radial-displacement pattern across
-        the arc --- consistent with an early buckling mode, though not
-        confirmed against a real eigenvalue analysis
+  \item \textbf{Bug:} the two layers were meshed separately and joined with
+        \texttt{NUMMRG}, which merges only coincident nodes --- the layers
+        were bonded along a few node lines only (4 corner nodes in the
+        4-condition deck). The ``two-lobe bulge'' reported earlier was the
+        layer lifting between those lines, \textbf{not} a buckling mode
+  \item \textbf{Fix:} \texttt{VGLUE} (one shared interface mesh). The bonded
+        cylinder bulges near-uniformly and converges at second order under
+        refinement (2.4k/19k/150k elements: profile error
+        $2.7\,\% \to 0.58\,\%$)
+  \item \textbf{Consequence:} every stress from the old decks is re-derived.
+        4 clinical conditions: growth layer $6.3\times$ the substrate von
+        Mises (not $15.2\times$), $0.4\,\%$ spread between conditions (not
+        $9.1\,\%$); the $\alpha{\approx}0.01$ convergence limit was measured
+        on the mis-bonded mesh and is to be re-checked
 \end{itemize}
-\vspace{4pt}
-{\scriptsize Disk constraint since resolved (ANSYS/Abaqus work moved to a
-3.7\,TB local drive). Deck, full diagnosis, and the bulge notebook:
-\texttt{ansys\_usermat/apdl/t\_growth\_cylinder\_shell.dat},
-\texttt{ansys\_usermat/apdl/cylinder\_shell\_bulge\_analysis.ipynb}.}
+\vspace{2pt}
+{\scriptsize Constants now match the TMCMC calibration ($c^*=25$, no Hill
+gate, $\alpha^*=0$).}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{UserElement vs.\ UserMat: narrowed, not settled}
-\small The assignment says \emph{UserElement/UserMat}; this repo has a
-UserMat only --- it can't transport the ecology field spatially by itself.
-\vspace{6pt}
-\begin{table}
-\centering\small
-\begin{tabular}{@{}p{4.6cm}p{4.6cm}@{}}
-\toprule
-\textcolor{c3}{\textbf{Carries over either way}} & \textcolor{todo}{\textbf{Genuinely new work}}\\
-\midrule
-Our verified UMAT, unchanged --- a UserElement can call it directly
-(\texttt{KEYANSMAT=1} $\to$ \texttt{ElemGetMat}, confirmed from ANSYS's own
-example) &
-Field-DOF residual for the ecology transport --- \textbf{no template} in
-ANSYS's own example, either way\\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{frame}{UserElement vs.\ UserMat: proposal}
+\small
+\begin{itemize}
+  \item \textbf{Proposal:} thesis results on my own implementation ---
+        the paper-faithful ecology (reproduces all 14 numerical examples of
+        Klempt et al.\ 2026) $\to$ JAX PDE computes $\alpha(\mathbf x)$
+        $\to$ ANSYS USERMAT (one-way coupling)
+  \item \textbf{Why not Oliver's UserElement for the thesis:} different
+        interaction term, written for 2 species (5 species means rewriting
+        its PDE assembly), an open time-unit question, and new verification
+        with nothing to compare against --- roughly 1--2 months
+  \item \textbf{What one-way coupling gives up} is mainly stress$\to$growth
+        feedback, which Klempt et al.\ 2024 neglect as well
+  \item \textbf{Limitation:} the ANSYS side is material-point only; the
+        spatial fields live in the JAX PDE, not yet checked against an
+        external reference
+\end{itemize}
 \vspace{4pt}
 \centering
 \colorbox{c3!12}{\parbox{0.9\linewidth}{\centering\small
-\textbf{Working assumption, pending Oliver/Meisam:} extra nodal DOFs inside a
-UserElement --- not precomputed externally, as this repo does today}}
-\vspace{6pt}
-{\scriptsize Notes: \texttt{ansys\_usermat/USERELEM\_NOTES.md}.
-\textbf{Update:} Felix replied 20 Aug --- he has left IKM and can only give
-informal input, not a detailed USERMAT review; that now goes to
-Oliver/Meisam/Hendrik. He also flagged that his own approach has no viscous
-split ($F_v$) --- confirmed to reduce exactly to his $F=F_eF_g$ at
-$\eta{=}0$, and that slice is already inside the verified chain above.
-\texttt{crosscheck.py} is still ready to diff against his implementation
-once it arrives.}
+Entry point into Oliver's element exists (runs, 0 errors); real coupling
+listed as \textbf{future work} --- being discussed with Oliver on 1 Oct}}
 \end{frame}
 
 % --------------------------------------------------------
@@ -471,8 +464,8 @@ once it arrives.}
 \begin{frame}{Questions for this meeting}
 \begin{enumerate}
   \item Keio: anything needed from the Keio side for the DD requirements this term?
-  \item UserElement vs.\ UserMat: does the working assumption on the previous
-        slide look right, or is there a reason to prefer the other route?
+  \item UserElement vs.\ UserMat: is the proposal above (own implementation
+        for the thesis, merge into Oliver's element as future work) acceptable?
   \item Presentation: online attendance from Japan possible for Prof.\ Muramatsu?
 \end{enumerate}
 \end{frame}
