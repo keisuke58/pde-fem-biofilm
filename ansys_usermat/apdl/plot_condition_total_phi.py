@@ -8,6 +8,11 @@ reaches the stress. The CLSM compositions are fractions -- sum_i phi_i = 1 for
 every condition -- so all four start from the same total and relax to the same
 value, however different their make-up.
 
+The totals part only during the early transient, mostly through the
+vitalities psi_i: the alpha spread (converged; 200 and 800 steps per segment
+agree) is 0.56 % at t = 1e-4, peaks at 2.4 % near t = 1e-2, and falls to
+0.12 % at t = 1 and 0.003 % at t = 50. Printed by this script.
+
 Left: the measured initial compositions (very different). Right: phi_tot(t)
 for each condition, from the same seeds and ecology parameters as the
 4-region all-real cylinder deck.
@@ -56,24 +61,41 @@ def seeds():
 
 
 def trajectory(g0, theta, t_edges, per_seg=200):
-    """phi_tot at each edge, integrating each log-spaced segment finely."""
-    g, t_prev, out = np.asarray(g0), 0.0, []
+    """(phi_tot, int_0^t phi_tot) at each edge, integrating each log-spaced
+    segment in per_seg equal steps."""
+    g, t_prev, out, cum = np.asarray(g0), 0.0, [], []
+    acc = 0.0
     for t in t_edges:
-        g, _ = E.ecology_substeps(g, theta, t - t_prev, per_seg)
+        g, pi = E.ecology_substeps(g, theta, t - t_prev, per_seg)
+        acc += pi
         out.append(E.living_fraction_total(g))
+        cum.append(acc)
         t_prev = t
-    return np.array(out)
+    return np.array(out), np.array(cum)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("-o", "--out", type=Path,
                     default=Path("assets/condition_total_phi.png"))
+    ap.add_argument("--per-seg", type=int, default=200,
+                    help="ecology steps per log-spaced time segment "
+                         "(convergence check: compare 200 with 800)")
     a = ap.parse_args(argv)
 
     k_alpha, theta, g0 = seeds()
     t = np.logspace(-7, np.log10(50.0), 70)
-    traj = {c: trajectory(g, theta, t) for c, g in g0.items()}
+    res = {c: trajectory(g, theta, t, a.per_seg) for c, g in g0.items()}
+    traj = {c: r[0] for c, r in res.items()}
+
+    print(f"alpha spread between the conditions vs growth time "
+          f"({a.per_seg} steps per log segment):")
+    for T in (1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 50.0):
+        j = int(np.argmin(abs(np.log(t / T))))
+        al = {c: k_alpha * r[1][j] for c, r in res.items()}
+        lo, hi = min(al, key=al.get), max(al, key=al.get)
+        print(f"  t={t[j]:9.3e}: spread {(al[hi] / al[lo] - 1) * 100:6.3f} %"
+              f"  ({lo} lowest, {hi} highest)")
 
     print(f"alpha at TIME={DECK_TIME:g} vs number of ecology steps "
           f"(ANSYS uses 10):")

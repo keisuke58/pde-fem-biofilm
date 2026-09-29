@@ -615,22 +615,29 @@ The reason the conditions barely differ follows from the model's definition
 rather than from its parameters. The condition reaches the stress only through
 $\alpha$, since the material constants are the same in every region; and
 $\alpha$ grows as $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$ with
-$\varphi_{\mathrm{tot}} = \sum_i \varphi_i\psi_i$, the living total. Which
-species make up that total does not enter. The CLSM compositions are fractions,
-so $\sum_i\varphi_i = 1$ for every condition: the four start from the same
-total, and the ecology relaxes all four to the same value
-($\varphi_{\mathrm{tot}} = 0.9635$ by $t = 50$), however different their
-make-up (Figure~\ref{fig:ch5-total-phi}). A longer growth interval therefore
-does not open the conditions up either; it closes them further. The spread
-that remains at $t = 10^{-4}$ comes from the short initial transient of the
-vitalities $\psi_i$.
+$\varphi_{\mathrm{tot}} = \sum_i \varphi_i\psi_i$, the living total. The
+composition can reach the stress only by changing that total. The CLSM
+compositions are fractions, so $\sum_i\varphi_i = 1$ for every condition: the
+four start from the same total, and the ecology relaxes all four to the same
+value ($\varphi_{\mathrm{tot}} = 0.9635$ by $t = 50$), however different their
+make-up (Figure~\ref{fig:ch5-total-phi}). In between, the totals part only
+during a short transient, and mostly through the vitalities $\psi_i$ rather
+than the volume fractions: at $t = 10^{-2}$ the sums $\sum_i\varphi_i$ differ
+by at most $0.3\,\%$ between the conditions, the living totals by $1.8\,\%$.
+The resulting spread in $\alpha$, converged in the ecology time step, is
+$0.56\,\%$ at $t = 10^{-4}$, peaks at $2.4\,\%$ near $t = 10^{-2}$, and falls
+to $0.12\,\%$ at $t = 1$ and $0.003\,\%$ at $t = 50$. A longer growth interval
+therefore opens the conditions up only slightly, and only briefly; over long
+growth it closes them.}
 
-Refining the ecology time step shows how little of that remaining difference
-can be ranked. The decks take one ecology step per mechanical increment, ten in
-all, and ANSYS reproduces that ten-step integration exactly. Converged in the
-step size, the growth values move by about $1\,\%$ --- more than the spread
-between the conditions --- and in a different order: the spread stays near
-$0.5\,\%$, but the ranking of the conditions given above does not survive.
+\TierB{%
+Refining the ecology time step shows how little of the difference at the
+simulated time can be ranked. The decks take one ecology step per mechanical
+increment, ten in all, and ANSYS reproduces that ten-step integration to the
+five digits it prints. Converged in the step size, the growth values move by
+$0.8$--$1.5\,\%$ --- more than the spread between the conditions --- and in a
+different order: the spread stays near $0.5\,\%$, but the ranking of the
+conditions given above does not survive.
 An earlier version of this section reported a $9.1\,\%$ spread and a clear
 condition effect; that came from the unbonded mesh and the uncalibrated
 constants together, and does not stand. For the composition to reach the
@@ -646,7 +653,8 @@ depends on composition --- none of which the calibrated model has.}
     $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ that drives $\alpha$, for
     each condition, from the same seeds and ecology parameters as the
     cylinder decks. The make-up differs widely; the total that reaches the
-    mechanics does not.}
+    mechanics parts only briefly (at most $2.4\,\%$ in $\alpha$, near
+    $t = 10^{-2}$) and converges to the same value.}
   \label{fig:ch5-total-phi}
 \end{figure}
 
