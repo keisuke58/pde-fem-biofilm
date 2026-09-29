@@ -117,3 +117,98 @@ def test_server_dispatches_ecology_by_kind():
     np.testing.assert_allclose(
         eco_resp["g_new"], np.asarray(ecology_jax.ecology_step(G0, THETA_DEMO, DT_H)),
         rtol=1e-12, atol=1e-14)
+
+
+# ---------------------------------------------------------------------------
+# Sub-stepping: one request advancing the ODE n_sub times.
+#
+# The ecology ODE's usable step is much finer than the pseudo-time step a
+# mechanical deck is built around -- a factor of ~1000 on the partner
+# framework's own deck -- and a solver's bisection cannot bridge that. Sending
+# n_sub lets one call cover the increment at one socket round trip.
+#
+# The scheme is not new: every reference implementation under apdl/ advances
+# the ODE by chaining ecology_step, accumulating growth from each sub-step's
+# own state. These tests pin that the server does exactly the same thing, so
+# the bridge cannot drift from the references it is verified against.
+# ---------------------------------------------------------------------------
+def _chain(g0, theta, dt, n):
+    """The reference loop, as apdl/ecology_*_reference*.py writes it."""
+    import ecology_jax
+    g, phi_int = np.asarray(g0, dtype=float), 0.0
+    for _ in range(n):
+        g = np.asarray(ecology_jax.ecology_step(g, theta, dt / n))
+        phi_int += (dt / n) * float(ecology_jax.living_fraction_total(g))
+    return g, phi_int
+
+
+def test_substepping_reproduces_the_reference_loop_exactly():
+    import ecology_jax
+    import protocol
+    from material_server import evaluate_ecology
+    import json
+
+    g0 = np.asarray(ecology_jax.default_initial_state(), dtype=float)
+    theta = np.zeros(20)
+    dt, n = 1.0e-4, 10
+
+    g_ref, phi_ref = _chain(g0, theta, dt, n)
+    got = json.loads(evaluate_ecology(
+        json.loads(protocol.encode_ecology_request(g0, theta, dt, n_sub=n))))
+
+    # Bit-exact, not merely close: the server runs the same calls in the same
+    # order, so anything else means it is doing something different.
+    assert np.array_equal(np.asarray(got["g_new"]), g_ref)
+    assert got["phi_int"] == phi_ref
+
+
+def test_omitting_n_sub_is_the_old_single_step():
+    """Backward compatibility, in value as well as shape: a client built
+    against the pre-n_sub schema must get exactly what it got before."""
+    import ecology_jax
+    import protocol
+    from material_server import evaluate_ecology
+    import json
+
+    g0 = np.asarray(ecology_jax.default_initial_state(), dtype=float)
+    theta = np.zeros(20)
+    dt = 1.0e-5
+
+    assert b"n_sub" not in protocol.encode_ecology_request(g0, theta, dt)
+    got = json.loads(evaluate_ecology(
+        json.loads(protocol.encode_ecology_request(g0, theta, dt))))
+    g1 = np.asarray(ecology_jax.ecology_step(g0, theta, dt))
+
+    assert np.array_equal(np.asarray(got["g_new"]), g1)
+    assert got["phi_int"] == dt * float(ecology_jax.living_fraction_total(g1))
+
+
+def test_a_coarse_step_split_finely_is_not_the_same_as_taking_it_whole():
+    """The point of sub-stepping, stated as a test: if splitting made no
+    difference there would be nothing to fix, and a regression that quietly
+    ignored n_sub would pass every other check here."""
+    import ecology_jax
+    import protocol
+    from material_server import evaluate_ecology
+    import json
+
+    g0 = np.asarray(ecology_jax.default_initial_state(), dtype=float)
+    theta = np.zeros(20)
+    dt = 1.0e-2                      # well above the ODE's usable step
+
+    whole = json.loads(evaluate_ecology(
+        json.loads(protocol.encode_ecology_request(g0, theta, dt))))
+    split = json.loads(evaluate_ecology(
+        json.loads(protocol.encode_ecology_request(g0, theta, dt, n_sub=100))))
+
+    assert not np.allclose(np.asarray(whole["g_new"]),
+                           np.asarray(split["g_new"]), rtol=1e-6)
+
+
+def test_n_sub_must_be_at_least_one():
+    import ecology_jax
+    import protocol
+
+    g0 = np.asarray(ecology_jax.default_initial_state(), dtype=float)
+    with pytest.raises(ValueError):
+        protocol.encode_ecology_request(g0, np.zeros(20), 1e-5, n_sub=0)

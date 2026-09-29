@@ -132,10 +132,25 @@ def evaluate_ecology(req: dict) -> bytes:
     """0D Hamilton ecology ODE step -- see ecology_jax.py. Imported lazily so
     a plain material-bridge deployment (kUsePy=1, ecology unused) does not
     need jax installed, the same idiom set_tangent_backend uses for the
-    optional 'jax' dsdePl backend."""
+    optional 'jax' dsdePl backend.
+
+    `n_sub` divides the increment into that many ODE steps before returning,
+    so a caller whose own time step is far coarser than the ODE's usable one
+    can still advance it correctly at one round trip. The loop is the same one
+    every reference implementation under `apdl/` runs, including how growth is
+    accumulated: per sub-step, from that sub-step's state, never from the
+    final state applied to the whole increment.
+    """
     import ecology_jax
-    g_new = ecology_jax.ecology_step(req["g"], req["theta"], req["dt_h"])
-    return encode_ecology_response(g_new)
+    n_sub = int(req.get("n_sub", 1))
+    if n_sub < 1:
+        raise ValueError(f"n_sub must be at least 1, got {n_sub}")
+    dt_sub = float(req["dt_h"]) / n_sub
+    g, phi_int = req["g"], 0.0
+    for _ in range(n_sub):
+        g = ecology_jax.ecology_step(g, req["theta"], dt_sub)
+        phi_int += dt_sub * float(ecology_jax.living_fraction_total(g))
+    return encode_ecology_response(g, phi_int)
 
 
 class _Handler(socketserver.StreamRequestHandler):
