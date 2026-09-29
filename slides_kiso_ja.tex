@@ -8,8 +8,9 @@
 %   slides_muramatsu_ja.tex はこの2点を既知として書いてあるので、
 %   相手が初見ならこちらを先に挟む。
 %
-% CONSTRAINT: 基礎の2点だけ。4ページ。増やさない。
-% 箇条書きは体言止め。補足は要るところだけ。
+% CONSTRAINT: 6ページ以内。箇条書きは体言止め。補足は要るところだけ。
+% 2026-09-29: 「alpha は組成から決まる」で止まっていて、試問で必ず来る
+%   「どうやって?」に答えられなかったので、データと式の2枚を追加。
 \documentclass[aspectratio=169,11pt]{beamer}
 \usepackage{luatexja}
 \usetheme{Madrid}
@@ -17,6 +18,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{bm}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,decorations.pathmorphing}
 
@@ -94,6 +96,43 @@
 \vspace{8pt}
 \small 「膨らみたい」と「実際に膨らんだ」は別物。実際の変形はまわりが許す分だけで、
 その\textbf{差}が応力になる。
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{$\alpha$ はどこから来るのか（1）実測データ}
+\vspace{-2pt}
+{\small 菌種の割合は CLSM で測ってある。4条件 $\times$ 21日 $\times$ 5菌種。}
+\vspace{1pt}
+\begin{center}
+\includegraphics[width=\linewidth, height=0.64\textheight, keepaspectratio]{assets/heine_species_composition.png}
+\end{center}
+\vspace{-4pt}
+{\small Day 1 で既に大きく違う。修論で使うのは \textbf{Day 1 の組成}で、
+ここが4条件の出発点。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{$\alpha$ はどこから来るのか（2）組成 $\rightarrow$ 成長}
+\small 組成を時間発展させ、その積み上げが $\alpha$ になる。
+\vspace{5pt}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
+$\varphi_{\text{tot}} = \sum_i \varphi_i\,\psi_i$
+\qquad\qquad
+$\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
+\end{center}
+\vspace{6pt}
+\begin{itemize}\small
+  \item $\varphi_i$：菌種 $i$ の体積分率、$\psi_i$：その生存率
+  \item $\varphi_{\text{tot}}$ は\textbf{生きている菌の総量}。これが成長を駆動する
+  \item $\varphi_i$ の時間発展は5種の相互作用モデル。
+        相互作用行列 $\bm{A}$（対称）と $\bm{b}$、計 20 成分を \textbf{TMCMC で較正}
+  \item 積分するので、\textbf{同じ組成でも時間が長ければ $\alpha$ は大きい}
+\end{itemize}
+\vspace{5pt}
+\small $\psi_i$ は現状 \textbf{0.999 のプレースホルダ}。
+実験側の「生細胞のみ」比は 1 を超える値が出ており、モデルの $\psi_i\in[0,1]$ とは
+別物と確認したため、\textbf{代入せずに留保}している。
 \end{frame}
 
 % --------------------------------------------------------
