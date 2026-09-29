@@ -118,6 +118,11 @@ C     when moving to another ANSYS version.
 
 C     --- locals ---
       double precision C10, C01, D1, ETA, MTYPE, KUSEPY, KSTMAT
+C     Largest ecology step the ODE is verified at. Measured, not assumed: a
+C     Python dt sweep turns erratic from ~1.5e-3, so this sits with margin
+C     below it. See ansys_usermat/apdl/V222_PORT_INSTRUCTIONS.md.
+      double precision DTMAX_ECO, PHIINT
+      parameter       (DTMAX_ECO = 1.0d-4)
       double precision ALPHA, FGSC, FG_INV(3,3)
       double precision FV_OLD(3,3), FV_NEW(3,3), FV_DUM(3,3)
       double precision SV0(6), SVP(6), DFP(3,3)
@@ -137,7 +142,7 @@ C     ANSYS position k's component.
       data MAP6 /1, 2, 3, 4, 6, 5/
 C     Ecology (0D Hamilton ODE) hook locals.
       double precision KUSEECO, KALPHA, G_OLD(12), G_NEW(12),
-     &                 THETA20(20), PHITOT
+     &                 THETA20(20)
       logical          ECOOK
 
 C     --- material properties ---
@@ -174,16 +179,20 @@ C     only, not RESEARCH_MODEL.md sec.2's full reaction-diffusion PDE.
           G_OLD(I) = ustatev(14+I)
         end do
         call INIT_ECO_IF_ZERO(G_OLD)
-        call biofilm_ecology_hook(G_OLD, THETA20, dTime, G_NEW, ECOOK)
+C       The ODE is only trusted below DTMAX_ECO; a mechanical deck's step can
+C       be orders of magnitude coarser, and the solver's bisection will not
+C       bridge that. The hook divides the increment internally instead, and
+C       returns the integral of the living fraction over the sub-steps.
+C       Growth is formed from that integral, not from the final state's
+C       phi_tot: past one sub-step the end state does not stand for the whole
+C       increment, and using it would commit a wrong growth increment quietly.
+        call biofilm_ecology_hook(G_OLD, THETA20, dTime, DTMAX_ECO,
+     &                            G_NEW, PHIINT, ECOOK)
         if (ECOOK) then
           do I = 1, 12
             ustatev(14+I) = G_NEW(I)
           end do
-          PHITOT = 0.0d0
-          do I = 1, 5
-            PHITOT = PHITOT + G_NEW(I)*G_NEW(6+I)
-          end do
-          ALPHA = ALPHA + dTime*KALPHA*PHITOT
+          ALPHA = ALPHA + KALPHA*PHIINT
           if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
           ustatev(10) = ALPHA
         end if

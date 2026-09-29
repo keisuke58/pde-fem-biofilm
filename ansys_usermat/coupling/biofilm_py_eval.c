@@ -244,14 +244,25 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
  * reusing the same persistent connection and server as biofilm_py_eval:
  *
  *     int biofilm_ecology_eval(const double *g12, const double *theta20,
- *                              double dt_h, double *g_new12);
+ *                              double dt_h, int n_sub,
+ *                              double *g_new12, double *phi_int);
  *
  * g12: ecology state (phi[5], phi0, psi[5], gamma), theta20: the 15 A_ij +
  * 5 b_i calibrated interaction parameters (see ecology_jax.py). Returns 0 on
  * success; same failure/fallback contract as biofilm_py_eval.
+ *
+ * n_sub divides dt_h into that many ODE steps before returning. The ecology
+ * ODE's usable step is far finer than a mechanical deck's, and a solver's own
+ * bisection cannot bridge the gap; sub-stepping inside one call does, at one
+ * round trip. n_sub <= 1 sends the original single-step request.
+ *
+ * phi_int is the accumulated integral of the living fraction over those
+ * sub-steps. The caller needs it because growth accumulates as k_alpha times
+ * that integral -- with n_sub > 1 the final state's phi_tot no longer stands
+ * for the whole increment. May be NULL if the caller does not want it.
  */
 static int biofilm_ecology_eval_locked(const double *g12, const double *theta20, double dt_h,
-                                       double *g_new12)
+                                       int n_sub, double *g_new12, double *phi_int)
 {
     char req[4096], resp[RECV_CAP];
     int n, i, attempt, off;
@@ -262,7 +273,10 @@ static int biofilm_ecology_eval_locked(const double *g12, const double *theta20,
     off += snprintf(req + off, sizeof req - off, "],\"theta\":[");
     for (i = 0; i < 20; i++)
         off += snprintf(req + off, sizeof req - off, "%s%.17g", i ? "," : "", theta20[i]);
-    off += snprintf(req + off, sizeof req - off, "],\"dt_h\":%.17g}\n", dt_h);
+    off += snprintf(req + off, sizeof req - off, "],\"dt_h\":%.17g", dt_h);
+    if (n_sub > 1)
+        off += snprintf(req + off, sizeof req - off, ",\"n_sub\":%d", n_sub);
+    off += snprintf(req + off, sizeof req - off, "}\n");
     n = off;
     if (n <= 0 || (size_t)n >= sizeof req) return 1;
 
@@ -284,15 +298,28 @@ static int biofilm_ecology_eval_locked(const double *g12, const double *theta20,
     if (parse_array(resp, "\"g_new\"", g_new12, 12) != 0) return 5;
 
     for (i = 0; i < 12; i++) if (g_new12[i] != g_new12[i]) return 9;   /* NaN guard */
+
+    if (phi_int) {
+        /* Absent only if talking to a server older than the n_sub protocol.
+         * Signal that rather than guessing: at n_sub > 1 the caller cannot
+         * reconstruct it from g_new alone, so a fabricated value would be a
+         * wrong growth increment committed silently. */
+        const char *q = strstr(resp, "\"phi_int\"");
+        if (!q) return 6;
+        q = strchr(q, ':');
+        if (!q) return 6;
+        *phi_int = strtod(q + 1, NULL);
+        if (*phi_int != *phi_int) return 9;
+    }
     return 0;
 }
 
 int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
-                         double *g_new12)
+                         int n_sub, double *g_new12, double *phi_int)
 {
     int rc;
     mutex_lock(&g_mutex);
-    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, g_new12);
+    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, n_sub, g_new12, phi_int);
     mutex_unlock(&g_mutex);
     return rc;
 }
