@@ -66,6 +66,20 @@ directory closes that gap.
 > longer quite uniform (max u_r vs. u_r at θ=30°: 1 % at 0.1, 7 % at 0.2);
 > not examined further.
 >
+> **All cylinder decks now bonded** (2026-09-29). The five small-patch
+> ecology decks (`t_growth_cylinder_ecology{,_clsm,_big,_4region,_8region}`)
+> use one ESIZE = LEN/6 and 16 circumferential divisions so every region
+> split lands on element boundaries (equal region sizes: 192/192, 96×4,
+> 48×8); the shell decks keep their own two ESIZE values. Checked on real
+> ANSYS (`F:\biofilm_upf_kusepy`, `-smp -np 4`): 0 errors for all of them
+> except `t_growth_cylinder_shell_mesh2` (150k elements, not re-run; the
+> same fix is the g2 mesh of the convergence study above) and
+> `t_growth_cylinder_shell_wrapper`, which is written for the separate
+> 5-constant "wrapper v01" material build — run with the
+> `usermat_biofilm.f` exe its constants are read as D1 = 0 and the residual
+> overflows at once. The ecology decks' header reference values still come
+> from the old constants unless their header says otherwise.
+>
 > One trap found on the way: the 8/19 `ANSYS.exe` in `F:\biofilm_upf` is
 > not thread-safe under `-smp -np` > 1. The runs recorded below used DMP or
 > `-np 1` and are not affected.
