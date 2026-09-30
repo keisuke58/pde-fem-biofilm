@@ -37,9 +37,27 @@ RESULT (2026-09-29, klempt2024_results/summary.json): not reproduced.
     reaches phi 0.79 at T* = 1 where the paper fills the cube by 0.2), though
     its c(phi) relation tends to the paper's 0.49 plateau as phi -> 1, which
     supports first-order consumption.
-  - Likely remaining causes, not pinned down: the one-node-thick initial
-    disk and the front speed of an upwind FD scheme vs. the paper's Galerkin
-    FEM. Stopped here; treat the 2024 PDE as not independently reproduced.
+  - klempt2024_sensitivity.py has since tested the guesses this file used to
+    name. The one-node seed is cleared directly: six nodes only reaches
+    phi(0.20) = 0.238 against the paper's 1.000, and it scales with the seed
+    rather than changing the rate. Nutrient starvation is cleared too --
+    consumption a hundredfold weaker moves 0.105 to 0.108. The upwind front
+    speed was NOT tested directly (no grid-refinement study was run); what can
+    be said is that the two terms below account for the gap on their own,
+    which leaves little for it to explain.
+  - Where it does live, one change at a time from this file's own baseline:
+    dropping Eq. 34's n_gradphi . n_gradc projection is worth 3.2x (0.105 ->
+    0.333 -- the projection is ~0 on the colony's sides, so it grows upward as
+    a column instead of spreading, and filling a cube needs the spreading),
+    and K_M = 0.01 in place of Table 2's 1.0 is worth another 2.7x (0.333 ->
+    0.886, against the paper's 1.000). Table 2's K_M with the paper's own
+    plotted c holds f = c/(K_M+c) below 0.5.
+  - That is a localisation, NOT a reproduction: both changes contradict the
+    paper as printed, and matching a curve by moving two knobs is not evidence
+    the knobs are right. Either Fig. 7 came from something other than the
+    literal Eq. 34 / Table 2, or c is normalised differently than its axis
+    suggests -- a question for the authors. Treat the 2024 PDE as not
+    independently reproduced.
 
 Nothing here uses this repo's 5-species model: Klempt 2024 is a different
 (single-species, interface-growth) PDE. Only Eq. 36, alpha_dot = k_a phi, is
