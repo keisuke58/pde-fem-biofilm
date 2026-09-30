@@ -52,9 +52,45 @@ RESULT (2026-09-29, klempt2024_results/summary.json): not reproduced.
     and K_M = 0.01 in place of Table 2's 1.0 is worth another 2.7x (0.333 ->
     0.886, against the paper's 1.000). Table 2's K_M with the paper's own
     plotted c holds f = c/(K_M+c) below 0.5.
-  - That is a localisation, NOT a reproduction: both changes contradict the
-    paper as printed, and matching a curve by moving two knobs is not evidence
-    the knobs are right. Either Fig. 7 came from something other than the
+  - ROOT CAUSE, 2026-09-30, read off the paper itself (it is bundled at the
+    repository root; see THIRD_PARTY.md). The two variants that fit best are
+    the two the paper does not use, and the combination the paper does use is
+    the worst fit here. That is the finding, and it is not a small discrepancy.
+      * Growth. Eq. 34 is phi_dot - beta lap(phi) - k_a alpha
+        + ||grad phi|| (r c)/(k+c) n_gradphi . n_gradc = 0, a plain dot
+        product with no absolute value, and sec. 4.1 leans on exactly that:
+        "the gradient of biofilm and the gradient of nutrients are almost
+        perpendicular to each other resulting in a small value for the vector
+        product and consequently in minimal to no growth", which is what gives
+        Fig. 3 its egg shape. So growth="abs" is not a reading of the paper,
+        it contradicts the mechanism the paper describes.
+      * Consumption. Eq. 35 is c_dot - d lap(c) + g phi = 0 and Eq. 24 fixes
+        it: g*_c = g_bar phi, "the simplest possible functional dependency, a
+        linear relation". Zeroth order in c. So consumption="first_order" is
+        not the paper either.
+      * The constants are right, which removes the other suspicion. Table 2's
+        values are post-division: the paper sets eta_phi = eta_c = 1e-10 and
+        says "parameters which have been divided by their respective eta will
+        lose their bar", so d = 1e10, beta = 2, k_a = 1e-3, k = 1, g = 1e8 and
+        r = 100 are already the coefficients of Eqs. 34-36 and no eta enters
+        separately. The eta_phi visible in Table 1's weak form is the
+        pre-division form of the same thing.
+      * One genuine inconsistency in the paper: Table 1's step 3a solves
+        (alpha_n1 - alpha_n)/((1+alpha_n1) dt) - (k_a/alpha_n)(phi_n1 -
+        phi_n)/dt = 0, which is driven by phi_dot, while Eq. 36 is
+        alpha_dot = k_a phi, driven by phi. Which one was run is not
+        recoverable from the text. It barely moves phi here (k_a alpha ~ 1e-3
+        against a growth term of order 50), so it is not the factor of ten,
+        but it does mean "the paper's alpha equation" is ambiguous.
+  - What is left, and not yet separated: an explicit upwind finite-difference
+    scheme against the paper's implicit Galerkin FEM with bisection to as many
+    as 1e6 substeps; a fixed grid here against a domain that swells there,
+    since Fg feeds back into the geometry the averages are taken over; and the
+    clip of phi to [0,1] here, which the paper does not have.
+  - So this is a localisation, NOT a reproduction, and the earlier "Fig. 4
+    within 0.17/0.10" must not be quoted as agreement with Klempt 2024: it is
+    the agreement of a variant the paper does not use. Either Fig. 7 came from
+    something other than the
     literal Eq. 34 / Table 2, or c is normalised differently than its axis
     suggests -- a question for the authors. Treat the 2024 PDE as not
     independently reproduced.
