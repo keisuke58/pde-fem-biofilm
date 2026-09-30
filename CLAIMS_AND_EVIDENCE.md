@@ -92,17 +92,25 @@ same stresses are 0.02–0.3 kPa — two orders *below* the threshold.
    `dt/τ ≈ 0.5`** — measured, and the reason the delivered routine has to
    inspect the step and refuse. The standard fix is in the supervisor's own
    paper. → [`SOLEIMANI2019_NOTES.md`](SOLEIMANI2019_NOTES.md) §2.
-2. **Run `tier2b_real/tie_coverage_check.py` on `tier2b_real.inp`.** The
+2. **Cap `α`.** Soleimani, Haverich & Wriggers (2021) Eq. 17 carries a
+   Heaviside `H(α − α_cri)` on the growth law, and says why: without a limiting
+   constraint `α` "can literally approach infinity that is physically
+   inadmissible". Ours is uncapped (`ALPHA = ALPHA + KALPHA*PHIINT`, guarded
+   only against going negative), and on the partner's deck it reaches ≈ 4.7 —
+   a 5.7× stretch — and distorts the element. That is the `k_alpha` blocker,
+   and the lineage's answer is a cap, independent of the time-unit question.
+   → [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) §2.
+3. **Run `tier2b_real/tie_coverage_check.py` on `tier2b_real.inp`.** The
    tooth/implant `*TIE` coverage has never been checked, and `ADJUST=NO` with
    hand-set tolerances (0.5 / 0.6 / 1.0 / 2.8 mm) drops far slave nodes with
    only a warning — the same silent-partial-bond failure as §1.1. Needs the
    machine that has the `.inp`; takes seconds.
-3. **Cite Soleimani et al. (2023).** The nearest precedent to this thesis and it
+4. **Cite Soleimani et al. (2023).** The nearest precedent to this thesis and it
    appeared nowhere. → [`READING_GAPS.md`](READING_GAPS.md).
-4. **Close the UserElement question.** `THESIS_ASSIGNMENT.md` §4.1 says not to
+5. **Close the UserElement question.** `THESIS_ASSIGNMENT.md` §4.1 says not to
    implement until it is settled. Soleimani 2023 settles it: a multi-field ANSYS
    user element with **four scalar DOFs per node**.
-5. **Ask the experimental side for per-species LIVE/DEAD.** That group already
+6. **Ask the experimental side for per-species LIVE/DEAD.** That group already
    does SYTO9/PI CLSM, which is a bounded viability measure, and
    `JAXFEM/psi_spread_sensitivity.py` says the species would need a spread of
    about **17 %** before composition reached the stress. That turns "no data for
@@ -114,9 +122,9 @@ same stresses are 0.02–0.3 kPa — two orders *below* the threshold.
 
 | item | status |
 |---|---|
-| **Klempt 2024 Fig. 7** | the paper's own equations are the worst fit. Seed and nutrient cleared by measurement, constants cleared by reading. `JAXFEM/klempt2024_resolution.py` is testing resolution — supported by the same group stating phase-field needs 0.5 µm while Klempt 2024 runs 1 µm in 3D. The residue is a question for the authors, and **Meisam is a co-author**. |
+| **Klempt 2024 Fig. 7** | the paper's own equations are the worst fit. Seed and nutrient cleared by measurement, constants cleared by reading. `JAXFEM/klempt2024_resolution.py` is testing resolution, now supported twice over by the group itself: phase-field needs 0.5 µm while Klempt 2024 runs 1 µm in 3D (Soleimani 2023), and the advection term is "torturous", loses coercivity when `div v > 0`, and "necessitates particular numerical remedies" when it dominates — which at `r = 100` it does (Soleimani 2021 §2.3 Remark). The residue is a question for the authors, and **Meisam is a co-author**. |
 | **`E_SPEC`** | uncertain across two orders (10 Pa in the lineage against ~960 Pa here). Carries about half the headline ratio, and all of §1.5. |
-| **`k_alpha` time unit** | the real blocker on the partner's deck; `α` reaches 4.7 (a 5.7× stretch) at `TIME INC = 0.1`, so the distortion is the growth itself. Question 4 on the 10/1 agenda. |
+| **`k_alpha` time unit** | still question 4 on the 10/1 agenda, but no longer the whole story: Soleimani 2021 Eq. 17 caps `α` with a Heaviside precisely so it cannot run away, so the runaway is ours to fix whatever the time unit turns out to be (item 2 above). |
 | **Partner routine's call site** | still refuses `dt > DT_ECO_MAX` before the hook is reached; not in this repository. `ansys_usermat/apdl/NSUB_WIRING.md`. |
 | **Tooth/implant geometry** | the roadmap's open item, gated on item 2 above. |
 
