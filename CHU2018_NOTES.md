@@ -66,8 +66,16 @@ Say it carefully or it will not survive a question.
   **order of magnitude**, not equivalence.
 - The table above is **maxima**. The means are 0.46–2.36 kPa, mostly below the
   threshold, so the honest claim is about peak stress in the loaded regions.
-- The absolute values inherit the `E_SPEC` assumption, which carries roughly
-  half the headline ratio (`VERIFICATION_SENSITIVITY_LIMITATIONS.md` S2).
+- **The absolute values hang on `E_SPEC`, and it is uncertain by two orders of
+  magnitude.** Soleimani (2019) Table 2 — the source Klempt 2024 cites for its
+  own material properties — uses **E = 10 Pa** for biofilm, while this
+  repository assumes 10–1000 Pa per species, giving `E_voigt` ≈ 960 Pa
+  (commensal) and 500 Pa (dysbiotic): roughly 50–100× stiffer. Since `σ ∝ E`
+  (verified: 2× E gives 2.00× σ), at E = 10 Pa the maxima above would be
+  **0.02–0.3 kPa**, two orders *below* the threshold rather than straddling it.
+  **So the straddle is a property of our E_SPEC choice as much as of the
+  biology.** Quote it as a motivating coincidence of scale, never as a result.
+  See [`SOLEIMANI2019_NOTES.md`](SOLEIMANI2019_NOTES.md) §5.
 - They come from the Abaqus tooth/implant pipeline, whose `*TIE` coverage has
   never been checked — that is what `tier2b_real/tie_coverage_check.py` is for,
   and it has not been run against the real assembly yet.
