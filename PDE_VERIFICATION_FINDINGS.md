@@ -169,6 +169,69 @@ patches the module object `condition_spread_2d` itself holds and calls
 step from the operator it just installed and raises if the module disagrees.
 A wrong patch is now an error rather than a result.
 
+## 6b. Census: every zero-flux wall in the repository, and the one word behind it
+
+The whole defect is one word. `pad(u, 1, mode="edge")` puts the ghost at
+`u[0]`, giving `lap[0] = (u₁−u₀)/h²`; `mode="reflect"` puts it at `u[1]`,
+giving `2(u₁−u₀)/h²`, which is the mirror. On `[1,2,3,4]` at `h = 1` those are
+`1.0` and `2.0`, and `2.0` is what the hand-written mirror gives.
+
+Measured on the exact Neumann eigenfunction (3D one directly against a
+hand-built mirrored stencil):
+
+| operator | treatment | order at the wall |
+|---|---|---|
+| `core_hamilton_1d_nutrient.nutrient_step` | explicit factor 2 *(fixed today)* | 2.00 |
+| `core_hamilton_2d_nutrient.laplacian_2d_neumann` | explicit factor 2 *(fixed today)* | **2.00, 2.00** |
+| `core_hamilton_2d_nutrient._make_nutrient_step_mixed` | ghost = node 1 *(fixed today)* | — |
+| **`klempt2024_quantitative.lap`** | `mode="reflect"` | **exact: 0.0 difference from the mirror** |
+| `phase_field_at2_1d.solve_damage_fd` | ghost `d[-1]=d[1]`, coefficient doubled | **2.00** (by MMS, §6c) |
+| `klempt_pde_multispecies.lap_neumann` | `mode="edge"` | **0.00 — does not converge** |
+| `klempt_pde_jax.lap_neumann` | `mode="edge"` | **0.00 — does not converge** |
+| `felix_exact_check.laplacian_2d` | `mode="edge"` | **0.00 — does not converge** |
+
+**The most important row is the fourth.** `klempt2024_quantitative.py` is the
+script the reported Klempt 2024 figures come from, and it is in the correct
+column — those numbers do not inherit this defect.
+
+The three still defective are reproduction and benchmark scripts whose outputs
+are already written up. §6 showed that whether this matters has to be measured
+per configuration rather than assumed, so fixing them is a decision and not a
+cleanup; they are deliberately left alone and pinned by a test so a silent
+change in either direction shows up.
+
+## 6c. Two solvers that were already right
+
+Verified because they had never been, and because they are the counter-examples
+that make the defect a mistake rather than a house style.
+
+**`phase_field_at2_1d.solve_damage_fd`** solves the linear AT2 stationarity
+condition `−G_c ℓ d'' + (G_c/ℓ + 2H) d = 2H` with `d'(0) = d'(L) = 0`. A uniform
+`H` would make `d''` vanish identically and prove nothing — exactly the
+blindness that let the nutrient defect survive `test_pde_uniform_consistency` —
+so the target is a manufactured solution with real curvature,
+`d = 0.5 + 0.2 cos(nπz/L)`, which satisfies both Neumann conditions exactly for
+integer `n`; the `H` that makes it the solution follows by rearranging. Observed
+order **2.00, 2.00, 2.00** at `n = 2` and **2.01, 2.00, 2.00** at `n = 4`, with
+the manufactured `H` positive throughout. Its Neumann rows use the ghost
+`d[-1] = d[1]` *and* double the coefficient of `d[1]` — the treatment the two
+nutrient solvers were missing.
+
+**The Allen–Cahn interface.** `klempt_pde_multispecies.step` carries Klempt
+Eq. 34's double well as `−Γφ(1−φ)(1−2φ)` beside `β∇²φ`. With the other three
+terms off, substituting `φ = ½(1 + tanh(x/w))` into `βφ'' = Γφ(1−φ)(1−2φ)`
+gives `β/w² = Γ/4`, so
+
+    φ(x) = ½(1 + tanh(x/(2ξ))),    ξ = √(β/Γ)
+
+and that `ξ` is exactly the interface width
+`felix_complete_reproduction.py` already documents (`ξ = √(β/Γ) = 0.50 µm`) —
+so this checks a claim the repository makes rather than an outside one. The
+residual of the module's own right-hand side on that profile converges at
+**1.99, 1.99, 2.00** in the interior. (The wall rows are excluded: that module
+is one of the three `mode="edge"` cases above, which is why the interface is
+placed at the centre of a domain 12 ξ wide.)
+
 ## 7. Bearing on the Klempt 2024 gap
 
 `SOLEIMANI2021_NOTES.md` §3 quotes the group's own Remark that the advection

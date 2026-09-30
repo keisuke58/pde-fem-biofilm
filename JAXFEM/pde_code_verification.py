@@ -272,6 +272,8 @@ def main():
 if __name__ == "__main__":
     main()
     main_2d()
+    main_at2()
+    main_census()
 
 
 # ---------------------------------------------------------------------------
@@ -357,3 +359,204 @@ def main_2d():
         ords = [np.log(a[2] / b[2]) / np.log(a[1] / b[1])
                 for a, b in zip(rows[:-1], rows[1:])]
         print("  observed order: " + ", ".join(f"{p:.2f}" for p in ords))
+
+
+# ---------------------------------------------------------------------------
+# the AT2 damage solver, by manufactured solution -- and it is already right
+# ---------------------------------------------------------------------------
+#
+# `phase_field_at2_1d.solve_damage_fd` solves the linear AT2 stationarity
+# condition
+#
+#     -G_c*ell*d'' + (G_c/ell + 2H)*d = 2H ,      d'(0) = d'(L) = 0
+#
+# Included here for two reasons. First, it is the third PDE solver in the
+# repository and it had never been verified either. Second, it is the
+# counter-example to the boundary defect above: its Neumann rows use the ghost
+# node d[-1] = d[1] AND double the coefficient of d[1], which is the correct
+# reflect-about-the-node treatment that the two nutrient solvers were missing.
+# The same repository contained both the right and the wrong version of the
+# same boundary, in different files, by different hands.
+#
+# A uniform H would make d'' vanish identically and prove nothing -- the same
+# blindness that let the nutrient defect survive `test_pde_uniform_consistency`.
+# So the target here is a manufactured solution with real curvature:
+#
+#     d_ex(z) = A + B cos(n*pi*z/L)
+#
+# which satisfies both Neumann conditions exactly for integer n, and the H
+# field that makes it the solution follows from rearranging the equation:
+#
+#     H(z) = [ G_c*ell*B*(n*pi/L)^2 * cos + (G_c/ell)*(A + B*cos) ]
+#            / ( 2*(1 - A - B*cos) )
+#
+# A = 0.5, B = 0.2 keeps 1 - d_ex in [0.3, 0.7], so H stays finite, and n <= 4
+# keeps it positive at the parameters phase_field_at2_1d ships.
+
+AT2_A, AT2_B = 0.5, 0.2
+
+
+def at2_manufactured(z, L, G_c, ell, n_mode=2, A=AT2_A, B=AT2_B):
+    """Return (d_exact, H) such that solve_damage_fd(H, ...) == d_exact."""
+    k = n_mode * np.pi / L
+    cos = np.cos(k * z)
+    d_ex = A + B * cos
+    num = G_c * ell * B * k ** 2 * cos + (G_c / ell) * d_ex
+    return d_ex, num / (2.0 * (1.0 - d_ex))
+
+
+def study_at2(grids=(21, 41, 81, 161), n_mode=2):
+    """sup-norm error of the AT2 damage solve against the manufactured solution."""
+    import phase_field_at2_1d as at2
+    L, G_c, ell = at2.L_BIO, at2.G_C, at2.ELL
+    rows = []
+    for N in grids:
+        z = np.linspace(0.0, L, N)
+        h = L / (N - 1)
+        d_ex, Hf = at2_manufactured(z, L, G_c, ell, n_mode)
+        # d_prev far below the solution so the irreversibility clip cannot bite
+        d = at2.solve_damage_fd(Hf, np.full(N, -1.0e9), h, G_c, ell)
+        rows.append((N, h, float(np.max(np.abs(d - d_ex))),
+                     float(Hf.min())))
+    return rows
+
+
+def main_at2(n_mode=2):
+    rows = study_at2(n_mode=n_mode)
+    print(f"\nAT2 damage solve, manufactured d = {AT2_A} + {AT2_B} cos({n_mode}pi z/L)")
+    print(f"  {'N':>5} {'h':>12} {'sup err':>11} {'min H':>11}")
+    for N, h, e, hmin in rows:
+        print(f"  {N:>5} {h:>12.3e} {e:>11.3e} {hmin:>11.3e}")
+    ords = [np.log(a[2] / b[2]) / np.log(a[1] / b[1])
+            for a, b in zip(rows[:-1], rows[1:])]
+    print("  observed order: " + ", ".join(f"{p:.2f}" for p in ords))
+
+
+# ---------------------------------------------------------------------------
+# the Allen-Cahn interface, against its exact tanh profile
+# ---------------------------------------------------------------------------
+#
+# `klempt_pde_multispecies.step` carries Klempt Eq. 34's double well as
+# `-Gamma * phi (1 - phi)(1 - 2 phi)` beside `beta * lap(phi)`. Setting the
+# other three terms to zero leaves the stationary Allen-Cahn interface, whose
+# exact solution is standard: substituting phi = (1 + tanh(x/w))/2 into
+# `beta phi'' = Gamma phi (1 - phi)(1 - 2 phi)` gives `beta/w^2 = Gamma/4`, so
+#
+#     phi(x) = (1 + tanh(x / (2 xi)))/2 ,      xi = sqrt(beta / Gamma)
+#
+# That `xi` is exactly the interface width `felix_complete_reproduction.py`
+# documents ("xi = sqrt(beta/Gamma) = 0.50 um"), so this checks a claim the
+# repository already makes rather than an outside one.
+
+def tanh_interface(x, beta, gamma):
+    """The exact stationary Allen-Cahn profile, and its width."""
+    xi = np.sqrt(beta / gamma)
+    return 0.5 * (1.0 + np.tanh(x / (2.0 * xi))), xi
+
+
+def study_tanh_interface(grids=(41, 81, 161, 321), beta=1.0, gamma=8.0):
+    """Residual of the module's own right-hand side on the exact profile.
+
+    The interface sits at the centre of a domain 12 xi wide and the wall rows
+    are excluded, so this isolates the double well and the Laplacian from the
+    boundary treatment (which in that module is the defective one -- see the
+    census below).
+    """
+    import klempt_pde_multispecies as km
+    _, xi = tanh_interface(np.zeros(1), beta, gamma)
+    L = 12.0 * xi
+    rows = []
+    for N in grids:
+        h = L / (N - 1)
+        x = np.linspace(-L / 2.0, L / 2.0, N)
+        prof, _ = tanh_interface(x, beta, gamma)
+        phi = np.repeat(prof[:, None], 3, axis=1)     # uniform in y, so d/dy = 0
+        rhs = (beta * np.asarray(km.lap_neumann(jnp.asarray(phi), h, h))
+               - gamma * phi * (1.0 - phi) * (1.0 - 2.0 * phi))
+        rows.append((N, h, float(np.max(np.abs(rhs[2:-2, :])))))
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# census: which zero-flux walls in this repository are right
+# ---------------------------------------------------------------------------
+#
+# The whole defect is one word. numpy/jax `pad(u, 1, mode="edge")` puts the
+# ghost at `u[0]`, giving `lap[0] = (u1 - u0)/h^2`; `mode="reflect"` puts it at
+# `u[1]`, giving `2 (u1 - u0)/h^2`, which is the correct mirror. On [1,2,3,4]
+# at h = 1 those are lap[0] = 1.0 and 2.0 respectively, and 2.0 is what the
+# hand-written mirror gives.
+#
+#   correct
+#     core_hamilton_1d_nutrient.nutrient_step            explicit factor 2 (fixed 2026-09-30)
+#     core_hamilton_2d_nutrient.laplacian_2d_neumann     explicit factor 2 (fixed 2026-09-30)
+#     core_hamilton_2d_nutrient._make_nutrient_step_mixed ghost = node 1     (fixed 2026-09-30)
+#     klempt2024_quantitative.lap                        mode="reflect"
+#     phase_field_at2_1d.solve_damage_fd                 ghost d[-1] = d[1], coefficient doubled
+#
+#   still defective, and deliberately left alone for now
+#     klempt_pde_multispecies.lap_neumann                mode="edge"
+#     klempt_pde_jax.lap_neumann                         mode="edge"
+#     felix_exact_check.laplacian_2d                     mode="edge"
+#
+# The three left alone are reproduction and benchmark scripts whose outputs are
+# already written up, and the 2D impact study showed that whether this matters
+# has to be measured per configuration rather than assumed. Fixing them is a
+# decision, not a cleanup. Critically, `klempt2024_quantitative.py` -- the
+# script the reported Klempt 2024 numbers come from -- is in the correct
+# column, so those numbers do not inherit this defect.
+
+CENSUS_CORRECT = ("core_hamilton_2d_nutrient.laplacian_2d_neumann",
+                  "klempt2024_quantitative.lap")
+CENSUS_DEFECTIVE = ("klempt_pde_multispecies.lap_neumann",
+                    "klempt_pde_jax.lap_neumann",
+                    "felix_exact_check.laplacian_2d")
+
+
+def census_operators():
+    """{name: callable(u, dx, dy)} for the 2D zero-flux Laplacians, so the
+    order study above can be run over each of them."""
+    import klempt_pde_multispecies as km
+    import klempt_pde_jax as kj
+    import felix_exact_check as fx
+    from JAXFEM import core_hamilton_2d_nutrient as p2
+    return {
+        "core_hamilton_2d_nutrient.laplacian_2d_neumann": p2.laplacian_2d_neumann,
+        "klempt_pde_multispecies.lap_neumann": km.lap_neumann,
+        "klempt_pde_jax.lap_neumann": kj.lap_neumann,
+        "felix_exact_check.laplacian_2d": fx.laplacian_2d,
+    }
+
+
+def klempt2024_lap_matches_mirror(n=6, seed=0):
+    """`klempt2024_quantitative.lap` is 3D with a module-level spacing, so it
+    gets a direct correctness check instead of an order study: compare it
+    against a 7-point Laplacian built by hand with the reflect-about-the-node
+    ghost. Returns the largest absolute difference (0 if it is correct).
+
+    This one matters more than the rest of the census: it is the script the
+    reported Klempt 2024 numbers come from.
+    """
+    import klempt2024_quantitative as kq
+    rng = np.random.default_rng(seed)
+    u = rng.uniform(0.0, 1.0, (n, n, n))
+    got = np.asarray(kq.lap(u))
+    p = np.pad(u, 1, mode="reflect")          # ghost = node 1, the mirror
+    want = (p[2:, 1:-1, 1:-1] + p[:-2, 1:-1, 1:-1] + p[1:-1, 2:, 1:-1]
+            + p[1:-1, :-2, 1:-1] + p[1:-1, 1:-1, 2:] + p[1:-1, 1:-1, :-2]
+            - 6.0 * u) / kq.H ** 2
+    return float(np.max(np.abs(got - want)))
+
+
+def main_census():
+    print("\n2D zero-flux Laplacians in this repository, on the exact "
+          "Neumann eigenfunction")
+    for name, op in census_operators().items():
+        rows = study_2d_operator(op, grids=(21, 41, 81))
+        ords = [np.log(a[2] / b[2]) / np.log(a[1] / b[1])
+                for a, b in zip(rows[:-1], rows[1:])]
+        verdict = "OK" if min(ords) > 1.8 else "DEFECTIVE (wall does not converge)"
+        print(f"  {name:<52} order {', '.join(f'{p:.2f}' for p in ords)}  {verdict}")
+    d = klempt2024_lap_matches_mirror()
+    print(f"  {'klempt2024_quantitative.lap (3D, direct)':<52} "
+          f"max diff from mirror {d:.1e}  {'OK' if d == 0.0 else 'DEFECTIVE'}")

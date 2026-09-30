@@ -171,3 +171,71 @@ def test_the_committed_2d_diffusion_conserves_mass_through_a_zero_flux_wall():
 
     assert abs(drift(p2.laplacian_2d_neumann)) < 1.0e-12
     assert drift(v.laplacian_2d_neumann_half) < -0.01   # lost several percent
+
+
+# ---------------------------------------------------------------------------
+# the AT2 damage solver -- the counter-example: it was already right
+# ---------------------------------------------------------------------------
+
+def test_the_at2_damage_solver_is_second_order():
+    """By manufactured solution, `d = 0.5 + 0.2 cos(n pi z/L)`, which satisfies
+    both Neumann conditions exactly. A uniform driving field would make d''
+    vanish and prove nothing -- the same blindness that let the nutrient
+    defect survive test_pde_uniform_consistency."""
+    rows = v.study_at2(grids=(21, 41, 81), n_mode=2)
+    assert all(r[3] > 0.0 for r in rows), "manufactured H must stay positive"
+    for p in _order(rows)[-1:]:
+        assert 1.9 < p < 2.1, p
+
+
+def test_the_at2_solver_reflects_about_the_node():
+    """The reason it passes: its Neumann rows use ghost d[-1] = d[1] AND double
+    the coefficient of d[1]. The same repository held both the right and the
+    wrong version of the same boundary, in different files."""
+    rows = v.study_at2(grids=(41, 81), n_mode=4)
+    assert rows[-1][2] < rows[0][2] / 3.0, rows     # ~4x per halving
+
+
+# ---------------------------------------------------------------------------
+# the Allen-Cahn interface against its exact tanh profile
+# ---------------------------------------------------------------------------
+
+def test_the_allen_cahn_interface_matches_its_exact_tanh_profile():
+    """phi = (1 + tanh(x/(2 xi)))/2 with xi = sqrt(beta/Gamma) is the exact
+    stationary solution of Klempt Eq. 34's double well against its Laplacian,
+    and that xi is the interface width felix_complete_reproduction.py
+    documents. The residual of the module's own right-hand side on it
+    converges at second order."""
+    rows = v.study_tanh_interface(grids=(41, 81, 161))
+    for p in _order(rows)[-1:]:
+        assert 1.9 < p < 2.1, p
+
+
+# ---------------------------------------------------------------------------
+# census of every zero-flux wall in the repository
+# ---------------------------------------------------------------------------
+
+def test_the_reported_klempt_numbers_do_not_inherit_the_boundary_defect():
+    """The one that matters most: `klempt2024_quantitative.lap` is where the
+    reported Klempt 2024 figures come from. It uses numpy's `reflect` padding,
+    which puts the ghost at node 1 -- the correct mirror -- so it agrees with
+    a hand-built mirrored 7-point Laplacian exactly."""
+    assert v.klempt2024_lap_matches_mirror() == 0.0
+
+
+def test_the_census_of_zero_flux_walls_is_what_it_is_recorded_to_be():
+    """Pins which operators are right and which are not, so a new instance of
+    the `mode="edge"` idiom (or a silent fix of one of these) shows up here.
+    The whole defect is one word: numpy `pad(mode="edge")` puts the ghost at
+    the boundary node, `mode="reflect"` puts it at node 1."""
+    ops = v.census_operators()
+    for name in v.CENSUS_CORRECT:
+        if name not in ops:
+            continue
+        rows = v.study_2d_operator(ops[name], grids=(21, 41, 81))
+        assert min(_order(rows)) > 1.8, (name, rows)
+    for name in v.CENSUS_DEFECTIVE:
+        rows = v.study_2d_operator(ops[name], grids=(21, 41, 81))
+        errs = [r[2] for r in rows]
+        assert max(errs) / min(errs) < 1.01, (name, errs)   # flat: no convergence
+        assert all(r[3] < r[2] / 100.0 for r in rows), (name, rows)  # interior fine
