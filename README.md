@@ -18,7 +18,9 @@ pytest tests/                     # unit tests only
 ```
 
 See [`REPO_MAP.md`](REPO_MAP.md) for a guided tour, and cite via
-[`CITATION.cff`](CITATION.cff). Released under the [MIT License](LICENSE).
+[`CITATION.cff`](CITATION.cff). Released under the [MIT License](LICENSE);
+bundled third-party content and its own licence is listed in
+[`THIRD_PARTY.md`](THIRD_PARTY.md).
 
 Companion code for the LUH / IKM master's thesis and the Nishioka–Heine biofilm
 paper. The pipeline turns a TMCMC-calibrated 5-species ecology model and
