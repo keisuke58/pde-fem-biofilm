@@ -12,6 +12,21 @@ overview see the [project site](https://keisuke58.github.io/pde-fem-biofilm/).
 | [`JAXFEM/audit_all.py`](JAXFEM/audit_all.py) | All-in-one thesis-quality audit (`--quick` / `--strict` / `--strict-env`) |
 | [`validate_composition.py`](validate_composition.py) | Model ↔ Heine experiment composition validation (figure + metrics) |
 
+## Source papers, read and reconciled (2026-09-30)
+
+Notes taken from the papers this work builds on, each recording what it settles
+here rather than summarising the paper. [`CLAIMS_AND_EVIDENCE.md`](CLAIMS_AND_EVIDENCE.md)
+is the consolidation; these are the detail behind it.
+
+| File | What it settles |
+|---|---|
+| [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | Why the 2024 PDE is **not** reproduced: the variants that fit are not the paper's, and its own combination is the worst fit |
+| [`SOLEIMANI2023_NOTES.md`](SOLEIMANI2023_NOTES.md) | The nearest precedent, previously uncited. Our condition degeneracy belongs to the **simplex**, not to multi-species modelling; the UserElement question; the group's validation bar |
+| [`SOLEIMANI2019_NOTES.md`](SOLEIMANI2019_NOTES.md) | The unconditionally stable viscous integrator (Eq. 32) our explicit `Fv` update needs; and `E = 10 Pa`, which qualifies the stress comparison |
+| [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) | The Heaviside cap on `α` (Eq. 17), now implemented; resolves `CITATION_AUDIT.md` F1c; the group's own warning about the advection term |
+| [`CHU2018_NOTES.md`](CHU2018_NOTES.md) | What the computed stress is *for*: the ~5 kPa threshold at which the bacterial stress response turns on |
+| [`READING_GAPS.md`](READING_GAPS.md) | References Klempt 2024 rests on that this repository does not cite |
+
 ## Analysis lineages
 
 - **Klempt growth-stress pipeline** (thesis headline) — `gen_tooth_klempt_umat_inp.py`,

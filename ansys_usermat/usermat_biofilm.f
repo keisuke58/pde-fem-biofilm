@@ -145,6 +145,20 @@ C     dTime larger than it is split into ceil(dTime/DT_ECO_MAX) sub-steps
 C     inside one biofilm_ecology_eval round trip rather than sent whole.
       double precision DT_ECO_MAX
       parameter (DT_ECO_MAX = 1.0d-4)
+C     Largest alpha the growth law is allowed to reach. Soleimani, Haverich &
+C     Wriggers (2021), Arch Comput Methods Eng 28:4263, Eq. 17 puts a Heaviside
+C     H(alpha - alpha_cri) on exactly this law "to prevent the variable alpha
+C     from growing unboundedly ... Without the imposition of limiting
+C     constraints on the growth function, it can literally approach infinity
+C     that is physically inadmissible." Ours had no such limit, and on the
+C     partner's deck at TIME INC = 0.1 alpha reached ~4.7 -- a 5.7x stretch per
+C     direction -- and distorted the element. 1.0 is already a doubling of every
+C     length; every deck verified here sits at 2.9e-4 to 5e-2, more than an
+C     order below it, so nothing that passes today changes. Override with
+C     prop(30) if a case genuinely needs more.
+      double precision ALPHA_MAX_DEF
+      parameter (ALPHA_MAX_DEF = 1.0d0)
+      double precision ALPHA_MAX
       logical          ECOOK
 
 C     --- material properties ---
@@ -171,6 +185,8 @@ C     means no diffusion term, hence "0D": this advances the ODE in time
 C     only, not RESEARCH_MODEL.md sec.2's full reaction-diffusion PDE.
       KUSEECO = 0.0d0
       if (nProp .ge. 8) KUSEECO = prop(8)
+      ALPHA_MAX = ALPHA_MAX_DEF
+      if (nProp .ge. 30 .and. prop(30) .gt. 0.0d0) ALPHA_MAX = prop(30)
       if (KUSEECO .gt. 0.5d0 .and. nStatev .ge. 26 .and. nProp .ge. 29)
      &    then
         KALPHA = prop(9)
@@ -197,7 +213,15 @@ C         formula, kept below only as documentation of that equivalence).
           do I = 1, 5
             PHITOT = PHITOT + G_NEW(I)*G_NEW(6+I)
           end do
-          ALPHA = ALPHA + KALPHA*PHI_INT
+C         H(alpha - alpha_cri) of Soleimani 2021 Eq. 17: growth ceases once
+C         alpha passes the cap. Not a clamp -- the paper stops the growth law
+C         rather than clipping the variable, so alpha may overshoot by at most
+C         the one increment that crossed, exactly as their discretisation does.
+C         Applied only here, where alpha is integrated; the precomputed-field
+C         path above receives alpha from outside and is not ours to limit.
+          if (ALPHA .le. ALPHA_MAX) then
+            ALPHA = ALPHA + KALPHA*PHI_INT
+          end if
           if (ALPHA .lt. 0.0d0) ALPHA = 0.0d0
           ustatev(10) = ALPHA
         end if

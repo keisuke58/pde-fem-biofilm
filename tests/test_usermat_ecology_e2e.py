@@ -188,3 +188,61 @@ def test_ecology_falls_back_when_server_unreachable(e2e_exe):
     assert keycut == 0
     assert ustatev[9] == pytest.approx(0.3)         # alpha stays at input
     np.testing.assert_allclose(ustatev[14:26], G0)  # state stays at input
+
+
+# ---------------------------------------------------------------------------
+# The growth cap (Soleimani, Haverich & Wriggers 2021, Eq. 17).
+#
+# Their growth law carries a Heaviside H(alpha - alpha_cri) "to prevent the
+# variable alpha from growing unboundedly ... Without the imposition of
+# limiting constraints on the growth function, it can literally approach
+# infinity that is physically inadmissible." Ours had none, and on the
+# partner's deck at TIME INC = 0.1 alpha reached ~4.7 -- a 5.7x stretch per
+# direction -- and the element distorted.
+#
+# Two things need pinning: that the cap stops that, and that it is far enough
+# above every verified deck to change nothing that passes today.
+# ---------------------------------------------------------------------------
+ALPHA_MAX = 1.0        # ALPHA_MAX_DEF in usermat_biofilm.f
+
+
+def test_growth_ceases_once_alpha_is_past_the_cap(e2e_exe, server):
+    """Above the cap the increment is not applied at all.
+
+    Note it is the growth that stops, not alpha that is clipped: the paper
+    switches the source term off rather than clamping the variable, so alpha
+    comes back exactly as it went in rather than pinned to ALPHA_MAX."""
+    host, port = server
+    a_in = ALPHA_MAX * 1.5
+    ustatev, keycut = _run(e2e_exe, alpha=a_in, kuseeco=1.0, g_old=G0,
+                           host=host, port=port)
+    assert keycut == 0
+    assert ustatev[9] == pytest.approx(a_in, rel=0, abs=0), (
+        f"alpha moved from {a_in} to {ustatev[9]} despite being past the cap")
+
+
+def test_the_ecology_state_still_advances_above_the_cap(e2e_exe, server):
+    """The cap is on the growth law only. The composition keeps evolving --
+    stopping it too would silently freeze the ecology the deck is there to
+    integrate."""
+    host, port = server
+    ustatev, _ = _run(e2e_exe, alpha=ALPHA_MAX * 1.5, kuseeco=1.0, g_old=G0,
+                      host=host, port=port)
+    assert not np.allclose(ustatev[14:26], G0), \
+        "ecology state frozen above the cap; the Heaviside is on growth only"
+
+
+def test_the_cap_is_far_above_every_verified_deck(e2e_exe, server):
+    """Decks verified in this repository run alpha from 2.9e-4 to about 5e-2
+    (apdl/RUN_PREP.md, NSUB_WIRING.md, the closed-form deck). Starting an
+    increment from the largest of those must be untouched by the cap, or
+    introducing it would have moved a number that is already checked."""
+    host, port = server
+    a_in = 0.05
+    ustatev, _ = _run(e2e_exe, alpha=a_in, kuseeco=1.0, g_old=G0,
+                      host=host, port=port)
+    assert ustatev[9] > a_in, "growth did not advance below the cap"
+    ref, _ = _run(e2e_exe, alpha=0.0, kuseeco=1.0, g_old=G0,
+                  host=host, port=port)
+    assert ustatev[9] - a_in == pytest.approx(ref[9], rel=1e-12), (
+        "the increment below the cap differs from the uncapped one")
