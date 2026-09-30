@@ -1,0 +1,222 @@
+% 口頭試問 想定問答（日本語）— 自分用
+%
+% ビルド: lualatex slides_qa_ja.tex （2回）
+% 必要パッケージ: luatexja（Debian なら texlive-lang-japanese、
+%   加えて texlive-luatex / texlive-latex-extra）
+%
+% 方針: 答えの骨子を1行で先に置く。根拠はその下。
+%   「分からない」で終わる問いは、そう書いて練習する。
+%   数字は言い切れるものだけ載せる（曖昧な記憶で答えるより「確認します」）。
+%
+% CONSTRAINT: 8ページ以内。問いを足すなら弱いものを削る。
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{luatexja}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{cok}{RGB}{30,120,60}
+\definecolor{copen}{RGB}{190,40,40}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+
+% 問い → 答えの骨子
+\newcommand{\Q}[1]{\textbf{Q．#1}}
+\newcommand{\A}[1]{\vspace{2pt}\colorbox{c3!10}{\parbox{0.95\linewidth}{%
+  \small\textbf{→ }#1}}\vspace{3pt}}
+
+\title{想定問答}
+\subtitle{口頭試問に向けて（自分用）}
+\author[西岡佳祐]{西岡佳祐}
+\date{}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{結果について}
+\small\Q{4条件で応力が違うのは、条件のせいだと言えるのか}
+\A{\textbf{言えない。その結論は取り下げた。}界面の接着バグを直して再計算したら、
+条件間の差は \textbf{0.4\%} しかなかった。}
+\begin{itemize}\footnotesize
+  \item 2層を \texttt{NUMMRG,NODE}（座標が一致する節点だけ結合）でつないでいた。
+        2つの掃引の分割が揃っておらず、4条件デッキでは\textbf{角の4節点しか接着されていなかった}
+  \item 以前「座屈モード」と呼んでいた2つの膨らみは、\textbf{結合線の間で層が浮いていただけ}。
+        細かいメッシュほど最初のサブステップで落ちていたのも同じ原因
+  \item \texttt{VGLUE} で界面 651 節点すべてを共有させて修正
+\end{itemize}
+\vspace{2pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & 以前の報告 & \textbf{接着修正後} \\
+\midrule
+条件間の応力の広がり & $9.1\%$ & $\mathbf{0.4\%}$ \\
+条件間の成長 $\alpha$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
+成長層 / 基材の von Mises & $15.2$ 倍 & $\mathbf{6.3}$ \textbf{倍} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+{\footnotesize 置き場所・隣接領域の影響は最大 $0.28\%$ で条件間の差と同程度
+$\rightarrow$ そもそも分離できない。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{結果について（続き）}
+\small\Q{条件で差が出ないのは、計算が悪いからではないのか}
+\A{\textbf{モデルの定義からそうなる。}偶然でも計算ミスでもない。}
+\begin{itemize}\footnotesize
+  \item 条件が応力に届く経路は $\alpha$ だけ（物性は全領域で同一）。
+        $\dot\alpha = k_\alpha\varphi_{\mathrm{tot}}$、
+        $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ は\textbf{合計しか見ない}
+  \item CLSM 組成は\textbf{割合}なので、全条件が $\sum_i\varphi_i=1$ から出発して
+        同じ値（0.9635）に収束 $\Rightarrow$ \textbf{組成の違いは足し算で消える}
+  \item 差が出るのは $\psi$ の初期過渡だけ（$\alpha$ の差は最大 $2.4\%$、$t\approx10^{-2}$）。
+        $t=50$ で $0.003\%$ まで閉じる
+  \item 計算時刻の $\sim\!0.5\%$ の差も、生態の時間刻みを細かくすると\textbf{条件の順位が入れ替わる}
+        $\rightarrow$ 順位に意味はない
+\end{itemize}
+\vspace{1pt}
+\small\Q{一度出した結論を、自分で取り下げたのか}
+\A{はい。\textbf{同じ主張を2回直している}。1回目は「位置」$\rightarrow$「条件」、
+2回目は「条件」$\rightarrow$「どちらでもない」。}
+\begin{itemize}\footnotesize
+  \item 1回目の訂正は\textbf{理由としては正しかった}が、その下のメッシュが間違っていたので結論ごと無効になった
+  \item 交絡の処理より先に、\textbf{モデルが意図した形になっているか}を確認すべきだった
+  \item 見つけ方：\textbf{接着されている界面節点を数えた}（メッシュのみの実行）
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{手法について}
+\small\Q{接線剛性が数値微分なのは手抜きでは}
+\A{精度は測ってある。\textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}（648 通り）。}
+\begin{itemize}\footnotesize
+  \item さらに重要なのは、接線が甘くても\textbf{答えは狂わない}こと。残差は本物なので
+  \item 狂うのは\textbf{反復回数} $\rightarrow$ 「収束したか」が本当の試験
+  \item 実機 12240 要素、各サブステップ \textbf{1--4 反復}で収束。自動時間刻みは一度も縮まず
+\end{itemize}
+\vspace{5pt}
+\small\Q{なぜ Abaqus と ANSYS の両方を書いたのか}
+\A{Abaqus 版が先にあり、ANSYS へ移植した。\textbf{独立な2実装が検証手段になる}。}
+\begin{itemize}\footnotesize
+  \item Voigt 順序が違う（せん断の並び）ので、写像を共有できない $\rightarrow$ 実質的に独立
+  \item 8017 状態で \textbf{0 ULP} 一致
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{検証の限界（ここは正直に）}
+\small\Q{2実装が一致すれば、式は正しいのか}
+\A{\textbf{言えない}。実際に不整合を見つけた。}
+\vspace{2pt}
+\begin{itemize}\footnotesize
+  \item 等容分解で $J^{-2/3}$ を引く側のトレースにだけ掛けていた
+  \item 2つの実装は\textbf{同じ間違いを同じように}計算するので、一致しても検出できない
+  \item 影響は\textbf{純粋に静水圧成分のみ}。報告している von Mises には効かないことを確認済み
+  \item 直さずに\textbf{限界として章に明記}した（直すと参照値の連鎖が全部無効になるため）
+\end{itemize}
+\vspace{5pt}
+\small\Q{メッシュ収束性は確認したか}
+\A{\textbf{した}（接着修正と同時に）。接着した界面の上で\textbf{2次収束}。}
+\begin{itemize}\footnotesize
+  \item 要素数 2.4k / 19k / 150k で最大 $u_r = 1.7405 / 1.7399 / 1.7398 \times 10^{-3}$、
+        プロファイル誤差 $2.7\% \rightarrow 0.58\%$
+  \item \textbf{接着前は逆に、細かいメッシュほど最初のサブステップで落ちていた}
+        $\rightarrow$ 収束を見ようとすると必ず露出するバグだった
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{答えが「分からない」もの}
+\small ここは\textbf{言い切る練習}をしておく。取り繕うと必ず深掘りされる。
+
+\vspace{6pt}
+\small\Q{Klempt の 2024 年の PDE は再現できたのか}
+\A{\textcolor{copen}{\textbf{できていません。}}Fig.~7 が \textbf{5--10 倍遅く}成長します。}
+\vspace{3pt}
+\begin{itemize}\footnotesize
+  \item $|\nabla\varphi\cdot n_c|$ 成長 + 1次消費で解いた。
+        論文自身の $c(\varphi)$ 関係は\textbf{1次消費を支持している}
+  \item Fig.~4 は $0.17 / 0.10$ まで合う $\rightarrow$ \textbf{実装全体が壊れているわけではない}
+  \item \textbf{「2024 の PDE は独立に再現できていない」と記録した}
+  \item 一方、\textbf{2026 年版の数値例 14 件はすべて再現できている}
+  \item \textbf{ここまでは言える}。その先は推測になるので言わない
+\end{itemize}
+\vspace{3pt}
+{\footnotesize 以前ここに書いていた「常在菌・静置だけ約 5\% 外れる」は、
+接着修正後の再計算で\textbf{消えた} $\rightarrow$ 現象ではなく接着不足の産物だった。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{データについて}
+\small\Q{$\psi$（生存率）がプレースホルダなのは問題では}
+\A{問題ではあるが、\textbf{代入するより留保が正しい}と判断した。}
+\begin{itemize}\footnotesize
+  \item 実験側の「生細胞のみ」比は\textbf{1 を超える値が出る} $\rightarrow$ モデルの $\psi\in[0,1]$ と別物
+  \item 別物と分かっていて代入するのは、データの誤用
+  \item 現状 0.999 固定であることを明記している
+\end{itemize}
+\vspace{5pt}
+\small\Q{データの扱いで見つけた問題はあるか}
+\A{あります。\textbf{読み込みのバグを1つ}。}
+\begin{itemize}\footnotesize
+  \item シート先頭の列幅を全条件で使い回していた $\rightarrow$ 列幅の違う条件で\textbf{5菌種全部がずれていた}
+  \item 「測定なし」に見えていたのは、実データの後ろの空白を読んでいたため
+  \item 修正し、図を再生成、その条件のシードを追加
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{時間刻みについて}
+\small\Q{時間刻みは妥当だったのか}
+\A{2つの制限があり、\textbf{効いているのは生態側}。}
+\vspace{2pt}
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+制限 & 由来 & 今回 \\
+\midrule
+粘性 $\eta/(2C_{10})$ & 陽解法の流れ増分 & \textcolor{cok}{効かない}（$\eta=0$） \\
+生態 ODE & $10^{-4}$ 超はサブステップに分割 & $\Delta t=10^{-5}$、\textcolor{cok}{10倍の余裕} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{5pt}
+\begin{itemize}\footnotesize
+  \item 粘性側は $\Delta t/\tau \approx 0.5$ で\textbf{応力の符号が反転する}（測定済み）
+        $\rightarrow$ 納品版は刻みを検査して拒否する
+  \item 生態側は共同研究先のデッキ（$\Delta t = 0.1$）と 1000 倍ずれていた
+        $\rightarrow$ 材料呼び出しの内部で $\lceil \Delta t/10^{-4}\rceil$ 回に\textbf{細分化して解決}
+        （実機で確認、1回の通信あたり $0.07$ 秒）
+  \item \textbf{残っているのは刻みではなく $k_\alpha$ の時間単位}。$k_\alpha=50$ は
+        生態時間が合計 $0.1$--$1$ ms のデッキ用の値で、$\Delta t=0.1$ のデッキでは
+        $\alpha \approx 4.7$（各方向 $5.7$ 倍）になり要素が潰れる $\rightarrow$
+        \textbf{数値破綻ではなく成長そのもの}。そのデッキの時間軸に合わせて決め直す必要がある
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{答え方の方針}
+\vspace{4pt}
+\begin{itemize}\small
+  \item \textbf{数字は言い切れるものだけ}。曖昧なら「確認します」のほうが安全
+  \item \textbf{「確かめた」と「動いた」を混ぜない}。章もその方針で書いてある
+  \item \textbf{分からないものは分からないと言う}。
+        取り繕った瞬間に、そこだけ深掘りされる
+  \item 限界（静水圧の不整合、$\psi$ のプレースホルダ、Klempt 2024 の未再現、
+        $k_\alpha$ の時間単位）は\textbf{こちらから先に出す}。後から指摘されるより強い
+\end{itemize}
+\vspace{8pt}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
+限界を自分から言えることが、\\
+検証を理解している証拠になる}}
+\end{center}
+\end{frame}
+
+\end{document}

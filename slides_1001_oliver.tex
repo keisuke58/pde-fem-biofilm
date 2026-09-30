@@ -2,8 +2,11 @@
 % slides_1005.tex's structure/theme (same content style, different
 % audience: Oliver specifically, so this leads with the n=2->n=5 ANSYS/NEM
 % work and the citation-attribution finding that concerns his own code).
-% CONSTRAINT: keep this light -- aim for well under slides_1005.tex's
-% 20-page cap; trim rather than pad.
+% CONSTRAINT: keep this light. 12-page cap (build_slides.ps1 -MaxPages 12).
+% 2026-09-29: added two background frames -- the deck went straight from
+%   "where things stand" into the citation finding, which assumes both our
+%   growth split and where alpha comes from. He knows ANSYS and his own
+%   model; he does not know ours.
 \documentclass[aspectratio=169,11pt]{beamer}
 \usetheme{Madrid}
 \usecolortheme{seahorse}
@@ -12,6 +15,8 @@
 \usepackage{bm}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 
 \definecolor{c3}{RGB}{30,80,160}
 \definecolor{todo}{RGB}{200,30,30}
@@ -48,56 +53,143 @@
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Headline finding: a citation mix-up in your interaction term}
-\small
-Checked \texttt{Interaction12}/\texttt{Interaction21} in your
-\texttt{Ussfin} against the actual published equations directly (both
-Klempt papers, read term-by-term) -- an earlier note of mine said this
-term \emph{was} the 2026 paper's ``novel interaction scheme.'' That
-was wrong.
-\vspace{4pt}
+\begin{frame}{Background (1): the law I'm bringing}
+\small Growth as a multiplicative split, so the solver never sees growth as
+load. Yours is structured differently, which is partly why the citation
+question on the next slide matters.
+\vspace{3pt}
 \begin{center}
-\begin{tabular}{@{}p{5.3cm}p{5.3cm}@{}}
-\toprule
-\textbf{Klempt et al.\ 2026 (AAM)}, Eq.\,10/16--18 &
-\textbf{Your \texttt{Ussfin} term}\\
-\midrule
-Additive/bilinear: $I_{a,i}=\sum_j a_{ij}\bar\varphi_j$ added into a
-dissipation residual &
-Multiplicative: shifts a Monod-rate coefficient\\
-$A$ symmetric, diagonal self-terms included &
-No diagonal term, no symmetry constraint\\
-Single scalar nutrient, linear &
-Two independent Monod-saturated nutrient fields\\
-\bottomrule
-\end{tabular}
+\begin{tikzpicture}[font=\scriptsize,
+  s/.style={draw, minimum width=9mm, minimum height=9mm, fill=gray!8},
+  ar/.style={-{Stealth[length=2mm]}, thick, gray}]
+  \node[s] (a) at (0,0) {};
+  \node[s, minimum width=12mm, minimum height=12mm] (b) at (2.9,0) {};
+  \node[s, minimum width=12mm, minimum height=11mm] (c) at (5.8,0) {};
+  \node[s, fill=red!12, draw=red!70!black, very thick,
+        minimum width=10mm, minimum height=12mm] (d) at (8.7,0) {};
+  \draw[ar] (a) -- node[above]{$\bm{F}_g=(1{+}\alpha)\bm{I}$} node[below,font=\tiny]{no stress} (b);
+  \draw[ar] (b) -- node[above]{$\bm{F}_v$} node[below,font=\tiny]{stress relaxes} (c);
+  \draw[ar, red!70!black] (c) -- node[above,text=red!70!black]{$\bm{F}_e$}
+        node[below,font=\tiny,text=red!70!black]{\textbf{this alone loads}} (d);
+\end{tikzpicture}
 \end{center}
-\vspace{4pt}
-Your growth structure (Monod $\times$ Laplacian interface $\times$
-chemotaxis) instead matches the \emph{other} paper, Klempt 2024 (BMMB) --
-worth confirming which one you intended it to be.
+\vspace{2pt}
+\begin{itemize}\footnotesize
+  \item $\bm{F}=\bm{F}_e\bm{F}_v\bm{F}_g$ --- swelling and viscous flow carry no
+        stress; only what is left over does
+  \item $\alpha$ is isotropic here, one scalar per integration point, held in
+        a state variable
+  \item Consistent tangent by $\bm{F}$-perturbation, not closed form
+        ($1.1\times10^{-6}$ against AD over 648 combinations)
+  \item No solver includes, no common block --- so it is
+        ANSYS-release-independent, and drops into your call site as is
+\end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{n=2 $\to$ n=5: generalized your interaction term, found a real limit}
-\begin{itemize}
-  \item Extended \texttt{Interaction12/21} to all 20 directed pairs among
-        5 species (\texttt{usercm.inc}, \texttt{USolBeg}, \texttt{Ussfin})
-        -- mechanical mirror of your own pattern, no formula change
-  \item Ran on real ANSYS (\texttt{-smp -np 1} after any \texttt{Ussfin}
-        recompile -- found that's required, DMP hangs silently)
-  \item \textbf{Found a genuine critical coupling threshold}: species
-        3$\leftrightarrow$4, your baseline constants
-        (\texttt{MaxGrowth=100/dt=0.1/Penalty1=5}) --
-        \textbf{0.0005 stable, 0.0007 diverges} (residual force overflow)
-  \item Re-ran both boundary cases again 2026-09-08 to confirm it's real,
-        not a fluke -- reproduced exactly
-\end{itemize}
+\begin{frame}{Background (2): where $\alpha$ comes from}
+\small Not prescribed --- it accumulates from a measured composition evolving
+at the integration point.
 \vspace{4pt}
-{\scriptsize Root cause: species 3's own uncoupled trajectory is already
-close to unstable under your baseline constants -- any added coupling term
-tips it over by the last substep. Full writeup:
-\texttt{ansys\_usermat/apdl/N3\_GROWTH\_TRIAL.md}.}
+\begin{center}
+\colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
+$\varphi_{\text{tot}}=\sum_i \varphi_i\psi_i$
+\qquad
+$\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
+\end{center}
+\vspace{4pt}
+\begin{itemize}\footnotesize
+  \item Five oral species (\textit{S.\ oralis}, \textit{A.\ naeslundii},
+        \textit{Veillonella}, \textit{F.\ nucleatum}, \textit{P.\ gingivalis}),
+        CLSM-measured over 21 days, four clinical conditions
+  \item $\varphi_i$ volume fractions, $\psi_i$ viability; interaction
+        parameters TMCMC-calibrated
+  \item $\alpha$ is an \emph{integral} --- the same composition held longer
+        gives more growth
+  \item $\psi_i$ is still a placeholder at 0.999: the experiment's
+        ``living cells only'' ratio exceeds 1, so it is a different quantity
+        and was not substituted
+\end{itemize}
+\vspace{3pt}
+{\footnotesize This is what runs through the Gauss-point bridge in the
+second half of the deck.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Headline finding: a citation mix-up in your interaction term}
+\small Read both Klempt papers term by term against your \texttt{Ussfin}. An
+earlier note of mine called your term the 2026 paper's ``novel interaction
+scheme''. That was wrong --- they are different functional forms.
+\vspace{4pt}
+\begin{center}
+\colorbox{gray!8}{\parbox{0.46\linewidth}{\centering\footnotesize
+\textbf{Klempt et al.\ 2026}, Eq.\ 10/16--18\\[4pt]
+$I_{a,i}=\sum_j a_{ij}\bar\varphi_j$
+\quad\text{then}\quad
+$-\,c^{*}\psi_i I_{a,i}$\\[4pt]
+\textcolor{c3}{\textbf{additive}}, inside a dissipation residual}}%
+\hspace{2mm}%
+\colorbox{gray!8}{\parbox{0.46\linewidth}{\centering\footnotesize
+\textbf{Your \texttt{Ussfin}}\\[4pt]
+$\bigl(\text{MaxGrowth}_I+\text{Interaction}_{IJ}\,\text{Bio}_J\bigr)$\\[4pt]
+\textcolor{c3}{\textbf{multiplicative}}, shifting a Monod-rate coefficient}}
+\end{center}
+\vspace{3pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & Klempt 2026 & your \texttt{Ussfin} \\
+\midrule
+symmetry of $A$ & stated symmetric & \texttt{Interaction12}/\texttt{21} independent \\
+self-term $a_{ii}$ & included & none \\
+nutrient & one scalar, linear & two fields, Monod-saturated \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{3pt}
+{\footnotesize Your \emph{growth} structure (Monod $\times$ Laplacian interface
+$\times$ chemotaxis) matches the \emph{other} paper, Klempt 2024 (BMMB) ---
+worth confirming which one you intended it to be.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{n=2 $\to$ n=5: a real coupling ceiling, and what moves it}
+\small Extended \texttt{Interaction12/21} to all 20 directed pairs among 5
+species (\texttt{usercm.inc}, \texttt{USolBeg}, \texttt{Ussfin}) --- a
+mechanical mirror of your own pattern, no formula change. Real ANSYS,
+\texttt{-smp -np 1}.
+\vspace{3pt}
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+species 3$\leftrightarrow$4 coupling & baseline constants & result \\
+\midrule
+0.0005 & \texttt{MaxGrowth=100, dt=0.1, Penalty1=5} & passes \\
+\textbf{0.0006} & same & \textbf{diverges} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+{\footnotesize Threshold sits in $(0.0005,\,0.0006)$ --- bisected, then
+re-run on 2026-09-08 to confirm it is not a fluke.}
+\vspace{5pt}
+\small Which constant actually moves it (10$\times$ change to one at a time):
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+change & effect on the ceiling & \\
+\midrule
+\texttt{MaxGrowth} 10$\times$ smaller & raises it $\geq$10$\times$ (passes at 0.005) & \textbf{dominant lever} \\
+\texttt{Penalty1} 10$\times$ larger & same bracket as baseline & barely moves it \\
+\texttt{dt} 10$\times$ smaller & \emph{worse} --- diverges at 0.0005 & see below \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{2pt}
+{\footnotesize The \texttt{dt} row is flagged, not resolved: \texttt{TIME} was
+held fixed, so 10$\times$ smaller \texttt{dt} also means 10$\times$ more
+explicit growth substeps over the same elapsed duration. Read as an artifact
+of that rather than a genuine dt-stability effect.}
 \end{frame}
 
 % --------------------------------------------------------
