@@ -8,6 +8,14 @@
 ! doesn't touch geometry/BC/mesh at all -- since the base deck's own
 ! diagnosis is "a local over-constraint/singularity, not a load-ramping
 ! problem", which is exactly the failure mode LNSRCH is meant to help with.
+! INTERFACE BONDING (fixed 2026-09-29): this deck used to mesh the two
+! volumes separately and bond them with NUMMRG, which merges only
+! coincident nodes -- the growth layer was bonded along a few node lines
+! only (essentially floating). Every result this deck produced before that
+! date (incl. any 'two-lobe bulge' and the alpha~0.01 convergence limit) is
+! invalid. Now VGLUE shares the R_MID face; see ansys_usermat/apdl/README.md
+! (cylinder correction). Not yet re-run with the fix unless noted below.
+!
 
 FINISH
 /CLEAR
@@ -25,6 +33,7 @@ ARC   = 60
 
 CYLIND,R_IN,R_MID,0,LEN,0,ARC
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 TB,USER,1,1,6
 TBDATA,1,0.2E-3,0.0,5.0E3,0.0,0.0,0.0
@@ -42,18 +51,27 @@ TBDATA,10,0.015
 
 MSHKEY,0
 
+! Volumes are picked by their bounding face (VGLUE renumbers them);
+! meshed in CSYS,0 (VSWEEP in CSYS,1 ignores ESIZE).
 MAT,1
-VSEL,S,VOLU,,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
 ESIZE,0.15
-VSWEEP,1
+VSWEEP,ALL
 
 MAT,2
-VSEL,S,VOLU,,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
 ESIZE,0.05
-VSWEEP,2
+VSWEEP,ALL
+ALLSEL
 
 ALLSEL
-NUMMRG,NODE,1.0E-4
+! (NUMMRG removed: VGLUE already shares the interface nodes)
 NUMCMP,NODE
 NUMCMP,ELEM
 

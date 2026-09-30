@@ -35,6 +35,7 @@ Usage
   # Quick sanity test:
   python run_hamilton_2d_nutrient.py --quick-test
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -302,8 +303,8 @@ def main():
     ap.add_argument("--save-every", type=int, default=10)
     ap.add_argument("--D-c", type=float, default=0.01, help="Nutrient diffusion coefficient")
     ap.add_argument("--k-monod", type=float, default=1.0, help="Monod half-saturation constant")
-    ap.add_argument("--K-hill", type=float, default=0.05, help="Hill gate K for Fn->Pg")
-    ap.add_argument("--n-hill", type=float, default=4.0, help="Hill gate exponent")
+    ap.add_argument("--K-hill", type=float, default=K_HILL, help="Hill gate K for Fn->Pg")
+    ap.add_argument("--n-hill", type=float, default=N_HILL, help="Hill gate exponent")
     ap.add_argument("--out-dir", default="_results_2d_nutrient/run")
     ap.add_argument(
         "--all-conditions", action="store_true", help="Run all 4 conditions sequentially"

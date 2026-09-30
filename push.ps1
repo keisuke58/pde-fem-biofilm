@@ -1,88 +1,67 @@
 <#
 .SYNOPSIS
-    Push the current branch to origin using the GitHub PAT in .env, without
-    ever printing the token.
+    Push HEAD to origin/master with the PAT from .env, never printing the
+    token, then confirm against the GitHub API that the remote really moved.
 
 .DESCRIPTION
-    This machine has no credential helper configured (see CLAUDE.md), so a
-    plain `git push` prompts for username/password on the console and hangs
-    in a non-interactive session. The working pattern all session has been:
-    read GITHUB_PAT from .env via raw file I/O (never the Read tool, so it
-    never lands in a transcript), build an inline
-    https://x-access-token:<token>@github.com/... push URL, push, then
-    redact the token from anything printed. This script is that pattern,
-    written once instead of retyped by hand for every push.
-
-    Also prepends C:\msys64\usr\bin to PATH for the call, since there is no
-    git on PATH otherwise on this machine (again, see CLAUDE.md) -- without
-    it git's https/credential-helper subprocesses fail with "shared
-    libraries" errors.
+    No credential helper is configured on this machine, and the local
+    tracking ref refs/remotes/origin/master has a persistent rename-lock
+    (CLAUDE.md), so `git status` cannot be trusted to say whether a push
+    landed. This script:
+      1. reads GITHUB_PAT from .env (repo root)
+      2. pushes HEAD to master over https with the token in the URL
+      3. prints git's output with the token redacted
+      4. asks the GitHub API for the remote master sha and compares it
+         with the local HEAD
+    git's normal progress output goes to stderr, which PowerShell 5.1 turns
+    into error records; the push is judged by git's exit code and by the
+    API comparison, not by stderr.
 
 .PARAMETER Branch
-    Branch to push. Defaults to the current branch.
-
-.PARAMETER Remote
-    Repo URL host path, e.g. "keisuke58/pde-fem-biofilm". Defaults to what
-    this repo's origin already points at.
+    Remote branch to push to. Default master.
 
 .EXAMPLE
     .\push.ps1
-    .\push.ps1 -Branch feature/foo
 #>
-param(
-    [string]$Branch,
-    [string]$Remote = "keisuke58/pde-fem-biofilm"
-)
+param([string]$Branch = "master")
 
-$ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$envPath = Join-Path $repoRoot ".env"
-if (-not (Test-Path $envPath)) {
-    throw ".env not found at $envPath -- expected a GITHUB_PAT=... line there."
+$env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;$env:Path"
+Push-Location $repoRoot
+try {
+    $envFile = Join-Path $repoRoot ".env"
+    if (-not (Test-Path $envFile)) { throw ".env not found at $envFile" }
+    $line = Get-Content $envFile | Where-Object { $_ -match '^\s*GITHUB_PAT\s*=' } | Select-Object -First 1
+    if (-not $line) { throw "GITHUB_PAT not set in .env" }
+    $tok = ($line -replace '^\s*GITHUB_PAT\s*=\s*', '').Trim().Trim('"').Trim("'")
+
+    $head = (& git rev-parse HEAD).Trim()
+    Write-Output "== push $($head.Substring(0,7)) -> origin/$Branch =="
+    $url = "https://x-access-token:$tok@github.com/keisuke58/pde-fem-biofilm.git"
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $out = & git push $url "HEAD:$Branch" 2>&1 | Out-String
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $prev
+    ($out -replace [regex]::Escape($tok), '***').Trim() -split "`n" |
+        ForEach-Object { $_ -replace '^\s*git(\.exe)?\s*:\s*', '' } |
+        Where-Object { $_ -notmatch '^\s*(\+ |In Zeile|In line|In .*(Zeichen|char)|CategoryInfo|FullyQualifiedErrorId|~)' -and $_.Trim() } |
+        ForEach-Object { Write-Output "  $($_.Trim())" }
+    if ($code -ne 0) { throw "git push exited $code" }
+
+    # The API answers from a cache for a few seconds after a push.
+    for ($i = 0; $i -lt 6; $i++) {
+        $remote = (Invoke-RestMethod -Headers @{ "Cache-Control" = "no-cache" } `
+            "https://api.github.com/repos/keisuke58/pde-fem-biofilm/commits/$Branch").sha
+        if ($remote -eq $head) { break }
+        Start-Sleep -Seconds 2
+    }
+    if ($remote -eq $head) {
+        Write-Output "OK: GitHub $Branch = $($remote.Substring(0,7)) (matches local HEAD)"
+    } else {
+        Write-Output "MISMATCH: GitHub $Branch = $($remote.Substring(0,7)), local HEAD = $($head.Substring(0,7))"
+    }
+} finally {
+    Remove-Variable tok, url -ErrorAction SilentlyContinue
+    Pop-Location
 }
-
-$env:Path = "C:\msys64\usr\bin;" + $env:Path
-
-if (-not $Branch) {
-    $Branch = (git -C $repoRoot rev-parse --abbrev-ref HEAD).Trim()
-}
-
-$envContent = [System.IO.File]::ReadAllText($envPath)
-$tokenLine = ($envContent -split "`n" | Where-Object { $_ -match '^GITHUB_PAT=' })
-if (-not $tokenLine) {
-    throw "No GITHUB_PAT= line found in .env"
-}
-$token = ($tokenLine -replace '^GITHUB_PAT=', '').Trim()
-if (-not $token) {
-    throw "GITHUB_PAT in .env is empty"
-}
-
-$pushUrl = "https://x-access-token:$token@github.com/$Remote.git"
-
-Write-Output "Pushing branch '$Branch' to $Remote ..."
-
-# git's normal progress output goes to stderr. Redirecting stderr (2>&1)
-# under $ErrorActionPreference="Stop" turns each of those lines into a
-# terminating NativeCommandError even on success ($LASTEXITCODE 0) -- so
-# this push actually succeeds while the script throws before printing the
-# confirmation or running the fetch below. Drop to Continue just for this
-# call and check $LASTEXITCODE explicitly instead of trusting exceptions.
-$prevEAP = $ErrorActionPreference
-$ErrorActionPreference = "Continue"
-$result = git -C $repoRoot push $pushUrl $Branch 2>&1 | Out-String
-$pushExit = $LASTEXITCODE
-$ErrorActionPreference = $prevEAP
-
-Write-Output ($result -replace [regex]::Escape($token), '***')
-if ($pushExit -ne 0) {
-    throw "git push exited $pushExit -- see output above (token already redacted)."
-}
-
-# Keep the local origin/<branch> tracking ref in sync so `git status` doesn't
-# report stale "ahead by N commits" after a push done via this inline URL
-# instead of the configured 'origin' remote. Same stderr caveat as the push
-# above -- fetch's progress output is stderr too.
-$ErrorActionPreference = "Continue"
-git -C $repoRoot fetch origin $Branch 2>&1 | Out-Null
-$ErrorActionPreference = $prevEAP
-Write-Output "Done -- origin/$Branch tracking ref refreshed."

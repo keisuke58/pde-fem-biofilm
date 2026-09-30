@@ -3,7 +3,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -19,20 +19,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     SX           SY           SZ           SXY          SYZ          SXZ     
-       2 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
-       4 -0.29998     -0.29998     -0.29998       0.0000       0.0000     -0.55594E-016
-       3 -0.29998     -0.29998     -0.29998       0.0000     -0.55594E-016  0.0000     
-       1 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
-       5 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
-       6 -0.29998     -0.29998     -0.29998      0.38576E-033-0.69492E-016-0.55594E-016
-       7 -0.29998     -0.29998     -0.29998      0.61722E-032-0.11119E-015-0.22238E-015
-       8 -0.29998     -0.29998     -0.29998       0.0000       0.0000       0.0000     
+       2 -0.30002     -0.30002     -0.30002       0.0000       0.0000       0.0000     
+       4 -0.30002     -0.30002     -0.30002       0.0000       0.0000     -0.55594E-016
+       3 -0.30002     -0.30002     -0.30002       0.0000     -0.55594E-016  0.0000     
+       1 -0.30002     -0.30002     -0.30002       0.0000       0.0000       0.0000     
+       5 -0.30002     -0.30002     -0.30002       0.0000       0.0000       0.0000     
+       6 -0.30002     -0.30002     -0.30002      0.38576E-033-0.69492E-016-0.55594E-016
+       7 -0.30002     -0.30002     -0.30002      0.61722E-032-0.11119E-015-0.22238E-015
+       8 -0.30002     -0.30002     -0.30002       0.0000       0.0000       0.0000     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -46,20 +46,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     10      
-       2  0.49714E-003
-       4  0.49714E-003
-       3  0.49714E-003
-       1  0.49714E-003
-       5  0.49714E-003
-       6  0.49714E-003
-       7  0.49714E-003
-       8  0.49714E-003
+       2  0.49720E-003
+       4  0.49720E-003
+       3  0.49720E-003
+       1  0.49720E-003
+       5  0.49720E-003
+       6  0.49720E-003
+       7  0.49720E-003
+       8  0.49720E-003
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -73,20 +73,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     15      
-       2  0.32417     
-       4  0.32417     
-       3  0.32417     
-       1  0.32417     
-       5  0.32417     
-       6  0.32417     
-       7  0.32417     
-       8  0.32417     
+       2  0.32441     
+       4  0.32441     
+       3  0.32441     
+       1  0.32441     
+       5  0.32441     
+       6  0.32441     
+       7  0.32441     
+       8  0.32441     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -100,20 +100,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     16      
-       2  0.32445     
-       4  0.32445     
-       3  0.32445     
-       1  0.32445     
-       5  0.32445     
-       6  0.32445     
-       7  0.32445     
-       8  0.32445     
+       2  0.32448     
+       4  0.32448     
+       3  0.32448     
+       1  0.32448     
+       5  0.32448     
+       6  0.32448     
+       7  0.32448     
+       8  0.32448     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -127,20 +127,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     17      
-       2  0.21689     
-       4  0.21689     
-       3  0.21689     
-       1  0.21689     
-       5  0.21689     
-       6  0.21689     
-       7  0.21689     
-       8  0.21689     
+       2  0.21633     
+       4  0.21633     
+       3  0.21633     
+       1  0.21633     
+       5  0.21633     
+       6  0.21633     
+       7  0.21633     
+       8  0.21633     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -154,20 +154,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     18      
-       2  0.13448     
-       4  0.13448     
-       3  0.13448     
-       1  0.13448     
-       5  0.13448     
-       6  0.13448     
-       7  0.13448     
-       8  0.13448     
+       2  0.13478     
+       4  0.13478     
+       3  0.13478     
+       1  0.13478     
+       5  0.13478     
+       6  0.13478     
+       7  0.13478     
+       8  0.13478     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -194,7 +194,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -221,7 +221,7 @@
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -235,20 +235,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     21      
-       2  0.99433     
-       4  0.99433     
-       3  0.99433     
-       1  0.99433     
-       5  0.99433     
-       6  0.99433     
-       7  0.99433     
-       8  0.99433     
+       2  0.99441     
+       4  0.99441     
+       3  0.99441     
+       1  0.99441     
+       5  0.99441     
+       6  0.99441     
+       7  0.99441     
+       8  0.99441     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -262,20 +262,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     22      
-       2  0.99421     
-       4  0.99421     
-       3  0.99421     
-       1  0.99421     
-       5  0.99421     
-       6  0.99421     
-       7  0.99421     
-       8  0.99421     
+       2  0.99442     
+       4  0.99442     
+       3  0.99442     
+       1  0.99442     
+       5  0.99442     
+       6  0.99442     
+       7  0.99442     
+       8  0.99442     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -289,20 +289,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     23      
-       2  0.99424     
-       4  0.99424     
-       3  0.99424     
-       1  0.99424     
-       5  0.99424     
-       6  0.99424     
-       7  0.99424     
-       8  0.99424     
+       2  0.99440     
+       4  0.99440     
+       3  0.99440     
+       1  0.99440     
+       5  0.99440     
+       6  0.99440     
+       7  0.99440     
+       8  0.99440     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -316,20 +316,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     24      
-       2  0.99436     
-       4  0.99436     
-       3  0.99436     
-       1  0.99436     
-       5  0.99436     
-       6  0.99436     
-       7  0.99436     
-       8  0.99436     
+       2  0.99439     
+       4  0.99439     
+       3  0.99439     
+       1  0.99439     
+       5  0.99439     
+       6  0.99439     
+       7  0.99439     
+       8  0.99439     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -343,20 +343,20 @@
   
   ELEMENT=       1        SOLID185
     NODE     25      
-       2  0.99435     
-       4  0.99435     
-       3  0.99435     
-       1  0.99435     
-       5  0.99435     
-       6  0.99435     
-       7  0.99435     
-       8  0.99435     
+       2  0.99437     
+       4  0.99437     
+       3  0.99437     
+       1  0.99437     
+       5  0.99437     
+       6  0.99437     
+       7  0.99437     
+       8  0.99437     
 
  PRINT SVAR ELEMENT SOLUTION PER ELEMENT
 
  *** MAPDL - ENGINEERING ANALYSIS SYSTEM  RELEASE 2022 R2          22.2     ***
  Ansys Mechanical Enterprise Academic Teaching     
- 00000000  VERSION=WINDOWS x64   11:57:51  SEP 07, 2026 CP=      1.781
+ 00000000  VERSION=WINDOWS x64   20:34:37  SEP 29, 2026 CP=      0.391
 
   biofilm USERMAT - 0D Hamilton ecology hook (closed-form check)               
 
@@ -370,11 +370,11 @@
   
   ELEMENT=       1        SOLID185
     NODE     26      
-       2   259.94     
-       4   259.94     
-       3   259.94     
-       1   259.94     
-       5   259.94     
-       6   259.94     
-       7   259.94     
-       8   259.94     
+       2   149.99     
+       4   149.99     
+       3   149.99     
+       1   149.99     
+       5   149.99     
+       6   149.99     
+       7   149.99     
+       8   149.99     

@@ -85,6 +85,7 @@ from JAXFEM.core_hamilton_2d_nutrient import (
     _make_nutrient_step_stable,
 )
 from material_models import E_MAX_PA, E_MIN_PA, DI_SCALE
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 OUT_DIR = os.path.join(_HERE, "_multiscale_2d_results")
 
@@ -136,9 +137,9 @@ DT_H = 1e-3  # Hamilton time step
 N_SUB_C = 20  # nutrient PDE sub-steps (CFL stability)
 SAVE_EVERY = 100  # save snapshot every N macro steps
 
-# Hamilton coupling scale: nutrient PDE gives c ∈ [0,1], but Hamilton model
-# was calibrated with c = 100.0.  Scale c_pde → c_hamilton = c_pde * C_SCALE.
-C_HAMILTON_SCALE = 100.0
+# Hamilton coupling scale: nutrient PDE gives c ∈ [0,1]; the reaction sees
+# c_pde * C_STAR, the c* the TMCMC calibration of A used (ecology_constants.py).
+C_HAMILTON_SCALE = C_STAR
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -184,10 +185,10 @@ def solve_0d_reference(theta_np: np.ndarray) -> dict:
         "Kp1": 1e-4,
         "Eta": jnp.ones(5, dtype=jnp.float64),
         "EtaPhi": jnp.ones(5, dtype=jnp.float64),
-        "c": 100.0,
-        "alpha": 100.0,
-        "K_hill": jnp.array(0.05, dtype=jnp.float64),
-        "n_hill": jnp.array(4.0, dtype=jnp.float64),
+        "c": C_STAR,
+        "alpha": ALPHA_STAR,
+        "K_hill": jnp.array(K_HILL, dtype=jnp.float64),
+        "n_hill": jnp.array(N_HILL, dtype=jnp.float64),
         "A": A,
         "b_diag": b_diag,
         "active_mask": active_mask,
@@ -239,8 +240,8 @@ def run_2d(theta: np.ndarray, condition_label: str, reaction_fn=None, nutrient_f
         # Species-weighted consumption (scaled by G_EFF)
         g_consumption=np.array([G_EFF * 1.0, G_EFF * 1.0, G_EFF * 0.8, G_EFF * 0.5, G_EFF * 0.3]),
         c_boundary=1.0,
-        K_hill=0.05,
-        n_hill=4.0,
+        K_hill=K_HILL,
+        n_hill=N_HILL,
         newton_iters=6,
     )
 

@@ -46,6 +46,7 @@ from core_hamilton_2d_nutrient import (
     theta_to_matrices,
 )
 from solve_stress_2d import solve_2d_fem
+from ecology_constants import C_STAR, K_HILL, N_HILL
 from material_models import compute_di, compute_E_phi_pg, E_MAX_PA, E_MIN_PA
 
 # VEM solver (optional, loaded on demand)
@@ -92,7 +93,7 @@ GROWTH_WEIGHTS = np.array([1.0, 0.8, 0.6, 0.5, 0.3])
 # ============================================================================
 
 
-def _equilibrate_0d_numba(theta, maxtimestep=2500, dt=1e-5, K_hill=0.05, n_hill=4.0):
+def _equilibrate_0d_numba(theta, maxtimestep=2500, dt=1e-5, K_hill=K_HILL, n_hill=N_HILL):
     """
     Run 0D Hamilton ODE (Numba solver, 50 Newton iter + line search) to find
     the quasi-stationary state at the TMCMC calibration time.
@@ -106,7 +107,8 @@ def _equilibrate_0d_numba(theta, maxtimestep=2500, dt=1e-5, K_hill=0.05, n_hill=
     from improved_5species_jit import BiofilmNewtonSolver5S
 
     solver = BiofilmNewtonSolver5S(
-        dt=dt, maxtimestep=maxtimestep, eps=1e-8, K_hill=K_hill, n_hill=n_hill
+        dt=dt, maxtimestep=maxtimestep, eps=1e-8, K_hill=K_hill, n_hill=n_hill,
+        c_const=C_STAR,   # the solver's own default is 100
     )
     _t_arr, g_arr = solver.run_deterministic(theta[:20])
     g_final = g_arr[-1].copy()
@@ -887,8 +889,8 @@ def main():
     ap.add_argument("--dt-growth", type=float, default=0.1, help="Growth step size")
     ap.add_argument("--n-growth-steps", type=int, default=50, help="Number of growth steps")
     # Physics
-    ap.add_argument("--k-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--k-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     ap.add_argument("--nu", type=float, default=0.30)
     ap.add_argument("--k-alpha", type=float, default=0.05)
     ap.add_argument("--e-model", choices=["phi_pg", "virulence", "di"], default="phi_pg")

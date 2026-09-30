@@ -19,7 +19,16 @@ material slot, so CS, CH and DS each appear in two different quadrants. This
 script checks that the element sets really are identical before comparing
 anything, then reads the same condition at two placements.
 
-The answer is the opposite of what the chapter claimed. Holding the condition
+UPDATE 2026-09-29: everything below this paragraph was measured on decks whose
+two layers were bonded at only a few nodes (NUMMRG), with the old ecology
+constants. Re-run bonded, with c* = 25, no Hill gate, alpha* = 0: the theta
+contrasts are +0.01 % / -0.02 %, the spread between conditions is only 0.4 %,
+and CH moved in theta AND Z shifts by 0.28 % -- the same order as the spread
+(Z is mirror-symmetric, so that is most likely the neighbouring regions). The
+conclusion "it is the condition" no longer holds: under these constants the
+four conditions barely differ in stress at all.
+
+(Original, now superseded:) The answer is the opposite of what the chapter claimed. Holding the condition
 and Z fixed and moving only in theta changes the mean von Mises by about a
 tenth of a percent, while the conditions differ from each other by about nine
 percent.
@@ -53,8 +62,10 @@ RUNS = {
     "growth_result_cylinder_ecology_4region_all_real_clsm.txt":
         {2: "CS", 3: "CH", 4: "DS", 5: "DH"},
 }
-ALPHA = {"CS": 4.6145e-3, "CH": 4.6920e-3, "DS": 4.3557e-3,
-         "DH": 4.8186e-3, "default": 4.5687e-3}
+# As ANSYS prints them (5 digits); c* = 25, no Hill gate, alpha* = 0
+# (ecology_constants.py), re-run 2026-09-29 on the bonded mesh.
+ALPHA = {"CS": 4.8944e-3, "CH": 4.9036e-3, "DS": 4.8772e-3,
+         "DH": 4.9071e-3, "default": 4.8811e-3}
 ORDER = ["CS", "DS", "default", "CH", "DH"]
 
 
@@ -146,8 +157,8 @@ def plot(rows, out, caption=True):
     pad = 0.09 * (max(allv) - min(allv))     # room for the staggered labels
     ax.set_ylim(min(allv) - pad, max(allv) + pad)
     ax.set_ylabel(r"mean von Mises  [$\times 10^{-6}$]")
-    ax.set_title("The same condition, put in two different places, gives the "
-                 "same stress", fontsize=11)
+    ax.set_title("Each condition in two different places, two runs",
+                 fontsize=11)
     ax.grid(alpha=0.25, axis="y")
 
     if caption:
@@ -159,8 +170,9 @@ def plot(rows, out, caption=True):
                  f"Moving in $\\theta$ at fixed condition and $Z$ -- {txt} -- "
                  f"against a spread of {(max(vals) / min(vals) - 1) * 100:.1f}% "
                  f"between conditions.\n"
-                 f"Position is worth about a tenth of a percent here; the "
-                 f"conditions are what separate.",
+                 f"A condition moved in both $\\theta$ and $Z$ (CH) shifts by a "
+                 f"similar amount to that spread, so placement and neighbours "
+                 f"are not negligible against it.",
                  ha="center", va="bottom", fontsize=8, color="0.35")
     fig.tight_layout(rect=(0, 0.16 if caption else 0.0, 1, 1))
     fig.savefig(out, dpi=200)

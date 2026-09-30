@@ -48,6 +48,7 @@ from .core_hamilton_1d import (
     diffusion_step,
     make_initial_state,
 )
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR
 
 # ---------------------------------------------------------------------------
 # 残差関数: c をノードごとのスカラーとして受け取る
@@ -181,15 +182,18 @@ _newton_vmap_c = jax.jit(jax.vmap(newton_step_c, in_axes=(0, 0, None)))
 
 
 def reaction_step_c(G, c_field, params):
-    """Hamilton 反応ステップ。c_field (N,) をノードごとに渡す。"""
+    """Hamilton 反応ステップ。c_field (N,) は境界で 1 に正規化された栄養場で、
+    反応には C_STAR * c_field を渡す (ecology_constants.py; 2D 版の
+    c_hamilton_scale と同じ扱い)。"""
     n_sub = params["n_react_sub"]
+    c_eff = C_STAR * c_field
 
     def body(carry, _):
         G_local, c_local = carry
         G_new = _newton_vmap_c(G_local, c_local, params)
         return (G_new, c_local), None
 
-    (G_final, _), _ = jax.lax.scan(body, (G, c_field), jnp.arange(n_sub))
+    (G_final, _), _ = jax.lax.scan(body, (G, c_eff), jnp.arange(n_sub))
     return G_final
 
 
@@ -289,9 +293,9 @@ def simulate_hamilton_1d_nutrient(
         "Kp1": 1e-4,
         "Eta": jnp.ones(5),
         "EtaPhi": jnp.ones(5),
-        "alpha": 100.0,
-        "K_hill": 0.05,
-        "n_hill": 4.0,
+        "alpha": ALPHA_STAR,
+        "K_hill": K_HILL,
+        "n_hill": N_HILL,
         "A": A,
         "b_diag": b_diag,
         "active_mask": active_mask,

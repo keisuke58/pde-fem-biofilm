@@ -20,6 +20,7 @@ Usage:
 """
 
 from __future__ import annotations
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import sys
@@ -296,11 +297,11 @@ def run_all_checks(verbose: bool = False):
                 dt=1e-4,
                 maxtimestep=750,
                 active_species=[0, 1, 2, 3, 4],
-                c_const=25.0,
+                c_const=C_STAR,
                 alpha_const=0.0,
                 phi_init=0.02,
-                K_hill=0.05,
-                n_hill=4.0,
+                K_hill=K_HILL,
+                n_hill=N_HILL,
                 use_numba=True,
             )
             phi_list = []

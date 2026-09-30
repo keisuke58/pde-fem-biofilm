@@ -882,3 +882,35 @@ result) is confirmed done. A deck built around the ecology ODE's own time
 scale (`TIME,1.0E-4`/`NSUBST,10`, the way every `t_growth_cylinder_ecology*
 .dat` in this repo already is) is the natural next test, rather than
 retrofitting this specific elastic-scale deck further.
+
+**2026-09-29: sub-stepping closes the step-size gap; what remains is the
+growth rate's scale.** The ecology request now carries `n_sub`, and this
+repo's `usermat_biofilm.f` splits `dTime` into `ceil(dTime/1e-4)` sub-steps
+inside one call (`t_growth_ecology_substep.dat`, real ANSYS, exact match to
+the Python reference). The server runs the chain as one compiled scan,
+bit-identical to chaining `ecology_step`, which took the cost of 1000
+sub-steps from ~10 s to ~0.07 s per call. Measured on real ANSYS:
+
+| deck | dTime | n_sub | wall, old server | wall, compiled | result |
+|---|---|---|---|---|---|
+| single element, F = I | 0.1 | 1000 | 357 s | 5.6 s | 0 errors, equal to Python reference; identical output both servers |
+| 54-element cylinder, CS/CH/DS/DH (unchanged deck) | 1e-5 | 1 | 131 s (09-08) | 13.6 s | 0 errors, all 882 result lines identical to 09-08 |
+| 54-element cylinder, same, `TIME,0.1`/`NSUBST,1` | 0.1 | 1000 | — | 51.7 s | 1 error: element highly distorted |
+
+The last row is the step-size case this section was about, and it still
+fails, but for a different reason. With the single coarse step, alpha was
+~2.6e-9 and `gamma` ~1e6: the ODE solve had diverged. With 1000
+sub-steps the ecology state is finite and sane (`gamma` 111-326, phi sums
+to 1), and alpha is **large**: 4.72 / 4.46 / 0.39 / 4.64 for
+CS / CH / DS / DH (`ecology_4region_reference_coarse.py`: the Day-1 seeds
+through `ecology_substeps(dt=0.1, n_sub=1000)`, `k_alpha=50`). With
+`Fg=(1+alpha)I` that is a 5.7x stretch per direction, so the distortion is
+the growth itself, not a numerical failure.
+
+So the remaining blocker for a deck stepping at `TIME INC=0.1` is not
+the step size any more. `k_alpha=50` was chosen for decks that run
+0.1-1 ms of ecology time in total, and it has no meaning on a deck whose
+pseudo-time unit is different. `k_alpha` (or the ecology/mechanical
+time-unit map) has to be set for that deck's time axis before the result
+means anything. The partner framework's own wiring and guard live in its
+tree and were not changed here.

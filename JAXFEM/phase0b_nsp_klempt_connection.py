@@ -35,6 +35,9 @@ import argparse
 import sys
 from pathlib import Path
 
+import os as _os_ec, sys as _sys_ec  # noqa: E401
+_sys_ec.path.insert(0, _os_ec.path.dirname(_os_ec.path.dirname(_os_ec.path.abspath(__file__))))
+from ecology_constants import ALPHA_STAR  # noqa: E402
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -82,7 +85,7 @@ def nsp_single_species_eq(c_local, n_steps=500, dt=1e-3):
         theta, N_SP,
         n_steps=n_steps, dt=dt,
         phi_init=phi_init,
-        c_const=c_hamilton, alpha_const=100.0,
+        c_const=c_hamilton, alpha_const=ALPHA_STAR,
     )
     # traj shape: (n_steps+1, N_SP) — phibar (mean-field φ)
     return float(traj[-1, 0])   # φ_So at equilibrium

@@ -37,6 +37,21 @@
 ! than silently worked around; theta (interaction parameters) is also
 ! still THETA_DEMO, not TMCMC-calibrated -- both remain open items.
 !
+! EXPECTED, CURRENT (2026-09-29; c*=25, no Hill gate, alpha*=0 --
+! ecology_constants.py; from ecology_deck_reference.py). Confirmed on real
+! ANSYS the same day (F:\biofilm_upf_kusepy build, -smp -np 4): 0 errors,
+! SX and SVAR(10), SVAR(15:26) equal to these at printed precision.
+!   g_new(phi)   = [0.117861202, 0.0192489159, 0.769481597, 0.0715397892, 0.0218628777]
+!   g_new(phi0)  = 5.61866218e-06
+!   g_new(psi)   = [0.994386636, 0.994376455, 0.994542955, 0.994381792, 0.994376072]
+!   g_new(gamma) = 148.880299
+!   alpha_new    = 4.972502801e-04
+!   SX=SY=SZ     = -3.00046169e-01
+!   SXY=SYZ=SXZ  = 0
+!
+! The EXPECTED block below is from the OLD constants (c*=100, Hill gate
+! K=0.05 n=4, alpha*=100) and is kept only as history.
+!
 ! EXPECTED (independently computed in Python, ecology_jax.ecology_step
 ! from this exact initial state, THETA_DEMO, dt=1e-5, k_alpha=50 --
 ! reproducible via the composition-extraction + closed-form check run

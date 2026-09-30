@@ -88,6 +88,14 @@
 ! ansys_usermat/coupling/material_server.py listening on 127.0.0.1:8765):
 !   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
 !       -i t_growth_cylinder_ecology.dat -o out_cylinder_ecology.txt
+! INTERFACE BONDING (fixed 2026-09-29): this deck used to mesh the two
+! volumes separately and bond them with NUMMRG, which merges only
+! coincident nodes -- the growth layer was bonded along a few node lines
+! only (essentially floating). Every result this deck produced before that
+! date (incl. any 'two-lobe bulge' and the alpha~0.01 convergence limit) is
+! invalid. Now VGLUE shares the R_MID face; see ansys_usermat/apdl/README.md
+! (cylinder correction). Not yet re-run with the fix unless noted below.
+!
 
 FINISH
 /CLEAR
@@ -112,6 +120,7 @@ ARC   = 5                    ! shrunk from t_growth_cylinder_shell.dat's 60
 ! pointer, then bond the interface with NUMMRG.
 CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm)
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 ! ---- substrate material (mat 1): unchanged from t_growth_cylinder_shell.dat
 ! -- no ecology, no growth (alpha = 0; nProp=6 so usermat_biofilm.f's
@@ -167,15 +176,33 @@ TBDATA,25,0.999,0.0                   ! g psi(5)=.999, gamma=0
 ! ---- mesh -- coarse, smoke test only, same ESIZE as t_growth_cylinder_shell.dat
 MSHKEY,0
 
+! Volumes are picked by their bounding face (VGLUE renumbers them).
+! One ESIZE for both volumes: they share the R_MID face, and whichever
+! is swept first fixes that face mesh for the other. LEN/6 and 16
+! circumferential divisions keep the region splits on element boundaries.
+ESIZE_C = LEN/6
+CSYS,1
+LSEL,S,LOC,Y,ARC/2
+LESIZE,ALL,,,16
+LSEL,ALL
+CSYS,0
+
 MAT,1
-VSEL,S,VOLU,,1
-ESIZE,0.15
-VSWEEP,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
 
 MAT,2
-VSEL,S,VOLU,,2
-ESIZE,0.05
-VSWEEP,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
+ALLSEL
 
 ! ---- split the growth layer into the two ecology-seed regions --------------
 ! Mesh once under MAT,2 (VSWEEP above), then reassign the upper-theta half
@@ -189,7 +216,7 @@ EMODIF,ALL,MAT,3
 CSYS,0
 
 ALLSEL
-NUMMRG,NODE,1.0E-4                    ! bond the two layers: merge coincident
+! (NUMMRG removed: VGLUE already shares the interface nodes)
                                        ! nodes at the shared R_MID interface
 NUMCMP,NODE
 NUMCMP,ELEM

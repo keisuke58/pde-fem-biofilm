@@ -20,6 +20,9 @@ Usage:
     python solve_stress_2d.py --condition dh_baseline   # from TMCMC result
     python solve_stress_2d.py --from-npy phi.npy c.npy  # from pre-computed fields
 """
+import os as _os_ec, sys as _sys_ec  # noqa: E401
+_sys_ec.path.insert(0, _os_ec.path.dirname(_os_ec.path.dirname(_os_ec.path.abspath(__file__))))
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -862,8 +865,8 @@ def run_2d_stress_pipeline(
     dt_h=1e-5,
     n_react_sub=20,
     save_every=60,
-    K_hill=0.05,
-    n_hill=4.0,
+    K_hill=K_HILL,
+    n_hill=N_HILL,
     nu=0.30,
     alpha_coeff=0.05,
     e_model="phi_pg",
@@ -1082,8 +1085,8 @@ def main():
     ap.add_argument("--n-macro", type=int, default=60)
     ap.add_argument("--dt-h", type=float, default=1e-5)
     ap.add_argument("--n-react-sub", type=int, default=20)
-    ap.add_argument("--k-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--k-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     ap.add_argument("--nu", type=float, default=0.30)
     ap.add_argument("--alpha-coeff", type=float, default=0.05)
     ap.add_argument("--e-model", choices=["phi_pg", "virulence", "di"], default="phi_pg")

@@ -38,6 +38,7 @@ Usage
 """
 
 from __future__ import annotations
+from ecology_constants import C_STAR, K_HILL, N_HILL, ALPHA_STAR  # noqa: E402
 import argparse
 import sys
 import json
@@ -517,7 +518,7 @@ class FEMBiofilmSimulation:
             "Eta": solver_params.get("Eta", np.ones(5)),
             "EtaPhi": solver_params.get("EtaPhi", np.ones(5)),
             "c": solver_params.get("c", 100.0),
-            "alpha": solver_params.get("alpha", 100.0),
+            "alpha": solver_params.get("alpha", ALPHA_STAR),
             "K_hill": solver_params.get("K_hill", 0.05),
             "n_hill": solver_params.get("n_hill", 4.0),
             "active_mask": solver_params.get("active_mask", np.ones(5, dtype=np.int64)),
@@ -798,8 +799,8 @@ def parse_args():
         default=[0.001, 0.001, 0.0008, 0.0005, 0.0002],
         help="Diffusion coefficient per species (5 values)",
     )
-    p.add_argument("--K-hill", type=float, default=0.05)
-    p.add_argument("--n-hill", type=float, default=4.0)
+    p.add_argument("--K-hill", type=float, default=K_HILL)
+    p.add_argument("--n-hill", type=float, default=N_HILL)
     p.add_argument(
         "--init-mode",
         default="gradient",
@@ -839,8 +840,8 @@ def main():
         "Kp1": 1e-4,
         "Eta": np.ones(5),
         "EtaPhi": np.ones(5),
-        "c": 100.0,
-        "alpha": 100.0,
+        "c": C_STAR,
+        "alpha": ALPHA_STAR,
         "K_hill": args.K_hill,
         "n_hill": args.n_hill,
         "active_mask": np.ones(5, dtype=np.int64),

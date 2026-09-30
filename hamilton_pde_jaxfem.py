@@ -35,6 +35,7 @@ Usage
 -----
     python hamilton_pde_jaxfem.py [--setup-only] [--nx 20] [--ny 20]
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import sys
@@ -158,7 +159,7 @@ def theta_to_matrices(theta):
 # ── Hamilton reaction source term ────────────────────────────────────────────
 
 
-def hamilton_reaction(phi, A, b_diag, K_hill=0.05, n_hill=4.0, c_nutrient=1.0, k_monod=1.0):
+def hamilton_reaction(phi, A, b_diag, K_hill=K_HILL, n_hill=N_HILL, c_nutrient=1.0, k_monod=1.0):
     """
     Compute Hamilton reaction rates R_i for 5 species.
 
@@ -231,7 +232,7 @@ if _HAS_JAXFEM:
         """
 
         def __init__(
-            self, theta, D_eff=None, K_hill=0.05, n_hill=4.0, k_monod=1.0, *args, **kwargs
+            self, theta, D_eff=None, K_hill=K_HILL, n_hill=N_HILL, k_monod=1.0, *args, **kwargs
         ):
             super().__init__(*args, **kwargs)
             self.A_mat, self.b_diag = theta_to_matrices(theta)
@@ -393,8 +394,8 @@ if _HAS_JAXFEM:
             Lx=1.0,
             Ly=1.0,
             D_eff=None,
-            K_hill=0.05,
-            n_hill=4.0,
+            K_hill=K_HILL,
+            n_hill=N_HILL,
             k_monod=1.0,
             *args,
             **kwargs,
@@ -475,7 +476,7 @@ if _HAS_JAXFEM:
 # ── Mesh and Problem setup ───────────────────────────────────────────────────
 
 
-def setup_problem(theta, Nx=20, Ny=20, Lx=1.0, Ly=1.0, D_eff=None, K_hill=0.05, n_hill=4.0):
+def setup_problem(theta, Nx=20, Ny=20, Lx=1.0, Ly=1.0, D_eff=None, K_hill=K_HILL, n_hill=N_HILL):
     """
     Build the steady-state jax_fem Problem for 5-species Hamilton PDE.
 
@@ -518,7 +519,7 @@ def setup_problem(theta, Nx=20, Ny=20, Lx=1.0, Ly=1.0, D_eff=None, K_hill=0.05, 
 
 
 def setup_timedep_problem(
-    theta, dt, Nx=20, Ny=20, Lx=1.0, Ly=1.0, D_eff=None, K_hill=0.05, n_hill=4.0, k_monod=1.0
+    theta, dt, Nx=20, Ny=20, Lx=1.0, Ly=1.0, D_eff=None, K_hill=K_HILL, n_hill=N_HILL, k_monod=1.0
 ):
     """
     Build the time-dependent (backward-Euler) jax_fem Problem.
@@ -733,8 +734,8 @@ Next steps:
     ap.add_argument("--dt", type=float, default=1e-3, help="Time step for backward-Euler")
     ap.add_argument("--t-final", type=float, default=0.01, help="End time for time integration")
     ap.add_argument("--save-every", type=int, default=5)
-    ap.add_argument("--K-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--K-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     args = ap.parse_args()
 
     if not _HAS_JAXFEM:

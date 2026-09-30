@@ -24,6 +24,7 @@ Usage
   # Quick test:
   python generate_3d_conformal_auto.py --condition dh_baseline --quick
 """
+from ecology_constants import C_STAR, K_HILL, N_HILL  # noqa: E402
 
 import argparse
 import json
@@ -89,7 +90,7 @@ def load_theta(path):
         return np.array([d[k] for k in _PARAM_KEYS], dtype=np.float64)
 
 
-def compute_0d_di(theta_np, K_hill=0.05, n_hill=4.0, n_steps=2500, dt=0.01):
+def compute_0d_di(theta_np, K_hill=K_HILL, n_hill=N_HILL, n_steps=2500, dt=0.01):
     """Run 0D Hamilton ODE to get condition-specific DI_0D.
 
     Returns dict with di_0d, phi_final, E_di (Pa).
@@ -114,8 +115,8 @@ def run_fem_2d(theta, condition, cfg_override=None):
         n_react_sub=20,
         dt_h=1e-5,
         save_every=10,
-        K_hill=0.05,
-        n_hill=4.0,
+        K_hill=K_HILL,
+        n_hill=N_HILL,
     )
     result = run_simulation(theta, cfg)
     return result, cfg
@@ -309,8 +310,8 @@ def run_condition(condition, args):
             n_react_sub=5,
             dt_h=1e-5,
             save_every=5,
-            K_hill=0.05,
-            n_hill=4.0,
+            K_hill=K_HILL,
+            n_hill=N_HILL,
         )
     else:
         cfg = Config2D(
@@ -411,8 +412,8 @@ def main():
     ap.add_argument("--n-react-sub", type=int, default=20)
     ap.add_argument("--dt-h", type=float, default=1e-5)
     ap.add_argument("--save-every", type=int, default=10)
-    ap.add_argument("--k-hill", type=float, default=0.05)
-    ap.add_argument("--n-hill", type=float, default=4.0)
+    ap.add_argument("--k-hill", type=float, default=K_HILL)
+    ap.add_argument("--n-hill", type=float, default=N_HILL)
     # Mesh config
     ap.add_argument("--thickness", type=float, default=0.5)
     ap.add_argument("--n-layers", type=int, default=8)

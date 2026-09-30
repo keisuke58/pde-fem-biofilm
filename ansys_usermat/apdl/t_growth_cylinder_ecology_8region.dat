@@ -24,6 +24,14 @@
 ! dominant-species compositions, an emergent pattern under THETA_DEMO, not
 ! something picked for that outcome. See out_cylinder_ecology_8region.txt
 ! / growth_result_cylinder_ecology_8region.txt.
+! INTERFACE BONDING (fixed 2026-09-29): this deck used to mesh the two
+! volumes separately and bond them with NUMMRG, which merges only
+! coincident nodes -- the growth layer was bonded along a few node lines
+! only (essentially floating). Every result this deck produced before that
+! date (incl. any 'two-lobe bulge' and the alpha~0.01 convergence limit) is
+! invalid. Now VGLUE shares the R_MID face; see ansys_usermat/apdl/README.md
+! (cylinder correction). Not yet re-run with the fix unless noted below.
+!
 
 FINISH
 /CLEAR
@@ -42,6 +50,7 @@ ARC   = 5
 
 CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 ! ---- substrate (mat 1): no ecology, no growth
 TB,USER,1,1,6
@@ -128,15 +137,33 @@ TBDATA,25,0.99,0.0
 
 MSHKEY,0
 
+! Volumes are picked by their bounding face (VGLUE renumbers them).
+! One ESIZE for both volumes: they share the R_MID face, and whichever
+! is swept first fixes that face mesh for the other. LEN/6 and 16
+! circumferential divisions keep the region splits on element boundaries.
+ESIZE_C = LEN/6
+CSYS,1
+LSEL,S,LOC,Y,ARC/2
+LESIZE,ALL,,,16
+LSEL,ALL
+CSYS,0
+
 MAT,1
-VSEL,S,VOLU,,1
-ESIZE,0.15
-VSWEEP,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
 
 MAT,2
-VSEL,S,VOLU,,2
-ESIZE,0.05
-VSWEEP,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
+ESIZE,ESIZE_C
+VSWEEP,ALL
+ALLSEL
 
 ! ---- split the growth layer into a 2x2x2 (R x theta x Z) grid ------------
 CSYS,1                                 ! cylindrical: X=radius, Y=theta[deg], Z=axial
@@ -192,7 +219,7 @@ EMODIF,ALL,MAT,9                       ! near-surface, upper-theta, upper-Z -> H
 CSYS,0
 ALLSEL
 
-NUMMRG,NODE,1.0E-4
+! (NUMMRG removed: VGLUE already shares the interface nodes)
 NUMCMP,NODE
 NUMCMP,ELEM
 

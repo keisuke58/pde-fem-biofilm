@@ -141,6 +141,14 @@
 !   edges) is traction-free. This is deliberately the crudest BC that still
 !   lets the growth layer push against something -- not meant to model a
 !   real periodontal support.
+! INTERFACE BONDING (fixed 2026-09-29): this deck used to mesh the two
+! volumes separately and bond them with NUMMRG, which merges only
+! coincident nodes -- the growth layer was bonded along a few node lines
+! only (essentially floating). Every result this deck produced before that
+! date (incl. any 'two-lobe bulge' and the alpha~0.01 convergence limit) is
+! invalid. Now VGLUE shares the R_MID face; see ansys_usermat/apdl/README.md
+! (cylinder correction). Not yet re-run with the fix unless noted below.
+!
 
 FINISH
 /CLEAR
@@ -175,6 +183,7 @@ ARC   = 60
 ! one geometrically (not topologically) identical face.
 CYLIND,R_IN,R_MID,0,LEN,0,ARC        ! volume 1: substrate (tooth proxy)
 CYLIND,R_MID,R_OUT,0,LEN,0,ARC       ! volume 2: growth layer (biofilm)
+VGLUE,ALL                            ! share the R_MID face -> bonded mesh
 
 ! ---- substrate material (mat 1): same hyperelastic law, alpha = 0 (no growth)
 TB,USER,1,1,6
@@ -212,28 +221,27 @@ TBDATA,10,0.01                        ! alpha (growth driver) -- reduced from th
 ! actually were: a bad element at t=0, not a load-ramping problem.
 MSHKEY,0
 
+! Volumes are picked by their bounding face (VGLUE renumbers them);
+! meshed in CSYS,0 (VSWEEP in CSYS,1 ignores ESIZE).
 MAT,1
-VSEL,S,VOLU,,1
-ESIZE,0.15                            ! substrate: 0.3 thick -> 2 elements through
-VSWEEP,1
+CSYS,1
+ASEL,S,LOC,X,R_IN
+VSLA,S
+CSYS,0
+ESIZE,0.15
+VSWEEP,ALL
 
-! Tried local refinement: LSEL by LENGTH (~0.1) to grab just the growth
-! layer's 4 through-thickness lines, LESIZE,,,6 for 6 divisions instead of
-! 2, leaving circumferential/axial ESIZE untouched. Result: no better --
-! 3 errors/1 element (5101) became 6 errors/2 elements (1531, 1556, now
-! back in the substrate), and it ate disk down to 0.14 GB free (the mesh
-! more than doubled in element count). Reverted. Three BC/mesh directions
-! tried today (axial-end UZ=0: helped; excluding the interface row from
-! it: hurt; local through-thickness refinement: hurt) without reaching
-! convergence -- worth a fundamentally different BC or a real FE person's
-! eyes rather than more guessing, next time this is picked up.
 MAT,2
-VSEL,S,VOLU,,2
-ESIZE,0.05                            ! growth layer: 0.1 thick -> 2 elements through
-VSWEEP,2
+CSYS,1
+ASEL,S,LOC,X,R_OUT
+VSLA,S
+CSYS,0
+ESIZE,0.05
+VSWEEP,ALL
+ALLSEL
 
 ALLSEL
-NUMMRG,NODE,1.0E-4                    ! bond the two layers: merge coincident
+! (NUMMRG removed: VGLUE already shares the interface nodes)
                                        ! nodes at the shared R_MID interface
 NUMCMP,NODE
 NUMCMP,ELEM
