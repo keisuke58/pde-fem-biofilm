@@ -33,26 +33,36 @@ one face of the domain, while nutrient_step here holds it on all walls, so the
 gradient runs edge-to-centre rather than bottom-to-top. The point being tested
 is whether a gradient separates the species at all, which either geometry poses.
 
-STATUS 2026-09-30: the question is not answered yet, and the reason is worth
-recording because it is not a bug in this file.
+STATUS 2026-09-30: running, on this machine, with no special hardware.
 
-At the ecology's own pace nothing spatial happens at all. Over the horizon the
-0D work uses (t ~ 1e-2, where the condition spread peaks) the nutrient barely
-moves -- c stays at 0.9996 of its boundary value and the species separation is
-exactly 0 -- so control and full give identical answers to every digit. That is
-not a null result about biology; it is a timescale mismatch. The Hamilton step
-is dt_h = 1e-5..1e-4 while the nutrient field needs t ~ 3-10 to develop a
-gradient against D_c = 0.01 and g ~ 0.3-1.0, a separation of roughly a
-thousandfold. It is the same shape as the gap between the ecology ODE and a
-mechanical deck's increment that n_sub exists to bridge, and it will need the
-same kind of deliberate answer rather than a longer loop.
+Two earlier readings of this file were wrong and are worth keeping, because
+both looked like facts about the world and were facts about the code.
 
-Reaching t ~ 3-10 means thousands of macro steps, and this container did not
-get there: raising dt_h to its measured ceiling of 1e-4, or n_react_sub to
-100, makes JAX's compilation fail with "Cannot allocate memory" while 15 GB
-sit free, so it is an LLVM JIT limit rather than the machine. Run it somewhere
-with room before reading anything into the ratio; the script prints a refusal
-instead of a verdict when the species never separated.
+The first was "this needs a bigger machine". Long runs died with LLVM's
+"Cannot allocate memory" while 15 GB sat free, which reads as an environment
+limit. It was not: the macro loop was driven from Python around functions that
+re-entered XLA compilation each iteration, and the compilations accumulated.
+Short runs hid it. This file now follows run_simulation_coupled's own
+structure -- a Python loop around a jitted Newton vmap and a NumPy nutrient
+step -- which is what the repo already does, and for this reason: both
+_make_reaction_step_c and _make_nutrient_step_stable say so in their
+docstrings.
+
+The second was "spatial coupling changes nothing". It appeared to, exactly,
+to every digit, and the cause was that this file mirrored run_simulation()
+rather than run_simulation_coupled(). run_simulation passes cfg.c_hamilton
+into the reaction as a scalar and never feeds its own nutrient field back, so
+from a uniform initial condition every node stays identical for ever and the
+grid is 0D replicated. The nutrient field it computes is decorative on that
+path. With the coupled reaction, which takes the local c per node, the species
+do begin to separate and the control and full arms part.
+
+Neither was caught by reading the code, and both were caught by the control
+arm sitting next to the measurement.
+
+No GPU: the grid is tens of nodes across and the cost is wall-clock over many
+sequential steps, not parallelism, so a CPU is the right machine and more
+cores buy little.
 
 What it did already establish is the control itself. A first version compared
 the 2D spread against the 0D figure quoted from psi_spread_sensitivity.py and
@@ -62,10 +72,7 @@ identical to four decimals. The apparent effect was the two scripts using
 different horizons, and nothing else. Hence spatial=False here rather than a
 number carried across from another file.
 
-Verified working: --nx 8 --macro 5 (defaults otherwise). Larger runs are
-what the paragraph above is about.
-
-    python JAXFEM/condition_spread_2d.py --nx 8 --macro 5
+    python JAXFEM/condition_spread_2d.py --nx 8 --macro 2000 --dt-h 1e-4
 """
 import argparse
 import json
@@ -80,6 +87,7 @@ for p in (_REPO, _HERE, _REPO / "ansys_usermat" / "coupling",
           _REPO / "ansys_usermat" / "apdl"):
     sys.path.insert(0, str(p))
 
+import jax
 import jax.numpy as jnp                                        # noqa: E402
 import core_hamilton_2d_nutrient as H                          # noqa: E402
 from jax_hamilton_0d_5species_demo import THETA_DEMO           # noqa: E402
@@ -120,7 +128,7 @@ def uniform_state(cfg, phi):
     return G.reshape(cfg.Nx * cfg.Ny, 12), c
 
 
-def run(theta, cfg, phi0, spatial=True):
+def run(theta, cfg, phi0, spatial=True, n_sub_c=30):
     """Mirrors core_hamilton_2d_nutrient.run_simulation's macro loop, but from
     a CLSM-seeded uniform state and accumulating alpha as it goes.
 
@@ -134,28 +142,43 @@ def run(theta, cfg, phi0, spatial=True):
     two, so a difference between them is spatial coupling and not bookkeeping.
     """
     A, b_diag = H.theta_to_matrices(jnp.asarray(theta, dtype=jnp.float64))
+    # No "c" here on purpose: the coupled reaction takes the *local* nutrient
+    # per node instead of a constant. run_simulation() passes cfg.c_hamilton as
+    # a scalar and never feeds its own nutrient field back, so on a uniform
+    # initial condition every node stays identical forever and the run is 0D
+    # replicated across the grid. That is what this study first measured, and
+    # it is why control and full agreed to every digit.
     params = {"dt_h": cfg.dt_h, "Kp1": cfg.Kp1, "Eta": jnp.ones(5),
-              "EtaPhi": jnp.ones(5), "c": cfg.c_hamilton, "alpha": cfg.alpha,
+              "EtaPhi": jnp.ones(5), "alpha": cfg.alpha,
               "K_hill": jnp.array(cfg.K_hill), "n_hill": jnp.array(cfg.n_hill),
               "A": A, "b_diag": b_diag,
               "active_mask": jnp.ones(5, dtype=jnp.int64)}
-    react = H._make_reaction_step(cfg.n_react_sub, cfg.newton_iters)
+    react = H._make_reaction_step_c(cfg.n_react_sub, cfg.newton_iters)
+    nutrient = H._make_nutrient_step_stable(n_sub_c)
+    g_cons = jnp.array(cfg.g_consumption) if spatial else jnp.zeros(5)
+    c_scale = float(cfg.c_hamilton)
     D_eff = jnp.array(cfg.D_eff) if spatial else jnp.zeros(5)
+    # A Python macro loop, following run_simulation_coupled's own structure
+    # rather than a lax.scan. That is deliberate and the repo got there first:
+    # _make_reaction_step_c drives its sub-steps from Python "to avoid
+    # cumulative LLVM compilation issues", and _make_nutrient_step_stable is
+    # pure NumPy for the same reason -- which also means it cannot be traced,
+    # so a scan around it is not available even if it were wanted.
     G, c = uniform_state(cfg, phi0)
     alpha = jnp.zeros((cfg.Nx, cfg.Ny), dtype=jnp.float64)
 
     for _ in range(cfg.n_macro):
-        G = react(G, params)
+        G = react(G, c.reshape(cfg.Nx * cfg.Ny) * c_scale, params)
         g2 = G.reshape(cfg.Nx, cfg.Ny, 12)
         phi2 = H.diffusion_step_species_2d(g2[:, :, :5], D_eff, cfg.dt_macro,
                                            cfg.dx, cfg.dy)
         g2 = g2.at[:, :, :5].set(phi2)
         g2 = g2.at[:, :, 5].set(1.0 - jnp.sum(phi2, axis=-1))
         G = g2.reshape(cfg.Nx * cfg.Ny, 12)
-        phi_tot = jnp.sum(phi2 * g2[:, :, 6:11], axis=-1)      # sum_i phi_i psi_i
+        phi_tot = jnp.sum(phi2 * g2[:, :, 6:11], axis=-1)     # sum_i phi_i psi_i
         alpha = alpha + cfg.dt_macro * K_ALPHA * phi_tot
-        if spatial:
-            c = H.nutrient_step(c, phi2, cfg, cfg.dt_macro)
+        c = nutrient(c, phi2, cfg.D_c, cfg.k_monod, g_cons, cfg.c_boundary,
+                     cfg.dx, cfg.dy, cfg.dt_macro)
 
     phi2 = np.asarray(G.reshape(cfg.Nx, cfg.Ny, 12)[:, :, :5])
     return float(jnp.mean(alpha)), phi2, np.asarray(c)
