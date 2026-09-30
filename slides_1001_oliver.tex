@@ -304,10 +304,13 @@ set for decks spanning $\sim$1\,ms, so it needs your deck's time unit (Q4).}
         my integrator reproduces all 14 of its numerical examples) $\to$
         JAX PDE computes $\alpha(\mathbf x)$ $\to$ ANSYS USERMAT
         (one-way coupling)
-  \item \textbf{Why not a full merge into your element now:} different
-        interaction term and $n=2$ (a 5-species version means rewriting
-        \texttt{Ussfin}), the time-unit question (Q4), and new verification
-        with nothing to compare against --- roughly 1--2 months
+  \item \textbf{Why not a full merge now --- not the 5-species work, which is
+        done.} \texttt{Ussfin} carries species 1--5 and all 20
+        \texttt{InteractionIJ} pairs, 0 errors in real ANSYS. It generalises
+        \emph{your} multiplicative, nutrient-driven term, not the paper's
+        additive one, so it is not what the thesis argues from and there is
+        \textbf{no shared variable space to verify one against the other}.
+        With the trial-only IC shortcut and Q4: roughly 1--2 months
   \item \textbf{What one-way coupling gives up} is mainly stress$\to$growth
         feedback, which Klempt et al.\ 2024 neglect as well (Sec.\,2.4)
   \item \textbf{Limitation:} the ANSYS side is material-point only; the
