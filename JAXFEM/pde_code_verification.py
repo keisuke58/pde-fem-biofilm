@@ -274,6 +274,7 @@ if __name__ == "__main__":
     main_2d()
     main_at2()
     main_census()
+    main_time()
 
 
 # ---------------------------------------------------------------------------
@@ -560,3 +561,124 @@ def main_census():
     d = klempt2024_lap_matches_mirror()
     print(f"  {'klempt2024_quantitative.lap (3D, direct)':<52} "
           f"max diff from mirror {d:.1e}  {'OK' if d == 0.0 else 'DEFECTIVE'}")
+
+
+# ---------------------------------------------------------------------------
+# time: order, and the stability limit nothing guards
+# ---------------------------------------------------------------------------
+#
+# Everything above measures the *spatial* discretisation. The time integrator
+# is separate and is checked separately, against the exact solution of the ODE
+# system the spatial discretisation defines -- `exp(M t) u0`, built by applying
+# the operator to unit vectors. Comparing against the continuum solution
+# instead would mix the two errors and could not isolate either.
+#
+# The object under test is `diffusion_step_species_2d`, which is **one explicit
+# Euler step, with no sub-stepping**: the caller hands it `dt_macro` directly.
+# That is worth stating beside `_make_nutrient_step_stable`, which divides the
+# same increment into `n_sub_c` sub-steps precisely because an explicit
+# diffusion step has a step limit. The species path has no such guard.
+
+def _discrete_laplacian_matrix(N, h, op=None):
+    """Assemble the matrix of a 2D Laplacian operator by probing it."""
+    from JAXFEM import core_hamilton_2d_nutrient as p2
+    if op is None:
+        op = p2.laplacian_2d_neumann
+    n = N * N
+    A = np.zeros((n, n))
+    for j in range(n):
+        e = np.zeros((N, N))
+        e.flat[j] = 1.0
+        A[:, j] = np.asarray(op(jnp.asarray(e), h, h)).ravel()
+    return A
+
+
+def study_time_order(N=9, D=1.0e-3, t_end=None, dts=None):
+    """Error of the repository's species-diffusion step against exp(M t).
+
+    Five species at 0.1 each, so the sum stays at 0.5 and neither the clip to
+    [0,1] nor the simplex rescale in `diffusion_step_species_2d` can bite --
+    otherwise this would be measuring the projection, not the integrator.
+    """
+    from JAXFEM import core_hamilton_2d_nutrient as p2
+    from scipy.linalg import expm
+    h = 1.0 / (N - 1)
+    A = _discrete_laplacian_matrix(N, h)
+    if t_end is None:
+        t_end = 0.02 * h * h / D * 64          # comfortably inside stability
+    if dts is None:
+        dts = [t_end / n for n in (8, 16, 32, 64, 128)]
+
+    g = np.linspace(0.0, 1.0, N)
+    X, Y = np.meshgrid(g, g, indexing="ij")
+    u0 = 0.1 + 0.02 * np.cos(np.pi * X) * np.cos(np.pi * Y)
+    exact = (expm(D * A * t_end) @ u0.ravel()).reshape(N, N)
+
+    D_eff = jnp.asarray([D] * 5)
+    rows = []
+    for dt in dts:
+        n = int(round(t_end / dt))
+        phi = jnp.asarray(np.repeat(u0[:, :, None], 5, axis=2))
+        for _ in range(n):
+            phi = p2.diffusion_step_species_2d(phi, D_eff, dt, h, h)
+        got = np.asarray(phi)[:, :, 0]
+        rows.append((n, dt, float(np.max(np.abs(got - exact))),
+                     dt * D / h ** 2))
+    return rows
+
+
+def study_time_stability(N=9, D=1.0e-3, ratios=(0.1, 0.24, 0.26, 0.5, 1.0),
+                         n_steps=400, seed=0):
+    """Where the unguarded explicit step actually fails.
+
+    The mirrored five-point Laplacian has `|lambda|_max = 8/h^2` exactly, so
+    `u + dt D lap(u)` is stable for `dt D/h^2 <= 1/4`.
+
+    The initial condition must excite the most unstable mode or this measures
+    nothing. A smooth `cos(pi x) cos(pi y)` contains only the lowest modes, and
+    with it `dt D/h^2 = 0.26` stayed bounded for 200 steps -- not because it is
+    stable but because the growing mode was only present at round-off and
+    1.08^200 * 1e-17 is still invisible. A random field carries every mode, so
+    the rows below straddle the limit where the theory puts it.
+    """
+    from JAXFEM import core_hamilton_2d_nutrient as p2
+    h = 1.0 / (N - 1)
+    rng = np.random.default_rng(seed)
+    u0 = 0.1 + 0.02 * rng.normal(size=(N, N))
+    rows = []
+    for r in ratios:
+        dt = r * h * h / D
+        # clip-free probe: the raw scheme, so the simplex projection cannot
+        # hide a blow-up by clamping it back into [0, 1]
+        u = jnp.asarray(u0)
+        for _ in range(n_steps):
+            u = u + dt * D * p2.laplacian_2d_neumann(u, h, h)
+        raw = float(np.max(np.abs(np.asarray(u))))
+        # and through the repository's own step, where the clip does apply
+        phi = jnp.asarray(np.repeat(u0[:, :, None], 5, axis=2))
+        for _ in range(n_steps):
+            phi = p2.diffusion_step_species_2d(phi, jnp.asarray([D] * 5),
+                                               dt, h, h)
+        clipped = float(np.max(np.abs(np.asarray(phi)[:, :, 0])))
+        rows.append((r, dt, raw, clipped))
+    return rows
+
+
+def main_time():
+    rows = study_time_order()
+    print("\ntime order of diffusion_step_species_2d, against exp(M t)")
+    print(f"  {'steps':>6} {'dt':>11} {'dt*D/h^2':>10} {'error':>11}")
+    for n, dt, e, cfl in rows:
+        print(f"  {n:>6} {dt:>11.3e} {cfl:>10.4f} {e:>11.3e}")
+    ords = [np.log(a[2] / b[2]) / np.log(a[1] / b[1])
+            for a, b in zip(rows[:-1], rows[1:])]
+    print("  observed order: " + ", ".join(f"{p:.2f}" for p in ords))
+
+    print("\nstability of the same step (400 steps, random IC; "
+          "limit is dt*D/h^2 = 0.25)")
+    print(f"  {'dt*D/h^2':>9} {'max|u| raw':>13} {'max|phi| via the step':>22}")
+    for r, dt, raw, clipped in study_time_stability():
+        print(f"  {r:>9.2f} {raw:>13.3e} {clipped:>22.3e}")
+    print("  The right-hand column is the repository's own step, whose clip to")
+    print("  [0,1] bounds the output even when the scheme has gone unstable --")
+    print("  so a blow-up here looks like a saturated field, not an error.")

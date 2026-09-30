@@ -232,6 +232,51 @@ residual of the module's own right-hand side on that profile converges at
 is one of the three `mode="edge"` cases above, which is why the interface is
 placed at the centre of a domain 12 ξ wide.)
 
+## 6d. Time: first order, and a step limit nothing guards
+
+Everything above is the *spatial* discretisation. The time integrator is
+measured separately, against `exp(M t) u₀` — the exact solution of the ODE
+system the spatial discretisation defines, with `M` assembled by probing the
+operator. Comparing against the continuum solution instead would mix the two
+errors and could isolate neither.
+
+`diffusion_step_species_2d` comes out at order **1.02, 1.01, 1.01, 1.00** —
+explicit Euler, as written. Worth stating beside the second-order space:
+**refining the grid alone cannot buy accuracy the time step does not already
+have**, and at these settings the time error is the binding one.
+
+It is also **one explicit Euler step with no sub-stepping** — the caller hands
+it `dt_macro` directly. `_make_nutrient_step_stable` divides the same increment
+into `n_sub_c` sub-steps precisely because an explicit diffusion step has a
+limit; the species path has no equivalent guard. The mirrored five-point
+Laplacian has `|λ|_max = 8/h²` exactly, so the limit is `dt·D/h² = 1/4`:
+
+| `dt·D/h²` | raw scheme after 400 steps | through `diffusion_step_species_2d` |
+|---|---|---|
+| 0.10 | 0.1025 | 0.1025 |
+| 0.24 | 0.1025 | 0.1025 |
+| **0.26** | **4.0e+10** | 0.2 |
+| 0.50 | 1.2e+188 | 0.2 |
+| 1.00 | **nan** | 0.2 |
+
+**The right-hand column is the finding.** The clip to `[0,1]` and the simplex
+rescale run *every* step, so an unstable run never reaches `inf` or `nan`. At
+four times the limit it lands on a **binarised field** — every node either
+empty or at the simplex bound, species sums exactly 0 or 1, everything inside
+its bounds, no warning of any kind. An unstable species-diffusion run does not
+look like a failure; it looks like a plausible result. That is pinned by a test.
+
+The measurement also needed care to be worth anything: a smooth
+`cos(πx)cos(πy)` initial condition contains only the lowest modes, and with it
+`dt·D/h² = 0.26` stayed bounded for 200 steps — not because it is stable but
+because the growing mode was present only at round-off, and `1.08²⁰⁰ × 1e−17`
+is still invisible. The probe now uses a random field, which carries every
+mode, and the rows straddle the limit where the theory puts it.
+
+`condition_spread_2d` runs `dt·D/h² ≈ 9.8e−5`, three orders inside the limit,
+so none of its results are affected — this is a trap for a future run on a
+finer grid or a larger diffusivity, not a defect in a reported number.
+
 ## 7. Bearing on the Klempt 2024 gap
 
 `SOLEIMANI2021_NOTES.md` §3 quotes the group's own Remark that the advection

@@ -239,3 +239,58 @@ def test_the_census_of_zero_flux_walls_is_what_it_is_recorded_to_be():
         errs = [r[2] for r in rows]
         assert max(errs) / min(errs) < 1.01, (name, errs)   # flat: no convergence
         assert all(r[3] < r[2] / 100.0 for r in rows), (name, rows)  # interior fine
+
+
+# ---------------------------------------------------------------------------
+# time: first order, and an unguarded step limit that fails silently
+# ---------------------------------------------------------------------------
+
+def test_the_species_diffusion_is_first_order_in_time():
+    """Measured against exp(M t) -- the exact solution of the ODE system the
+    spatial discretisation defines -- so the spatial error cannot contaminate
+    the temporal order. Explicit Euler, so 1.00.
+
+    Worth having next to the second-order space above: refining the grid alone
+    cannot buy accuracy the time step does not already have."""
+    rows = v.study_time_order()
+    for p in [np.log(a[2] / b[2]) / np.log(a[1] / b[1])
+              for a, b in zip(rows[:-1], rows[1:])][-1:]:
+        assert 0.9 < p < 1.1, p
+
+
+def test_the_species_diffusion_step_limit_is_where_theory_puts_it():
+    """`diffusion_step_species_2d` is ONE explicit Euler step with no
+    sub-stepping -- the caller hands it dt_macro directly, unlike
+    `_make_nutrient_step_stable`, which divides the same increment into
+    n_sub_c sub-steps precisely because an explicit diffusion step has a
+    limit. The mirrored five-point Laplacian has |lambda|_max = 8/h^2, so the
+    limit is dt*D/h^2 = 1/4."""
+    rows = {r[0]: r for r in v.study_time_stability()}
+    assert rows[0.24][2] < 1.0                  # stable just below
+    assert rows[0.26][2] > 1.0e6                # diverging just above
+    assert rows[1.0][2] > 1.0e100 or np.isnan(rows[1.0][2])
+
+
+def test_an_unstable_species_step_saturates_instead_of_signalling():
+    """The part that matters operationally. The clip to [0,1] and the simplex
+    rescale run every step, so an unstable run never reaches inf or nan: it
+    lands on a binarised field of empty and saturated nodes, within bounds,
+    with no warning of any kind. It looks like a plausible result."""
+    import jax.numpy as jnp
+    from JAXFEM import core_hamilton_2d_nutrient as p2
+    N, D = 9, 1.0e-3
+    h = 1.0 / (N - 1)
+    dt = 1.0 * h * h / D                        # 4x over the limit
+    rng = np.random.default_rng(0)
+    u0 = 0.1 + 0.02 * rng.normal(size=(N, N))
+    phi = jnp.asarray(np.repeat(u0[:, :, None], 5, axis=2))
+    for _ in range(400):
+        phi = p2.diffusion_step_species_2d(phi, jnp.asarray([D] * 5), dt, h, h)
+    a = np.asarray(phi)
+    assert not np.isnan(a).any(), "no nan: nothing signals the instability"
+    assert a.min() >= 0.0 and a.max() <= 1.0, "stays inside the bounds"
+    # binarised: every node is either empty or at the simplex bound
+    assert np.all(np.isclose(a, 0.0, atol=1e-9) | np.isclose(a, 0.2, atol=1e-9))
+    sums = a.sum(axis=-1)
+    assert np.all(np.isclose(sums, 0.0, atol=1e-9)
+                  | np.isclose(sums, 1.0, atol=1e-9))
