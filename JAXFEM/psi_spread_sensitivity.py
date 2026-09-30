@@ -95,6 +95,27 @@ def pattern(rng):
     return (v - lo) / (hi - lo) if hi > lo else np.zeros(5)
 
 
+def _crossing(ss, med, target):
+    """The smallest spread at which the median reaches `target`.
+
+    Not np.interp: that assumes the x it searches is increasing, and the
+    median is not. Over the longer horizon a small psi spread slightly
+    *reduces* the condition spread before it grows, so interpolating against
+    the whole curve is reading a non-monotonic function backwards. Scan for
+    the first crossing instead and interpolate only inside the segment that
+    brackets it, and say plainly when the baseline is already above the
+    target rather than reporting s = 0 for it.
+    """
+    if med[0] >= target:
+        return f"already exceeded with psi uniform ({med[0]:.2%} at s = 0)"
+    for i in range(1, len(med)):
+        if med[i] >= target:
+            lo, hi = med[i - 1], med[i]
+            frac = 0.0 if hi == lo else (target - lo) / (hi - lo)
+            return f"s ~ {ss[i - 1] + frac * (ss[i] - ss[i - 1]):.1%}"
+    return f"not reached by s = {ss[-1]:.0%}"
+
+
 def spread_of(alphas):
     a = np.asarray(alphas, dtype=float)
     return float((a.max() - a.min()) / a.mean())
@@ -140,10 +161,7 @@ def main(argv=None):
         ss = np.array([r["s"] for r in rows])
         print("  psi spread needed for an alpha spread of:")
         for target in (0.01, 0.05, 0.091):
-            if med.max() < target:
-                print(f"    {target:.1%}: not reached by s = {ss.max():.0%}")
-            else:
-                print(f"    {target:.1%}: s ~ {np.interp(target, med, ss):.1%}")
+            print(f"    {target:.1%}: {_crossing(ss, med, target)}")
 
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_text(json.dumps(
