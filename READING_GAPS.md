@@ -113,3 +113,65 @@ individual-based simulators are the alternative, and none appear here.
 
 Nothing here is verified beyond the bibliographic details as printed in Klempt
 et al. (2024); the papers themselves have not been read in this repository.
+
+---
+
+## Status, 2026-09-30: all of the above are now in the bibliography
+
+Fourteen entries added to `biofilm_3tooth_refs.bib` (23 → 37), the file
+`thesis_ch5/_build_check.tex` and `biofilm_3tooth_report.tex` both use. Brace
+balance, duplicate keys and required fields checked.
+
+**Provenance is recorded per entry, because it matters for a submission.**
+
+| verified first-hand (PDF read, DOI included) | key |
+|---|---|
+| Soleimani et al. 2023, co-aggregation | `Soleimani2023CoAggregation` |
+| Soleimani 2019, viscoelastic growth | `Soleimani2019ViscoelasticGrowth` |
+| Soleimani, Haverich & Wriggers 2021 | `Soleimani2021Atherosclerosis` |
+| Chu et al. 2018 | `Chu2018SelfInducedStress` |
+
+The other ten are **transcribed from Klempt et al. (2024)'s reference list and
+have not been checked against the articles**. They deliberately carry no `doi`
+field rather than a guessed one, and each entry's `note` says so:
+`Soleimani2020AnisotropicGrowth`, `Goriely2017BiologicalGrowth`,
+`LubardaHoger2002GrowingMass`, `EpsteinMaugin2000VolumetricGrowth`,
+`Rath2017StreptococcusGordonii`, `Bol2013BiofilmMechanicalCharacterisation`,
+`Mattei2018ContinuumDiscreteReview`, `Lardon2011iDynoMiCS`, `Li2019NUFEB`,
+`Naylor2017Simbiotics`. **Verify these before submission** — a wrong volume or
+page range in a thesis bibliography is the kind of error a viva finds.
+
+### The Rath suspicion was right
+
+§5 above wondered whether the 44 "Rath" matches in this repository were the
+2017 *S. gordonii* paper. They were not: **`biofilm_3tooth_refs.bib` had no
+Rath entry at all** before today. Whatever those matches were, none of them
+was a citation. Now added as `Rath2017StreptococcusGordonii`.
+
+### Where each should be cited
+
+Adding the entries is not citing them. The points that need a `\cite`:
+
+- `Soleimani2021Atherosclerosis` — where `Fg = (1+α)I` is introduced (its
+  Eq. 15 is this convention verbatim, `α(0) = 0`), and where the growth cap is
+  described (its Eq. 17). This is what closes `CITATION_AUDIT.md` F1c.
+- `Rodriguez1994StressDependentGrowth` (already present),
+  `LubardaHoger2002GrowingMass`, `Goriely2017BiologicalGrowth` — at the
+  multiplicative split itself, which currently cites only the Klempt papers.
+- `Soleimani2023CoAggregation` — in the introduction, as the precedent this
+  work is a smaller version of. A reader from that group will look for it
+  first.
+- `Soleimani2019ViscoelasticGrowth` — at the viscoelastic UMAT, and again at
+  the integrator discussion (`VISCOUS_UPDATE_SCHEME.md`).
+- `Soleimani2020AnisotropicGrowth` — where the one-way coupling is justified,
+  to say what is being deferred.
+- `Chu2018SelfInducedStress` — where the stress magnitudes are interpreted,
+  with the `E_SPEC` caveat from `CHU2018_NOTES.md` attached.
+- `Bol2013BiofilmMechanicalCharacterisation` — at the `E_SPEC` limitation.
+- `Mattei2018ContinuumDiscreteReview`, `Lardon2011iDynoMiCS`, `Li2019NUFEB`,
+  `Naylor2017Simbiotics` — where the continuum approach is chosen, to say what
+  it is chosen against.
+- `EpsteinMaugin2000VolumetricGrowth` — at the thermodynamics of an open
+  growing system.
+- `Rath2017StreptococcusGordonii` — beside the *S. oralis* pioneer-colonizer
+  discussion.

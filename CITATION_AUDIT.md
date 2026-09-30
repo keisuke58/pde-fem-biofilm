@@ -106,6 +106,12 @@ that still needs a pass with both PDFs open (both now confirmed available).
 > Klempt's minus 1 — and it is not an undocumented deviation but a form the
 > group itself publishes. Cite Eq. 15 at the point `Fg` is introduced.
 > See [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) §1.
+>
+> **The citation now exists**: `Soleimani2021Atherosclerosis` in
+> `biofilm_3tooth_refs.bib` (added 2026-09-30, DOI verified from the PDF). It
+> still has to be *used* at that point in the text — the bibliography entry is
+> not the citation. See [`READING_GAPS.md`](READING_GAPS.md) for the full list
+> of where each new entry belongs.
 
 ### Original finding, kept for the record
 

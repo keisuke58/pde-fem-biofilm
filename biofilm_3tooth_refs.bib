@@ -339,3 +339,222 @@
   address      = {Providence, RI},
   year         = {2024}
 }
+
+% ---------------------------------------------------------------------------
+% Added 2026-09-30 from READING_GAPS.md, which was compiled from Klempt et al.
+% (2024)'s own reference list and checked against what this repository cited.
+%
+% PROVENANCE, because it matters for a thesis: the four entries carrying a doi
+% field were read from the PDF itself (notes in SOLEIMANI2019_NOTES.md,
+% SOLEIMANI2021_NOTES.md, SOLEIMANI2023_NOTES.md, CHU2018_NOTES.md), so their
+% details are first-hand. The rest are transcribed from Klempt et al. (2024)'s
+% reference list and have NOT been checked against the articles; they
+% deliberately carry no doi rather than a guessed one, and each should be
+% verified before the thesis is submitted.
+% ---------------------------------------------------------------------------
+
+@article{Soleimani2023CoAggregation,
+  author  = {Soleimani, M. and Szafranski, S. P. and Qu, T. and
+             Mukherjee, R. and Stiesch, M. and Wriggers, P. and Junker, P.},
+  title   = {Numerical and experimental investigation of multi-species
+             bacterial co-aggregation},
+  journal = {Scientific Reports},
+  volume  = {13},
+  pages   = {11839},
+  year    = {2023},
+  doi     = {10.1038/s41598-023-38806-2},
+  note    = {The closest existing work to this thesis: multi-species,
+             numerical and experimental, by the supervisor with the dental
+             clinic side and both Klempt co-authors. Read 2026-09-30; see
+             SOLEIMANI2023_NOTES.md}
+}
+
+@article{Soleimani2019ViscoelasticGrowth,
+  author  = {Soleimani, M.},
+  title   = {Finite strain visco-elastic growth driven by nutrient diffusion:
+             theory, {FEM} implementation and an application to the biofilm
+             growth},
+  journal = {Computational Mechanics},
+  volume  = {64},
+  number  = {5},
+  pages   = {1289--1301},
+  year    = {2019},
+  doi     = {10.1007/s00466-019-01708-0},
+  note    = {Precedent for the viscoelastic UMAT, and the source of the
+             unconditionally stable exponential update (its Eq. 32) that
+             VISCOUS_UPDATE_SCHEME.md specifies and verifies against closed
+             form. Read 2026-09-30}
+}
+
+@article{Soleimani2021Atherosclerosis,
+  author  = {Soleimani, M. and Haverich, A. and Wriggers, P.},
+  title   = {Mathematical modeling and numerical simulation of
+             atherosclerosis based on a novel surgeon's view},
+  journal = {Archives of Computational Methods in Engineering},
+  volume  = {28},
+  pages   = {4263--4282},
+  year    = {2021},
+  doi     = {10.1007/s11831-021-09623-5},
+  note    = {Cite at the point $F_g=(1+\alpha)I$ is introduced: its Eq. 15 is
+             this work's convention verbatim, with $\alpha(0)=0$, which
+             resolves CITATION_AUDIT item F1c. Its Eq. 17 is the growth cap
+             now implemented in usermat_biofilm.f. Read 2026-09-30}
+}
+
+@article{Chu2018SelfInducedStress,
+  author  = {Chu, E. K. and Kilic, O. and Cho, H. and Groisman, A. and
+             Levchenko, A.},
+  title   = {Self-induced mechanical stress can trigger biofilm formation in
+             uropathogenic {E}scherichia coli},
+  journal = {Nature Communications},
+  volume  = {9},
+  pages   = {4087},
+  year    = {2018},
+  doi     = {10.1038/s41467-018-06552-z},
+  note    = {Why growth-induced stress is worth computing at all. Quote its
+             threshold only with the E_SPEC caveat attached -- see
+             CHU2018_NOTES.md, which corrects an earlier over-claim.
+             Read 2026-09-30}
+}
+
+@article{Soleimani2020AnisotropicGrowth,
+  author  = {Soleimani, M. and Muthyala, N. and Marino, M. and Wriggers, P.},
+  title   = {A novel stress-induced anisotropic growth model driven by
+             nutrient diffusion},
+  journal = {Journal of the Mechanics and Physics of Solids},
+  volume  = {144},
+  pages   = {104097},
+  year    = {2020},
+  note    = {Models the stress-to-growth feedback that this work's one-way
+             coupling gives up; the clearest way to state what is deferred.
+             Details from Klempt et al. (2024)'s reference list, not verified}
+}
+
+@book{Goriely2017BiologicalGrowth,
+  author    = {Goriely, A.},
+  title     = {The Mathematics and Mechanics of Biological Growth},
+  publisher = {Springer},
+  year      = {2017},
+  note      = {Standard monograph for the growth kinematics chapter.
+               Details from Klempt et al. (2024)'s reference list, not verified}
+}
+
+@article{LubardaHoger2002GrowingMass,
+  author  = {Lubarda, V. A. and Hoger, A.},
+  title   = {On the mechanics of solids with a growing mass},
+  journal = {International Journal of Solids and Structures},
+  volume  = {39},
+  number  = {18},
+  pages   = {4627--4664},
+  year    = {2002},
+  note    = {Foundation for the multiplicative split, alongside Rodriguez
+             et al. (1994). Details from Klempt et al. (2024)'s reference
+             list, not verified}
+}
+
+@article{EpsteinMaugin2000VolumetricGrowth,
+  author  = {Epstein, M. and Maugin, G. A.},
+  title   = {Thermomechanics of volumetric growth in uniform bodies},
+  journal = {International Journal of Plasticity},
+  volume  = {16},
+  number  = {7--8},
+  pages   = {951--978},
+  year    = {2000},
+  note    = {Thermodynamic setting for growth; relevant to the extra entropy
+             source Soleimani (2019) needs for an open system. Details from
+             Klempt et al. (2024)'s reference list, not verified}
+}
+
+@article{Rath2017StreptococcusGordonii,
+  author  = {Rath, H. and Feng, D. and Neuweiler, I. and Stumpp, N. S. and
+             Nackenhorst, U. and Stiesch, M.},
+  title   = {Biofilm formation by the oral pioneer colonizer
+             {S}treptococcus gordonii: an experimental and numerical study},
+  journal = {FEMS Microbiology Ecology},
+  volume  = {93},
+  number  = {3},
+  pages   = {fix010},
+  year    = {2017},
+  note    = {Oral, experimental, same institute, and directly comparable to
+             S. oralis leading the succession panel. Note that this
+             bibliography previously had NO Rath entry at all: the 44 "Rath"
+             matches READING_GAPS.md counted in the repository were something
+             else. Details from Klempt et al. (2024)'s reference list, not
+             verified}
+}
+
+@article{Bol2013BiofilmMechanicalCharacterisation,
+  author  = {B{\"o}l, M. and Ehret, A. E. and Bolea Albero, A. and
+             Hellriegel, J. and Krull, R.},
+  title   = {Recent advances in mechanical characterisation of biofilm and
+             their significance for material modelling},
+  journal = {Critical Reviews in Biotechnology},
+  volume  = {33},
+  number  = {2},
+  pages   = {145--171},
+  year    = {2013},
+  note    = {Cite where E_SPEC is disclosed as an assumption: this is why no
+             better number exists. Details from Klempt et al. (2024)'s
+             reference list, not verified}
+}
+
+@article{Mattei2018ContinuumDiscreteReview,
+  author  = {Mattei, M. R. and Frunzo, L. and D'Acunto, B. and Pechaud, Y. and
+             Esposito, G. and Pirozzi, F.},
+  title   = {Continuum and discrete approach in modeling biofilm development
+             and structure: a review},
+  journal = {Journal of Mathematical Biology},
+  volume  = {76},
+  number  = {4},
+  pages   = {945--1003},
+  year    = {2018},
+  note    = {The review that frames the continuum-versus-individual-based
+             choice this work makes implicitly. Details from Klempt et al.
+             (2024)'s reference list, not verified}
+}
+
+@article{Lardon2011iDynoMiCS,
+  author  = {Lardon, L. A. and Merkey, B. V. and Martins, S. and
+             D{\"o}tsch, A. and Picioreanu, C. and Kreft, J.-U. and
+             Smets, B. F.},
+  title   = {i{D}yno{M}i{CS}: next-generation individual-based modelling of
+             biofilms},
+  journal = {Environmental Microbiology},
+  volume  = {13},
+  number  = {9},
+  pages   = {2416--2434},
+  year    = {2011},
+  note    = {One of the individual-based alternatives this work is choosing
+             against. Details from Klempt et al. (2024)'s reference list,
+             not verified}
+}
+
+@article{Li2019NUFEB,
+  author  = {Li, B. and Taniguchi, D. and Gedara, J. P. and Gogulancea, V. and
+             Gonzalez-Cabaleiro, R. and Chen, J. and McGough, A. S. and
+             Ofiteru, I. D. and Curtis, T. P. and Zuliani, P.},
+  title   = {{NUFEB}: a massively parallel simulator for individual-based
+             modelling of microbial communities},
+  journal = {PLoS Computational Biology},
+  volume  = {15},
+  number  = {12},
+  pages   = {e1007125},
+  year    = {2019},
+  note    = {Individual-based alternative. Details from Klempt et al. (2024)'s
+             reference list, not verified}
+}
+
+@article{Naylor2017Simbiotics,
+  author  = {Naylor, J. and Fellermann, H. and Ding, Y. and Mohammed, W. K. and
+             Jakubovics, N. S. and Mukherjee, J. and Biggs, C. A. and
+             Wright, P. C. and Krasnogor, N.},
+  title   = {Simbiotics: a multiscale integrative platform for {3D} modeling
+             of bacterial populations},
+  journal = {ACS Synthetic Biology},
+  volume  = {6},
+  number  = {7},
+  pages   = {1194--1210},
+  year    = {2017},
+  note    = {Individual-based alternative. Details from Klempt et al. (2024)'s
+             reference list, not verified}
+}
