@@ -55,11 +55,26 @@ the exact steady solution of the nutrient equation of the paper this work
 reproduces. See `KLEMPT2024_REPRODUCTION.md`.
 
 ------------------------------------------------------------------------------
-What this found
+What this found, and what was done about it
 ------------------------------------------------------------------------------
 
-Run it. The measured order and the boundary diagnosis are printed rather than
-asserted here; `tests/test_nutrient_verification.py` pins them.
+Both solvers wrote their zero-flux row as `(u1 - u0)/h^2`, half the correct
+second difference, which places the wall half a cell outside the node. It cost
+one order in 1D and made the 2D operator **inconsistent** at the wall -- the
+error did not shrink with `h` at all -- leaking about 5 % of the species mass
+through a boundary declared zero-flux.
+
+Fixed 2026-09-30 in all three places it appeared:
+
+  * `core_hamilton_1d_nutrient.nutrient_step`          (1D nutrient, x=0)
+  * `core_hamilton_2d_nutrient.laplacian_2d_neumann`   (2D species, 4 walls)
+  * `core_hamilton_2d_nutrient._make_nutrient_step_mixed` (2D nutrient, 3 walls)
+
+The `_half` variants below preserve the pre-fix arithmetic so the measurement
+can still be reproduced, and `_mirror` variants are asserted to reproduce the
+now-committed routines bit for bit. `PDE_VERIFICATION_FINDINGS.md` has the
+numbers and `JAXFEM/boundary_fix_impact.py` the effect on the reported 2D
+condition spread; `tests/test_pde_code_verification.py` pins all of it.
 """
 from __future__ import annotations
 
@@ -140,8 +155,9 @@ def steady_state(N, D_c, g_eff, k_monod, phi, step=None, n_diff_times=20.0):
 # the candidate fix, as one changed coefficient
 # ---------------------------------------------------------------------------
 
-def nutrient_step_neumann2(c_field, phi_total, params):
-    """`nutrient_step` with the Neumann row at its ghost-node value.
+def nutrient_step_mirror(c_field, phi_total, params):
+    """`nutrient_step`'s Neumann row at its ghost-node value -- now the
+    committed one, which a test below asserts bit for bit.
 
     A ghost node `c_{-1} = c_1` (the reflecting wall `c'(0) = 0`) gives
 
@@ -161,8 +177,9 @@ def nutrient_step_neumann2(c_field, phi_total, params):
     return _step_impl(c_field, phi_total, params, 2.0)
 
 
-def nutrient_step_asis(c_field, phi_total, params):
-    """The same body with the current coefficient, for the equivalence proof."""
+def nutrient_step_half(c_field, phi_total, params):
+    """The same body with the pre-2026-09-30 coefficient, kept so the
+    measurement that motivated the fix stays reproducible."""
     return _step_impl(c_field, phi_total, params, 1.0)
 
 
@@ -237,8 +254,8 @@ def orders(rows):
 
 
 def main():
-    for name, step in (("as committed", None),
-                       ("Neumann coefficient 2", nutrient_step_neumann2)):
+    for name, step in (("as committed (wall on the node)", None),
+                       ("pre-fix (wall half a cell out)", nutrient_step_half)):
         print(f"\n=== {name} " + "=" * (52 - len(name)))
         res = study(step)
         for label, rows in res.items():
@@ -292,6 +309,22 @@ def laplacian_2d_neumann_mirror(u, dx, dy):
     return lap_x + lap_y
 
 
+def laplacian_2d_neumann_half(u, dx, dy):
+    """`laplacian_2d_neumann` as it stood before 2026-09-30: ghost = boundary
+    node, so every wall row carries half the correct second difference."""
+    lap_x = jnp.zeros_like(u)
+    lap_x = lap_x.at[1:-1, :].set(
+        (u[:-2, :] + u[2:, :] - 2.0 * u[1:-1, :]) / (dx * dx))
+    lap_x = lap_x.at[0, :].set((u[1, :] - u[0, :]) / (dx * dx))
+    lap_x = lap_x.at[-1, :].set((u[-2, :] - u[-1, :]) / (dx * dx))
+    lap_y = jnp.zeros_like(u)
+    lap_y = lap_y.at[:, 1:-1].set(
+        (u[:, :-2] + u[:, 2:] - 2.0 * u[:, 1:-1]) / (dy * dy))
+    lap_y = lap_y.at[:, 0].set((u[:, 1] - u[:, 0]) / (dy * dy))
+    lap_y = lap_y.at[:, -1].set((u[:, -2] - u[:, -1]) / (dy * dy))
+    return lap_x + lap_y
+
+
 def study_2d_operator(op=None, grids=GRIDS):
     """sup-norm error of the 2D Laplacian on an exact Neumann eigenfunction."""
     from JAXFEM import core_hamilton_2d_nutrient as p2
@@ -312,8 +345,10 @@ def study_2d_operator(op=None, grids=GRIDS):
 
 def main_2d():
     from JAXFEM import core_hamilton_2d_nutrient as p2
-    for name, op in (("as committed", p2.laplacian_2d_neumann),
-                     ("mirrored about the node", laplacian_2d_neumann_mirror)):
+    for name, op in (("as committed (mirrored about the node)",
+                      p2.laplacian_2d_neumann),
+                     ("pre-fix (ghost = boundary node)",
+                      laplacian_2d_neumann_half)):
         rows = study_2d_operator(op)
         print(f"\n2D Laplacian, Neumann eigenfunction -- {name}")
         print(f"  {'N':>5} {'h':>9} {'sup err':>11} {'interior only':>14}")

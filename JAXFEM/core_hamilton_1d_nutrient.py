@@ -225,8 +225,15 @@ def nutrient_step(c_field, phi_total, params):
         lap = jnp.zeros_like(c)
         interior = (c[:-2] + c[2:] - 2.0 * c[1:-1]) / (dx * dx)
         lap = lap.at[1:-1].set(interior)
-        # Neumann BC at x=0: ghost node approach → lap[0] = (c[1]-c[0])/(dx²)
-        lap = lap.at[0].set((c[1] - c[0]) / (dx * dx))
+        # Neumann BC at x=0: ghost node c[-1] = c[1] reflects about node 0
+        # (the zero-flux wall sits ON the node), giving
+        #   lap[0] = (c[1] - 2c[0] + c[1])/dx² = 2(c[1]-c[0])/dx²
+        # The finite-volume reading agrees: a half-width control volume at
+        # node 0 takes flux D(c[1]-c[0])/dx across a cell of width dx/2.
+        # This carried a factor 1 instead of 2 until 2026-09-30, which put the
+        # wall half a cell outside the node and cost one order of accuracy --
+        # measured against exact solutions in PDE_VERIFICATION_FINDINGS.md.
+        lap = lap.at[0].set(2.0 * (c[1] - c[0]) / (dx * dx))
         # Dirichlet at x=L: c[-1] は更新しない
 
         # 反応項: Monod 型消費

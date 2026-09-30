@@ -57,6 +57,22 @@ coupling widens the gap 1.33×, and nothing like the withdrawn 9.1 % returns.
 
 `JAXFEM/condition_spread_2d.py`.
 
+**Checked against the zero-flux boundary defect** found on 2026-09-30, since
+the species diffusion in this arm ran through it
+([`PDE_VERIFICATION_FINDINGS.md`](PDE_VERIFICATION_FINDINGS.md)). Running the
+pre-fix and fixed operators in one process at one horizon moves the spread by
+−1.7e−8 (60 steps), +3.5e−7 (300) and +1.7e−6 (900) relative — about one part
+in 10⁶ against a 1.16× effect there — because species diffusion is nearly
+inert at these settings (total diffusion number ≈ 0.09 at 900 steps). **The
+number above is not an artifact of the boundary.** The 2000-step horizon it was
+computed at could not itself be re-measured (that run exhausts memory), so this
+rests on three horizons plus a tame trend. `JAXFEM/boundary_fix_impact.py`.
+
+One consequence is worth noting rather than hiding: if species diffusion is
+nearly inert, the `full` arm's advantage is most likely the nutrient coupling,
+which it switches on at the same time. A one-at-a-time run would settle which,
+and has not been done.
+
 ### 1.4 The Klempt 2024 "agreement" must not be quoted
 
 `klempt2024_quantitative.py` reported Fig. 4 "within 0.17 / 0.10". **That is a
