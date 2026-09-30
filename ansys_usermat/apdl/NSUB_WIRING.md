@@ -79,15 +79,36 @@ Because that source is not here, none of it is covered by the test suite or the
 syntax checks. It is the one part that arrives at the machine unverified.
 
 What to record when that deck runs: `NUMBER OF ERROR MESSAGES`; whether it
-reaches the end of the load step; `SVAR(10)` and `SVAR(84)` on a few elements,
-since a completed run with alpha stuck at its seed means the hook was never
-reached; and **wall time**. A thousand ODE steps per Gauss point per increment
-is the cost being traded for the round trip. If that is unusable, it is a real
-result worth having — report it rather than raising `DT_ECO_MAX` to make it
-finish, since that threshold is measured and raising it to buy speed
-reintroduces exactly the silent divergence the guard exists for.
+reaches the end of the load step; and `SVAR(10)` and `SVAR(84)` on a few
+elements, since a completed run with alpha stuck at its seed means the hook was
+never reached.
 
-**2. Regression, if the custom exe is rebuilt.**
+Speed is no longer the thing to watch. The server runs the chain as one
+compiled scan, bit-identical to chaining `ecology_step`, which took 1000
+sub-steps from ~10 s to ~0.07 s per call: the single-element deck at
+`dTime = 0.1` went 357 s to 5.6 s, and the 54-element cylinder 131 s to 13.6 s.
+
+**2. The scale of `k_alpha`, which sub-stepping exposed rather than fixed.**
+This is now the real blocker for any deck stepping at `TIME INC = 0.1`, and it
+is a modelling decision, not a numerical one. With 1000 sub-steps the ecology
+state comes back finite and sane (`gamma` 111–326, phi summing to 1) and alpha
+comes back **large**: 4.72 / 4.46 / 0.39 / 4.64 for CS / CH / DS / DH. With
+`Fg = (1+alpha)I` that is a 5.7× stretch per direction, so the "element highly
+distorted" error on that run is **the growth itself, not a numerical failure**.
+
+`k_alpha = 50` was chosen for decks that run 0.1–1 ms of ecology time in total.
+It has no meaning on a deck whose pseudo-time unit is something else, so
+`k_alpha` — or the ecology/mechanical time-unit map — has to be set on that
+deck's own time axis before any result from it means anything. That needs the
+partner's answer to what one unit of their `TIME` physically stands for; it is
+question 4 on the 10/1 agenda. Re-running before then only reproduces the same
+5.7× stretch.
+
+Either way, do not raise `DT_ECO_MAX` to make a run finish: that threshold is
+measured, and raising it to buy speed reintroduces exactly the silent
+divergence the guard exists for.
+
+**3. Regression, if the custom exe is rebuilt.**
 `t_growth_cylinder_ecology_4region_all_real_clsm.dat` runs at `dt = 1e-5`,
 below `DT_ECO_MAX`, so `NSUB = 1` and it must be unaffected: 0 errors and the
 four regions' alpha unchanged at
@@ -95,7 +116,7 @@ four regions' alpha unchanged at
 something other than sub-stepping changed, and the build-order trap above is
 the first thing to check.
 
-**3. The tooth/implant geometry**, the roadmap's actual open item and a larger
+**4. The tooth/implant geometry**, the roadmap's actual open item and a larger
 job.
 
 ## If something fails
@@ -104,5 +125,5 @@ job.
   `material_server.py` is running; restart it from this checkout.
 - **Plausible-but-wrong numbers** — suspect the build order above before
   suspecting the physics. A mismatched `ANSYS.exe` runs cleanly.
-- **Unusably slow** — expected risk; report the wall time, do not raise
-  `DT_ECO_MAX`.
+- **Alpha far too large, elements distorting** — not a numerical failure; see
+  the `k_alpha` item above. Do not raise `DT_ECO_MAX` to work around it.
