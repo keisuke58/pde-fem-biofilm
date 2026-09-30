@@ -197,3 +197,53 @@ Each of these cost a debugging cycle. They are not hypothetical.
   `biofilm_material_v01.f` become unnecessary for the viscous term. Whether to
   remove them is a separate call: the guard is cheap, and the partner group was
   handed the constraint explicitly.
+
+## The scheme measured against closed form
+
+Added 2026-09-30, after the specification above. The specification argued about
+the change without ever measuring the scheme it proposed; this is that
+measurement. Code: `ansys_usermat/viscous_integrator_verification.py`, pinned by
+`tests/test_viscous_integrator_verification.py`. It runs in about a second, with
+no ANSYS and without touching the verified UMAT.
+
+The target is the ODE Soleimani 2019 Eq. 32 is derived from — the 1D Maxwell
+element of his Eq. 31, `Q' + Q/τ = S'` — so the scalar case here is not a
+convenience, it is the equation. `τ = 0.01 s`, his Table 2 value.
+
+**Relaxation** (`S' = 0`, exact answer `Q0 exp(−t/τ)`):
+
+| Δt/τ | Eq. 32, relative error | forward Euler, relative error |
+|---|---|---|
+| 0.1 | 3.0e−15 | **0.235** |
+| 0.5 | 0 | 0.855 |
+| 1.0 | 3.9e−16 | 1.00 |
+| 2.0 | 1.9e−16 | 53.6 |
+| 10 | 0 | 2.0e+5 |
+| 100 | 0 | 2.7e+45 |
+
+Eq. 32 reduces here to `Q_{n+1} = exp(−Δt/τ) Q_n`, whose n-th iterate *is* the
+exact solution sampled at `t_n` — so it is exact at every step size, and the
+paper's "cannot go unstable however coarse the step" is not merely stability
+but exactness on this problem. Forward Euler gives `(1 − Δt/τ)^n`: already 23 %
+wrong at a step one tenth of `τ`, no information left at `Δt = τ`, divergent
+past 2.
+
+**Ramp** (`S' = r`, exact answer `r τ (1 − exp(−t/τ))`) separates them on
+accuracy instead of stability:
+
+| | observed order |
+|---|---|
+| Eq. 32 | **1.99, 2.00, 2.00, 2.00** |
+| forward Euler | 0.69, 0.87, 0.94, 0.97 |
+
+**One honest qualification, pinned by a test so it cannot quietly disappear.**
+At the coarsest ramp step measured (`Δt/τ = 0.5`) forward Euler is the *more*
+accurate of the two — 5.8e−5 against 1.0e−4. The exponential update's advantage
+is order and unconditional stability, not a smaller error at every step size,
+and the case for the change should be made on those terms.
+
+This does not alter the decision recorded above: the repository's own runs use
+`η = 0`, `DTMAX_RATIO = 0.5` already refuses the steps where the explicit
+update misbehaves, and the change moves five mirrored files in the most
+verified part of the code. It does mean the specification now rests on a
+measurement of the proposed scheme rather than on an argument about it.
