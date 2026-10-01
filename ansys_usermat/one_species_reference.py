@@ -127,6 +127,14 @@ def k_alpha_from_trace(rows, alpha_target, phi_col="bio1"):
     integrated over converged sub-steps -- the last call of each sub-step --
     rather than assuming phi_max = 1. In the 1 Oct stage 2 run phi peaked
     near 0.01, so the phi_max = 1 rule landed alpha at 1/200 of its target.
+
+    Only as good as the sampling: if the trace never reaches the region where
+    phi is largest (the seed, phi = 1), this OVER-estimates k_alpha -- by
+    about 100 times in the 1 Oct stage 3 run, where k = 3.64 for 0.02
+    distorted an element at the first sub-step. The fragment now also traces
+    every point with phi >= TRACE_PHI_MIN; check that the trace contains such
+    points before trusting this, or use k_alpha_for_target with the deck's
+    seed value as phi_max.
     """
     by_pt = defaultdict(lambda: defaultdict(list))
     for r in rows:
@@ -138,3 +146,16 @@ def k_alpha_from_trace(rows, alpha_target, phi_col="bio1"):
     if best <= 0.0:
         raise ValueError(f"{phi_col} never rises above 0 in this trace")
     return alpha_target / best
+
+
+def partner_alpha_gap(rows):
+    """Largest |alpha_new - ((locbio1 + locbio2)/2 - 1)| in a trace.
+
+    For prop(28) = 3, where alpha is the partner's own: should be zero.
+    For prop(28) = 1/2 with k_alpha = their K_LOCAL1 it measures how far our
+    Eq. 36 is from theirs -- the 1 Oct runs found agreement to every printed
+    digit, one sub-step apart (they integrate with bio from the previous
+    sub-step).
+    """
+    return max(abs(r["alpha_new"] - (0.5 * (r["locbio1"] + r["locbio2"]) - 1.0))
+               for r in rows)

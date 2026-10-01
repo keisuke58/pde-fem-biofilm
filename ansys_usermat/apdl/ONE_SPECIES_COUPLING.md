@@ -214,7 +214,7 @@ untested is only their position in the real file.
    | 6 | **0** | ecology mode **off** |
    | 7 | `k_α` | stage 1: `0`; later: `k_alpha_from_trace(<stage-1 trace>, α_target)` |
    | 8–27 | 0 | ecology θ, unused |
-   | 28 | 1 or 2 | phi mode: one species (`φ = bio1`) or two (`φ = bio1 + bio2`) |
+   | 28 | 1, 2 or 3 | phi mode: one species (`φ = bio1`), two (`φ = bio1 + bio2`), or 3 = the partner's own α (`Sdp_sumLocal − 1`) |
 
 6. **Two species only:** seed biofilm 2 — `sGdp_Bio2start` is zero in the
    minimal working example. Oliver noted biofilm 1 cannot grow into biofilm-2
@@ -290,6 +290,34 @@ Found by these runs and fixed afterwards:
   α at 9.9994e-05, 1/200 of its 0.02 target. `k_alpha_from_trace` now takes
   the φ the run actually produced from the stage-1 trace; for this deck it
   gives about 1.8 for α ≈ 0.02.
+
+## Stage 3 on IKMHIWI03, 2026-10-01
+
+Rebuilt with `TRACE_STRIDE = 37`, 0 build errors, `-np 1`.
+
+- **`k_alpha_from_trace` over-estimated `k_α` about 100 times.** The deck
+  seeds `MY_BIOSTART1 = 1.0`, so φ = 1 in the seed region, but no traced point
+  lay there (traced φ_max ≈ 0.015). `k = 3.64` for α 0.02 distorted an element
+  at sub-step 1. Ran instead with `k = α_target / (1.0 × 1.1)`. Fixed since:
+  the fragment also traces every point with φ ≥ `TRACE_PHI_MIN` (0.5).
+- **α_target 0.05 / 0.1 / 0.2 / 0.3 / 0.4: 0 errors, 11/11 sub-steps.**
+  `k ≈ 0.55` (α_target 0.5): element 109 "turning inside out" at sub-step 9.
+  **Break point about 0.4–0.45**, assuming φ ≈ 1 at the seed-region points —
+  not yet traced, so unconfirmed.
+- At α_target 0.3, `check_trace`: `once_per_increment`, `eq36`, `carried` all
+  True, and `phi_bio1.varies_between_points` True. **`bio` is the
+  Gauss-point φ.**
+- **`locbio` is not a φ candidate — it is the partner's own `α_K`.** USSFin
+  integrates Eq. 36 into it and their AceGen law uses
+  `(locbio1 + locbio2)/2` as `Fg`. With `k_α = K_LOCAL1 = 0.01`, our α equals
+  `locbio1 − 1` to all printed digits, one sub-step apart. See
+  `OLIVER_MODEL_NOTES.md`, Correction 2.
+- **`prop(28) = 3`** added (first locally on IKMHIWI03, now in the fragment
+  and pre-flighted): `Sbio_GrowthConst = Sdp_sumLocal − 1`, i.e. the
+  partner's own growth driving our material (η = 0). 0 errors, 11/11.
+  `one_species_reference.partner_alpha_gap(rows)` measures our α against
+  theirs. Note `Sdp_sumLocal` averages the two species' `α_K`, so with
+  biofilm 2 absent it gives half of `locbio1 − 1` — a question for Oliver.
 
 ## Verifying the first run
 

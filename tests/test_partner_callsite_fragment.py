@@ -29,11 +29,11 @@ pytestmark = pytest.mark.skipif(_FC is None, reason="gfortran unavailable")
 MOCK = """\
       SUBROUTINE MOCKMAT(nProp, prop, ustatev, dTime, elemId,
      &   kDomIntPt, ldstep, isubst, Sdp_bio1_n, Sdp_locbio1_n,
-     &   Sdp_bio2_n, Sdp_locbio2_n, Sbio_GrowthConst)
+     &   Sdp_bio2_n, Sdp_locbio2_n, Sdp_sumLocal, Sbio_GrowthConst)
       IMPLICIT NONE
       INTEGER nProp
       DOUBLE PRECISION prop(nProp), ustatev(100), dTime
-      DOUBLE PRECISION Sbio_GrowthConst
+      DOUBLE PRECISION Sbio_GrowthConst, Sdp_sumLocal
       DOUBLE PRECISION Sdp_bio1_n, Sdp_locbio1_n
       DOUBLE PRECISION Sdp_bio2_n, Sdp_locbio2_n
       INTEGER elemId, kDomIntPt, ldstep, isubst
@@ -61,7 +61,8 @@ MOCK = """\
           DO it = 1, 3
             work = ust(:,ie)
             CALL MOCKMAT(np, prop, work, dt, e, 1, 1, s, b1,
-     &                   0.5D0*b1, b2, 0.5D0*b2, sg)
+     &                   1.0D0+0.01D0*b1, b2, 1.0D0+0.01D0*b2,
+     &                   1.0D0+0.005D0*(b1+b2), sg)
           END DO
           ust(:,ie) = work
         END DO
@@ -131,3 +132,24 @@ def test_a_27_constant_deck_never_reads_prop_28():
     an out-of-range read into a runtime failure, so a pass means no read."""
     _, alphas = _build_and_run(1, nprop=27)
     assert alphas == [0.0, 0.0, 0.0]
+
+
+def test_mode_3_takes_the_partners_alpha():
+    """prop(28) = 3: alpha is the partner's own Sdp_sumLocal - 1, whatever
+    k_alpha says -- their USSFin already integrates Eq. 36 as locbio."""
+    tmp, alphas = _build_and_run(3, k_alpha=123.0)
+    rows = ref.read_trace(tmp / "phi_trace.csv")
+    assert rows and ref.partner_alpha_gap(rows) < 1e-15
+    # element 1, last increment: b1 = 0.15 + 0.05*4 ... sumLocal - 1
+    s = 5
+    b1, b2 = 0.1 + 0.05 * s, 0.02 * s
+    assert abs(alphas[0] - 0.005 * (b1 + b2)) < 1e-15
+
+
+def test_points_past_the_phi_threshold_are_traced_even_off_stride():
+    """Element 2 is not on the stride; in two-species mode its phi reaches
+    0.55 by the last increment and must then appear."""
+    tmp, _ = _build_and_run(2)
+    rows = ref.read_trace(tmp / "phi_trace.csv")
+    e2 = [r for r in rows if r["elem"] == 2]
+    assert e2 and all(r["phi_used"] >= 0.5 for r in e2)

@@ -245,7 +245,7 @@ What is commented out is the *other* model, and the block says whose:
 path. So the disabled branch is the glass model and the live one is the
 biofilm model, not the other way round.
 
-### ⚠️ `sAlpha` in that routine is NOT the growth α
+### ⚠️ ~~`sAlpha` in that routine is NOT the growth α~~ — WRONG, see Correction 2 at the end
 
 Worth stating explicitly, because the name invites exactly the wrong
 assumption. The two biofilm arguments are fed from:
@@ -693,3 +693,26 @@ model** — the microscopic, species-resolved one — while the Fortran is the
 **macroscopic 3D model**, which deliberately treats the biofilm as one
 homogeneous phase. They answer different questions at different scales and
 are meant to be bridged, not merged.
+
+## Correction 2 — stage 3 on IKMHIWI03, 1 October: the growth IS there
+
+**Two claims above are wrong.** §6 says `sAlpha` "is NOT the growth α" and
+that "there is still no growth kinematics anywhere in the pool"; the 1
+September email's question 2 rested on the same reading. Running the coupling
+on the real deck showed otherwise:
+
+- `locbio` **is** Klempt's `α_K`. `USSFin` (around line 2306) integrates
+  `locbio_n = locbio_{n−1} + dt·K_LOCAL1·bio_{n−1}` — Eq. 36, explicit in
+  `bio`, starting at 1 (`K_LOCAL1 = 0.01` in the deck).
+- `AceGenNeoHookV04` uses `sAlpha = Sdp_sumLocal = (locbio1 + locbio2)/2` as
+  `Fg = α_K I` (`v(23) = F11/sAlpha`, …).
+- With `k_α = K_LOCAL1`, our `BIOFILM_ALPHA_FROM_PHI` reproduces
+  `locbio1 − 1` to every printed digit, one sub-step apart (they integrate
+  with `bio` from the previous sub-step) — two independent implementations
+  of Eq. 36 agreeing.
+
+So the partner's element already grows, by Klempt's law; what we bring is
+not `Fg` but the bridge to the point model. One open question for Oliver:
+`sAlpha` **averages** the two `α_K`, so with biofilm 2 absent
+(`locbio2 = 1`) the element grows at half the rate `locbio1` gives. Whether
+that averaging is intended is his to say.

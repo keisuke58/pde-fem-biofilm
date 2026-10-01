@@ -8,6 +8,11 @@ C     (997 left only element 1 in the test deck, so phi could not be
 C     told apart between points -- found in the stage 1 run, 1 Oct.)
       INTEGER TRACE_STRIDE
       PARAMETER (TRACE_STRIDE = 37)
+C     ...and every integration point 1 where phi reaches TRACE_PHI_MIN:
+C     stride sampling missed the seeded region (phi = 1) in the stage 3
+C     run, so the trace never saw the points that grow fastest.
+      DOUBLE PRECISION TRACE_PHI_MIN
+      PARAMETER (TRACE_PHI_MIN = 0.5D0)
       LOGICAL TRACE_OPEN
       SAVE TRACE_OPEN
       DATA TRACE_OPEN /.FALSE./
