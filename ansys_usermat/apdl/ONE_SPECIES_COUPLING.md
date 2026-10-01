@@ -319,6 +319,40 @@ Rebuilt with `TRACE_STRIDE = 37`, 0 build errors, `-np 1`.
   theirs. Note `Sdp_sumLocal` averages the two species' `α_K`, so with
   biofilm 2 absent it gives half of `locbio1 − 1` — a question for Oliver.
 
+## Stage 3 confirmed with the seed region traced, 2026-10-01
+
+Rebuilt at `62c5766` (threshold tracing on). The seed region now appears in
+the trace: 32 elements, φ = 0.991–1.002.
+
+| deck | result | from the trace |
+|---|---|---|
+| α_target 0.4 | 0 errors, 11/11 | α_max = 0.4007; all three checks True |
+| `k = 0.5` | element 109 inverts at sub-step 10 | converged through sub-step 9 (α ≈ 0.45), fails on the way to α ≈ 0.50; all three checks True up to there |
+| `prop(28) = 3` (partner's α) | 0 errors, 11/11 | `partner_alpha_gap = 0.0` |
+
+**One-species coupling: stages 0–3 PASS. Usable range α ≤ 0.45 on this mesh;
+the first failure is at α ≈ 0.50, by element inversion.** For scale, Klempt's
+own `k_α = 1e-3` keeps α near 1e-4, far inside it.
+
+**The halving is real, measured.** In the seed region (φ ≈ 1,
+`K_LOCAL1 = 0.01`, `T = 1.1`) `locbio1 − 1` should reach about 0.011; the
+partner's α (`Sdp_sumLocal − 1`) peaks at 0.005 — half, as the average with
+an inactive `locbio2 = 1` predicts. This is the evidence for the question to
+Oliver.
+
+## Stage 4 — two species (next)
+
+- `prop(28) = 2` (φ = bio1 + bio2); seed biofilm 2, e.g. `MY_BIOSTART2 = 1.0`
+  in a region apart from biofilm 1 (Oliver: biofilm 1 cannot grow into
+  biofilm-2 nodes unless their boundary value is released).
+- `k = α_target / (φ_max × T)` with α_target well inside the window
+  (0.2); confirm φ_max in the trace.
+- Pass: 0 errors, 11/11, the three checks True, and `phi_bio2`
+  `varies_between_points` True.
+- Averaging check: run once with `k_α = K_LOCAL1`. If `sAlpha` averages,
+  ours / (`Sdp_sumLocal − 1`) is close to 2 wherever only one species is
+  present, and closer to 1 where both are — up to the one-sub-step lag.
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,
