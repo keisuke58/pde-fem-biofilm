@@ -35,6 +35,12 @@ foreach ($f in 'comp_trace.csv', 'pm_trace.csv', 'phi_trace.csv') {
     if (Test-Path $p) { Move-Item $p ($p -replace '\.csv$', "_prev_$ts.csv") }
 }
 
+# a server left over from an earlier run would answer on 8765 with its own
+# case / species count -- refuse instead of silently talking to it
+$c = New-Object Net.Sockets.TcpClient
+try { $c.Connect('127.0.0.1', 8765); $busy = $true } catch { $busy = $false } finally { $c.Close() }
+if ($busy) { throw 'port 8765 already in use: another material server is running; stop it first' }
+
 $srvArgs = @((Join-Path $repo 'ansys_usermat\coupling\material_server.py'))
 if ($Case) { $srvArgs += @('--case', $Case) }
 elseif ($ActiveSpecies) { $srvArgs += @('--active-species', "$ActiveSpecies") }
