@@ -33,6 +33,11 @@
 ! exactly) before taking 3 chained 0D Hamilton sub-steps of dt_sub=1e-4 each
 ! with the demo THETA_DEMO interaction parameters and k_alpha=50.
 !
+! EXPECTED AFTER THE HILL-GATE FIX (2026-10-01; coupling/
+! ODE_TMCMC_CROSSCHECK.md): only g_new(psi_5) moves, 0.815483278 ->
+! 0.815483971; alpha and SX are unchanged at the printed precision. The
+! ANSYS-confirmed block below is the pre-fix baseline; re-run at Keio.
+!
 ! EXPECTED, CURRENT (2026-09-29; c*=25, no Hill gate, alpha*=0 --
 ! ecology_constants.py; from ecology_deck_reference.py). Confirmed on real
 ! ANSYS the same day (F:\biofilm_upf_kusepy build, -smp -np 4): 0 errors,

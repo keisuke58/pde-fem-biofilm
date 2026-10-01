@@ -19,9 +19,27 @@ Measured to T* = 2 with THETA_DEMO, c* = 25:
   **7.8e−15**.
 
 **Scope.** Only species 5 (P. gingivalis) in five-species runs. The one- and
-two-species runs (stages 0–5) are unaffected. **Not fixed yet**: the fix moves
-every five-species reference value verified on ANSYS, for example
-`t_growth_ecology_substep.dat`'s expected block, so it needs a decision.
+two-species runs (stages 0–5) and the Klempt 2026 reproductions (species 5
+inactive) are unaffected.
+
+**Fixed 2026-10-01** (decision: fix, re-run the ANSYS baselines at Keio).
+With the gate off, the interaction is now left unchanged. The same pattern
+was in 9 places: the 0D demo; the 1D and 2D demos/pipelines; the
+`JAXFEM/core_hamilton_{1d,1d_nutrient,2d_nutrient}` steppers (two in 2D);
+and `hamilton_ode_jax_nsp`. All were fixed together, so 0D, 1D and 2D stay
+mutually consistent (`test_pde_uniform_consistency`).
+
+What moved:
+
+| | before | after |
+|---|---|---|
+| `t_growth_ecology_clsm_phi.dat` (CLSM seed, φ₅ = 0.022) | α 4.972502801e−4, SX −3.00046169e−1, γ 148.88 | α 4.972516806e−4, SX −3.00047014e−1, γ 159.89 (α, SX rel. 2.8e−6) |
+| `t_growth_ecology_substep.dat` (default seed, φ₅ = 0) | ψ₅ 0.815483278 | ψ₅ 0.815483971; α, SX unchanged at printed precision |
+| other ecology decks | — | unchanged at printed precision |
+| ψ-spread sensitivity, α spread at t ≈ 1e−2 | 2.4 % | 1.2 % |
+
+The ANSYS-confirmed pre-fix blocks are kept in the deck headers, with the
+new expected values above them. **To be re-run on ANSYS at Keio.**
 
 **Newton loop.** `newton_step` runs a fixed 6 iterations without a
 convergence check. On the first step from ψ = 0.999 at dt = 1e−4 it ends at

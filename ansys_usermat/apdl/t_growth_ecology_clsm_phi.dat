@@ -37,6 +37,16 @@
 ! than silently worked around; theta (interaction parameters) is also
 ! still THETA_DEMO, not TMCMC-calibrated -- both remain open items.
 !
+! EXPECTED AFTER THE HILL-GATE FIX (2026-10-01; gate off no longer zeroes
+! species 5's interaction -- coupling/ODE_TMCMC_CROSSCHECK.md). Not yet run
+! on ANSYS; the block below it is the ANSYS-confirmed pre-fix baseline.
+! To be re-run at Keio. From ecology_deck_reference.py:
+!   g_new(phi)   = [0.117805684, 0.0191946486, 0.769424741, 0.0714843241, 0.0220849833]
+!   g_new(psi)   = [0.994387216, 0.994376545, 0.994546466, 0.994382142, 0.994376765]
+!   g_new(gamma) = 159.893565
+!   alpha_new    = 4.972516806e-04
+!   SX=SY=SZ     = -3.00047014e-01
+!
 ! EXPECTED, CURRENT (2026-09-29; c*=25, no Hill gate, alpha*=0 --
 ! ecology_constants.py; from ecology_deck_reference.py). Confirmed on real
 ! ANSYS the same day (F:\biofilm_upf_kusepy build, -smp -np 4): 0 errors,

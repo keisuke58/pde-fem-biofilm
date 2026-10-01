@@ -8,8 +8,9 @@ pin it against two figures that were established independently of it:
   * at zero psi spread the four conditions' alpha differ by ~0.6%, the
     1.006x reported for the 4-condition deck after the calibration constants
     were unified;
-  * over the longer horizon that rises to ~2.4%, the peak the alpha spread
-    was separately found to reach near t = 1e-2.
+  * over the longer horizon that rises to ~1.2% (it was ~2.4% before the
+    Hill-gate fix of 2026-10-01: with the gate off, species 5's interaction
+    used to be multiplied by 0; coupling/ODE_TMCMC_CROSSCHECK.md).
 
 If either drifts, the sweep is measuring something else and its answer about
 what psi would have to be is not about this model.
@@ -64,9 +65,9 @@ def test_uniform_psi_reproduces_the_reported_alpha_spread(comps):
 
 
 def test_the_spread_is_larger_over_the_longer_horizon(comps):
-    """~2.4% near t = 1e-2, the peak found independently of this script."""
+    """~1.2% near t = 1e-2 (2.4% before the Hill-gate fix, 2026-10-01)."""
     s = _spread(comps, np.full(5, pss.PSI_MAX), "peak")
-    assert 0.020 < s < 0.028, f"expected ~2.4%, got {s:.4%}"
+    assert 0.010 < s < 0.015, f"expected ~1.2%, got {s:.4%}"
 
 
 def test_giving_the_species_different_viabilities_brings_the_spread_back(comps):

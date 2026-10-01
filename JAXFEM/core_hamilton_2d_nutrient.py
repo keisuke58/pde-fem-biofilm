@@ -228,7 +228,10 @@ def residual(g_new, g_prev, params):
     fn = jnp.maximum(phi_new[3] * psi_new[3], 0.0)
     num = fn**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_mask
+    # gate off (K_hill = 0 or species 5 inactive) leaves the interaction
+    # unchanged, as TMCMC's BiofilmNewtonSolver5S does; it used to multiply
+    # it by 0 (found 2026-10-01, coupling/ODE_TMCMC_CROSSCHECK.md)
+    factor = jnp.where(hill_mask > 0, jnp.where(den > eps, num / den, 0.0), 1.0)
     Ia = Ia.at[4].set(Ia[4] * factor)
 
     Q = jnp.zeros(12, dtype=jnp.float64)
@@ -731,7 +734,10 @@ def residual_c(g_new, g_prev, c_node, params):
     fn = jnp.maximum(phi_new[3] * psi_new[3], 0.0)
     num = fn**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_mask
+    # gate off (K_hill = 0 or species 5 inactive) leaves the interaction
+    # unchanged, as TMCMC's BiofilmNewtonSolver5S does; it used to multiply
+    # it by 0 (found 2026-10-01, coupling/ODE_TMCMC_CROSSCHECK.md)
+    factor = jnp.where(hill_mask > 0, jnp.where(den > eps, num / den, 0.0), 1.0)
     Ia = Ia.at[4].set(Ia[4] * factor)
 
     Q = jnp.zeros(12, dtype=jnp.float64)
