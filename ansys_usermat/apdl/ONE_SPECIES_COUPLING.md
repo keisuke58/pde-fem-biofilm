@@ -4,6 +4,23 @@ Decided 2026-10-01 in the meeting with Oliver: couple **one species fully**
 first, then extend to two. Main results follow Klempt et al. (2024); nothing
 is added to their formulation.
 
+## Scope decision (2026-10-01)
+
+**The thesis completes the coupling for one and two species, and stops
+there.** Five species move to the Keio continuation.
+
+- Oliver's element is a two-species code (`Bio1`, `Bio2`, `Interaction12/21`),
+  so one and two species run inside what he gave us, with a shared variable
+  to verify against (`φ`, or `φ₁ + φ₂`).
+- From three species on, the code itself has to be generalised: his
+  interaction term is multiplicative, the paper's is additive, so there is no
+  shared variable space to check one against the other, and the five-species
+  trial already showed a coupling ceiling between 0.0005 and 0.0006. That is
+  the "one to two months" that made a full merge future work.
+- "Complete" for each of the two means: stages 0–2 of the bring-up pass on
+  real ANSYS, the alpha history matches `one_species_reference`, and the
+  stresses are reported in the Klempt setting.
+
 ## Why one species first
 
 Every obstacle that made the five-species merge "future work" goes away:
