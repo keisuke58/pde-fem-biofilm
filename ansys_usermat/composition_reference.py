@@ -51,15 +51,16 @@ def step(g, phi3, theta, hp, dt, n_sub):
 
 
 def reference(phi3_series, theta, hp, dt, dt_max=1.0e-4, chi1=0.5,
-              phi_min=0.0, s=1.0):
+              phi_min=0.0, s=1.0, phi_cap=PHIMAX):
     """Stand-alone scheme for phi_3D(t) given per substep; returns states.
-    s: the point model's clock, dt_pm = s * dt (prop(31))."""
+    s: the point model's clock, dt_pm = s * dt (prop(31)).
+    phi_cap: the point model sees min(phi_3D, phi_cap) (prop(32))."""
     g = seed(chi1)
     dt_pm = s * dt
     n_sub = 1 if dt_pm <= dt_max else math.ceil(dt_pm / dt_max)
     out = []
     for p in phi3_series:
-        p = min(max(p, 0.0), PHIMAX)
+        p = min(max(p, 0.0), min(phi_cap, PHIMAX))
         if p >= phi_min and p > 0.0:
             g = step(g, p, theta, hp, dt_pm, n_sub)
         out.append(g.copy())

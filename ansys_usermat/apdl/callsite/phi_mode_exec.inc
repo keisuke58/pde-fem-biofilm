@@ -64,7 +64,16 @@ C         prop(30) = chi_1 at the first call (default 0.5).
 C         prop(31) = s, the point model's clock: it advances s * dTime
 C         per substep (default 1). No paper links Klempt 2024's T* to
 C         Klempt 2026's time unit; s is that assumption, made explicit.
-          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
+C         prop(32) = phi_cap: the amount the point model sees is
+C         min(phi_3D, phi_cap) (default 1 - 1e-6). In fully packed
+C         regions phi0 would otherwise be pinned below the point model's
+C         own packing limit and the composition would depend on the
+C         coupling interval; at phi_cap = 0.9 it converges.
+          CM_CAP = SP_PHIMAX
+          IF (nProp .GE. 32) THEN
+            IF (prop(32) .GT. 0.0D0) CM_CAP = MIN(prop(32), SP_PHIMAX)
+          END IF
+          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), CM_CAP)
           DO PM_I = 1, 12
             PM_GOLD(PM_I) = ustatev(71 + PM_I)
           END DO

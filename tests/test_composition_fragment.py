@@ -32,7 +32,7 @@ from test_partner_callsite_fragment import (            # noqa: E402
 pytestmark = pytest.mark.skipif(_FC is None or _CC is None,
                                 reason="gfortran/cc unavailable")
 
-DT, NSTEPS, K_ALPHA, PHI_MIN, CHI1, S = 0.01, 6, 1.0e-3, 0.01, 0.5, 0.5
+DT, NSTEPS, K_ALPHA, PHI_MIN, CHI1, S, CAP = 0.01, 6, 1.0e-3, 0.01, 0.5, 0.5, 0.9
 ELEMS = (1, 38, 75)                      # all on the trace stride
 
 
@@ -48,11 +48,12 @@ _SUB = MOCK[:MOCK.index("      PROGRAM DRIVE")]
 DRIVER = _SUB + """\
       PROGRAM COMPDRV
       IMPLICIT NONE
-      DOUBLE PRECISION prop(31), ust(100,3), work(100), sg, dt, b1
+      DOUBLE PRECISION prop(32), ust(100,3), work(100), sg, dt, b1
       INTEGER it, s, ie, e, kc, nsteps, ielem(3)
       DATA ielem /1, 38, 75/
       prop = 0.0D0
-      READ(*,*) prop(7), dt, nsteps, prop(29), prop(30), prop(31)
+      READ(*,*) prop(7), dt, nsteps, prop(29), prop(30), prop(31),
+     &          prop(32)
       DO it = 1, 20
         READ(*,*) prop(7 + it)
       END DO
@@ -71,7 +72,7 @@ DRIVER = _SUB + """\
           IF (e .EQ. 75) b1 = 1.0D0
           DO it = 1, 3
             work = ust(:,ie)
-            CALL MOCKMAT(31, prop, work, dt, e, 1, 1, s, b1,
+            CALL MOCKMAT(32, prop, work, dt, e, 1, 1, s, b1,
      &                   1.0D0, 0.0D0, 1.0D0, 1.0D0, sg, kc)
           END DO
           ust(:,ie) = work
@@ -93,7 +94,7 @@ def run():
     try:
         tmp, exe = build_mock(DRIVER)
         th = ms.ECOLOGY_CASE["theta"]
-        line = (f"{K_ALPHA} {DT} {NSTEPS} {PHI_MIN} {CHI1} {S}\n"
+        line = (f"{K_ALPHA} {DT} {NSTEPS} {PHI_MIN} {CHI1} {S} {CAP}\n"
                 + "".join(f"{x:.17e}\n" for x in th))
         r = subprocess.run([str(exe)], input=line, capture_output=True,
                            text=True, cwd=tmp, timeout=600,
@@ -123,7 +124,8 @@ def test_trace_passes_every_check(run):
 def test_each_point_equals_the_stand_alone_scheme(run, e):
     rows, th, hp, _ = run
     want = cref.reference([phi3(e, s) for s in range(1, NSTEPS + 1)], th,
-                          hp, DT, chi1=CHI1, phi_min=PHI_MIN, s=S)
+                          hp, DT, chi1=CHI1, phi_min=PHI_MIN, s=S,
+                          phi_cap=CAP)
     got = [[r for r in rows if r["elem"] == e and r["isubst"] == s][-1]
            for s in range(1, NSTEPS + 1)]
     for w, g in zip(want, got):
@@ -142,6 +144,7 @@ def test_the_void_point_holds_until_filled(run):
 def test_the_amount_is_the_3d_field_and_growth_is_eq36(run):
     rows, _, _, alphas = run
     for r in rows:
+        assert r["phi3"] == min(r["phi_used"], CAP)    # the cap
         if r["hit"] != 2:
             assert abs(r["g_new"][0] + r["g_new"][1] - r["phi3"]) <= 4e-16
             assert r["g_new"][5] == 1.0 - r["phi3"]

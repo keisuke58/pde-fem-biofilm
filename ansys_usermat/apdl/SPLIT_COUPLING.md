@@ -147,6 +147,76 @@ is fully packed:
 Either way, the seed numbers above (and the ANSYS smoke test on element
 220, which is in the seed) are coupling-interval artefacts, not results.
 
+### Decision (1 Oct): (a), `φ_cap = 0.9` as `prop(32)`
+
+The point model sees `min(φ_3D, φ_cap)`. Its fidelity to Klempt 2026 is
+already shown stand-alone: all 14 examples, 2026-09-29. Here the coupling
+has to be continuous across the edge of the packed region and converged in
+the coupling interval.
+
+Sensitivity, s = 0.15, T* = 1. χ₁ at deck dt 0.025 / 0.0125
+(`composition_reference.reference(..., phi_cap=...)`):
+
+| case 3 | seed (1) | interior 0.9 | interior 0.4 | front 0.05 → 1 |
+|---|---|---|---|---|
+| cap 0.85 | 0.6683 / 0.6681 | 0.6683 / 0.6681 | 0.6681 / 0.6680 | 0.6683 / 0.6681 |
+| **cap 0.9** | **0.6665 / 0.6681** | 0.6665 / 0.6681 | 0.6681 / 0.6680 | 0.6691 / 0.6681 |
+| cap 0.95 | 0.6378 / 0.6635 (not converged) | 0.6665 / 0.6681 | 0.6681 / 0.6680 | 0.6697 / 0.6689 |
+
+| case 6 | seed (1) | interior 0.9 | interior 0.4 | front 0.05 → 1 |
+|---|---|---|---|---|
+| cap 0.85 | 0.0232 / 0.0243 | 0.0232 / 0.0243 | 0.0640 / 0.0662 | 0.0232 / 0.0243 |
+| **cap 0.9** | **0.0209 / 0.0224** | 0.0209 / 0.0224 | 0.0640 / 0.0662 | 0.0209 / 0.0224 |
+| cap 0.95 | 0.0140 / 0.0181 | 0.0209 / 0.0224 | 0.0640 / 0.0662 | 0.0140 / 0.0181 |
+
+- **case 3:** with cap 0.85 or 0.9, the seed equals the interior (0.668) and
+  is converged at dt 0.025 to within 0.0016. Continuity holds.
+- **case 3, cap 0.95:** needs dt ≤ 0.0125 in the packed region.
+- **case 6:** species 2 wins for every cap (χ₁ 0.014–0.024; dt changes it
+  by ≤ 0.004).
+
+### Run sheet as commands (IKMHIWI03)
+
+`<BASE>` is the deck of the mode-7 smoke test (element 220 in the seed).
+**Its `K_LOCAL` should be `k_α = 1e−3`**: Eq. 34 and Eq. 36 share k_α, and
+`φ_min = 0.01 ≥ 10·K_LOCAL·T_end` requires it.
+
+```
+git pull
+python ansys_usermat\apdl\paste_fragments.py F:\biofilm_upf_wired\Usermat_P21-V21_v222.F
+.\ansys_usermat\apdl\build_wired.ps1
+python ansys_usermat\apdl\make_wired_deck.py F:\biofilm_upf_wired\<BASE>.dat F:\biofilm_upf_wired\ds_m7_c3_cap090.dat --props 6=0,7=1e-3,8=1,9=1,10=1,11=0,12=0,28=7,29=0.01,30=0.5,31=0.15,32=0.9 --elem 220 --deltim 0.025 --time 1.0 --post elem
+.\ansys_usermat\apdl\run_wired.ps1 -Deck ds_m7_c3_cap090.dat -Case 2sp_case3 -TimeoutMin 120 -Judge
+```
+
+Sensitivity runs: the same, with
+- `32=0.85` (deck `ds_m7_c3_cap085.dat`);
+- `32=0.95` (`ds_m7_c3_cap095.dat`), which also needs
+  `--deltim 0.0125` to converge.
+
+Contrast case: `-Case 2sp_case6` with `9=-1` (a₁₂ = −1; A, b otherwise as
+case 3; η = 1, 2 come from the server).
+
+**The judge's expected values for element 220.** These assume 40 substeps of
+0.025 (no bisection) and raw φ_3D ≥ cap throughout, as in the smoke test.
+- `checks`: all True, `replay` True (worst 0.0).
+- `max |ANSYS - stand-alone scheme|: 0.0`, then `PASS`.
+- Element 220's row: `phi3 0.9000..0.9000`; calls/cached/held = 40 / (3 per
+  substep for the iterations) / 0.
+
+| run | χ₁ end | ψ₁ | ψ₂ |
+|---|---|---|---|
+| case 3, cap 0.9 | **0.6665** (0.666462) | 0.9853 | 0.9766 |
+| case 3, cap 0.85 | 0.6683 (0.668250) | 0.9846 | 0.9754 |
+| case 3, cap 0.95, dt 0.025 | 0.6378 (0.637849) | 0.9851 | 0.9773 |
+| case 6, cap 0.9 | 0.0209 (0.020886) | 0.0482 | 0.9806 |
+| case 6, cap 0.85 | 0.0232 (0.023194) | 0.0484 | 0.9795 |
+| case 6, cap 0.95, dt 0.025 | 0.0140 (0.014015) | 0.0543 | 0.9835 |
+
+If ANSYS bisects a substep, the judge still has to PASS: it drives the
+reference with the trace's own steps. Only these end values would then
+move.
+
 ### ANSYS smoke test, IKMHIWI03, 1 Oct (prop(28) = 7)
 
 One element (220, in the seed), v222, `-np 1`, 30 constants (before s
@@ -217,8 +287,8 @@ The PAMM paper also supports two existing choices:
    (its cache is used) and `USE biofilm_split`. **USSFin is not changed.**
 2. Server: `material_server.py --case 2sp_case3`. This sets two species,
    c* = 100, α* = 10 and η = (1, 2).
-3. `TB,USER` with 31 constants (`prop(31) = s`, e.g. 0.15; deck
-   `DELTIM 0.025` to T* = 1):
+3. `TB,USER` with 32 constants (`prop(31) = s` = 0.15, `prop(32) = φ_cap` =
+   0.9; deck `DELTIM 0.025` to T* = 1). See "Run sheet as commands" above:
    - `prop(6) = 0`, `prop(28) = 7`;
    - `prop(7) = 1e−3` (k_α, Klempt 2024 Table 2);
    - `prop(8) = 1`, `prop(9) = 1`, `prop(10) = 1`, `prop(11) = 0`,
