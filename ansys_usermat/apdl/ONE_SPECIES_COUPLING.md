@@ -349,9 +349,36 @@ Oliver.
   (0.2); confirm φ_max in the trace.
 - Pass: 0 errors, 11/11, the three checks True, and `phi_bio2`
   `varies_between_points` True.
-- Averaging check: run once with `k_α = K_LOCAL1`. If `sAlpha` averages,
-  ours / (`Sdp_sumLocal − 1`) is close to 2 wherever only one species is
-  present, and closer to 1 where both are — up to the one-sub-step lag.
+- Averaging check: run once with `k_α = K_LOCAL1`. (The prediction first
+  written here — "about 2 where one species is present, closer to 1 where
+  both are" — was wrong; see the stage 4 results below.)
+
+## Stage 4 on IKMHIWI03, 2026-10-01 — PASS. Both cases complete.
+
+`prop(28) = 2`, `MY_BIOSTART2 = 1.0` (the deck's own BIOFILM2: 8 core
+elements inside BIOFILM1's 32), `k = 0.2/(2 × 1.1)`. 0 errors, 11/11, all
+three checks True, `phi_bio2.varies_between_points` True, φ_max = 2.002
+(both species at 1 in the core).
+
+**One- and two-species coupling now both pass on real ANSYS — the thesis
+scope (one and two species) is complete.**
+
+- **The averaging, exactly.** own(s − 1) / Oliver(s) = **2.000000 at every
+  traced point, whether biofilm 2 is present or not** (n = 46). With
+  `K_LOCAL1 = K_LOCAL2 = k`, ours is `k∫(φ₁ + φ₂) = (α_K1 − 1) + (α_K2 − 1)`
+  and theirs is `(α_K1 + α_K2)/2 − 1`, half of that sum everywhere. So
+  `sAlpha` always gives half the summed growth; "halved when biofilm 2 is
+  absent" was a special case, and the prediction above was wrong.
+- **The partner's biofilm-2 transport is unstable at the deck's
+  `MY_BETA2 = 0.05`** (500 × BETA1) with `dt = 0.1`: core `bio2` oscillates
+  sub-step to sub-step (1.0, 0.05, 0.40, 0.10, 0.31, 0.08, …) and goes
+  negative (min −0.021), so `phi_bio2.in_0_1` is False and α_max only
+  reaches 0.147 of the 0.2 target. With `MY_BETA2 = 0.0001`, `bio2` decays
+  smoothly 1.0 → 0.991, no negatives, α_max 0.2003, 0 errors, 11/11, checks
+  True. Not our code — an explicit diffusion step past its stability limit,
+  the same failure `PDE_VERIFICATION_FINDINGS.md` §6d describes — but every
+  two-species result needs a smaller `BETA2` or `dt`, and it is a question
+  for Oliver whether 500 × BETA1 is intended.
 
 ## Verifying the first run
 

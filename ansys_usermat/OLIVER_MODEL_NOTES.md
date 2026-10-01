@@ -713,6 +713,9 @@ on the real deck showed otherwise:
 
 So the partner's element already grows, by Klempt's law; what we bring is
 not `Fg` but the bridge to the point model. One open question for Oliver:
-`sAlpha` **averages** the two `α_K`, so with biofilm 2 absent
-(`locbio2 = 1`) the element grows at half the rate `locbio1` gives. Whether
-that averaging is intended is his to say.
+`sAlpha` takes the **mean** of the two `α_K`, so the element always grows by
+**half the summed growth**: `sAlpha − 1 = [(α_K1 − 1) + (α_K2 − 1)]/2`.
+Measured in stage 4: ours (the sum) / theirs = 2.000000 at every traced point,
+with or without biofilm 2 (n = 46). An earlier version of this note said the
+growth halves "when biofilm 2 is absent" — that is only a special case.
+Whether the mean (rather than the sum) is intended is his to say.
