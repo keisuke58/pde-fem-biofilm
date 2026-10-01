@@ -665,7 +665,8 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
    growth. Is a viscous biofilm law planned (which is what we would bring), or
    is elastic the intended scope? Related: is the `Sdp_bio1_n + Sdp_bio1_n`
    above a typo? — **2026-10-01: Oliver thinks it is a typo** for
-   `Sdp_bio1_n + Sdp_bio2_n`.
+   `Sdp_bio1_n + Sdp_bio2_n`, and agreed we fix it in our working copy
+   (recipe in `apdl/ONE_SPECIES_COUPLING.md`).
 5. **`sGi_nnz_T` is `INTEGER(KIND=8)` but reaches the pool routines as a
    default `INTEGER` `sz`.** Works at this mesh size; would truncate on a much
    larger one. Deliberate, or worth widening the pool API?

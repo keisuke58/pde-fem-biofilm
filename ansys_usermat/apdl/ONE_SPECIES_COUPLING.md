@@ -73,10 +73,26 @@ server is needed in this mode.
    the first, `Sdp_sumLocal` from the second), and the code does not say which
    is the Gauss-point value.
 2. ~~**`Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n`.**~~ **Answered 2026-10-01:
-   Oliver thinks it is a typo** for `Sdp_bio1_n + Sdp_bio2_n`. Until his
-   source is corrected, in this mode pass `PHI_LOC` as `sBiofilm` as well,
-   so the stiffness blend sees `φ` and not `2 φ`. For the two-species step
-   the corrected sum is exactly the `φ₁ + φ₂` that drives growth.
+   Oliver thinks it is a typo** for `Sdp_bio1_n + Sdp_bio2_n`, **and agreed
+   that we fix it in our working copy.** Apply this one-line change in
+   `Usermat_P21-V21_Conection_Test.F` on `F:\biofilm_upf_wired`:
+
+   ```fortran
+   C     was: Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n   (typo, confirmed with
+   C          Oliver 2026-10-01; fixed in our working copy with his OK)
+         Sdp_sumBio = Sdp_bio1_n + Sdp_bio2_n
+   ```
+
+   It changes the stiffness blend of the **original** AceGen path too
+   (`prop(1) = 0`), so any earlier run of that path is no longer reproduced
+   bit for bit -- note it beside those results. With species 2 switched off
+   (zero initial `Bio2`), `Sdp_sumBio` is then exactly `φ`, so in this mode
+   `sBiofilm` can stay as `Sdp_sumBio`; the `PHI_LOC` workaround is only
+   needed if the fix is not applied. For the two-species step the corrected
+   sum is exactly the `φ₁ + φ₂` that drives growth.
+
+   Our working copy now differs from Oliver's master by this line: tell him
+   when it is in, so his source picks it up too.
 3. **The physical time unit of the deck**, which sets `k_α` (`prop(7)`).
    `k_α = 50` was chosen for millisecond decks; at `TIME INC = 0.1` it takes
    `α` to about 4.7 per increment.
