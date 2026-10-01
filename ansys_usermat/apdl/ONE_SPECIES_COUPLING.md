@@ -68,42 +68,73 @@ server is needed in this mode.
 
 ## Questions that must be answered first (one answered)
 
-1. **Which pool variable is the local `φ` at the Gauss point** —
+1. **Which pool variable is the local `φ` at the Gauss point.** Oliver (1 Oct):
+   the macroscopic `φ` is defined at each quadrature point, not at the nodes,
+   and is the fraction of the maximum local biofilm density, in `[0, 1]`.
+   Still not said which of
    `Sdp_bio1_n` or `Sdp_locbio1_n`? Their file uses both (`Sdp_sumBio` from
    the first, `Sdp_sumLocal` from the second), and the code does not say which
    is the Gauss-point value.
-2. ~~**`Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n`.**~~ **Answered 2026-10-01:
-   Oliver thinks it is a typo** for `Sdp_bio1_n + Sdp_bio2_n`, **and agreed
-   that we fix it in our working copy.** Apply this one-line change in
-   `Usermat_P21-V21_Conection_Test.F` on `F:\biofilm_upf_wired`:
-
-   ```fortran
-   C     was: Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n   (typo, confirmed with
-   C          Oliver 2026-10-01; fixed in our working copy with his OK)
-         Sdp_sumBio = Sdp_bio1_n + Sdp_bio2_n
-   ```
-
-   Or run the patcher, which refuses unless the line occurs exactly once,
-   writes a backup, and is a no-op on a second run:
+2. ~~**`Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n`.**~~ **Discussed 2026-10-01
+   (meeting transcript): Oliver assumes it is a typo** for
+   `Sdp_bio1_n + Sdp_bio2_n` **but has not verified it**, and asked for it to
+   go in the meeting summary. He also pointed out that in the minimal working
+   example the starting values of biofilm 2 are zero ("a leftover" from
+   Felix's investigations), so today it has no influence. **The decision to
+   fix it in our working copy is ours**, not his; tell him when it is in.
+   `apply_partner_patches.py` makes the one-line change on IKMHIWI03 and
+   refuses unless the line occurs exactly once:
 
    ```bat
    python ansys_usermat\apdl\apply_partner_patches.py ^
        F:\biofilm_upf_wired\Usermat_P21-V21_Conection_Test.F
    ```
 
-   It changes the stiffness blend of the **original** AceGen path too
-   (`prop(1) = 0`), so any earlier run of that path is no longer reproduced
-   bit for bit -- note it beside those results. With species 2 switched off
-   (zero initial `Bio2`), `Sdp_sumBio` is then exactly `φ`, so in this mode
-   `sBiofilm` can stay as `Sdp_sumBio`; the `PHI_LOC` workaround is only
-   needed if the fix is not applied. For the two-species step the corrected
-   sum is exactly the `φ₁ + φ₂` that drives growth.
-
-   Our working copy now differs from Oliver's master by this line: tell him
-   when it is in, so his source picks it up too.
+   With biofilm 2 at zero, `Sdp_sumBio` is then exactly `φ`. The fix also
+   changes the stiffness blend of the original AceGen path (`prop(1) = 0`),
+   so note it beside any earlier run of that path.
 3. **The physical time unit of the deck**, which sets `k_α` (`prop(7)`).
-   `k_α = 50` was chosen for millisecond decks; at `TIME INC = 0.1` it takes
-   `α` to about 4.7 per increment.
+   **Oliver does not know it either** ("0.1 second or 0.1 minute, 0.1 hour, I
+   don't know"). Until it is fixed, choose `k_α` by its result instead of by a
+   rate: `one_species_reference.k_alpha_for_target(α_target, φ_max,
+   TIME_total)` keeps the total growth near a small, safe `α_target`, and the
+   thesis reports it that way. `k_α = 50` (chosen for millisecond decks) takes
+   `α` to about 4.7 per increment at `TIME INC = 0.1`.
+
+## What Oliver said about the bridge (meeting, 1 Oct)
+
+- **Target ANSYS 2024** — the version Felix gave him, "likely the most
+  up-to-date regarding the biofilm implementation".
+- **Keep to Klempt 2024; add nothing** — no viscosity, no Mooney-Rivlin. "It is
+  always good when you have a paper that you can reference." For a start he
+  even suggested small deformations / plain elasticity.
+- **The two models stay separate and are bridged.** The 3D model has one
+  homogeneous `φ` and deliberately ignores what it is made of; the point model
+  resolves species. At each quadrature point, run the point model with many
+  small inner steps until one outer step is covered, and carry its end state
+  into the next outer step so there are no jumps. That is exactly the `n_sub`
+  sub-stepping already verified in `usermat_biofilm.f`.
+- **Open on his side too — `φ₀`.** The point model's `φ₀` is an empty volume
+  inside a simplex; the outer `φ` is a fraction of the available volume. How
+  the two relate is not settled. With **one** inner species the unexplained
+  `φ₀` becomes larger, so he suggested considering **two** species. Start
+  simple, get it running, then improve.
+
+## Staged bring-up (answers incomplete: confirm each stage by running)
+
+Each stage has a pass criterion; do not move on until it holds. Stages 1–3
+add a one-row-per-call trace (`elem, ip, ldstep, isubst, dtime, bio1,
+locbio1, alpha_n, alpha_new`) written from the call site for two or three
+elements at integration point 1, run with `-np 1`;
+`one_species_reference.check_trace` reads it and returns the checks below.
+
+| stage | what | passes when |
+|---|---|---|
+| 0 | typo patch only, `prop(1) = 0` | the minimal working example runs to the end with 0 errors, as before |
+| 1 | `prop(6) = 2` with `k_α = 0` | 0 errors, `α` stays 0 everywhere, and the trace shows which of `bio1` / `locbio1` differs between points and changes in time — that one is the Gauss-point `φ` |
+| 2 | small `k_α` from `k_alpha_for_target` (`α_target` ~ 0.02) | `check_trace`: `once_per_increment`, `eq36` and `carried` all true |
+| 3 | raise `α_target` step by step | runs to the end; record where it stops being stable |
+| 4 | two species: `φ = φ₁ + φ₂` | same checks, with biofilm 2 seeded non-zero |
 
 ## Verifying the first run
 

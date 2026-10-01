@@ -651,12 +651,15 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
 ## Open questions for Oliver
 
 1. ~~**The USERMAT Fortran source**~~ — **received** (`Nishioka_Hoechel.zip`).
-2. **Which ANSYS release do we target?** His pool is built for **2024 R2 on
+2. **Which ANSYS release do we target?** — **1 Oct: 2024**, the version
+   Felix gave him. His pool is built for **2024 R2 on
    Linux** via `ANSUSERSHARED`; IKMHIWI03 has **v222 on Windows** via
    `ANSCUST.BAT`. The `usermat` signatures differ (41 vs 42 arguments — see
    above), so the two cannot share one source file unguarded. Either we adapt
    to 2024 R2 and work on the cluster, or he confirms a v222 build is viable.
-3. **Who computes φ?** His NEM solves the field, which makes this repo's
+3. **Who computes φ?** — **1 Oct:** the 3D model computes one homogeneous
+   `φ` per quadrature point; the point model is kept separate and bridged by
+   inner sub-stepping (`apdl/ONE_SPECIES_COUPLING.md`). His NEM solves the field, which makes this repo's
    α-field mapping (`ustatev(10)`) redundant under option (A) and points at
    (A) as the real integration path — but that is his call, not an inference
    we should act on unilaterally.
@@ -665,8 +668,9 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
    growth. Is a viscous biofilm law planned (which is what we would bring), or
    is elastic the intended scope? Related: is the `Sdp_bio1_n + Sdp_bio1_n`
    above a typo? — **2026-10-01: Oliver thinks it is a typo** for
-   `Sdp_bio1_n + Sdp_bio2_n`, and agreed we fix it in our working copy
-   (recipe in `apdl/ONE_SPECIES_COUPLING.md`).
+   `Sdp_bio1_n + Sdp_bio2_n`, not yet verified by him; biofilm 2 starts at
+   zero in his minimal working example, so it has no influence today. We fix
+   it in our working copy (`apdl/apply_partner_patches.py`).
 5. **`sGi_nnz_T` is `INTEGER(KIND=8)` but reaches the pool routines as a
    default `INTEGER` `sz`.** Works at this mesh size; would truncate on a much
    larger one. Deliberate, or worth widening the pool API?
@@ -680,3 +684,12 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
 *Both deliveries inspected 2026-09-01. Internal file paths and cluster
 usernames from the originals are deliberately not reproduced here — this
 repository is public, and the source pool is another group's code.*
+
+## Correction from the 1 October meeting
+
+§7 above calls the Mathematica notebook "the same growth model" as the
+Fortran. Oliver corrected this: the notebook (four species) is the **point
+model** — the microscopic, species-resolved one — while the Fortran is the
+**macroscopic 3D model**, which deliberately treats the biofilm as one
+homogeneous phase. They answer different questions at different scales and
+are meant to be bridged, not merged.
