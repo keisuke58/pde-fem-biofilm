@@ -59,10 +59,9 @@ shift, so it is the same equation.
 
 ## The call-site change (apply on IKMHIWI03, `F:\biofilm_upf_wired`)
 
-The partner's file stays off this public repository; this is the recipe. It
-sits inside the existing `prop(1) /= 0` branch (§7 of
-`V222_PORT_INSTRUCTIONS.md`), next to the `prop(6) = 1` ecology mode, as a new
-`prop(6) = 2` mode:
+The partner's file stays off this public repository; this is the recipe. It is
+superseded by the run sheet below (switch `prop(28)`, target
+`Sbio_GrowthConst` in v222.F); kept for the reasoning:
 
 ```fortran
       else if (prop(6) .gt. 1.5d0) then
@@ -148,34 +147,62 @@ elements at integration point 1, run with `-np 1`;
 | stage | what | passes when |
 |---|---|---|
 | 0 | typo patch only, `prop(1) = 0` | the minimal working example runs to the end with 0 errors, as before |
-| 1 | `prop(6) = 2` with `k_α = 0` | 0 errors, `α` stays 0 everywhere, and the trace shows which of `bio1` / `locbio1` differs between points and changes in time — that one is the Gauss-point `φ` |
+| 1 | `prop(28) = 1` with `k_α = 0` | 0 errors, `α` stays 0 everywhere, and the trace shows which of `bio1` / `locbio1` differs between points and changes in time — that one is the Gauss-point `φ` |
 | 2 | small `k_α` from `k_alpha_for_target` (`α_target` ~ 0.02) | `check_trace`: `once_per_increment`, `eq36` and `carried` all true |
 | 3 | raise `α_target` step by step | runs to the end; record where it stops being stable |
 | 4 | two species: `φ = φ₁ + φ₂` | same checks, with biofilm 2 seeded non-zero |
 
 ## Run sheet — one and two species (IKMHIWI03, working copy)
 
-Everything below is pre-flighted here: the two fragments compile as strict
-72-column fixed form under `IMPLICIT NONE` inside a mock usermat, driven the
-way ANSYS drives one (several iterations per increment, state committed only
-at convergence), and the trace they write passes `check_trace`
-(`tests/test_partner_callsite_fragment.py`). What has not been tested is
-their position in the real file.
+**Target file: `Usermat_P21-V21_v222.F`** — the one the 9/7 `ANSYS.exe` was
+built from (it has the `.obj`, the `prop(6)` ecology branch and
+`ustatev(84)`). `Usermat_P21-V21_Conection_Test.F` is not in the build; the
+typo fix already applied to it on 2026-10-01 is harmless and has a backup.
+Found by the IKMHIWI03 session on first contact with the real folder: the
+first version of this sheet assumed a `sGrowth` variable and a free
+`prop(6)`, neither of which exists in v222.F.
+
+The fragments are pre-flighted here as strict 72-column fixed form under
+`IMPLICIT NONE`, with bounds checking, inside a mock usermat driven the way
+ANSYS drives one (`tests/test_partner_callsite_fragment.py`). What remains
+untested is only their position in the real file.
 
 1. `git pull` this branch on IKMHIWI03.
-2. Typo fix (refuses unless the line occurs exactly once and `Sdp_bio2_n`
-   is defined elsewhere in the file):
-   `python ansys_usermat\apdl\apply_partner_patches.py F:\biofilm_upf_wired\Usermat_P21-V21_Conection_Test.F`
+2. Typo fix on the target file (refuses unless the line occurs exactly once
+   and `Sdp_bio2_n` is defined elsewhere in the file):
+   `python ansys_usermat\apdl\apply_partner_patches.py F:\biofilm_upf_wired\Usermat_P21-V21_v222.F`
 3. Paste `apdl/callsite/phi_mode_decl.inc` with the local declarations, and
-   `apdl/callsite/phi_mode_exec.inc` inside the `prop(1) /= 0` branch, after
-   `sGrowth` is set and before `CALL BIOFILM_GROWTH_VISCO_V01`. (Or copy both
-   files next to the source and `INCLUDE` them at those two places.)
-4. Build with `growth_from_phi.f` added to the sources:
-   `.\ansys_usermat\apdl\link_v222.ps1 -WorkDir F:\biofilm_upf_wired -Sources (Get-ChildItem F:\biofilm_upf_wired -Filter *.f,*.F)`
-   after copying `ansys_usermat\growth_from_phi.f` into that folder.
-   Compile `usermat_py_hook.f` before the usermat if the ecology mode is in
-   the same build.
-5. Material constants on `TB,USER` (Klempt setting):
+   `apdl/callsite/phi_mode_exec.inc` **after the ecology block has finished
+   setting `Sbio_GrowthConst`, immediately before `CALL
+   BIOFILM_GROWTH_VISCO_V01`**. The switch is `prop(28)`; `prop(6)` is left
+   to the ecology mode. Check these names exist in scope first: `nProp`,
+   `prop`, `ustatev`, `dTime`, `elemId`, `kDomIntPt`, `ldstep`, `isubst`,
+   `Sdp_bio1_n`, `Sdp_bio2_n`, `Sdp_locbio1_n`, `Sdp_locbio2_n`,
+   `Sbio_GrowthConst`.
+4. Build. Copy `ansys_usermat\growth_from_phi.f` into the folder, then
+   (`-Filter` takes one pattern, and two files define `usermat`, so the list
+   is built explicitly):
+
+   ```powershell
+   Copy-Item ansys_usermat\growth_from_phi.f F:\biofilm_upf_wired\
+   $skip = 'Usermat_P21-V21_Conection_Test.F'
+   $hook = 'usermat_py_hook.f'
+   $rest = Get-ChildItem F:\biofilm_upf_wired -File |
+       Where-Object { $_.Extension -in '.f','.F' -and
+                      $_.Name -ne $skip -and $_.Name -ne $hook } |
+       ForEach-Object Name
+   .\ansys_usermat\apdl\link_v222.ps1 -WorkDir F:\biofilm_upf_wired `
+       -Sources (@($hook) + $rest)
+   ```
+
+   `usermat_py_hook.f` goes **first** (v222.F `use`s its module; a stale
+   `.mod` is the trap `CLAUDE.md` records). **Use the copy already in
+   `F:\biofilm_upf_wired`, not the repository's current one**: the
+   repository's hook gained `n_sub` and `phi_int` in `bdddf8a`, while
+   v222.F still makes the old five-argument ecology call, so mixing them
+   fails to compile. The `n_sub` call-site patch (NSUB_WIRING.md) is a
+   separate step and not needed for the phi mode.
+5. Material constants — `TB,USER,<mat>,1,28` (28 constants), Klempt setting:
 
    | prop | value | meaning |
    |---|---|---|
@@ -183,15 +210,16 @@ their position in the real file.
    | 2 | 0 | η — viscosity off |
    | 3 | 0 | C01 ratio — neo-Hookean |
    | 4 | 0 | mtype — neo-Hookean |
-   | 5 | 0 | constant growth, unused in this mode |
-   | 6 | 2 or 3 | one species (`φ = bio1`) or two (`φ = bio1 + bio2`) |
+   | 5 | 0 | constant growth (overwritten in phi mode) |
+   | 6 | **0** | ecology mode **off** |
    | 7 | `k_α` | stage 1: `0`; stage 2: `k_alpha_for_target(0.02, 1.0, TIME_total)` |
+   | 8–27 | 0 | ecology θ, unused |
+   | 28 | 1 or 2 | phi mode: one species (`φ = bio1`) or two (`φ = bio1 + bio2`) |
 
 6. **Two species only:** seed biofilm 2 — `sGdp_Bio2start` is zero in the
    minimal working example. Oliver noted biofilm 1 cannot grow into biofilm-2
    nodes unless their boundary value is released there.
-7. Run with `-np 1` (the trace is one file), e.g.
-   `run_apdl.ps1 -Deck <deck> -Np 1 -WorkDir <dir>`.
+7. Run with `-np 1` (the trace is one file).
 8. Judge it: `python -c "import sys; sys.path.insert(0,'ansys_usermat'); import one_species_reference as r; print(r.check_trace(r.read_trace('phi_trace.csv'), K_ALPHA))"`
    with the `k_α` used. Pass = `once_per_increment`, `eq36`, `carried` all
    `True`, plus `NUMBER OF ERROR MESSAGES = 0` and the load step complete.
