@@ -498,11 +498,12 @@ settings are new. No rebuild is needed.
    python -c "import sys; sys.path.insert(0,'ansys_usermat'); import one_species_reference as r; print(r.check_elem_stress(r.read_elem_stress('elem_stress.csv'), r.read_pm_trace('pm_trace.csv'), 220))"
    ```
 
-   Pass means four checks are `True`:
+   Pass means three checks are `True`:
    - `alpha_matches`: the α in the result file is the trace's α for that substep, so the stress really was computed from the point model's α.
    - `compressive`: the growing element is held back by its neighbours, so its mean stress is negative.
-   - `seqv_grows`: `SEQV` does not fall while α rises.
    - `loads_neighbours`: the neighbours carry stress.
+
+   The checker drops result set 1; see below. `seqv_monotone` and `seqv_first_drop` are reported but are not pass/fail. Von Mises need not rise with α here, because the stiffness blends with the partner's own biofilm field, which evolves independently, and the neighbours change as well. This was a pass condition in the first version, which was too strong.
 
    Send back the whole dict: `alpha_end`, `seqv_end`, `p_end` and `seqv_nbr_max_end` are the numbers for the thesis.
 5. Optional, same deck, `prop(28) = 0` everywhere: the zero-growth baseline.
@@ -514,6 +515,29 @@ the closed form on real ANSYS: `t_growth_wrapper_v01_smoketest.dat`,
 `SX = −1.0193e−04` exactly (V222_PORT_INSTRUCTIONS.md). Clamping element
 220 instead would give purely hydrostatic stress and `SEQV = 0`, which says
 nothing about the von Mises stress this thesis reports.
+
+### Result set 1 is not an equilibrium state — drop it everywhere
+
+Found on IKMHIWI03, 1 Oct, in the partner's usermat. It is in their original
+too, not in our fragments. In v222.F, around lines 930–947, the routine
+returns zero stress and zero tangent while `Time = 0` and the per-point call
+count `Si_IterCnt < 2`. It needs the first two calls to collect nodes and
+build the NEM (around lines 453–500). ANSYS therefore sees a zero residual and
+"converges" substep 1 in two iterations. The output call after that returns
+the real stress, so set 1 holds an **unequilibrated** stress: element 220 is
+hydrostatic at −91 while its neighbours are at 0. Substep 1's growth is only
+equilibrated in substep 2, whose first residual is 18.47. Every run in that
+folder shows the same substep-1 residual 0.000: stage 0 with the original
+file, stage 3, and the Oliver-α run.
+
+- **`η = 0` (every run so far):** stress depends only on the current α, so
+  sets 2 onwards are correct. Drop set 1 from every reported number,
+  including the mode 2 / mode 3 whole-model comparison. `check_elem_stress`
+  does this by default.
+- **With viscosity:** the stress history would lag by one substep. This
+  matters only if `η > 0` is ever used with the partner's file.
+- **Not done:** holding α at `Time = 0` in the `prop(28)` modes. That would
+  move α off the point model and break stage 5's exact replay.
 
 ## Verifying the first run
 

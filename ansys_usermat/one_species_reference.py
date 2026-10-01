@@ -261,38 +261,52 @@ def read_elem_stress(path):
     return rows
 
 
-def check_elem_stress(rows, pm_rows, elem, rtol=1e-6):
-    """Stage-5 stress checks for the point-model element, from the result
+def check_elem_stress(rows, pm_rows, elem, rtol=1e-6, skip_first=True):
+    """Stage-5/6 stress checks for the point-model element, from the result
     file (rows) and the point-model trace (pm_rows).
+
+    skip_first -- drop the first result set. The partner's usermat returns
+    zero stress and zero tangent while Time = 0 and its per-point call count
+    is below 2 (it needs those calls to build the NEM), so ANSYS sees a zero
+    residual and "converges" substep 1 without equilibrium; the output call
+    after that writes the real, unequilibrated stress. Substep 1's growth is
+    equilibrated only in substep 2. Found on IKMHIWI03, 1 Oct; it is in
+    every run of that folder, including the partner's original.
 
     alpha_matches -- the alpha in the result file (SVAR 84) is the trace's
         last alpha_new of that sub-step: the stress was computed with the
-        point model's alpha, not with something else.
+        point model's alpha.
     compressive -- once alpha > 0 the element's mean stress is negative:
         it grows and its neighbours hold it back.
-    seqv_grows -- von Mises does not fall while alpha rises.
     loads_neighbours -- the neighbours carry stress once alpha > 0.
+
+    Reported, not judged: seqv_monotone and seqv_first_drop. Von Mises need
+    not rise with alpha here -- the stiffness blends with the partner's
+    biofilm field, which evolves on its own, and the neighbours change too.
     """
     last = {}
     for r in pm_rows:
         if r["elem"] == elem:
             last[(r["ldstep"], r["isubst"])] = r["alpha_new"]
     seq = sorted(rows, key=lambda r: r["time"])
+    dropped = seq[:1] if skip_first else []
+    seq = seq[len(dropped):]
     match = bool(seq) and all(
         (r["lstep"], r["sbstep"]) in last and
         abs(r["alpha"] - last[(r["lstep"], r["sbstep"])])
         <= rtol * max(abs(r["alpha"]), 1e-30) for r in seq)
     grown = [r for r in seq if r["alpha"] > 0.0]
     compressive = bool(grown) and all(r["p"] < 0.0 for r in grown)
-    grows = all(b["seqv"] >= a["seqv"] * (1 - rtol)
-                for a, b in zip(grown[:-1], grown[1:])
-                if b["alpha"] >= a["alpha"])
+    drop = next(((a["time"], a["seqv"], b["time"], b["seqv"])
+                 for a, b in zip(grown[:-1], grown[1:])
+                 if b["alpha"] >= a["alpha"]
+                 and b["seqv"] < a["seqv"] * (1 - rtol)), None)
     nbr = bool(grown) and all(r["seqv_nbr_max"] > 0.0 for r in grown)
     return {"alpha_matches": match, "compressive": compressive,
-            "seqv_grows": grows, "loads_neighbours": nbr,
-            "n_sets": len(seq),
+            "loads_neighbours": nbr,
+            "seqv_monotone": drop is None, "seqv_first_drop": drop,
+            "n_sets": len(seq), "n_dropped": len(dropped),
             "alpha_end": seq[-1]["alpha"] if seq else None,
             "seqv_end": seq[-1]["seqv"] if seq else None,
             "p_end": seq[-1]["p"] if seq else None,
             "seqv_nbr_max_end": seq[-1]["seqv_nbr_max"] if seq else None}
-

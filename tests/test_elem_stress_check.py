@@ -39,9 +39,9 @@ def _rows(tmp_path, alphas=(0.0, 0.1, 0.2, 0.3), p_sign=-1.0, seqv=None,
 def test_a_consistent_run_passes(tmp_path):
     rows, pm = _rows(tmp_path)
     c = ref.check_elem_stress(rows, pm, E)
-    assert c["n_sets"] == 4
-    assert all(c[k] for k in ("alpha_matches", "compressive", "seqv_grows",
-                              "loads_neighbours")), c
+    assert c["n_sets"] == 3 and c["n_dropped"] == 1
+    assert all(c[k] for k in ("alpha_matches", "compressive",
+                              "loads_neighbours", "seqv_monotone")), c
     assert abs(c["alpha_end"] - 0.3) < 1e-15
 
 
@@ -55,9 +55,23 @@ def test_tensile_growth_fails(tmp_path):
     assert not ref.check_elem_stress(rows, pm, E)["compressive"]
 
 
-def test_falling_von_mises_fails(tmp_path):
+def test_falling_von_mises_is_reported_not_failed(tmp_path):
     rows, pm = _rows(tmp_path, seqv=[0.0, 3e-3, 2e-3, 4e-3])
-    assert not ref.check_elem_stress(rows, pm, E)["seqv_grows"]
+    c = ref.check_elem_stress(rows, pm, E)
+    assert not c["seqv_monotone"]
+    assert c["seqv_first_drop"][1:4:2] == (3e-3, 2e-3)
+    assert c["alpha_matches"] and c["compressive"]
+
+
+def test_the_unequilibrated_first_set_is_dropped(tmp_path):
+    """Set 1: the partner's NEM build zeroes the stress in the first
+    iterations, so its stress is not an equilibrium one. Here it is made
+    tensile and wrong in alpha; with it dropped the run still passes."""
+    rows, pm = _rows(tmp_path, alphas=(0.05, 0.1, 0.2, 0.3))
+    rows[0]["p"], rows[0]["alpha"] = +91.0, 123.0
+    assert ref.check_elem_stress(rows, pm, E)["compressive"]
+    c = ref.check_elem_stress(rows, pm, E, skip_first=False)
+    assert not c["compressive"] and not c["alpha_matches"]
 
 
 def test_unloaded_neighbours_fail(tmp_path):
