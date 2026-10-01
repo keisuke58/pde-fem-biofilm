@@ -21,7 +21,7 @@ def _trace(per_iteration_bug=False, wrong_rate=False, n_sub=4, iters=3):
             for it in range(iters):
                 rate = 2 * K if wrong_rate else K
                 a_new = a_n + rate * phi * dt
-                rows.append(f"{elem},{ip},1,{s},{dt},{phi},{phi/2},{a_n},{a_new}")
+                rows.append(f"{elem},{ip},1,{s},{dt},{phi},{phi/2},0.0,0.0,{phi},{a_n},{a_new}")
                 if per_iteration_bug:
                     a_n = a_new                         # counts every iteration
             alpha = a_new

@@ -30,16 +30,17 @@ def alpha_klempt(alpha_repo: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# reading the diagnostic trace the call site writes (ONE_SPECIES_COUPLING.md,
-# "Staged bring-up"). Columns, comma-separated, one row per material call:
-#   elem, ip, ldstep, isubst, dtime, bio1, locbio1, alpha_n, alpha_new
+# reading the diagnostic trace the call site writes
+# (apdl/callsite/phi_mode_exec.inc). Comma-separated, one row per call:
+#   elem, ip, ldstep, isubst, dtime, bio1, locbio1, bio2, locbio2,
+#   phi_used, alpha_n, alpha_new
 # ---------------------------------------------------------------------------
 
 import csv
 from collections import defaultdict
 
 COLS = ("elem", "ip", "ldstep", "isubst", "dtime", "bio1", "locbio1",
-        "alpha_n", "alpha_new")
+        "bio2", "locbio2", "phi_used", "alpha_n", "alpha_new")
 
 
 def read_trace(path):
@@ -55,7 +56,7 @@ def read_trace(path):
     return rows
 
 
-def check_trace(rows, k_alpha, phi_col="bio1", rtol=1e-9):
+def check_trace(rows, k_alpha, phi_col="phi_used", rtol=1e-9):
     """Return a dict of named pass/fail checks plus the evidence for each.
 
     once_per_increment -- alpha_n is identical on every call within one
@@ -105,7 +106,8 @@ def check_trace(rows, k_alpha, phi_col="bio1", rtol=1e-9):
 
     return {"once_per_increment": once, "eq36": eq36, "carried": carried,
             "eq36_worst_abs_error": worst,
-            "phi_bio1": phi_stats("bio1"), "phi_locbio1": phi_stats("locbio1")}
+            **{f"phi_{c}": phi_stats(c)
+               for c in ("bio1", "locbio1", "bio2", "locbio2")}}
 
 
 def k_alpha_for_target(alpha_target, phi_max, time_total):

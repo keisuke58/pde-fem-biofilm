@@ -136,6 +136,51 @@ elements at integration point 1, run with `-np 1`;
 | 3 | raise `α_target` step by step | runs to the end; record where it stops being stable |
 | 4 | two species: `φ = φ₁ + φ₂` | same checks, with biofilm 2 seeded non-zero |
 
+## Run sheet — one and two species (IKMHIWI03, working copy)
+
+Everything below is pre-flighted here: the two fragments compile as strict
+72-column fixed form under `IMPLICIT NONE` inside a mock usermat, driven the
+way ANSYS drives one (several iterations per increment, state committed only
+at convergence), and the trace they write passes `check_trace`
+(`tests/test_partner_callsite_fragment.py`). What has not been tested is
+their position in the real file.
+
+1. `git pull` this branch on IKMHIWI03.
+2. Typo fix (refuses unless the line occurs exactly once and `Sdp_bio2_n`
+   is defined elsewhere in the file):
+   `python ansys_usermat\apdl\apply_partner_patches.py F:\biofilm_upf_wired\Usermat_P21-V21_Conection_Test.F`
+3. Paste `apdl/callsite/phi_mode_decl.inc` with the local declarations, and
+   `apdl/callsite/phi_mode_exec.inc` inside the `prop(1) /= 0` branch, after
+   `sGrowth` is set and before `CALL BIOFILM_GROWTH_VISCO_V01`. (Or copy both
+   files next to the source and `INCLUDE` them at those two places.)
+4. Build with `growth_from_phi.f` added to the sources:
+   `.\ansys_usermat\apdl\link_v222.ps1 -WorkDir F:\biofilm_upf_wired -Sources (Get-ChildItem F:\biofilm_upf_wired -Filter *.f,*.F)`
+   after copying `ansys_usermat\growth_from_phi.f` into that folder.
+   Compile `usermat_py_hook.f` before the usermat if the ecology mode is in
+   the same build.
+5. Material constants on `TB,USER` (Klempt setting):
+
+   | prop | value | meaning |
+   |---|---|---|
+   | 1 | 1 | use the growth law |
+   | 2 | 0 | η — viscosity off |
+   | 3 | 0 | C01 ratio — neo-Hookean |
+   | 4 | 0 | mtype — neo-Hookean |
+   | 5 | 0 | constant growth, unused in this mode |
+   | 6 | 2 or 3 | one species (`φ = bio1`) or two (`φ = bio1 + bio2`) |
+   | 7 | `k_α` | stage 1: `0`; stage 2: `k_alpha_for_target(0.02, 1.0, TIME_total)` |
+
+6. **Two species only:** seed biofilm 2 — `sGdp_Bio2start` is zero in the
+   minimal working example. Oliver noted biofilm 1 cannot grow into biofilm-2
+   nodes unless their boundary value is released there.
+7. Run with `-np 1` (the trace is one file), e.g.
+   `run_apdl.ps1 -Deck <deck> -Np 1 -WorkDir <dir>`.
+8. Judge it: `python -c "import sys; sys.path.insert(0,'ansys_usermat'); import one_species_reference as r; print(r.check_trace(r.read_trace('phi_trace.csv'), K_ALPHA))"`
+   with the `k_α` used. Pass = `once_per_increment`, `eq36`, `carried` all
+   `True`, plus `NUMBER OF ERROR MESSAGES = 0` and the load step complete.
+   The `phi_bio1` / `phi_locbio1` entries say which variable varies between
+   points and in time — that is the Gauss-point `φ`.
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,

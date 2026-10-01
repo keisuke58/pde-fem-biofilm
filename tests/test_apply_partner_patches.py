@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ansys_usermat" / "
 import apply_partner_patches as ap   # noqa: E402
 
 SNIPPET = (
+    "      DOUBLE PRECISION Sdp_bio1_n, Sdp_bio2_n\n"
     "      Sdp_sumBio   = Sdp_bio1_n + Sdp_bio1_n\n"
     "      Sdp_sumLocal = (Sdp_locbio1_n + Sdp_locbio2_n)/2\n")
 
@@ -57,3 +58,8 @@ def test_end_to_end_writes_a_backup(tmp_path):
     assert len(list(tmp_path.glob("Usermat_test.F.orig-*"))) == 1
     assert ap.main([str(f)]) == 0                    # second run: no-op
     assert len(list(tmp_path.glob("Usermat_test.F.orig-*"))) == 1
+
+
+def test_refuses_when_bio2_is_never_defined():
+    with pytest.raises(ap.PatchError):
+        ap.patch_text("      Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n\n")

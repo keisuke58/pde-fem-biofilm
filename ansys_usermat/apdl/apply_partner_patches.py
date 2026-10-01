@@ -56,6 +56,12 @@ def patch_text(text: str) -> tuple[str, str]:
                          f"Sdp_bio1_n' line, found {len(hits)} -- not touching "
                          "the file")
     i = hits[0]
+    others = [ln for j, ln in enumerate(lines)
+              if j != i and re.search(r"\bSdp_bio2_n\b", ln, re.IGNORECASE)
+              and not ln.lstrip().upper().startswith(("C", "!", "*"))]
+    if not others:
+        raise PatchError("Sdp_bio2_n is not declared or set anywhere else in "
+                         "this file -- the fix would read an undefined value")
     eol = "\r\n" if lines[i].endswith("\r\n") else "\n"
     m = TYPO.match(lines[i].rstrip("\r\n"))
     new = f"{m.group('ind')}Sdp_sumBio = Sdp_bio1_n + Sdp_bio2_n{m.group('tail')}"
