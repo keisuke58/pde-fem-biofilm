@@ -2,7 +2,7 @@
 mode (prop(28) = 7) of the partner-element usermat.
 
     python ansys_usermat/apdl/judge_comp_trace.py F:\\biofilm_upf_wired\\comp_trace.csv \\
-        [--case 2sp_case3] [--k-alpha 1e-3] [--phi-min 0.01]
+        [--case 2sp_case3] [--k-alpha 1e-3] [--phi-min 0.01] [--s S]
 
 1. composition_reference.check_comp_trace (once per increment, carried,
    sum phi_i = phi_3D, one server call per point and substep, Eq. 36, replay);
@@ -32,6 +32,8 @@ def main() -> int:
     ap.add_argument("--case", default="2sp_case3")
     ap.add_argument("--k-alpha", type=float, default=1.0e-3)
     ap.add_argument("--phi-min", type=float, default=0.01)
+    ap.add_argument("--s", type=float, default=None,
+                    help="point-model clock, prop(31); default: read from the trace (dt_pm / dtime)")
     a = ap.parse_args()
 
     ms.set_case(a.case)
@@ -54,8 +56,9 @@ def main() -> int:
           "calls/cached/held  max diff")
     for key, subs in sorted(by_pt.items()):
         seq = [subs[k] for k in sorted(subs)]
+        s_pt = a.s if a.s is not None else seq[0]["dt_pm"] / seq[0]["dtime"]
         ref = cr.reference([r["phi3"] for r in seq], theta, hp,
-                           seq[0]["dtime"], phi_min=a.phi_min)
+                           seq[0]["dtime"], phi_min=a.phi_min, s=s_pt)
         d = max(float(np.max(np.abs(np.asarray(r["g_new"]) - g)))
                 for r, g in zip(seq, ref))
         worst = max(worst, d)

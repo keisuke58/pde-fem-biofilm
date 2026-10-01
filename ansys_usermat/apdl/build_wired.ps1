@@ -19,7 +19,13 @@ $rest = Get-ChildItem $WorkDir -File |
     Where-Object { $_.Extension -in '.f', '.F' -and $skip -notcontains $_.Name } |
     ForEach-Object Name
 $t0 = Get-Date
-& (Join-Path $PSScriptRoot 'link_v222.ps1') -WorkDir $WorkDir -Sources ($first + $rest)
-$exe = Get-Item (Join-Path $WorkDir 'ANSYS.exe') -ErrorAction SilentlyContinue
+# one retry: right after the 390 MB exe has been copied (e.g. as a backup) the
+# link failed once with no error message and passed on the retry (1 Oct)
+for ($try = 1; $try -le 2; $try++) {
+    & (Join-Path $PSScriptRoot 'link_v222.ps1') -WorkDir $WorkDir -Sources ($first + $rest)
+    $exe = Get-Item (Join-Path $WorkDir 'ANSYS.exe') -ErrorAction SilentlyContinue
+    if ($exe -and $exe.LastWriteTime -ge $t0) { break }
+    if ($try -eq 1) { 'link produced no new ANSYS.exe; retrying once in 10 s'; Start-Sleep 10 }
+}
 if (-not $exe -or $exe.LastWriteTime -lt $t0) { throw 'ANSYS.exe was not rebuilt' }
 "OK: $($exe.FullName)  $($exe.Length) bytes  $($exe.LastWriteTime)"
