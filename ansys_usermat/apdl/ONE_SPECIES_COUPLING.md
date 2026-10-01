@@ -445,6 +445,38 @@ a replay of every increment with `ecology_substeps` matches **bit for bit**.
 
    A `keycut` means the returned state failed the sanity check (NaN, `Σφ > 1.5`, or `|γ| > 1e5`). α is then held, and the trace still records the attempt.
 
+## Stage 5 on IKMHIWI03, 2026-10-01 — PASS for n = 1 and n = 2
+
+Build: the repository's `usermat_py_hook.f` and `biofilm_py_eval.c`
+(`cl /c /O2 /MD`), v222.F's old ecology call changed to
+`(g, theta, dTime, 1, g_new, PM_PHIINT, ok)`, both fragments from `b002a41`.
+0 build errors.
+
+The NEM deck cannot be shrunk to one element, so the point model runs on one
+element of it. Element 220 gets mat 2 (`prop(28) = 4`) via `MPCOPY,,1,2` and
+`MPCHG,2,220`. The other 511 elements stay mat 1 with `prop(28) = 0`. The run
+used `-np 1`, `n_sub = 1000`, and took about 200 s per run.
+
+| | n = 1 | n = 2 |
+|---|---|---|
+| server | `--active-species 1` | `--active-species 2` |
+| θ (k_α = 0.5) | a₁₁ = 1.34, b₁ = 0.32 | + a₁₂ = −0.18, a₂₂ = 1.79, b₂ = 1.49 |
+| errors / substeps / keycut | 0 / 11 of 11 / none | 0 / 11 of 11 / none |
+| `check_pm_trace` | all five `True` | all five `True` |
+| `replay_worst_g`, `replay_worst_alpha` | 0.0, 0.0 | 0.0, 0.0 |
+| α at t = 1.1 | 0.507 | 0.519 |
+| φ at the end | φ₁ = 0.976 (fixed point from substep 2) | φ₁ = 0.018, φ₂ = 0.965, φ₃₋₅ = 0 |
+
+The only extra warning is "elapsed time > CPU time", which is ANSYS waiting on
+the server.
+
+**Reproduced off-machine.** `ecology_substeps` from the same seed and θ,
+11 × (dt = 0.1, 1000 inner steps), gives α = 0.5075 / 0.5187 and the same φ.
+The Gauss point and the standalone point model agree. The one- and
+two-species bridge is therefore complete on real ANSYS:
+- the phi modes (stages 0–4);
+- the point model (stage 5).
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,
