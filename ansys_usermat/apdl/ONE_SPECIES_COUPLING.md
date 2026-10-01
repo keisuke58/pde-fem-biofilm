@@ -477,6 +477,44 @@ two-species bridge is therefore complete on real ANSYS:
 - the phi modes (stages 0–4);
 - the point model (stage 5).
 
+## Stage 6 — stress from the point-model element (next)
+
+The stage-5 run on element 220 is reused as it stands; only the output
+settings are new. No rebuild is needed.
+
+1. Before `SOLVE`, add `OUTRES,ALL,ALL` and `OUTRES,SVAR,ALL`. `SVAR 84` is
+   the converged α. Check that the deck's `TB,STATE` declares at least 84
+   state variables.
+2. Run n = 1 exactly as in stage 5 (server `--active-species 1`, `-np 1`).
+3. After `FINISH`, copy `ansys_usermat\apdl\callsite\post_elem_stress.mac`
+   into the run directory and run it on the result file. You can append
+   `/INPUT,post_elem_stress,mac` with `ARG1` set first (`ARG1 = 220`), or
+   call it as `post_elem_stress,220`. It writes `elem_stress.csv` with one
+   row per result set: stress components, `SEQV`, α, and the largest
+   `SEQV` among the elements sharing a node with 220.
+4. Judge it:
+
+   ```
+   python -c "import sys; sys.path.insert(0,'ansys_usermat'); import one_species_reference as r; print(r.check_elem_stress(r.read_elem_stress('elem_stress.csv'), r.read_pm_trace('pm_trace.csv'), 220))"
+   ```
+
+   Pass means four checks are `True`:
+   - `alpha_matches`: the α in the result file is the trace's α for that substep, so the stress really was computed from the point model's α.
+   - `compressive`: the growing element is held back by its neighbours, so its mean stress is negative.
+   - `seqv_grows`: `SEQV` does not fall while α rises.
+   - `loads_neighbours`: the neighbours carry stress.
+
+   Send back the whole dict: `alpha_end`, `seqv_end`, `p_end` and `seqv_nbr_max_end` are the numbers for the thesis.
+5. Optional, same deck, `prop(28) = 0` everywhere: the zero-growth baseline.
+   `SEQV` at element 220 should then stay at the background level.
+
+There is no closed form here. One growing element inside an elastic body
+is an inclusion problem. The material law itself is already checked against
+the closed form on real ANSYS: `t_growth_wrapper_v01_smoketest.dat`,
+`SX = −1.0193e−04` exactly (V222_PORT_INSTRUCTIONS.md). Clamping element
+220 instead would give purely hydrostatic stress and `SEQV = 0`, which says
+nothing about the von Mises stress this thesis reports.
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,

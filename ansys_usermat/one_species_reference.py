@@ -244,3 +244,55 @@ def check_pm_trace(rows, k_alpha, n_active, theta=None, dt_max=1.0e-4):
         out.update({"replay": worst_g == 0.0 and worst_a <= 2.3e-16,
                     "replay_worst_g": worst_g, "replay_worst_alpha": worst_a})
     return out
+
+
+def read_elem_stress(path):
+    """Rows of elem_stress.csv (apdl/callsite/post_elem_stress.mac)."""
+    rows = []
+    with open(path, newline="") as f:
+        for r in csv.reader(f):
+            if not r or not r[0].strip().replace(".", "").isdigit():
+                continue
+            v = [float(x) for x in r]
+            rows.append({"lstep": int(v[0]), "sbstep": int(v[1]),
+                         "time": v[2], "s": v[3:9], "seqv": v[9],
+                         "alpha": v[10], "seqv_nbr_max": v[11],
+                         "p": (v[3] + v[4] + v[5]) / 3.0})
+    return rows
+
+
+def check_elem_stress(rows, pm_rows, elem, rtol=1e-6):
+    """Stage-5 stress checks for the point-model element, from the result
+    file (rows) and the point-model trace (pm_rows).
+
+    alpha_matches -- the alpha in the result file (SVAR 84) is the trace's
+        last alpha_new of that sub-step: the stress was computed with the
+        point model's alpha, not with something else.
+    compressive -- once alpha > 0 the element's mean stress is negative:
+        it grows and its neighbours hold it back.
+    seqv_grows -- von Mises does not fall while alpha rises.
+    loads_neighbours -- the neighbours carry stress once alpha > 0.
+    """
+    last = {}
+    for r in pm_rows:
+        if r["elem"] == elem:
+            last[(r["ldstep"], r["isubst"])] = r["alpha_new"]
+    seq = sorted(rows, key=lambda r: r["time"])
+    match = bool(seq) and all(
+        (r["lstep"], r["sbstep"]) in last and
+        abs(r["alpha"] - last[(r["lstep"], r["sbstep"])])
+        <= rtol * max(abs(r["alpha"]), 1e-30) for r in seq)
+    grown = [r for r in seq if r["alpha"] > 0.0]
+    compressive = bool(grown) and all(r["p"] < 0.0 for r in grown)
+    grows = all(b["seqv"] >= a["seqv"] * (1 - rtol)
+                for a, b in zip(grown[:-1], grown[1:])
+                if b["alpha"] >= a["alpha"])
+    nbr = bool(grown) and all(r["seqv_nbr_max"] > 0.0 for r in grown)
+    return {"alpha_matches": match, "compressive": compressive,
+            "seqv_grows": grows, "loads_neighbours": nbr,
+            "n_sets": len(seq),
+            "alpha_end": seq[-1]["alpha"] if seq else None,
+            "seqv_end": seq[-1]["seqv"] if seq else None,
+            "p_end": seq[-1]["p"] if seq else None,
+            "seqv_nbr_max_end": seq[-1]["seqv_nbr_max"] if seq else None}
+
