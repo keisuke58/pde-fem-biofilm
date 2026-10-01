@@ -249,8 +249,8 @@ Parameters keep their five-species positions (`prop(8:27) = theta(1:20)`):
 
 | | `A` | `b` |
 |---|---|---|
-| n = 1 | `prop(8) = a₁₁` | `prop(23) = b₁` |
-| n = 2 | `prop(8) = a₁₁`, `prop(9) = a₁₂`, `prop(10) = a₂₂` | `prop(23) = b₁`, `prop(24) = b₂` |
+| n = 1 | `prop(8) = a₁₁` | `prop(11) = b₁` |
+| n = 2 | `prop(8) = a₁₁`, `prop(9) = a₁₂`, `prop(10) = a₂₂` | `prop(11) = b₁`, `prop(12) = b₂` |
 
 All other `prop(8:27)` entries are ignored by the mask; set them to 0.
 
@@ -423,8 +423,8 @@ a replay of every increment with `ecology_substeps` matches **bit for bit**.
    | 7 | `k_α` (start with 0.5) | same |
    | 8 | a₁₁ = 1.34 | a₁₁ |
    | 9, 10 | 0 | a₁₂, a₂₂ |
-   | 23 | b₁ = THETA_DEMO[15] | b₁ |
-   | 24 | 0 | b₂ |
+   | 11 | b₁ | b₁ |
+   | 12 | 0 | b₂ |
    | other 8–27 | 0 | 0 |
    | 28 | **4** | **4** |
 
@@ -460,7 +460,7 @@ used `-np 1`, `n_sub = 1000`, and took about 200 s per run.
 | | n = 1 | n = 2 |
 |---|---|---|
 | server | `--active-species 1` | `--active-species 2` |
-| θ (k_α = 0.5) | a₁₁ = 1.34, b₁ = 0.32 | + a₁₂ = −0.18, a₂₂ = 1.79, b₂ = 1.49 |
+| θ (k_α = 0.5) | a₁₁ = 1.34, "b₁" = 0.32 in `prop(23)` | + a₁₂ = −0.18, a₂₂ = 1.79, "b₂" = 1.49 in `prop(24)` |
 | errors / substeps / keycut | 0 / 11 of 11 / none | 0 / 11 of 11 / none |
 | `check_pm_trace` | all five `True` | all five `True` |
 | `replay_worst_g`, `replay_worst_alpha` | 0.0, 0.0 | 0.0, 0.0 |
@@ -469,6 +469,18 @@ used `-np 1`, `n_sub = 1000`, and took about 200 s per run.
 
 The only extra warning is "elapsed time > CPU time", which is ANSYS waiting on
 the server.
+
+**Correction, same day: the b slots in this sheet were wrong.** The
+encoding (`theta_to_matrices`, identical in TMCMC's `BiofilmNewtonSolver5S`
+and in `jax_hamilton_0d_5species_demo`) puts b₁, b₂ at θ[3], θ[4], which is
+`prop(11)`, `prop(12)`. θ[15] is b₅ and θ[16] is a₁₅. So the runs above
+had b₁ = b₂ = 0, with 0.32 in b₅ and 1.49 in a₁₅. **The results do not
+move.** Rerun off-machine with the b values in the right slots, α and every
+φ, ψ agree to all printed digits, for two reasons:
+- b only enters multiplied by the antibiotic concentration α* = 0
+  (`ecology_constants.ALPHA_STAR`);
+- a₁₅ couples to species 5, which is masked off.
+The tables above are now corrected.
 
 **Reproduced off-machine.** `ecology_substeps` from the same seed and θ,
 11 × (dt = 0.1, 1000 inner steps), gives α = 0.5075 / 0.5187 and the same φ.

@@ -33,9 +33,10 @@ pytestmark = pytest.mark.skipif(_FC is None or _CC is None,
 
 
 def _theta_one_species():
-    """Only a11 and b1 non-zero: the n = 1 prop(8:27) layout."""
+    """Only a11 and b1 non-zero: the n = 1 prop(8:27) layout
+    (theta_to_matrices: a11 = theta[0], b1 = theta[3])."""
     th = [0.0] * 20
-    th[0], th[15] = float(THETA_DEMO[0]), float(THETA_DEMO[15])
+    th[0], th[3] = float(THETA_DEMO[0]), float(THETA_DEMO[3])
     return th
 
 
