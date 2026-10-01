@@ -47,7 +47,7 @@ MOCK = """\
       DOUBLE PRECISION prop(28), ust(100,3), work(100), sg, dt
       DOUBLE PRECISION b1, b2
       INTEGER e, ie, s, it, ielem(3), mode, np
-      DATA ielem /1, 2, 998/
+      DATA ielem /1, 2, 38/
       prop = 0.0D0
       READ(*,*) mode, prop(7), dt, np
       prop(1) = 1.0D0
@@ -110,7 +110,7 @@ def test_one_and_two_species_pass_the_bring_up_checks(mode):
 def test_only_the_sampled_elements_are_traced():
     tmp, _ = _build_and_run(1)
     elems = {r["elem"] for r in ref.read_trace(tmp / "phi_trace.csv")}
-    assert elems == {1, 998}                     # element 2 is not sampled
+    assert elems == {1, 38}                      # stride 37: 2 is not sampled
 
 
 def test_alpha_matches_eq36_summed_over_increments():

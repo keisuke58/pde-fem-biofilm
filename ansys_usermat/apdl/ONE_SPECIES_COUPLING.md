@@ -148,7 +148,7 @@ elements at integration point 1, run with `-np 1`;
 |---|---|---|
 | 0 | typo patch only, `prop(1) = 0` | the minimal working example runs to the end with 0 errors, as before |
 | 1 | `prop(28) = 1` with `k_α = 0` | 0 errors, `α` stays 0 everywhere, and the trace shows which of `bio1` / `locbio1` differs between points and changes in time — that one is the Gauss-point `φ` |
-| 2 | small `k_α` from `k_alpha_for_target` (`α_target` ~ 0.02) | `check_trace`: `once_per_increment`, `eq36` and `carried` all true |
+| 2 | small `k_α` (`α_target` ~ 0.02) | `check_trace`: `once_per_increment`, `eq36` and `carried` all true |
 | 3 | raise `α_target` step by step | runs to the end; record where it stops being stable |
 | 4 | two species: `φ = φ₁ + φ₂` | same checks, with biofilm 2 seeded non-zero |
 
@@ -212,7 +212,7 @@ untested is only their position in the real file.
    | 4 | 0 | mtype — neo-Hookean |
    | 5 | 0 | constant growth (overwritten in phi mode) |
    | 6 | **0** | ecology mode **off** |
-   | 7 | `k_α` | stage 1: `0`; stage 2: `k_alpha_for_target(0.02, 1.0, TIME_total)` |
+   | 7 | `k_α` | stage 1: `0`; later: `k_alpha_from_trace(<stage-1 trace>, α_target)` |
    | 8–27 | 0 | ecology θ, unused |
    | 28 | 1 or 2 | phi mode: one species (`φ = bio1`) or two (`φ = bio1 + bio2`) |
 
@@ -259,6 +259,37 @@ Still needed for this path in v222.F: the `n_sub` call-site patch
 limit. At about 0.07 s per Gauss-point call for 1000 sub-steps, the full
 minimal working example (about 150,000 points) costs hours per equilibrium
 iteration, so bring it up on one element first.
+
+## Results on IKMHIWI03, 2026-10-01 — stages 0–2 PASS
+
+New `ANSYS.exe` built from `Usermat_P21-V21_v222.F` with the typo fix and the
+phi-mode fragments, run with `-np 1`. All three runs: 0 errors, completed to
+the same 11 sub-steps (`TIME = 1.1`) as the 9/7 run. The 9/7 executable is
+kept as `F:\biofilm_upf_wired_ANSYS_20260907.exe`.
+
+| stage | deck | result |
+|---|---|---|
+| 0 | `ds_oliver_wired_baseline.dat`, `prop(1) = 0` | 0 errors, 2 warnings (same as 9/7), no trace — as expected |
+| 1 | `ds_phi_stage1_k0.dat`, 28 constants, `prop(28) = 1`, `k_α = 0` | 0 errors, 46 trace rows, α stays 0 |
+| 2 | `ds_phi_stage2_k002.dat`, `k_α = 0.0181818…` | 0 errors; `check_trace`: `once_per_increment`, `eq36`, `carried` all True; `eq36_worst_abs_error = 0.0` |
+
+**The re-entrancy question is settled on real hardware**: 46 calls for 11
+sub-steps, so usermat is called several times per sub-step, and α still
+rises exactly once per sub-step — never once per Newton iteration.
+
+Found by these runs and fixed afterwards:
+
+- **Sampling.** `MOD(elemId, 997) = 1` hit only element 1 in the 512-element
+  deck, so `varies_between_points` could not be judged. Now
+  `TRACE_STRIDE = 37` (about 14 elements there).
+- **Which φ.** In time alone, `bio1` (0 → 0.0099990) and `bio2`
+  (0 → 0.0060601) rise inside `[0, 1]`, while `locbio1/2` sit at
+  1.0000–1.000045, slightly above 1. **`bio` looks like the Gauss-point φ**;
+  the wider trace in stage 3 confirms or refutes it between points.
+- **`k_α`.** φ peaks near 0.01, not 1, so the `φ_max = 1` rule left the final
+  α at 9.9994e-05, 1/200 of its 0.02 target. `k_alpha_from_trace` now takes
+  the φ the run actually produced from the stage-1 trace; for this deck it
+  gives about 1.8 for α ≈ 0.02.
 
 ## Verifying the first run
 

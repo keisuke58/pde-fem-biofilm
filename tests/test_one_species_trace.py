@@ -58,3 +58,19 @@ def test_phi_statistics_describe_each_candidate(tmp_path):
 def test_k_alpha_for_a_target_growth():
     k = ref.k_alpha_for_target(0.02, phi_max=1.0, time_total=1.1)
     assert abs(k * 1.0 * 1.1 - 0.02) < 1e-15
+
+
+def test_k_alpha_from_a_stage_1_trace_hits_the_target(tmp_path):
+    """phi ~ 0.01 like the 1 Oct run: the target is met, where the
+    phi_max = 1 rule would have fallen 100 times short."""
+    lines = ["elem,ip,ldstep,isubst,dtime,bio1,locbio1,bio2,locbio2,"
+             "phi_used,alpha_n,alpha_new"]
+    for s in range(1, 12):
+        for it in range(3):                      # repeated iterations
+            lines.append(f"1,1,1,{s},0.1,{0.001*s},1.0,0,0,{0.001*s},0,0")
+    rows = _write(tmp_path, lines)
+    k = ref.k_alpha_from_trace(rows, 0.02)
+    integral = sum(0.001 * s * 0.1 for s in range(1, 12))
+    assert abs(k * integral - 0.02) < 1e-14
+    alpha = ref.alpha_history([0.001 * s for s in range(1, 12)], k, 0.1)
+    assert abs(alpha[-1] - 0.02) < 1e-14

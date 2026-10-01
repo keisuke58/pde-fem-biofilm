@@ -118,3 +118,23 @@ def k_alpha_for_target(alpha_target, phi_max, time_total):
     units, and report it that way.
     """
     return alpha_target / (phi_max * time_total)
+
+
+def k_alpha_from_trace(rows, alpha_target, phi_col="bio1"):
+    """k_alpha that brings the fastest-growing traced point to alpha_target.
+
+    Uses the phi the run actually produced (a k_alpha = 0 stage-1 trace),
+    integrated over converged sub-steps -- the last call of each sub-step --
+    rather than assuming phi_max = 1. In the 1 Oct stage 2 run phi peaked
+    near 0.01, so the phi_max = 1 rule landed alpha at 1/200 of its target.
+    """
+    by_pt = defaultdict(lambda: defaultdict(list))
+    for r in rows:
+        by_pt[(r["elem"], r["ip"])][(r["ldstep"], r["isubst"])].append(r)
+    best = 0.0
+    for subs in by_pt.values():
+        integ = sum(v[-1][phi_col] * v[-1]["dtime"] for v in subs.values())
+        best = max(best, integ)
+    if best <= 0.0:
+        raise ValueError(f"{phi_col} never rises above 0 in this trace")
+    return alpha_target / best

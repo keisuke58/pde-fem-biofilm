@@ -29,8 +29,9 @@ C     locbio in the two PHI_USED lines -- nothing else.
      &                              dTime, ALPHA_NEW)
         Sbio_GrowthConst = ALPHA_NEW
         ustatev(84)      = ALPHA_NEW
-C       trace: integration point 1 of about one element in 997
-        IF (kDomIntPt .EQ. 1 .AND. MOD(elemId, 997) .EQ. 1) THEN
+C       trace: integration point 1 of one element in TRACE_STRIDE
+        IF (kDomIntPt .EQ. 1 .AND.
+     &      MOD(elemId, TRACE_STRIDE) .EQ. 1) THEN
           IF (.NOT. TRACE_OPEN) THEN
             OPEN(97, FILE='phi_trace.csv', STATUS='UNKNOWN',
      &           POSITION='APPEND')
