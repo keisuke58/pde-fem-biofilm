@@ -66,16 +66,17 @@ for the Klempt setting: `prop(2) = 0` (η), `prop(3) = 0` (C01 ratio),
 has no module dependency, so build order does not matter for it. No material
 server is needed in this mode.
 
-## Questions that must be answered first
+## Questions that must be answered first (one answered)
 
 1. **Which pool variable is the local `φ` at the Gauss point** —
    `Sdp_bio1_n` or `Sdp_locbio1_n`? Their file uses both (`Sdp_sumBio` from
    the first, `Sdp_sumLocal` from the second), and the code does not say which
    is the Gauss-point value.
-2. **`Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n`.** In this mode it matters
-   directly: `sBiofilm` blends the stiffness, and with species 2 switched off
-   it would read `2 φ` instead of `φ`. Pass `PHI_LOC` as `sBiofilm` too, or
-   have the typo fixed first.
+2. ~~**`Sdp_sumBio = Sdp_bio1_n + Sdp_bio1_n`.**~~ **Answered 2026-10-01:
+   Oliver thinks it is a typo** for `Sdp_bio1_n + Sdp_bio2_n`. Until his
+   source is corrected, in this mode pass `PHI_LOC` as `sBiofilm` as well,
+   so the stiffness blend sees `φ` and not `2 φ`. For the two-species step
+   the corrected sum is exactly the `φ₁ + φ₂` that drives growth.
 3. **The physical time unit of the deck**, which sets `k_α` (`prop(7)`).
    `k_α = 50` was chosen for millisecond decks; at `TIME INC = 0.1` it takes
    `α` to about 4.7 per increment.
