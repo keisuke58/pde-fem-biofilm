@@ -1,0 +1,279 @@
+% Speaker script for slides_1005.tex (meeting 5 Oct 2026), English + Japanese.
+% Build: .\build_slides.ps1 -Tex speaker_notes_1005.tex -MaxPages 30   (lualatex, luatexja)
+\documentclass[11pt,a4paper]{article}
+\usepackage{luatexja}
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\definecolor{c3}{RGB}{30,80,160}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\newcounter{sl}
+\newcommand{\slide}[2]{\stepcounter{sl}\vspace{8pt}%
+  {\color{c3}\large\bfseries Slide \thesl\ --- #1}\hfill{\small #2}\par\vspace{2pt}}
+\newcommand{\EN}{\textbf{EN}\quad}
+\newcommand{\JA}{\par\textbf{JA}\quad}
+
+\begin{document}
+{\Large\bfseries Speaker script --- meeting 5 October 2026}\\[2pt]
+Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
+16 slides, about 20 minutes. Times are rough targets.
+
+% ------------------------------------------------------------------
+\slide{Title}{0:20}
+\EN Thank you for making time. Today I will show where the thesis stands:
+the biofilm growth model is now coupled into the existing IKM element, and
+everything follows the published papers by Klempt et al.
+\JA お時間をいただきありがとうございます。今日は修論の現状を報告します。
+バイオフィルムの成長モデルを IKM の既存の要素に組み込み、すべて Klempt らの論文に
+沿って進めた結果です。
+
+% ------------------------------------------------------------------
+\slide{Where we stand (administration)}{0:40}
+\EN Briefly the formal side: admission was granted in August, the examiners
+are Prof.\ Junker and Dr.\ Wangenheim, and the thesis is written in English.
+I plan to submit in December, before I return to Japan, and to present in December.
+\JA まず事務的なことです。8 月に受験資格が認められ、審査員は Junker 先生と
+Wangenheim 先生です。修論は英語で書きます。提出は帰国前の 12 月、発表も 12 月の予定です。
+
+% ------------------------------------------------------------------
+\slide{Since the last meeting: the scope is fixed}{1:30}
+\EN The main change since the last meeting is that the scope of the FEM part
+is now fixed. The thesis covers one and two species, coupled into Oliver's
+element, strictly as Klempt et al.\ 2024 describe it, with the species
+composition taken from the point model of Klempt et al.\ 2026, and all
+parameters from the papers. More species --- starting from the four-species
+cases of the 2026 paper, up to the five oral species --- would be continued
+at Keio. The reason is simple: for one and two species the papers give
+numbers I can check against; beyond that they do not.
+\JA 前回からの一番大きな変化は、FEM 部分の範囲が決まったことです。修論では
+1 菌種と 2 菌種を扱い、Oliver の要素に Klempt 2024 のとおり厳密に組み込みます。
+菌種の組成は Klempt 2026 の点モデルから取り、パラメータはすべて論文の値です。
+それ以上の菌種数、つまり 2026 年論文の 4 菌種から始めて口腔の 5 菌種までは、
+慶應で続ける計画です。理由は単純で、1・2 菌種なら論文に照合できる数値がありますが、
+それ以上にはないからです。
+
+% ------------------------------------------------------------------
+\slide{Before coupling: our own growth law is verified}{1:30}
+\EN Before coupling anything, the growth law itself was checked. Against closed
+forms: the fully constrained cube matches exactly, and free growth gives zero
+stress to $10^{-10}$. Against other implementations: the ANSYS and Abaqus
+versions are bit-identical over 2037 states, and the Python version agrees to
+$10^{-13}$. The multi-species point model reproduces all fourteen numerical
+examples of the 2026 paper --- I also found two misprints there --- and it
+reproduces the figures of Fritsch et al.\ within 0.013.
+\JA 組み込む前に、成長則そのものを確認しました。閉じた解との比較では、
+完全拘束の立方体は厳密に一致し、自由成長では応力が $10^{-10}$ でゼロになります。
+別実装との比較では、ANSYS 版と Abaqus 版が 2037 状態でビット単位で一致し、
+Python 版とも $10^{-13}$ で一致します。多菌種の点モデルは 2026 年論文の数値例
+14 個をすべて再現し、その過程で論文の誤植を 2 つ見つけました。Fritsch らの図とも
+0.013 以内で一致します。
+
+% ------------------------------------------------------------------
+\slide{The coupling: what the element does and what we add}{2:00}
+\EN This is the coupling. Oliver's element solves the biofilm field of
+Klempt 2024, Equation 34 --- diffusion, the source from growth, and front
+growth driven by the nutrient. We do not touch it. What we add happens at
+each Gauss point of the material routine: we take $\varphi$ from the field,
+integrate Equation 36, $\dot\alpha=k_a\varphi$, and turn $\alpha$ into the
+growth tensor and the stress with the verified law. The rate $k_a$ is the
+published value, $10^{-3}$ per unit time, used both in the field and in
+Equation 36.
+\JA これが組み込みの全体です。Oliver の要素は Klempt 2024 の式 34、つまり拡散、
+成長による生成、栄養で駆動される界面成長を解きます。ここには手を入れていません。
+私たちが加えたのは材料ルーチンの各ガウス点での処理です。場から $\varphi$ を受け取り、
+式 36 $\dot\alpha=k_a\varphi$ を積分し、その $\alpha$ を検証済みの成長則で
+成長テンソルと応力にします。$k_a$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
+
+% ------------------------------------------------------------------
+\slide{Check 1: exact solution}{1:30}
+\EN The first check uses an exact solution. Where the field has no gradients,
+the two equations reduce to a linear system with the solution $\sinh$ and
+$\cosh$. Left and middle: ANSYS against the exact curves. The dotted line is
+the exact solution of the time-stepping scheme itself, and the right panel
+shows the difference to it: for $\alpha$ it is round-off, $10^{-11}$; for
+$\varphi$ it is $10^{-7}$, about $10^{-4}$ relative, because this element
+still sees a little gradient from its neighbours.
+\JA 1 つ目は厳密解による確認です。場に勾配がない所では、2 本の式が線形系になり、
+解は sinh と cosh です。左と中央が ANSYS と厳密解の比較です。点線は時間刻みの
+計算式そのものの厳密解で、右の図がそれとの差です。$\alpha$ は丸め誤差の $10^{-11}$、
+$\varphi$ は $10^{-7}$、相対で約 $10^{-4}$ です。この要素も周りからわずかに
+勾配を受けているためです。
+
+% ------------------------------------------------------------------
+\slide{Check 2: whole model}{1:30}
+\EN Second, the whole model. The element already carries its own growth
+variable, so we can compute the stress in two ways: with Equation 36 in our
+material routine, or with the element's variable. Each dot is one element.
+The pattern is the same --- cosine similarity 1.0000 --- but the element's
+variable gives 0.455 of ours. That number is exactly one half times ten
+elevenths: the element averages over both species fields, including the
+unused one, and it lags one time step.
+\JA 2 つ目はモデル全体です。要素はもともと独自の成長変数を持っているので、
+応力を 2 通りで計算できます。材料ルーチンで式 36 を使う方法と、要素の変数を使う方法です。
+点 1 つが要素 1 つです。分布の形は同じでコサイン類似度は 1.0000 ですが、
+大きさは要素の変数のほうが 0.455 倍です。これはちょうど 1/2 × 10/11 で、
+要素が使っていない菌種の場も含めて 2 つの場を平均していることと、
+1 ステップ遅れていることで説明できます。
+
+% ------------------------------------------------------------------
+\slide{Check 3: the seeded element}{1:30}
+\EN Third, the seeded element over time. Its $\alpha$ grows linearly to
+$1.1\times10^{-3}$, which is exactly $k_a\varphi t$. The element itself is
+compressed, and its neighbours carry about ten times its von Mises stress ---
+the ring of stress around the biofilm that Klempt et al.\ also describe in
+their 2023 paper. The stresses are small, at most 0.02 MPa. That is because
+the published growth rate is slow; it is a property of the parameters, not of
+the coupling.
+\JA 3 つ目は、種を置いた要素の時間変化です。$\alpha$ は直線的に増えて
+$1.1\times10^{-3}$ になり、これはちょうど $k_a\varphi t$ です。要素自体は圧縮され、
+隣の要素はその約 10 倍の von Mises 応力を持ちます。Klempt らの 2023 年の論文に
+ある、バイオフィルムを囲む応力の輪と同じ傾向です。応力は最大 0.02 MPa と小さいですが、
+これは論文の成長速度が遅いためで、組み込みの問題ではありません。
+
+% ------------------------------------------------------------------
+\slide{Three things found along the way}{1:30}
+\EN Three findings. First, the element's growth variable is the mean of the two
+species fields, so with one species growth is halved. I would like to ask
+Oliver whether that is intended. Second, start values must satisfy
+$\varphi_1+\varphi_2\le1$, because the void fraction is one minus all
+species; the example input starts both species at one in the seed, so for one
+species I start the second at zero. Third, the first result set is not in
+equilibrium, because the element returns zero stress while it sets up its
+operators; we drop it. And to be clear: earlier bring-up runs used larger
+growth rates to make the stress visible --- everything shown today uses the
+published values.
+\JA 見つかったことが 3 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
+1 菌種だと成長が半分になります。意図したものか Oliver に確認したいと思います。
+2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\varphi_1+\varphi_2\le1$
+でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
+1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
+要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
+なお、立ち上げ段階では応力を見やすくするため大きな成長速度を使っていましたが、
+今日お見せした結果はすべて論文の値です。
+
+% ------------------------------------------------------------------
+\slide{Two species: composition from the point model}{1:45}
+\EN For two species, the question is how to connect the point model to the 3-D
+field. The answer that stays faithful to both papers: the field decides the
+amount, $\varphi_{3D}$, and drives growth; the point model decides only the
+composition --- which species, and $\psi$. At each step its state is rescaled
+so that the species add up to the amount from the field. The composition does
+not act back on the stress, because in Klempt 2024 no material parameter
+depends on the species. On ANSYS, every point and every step equals the scheme
+run on its own, with difference zero.
+\JA 2 菌種では、点モデルと 3 次元の場をどうつなぐかが問題です。両方の論文に忠実な
+つなぎ方として、量 $\varphi_{3D}$ は場が決めて成長を駆動し、点モデルは組成、つまり
+どの菌種か、そして $\psi$ だけを決めます。各ステップで点モデルの状態を、
+菌種の和が場の量に一致するように合わせ直します。組成は応力に戻りません。
+Klempt 2024 では菌種によって変わる材料定数がないからです。ANSYS 上では、
+全点・全ステップが単独で回した同じ計算と差 0 で一致しました。
+
+% ------------------------------------------------------------------
+\slide{Two species: results in the packed seed}{1:30}
+\EN Results in the fully packed seed, for two cases of Table 1 with the paper's
+parameters. Case 3 is coexistence: the paper gives 0.60 for species 1; coupled
+we get 0.667, and between 0.664 and 0.668 when the cap is varied. Case 6 is
+the case where one species wins: the paper has species 1 at zero with
+$\psi_1=0.05$; we get 0.021 and $\psi_1=0.048$. So the type of outcome is
+kept; the ratio shifts because the amount now comes from the 3-D field, not
+from the point model filling up on its own. The result is converged in the
+coupling time step.
+\JA 種の領域、つまり完全に詰まった所での結果です。Table 1 の 2 ケースを論文の
+パラメータで計算しました。ケース 3 は共存で、論文では菌種 1 が 0.60、組み込んだ計算では
+0.667、上限値を変えても 0.664〜0.668 です。ケース 6 は片方が勝つケースで、論文では
+菌種 1 がゼロ、$\psi_1=0.05$、こちらは 0.021 と 0.048 です。結果の種類は保たれていて、
+比が変わるのは、量が点モデル自身の増え方ではなく 3 次元の場から来るためです。
+結合の時間刻みに対して収束しています。
+
+% ------------------------------------------------------------------
+\slide{Two modelling assumptions}{1:45}
+\EN Two assumptions are needed, and I state them explicitly. First, time: the
+2024 paper runs to $T^*=1$, the 2026 paper counts steps of $10^{-4}$ in its own
+unit, and no paper links the two. So the point model advances $s$ times the
+time step, with $s=0.15$. This matters: in case 6 the winner only emerges for
+$s$ around 0.15 or larger; in case 3 it moves the result by 0.03 to 0.06.
+Second, in fully packed regions the point model sees at most 0.9 of the
+amount; without that, the result depends on the coupling time step. Each is
+one named number with a sensitivity study; nothing else is tuned.
+\JA 仮定が 2 つ必要で、それを明示しています。1 つ目は時間です。2024 年論文は
+$T^*=1$ まで、2026 年論文は独自の単位で $10^{-4}$ のステップを数えていて、
+両者を結ぶ記述はどの論文にもありません。そこで点モデルは時間刻みの $s$ 倍だけ進むとし、
+$s=0.15$ としました。これは結果に効きます。ケース 6 では $s$ が 0.15 程度以上でないと
+勝者が現れず、ケース 3 では結果が 0.03〜0.06 動きます。2 つ目は、完全に詰まった所では
+点モデルが見る量を最大 0.9 にすることです。これがないと結果が結合の時間刻みに依存します。
+どちらも名前の付いた 1 つの数値で、感度も調べています。それ以外は何も調整していません。
+
+% ------------------------------------------------------------------
+\slide{Earlier work kept: curved substrate}{1:00}
+\EN One earlier result stays in the thesis, on our own growth law: a growth
+layer on a curved substrate. I found that the layers had been joined only
+along a few node lines; with a shared interface mesh the layer bulges
+uniformly and converges at second order. As a consequence, the differences
+between the four clinical conditions are as small as placement effects, so I
+do not claim a condition effect on stress.
+\JA 以前の結果で修論に残すものが 1 つあります。自前の成長則を使った、曲面の基盤上の
+成長層です。2 つの層が数本の節点列でしかつながっていなかったことが分かり、
+界面を共有するメッシュに直すと、層は一様に膨らみ、2 次で収束しました。その結果、
+4 つの臨床条件の違いは配置の影響と同程度しかないので、条件による応力の差は主張しません。
+
+% ------------------------------------------------------------------
+\slide{Timeline}{0:40}
+\EN The coupling for one and two species is done. October and November are for
+the thesis runs and figures, writing runs in parallel, and submission is early
+to mid December, before I return to Japan.
+\JA 1・2 菌種の組み込みは終わっています。10〜11 月で修論用の計算と図を仕上げ、
+並行して執筆し、帰国前の 12 月上旬から中旬に提出します。
+
+% ------------------------------------------------------------------
+\slide{Questions for this meeting}{2:00}
+\EN I have four questions. First, the scope: is it agreed that the thesis
+covers one and two species strictly as published, and more species continue
+at Keio? Second, are the two assumptions --- the time link and the cap, each
+with a sensitivity study --- acceptable for the thesis? Third, is anything
+needed from the Keio side for the double-degree requirements this term? And
+fourth, could Prof.\ Muramatsu attend the presentation online from Japan?
+\JA 4 つお聞きしたいことがあります。1 つ目、範囲について、修論は論文どおりの 1・2 菌種、
+それ以上は慶應で続けるという分け方でよろしいでしょうか。2 つ目、時間の対応と上限値という
+2 つの仮定を、感度の検討付きで修論に入れてよいでしょうか。3 つ目、ダブルディグリーの
+要件で、今学期に慶應側で必要なことはありますか。4 つ目、村松先生に日本から
+オンラインで発表に参加していただくことは可能でしょうか。
+
+% ------------------------------------------------------------------
+\slide{References}{(no talk)}
+\EN Leave this slide up only if asked; the four papers are the ones cited on
+the slides.
+\JA 聞かれたときだけ表示します。スライドで引用した 4 本の論文です。
+
+% ------------------------------------------------------------------
+\vspace{12pt}
+{\color{c3}\large\bfseries Possible questions and short answers}
+
+\begin{description}[leftmargin=0pt,itemsep=6pt]
+\item[Why are the stresses so small?]
+\EN The published $k_a=10^{-3}$ with $T^*\le1$ gives $\alpha\le10^{-3}$. Larger
+rates make larger stresses, but they would no longer be the paper's model.
+\JA 論文の $k_a=10^{-3}$ と $T^*\le1$ では $\alpha\le10^{-3}$ にしかなりません。
+速度を大きくすれば応力も大きくなりますが、それはもう論文のモデルではありません。
+
+\item[Why not the five species right away?]
+\EN There is no published reference beyond four species, and Oliver's element is
+written for two fields; extending it is a rewrite plus new verification.
+\JA 4 菌種を超えると論文の参照値がなく、Oliver の要素も 2 つの場を前提に書かれています。
+拡張は書き直しと新たな検証が必要です。
+
+\item[Is the composition result physical, given it differs from the paper?]
+\EN The type of outcome matches; the ratio differs because the amount is set
+by the field. The point model alone reproduces the paper exactly, so the shift
+is the coupling's effect, and it is converged and insensitive to the cap.
+\JA 結果の種類は一致しています。比の違いは量を場が決めるためです。点モデル単独では
+論文を厳密に再現しているので、この差は結合による効果で、収束しており上限値にも鈍感です。
+
+\item[Why $s=0.15$?]
+\EN It maps the 2026 paper's 1500 steps of $10^{-4}$ onto the 2024 paper's
+horizon $T^*=1$. It is an assumption, which is why it is reported with a sweep.
+\JA 2026 年論文の $10^{-4}$ × 1500 ステップを、2024 年論文の $T^*=1$ に対応させる値です。
+仮定なので、感度の結果と一緒に示しています。
+\end{description}
+\end{document}
