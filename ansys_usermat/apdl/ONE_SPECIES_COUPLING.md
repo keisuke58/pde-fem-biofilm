@@ -83,6 +83,14 @@ server is needed in this mode.
          Sdp_sumBio = Sdp_bio1_n + Sdp_bio2_n
    ```
 
+   Or run the patcher, which refuses unless the line occurs exactly once,
+   writes a backup, and is a no-op on a second run:
+
+   ```bat
+   python ansys_usermat\apdl\apply_partner_patches.py ^
+       F:\biofilm_upf_wired\Usermat_P21-V21_Conection_Test.F
+   ```
+
    It changes the stiffness blend of the **original** AceGen path too
    (`prop(1) = 0`), so any earlier run of that path is no longer reproduced
    bit for bit -- note it beside those results. With species 2 switched off
