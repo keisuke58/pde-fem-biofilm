@@ -16,3 +16,13 @@ C     run, so the trace never saw the points that grow fastest.
       LOGICAL TRACE_OPEN
       SAVE TRACE_OPEN
       DATA TRACE_OPEN /.FALSE./
+C     --- point-model mode (prop(28) = 4) -----------------------------
+C     PM_ prefix: no clash with the partner's own local names.
+      DOUBLE PRECISION PM_GOLD(12), PM_GNEW(12), PM_TH(20)
+      DOUBLE PRECISION PM_PHIINT, PM_PHITOT, PM_SUM
+      INTEGER PM_NSUB, PM_I
+      LOGICAL PM_OK, PM_TRACE_OPEN
+      SAVE PM_TRACE_OPEN
+      DATA PM_TRACE_OPEN /.FALSE./
+      DOUBLE PRECISION PM_DTMAX
+      PARAMETER (PM_DTMAX = 1.0D-4)

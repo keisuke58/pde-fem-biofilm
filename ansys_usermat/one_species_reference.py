@@ -159,3 +159,88 @@ def partner_alpha_gap(rows):
     """
     return max(abs(r["alpha_new"] - (0.5 * (r["locbio1"] + r["locbio2"]) - 1.0))
                for r in rows)
+
+
+# ---------------------------------------------------------------------------
+# point-model mode (prop(28) = 4): pm_trace.csv, one row per material call
+#   elem, ip, ldstep, isubst, nsub, dtime, alpha_n, alpha_new,
+#   g_old[12], g_new[12]
+# ---------------------------------------------------------------------------
+
+import math
+
+
+def read_pm_trace(path):
+    rows = []
+    with open(path, newline="") as f:
+        for r in csv.reader(f):
+            if not r or not r[0].strip().lstrip("-").isdigit():
+                continue
+            v = [x.strip() for x in r]
+            g = [float(x) for x in v[8:32]]
+            rows.append({"elem": int(v[0]), "ip": int(v[1]),
+                         "ldstep": int(v[2]), "isubst": int(v[3]),
+                         "nsub": int(v[4]), "dtime": float(v[5]),
+                         "alpha_n": float(v[6]), "alpha_new": float(v[7]),
+                         "g_old": g[:12], "g_new": g[12:]})
+    return rows
+
+
+def check_pm_trace(rows, k_alpha, n_active, theta=None, dt_max=1.0e-4):
+    """Pass/fail checks for the point-model bridge, from its trace alone.
+
+    once_per_increment -- every call within one sub-step starts from the same
+        inner state and the same alpha (ANSYS hands back the converged state
+        on each equilibrium iteration).
+    carried -- the next sub-step's inner state and alpha are exactly the last
+        call of the previous one: the inner model continues where it stopped,
+        no jumps between outer steps. This is the property Oliver asked for.
+    nsub -- the inner step count is ceiling(dtime / dt_max).
+    inactive_zero -- species above n_active stay exactly zero.
+    replay (only with theta, needs jax) -- each sub-step's last call is
+        recomputed with ecology_substeps from its own g_old; g_new must match
+        bit for bit and alpha_new must equal alpha_n + k_alpha * phi_int to
+        2 ulp (replay_worst_alpha is the relative gap).
+    """
+    by_pt = defaultdict(lambda: defaultdict(list))
+    for r in rows:
+        by_pt[(r["elem"], r["ip"])][(r["ldstep"], r["isubst"])].append(r)
+    once = carried = nsub_ok = inactive = True
+    off = list(range(n_active, 5)) + list(range(6 + n_active, 11))
+    for subs in by_pt.values():
+        keys = sorted(subs)
+        for k in keys:
+            rs = subs[k]
+            if len({tuple(r["g_old"]) for r in rs}) != 1 or \
+               len({r["alpha_n"] for r in rs}) != 1:
+                once = False
+        for a, b in zip(keys[:-1], keys[1:]):
+            la, fb = subs[a][-1], subs[b][0]
+            if la["g_new"] != fb["g_old"] or la["alpha_new"] != fb["alpha_n"]:
+                carried = False
+        for rs in subs.values():
+            for r in rs:
+                if r["nsub"] != max(1, math.ceil(r["dtime"] / dt_max - 1e-9)):
+                    nsub_ok = False
+                if any(r["g_new"][i] != 0.0 for i in off):
+                    inactive = False
+    out = {"once_per_increment": once, "carried": carried, "nsub": nsub_ok,
+           "inactive_zero": inactive}
+    if theta is not None:
+        import ecology_jax as eco
+        worst_g = worst_a = 0.0
+        for subs in by_pt.values():
+            for rs in subs.values():
+                r = rs[-1]
+                g, pint = eco.ecology_substeps(r["g_old"], theta, r["dtime"],
+                                               r["nsub"], n_active)
+                worst_g = max(worst_g, float(np.max(np.abs(
+                    np.asarray(g) - np.asarray(r["g_new"])))))
+                # same operation order as the Fortran: alpha_n + k*phi_int
+                want = r["alpha_n"] + k_alpha * float(pint)
+                worst_a = max(worst_a, abs(r["alpha_new"] - want)
+                              / max(abs(want), 1e-300))
+        # g bit for bit; alpha to 2 ulp (ifort may fuse the multiply-add)
+        out.update({"replay": worst_g == 0.0 and worst_a <= 2.3e-16,
+                    "replay_worst_g": worst_g, "replay_worst_alpha": worst_a})
+    return out

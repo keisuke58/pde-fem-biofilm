@@ -380,6 +380,71 @@ scope (one and two species) is complete.**
   two-species result needs a smaller `BETA2` or `dt`, and it is a question
   for Oliver whether 500 × BETA1 is intended.
 
+## Stage 5 — the point model at the Gauss point (`prop(28) = 4`)
+
+The ecology ODE runs inside the element, with `n_sub` inner steps and one or
+two species masked in the server. α grows from the ODE's own `φ`, integrated
+over the inner steps (`α ← α + k_α · phi_int`), not from `bio1`. This mode
+uses the fragments' own call to the hook, so v222.F's ecology branch
+(`prop(6)`) and its `dt > DT_ECO_MAX` refusal stay switched off and untouched.
+
+Pre-flighted here (`tests/test_point_model_fragment.py`): the mock usermat,
+linked against the repository's hook and C shim, talks to a real
+`material_server --active-species 1` at `dt = 0.1` (1000 inner steps). The
+trace passes `once_per_increment`, `carried`, `nsub` and `inactive_zero`, and
+a replay of every increment with `ecology_substeps` matches **bit for bit**.
+
+1. Re-paste both fragments; they gained the mode-4 block.
+2. **Use the repository's hook this time** (it has `n_sub` and `phi_int`).
+   v222.F's own ecology call is the old five-argument form and will no longer
+   compile against it. Change only that one call to the new form, which with
+   `n_sub = 1` returns exactly what the old one did:
+
+   ```fortran
+         CALL biofilm_ecology_hook(<g>, <theta>, <dt>, 1, <g_new>,
+        &     PM_PHIINT, <ok>)
+   ```
+
+   Keep v222.F's own argument names in the `<…>` positions. `PM_PHIINT` is
+   declared by `phi_mode_decl.inc` and is only a scratch output there.
+3. Build as in step 4 of the run sheet, with three changes. Copy
+   `ansys_usermat\coupling\usermat_py_hook.f` from the repository over the
+   folder's copy. Compile the C shim with `cl /c /O2
+   ansys_usermat\coupling\biofilm_py_eval.c` and put the `.obj` in the
+   folder. Delete the stale `ANSYS.exe` / `.lib` / `.exp` / `.map` and
+   `biofilm_py_bridge.mod` first.
+4. Start the server in the run directory's shell:
+   `python ansys_usermat\coupling\material_server.py --active-species 1`.
+5. Material constants: the stage table with these changes:
+
+   | prop | n = 1 | n = 2 |
+   |---|---|---|
+   | 6 | 0 | 0 |
+   | 7 | `k_α` (start with 0.5) | same |
+   | 8 | a₁₁ = 1.34 | a₁₁ |
+   | 9, 10 | 0 | a₁₂, a₂₂ |
+   | 23 | b₁ = THETA_DEMO[15] | b₁ |
+   | 24 | 0 | b₂ |
+   | other 8–27 | 0 | 0 |
+   | 28 | **4** | **4** |
+
+   For n = 2, start the server with `--active-species 2`.
+6. **One element first**, `-np 1`. At about 0.07 s per Gauss-point call for
+   1000 inner steps, the minimal working example would cost hours per
+   iteration.
+7. Judge it:
+
+   ```
+   python -c "import sys; sys.path.insert(0,'ansys_usermat'); sys.path.insert(0,'ansys_usermat/coupling'); import one_species_reference as r; print(r.check_pm_trace(r.read_pm_trace('pm_trace.csv'), K_ALPHA, 1, THETA))"
+   ```
+
+   `THETA` is the list `prop(8:27)`. Pass means:
+   - `once_per_increment`, `carried`, `nsub`, `inactive_zero` and `replay` are all `True`;
+   - `NUMBER OF ERROR MESSAGES = 0`;
+   - no `keycut` cut-backs in the `.out`.
+
+   A `keycut` means the returned state failed the sanity check (NaN, `Σφ > 1.5`, or `|γ| > 1e5`). α is then held, and the trace still records the attempt.
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,
