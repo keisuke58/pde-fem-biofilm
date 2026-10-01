@@ -61,7 +61,7 @@ Model parameters are passed as **APDL parameters** (`*SET`), not through
 ### Biofilm parameters already present
 
 ```
-YOUNG_BIO   = 1000        ! Pa
+YOUNG_BIO   = 1000        ! solver units: the deck has /units,MPA (see below)
 YOUNG_VOID  = 1.0         ! void/empty-region stiffness
 POISSON_BIO = 0.3
 MY_BIOSTART1 = 1.0   MY_BIOSTART2 = 0.0      ! biofilm initial condition, two regions
@@ -70,8 +70,13 @@ MY_BETA1 = 1.0e-4    MY_BETA2 = 5.0e-2       ! growth rates
 MY_DIFF1 = 1.0       MY_DIFF2 = 1.0          ! diffusion coefficients
 ```
 
-**The scales agree with this repo.** `YOUNG_BIO = 1000` Pa matches
-`material_models.E_MAX_PA = 1000`, and `POISSON_BIO = 0.3` matches the ν
+**Correction, 2026-10-01: the scales do not agree.** The deck is in
+`/units,MPA` (the `ds_oliver_wired_*.dat` decks here, line 22, say so), and
+`YOUNG_BIO` is marked `![UNIT]`, i.e. solver units: `YOUNG_BIO = 1000` is
+**1000 MPa**, `YOUNG_VOID = 1` is 1 MPa. Earlier this note read it as 1000 Pa
+and said it matched `material_models.E_MAX_PA = 1000`; it does not, by a
+factor of 10⁶. Stresses from these decks are in MPa and scale linearly with E.
+`POISSON_BIO = 0.3` (and `POISSON_VOID = 0.3`) does match the ν
 default in [`coupling/composition_to_material.py`](coupling/composition_to_material.py).
 A two-field (biofilm + nutrient) reaction–diffusion structure is also what
 `JAXFEM/` implements for the Klempt model.

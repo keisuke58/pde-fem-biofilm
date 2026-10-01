@@ -404,7 +404,10 @@ $\varphi_{\rm cap}$ & largest amount the point model sees\\
 \small
 \textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
 isotropic $\mathbf F_g=(1+\alpha)\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
-A body that can grow freely stays stress free; stress appears where growth is constrained.
+A body that can grow freely stays stress free; stress appears where growth is constrained.\\
+\textbf{Material} (the example input, solver units MPa): $E_{\rm bio}=1000$, $E_{\rm void}=1$,
+$\nu=0.3$, blended linearly with the local biofilm fraction; no viscosity.
+Stresses scale linearly with $E$.
 \vspace{4pt}
 
 \textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
