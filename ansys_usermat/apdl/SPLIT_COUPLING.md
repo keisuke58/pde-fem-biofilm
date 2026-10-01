@@ -65,6 +65,103 @@ Every case stays finite, but:
    pre-flight now matches bit for bit. Check (a) (`φ = sinh`,
    `α_K = cosh`) is unaffected; it concerns the 3D field alone.
 
+### `φ_min` (`prop(29)`), defined
+
+`φ_min` gates the point model on the amount. Where `φ_3D < φ_min` at a Gauss
+point, the point model is not run that substep: there is no server call and
+no rescaling, and composition, ψ and γ are held at their last values (or at
+`prop(30)` if the point was never active). Growth (Eq. 36) and the 3D field
+are not affected.
+
+The partner's field raises `bio` in the void by `dt·K_LOCAL·locbio` per
+substep (locbio ≈ 1), so the void background at the end of the run is about
+`K_LOCAL·T_end`. With `K_LOCAL = k_α = 1e−3` (Klempt 2024 Table 2; Eq. 34
+and Eq. 36 share k_α) and `T* = 1`, the background is `1e−3`, so **`φ_min =
+1e−2` is 10× above it. Confirmed.** Rule: `φ_min ≥ 10·K_LOCAL·T_end`. With the
+bring-up value `K_LOCAL = 0.01` and `T = 1.1` the background reaches 0.011,
+which would cross 1e−2. In the sweep below, the void stays at χ₁ = 0.5000
+(held) for every s.
+
+### `s` (`prop(31)`), and the sensitivity sweep
+
+Option (B) is decided. The point model advances `s·dt` per substep. **s is an
+explicit assumption**, because no paper links Klempt 2024's T* to Klempt
+2026's time unit. Pre-flighted: the mock with s = 0.5 matches the reference
+bit for bit, and α is identical for every s.
+
+**Stress is not swept:** in this mode α depends only on φ_3D, so the stress
+is identical for every s by construction, and the test pins it. Only the
+composition moves. Script: `ansys_usermat/composition_s_sweep.py`.
+
+χ₁ at T* = 1, deck dt = 0.1, φ_min = 0.01:
+
+| amount φ_3D(t) | case 3, s = 0.05 / 0.15 / 0.5 | case 6, s = 0.05 / 0.15 / 0.5 |
+|---|---|---|
+| seed (1) | 0.478 / 0.486 / 0.513 | 0.014 / 0.014 / 0.014 |
+| interior 0.9 | 0.602 / 0.609 / 0.635 | **0.329** / 0.014 / 0.014 |
+| interior 0.4 | 0.646 / 0.669 / 0.676 | **0.307** / 0.049 / 0.014 |
+| front 0.05 → 1 | 0.638 / 0.672 / 0.701 | **0.230** / 0.014 / 0.014 |
+| void (K_LOCAL·t) | 0.500 (held) | 0.500 (held) |
+
+- **Case 6 (one species wins):** the outcome is set by s. At s = 0.05 the
+  point model has not finished: the winner has not emerged, except in the
+  seed. From s = 0.15 up, the paper's end state is reached everywhere.
+- **Case 3 (coexistence):** χ₁ moves by 0.03–0.06 over the sweep, and depends
+  more on the local amount (0.48–0.70) than on s.
+
+### Coupling interval, and the seed region (open)
+
+The deck dt is the coupling interval: rescaling happens once per substep. It
+must converge on its own. For case 3, s = 0.15:
+
+| deck dt | seed (φ_3D = 1) | interior 0.9 | interior 0.4 | front |
+|---|---|---|---|---|
+| 0.1 | 0.486 | 0.609 | 0.669 | 0.672 |
+| 0.05 | 0.459 | 0.647 | 0.668 | 0.671 |
+| 0.025 | 0.395 | 0.667 | 0.668 | 0.670 |
+| 0.0125 | **0.201** | 0.668 | 0.668 | 0.669 |
+
+**Interior and front converge at dt ≤ 0.025. Use deck dt = 0.025:** 40
+substeps to T* = 1, with n_sub ≈ 38 at s = 0.15, which is cheap.
+
+**The seed does not converge.** There `φ₀` is pinned at 1e−6, below the
+point model's own packing limit (stand-alone case 3 settles at φ₀ ≈ 0.013).
+Each inner integration pushes φ₀ up off its barrier and each rescale pushes
+it back, so the finer the coupling, the more that fight dominates. Capping
+the amount fed to the point model does not cure it above φ₀ ≈ 0.05:
+
+| cap on φ_3D | dt 0.1 / 0.05 / 0.025 / 0.0125 |
+|---|---|
+| 1 − 1e−6 | 0.486 / 0.459 / 0.395 / 0.201 |
+| 0.99 | 0.504 / 0.499 / 0.488 / 0.465 |
+| 0.95 | 0.562 / 0.598 / 0.638 / 0.664 |
+| 0.9 (the interior row) | converged, 0.668 |
+
+**A decision is needed** on how composition is defined where the 3D field
+is fully packed:
+- (a) evaluate it at a capped amount (φ_cap ≈ 0.9; converged). This is one
+  more stated assumption.
+- (b) in packed regions, take χ from the free-running point model, with no
+  rescaling.
+
+Either way, the seed numbers above (and the ANSYS smoke test on element
+220, which is in the seed) are coupling-interval artefacts, not results.
+
+### ANSYS smoke test, IKMHIWI03, 1 Oct (prop(28) = 7)
+
+One element (220, in the seed), v222, `-np 1`, 30 constants (before s
+existed, so s = 1), server `--case 2sp_case3`, `DELTIM 0.01`, end time 0.16.
+
+- 0 errors.
+- `check_comp_trace`: once / carried / amount / one_call / eq36 all True;
+  replay True (worst 0.0).
+- The whole trajectory equals `composition_reference.reference` (max
+  difference **0.0**).
+- χ₁ ends at 0.4708, ψ at 0.9835 / 0.9800.
+
+So the Fortran path is exact on real ANSYS. The seed caveat above applies
+to the value 0.4708 itself.
+
 ### Time: matching the papers
 
 - **Klempt 2024** normalises its own time, `T* = t/t_ref ∈ [0, 1]`, with
@@ -120,7 +217,8 @@ The PAMM paper also supports two existing choices:
    (its cache is used) and `USE biofilm_split`. **USSFin is not changed.**
 2. Server: `material_server.py --case 2sp_case3`. This sets two species,
    c* = 100, α* = 10 and η = (1, 2).
-3. `TB,USER` with 30 constants:
+3. `TB,USER` with 31 constants (`prop(31) = s`, e.g. 0.15; deck
+   `DELTIM 0.025` to T* = 1):
    - `prop(6) = 0`, `prop(28) = 7`;
    - `prop(7) = 1e−3` (k_α, Klempt 2024 Table 2);
    - `prop(8) = 1`, `prop(9) = 1`, `prop(10) = 1`, `prop(11) = 0`,

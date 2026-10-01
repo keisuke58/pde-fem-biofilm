@@ -57,8 +57,13 @@ C         + bio2 and is not touched. The point model decides only the
 C         COMPOSITION chi_i = phi_i / sum(phi) and psi: its state is
 C         rescaled to sum(phi_i) = phi_3D before and after each inner
 C         integration (phi0 = 1 - phi_3D). Growth: Eq. 36 with phi_3D.
-C         Below prop(29) = phi_min the state is held (no server call).
+C         prop(29) = phi_min: where phi_3D < phi_min the point model is
+C         not run (no server call, no rescaling) and composition, psi
+C         and gamma are held; growth (Eq. 36) is not affected.
 C         prop(30) = chi_1 at the first call (default 0.5).
+C         prop(31) = s, the point model's clock: it advances s * dTime
+C         per substep (default 1). No paper links Klempt 2024's T* to
+C         Klempt 2026's time unit; s is that assumption, made explicit.
           SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
           DO PM_I = 1, 12
             PM_GOLD(PM_I) = ustatev(71 + PM_I)
@@ -79,8 +84,13 @@ C         prop(30) = chi_1 at the first call (default 0.5).
           DO PM_I = 1, 20
             PM_TH(PM_I) = prop(7 + PM_I)
           END DO
+          CM_TS = 1.0D0
+          IF (nProp .GE. 31) THEN
+            IF (prop(31) .GT. 0.0D0) CM_TS = prop(31)
+          END IF
+          CM_DT = CM_TS * dTime
           PM_NSUB = 1
-          IF (dTime .GT. PM_DTMAX) PM_NSUB = CEILING(dTime / PM_DTMAX)
+          IF (CM_DT .GT. PM_DTMAX) PM_NSUB = CEILING(CM_DT / PM_DTMAX)
           SP_ID = SPLIT_ID(elemId, kDomIntPt)
           PM_OK = .TRUE.
           PM_PHIINT = 0.0D0
@@ -101,7 +111,7 @@ C         prop(30) = chi_1 at the first call (default 0.5).
               SP_HITI = 1
             ELSE
               SP_HITI = 0
-              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, dTime,
+              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
      &             PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
               IF (PM_OK) THEN
                 DO PM_I = 1, 12
@@ -137,10 +147,10 @@ C         prop(30) = chi_1 at the first call (default 0.5).
      &             POSITION='APPEND')
               CM_TRACE_OPEN = .TRUE.
             END IF
-            WRITE(96,'(I0,5(",",I0),5(",",ES24.16E3),'//
+            WRITE(96,'(I0,5(",",I0),6(",",ES24.16E3),'//
      &            '24(",",ES24.16E3))')
      &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
-     &        dTime, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
+     &        dTime, CM_DT, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
      &        (PM_GOLD(PM_I), PM_I = 1, 12),
      &        (PM_GNEW(PM_I), PM_I = 1, 12)
             FLUSH(96)

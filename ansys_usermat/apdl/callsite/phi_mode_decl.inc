@@ -36,7 +36,7 @@ C     Needs USE biofilm_split next to USE biofilm_py_bridge.
       DOUBLE PRECISION SP_PHIMAX
       PARAMETER (SP_PHIMAX = 1.0D0 - 1.0D-6)
 C     --- composition from the point model (prop(28) = 7) --------------
-      DOUBLE PRECISION CM_CHI1, CM_S, CM_F
+      DOUBLE PRECISION CM_CHI1, CM_S, CM_F, CM_TS, CM_DT
       LOGICAL CM_TRACE_OPEN
       SAVE CM_TRACE_OPEN
       DATA CM_TRACE_OPEN /.FALSE./

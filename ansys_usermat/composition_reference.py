@@ -51,15 +51,17 @@ def step(g, phi3, theta, hp, dt, n_sub):
 
 
 def reference(phi3_series, theta, hp, dt, dt_max=1.0e-4, chi1=0.5,
-              phi_min=0.0):
-    """Stand-alone scheme for phi_3D(t) given per substep; returns states."""
+              phi_min=0.0, s=1.0):
+    """Stand-alone scheme for phi_3D(t) given per substep; returns states.
+    s: the point model's clock, dt_pm = s * dt (prop(31))."""
     g = seed(chi1)
-    n_sub = max(1, math.ceil(dt / dt_max - 1e-9))
+    dt_pm = s * dt
+    n_sub = 1 if dt_pm <= dt_max else math.ceil(dt_pm / dt_max)
     out = []
     for p in phi3_series:
         p = min(max(p, 0.0), PHIMAX)
         if p >= phi_min and p > 0.0:
-            g = step(g, p, theta, hp, dt, n_sub)
+            g = step(g, p, theta, hp, dt_pm, n_sub)
         out.append(g.copy())
     return out
 
@@ -71,13 +73,14 @@ def read_comp_trace(path):
             v = [x.strip() for x in r]
             if not v or not v[0].isdigit():
                 continue
-            g = [float(x) for x in v[11:35]]
+            g = [float(x) for x in v[12:36]]
             rows.append({"elem": int(v[0]), "ip": int(v[1]),
                          "ldstep": int(v[2]), "isubst": int(v[3]),
                          "nsub": int(v[4]), "hit": int(v[5]),
-                         "dtime": float(v[6]), "phi_used": float(v[7]),
-                         "phi3": float(v[8]), "alpha_n": float(v[9]),
-                         "alpha_new": float(v[10]),
+                         "dtime": float(v[6]), "dt_pm": float(v[7]),
+                         "phi_used": float(v[8]),
+                         "phi3": float(v[9]), "alpha_n": float(v[10]),
+                         "alpha_new": float(v[11]),
                          "g_old": g[:12], "g_new": g[12:]})
     return rows
 
@@ -125,7 +128,7 @@ def check_comp_trace(rows, k_alpha, theta=None, hp=None, dt_max=1.0e-4):
                 r = rs[-1]
                 if r["hit"] == 2:
                     continue
-                gn, _ = eco.ecology_substeps(r["g_old"], theta, r["dtime"],
+                gn, _ = eco.ecology_substeps(r["g_old"], theta, r["dt_pm"],
                                              r["nsub"], 2, hp)
                 gn = rescale(np.asarray(gn), r["phi3"])
                 worst = max(worst, float(np.max(np.abs(
