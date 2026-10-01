@@ -226,6 +226,40 @@ untested is only their position in the real file.
    The `phi_bio1` / `phi_locbio1` entries say which variable varies between
    points and in time — that is the Gauss-point `φ`.
 
+## The point model with one or two species (ecology bridge)
+
+Separate from the phi mode above. When the inner point model (the Hamilton
+ecology ODE) runs at the Gauss point, a one- or two-species run uses the
+**unchanged five-species interface** — `g(12)`, `theta(20)`,
+`ustatev(72:83)`, `prop(8:27)` — with species masked off in the server:
+
+    python ansys_usermat/coupling/material_server.py --active-species 2
+
+**Masked, not zeroed.** The model clips every `φ` up to `1e-10` each step,
+so a species merely started at zero is revived and grows (measured: to
+0.036 in 2000 steps, `γ` off by 95). Masked, it stays exactly zero, and the
+masked five-species model reproduces `JAXFEM/hamilton_ode_jax_nsp.py` at
+**n = 1 to 1.7e-12 and n = 2 to 3.7e-12** — it *is* the n-species model
+(`tests/test_ecology_active_species.py`). The five-species path is
+bit-identical to before. The five-species default the Fortran seeds is made
+consistent on the first call (switched-off `φ`, `ψ` zeroed;
+`φ₀ = 1 − Σ active φ`).
+
+Parameters keep their five-species positions (`prop(8:27) = theta(1:20)`):
+
+| | `A` | `b` |
+|---|---|---|
+| n = 1 | `prop(8) = a₁₁` | `prop(23) = b₁` |
+| n = 2 | `prop(8) = a₁₁`, `prop(9) = a₁₂`, `prop(10) = a₂₂` | `prop(23) = b₁`, `prop(24) = b₂` |
+
+All other `prop(8:27)` entries are ignored by the mask; set them to 0.
+
+Still needed for this path in v222.F: the `n_sub` call-site patch
+(`NSUB_WIRING.md`), because the macro step 0.1 is 1000 times the ODE's
+limit. At about 0.07 s per Gauss-point call for 1000 sub-steps, the full
+minimal working example (about 150,000 points) costs hours per equilibrium
+iteration, so bring it up on one element first.
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,

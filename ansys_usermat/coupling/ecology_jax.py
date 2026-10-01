@@ -84,7 +84,48 @@ def default_initial_state() -> jnp.ndarray:
     return g
 
 
-def ecology_step(g_prev, theta, dt_h: float) -> jnp.ndarray:
+N_SPECIES = 5
+
+
+def active_mask(n_active: int = N_SPECIES) -> jnp.ndarray:
+    """Species 1..n_active on, the rest off -- the reduced n-species model.
+
+    Masking is NOT the same as starting the extra species at zero. The model
+    clips every phi up to 1e-10 each step, so a species started at zero is
+    revived and grows (measured: to 0.036 within 2000 steps, gamma off by
+    95). With the mask the clip never touches it and it stays exactly zero,
+    and the masked five-species model reproduces JAXFEM/hamilton_ode_jax_nsp
+    at n = 1 and n = 2 to round-off (tests/test_ecology_active_species.py).
+    """
+    if not 1 <= int(n_active) <= N_SPECIES:
+        raise ValueError(f"n_active must be 1..{N_SPECIES}, got {n_active}")
+    return jnp.array([1] * int(n_active) + [0] * (N_SPECIES - int(n_active)),
+                     dtype=jnp.int64)
+
+
+def seed_inactive(g, n_active: int = N_SPECIES) -> np.ndarray:
+    """Make a five-species state consistent with an n_active-species run.
+
+    The Fortran side seeds every Gauss point with the five-species default
+    (INIT_ECO_IF_ZERO), which puts biomass in species the reduced model has
+    switched off. On that first call this zeroes them -- phi and psi -- and
+    restores phi0 = 1 - sum(active phi), the closure the n-species model
+    starts from. Once zeroed the mask keeps them at exactly zero, so every
+    later call finds nothing to do and the state passes through unchanged.
+    """
+    g = np.array(g, dtype=np.float64)
+    n = int(n_active)
+    if n >= N_SPECIES:
+        return g
+    off = list(range(n, N_SPECIES)) + list(range(6 + n, 6 + N_SPECIES))
+    if np.any(g[off] != 0.0):
+        g[off] = 0.0
+        g[5] = 1.0 - g[0:n].sum()
+    return g
+
+
+def ecology_step(g_prev, theta, dt_h: float,
+                 n_active: int = N_SPECIES) -> jnp.ndarray:
     """Advance the 0D Hamilton ODE state by one increment dt_h.
 
     g_prev, theta: array-like, shapes (12,) and (20,). Returns g_new (12,).
@@ -97,15 +138,19 @@ def ecology_step(g_prev, theta, dt_h: float) -> jnp.ndarray:
     params = default_hparams(dt_h)
     params["A"] = A
     params["b_diag"] = b_diag
+    if n_active != N_SPECIES:
+        params["active_mask"] = active_mask(n_active)
+        g_prev = seed_inactive(g_prev, n_active)
     return newton_step_jit(jnp.asarray(g_prev, dtype=jnp.float64), params)
 
 
 @jax.jit
-def _substep_scan(g0, theta, dt_sub, steps):
+def _substep_scan(g0, theta, dt_sub, steps, mask):
     A, b_diag = theta_to_matrices(theta)
     params = default_hparams(dt_sub)
     params["A"] = A
     params["b_diag"] = b_diag
+    params["active_mask"] = mask
     params = jax.tree_util.tree_map(jnp.asarray, params)
 
     def body(g, _):
@@ -115,7 +160,8 @@ def _substep_scan(g0, theta, dt_sub, steps):
     return jax.lax.scan(body, g0, steps)
 
 
-def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int):
+def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int,
+                     n_active: int = N_SPECIES):
     """Advance by dt_h in n_sub equal ecology_step's; return (g_new, phi_int).
 
     phi_int = sum_k dt_sub * living_fraction_total(g_k). Bit-identical to
@@ -130,9 +176,10 @@ def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int):
     each distinct n_sub compiles once.
     """
     dt_sub = float(dt_h) / n_sub
+    g_prev = seed_inactive(g_prev, n_active)
     g, traj = _substep_scan(jnp.asarray(g_prev, dtype=jnp.float64),
                             jnp.asarray(theta, dtype=jnp.float64),
-                            dt_sub, jnp.arange(n_sub))
+                            dt_sub, jnp.arange(n_sub), active_mask(n_active))
     phi_int = 0.0
     for gk in np.asarray(traj):
         phi_int += dt_sub * living_fraction_total(gk)
