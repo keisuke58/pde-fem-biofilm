@@ -528,6 +528,28 @@ the closed form on real ANSYS: `t_growth_wrapper_v01_smoketest.dat`,
 220 instead would give purely hydrostatic stress and `SEQV = 0`, which says
 nothing about the von Mises stress this thesis reports.
 
+### Stage 6 on IKMHIWI03, 1 Oct — PASS
+
+Element 220, point model n = 1 (files `elem_stress_stage6_pm1.csv`,
+`pm_trace_stage6_pm1.csv`), result set 1 dropped, 10 sets judged:
+
+| check | result |
+|---|---|
+| `alpha_matches` (result file α = trace α, every set) | True |
+| `compressive` | True |
+| `loads_neighbours` | True |
+| `seqv_monotone` (reported only) | False: 40.91 → 39.78 between t = 1.0 and 1.1 |
+
+The numbers at t = 1.1:
+- α = 0.50747, the same α as stage 5 and the off-machine run (0.5074717),
+  matching to the result file's single precision;
+- element SEQV = 39.78, mean stress p = −324.1;
+- largest neighbour SEQV = 154.6.
+
+The neighbours carry about four times the growing element's von Mises
+stress. That matches the tension ring around a growing biofilm in Klempt,
+Soleimani & Junker (PAMM 2023).
+
 ### Result set 1 is not an equilibrium state — drop it everywhere
 
 Found on IKMHIWI03, 1 Oct, in the partner's usermat. It is in their original
