@@ -19,6 +19,8 @@ C                     alpha += k_alpha * phi_int, phi_int being the
 C                     integral of sum(phi_i psi_i) over the inner steps.
 C                     theta in prop(8:27). The partner's prop(6) ecology
 C                     block is left alone: keep prop(6) = 0.
+C       prop(28) = 7: COMPOSITION from the point model, amount from the
+C                     3D field (unchanged): see the branch below.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
 C                     for one (5) or two (6) species: phi_i from the
 C                     3D field, the point model gives the reaction
@@ -48,7 +50,102 @@ C     locbio in the two PHI_USED lines -- nothing else.
           PHI_USED = Sdp_bio1_n
         END IF
         ALPHA_N = ustatev(84)
-        IF (prop(28) .GT. 4.5D0) THEN
+        IF (prop(28) .GT. 6.5D0) THEN
+C         --- composition from the point model (Klempt 2026) --------
+C         The 3D field (Klempt 2024) decides the AMOUNT phi_3D = bio1
+C         + bio2 and is not touched. The point model decides only the
+C         COMPOSITION chi_i = phi_i / sum(phi) and psi: its state is
+C         rescaled to sum(phi_i) = phi_3D before and after each inner
+C         integration (phi0 = 1 - phi_3D). Growth: Eq. 36 with phi_3D.
+C         Below prop(29) = phi_min the state is held (no server call).
+C         prop(30) = chi_1 at the first call (default 0.5).
+          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
+          DO PM_I = 1, 12
+            PM_GOLD(PM_I) = ustatev(71 + PM_I)
+          END DO
+          IF (PM_GOLD(7) .EQ. 0.0D0) THEN
+            CM_CHI1 = 0.5D0
+            IF (nProp .GE. 30) CM_CHI1 = prop(30)
+            DO PM_I = 1, 12
+              PM_GOLD(PM_I) = 0.0D0
+            END DO
+            PM_GOLD(1) = CM_CHI1
+            PM_GOLD(2) = 1.0D0 - CM_CHI1
+            PM_GOLD(7) = 0.999D0
+            PM_GOLD(8) = 0.999D0
+          END IF
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
+          DO PM_I = 1, 20
+            PM_TH(PM_I) = prop(7 + PM_I)
+          END DO
+          PM_NSUB = 1
+          IF (dTime .GT. PM_DTMAX) PM_NSUB = CEILING(dTime / PM_DTMAX)
+          SP_ID = SPLIT_ID(elemId, kDomIntPt)
+          PM_OK = .TRUE.
+          PM_PHIINT = 0.0D0
+          IF (SP_SUM .LT. SP_MIN .OR. SP_SUM .LE. 0.0D0) THEN
+            SP_HITI = 2
+            DO PM_I = 1, 12
+              PM_GNEW(PM_I) = PM_GOLD(PM_I)
+            END DO
+          ELSE
+            CM_S = PM_GOLD(1) + PM_GOLD(2)
+            CM_F = SP_SUM / CM_S
+            PM_GOLD(1) = PM_GOLD(1) * CM_F
+            PM_GOLD(2) = PM_GOLD(2) * CM_F
+            PM_GOLD(6) = 1.0D0 - SP_SUM
+            CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
+     &                           PM_GNEW, PM_PHIINT, SP_HIT)
+            IF (SP_HIT) THEN
+              SP_HITI = 1
+            ELSE
+              SP_HITI = 0
+              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, dTime,
+     &             PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              IF (PM_OK) THEN
+                DO PM_I = 1, 12
+                  IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
+                END DO
+                IF (PM_GNEW(1) + PM_GNEW(2) .LE. 0.0D0) PM_OK = .FALSE.
+              END IF
+              IF (PM_OK) THEN
+                CM_S = PM_GNEW(1) + PM_GNEW(2)
+                CM_F = SP_SUM / CM_S
+                PM_GNEW(1) = PM_GNEW(1) * CM_F
+                PM_GNEW(2) = PM_GNEW(2) * CM_F
+                PM_GNEW(6) = 1.0D0 - SP_SUM
+                CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst, PM_GOLD,
+     &                               PM_GNEW, PM_PHIINT)
+              END IF
+            END IF
+          END IF
+          IF (PM_OK) THEN
+            DO PM_I = 1, 12
+              ustatev(71 + PM_I) = PM_GNEW(PM_I)
+            END DO
+          ELSE
+            keycut = 1
+          END IF
+          CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+     &                                dTime, ALPHA_NEW)
+          IF (kDomIntPt .EQ. 1 .AND.
+     &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+     &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+            IF (.NOT. CM_TRACE_OPEN) THEN
+              OPEN(96, FILE='comp_trace.csv', STATUS='UNKNOWN',
+     &             POSITION='APPEND')
+              CM_TRACE_OPEN = .TRUE.
+            END IF
+            WRITE(96,'(I0,5(",",I0),5(",",ES24.16E3),'//
+     &            '24(",",ES24.16E3))')
+     &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
+     &        dTime, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
+     &        (PM_GOLD(PM_I), PM_I = 1, 12),
+     &        (PM_GNEW(PM_I), PM_I = 1, 12)
+            FLUSH(96)
+          END IF
+        ELSE IF (prop(28) .GT. 4.5D0) THEN
 C         --- reaction step of the transport/reaction split ---------
 C         The 3D field (bio1, bio2 at this Gauss point) gives the
 C         species' volume fractions; psi and gamma are carried here.

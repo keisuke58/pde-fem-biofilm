@@ -145,12 +145,18 @@ def ecology_step(g_prev, theta, dt_h: float,
 
 
 @jax.jit
-def _substep_scan(g0, theta, dt_sub, steps, mask):
+def _substep_scan(g0, theta, dt_sub, steps, mask, c=C_STAR, alpha=ALPHA_STAR,
+                  eta=None):
     A, b_diag = theta_to_matrices(theta)
     params = default_hparams(dt_sub)
     params["A"] = A
     params["b_diag"] = b_diag
     params["active_mask"] = mask
+    params["c"] = c
+    params["alpha"] = alpha
+    if eta is not None:
+        params["Eta"] = eta
+        params["EtaPhi"] = eta
     params = jax.tree_util.tree_map(jnp.asarray, params)
 
     def body(g, _):
@@ -161,7 +167,7 @@ def _substep_scan(g0, theta, dt_sub, steps, mask):
 
 
 def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int,
-                     n_active: int = N_SPECIES):
+                     n_active: int = N_SPECIES, hp: dict | None = None):
     """Advance by dt_h in n_sub equal ecology_step's; return (g_new, phi_int).
 
     phi_int = sum_k dt_sub * living_fraction_total(g_k). Bit-identical to
@@ -174,12 +180,23 @@ def ecology_substeps(g_prev, theta, dt_h: float, n_sub: int,
     the same arithmetic as the chained loop by construction (an in-graph
     reduction differed from it by an ulp). The scan length is static, so
     each distinct n_sub compiles once.
+
+    hp -- optional per-run constants in place of ecology_constants.py:
+    {"c": c*, "alpha": alpha*, "eta": eta_i (5,)} -- the per-case values of
+    Klempt et al. 2026 Table 1 (eta_i sets both Eta and EtaPhi, and Kp1 stays
+    1e-4, exactly as JAXFEM/klempt2026_reproduction.build does). Without it
+    the path is unchanged.
     """
     dt_sub = float(dt_h) / n_sub
     g_prev = seed_inactive(g_prev, n_active)
+    extra = ()
+    if hp is not None:
+        extra = (jnp.float64(hp["c"]), jnp.float64(hp["alpha"]),
+                 jnp.asarray(hp["eta"], dtype=jnp.float64))
     g, traj = _substep_scan(jnp.asarray(g_prev, dtype=jnp.float64),
                             jnp.asarray(theta, dtype=jnp.float64),
-                            dt_sub, jnp.arange(n_sub), active_mask(n_active))
+                            dt_sub, jnp.arange(n_sub), active_mask(n_active),
+                            *extra)
     phi_int = 0.0
     for gk in np.asarray(traj):
         phi_int += dt_sub * living_fraction_total(gk)

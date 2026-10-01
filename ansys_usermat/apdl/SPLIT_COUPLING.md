@@ -1,4 +1,141 @@
-# Point model inside the 3D biofilm field — transport/reaction split
+# Point model inside the 3D biofilm field
+
+> **Current decision (1 Oct, later the same day): option (i), section 0.**
+> The partner's 3D field is left exactly as it is (it *is* Klempt 2024
+> Eq. 34–36). The point model decides only the composition. The
+> transport/reaction split in sections 1–6 is **superseded**. It stays in
+> the fragments (`prop(28) = 5, 6`) and is pre-flighted, but it is not the
+> plan.
+
+## 0. Option (i): amount from the 3D field, composition from the point model (`prop(28) = 7`)
+
+- **Amount:** the 3D field (Klempt 2024, USSFin unchanged) gives
+  `φ_3D = bio1 + bio2` at the Gauss point.
+- **Composition:** the point model (Klempt et al. 2026, a Table 1 case)
+  gives only `χᵢ = φᵢ/Σφ` and ψ. Its carried state is rescaled to
+  `Σφᵢ = φ_3D`, with `φ₀ = 1 − φ_3D`, before and after each inner
+  integration.
+- **Growth:** Eq. 36 with `φ_3D`, and `k_α` from Klempt 2024 Table 2
+  (1e−3 T*⁻¹).
+- **Below `φ_min`** (`prop(29)`) the state is held and the server is not
+  called.
+- **Initial composition:** `prop(30) = χ₁`.
+- **Constants:** two-species constants come from the server,
+  `material_server.py --case 2sp_case3`. The case supplies `c* = 100`,
+  `α* = 10` and `ηᵢ`; `prop(8:27)` must carry the case's A and b, and the
+  server refuses a mismatch. Through the server, case 3 and case 6 reproduce
+  `JAXFEM/klempt2026_reproduction` exactly (difference 0.0; case 3
+  φ = 0.5945 / 0.3926, against the paper's 0.60 / 0.40).
+
+Pre-flight `tests/test_composition_fragment.py` (all pass). The test has
+three points: one growing, one in the void that is filled later, and one at
+the seed (φ_3D = 1, clamped).
+
+- **Trace checks:** once per increment, state carried, `Σφᵢ = φ_3D` to
+  4e−16, one server call per point and substep, Eq. 36 exact.
+- **Replay:** every server call is reproduced bit for bit.
+- **Stand-alone scheme:** every point equals
+  `composition_reference.reference` (the scheme run on its own for the same
+  `φ_3D(t)`) **bit for bit**. This is the exact target for a gradient-free
+  region.
+
+### What the rescaling does (measured, Python, macro dt = 0.01, to T = 0.15)
+
+χ₁ at T = 0.05 / 0.15:
+
+| φ_3D held at | case 3 | case 6 |
+|---|---|---|
+| stand-alone point model (its own amount) | 0.602 / 0.614 | 0.307 / 0.014 |
+| 1e−4 (near void) | **0.474 / 0.474, frozen** | 0.473 / 0.473, frozen |
+| 0.4 | 0.647 / 0.669 | 0.308 / 0.055 |
+| 0.9 | 0.564 / 0.633 | 0.328 / 0.014 |
+| 1 − 1e−6 (seed) | 0.490 / 0.473 | 0.048 / 0.014 |
+
+Every case stays finite, but:
+1. **The composition depends on the local amount.** At φ_3D = 1 (the seed
+   region), case 3's coexistence ends at 0.47 / 0.53, not the paper's
+   0.60 / 0.40. The paper's ratio is set during the filling transient, which
+   rescaling to a fixed amount removes. Case 6 (one species wins) is robust.
+2. **Near the void the composition freezes** at about its starting value.
+3. **Exact-solution check (b) needs restating.** `φᵢ = sinh(k_α t)·χᵢ(t)`
+   with χ from the *stand-alone* point model is not what option (i)
+   computes: with `φ_3D = sinh(1e−3 t)` ≈ 1e−4 the composition stays frozen
+   at about 0.47, while the stand-alone χ goes to 0.61. The exact target is
+   the stand-alone *rescaled* scheme driven by `φ_3D(t)`, which the
+   pre-flight now matches bit for bit. Check (a) (`φ = sinh`,
+   `α_K = cosh`) is unaffected; it concerns the 3D field alone.
+
+### Time: matching the papers
+
+- **Klempt 2024** normalises its own time, `T* = t/t_ref ∈ [0, 1]`, with
+  10³ nominal substeps.
+- **Klempt 2026** runs 500–1500 steps of 1e−4, which is 0.05–0.15 in *its*
+  time unit.
+- **PAMM 2023** (Klempt, Soleimani, Junker) plots 0–0.2.
+
+Nothing links the 2024 and 2026 units: no `t_ref` or day count is given in
+either paper. Two ways to proceed:
+
+- **(A) Deck end = 0.15**, the point model at its own pace. The composition
+  reaches the paper's horizon, but the 3D growth covers only 15 % of Klempt
+  2024's horizon: with `k_α = 1e−3`, α ≤ 1.5e−4, so there is hardly any
+  stress. Cheap: 15 substeps of 0.01, `n_sub = 100`.
+- **(B) Deck end T* = 1** (Klempt 2024's own horizon), with the point model
+  run on a scaled clock, `dt_pm = s·dt` and `s = 0.15`. Each paper keeps
+  its own horizon, and `s` is the single, explicit modelling assumption
+  linking them. It is not built yet: it would be one more property,
+  `prop(31) = s`.
+
+**Recommendation: (B).** It keeps both published parameter sets unchanged
+and puts the unknown into one named factor, the same unknown as the
+T* ↔ days question. Either way, `k_α = 1e−3` with T* ≤ 1 gives
+α ≤ 1e−3. The stresses will be small: Klempt 2024's own growth is slow, and
+that is a property of the paper's parameters, not of the coupling.
+
+### For the thesis: composition does not feed back into the stress
+
+Suggested wording:
+
+> The amount of biofilm and its growth follow Klempt et al. (2024); the
+> species composition is computed from the multi-species point model of
+> Klempt et al. (2026) and is a one-way output: it does not alter the
+> mechanical response. This is a property of the 2024 formulation, in
+> which no material parameter depends on the species. In Klempt, Soleimani
+> and Junker (PAMM 2023), species identity enters only through the
+> front-growth factor R_s and the consumption g, both stated to depend on
+> the type of microorganism; with these taken equal for all species, as
+> here, the composition cannot reach the stress. A composition-dependent
+> R_s = Σχᵢ R_s,i would be the natural two-way extension.
+
+The PAMM paper also supports two existing choices:
+- the nutrient diffuses "instantly" compared with growth, which supports a
+  quasi-static or constant c;
+- the hydrostatic pressure is compressive inside the biofilm, with a ring of
+  tension at the 0 < φ < 1 edge. This is a qualitative check on our whole-
+  model stress, where the ring SEQV is the largest.
+
+### Run sheet (IKMHIWI03), option (i)
+
+1. `git pull`. Re-paste both fragments; keep `split_rates.f` in the build
+   (its cache is used) and `USE biofilm_split`. **USSFin is not changed.**
+2. Server: `material_server.py --case 2sp_case3`. This sets two species,
+   c* = 100, α* = 10 and η = (1, 2).
+3. `TB,USER` with 30 constants:
+   - `prop(6) = 0`, `prop(28) = 7`;
+   - `prop(7) = 1e−3` (k_α, Klempt 2024 Table 2);
+   - `prop(8) = 1`, `prop(9) = 1`, `prop(10) = 1`, `prop(11) = 0`,
+     `prop(12) = 0` (case 3's A and b); the rest of `prop(8:27)` = 0;
+   - `prop(29) = φ_min` (e.g. 0.01);
+   - `prop(30) = 0.5` (case 3 starts 0.2 / 0.2).
+4. Gradient-free check first: in a region where `φ_3D = sinh(k_α t)`
+   (check (a)), the composition must equal
+   `composition_reference.reference(φ_3D series, ...)`.
+5. Judge with
+   `composition_reference.check_comp_trace(read_comp_trace('comp_trace.csv'), 1e-3, theta, hp)`,
+   where `theta`/`hp` are `material_server.ECOLOGY_CASE` after
+   `set_case('2sp_case3')`.
+
+---
 
 Decision (1 Oct): for one and two species, connect the calibrated point model
 (Klempt et al. 2026, Hamilton ecology ODE) to the partner's 3D field by
