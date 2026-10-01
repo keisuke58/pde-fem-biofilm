@@ -37,6 +37,7 @@ MOCK = """\
      &   Sdp_bio2_n, Sdp_locbio2_n, Sdp_sumLocal, Sbio_GrowthConst,
      &   keycut)
       USE biofilm_py_bridge
+      USE biofilm_split
       IMPLICIT NONE
       INTEGER keycut
       INTEGER nProp
@@ -84,15 +85,23 @@ MOCK = """\
 """
 
 
-def build_mock():
+_SPLIT = _CS / "split_rates.f"
+
+
+def build_mock(source=None):
     """Compile the fragments into the mock, linked against the real bridge
-    module and C shim -- the same objects the ANSYS build links."""
+    module and C shim -- the same objects the ANSYS build links -- and the
+    split hand-over module. `source` replaces the default mock program."""
     tmp = Path(tempfile.mkdtemp())
     for f in ("phi_mode_decl.inc", "phi_mode_exec.inc"):
         shutil.copy(_CS / f, tmp / f)
-    (tmp / "mock.f").write_text(MOCK)
+    (tmp / "mock.f").write_text(source if source is not None else MOCK)
     subprocess.run([_FC, "-c", "-ffixed-line-length-132", "-J", str(tmp),
                     str(_HOOK), "-o", str(tmp / "hook.o")], check=True,
+                   cwd=tmp)
+    subprocess.run([_FC, "-c", "-ffixed-form", "-ffixed-line-length-72",
+                    "-Werror=line-truncation", "-J", str(tmp),
+                    str(_SPLIT), "-o", str(tmp / "split.o")], check=True,
                    cwd=tmp)
     subprocess.run([_CC, "-c", "-fPIC", str(_SHIM), "-o",
                     str(tmp / "shim.o")], check=True)
@@ -101,7 +110,8 @@ def build_mock():
                         "-fcheck=bounds",
                         "-Werror=line-truncation", "-I", str(tmp),
                         str(tmp / "mock.f"), str(_AU / "growth_from_phi.f"),
-                        str(tmp / "hook.o"), str(tmp / "shim.o"),
+                        str(tmp / "hook.o"), str(tmp / "split.o"),
+                        str(tmp / "shim.o"),
                         "-o", str(exe)] + _WS2, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     return tmp, exe

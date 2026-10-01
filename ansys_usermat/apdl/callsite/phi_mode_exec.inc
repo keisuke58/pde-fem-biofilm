@@ -19,6 +19,12 @@ C                     alpha += k_alpha * phi_int, phi_int being the
 C                     integral of sum(phi_i psi_i) over the inner steps.
 C                     theta in prop(8:27). The partner's prop(6) ecology
 C                     block is left alone: keep prop(6) = 0.
+C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
+C                     for one (5) or two (6) species: phi_i from the
+C                     3D field, the point model gives the reaction
+C                     rate R_i, handed to USSFin through biofilm_split
+C                     (split_rates.f); alpha from Eq. 36 with
+C                     phi = bio1 (+ bio2). prop(29) = phi_min.
 C       prop(28) = 3: the partner's OWN growth. USSFin already integrates
 C                     Eq. 36 as locbio = alpha_K (Klempt convention,
 C                     starting at 1; rate K_LOCAL1, explicit in bio), and
@@ -35,13 +41,121 @@ C     If stage 1 shows locbio is the Gauss-point value, change bio to
 C     locbio in the two PHI_USED lines -- nothing else.
       IF (nProp .GE. 28) THEN
       IF (prop(28) .GT. 0.5D0) THEN
-        IF (prop(28) .GT. 1.5D0 .AND. prop(28) .LT. 2.5D0) THEN
+        IF ((prop(28) .GT. 1.5D0 .AND. prop(28) .LT. 2.5D0) .OR.
+     &      prop(28) .GT. 5.5D0) THEN
           PHI_USED = Sdp_bio1_n + Sdp_bio2_n
         ELSE
           PHI_USED = Sdp_bio1_n
         END IF
         ALPHA_N = ustatev(84)
-        IF (prop(28) .GT. 3.5D0) THEN
+        IF (prop(28) .GT. 4.5D0) THEN
+C         --- reaction step of the transport/reaction split ---------
+C         The 3D field (bio1, bio2 at this Gauss point) gives the
+C         species' volume fractions; psi and gamma are carried here.
+C         One point-model step over dTime gives the reaction rate
+C         R_i = (phi_i after - phi_i before) / dTime, handed to USSFin
+C         (biofilm_split). Growth stays Klempt 2024 Eq. 36 with
+C         phi = sum of the species: the PHI_USED call below.
+          SP_N = 1
+          IF (prop(28) .GT. 5.5D0) SP_N = 2
+          SP_PHI(1) = MIN(MAX(Sdp_bio1_n, 0.0D0), 1.0D0)
+          SP_PHI(2) = 0.0D0
+          IF (SP_N .EQ. 2) SP_PHI(2) = MIN(MAX(Sdp_bio2_n, 0.0D0),
+     &                                     1.0D0)
+          SP_SUM = SP_PHI(1) + SP_PHI(2)
+          IF (SP_SUM .GT. SP_PHIMAX) THEN
+            SP_PHI(1) = SP_PHI(1) * (SP_PHIMAX / SP_SUM)
+            SP_PHI(2) = SP_PHI(2) * (SP_PHIMAX / SP_SUM)
+            SP_SUM = SP_PHI(1) + SP_PHI(2)
+          END IF
+          DO PM_I = 1, 12
+            PM_GOLD(PM_I) = ustatev(71 + PM_I)
+          END DO
+C         first call at this point: psi = 0.999 for the active species
+          IF (PM_GOLD(7) .EQ. 0.0D0) THEN
+            DO PM_I = 7, 6 + SP_N
+              PM_GOLD(PM_I) = 0.999D0
+            END DO
+            PM_GOLD(12) = 0.0D0
+          END IF
+          DO PM_I = 1, 5
+            PM_GOLD(PM_I) = 0.0D0
+          END DO
+          DO PM_I = 7 + SP_N, 11
+            PM_GOLD(PM_I) = 0.0D0
+          END DO
+          PM_GOLD(1) = SP_PHI(1)
+          IF (SP_N .EQ. 2) PM_GOLD(2) = SP_PHI(2)
+          PM_GOLD(6) = 1.0D0 - SP_SUM
+C         below phi_min (prop(29)) no reaction: the point model makes
+C         biomass out of nothing at phi = 0, so the void is reached by
+C         transport only
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
+          DO PM_I = 1, 20
+            PM_TH(PM_I) = prop(7 + PM_I)
+          END DO
+          PM_NSUB = 1
+          IF (dTime .GT. PM_DTMAX) PM_NSUB = CEILING(dTime / PM_DTMAX)
+          SP_ID = SPLIT_ID(elemId, kDomIntPt)
+          SP_HITI = 0
+          PM_OK = .TRUE.
+          IF (SP_SUM .LT. SP_MIN) THEN
+            SP_HITI = 2
+            DO PM_I = 1, 12
+              PM_GNEW(PM_I) = PM_GOLD(PM_I)
+            END DO
+            PM_PHIINT = 0.0D0
+          ELSE
+            CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
+     &                           PM_GNEW, PM_PHIINT, SP_HIT)
+            IF (SP_HIT) THEN
+              SP_HITI = 1
+            ELSE
+              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, dTime,
+     &             PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              IF (PM_OK) THEN
+                DO PM_I = 1, 12
+                  IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
+                END DO
+                IF (ABS(PM_GNEW(12)) .GT. 1.0D5) PM_OK = .FALSE.
+              END IF
+              IF (PM_OK) CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst,
+     &                        PM_GOLD, PM_GNEW, PM_PHIINT)
+            END IF
+          END IF
+          IF (PM_OK) THEN
+            SP_R(1) = (PM_GNEW(1) - PM_GOLD(1)) / dTime
+            SP_R(2) = 0.0D0
+            IF (SP_N .EQ. 2) SP_R(2) = (PM_GNEW(2) - PM_GOLD(2)) / dTime
+            DO PM_I = 1, 12
+              ustatev(71 + PM_I) = PM_GNEW(PM_I)
+            END DO
+          ELSE
+            SP_R(1) = 0.0D0
+            SP_R(2) = 0.0D0
+            keycut = 1
+          END IF
+          CALL SPLIT_PUT(SP_ID, SP_R(1), SP_R(2), ldstep, isubst)
+          CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+     &                                dTime, ALPHA_NEW)
+          IF (kDomIntPt .EQ. 1 .AND.
+     &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+     &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+            IF (.NOT. SP_TRACE_OPEN) THEN
+              OPEN(99, FILE='split_trace.csv', STATUS='UNKNOWN',
+     &             POSITION='APPEND')
+              SP_TRACE_OPEN = .TRUE.
+            END IF
+            WRITE(99,'(I0,5(",",I0),7(",",ES24.16E3),'//
+     &            '24(",",ES24.16E3))')
+     &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
+     &        dTime, Sdp_bio1_n, Sdp_bio2_n, SP_R(1), SP_R(2),
+     &        ALPHA_N, ALPHA_NEW, (PM_GOLD(PM_I), PM_I = 1, 12),
+     &        (PM_GNEW(PM_I), PM_I = 1, 12)
+            FLUSH(99)
+          END IF
+        ELSE IF (prop(28) .GT. 3.5D0) THEN
 C         --- point model, inner steps inside this one call ---
           PM_SUM = 0.0D0
           DO PM_I = 1, 12

@@ -26,3 +26,12 @@ C     PM_ prefix: no clash with the partner's own local names.
       DATA PM_TRACE_OPEN /.FALSE./
       DOUBLE PRECISION PM_DTMAX
       PARAMETER (PM_DTMAX = 1.0D-4)
+C     --- transport/reaction split (prop(28) = 5, 6) -------------------
+C     Needs USE biofilm_split next to USE biofilm_py_bridge.
+      DOUBLE PRECISION SP_PHI(2), SP_SUM, SP_MIN, SP_R(2)
+      INTEGER SP_N, SP_ID, SP_HITI
+      LOGICAL SP_HIT, SP_TRACE_OPEN
+      SAVE SP_TRACE_OPEN
+      DATA SP_TRACE_OPEN /.FALSE./
+      DOUBLE PRECISION SP_PHIMAX
+      PARAMETER (SP_PHIMAX = 1.0D0 - 1.0D-6)
