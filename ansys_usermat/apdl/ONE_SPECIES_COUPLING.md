@@ -530,6 +530,10 @@ nothing about the von Mises stress this thesis reports.
 
 ### Stage 6 on IKMHIWI03, 1 Oct — PASS
 
+> **Not paper values.** This run used `k_α = 0.5` and a TMCMC-like θ: it
+> checks the wiring, not the physics. The Klempt 2024 Table 2 numbers are in
+> "Re-run with Klempt 2024 Table 2 values" below.
+
 Element 220, point model n = 1 (files `elem_stress_stage6_pm1.csv`,
 `pm_trace_stage6_pm1.csv`), result set 1 dropped, 10 sets judged:
 
@@ -549,6 +553,30 @@ The numbers at t = 1.1:
 The neighbours carry about four times the growing element's von Mises
 stress. That matches the tension ring around a growing biofilm in Klempt,
 Soleimani & Junker (PAMM 2023).
+
+## Re-run with Klempt 2024 Table 2 values (IKMHIWI03, 1 Oct)
+
+Settings: `k_α = K_LOCAL1 = 1e−3`, `K_LOCAL2 = 0`, `MY_BIOSTART2 = 0`, one
+species. Figures: `assets/fig1005_exact.png`, `fig1005_whole_model.png` and
+`fig1005_element220.png`, made by `ansys_usermat/apdl/figs_1005.py`.
+
+| check | result |
+|---|---|
+| exact solution in a gradient-free region (`φ = sinh(k_α t)`, `α_K = cosh(k_α t)`) | α_K error 2.7e−11, φ error 1.1e−7 (≈1e−4 relative) |
+| whole model, our Eq. 36 vs the partner's own α | SEQV fields cosine **1.0000** |
+| partner α / our α | **0.455** = ½ × 10/11 |
+| element 220 | α = 1.1e−3, SEQV = 1.8e−3 MPa, largest neighbour 1.8e−2 MPa |
+
+**Where 0.455 comes from:**
+- **½:** `sAlpha` averages `locbio1` with the unused species-2 `locbio2`.
+  That one stays at α_K = 1 (`K_LOCAL2 = 0`), so the partner's α is
+  `(α_K1 + 1)/2 − 1 = α/2`.
+- **10/11:** the one-substep lag of `locbio`.
+
+With the paper's own parameters the stresses are small: α ≈ 1e−3 over
+T* = 1. That is a property of Klempt 2024's `k_α`, not of the coupling.
+The neighbours again carry about 10× the growing element's von Mises
+stress.
 
 ### Result set 1 is not an equilibrium state — drop it everywhere
 
@@ -574,6 +602,11 @@ file, stage 3, and the Oliver-α run.
   move α off the point model and break stage 5's exact replay.
 
 ## Stage 7 on IKMHIWI03, 2026-10-01 — whole model, mode 2 vs mode 3
+
+> **Not paper values, and the seed is outside the model.** This run used
+> `k_α = K_LOCAL = 0.1` and `MY_BIOSTART2 = 1.0`, so `bio1 + bio2 ≈ 2` in
+> the seed, which violates `φ₀ = 1 − Σφ ≥ 0`. It shows the wiring and the
+> mean-vs-sum factor only. The Klempt 2024 Table 2 re-run follows below.
 
 Deck: the stable stage-4 setup (`MY_BIOSTART2 = 1.0`, `MY_BETA2 = 1e-4`,
 `η = 0`), with `K_LOCAL1 = K_LOCAL2 = k_α = 0.1`. Only `prop(28)` differs

@@ -201,8 +201,8 @@ case 3; η = 1, 2 come from the server).
 0.025 (no bisection) and raw φ_3D ≥ cap throughout, as in the smoke test.
 - `checks`: all True, `replay` True (worst 0.0).
 - `max |ANSYS - stand-alone scheme|: 0.0`, then `PASS`.
-- Element 220's row: `phi3 0.9000..0.9000`; calls/cached/held = 40 / (3 per
-  substep for the iterations) / 0.
+- Element 220's row: `phi3 0.9000..0.9000`; calls/cached/held = 40 / (the
+  remaining usermat calls; 5 per substep on IKMHIWI03) / 0.
 
 | run | χ₁ end | ψ₁ | ψ₂ |
 |---|---|---|---|
@@ -216,6 +216,23 @@ case 3; η = 1, 2 come from the server).
 If ANSYS bisects a substep, the judge still has to PASS: it drives the
 reference with the trace's own steps. Only these end values would then
 move.
+
+### φ_cap runs on IKMHIWI03, 1 Oct — all PASS
+
+Base: the stage-5 deck with `K_LOCAL1 = K_LOCAL2 = 1e−3`, props as in the
+run sheet, s = 0.15, T* = 1. Every run: checks True, replay 0.0, stand-alone
+diff 0.0.
+
+| run | χ₁ | ψ₁ / ψ₂ | expected χ₁ |
+|---|---|---|---|
+| case 3, cap 0.9 | 0.6665 | 0.9853 / 0.9766 | 0.6665 |
+| case 3, cap 0.85 | 0.6683 | 0.9846 / 0.9754 | 0.6683 |
+| case 3, cap 0.95, dt 0.0125 | 0.6635 | 0.9853 / 0.9767 | 0.6635 (converged value) |
+| case 6, cap 0.9 | 0.0209 | 0.0482 / 0.9806 | 0.0209 |
+
+calls / cached / held = 40 / 200 / 0. ANSYS makes 5 usermat calls per
+substep, not 3, and the cache absorbs them. The result does not depend on
+this.
 
 ### ANSYS smoke test, IKMHIWI03, 1 Oct (prop(28) = 7)
 
