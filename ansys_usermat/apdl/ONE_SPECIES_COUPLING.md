@@ -539,6 +539,47 @@ file, stage 3, and the Oliver-α run.
 - **Not done:** holding α at `Time = 0` in the `prop(28)` modes. That would
   move α off the point model and break stage 5's exact replay.
 
+## Stage 7 on IKMHIWI03, 2026-10-01 — whole model, mode 2 vs mode 3
+
+Deck: the stable stage-4 setup (`MY_BIOSTART2 = 1.0`, `MY_BETA2 = 1e-4`,
+`η = 0`), with `K_LOCAL1 = K_LOCAL2 = k_α = 0.1`. Only `prop(28)` differs
+between the two runs. `OUTRES,ALL,ALL`; a local post macro dumps elem, SEQV,
+SX, SY, SZ and SVAR 84 at `SET,LAST` (t = 1.1). Both runs: 0 errors, 11/11.
+Set 1 plays no part, because only the last set is used.
+
+| | mode 2 (ours, `φ = bio1 + bio2`) | mode 3 (partner's `Sdp_sumLocal − 1`) | 2 / 3 |
+|---|---|---|---|
+| core α max | 0.2236 | 0.1016 | 2.20 |
+| core SEQV max | 21.11 | 11.75 | 1.80 |
+| core p min | −109.4 | −59.44 | 1.84 |
+| ring SEQV max | 96.00 | 48.52 | 1.98 |
+| outside SEQV max | 33.16 | 16.08 | 2.06 |
+
+The SEQV fields have cosine similarity **0.9992**. The per-element SEQV ratio
+is 1.80–2.33 (median 2.26), and the argmax is element 356 in both runs.
+**Same spatial pattern, about twice the magnitude.**
+
+**Every ratio is accounted for:**
+- **α, 2.20 = 2 × 11/10.** The factor 2 is `sAlpha` taking the mean
+  `(locbio1 + locbio2)/2` where Eq. 36 has the sum (stage 4). The factor
+  11/10 is the one-substep lag: the partner's `locbio` is updated in
+  `USSFin` after the substep, so at t = 1.1 it holds 10 substeps of growth
+  against our 11.
+- **Core stress, 1.80, below 2.20.** This is the finite-strain volumetric
+  term. `(1+α)^−3 − 1` at α = 0.2236 and 0.1016 gives a ratio of
+  **1.802**, matching core SEQV (1.80) and close to core p (1.84). Stress
+  is not linear in α at these magnitudes.
+- **Ring and outside, ≈ 2.** These elements are smaller-strain regions
+  loaded by the core.
+
+The one physical difference between the two growth laws is therefore the
+mean in `sAlpha`, which remains an open question for Oliver: mean or sum.
+Everything else is the same model. If the answer is "sum", mode 3 with a
+doubled `K_LOCAL` should reproduce mode 2 up to the one-substep lag.
+
+Raw files stay on IKMHIWI03 (`all_stress_mode2.csv`, `all_stress_mode3.csv`,
+`post_all_stress.mac` in the wired folder).
+
 ## Verifying the first run
 
 1. Record `NUMBER OF ERROR MESSAGES`, whether the load step reaches its end,
