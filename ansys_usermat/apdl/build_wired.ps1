@@ -18,6 +18,11 @@ foreach ($f in $first) {
 $rest = Get-ChildItem $WorkDir -File |
     Where-Object { $_.Extension -in '.f', '.F' -and $skip -notcontains $_.Name } |
     ForEach-Object Name
+# dev-env.ps1 puts MSYS2 / mingw tools on PATH; every link failure on 1-2 Oct
+# came after it had been dot-sourced in the same call (MSYS has its own
+# `link`), every clean call linked. Build with those entries removed.
+$savedPath = $env:Path
+$env:Path = ($env:Path -split ';' | Where-Object { $_ -and $_ -notmatch 'msys64|mingw64' }) -join ';'
 $t0 = Get-Date
 # retries: the link intermittently ends with no new ANSYS.exe and no error
 # message (1 Oct: once right after copying the 390 MB exe, once twice in a
@@ -28,5 +33,6 @@ for ($try = 1; $try -le 3; $try++) {
     if ($exe -and $exe.LastWriteTime -ge $t0) { break }
     if ($try -lt 3) { "link produced no new ANSYS.exe (attempt $try); retrying in 30 s"; Start-Sleep 30 }
 }
+$env:Path = $savedPath
 if (-not $exe -or $exe.LastWriteTime -lt $t0) { throw 'ANSYS.exe was not rebuilt' }
 "OK: $($exe.FullName)  $($exe.Length) bytes  $($exe.LastWriteTime)"
