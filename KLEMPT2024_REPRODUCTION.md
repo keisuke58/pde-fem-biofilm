@@ -218,3 +218,26 @@ two stated departures from the printed equations; φ and c together not
 reproduced with Table 2. Questions for the authors: which form of Eq. 34 and
 35 was run (Table 1 differs from both), the width of the nutrient strip, and
 whether c in Fig. 4 is normalised as in Eq. 35.
+
+## 10. The figures read by colour, and test case 4.2 (Fig. 7) (2026-10-02)
+
+`JAXFEM/klempt2024_digitize.py` reads Fig. 4 and Fig. 7 off the PDF by colour,
+calibrated on the tick marks (`klempt2024_results/paper_curves_digitized.json`).
+Fig. 4 and three of Fig. 7's curves agree with the earlier eye readings within
+0.02; Fig. 7 "high" φ was read far too low early (0.12 / 0.55 at T* = 0.05 /
+0.10; the figure gives 0.35 / 0.73). Results quoted against `PAPER["fig7_high"]`
+in `klempt2024_quantitative.py` / `klempt2024_sensitivity.py` used the eye
+reading.
+
+`JAXFEM/klempt2024_case2.py` runs 4.2 with the paper's set-up (bottom face
+c = 1, 5 µm disk above it) against the digitised curves. Not reproduced under
+any reading tried, and two numbers say why: the "high" case fills the cube at a
+front speed near 150 µm/T*, beyond Table 2's r·c/(k+c) ≤ 50 µm/T*; and Eq. 34
+as printed moves the biofilm towards the nutrient (down), while Table 4 shows
+it growing away from it (up). The nutrient plateau of the "high" case does
+hold, and is a clean check: first-order consumption with Table 2's d and g
+gives 0.482 (tanh 2 / 2), the paper 0.489, the printed zero-order form 0.139.
+With §9 this points to first-order consumption in the paper's computations.
+Questions for the authors (add to §9): the growth term actually run (sign,
+both faces?), r and k, and the size of the initial biofilm (the paper's mean
+φ at T* = 0.01 is ten times a one-layer disk).

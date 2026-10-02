@@ -175,8 +175,14 @@ def eno2_dot(phi, v):
 def run(seed, nutrient, consumption="printed", growth="printed", clip="both",
         clip_c=True, scheme="upwind1", dt=K.DT, t_end=K.T_END):
     phi0, _, g = K.setup("fig4_edge")
+    return run_setup(phi0, nutrient_mask(nutrient), K.G_TABLE, seed, consumption, growth,
+                     clip, clip_c, scheme, dt, t_end)
+
+
+def run_setup(phi0, mask, g, seed="ic", consumption="printed", growth="printed",
+              clip="both", clip_c=True, scheme="upwind1", dt=K.DT, t_end=K.T_END):
+    """Eq. 34-36 on the 21^3 grid for a given seed phi0, nutrient mask and g."""
     held = phi0 > 0.5
-    mask = nutrient_mask(nutrient)
     solve = QuasiStaticC(mask, g, clip_c) if consumption == "printed" else FirstOrderC(mask, g)
     phi = phi0.copy()
     alpha = np.ones_like(phi)
