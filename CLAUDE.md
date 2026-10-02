@@ -231,6 +231,10 @@ examiners). Check each one before the document is handed over.
   slides. The 5 Oct deck (`slides_1005.tex`, appendix A–C) is the template.
 - **No internal labels** (stage numbers, `prop(28)` modes, run names) in
   anything the partner or the supervisors see. Describe what a run does.
+- **Figures in Times New Roman** (decided 2026-10-02). Every figure script
+  calls `figstyle.apply()` from `ansys_usermat/figstyle.py` (Times New Roman,
+  Liberation Serif where it is not installed, STIX mathematics). New figure
+  scripts use it too; do not set fonts per script.
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
