@@ -40,7 +40,7 @@ submission.
 | 5.4 | Closed forms in ANSYS; curved shell; pressure term | `apdl/` decks, `closed_form_reference.py`, `DEVIATOR_SCALING_FINDING.md` |
 | 5.5 | Eq. 36 at the Gauss points, once per increment; three framework properties | `apdl/ONE_SPECIES_COUPLING.md`, `apdl/callsite/`, `one_species_reference.py` |
 | 5.6 | Point model, amount/composition split, s, φ_cap, φ_min | `JAXFEM/klempt2026_reproduction.py`, `JAXFEM/fritsch2025_cases.py`, `apdl/SPLIT_COUPLING.md`, `composition_reference.py`, `composition_s_sweep.py` |
-| 5.7 | Exact solution, whole model, two species (A); seeded-element stress and the four-condition study (B) | `apdl/figs_1005.py` and `assets/fig1005_*.png`; `apdl/SPLIT_COUPLING.md` |
+| 5.7 | Exact solution, whole model, seeded-element stress (Klempt 2024 stiffness), two species; the earlier four-condition study is not in the thesis (decided 2026-10-02) | `apdl/figs_1005.py` and `assets/fig1005_*.png`; `apdl/SPLIT_COUPLING.md` |
 | 5.8 | Limitations | this chapter |
 
 The V&V figure is `ch5_flow/flow_vv_thesis.tex` (ANSYS evidence only), not
