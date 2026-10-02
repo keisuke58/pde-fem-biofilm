@@ -663,3 +663,35 @@ switched on its direction is undefined where the nutrient is uniform
       about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
       largest von Mises stress is $10^{-4}$~Pa.
 \end{itemize}}
+
+%-----------------------------------------------------------------------
+\section{Outlook: towards a two-way coupling}
+\label{sec:ch5-outlook}
+
+% TierA. ROADMAP_TWO_WAY.md.
+\TierA{%
+The coupling of this chapter is one-way: the field drives growth and stress,
+and the point model returns a composition that nothing reads back. Four steps
+would close the loop, ordered by how well the literature supports them.
+\begin{enumerate}
+\item \emph{Local nutrient into the point model.} Klempt et
+      al.~\cite{Klempt2026ContinuumBacterialGrowth} treat $c^*$ as a given,
+      possibly time-dependent, variable; replacing it by the local $c$ of the
+      field needs no new physics.
+\item \emph{Composition into the spreading.} In the earlier spatial model the
+      front factor and the consumption depend on the species
+      \cite{Klempt2023NumericalComparison}; $R_s=\sum_i\chi_iR_{s,i}$ and
+      $g=\sum_i\chi_i g_i$ would let the composition shape where the biofilm
+      grows. This needs a working front term
+      (\S\ref{sec:ch5-coupling}, property~4).
+\item \emph{Composition into the stiffness.} $E=\sum_i\chi_iE_i$ would let the
+      composition reach the stress directly, but species-specific moduli are
+      not available \cite{Bol2013BiofilmMechanicalCharacterisation}.
+\item \emph{Stress into growth.} The mechanical term of Klempt et al.\ 2024,
+      Eq.~30, dropped in their Eq.~34, and stress-dependent growth as in
+      \cite{Soleimani2020AnisotropicGrowth} would close the loop from the
+      mechanics back to the field.
+\end{enumerate}
+Steps 1 and 2 are the natural first goal of the continuation at Keio; each
+must reduce exactly to the one-way scheme when the species are made equal.}
+
