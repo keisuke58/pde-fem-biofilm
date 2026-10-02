@@ -377,11 +377,23 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.}
       $|\nabla\varphi|$. On a test copy with the slip fixed, $|\Delta\varphi|$
       makes the explicit update unstable at $\Delta t=0.005$, while
       $|\nabla\varphi|$ spreads the seed at the paper's pace but lets
-      $\varphi$ exceed $1$, and the run breaks down near $T^*=0.22$. The checks
-      of \S\ref{sec:ch5-results} do not depend on this term (the
-      gradient-free region has no front, and both ways of computing $\alpha$
-      see the same field); how far the biofilm spreads does, which is why the
-      example model shows no spreading.
+      $\varphi$ exceed $1$, and the run breaks down near $T^*=0.22$. The
+      overshoot follows from a cell P\'eclet number of about $30$ for this
+      advection term on the element's mesh. With the slip fixed and the term
+      discretised upwind, $\varphi$ stays below $1$, but the biofilm grows
+      both towards the nutrient and away from it, far more slowly than in the
+      paper. Beyond the seed the nutrient is almost uniform, so
+      $\nabla c\approx\mathbf 0$, while the paper's direction
+      $\nabla c/|\nabla c|$ remains a unit vector whose orientation is then
+      set by round-off. This is a property of equation~\eqref{eq:ch5-field}
+      as stated, where the direction is undefined wherever $c$ is uniform,
+      and not of the discretisation. I do not regularise it here, because
+      that would add a threshold of my own; how the authors treat this limit
+      is an open question for them. The checks of \S\ref{sec:ch5-results} do
+      not depend on this term (the gradient-free region has no front, and
+      both ways of computing $\alpha$ see the same field); how far the
+      biofilm spreads does, which is why the example model shows no
+      spreading.
 \end{enumerate}}
 
 %-----------------------------------------------------------------------
@@ -612,8 +624,9 @@ $\varphi_{\min}$; they are packed and seeded at $t=0$, so both schemes give
 one uniform composition. A composition that varies in space needs a case in
 which the biofilm spreads within the simulated time, which in this model
 means a nutrient gradient driving the front term of~\eqref{eq:ch5-field}.
-That term is switched off in the element at present (property~4 of
-\S\ref{sec:ch5-coupling}).}
+That term is switched off in the element at present, and even when it is
+switched on its direction is undefined where the nutrient is uniform
+(property~4 of \S\ref{sec:ch5-coupling}).}
 
 % TierB. The earlier four-condition study used the five-species ecology at
 % c* = 25. The Hill-gate fix of 2026-10-01 moved its transient peak from 2.4 %
@@ -657,6 +670,12 @@ through that total.}
       does not spread within $T^*\le1$, because the element's front term is
       switched off; the composition is therefore uniform. The coupling is
       verified, but its spatial effect is not yet demonstrated.
+\item \emph{Front growth where the nutrient is uniform.} The direction
+      $\nabla c/|\nabla c|$ of the front term in Klempt et al.\ 2024 is
+      undefined where $\nabla c=\mathbf 0$. A corrected and upwinded front
+      term therefore grows in directions set by round-off beyond the seed.
+      How this limit is to be treated is left to the continuation at Keio,
+      after consulting the authors.
 \item \emph{Magnitude.} With the published growth rate, $\alpha$ stays below
       about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
       largest von Mises stress is $10^{-4}$~Pa.
