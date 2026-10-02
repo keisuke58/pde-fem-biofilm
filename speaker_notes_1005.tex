@@ -139,11 +139,14 @@ $\varphi_1+\varphi_2\le1$, because the void fraction is one minus all
 species; the example input starts both species at one in the seed, so for one
 species I start the second at zero. Third, the first result set is not in
 equilibrium, because the element returns zero stress while it sets up its
-operators, so I exclude it. Fourth, the element's front-growth term multiplies
-the Laplacian of $\varphi$, where Equation 34 has the gradient magnitude; the
-gradient is computed in the same routine but not used there. The three checks
-do not depend on this term, but the spreading of the biofilm does, so this is
-my second question to Oliver. Earlier bring-up runs used larger growth rates
+operators, so I exclude it. Fourth, the element's front-growth term is
+inactive. When the input is read, the weights of the other species are written
+into the weight of species 1, and the last one is zero, so this term is always
+zero. In addition, it multiplies the Laplacian of $\varphi$, where Equation 34 has
+the gradient magnitude. In a test copy with both corrected, the seed spreads
+as in the paper's example, but $\varphi$ goes above 1. The three checks do not
+depend on this term. I would like to discuss both points with Oliver before
+using the spreading in the thesis. Earlier bring-up runs used larger growth rates
 and the example input's stiffness, 1000 MPa; everything shown today uses the
 published values.
 \JA 見つかったことが 4 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
@@ -152,10 +155,12 @@ published values.
 でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
 1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
 要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
-4 つ目、要素の界面成長の項は $\varphi$ のラプラシアンを掛けていますが、式 34 では勾配の
-大きさです。勾配は同じルーチンで計算されていますが、そこでは使われていません。
-3 つの確認はこの項に依存しませんが、バイオフィルムの広がりは依存するので、
-Oliver への 2 つ目の質問にします。
+4 つ目、要素の界面成長の項が働いていません。入力を読み込むとき、ほかの菌種の重みが
+菌種 1 の重みに書き込まれていて、最後に読む値が 0 なので、この項は常に 0 になります。
+さらに、この項は $\varphi$ のラプラシアンを掛けていますが、式 34 では勾配の大きさです。
+両方を直した試験用のコピーでは、論文の例と同じように種が広がりましたが、$\varphi$ が 1 を
+超えました。3 つの確認はこの項に依存しません。広がりを修論で使う前に、この 2 点を
+Oliver と相談したいと思います。
 なお、立ち上げ段階では大きな成長速度と例題入力の剛性（1000 MPa）を使っていましたが、
 今日お見せした結果はすべて論文の値です。
 

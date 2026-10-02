@@ -93,6 +93,16 @@ PAPER_CURVES = {
 #      (Sdp_NormBio1) is computed in the same routine but not used there.
 #      So MAX_GROWTH11 has units L^2/T* there (r: L/T*); it is NOT r one-to-one,
 #      and the r scaling in deck_values() only holds for a |grad phi| front term.
+#   !! AND THE FRONT TERM IS SWITCHED OFF: USolBeg reads ORI_WEIGHT12 and
+#      ORI_WEIGHT22 into sGdp_OriWeight11 (copy-paste slip), so the last one
+#      read, ORI_WEIGHT22 = 0, sets species 1's weight to 0 and Ori = 0 always
+#      (found 2026-10-02 by printing the factors in a test copy). In every
+#      partner-element run so far the biofilm cannot spread.
+#      Test copy F:\biofilm_upf_diag, Fig. 7 setup: slip fixed + |grad phi| ->
+#      the seed spreads (phi >= 0.5 at 4 -> 94 traced points by T* = 0.18), but
+#      phi exceeds 1 (up to ~3; the penalty does not bound it) and the run
+#      breaks down near T* = 0.22. Slip fixed + |lap phi| -> unstable at
+#      dt = 0.005 (front rate ~560 / T*). Neither is used for thesis results.
 #   nutrient: quasi-static  MY_DIFF1 * lap(c) = CONSUMPTION11 * bio1 (+ CONSUMPTION12 * bio2),
 #             c held at MY_NUTSTART1 on the Gauss points of component NUTRIENT1
 #   index order of MAX_GROWTH / HALF_VELO / CONSUMPTION: %nutrient%%species%

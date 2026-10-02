@@ -200,10 +200,11 @@ result, $\tfrac12\times\tfrac{10}{11}$:
         both species at 1 in the seed; for one species I start the second at 0.
   \item \textbf{The first result set is not in equilibrium:} the element returns zero
         stress on its first calls while it sets up its operators. This set is excluded.
-  \item \textbf{The element's front-growth term uses $|\Delta\varphi|$} where Eq.\ 34 has
-        $|\nabla\varphi|$ ($|\nabla\varphi|$ is computed but not used there).
-        Checks 1--3 do not depend on it; spreading of the biofilm does.
-        $\Rightarrow$ question to Oliver.
+  \item \textbf{The element's front-growth term is inactive:} a copy slip in reading
+        its weights sets the weight of species 1 to zero. It also uses
+        $|\Delta\varphi|$ where Eq.\ 34 has $|\nabla\varphi|$. With both corrected in a
+        test copy the seed spreads, but $\varphi$ exceeds 1. Checks 1--3 do not
+        depend on this term. $\Rightarrow$ to discuss with Oliver.
 \end{enumerate}
 \vspace{6pt}
 \colorbox{c3!12}{\parbox{0.95\linewidth}{\small
