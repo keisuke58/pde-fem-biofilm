@@ -424,6 +424,22 @@ two models are to be combined, since each prescribes its own evolution of the
 amount; a coupling that needs no such choice would require a spatial
 multi-species model derived from a single variational principle.
 
+\paragraph{A second scheme.} Klempt et al.\ describe their model as a
+material point model and state that $\varphi_0$ ``rather serves as a numerical
+auxiliary quantity'' and is not to be read as physical voids
+\cite{Klempt2026ContinuumBacterialGrowth}. The scaled scheme above uses
+$\varphi_0=1-\varphi_{3D}$ and so gives $\varphi_0$ a physical meaning. I
+therefore also implemented a second scheme that keeps $\varphi_0$ auxiliary:
+at each Gauss point the point model runs on its own, unscaled, from the step
+in which the field first reaches $\varphi_{\min}$, and supplies only the
+composition, while the amount remains the field's. Its composition is then
+always the paper's trajectory, shifted by the local arrival time of the
+biofilm, and needs no cap. In the packed seed at $T^*=1$ it gives
+$\chi_1=0.614$ in case~3 and $0.014$ in case~6, the values of the point model
+alone, against $0.667$ and $0.021$ for the scaled scheme. The two schemes
+differ in what they let the composition depend on: the local amount in the
+first, the local age of the biofilm in the second.
+
 The composition does not act back on the stress. In Klempt et al.\ 2024 no
 material parameter depends on the species; in the earlier spatial model of
 Klempt et al.~\cite{Klempt2023NumericalComparison} species identity enters only

@@ -50,7 +50,7 @@ function Stop-Tree([int]$id) {
 }
 
 Copy-Item (Join-Path $PSScriptRoot 'callsite\post_*.mac') $WorkDir -Force
-$outputs = 'comp_trace.csv', 'pm_trace.csv', 'phi_trace.csv', 'all_stress.csv', 'elem_stress.csv'
+$outputs = 'comp_trace.csv', 'age_trace.csv', 'pm_trace.csv', 'phi_trace.csv', 'all_stress.csv', 'elem_stress.csv'
 $ts = Get-Date -Format 'HHmmssfff'
 foreach ($f in $outputs) {
     $p = Join-Path $WorkDir $f

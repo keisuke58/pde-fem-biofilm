@@ -32,6 +32,10 @@ def main() -> int:
     ap.add_argument("--case", default="2sp_case3")
     ap.add_argument("--k-alpha", type=float, default=1.0e-3)
     ap.add_argument("--phi-min", type=float, default=0.01)
+    ap.add_argument("--age", action="store_true",
+                    help="trace from prop(28) = 8 (age_trace.csv): independent point model, no scaling")
+    ap.add_argument("--phi-init", type=float, nargs=2, default=(0.2, 0.2),
+                    help="phi_1, phi_2 at the start, prop(30)/prop(32) (--age only)")
     ap.add_argument("--s", type=float, default=None,
                     help="point-model clock, prop(31); default: read from the trace (dt_pm / dtime)")
     a = ap.parse_args()
@@ -42,7 +46,10 @@ def main() -> int:
     if not rows:
         print("FAIL: empty trace")
         return 1
-    checks = cr.check_comp_trace(rows, a.k_alpha, theta, hp)
+    if a.age:
+        checks = cr.check_age_trace(rows, a.k_alpha, theta, hp)
+    else:
+        checks = cr.check_comp_trace(rows, a.k_alpha, theta, hp)
     print("checks:", checks)
 
     by_pt = defaultdict(dict)
@@ -57,8 +64,13 @@ def main() -> int:
     for key, subs in sorted(by_pt.items()):
         seq = [subs[k] for k in sorted(subs)]
         s_pt = a.s if a.s is not None else seq[0]["dt_pm"] / seq[0]["dtime"]
-        ref = cr.reference([r["phi3"] for r in seq], theta, hp,
-                           seq[0]["dtime"], phi_min=a.phi_min, s=s_pt)
+        if a.age:
+            ref = cr.reference_age([r["phi3"] for r in seq], theta, hp,
+                                   seq[0]["dtime"], phi_min=a.phi_min, s=s_pt,
+                                   phi_init=tuple(a.phi_init))
+        else:
+            ref = cr.reference([r["phi3"] for r in seq], theta, hp,
+                               seq[0]["dtime"], phi_min=a.phi_min, s=s_pt)
         d = max(float(np.max(np.abs(np.asarray(r["g_new"]) - g)))
                 for r, g in zip(seq, ref))
         worst = max(worst, d)

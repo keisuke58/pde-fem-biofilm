@@ -19,6 +19,9 @@ C                     alpha += k_alpha * phi_int, phi_int being the
 C                     integral of sum(phi_i psi_i) over the inner steps.
 C                     theta in prop(8:27). The partner's prop(6) ecology
 C                     block is left alone: keep prop(6) = 0.
+C       prop(28) = 8: COMPOSITION from an independent point model that
+C                     starts when biofilm arrives (no scaling to the
+C                     field); see the branch below.
 C       prop(28) = 7: COMPOSITION from the point model, amount from the
 C                     3D field (unchanged): see the branch below.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
@@ -50,7 +53,104 @@ C     locbio in the two PHI_USED lines -- nothing else.
           PHI_USED = Sdp_bio1_n
         END IF
         ALPHA_N = ustatev(84)
-        IF (prop(28) .GT. 6.5D0) THEN
+        IF (prop(28) .GT. 7.5D0) THEN
+C         --- composition from an independent point model -----------
+C         Klempt et al. 2026 formulate a material point model and call
+C         phi0 a numerical auxiliary, not a physical void. Here the
+C         point model runs on its own at each Gauss point, NOT scaled
+C         to the field, from the substep in which the field first
+C         reaches phi_min (prop(29)). It supplies only the composition
+C         chi_i = phi_i / sum(phi); the amount stays the field's
+C         (Klempt 2024), and growth is Eq. 36 with phi_3D.
+C         prop(30), prop(32) = phi_1, phi_2 at the start (default
+C         0.2, 0.2); prop(31) = s, the point model's clock.
+          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
+          DO PM_I = 1, 12
+            PM_GOLD(PM_I) = ustatev(71 + PM_I)
+          END DO
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
+          DO PM_I = 1, 20
+            PM_TH(PM_I) = prop(7 + PM_I)
+          END DO
+          CM_TS = 1.0D0
+          IF (nProp .GE. 31) THEN
+            IF (prop(31) .GT. 0.0D0) CM_TS = prop(31)
+          END IF
+          CM_DT = CM_TS * dTime
+          PM_NSUB = 1
+          IF (CM_DT .GT. PM_DTMAX) PM_NSUB = CEILING(CM_DT / PM_DTMAX)
+          SP_ID = SPLIT_ID(elemId, kDomIntPt)
+          PM_OK = .TRUE.
+          PM_PHIINT = 0.0D0
+          IF (PM_GOLD(7) .EQ. 0.0D0 .AND. SP_SUM .LT. SP_MIN) THEN
+C           no biofilm here yet: the point model has not started
+            SP_HITI = 2
+            DO PM_I = 1, 12
+              PM_GNEW(PM_I) = PM_GOLD(PM_I)
+            END DO
+          ELSE
+            IF (PM_GOLD(7) .EQ. 0.0D0) THEN
+C             biofilm has arrived: start from the case's initial state
+              DO PM_I = 1, 12
+                PM_GOLD(PM_I) = 0.0D0
+              END DO
+              PM_GOLD(1) = 0.2D0
+              PM_GOLD(2) = 0.2D0
+              IF (nProp .GE. 30) THEN
+                IF (prop(30) .GT. 0.0D0) PM_GOLD(1) = prop(30)
+              END IF
+              IF (nProp .GE. 32) THEN
+                IF (prop(32) .GT. 0.0D0) PM_GOLD(2) = prop(32)
+              END IF
+              PM_GOLD(6) = 1.0D0 - (PM_GOLD(1) + PM_GOLD(2))
+              PM_GOLD(7) = 0.999D0
+              PM_GOLD(8) = 0.999D0
+            END IF
+            CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
+     &                           PM_GNEW, PM_PHIINT, SP_HIT)
+            IF (SP_HIT) THEN
+              SP_HITI = 1
+            ELSE
+              SP_HITI = 0
+              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
+     &             PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              IF (PM_OK) THEN
+                DO PM_I = 1, 12
+                  IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
+                END DO
+                IF (PM_GNEW(1) + PM_GNEW(2) .LE. 0.0D0) PM_OK = .FALSE.
+              END IF
+              IF (PM_OK) CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst,
+     &                        PM_GOLD, PM_GNEW, PM_PHIINT)
+            END IF
+          END IF
+          IF (PM_OK) THEN
+            DO PM_I = 1, 12
+              ustatev(71 + PM_I) = PM_GNEW(PM_I)
+            END DO
+          ELSE
+            keycut = 1
+          END IF
+          CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+     &                                dTime, ALPHA_NEW)
+          IF (kDomIntPt .EQ. 1 .AND.
+     &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+     &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+            IF (.NOT. AG_TRACE_OPEN) THEN
+              OPEN(95, FILE='age_trace.csv', STATUS='UNKNOWN',
+     &             POSITION='APPEND')
+              AG_TRACE_OPEN = .TRUE.
+            END IF
+            WRITE(95,'(I0,5(",",I0),6(",",ES24.16E3),'//
+     &            '24(",",ES24.16E3))')
+     &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
+     &        dTime, CM_DT, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
+     &        (PM_GOLD(PM_I), PM_I = 1, 12),
+     &        (PM_GNEW(PM_I), PM_I = 1, 12)
+            FLUSH(95)
+          END IF
+        ELSE IF (prop(28) .GT. 6.5D0) THEN
 C         --- composition from the point model (Klempt 2026) --------
 C         The 3D field (Klempt 2024) decides the AMOUNT phi_3D = bio1
 C         + bio2 and is not touched. The point model decides only the

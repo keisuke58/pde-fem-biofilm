@@ -234,6 +234,82 @@ calls / cached / held = 40 / 200 / 0. ANSYS makes 5 usermat calls per
 substep, not 3, and the cache absorbs them. The result does not depend on
 this.
 
+### Second scheme: an independent point model, started when biofilm arrives (`prop(28) = 8`, 2 Oct)
+
+**What Klempt et al. 2026 say about φ₀.** From the paper's own text,
+`tmcmc202601/tmcmc/_pdf_text/biofilm_simulation_p1_12.txt`, arXiv version:
+
+> "Since the model is formulated as a material point model, interpreting the
+> empty space as physical voids or channels within the biofilm would be
+> inappropriate. The empty space variable φ₀ rather serves as a numerical
+> auxiliary quantity used to enforce the holonomic volume constraint given by
+> Equation (9)." (after Eq. 9)
+>
+> "The model was implemented using Wolfram Mathematica in an implicit
+> framework on a material point." (p. 6)
+
+The paper has **no spatial version**, and its outlook does not announce one.
+
+The scaled scheme (`prop(28) = 7`) sets `φ₀ = 1 − φ_3D`, so it treats φ₀ as
+Klempt 2024's physical void, which is the reading the authors call
+inappropriate. A second scheme that avoids this was added on 2 Oct (the user's
+decision: keep both and compare).
+
+**Mode 8:**
+- At each Gauss point the point model runs **on its own, unscaled**, from the
+  substep in which the field first reaches `φ_min`.
+- It starts from the case's initial state: `prop(30)`, `prop(32)` = φ₁, φ₂
+  (default 0.2, 0.2), and ψ = 0.999.
+- It supplies only the composition `χᵢ = φᵢ/Σφ`. The amount stays the
+  field's: `φᵢ = φ_3D·χᵢ` in post-processing, and growth is Eq. 36 with φ_3D.
+- `prop(31) = s` as before. No φ_cap is needed. φ₀ stays the paper's
+  auxiliary variable.
+- Spatial variation comes from the local **arrival time**: the seed is
+  oldest, the front youngest.
+
+Pre-flight `tests/test_age_composition_fragment.py`:
+- trace checks pass (`check_age_trace`: once / carried / held / one_call /
+  eq36 / replay);
+- every point equals `reference_age` bit for bit;
+- two points that start together have identical states although their
+  amounts differ (0.35… vs 1);
+- a point filled two substeps later follows the same path two substeps later.
+
+| | scaled (mode 7) | independent (mode 8) |
+|---|---|---|
+| φ₀ | treated as physical void (against the paper's statement) | numerical auxiliary, as in the paper |
+| composition vs. the paper | equal only if the amounts agree (test) | **always** the paper's trajectory |
+| depends on the local amount | yes | no |
+| depends on the local arrival time | weakly | yes |
+| own assumptions | φ₀ reading, s, φ_cap, φ_min | start at arrival, s, φ_min |
+
+**Expected judge values, element 220** (seed; s = 0.15, T* = 1, any coupling
+step):
+
+| run | χ₁ | ψ₁ | ψ₂ |
+|---|---|---|---|
+| case 3 | 0.6137 (0.613704) | 0.9849 | 0.9777 |
+| case 6 | 0.0138 (0.013844) | 0.0545 | 0.9836 |
+
+These are the stand-alone point model at `T_pm = s·T* = 0.15`; compare with
+the scaled scheme's 0.6665 / 0.0209.
+
+**Commands (IKMHIWI03):**
+
+```
+git pull
+python ansys_usermat\apdl\paste_fragments.py F:\biofilm_upf_wired\Usermat_P21-V21_v222.F
+.\ansys_usermat\apdl\build_wired.ps1
+python ansys_usermat\apdl\make_wired_deck.py F:\biofilm_upf_wired\<BASE>.dat F:\biofilm_upf_wired\ds_m8_c3.dat --props 6=0,7=1e-3,8=1,9=1,10=1,11=0,12=0,28=8,29=0.01,30=0.2,31=0.15,32=0.2 --elem 220 --deltim 0.025 --time 1.0 --post elem
+.\ansys_usermat\apdl\run_wired.ps1 -Deck ds_m8_c3.dat -Case 2sp_case3 -TimeoutMin 120
+python ansys_usermat\apdl\judge_comp_trace.py F:\biofilm_upf_wired\age_trace_ds_m8_c3.csv --age --case 2sp_case3
+```
+
+Case 6: `9=-1` and `-Case 2sp_case6` / `--case 2sp_case6`. `run_wired.ps1`
+now also moves `age_trace.csv` aside before a run and copies it to
+`age_trace_<job>.csv` afterwards. Its `-Judge` calls the judge without
+`--age`, so judge mode 8 by hand, as above.
+
 ### Stiffness as in Klempt 2024 (2 Oct)
 
 Klempt et al. 2024, Eq. 20 and Table 2:

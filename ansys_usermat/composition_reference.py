@@ -136,3 +136,90 @@ def check_comp_trace(rows, k_alpha, theta=None, hp=None, dt_max=1.0e-4):
                     gn - np.asarray(r["g_new"])))))
         out.update({"replay": worst == 0.0, "replay_worst": worst})
     return out
+
+
+# --------------------------------------------------------------------------
+# prop(28) = 8: the point model runs on its own (no scaling to the field)
+# from the substep in which the field first reaches phi_min. Klempt et al.
+# 2026 call their model a material point model and phi0 a numerical
+# auxiliary, not a physical void; this mode keeps it that way.
+
+def seed_age(phi1=0.2, phi2=0.2):
+    g = np.zeros(12)
+    g[0], g[1] = phi1, phi2
+    g[5] = 1.0 - (phi1 + phi2)
+    g[6] = g[7] = 0.999
+    return g
+
+
+def reference_age(phi3_series, theta, hp, dt, dt_max=1.0e-4, phi_min=0.0,
+                  s=1.0, phi_init=(0.2, 0.2)):
+    """Stand-alone scheme of prop(28) = 8 for phi_3D(t) given per substep.
+    Returns the point-model state after each substep (zeros before the
+    start)."""
+    import ecology_jax as eco
+    g = np.zeros(12)
+    dt_pm = s * dt
+    n_sub = 1 if dt_pm <= dt_max else math.ceil(dt_pm / dt_max)
+    out = []
+    for p in phi3_series:
+        p = min(max(p, 0.0), PHIMAX)
+        if g[6] == 0.0 and p < phi_min:
+            out.append(g.copy())
+            continue
+        if g[6] == 0.0:
+            g = seed_age(*phi_init)
+        gn, _ = eco.ecology_substeps(g, theta, dt_pm, n_sub, 2, hp)
+        g = np.asarray(gn)
+        out.append(g.copy())
+    return out
+
+
+def check_age_trace(rows, k_alpha, theta=None, hp=None):
+    """once_per_increment, carried (unscaled: g_new of one substep is g_old
+    of the next, bit for bit), held (before the start the state is zero),
+    one_call, eq36, and with theta/hp a bit-exact replay of every call."""
+    by_pt = defaultdict(lambda: defaultdict(list))
+    for r in rows:
+        by_pt[(r["elem"], r["ip"])][(r["ldstep"], r["isubst"])].append(r)
+    once = carried = held = one_call = eq36 = True
+    for subs in by_pt.values():
+        keys = sorted(subs)
+        for k in keys:
+            rs = subs[k]
+            if len({tuple(r["g_old"]) for r in rs}) != 1 or \
+               len({r["alpha_n"] for r in rs}) != 1:
+                once = False
+            if rs[0]["hit"] != 2 and [r["hit"] for r in rs].count(0) != 1:
+                one_call = False
+            for r in rs:
+                if r["hit"] == 2 and any(x != 0.0 for x in r["g_new"]):
+                    held = False
+                if r["alpha_new"] != r["alpha_n"] + k_alpha * r["phi_used"] \
+                        * r["dtime"]:
+                    eq36 = False
+        for a, b in zip(keys[:-1], keys[1:]):
+            la, fb = subs[a][-1], subs[b][0]
+            if la["alpha_new"] != fb["alpha_n"]:
+                carried = False
+            # the substep that starts the point model follows a held one
+            # (state zero) and begins from the seed instead
+            if la["hit"] != 2 and la["g_new"] != fb["g_old"]:
+                carried = False
+    out = {"once_per_increment": once, "carried": carried, "held": held,
+           "one_call": one_call, "eq36": eq36}
+    if theta is not None:
+        import ecology_jax as eco
+        worst = 0.0
+        for subs in by_pt.values():
+            for rs in subs.values():
+                r = rs[-1]
+                if r["hit"] == 2:
+                    continue
+                gn, _ = eco.ecology_substeps(r["g_old"], theta, r["dt_pm"],
+                                             r["nsub"], 2, hp)
+                worst = max(worst, float(np.max(np.abs(
+                    np.asarray(gn) - np.asarray(r["g_new"])))))
+        out.update({"replay": worst == 0.0, "replay_worst": worst})
+    return out
+

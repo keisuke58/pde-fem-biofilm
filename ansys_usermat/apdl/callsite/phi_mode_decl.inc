@@ -40,3 +40,7 @@ C     --- composition from the point model (prop(28) = 7) --------------
       LOGICAL CM_TRACE_OPEN
       SAVE CM_TRACE_OPEN
       DATA CM_TRACE_OPEN /.FALSE./
+C     --- composition from an independent point model (prop(28) = 8) ---
+      LOGICAL AG_TRACE_OPEN
+      SAVE AG_TRACE_OPEN
+      DATA AG_TRACE_OPEN /.FALSE./
