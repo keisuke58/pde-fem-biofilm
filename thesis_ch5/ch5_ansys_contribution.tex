@@ -350,7 +350,7 @@ call (46 calls over 11 substeps in the first run) confirms that growth is
 counted once per increment, that each increment starts from the previous one's
 end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.}
 
-\subsection{Three properties of the framework found along the way}
+\subsection{Four properties of the framework found along the way}
 % TierA. ONE_SPECIES_COUPLING.md, stage 3/4 and result-set-1 sections.
 \TierA{%
 \begin{enumerate}
@@ -368,6 +368,13 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.}
       calls, so the solver converges the first substep on a zero residual. The
       output written for that substep is not an equilibrium state and is
       excluded from every result below.
+\item \emph{The front term uses $|\Delta\varphi|$.} In the element the
+      front-growth term of~\eqref{eq:ch5-field} is multiplied by
+      $|\Delta\varphi|$, the Laplacian it also uses for the diffusion term,
+      where the paper has $|\nabla\varphi|$. The checks of
+      \S\ref{sec:ch5-results} do not depend on this term (the gradient-free
+      region has no front, and both ways of computing $\alpha$ see the same
+      field); how far the biofilm spreads does.
 \end{enumerate}}
 
 %-----------------------------------------------------------------------
