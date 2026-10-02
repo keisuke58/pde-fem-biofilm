@@ -14,23 +14,18 @@ tension read at a glance. The seed is outlined.
 from __future__ import annotations
 
 import argparse
-import csv
 from pathlib import Path
 
 import numpy as np
 
 
-def read(path):
-    with open(path, newline="") as f:
-        rows = [r for r in csv.reader(f)]
-    head = [h.strip() for h in rows[0]]
-    if not {"cx", "cy", "cz"} <= set(head):
-        raise SystemExit("no centroid columns: re-run with the updated "
-                         "post_all_stress.mac")
-    a = np.array([[float(x) for x in r] for r in rows[1:] if r])
-    col = {h: a[:, i] for i, h in enumerate(head)}
-    col["p"] = (col["sx"] + col["sy"] + col["sz"]) / 3.0
-    return col
+def read(path, grid=None, size=None):
+    """CSV with centroid columns; without them, --grid/--size assume a
+    regular block (see plot_3d.py, which prints a check of that)."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from plot_3d import read as read3d
+    return read3d(path, grid, size)
 
 
 def section(col, axis):
@@ -66,8 +61,10 @@ def main(argv=None):
     ap.add_argument("--axis", default="x", choices=("x", "y", "z"))
     ap.add_argument("--out", default=None)
     ap.add_argument("--title", default="")
+    ap.add_argument("--grid", type=int, help="old CSV without centroids: N per side")
+    ap.add_argument("--size", type=float, help="old CSV without centroids: side [mm]")
     a = ap.parse_args(argv)
-    col = read(a.csv)
+    col = read(a.csv, a.grid, a.size)
     g, us, vs, un, vn, pos, seed = section(col, a.axis)
     pa = 1e6                                   # MPa -> Pa
     du = (us[1] - us[0]) if len(us) > 1 else 1.0
