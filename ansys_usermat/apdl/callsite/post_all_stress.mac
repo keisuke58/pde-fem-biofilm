@@ -1,5 +1,7 @@
 ! post_all_stress.mac -- every element at the last result set:
-! elem, SEQV, mean stress p = (SX+SY+SZ)/3, alpha (SVAR 84). Centroid values.
+! elem, SEQV, SX, SY, SZ, alpha (SVAR 84), centroid x, y, z. Centroid values.
+! The centroid columns (added 2026-10-02) come last, so readers of the first
+! six columns are unaffected; plot_section.py uses them for section maps.
 /POST1
 SET,LAST
 ALLSEL
@@ -10,22 +12,31 @@ ETABLE,ESX,S,X
 ETABLE,ESY,S,Y
 ETABLE,ESZ,S,Z
 ETABLE,EA84,SVAR,84
+ETABLE,ECX,CENT,X
+ETABLE,ECY,CENT,Y
+ETABLE,ECZ,CENT,Z
 *DIM,EID_,ARRAY,EMAX_
 *DIM,ESQ_,ARRAY,EMAX_
 *DIM,EXX_,ARRAY,EMAX_
 *DIM,EYY_,ARRAY,EMAX_
 *DIM,EZZ_,ARRAY,EMAX_
 *DIM,EAL_,ARRAY,EMAX_
+*DIM,ECX_,ARRAY,EMAX_
+*DIM,ECY_,ARRAY,EMAX_
+*DIM,ECZ_,ARRAY,EMAX_
 *VFILL,EID_(1),RAMP,1,1
 *VGET,ESQ_(1),ELEM,1,ETAB,ESEQ
 *VGET,EXX_(1),ELEM,1,ETAB,ESX
 *VGET,EYY_(1),ELEM,1,ETAB,ESY
 *VGET,EZZ_(1),ELEM,1,ETAB,ESZ
 *VGET,EAL_(1),ELEM,1,ETAB,EA84
+*VGET,ECX_(1),ELEM,1,ETAB,ECX
+*VGET,ECY_(1),ELEM,1,ETAB,ECY
+*VGET,ECZ_(1),ELEM,1,ETAB,ECZ
 *CFOPEN,all_stress,csv
 *VWRITE
-('elem,seqv,sx,sy,sz,alpha')
-*VWRITE,EID_(1),ESQ_(1),EXX_(1),EYY_(1),EZZ_(1),EAL_(1)
-(F8.0,5(',',E24.16))
+('elem,seqv,sx,sy,sz,alpha,cx,cy,cz')
+*VWRITE,EID_(1),ESQ_(1),EXX_(1),EYY_(1),EZZ_(1),EAL_(1),ECX_(1),ECY_(1),ECZ_(1)
+(F8.0,8(',',E24.16))
 *CFCLOS
 FINISH
