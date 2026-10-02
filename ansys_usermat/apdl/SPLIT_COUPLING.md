@@ -310,6 +310,28 @@ now also moves `age_trace.csv` aside before a run and copies it to
 `age_trace_<job>.csv` afterwards. Its `-Judge` calls the judge without
 `--age`, so judge mode 8 by hand, as above.
 
+### Mode 8 on IKMHIWI03, 2 Oct — PASS, and what the example model can show
+
+Element 220, s = 0.15, T* = 1. Judged with `--age`: all checks True, replay
+0.0, stand-alone difference 0.0.
+- case 3: χ₁ = 0.6137, ψ = 0.9849 / 0.9777;
+- case 6: χ₁ = 0.0138, ψ = 0.0545 / 0.9836.
+
+Both equal the expected values.
+
+**There is no whole-model composition map yet.** With the paper's
+parameters, only the 32 seed elements exceed φ_min = 0.01 by T* = 1. They are
+packed and seeded at t = 0, so both schemes give one uniform composition, at
+about 1 h per run. A spatially varying composition needs a case in which the
+biofilm spreads within the run, i.e. a nutrient gradient driving the front
+term of Eq. 34. Recorded in chapter 5 (results and limitations).
+
+The Klempt-stiffness check on IKMHIWI03 (d40d447):
+- `YOUNG_VOID` reaches `sYoungL` only;
+- the AceGen path needs `prop(1) = 0` and is unused;
+- ν 0.45 vs 0.49 scales the stress by 0.79 for a 5× bulk modulus, so there is
+  no sign of locking.
+
 ### Stiffness as in Klempt 2024 (2 Oct)
 
 Klempt et al. 2024, Eq. 20 and Table 2:
