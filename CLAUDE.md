@@ -192,6 +192,47 @@ this machine's specific workflow.
   Claude on the Contributors page just as surely. `pre-commit` does not
   receive the commit message; only `commit-msg` does.
 
+## Slides, notes and other documents for supervisors (decided 2026-10-02)
+
+These apply to every deck, speaker script, email draft or report written for
+the supervisors (Prof. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
+examiners). Check each one before the document is handed over.
+
+- **Abaqus is not part of this thesis.** Abaqus work is the Keio
+  continuation. Do not list Abaqus runs or ANSYS-vs-Abaqus comparisons as
+  done work in thesis material. Mentioning Abaqus as *future work at Keio*
+  is fine.
+- **First person singular.** Write "I", not "we" or "our". Use neutral
+  wording such as "this work" or "added in this work" where "I" reads
+  badly. In Japanese, write 私, not 私たち.
+- **Avoid wording that reads as AI-generated.**
+  - Avoid emphatic slogans: "strictly", "exactly as published", "nothing
+    else is tuned", "a property of X, not of Y", "The reason is simple",
+    "This matters:".
+  - Do not use dashes (---) as the main punctuation; use commas, colons or
+    a new sentence.
+  - Keep bold to a few key numbers.
+  - State the result plainly and let the numbers carry it.
+- **Follow Klempt et al. 2024 (Felix) for the model and its parameters.**
+  - Any value not taken from a paper must be marked as such on the slide,
+    e.g. the bring-up growth rates or the partner's example-input
+    stiffness.
+  - Modelling assumptions (e.g. the time link s, φ_cap) are stated as
+    assumptions, each with its sensitivity study.
+- **Units.** The partner's decks are `/units,MPA`, so `YOUNG_BIO = 1000`
+  means 1000 MPa. Give units for every material constant. The Klempt 2024
+  values are μ = 3.3557 Pa (E = 10 Pa, ν = 0.49).
+- **Background appendix.** Every deck gets an appendix with the notation
+  (basic variables of the growth field, the point model and the coupling)
+  and the background equations, so questions can be answered from the
+  slides. The 5 Oct deck (`slides_1005.tex`, appendix A–C) is the template.
+- **No internal labels** (stage numbers, `prop(28)` modes, run names) in
+  anything the partner or the supervisors see. Describe what a run does.
+- **Build and check before handing over.** Keep the deck at 20 pages or
+  fewer, with no LaTeX errors and no overfull frames, and look at the
+  rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
+  pdflatex/lualatex in a cloud session.
+
 ## This PC vs. claude.ai (web) — don't mix them up
 
 The user also discusses this repo with Claude on claude.ai (browser, no file/
