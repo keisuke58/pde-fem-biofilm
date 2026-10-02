@@ -7,7 +7,7 @@ klempt2026_cases.py / fritsch2025_cases.py -- plus how they map onto the
 parameters of the partner's (Oliver's) ANSYS deck.
 
     from klempt2024_cases import TABLE2, CASES, PAPER_CURVES, OLIVER_DECK, deck_values
-    deck_values("fig7_high", L_deck=1.5)     # -> {"MY_DIFF1": ..., "CONSUMPTION11": ..., ...}
+    deck_values("fig7_high")     # deck cube 2 mm -> {"MY_DIFF1": ..., "CONSUMPTION11": ..., ...}
 
 Equations (Table 2 values are already divided by eta, so they are the
 coefficients of these equations; time is the normalised T* in [0, 1]):
@@ -110,16 +110,21 @@ OLIVER_DECK = {
         "MY_BIOSTART1": 1.0, "MY_BIOSTART2": 1.0, "YOUNG_BIO": 1000.0, "POISSON_BIO": 0.3,
     },
     "geometry": {
-        "units": "mm (/units,MPA)", "cube_mm": 1.5, "elements_per_side": 8,
-        "NUTRIENT1": "elements 1-64 = the bottom layer -> c fixed there (like Fig. 7's bottom face)",
-        "NUTRIENT2": "a side layer (elements 1-8, 65-72, ...)",
-        "BIOFILM1": "32 elements around the centre (incl. 220)",
+        "units": "mm (/units,MPA)", "cube_mm": 2.0, "range_mm": (-1.0, 1.0),
+        "elements_per_side": 8, "element_mm": 0.25,
+        "NUTRIENT1": "elements 1-64 = the layer on the y = -1 face -> c held at MY_NUTSTART1 there "
+                     "(like Fig. 7's nutrient face)",
+        "NUTRIENT2": "the layer on the z = -1 face (nutrient 2, start value 0 -> unused)",
+        "BIOFILM1": "32 elements, a 4x4x2-ish block around the centre (incl. 220)",
         "BIOFILM2": "8 elements: 220 221 228 229 284 285 292 293",
+        "fig7_seed": "elements 92 93 100 101: 2x2 at the centre of the 2nd layer from the "
+                     "nutrient face, 0.5 mm wide = 1/4 of the cube, like the paper's 5 um disk "
+                     "in 20 um (make_wired_deck.py --cmblock BIOFILM1=92,93,100,101)",
     },
 }
 
 
-def deck_values(case: str, L_deck: float = 1.5) -> dict:
+def deck_values(case: str, L_deck: float = 2.0) -> dict:
     """Klempt 2024 coefficients for `case`, rescaled to a deck cube of side
     L_deck (deck length unit) with T* kept as the time unit, so that every
     dimensionless group of the paper is preserved:
