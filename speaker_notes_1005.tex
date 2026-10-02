@@ -118,15 +118,17 @@ unused one, and it lags one time step.
 \slide{Check 3: the seeded element}{1:30}
 \EN Third, the seeded element over time. Its $\alpha$ grows linearly to
 $1.1\times10^{-3}$, which is exactly $k_a\varphi t$. The element itself is
-compressed, and its neighbours carry about ten times its von Mises stress.
+compressed, and its neighbours carry about 25 times its von Mises stress.
 Klempt et al.\ show a similar ring of stress around the biofilm in their 2023
-paper. The stresses are small, at most 0.02 MPa, because the published
-growth rate is slow.
+paper. The stresses are tiny, at most $10^{-4}$ Pa, because the published
+growth rate is slow and the biofilm is very soft, $E=10$ Pa, as in their
+Table 2.
 \JA 3 つ目は、種を置いた要素の時間変化です。$\alpha$ は直線的に増えて
 $1.1\times10^{-3}$ になり、これはちょうど $k_a\varphi t$ です。要素自体は圧縮され、
-隣の要素はその約 10 倍の von Mises 応力を持ちます。Klempt らの 2023 年の論文に
-ある、バイオフィルムを囲む応力の輪と同じ傾向です。応力は最大 0.02 MPa と小さいですが、
-これは論文の成長速度が遅いためです。
+隣の要素はその約 25 倍の von Mises 応力を持ちます。Klempt らの 2023 年の論文に
+ある、バイオフィルムを囲む応力の輪と同じ傾向です。応力は最大 $10^{-4}$ Pa と非常に
+小さいですが、これは論文の成長速度が遅く、バイオフィルムがとても柔らかい
+（Table 2 の $E=10$ Pa）ためです。
 
 % ------------------------------------------------------------------
 \slide{Three things found along the way}{1:30}
@@ -138,14 +140,15 @@ species; the example input starts both species at one in the seed, so for one
 species I start the second at zero. Third, the first result set is not in
 equilibrium, because the element returns zero stress while it sets up its
 operators, so I exclude it. Earlier bring-up runs used larger growth rates
-to make the stress visible; everything shown today uses the published values.
+and the example input's stiffness, 1000 MPa; everything shown today uses the
+published values.
 \JA 見つかったことが 3 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
 1 菌種だと成長が半分になります。意図したものか Oliver に確認したいと思います。
 2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\varphi_1+\varphi_2\le1$
 でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
 1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
 要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
-なお、立ち上げ段階では応力を見やすくするため大きな成長速度を使っていましたが、
+なお、立ち上げ段階では大きな成長速度と例題入力の剛性（1000 MPa）を使っていましたが、
 今日お見せした結果はすべて論文の値です。
 
 % ------------------------------------------------------------------
@@ -250,10 +253,16 @@ field, background of the point model and one coupling step), for questions only.
 
 \begin{description}[leftmargin=0pt,itemsep=6pt]
 \item[Why are the stresses so small?]
-\EN The published $k_a=10^{-3}$ with $T^*\le1$ gives $\alpha\le10^{-3}$. Larger
-rates make larger stresses, but they would no longer be the paper's model.
-\JA 論文の $k_a=10^{-3}$ と $T^*\le1$ では $\alpha\le10^{-3}$ にしかなりません。
-速度を大きくすれば応力も大きくなりますが、それはもう論文のモデルではありません。
+\EN The published $k_a=10^{-3}$ with $T^*\le1$ gives $\alpha\le10^{-3}$, and the
+published stiffness is $E=10$ Pa, weighted with $\varphi^2$. Stress scales
+with both, so other values give other magnitudes, but they would no longer be
+the paper's model. (I checked $\nu=0.45$ against 0.49: the stress changes by
+27\,\% while the bulk modulus changes fivefold, so no sign of locking.)
+\JA 論文の $k_a=10^{-3}$ と $T^*\le1$ では $\alpha\le10^{-3}$ にしかならず、剛性も
+論文では $E=10$ Pa で $\varphi^2$ に比例します。応力はどちらにも比例するので、
+値を変えれば大きさも変わりますが、それはもう論文のモデルではありません。
+（$\nu=0.45$ と 0.49 を比べると、体積弾性率は 5 倍変わるのに応力の変化は 27\,\% なので、
+要素が硬くなりすぎる兆候はありません。）
 
 \item[Why not the five species right away?]
 \EN There is no published reference beyond four species, and Oliver's element is

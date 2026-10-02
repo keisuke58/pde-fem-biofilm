@@ -117,7 +117,8 @@ Klempt et al.\ 2024, Eq.\ 34, at its points:
 \end{itemize}
 \vspace{2pt}
 Parameters: Klempt et al.\ 2024 Table 2, $k_a=10^{-3}$ per unit time $T^*$,
-in the field \emph{and} in Eq.\ 36. ANSYS 2022 R2, one-species runs.
+in the field \emph{and} in Eq.\ 36; $E=10$ Pa, $\nu=0.49$, stiffness $\propto\varphi^2$.
+ANSYS 2022 R2, one-species runs.
 \vspace{4pt}
 \begin{center}
 \begin{tikzpicture}[node distance=1.2cm, every node/.style={font=\small}]
@@ -179,11 +180,11 @@ result, $\tfrac12\times\tfrac{10}{11}$:
 \small
 \begin{itemize}
   \item $\alpha=1.1\times10^{-3}=k_a\,\varphi\,t$ at $T^*=1.1$, exactly as Eq.\ 36 says
-  \item The element is compressed; its neighbours carry about 10$\times$ its
+  \item The element is compressed; its neighbours carry about 25$\times$ its
         von Mises stress (a similar stress ring around the biofilm is shown in
         Klempt et al.\ 2023)
-  \item Stresses are small ($\le 0.02$ MPa) since the published growth rate
-        $k_a=10^{-3}$ is slow
+  \item Stresses are tiny ($\le 10^{-4}$ Pa): the published growth rate
+        $k_a=10^{-3}$ is slow and the biofilm is soft ($E=10$ Pa)
 \end{itemize}
 \end{frame}
 
@@ -202,8 +203,8 @@ result, $\tfrac12\times\tfrac{10}{11}$:
 \end{enumerate}
 \vspace{6pt}
 \colorbox{c3!12}{\parbox{0.95\linewidth}{\small
-Earlier bring-up runs used larger growth rates (0.1, 0.5) to make stresses visible;
-all results on these slides use the published values.}}
+Earlier bring-up runs used larger growth rates (0.1, 0.5) and the example input's
+stiffness (1000 MPa); all results on these slides use the published values.}}
 \end{frame}
 
 % --------------------------------------------------------
@@ -405,9 +406,9 @@ $\varphi_{\rm cap}$ & largest amount the point model sees\\
 \textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
 isotropic $\mathbf F_g=(1+\alpha)\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
 A body that can grow freely stays stress free; stress appears where growth is constrained.\\
-\textbf{Material} (the example input, solver units MPa): $E_{\rm bio}=1000$, $E_{\rm void}=1$,
-$\nu=0.3$, blended linearly with the local biofilm fraction; no viscosity.
-Stresses scale linearly with $E$.
+\textbf{Material} (Klempt et al.\ 2024, Eq.\ 20 and Table 2): $E=10$ Pa, $\nu=0.49$,
+stiffness weighted with $\varphi^2$ (void: floor $10^{-3}E$); no viscosity.
+Stresses scale linearly with $E$ (the example input's 1000 MPa gives $10^8\times$ larger values).
 \vspace{4pt}
 
 \textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
