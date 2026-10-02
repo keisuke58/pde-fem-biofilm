@@ -106,19 +106,19 @@ def main():
             ax.set_yticks([-1, 0, 1])
             ax.set_facecolor("#c3c9d1")
             if jt == 0:
-                ax.set_ylabel({None: r"amount $\varphi_{3D}$" "\n(prescribed)\n\ny [mm]",
+                ax.set_ylabel({None: r"amount $\phi_{3D}$" "\n(prescribed)\n\ny [mm]",
                                "A": "case 6, scheme A\n(rescaled)\n\ny [mm]",
                                "B": "case 6, scheme B\n(independent)\n\ny [mm]"}[sch])
             if i == len(rows) - 1:
                 ax.set_xlabel("x [mm]")
-    fig.colorbar(im0, ax=axs[0, :], shrink=0.85, label=r"$\varphi_{3D}$")
+    fig.colorbar(im0, ax=axs[0, :], shrink=0.85, label=r"$\phi_{3D}$")
     cb = fig.colorbar(im1, ax=axs[1:, :], shrink=0.6,
-                      label=r"composition $\chi_1 = \varphi_1/(\varphi_1+\varphi_2)$")
+                      label=r"share of species 1, $\phi_1/(\phi_1+\phi_2)$")
     cb.set_ticks([0, 0.25, 0.5])
     cb.set_ticklabels(["0: species 2 only", "0.25", "0.5: start (equal)"])
     fig.suptitle("Composition map from the coupled model on a prescribed spreading front "
                  "(demo, not an ANSYS result)\nKlempt et al. 2026 case 6; grey: point model "
-                 r"not started ($\varphi_{3D} < \varphi_{min}$)", fontsize=12.5)
+                 r"not started ($\phi_{3D} < \phi_{min}$)", fontsize=12.5)
     fig.savefig(OUT)
     print("wrote", OUT)
 

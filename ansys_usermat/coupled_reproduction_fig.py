@@ -86,7 +86,7 @@ def main():
                title=TITLES[case], ylim=(-0.03, 1.0))
         print(f"{case}: max |A - alone| {dev:.2e}, alone at 1500 {chi[1500]:.4f}, "
               f"ANSYS B {ANSYS_B[case]}")
-    axs[0].set_ylabel(r"composition $\chi_1 = \varphi_1/(\varphi_1+\varphi_2)$")
+    axs[0].set_ylabel(r"share of species 1, $\phi_1/(\phi_1+\phi_2)$")
     axs[1].plot([], [], "D", ms=9, mfc="none", mec="#7b8794", mew=2,
                 label="read off the paper's Fig. 3 (case 3)")
     axs[1].legend(fontsize=9, loc="upper right")

@@ -46,7 +46,7 @@ implant failure). One picture, two sentences.}
 \begin{frame}{Background: continuum models of biofilm growth}
 \todo{Klempt et al.\ 2023 (PAMM), 2024 (growth field, Eq.\ 34/36), 2026
 (multi-species point model). Volume growth $\mathbf F=\mathbf F_e\mathbf F_g$
-vs.\ density $\varphi$. Source: slides\_1005 appendix B/C, thesis ch.\ 5.2.}
+vs.\ density $\phi$. Source: slides\_1005 appendix B/C, thesis ch.\ 5.2.}
 \end{frame}
 
 \begin{frame}{Earlier work: the calibrated point model}
@@ -62,8 +62,8 @@ contributions (ch.\ 5.1).}
 \end{frame}
 
 \begin{frame}{The growth law in ANSYS}
-\todo{$\mathbf F_g=(1+\alpha)\mathbf I$, neo-Hookean, stiffness
-$E(\varphi)=(\varphi^2+f)E$ with $E=10$~Pa, $\nu=0.49$ (Klempt 2024 Table 2).
+\todo{$\mathbf F_g=\alpha\mathbf I$, neo-Hookean, stiffness
+$E(\phi)=(\phi^2+f)E$ with $E=10$~Pa, $\nu=0.49$ (Klempt 2024 Table 2).
 Ch.\ 5.2--5.3.}
 \end{frame}
 
@@ -84,7 +84,7 @@ growth counted once per increment. Diagram from slides\_1005. Ch.\ 5.5.}
 \end{frame}
 
 \begin{frame}{Check: exact solution inside ANSYS}
-\todo{$\varphi=\sinh(k_at)$, $\alpha_K=\cosh(k_at)$; figure fig1005\_exact.}
+\todo{$\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$; figure fig1005\_exact.}
 \end{frame}
 
 \begin{frame}{Check: whole model}
@@ -103,7 +103,7 @@ through $R_s$ and $g$). Ch.\ 5.6.}
 \end{frame}
 
 \begin{frame}{Two species: results and assumptions}
-\todo{Case 3 / case 6 in ANSYS; time link $s$ and $\varphi_{\rm cap}$ with
+\todo{Case 3 / case 6 in ANSYS; time link $s$ and $\phi_{\rm cap}$ with
 their sensitivity (table from ch.\ 5.6).}
 \end{frame}
 
@@ -137,12 +137,11 @@ coupling, Abaqus implementation.}
 \textbf{Growth field and mechanics (Klempt et al.\ 2024)}\\[2pt]
 \begin{tabular}{@{}ll@{}}
 \toprule
-$\varphi$ & biofilm volume fraction (0 = void, 1 = dense)\\
+$\phi$ & biofilm volume fraction (0 = void, 1 = dense)\\
 $c$ & nutrient concentration\\
-$\alpha_K$ & expansion variable, $\mathbf F_g=\alpha_K\mathbf I$, $\alpha_K(0)=1$\\
-$\alpha$ & growth used here, $\alpha=\alpha_K-1$\\
+$\alpha$ & expansion variable, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; growth is $\alpha-1$\\
 $\mathbf F=\mathbf F_e\mathbf F_g$ & elastic / growth split\\
-$k_a$ & growth factor ($10^{-3}$ per $T^*$)\\
+$k_\alpha$ & growth factor ($10^{-3}$ per $T^*$)\\
 $\beta$ & phase-field regularisation\\
 $r,\ K$ & front growth rate, Monod constant\\
 $T^*$ & normalised time, $T^*\in[0,1]$\\
@@ -153,10 +152,10 @@ $T^*$ & normalised time, $T^*\in[0,1]$\\
 \textbf{Point model (Klempt et al.\ 2026)}\\[2pt]
 \begin{tabular}{@{}ll@{}}
 \toprule
-$\varphi_i$ & volume fraction of species $i$\\
-$\varphi_0$ & void, $\varphi_0=1-\sum_i\varphi_i$\\
+$\phi_i$ & volume fraction of species $i$\\
+$\phi_0$ & void, $\phi_0=1-\sum_i\phi_i$\\
 $\psi_i$ & living fraction (viability) of species $i$\\
-$\gamma$ & Lagrange multiplier for $\sum\varphi_i+\varphi_0=1$\\
+$\gamma$ & Lagrange multiplier for $\sum\phi_i+\phi_0=1$\\
 $A_{ij}$ & interaction matrix (self, cooperation, competition)\\
 $b_i$ & sensitivity to the antibiotic\\
 $c^*,\ \alpha^*$ & nutrient, antibiotic concentration\\
@@ -166,10 +165,10 @@ $\eta_i$ & viscosity (time scale) of species $i$\\
 \textbf{Coupling (this work)}\\[2pt]
 \begin{tabular}{@{}ll@{}}
 \toprule
-$\varphi_{3D}$ & amount from the element field\\
-$\chi_i$ & composition $\varphi_i/\sum_j\varphi_j$\\
+$\phi_{3D}$ & amount from the element field\\
+$\phi_i/\sum_j\phi_j$ & composition (share of species $i$)\\
 $s$ & time link: point model advances $s\,\Delta t$\\
-$\varphi_{\rm cap}$ & largest amount the point model sees\\
+$\phi_{\rm cap}$ & largest amount the point model sees\\
 \bottomrule
 \end{tabular}
 \end{column}
@@ -180,7 +179,7 @@ $\varphi_{\rm cap}$ & largest amount the point model sees\\
 \begin{frame}{Appendix B: background, growth field and mechanics}
 \small
 \textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
-isotropic $\mathbf F_g=(1+\alpha)\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
+isotropic $\mathbf F_g=\alpha\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
 A body that can grow freely stays stress free; stress appears where growth is constrained.\\
 \textbf{Material} (the example input, solver units MPa): $E_{\rm bio}=1000$, $E_{\rm void}=1$,
 $\nu=0.3$, blended linearly with the local biofilm fraction; no viscosity.
@@ -189,17 +188,17 @@ Stresses scale linearly with $E$.
 
 \textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
 \[
-\dot\varphi=\underbrace{\beta\,\Delta\varphi}_{\text{diffusion}}
-+\underbrace{k_a\,\alpha_K}_{\text{local source}}
--\underbrace{r\,\frac{c}{K+c}\,\nabla\varphi\cdot\frac{\nabla c}{|\nabla c|}}_{\text{front growth towards nutrient}},
+\dot\phi=\underbrace{\beta\,\Delta\phi}_{\text{diffusion}}
++\underbrace{k_\alpha\,\alpha}_{\text{local source}}
+-\underbrace{r\,\frac{c}{K+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|}}_{\text{front growth towards nutrient}},
 \qquad
-\dot\alpha_K=k_a\,\varphi
+\dot\alpha=k_\alpha\,\phi
 \]
 \begin{itemize}
-  \item $\varphi$ and $c$ are nodal fields of the element; $\alpha$ is an internal
+  \item $\phi$ and $c$ are nodal fields of the element; $\alpha$ is an internal
         variable at the Gauss points
   \item The front term moves the biofilm boundary up the nutrient gradient; it vanishes
-        where $\varphi$ or $c$ is uniform
+        where $\phi$ or $c$ is uniform
   \item The nutrient diffuses much faster than the biofilm grows (quasi-static $c$)
 \end{itemize}
 \end{frame}
@@ -210,22 +209,22 @@ Stresses scale linearly with $E$.
 \textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence:
 \[
 \begin{aligned}
-(\eta_{\varphi,i}+\eta_i\psi_i^2)\,\dot\varphi_i+\eta_i\varphi_i\psi_i\,\dot\psi_i
-&= c^*\psi_i\textstyle\sum_j A_{ij}\varphi_j\psi_j-\gamma-(\text{barrier})\\
-\eta_i\,(\varphi_i\psi_i\,\dot\varphi_i+\varphi_i^2\,\dot\psi_i)
-&= c^*\varphi_i\textstyle\sum_j A_{ij}\varphi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier})
+(\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\
+\eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier})
 \end{aligned}
 \]
-with $\sum_i\varphi_i+\varphi_0=1$; the barrier terms keep $\varphi_i,\psi_i$ in $(0,1)$.
+with $\sum_i\phi_i+\phi_0=1$; the barrier terms keep $\phi_i,\psi_i$ in $(0,1)$.
 Implicit time stepping, $\Delta t=10^{-4}$.
 \vspace{4pt}
 
 \textbf{One time step of the coupled ANSYS run}
 \begin{enumerate}
-  \item The element updates its field $\varphi$ (Eq.\ 34)
-  \item At each Gauss point: $\varphi_{3D}\to\alpha$ (Eq.\ 36) $\to\mathbf F_g\to$ stress
-  \item Two species: the point model is scaled to $\min(\varphi_{3D},\varphi_{\rm cap})$,
-        advanced by $s\,\Delta t$, scaled again; $\chi_i,\psi_i$ are stored as state variables
+  \item The element updates its field $\phi$ (Eq.\ 34)
+  \item At each Gauss point: $\phi_{3D}\to\alpha$ (Eq.\ 36) $\to\mathbf F_g\to$ stress
+  \item Two species: the point model is scaled to $\min(\phi_{3D},\phi_{\rm cap})$,
+        advanced by $s\,\Delta t$, scaled again; $\phi_i,\psi_i$ are stored as state variables
 \end{enumerate}
 \end{frame}
 

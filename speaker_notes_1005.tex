@@ -72,16 +72,16 @@ reproduces the figures of Fritsch et al.\ within 0.013.
 \EN This is the coupling. Oliver's element solves the biofilm field of
 Klempt 2024, Equation 34: diffusion, the source from growth, and front
 growth driven by the nutrient. I do not change it. What I add happens at
-each Gauss point of the material routine: I take $\varphi$ from the field,
-integrate Equation 36, $\dot\alpha=k_a\varphi$, and turn $\alpha$ into the
-growth tensor and the stress with the verified law. The rate $k_a$ is the
+each Gauss point of the material routine: I take $\phi$ from the field,
+integrate Equation 36, $\dot\alpha=k_\alpha\phi$, and turn $\alpha$ into the
+growth tensor and the stress with the verified law. The rate $k_\alpha$ is the
 published value, $10^{-3}$ per unit time, used both in the field and in
 Equation 36.
 \JA これが組み込みの全体です。Oliver の要素は Klempt 2024 の式 34、つまり拡散、
 成長による生成、栄養で駆動される界面成長を解きます。ここには手を入れていません。
-私が加えたのは材料ルーチンの各ガウス点での処理です。場から $\varphi$ を受け取り、
-式 36 $\dot\alpha=k_a\varphi$ を積分し、その $\alpha$ を検証済みの成長則で
-成長テンソルと応力にします。$k_a$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
+私が加えたのは材料ルーチンの各ガウス点での処理です。場から $\phi$ を受け取り、
+式 36 $\dot\alpha=k_\alpha\phi$ を積分し、その $\alpha$ を検証済みの成長則で
+成長テンソルと応力にします。$k_\alpha$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
 
 % ------------------------------------------------------------------
 \slide{Check 1: exact solution}{1:30}
@@ -90,12 +90,12 @@ the two equations reduce to a linear system with the solution $\sinh$ and
 $\cosh$. Left and middle: ANSYS against the exact curves. The dotted line is
 the exact solution of the time-stepping scheme itself, and the right panel
 shows the difference to it: for $\alpha$ it is round-off, $10^{-11}$; for
-$\varphi$ it is $10^{-7}$, about $10^{-4}$ relative, because this element
+$\phi$ it is $10^{-7}$, about $10^{-4}$ relative, because this element
 still sees a little gradient from its neighbours.
 \JA 1 つ目は厳密解による確認です。場に勾配がない所では、2 本の式が線形系になり、
 解は sinh と cosh です。左と中央が ANSYS と厳密解の比較です。点線は時間刻みの
 計算式そのものの厳密解で、右の図がそれとの差です。$\alpha$ は丸め誤差の $10^{-11}$、
-$\varphi$ は $10^{-7}$、相対で約 $10^{-4}$ です。この要素も周りからわずかに
+$\phi$ は $10^{-7}$、相対で約 $10^{-4}$ です。この要素も周りからわずかに
 勾配を受けているためです。
 
 % ------------------------------------------------------------------
@@ -116,15 +116,15 @@ unused one, and it lags one time step.
 
 % ------------------------------------------------------------------
 \slide{Check 3: the seeded element}{1:30}
-\EN Third, the seeded element over time. Its $\alpha$ grows linearly to
-$1.1\times10^{-3}$, which is exactly $k_a\varphi t$. The element itself is
+\EN Third, the seeded element over time. Its growth $\alpha-1$ increases linearly to
+$1.1\times10^{-3}$, which is exactly $k_\alpha\phi t$. The element itself is
 compressed, and its neighbours carry about 25 times its von Mises stress.
 Klempt et al.\ show a similar ring of stress around the biofilm in their 2023
 paper. The stresses are tiny, at most $10^{-4}$ Pa, because the published
 growth rate is slow and the biofilm is very soft, $E=10$ Pa, as in their
 Table 2.
-\JA 3 つ目は、種を置いた要素の時間変化です。$\alpha$ は直線的に増えて
-$1.1\times10^{-3}$ になり、これはちょうど $k_a\varphi t$ です。要素自体は圧縮され、
+\JA 3 つ目は、種を置いた要素の時間変化です。成長量 $\alpha-1$ は直線的に増えて
+$1.1\times10^{-3}$ になり、これはちょうど $k_\alpha\phi t$ です。要素自体は圧縮され、
 隣の要素はその約 25 倍の von Mises 応力を持ちます。Klempt らの 2023 年の論文に
 ある、バイオフィルムを囲む応力の輪と同じ傾向です。応力は最大 $10^{-4}$ Pa と非常に
 小さいですが、これは論文の成長速度が遅く、バイオフィルムがとても柔らかい
@@ -135,30 +135,30 @@ $1.1\times10^{-3}$ になり、これはちょうど $k_a\varphi t$ です。要
 \EN Four findings. First, the element's growth variable is the mean of the two
 species fields, so with one species growth is halved. I would like to ask
 Oliver whether that is intended. Second, start values must satisfy
-$\varphi_1+\varphi_2\le1$, because the void fraction is one minus all
+$\phi_1+\phi_2\le1$, because the void fraction is one minus all
 species; the example input starts both species at one in the seed, so for one
 species I start the second at zero. Third, the first result set is not in
 equilibrium, because the element returns zero stress while it sets up its
 operators, so I exclude it. Fourth, the element's front-growth term is
 inactive. When the input is read, the weights of the other species are written
 into the weight of species 1, and the last one is zero, so this term is always
-zero. In addition, it multiplies the Laplacian of $\varphi$, where Equation 34 has
+zero. In addition, it multiplies the Laplacian of $\phi$, where Equation 34 has
 the gradient magnitude. In a test copy with both corrected, the seed spreads
-as in the paper's example, but $\varphi$ goes above 1. The three checks do not
+as in the paper's example, but $\phi$ goes above 1. The three checks do not
 depend on this term. I would like to discuss both points with Oliver before
 using the spreading in the thesis. Earlier bring-up runs used larger growth rates
 and the example input's stiffness, 1000 MPa; everything shown today uses the
 published values.
 \JA 見つかったことが 4 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
 1 菌種だと成長が半分になります。意図したものか Oliver に確認したいと思います。
-2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\varphi_1+\varphi_2\le1$
+2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\phi_1+\phi_2\le1$
 でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
 1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
 要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
 4 つ目、要素の界面成長の項が働いていません。入力を読み込むとき、ほかの菌種の重みが
 菌種 1 の重みに書き込まれていて、最後に読む値が 0 なので、この項は常に 0 になります。
-さらに、この項は $\varphi$ のラプラシアンを掛けていますが、式 34 では勾配の大きさです。
-両方を直した試験用のコピーでは、論文の例と同じように種が広がりましたが、$\varphi$ が 1 を
+さらに、この項は $\phi$ のラプラシアンを掛けていますが、式 34 では勾配の大きさです。
+両方を直した試験用のコピーでは、論文の例と同じように種が広がりましたが、$\phi$ が 1 を
 超えました。3 つの確認はこの項に依存しません。広がりを修論で使う前に、この 2 点を
 Oliver と相談したいと思います。
 なお、立ち上げ段階では大きな成長速度と例題入力の剛性（1000 MPa）を使っていましたが、
@@ -168,14 +168,14 @@ Oliver と相談したいと思います。
 \slide{Two species: composition from the point model}{1:45}
 \EN For two species, the question is how to connect the point model to the 3-D
 field. I chose a split that keeps both papers as they are: the field decides the
-amount, $\varphi_{3D}$, and drives growth; the point model decides only the
+amount, $\phi_{3D}$, and drives growth; the point model decides only the
 composition, that is which species and $\psi$. At each step its state is rescaled
 so that the species add up to the amount from the field. The composition does
 not act back on the stress, because in Klempt 2024 no material parameter
 depends on the species. On ANSYS, every point and every step equals the scheme
 run on its own, with difference zero.
 \JA 2 菌種では、点モデルと 3 次元の場をどうつなぐかが問題です。両方の論文に忠実な
-つなぎ方として、量 $\varphi_{3D}$ は場が決めて成長を駆動し、点モデルは組成、つまり
+つなぎ方として、量 $\phi_{3D}$ は場が決めて成長を駆動し、点モデルは組成、つまり
 どの菌種か、そして $\psi$ だけを決めます。各ステップで点モデルの状態を、
 菌種の和が場の量に一致するように合わせ直します。組成は応力に戻りません。
 Klempt 2024 では菌種によって変わる材料定数がないからです。ANSYS 上では、
@@ -266,13 +266,13 @@ field, background of the point model and one coupling step), for questions only.
 
 \begin{description}[leftmargin=0pt,itemsep=6pt]
 \item[Why are the stresses so small?]
-\EN The published $k_a=10^{-3}$ with $T^*\le1$ gives $\alpha\le10^{-3}$, and the
-published stiffness is $E=10$ Pa, weighted with $\varphi^2$. Stress scales
+\EN The published $k_\alpha=10^{-3}$ with $T^*\le1$ gives $\alpha-1\le10^{-3}$, and the
+published stiffness is $E=10$ Pa, weighted with $\phi^2$. Stress scales
 with both, so other values give other magnitudes, but they would no longer be
 the paper's model. (I checked $\nu=0.45$ against 0.49: the stress changes by
 27\,\% while the bulk modulus changes fivefold, so no sign of locking.)
-\JA 論文の $k_a=10^{-3}$ と $T^*\le1$ では $\alpha\le10^{-3}$ にしかならず、剛性も
-論文では $E=10$ Pa で $\varphi^2$ に比例します。応力はどちらにも比例するので、
+\JA 論文の $k_\alpha=10^{-3}$ と $T^*\le1$ では $\alpha-1\le10^{-3}$ にしかならず、剛性も
+論文では $E=10$ Pa で $\phi^2$ に比例します。応力はどちらにも比例するので、
 値を変えれば大きさも変わりますが、それはもう論文のモデルではありません。
 （$\nu=0.45$ と 0.49 を比べると、体積弾性率は 5 倍変わるのに応力の変化は 27\,\% なので、
 要素が硬くなりすぎる兆候はありません。）

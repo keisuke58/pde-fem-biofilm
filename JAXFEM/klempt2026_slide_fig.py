@@ -43,10 +43,10 @@ def main():
         pb = r["phi"] * r["psi"]
         for i in range(2):
             ax.plot(k, pb[:, i], color=SPECIES[i], lw=2.2,
-                    label=rf"species {i + 1}, $\varphi_{i + 1}\psi_{i + 1}$")
+                    label=rf"species {i + 1}, $\phi_{i + 1}\psi_{i + 1}$")
             ax.plot(k[-1], case["paper"]["phibar_end"][i], "D", ms=9, mfc="none",
                     mec=SPECIES[i], mew=2)
-        ax.plot(k, r["phi0"], color=INK, lw=1.6, ls="--", label=r"$\varphi_0$ (auxiliary)")
+        ax.plot(k, r["phi0"], color=INK, lw=1.6, ls="--", label=r"$\phi_0$ (auxiliary)")
         z = case["paper"]["phi0_zero_step"]
         ax.plot(z, 0.0, "D", ms=9, mfc="none", mec=INK, mew=2)
         ax.set(xlabel=r"time step ($\Delta t = 10^{-4}$)", ylim=(-0.04, 1.04), title=TITLES[name])

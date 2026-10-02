@@ -38,8 +38,8 @@ OUT = HERE.parent / "assets"
 DT, T, S, PHI_CAP, PHI_MIN = 0.1, 1.0, 0.15, 0.9, 1.0e-2
 CASES = {"2sp_case3": "case 3", "2sp_case6": "case 6"}
 SCENARIOS = {
-    r"seed, $\varphi_{3D} = 1$": lambda t: 1.0,
-    r"interior, $\varphi_{3D} = 0.4$": lambda t: 0.4,
+    r"seed, $\phi_{3D} = 1$": lambda t: 1.0,
+    r"interior, $\phi_{3D} = 0.4$": lambda t: 0.4,
     r"front arriving at $T^* = 0.3$": lambda t: float(np.clip((t - 0.3) / 0.5, 0.0, 1.0)),
 }
 import figstyle  # noqa: E402
@@ -76,7 +76,7 @@ def fig_schemes():
     for i, (case, cname) in enumerate(CASES.items()):
         for j, (sname, f) in enumerate(SCENARIOS.items()):
             a = ax[i, j]
-            for scheme, lab, st in (("A", "A: rescaled to $\\varphi_{3D}$", "o-"),
+            for scheme, lab, st in (("A", "A: rescaled to $\\phi_{3D}$", "o-"),
                                     ("B", "B: independent from arrival", "s--")):
                 t, c = run(case, f, S, scheme)
                 a.plot(t, c, st, ms=4, label=lab)
@@ -88,18 +88,18 @@ def fig_schemes():
             a2.grid(False)
             a2.spines["right"].set_visible(True)
             if j == 2:
-                a2.set_ylabel(r"$\varphi_{3D}$ (grey)", color="0.4")
+                a2.set_ylabel(r"$\phi_{3D}$ (grey)", color="0.4")
             else:
                 a2.set_yticklabels([])
             a.set_ylim(-0.02, 1.0)
             a.set_title(f"{cname}, {sname}", fontsize=10)
             if j == 0:
-                a.set_ylabel(r"$\chi_1 = \varphi_1/(\varphi_1+\varphi_2)$")
+                a.set_ylabel(r"share of species 1, $\phi_1/(\phi_1+\phi_2)$")
             if i == 1:
                 a.set_xlabel(r"time $T^*$")
     ax[0, 0].legend(fontsize=9, loc="lower left")
     fig.suptitle(rf"Composition of the two schemes; Klempt et al. 2026 cases; "
-                 rf"assumed: $s$ = {S}, $\varphi_{{cap}}$ = {PHI_CAP}, $\varphi_{{min}}$ = {PHI_MIN}, "
+                 rf"assumed: $s$ = {S}, $\phi_{{cap}}$ = {PHI_CAP}, $\phi_{{min}}$ = {PHI_MIN}, "
                  rf"$\Delta t$ = {DT}", fontsize=11)
     fig.tight_layout()
     fig.savefig(OUT / "fig_composition_schemes.png")
@@ -116,12 +116,12 @@ def fig_s():
             y = [run(case, f, s, "A")[1][-1] for s in s_vals]
             a.plot(s_vals, y, "o-", color=f"C{k}", label=f"A, {sname}")
             rows += [(cname, sname, "A", s, v) for s, v in zip(s_vals, y)]
-        y = [run(case, SCENARIOS[r"seed, $\varphi_{3D} = 1$"], s, "B")[1][-1] for s in s_vals]
+        y = [run(case, SCENARIOS[r"seed, $\phi_{3D} = 1$"], s, "B")[1][-1] for s in s_vals]
         a.plot(s_vals, y, "s--", color="0.3", label="B, seed")
         rows += [(cname, "seed", "B", s, v) for s, v in zip(s_vals, y)]
         a.axvline(S, color="0.6", lw=1, ls=":")
         a.set(xscale="log", xlabel=r"point-model clock $s$ (assumed)",
-              ylabel=r"$\chi_1$ at $T^* = 1$", title=cname)
+              ylabel=r"$\phi_1/(\phi_1+\phi_2)$ at $T^* = 1$", title=cname)
         a.set_xticks(s_vals)
         a.set_xticklabels([f"{s:g}" for s in s_vals])
         a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())

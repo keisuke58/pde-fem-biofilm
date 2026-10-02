@@ -75,7 +75,7 @@ def main(argv=None):
     dv = (vs[1] - vs[0]) if len(vs) > 1 else 1.0
     ext = [us[0] - du / 2, us[-1] + du / 2, vs[0] - dv / 2, vs[-1] + dv / 2]
     fig, axs = plt.subplots(1, 3, figsize=(12.5, 4.0), constrained_layout=True)
-    panels = [("alpha", "growth $\\alpha$ [-]", 1.0, "Blues", None),
+    panels = [("alpha", "growth $\\alpha - 1$ [-]", 1.0, "Blues", None),
               ("seqv", "von Mises [Pa]", pa, "Blues", None),
               ("p", "mean stress $p$ [Pa] (− compression)", pa, "RdBu_r", "div")]
     for ax, (k, lab, sc, cmap, kind) in zip(axs, panels):

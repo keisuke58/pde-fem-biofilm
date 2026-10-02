@@ -72,7 +72,7 @@
   \node[box] (a) {CLSM で測った\\菌種組成};
   \node[box, right=of a] (b) {TMCMC で較正\\5種生態モデル};
   \node[box, right=of b] (c) {成長場\\$\alpha(x)$};
-  \node[mine, right=of c] (d) {FEM 材料則\\$\bm{F}_g=(1{+}\alpha)\bm{I}$};
+  \node[mine, right=of c] (d) {FEM 材料則\\$\bm{F}_g=\alpha\bm{I}$};
   \node[mine, right=of d] (e) {von Mises 応力\\条件間比較};
   \foreach \i/\j in {a/b, b/c, c/d, d/e} \draw[ar] (\i) -- (\j);
   \node[below=6mm of d, font=\scriptsize, text=c3] (lab)
@@ -94,7 +94,7 @@
 \small 成長と粘弾性を持つ構成則を、ANSYS が要素ごとに呼ぶ材料ルーチンとして実装。
 \vspace{4pt}
 \begin{itemize}\small
-  \item 成長運動学 $\bm{F}=\bm{F}_e\bm{F}_v\bm{F}_g$、$\bm{F}_g=(1+\alpha)\bm{I}$
+  \item 成長運動学 $\bm{F}=\bm{F}_e\bm{F}_v\bm{F}_g$、$\bm{F}_g=\alpha\bm{I}$
   \item 接線剛性は $\bm{F}$ 摂動による数値微分（閉形式ではない）
   \item ANSYS の include も common block も使わない自己完結型
         $\Rightarrow$ \textbf{ANSYS のバージョンに依存しない}
@@ -153,7 +153,7 @@ Klempt et al.\ 2026 の数値例 14 件をすべて再現（誤植 2 か所も�
 \midrule
 成長層 / 基材の von Mises & $15.2$ 倍 & $\mathbf{6.3}$ \textbf{倍} \\
 条件間の応力の広がり & $9.1\%$ & $\mathbf{0.4\%}$ \\
-条件間の成長 $\alpha$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
+条件間の成長 $\alpha-1$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -182,11 +182,11 @@ Klempt et al.\ 2026 の数値例 14 件をすべて再現（誤植 2 か所も�
 \vspace{-6pt}
 \begin{itemize}\footnotesize
   \item 条件が応力に届く経路は $\alpha$ だけ（物性は全領域で同一）。
-        $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$、
-        $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ は\textbf{合計}しか見ない
-  \item CLSM 組成は割合なので全条件 $\sum_i\varphi_i=1$ から出発し、
+        $\dot\alpha = k_\alpha\,\phi_{\mathrm{tot}}$、
+        $\phi_{\mathrm{tot}}=\sum_i\phi_i\psi_i$ は\textbf{合計}しか見ない
+  \item CLSM 組成は割合なので全条件 $\sum_i\phi_i=1$ から出発し、
         同じ値（0.9635）に収束 $\Rightarrow$ \textbf{組成の違いは足し算で消える}
-  \item 差が出るのは主に活性 $\psi_i$ の初期過渡のみ（$\alpha$ の差は最大 2.4\%、
+  \item 差が出るのは主に活性 $\psi_i$ の初期過渡のみ（$\alpha-1$ の差は最大 2.4\%、
         $t\approx10^{-2}$）。長時間では 0.003\% まで閉じる
   \item 計算時刻の約 0.5\% の差も、生態の時間刻みを細かくすると\textbf{条件の順位が入れ替わる}
 \end{itemize}
@@ -204,7 +204,7 @@ Klempt et al.\ 2026 の数値例 14 件をすべて再現（誤植 2 か所も�
 \toprule
 ID & 内容 & 状況 \\
 \midrule
-A & 成長 Jacobian $\partial\sigma/\partial\varphi_i$ & \lv{cok}{実装済み}。機構的感度の議論に育てる \\
+A & 成長 Jacobian $\partial\sigma/\partial\phi_i$ & \lv{cok}{実装済み}。機構的感度の議論に育てる \\
 B & AT2 フェーズフィールド破壊 & \lv{cok}{実装済み}。$t_{\mathrm{crit}}$ と生態の結合（橋渡しは実装済み） \\
 D & 2チャンネル粘弾性 UMAT & \lv{cok}{実装済み}。時間依存性が要るなら条件スイープ \\
 C$'$ & Replicon 安定性解析（disordered-gLV） & \lv{cok}{実装済み}。小規模群集のディスバイオシス様式を執筆 \\

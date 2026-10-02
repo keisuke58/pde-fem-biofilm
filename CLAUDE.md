@@ -30,6 +30,8 @@ Abaqus run is possible here but nothing has been run here yet.
 - `tier2b_real/`, `configs/`, `runs/` — Abaqus coupon/implant job generation,
   configs, and run logs.
 - `tests/` — pytest unit tests (`pytest tests/`).
+- `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, with
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
@@ -216,6 +218,23 @@ examiners). Check each one before the document is handed over.
     a new sentence.
   - Keep bold to a few key numbers.
   - State the result plainly and let the numbers carry it.
+- **Klempt et al. 2024 is the reference this work follows.** The paper is in
+  the repository: `references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf`
+  (CC BY 4.0; searchable text in the `.txt` next to it). Check the model,
+  parameters and notation against it, not against memory or older notes.
+- **Notation as in the papers** (decided 2026-10-02), in every document and
+  figure:
+  - $\phi$ (`\phi`, not `\varphi`) for volume fractions, as printed in
+    Klempt 2024, Klempt et al. 2026 and PAMM 2023;
+  - $\alpha$ with $\mathbf F_g=\alpha\mathbf I$ and $\alpha(0)=1$ (Klempt 2024);
+    the growth is written $\alpha-1$. Do not use $\alpha_K$ or
+    $\mathbf F_g=(1+\alpha)\mathbf I$ in documents (the UMAT's internal
+    variable is $\alpha-1$; say so where code values are quoted);
+  - $k_\alpha$ for the growth rate (Klempt 2024 Eq. 34/36, Table 2);
+  - point model (Klempt et al. 2026): $\phi_i$, $\psi_i$,
+    $\bar\phi_i=\phi_i\psi_i$, $\phi_0$, $\gamma$, $\eta_i$, $c^*$, $\alpha^*$.
+    The papers have no symbol for the share of a species: write
+    $\phi_1/(\phi_1+\phi_2)$, not a new symbol such as $\chi_i$.
 - **Follow Klempt et al. 2024 (Felix) for the model and its parameters.**
   - Any value not taken from a paper must be marked as such on the slide,
     e.g. the bring-up growth rates or the partner's example-input

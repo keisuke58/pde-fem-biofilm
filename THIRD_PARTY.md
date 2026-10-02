@@ -5,7 +5,7 @@ recorded. Everything else in the tree is covered by [`LICENSE`](LICENSE) (MIT).
 
 ---
 
-## `felix_s10237-024-01883-x.pdf` — Klempt et al. (2024), the growth model this work builds on
+## `references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf` — Klempt et al. (2024), the growth model this work builds on
 
 > **A Hamilton principle-based model for diffusion-driven biofilm growth**
 > Felix Klempt, Meisam Soleimani, Peter Wriggers, Philipp Junker
@@ -17,12 +17,14 @@ recorded. Everything else in the tree is covered by [`LICENSE`](LICENSE) (MIT).
 **Licence: [Creative Commons Attribution 4.0 International (CC BY 4.0)](http://creativecommons.org/licenses/by/4.0/)**
 — Open Access funding enabled and organized by Projekt DEAL. The licence permits
 redistribution in any medium or format provided the authors and source are
-credited, the licence is linked, and any changes are indicated. **The file is
-bundled verbatim; no changes have been made to it.**
+credited, the licence is linked, and any changes are indicated. **The PDF is
+bundled verbatim; no changes have been made to it.** Next to it,
+`references/Klempt2024_Hamilton_biofilm_growth_BMMB.txt` is a plain-text
+extraction (`pdftotext -layout`) of the same article, added so the text can be
+searched; it is a change of format only, under the same licence and credit.
 
-The filename is the publisher's DOI suffix rather than anything searchable, which
-is why this entry exists: a search for `klempt2024` in the tree does not find the
-paper itself. Where the code refers to "Klempt 2024", "Eq. 34–36" or "Table 2",
+The file was renamed on 2026-10-02 from the publisher's DOI suffix
+(`felix_s10237-024-01883-x.pdf`) to a searchable name. Where the code refers to "Klempt 2024", "Eq. 34–36" or "Table 2",
 this is the document meant — see `JAXFEM/klempt2024_quantitative.py`,
 `JAXFEM/klempt2024_sensitivity.py` and `klempt2024_gap_analysis.md`.
 

@@ -1,0 +1,1160 @@
+Biomechanics and Modeling in Mechanobiology (2024) 23:2091–2113
+https://doi.org/10.1007/s10237-024-01883-x
+
+    ORIGINAL PAPER
+
+
+
+A Hamilton principle‑based model for diffusion‑driven biofilm growth
+Felix Klempt1 · Meisam Soleimani1 · Peter Wriggers1 · Philipp Junker1
+
+Received: 22 April 2024 / Accepted: 5 August 2024 / Published online: 30 September 2024
+© The Author(s) 2024
+
+
+Abstract
+Dense communities of bacteria, also known as biofilms, are ubiquitous in all of our everyday life. They are not only always
+surrounding us, but are also active inside our bodies, for example in the oral cavity. While some biofilms are beneficial or
+even necessary for human life, others can be harmful. Therefore, it is highly important to gain an in-depth understanding
+of biofilms which can be achieved by in vitro or in vivo experiments. Since these experiments are often time-consuming
+or expensive, in silico models have proven themselves to be a viable tool in assisting the description and analysis of these
+complicated processes. Current biofilm growth simulations are using mainly two approaches for describing the underlying
+models. The volumetric approach splits the deformation tensor into a growth and an elastic part. In this approach, the mass
+never changes, unless some additional constraints are enforced. The density-based approach, on the other hand, uses an evolu-
+tion equation to update the growing tissue by adding mass. Here, the density stays constant, and no pressure is exerted. The in
+silico model presented in this work combines the two approaches. Thus, it is possible to capture stresses inside of the biofilm
+while adding mass. Since this approach is directly derived from Hamilton’s principle, it fulfills the first and second law of
+thermodynamics automatically, which other models need to be checked for separately. In this work, we show the derivation
+of the model as well as some selected numerical experiments. The numerical experiments show a good phenomenological
+agreement with what is to be expected from a growing biofilm. The numerical behavior is stable, and we are thus capable of
+solving complicated boundary value problems. In addition, the model is very reactive to different input parameters, thereby
+different behavior of various biofilms can be captured without modifying the model.
+
+Keywords Growth · Biofilm · Hamilton principle · Multi-physics · Finite Element Simulation
+
+
+1 Introduction                                                              of life (Flemming and Wingender, 2010). Most of the time,
+                                                                            these microorganisms live in diverse communities attached
+With an estimated half of the biomass in the world consist-                 to an interface between two phases (e.g., solid–liquid). In
+ing of prokaryotes living in every biome of the planet, one                 literature, it is widely agreed to call this arrangement biofilm
+could say that microorganisms are the most successful forms                 (Böl et al. 2013). These biofilms do not only consist of mul-
+                                                                            tiple species of microorganisms, but also of a self-secreted
+                                                                            extracellular polymeric substance (EPS), water, a substra-
+Meisam Soleimani, Peter Wriggers and Philipp Junker have
+contributed equally to this work.                                           tum and nutrients. EPS composes itself of polysaccharides,
+                                                                            proteins, DNA, and lipids and represent of more than 90%
+* Felix Klempt                                                              of the entire organic matter inside a biofilm (Nielsen et al.
+  klempt@ikm.uni-hannover.de                                                1997; Flemming and Wingender 2010). Because of the high
+     Meisam Soleimani                                                       volume fraction of EPS, it is subject to most of the mechani-
+     soleimani@ikm.uni-hannover.de                                          cal stresses inside of the biofilm (Billings et al. 2015).
+     Peter Wriggers                                                             Due to their abundant nature, biofilms have an enormous
+     wriggers@ikm.uni-hannover.de                                           impact on human life for better or for worse. For instance,
+     Philipp Junker                                                         beneficial biofilms are used in industrial applications like
+     junker@ikm.uni-hannover.de                                             water treatment units (Soleimani et al. 2016). Harmful ones
+1
+     Institue of Continuum Mechanics, Leibniz University
+                                                                            can be found on implant surfaces among other things where
+     Hannover, An der Universität 1, 30823 Garbsen,                         they can be detrimental to the surrounding bone structure.
+     Lower Saxony, Germany
+
+
+                                                                                                                            Vol.:(0123456789)
+2092                                                                                                                F. Klempt et al.
+
+
+In addition, over 80% of microbial infections can be traced      describing them. Despite the difficulties of implementing,
+back to biofilms (Klapper & Dockery, 2010).                      mathematical models offer useful features in investigating
+   Biofilm formation can roughly be divided into four            biofilms. The development and morphology of the biofilm
+steps. At first, a conditioning film is established (Soleimani   can be predicted in a wide range of environmental condi-
+2017). Organic material starts to accumulate at the interface    tions (Hermanowicz, 2001). Since the biofilm itself consists
+between the two phases. In this step, not only the material      of individual particles, bacteria, individual-based modeling
+of which the substrate is composed is important, but also        (IBM) is a natural modeling choice. Mechanisms concerning
+the microstructure. It is shown that on rougher surfaces,        a single cell, such as division and mobility, can be investi-
+more microorganisms can adhere (Chinnaraj et al. 2021).          gated in these models. Furthermore, the explicit nature of
+In the second step, planktonic microorganisms attach to          the time integration scheme allows for parallel solvers and
+the preconditioned surface. This attachment is considered        domain decomposition, making this approach scalable as
+reversible since the biofilm can be detached by rinsing the      well as suitable for a large number of microbial agents. Sev-
+surface with water. The main forces acting here are van der      eral open-source software systems are available using this
+Waals forces. After the initial attachment, EPS is produced      approach (see Lardon et al., 2011; Li et al., 2019; Naylor
+which strengthen the currently irreversible bond between the     et al., 2017; Tack et al., 2017; Verhulst et al., 2011). Besides
+substratum and the biofilm. In this phase, the main biofilm      IBM, there are also continuum-based models describing not
+growth happens which is focus of this work. After matura-        only the individual bacterium, but also the behavior of the
+tion, parts of the biofilm detach. This can be part of a sur-    biofilm as a whole. Here, the biofilm is homogenized, mean-
+vival strategy to expand to places with more nutrition or it     ing that the material parameters are averaged over the whole
+could be due to mechanical stresses on the biofilm. Either       inside of the biofilm, whether bacteria, EPS or voids are
+way, the growth and the detachment balance each other out,       present. Rath et al. (2017) showed the precision of such an
+such that an equilibrium height in order of micrometer is        approach by combining experimental studies and numeri-
+achieved. The exact height of the equilibrium depends on         cal simulation. This second, continuum-based, approach is
+numerous factors, including nutrient supply and flow veloc-      further investigated in this work.
+ity as well as the species involved (Albero et al. 2014).           In literature, there are two prominent approaches to mod-
+   Growth in this context is defined by a change in mass         eling biological growth. The first one is commonly known
+and microstructure. Not only cell division performed by          and was developed by Rodriguez et al. (1994). The idea is to
+the microorganisms, but also their production of EPS is an       split the deformation tensor multiplicatively in an elastic and
+important factor of biofilm growth. The change in micro-         a growth part in a similar way as done in plasticity models.
+structure itself without a volume change is called remod-        Thereby, the growth part of the deformation tensor describes
+eling. Harder biological structures like bones and teeth tend    an intermediate stress-free state. That way, changes in vol-
+to remodel, whereas soft tissues tend to grow (Albero et al.,    ume are included in the model, but no changes to the mass
+2018).                                                           are present. Consequently, the density changes as a result
+   In order to gain a better understanding of the growth and     of volume change. Additional constraint, like the constant
+remodeling process, models have proven themselves to be a        density assumptions (see Soleimani, 2019), are necessary
+viable tool in analyzing complicated processes (Chaudhry         for the model to depict a change in mass, leading to a not-
+and Beg, 1998). These models are based on a mathematical         purely volumetric approach. Another way to include changes
+description, which requires careful attention, since growth      in mass into a model, the second approach, a density-based
+has to be modeled in the framework of an open system in          approach, can be used. This approach is used for example
+which the local mass produced has to be taken into account       by Waffenschmidt et al. (2012). There, an energy-driven
+(Soleimani et al. 2020). Mass added by growth can be             evolution equation is used to update the growing tissue by
+regarded as a compliant or non-compliant source of momen-        adding mass. Since the addition of mass in this approach is
+tum (Goriely 2017). Furthermore, the second law of ther-         directly linked with the addition of the equivalent amount of
+modynamics should not be violated. The thermodynamics            volume, the density can never change in the density-based
+and mechanics of growth are discussed in detail by Epstein       growth approach. In this paper, both approaches are unified
+and Maugin (2000) and Lubarda and Hoger (2002). Since            in the context of a novel hybrid formalism derived from the
+growth happens orders of magnitude slower than nutrient          stationarity principle. The interested reader is referred to
+transport or fluid flow, a common assumption is that the         Capriz and Mariano (2003) for a general theory on material
+faster processes have already reached a steady state when        modeling based on the stationarity principle. In the present
+dealing with the slower processes. This practice is called       work, an extension of the Hamilton principle is used. The
+time homogenization (Haouala & Doghri, 2015). On the             extension of the Hamilton principle was first described by
+other hand, the diverse structure already implies that bio-      Junker and Balzani (2021) to provide a unifying theory for
+films are non-homogeneous which adds other difficulties in       coupled problems and dissipative microstructure evolution
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                 2093
+
+and is extended even further in this work. The newly intro-              • The effects of gravity on the biofilm are neglected for this
+duced framework offers a physically sound strategy to derive                work.
+transient field equations for all state variables. Compared to
+classical approaches for deriving material models, like the              The basis of the mathematical description is the extended
+principle of maximum dissipation, the principle of the mini-             Hamilton principle which, as it is presented in Junker and
+mum of the dissipation potential and others, the extended                Balzani (2021), applies to coupled problems and dissipa-
+Hamilton principle provides direct access to transient field             tive microstructure evolution. The dissipation, and therefore
+equations for all internal variables. Other main advantages              entropy production, in these models is always positive. It
+are:                                                                     fulfills the first and second law of thermodynamics automati-
+                                                                         cally. This fulfillment and consistency of the laws of ther-
+• since the extended Hamilton principle derives itself from              modynamics are oftentimes not shown for biofilm growth
+  the first and second law of thermodynamics, the thermo-                models in the literature.
+  dynamical consistency is automatically ensured. Existing                  The extended Hamilton principle investigates the station-
+  phenomenological and heuristic model need to always                    arity condition with regard to all (thermodynamic) state vari-
+  check for thermodynamical consistency.                                 ables. Four state variables are chosen to model the growth—
+• coupling between variables will occur naturally without                the first ones are the displacements u = u(x) in all spatial
+  them being explicitly modeled. They may offer insights                 directions. To indicate the occurrence of biofilm in the dis-
+  which might otherwise be hard to see and thus to inves-                cretized space, a biofilm state variable 𝜙̂ = 𝜙(x)
+                                                                                                                          ̂ is intro-
+  tigate.                                                                duced. The biofilm state variable 𝜙 is normalized by divid-
+                                                                                                                ̂
+• a Hamilton-based approach directly yields holistic space-                                                ̂
+                                                                         ing by its maximum, i.e., 𝜙 = 𝜙𝜙(x)
+                                                                                                           ̂ . Hence, 𝜙 = 1 indicates a
+  time formulations which are beneficial for a proper                                                       max
+                                                                         fully dense biofilm and 𝜙 = 0 indicates a locally void space
+  numerical treatment. For more information on space-time                without biomaterial. Intermediate states 𝜙 ∈ ]0, 1[ are inter-
+  variational material modeling, the reader is referred to               preted as partially dense biofilms. Thus, the variable 𝜙 can
+  Junker and Wick (2024).                                                be interpreted as density. To indicate the presence of nutri-
+                                                                         ents at a specific place, the nutrient concentration
+                                                                         c = c(x) ∈ ]0, 1] is introduced as a third state variable. It is
+2 Multi‑physics mathematical model                                      the normalized form of the amount of nutrients in a given
+                                                                         volume, i.e., c = ĉĉ (x) . Since the biofilm state variable 𝜙 and
+In the upcoming chapter, the mathematical model is                                           max
+
+expounded. The presented model is based on two main                      the nutrient concentration c are normalized, they are dimen-
+assumptions. The first one is that growth and remodeling                 sionless. The fourth state variable used in this model is the
+strongly impact both, the potentials in the biological body as           local expansion parameter 𝛼 , which is also dimensionless. It
+well as the work along the process. The second assumption                describes the local expansion of the biofilm according to the
+states that the energy necessary for growth is provided by               volume-based approach.
+nutrients. For the mathematical description, however, more
+assumptions are necessary, which are listed below.                       2.1 Kinematics of growth
+• Only one species of bacteria is taken into account to                  In this section, the kinematics of the model are explained.
+    prove the general concept of the modeling approach. The              Similar to finite strain plasticity, the deformation gradi-
+    biofilm is furthermore homogenized. Voids and EPS are                ent is split into a growth part and an elastic part such that
+    thus condensed in the continuous biofilm formulation.                F = Fe ⋅ Fg . This kinematic split was first introduced into
+•   The growth formulation is based on the hyperbolic                    biomechanics by Rodriguez et al. (1994). It is exemplified
+    Monod equation (Monod, 1949).                                        in Fig. 1.
+•   The mechanical contribution which emerges automati-                     In further analogy to elasto-plasticity, a strain energy func-
+    cally from the Hamiltonian formulation is deemed to be               tion is based on the elastic part. The growth part is constructed
+    small in comparison with other growth mechanisms and                 with the local expansion parameter 𝛼 in the form of Fg = 𝛼 I,
+    thus omitted from the model.                                         where I is the identity tensor, i.e., isotropic growth is assumed.
+•   Since biofilms consist of up to 98% water (Flemming &                The local expansion parameter 𝛼 itself is governed by an evolu-
+    Wingender, 2001), incompressible material behavior can               tion equation which stems from the stationarity of the Hamil-
+    be assumed.                                                          ton functional H with respect to 𝛼. The evolution equation of
+•   Due to vastly different time scales of the diffusion pro-            𝛼 connects the local expansion parameter 𝛼 with the non-local
+    cess of the nutrients and the growth process, a steady               biofilm state variable 𝜙. The derivation is shown in section 2.4.
+    state of already diffused nutrients is assumed.
+2094                                                                                                                                     F. Klempt et al.
+
+
+                                                                            E + K = W + Q + B + cint                                                 (3)
+                                                                            with the mechanical work W , the thermal work Q, the bio-
+                                                                            logical work B and some integration constant cint . The inte-
+                                                                            gration constant is set to cint = 0 since it only represents the
+                                                                            energy of an arbitrary reference state. This reduces Equation
+                                                                            (3) to
+                                                                            E + K = W + Q + B.                                                       (4)
+                                                                            The inner energy consists of the total free energy as well
+                                                                            as the heat. Integrated over the whole body Ω0 , it can be
+                                                                            written as
+
+
+                                                                                 ∫                  ∫
+                                                                            E=            ̄ dV +
+                                                                                       𝜌0 Ψ              Θ ρ0 s̄ dV,
+                                                                                                                                                     (5)
+Fig. 1  Visualization of the kinematic split after Soleimani (2017)              Ω0                Ω0
+
+                                                                            where Ψ   ̄ is the mass specific free energy density which
+                                                                            depends on the current physical state, e.g., the microstruc-
+The growth part of the deformation gradient Fg maps a point
+                                                                            ture and deformation. The temperature is denoted by Θ and
+X from the reference configuration Ω0 onto an intermediate,
+                                                                            the mass specific entropy by s̄ . The initial density is referred
+stress-free configuration Ωg . This introduced intermediate
+                                                                            to as 𝜌0 . The kinetic energy is given by
+configuration may not be compatible since parts may overlap
+or holes may be created within this configuration. The elastic
+                                                                                 ∫ 2 0
+                                                                                   1
+part of the deformation tensor Fe then maps this intermediate
+                                                                            K=       𝜌 ‖u‖
+                                                                                        ̇ 2 dV.
+                                                                                                                                                     (6)
+configuration Ωg onto the current configuration Ωt to arrive at a                Ω0
+
+physically sound, grown state. The elastic right Cauchy–Green
+                                                                            The mechanical and thermal work are commonly described
+deformation tensor as well as its isochoric counterpart can be
+                                                                            by
+expressed as
+
+                                                                                  ∫                     ∫
+Ce = FTe ⋅ Fe ,       ̃ e = (det [Fe ])−2∕3 Ce .
+                      C                                               (1)   W=          f∗ ⋅ u dV +          t∗ ⋅ u dA.
+                                                                                                                                                     (7)
+                                                                                  Ω0                 𝜕Ω0
+
+
+2.2 Extended Hamilton principle
+                                                                                      ∫ ∫                          ∫ ∫
+                                                                            Q=−                ∇X ⋅ q∗ d̄t dV +             h∗ d̄t dV.
+                                                                                                                                                     (8)
+The following chapter explains in detail the derivation of                            Ω0 t ⋆                       Ω0 t ⋆
+the extended Hamilton principle and the adjustments neces-
+sary to model biofilm growth. All equations are given in the                The work performed by external traction forces t∗ and body
+reference configuration, if not explicitly stated otherwise.                forces f∗ as well as the heat flux vector q∗ and the heat source
+The first law of thermodynamics, i.e., the balance of energy,               h∗ are marked with a star to indicate variables which are
+states that the rate of the total energy equals the power due               applied externally on the biofilm and have to be modeled
+to external loads.                                                          to set the boundary value problem. Consequently, these
+                                                                            quantities are assumed to be constant (dead loads) and thus
+Ė + K̇ = Pmech + Ptherm + Pbio                                       (2)   unaffected during the calculation of variations. The biologi-
+Here, Ė is the change of the inner energy and K̇ is the change             cal work B is modeled analogously to the mechanical work
+of the kinetic energy. On the right-hand side, the mechanical               performed on the body.
+power Pmech , the thermal power Ptherm and the biological
+                                                                                 ∫                   ∫
+power Pbio change the total energy of the system E + K. The                 B=         h∗𝜙 𝜙 dV +           g∗c c dV,
+                                                                                                                                                     (9)
+biological power Pbio is introduced to include all processes                     Ω0                 Ω0
+related to the change in energy performed by biological pro-
+cesses, such as growth and consumption. After integrating                   where h∗𝜙 is the growth term, describing the growth of the
+(2) over time, one obtains                                                  biofilm and g∗c is the consumption term describing the con-
+                                                                            sumption of nutrients. Similar to the forces 𝐟 ∗ and 𝐭 ∗ in the
+                                                                            formulation of the mechanical work having an effect on
+                                                                            the displacement u of the body Ω0 , the growth term h∗𝜙 and
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                                              2095
+
+consumption term g∗c are having an effect on the biofilm                             Junker and Balzani (2021). The total potential is then intro-
+state variable 𝜙 and the nutrients c. Both terms have to be                          duced as
+modeled. The modeling approach presented in this work is
+                                                                                     G≔
+                                                                                          �                   �                      �
+stated in chapter 2.3.2. The second law of thermodynamics                                          ̄ dV −
+                                                                                                𝜌0 Ψ               f∗ ⋅ u dV −                t∗ ⋅ u dA.
+                                                                                                                                                                    (13)
+accounts for the irreversible flow of temperature in a non-                               Ω0                  Ω0                    𝜕Ω0
+universal direction.
+                                                                                     With the reformulations and the introduction of the second
+     𝜌 s̄ dV ≥ 0
+Dt � 0
+D                                                                                    law of thermodynamics mentioned above, the balance of
+                                                                              (10)
+     Ω0
+                                                                                     energies can be rewritten as
+
+
+                                                                                                     ∫ ∫                          ∫ ∫ Θ
+                                                                                                                                      1 ∗
+With the material time derivative in the reference configu-                          K+G=B−                   Θ̇ 𝜌0 s̄ d̄t dV −         q ∇X Θ d̄t dV − D.
+ration Dt
+       D
+          ≔ 𝜕t𝜕 . Two bodies which can exchange energy and                                           Ω   t⋆                       Ω      t⋆
+are of different temperature will always compensate their                                                                                                           (14)
+thermal differences by increasing the temperature of the                             Since biofilms consist of up to 98% water (Flemming and
+colder body while decreasing the temperature of the warmer                           Wingender 2001), incompressible material behavior can
+body. This means, the heat energy, or entropy, in an adi-                            be assumed. This assumption leads to the condition that
+abatic system can never decrease. The entropy can change                             det [Fe ] = 1, which is enforced by the constraint functional
+in time due to entropy flux, an entropy source and entropy
+
+                                                                                          ∫
+production Δs. We assume the entropy flux to be Θq and the                           C=         p (det [Fe ] − 1) dV
+                               ∗                                                                                                                                    (15)
+entropy source to be hΘ The entropy production Δs accounts                                Ω0
+for the entropy production of dissipative processes related
+to growth. With that, the balance of entropy can be written                          where p is the Lagrange parameter, which itself can be
+after integration by parts as                                                        interpreted as hydrostatic stress. This assumption implies
+                                                                                     ̃ e = Ce as can be seen from Eq. 1. The functional is neces-
+                                                                                     C
+                                                                                     sarily zero, thus it can be added onto Eq. 14 which gives
+∫                     ∫ ∫                              ∫ ∫
+      Θ 𝜌0 s̄ dV −             ∇X ⋅ q∗ d̄t dV +                 h∗ d̄t dV =
+
+                                                                                                         ∫ ∫                        ∫ ∫ Θ
+Ω0                    Ω0 t ⋆                           Ω0 t ⋆                                                                           1 ∗
+                                                                                     K+G+C=B−                      Θ̇ s̄ d̄t dV −         q ∇X Θ d̄t dV − D.
+
+     ∫ ∫                           ∫ ∫ Θ
+                                       1 ∗
+−             Θ̇ 𝜌0 s̄ d̄t dV −          q ∇X Θ d̄t dV                                                   Ω0 t ⋆                     Ω0 t ⋆
+                                                                                                                                                                    (16)
+     Ω0 t ⋆                        Ω0 t ⋆
+                                                                                     The energy balance can then be inserted into the action
+     ∫ ∫
+−             ΘΔs d̄t dV,                                                            functional
+
+                                                                                     A≔
+     Ω0 t ⋆
+
+                                                                                           �u �Ω0                     �𝜏 �Ω0                               �𝜏
+                                                                              (11)                  𝜌u̇ dV du =                  ̇ 2 dV dt =
+                                                                                                                               𝜌‖u‖                             2K dt
+see Junker and Balzani (2021). Once energy is transformed
+                                                                                                                                                                    (17)
+                                                                                     with the time interval 𝜏 ≔ {0, T}, where T denotes the end
+into heat energy, it can only partly be transformed back into
+its original form of energy. The process of losing part of the
+energy in every process is called dissipation. The dissipated                        time point. Inserting Eq. 3 in A results in the Hamilton
+energy can be described as                                                           functional
+
+
+          ∫ ∫                        ∫                                                     ∫𝜏                                                                       (18)
+D=                 ΘΔs d̄t dV=∶             Ddiss dV                                 H=         (K − G − C + B − D) dt.
+                                                                              (12)
+       Ω0     t⋆                    Ω0
+                                                                                     With the assumption of a quasi-static and isothermal pro-
+with the dissipated energy Ddiss which is modeled as                                 cess, i.e., K = 0, Θ̇ = 0 and ∇X Θ = 0, H simplifies to
+Ddiss ≔ pdiss,∗ ⋅ 𝝃 . Here, 𝝃 denotes the vector of internal
+
+                                                                                           ∫
+(thermodynamic) state variables needed to describe the                               H=         (G + C − B + D) dt → stat.                                          (19)
+physical system. The non-conservative forces are computed                                                                      u,𝝃
+
+as pdiss,∗ ≔ 𝜕Δ𝜕𝝃̇ with the dissipation function Δdiss , which
+                diss                                                                       𝜏
+
+                                                                                     More details on the extended Hamilton principle including
+needs to be modeled. In this work, a rate-dependent micro-
+                                                                                     non-isothermal processes can be found in Junker and Balzani
+structure evolution is assumed which leads to the dissipative
+                                                                                     (2021) and Junker and Wick (2024).
+function modeled to be Δdiss = 𝜂2 ‖ ̇ ‖2
+                                  ‖𝝃 ‖ . Further information
+for the modeling of the dissipative function can be found in
+2096                                                                                                                                    F. Klempt et al.
+
+
+2.3 Material model                                                   possible. The dimensionless orientation function indicates,
+                                                                      as the name suggests, the orientation of maximal growth. In
+2.3.1 Energy density function                                        this work, an orientation function is chosen which promotes
+                                                                      growth in the direction of the biggest nutrient gradient
+The material behavior has to be defined by an appropriate
+                                                                      o(∇X 𝜙, ∇X c) ≔ n∇𝜙 ⋅ n∇c                           n∇c ≔
+                                                                                                                                   ∇X c
+energy density function of the system. The energy chosen                                                          where
+                                                                                                                                  ‖∇ c‖
+in this contribution is                                                                                                           ‖ X ‖
+                                                                                                                                                  (23)
+                                                                                     n∇𝜙 ≔
+                                                                                                  ∇X 𝜙
+      𝜇              1           1                                      and                                   .
+Ψ = 𝜙2 (I ∶ Ce − 3) + 𝛽̄ ‖ ∇ 𝜙‖ + d̄ ‖
+                               2
+                                      ∇ c‖ − k̄ 𝛼 𝛼 𝜙.
+                                          2                                                      ‖∇ 𝜙‖
+      2              2 ‖ X ‖     2 ‖ X ‖                                                         ‖ X ‖
+                                                              (20)
+                                                                      For the consumption, the simplest possible functional
+The energy density Ψ = 𝜌0 Ψ measured in m3 consists of sev-
+                              ̄              J
+                                                                      dependency, a linear relation, is chosen, i.e.,
+eral different terms—the first one describes the mechanical
+behavior with the shear modulus 𝜇 in MPa and the identity             g∗c = ḡ 𝜙                                                                  (24)
+matrix I . Since the surrounding void is assumed to possess
+                                                                      where g is the consumption factor with units of mJ3 . The
+no mechanical stiffness, only the biofilm with the biofilm
+                                                                      higher the consumption factor g, the more consumption hap-
+state variable 𝜙 is linked quadratically to this term. It is
+                                                                      pens if biofilm is present.
+worth mentioning that the nonlinear dependence causes
+a non-convexity of the related condensed energy. In turn,
+localization of 𝜙 is intended. Both, the biofilm state variable
+                                                                      2.4 Evolution equations
+𝜙 and the nutrients field variable c have a diffusion term
+                                                                      After inserting the energy and the growth term into the
+which regularizes the phase field with the parameters 𝛽̄ and
+                                                                      extended Hamilton functional, its stationary condition with
+d̄ , respectively. Both have Newton as their unit. The last
+                                                                      respect to the variables {u, 𝝃} = {u, 𝜙, c, 𝛼}
+term describes energy stored when local growth has evolved
+inside of the biofilm, i.e., 𝛼 > 0, 𝜙 > 0, providing the link-        𝛿H = 𝛿u H + 𝛿𝜙 H + 𝛿c H + 𝛿𝛼 H = 0                        ∀ 𝛿u, 𝛿𝜙, 𝛿c, 𝛿𝛼
+age between the expansion parameter 𝛼 and the non-local                                                                                       (25)
+biofilm state variable 𝜙. It is scaled with the factor k̄ 𝛼 . It is
+                                                                      needs to be evaluated. For the displacements, i.e., 𝛿u H = 0,
+given in mJ3 .
+                                                                      this leads to the principle of virtual work.
+
+
+                                                                                 ∫ 𝜕C e            ∫              ∫
+                                                                                   𝜕Ψ
+                                                                      𝛿u H =            ∶ 𝛿Ce dV −   f∗ ⋅ 𝛿u dV −   t∗ ⋅ 𝛿u dA
+2.3.2 Growth term h∗ and consumption term g∗c
+                                                                                 Ω0                               Ω0              𝜕Ω0
+
+The second quantity which needs to be modeled is the
+                                                                                      ∫
+                                                                                 +           p det[Fe ] F−T
+                                                                                                         e ∶ 𝛿Fe dV = 0             ∀𝛿u
+growth term h∗ϕ in B in Eq. 9. It can be chosen to account                                     ⏟⏞⏞⏞⏞⏟⏞⏞⏞⏞⏟
+                                                                                      Ω0
+for a variety of different growth approaches and possesses                                         = cof Fe
+
+the unit mJ3 . We model it as                                                                                                                     (26)
+                                                                      For the state growth variables 𝜙 and the concentration vari-
+h∗ϕ ∶= r̃ (c) o(∇X 𝜙, ∇X c).                                  (21)    able c, the stationarity conditions follow as
+It consists of a growth function r̃ (c) and an orientation func-
+                                                                                ∫ 𝜕𝜙         ∫ 𝜙
+                                                                                  𝜕Ψ
+                                                                      𝛿𝜙 H =         𝛿𝜙 dV −   h∗ 𝛿𝜙 dV
+tion o(∇X 𝜙, ∇X c). The growth function r̃ (c) is modeled with
+the Monod relation (see Monod (1949)) as
+                                                                                Ω0                      Ω0
+
+
+                                                                                ∫ 𝜕∇X 𝜙              ∫ 𝜙
+                                                                                   𝜕Ψ
+                                                                            +           ⋅ ∇X 𝛿𝜙 dV +   pdiss,∗ 𝛿𝜙 dV
+r̃ (c) = ‖    ‖ r̄ c                                          (22)
+         ‖∇X 𝜙‖ k + c ,                                                         Ω0                                Ω0
+
+
+                                                                                     ∫
+                                                                            i.b.p.
+where r̄ and k are material constants. While r̄ has the unit                 =             [𝜙𝜇 (I ∶ Ce − 3) + h∗𝜙 − k̄ 𝛼 𝛼 − 𝛽̄ ∇2X 𝜙 + 𝜂𝜙 𝜙̇ ]𝛿𝜙 dV
+ J
+m2
+   , the material constant k is dimensionless. The Monod                             Ω0
+
+equation is weighted with the norm of the gradient of the
+                                                                                     ∫
+                                                                                +          𝛽̄ n ⋅ ∇X 𝜙 𝛿𝜙 dA = 0          ∀𝛿𝜙
+biofilm state variable 𝜙 . The choice of including the norm                          𝜕Ω0
+of the gradient of 𝜙 promotes growth in the interface of bio-                                                                                     (27)
+film and void. In turn, no non-local growth may happen in
+                                                                      and
+a region with homogeneous biofilm variable. As we will
+see later, local expansion, i.e., density-based growth, is still
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                              2097
+
+
+                                                                                   stress is present. Also mechanical stress and cell prolifera-
+          ∫
+                   𝜕Ψ
+𝛿c H =                𝛿c dV
+          Ω0
+                   𝜕c                                                              tion in biofilm is correlated, (see Chu et al. 2018). This link,
+                                                                                   however, is deemed to be very small in comparison with
+          ∫ 𝜕∇X c              ∫ c              ∫
+             𝜕Ψ
+      +           ⋅ ∇X 𝛿c dV +   pdiss,∗ 𝛿c dV + g∗c 𝜙 𝛿c dV                       the growth due to other stimuli such as the concentration
+          Ω0                         Ω0                   Ω0
+                                                                                   of nutrients surrounding the biofilm. In other words, the
+                                                                                   mechanical stiffness 𝜇 is assumed to be orders of magnitude
+               ∫                                  ∫
+      i.b.p.
+       =                   ̄ 2 c + 𝜂c c]𝛿c
+                    [̄g𝜙 − d∇         ̇    dV +       ̄ ⋅ ∇X c 𝛿c dA = 0,
+                                                      dn                    ∀𝛿c
+                              X
+               Ω0                             𝜕Ω0                                  smaller than every other parameter. Thus, mechanical influ-
+                                                                            (28)   ence on the growth in Eq. 30 is neglected, yielding
+respectively. The abbreviation “i.b.p.” is used to indicate                        {
+                                                                                               ̄ 2 𝜙 − k̄ 𝛼 𝛼 + r̃ (c) o(∇X 𝜙, ∇X c) = 0 ∀X ∈ Ω0
+                                                                                       𝜂𝜙 𝜙̇ − 𝛽∇
+where integration by parts was used.                                                             X
+                                                                                       n ⋅ ∇X 𝜙                                      = 0 ∀X ∈ 𝜕Ω0
+
+Remark 1 The growth term h∗ϕ has a direct dependency on                                                                                             (33)
+the variables c, ∇X c, ∇X 𝜙 i.e., h∗ϕ = h∗ϕ (c, ∇X c, ∇X 𝜙). For the               As mentioned above, the process of diffusion of nutrients is
+computation of the stationarity condition, this dependency                         a very fast process in comparison with the growth of bio-
+is disregarded because the growth term h∗ϕ does not adjust                         films. This is why time homogenization is used. In math-
+                                                                                   ematical terms, the viscosity parameter of the biofilm state
+itself to turn H stationary. It is imposed as a material prop-
+                                                                                   variable and the expansion parameter is much larger than
+erty of the biofilm which needs to be modeled. In general,
+                                                                                   the viscosity parameter of the nutrients, i.e., 𝜂𝜙 ≫ 𝜂c and
+an arbitrary h∗ϕ can be chosen as long as it is not dependent
+                                                                                   𝜂𝛼 ≫ 𝜂c, i.e., a steady state for the concentration of nutrients.
+on the rate of any internal variable. A suitable h∗ϕ , however,                    After dividing Eqs. 33, 31 and 32 by their respective viscos-
+consists only of parameters with a physical interpretation.                        ity parameter, the set of evolution equation emerges, which
+Thus, we assume an unidirectional coupling between 𝜙 and                           is used for calculation.
+c: the nutrient field variable c is not influenced by the biofilm                  {
+state variable 𝜙. Equivalently, the same is true for the con-                          𝜙̇ − 𝛽∇2X 𝜙 − k𝛼 𝛼 + ‖    ‖ rc
+                                                                                                            ‖∇X 𝜙‖ k+c n∇𝜙 ⋅ n∇c = 0   ∀X ∈ Ω0
+                                                                                                                                                    (34)
+sumption g∗c = g∗c (c).                                                                n ⋅ ∇X 𝜙 = 0 ∀X ∈ 𝜕Ω0
+
+   The final part of the variation is                                              {
+                                                                                       ċ − d ∇2X c + g𝜙 = 0 ∀X ∈ Ω0
+          [                ]                                                                                                                        (35)
+                                                                                       n ⋅ ∇X c = 0 ∀X ∈ 𝜕Ω0
+       ∫ 𝜕𝛼
+            𝜕Ψ      diss,∗
+𝛿𝛼 H =          + p𝛼         𝛿𝛼 dV = 0                         ∀𝛿𝛼.         (29)
+               Ω0                                                                  {
+                                                                                       𝛼̇ − k𝛼 𝜙 = 0   ∀X ∈ Ω0                                      (36)
+These stationarity conditions leave us with the local evolu-
+tion equations for the biofilm state variable 𝜙 , the nutri-                       For the computations, we set 𝜂c = 10−10 . Since we also set
+ent concentration c and the local expansion parameter 𝛼 as                         𝜂𝜙 = 𝜂c , kα stays the same in Eq. 34 and in Eq. 36. Parame-
+shown below.                                                                       ters which have been divided by their respective 𝜂 will lose
+                                                                                   their bar, i.e., ∙ = 𝜂∙̄ .
+⎧ 𝜂 𝜙̇ − 𝛽∇
+          ̄ 2 𝜙 − k̄ 𝛼 𝛼 + r̃ (c) o(∇X 𝜙, ∇X c)
+⎪ 𝜙         X
+⎨            +𝜙𝜇 (I ∶ Ce − 3) = 0 ∀X ∈ Ω0                                   (30)
+⎪ n ⋅ ∇X 𝜙 = 0 ∀X ∈ 𝜕Ω0                                                            3 Numerical implementation
+⎩
+
+{                                                                                  The adopted numerical method is based on the standard
+    𝜂c ċ − d̄ ∇2X c + ḡ 𝜙 = 0 ∀X ∈ Ω0                                            Galerkin FEM. The topology of the utilized element is a
+                                                                            (31)
+    n ⋅ ∇X c = 0 ∀X ∈ 𝜕Ω0                                                          brick with eight nodes. There exist five unknowns per corner
+                                                                                   node, namely the displacements u = (u, v, w)T , the concen-
+{
+    𝜂𝛼 𝛼̇ − k̄ 𝛼 𝜙 = 0 ∀X ∈ Ω0                                              (32)   trations of nutrients c, and the biofilm state variable 𝜙. The
+                                                                                   hydrostatic stress p is treated as a constant over the entire
+In these equations, 𝜂𝜙 , 𝜂c and 𝜂𝛼 are the dynamic viscosity                       element. The chosen finite element formulation is equiva-
+                                       k
+parameters with a unit of s mg . From Eq. 30, it can be seen that                  lent to a standard H1P0 element in which the interpolation
+biofilm growth is coupled with the mechanical load. This                           function for the rest of the field variables is assumed to be
+link implies that growth is happening, where mechanical                            linear. A static condensation scheme is utilized to eliminate
+2098                                                                                                                                          F. Klempt et al.
+
+the hydrostatic stress at the element level. Additionally, the                              an algorithm for the update of field variables at the cur-
+variable 𝛼 which is defined as an internal local variable at                                rent time step, namely un+1 , vn+1 , wn+1 , cn+1, and 𝜙n+1. The
+the Gauss points is governed by the evolution equation 36                                   subscript n + 1 highlights the association of the variable
+obtained from the Hamilton principle.                                                       with the current time step. Similarly, the previous values
+   The weak form of the governing equations presented                                       of the variables are denoted by n in the subscript. For the
+in Eqs. 26, 27 and 28 provide the basis for the numeri-                                     sake of conciseness and clarity, the numerical algorithm
+cal implementation. The implementation of the multi-                                        (pseudocode) is summarized in Table 1.
+field problem in hand was carried out using AceGen,
+see (Korelc and Wriggers 2016), which is a package in
+MATHEMATICA for automatic differentiation. Lineariz-                                        4 Numerical examples
+ing the weak forms gives the stiffness matrix that can be
+tailored to a user element in FORTRAN an implemented                                        In the following chapter, selected results of numerical simu-
+in any FEM solver. Here, ANSYS is used for this pur-                                        lations of the model will be presented to verify the validity
+pose. The objective of the numerical strategy is to find                                    of the model. For the numerical examples, parameters have
+
+
+Table 1  Implementation
+algorithm in the AceGen          1. Interpolate the field variables DI (components of displacement, concentration, density) using standard
+                                   linear FEM shape functions NI
+                                      ∑M
+                                 D = I NI DI , DI ∶= uI , vI , wI , p, cI , 𝜙I M :number of nodes
+                                         ⋃N         �                                                �
+                                 𝔻e ∶= I DI = u1 , v1 , w1 , c1 , 𝜙1 , ..., uN , vN , wN , cN , 𝜙N ,
+                                 2. Initialize the global Newton–Raphson using
+                                 Fe(n+1) = Fn+1 ⋅ F−1
+                                                    g(n)
+                                 Je(n+1) = det(Fe(n+1) )
+                                                       2
+                                 ̃ e(n+1) = J − 3 FT
+                                 C                         ⋅ Fe(n+1)
+                                             e(n+1) e(n+1)
+
+                                       Compute Ψn+1 using Eq. 20 and 𝔻e(n+1) as well as 𝛼n
+                                                           𝜕Ψn+1
+                                 𝝈 n+1 = J 1                       FTe(n+1)
+                                             e(n+1) 𝜕Fe(n+1)
+
+
+                                 3. Local equation (at Gauss point): ℝ𝛼 = 0
+                                 a. Solve the local problems, namely Eq. 36, at Gauss points to find the internal variables 𝛼n+1
+                                        (𝛼       −𝛼 )          k (𝜙n+1 −𝜙n )
+                                 ℝ𝛼 = (1+𝛼
+                                        n+1  n
+                                            )Δt
+                                                − 𝜂α                 Δt
+                                                 n+1            𝛼
+
+                                 b. Update Je(n+1), Fg(n+1) and Fe(n+1)
+                                 c. Compute A = 𝜕𝔻n+1 which is later needed for the tangent computation (step 5)
+                                                               𝜕𝛼
+                                                                    e
+                                 4. Compute 𝛿H using Eq. 25
+                                 𝛿H = ∫Ω [Se(n+1) ∶ 𝛿Ce(n+1) + (Je(n+1) − 1)𝛿pn+1 ] dv
+                                 + ∫Ω [d ∇cn+1 ⋅ ∇𝛿cn+1 + g 𝛿cn+1 ] dv
+                                 + ∫Ω [𝛽 ∇𝜙n+1 ⋅ ∇𝛿𝜙n+1 + 𝜂𝜙 n+1Δt n+1 𝛿𝜙n+1 − r k+cn+1
+                                                                               𝜙t   −𝜙t−1             c         ∇𝜙n+1 ⋅∇cn
+                                                                                                                  |∇cn |
+                                                                                                                           𝛿𝜙n+1 ] dv
+                                                                                                          n+1
+
+
+                                 5. Compute the residuum vector of the element ℝe = 𝜕𝛿𝔻
+                                                                                    𝜕𝛿H
+                                                                                                                   e
+                                 6. Compute the element stiffness matrix taking into account the local internal variables
+                                        𝜕ℝ
+                                 𝕂e = 𝜕𝔻e | 𝜕𝛼 =A
+                                             e    𝜕𝔻e
+
+
+                                 7. Do the static condensation (Schur complement) for the pressure degree of freedom (p) in the element
+                                   stiffness matrix 𝕂e which has been expressed in terms of submatrixes KDD , KDp , KpD and Kpp
+                                        [          ]
+                                          K   K             Schur complement
+                                 𝕂e = DD Dp                                           � 𝕂e = [KDD − KDp Kpp
+                                                         �����������������������������→                    −1 K ]
+                                          KpD Kpp 41×41                                                          pD 40×40
+
+                                                                                                  ⋃all elements
+                                 8. Global Newton–Raphson iteration: (ℝ, 𝔻, 𝕂) =                                (ℝe , 𝔻e , 𝕂e )
+                                        DO WHILE ‖ℝ‖ ≥ tol (check the global convergence)
+                                        Repeat steps (2) to (6)
+                                      𝔻 ⇐ 𝔻 + Δ𝔻, Δ𝔻 = −𝕂−1 ℝ
+                                      END DO
+                                 9. Go to the next time step and start from step (2)
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                   2099
+
+Table 2  Parameter used in subsequent simulations. The shear modu-
+lus 𝜇 is equivalent to a Young’s modulus E = 10 Pa and Poisson ratio
+𝜈 = 0.49 (Soleimani, 2019)
+Parameter                                        Value       Units
+
+Shear modulus                             𝜇      3.3557      Pa
+nutrient diffusivity                      d      10  10
+                                                             𝜇m2 ⋅ T∗−1
+Phase-field regularization parameter      𝛽      2           𝜇m2 ⋅ T∗−1
+Growth factor                             kα     10−3        T∗−1
+Half-velocity constant                    k      1           -
+Consumption parameter                     g      108         T∗−1
+Growth parameter                          r      100         T∗−1
+
+
+
+been chosen that provide a good phenomenological match
+to biofilm growth. These parameters are listed in Table 2. If             Fig. 2  Schematic figure of the boundary conditions. The position of
+a simulation, presented in the following, deviates from these             the nodes where 𝜙 = 1 is colored red whereas the position of nodes
+                                                                          where c = 1 is colored green
+values, it is explicitly stated. The time step in all simulations
+was defined by substeps. The nominal amount of substeps
+was 103, if the simulation did not converge; however, bisec-              sphere increases. The development of three variables, the
+tion occurred automatically up to a maximum amount of                     biofilm state variable 𝜙, the nutrient concentration c and the
+substeps of 106 . Biofilm formation time can vary widely                  hydrostatic stress p, is depicted in Table 3. The pictures in
+based on nutrient availability or species of microorganisms               the table show the same diagonal cut through the cubic
+involved. To account for differences in time, a normalized                domain. The cut is performed diagonally through the middle
+time T∗ = t t , with the actual time t and a reference time tref          of the domain in such a way that the corner with the applied
+                                                                          nutrients is at the top right. In the first column, the biofilm
+              ref
+which is chosen based on the conditions for growth at hand
+such that the normalized time T∗ ∈ [0, 1].                                state variable 𝜙 is plotted. As in Fig. 3, the growth toward
+                                                                          the nutrients can be seen clearly. This directional growth
+                                                                          stems from the formulation of h∗𝜙 = r k+c    c
+                                                                                                                         ∇X 𝜙 ⋅ n∇c which
+4.1 Test case 1: directional growth                                      contains the product of gradients of the nutrient concentra-
+                                                                          tion c and of the biofilm state variable 𝜙 . Thus, growth in
+For the first boundary value problem, a cube with the dimen-              the direction of the steepest gradient of nutrient concentra-
+sions of 20 × 20 × 20𝜇m is discretized. The dimensions of                 tion is enhanced which is supported by experimental obser-
+the mesh are 1𝜇m in each direction.                                       vations in Hornung et al. (2018). In the simulation results,
+   The biofilm state variable 𝜙 is applied as a constant value            there is another observation which can be traced back to the
+of 𝜙 = 1 to all nodes within a radius of 5𝜇m at the center of             formulation of h∗𝜙
+the cube. In one of the corners, the value of the nutrients is               Since there is also a gradient of the nutrients in the
+fixed to be c = 1 at all times to provide the nutrients neces-            opposite side of the biofilm, i.e., toward the corner, oppo-
+sary for growth. These boundary conditions are visualized                 site to where the nutrient concentration is set to c = 1, the
+in Fig. 2.                                                                biofilm growth is also enhanced in this direction resulting
+   Figure 3 shows a 3D rendering of all the values of 𝜙 ≥ 0.8             in a slight egg-like shape. The egg-like shape can also be
+at different times of the simulation. It can clearly be seen that         observed in Fig. 3. There is less growth on the sides of the
+the biofilm state variable 𝜙 evolves toward the corner with               biofilm facing the other corners of the cube because of the
+nutrient source. Additionally, the volume of the center                   nature of the vector product between the two gradients.
+2100                                                                                                           F. Klempt et al.
+
+Fig. 3  Simulation results at
+different times of the first test
+case. The isosurface, where the
+biofilm state variable is 𝜙 ≥ 0.8,
+is shown. The biofilm is grow-
+ing toward the top left corner
+where the nutrient variable is
+set constant to c = 1
+
+
+
+
+At these sides, the gradient of biofilm and the gradient of    reach zero but rather an equilibrium state where as much
+nutrients are almost perpendicular to each other resulting     nutrients are getting depleted as can diffuse through the
+in a small value for the vector product and consequently       domain. The equilibrium state is being approached by the
+in minimal to no growth. Regardless, an overall increase       termination of the simulation, which is illustrated in the
+in the spheres volume can be observed, as mentioned            graph depicted in Fig. 4.
+before. In the second column of Table 3, the nutrients are        The graph shows the average nutrients throughout the
+portrayed. Since the diffusion is a fast process in relation   whole domain in blue and the average biofilm state vari-
+to growth, the nutrients are already diffused through the      able in the whole domain in red. The nutrients tend to an
+whole domain at the start of the simulation at 5% of the       equilibrium state at an average nutrients value of around
+simulation time. While the growth of the biofilm takes         10%. In accordance to the Monod relation used in the for-
+place, the nutrients are getting depleted. Depletion first     mulation of h∗𝜙 , the biofilm state variable first grows rap-
+takes place in the section of the biofilm furthest from the    idly before the growth rate decelerates and also tends to
+source of nutrients which results ultimately in the already    an equilibrium state. In this case, the equilibrium is not
+complex interactions between the two gradient vectors.         achieved and the whole domain would fill up with biofilm
+Since new nutrients are always diffusing from the top cor-     if continued. In the third column in Table 3, the hydro-
+ner, the amount of total nutrients in the domain will never    static stress p can be seen. Inside the biofilm, hydrostatic
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                        2101
+
+Table 3  Variable distribution            time        biofilm state variable φ [-]    nutrient concentration c [-]   hydrostatic stress p [MPa]
+in the middle cross section of
+the first numerical example
+presented
+                                          5%
+
+
+
+
+                                          25%
+
+
+
+
+                                          45%
+
+
+
+
+                                          100%
+
+
+
+                                                                                                                                           ×10−4
+                                          Legends
+                                                       1         0.5       0           1        0.5        0         3       -1.75     -6.5
+
+
+Fig. 4  Average value of the
+nutrient concentration c (blue)
+and the biofilm state variable
+𝜙 (red) throughout the whole
+discretized domain
+
+
+
+
+pressure can be observed. On the outer edge of the biofilm                     state variable 𝜙 with the deformation tensor F through the
+is a ring of tension. Outside of the biofilm, the pressure is                  definition of the growth part of the deformation tensor as
+zero. The stress is a direct cause of correlating the biofilm                  Fg = 𝛼I.
+2102                                                                                                                      F. Klempt et al.
+
+                                                                       than directly in the middle where there is biofilm which
+                                                                       depletes the nutrients diffusing from the bottom of the cube.
+                                                                       With a higher consumption factor, there are no nutrients on
+                                                                       top of the biofilm to grow into. A small consumption factor
+                                                                       allows the nutrients to be available in a vast quantity above
+                                                                       the biofilm. The graph in Fig. 7 shows both, the average
+                                                                       nutrients concentration c in blue and the average value of
+                                                                       the biofilm state variable ϕ in red of both sub-cases over the
+                                                                       whole domain.
+
+                                                                          The “high” case is illustrated by the dashed line, the
+                                                                       “low” case by a solid one. The general behavior of both
+                                                                       sub-cases is very similar. It can be seen that in both cases, an
+                                                                       equilibrium state has been reached and neither the nutrient
+                                                                       concentration nor the biofilm state variable changes after
+Fig. 5  Schematic figure of the boundary conditions. The position of   that state has been reached. It also shows that despite the fact
+the nodes where 𝜙 = 1 is colored red and c = 1 is colored green        that the “high” sub-case fills up the discretized domain after
+                                                                       13% of simulation time, the nutrient concentrations equilib-
+4.2 Biofilm on nutrients                                              rium is significantly higher than the nutrient concentration
+                                                                       from the “low” sub-case. The hydrostatic stress distribution
+To model the growth behavior of biofilm sitting on nutri-              inside both simulation shows a similar pattern as well. In
+ents, different boundary values are chosen which can be                Fig. 8, qualitative results of the “high” case are shown. The
+seen in Fig. 5. The nodes at the bottom of the discretized             following observation holds true for both cases though: the
+20 × 20 × 20𝜇m domain are set to a nutrient concentration              blue region is under pressure, the red and orange regions
+of c = 1. In the plane directly above, the initial biofilm is          are under tension, and the region colored in green is zero.
+placed in a centered circle with a diameter of 5𝜇m by setting          At the very start of the simulation, in Fig. 8a, tension can be
+the value for the biofilm state variable to 𝜙 = 1.                     seen in the regions where the biofilm first grows toward the
+   This setup is subdivided into two sub-cases with dif-               bottom of the discretized domain and toward the nutrients at
+ferent consumption parameters g . Simulation results with              the top of the biofilm. Inside the biofilm, there is pressure at
+g = 1010 T∗−1 will be labeled as “low,” and simulation                 all times of the simulation. Once it grows to the top, a new
+results with a consumption parameter of g = 108 T∗−1 will              region of tension forms, as can be seen in Fig. 8b–d. The
+be labeled as “high.” All other parameters are equal to the            initial region of tension inside the biofilm vanishes slowly.
+parameters presented in Table 2. Table 4 shows the distribu-
+tion of the biofilm state variable 𝜙 for both sub-cases. Purely        4.3 Growth against rigid obstacles
+as a result of using different material parameters, two vastly
+different growing pattern can be seen. Right from the start,           The geometry of the obstacle test case is taken from Albero
+the results from the simulation with the lower consumption             et al. (2014) and was later used by Soleimani (2019) and
+factor g grows much higher and filling the entire discretized          Soleimani et al. (2020). It is schematically visualized in
+cube after just 13% of simulation time. During the simula-             Fig. 9.
+tion, first a mushroom-shaped structure and then a droplet-               The idea is to provide a highly complex environment for
+like structure can be observed, which is in accordance to              the biofilm to grow in, containing regions posing constraints
+observations in in vitro experiments with biofilm-forming              to the growth process. It consists of a 30 × 30 × 30𝜇m cube
+bacteria such as Toyofuku et al. (2016). In contrast, the              with four columns. The columns act as rigid obstacles for
+simulation with a higher consumption factor grows only to              the biofilm growth. They are modeled as solid objects where
+a certain height, after which the biofilm fills out the edges          all degrees of freedom are set to zero. The contact between
+of the discretized cube, forming a biofilm layer at the bot-           the solid bars and the cube containing biofilm is defined as
+tom. This vastly different behavior can be explained by the            frictionless. The domain in which the biofilm can develop
+different nutrient fields emerging from different consump-             can thus slide past the rigid tubes without penetrating them.
+tion factors. The general nutrient field emerging from these           The biofilm state variable is set to 𝜙 = 1 in a sphere with a
+kinds of boundary value problem is shown in Fig. 6. Above              radius of 5𝜇m located in the center of the cube. Similarly to
+the biofilm is a zone where there are little to no nutrients.          the agar test case, the nodes of one side of the cube are set to
+This area is dark blue in the illustration. On the sides of the        a value of the nutrient concentration of c = 1. Figure 10a–d
+biofilm, the gradient of nutrient concentration is less steep          shows a 3D rendering of all values of 𝜙 ≥ 0.8 at different
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                            2103
+
+Table 4  Distribution of the
+state growth variable 𝜙 of the
+model resembling an agar plate
+at different times throughout
+the “high” and “low” boundary
+value problem
+
+
+
+
+times throughout the simulation. The sphere, in which the                challenge since the biofilm state variable is a field variable
+initial biofilm starts, can be seen in Fig. 10a. The biofilm             evolving inside the pre-discretized cube.
+then quickly grows around the rigid columns and reconnects.                 Table 5 shows a diagonal cut through the domain. The
+While self-contact can be an issue if new elements are cre-              rigid columns can be seen as blue ovals since the cut is per-
+ated, the formulation presented here avoids this numerical               formed at a 45◦ angle to both of them. The state growth
+                                                                         variable 𝜙 and the nutrients concentration c are presented
+2104                                                                                                                        F. Klempt et al.
+
+
+                                                                           4.4 Maze
+
+                                                                           To show the versatility of the model, a complex maze geom-
+                                                                           etry was designed. The model is semi-2D, i.e., the thickness
+                                                                           of the model is one element and thus no three-dimensional
+                                                                           effects can be captured. The maze has a diameter of 560𝜇m
+                                                                           and thus is larger than the other boundary value problems
+                                                                           presented. Therefore, the simulation parameters have been
+                                                                           adjusted. The modified parameters are listed in Table 6.
+                                                                              The geometry is depicted in Fig. 11. The maze itself con-
+                                                                           sists of two bodies: the path where the biofilm and nutrients
+                                                                           behave like in the boundary value problems shown prior and
+                                                                           the walls where neither of them is present.
+                                                                              In addition to that, the wall is fixed in all three spatial
+                                                                           directions. Between the two bodies, frictionless contact is
+Fig. 6  General behavior of the nutrient field from the agar simula-       modeled to allow the sliding between the path and the wall.
+tions. The blue area on top of the biofilm indicates low nutrient level,
+the red area at the bottom a nutrient level of c = 1. This particular      The nodes in the circular area in the center of the maze are
+nutrients field is taken from the “low” agar simulation at the start of    set to have a nutrient concentration of c = 1. They diffuse
+the simulation                                                             through the maze following the path from the middle to the
+                                                                           entrance of the maze where the initial biofilm colony, i.e.,
+                                                                           the nodes with 𝜙 = 1 are located at the start of the simu-
+at the same simulation times as in Fig. 10. Not surprisingly,              lation. The diffusion process and subsequent depletion are
+the nutrient concentration field shows a similar behavior as               shown in the right column of Table 7. The biofilm first grows
+in the cases presented before.                                             from the entrance in all directions, since there are enough
+                                                                           nutrients to allow growth, even if the biofilm grows into a
+                                                                           dead-end. The bigger the dead-end is, the more nutrients dif-
+                                                                           fused into it and the more biofilm grows into the dead-end.
+
+
+Fig. 7  Average values of the
+nutrient variable c in blue and
+biofilm state variable 𝜙 in red
+over the simulation time. The
+“high” case is illustrated as a
+dashed line, the “low” case in a
+solid line
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                  2105
+
+
+
+
+Fig. 8  Hydrostatic stress distribution in the biofilm with the agar     hydrostatic stress of p = 0, red indicates tension and blue compres-
+simulations. Here, it is shown exemplary with four results from the      sion. The absolute values are dependent of Young’s modulus which
+“high” agar simulation at different times. The teal color indicates a    needs to be adjusted to fit real biofilm in future works
+
+
+                                                                         Once nutrients are depleted in the dead-end, the biofilm
+                                                                         either stays at the level that was before, or it retracts. The
+                                                                         retraction can be observed in the table at 40% of the simu-
+                                                                         lation time when compared to the following images. The
+                                                                         points of interest are enhanced in Table 7. At the end of the
+                                                                         simulation, the biofilm arrives at a steady state while also
+                                                                         reaching the middle of the maze.
+
+                                                                         4.5 Grate
+
+                                                                         As a last example, another semi-2D boundary value problem
+                                                                         is presented.
+                                                                            The geometry is a square grate that contains a starting
+                                                                         population of biofilm on one end and nutrients on the other
+                                                                         end. In Figure 12, the starting conditions can be observed.
+                                                                         The evolution of the biofilm state variable 𝜙 , the nutrient
+Fig. 9  Schematic figure of the boundary conditions. The position of
+the nodes where 𝜙 = 1 is colored red, where c = 1 is colored green       concentration c, and the hydrostatic stress p throughout the
+and the rigid obstacles are black                                        simulation is depicted in Table 8. From there, it can be seen
+2106                                                                                                               F. Klempt et al.
+
+Fig. 10  Three-dimensional ren-
+dering of the biofilm state vari-
+able 𝜙 ≥ 0.8 at different times
+throughout the simulation. The
+growth around rigid obstacles
+can be observed
+
+
+
+
+that the biofilm is not strictly following just one path but     is positive hydrostatic stress at the areas where the biofilm
+rather splits up and recombines by the end of the simulation.    meets the boundary of the geometry.
+In the last result for the biofilm state variable 𝜙 at 100% of      Figure 13 shows an oblique view of the boundary value
+simulation time, a half-circle indent occurs at the top part     problem at the end of the simulation.
+of the biofilm. This is due to the fixed values of the nutri-       The distortion of the elements is enhanced 500 times to
+ent concentration of c = 1 at these nodes. Since there is no     better visualize the swelling of the biofilm due to the evolu-
+gradient at the nodes, the biofilm has no incentive to grow      tion of 𝛼 . It can be seen that not only does the biofilm state
+there. The hydrostatic stress develops similarly to the previ-   variable 𝜙 evolve through the domain, but also the domain
+ous boundary value problems. In the middle of the biofilm is     itself changes in volume which results in the stresses. Parts
+an area of negative hydrostatic stress (pressure), while there   of the mesh where biofilm is present continue to swell,
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                               2107
+
+Table 5  Results of the                            time          biofilm state variable φ [-]        nutrient concentration c [-]
+simulation containing obstacles.
+In the left column, the biofilm
+state variable 𝜙 is shown. In
+the right column, the nutrient
+concentration c is presented at                    6%
+different times throughout the
+simulation
+
+
+
+
+                                                   46%
+
+
+
+
+                                                   70%
+
+
+
+
+                                                   100%
+
+
+
+
+                                                   Legends
+                                                                    1      0.5          0             1          0.5           0
+
+
+Table 6  Parameter used in the maze simulation (all other parameters      5 Conclusions
+stay the same)
+Parameter                                   Value            Units        In this paper, we proposed a Hamilton-based growth model
+                                                                          for biofilms that combines the volumetric approach based on
+Nutrient diffusivity           d            1013             𝜇m2 ⋅ T∗−1
+                                                                          the multiplicative split of deformation with a density-based
+Phase-field regularization     𝛽            10               𝜇m2 ⋅ T∗−1   approach. The former handles the volume change in the
+ parameter
+                                                                          growth phenomenon, while the latter deals with the change
+Growth factor                  kα           10−6             T∗−1
+                                                                          (production) of mass as a result of the biological process.
+Growth parameter               r            200              T∗−1
+                                                                          Using an extended Hamilton principle as the methodology
+                                                                          for the derivation of the mathematical model, the first and
+                                                                          second laws of thermodynamics are inherently fulfilled. It
+indicating further growth by the biofilm living there. Since              gives rise to the reliability, stability and robustness of the
+this swelling is accompanied by mesh distortion, only a cer-              mathematical model. Several numerical test cases are pro-
+tain amount of swelling can be computed before self-pene-                 vided to show the versatility of the presented model. Besides
+tration, indicated by det [F] < 0, occurs and, consequently,              academic and classical examples, challenging and more
+the solver fails. This mesh distortion and subsequent failure             exotic boundary condition problems are considered. The
+of the solver, however, is not present in the numerical exam-             numerical results show a good agreement with the intuitive
+ples presented in this work.                                              expectation as well as the available data in the literature. The
+2108                                                                                                             F. Klempt et al.
+
+Fig. 11  Geometry of the maze.
+The thickness is 4 𝜇m. The
+undiscretized wall is 10 𝜇m
+wide
+
+
+
+
+numerical implementation is so stable that it is capable of     principle. This is necessary when it comes to the experi-
+capturing very complex morphology of biofilm in extremely       mental validation of the model and is the direction of our
+irregular domains in the presence of numerous obstacles. It     future work. It is commonly known that real-world biofilms
+makes the model suitable for more realistic applications such   (for example those that inhabit the oral cavity or in vivo
+as bioreactors in which intricate three-dimensional ducts and   experiments) constitute hundreds of species and, hence, a
+microchambers are designed to support bacterial growth          decent numerical model must be as overarching as possi-
+and biological processes. Additionally, one can extend the      ble. Finally, the impact of antimicrobial substances (drugs)
+model to incorporate different species of biofilms and their    can be introduced into the model to have a comprehensive
+multilateral interactions. A preliminary investigation of a     virtual platform for studying biofilms and the preventative
+coaggregation between two-species systems has been per-         measures to control them. This is also left for the last steps
+formed in Soleimani et al. (2023) which can be generalized      of our work.
+to an arbitrary number of species thanks to the Hamilton
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                     2109
+
+Table 7  Results of the maze                              time           biofilm state variable φ [-]       nutrient concentration c [-]
+simulation. In the left column,
+the biofilm state variable 𝜙 is
+shown. In the right column,
+the nutrient concentration c
+is presented at different times
+throughout the simulation
+                                                          2%
+
+
+
+
+                                                          18%
+
+
+
+
+                                                          40%
+
+
+
+
+                                                          62%
+
+
+
+
+                                                          100%
+                                                                                                       31
+
+
+
+
+                                                          Legends             1        0.5         0             1        0.5        0
+2110                              F. Klempt et al.
+
+Fig. 12  Geometry of the grate.
+The thickness is 1 𝜇m
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                    2111
+
+Table 8  Results of the grate simulation. In the left column, the bio-     The right column shows the hydrostatic stress p at the corresponding
+film state variable 𝜙 is shown. In the middle column, the nutrient con-    simulation times
+centration c is presented at different times throughout the simulation.
+            time          biofilm state variable φ [-]           nutrient concentration c [-]      hydrostatic stress p [MPa]
+
+
+
+
+            0%
+
+
+
+
+            25%
+
+
+
+
+            50%
+
+
+
+
+            75%
+
+
+
+
+            100%
+
+
+
+
+                                                                                                                              ×10−3
+            Legends
+                            1          0.5          0             1        0.5         0          2.04       -3.41       -8.84
+2112                                                                                                                                  F. Klempt et al.
+
+Fig. 13  Oblique view of
+the field of the biofilm state
+variable 𝜙 of the grate boundary
+value problem. The distortion
+is enhanced by a factor of 500.
+Element swelling due to the
+evolution of 𝛼 can be observed,
+especially in parts of the mesh
+where biofilm was present the
+longest
+
+
+
+
+Acknowledgements We highly acknowledge the funding of this                        roughness and topography on bacterial attachment. J Mater Sci
+research by the Deutsche Forschungsgemeinschaft (DFG, German                      Technol 81:151–161
+Research Foundation) through the project grant TRR 298 (SIIRI),              Albero AB, Ehret AE, Böl M (2014) A new approach to the simulation
+project 426335750.                                                                of microbial biofilms by a theory of fluid-like pressure-restricted
+                                                                                  finite growth. Comput Methods Appl Mech Eng 272:271–289
+Funding Open Access funding enabled and organized by Projekt                 Mattei M, Frunzo L, D’acunto B, Pechaud Y, Pirozzi F, Esposito G
+DEAL.                                                                             (2018) Continuum and discrete approach in modeling biofilm
+                                                                                  development and structure: a review. J Math Bio 76(4):945–1003
+Open Access This article is licensed under a Creative Commons Attri-         Chaudhry MAS, Beg SA (1998) A review on the mathematical mod-
+bution 4.0 International License, which permits use, sharing, adapta-             eling of biofilm processes: advances in fundamentals of biofilm
+tion, distribution and reproduction in any medium or format, as long              modeling. Chem Eng Technol Ind Chem Plant Equip Process Eng
+as you give appropriate credit to the original author(s) and the source,          Biotechnol 21(9):701–710
+provide a link to the Creative Commons licence, and indicate if changes      Soleimani M, Muthyala N, Marino M, Wriggers P (2020) A novel
+were made. The images or other third party material in this article are           stress-induced anisotropic growth model driven by nutrient diffu-
+included in the article’s Creative Commons licence, unless indicated              sion: theory, fem implementation and applications in bio-mechan-
+otherwise in a credit line to the material. If material is not included in        ical problems. J Mech Phys Solids 144:104097
+the article’s Creative Commons licence and your intended use is not          Goriely A (2017) The Mathematics and Mechanics of Biological
+permitted by statutory regulation or exceeds the permitted use, you will          Growth, vol 45. Springer, Berlin
+need to obtain permission directly from the copyright holder. To view a      Epstein M, Maugin GA (2000) Thermomechanics of volumetric growth
+copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.          in uniform bodies. Int J Plast 16(7–8):951–978
+                                                                             Lubarda VA, Hoger A (2002) On the mechanics of solids with a grow-
+                                                                                  ing mass. Int J Solids Struct 39(18):4627–4664
+                                                                             Haouala S, Doghri I (2015) Modeling and algorithms for two-scale
+References                                                                        time homogenization of viscoelastic-viscoplastic solids under
+                                                                                  large numbers of cycles. Int J Plast 70:98–125
+Flemming H-C, Wingender J (2010) The biofilm matrix. Nat Rev                 Hermanowicz SW (2001) A simple 2d biofilm model yields a variety
+     Microbiol 8(9):623–633                                                       of morphological features. Math Biosci 169(1):1–14
+Böl M, Ehret AE, Bolea Albero A, Hellriegel J, Krull R (2013)                Lardon LA, Merkey BV, Martins S, Dötsch A, Picioreanu C, Kreft
+     Recent advances in mechanical characterisation of biofilm and                J-U, Smets BF (2011) idynomics: next-generation individual-
+     their significance for material modelling. Crit Rev Biotechnol               based modelling of biofilms. Environ Microbiol 13(9):2416–2434
+     33(2):145–171                                                           Li B, Taniguchi D, Gedara JP, Gogulancea V, Gonzalez-Cabaleiro
+Nielsen PH, Jahn A, Palmgren R (1997) Conceptual model for pro-                   R, Chen J, McGough AS, Ofiteru ID, Curtis TP, Zuliani P
+     duction and composition of exopolymers in biofilms. Water Sci                (2019) Nufeb: a massively parallel simulator for individual-
+     Technol 36(1):11–19                                                          based modelling of microbial communities. PLoS Comput Biol
+Billings N, Birjiniuk A, Samad TS, Doyle PS, Ribbeck K (2015) Mate-               15(12):1007125
+     rial properties of biofilms-a review of methods for understanding       Naylor J, Fellermann H, Ding Y, Mohammed WK, Jakubovics NS,
+     permeability and mechanics. Rep Progress Phys 78(3):036601                   Mukherjee J, Biggs CA, Wright PC, Krasnogor N (2017) Sim-
+Soleimani M, Wriggers P, Rath H, Stiesch M (2016) Numerical                       biotics: a multiscale integrative platform for 3d modeling of
+     simulation and experimental validation of biofilm in a multi-                bacterial populations. ACS Synth Biol 6(7):1194–1210
+     physics framework using an sph based method. Comput Mech                Tack IL, Nimmegeers P, Akkermans S, Hashem I, Van Impe JF
+     58(4):619–633                                                                (2017) Simulation of escherichia coli dynamics in biofilms and
+Klapper I, Dockery J (2010) Mathematical description of microbial                 submerged colonies with an individual-based model including
+     biofilms. SIAM Rev 52(2):221–265                                             metabolic network information. Front Microbiol 8:2509
+Soleimani M (2017) Numerical simulation and experimental validation          Verhulst A, Cappuyns A, Van Derlinden E, Bernaerts K, Van Impe J
+     of biofilm formation. PhD thesis                                             (2011) Analysis of the lag phase to exponential growth transi-
+Chinnaraj SB, Jayathilake PG, Dawson J, Ammar Y, Portoles J, Jakubo-              tion by incorporating inoculum characteristics. Food Microbiol
+     vics N, Chen J (2021) Modelling the combined effect of surface               28(4):656–666
+A Hamilton principle‑based model for diffusion‑driven biofilm growth﻿	                                                                     2113
+
+Rath H, Feng D, Neuweiler I, Stumpp NS, Nackenhorst U, Stiesch M         Flemming H-C, Wingender J (2001) Biofilme-die bevorzugte lebens-
+    (2017) Biofilm formation by the oral pioneer colonizer Strepto-           form der bakterien: Flocken, filme und schlämme. Biol Unserer
+    coccus gordonii: an experimental and numerical study. FEMS                Zeit 31(3):169–180
+    Microbiol Ecol 93(3):fix010                                          Chu EK, Kilic O, Cho H, Groisman A, Levchenko A (2018) Self-
+Rodriguez EK, Hoger A, McCulloch AD (1994) Stress-dependent                   induced mechanical stress can trigger biofilm formation in
+    finite growth in soft elastic tissues. J Biomech 27(4):455–467            uropathogenic Escherichia coli. Nat Commun 9(1):4087
+Soleimani M (2019) Finite strain visco-elastic growth driven by          Korelc J, Wriggers P (2016) Automation of finite element methods.
+    nutrient diffusion: theory, fem implementation and an appli-              Springer, Berlin
+    cation to the biofilm growth. Comput Mech 64(5):1289–1301            Hornung R, Grünberger A, Westerwalbesloh C, Kohlheyer D, Gomp-
+Waffenschmidt T, Menzel A, Kuhl E (2012) Anisotropic density                  per G, Elgeti J (2018) Quantitative modelling of nutrient-limited
+    growth of bone-a computational micro-sphere approach. Int J               growth of bacterial colonies in microfluidic cultivation. J R Soc
+    Solids Struct 49(14):1928–1946                                            Interface 15(139):20170713
+Capriz G, Mariano PM (2003) Symmetries and hamiltonian formal-           Toyofuku M, Inaba T, Kiyokawa T, Obana N, Yawata Y, Nomura N
+    ism for complex materials. J Elast 72:57–70                               (2016) Environmental factors that shape biofilm formation. Biosci
+Junker P, Balzani D (2021) An extended hamilton principle as unify-           Biotechnol Biochem 80(1):7–12
+    ing theory for coupled problems and dissipative microstructure       Soleimani M, Szafranski SP, Qu T, Mukherjee R, Stiesch M, Wriggers
+    evolution. Continuum Mech Thermodyn 33(4):1931–1956                       P, Junker P (2023) Numerical and experimental investigation of
+Junker P, Wick T (2024) Space-time variational material modeling:             multi-species bacterial co-aggregation. Sci Rep 13(1):11839
+    a new paradigm demonstrated for thermo-mechanically cou-
+    pled wave propagation, visco-elasticity, elasto-plasticity with      Publisher's Note Springer Nature remains neutral with regard to
+    hardening, and gradient-enhanced damage. Comput Mech                 jurisdictional claims in published maps and institutional affiliations.
+    73(2):365–402
+Monod J (1949) The growth of bacterial cultures. Annu Rev Micro-
+    biol 3(1):371–394
+

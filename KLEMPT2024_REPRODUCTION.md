@@ -2,7 +2,7 @@
 
 Status 2026-09-30. The 2024 PDE is recorded as **not independently reproduced**,
 and this is the account of why. The paper is bundled at the repository root
-(`felix_s10237-024-01883-x.pdf`, CC BY 4.0 — see [`THIRD_PARTY.md`](THIRD_PARTY.md)),
+(`references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf`, CC BY 4.0 — see [`THIRD_PARTY.md`](THIRD_PARTY.md)),
 so everything below is read off it rather than inferred.
 
 Code: [`JAXFEM/klempt2024_quantitative.py`](JAXFEM/klempt2024_quantitative.py)

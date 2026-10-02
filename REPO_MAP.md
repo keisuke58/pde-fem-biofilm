@@ -70,6 +70,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 |---|---|
 | `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
+| `references/` | Klempt et al. 2024 (BMMB, CC BY 4.0), the paper this work follows: the PDF and a searchable text extraction; licence in `THIRD_PARTY.md` |
 | `thesis_ch5/` | Chapter 5 skeleton with an evidence map, plus `PORTING.md` for merging it into the thesis repository |
 | `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
 | `reports/` | Written progress updates to the supervisors, kept next to the work they describe |

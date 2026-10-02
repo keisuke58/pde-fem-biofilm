@@ -126,7 +126,7 @@ def chi_inset(fig, rect):
     for s in ("top", "right"):
         ax.spines[s].set_visible(True)
     ax.set_xlabel(r"time $T^*$", fontsize=10, labelpad=1)
-    ax.set_ylabel(r"$\chi_i$", fontsize=11, labelpad=1)
+    ax.set_ylabel("share", fontsize=10, labelpad=1)
     ax.tick_params(labelsize=8.5, length=2, pad=1.5)
     ax.text(0.5, 0.27, "species 1", ha="center", va="center", fontsize=10, color="white")
     ax.text(0.5, 0.80, "species 2", ha="center", va="center", fontsize=10, color="white")
@@ -163,10 +163,10 @@ def main():
     panel(ax, "macro", "1", "Macro: 3D growth field", "Klempt et al. 2024, partner's element")
     x, _ = PX["macro"]
     eqs(ax, x + 0.025, 0.695, [
-        r"$\dot\varphi = \beta\,\Delta\varphi + k_a\,\alpha_K + $ front term",
-        r"$\dot\alpha_K = k_a\,\varphi$",
+        r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha + $ front term",
+        r"$\dot\alpha = k_\alpha\,\phi$,   $\alpha(0) = 1$",
     ])
-    ax.text(x + 0.025, 0.575, r"gives the amount $\varphi_{3D}(\mathbf{x},t)$",
+    ax.text(x + 0.025, 0.575, r"gives the amount $\phi_{3D}(\mathbf{x},t)$",
             fontsize=12.5, color=PANEL["macro"][1], weight="bold", va="center", zorder=4)
     cube_inset(fig, [x + 0.005, 0.205, 0.20, 0.35])
     ax.text(x + 0.215, 0.315, "2 mm cube\n512 elements\nseed (dark)", fontsize=10.5,
@@ -178,7 +178,7 @@ def main():
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
     ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5, color=INK,
             va="center", linespacing=1.25, zorder=4)
-    ax.text(x + 0.16, 0.585, r"decides only the" "\n" r"composition $\chi_i = \varphi_i\,/\,(\varphi_1 + \varphi_2)$",
+    ax.text(x + 0.16, 0.585, r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$",
             fontsize=11, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
     arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1],
           lw=1.3, conn="arc3,rad=0.25")
@@ -188,8 +188,8 @@ def main():
     panel(ax, "mech", "3", "Growth and stress", "partner's element, Klempt 2024 stiffness")
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
-        r"$\dot\alpha = k_a\,\varphi_{3D}$,   $\mathbf{F}_g = (1+\alpha)\,\mathbf{I}$",
-        r"$E(\varphi) = (\varphi^2 + f)\,E_{bio}$",
+        r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
+        r"$E(\phi) = (\phi^2 + f)\,E_{bio}$",
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
     ])
     stress_sketch(ax, x + 0.085, 0.375, 0.026)
@@ -200,17 +200,17 @@ def main():
     # connections ------------------------------------------------------------
     y_mid = 0.555
     arrow(ax, (PX["macro"][0] + PX["macro"][1], y_mid), (PX["micro"][0], y_mid))
-    ax.text(0.3325, y_mid + 0.03, r"$\varphi_{3D}$", ha="center", fontsize=13, color=INK)
+    ax.text(0.3325, y_mid + 0.03, r"$\phi_{3D}$", ha="center", fontsize=13, color=INK)
     xa = PX["macro"][0] + PX["macro"][1] / 2
     xc = PX["mech"][0] + PX["mech"][1] / 2
     ax.plot([xa, xa, xc], [Y0 + H, 0.945, 0.945], color=INK, lw=1.8, zorder=5,
             solid_capstyle="round")
     arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004))
-    ax.text(0.5, 0.958, r"$\varphi_{3D}$: growth uses the amount only", ha="center",
+    ax.text(0.5, 0.958, r"$\phi_{3D}$: growth uses the amount only", ha="center",
             va="bottom", fontsize=12.5, color=INK)
     xm = PX["micro"][0] + PX["micro"][1] * 0.72
     arrow(ax, (xm, Y0), (xm, 0.105))
-    ax.text(xm, 0.085, r"output: composition map $\chi_i(\mathbf{x},t)$", ha="center",
+    ax.text(xm, 0.085, r"output: species $\phi_i(\mathbf{x},t)$, $\psi_i(\mathbf{x},t)$", ha="center",
             va="top", fontsize=12.5, color=INK)
     xb = PX["micro"][0] + PX["micro"][1] * 0.22
     ax.plot([xb, xb, xa], [Y0, 0.13, 0.13], color=MUTED, lw=1.5, ls=(0, (4, 3)), zorder=5)
@@ -219,9 +219,9 @@ def main():
             fontsize=11, color=MUTED, style="italic")
 
     ax.text(0.5, 0.012,
-            r"Point model run two ways: A) rescaled every step to $\varphi_{3D}$;  "
-            r"B) started when $\varphi_{3D}$ first reaches $\varphi_{min}$, then independent.   "
-            r"Assumed, not from a paper: $s$ = 0.15, $\varphi_{cap}$ = 0.9, $\varphi_{min}$ = 0.01.",
+            r"Point model run two ways: A) rescaled every step to $\phi_{3D}$;  "
+            r"B) started when $\phi_{3D}$ first reaches $\phi_{min}$, then independent.   "
+            r"Assumed, not from a paper: $s$ = 0.15, $\phi_{cap}$ = 0.9, $\phi_{min}$ = 0.01.",
             ha="center", va="bottom", fontsize=10.5, color=MUTED)
 
     OUT.parent.mkdir(exist_ok=True)

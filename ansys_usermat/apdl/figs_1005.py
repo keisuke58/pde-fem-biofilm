@@ -1,5 +1,5 @@
 """figs_1005.py -- figures for the 5 Oct meeting, from the ANSYS runs of
-1-2 Oct with Klempt et al. 2024 Table 2 values (k_a = 1e-3 /T*, in both the
+1-2 Oct with Klempt et al. 2024 Table 2 values (k_alpha = 1e-3 /T*, in both the
 partner's field and the growth law), ONE species (second species field
 started at 0 with rate 0), stored in results/2026-10-01_paper_values/
 (git-ignored like every *.csv: local on IKMHIWI03; the same files are in
@@ -70,24 +70,24 @@ def fig_exact():
     tt = np.linspace(0, t[-1], 200)
 
     fig, ax = plt.subplots(1, 3, figsize=(14, 3.8))
-    ax[0].plot(tt, np.sinh(K * tt), "k-", label=r"exact $\sinh(k_a t)$")
+    ax[0].plot(tt, np.sinh(K * tt), "k-", label=r"exact $\sinh(k_\alpha t)$")
     ax[0].plot(t, dx, "k:", lw=1.5, label="exact solution of the explicit update")
     ax[0].plot(t, bio, "o", color="C0", label="ANSYS")
-    ax[0].set(xlabel=r"time $T^*$", ylabel=r"$\varphi$", title=r"biofilm fraction $\varphi$")
-    ax[1].plot(tt, np.cosh(K * tt) - 1, "k-", label=r"exact $\cosh(k_a t)-1$")
+    ax[0].set(xlabel=r"time $T^*$", ylabel=r"$\phi$", title=r"biofilm fraction $\phi$")
+    ax[1].plot(tt, np.cosh(K * tt) - 1, "k-", label=r"exact $\cosh(k_\alpha t)-1$")
     ax[1].plot(t, dy - 1, "k:", lw=1.5, label="exact solution of the explicit update")
     ax[1].plot(t, loc - 1, "o", color="C1", label="ANSYS")
-    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha_K - 1$", title=r"growth $\alpha_K - 1$")
+    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha - 1$", title=r"growth $\alpha - 1$")
     for a in ax[:2]:
         a.legend(loc="upper left", fontsize=9)
         a.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     eb, el = np.abs(bio - dx), np.abs(loc - dy)
-    ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", label=r"$\varphi$")
-    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha_K$")
+    ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", label=r"$\phi$")
+    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha$")
     ax[2].set(xlabel=r"time $T^*$", ylabel="|ANSYS - discrete exact|",
               title="error vs. the update's exact solution")
     ax[2].legend(fontsize=10)
-    fig.suptitle(rf"Element 1 (outside the seed), Klempt 2024 Eq. 34/36, $k_a$ = {K:g} (Table 2), "
+    fig.suptitle(rf"Element 1 (outside the seed), Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
                  rf"$\Delta t$ = {DT:g}", y=1.03)
     fig.savefig(OUT / "fig1005_exact.png")
     plt.close(fig)
@@ -117,7 +117,7 @@ def fig_whole():
               ylabel="von Mises [Pa], partner's growth variable",
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
-    fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_a$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \varphi^2$", y=1.0, fontsize=10)
+    fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
     fig.savefig(OUT / "fig1005_whole_model.png")
     plt.close(fig)
     return cos, ratio, float(q1.max()), float(q2.max())
@@ -142,10 +142,10 @@ def fig_elem():
     ax[0].set(xlabel=r"time $T^*$", ylabel="von Mises [Pa]", title="seeded element 220 and its neighbours")
     ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     ax[0].legend(fontsize=8)
-    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha$", title=r"growth $\alpha$ of element 220")
+    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha - 1$", title=r"growth $\alpha - 1$ of element 220")
     ax[1].legend(fontsize=9)
     ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-    fig.suptitle(r"One species; Klempt 2024 Table 2: $k_a$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \varphi^2$; result set 1 dropped", y=1.02, fontsize=11)
+    fig.suptitle(r"One species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$; result set 1 dropped", y=1.02, fontsize=11)
     fig.savefig(OUT / "fig1005_element220.png")
     plt.close(fig)
     return out

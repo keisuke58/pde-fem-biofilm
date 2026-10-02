@@ -55,7 +55,7 @@
  & 以前の報告 & \textbf{接着修正後} \\
 \midrule
 条件間の応力の広がり & $9.1\%$ & $\mathbf{0.4\%}$ \\
-条件間の成長 $\alpha$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
+条件間の成長 $\alpha-1$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
 成長層 / 基材の von Mises & $15.2$ 倍 & $\mathbf{6.3}$ \textbf{倍} \\
 \bottomrule
 \end{tabular}
@@ -71,11 +71,11 @@ $\rightarrow$ そもそも分離できない。}
 \A{\textbf{モデルの定義からそうなる。}偶然でも計算ミスでもない。}
 \begin{itemize}\footnotesize
   \item 条件が応力に届く経路は $\alpha$ だけ（物性は全領域で同一）。
-        $\dot\alpha = k_\alpha\varphi_{\mathrm{tot}}$、
-        $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ は\textbf{合計しか見ない}
-  \item CLSM 組成は\textbf{割合}なので、全条件が $\sum_i\varphi_i=1$ から出発して
+        $\dot\alpha = k_\alpha\phi_{\mathrm{tot}}$、
+        $\phi_{\mathrm{tot}}=\sum_i\phi_i\psi_i$ は\textbf{合計しか見ない}
+  \item CLSM 組成は\textbf{割合}なので、全条件が $\sum_i\phi_i=1$ から出発して
         同じ値（0.9635）に収束 $\Rightarrow$ \textbf{組成の違いは足し算で消える}
-  \item 差が出るのは $\psi$ の初期過渡だけ（$\alpha$ の差は最大 $2.4\%$、$t\approx10^{-2}$）。
+  \item 差が出るのは $\psi$ の初期過渡だけ（$\alpha-1$ の差は最大 $2.4\%$、$t\approx10^{-2}$）。
         $t=50$ で $0.003\%$ まで閉じる
   \item 計算時刻の $\sim\!0.5\%$ の差も、生態の時間刻みを細かくすると\textbf{条件の順位が入れ替わる}
         $\rightarrow$ 順位に意味はない
@@ -140,8 +140,8 @@ $\rightarrow$ そもそも分離できない。}
 \A{\textcolor{copen}{\textbf{できていません。}}Fig.~7 が \textbf{5--10 倍遅く}成長します。}
 \vspace{3pt}
 \begin{itemize}\footnotesize
-  \item $|\nabla\varphi\cdot n_c|$ 成長 + 1次消費で解いた。
-        論文自身の $c(\varphi)$ 関係は\textbf{1次消費を支持している}
+  \item $|\nabla\phi\cdot n_c|$ 成長 + 1次消費で解いた。
+        論文自身の $c(\phi)$ 関係は\textbf{1次消費を支持している}
   \item Fig.~4 は $0.17 / 0.10$ まで合う $\rightarrow$ \textbf{実装全体が壊れているわけではない}
   \item \textbf{「2024 の PDE は独立に再現できていない」と記録した}
   \item 一方、\textbf{2026 年版の数値例 14 件はすべて再現できている}
@@ -195,7 +195,7 @@ $\rightarrow$ そもそも分離できない。}
         （実機で確認、1回の通信あたり $0.07$ 秒）
   \item \textbf{残っているのは刻みではなく $k_\alpha$ の時間単位}。$k_\alpha=50$ は
         生態時間が合計 $0.1$--$1$ ms のデッキ用の値で、$\Delta t=0.1$ のデッキでは
-        $\alpha \approx 4.7$（各方向 $5.7$ 倍）になり要素が潰れる $\rightarrow$
+        $\alpha \approx 5.7$（各方向 $5.7$ 倍）になり要素が潰れる $\rightarrow$
         \textbf{数値破綻ではなく成長そのもの}。そのデッキの時間軸に合わせて決め直す必要がある
 \end{itemize}
 \end{frame}

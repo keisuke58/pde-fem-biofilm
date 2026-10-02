@@ -67,7 +67,7 @@ question on the next slide matters.
   \node[s, minimum width=12mm, minimum height=11mm] (c) at (5.8,0) {};
   \node[s, fill=red!12, draw=red!70!black, very thick,
         minimum width=10mm, minimum height=12mm] (d) at (8.7,0) {};
-  \draw[ar] (a) -- node[above]{$\bm{F}_g=(1{+}\alpha)\bm{I}$} node[below,font=\tiny]{no stress} (b);
+  \draw[ar] (a) -- node[above]{$\bm{F}_g=\alpha\bm{I}$} node[below,font=\tiny]{no stress} (b);
   \draw[ar] (b) -- node[above]{$\bm{F}_v$} node[below,font=\tiny]{stress relaxes} (c);
   \draw[ar, red!70!black] (c) -- node[above,text=red!70!black]{$\bm{F}_e$}
         node[below,font=\tiny,text=red!70!black]{\textbf{this alone loads}} (d);
@@ -93,16 +93,16 @@ at the integration point.
 \vspace{4pt}
 \begin{center}
 \colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
-$\varphi_{\text{tot}}=\sum_i \varphi_i\psi_i$
+$\phi_{\text{tot}}=\sum_i \phi_i\psi_i$
 \qquad
-$\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
+$\alpha = k_\alpha \displaystyle\int \phi_{\text{tot}}\,dt$}}
 \end{center}
 \vspace{4pt}
 \begin{itemize}\footnotesize
   \item Five oral species (\textit{S.\ oralis}, \textit{A.\ naeslundii},
         \textit{Veillonella}, \textit{F.\ nucleatum}, \textit{P.\ gingivalis}),
         CLSM-measured over 21 days, four clinical conditions
-  \item $\varphi_i$ volume fractions, $\psi_i$ viability; interaction
+  \item $\phi_i$ volume fractions, $\psi_i$ viability; interaction
         parameters TMCMC-calibrated
   \item $\alpha$ is an \emph{integral} --- the same composition held longer
         gives more growth
@@ -124,7 +124,7 @@ scheme''. That was wrong --- they are different functional forms.
 \begin{center}
 \colorbox{gray!8}{\parbox{0.46\linewidth}{\centering\footnotesize
 \textbf{Klempt et al.\ 2026}, Eq.\ 10/16--18\\[4pt]
-$I_{a,i}=\sum_j a_{ij}\bar\varphi_j$
+$I_{a,i}=\sum_j a_{ij}\bar\phi_j$
 \quad\text{then}\quad
 $-\,c^{*}\psi_i I_{a,i}$\\[4pt]
 \textcolor{c3}{\textbf{additive}}, inside a dissipation residual}}%
@@ -196,7 +196,7 @@ of that rather than a genuine dt-stability effect.}
 \begin{frame}{Separately: real CLSM data now drives this repo's own USERMAT}
 \small Not your pipeline -- this repo's own ecology bridge
 (\texttt{usermat\_biofilm.f}'s \texttt{kUseEcology}, the paper-faithful
-$I_a=A\bar\varphi$ model). Replaced the placeholder seed with real Day-1
+$I_a=A\bar\phi$ model). Replaced the placeholder seed with real Day-1
 CLSM composition, step by step, each verified on real ANSYS against an
 independent Python reference:
 \vspace{4pt}
@@ -230,7 +230,7 @@ $2.7\,\% \to 0.58\,\%$). Constants now also match the TMCMC calibration
 \midrule
 growth layer / substrate, mean von Mises & $15.2\times$ & $\mathbf{6.3\times}$\\
 stress spread between the 4 conditions & $9.1\,\%$ & $\mathbf{0.4\,\%}$\\
-growth $\alpha$ spread between the 4 conditions & $1.106\times$ & $1.006\times$\\
+growth $\alpha-1$ spread between the 4 conditions & $1.106\times$ & $1.006\times$\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -250,11 +250,11 @@ conclusion is withdrawn.}
 \vspace{-6pt}
 \begin{itemize}\footnotesize
   \item The condition reaches the stress only through $\alpha$ (same material
-        constants everywhere), and $\dot\alpha = k_\alpha\,\varphi_{\mathrm{tot}}$
-        with $\varphi_{\mathrm{tot}}=\sum_i\varphi_i\psi_i$ --- \textbf{only the total}
+        constants everywhere), and $\dot\alpha = k_\alpha\,\phi_{\mathrm{tot}}$
+        with $\phi_{\mathrm{tot}}=\sum_i\phi_i\psi_i$ --- \textbf{only the total}
   \item CLSM compositions are fractions: every condition starts at
-        $\sum_i\varphi_i=1$ and relaxes to the same total (0.9635).
-        They part only in the early $\psi$ transient: $\alpha$ spread peaks at
+        $\sum_i\phi_i=1$ and relaxes to the same total (0.9635).
+        They part only in the early $\psi$ transient: $\alpha-1$ spread peaks at
         2.4\,\% near $t\approx10^{-2}$, 0.003\,\% by $t=50$
   \item At the simulated time ($\sim$0.5\,\%), refining the ecology step
         \textbf{reorders the conditions}, so the ranking means nothing

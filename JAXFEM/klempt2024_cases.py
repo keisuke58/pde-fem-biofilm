@@ -1,8 +1,8 @@
 """klempt2024_cases.py -- the parameters and numerical examples of Klempt,
 Soleimani, Wriggers & Junker, "A Hamilton principle-based model for
 diffusion-driven biofilm growth", Biomech Model Mechanobiol 23:2091-2113
-(2024), doi:10.1007/s10237-024-01883-x (PDF at the repository root,
-felix_s10237-024-01883-x.pdf), as data -- the same idea as
+(2024), doi:10.1007/s10237-024-01883-x (PDF in references/,
+references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf), as data -- the same idea as
 klempt2026_cases.py / fritsch2025_cases.py -- plus how they map onto the
 parameters of the partner's (Oliver's) ANSYS deck.
 

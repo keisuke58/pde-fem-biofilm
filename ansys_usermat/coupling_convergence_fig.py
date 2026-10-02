@@ -67,12 +67,12 @@ def main():
     figstyle.apply(12)
     fig, ax = plt.subplots(1, 2, figsize=(14, 4.3))
     t = np.linspace(0, 1, 200)
-    ax[0].plot(t, phi3(t), color="#1f2933", lw=2, label=r"prescribed $\varphi_{3D}(t)$")
+    ax[0].plot(t, phi3(t), color="#1f2933", lw=2, label=r"prescribed $\phi_{3D}(t)$")
     for d, c in ((0.1, "#eb6834"), (0.02, "#2a78d6")):
         tk = np.arange(0, 1 + 1e-9, d)
         ax[0].step(tk, phi3(np.minimum(tk + d, 1)), where="post", color=c, lw=1.2,
                    label=rf"seen by the point model, $\Delta t$ = {d:g}")
-    ax[0].set(xlabel=r"time $T^*$", ylabel=r"amount $\varphi_{3D}$",
+    ax[0].set(xlabel=r"time $T^*$", ylabel=r"amount $\phi_{3D}$",
               title="prescribed amount and what the point model sees")
     ax[0].legend(loc="upper left", fontsize=10)
 
@@ -94,7 +94,7 @@ def main():
     ax[1].text(0.093, 2e-6, "deck step of\nthe ANSYS runs", color="#616e7c", fontsize=10,
                ha="right", va="bottom")
     ax[1].set(xlabel=r"coupling step $\Delta t$ (deck increment)",
-              ylabel=r"$|\chi_1 - \chi_1^{ref}|$",
+              ylabel=r"error in $\phi_1/(\phi_1+\phi_2)$",
               title="composition converges in the coupling step")
     ax[1].legend(fontsize=9.5, loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.suptitle(r"Coupled composition (rescaled scheme), point model at its own step $10^{-4}$; "
