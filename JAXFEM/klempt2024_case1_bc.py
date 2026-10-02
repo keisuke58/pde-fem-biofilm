@@ -28,24 +28,45 @@ the mean of phi barely grows; with the seed held, the back cannot erode.
     python JAXFEM/klempt2024_case1_bc.py            # four combinations
     python JAXFEM/klempt2024_case1_bc.py --seed dirichlet --nutrient band3 --growth abs
 
-Result (2026-10-02), mean phi against Fig. 4 (paper 0.13 / 0.325 / 0.74 at
-T* = 0.05 / 0.2 / 1), Eq. 34 as printed unless noted:
-  - seed held vs initial value: small (edge: 0.109 -> 0.141 at T* = 1).
-  - nutrient on one edge line (as before) or one corner node: the nutrient
-    runs out (mean c 0.07 / 0.00 at T* = 0.05 against 0.33), the front
-    r c/(k+c) barely moves, mean phi stays near 0.1.
-  - nutrient on the strip Fig. 2 draws (nodes within w of the edge): the
-    early curve is reproduced. w = 4 um, seed held: phi 0.157 / 0.315 at
-    T* = 0.05 / 0.2 (paper 0.13 / 0.325); w = 2 um gives c closest to the
-    paper (0.43 -> 0.067 against 0.33 -> 0.085).
-  - after T* ~ 0.3 every variant levels off (0.30-0.45 at T* = 1, paper
-    0.74). Growth on both faces (|grad phi . n_c|, growth="abs", not Eq. 34
-    as printed) helps late (w = 3 um: 0.446) but does not close it.
-  - Remaining candidates, untested: the strip width is read off a sketch;
-    the paper's implicit Galerkin FEM (no upwinding, no clip of phi) against
-    explicit upwind FD here; Table 1's weak form differs from Eq. 34 in the
-    sign of the front term and drops k_alpha alpha, and from Eq. 35 in the
-    consumption (g, not g phi).
+Result (2026-10-02), mean phi / mean c against Fig. 4 (paper phi 0.13 /
+0.325 / 0.74 and c 0.33 / 0.165 / 0.085 at T* = 0.05 / 0.2 / 1). All runs:
+Table 2, dt = 1e-3, 21^3 nodes. Largest |difference| over the curve:
+
+  set-up                                                     phi     c
+  Eq. 34/35 as printed, nutrient on one edge line (before)   0.63    0.24
+    + seed held at phi = 1                                   0.60    0.26
+    nutrient on one corner node                              0.67    0.33  (c -> 0)
+  Eq. 34/35 as printed, nutrient on the Fig. 2 strip w=4     0.34    0.31
+    no clip of phi / of c, or 2nd-order ENO advection        no change (< 0.01)
+  first-order consumption g phi c (not Eq. 24/35), edge      0.30    0.10
+  + growth on both faces |grad phi . n_c| (not Eq. 34), edge 0.16    0.10
+  + the same, strip w = 2                                    0.08    0.30
+  + the same, strip w = 1                                    0.05    0.23
+  DIAGNOSTIC (not the paper): w=1, g x4                      0.27    0.03
+  DIAGNOSTIC (not the paper): w=1, g x4, k = 0.25            0.07    0.09
+
+What this establishes:
+  1. Where the nutrient is held matters most. Fig. 2 draws a strip along the
+     edge, not one line of nodes; with the strip the nutrient stays at the
+     paper's level early on and the early phi curve follows.
+  2. Eq. 34 as printed is a non-conservative advection of phi up the nutrient
+     gradient: the colony is moved, not grown, so mean phi cannot rise from
+     0.065 to 0.74 under any of the numerical variants (clipping, scheme,
+     held seed). Growth on both faces, |grad phi . n_c|, does; it matches the
+     paper's text ("growth is also enhanced" toward the opposite corner, none
+     on the faces perpendicular to grad c) but not Eq. 34's sign.
+  3. The paper's phi and c curves are not consistent with each other under
+     Table 2's Monod constant k = 1: with the paper's c ~ 0.1 the front factor
+     c/(k+c) is ~0.09, too slow for the paper's phi. Matching both needs a
+     stronger consumption and a smaller k (last line), i.e. two values not in
+     Table 2. The same direction was found for Fig. 7 (klempt2024_sensitivity:
+     k = 0.01). A question for the authors, not something to tune here.
+  4. Table 1's weak form differs from Eq. 34 (sign of the front term, no
+     k_alpha alpha) and Eq. 35 (consumption g, not g phi); which form was run
+     is not recoverable from the text.
+So phi alone can be reproduced to 0.05 with two departures from the printed
+equations (both-face growth, first-order consumption) and a strip width read
+off a sketch; phi and c together are not reproduced with Table 2.
 """
 from __future__ import annotations
 
@@ -82,7 +103,8 @@ class QuasiStaticC:
     """Eq. 35 quasi-static, printed (zero-order) consumption: -d lap c = -g phi,
     c = 1 on the mask. The matrix does not change, so factorise once."""
 
-    def __init__(self, mask, g):
+    def __init__(self, mask, g, clip_c=True):
+        self.clip_c = clip_c
         self.free = ~mask.ravel()
         A = (-K.LAP).tocsr()
         self.Aff = spla.splu(A[self.free][:, self.free].tocsc())
@@ -93,7 +115,9 @@ class QuasiStaticC:
         rhs = -(self.g / K.D) * phi.ravel()[self.free] - self.bfix
         c = np.ones(K.N ** 3)
         c[self.free] = self.Aff.solve(rhs)
-        return np.clip(c, 0.0, 1.0).reshape(K.N, K.N, K.N)
+        if self.clip_c:
+            c = np.clip(c, 0.0, 1.0)
+        return c.reshape(K.N, K.N, K.N)
 
 
 class FirstOrderC:
@@ -101,17 +125,59 @@ class FirstOrderC:
     -d lap c + g phi c = 0, c = 1 on the mask. Not the paper's Eq. 24/35."""
 
     def __init__(self, mask, g):
-        self.mask, self.g = mask, g
+        self.free = ~mask.ravel()
+        A = (-K.LAP).tocsr()
+        self.Lff = A[self.free][:, self.free].tocsr()
+        self.Lfx = A[self.free][:, ~self.free].tocsr()
+        self.nfix = int((~self.free).sum())
+        self.g = g
+        self.x = None
 
     def __call__(self, phi):
-        return K.solve_c(phi, self.g, self.mask, "first_order")
+        q = (self.g / K.D) * phi.ravel()[self.free]
+        Aff = self.Lff + sp.diags(q)
+        rhs = -(self.Lfx @ np.ones(self.nfix))
+        # the reflected-wall Laplacian is not symmetric, so no CG; BiCGSTAB from
+        # the previous step's solution, checked against the residual
+        x, info = spla.bicgstab(Aff, rhs, x0=self.x, rtol=1e-12, maxiter=20000)
+        if info != 0:
+            x = spla.spsolve(Aff.tocsc(), rhs)
+        self.x = x
+        c = np.ones(K.N ** 3)
+        c[self.free] = x
+        return np.clip(c, 0.0, 1.0).reshape(K.N, K.N, K.N)
 
 
-def run(seed, nutrient, consumption="printed", growth="printed", dt=K.DT, t_end=K.T_END):
+def _minmod(a, b):
+    return np.where(a * b > 0, np.where(np.abs(a) < np.abs(b), a, b), 0.0)
+
+
+def eno2_dot(phi, v):
+    """v . grad(phi) with second-order ENO upwind differences per axis
+    (Shu & Osher): far less numerical diffusion than first-order upwind,
+    whose v h / 2 ~ 25 um^2/T* swamps beta = 2 here."""
+    h = K.H
+    p = np.pad(phi, 2, mode="reflect")
+    out = np.zeros_like(phi)
+    n = phi.shape[0]
+    for ax in range(3):
+        def sh(k):
+            sl = [slice(2, 2 + n)] * 3
+            sl[ax] = slice(2 + k, 2 + k + n)
+            return p[tuple(sl)]
+        pm2, pm1, p0, pp1, pp2 = sh(-2), sh(-1), sh(0), sh(1), sh(2)
+        dm = (p0 - pm1) / h + 0.5 * _minmod(p0 - 2 * pm1 + pm2, pp1 - 2 * p0 + pm1) / h
+        dp = (pp1 - p0) / h - 0.5 * _minmod(pp1 - 2 * p0 + pm1, pp2 - 2 * pp1 + p0) / h
+        out += np.where(v[ax] > 0, v[ax] * dm, v[ax] * dp)
+    return out
+
+
+def run(seed, nutrient, consumption="printed", growth="printed", clip="both",
+        clip_c=True, scheme="upwind1", dt=K.DT, t_end=K.T_END):
     phi0, _, g = K.setup("fig4_edge")
     held = phi0 > 0.5
     mask = nutrient_mask(nutrient)
-    solve = QuasiStaticC(mask, g) if consumption == "printed" else FirstOrderC(mask, g)
+    solve = QuasiStaticC(mask, g, clip_c) if consumption == "printed" else FirstOrderC(mask, g)
     phi = phi0.copy()
     alpha = np.ones_like(phi)
     c = solve(phi)
@@ -121,10 +187,22 @@ def run(seed, nutrient, consumption="printed", growth="printed", dt=K.DT, t_end=
         gx, gy, gz = K.grad_c(c)
         mag = np.sqrt(gx ** 2 + gy ** 2 + gz ** 2)
         speed = np.where(mag > 1e-14, K.R * c / (K.K_M + c) / np.maximum(mag, 1e-14), 0.0)
-        adv = K.upwind_dot(phi, (speed * gx, speed * gy, speed * gz))
-        src = np.abs(adv) if growth == "abs" else -adv
-        phi = phi + dt * (K.BETA * K.lap(phi) + K.K_A * alpha + src)
-        phi = np.clip(phi, 0.0, 1.0)
+        v = (speed * gx, speed * gy, speed * gz)
+
+        def rhs(f):
+            adv = (eno2_dot if scheme == "eno2" else K.upwind_dot)(f, v)
+            src = np.abs(adv) if growth == "abs" else -adv
+            return K.BETA * K.lap(f) + K.K_A * alpha + src
+
+        if scheme == "eno2":           # Heun / SSP-RK2, nutrient frozen over the step
+            f1 = phi + dt * rhs(phi)
+            phi = 0.5 * (phi + f1 + dt * rhs(f1))
+        else:
+            phi = phi + dt * rhs(phi)
+        if clip == "both":
+            phi = np.clip(phi, 0.0, 1.0)
+        elif clip == "lower":
+            phi = np.maximum(phi, 0.0)
         if seed == "dirichlet":
             phi[held] = 1.0
         alpha = alpha + dt * K.K_A * phi
@@ -140,8 +218,19 @@ def main(argv=None):
     ap.add_argument("--nutrient", nargs="+", default=["edge", "corner"])
     ap.add_argument("--consumption", default="printed", choices=("printed", "first_order"))
     ap.add_argument("--growth", default="printed", choices=("printed", "abs"))
+    ap.add_argument("--clip", default="both", choices=("both", "lower", "none"),
+                    help="phi clipped to [0,1] (as before), >= 0 only, or not at all (the paper)")
+    ap.add_argument("--scheme", default="upwind1", choices=("upwind1", "eno2"))
+    ap.add_argument("--g-scale", type=float, default=1.0,
+                    help="DIAGNOSTIC ONLY: multiply Table 2's g (not the paper)")
+    ap.add_argument("--k-monod", type=float, default=1.0,
+                    help="DIAGNOSTIC ONLY: Monod constant k (Table 2: 1)")
+    ap.add_argument("--no-clip-c", action="store_true",
+                    help="leave c unclipped (zero-order consumption can drive it below 0)")
     a = ap.parse_args(argv)
     paper = K.PAPER["fig4_edge"]
+    K.G_TABLE = 1e8 * a.g_scale
+    K.K_M = a.k_monod
     try:
         results = json.loads(OUT.read_text())
     except (OSError, ValueError):
@@ -149,9 +238,15 @@ def main(argv=None):
     for nut in a.nutrient:
         for sd in a.seed:
             t0 = time.time()
-            rec, phi, c = run(sd, nut, a.consumption, a.growth)
+            rec, phi, c = run(sd, nut, a.consumption, a.growth, a.clip, not a.no_clip_c,
+                              a.scheme)
             cmp = K.compare(rec, paper)
-            key = f"seed={sd}/nutrient={nut}/consumption={a.consumption}/growth={a.growth}"
+            key = (f"seed={sd}/nutrient={nut}/consumption={a.consumption}/growth={a.growth}"
+                   f"/clip={a.clip}" + ("/c=unclipped" if a.no_clip_c else "")
+                   + f"/scheme={a.scheme}" + (f"/g_x{a.g_scale:g}" if a.g_scale != 1 else "")
+                   + (f"/k={a.k_monod:g}" if a.k_monod != 1 else ""))
+            print(f"   phi range at T*=1: [{phi.min():.3f}, {phi.max():.3f}], "
+                  f"c range [{c.min():.3f}, {c.max():.3f}]")
             results[key] = {**cmp, "curve": rec}
             print(f"\n== {key}  ({time.time() - t0:.0f}s)")
             print("   t      " + "  ".join(f"{t:5.2f}" for t in paper["t"]))

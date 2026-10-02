@@ -200,3 +200,21 @@ Remedies, each a change to the partner's code, so for Oliver to decide:
 - refine to Pe < 1, which needs h < 0.008 mm (impractical).
 
 
+
+## 9. Test case 1 (Fig. 3/4) revisited with the paper's set-up (2026-10-02)
+
+`JAXFEM/klempt2024_case1_bc.py` (results in `klempt2024_results/case1_bc.json`;
+the full table is in its docstring). The earlier runs held the nutrient on one
+edge line; the paper's Fig. 2 draws a strip along the edge. With the strip the
+early part of Fig. 4 follows. The late part does not with Eq. 34/35 as
+printed, under any numerical variant (seed held, no clipping, 2nd-order ENO):
+Eq. 34 as printed advects the colony rather than growing it. With growth on
+both faces (|∇φ·n_∇c|, as the paper's text describes) and first-order
+consumption, mean φ matches Fig. 4 to 0.05 over T* ∈ [0, 1], but mean c is
+about twice the paper's. φ and c together need a stronger consumption and a
+smaller Monod constant than Table 2 (diagnostic: g ×4, k = 0.25 gives 0.07 /
+0.09), the same direction as the Fig. 7 finding above. So: φ reproduced with
+two stated departures from the printed equations; φ and c together not
+reproduced with Table 2. Questions for the authors: which form of Eq. 34 and
+35 was run (Table 1 differs from both), the width of the nutrient strip, and
+whether c in Fig. 4 is normalised as in Eq. 35.
