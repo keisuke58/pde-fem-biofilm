@@ -368,13 +368,20 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.}
       calls, so the solver converges the first substep on a zero residual. The
       output written for that substep is not an equilibrium state and is
       excluded from every result below.
-\item \emph{The front term uses $|\Delta\varphi|$.} In the element the
-      front-growth term of~\eqref{eq:ch5-field} is multiplied by
-      $|\Delta\varphi|$, the Laplacian it also uses for the diffusion term,
-      where the paper has $|\nabla\varphi|$. The checks of
-      \S\ref{sec:ch5-results} do not depend on this term (the gradient-free
-      region has no front, and both ways of computing $\alpha$ see the same
-      field); how far the biofilm spreads does.
+\item \emph{The front term is switched off, and differs from the paper.}
+      An input-reading slip sets the orientation weight of species~1 to zero
+      (the weights of both species are read into the same variable, and the
+      last one read is zero), so the front-growth term
+      of~\eqref{eq:ch5-field} never acts and the biofilm only diffuses. The
+      term is also multiplied by $|\Delta\varphi|$ where the paper has
+      $|\nabla\varphi|$. On a test copy with the slip fixed, $|\Delta\varphi|$
+      makes the explicit update unstable at $\Delta t=0.005$, while
+      $|\nabla\varphi|$ spreads the seed at the paper's pace but lets
+      $\varphi$ exceed $1$, and the run breaks down near $T^*=0.22$. The checks
+      of \S\ref{sec:ch5-results} do not depend on this term (the
+      gradient-free region has no front, and both ways of computing $\alpha$
+      see the same field); how far the biofilm spreads does, which is why the
+      example model shows no spreading.
 \end{enumerate}}
 
 %-----------------------------------------------------------------------
@@ -604,7 +611,9 @@ spatial structure to show. By $T^*=1$ only the $32$ seeded elements exceed
 $\varphi_{\min}$; they are packed and seeded at $t=0$, so both schemes give
 one uniform composition. A composition that varies in space needs a case in
 which the biofilm spreads within the simulated time, which in this model
-means a nutrient gradient driving the front term of~\eqref{eq:ch5-field}.}
+means a nutrient gradient driving the front term of~\eqref{eq:ch5-field}.
+That term is switched off in the element at present (property~4 of
+\S\ref{sec:ch5-coupling}).}
 
 % TierB. The earlier four-condition study used the five-species ecology at
 % c* = 25. The Hill-gate fix of 2026-10-01 moved its transient peak from 2.4 %
@@ -645,8 +654,9 @@ through that total.}
       $\nu=0.49$ with the element's mean-dilatation formulation; the stress
       changes by $27\,\%$ between $\nu=0.45$ and $0.49$.
 \item \emph{No spatial composition yet.} In the example model the biofilm
-      does not spread within $T^*\le1$, so the composition is uniform; the
-      coupling is verified, but its spatial effect is not yet demonstrated.
+      does not spread within $T^*\le1$, because the element's front term is
+      switched off; the composition is therefore uniform. The coupling is
+      verified, but its spatial effect is not yet demonstrated.
 \item \emph{Magnitude.} With the published growth rate, $\alpha$ stays below
       about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
       largest von Mises stress is $10^{-4}$~Pa.

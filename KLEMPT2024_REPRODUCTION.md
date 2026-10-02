@@ -165,3 +165,22 @@ caveats:
 Not a proof either way; it says which test to run next on the machine: the
 same deck with the front term switched to `|∇φ|`.
 
+**Correction, same day (IKMHIWI03, f278885): the reason for the decay was
+neither form.** In the partner element the front term was **switched off**.
+`USolBeg` reads `ORI_WEIGHT12` and `ORI_WEIGHT22` into species 1's weight
+`sGdp_OriWeight11`, so the last value read, `ORI_WEIGHT22 = 0`, zeroes it. The
+front term never acted, and the seed only diffused. My reading above, that the
+decay looked like Eq. 34 as printed, was wrong: it was diffusion with no front
+term at all.
+
+On a test copy with that slip fixed:
+- with `|∇²φ|` the explicit update is unstable at dt = 0.005;
+- with `|∇φ|` (Eq. 34) at dt = 0.001 the seed spreads, from 4 to 94 traced
+  points with φ ≥ 0.5 by T* = 0.18. That is the paper's pace (cube filled by
+  T* = 0.2). But φ exceeds 1 (up to about 3) and the run breaks down near
+  T* = 0.22: the element does not bound φ.
+
+This reproduction clips φ to [0, 1] and stays far slower than the paper, so
+the two now differ in a way worth separating later.
+
+
