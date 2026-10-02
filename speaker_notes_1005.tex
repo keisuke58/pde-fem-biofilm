@@ -131,23 +131,31 @@ $1.1\times10^{-3}$ になり、これはちょうど $k_a\varphi t$ です。要
 （Table 2 の $E=10$ Pa）ためです。
 
 % ------------------------------------------------------------------
-\slide{Three things found along the way}{1:30}
-\EN Three findings. First, the element's growth variable is the mean of the two
+\slide{Four things found along the way}{1:45}
+\EN Four findings. First, the element's growth variable is the mean of the two
 species fields, so with one species growth is halved. I would like to ask
 Oliver whether that is intended. Second, start values must satisfy
 $\varphi_1+\varphi_2\le1$, because the void fraction is one minus all
 species; the example input starts both species at one in the seed, so for one
 species I start the second at zero. Third, the first result set is not in
 equilibrium, because the element returns zero stress while it sets up its
-operators, so I exclude it. Earlier bring-up runs used larger growth rates
+operators, so I exclude it. Fourth, the element's front-growth term multiplies
+the Laplacian of $\varphi$, where Equation 34 has the gradient magnitude; the
+gradient is computed in the same routine but not used there. The three checks
+do not depend on this term, but the spreading of the biofilm does, so this is
+my second question to Oliver. Earlier bring-up runs used larger growth rates
 and the example input's stiffness, 1000 MPa; everything shown today uses the
 published values.
-\JA 見つかったことが 3 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
+\JA 見つかったことが 4 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
 1 菌種だと成長が半分になります。意図したものか Oliver に確認したいと思います。
 2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\varphi_1+\varphi_2\le1$
 でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
 1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
 要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
+4 つ目、要素の界面成長の項は $\varphi$ のラプラシアンを掛けていますが、式 34 では勾配の
+大きさです。勾配は同じルーチンで計算されていますが、そこでは使われていません。
+3 つの確認はこの項に依存しませんが、バイオフィルムの広がりは依存するので、
+Oliver への 2 つ目の質問にします。
 なお、立ち上げ段階では大きな成長速度と例題入力の剛性（1000 MPa）を使っていましたが、
 今日お見せした結果はすべて論文の値です。
 

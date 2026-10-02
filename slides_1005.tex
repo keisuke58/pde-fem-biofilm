@@ -103,7 +103,7 @@ Free growth (only rigid-body modes fixed) & stress $\equiv 0$ & $\sim 10^{-10}$\
 \begin{frame}{The coupling: what the element does and what is added}
 \small
 \textbf{The element (Oliver's, unchanged)} solves the biofilm field of
-Klempt et al.\ 2024, Eq.\ 34, at its points:
+Klempt et al.\ 2024, Eq.\ 34, at its points (front term: see ``found along the way''):
 \[
 \dot\varphi-\beta\,\Delta\varphi-k_a\,\alpha_K
 +|\nabla\varphi|\,r\,\frac{c}{K+c}\,\mathbf n_\varphi\!\cdot\mathbf n_c=0,
@@ -189,7 +189,7 @@ result, $\tfrac12\times\tfrac{10}{11}$:
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Three things found along the way}
+\begin{frame}{Four things found along the way}
 \small
 \begin{enumerate}
   \item \textbf{The element's growth variable is the mean of the two species fields.}
@@ -200,6 +200,10 @@ result, $\tfrac12\times\tfrac{10}{11}$:
         both species at 1 in the seed; for one species I start the second at 0.
   \item \textbf{The first result set is not in equilibrium:} the element returns zero
         stress on its first calls while it sets up its operators. This set is excluded.
+  \item \textbf{The element's front-growth term uses $|\Delta\varphi|$} where Eq.\ 34 has
+        $|\nabla\varphi|$ ($|\nabla\varphi|$ is computed but not used there).
+        Checks 1--3 do not depend on it; spreading of the biofilm does.
+        $\Rightarrow$ question to Oliver.
 \end{enumerate}
 \vspace{6pt}
 \colorbox{c3!12}{\parbox{0.95\linewidth}{\small
