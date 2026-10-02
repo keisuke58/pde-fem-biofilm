@@ -51,3 +51,43 @@ to the source terms; clipping does not.
   spatial composition yet").
 - Tell me the numbers; chapter 5, property 4 and the limitation will be
   rewritten from them.
+
+## Result on IKMHIWI03, 2 Oct (test copy `F:\biofilm_upf_diag`)
+
+**Implementation:**
+- the reading slip is fixed;
+- the front term is `−w·r·c/(K+c)·n_c·∇φ`;
+- ∇φ comes from a weighted least-squares fit (w = 1/|d|²) over the NEM
+  neighbours upstream of `a = w·r·c/(K+c)·n_c`, with the central gradient
+  where fewer than 3 neighbours lie upstream.
+
+Fig. 7 setup (`ds_fig7h`, scaled Table 2), T* = 0.3, 0 errors.
+
+| check | result | |
+|---|---|---|
+| upper bound | max φ 0.999 | pass |
+| lower bound | min φ −0.011 | fail (small) |
+| spreading | mean φ 0.031 / 0.045 / 0.052 / 0.053 / 0.051 / 0.047 at T* = 0.05 … 0.30 (paper: 0.55 at 0.1, 1.0 at 0.2) | far slower than the paper |
+| time step | dt 1e−3 vs 5e−4: mean φ differs 1.1–2.6 % | fail (1 %) |
+| direction | slab means along y at T* = 0.3 (slab 1 = nutrient face): front on 0.039 0.077 0.066 0.056 0.047 0.040 0.032 0.019; front off 0.010 0.044 0.010 0 0 0 0 0 | fail: growth towards the nutrient **and** away from it |
+
+**Cause (diagnosis on IKMHIWI03, agreed):**
+- Beyond the seed the nutrient is almost uniform (c by slab 1.000 0.996
+  0.993 0.993 …), so ∇c ≈ 0.
+- Eq. 34 normalises the direction, `n_c = ∇c/|∇c|`, which stays a unit
+  vector there while the speed `r·c/(K+c) ≈ 0.5 r` does not vanish, so
+  round-off sets the direction.
+- This is a property of Eq. 34's normalised `n_c` (0/0 where c is uniform),
+  not of the upwinding.
+
+**Options:**
+- (a) switch the term off where |∇c| < 1 % of its maximum: a
+  regularisation, with the threshold as a new assumption;
+- (b) unnormalised ∇c: a different model, so not recommended;
+- (c) stop and record it as a limitation.
+
+**Recommendation (cloud session): (c) for the thesis.** No result of chapter 5
+depends on the front term. (a) would add an assumption of my own. How Klempt
+et al. handle `∇c/|∇c|` where `∇c → 0` is a question for Felix: Table 1 of
+the 2024 paper uses the normalised form in the weak form. Decide (a) or its
+equivalent at Keio from his answer.
