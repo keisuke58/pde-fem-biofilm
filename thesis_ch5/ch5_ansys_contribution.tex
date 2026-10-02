@@ -132,10 +132,12 @@ supports this form,
   E(\phi) = (\phi^2+f)\,E_{\mathrm{bio}},\qquad \nu=\nu_{\mathrm{bio}},
   \label{eq:ch5-stiffness}
 \end{equation}
-where $f$ is a small floor that keeps the void solvable. It is tested to
+where $f$ is a small floor that keeps the void solvable; it is not in the
+paper, whose void has no stiffness. It is tested to
 reproduce the plain law fed the same $E$ at every $\phi$ and to scale the
-stress by $\phi^2$. The near incompressibility of the paper is
-approximated by $\nu=0.49$. The element, SOLID185 in its default
+stress by $\phi^2$. The paper's material is incompressible, with $\det\mathbf F_e=1$ enforced by
+a Lagrange multiplier, and $\nu=0.49$ enters there only through $\mu$; here
+the constraint is approximated by $\nu=0.49$. The element, SOLID185 in its default
 $\bar{\mathbf B}$ formulation, uses one dilatation per element, the same idea as
 the H1P0 element of the paper; that this formulation is active with a user
 material is indicated by the solver: lowering $\nu$ from $0.49$ to $0.45$
@@ -311,7 +313,7 @@ its own routines, alternating substep by substep
 al.~\cite{Klempt2024DiffusionDrivenGrowth}, Eq.~34 and 36:
 \begin{equation}
   \dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha
-   - r\,\frac{c}{K+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|},
+   - r\,\frac{c}{k+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|},
   \qquad \dot\alpha = k_\alpha\,\phi ,
   \label{eq:ch5-field}
 \end{equation}
@@ -535,6 +537,14 @@ $\phi_{\rm cap}=0.95$ needs $0.0125$.}
 All runs use ANSYS 2022~R2 on the framework's example model (512 elements),
 one process, $\Delta t=0.1$, and the growth parameters of Klempt et al.\ 2024,
 Table~2: $k_\alpha=10^{-3}$, one species, the second field started at zero.
+The other coefficients of~\eqref{eq:ch5-field} and of the nutrient ($\beta$,
+$r$, $k$, $d$, $g$) are those of the framework's example input, on a 2~mm cube
+instead of the paper's 20~$\mu$m one, and are not taken from the paper; with
+the front term off (\S\ref{sec:ch5-coupling}), $r$, $k$ and the nutrient do
+not act. The paper uses $10^3$ substeps over $T^*\in[0,1]$; these runs use
+$\Delta t=0.1$ up to $T^*=1.1$, which is exact for the gradient-free growth
+shown below and is a limit for the composition where the amount changes in
+time.
 
 \paragraph{Exact solution inside ANSYS.} Where the field has no gradients,
 \eqref{eq:ch5-field} reduces to $\dot\phi=k_\alpha\alpha$,
@@ -578,9 +588,11 @@ Klempt et al.\ 2024, equation~\eqref{eq:ch5-stiffness} with $E=10$~Pa,
 $\nu=0.49$ and a void floor $f=10^{-3}$, $\alpha-1$ in the seeded element grows
 linearly to $1.1\times10^{-3}$ at $T^*=1.1$, which is $k_\alpha\phi t$ as
 equation~\eqref{eq:ch5-eq36} requires. The element is compressed, and its
-neighbours carry about $25$ times its von Mises stress, a ring of stress
-around the biofilm like the one Klempt et al.~\cite{Klempt2023NumericalComparison}
-show. The element's von Mises stress is $4.0\times10^{-6}$~Pa and the largest
+neighbours carry about $25$ times its von Mises stress. Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth,Klempt2023NumericalComparison}
+report pressure inside the biofilm and a ring of tension at its edge; the
+compressed seed agrees with that, and whether its neighbours are in tension
+is to be read from their mean stress, which these runs have not yet output. The element's von Mises stress is $4.0\times10^{-6}$~Pa and the largest
 in the model $9.9\times10^{-5}$~Pa. The growth variable of the element still
 gives $0.455$ times the stress of~\eqref{eq:ch5-eq36}. Compared with the
 framework's example stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly), the
