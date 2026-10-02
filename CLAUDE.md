@@ -124,6 +124,9 @@ this machine's specific workflow.
 
 ## Working style for this repo
 
+- **Always reply to the user in Japanese, and keep replies short**
+  (decided 2026-10-02). Documents keep their own language (thesis and decks
+  in English unless asked otherwise).
 - Keep changes scoped to named files; don't touch the pre-existing
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
