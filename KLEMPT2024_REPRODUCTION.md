@@ -183,4 +183,20 @@ On a test copy with that slip fixed:
 This reproduction clips φ to [0, 1] and stays far slower than the paper, so
 the two now differ in a way worth separating later.
 
+**Why φ exceeds 1 there: the cell Péclet number, not the time step.**
+Estimated from `klempt2024_cases.deck_values` (2 mm cube, 0.25 mm elements):
+- front speed v = r·c/(K+c) ≤ 10·½ = 5 mm/T*, β = 0.02 mm²/T*;
+- CFL v·dt/h = 0.02 at dt = 0.001, far inside any limit;
+- **cell Péclet number Pe = v·h/(2β) ≈ 31**.
+
+The front term is an advection of φ up the nutrient gradient (§2). Advection
+by central differences at Pe ≫ 1 gives over- and undershoots, which matches
+φ reaching about 3. The `|∇²φ|` form scales with 1/h², which matches the
+explicit instability at a front rate of about 560/T*.
+
+Remedies, each a change to the partner's code, so for Oliver to decide:
+- upwind the front term, as this reproduction does (bounded);
+- clip φ to [0, 1] (simple, but not mass-conserving);
+- refine to Pe < 1, which needs h < 0.008 mm (impractical).
+
 
