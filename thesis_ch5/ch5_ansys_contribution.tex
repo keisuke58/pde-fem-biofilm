@@ -410,6 +410,20 @@ advanced, and scaled again; $\chi_i$, $\psi_i$ and $\gamma$ are stored as state
 variables. The parameters are those of the paper's Table~1 cases ($c^*=100$,
 $\alpha^*=10$, $\eta_i$ per case).
 
+\paragraph{Consistency with the point model.} The scaling changes nothing
+when the field's amount is the one the point model would produce on its own.
+Driven by exactly that amount, the coupled scheme gives back the composition
+of the point model alone: to $1.2\times10^{-5}$ in case~3 and to
+$6\times10^{-17}$ in case~6 of the paper, at coupling steps from $0.01$ down to
+$0.0025$.%
+\footnote{\texttt{tests/test\_composition\_reduces\_to\_point\_model.py}.}
+The coupled composition can therefore differ from the paper only where the
+field's amount differs from the point model's, and the difference is caused by
+that amount and not by the coupling itself. No published work states how the
+two models are to be combined, since each prescribes its own evolution of the
+amount; a coupling that needs no such choice would require a spatial
+multi-species model derived from a single variational principle.
+
 The composition does not act back on the stress. In Klempt et al.\ 2024 no
 material parameter depends on the species; in the earlier spatial model of
 Klempt et al.~\cite{Klempt2023NumericalComparison} species identity enters only
