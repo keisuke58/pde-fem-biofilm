@@ -139,7 +139,9 @@ stress by $\varphi^2$. The near incompressibility of the paper is
 approximated by $\nu=0.49$. The element, SOLID185 in its default
 $\bar{\mathbf B}$ formulation, uses one dilatation per element, the same idea as
 the H1P0 element of the paper; that this formulation is active with a user
-material remains to be confirmed on the solver.}
+material is indicated by the solver: lowering $\nu$ from $0.49$ to $0.45$
+changes the stress by $27\,\%$ for a fivefold change of the bulk modulus, with
+no sign of locking (\S\ref{sec:ch5-results}).}
 
 %-----------------------------------------------------------------------
 \section{Implementation}
@@ -544,30 +546,30 @@ both species fields, one of them unused, and a lag of one substep
   \label{fig:ch5-whole}
 \end{figure}}
 
-% TierB. Stress values from the example-input stiffness (E = 1000 MPa,
-% nu = 0.3, linear blend). Re-run with eq. (ch5-stiffness), E = 10 Pa,
-% nu = 0.49 (make_wired_deck --set YOUNG_BIO=1e-5 POISSON_BIO=0.49
-% YOUNG_VOID=-1e-3) and replace the numbers and the figure.
-\TierB{%
-\paragraph{The seeded element.} In the element seeded with biofilm, $\alpha$
-grows linearly to $1.1\times10^{-3}$ at $T^*=1.1$, which is $k_a\varphi t$ as
+% TierA. Re-run on IKMHIWI03 with the Klempt 2024 stiffness (commit c0ac081).
+\TierA{%
+\paragraph{Stresses with the published stiffness.} With the stiffness of
+Klempt et al.\ 2024, equation~\eqref{eq:ch5-stiffness} with $E=10$~Pa,
+$\nu=0.49$ and a void floor $f=10^{-3}$, $\alpha$ in the seeded element grows
+linearly to $1.1\times10^{-3}$ at $T^*=1.1$, which is $k_a\varphi t$ as
 equation~\eqref{eq:ch5-eq36} requires. The element is compressed, and its
-neighbours carry about ten times its von Mises stress, a ring of stress around
-the biofilm like the one Klempt et al.~\cite{Klempt2023NumericalComparison}
-show. With the framework's example stiffness ($E=1000$~MPa, $\nu=0.3$) the
-element's von Mises stress is $1.8\times10^{-3}$~MPa and the largest in its
-neighbours $1.8\times10^{-2}$~MPa. With the stiffness of the paper,
-equation~\eqref{eq:ch5-stiffness}, these fall to the order of
-$10^{-5}$ to $10^{-3}$~Pa; a fully constrained element at the same growth
-carries $-0.56$~Pa.
+neighbours carry about $25$ times its von Mises stress, a ring of stress
+around the biofilm like the one Klempt et al.~\cite{Klempt2023NumericalComparison}
+show. The element's von Mises stress is $4.0\times10^{-6}$~Pa and the largest
+in the model $9.9\times10^{-5}$~Pa. The growth variable of the element still
+gives $0.455$ times the stress of~\eqref{eq:ch5-eq36}. Compared with the
+framework's example stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly), the
+stresses fall by a factor of about $6\times10^{-9}$ and the pattern changes
+(cosine similarity $0.94$), because the void is now soft. Lowering $\nu$ from
+$0.49$ to $0.45$, a fivefold smaller bulk modulus, changes the stress by
+$27\,\%$, with no sign of volumetric locking.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{\ansysfigdir fig1005_element220.png}
   \caption[The seeded element and its neighbours]{%
     Growth and von Mises stress of the seeded element and its neighbours over
-    time. Example-input stiffness; to be replaced by the run with the
-    stiffness of Klempt et al.\ 2024.}
+    time, with the stiffness of Klempt et al.\ 2024.}
   \label{fig:ch5-element}
 \end{figure}}
 
@@ -623,8 +625,9 @@ through that total.}
       not change the von Mises stress at a given deformation, and at
       $\nu=0.49$ it is $1.3\,\%$ of the constrained pressure.
 \item \emph{Incompressibility.} The paper's exact constraint is approximated by
-      $\nu=0.49$ with the element's mean-dilatation formulation.
+      $\nu=0.49$ with the element's mean-dilatation formulation; the stress
+      changes by $27\,\%$ between $\nu=0.45$ and $0.49$.
 \item \emph{Magnitude.} With the published growth rate, $\alpha$ stays below
       about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
-      stresses are of the order of pascals or below.
+      largest von Mises stress is $10^{-4}$~Pa.
 \end{itemize}}
