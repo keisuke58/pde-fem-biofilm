@@ -133,3 +133,35 @@ only the authors can answer, and it is worth more asked than worked around.
   §4.1 directional growth, §4.2 biofilm on nutrients, §4.3 growth against rigid
   obstacles (geometry from Albero et al. 2014, later used by Soleimani 2019 and
   Soleimani et al. 2020), §4.4 maze, §4.5 grate.
+
+## 8. The partner element's front term, |∇²φ| instead of |∇φ| (2026-10-02)
+
+The partner's element multiplies the front-growth term by `|∇²φ|` where
+Eq. 34 has `|∇φ|`. In the partner element, the Fig. 7 setup with Table 2
+values scaled to its deck (IKMHIWI03, commit 4a54c09) does not grow: the seed's
+peak φ falls from 1.0 to 0.1. Was the `|∇²φ|` the cause? I tested this here,
+in the same 21³ reproduction: `klempt2024_quantitative.run(...,
+growth="lap")`, Fig. 7 high nutrient, consumption as printed, dt = 1e−3.
+
+| T* | paper (mean φ) | Eq. 34 as printed, `\|∇φ\|` (mean / max φ) | `\|∇²φ\|` (mean / max φ) |
+|---|---|---|---|
+| 0.1 | 0.55 | 0.027 / 0.93 | 0.011 / 1.00 |
+| 0.2 | 1.00 | 0.068 / 0.60 | 0.032 / 1.00 |
+| 0.5 | 1.00 | 0.160 / **0.36** | 0.127 / **1.00** |
+
+- **It is the printed `|∇φ|` form that erodes the peak** (1.0 → 0.36): it is a
+  transport of φ towards the nutrient, as §2 explains, so the back of the
+  colony empties. With `|∇²φ|` the peak stays at 1.0.
+- **Neither form fills the cube** as Fig. 7 does by T* = 0.2. That is the
+  negative result of §1, not something new.
+
+So this test does not support `|∇²φ|` as the cause of the partner run's
+decay. The decay looks more like what Eq. 34 as printed does on its own. Two
+caveats:
+- `|∇²φ|` scales with 1/h², so its weight depends on the mesh (here h = 1 µm;
+  the partner mesh is 0.25 mm with deck-scaled parameters);
+- the partner element also has its own discretisation.
+
+Not a proof either way; it says which test to run next on the machine: the
+same deck with the front term switched to `|∇φ|`.
+

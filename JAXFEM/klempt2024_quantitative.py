@@ -241,7 +241,9 @@ def run(case, variant, growth="printed", dt=DT, t_end=T_END):
     -- a transport of phi towards the nutrient (the back of the colony erodes).
     growth="abs": |grad phi . n_c| as a source -- growth on both faces aligned
     with the nutrient gradient, none on the faces perpendicular to it, which
-    is what the paper's text and Fig. 3/Table 4 describe."""
+    is what the paper's text and Fig. 3/Table 4 describe.
+    growth="lap": the partner element's front term, |lap phi| r c/(k+c)
+    n_phi.n_c (central differences), for comparison (2026-10-02)."""
     phi, mask, g = setup(case)
     alpha = np.ones_like(phi)
     c = solve_c(phi, g, mask, variant)
@@ -254,6 +256,16 @@ def run(case, variant, growth="printed", dt=DT, t_end=T_END):
         v = (speed * gx, speed * gy, speed * gz)
         if growth == "abs":
             src = np.abs(upwind_dot(phi, v))
+        elif growth == "lap":
+            # the partner element's form: |lap phi| in place of |grad phi|,
+            # times r c/(k+c) and the orientation n_gradphi . n_gradc
+            px, py, pz = grad_c(phi)
+            mp = np.sqrt(px**2 + py**2 + pz**2)
+            mc = np.sqrt(gx**2 + gy**2 + gz**2)
+            nd = np.where((mc > 1e-14) & (mp > 1e-14),
+                          (px * gx + py * gy + pz * gz)
+                          / np.maximum(mc * mp, 1e-30), 0.0)
+            src = -np.abs(lap(phi)) * R * c / (K_M + c) * nd
         else:
             src = -upwind_dot(phi, v)
         phi = phi + dt * (BETA * lap(phi) + K_A * alpha + src)
