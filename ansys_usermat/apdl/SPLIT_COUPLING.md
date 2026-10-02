@@ -234,6 +234,52 @@ calls / cached / held = 40 / 200 / 0. ANSYS makes 5 usermat calls per
 substep, not 3, and the cache absorbs them. The result does not depend on
 this.
 
+### Stiffness as in Klempt 2024 (2 Oct)
+
+Klempt et al. 2024, Eq. 20 and Table 2:
+- the elastic term is `φ²·μ/2·(I:C̃e − 3)`;
+- the void "possesses no mechanical stiffness";
+- μ = 3.3557 Pa (E = 10 Pa, ν = 0.49);
+- the material is incompressible (H1P0).
+
+The runs so far used the partner's example values, linearly blended:
+E_bio = 1000 **MPa**, E_void = 1 MPa, ν = 0.3. The deck is `/units,MPA`.
+
+`BIOFILM_GROWTH_VISCO_V01` now has a Klempt branch, selected by
+`sYoungL < 0` (a negative modulus has no other meaning):
+
+    E(φ) = (φ² + f)·E_bio,   ν = ν_bio,   f = −sYoungL (void floor)
+
+- `φ` is the biofilm fraction the call passes (`bio1 + bio2`), clamped to
+  [0, 1]. Shear and bulk both scale, so the void is soft in both.
+- With `sYoungL ≥ 0` the old linear blend is unchanged.
+- Tests (`test_material_wrapper.py`): equal to the linear path fed
+  `E = (φ² + f)·E_bio` at φ = 0, 0.3, 0.7, 1; stress at φ = 0.5 is ¼ of
+  φ = 1; the default path is unchanged.
+
+**Deck** (solver units MPa), with `make_wired_deck.py --set`:
+
+    --set YOUNG_BIO=1e-5 --set POISSON_BIO=0.49 --set YOUNG_VOID=-1e-3
+
+**Check on IKMHIWI03 first:**
+1. The call to `BIOFILM_GROWTH_VISCO_V01` in v222.F passes `YOUNG_VOID`
+   (`sGdp_YoungVoid`) as `sYoungL`.
+2. `YOUNG_VOID` is used nowhere else (the USSFin, other materials), because
+   a negative value must not reach anything else.
+
+**Incompressibility:**
+- The element is SOLID185 with the default KEYOPT(2) = 0, which is the B-bar
+  (mean-dilatation) method. For an 8-node brick that is the same idea as
+  Klempt's H1P0, one pressure per element.
+- ν = 0.49 approximates their exact constraint.
+- Whether B-bar is applied with a user material should be confirmed on the
+  machine. Comparing ν = 0.45 and 0.49 on the same run gives an indication:
+  a locking element stiffens strongly as ν → 0.5.
+
+**Expected effect:** stresses fall by about E_new / E_old = 1e−5 / 1e3 = 1e−8,
+modified by φ². The figures and slide numbers from the E = 1000 MPa runs
+(≤ 0.02 MPa) must be redone.
+
 ### ANSYS smoke test, IKMHIWI03, 1 Oct (prop(28) = 7)
 
 One element (220, in the seed), v222, `-np 1`, 30 constants (before s
