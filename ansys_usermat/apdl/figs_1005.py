@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import csv
 import math
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -42,8 +43,9 @@ HERE = Path(__file__).resolve().parent
 RES = HERE / "results" / "2026-10-01_paper_values"
 OUT = HERE.parents[1] / "assets"
 K, DT = 1.0e-3, 0.1
-plt.rcParams.update({"font.size": 12, "axes.grid": True, "grid.alpha": 0.3,
-                     "savefig.dpi": 200, "savefig.bbox": "tight"})
+sys.path.insert(0, str(HERE.parent))
+import figstyle  # noqa: E402
+figstyle.apply(12)
 
 
 def read_rows(p):

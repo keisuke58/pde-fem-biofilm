@@ -32,7 +32,9 @@ TITLES = {"2sp_case3": "case 3 (Fig. 3): coexistence",
 
 
 def main():
-    plt.rcParams.update({"font.size": 11, "axes.grid": True, "grid.alpha": 0.3})
+    sys.path.insert(0, str(HERE.parent / "ansys_usermat"))
+    import figstyle
+    figstyle.apply()
     fig, axs = plt.subplots(1, 2, figsize=(12, 4.2))
     for ax, name in zip(axs, TITLES):
         case = CASES[name]

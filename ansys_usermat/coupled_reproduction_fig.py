@@ -63,7 +63,8 @@ def curves(case):
 
 
 def main():
-    plt.rcParams.update({"font.size": 11, "axes.grid": True, "grid.alpha": 0.3})
+    import figstyle
+    figstyle.apply()
     fig, axs = plt.subplots(1, 2, figsize=(12, 4.3))
     for ax, case in zip(axs, TITLES):
         t, chi, tc, cc = curves(case)

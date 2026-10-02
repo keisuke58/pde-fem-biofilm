@@ -84,6 +84,10 @@ def check(g):
 def main(argv=None):
     import matplotlib
     matplotlib.use("Agg")
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import figstyle
+    figstyle.apply()
     import matplotlib.pyplot as plt
     from matplotlib import colors, cm
 

@@ -53,6 +53,10 @@ def section(col, axis):
 def main(argv=None):
     import matplotlib
     matplotlib.use("Agg")
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import figstyle
+    figstyle.apply()
     import matplotlib.pyplot as plt
     from matplotlib.colors import TwoSlopeNorm
 
@@ -85,6 +89,7 @@ def main(argv=None):
                            vmin=0.0)
         ax.contour(np.where(seed, 1.0, 0.0), levels=[0.5], colors="k",
                    linewidths=1.0, origin="lower", extent=ext)
+        ax.grid(False)
         ax.set_title(lab, fontsize=10)
         ax.set_xlabel(f"{un} [mm]")
         ax.set_ylabel(f"{vn} [mm]")

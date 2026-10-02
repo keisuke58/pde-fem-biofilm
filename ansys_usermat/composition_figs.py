@@ -42,8 +42,8 @@ SCENARIOS = {
     r"interior, $\varphi_{3D} = 0.4$": lambda t: 0.4,
     r"front arriving at $T^* = 0.3$": lambda t: float(np.clip((t - 0.3) / 0.5, 0.0, 1.0)),
 }
-plt.rcParams.update({"font.size": 11, "axes.grid": True, "grid.alpha": 0.3,
-                     "savefig.dpi": 200, "savefig.bbox": "tight"})
+import figstyle  # noqa: E402
+figstyle.apply()
 
 
 def chi1(states):
@@ -86,6 +86,7 @@ def fig_schemes():
             a2.plot(tt, [f(x) for x in tt], color="0.6", lw=1)
             a2.set_ylim(0, 1.05)
             a2.grid(False)
+            a2.spines["right"].set_visible(True)
             if j == 2:
                 a2.set_ylabel(r"$\varphi_{3D}$ (grey)", color="0.4")
             else:
