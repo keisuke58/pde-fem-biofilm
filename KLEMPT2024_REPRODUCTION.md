@@ -381,3 +381,14 @@ paper's colours):
   fills the block at the corner rather than touching two opposite faces as
   in the paper. The averages agree; the morphology agrees in kind, not in
   detail.
+
+Is the difference in shape numerical? Five variants with the corner source and
+time scale 2 (β scaled with s, β = 2, β = 0.5; first-order upwind and
+second-order ENO): Fig. 4 RMS 0.021-0.029 for all, and the same isosurfaces
+(a slender egg, the corner block filled at 100 %). Neither the phase-field
+regularisation nor the discretisation changes the shape, so the remaining
+difference lies in the equations or the set-up, not in the numerics. The
+most visible part: growth on both faces |∇φ·n_c| is zero on faces
+perpendicular to n_c, so the egg cannot fatten sideways, while the paper's
+egg does. What the paper's element computes there is a question for the
+authors.
