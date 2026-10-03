@@ -402,3 +402,39 @@ Table 4 (test case 4.2) side by side, `JAXFEM/klempt2024_table4_fig.py`
   thinner with a wider interface; the early dome is smaller here.
 The same pattern as in 4.1: the averages agree, sideways growth is missing
 and the interface is diffuse.
+
+## 15. Growth on every face of the colony: one more parameter (2026-10-03)
+
+§14 traced the remaining difference in shape to the front term: growth on
+both faces, |n_φ·n_c|, is zero on faces perpendicular to the nutrient
+gradient, so the colony cannot widen. The paper's text says growth there is
+"less", not zero. Hypothesis, tested as such: the front term is a mix of
+isotropic growth and growth along the nutrient gradient,
+
+    r c/(k+c) |∇φ| [ w + (1 − w) |n_φ·n_c| ],
+
+w one new parameter, not from the paper (`klempt2024_case1_bc.run_setup`,
+growth = "blend<w>", Godunov-upwinded |∇φ| for the isotropic part).
+Table 2 otherwise unchanged; best time scale per run. RMS against the
+digitised curves:
+
+| w | 4.1 (Fig. 4) | 4.2 high | 4.2 low |
+|---|---|---|---|
+| 0 (§12-14) | 0.022 (s = 2) | 0.038 (s = 10) | 0.07 (s = 4) |
+| 0.25 | 0.017 (s = 1.5) | 0.035 (s = 6) | 0.042 (s = 4) |
+| **0.5** | **0.013 (s = 1)** | **0.037 (s = 6)** | **0.030 (s = 3)** |
+| 1 (isotropic) | 0.063 | 0.033 (s = 4) | 0.037 (s = 2) |
+
+w = 0.5 improves all three curves at once, brings the time scales closer
+(6 / 3 for 4.2 instead of 10 / 4-5; 1 for 4.1, i.e. Table 2's own T*), and
+changes the shapes towards the paper's (`assets/fig_klempt2024_fig3_blend.png`,
+`assets/fig_klempt2024_table4_blend.png`):
+- 4.1: a full egg towards the corner, smooth, no scattered patches; at 100 %
+  the corner block and a large body, as in the paper.
+- 4.2 "high": the dome up to 4 % looks like the paper's; at 7 % it spreads to
+  the side walls instead of rising as a column with straight sides.
+- 4.2 "low": the dome and the final layer look like the paper's.
+This is the closest reproduction so far, with three stated departures from
+the printed equations (both faces, consumption g φ c, the isotropic share w)
+and a time scale per run. It remains a hypothesis about what the paper's
+element computes; the authors can confirm or reject it.

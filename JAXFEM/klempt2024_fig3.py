@@ -51,13 +51,13 @@ def source(name):
     return (K.X >= K.L - a - 1e-9) & (K.Y >= K.L - a - 1e-9) & (K.Z >= K.L - a - 1e-9)
 
 
-def fields(src, s):
+def fields(src, s, growth="abs"):
     K.R, K.BETA, K.K_A = 100 * s, 2 * s, 1e-3 * s
     phi, _, _ = K.setup("fig4_edge")
     mask = source(src)
     out, t = {}, 0.0
     for t_next in TIMES:
-        _, phi, _ = B.run_setup(phi, mask, 1e8, "ic", "first_order", "abs",
+        _, phi, _ = B.run_setup(phi, mask, 1e8, "ic", "first_order", growth,
                                 t_end=round(t_next - t, 6))
         out[t_next] = phi.copy()
         t = t_next
@@ -110,9 +110,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default="corner2")
     ap.add_argument("--s", type=float, default=2.0)
+    ap.add_argument("--growth", default="abs", help='"abs" or e.g. "blend0.5" (diagnostic)')
+    ap.add_argument("--out", default=str(OUT))
     a = ap.parse_args(argv)
     figstyle.apply(size=11)
-    F = fields(a.source, a.s)
+    F = fields(a.source, a.s, a.growth)
     P = paper_panels()
     fig = plt.figure(figsize=(14, 7.2))
     for i, t in enumerate(TIMES):
@@ -123,11 +125,11 @@ def main(argv=None):
         ax2.imshow(P[i]); ax2.set_axis_off()
         ax2.set_title(f"paper, {round(t * 100)} %", fontsize=11)
     fig.suptitle(r"Klempt et al. 2024, Fig. 3: isosurface $\phi = 0.8$ of test case 4.1. "
-                 f"This work: Python reproduction (Table 2, nutrient {a.source}, time scale {a.s:g}); "
+                 f"This work: Python reproduction (Table 2, nutrient {a.source}, time scale {a.s:g}, growth {a.growth}); "
                  "paper: Fig. 3 (CC BY 4.0)", fontsize=11.5)
     fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.02, hspace=0.12)
-    fig.savefig(OUT, dpi=200)
-    print("wrote", OUT)
+    fig.savefig(a.out, dpi=200)
+    print("wrote", a.out)
 
 
 if __name__ == "__main__":

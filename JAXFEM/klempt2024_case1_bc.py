@@ -148,6 +148,22 @@ class FirstOrderC:
         return np.clip(c, 0.0, 1.0).reshape(K.N, K.N, K.N)
 
 
+def grad_out(phi):
+    """|grad phi| for phi_t = F |grad phi| with F > 0 (the dense region grows
+    outwards), Godunov upwinding: sum of min(D-phi, 0)^2 + max(D+phi, 0)^2."""
+    p = np.pad(phi, 1, mode="reflect")
+    s = 0.0
+    for ax in range(3):
+        f = [slice(1, -1)] * 3
+        b = [slice(1, -1)] * 3
+        f[ax] = slice(2, None)
+        b[ax] = slice(None, -2)
+        dp = (p[tuple(f)] - phi) / K.H
+        dm = (phi - p[tuple(b)]) / K.H
+        s = s + np.minimum(dm, 0) ** 2 + np.maximum(dp, 0) ** 2
+    return np.sqrt(s)
+
+
 def _minmod(a, b):
     return np.where(a * b > 0, np.where(np.abs(a) < np.abs(b), a, b), 0.0)
 
@@ -197,7 +213,14 @@ def run_setup(phi0, mask, g, seed="ic", consumption="printed", growth="printed",
 
         def rhs(f):
             adv = (eno2_dot if scheme == "eno2" else K.upwind_dot)(f, v)
-            src = np.abs(adv) if growth == "abs" else -adv
+            if growth.startswith("blend"):
+                # DIAGNOSTIC (not the paper): growth on every face of the colony,
+                # w isotropic + (1 - w) along the nutrient gradient, "blend0.5"
+                w = float(growth[len("blend"):])
+                src = (w * K.R * c / (K.K_M + c) * grad_out(f)
+                       + (1.0 - w) * np.abs(adv))
+            else:
+                src = np.abs(adv) if growth == "abs" else -adv
             return K.BETA * K.lap(f) + K.K_A * alpha + src
 
         if scheme == "eno2":           # Heun / SSP-RK2, nutrient frozen over the step

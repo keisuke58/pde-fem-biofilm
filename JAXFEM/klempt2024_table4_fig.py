@@ -42,13 +42,13 @@ PAPER_COLS = {"high": (1306, 1653), "low": (1801, 2148)}
 PAPER_ROWS = [(344, 691), (706, 1053), (1068, 1415), (1431, 1778), (1793, 2139), (2156, 2501)]
 
 
-def fields(sub):
+def fields(sub, growth="abs"):
     s = SCALE[sub]
     K.R, K.BETA, K.K_A = 100 * s, 2 * s, 1e-3 * s
     phi, mask = C.setup(1)
     out, t = {}, 0.0
     for t_next in TIMES:
-        _, phi, _ = B.run_setup(phi, mask, C.G[sub], "ic", "first_order", "abs",
+        _, phi, _ = B.run_setup(phi, mask, C.G[sub], "ic", "first_order", growth,
                                 t_end=round(t_next - t, 6))
         out[t_next] = phi.copy()
         t = t_next
@@ -64,10 +64,18 @@ def paper_panels():
                 for k, (x0, x1) in PAPER_COLS.items() for r, (y0, y1) in enumerate(PAPER_ROWS)}
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--growth", default="abs", help='"abs" or e.g. "blend0.5" (diagnostic)')
+    ap.add_argument("--s-high", type=float, default=SCALE["high"])
+    ap.add_argument("--s-low", type=float, default=SCALE["low"])
+    ap.add_argument("--out", default=str(OUT))
+    args = ap.parse_args(argv)
+    SCALE["high"], SCALE["low"] = args.s_high, args.s_low
     figstyle.apply(size=11)
     cmap, norm = figstyle.klempt_cmap()
-    F = {sub: fields(sub) for sub in SCALE}
+    F = {sub: fields(sub, args.growth) for sub in SCALE}
     P = paper_panels()
     L, ky = K.L, K.N // 2
     fig, ax = plt.subplots(len(TIMES), 4, figsize=(9.6, 13.2))
@@ -91,10 +99,11 @@ def main():
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     fig.colorbar(sm, ax=ax, shrink=0.4, pad=0.02, label=r"$\phi$ [-]")
     fig.suptitle("Klempt et al. 2024, test case 4.2 (Table 4): vertical mid-plane, nutrient face at "
-                 "the bottom.\nThis work: Python reproduction (Table 2, time scale 10 / 4, both-face "
-                 r"growth, consumption $g\phi c$); paper: Table 4 (CC BY 4.0)", fontsize=10.5)
-    fig.savefig(OUT, dpi=200)
-    print("wrote", OUT)
+                 "the bottom.\nThis work: Python reproduction (Table 2, time scale "
+                 f"{SCALE['high']:g} / {SCALE['low']:g}, growth {args.growth}, consumption $g\\phi c$); "
+                 "paper: Table 4 (CC BY 4.0)", fontsize=10.5)
+    fig.savefig(args.out, dpi=200)
+    print("wrote", args.out)
 
 
 if __name__ == "__main__":
