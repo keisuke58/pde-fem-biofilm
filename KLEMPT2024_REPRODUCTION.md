@@ -358,3 +358,26 @@ The plotted stresses fit μ = 3.3557 MPa to within a factor of about two,
 against a factor of 10⁶ for Pa. This is an inference from the plot, not a
 statement of the paper; a question for the authors. It matters wherever the
 stress magnitudes of Klempt 2024 are compared with this work's.
+
+## 14. Fig. 3: the nutrient sits in a corner, and the shape (2026-10-03)
+
+Fig. 3 (45 %) shows the biofilm reaching one corner of the cube in a thin
+tube, and the text says "In one of the corners". With the source as the
+nodes of a 2 µm cube at the corner and time scale 2, Fig. 4 is matched to
+an RMS of 0.029 (φ) and 0.015 (c); the edge line of §12 gave 0.029 / 0.051
+(`JAXFEM/klempt2024_corner_scan.py`). So the corner block is the better
+reading of the set-up, and §12's 4.1 row improves to 0.03 / 0.02.
+
+The shape is a different matter (`JAXFEM/klempt2024_fig3.py`, isosurface
+φ = 0.8 next to the paper's panels; `JAXFEM/klempt2024_table3_fig.py`,
+Table 3's diagonal cut in the paper's colours):
+- at 5 % the sphere matches;
+- from 25 % on, the paper's biofilm is an egg drawn out towards the corner
+  and away from it, with a sharp interface, and reaches the corner in a tube
+  by 45 %. Here it stays nearly round with a diffuse interface, and a
+  separate patch grows at the source.
+- A likely reason: with consumption g φ c the colony depletes the nutrient
+  inside itself, so ∇c points outwards on every face and growth on both
+  faces is the same all round. The paper's c (Table 3) has contours centred
+  on the corner, so its ∇c is dominated by the gradient from the source.
+  This is not resolved; the averages agree, the morphology does not.
