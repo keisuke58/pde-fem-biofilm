@@ -46,6 +46,7 @@ Result (2026-10-02), largest |difference| to Fig. 7 over T* in [0, 1]:
     consumption with Table 2's d and g against the paper's 0.489, while the
     printed zero-order form gives 0.139. Together with test case 1 this
     points to first-order consumption in the paper's computations.
+"""
 
 from __future__ import annotations
 
