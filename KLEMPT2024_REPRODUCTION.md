@@ -392,3 +392,13 @@ most visible part: growth on both faces |∇φ·n_c| is zero on faces
 perpendicular to n_c, so the egg cannot fatten sideways, while the paper's
 egg does. What the paper's element computes there is a question for the
 authors.
+
+Table 4 (test case 4.2) side by side, `JAXFEM/klempt2024_table4_fig.py`
+(vertical mid-plane, the paper's colours):
+- "high": both fill the cube by 13 %. On the way, the paper's biofilm is a
+  compact mushroom with a sharp interface that widens sideways; here a
+  narrow column grows straight up inside a wide diffuse halo.
+- "low": both end as a layer on the nutrient face (100 %), here slightly
+  thinner with a wider interface; the early dome is smaller here.
+The same pattern as in 4.1: the averages agree, sideways growth is missing
+and the interface is diffuse.
