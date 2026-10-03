@@ -91,3 +91,6 @@ Details in `KLEMPT2024_REPRODUCTION.md` sec. 12-13.
 - Is mu = 3.3557 in Pa or MPa? Table 3's pressure fits MPa (ANSYS micro-MKS).
 - The nutrient source of 4.1: the edge line (Table 3) or the 5 um strip of
   Fig. 2?
+- Added 3 Oct, not in the email: alpha by Eq. 36 (alpha-dot = k_alpha phi) or
+  by Table 1 step 3a (driven by phi-dot)? Under Table 1 a seed that is full
+  from the start does not grow (`KLEMPT2024_REPRODUCTION.md` sec. 4).

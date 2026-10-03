@@ -76,16 +76,41 @@ short of nutrient; it is short of growth.
 
 ## 4. An inconsistency in the paper
 
-Table 1 step 3a solves
+Table 1 step 3a solves (read again from the rendered page on 3 Oct; an
+earlier version of this note had `k_α / α_n` here, a transcription slip)
 
 ```
-(α_{n+1} − α_n) / ((1 + α_{n+1}) Δt)  −  (k_α / α_n)(φ_{n+1} − φ_n) / Δt  =  0
+(α_{n+1} − α_n) / ((1 + α_{n+1}) Δt)  −  (k_α / η_α)(φ_{n+1} − φ_n) / Δt  =  0
 ```
 
-driven by `φ̇`, while Eq. 36 is `α̇ = k_α φ`, driven by `φ`. Which was run is not
-recoverable from the text. It cannot be the factor of ten — `k_α α` is of order
-10⁻³ against a growth term of order 50 — but "the paper's α equation" is
-ambiguous, and any future comparison has to say which one it used.
+driven by `φ̇`, while Eq. 36 is `α̇ = k_α φ`, driven by `φ`. Table 1 says it
+solves Eq. 36, so one of the two is a misprint. It cannot be the factor of
+ten — `k_α α` is of order 10⁻³ against a growth term of order 50 — but "the
+paper's α equation" is ambiguous, and any comparison has to say which one it
+used.
+
+**How much it matters (3 Oct, `JAXFEM/klempt2024_alpha_law.py`,
+`assets/fig_klempt2024_alpha_law.png`).** Reading `k_α / η_α` as `k_α` (the
+divided parameter) and α in Table 1 as the growth α − 1, Table 1 integrates
+to `1 + a = (1 + a₀) exp(k_α (φ − φ₀))`: growth only where φ changes. On the
+test case 4.1 field, T* = 1, nodes with φ ≥ 0.5:
+
+| | Eq. 36 | Table 1 |
+|---|---|---|
+| mean α − 1, all | 5.7e−4 | 7.8e−4 |
+| biofilm there from the start (515 nodes) | 9.9e−4 | −0.6e−5 |
+| new biofilm (5954 nodes) | 5.4e−4 | 8.5e−4 |
+| ANSYS seed, φ = 1 throughout | 1.0e−3 | 0 |
+
+The averages are of the same size, but the place of growth is opposite: with
+Eq. 36 the old biofilm grows most, with Table 1 it does not grow at all and
+only the newly colonised region grows. For this thesis the difference is
+decisive: the ANSYS seed has φ = 1 from the start, so under Table 1 it would
+not grow and carry no stress. Both ANSYS implementations (mine and the
+partner's element, Check 1: α = cosh(k_α t)) follow Eq. 36, as the text of
+Sec. 3 says ("governed by the evolution equation 36"). The thesis uses Eq. 36
+and names Table 1 as the other reading. Not yet in the 3 Oct email to Felix;
+added to the open questions in `PAPER_CHECK_KLEMPT2024.md` (for 5 Oct).
 
 ## 5. What is still unseparated
 
