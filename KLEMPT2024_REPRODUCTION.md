@@ -438,3 +438,9 @@ This is the closest reproduction so far, with three stated departures from
 the printed equations (both faces, consumption g φ c, the isotropic share w)
 and a time scale per run. It remains a hypothesis about what the paper's
 element computes; the authors can confirm or reject it.
+
+Fine scan of w (`JAXFEM/klempt2024_blend_scan.py`, results in
+`klempt2024_results/blend_scan.json`): for w = 0.35-0.7 the worst of the three
+curves stays at 0.029-0.032, so the curves do not pin w down; at w = 0.5 the
+three are 0.013 (4.1, s = 1), 0.021 (4.2 high, s = 5) and 0.030 (4.2 low,
+s = 3). The shapes, not the curves, would have to decide w.
