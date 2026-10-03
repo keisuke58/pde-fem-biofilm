@@ -309,3 +309,9 @@ Open: "high" and "low" share one axis in Fig. 7 but want s = 10 and s = 4–5;
 with one s = 7 both are at about 0.09. The two departures from the printed
 equations (both-face growth, first-order consumption) remain. Questions for
 the authors: t_ref of each run, and the form of Eq. 34/35 that was run.
+
+Check, same day: the same scan with Eq. 34 as printed (no both-face growth),
+with first-order or printed consumption and s up to 40 (4.2) / 8 (4.1),
+reaches only 0.15 (4.1), 0.17 (4.2 high, final mean φ 0.73 instead of 1) and
+0.13 (4.2 low, φ hardly grows). The printed term moves the colony rather than
+growing it, at any time scale. Both-face growth is needed for every figure.
