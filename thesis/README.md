@@ -33,3 +33,21 @@ as in the papers, no AI-sounding wording, units, figures in Times New Roman).
 cd thesis && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 Needs `algorithm.sty` (Debian/Ubuntu: `texlive-science`).
+
+## Status (3 Oct 2026)
+
+| part | state |
+|---|---|
+| abstract | rewritten for the new structure (German draft kept, disabled) |
+| ch1 introduction | rewritten |
+| ch2 background | rewritten; checked against Klempt 2024 and the Klempt 2026 reproduction |
+| ch3 calibration | old text kept; in-vivo sign-prior section added at the end (condensed old ch4); style pass still to do (first person, dashes) |
+| ch4 ANSYS coupling | moved in from `../thesis_ch5`; drafting markers (A/B in the margin) still in |
+| ch5 conclusion | rewritten (file `chapters/ch6_conclusion.tex`) |
+| appendix | AGORA2 strains, TMCMC details, Klempt 2024 reproduction (new) |
+
+Open, for the author to decide:
+- the title on the title page is still the old one ("Hamilton-Principle Models of Oral Biofilm Dysbiosis ..."); it may already be registered with the Pruefungsamt;
+- the title page names Prof. Junker as Betreuer; Meisam Soleimani supervises the work (`../THESIS_ASSIGNMENT.md`);
+- the old ch4 and ch5 files (`chapters/ch4_dieckow.tex`, `chapters/ch5_integration.tex`, `chapters/appendix_unused.tex`) are no longer input and can be deleted once nothing more is taken from them.
+

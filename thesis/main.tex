@@ -122,47 +122,37 @@
 
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-This thesis presents three complementary computational contributions for modelling
-multi-species oral biofilm and microbiome dynamics, all grounded in the
-Extended Hamilton Principle developed at the Institut für Kontinuumsmechanik (IKM),
-Leibniz Universität Hannover.
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md.
+A point model of a multi-species biofilm describes how the composition at one
+material point evolves in time, but has no space. A continuum growth model
+describes where a biofilm grows and what stresses it carries, but does not
+distinguish species. This thesis brings the point model into an existing finite
+element framework, the biofilm element of the Institut für Kontinuumsmechanik
+in ANSYS, so that composition, growth and stress can be computed together. Both
+models follow from the extended Hamilton principle: the growth field of Klempt
+et al.\ (2024) and the multi-species point model of Klempt et al.\ (2026).
 
-The first contribution (\textbf{Chapter~\ref{ch:heine}}) introduces a
-GPU-accelerated Bayesian inference framework using Transitional Markov Chain
-Monte Carlo (TMCMC) for estimating the 15-dimensional symmetric interaction
-matrix governing a five-species oral biofilm model from Heine~et~al.'s in-vitro
-time-course data across four experimental conditions.
-A ${\sim}200\times$ speedup over the CPU baseline is achieved via JAX-compiled
-batched forward-model evaluation on NVIDIA RTX\,4090.
+First, the 15 interaction coefficients of a five-species point model are
+estimated with transitional Markov chain Monte Carlo from in-vitro time courses
+under four conditions. Compiled with JAX, the forward model runs about 200 times
+faster than on the CPU, and the inferred interactions predict the measured pH,
+which was not used in the calibration ($R^2=0.78$). A metabolic sign prior
+carries the same type of model to sparse in-vivo data.
 
-The second contribution (\textbf{Chapter~\ref{ch:dieckow}}) applies the
-Hamilton replicator equation to in-vivo 16S~rRNA amplicon data from
-10 patients (Dieckow~et~al.), incorporating a three-layer metabolic sign prior
-constructed from experimental eHOMD data, AGORA2 parsimonious FBA, and MICOM
-community FBA.
-Leave-one-patient-out cross-validation demonstrates genuine out-of-sample
-generalisation (LOO-RMSE $= 0.0490$, Bray-Curtis $= 0.147$, 47.7\% below
-the persistence null model), with external validation on 127 independent
-peri-implant samples.
+Second, the growth kinematics $\bF=\bF_e\bF_g$ with $\bF_g=\alpha\bI$ is
+implemented as an ANSYS user material, verified against closed-form solutions,
+and coupled to the element's biofilm field through the growth equation at
+every Gauss point. Inside ANSYS the coupled run follows the exact solution of
+a gradient-free region to $3\times10^{-11}$.
 
-The third contribution (\textbf{Chapter~\ref{ch:integration}}) extends the model
-in space: a reaction--diffusion formulation with verified transport numerics, and a
-per-voxel three-dimensional analysis of 84 FISH fields of view showing that
-dysbiosis forms a laterally homogeneous, vertically stratified mat with
-\textit{P.~gingivalis} sequestered at depth ($p = 2\times10^{-4}$), while commensal
-health remains patchy --- delimiting what a continuum model can reproduce.
-A finite-element realisation then embeds this depth composition as the growth driver
-of a continuum-mechanics model, showing that the dysbiotic structure imprints a far
-higher residual stress at the implant interface and, through a cohesive-zone interface,
-detaches the biofilm up to $3.3\times$ further than the commensal control at identical
-mechanical parameters --- a direct mechanical link from compositional dysbiosis to
-implant detachment.
+Third, for two species the point model runs at every Gauss point: the field
+sets the amount of biofilm, the point model its composition. Every call from
+ANSYS to the point model is reproduced in Python bit for bit, and the published
+outcomes, coexistence and the survival of one species, are kept.
 
-Together, these contributions demonstrate that physics-informed machine learning —
-combining thermodynamic variational principles with Bayesian inference and
-metabolic network constraints — provides a principled and computationally
-efficient route to characterising microbial community interactions from
-limited clinical data.
+The coupling is one-way and verified, not validated. More species and a
+coupling in which the composition acts on growth and stiffness are left to the
+continuation of this work.
 
 % English-only thesis: German Zusammenfassung disabled (draft kept below).
 % Re-enable (remove \iffalse...\fi) only if the Pruefungsordnung requires a German summary.
@@ -170,37 +160,24 @@ limited clinical data.
 \newpage
 \chapter*{Zusammenfassung}
 \addcontentsline{toc}{chapter}{Zusammenfassung}
-% DRAFT — Übersetzung der englischen Kurzfassung; vor Abgabe Korrektur lesen.
-Diese Arbeit stellt drei komplementäre rechnergestützte Beiträge zur Modellierung
-der Dynamik oraler Mehrspezies-Biofilme vor, die alle auf dem am Institut für
-Kontinuumsmechanik (IKM) der Leibniz Universität Hannover entwickelten Erweiterten
-Hamilton-Prinzip beruhen.
+% DRAFT, 3 Oct 2026: Übersetzung der englischen Kurzfassung; vor Abgabe Korrektur lesen.
+Ein Punktmodell eines Mehrspezies-Biofilms beschreibt die zeitliche Entwicklung
+der Zusammensetzung an einem Materialpunkt, aber nicht den Raum. Ein
+kontinuumsmechanisches Wachstumsmodell beschreibt, wo ein Biofilm wächst und
+welche Spannungen er trägt, unterscheidet aber keine Spezies. In dieser Arbeit
+wird das Punktmodell in ein bestehendes Finite-Elemente-Framework, das
+Biofilm-Element des Instituts für Kontinuumsmechanik in ANSYS, eingebunden,
+sodass Zusammensetzung, Wachstum und Spannung gemeinsam berechnet werden.
 
-Der erste Beitrag (\textbf{Kapitel~\ref{ch:heine}}) führt ein GPU-beschleunigtes
-Bayes'sches Inferenzverfahren mittels Transitional Markov Chain Monte Carlo (TMCMC)
-ein, um die $15$-dimensionale symmetrische Interaktionsmatrix eines
-Fünf-Spezies-Biofilmmodells aus den In-vitro-Zeitreihendaten von Heine~et~al.\ über
-vier Versuchsbedingungen zu schätzen; eine JAX-kompilierte, gebündelte Auswertung
-auf einer NVIDIA RTX\,4090 erreicht eine ${\sim}200$-fache Beschleunigung.
-
-Der zweite Beitrag (\textbf{Kapitel~\ref{ch:dieckow}}) wendet die
-Hamilton-Replikatorgleichung auf In-vivo-16S-rRNA-Daten von $10$ Patienten
-(Dieckow~et~al.) an und nutzt eine dreischichtige metabolische Vorzeichen-Prior
-(eHOMD, AGORA2-pFBA, MICOM). Die Leave-one-patient-out-Kreuzvalidierung zeigt eine
-echte Generalisierung außerhalb der Stichprobe (LOO-RMSE $=0.0490$, $47.7\%$ unter
-dem Persistenz-Nullmodell).
-
-Der dritte Beitrag (\textbf{Kapitel~\ref{ch:integration}}) erweitert das Modell
-räumlich (Reaktions-Diffusions-Formulierung mit verifizierter Transport-Numerik)
-und zeigt anhand einer voxelweisen 3-D-Analyse von $84$ FISH-Aufnahmen, dass die
-Dysbiose eine lateral homogene, vertikal geschichtete Matte mit in der Tiefe
-sequestriertem \textit{P.~gingivalis} bildet.
-
-Zusammen zeigen diese Beiträge, dass physik-informiertes maschinelles Lernen ---
-die Verbindung thermodynamischer Variationsprinzipien mit Bayes'scher Inferenz und
-metabolischen Netzwerk-Randbedingungen --- einen prinzipiellen und effizienten Weg
-zur Charakterisierung mikrobieller Interaktionen aus begrenzten klinischen Daten
-bietet.
+Erstens werden die 15 Interaktionskoeffizienten eines Fünf-Spezies-Punktmodells
+mit Transitional Markov Chain Monte Carlo aus In-vitro-Zeitreihen unter vier
+Bedingungen geschätzt; die geschätzten Interaktionen sagen den gemessenen
+pH-Wert vorher ($R^2=0.78$). Zweitens wird die Wachstumskinematik
+$\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, als ANSYS-Materialroutine implementiert,
+gegen geschlossene Lösungen verifiziert und an jedem Gaußpunkt an das
+Biofilmfeld des Elements gekoppelt. Drittens läuft für zwei Spezies das
+Punktmodell an jedem Gaußpunkt: das Feld bestimmt die Menge, das Punktmodell die
+Zusammensetzung. Die Kopplung ist einseitig und verifiziert, nicht validiert.
 \fi % end disabled German Zusammenfassung
 
 \newpage
