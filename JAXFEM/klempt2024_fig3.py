@@ -38,7 +38,7 @@ import klempt2024_quantitative as K  # noqa: E402
 OUT = ROOT / "assets" / "fig_klempt2024_fig3.png"
 PDF = ROOT / "references" / "Klempt2024_Hamilton_biofilm_growth_BMMB.pdf"
 TIMES = [0.05, 0.25, 0.45, 1.00]
-AZIM = 70
+AZIM = 150
 ORANGE, RED = "#e8a317", "#c0000a"
 
 

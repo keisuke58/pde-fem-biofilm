@@ -368,16 +368,16 @@ an RMS of 0.029 (φ) and 0.015 (c); the edge line of §12 gave 0.029 / 0.051
 (`JAXFEM/klempt2024_corner_scan.py`). So the corner block is the better
 reading of the set-up, and §12's 4.1 row improves to 0.03 / 0.02.
 
-The shape is a different matter (`JAXFEM/klempt2024_fig3.py`, isosurface
-φ = 0.8 next to the paper's panels; `JAXFEM/klempt2024_table3_fig.py`,
-Table 3's diagonal cut in the paper's colours):
+The shape (`JAXFEM/klempt2024_fig3.py`, isosurface φ = 0.8 next to the
+paper's panels, seen from the paper's side with the nutrient corner at the
+top left; `JAXFEM/klempt2024_table3_fig.py`, Table 3's diagonal cut in the
+paper's colours):
 - at 5 % the sphere matches;
-- from 25 % on, the paper's biofilm is an egg drawn out towards the corner
-  and away from it, with a sharp interface, and reaches the corner in a tube
-  by 45 %. Here it stays nearly round with a diffuse interface, and a
-  separate patch grows at the source.
-- A likely reason: with consumption g φ c the colony depletes the nutrient
-  inside itself, so ∇c points outwards on every face and growth on both
-  faces is the same all round. The paper's c (Table 3) has contours centred
-  on the corner, so its ∇c is dominated by the gradient from the source.
-  This is not resolved; the averages agree, the morphology does not.
+- at 25 % both are an egg drawn out towards the nutrient corner and away
+  from it, and at 45 % both reach the corner. A first rendering seen along
+  the corner diagonal made the egg look round; that was the viewpoint.
+- Differences: here the egg is more slender, with a more diffuse interface,
+  scattered small patches appear near the source, and at 100 % the biofilm
+  fills the block at the corner rather than touching two opposite faces as
+  in the paper. The averages agree; the morphology agrees in kind, not in
+  detail.
