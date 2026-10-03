@@ -1,134 +1,82 @@
 \chapter{Introduction}
 \label{ch:intro}
 
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md. The clinical
+% background is kept from the earlier draft; the model overview and the
+% objectives are new.
+
 \section{Clinical Background: Oral Biofilm and Peri-implantitis}
 \label{sec:intro_clinical}
 
 Dental implants have become the standard of care for restoring missing teeth, with an estimated 15 million implants placed annually worldwide~\cite{Kolenbrander2010OralMultispecies}.
-However, peri-implantitis --- a progressive, biofilm-driven inflammatory condition affecting the peri-implant bone --- affects 20--35\% of implant patients and remains the leading cause of implant failure~\cite{Marsh2003Dental, Berglundh2018Peri, Schwarz2022PeriImplantitis, Sedghi2021PeriImplant}.
-The pathogenesis is intimately linked to the multi-species microbial communities that colonise the implant surface: dysbiotic shifts in the oral microbiome, driven by pathobionts such as \textit{Porphyromonas gingivalis} (\textit{Pg})~\cite{Mysak2014Pg}, trigger host immune responses that ultimately lead to bone resorption~\cite{Hajishengallis2012Dysbiosis, Lamont2018Periodontal}.
+Peri-implantitis, a progressive inflammatory condition of the tissue around an implant driven by biofilm, affects 20--35\% of implant patients and is the leading cause of implant failure~\cite{Marsh2003Dental, Berglundh2018Peri, Schwarz2022PeriImplantitis, Sedghi2021PeriImplant}.
+It is linked to the multi-species communities that colonise the implant surface: dysbiotic shifts in the oral microbiome, driven by pathobionts such as \textit{Porphyromonas gingivalis} (\textit{Pg})~\cite{Mysak2014Pg}, trigger host immune responses that lead to bone resorption~\cite{Hajishengallis2012Dysbiosis, Lamont2018Periodontal}.
 
-The oral microbiome is among the most complex in the human body, comprising more than 700 taxa that interact through intricate webs of mutualism, competition, and metabolic cross-feeding~\cite{Kolenbrander2010OralMultispecies, Dewhirst2010HOMD}.
-A defining feature of this system is its bistability: in a healthy host, the community is maintained in a commensal state dominated by early colonisers such as \textit{Streptococcus oralis} (\textit{So}) and \textit{Actinomyces naeslundii} (\textit{An}); perturbation can trigger a transition to a dysbiotic state in which late-colonising pathogens --- most notably \textit{Pg}, a low-abundance keystone pathogen~\cite{Hajishengallis2014Polymicrobial} --- establish a positive feedback loop with the immune system~\cite{Marsh2003Dental}.
+The oral microbiome comprises more than 700 taxa that interact through mutualism, competition and metabolic cross-feeding~\cite{Kolenbrander2010OralMultispecies, Dewhirst2010HOMD}.
+In a healthy host the community is dominated by early colonisers such as \textit{Streptococcus oralis} (\textit{So}) and \textit{Actinomyces naeslundii} (\textit{An}).
+A perturbation can shift it to a dysbiotic state in which late colonisers, most notably the low-abundance keystone pathogen \textit{Pg}~\cite{Hajishengallis2014Polymicrobial}, sustain a positive feedback loop with the immune system~\cite{Marsh2003Dental}.
 
-Two experimental data sources anchor the present work.
-First, Heine et al.~\cite{Heine2025PeriImplant} characterised the temporal dynamics of five representative oral taxa (\textit{So}, \textit{An}, \textit{Veillonella} spp.~(\textit{Vei}), \textit{Fusobacterium nucleatum}~(\textit{Fn}), and \textit{Pg}) across four in-vitro conditions defined by community state (commensal vs.\ dysbiotic) and cultivation mode (static vs.\ HOBIC reactor).
-The two community states employed distinct \textit{Pg} strains: the commensal consortium used the avirulent strain \textit{Pg} ATCC 20709, whereas the dysbiotic consortium employed the virulent strain \textit{Pg} W83, which harbours a full complement of gingipain and fimbrial virulence determinants.
-Second, Dieckow et al.~\cite{dieckow2024} provided a longitudinal in-vivo 16S rRNA amplicon dataset from 10 patients recovering from caries treatment, spanning 10 microbial guilds and three time points over three weeks.
-Together, these complementary datasets --- one controlled in-vitro, one clinical in-vivo --- define the scope and the validation strategy of this thesis.
+A biofilm is also a mechanical body.
+It grows on a surface, and where it grows unevenly, or against a stiff substrate, it carries stresses that bear on detachment and on the loading of the tissue beneath.
+Which species are present, and where, therefore matters for the mechanics as well as for the biology.
+This thesis is about bringing these two descriptions together in a finite element setting.
 
-
-\section{Mathematical Models of Microbial Community Dynamics}
+\section{Models of Biofilm Composition and Growth}
 \label{sec:intro_models}
 
-\subsection{Generalised Lotka-Volterra Models}
+\subsection{Composition at a material point}
 
-The generalised Lotka-Volterra (gLV) system, with roots in classical population
-ecology~\cite{Lotka1925Elements, May1972Stability}, has long been the workhorse for
-modelling microbial community dynamics~\cite{Gonze2018gLV, Stein2013gLV, Venturelli2018Deciphering, Marsland2019MicrobialCRM}:
+The generalised Lotka--Volterra (gLV) system, with roots in classical population ecology~\cite{Lotka1925Elements, May1972Stability}, is the common model of microbial community dynamics~\cite{Gonze2018gLV, Stein2013gLV, Venturelli2018Deciphering, Marsland2019MicrobialCRM}:
 \begin{equation}
   \dot{\phi}_i = \phi_i \Bigl( r_i + \sum_j A_{ij} \phi_j \Bigr), \quad i = 1,\dots,n,
   \label{eq:glv}
 \end{equation}
-where $r_i$ is the intrinsic growth rate and $A_{ij}$ the interaction coefficient between species $j$ and species $i$.
-Despite its tractability, gLV models suffer from two well-known limitations in the oral context: (i) the interaction matrix $A$ has $n^2$ free parameters, which are severely underdetermined from typical clinical time-course data~\cite{Stein2013gLV, Cao2017Identifiability}; and (ii) the model carries no thermodynamic guarantee of physical consistency --- in particular, there is no constraint preventing non-symmetric interactions that violate energetic reciprocity~\cite{Coyte2015Ecology}. A further subtlety is that relative-abundance (16S) data are inherently \emph{compositional}, so interactions inferred without accounting for the unit-sum constraint can be spurious~\cite{Aitchison1982Compositional, Aitchison1986Compositional, PawlowskyGlahn2015Compositional, Gloor2017Microbiome}.
+with growth rates $r_i$ and interaction coefficients $A_{ij}$.
+Its $n^2$ interaction coefficients are poorly determined by typical time-course data~\cite{Stein2013gLV, Cao2017Identifiability}, and relative-abundance data carry a unit-sum constraint that the model does not respect~\cite{Aitchison1986Compositional, Gloor2017Microbiome}.
 
-\subsection{Hamilton Replicator and Extended Hamilton Principle}
+The extended Hamilton principle~\cite{JunkerBalzani2021ExtendedHamilton} derives the evolution of a biofilm from an energy and a dissipation functional.
+Applied to a material point with several species, it gives the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}: volume fractions $\phi_i$ and viabilities $\psi_i$, the living fraction $\bar\phi_i=\phi_i\psi_i$, a symmetric interaction matrix $A_{ij}$ and a nutrient level $c^*$.
+Symmetry follows from the quadratic form of the energy and reduces the number of interaction coefficients to $n(n+1)/2$, 15 for five species.
+The model describes how the composition at one point evolves in time; it has no space.
 
-A thermodynamically consistent alternative is provided by the Extended Hamilton Principle~\cite{JunkerBalzani2021ExtendedHamilton}, which derives the biofilm evolution equations from a variational free energy functional.
-In the homogeneous (0D) limit, this yields the Hamilton replicator equation:
-\begin{equation}
-  \dot{\phi}_i = \phi_i \Bigl[ (A\bar{\bphi})_i - \bar{\bphi}^\top A \bar{\bphi} \Bigr],
-  \label{eq:hamilton_rep}
-\end{equation}
-where $\bar{\phi}_i = \phi_i \psi_i$ is the living volume fraction, $\psi_i$ is the viability (fraction of living cells within species $i$), and $A$ is \emph{constrained to be symmetric}: $A_{ij} = A_{ji}$.
-Symmetry arises automatically from the quadratic form of the free energy and reduces the parameter count from $n^2$ to $n(n+1)/2$; for $n=5$ this gives 15 independent entries.
-Biologically, it is motivated by metabolite-mediated interactions where both partners share the same diffusible pool (Section~\ref{sec:theory_replicator}); asymmetric effects such as directional toxin secretion are suppressed and constitute the domain where the unconstrained gLV has a slight predictive advantage.
-The mean-fitness subtraction in~\eqref{eq:hamilton_rep} enforces the compositional constraint $\sum_i \phi_i = 1$ exactly, avoiding the spurious volume drift that plagues unconstrained gLV formulations.
+\subsection{Identifying the interactions}
 
-\subsection{Parameter Identification: The Inverse Problem}
+The interaction coefficients have to be estimated from measurements, and with five species and a few time points the problem is poorly posed.
+Bayesian inference quantifies the remaining uncertainty~\cite{Gelman2013BDA}.
+Transitional Markov chain Monte Carlo (TMCMC)~\cite{ChingChen2007TMCMC, Betz2016TMCMC} passes from the prior to the posterior through a sequence of tempered distributions, which copes with the multimodal posteriors of this problem and parallelises over the samples; compiled with JAX~\cite{jax2018github}, the forward model runs fast enough to make it practical.
+Where data are sparse, the signs of the interactions can be fixed beforehand from metabolic network models~\cite{OrthThiele2010WhatIsFBA, Diener2020MICOM, Heinken2023AGORA2}: a species that feeds another implies $A_{ij}>0$, competition implies $A_{ij}<0$.
 
-Estimating the 15-dimensional interaction matrix $A$ from time-course data constitutes a challenging inverse problem.
-With $N_t = 5$ usable time points (Day 1 is consumed as an initial condition) and $n = 5$ species, one has at most 25 scalar observations for 15 unknowns; the system is poorly identified without additional constraints.
-The posterior landscape is multimodal --- particularly in the dysbiotic condition where the pathogen surge at late time creates near-degenerate solutions --- rendering standard gradient-based optimisation unreliable.
+\subsection{Growth in space}
 
-Bayesian inference provides a principled framework for quantifying this uncertainty~\cite{Gelman2013BDA, RobertCasella2004MonteCarlo}; it has recently been applied to biofilm constitutive parameters under hybrid uncertainty~\cite{Fritsch2025BayesianMicrofilms}.
-Transitional Markov Chain Monte Carlo (TMCMC)~\cite{ChingChen2007TMCMC, Betz2016TMCMC}, a sequential Monte Carlo sampler~\cite{Chopin2002SMC, DelMoral2006SMCSamplers, Doucet2001SMC}, addresses multimodality through a sequence of annealed intermediate distributions $p_j(\btheta) \propto \mathcal{L}(\mathbf{y}|\btheta)^{\beta_j} p(\btheta)$, where $0 = \beta_0 < \beta_1 < \cdots < \beta_J = 1$, gradually morphing the prior into the posterior. Unlike gradient-based samplers such as HMC/NUTS~\cite{Hoffman2014NUTS, Betancourt2017HMC}, its derivative-free resample--mutate cycle parallelises trivially across particles.
-The main computational bottleneck is the repeated forward-model evaluation required at each TMCMC stage; with $N = 2{,}000$ particles and $J \approx 6$ stages, roughly $10^4$--$10^5$ ODE integrations are needed per inference run.
-
-\subsection{Metabolic Priors for Microbiome Inference}
-
-An alternative strategy for reducing ill-posedness is to constrain the \emph{sign} of each interaction coefficient using metabolic network models~\cite{OrthThiele2010WhatIsFBA, Diener2020MICOM, Heinken2023AGORA2}.
-If metabolic reconstruction predicts that species $i$ secretes a metabolite that promotes the growth of species $j$ (cross-feeding), then $A_{ij} > 0$ is expected; conversely, competitive exclusion implies $A_{ij} < 0$.
-Systematic databases such as AGORA2~\cite{Heinken2023AGORA2} provide genome-scale metabolic reconstructions for thousands of gut and oral taxa, enabling parsimonious FBA (pFBA)~\cite{Lewis2012pFBA} and community FBA (via MICOM~\cite{Diener2020MICOM}) to generate quantitative exchange fluxes from which sign predictions can be derived.
-In the second contribution of this thesis (Chapter~\ref{ch:dieckow}), a three-layer sign prior is constructed by combining eHOMD experimental data, AGORA2 pFBA, and MICOM community FBA, and applied to the in-vivo Dieckow dataset.
-
-\subsection{GPU Acceleration in Scientific Computing}
-
-The computational demand of Bayesian inference for ODE-based biofilm models has historically limited its application to low-dimensional problems.
-Recent advances in differentiable programming frameworks --- in particular JAX~\cite{jax2018github} --- enable the compilation of the entire forward model to GPU-executable XLA code, with automatic batching of the particle ensemble via \texttt{vmap}.
-This approach achieves a ${\sim}200\times$ speedup over the CPU baseline (Section~\ref{sec:heine_gpu}), making TMCMC inference on the 15-dimensional interaction matrix practically feasible.
-
-\subsection{Surrogate Models and Neural Operators}
-
-For further acceleration, neural operator surrogates such as DeepONet~\cite{Lu2021DeepONet}, grounded in the universal-approximation theorem for operators~\cite{Chen1995Universal} and related to Fourier neural operators~\cite{Li2021FNO} and the broader physics-informed and neural-ODE programmes~\cite{Karniadakis2021PINN, Chen2018NeuralODE, Rackauckas2020DiffEq}, can replace the ODE integration in the likelihood evaluation.
-DeepONet learns the operator mapping from initial conditions and parameters to the solution trajectory, enabling likelihood evaluations at neural-network inference speed (${\sim}10^3\times$ faster than ODE integration).
-Such surrogates are a natural extension of the GPU-accelerated direct-ODE approach taken here and are noted as future work; the present thesis evaluates the forward model exactly.
-
+Continuum models of biofilm growth describe the biofilm as a field.
+In the model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}, also derived from the extended Hamilton principle, a biofilm field $\phi(\mathbf X,t)$ spreads towards a diffusing nutrient $c(\mathbf X,t)$, and the local growth enters the kinematics through the split $\mathbf F=\mathbf F_e\mathbf F_g$ with $\mathbf F_g=\alpha\mathbf I$.
+Where the growth is uneven or constrained, the elastic part $\mathbf F_e$ carries stress.
+The authors solve this model with a user element in ANSYS, and an earlier comparison of growth models showed pressure inside a growing biofilm and tension at its edge~\cite{Klempt2023NumericalComparison}.
+The field model has one biofilm variable; it does not say which species the biofilm consists of.
 
 \section{Objectives and Thesis Structure}
 \label{sec:intro_structure}
 
-This thesis makes three main contributions, all grounded in the Extended Hamilton Principle and validated against independent experimental data:
+The point model gives the composition but no space; the field model gives space and stress but no composition.
+The task of this thesis is to bring the point model into an existing, working finite element framework, so that the composition, the growth and the resulting stresses can be computed in space.
+The framework is the biofilm element developed at the Institut für Kontinuumsmechanik, which solves the field model of Klempt et al.\ 2024 in ANSYS.
 
+I make three contributions:
 \begin{enumerate}
-  \item \textbf{GPU-accelerated Bayesian inference for Heine in-vitro data
-        (Chapter~\ref{ch:heine}):}
-    A TMCMC framework for estimating the 15-dimensional symmetric interaction matrix
-    from Heine et al.'s five-species in-vitro time-course data, achieving ${\sim}200\times$
-    speedup via JAX GPU parallelisation. Two-phase estimation (fix-$\psi$ then release-$\psi$)
-    resolves posterior multimodality, and UMAP visualisation confirms that all four
-    experimental conditions form well-separated clusters in the 15-dimensional
-    posterior space.
-
-  \item \textbf{Metabolic-prior replicator dynamics for Dieckow in-vivo data
-        (Chapter~\ref{ch:dieckow}):}
-    A three-layer metabolic sign prior (eHOMD experimental data, AGORA2 pFBA, MICOM
-    community FBA) applied to the Hamilton replicator for in-vivo oral 16S rRNA
-    amplicon data from 10 patients. Leave-one-patient-out cross-validation demonstrates
-    genuine out-of-sample generalisation (LOO-RMSE $= 0.0490$, Bray-Curtis $= 0.147$,
-    47.7\% below the persistence null model), and external validation on Joshi et al.'s
-    127 peri-implant samples yields Spearman $\rho = 0.46$ ($p < 0.0001$).
-
-  \item \textbf{Spatial extension, 3-D imaging, and mechanical realisation
-        (Chapter~\ref{ch:integration}):}
-    A reaction--diffusion extension of the Hamilton model to resolve depth
-    stratification, with verified transport numerics (second-order diffusion
-    stencil; conservative finite-volume vs.\ non-conservative diagonal scheme), and
-    a per-voxel 3-D analysis of $84$ FISH fields of view. The imaging shows that
-    dysbiosis is a laterally homogeneous, vertically stratified mat with
-    \textit{Pg} sequestered at depth beneath \textit{Fn}
-    ($p = 2.2\times10^{-4}$ for the lateral-homogenisation contrast), delimiting what
-    a continuum model can and cannot reproduce. A finite-element realisation then
-    drives a continuum-mechanics model with this depth composition, linking the
-    dysbiotic structure to a higher implant-interface residual stress and a
-    $3.3\times$ larger biofilm detachment than the commensal control.
+  \item \emph{A calibrated point model} (Chapter~\ref{ch:heine}).
+    The 15 interaction coefficients of a five-species point model are estimated with TMCMC from the in-vitro time courses of Heine et al.~\cite{Heine2025PeriImplant} under four conditions (commensal and dysbiotic, static and in a HOBIC flow reactor).
+    A final section shows how sign constraints from metabolic models carry the same model to sparse in-vivo data; this part was done during an internship.
+  \item \emph{A growth law in the finite element framework} (Chapter~\ref{ch:ansys}).
+    The growth kinematics $\mathbf F_g=\alpha\mathbf I$ is implemented as an ANSYS user material, verified against closed-form solutions, and coupled to the element's biofilm field through the growth equation of Klempt et al.\ 2024 at every Gauss point.
+  \item \emph{The composition at every Gauss point} (Chapter~\ref{ch:ansys}).
+    For two species, the point model of Klempt et al.\ 2026 runs at every Gauss point alongside the field: the field sets the amount of biofilm, the point model sets its composition.
+    Every call from ANSYS to the point model is reproduced in Python, and the coupled results are compared with the published cases.
 \end{enumerate}
 
-These contributions are deliberately shaped to the implant-research setting that motivates
-them. The third in particular closes the loop between the two arms that peri-implant studies
-usually pursue separately --- the microbial community colonising the implant surface and the
-mechanical fate of the implant itself --- by carrying a 16S-derived compositional dysbiosis
-through a finite-element model to an implant-interface mechanical risk; placing the work at
-the intersection of peri-implant microbiology and implant biomechanics that defines the field.
+The thesis covers one and two species, for which the papers give numbers to check against.
+More species and a coupling in which the composition acts back on growth and stiffness are left to the continuation of this work at Keio University.
 
-The three contributions are unified by the Extended Hamilton Principle
-(Chapter~\ref{ch:theory}), which provides the thermodynamic foundation for the
-symmetric interaction matrix~$\bA$ and the compositional constraint that
-distinguishes Hamilton replicator dynamics from gLV. Across all three, the recurring
-finding is that interaction \emph{sign} --- recovered emergently from rich in-vitro
-data, imposed as a metabolic prior on sparse in-vivo data, and carried into the
-spatial reaction term --- is the robust, transferable structure. Chapter~\ref{ch:integration}
-draws out the complementarity of the in-vitro and in-vivo frameworks, sketches a
-unified Bayesian--metabolic inference scheme, and reports the spatial results before
-closing on clinical applications.
+Chapter~\ref{ch:theory} sets out the background: the extended Hamilton principle, the field model of Klempt et al.\ 2024, the point model of Klempt et al.\ 2026 and Bayesian inference with TMCMC.
+Chapter~\ref{ch:heine} calibrates the point model.
+Chapter~\ref{ch:ansys} brings it into the ANSYS element, with the verification, the results for one and two species and their limits.
+Chapter~\ref{ch:conclusion} summarises the results and outlines the continuation.

@@ -6,8 +6,8 @@
 
 \subsection{State Variables and Kinematics}
 
-Following Klempt et al.~\cite{Klempt2025ContinuumBiofilm} --- who extended the
-single-species Hamilton-based growth model of~\cite{Klempt2024ContinuumGrowth} to
+Following Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth} --- who extended the
+single-species Hamilton-based growth model of~\cite{Klempt2024DiffusionDrivenGrowth} to
 multiple interacting species --- the biofilm
 state at a material point is described by two internal variable fields:
 the \emph{volume fraction} $\phi_i \in [0,1]$ occupied by species $i$ ($i = 1,\dots,n$),
@@ -19,7 +19,7 @@ The living volume fraction is then
   \label{eq:living}
 \end{equation}
 An additional void fraction $\phi_0\in[0,1]$ acts as a numerical auxiliary variable
-to enforce the holonomic incompressibility constraint~\cite{Klempt2025ContinuumBiofilm}:
+to enforce the holonomic incompressibility constraint~\cite{Klempt2026ContinuumBacterialGrowth}:
 \begin{equation}
   \sum_{l=0}^{n} \phi_l(t) = 1 \quad \forall\, t.
   \label{eq:constraint}
@@ -51,7 +51,7 @@ The volume constraint enters through
 \begin{equation}
   \mathcal{C} = \gamma\!\left(\sum_{l=0}^{n} \phi_l - 1\right).
 \end{equation}
-The dissipation potential is~\cite{Klempt2025ContinuumBiofilm}
+The dissipation potential is~\cite{Klempt2026ContinuumBacterialGrowth}
 \begin{equation}
   \mathcal{D} = \tfrac{1}{2}\,\dot{\bar{\bphi}}^\top \boldsymbol{\eta}\,\dot{\bar{\bphi}}
               + \tfrac{1}{2}\,\dot{\bphi}^\top \boldsymbol{\eta}\,\dot{\bphi},
@@ -62,7 +62,7 @@ $\eta_i = 1$ for all species (absorbed into the time scale).
 The two-term structure is necessary: using only the first term would yield a
 rank-deficient system because $\bar\phi_i=\phi_i\psi_i$ couples the two rate
 variables; the second term $\tfrac12\dot\bphi^\top\boldsymbol\eta\,\dot\bphi$
-restores full rank~\cite{Klempt2025ContinuumBiofilm}.
+restores full rank~\cite{Klempt2026ContinuumBacterialGrowth}.
 
 \subsection{Governing Equations}
 
@@ -112,7 +112,7 @@ In the numerical implementation a logarithmic barrier penalty $\Psi_{\mathrm{bar
 $K_p = \eta_i\times 10^{-4}$ enforces the box constraints $\phi_i,\psi_i\in(0,1)$, omitted
 from \eqref{eq:gov_phi}--\eqref{eq:gov_void} for clarity.
 Symmetry $A_{ij} = A_{ji}$ is a modelling assumption imposed
-in~\cite{Klempt2025ContinuumBiofilm}: the free energy~\eqref{eq:free_energy} is
+in~\cite{Klempt2026ContinuumBacterialGrowth}: the free energy~\eqref{eq:free_energy} is
 well-defined for any square $\bA$, but its antisymmetric part does not contribute
 to the quadratic form and is therefore set to zero by convention, halving the
 parameter count from $n^2$ to $n(n+1)/2$.
@@ -134,7 +134,7 @@ The nutrient concentration $c^*$ enters the evolution equations only through the
 $c^*A_{ij}$, so its absolute value is non-identifiable: rescaling $c^*\mapsto\lambda c^*$ and
 $\bA\mapsto\lambda^{-1}\bA$ leaves the dynamics invariant. We fix this gauge by setting
 $c^*=25$ (cf.\ $c^*=100\,\mathrm{J\,m^{-3}}$ in the numerical experiments of
-Klempt et al.~\cite{Klempt2025ContinuumBiofilm}), which renders the inferred
+Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}), which renders the inferred
 $A_{ij}=\mathcal{O}(1)$; $c^*$ therefore sets the
 overall time scale rather than an independent degree of freedom. The Heine et al.\ assays
 use no antibiotic, so $\alpha^*=0$ deactivates the decay term $\alpha^*b_i\psi_i$ and the

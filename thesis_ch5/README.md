@@ -1,6 +1,9 @@
 # Chapter 5 — skeleton and evidence map
 
-`ch5_ansys_contribution.tex` is a frame for the chapter with the facts already
+Moved 3 Oct 2026: the chapter is now `../thesis/chapters/ch4_ansys.tex`, chapter 4
+of the thesis (`../thesis/`). `_build_check.tex` builds it on its own.
+
+`ch5_ansys_contribution.tex` (now `ch4_ansys.tex`) is a frame for the chapter with the facts already
 pinned in place. It is not draft prose; the point is that writing becomes
 filling in sentences rather than hunting for numbers and file paths.
 

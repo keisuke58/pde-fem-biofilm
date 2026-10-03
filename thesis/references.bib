@@ -1957,3 +1957,64 @@
   title     = {The mechanical properties of human dentin: a critical review and re-evaluation of the dental literature},
   journal   = {Critical Reviews in Oral Biology \& Medicine},
   volume    = {14}, number = {1}, pages = {13--29}, year = {2003}}
+
+% ---- added 3 Oct 2026 with the ANSYS chapter (from ../biofilm_3tooth_refs.bib) ----
+@article{Klempt2024DiffusionDrivenGrowth,
+  author  = {Klempt, F. and Soleimani, M. and Wriggers, P. and Junker, P.},
+  title   = {A {H}amilton principle-based model for diffusion-driven biofilm growth},
+  journal = {Biomechanics and Modeling in Mechanobiology},
+  volume  = {23},
+  year    = {2024},
+  pages   = {2091--2113},
+  doi     = {10.1007/s10237-024-01883-x},
+  annote  = {Growth kinematics constitutive basis of this work: $F=F_e F_g$
+             (Sec. 2.1). NOTE: this paper's own $F_g=\alpha I$, not
+             $F_g=(1+\alpha)I$ as used elsewhere in this repo -- see the
+             comment above; unresolved as of 2026-08-20}
+}
+
+@article{Klempt2026ContinuumBacterialGrowth,
+  author  = {Klempt, F. and Geisler, H. and Soleimani, M. and Junker, P.},
+  title   = {A continuum multi-species bacterial growth model with a novel interaction scheme},
+  journal = {Archive of Applied Mechanics},
+  volume  = {96},
+  number  = {164},
+  year    = {2026},
+  doi     = {10.1007/s00419-026-03160-y},
+  annote  = {Published version of arXiv:2509.01274; 0-D material-point model
+             for the 5-species phi/psi interaction dynamics (Hamilton
+             principle, Eqs. 16-18). NOT the growth-kinematics source -- see
+             Klempt2024DiffusionDrivenGrowth for F=Fe*Fg, Fg=alpha I, alpha(0)=1}
+}
+
+@article{Klempt2023NumericalComparison,
+  author  = {Klempt, F. and Soleimani, M. and Junker, P.},
+  title   = {Numerical comparison of biofilm growth models using prominent
+             modeling approaches},
+  journal = {Proceedings in Applied Mathematics and Mechanics (PAMM)},
+  volume  = {22},
+  number  = {1},
+  pages   = {e202200054},
+  year    = {2023},
+  doi     = {10.1002/pamm.202200054},
+  annote  = {Read from the PDF (2026-10-01). Precursor spatial model: source
+             term scaled by a species-dependent factor $R_s$, consumption $g$
+             species-dependent; hydrostatic pressure inside the biofilm and
+             tension at its edge.}
+}
+
+@article{Bol2013BiofilmMechanicalCharacterisation,
+  author  = {B{\"o}l, M. and Ehret, A. E. and Bolea Albero, A. and
+             Hellriegel, J. and Krull, R.},
+  title   = {Recent advances in mechanical characterisation of biofilm and
+             their significance for material modelling},
+  journal = {Critical Reviews in Biotechnology},
+  volume  = {33},
+  number  = {2},
+  pages   = {145--171},
+  year    = {2013},
+  doi     = {10.3109/07388551.2012.679250},
+  annote  = {Cite where E\_SPEC is disclosed as an assumption: this is why no
+             better number exists. Verified against Crossref 2026-10-02}
+}
+

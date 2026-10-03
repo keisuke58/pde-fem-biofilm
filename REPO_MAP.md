@@ -73,7 +73,8 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `references/` | Klempt et al. 2024 (BMMB, CC BY 4.0), the paper this work follows: the PDF and a searchable text extraction; licence in `THIRD_PARTY.md` |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
 | `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
-| `thesis_ch5/` | Chapter 5 skeleton with an evidence map, plus `PORTING.md` for merging it into the thesis repository |
+| `thesis/` | **The thesis itself** (from 3 Oct 2026; copied from LUH_summer_2026). `main.tex`, `chapters/`, structure in `thesis/README.md`; the ANSYS chapter is `chapters/ch4_ansys.tex` |
+| `thesis_ch5/` | Evidence map and a stand-alone build check (`_build_check.tex`) of the ANSYS chapter, which now lives in `thesis/chapters/ch4_ansys.tex` |
 | `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
 | `reports/` | Written progress updates to the supervisors, kept next to the work they describe |
 | `DEVIATOR_SCALING_FINDING.md` | A mis-scaled isochoric split in the verified core: a pure pressure error, von Mises unaffected. Documented, not fixed — with the reasoning |
