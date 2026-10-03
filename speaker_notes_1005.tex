@@ -18,7 +18,7 @@
 \begin{document}
 {\Large\bfseries Speaker script --- meeting 5 October 2026}\\[2pt]
 Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
-21 slides plus a 3-slide appendix (notation, background), about 27 minutes. Times are rough targets.
+22 slides plus a 3-slide appendix (notation, background), about 28 minutes. Times are rough targets.
 
 % ------------------------------------------------------------------
 \slide{Title}{0:20}
@@ -90,6 +90,15 @@ at the centre.
 モデルは 2 mm の立方体、512 要素です。力学は 3 つの角の節点で剛体運動だけを止めているので、
 一様に成長すれば応力はゼロで、応力は成長の差から生じます。栄養は $y=-1$ mm の面の要素層で
 $c=1$ に固定し、バイオフィルムは中心の 32 要素を $\phi=1$ で始めます。
+
+% ------------------------------------------------------------------
+\slide{Model and boundary conditions}{0:45}
+\EN Here is the model in 3D. The seed of 32 elements is at the centre, the
+nutrient is held on the layer at the back face, and only the three marked
+corner nodes are constrained, which removes the rigid-body motion and
+nothing more.
+\JA モデルの 3 次元図です。中心に 32 要素の種があり、栄養は奥の面の要素層で固定して
+います。拘束は印を付けた角の 3 節点だけで、剛体運動を止める以外の拘束はありません。
 
 % ------------------------------------------------------------------
 \slide{One coupling step at a Gauss point}{1:30}

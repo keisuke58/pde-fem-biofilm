@@ -120,13 +120,22 @@ Parameters: Klempt et al.\ 2024 Table 2, $k_\alpha=10^{-3}$ per unit time $T^*$,
 in the field \emph{and} in Eq.\ 36; $E=10$ Pa, $\nu=0.49$, stiffness $\propto\phi^2$.
 $\beta$, $r$, $k$, $d$, $g$: framework's example input (not from the paper).
 ANSYS 2022 R2, one-species runs.
-\vspace{4pt}
-\colorbox{c3!12}{\parbox{0.97\linewidth}{\footnotesize
-\textbf{Model:} cube of 2 mm, $8\times8\times8=512$ hexahedral elements (0.25 mm).
-\textbf{Mechanics:} only rigid-body motion is suppressed (three corner nodes), so
-uniform growth is stress free and stress comes from differences in growth.
-\textbf{Nutrient:} $c=1$ held in the element layer on one face ($y=-1$ mm).
-\textbf{Biofilm:} $\phi=1$ in a seed of 32 elements at the centre, $\phi=0$ elsewhere.}}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Model and boundary conditions}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{assets/fig_model_setup.png}
+\end{center}
+\vspace{-6pt}
+\footnotesize
+\begin{itemize}
+  \item \textbf{Mechanics:} only rigid-body motion is suppressed (three corner nodes);
+        uniform growth is stress free, stress comes from differences in growth
+  \item \textbf{Nutrient:} $c=1$ held in the element layer on the face $y=-1$ mm.
+        \textbf{Biofilm:} $\phi=1$ in the seed of 32 elements at the start, $\phi=0$ elsewhere
+\end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
