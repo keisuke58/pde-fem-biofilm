@@ -77,7 +77,7 @@ python ansys_usermat\apdl\figs_1005.py    # redraw in Times New Roman with the n
      on the stiffness);
   3. note the fix on the "Four things found" slide.
 
-## Open questions on the paper (3 Oct, for Prof. Soleimani on 5 Oct, then Felix)
+## Open questions on the paper (3 Oct; sent to Felix by email on 3 Oct, also for Prof. Soleimani on 5 Oct)
 
 Details in `KLEMPT2024_REPRODUCTION.md` sec. 12-13.
 - Which form of Eq. 34/35 produced Fig. 4 and 7: growth on both faces of the
