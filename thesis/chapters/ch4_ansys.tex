@@ -40,32 +40,26 @@
 \section{Scope and contribution}
 \label{sec:ch5-scope}
 
-% TierA. THESIS_ASSIGNMENT.md §1; scope decision 2026-10-01.
+% TierA. THESIS_ASSIGNMENT.md §1; scope decision 2026-10-01. Shortened 3 Oct
+% 2026: the objectives are in chapter 1, the model equations in chapter 2.
 \TierA{%
-The task set for this thesis is to bring the temporal model of a growing
-biofilm, which describes a single material point, into an existing FEM
-framework so that its spatial variation and the resulting stresses can be
-computed. The framework is the element developed at IKM for the partner
-project, which already solves a biofilm field of the kind proposed by
-Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}.
-
-This chapter covers one and two species. For these cases the papers provide
-numbers to check against, and every step below is compared with them. I make
-three contributions:
-\begin{enumerate}
-\item a growth constitutive law, $\mathbf F=\mathbf F_e\mathbf F_g$ with
+This chapter brings the point model of Chapter~\ref{ch:heine} into the
+biofilm element developed at IKM for the partner project, which solves the
+field model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
+(Section~\ref{sec:theory_field}) in ANSYS. It covers one and two species, for
+which the papers give numbers to check against, and contains the second and
+third contribution of the thesis (Section~\ref{sec:intro_structure}):
+\begin{itemize}
+\item a growth law, $\mathbf F=\mathbf F_e\mathbf F_g$ with
       $\mathbf F_g=\alpha\mathbf I$, implemented as an ANSYS user material
-      and verified against closed forms (\S\ref{sec:ch5-model}--\ref{sec:ch5-verification});
-\item the coupling of this law to the element's biofilm field through the
-      growth equation of Klempt et al.~2024, integrated at every Gauss point
-      (\S\ref{sec:ch5-coupling});
-\item for two species, the species composition from the multi-species point
-      model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, run at
-      every Gauss point alongside the field (\S\ref{sec:ch5-composition}).
-\end{enumerate}
-More species, starting from the four-species examples of the 2026 paper, and
-a coupling in which the composition acts back on the mechanics are left to
-the continuation of this work at Keio University.}
+      and verified against closed forms (\S\ref{sec:ch5-model}--\ref{sec:ch5-verification}),
+      and coupled to the element's biofilm field through the growth equation
+      at every Gauss point (\S\ref{sec:ch5-coupling});
+\item for two species, the composition from the point model of Klempt et
+      al.~\cite{Klempt2026ContinuumBacterialGrowth}
+      (Section~\ref{sec:theory_point}), run at every Gauss point alongside the
+      field (\S\ref{sec:ch5-composition}).
+\end{itemize}}
 
 %-----------------------------------------------------------------------
 \section{The constitutive model}
@@ -139,10 +133,10 @@ stress by $\phi^2$. The paper's material is incompressible, with $\det\mathbf F_
 a Lagrange multiplier, and $\nu=0.49$ enters there only through $\mu$; here
 the constraint is approximated by $\nu=0.49$. The element, SOLID185 in its default
 $\bar{\mathbf B}$ formulation, uses one dilatation per element, the same idea as
-the H1P0 element of the paper; that this formulation is active with a user
-material is indicated by the solver: lowering $\nu$ from $0.49$ to $0.45$
-changes the stress by $27\,\%$ for a fivefold change of the bulk modulus, with
-no sign of locking (\S\ref{sec:ch5-results}).}
+the H1P0 element of the paper. A Python solution of the same problem shows
+that with this formulation the mean stress changes by less than $10\,\%$
+between $\nu=0.49$ and $0.499$, while full integration would overestimate it
+several times (\S\ref{sec:ch5-results}).}
 
 %-----------------------------------------------------------------------
 \section{Implementation}
@@ -340,7 +334,7 @@ and pass $\alpha$ to the growth law. I use the paper's $k_\alpha=10^{-3}$ per un
 of normalised time $T^*$, in the field and in~\eqref{eq:ch5-eq36} alike, and
 the deck time is $T^*$.
 
-The paper prints a second form of this law. Table~1, step~3a, of Klempt et
+The paper prints a second form of this law (Section~\ref{sec:theory_field}). Table~1, step~3a, of Klempt et
 al.\ 2024 integrates $\alpha$ from the change of $\phi$,
 $(\alpha_{n+1}-\alpha_n)/((1+\alpha_{n+1})\Delta t)=k_\alpha(\phi_{n+1}-\phi_n)/\Delta t$
 (with $k_\alpha/\eta_\alpha$ read as $k_\alpha$), while its text states that
