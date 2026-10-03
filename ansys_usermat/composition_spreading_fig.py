@@ -61,21 +61,25 @@ def main():
     snaps = T.macro_snapshots()
     chis = {name: run(snaps, case) for case, name in T.CASES.items()}
     kz = T.K.N // 2
+    cmap, norm = figstyle.klempt_cmap()          # the paper's contour colours
     ext = (0, T.K.L, 0, T.K.L)
     fig, ax = plt.subplots(3, len(TIMES), figsize=(13, 9.6))
     for c, k in enumerate(TIMES):
         phi = snaps[k][:, :, kz].T
-        im0 = ax[0, c].imshow(phi, origin="lower", extent=ext, vmin=0, vmax=1, cmap="Blues")
+        im0 = ax[0, c].imshow(phi, origin="lower", extent=ext, cmap=cmap, norm=norm,
+                              interpolation="bilinear")
         ax[0, c].set_title(rf"$T^* = {k * T.DT:.1f}$")
         for r, name in enumerate(chis, start=1):
             chi = chis[name][k][:, :, kz].T
             chi = np.where(phi >= 0.05, chi, np.nan)     # show composition where there is biofilm
-            im = ax[r, c].imshow(chi, origin="lower", extent=ext, vmin=0, vmax=1, cmap="PuOr_r")
-            ax[r, c].set_facecolor("#eef1f4")
+            im = ax[r, c].imshow(chi, origin="lower", extent=ext, cmap=cmap, norm=norm,
+                                 interpolation="nearest")
+            ax[r, c].set_facecolor("#d9dde2")
         for r in range(3):
             a = ax[r, c]
             a.grid(False)
-            a.plot([T.K.L], [T.K.L], marker="s", ms=9, color="#3a9d5d", clip_on=False)
+            figstyle.element_grid(a, np.arange(0, 21), np.arange(0, 21), alpha=0.2)
+            a.plot([T.K.L], [T.K.L], marker="s", ms=9, color="white", mec="black", clip_on=False)
             a.set_xticks([0, 10, 20]); a.set_yticks([0, 10, 20])
             if c:
                 a.set_yticklabels([])
@@ -90,7 +94,7 @@ def main():
     fig.colorbar(im, ax=ax[1:, :], label=r"$\phi_1/(\phi_1+\phi_2)$", shrink=0.9, pad=0.015)
     fig.suptitle("Composition along a spreading front (Python); Klempt et al. 2024 test case 4.1 field, "
                  "Klempt et al. 2026 cases 3 and 6;\nmid-plane $z = 10\\ \\mu$m, nutrient on the edge "
-                 "at the top right (green), grey: no biofilm ($\\phi < 0.05$)", fontsize=12)
+                 "at the top right (white square), grey: no biofilm ($\\phi < 0.05$)", fontsize=12)
     fig.savefig(OUT, dpi=200)
     print("wrote", OUT)
     for name, d in chis.items():
