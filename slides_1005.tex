@@ -372,7 +372,7 @@ All other parameters are the published values.
   \item \textbf{Time link $s$} chosen at 0.15, where case 6's winner just
         appears; sensitivity shown, but $s$ has no source in a paper
   \item \textbf{Input field:} Eq.\ 34 as printed moves the colony rather than
-        growing it (next slide); the coupling inherits this
+        growing it (Appendix D); the coupling inherits this
   \item \textbf{Two $\alpha$:} the element's own and Eq.\ 36 in the material
         call are integrated separately (Check 2)
 \end{enumerate}
@@ -387,35 +387,6 @@ each point early, so its point model runs for most of the time either way.
 \end{columns}
 \end{frame}
 
-% --------------------------------------------------------
-\begin{frame}{Klempt et al.\ 2024 test cases, reproduced in Python}
-\small
-Independent Python solver on the paper's 20\,$\mu$m cube (21$^3$ grid), not the ANSYS model.
-Table 2 unchanged; growth on both faces of the colony and consumption
-proportional to $c$ (two departures from Eq.\ 34/35 as printed); one time
-scale per simulation, since $T^*=t/t_{\rm ref}$ with $t_{\rm ref}$
-``chosen based on the conditions for growth at hand'' (Sec.\ 4).
-\vspace{4pt}
-\begin{center}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-test case & time scale & RMS difference $\phi$ & RMS difference $c$\\
-\midrule
-4.1 directional growth (Fig.\ 4) & 1.5 & 0.03 & 0.05\\
-4.2 ``high'' (Fig.\ 7) & 10 & 0.04 & 0.04\\
-4.2 ``low'' (Fig.\ 7) & 4--5 & 0.09 & 0.05\\
-\bottomrule
-\end{tabular}
-\end{center}
-\vspace{4pt}
-\begin{itemize}
-  \item Eq.\ 34 as printed does not reach these curves at any time scale
-  \item The nutrient plateau of 4.2 ``high'' (0.489) follows from Table 2 with
-        consumption $g\phi c$: 0.482
-  \item Table 3's pressure ($10^{-4}$ MPa) fits $\mu=3.3557$ read as MPa;
-        with Pa it would be $10^{-9}$ MPa
-\end{itemize}
-\end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Earlier work kept in the thesis: curved substrate}
@@ -592,6 +563,37 @@ Implicit time stepping, $\Delta t=10^{-4}$.
   \item Two species: the point model is scaled to $\min(\phi_{3D},\phi_{\rm cap})$,
         advanced by $s\,\Delta t$, scaled again; $\phi_i,\psi_i$ are stored as state variables
 \end{enumerate}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix D: Klempt et al.\ 2024 test cases, reproduced in Python}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{assets/fig_klempt2024_fig3.png}
+\end{center}
+\vspace{-8pt}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+test case & time scale & RMS $\phi$ & RMS $c$\\
+\midrule
+4.1 (Fig.\ 4) & 2 & 0.03 & 0.02\\
+4.2 ``high'' (Fig.\ 7) & 10 & 0.04 & 0.04\\
+4.2 ``low'' (Fig.\ 7) & 4--5 & 0.09 & 0.05\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.51\textwidth}
+Independent solver on the paper's 20\,$\mu$m cube, not the ANSYS model.
+Table 2 unchanged; growth on both faces and consumption $g\phi c$ (two
+departures from Eq.\ 34/35 as printed); nutrient in a 2\,$\mu$m corner block;
+one time scale per run ($T^*=t/t_{\rm ref}$, Sec.\ 4). Curves agree; the
+shape agrees in kind (egg towards the corner) but is more slender, also with
+other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
+\end{column}
+\end{columns}
 \end{frame}
 
 \end{document}
