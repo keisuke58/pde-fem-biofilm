@@ -78,23 +78,36 @@ change von Mises. Ch.\ 5.4.}
 growth\_cylinder\_alpha\_sweep). The four-condition study is not part of the thesis.}
 \end{frame}
 
+\begin{frame}{Model and boundary conditions}
+\todo{2~mm cube, $8^3=512$ SOLID185 elements (B-bar), seed of 32 elements,
+nutrient held on the face $y=-1$~mm, only rigid-body motion constrained, units
+mm/MPa. Figure fig\_model\_setup (slides\_1005).}
+\end{frame}
+
 \begin{frame}{Coupling into the IKM element}
 \todo{The element's field (Eq.\ 34) unchanged; Eq.\ 36 at every Gauss point;
 growth counted once per increment. Diagram from slides\_1005. Ch.\ 5.5.}
 \end{frame}
 
-\begin{frame}{Check: exact solution inside ANSYS}
-\todo{$\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$; figure fig1005\_exact.}
-\end{frame}
-
-\begin{frame}{Check: whole model}
-\todo{Cosine similarity 1.0000, factor $0.455=\tfrac12\times\tfrac{10}{11}$;
-figure fig1005\_whole\_model.}
+\begin{frame}{Checks of the coupling in ANSYS}
+\todo{Left: exact solution, $\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$
+(fig1005\_exact). Right: whole model, cosine similarity 1.0000, factor
+$0.455=\tfrac12\times\tfrac{10}{11}$ (fig1005\_whole\_model). Ch.\ 5.7.
+Footnote: Eq.\ 36, not Table~1 of the paper (fig\_klempt2024\_alpha\_law,
+ch.\ 5.5).}
 \end{frame}
 
 \begin{frame}{Stresses with the published stiffness}
-\todo{Seeded element and neighbours, stress ring. TO RE-RUN with $E=10$~Pa,
-$\nu=0.49$ before this slide is filled.}
+\todo{Seed compressed, first layer around it in tension on average (ring of
+Klempt 2024). Fill after the stiffness typo fix and the $16^3$ run; quote
+seed averages from $16^3$, no peaks.}
+\end{frame}
+
+\begin{frame}{How far the stresses can be trusted}
+\todo{Mesh: $8^3$ seed averages about $1.7\times$ the $16^3$/$32^3$ values,
+corner peaks do not converge (Python and ANSYS $16^3$). Incompressibility:
+B-bar, mean stress within 10\,\% from $\nu=0.49$ to $0.499$; full
+integration would lock. Ch.\ 5.7, MESH\_STUDY.md.}
 \end{frame}
 
 \begin{frame}{Two species: amount from the field, composition from the point model}
@@ -107,9 +120,18 @@ through $R_s$ and $g$). Ch.\ 5.6.}
 their sensitivity (table from ch.\ 5.6).}
 \end{frame}
 
+\begin{frame}{Two species on a spreading biofilm (Python)}
+\todo{The same scheme on the reproduced Klempt 2024 test case 4.1 field
+(fig\_composition\_spreading); not carrying the composition with the front
+changes the mean by at most 0.001. Shows what ANSYS cannot show until the
+element's front term works.}
+\end{frame}
+
 \begin{frame}{Limitations}
-\todo{Verification only, no validation; one-way composition; $s$ is an
-assumption; small stresses with the published parameters. Ch.\ 5.8.}
+\todo{Verification only, no validation; one-way composition; $s$ and
+$\phi_{\rm cap}$ are assumptions; no spreading in ANSYS (front term); mesh;
+two $\alpha$ laws in the paper; small stresses with the published
+parameters. Ch.\ 5.8.}
 \end{frame}
 
 \begin{frame}{Conclusion and outlook}
