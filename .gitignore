@@ -139,3 +139,7 @@ ansys_usermat/apdl/*_mesh[0-9].dat
 *.mod
 *.o
 *.obj
+thesis/*.lof
+thesis/*.lot
+thesis/*.toc
+thesis/*.out
