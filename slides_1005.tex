@@ -126,7 +126,7 @@ ANSYS 2022 R2, one-species runs.
 \begin{frame}{Model and boundary conditions}
 \vspace{-6pt}
 \begin{center}
-\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{assets/fig_model_setup.png}
+\includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{assets/fig_model_setup.png}
 \end{center}
 \vspace{-6pt}
 \footnotesize
@@ -135,6 +135,8 @@ ANSYS 2022 R2, one-species runs.
         uniform growth is stress free, stress comes from differences in growth
   \item \textbf{Nutrient:} $c=1$ held in the element layer on the face $y=-1$ mm.
         \textbf{Biofilm:} $\phi=1$ in the seed of 32 elements at the start, $\phi=0$ elsewhere
+  \item Checks 1--3 and the two-species results use this model (ANSYS, 1--2 Oct);
+        the Klempt et al.\ 2024 reproduction uses the paper's own 20\,$\mu$m cube (Python)
 \end{itemize}
 \end{frame}
 
@@ -378,7 +380,7 @@ All other parameters are the published values.
 \begin{column}{0.48\textwidth}
 \includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}\\
 \scriptsize Composition at $T^*=1$ of the points first reached at each time;
-growth field of Klempt et al.\ 2024 test case 4.1 (21$^3$ grid, Python);
+growth field of Klempt et al.\ 2024 test case 4.1 (Python, the paper's 20\,$\mu$m cube, 21$^3$ grid, not the ANSYS model);
 Klempt et al.\ 2026 cases 3 and 6. The diffuse edge of the field reaches
 each point early, so its point model runs for most of the time either way.
 \end{column}
@@ -388,6 +390,7 @@ each point early, so its point model runs for most of the time either way.
 % --------------------------------------------------------
 \begin{frame}{Klempt et al.\ 2024 test cases, reproduced in Python}
 \small
+Independent Python solver on the paper's 20\,$\mu$m cube (21$^3$ grid), not the ANSYS model.
 Table 2 unchanged; growth on both faces of the colony and consumption
 proportional to $c$ (two departures from Eq.\ 34/35 as printed); one time
 scale per simulation, since $T^*=t/t_{\rm ref}$ with $t_{\rm ref}$
