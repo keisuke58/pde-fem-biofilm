@@ -409,9 +409,9 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.}
       paper. Beyond the seed the nutrient is almost uniform, so
       $\nabla c\approx\mathbf 0$, while the paper's direction
       $\nabla c/|\nabla c|$ remains a unit vector whose orientation is then
-      set by round-off. This is a property of equation~\eqref{eq:ch5-field}
-      as stated, where the direction is undefined wherever $c$ is uniform,
-      and not of the discretisation. I do not regularise it here, because
+      set by round-off. In equation~\eqref{eq:ch5-field} as stated the
+      direction is undefined wherever $c$ is uniform, so a finer mesh or
+      another scheme does not remove it. I do not regularise it here, because
       that would add a threshold of my own; how the authors treat this limit
       is an open question for them. The checks of \S\ref{sec:ch5-results} do
       not depend on this term (the gradient-free region has no front, and
@@ -464,7 +464,7 @@ $\alpha^*=10$, $\eta_i$ per case).
 
 \paragraph{Consistency with the point model.} The scaling changes nothing
 when the field's amount is the one the point model would produce on its own.
-Driven by exactly that amount, the coupled scheme gives back the composition
+Driven by that amount, the coupled scheme gives back the composition
 of the point model alone: to $1.2\times10^{-5}$ in case~3 and to
 $6\times10^{-17}$ in case~6 of the paper, at coupling steps from $0.01$ down to
 $0.0025$.%
@@ -659,7 +659,7 @@ to be run.}
 \TierA{%
 \paragraph{Two species.} With the point model coupled, every traced point of
 the ANSYS run equals the same scheme run on its own, with a difference of
-exactly $0$, and every call to the point model is reproduced bit for bit. In
+$0$, and every call to the point model is reproduced bit for bit. In
 the packed seed, at $T^*=1$:
 \begin{itemize}
 \item case~3 (coexistence): the paper gives $\phi_1=0.60$, $\phi_2=0.40$ for the point model
@@ -779,5 +779,5 @@ would close the loop, ordered by how well the literature supports them.
       mechanics back to the field.
 \end{enumerate}
 Steps 1 and 2 are the natural first goal of the continuation at Keio; each
-must reduce exactly to the one-way scheme when the species are made equal.}
+must reduce to the one-way scheme when the species are made equal.}
 
