@@ -1,0 +1,345 @@
+\chapter{Theoretical Background}
+\label{ch:theory}
+
+\section{Extended Hamilton Principle for Biofilm Mechanics}
+\label{sec:theory_hamilton}
+
+\subsection{State Variables and Kinematics}
+
+Following Klempt et al.~\cite{Klempt2025ContinuumBiofilm} --- who extended the
+single-species Hamilton-based growth model of~\cite{Klempt2024ContinuumGrowth} to
+multiple interacting species --- the biofilm
+state at a material point is described by two internal variable fields:
+the \emph{volume fraction} $\phi_i \in [0,1]$ occupied by species $i$ ($i = 1,\dots,n$),
+and the \emph{viability fraction} $\psi_i \in [0,1]$, representing the proportion of
+living cells within species $i$.
+The living volume fraction is then
+\begin{equation}
+  \bar{\phi}_i := \phi_i\,\psi_i, \qquad i = 1,\dots,n.
+  \label{eq:living}
+\end{equation}
+An additional void fraction $\phi_0\in[0,1]$ acts as a numerical auxiliary variable
+to enforce the holonomic incompressibility constraint~\cite{Klempt2025ContinuumBiofilm}:
+\begin{equation}
+  \sum_{l=0}^{n} \phi_l(t) = 1 \quad \forall\, t.
+  \label{eq:constraint}
+\end{equation}
+
+\subsection{Variational Formulation}
+
+The evolution equations are derived from the Extended Hamilton Principle~\cite{JunkerBalzani2021ExtendedHamilton}:
+\begin{equation}
+  \mathcal{H} = \int_\tau \bigl(\mathcal{G} + \mathcal{C} + \mathcal{D}\bigr)\,\mathrm{d}t
+  \;\to\; \mathrm{stat}_{\boldsymbol{\xi},\gamma},
+  \label{eq:hamilton_principle}
+\end{equation}
+where $\boldsymbol{\xi} = (\boldsymbol{\phi}, \boldsymbol{\psi})^\top$ collects
+all state variables, $\gamma$ is a Lagrange multiplier enforcing the constraint
+\eqref{eq:constraint}, $\mathcal{G}$ is the Helmholtz free energy, $\mathcal{C}$
+the constraint functional, and $\mathcal{D}$ the dissipation.
+
+The free energy density encodes nutrient-driven growth and antibiotic-induced killing:
+\begin{equation}
+  \Psi = -\tfrac{1}{2}\,c^*\,\bar{\bphi}^\top \bA\,\bar{\bphi}
+        + \tfrac{1}{2}\,\alpha^*\,\bpsi^\top \mathbf{B}\,\bpsi,
+  \label{eq:free_energy}
+\end{equation}
+where $c^*$ is the nutrient concentration, $\alpha^*$ the antibiotic concentration,
+$\bA \in \Real^{n \times n}$ is the symmetric growth-interaction matrix, and
+$\mathbf{B} = \mathrm{diag}(b_1,\dots,b_n)$ the antibiotic sensitivity matrix.
+The volume constraint enters through
+\begin{equation}
+  \mathcal{C} = \gamma\!\left(\sum_{l=0}^{n} \phi_l - 1\right).
+\end{equation}
+The dissipation potential is~\cite{Klempt2025ContinuumBiofilm}
+\begin{equation}
+  \mathcal{D} = \tfrac{1}{2}\,\dot{\bar{\bphi}}^\top \boldsymbol{\eta}\,\dot{\bar{\bphi}}
+              + \tfrac{1}{2}\,\dot{\bphi}^\top \boldsymbol{\eta}\,\dot{\bphi},
+  \label{eq:dissipation}
+\end{equation}
+with diagonal viscosity matrix $\boldsymbol{\eta} = \mathrm{diag}(\eta_1,\dots,\eta_n)$,
+$\eta_i = 1$ for all species (absorbed into the time scale).
+The two-term structure is necessary: using only the first term would yield a
+rank-deficient system because $\bar\phi_i=\phi_i\psi_i$ couples the two rate
+variables; the second term $\tfrac12\dot\bphi^\top\boldsymbol\eta\,\dot\bphi$
+restores full rank~\cite{Klempt2025ContinuumBiofilm}.
+
+\subsection{Governing Equations}
+
+Evaluating $\delta\mathcal{H} = 0$ with respect to $\delta\phi_i$, $\delta\psi_i$, and
+$\delta\gamma$ yields:
+
+\medskip\noindent
+\textit{Volume fraction} ($i = 1,\dots,n$):
+\begin{equation}
+  0 = -c^*\,\psi_i\,\bigl(\bA\bar{\bphi}\bigr)_i
+      + \eta_i\!\left(\dot\phi_i\,\psi_i^2 + \bar\phi_i\,\dot\psi_i + \dot\phi_i\right)
+      + \gamma.
+  \label{eq:gov_phi}
+\end{equation}
+\footnotetext{The dissipation terms follow from
+$\partial\mathcal{D}/\partial\dot\phi_i
+ = \eta_i\,\dot{\bar\phi}_i\,(\partial\bar\phi_i/\partial\phi_i)
+ + \eta_i\,\dot\phi_i
+ = \eta_i(\dot\phi_i\psi_i+\phi_i\dot\psi_i)\psi_i + \eta_i\dot\phi_i
+ = \eta_i(\dot\phi_i\psi_i^2 + \bar\phi_i\dot\psi_i + \dot\phi_i)$,
+using $\bar\phi_i=\phi_i\psi_i$ and the chain rule
+$\partial\dot{\bar\phi}_i/\partial\dot\phi_i=\psi_i$.
+The $+\dot\phi_i$ term without $\psi$-weighting arises from the second term
+$\tfrac12\dot\bphi^\top\boldsymbol\eta\,\dot\bphi$ in~\eqref{eq:dissipation}.
+The $\delta\psi_i$-equation follows analogously.}
+
+\noindent\textit{Viability fraction} ($i = 1,\dots,n$):
+\begin{equation}
+  0 = -c^*\,\phi_i\,\bigl(\bA\bar{\bphi}\bigr)_i
+      + \alpha^*\,b_i\,\psi_i
+      + \eta_i\!\left(\dot\psi_i\,\phi_i^2 + \bar\phi_i\,\dot\phi_i\right)
+      + \gamma.
+  \label{eq:gov_psi}
+\end{equation}
+
+\noindent\textit{Void fraction and constraint:}
+\begin{equation}
+  0 = \gamma + \dot\phi_0, \qquad
+  0 = \sum_{l=0}^{n}\phi_l - 1.
+  \label{eq:gov_void}
+\end{equation}
+
+The system \eqref{eq:gov_phi}--\eqref{eq:gov_void} constitutes $2n+2$ coupled non-linear
+equations, solved at each time step via Newton's method with implicit Euler discretisation,
+the standard choice for the stiff system near the simplex boundary~\cite{Hairer1996ODE}.
+In the numerical implementation a logarithmic barrier penalty $\Psi_{\mathrm{bar}}$ with
+$K_p = \eta_i\times 10^{-4}$ enforces the box constraints $\phi_i,\psi_i\in(0,1)$, omitted
+from \eqref{eq:gov_phi}--\eqref{eq:gov_void} for clarity.
+Symmetry $A_{ij} = A_{ji}$ is a modelling assumption imposed
+in~\cite{Klempt2025ContinuumBiofilm}: the free energy~\eqref{eq:free_energy} is
+well-defined for any square $\bA$, but its antisymmetric part does not contribute
+to the quadratic form and is therefore set to zero by convention, halving the
+parameter count from $n^2$ to $n(n+1)/2$.
+This choice preserves the gradient-flow structure of the dynamics and the
+associated thermodynamic consistency guarantee~\cite{JunkerBalzani2021ExtendedHamilton},
+in the tradition of non-equilibrium thermodynamics with internal variables and
+extremum principles~\cite{Maugin1992NonequilibriumTD, Ziegler1963MaximumEntropy}.
+Biologically, symmetry is a reasonable approximation when interactions are
+mediated by \emph{diffusible metabolites shared through a common pool}: if
+species $j$ secretes lactate that promotes species $i$ (cross-feeding,
+$A_{ij}>0$), the same metabolite pool constrains $j$ in proportion, making
+$A_{ij}\approx A_{ji}$ for syntrophic partners~\cite{Kolenbrander2010OralMultispecies}.
+Genuinely asymmetric effects (directional toxin secretion, contact killing) are
+suppressed and constitute the domain where the unconstrained gLV retains a small
+predictive edge (Chapter~\ref{ch:dieckow}).
+
+\paragraph{Scale gauge.}
+The nutrient concentration $c^*$ enters the evolution equations only through the product
+$c^*A_{ij}$, so its absolute value is non-identifiable: rescaling $c^*\mapsto\lambda c^*$ and
+$\bA\mapsto\lambda^{-1}\bA$ leaves the dynamics invariant. We fix this gauge by setting
+$c^*=25$ (cf.\ $c^*=100\,\mathrm{J\,m^{-3}}$ in the numerical experiments of
+Klempt et al.~\cite{Klempt2025ContinuumBiofilm}), which renders the inferred
+$A_{ij}=\mathcal{O}(1)$; $c^*$ therefore sets the
+overall time scale rather than an independent degree of freedom. The Heine et al.\ assays
+use no antibiotic, so $\alpha^*=0$ deactivates the decay term $\alpha^*b_i\psi_i$ and the
+sensitivity matrix $\mathbf{B}$.
+
+\paragraph{From composition to mechanics.}
+The Extended Hamilton Principle above governs the \emph{composition} fields
+$(\bphi,\bpsi)$; the biofilm's \emph{deformation} is the complementary mechanical degree
+of freedom, governed by the same thermodynamic philosophy of a free energy rendered
+stationary subject to constraints. Because the local biomass fraction sets the local
+rate of biomass accretion, the composition acts as the driver of a stress-free
+\emph{growth} of the continuum, which the standard multiplicative split
+$\bF=\bF_{\!e}\bF_{\!g}$~\cite{Rodriguez1994Growth} separates from the stress-carrying
+elastic deformation $\bF_{\!e}$; closing the description with a hyperelastic constitutive
+law for $\bF_{\!e}$ then turns a depth-varying composition into a depth-varying
+mechanical state. The compositional incompressibility constraint~\eqref{eq:constraint}
+--- a mixture condition on the \emph{relative} fractions --- is distinct from, and
+compatible with, the physical volume growth $J_g=\det\bF_{\!g}>1$ of accreting biomass.
+The finite-element realisation of this composition\,$\rightarrow$\,growth\,$\rightarrow$\,stress
+chain, and the residual stress it imprints at the implant interface, is developed in
+Section~\ref{sec:integration_fem}.
+
+
+\section{Replicator Equation and Compositional Dynamics}
+\label{sec:theory_replicator}
+
+The model integrated throughout this thesis is the full coupled $\bphi$--$\bpsi$
+system~\eqref{eq:gov_phi}--\eqref{eq:gov_void}. It is instructive to relate it to the
+classical \emph{replicator equation} of evolutionary game theory~\cite{Hofbauer1998EGT,TaylorJonker1978Replicator}:
+\begin{equation}
+  \dot{\phi}_i = \phi_i \Bigl[ \bigl(\bA\bphi\bigr)_i - \bphi^\top \bA \bphi \Bigr],
+  \qquad \sum_i \phi_i = 1,
+  \label{eq:replicator}
+\end{equation}
+in which the mean-fitness term $\bphi^\top\bA\bphi$ projects the growth onto the tangent
+plane of the $n$-simplex, conserving composition exactly. For a symmetric $\bA$,
+\eqref{eq:replicator} is a (generalised) gradient flow of the mean fitness
+$W(\bphi)=\tfrac12\bphi^\top\bA\bphi$ with respect to the \emph{Shahshahani information
+metric} $g_{ij}=\delta_{ij}/\phi_i$, and $W$ is a strict Lyapunov function---its monotone
+increase (equivalently, the monotone decrease of the free energy $\Psi=-W$) is the
+thermodynamic-consistency statement, the dissipation being non-negative by
+construction~\cite{Hofbauer1998EGT, Shahshahani1979}.
+
+\paragraph{Remark (mobility metric).}
+The $\phi_i$-weighted form~\eqref{eq:replicator} corresponds specifically to the
+Shahshahani (information-geometric) mobility. The continuum model's dissipation
+potential~\eqref{eq:dissipation} uses a constant viscosity $\boldsymbol{\eta}$; its
+well-mixed, $\psi_i\!\equiv\!1$ reduction is therefore the affine projection
+$\dot\phi_i\propto(\bA\bphi)_i-\langle\bA\bphi\rangle$ rather than~\eqref{eq:replicator}
+verbatim. The two coincide in sign structure and fixed points; \eqref{eq:replicator} is
+retained as the canonical compositional reference because the inference operates on the
+same symmetric $\bA$ and simplex constraint.
+
+\paragraph{Relation to gLV.}
+Equation~\eqref{eq:replicator} differs from the generalised Lotka-Volterra (gLV) model
+\eqref{eq:glv} in two key respects: (i) the interaction matrix $\bA$ is constrained to
+be \emph{symmetric} by the variational derivation, reducing the parameter count from
+$n^2$ to $n(n+1)/2$; (ii) the right-hand side preserves $\sum_i \phi_i = 1$ exactly,
+whereas gLV models require explicit normalisation and do not guarantee volume conservation.
+These properties make the Hamilton replicator particularly suited for closed microbial
+communities where total biovolume is constrained (e.g., in-vitro cultures of fixed total
+cell concentration).
+
+\paragraph{Fixed points and stability.}
+The interior fixed points of~\eqref{eq:replicator} satisfy $(\bA\bphi^*)_i = \bphi^{*\top}\bA\bphi^*$
+for all $i$ with $\phi^*_i > 0$.
+For a positive definite $\bA$, the system has a unique interior fixed point, which is
+a globally stable equilibrium on the simplex (Lyapunov function: $V = -\tfrac{1}{2}\bphi^\top\bA\bphi$).
+In the dysbiotic condition, the interaction matrix inferred from Heine et al.'s data
+exhibits a near-singular structure with large off-diagonal entries involving $\text{Pg}$,
+consistent with the bistable dynamics observed experimentally.
+
+
+\section{Bayesian Inference and TMCMC}
+\label{sec:theory_tmcmc}
+
+\subsection{Bayesian Parameter Identification}
+
+Given observed species trajectories $\mathbf{y} = \{\mathbf{y}_t\}_{t=1}^{N_t}$
+and a forward model $\mathcal{F}(\btheta)$ parameterised by the interaction vector
+$\btheta \in \Real^{15}$, Bayesian inference seeks the posterior distribution:
+\begin{equation}
+  p(\btheta \mid \mathbf{y}) \;\propto\; \mathcal{L}(\mathbf{y} \mid \btheta)\,p(\btheta),
+  \label{eq:bayes}
+\end{equation}
+where $\mathcal{L}(\mathbf{y} \mid \btheta)$ is the likelihood and $p(\btheta)$ the prior.
+We adopt a Gaussian likelihood with isotropic noise:
+\begin{equation}
+  \mathcal{L}(\mathbf{y} \mid \btheta)
+  = \prod_{t,i} \mathcal{N}\!\left(y_{t,i} \mid \hat\phi_i(t;\btheta),\,\sigma^2\right),
+\end{equation}
+where $\hat\phi_i(t;\btheta)$ is the ODE solution at time $t$.
+
+\subsection{Transitional Markov Chain Monte Carlo}
+
+TMCMC~\cite{ChingChen2007TMCMC, Betz2016TMCMC} constructs a sequence of intermediate
+distributions that bridge the prior to the posterior via a tempering schedule
+$0 = \beta_0 < \beta_1 < \cdots < \beta_J = 1$:
+\begin{equation}
+  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{\beta_j}\,p(\btheta).
+  \label{eq:tmcmc_intermediate}
+\end{equation}
+At each stage $j$, importance weights $w_j^{(k)} \propto \mathcal{L}^{\beta_j - \beta_{j-1}}$ are
+computed, particles are resampled, and short Metropolis--Hastings chains are run to
+diversify the ensemble.
+The tempering exponent $\beta_j$ is chosen adaptively to maintain a target coefficient
+of variation of the weights (typically $c_v = 1$), ensuring smooth progression from
+the diffuse prior to the concentrated posterior.
+
+\paragraph{GPU parallelisation.}
+The dominant cost is the batched forward-model evaluation at each stage.
+In this work, the ODE right-hand side is compiled to GPU-executable XLA code via
+JAX~\cite{jax2018github}, and the entire particle ensemble (typically $N = 2{,}000$)
+is evaluated in a single batched call using \texttt{jax.vmap}.
+This yields a ${\sim}200\times$ speedup over the CPU baseline
+(Section~\ref{sec:heine_gpu}), making TMCMC inference on the 15-dimensional
+parameter vector practically feasible within minutes.
+
+\paragraph{Iteratively narrowed priors.}
+To address posterior multimodality in the dysbiotic condition, we employ an iterative
+strategy: after an initial TMCMC run on a broad prior, the posterior mean and standard
+deviation are used to construct a tighter prior for a subsequent run.
+This two-pass approach concentrates sampling on the high-posterior-density region,
+reducing the effective dimensionality of the problem and improving convergence.
+
+\paragraph{Identifiability diagnostic.}
+To distinguish data-informed parameters from prior-dominated ones, we use the
+effective-dimensionality ratio
+\begin{equation}
+  r_i \;=\; \frac{\sigma_{\mathrm{post},i}}{\Delta_{\mathrm{prior},i}},
+  \label{eq:effdim}
+\end{equation}
+the posterior standard deviation of $\theta_i$ relative to its prior width.
+A value $r_i \ll 1$ indicates the datum tightly constrains $\theta_i$ (the posterior is
+much narrower than the prior), whereas $r_i \to 1$ flags a prior-dominated, non-identified
+parameter. Reporting $r_i$ per parameter makes the identifiability of the
+$15$-dimensional inference explicit rather than assumed
+(Chapter~\ref{ch:heine}: all $15$ entries satisfy $r_i < 0.43$, i.e.\ every parameter is
+data-informed).
+
+
+\section{Flux Balance Analysis and Metabolic Sign Priors}
+\label{sec:theory_fba}
+
+\subsection{Flux Balance Analysis}
+
+Flux Balance Analysis (FBA) predicts the metabolic phenotype of a microorganism
+under steady-state assumptions~\cite{OrthThiele2010WhatIsFBA, Heinken2023AGORA2}.
+Given a stoichiometric matrix $S \in \Real^{m \times r}$ (metabolites $\times$ reactions),
+FBA solves:
+\begin{equation}
+  \max_{\mathbf{v}}\; \mathbf{c}^\top\mathbf{v}
+  \quad \text{s.t.} \quad S\mathbf{v} = \mathbf{0},\; \mathbf{lb} \le \mathbf{v} \le \mathbf{ub},
+\end{equation}
+where $\mathbf{c}$ is the objective vector (typically biomass production),
+$\mathbf{v}$ the flux vector, and $\mathbf{lb}$, $\mathbf{ub}$ the reaction bounds.
+Parsimonious FBA (pFBA)~\cite{Lewis2012pFBA} additionally minimises the total flux at the optimal growth
+rate, yielding a biologically plausible flux distribution without unnecessary
+enzyme activity.
+
+\subsection{Community FBA via MICOM}
+
+MICOM~\cite{Diener2020MICOM} extends FBA (computed here with COBRApy~\cite{Ebrahim2013COBRApy}) to multi-species consortia, generalising single-organism dynamic FBA~\cite{Mahadevan2002DynamicFBA}, by coupling
+individual metabolic models through shared metabolite exchange fluxes and optimising a
+cooperative tradeoff objective balancing community growth with individual growth.
+For each species pair $(i, j)$, MICOM predicts the net exchange flux of shared metabolites,
+from which the sign of ecological interaction --- mutualism ($+/+$), competition ($-/-$),
+commensalism ($+/0$), or amensalism ($-/0$) --- can be inferred.
+
+\subsection{Three-Layer Sign Prior}
+
+For the Dieckow dataset (Chapter~\ref{ch:dieckow}), a three-layer sign prior
+$\mathbf{S} \in \{-1, 0, +1\}^{n \times n}$ is constructed hierarchically:
+\begin{enumerate}
+  \item \textbf{Layer 1 (eHOMD experimental)}: Empirical co-occurrence and
+    exclusion data from the expanded Human Oral Microbiome Database (eHOMD).
+  \item \textbf{Layer 2 (AGORA2 pFBA)}: Parsimonious FBA predictions of
+    pairwise metabolite exchange from 7,302 gut/oral reconstructions~\cite{Heinken2023AGORA2}.
+  \item \textbf{Layer 3 (MICOM community FBA)}: Community-level cooperative
+    tradeoff predictions resolving conflicts between Layers 1 and 2~\cite{Diener2020MICOM}.
+\end{enumerate}
+The sign prior is incorporated into the loss function as a half-space hinge-squared penalty:
+\begin{equation}
+  \mathcal{R}(\btheta; \mathbf{S}) = \lambda \sum_{i,j:\, S_{ij}\neq 0}
+  \max\!\bigl(0,\; -S_{ij}\,A_{ij}\bigr)^2,
+\end{equation}
+penalising parameter values whose sign contradicts the metabolic prediction while
+leaving sign-consistent entries unconstrained.
+
+The prior uses the \emph{sign} of the metabolic signal exclusively, not its
+magnitude.
+This is not a modelling compromise but the principled choice given the current
+state of constraint-based metabolic modelling.
+Rath et al.\ \cite{Rath2024GEMReliability} evaluated semi-curated GEMs (including
+AGORA-derived reconstructions) against in-vitro interaction data and found that
+predicted interaction strengths are quantitatively unreliable (Spearman
+$r < 0.3$), while the sign/direction of interactions retains practical predictive
+signal.
+A mechanistic derivation linking FBA exchange fluxes
+[mmol\,gDW$^{-1}$\,h$^{-1}$] to dimensionless gLV interaction coefficients does
+not exist in the published literature: the MacArthur consumer-resource reduction
+to gLV (Marsland et al.\ \cite{Marsland2020MiCRM}) uses coarse-grained preference
+parameters rather than genome-scale stoichiometry, and the gLV approximation
+itself breaks down above a metabolic leakage threshold of $l_i \approx 0.2$
+that lies within the biologically realistic range (Mustri et al.\
+\cite{Mustri2025GLVABreakdown}).
+Using sign information only is therefore the appropriate and maximally honest
+use of the metabolic model output.

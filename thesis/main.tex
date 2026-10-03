@@ -1,0 +1,276 @@
+\documentclass[12pt, a4paper, twoside]{report}
+
+% ── Encoding & fonts ────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ── Page layout ─────────────────────────────────────────────────────────────
+\usepackage[
+  a4paper,
+  top=25mm, bottom=25mm,
+  inner=30mm, outer=20mm,
+  headheight=15pt
+]{geometry}
+\usepackage{setspace}
+\setstretch{1.2}   % slightly tighter than \onehalfspacing
+
+% ── Math ────────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}
+
+% ── Graphics & tables ───────────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ── Colours & hyperlinks ─────────────────────────────────────────────────────
+\usepackage{xcolor}
+\usepackage[hidelinks, pdfencoding=auto]{hyperref}
+\usepackage[protrusion=true, expansion=true]{microtype}  % reduces overfull boxes
+\setlength{\emergencystretch}{2em}                        % absorb residual overfull
+
+% Heading sizes — moderate the report-class defaults (chapter \Huge, section \Large,
+% subsection \large felt oversized). titlesec shrinks them one notch each.
+\usepackage{titlesec}
+% compact heading scale (body 12pt): chapter 16, section 12.5, subsection 12.
+\titleformat{\chapter}[hang]
+  {\normalfont\fontsize{16}{19}\bfseries}{\thechapter\quad}{0pt}{}
+\titlespacing*{\chapter}{0pt}{6pt}{14pt}
+\titleformat{\section}{\normalfont\fontsize{12}{14}\bfseries}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6ex plus .6ex}{0.8ex}
+\titleformat{\subsection}{\normalfont\fontsize{11}{13}\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .5ex}{0.6ex}
+\titleformat{\subsubsection}{\normalfont\fontsize{11}{13}\itshape}{\thesubsubsection}{0.5em}{}
+
+% ── Bibliography ─────────────────────────────────────────────────────────────
+\usepackage[numbers, sort&compress]{natbib}
+\bibliographystyle{unsrtnat}
+
+% ── Headers ─────────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+
+% ── Misc ─────────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% ── Math shortcuts ───────────────────────────────────────────────────────────
+\newcommand{\bphi}{\boldsymbol{\phi}}
+\newcommand{\bpsi}{\boldsymbol{\psi}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bsigma}{\boldsymbol{\sigma}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\yobs}{\mathbf{y}_{\mathrm{obs}}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calP}{\mathcal{P}}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title page ───────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Large Leibniz Universität Hannover\\[4pt]
+         Fakultät für Maschinenbau\\[4pt]
+         Institut für Kontinuumsmechanik}\\[2cm]
+
+  \rule{\textwidth}{1.5pt}\\[0.4cm]
+  % Title direction chosen 2026-06-13 (Hamilton-balanced); PENDING Junker+Soleimani agreement
+  % before Page 1 goes to the Pruefungsamt. Prior subtitle: "GPU-Accelerated Inference,
+  % Metabolic Priors, and Spatial Stratification" (inference-only; lacked the FEM mechanics).
+  {\LARGE\bfseries Hamilton-Principle Models of Oral Biofilm Dysbiosis}\\[8pt]
+  {\large\bfseries Bayesian Inference, Spatial Stratification,\\[2pt]
+   and Mechanical Realisation}\\[0.4cm]
+  \rule{\textwidth}{1.5pt}\\[1.5cm]
+
+  {\large\bfseries Masterarbeit}\\[0.5cm]
+  {\large im Studiengang Maschinenbau (Double Degree, LUH/Keio)}\\[2cm]
+
+  \begin{tabular}{ll}
+    \textbf{Verfasser:}       & Keisuke Nishioka \\
+    \textbf{Matrikelnummer:}  & 10081049 \\
+    \textbf{Betreuer:}        & Prof.\ Dr.-Ing.\ habil.\ Philipp Junker \\
+    \textbf{Institut:}        & Institut für Kontinuumsmechanik (IKM) \\
+    \textbf{Abgabedatum:}     & Dezember 2026 \\
+  \end{tabular}
+
+  \vfill
+  {\small Hannover, \today}
+\end{titlepage}
+
+% ── Front matter ─────────────────────────────────────────────────────────────
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This thesis presents three complementary computational contributions for modelling
+multi-species oral biofilm and microbiome dynamics, all grounded in the
+Extended Hamilton Principle developed at the Institut für Kontinuumsmechanik (IKM),
+Leibniz Universität Hannover.
+
+The first contribution (\textbf{Chapter~\ref{ch:heine}}) introduces a
+GPU-accelerated Bayesian inference framework using Transitional Markov Chain
+Monte Carlo (TMCMC) for estimating the 15-dimensional symmetric interaction
+matrix governing a five-species oral biofilm model from Heine~et~al.'s in-vitro
+time-course data across four experimental conditions.
+A ${\sim}200\times$ speedup over the CPU baseline is achieved via JAX-compiled
+batched forward-model evaluation on NVIDIA RTX\,4090.
+
+The second contribution (\textbf{Chapter~\ref{ch:dieckow}}) applies the
+Hamilton replicator equation to in-vivo 16S~rRNA amplicon data from
+10 patients (Dieckow~et~al.), incorporating a three-layer metabolic sign prior
+constructed from experimental eHOMD data, AGORA2 parsimonious FBA, and MICOM
+community FBA.
+Leave-one-patient-out cross-validation demonstrates genuine out-of-sample
+generalisation (LOO-RMSE $= 0.0490$, Bray-Curtis $= 0.147$, 47.7\% below
+the persistence null model), with external validation on 127 independent
+peri-implant samples.
+
+The third contribution (\textbf{Chapter~\ref{ch:integration}}) extends the model
+in space: a reaction--diffusion formulation with verified transport numerics, and a
+per-voxel three-dimensional analysis of 84 FISH fields of view showing that
+dysbiosis forms a laterally homogeneous, vertically stratified mat with
+\textit{P.~gingivalis} sequestered at depth ($p = 2\times10^{-4}$), while commensal
+health remains patchy --- delimiting what a continuum model can reproduce.
+A finite-element realisation then embeds this depth composition as the growth driver
+of a continuum-mechanics model, showing that the dysbiotic structure imprints a far
+higher residual stress at the implant interface and, through a cohesive-zone interface,
+detaches the biofilm up to $3.3\times$ further than the commensal control at identical
+mechanical parameters --- a direct mechanical link from compositional dysbiosis to
+implant detachment.
+
+Together, these contributions demonstrate that physics-informed machine learning —
+combining thermodynamic variational principles with Bayesian inference and
+metabolic network constraints — provides a principled and computationally
+efficient route to characterising microbial community interactions from
+limited clinical data.
+
+% English-only thesis: German Zusammenfassung disabled (draft kept below).
+% Re-enable (remove \iffalse...\fi) only if the Pruefungsordnung requires a German summary.
+\iffalse
+\newpage
+\chapter*{Zusammenfassung}
+\addcontentsline{toc}{chapter}{Zusammenfassung}
+% DRAFT — Übersetzung der englischen Kurzfassung; vor Abgabe Korrektur lesen.
+Diese Arbeit stellt drei komplementäre rechnergestützte Beiträge zur Modellierung
+der Dynamik oraler Mehrspezies-Biofilme vor, die alle auf dem am Institut für
+Kontinuumsmechanik (IKM) der Leibniz Universität Hannover entwickelten Erweiterten
+Hamilton-Prinzip beruhen.
+
+Der erste Beitrag (\textbf{Kapitel~\ref{ch:heine}}) führt ein GPU-beschleunigtes
+Bayes'sches Inferenzverfahren mittels Transitional Markov Chain Monte Carlo (TMCMC)
+ein, um die $15$-dimensionale symmetrische Interaktionsmatrix eines
+Fünf-Spezies-Biofilmmodells aus den In-vitro-Zeitreihendaten von Heine~et~al.\ über
+vier Versuchsbedingungen zu schätzen; eine JAX-kompilierte, gebündelte Auswertung
+auf einer NVIDIA RTX\,4090 erreicht eine ${\sim}200$-fache Beschleunigung.
+
+Der zweite Beitrag (\textbf{Kapitel~\ref{ch:dieckow}}) wendet die
+Hamilton-Replikatorgleichung auf In-vivo-16S-rRNA-Daten von $10$ Patienten
+(Dieckow~et~al.) an und nutzt eine dreischichtige metabolische Vorzeichen-Prior
+(eHOMD, AGORA2-pFBA, MICOM). Die Leave-one-patient-out-Kreuzvalidierung zeigt eine
+echte Generalisierung außerhalb der Stichprobe (LOO-RMSE $=0.0490$, $47.7\%$ unter
+dem Persistenz-Nullmodell).
+
+Der dritte Beitrag (\textbf{Kapitel~\ref{ch:integration}}) erweitert das Modell
+räumlich (Reaktions-Diffusions-Formulierung mit verifizierter Transport-Numerik)
+und zeigt anhand einer voxelweisen 3-D-Analyse von $84$ FISH-Aufnahmen, dass die
+Dysbiose eine lateral homogene, vertikal geschichtete Matte mit in der Tiefe
+sequestriertem \textit{P.~gingivalis} bildet.
+
+Zusammen zeigen diese Beiträge, dass physik-informiertes maschinelles Lernen ---
+die Verbindung thermodynamischer Variationsprinzipien mit Bayes'scher Inferenz und
+metabolischen Netzwerk-Randbedingungen --- einen prinzipiellen und effizienten Weg
+zur Charakterisierung mikrobieller Interaktionen aus begrenzten klinischen Daten
+bietet.
+\fi % end disabled German Zusammenfassung
+
+\newpage
+\tableofcontents
+\listoffigures
+\listoftables
+
+\newpage
+\pagenumbering{arabic}
+
+% ── Chapters ─────────────────────────────────────────────────────────────────
+\input{chapters/ch1_introduction}
+\input{chapters/ch2_theory}
+\input{chapters/ch3_heine}
+\input{chapters/ch4_dieckow}
+\input{chapters/ch5_integration}
+\input{chapters/ch6_conclusion}
+
+% ── Bibliography ─────────────────────────────────────────────────────────────
+\bibliography{references}
+
+% ── Appendix ─────────────────────────────────────────────────────────────────
+\appendix
+\input{chapters/appendix}
+
+% ── Declaration ──────────────────────────────────────────────────────────────
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+% DRAFT — finalise wording (and funding statement) before submission.
+I thank my supervisor, Prof.\ Dr.-Ing.\ habil.\ Philipp Junker (Institut für
+Kontinuumsmechanik, IKM), for his guidance and for the continuum-mechanical
+foundation on which this work builds, and Dr.\ Meisam Soleimani for his advice on
+the numerical methods. I am grateful to Felix Klempt and Hendrik Geisler for many
+discussions on the Hamilton biofilm model and its implementation.
+
+This work was carried out in collaboration with the Hannover Medical School (MHH)
+and the Lower Saxony Centre for Biomedical Engineering, Implant Research and
+Development (NIFE). I thank Dr.\ Szymon~P.\ Szafra\'{n}ski for hosting and guiding
+the NIFE research internship and for the metabolic and microbiological insight that
+shaped the in-vivo work, and Nils Heine, Dr.\ Katharina Doll-Nikutta,
+Dr.\ Rumjhum Mukherjee, and Prof.\ Meike Stiesch for the experimental data and their
+biological interpretation.
+
+I also thank Assoc.\ Prof.\ Mayu Muramatsu (Keio University) for her encouragement
+and for discussions on continuing this line of work toward computational solid
+mechanics.
+
+I gratefully acknowledge financial support from the JASSO (Japan Student Services
+Organization) Student Exchange Support Program (Scholarship for Short-Term Study
+Abroad) and the Yoshiaki Ishii Human Resource Development Scholarship of Keio
+University, which together supported this double-degree research stay in Hannover.
+% TODO: confirm before asserting any specific grant (see MONTHLY_EMAIL_STRATEGY).
+% This research was conducted within the SFB/TRR-298 SIIRI consortium [confirm].
+
+Finally, I thank my family and friends for their support throughout this work.
+
+\newpage
+\chapter*{Selbstständigkeitserklärung}
+\addcontentsline{toc}{chapter}{Selbstständigkeitserklärung}
+
+Hiermit erkläre ich, dass ich die vorliegende Masterarbeit selbstständig verfasst
+und keine anderen als die angegebenen Hilfsmittel verwendet habe.
+Alle Stellen, die wörtlich oder sinngemäß aus anderen Werken übernommen wurden,
+sind als solche kenntlich gemacht.
+Diese Arbeit wurde in gleicher oder ähnlicher Form noch keiner anderen
+Prüfungsbehörde vorgelegt.
+
+\vspace{2cm}
+\noindent
+Hannover, \underline{\hspace{4cm}} \hfill
+Unterschrift: \underline{\hspace{5cm}}
+
+\end{document}

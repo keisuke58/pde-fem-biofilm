@@ -1,0 +1,565 @@
+\chapter{Metabolic-Prior Replicator Dynamics for In-Vivo Oral Microbiome}
+\label{ch:dieckow}
+
+Where Chapter~\ref{ch:heine} identified interaction matrices from a defined
+\emph{in-vitro} consortium, this chapter turns to the harder \emph{in-vivo}
+regime: longitudinal 16S~rRNA data from a clinical cohort, where the community is
+ten guilds wide, the time series only three points deep, and the interactions must
+be regularised to be identifiable at all. The central idea of the thesis appears
+here in full --- the off-diagonal \emph{sign} of the interaction matrix is
+constrained from metabolic evidence (a flux-balance-derived sign prior), while its
+magnitude is left to the data --- and is shown to be the property that actually
+generalises out of sample.
+
+\medskip\noindent\textit{This chapter is based on the internal analysis document:}
+Nishioka K., Szafra\'{n}ski S.P., ``Metabolic-Prior Replicator Dynamics Predict
+Oral Microbiome Community Composition under Leave-One-Out Cross-Validation''
+(NIFE/IKM collaboration).
+
+%==============================================================================
+\section{Dataset and Guild Taxonomy}
+\label{sec:dieckow_data}
+%==============================================================================
+
+We use the 16S~rRNA amplicon data of Dieckow et al.~\cite{dieckow2024}, a
+prospective study of subgingival plaque on titanium implant abutments from
+$10$ patients sampled at three weekly time points (W1, W2, W3). Reads were
+processed by a standard amplicon pipeline --- ASV inference with DADA2~\cite{Callahan2016DADA2},
+taxonomic classification against SILVA~\cite{Quast2013SILVA, Bokulich2018FeatureClassifier, Robeson2021RESCRIPt} within
+QIIME2~\cite{Bolyen2019QIIME2} (VSEARCH~\cite{Rognes2016VSEARCH}), orchestrated by Nextflow~\cite{DiTommaso2017Nextflow}, referenced to the
+human oral microbiome taxonomy~\cite{Dewhirst2010HOMD} --- and the resulting ASVs are
+aggregated to the canonical $10$ class-level guilds used throughout this thesis
+(Table~\ref{tab:dieckow_guilds}; the ordering is the project-wide standard against
+which all abundance arrays are indexed), and each compositional vector is
+$\ell^1$-normalised to the unit simplex, $\sum_i\phi_i=1$ --- relative-abundance data
+being inherently compositional~\cite{Aitchison1982Compositional, Aitchison1986Compositional, PawlowskyGlahn2015Compositional, Gloor2017Microbiome}. Following
+Dieckow et al., a Gaussian-mixture clustering of the W1 compositions splits the
+cohort into two \emph{community types}: CT1 ($5$ patients), enriched in early
+commensal colonisers (Actinobacteria, Bacilli, Betaproteobacteria), and CT2
+($5$ patients), enriched in Fusobacteriia and Bacteroidia. With only
+$K\times(T-1)=20$ observations per patient against an interaction matrix of up to
+$K(K{+}1)/2=55$ entries, regularisation is not optional.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}cll@{}}
+    \toprule
+    \textbf{Index} & \textbf{Guild} & \textbf{SILVA 138.1 class / order}\\
+    \midrule
+    0 & Actinobacteria      & Actinobacteria, Actinomycetia\\
+    1 & Bacilli             & Bacilli\\
+    2 & Bacteroidia         & Bacteroidia\\
+    3 & Betaproteobacteria  & Betaproteobacteria\\
+    4 & Clostridia          & Clostridia, Erysipelotrichia\\
+    5 & Coriobacteriia      & Coriobacteriia\\
+    6 & Fusobacteriia       & Fusobacteriia, Fusobacteriales\\
+    7 & Gammaproteobacteria & Gammaproteobacteria\\
+    8 & Negativicutes       & Negativicutes, Selenomonadales, Veillonellales\\
+    9 & Other               & All remaining classes\\
+    \bottomrule
+  \end{tabular}
+  \caption[Ten class-level guilds]{The ten class-level guilds (canonical
+  ordering). The same guild definitions are used across all datasets in this
+  thesis so that abundance arrays and interaction matrices are directly comparable.}
+  \label{tab:dieckow_guilds}
+\end{table}
+
+%==============================================================================
+\section{Three-Layer Metabolic Sign Prior}
+\label{sec:dieckow_prior}
+%==============================================================================
+
+The sign prior is the thesis's central regulariser. It encodes a single biological
+rule --- \emph{if guild $j$ produces a metabolite consumed by guild $i$, then
+$A_{ij}>0$ regardless of magnitude} --- and is assembled in three layers of
+increasing mechanistic resolution (building on the FBA machinery of
+Section~\ref{sec:theory_fba}; Figure~\ref{fig:dieckow_pipeline}).
+
+\paragraph{L1 --- eHOMD / Szafra\'{n}ski experimental flows.} Experimentally
+confirmed produces/uses/inhibits relationships between guild-level taxa and oral
+metabolites, curated from the expanded Human Oral Microbiome Database
+(eHOMD)~\cite{Escapa2018eHOMD} and the Szafra\'{n}ski et al.\ supplement~\cite{Szafranski2025}. Cross-feeding
+contributes $+w_{L1}$, competition/inhibition $-w_{L1}$ ($w_{L1}=2.0$ for direct
+experimental evidence, $1.5$ literature-supported). L1 alone constrains $34$ guild
+pairs.
+
+\paragraph{L2 --- AGORA2 pFBA.} Parsimonious FBA on one representative genome-scale
+metabolic model per guild (AGORA2 v2.01~\cite{Heinken2023AGORA2}) under a standardised
+oral-fluid medium. pFBA minimises total flux at the optimal growth rate, giving
+sparse, sign-robust secretion/uptake patterns; the four strictly anaerobic guilds
+have their O$_2$ exchange shut off, and inorganic ions/gases are excluded as
+non-syntrophic. Adding L2 ($w_{L2}=1.0$) extends the constrained set only from $34$
+to $35$ pairs --- L1 already captures the dominant experimentally-known
+cross-feeding.
+
+\paragraph{L3 --- MICOM community FBA.} Single-species pFBA misses the resource
+competition and cross-feeding that emerge only when all guilds share one medium.
+MICOM~\cite{Diener2020MICOM} solves a community FBA over all $10$ guild models under the
+cooperative trade-off
+\begin{equation}
+  \text{maximise}\;\min_i\!\Bigl(\tfrac{\mu_i}{\mu_i^{\max}}\Bigr)
+  \quad\text{s.t.}\quad \textstyle\sum_i\mu_i\geq\tau\sum_i\mu_i^{\max},
+  \qquad \tau=0.5,
+  \label{eq:dieckow_micom}
+\end{equation}
+from whose flux solution flux-weighted cross-feeding ($+$) and diffusible-toxin
+($-$, e.g.\ H$_2$O$_2$/H$_2$S) signals are extracted. L3 adds $37$ pairs (total
+$72$) and the result is robust to $\tau\in\{0.3,0.4,0.5\}$ ($\Delta$RMSE$<0.001$).
+
+\paragraph{Net flow and penalty.} Because the Hamilton matrix is symmetric, the
+directed signals are symmetrised, $F_{ij}=\tfrac12(\mathrm{net}[i,j]+\mathrm{net}[j,i])$,
+giving prior sign $s_{ij}=\sgn(F_{ij})$ with stiffness $|F_{ij}|$; the asymmetric
+gLV uses the directed matrix without symmetrisation. The prior enters the loss as a
+half-normal (hinge-squared) penalty that is \emph{zero for correct-sign $A_{ij}$}
+and quadratic only for violations,
+\begin{equation}
+  \calP(\bA;\bF)
+  = \sum_{F_{ij}\neq0}\frac{|F_{ij}|}{2\sigma^2}
+    \bigl[\max(0,\,-\sgn(F_{ij})\,A_{ij})\bigr]^2,
+  \qquad \sigma=0.15,
+  \label{eq:dieckow_penalty}
+\end{equation}
+so it constrains \emph{sign, never magnitude} --- a deliberate choice justified
+post hoc in Section~\ref{sec:dieckow_results} (FBA flux units are not ecological
+interaction units). The full objective adds a data term and a mild ridge,
+$\calL=\mathrm{RMSE}(\hat\bphi,\bphi)+\calP(\bA;\bF)+\lambda\|\bA\|_F^2$
+($\lambda=10^{-4}$), minimised by L-BFGS-B with JAX autodiff gradients.
+
+%==============================================================================
+\section{Models and Cross-Validation}
+\label{sec:dieckow_models}
+%==============================================================================
+
+The primary model is the Hamilton replicator (symmetric $\bA$, shared across
+patients; patient-specific growth $\bb^{(p)}$) of Section~\ref{sec:theory_replicator},
+$\dot\phi_i=\phi_i(f_i(\bphi)-\bar f)$ with $f_i=b_i+\sum_jA_{ij}\phi_j$ and
+$A_{ii}\leq0$. For comparison we fit (i) an \emph{asymmetric} gLV (integrated by an explicit Runge--Kutta scheme~\cite{Dormand1980RK45}; no symmetry, no
+sign prior unless stated; double the off-diagonal freedom, a ceiling on
+expressiveness), (ii) a Hamilton Normal-Species-Pool (NSP) variant optimised by a
+three-step implicit-function-theorem scheme, and (iii) MDSINE2~\cite{Bucci2016MDSINE, Gibson2021MDSINE2}, a
+fully Bayesian gLV, as a sparsity-induction baseline.
+
+Generalisation is measured by leave-one-patient-out (LOO) cross-validation: for
+each held-out patient, $\bA$ and the training $\bb^{(q)}$ are fit on the other
+$9$; $\bA$ is frozen; the held-out $\bb^{(p)}$ is fit from W1 only; W2--W3 are
+predicted and scored by RMSE and Bray--Curtis (BC) dissimilarity~\cite{Bray1957BrayCurtis, Whittaker1960Diversity}.
+
+%==============================================================================
+\section{Results}
+\label{sec:dieckow_results}
+%==============================================================================
+
+\subsection{Interaction matrix and sign recovery}
+\label{sec:dieckow_A}
+
+The fitted matrix (Figure~\ref{fig:dieckow_A}) has all-negative diagonals
+(self-limitation) and its dominant facilitations are among early commensal
+colonisers --- Actinobacteria--Bacilli ($A_{01}=+1.61$),
+Bacilli--Betaproteobacteria ($A_{13}=+1.83$), Actinobacteria--Betaproteobacteria
+($A_{03}=+1.67$) --- consistent with documented co-aggregation, while Fusobacteriia
+interacts net-negatively with early colonisers (its late-bridging role). The full
+L1+L2+L3 prior achieves $70/70$ ($100\%$) sign agreement with the fitted $\bA$ at
+$W^*{=}1.0$ --- the lowest weight that achieves full consistency and simultaneously
+minimises training RMSE --- and MICOM's $72$ constrained pairs reach $72/72$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{dieckow_sign_pipeline.pdf}
+  \caption[Three-layer sign-prior construction]{Construction of the metabolic sign
+  prior. Oral-fluid medium $\to$ per-guild pFBA $\to$ community MICOM $\to$ signed
+  net-flow matrix $F_{ij}$. Constrained pairs by layer: L1 ($34$), L1+L2 ($35$),
+  L1+L2+L3 ($72$).}
+  \label{fig:dieckow_pipeline}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{dieckow_A_matrix.pdf}
+  \caption[Fitted in-vivo interaction matrix]{Fitted interaction matrix $\bA$
+  (Hamilton, full prior, all $10$ patients). Blue: competition; red: facilitation.
+  Diagonals $A_{ii}<0$. Marks: sign agreement (\checkmark) / disagreement ($\times$)
+  with the metabolic prior; full-model agreement $70/70$ ($100\%$). The dominant
+  red block is the early-coloniser co-aggregation core.}
+  \label{fig:dieckow_A}
+\end{figure}
+
+The asymmetric gLV ($\alpha{=}0.25$, best model; Table~\ref{tab:dieckow_loo})
+recovers the same dominant structure as the Hamilton result, while the directed
+representation reveals asymmetric facilitation absent from the symmetric prior
+(Figure~\ref{fig:dieckow_glv_A}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.68\textwidth]{dieckow_glv_Amatrix_thesis.pdf}
+  \caption[Fitted in-vivo gLV interaction matrix]{Fitted interaction matrix
+  $\bA$ (asymmetric gLV, $\alpha{=}0.25$, L1+L2 prior, mean of $10$ LOO folds,
+  mean LOO-RMSE $= 0.0490$).
+  Blue: competition; red: facilitation. Diagonals $A_{ii}<0$.
+  Green borders: sign agreement with metabolic prior (L1+L2);
+  red borders: discordant entries. Annotated values shown for $|A_{ij}|>0.05$.
+  The early-coloniser co-aggregation block (Actin./Bacil./Bact./$\beta$-Prot.)
+  dominates, consistent with the Hamilton result (Figure~\ref{fig:dieckow_A}).}
+  \label{fig:dieckow_glv_A}
+\end{figure}
+
+The annotated entries reveal three features invisible to the symmetric Hamilton fit.
+\emph{Bacillaceae as hub}: the Actin.--Bacil.\ mutual facilitation
+($A_{\text{Bacil.,Actin.}}=+3.37$, $A_{\text{Actin.,Bacil.}}=+2.79$) is an order
+of magnitude above any other pair; Bacillaceae additionally facilitates
+$\beta$-Proteobacteria ($+1.02$), Bacteroidetes ($+1.03$), and Negativicutes
+($+0.68$).
+\emph{Sign-asymmetric $\gamma$-Proteobacteria}: although Bacillaceae mildly
+facilitates $\gamma$-Proteobacteria ($+0.27$), $\gamma$-Proteobacteria strongly
+suppresses Bacillaceae in return ($-1.44$, reversed sign) --- a directed antagonism
+the symmetric model cannot represent.
+\emph{Clostridiaceae broad suppressor}: all ten outgoing interactions are negative
+(strongest $A_{\text{Clost.,Bact.}}=-0.66$), a profile that collapses into the
+background competition term of the symmetric fit. The strongest diagonal entry is
+Actinobacteria self-regulation ($A_{\text{Actin.,Actin.}}=-4.05$).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\textwidth]{fig_w_sweep_thesis.pdf}
+  \caption[AGORA weight sweep: sign agreement and RMSE vs.\ $W$]{Effect of AGORA
+  prior weight $W$ on sign agreement (teal, left axis) and training RMSE (orange,
+  right axis). $W^*{=}1.0$ is the \emph{first} weight to achieve $100\%$ sign
+  agreement ($70/70$ pairs) and simultaneously the one with the lowest training RMSE
+  ($0.057$); $W{=}2.0$ also reaches $100\%$ but at higher RMSE ($0.058$). The mean
+  LOO-RMSE at $W{=}1.0$ (dotted) confirms that full sign consistency is achieved
+  without over-fitting.}
+  \label{fig:w_sweep}
+\end{figure}
+
+\subsection{Out-of-sample generalisation}
+\label{sec:dieckow_loo}
+
+Across all variants (Table~\ref{tab:dieckow_loo}), every mechanistic model
+decisively beats the ecological null: the best LOO-BC of $0.147$ is $47.7\%$ below
+the persistence null ($0.281$). The sign prior improves the Hamilton model
+monotonically (no prior $0.0595\to$ L1+L2 $0.0516\to$ MICOM $0.0502$, the best
+Hamilton variant), and the overall best is the asymmetric gLV with $\alpha=0.25$
+(L1+L2, RMSE $0.0490\pm0.016$) --- its extra directed freedom slightly outweighs
+the symmetric sign constraint for this dataset. MICOM raises sign agreement to a
+perfect $72/72$ at a $5$--$6\%$ RMSE cost relative to that best gLV, a
+consistency-vs-accuracy trade-off discussed below. The fully Bayesian MDSINE2
+collapses to $\bA\approx0$ under only three time points (LOO-RMSE $0.0552$, $13\%$
+worse than gLV $\alpha{=}0.25$), confirming that \emph{sign-prior regularisation
+outperforms Bayesian sparsity-induction when $T$ is small} --- the operative regime
+for clinical microbiome series. The NSP variant ($0.091$) is $1.9\times$ worse,
+its latent warm-up cost not repaid on this short horizon.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}llccc@{}}
+    \toprule
+    Model & Layer & SA & LOO-RMSE & LOO-BC\\
+    \midrule
+    Hamilton (no prior)        & ---         & ---            & $0.0595$ & ---\\
+    gLV free (asymmetric)      & ---         & ---            & $0.0588$ & $0.154$\\
+    Hamilton L1+L2             & L1+L2       & $94\%$         & $0.0516$ & $0.155$\\
+    Hamilton +AGORA v1         & L1+L2+L3    & $94\%$         & $0.0562$ & $\mathbf{0.147}$\\
+    \textbf{gLV $\alpha{=}0.25$} & \textbf{L1+L2} & $97\%$    & $\mathbf{0.0490}$ & ---\\
+    gLV +MICOM ($\alpha{=}0.25$) & L1+L2+L3-MC & $\mathbf{100\%}$ & $0.0516$ & ---\\
+    Hamilton +MICOM            & L1+L2+L3-MC & $\mathbf{100\%}$ & $0.0502$ & ---\\
+    \midrule
+    NSP IFT v2                 & L1+L2       & ---            & $0.0906$ & ---\\
+    MDSINE2 (Bayesian gLV)     & Bayesian    & ---            & $0.0552^\dagger$ & ---\\
+    \bottomrule
+    \multicolumn{5}{@{}l}{\small $^\dagger$8/10 folds; $\bA\approx0$ (insufficient
+    Bayesian evidence at $T{=}3$). Null BC: persistence $0.281$.}
+  \end{tabular}
+  \caption[LOO cross-validation across model variants]{LOO cross-validation. SA:
+  sign agreement on constrained pairs. Best values in bold. Sign-prior
+  regularisation improves the Hamilton model monotonically; MICOM gives perfect
+  sign agreement.}
+  \label{tab:dieckow_loo}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{dieckow_loo_bc.pdf}
+  \caption[LOO Bray--Curtis across models]{LOO Bray--Curtis for all variants vs.\
+  null models (dashed: persistence $0.281$, grand-mean $0.254$). Every ODE model
+  substantially beats both nulls; the full-prior Hamilton attains the lowest BC
+  ($0.147$).}
+  \label{fig:dieckow_loo}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.70\textwidth,height=0.50\textheight,keepaspectratio]{dieckow_loo_fits_thesis.pdf}
+  \caption[Per-patient LOO predictions: gLV ($\alpha{=}0.25$, L1+L2 prior)]{Per-patient
+  leave-one-out predictions for all $10$ Dieckow patients.
+  Bars: observed guild fractions at W1 (light), W2 (mid), W3 (dark).
+  Crosses ($\times$): LOO-predicted W2 and W3 from the best-model gLV
+  ($\alpha{=}0.25$, L1+L2 prior, mean RMSE $= 0.0490$); the held-out patient's
+  $\bb^{(p)}$ is fit from W1 only and $\bA$ is frozen from the other 9 patients.
+  The model tracks the dominant early-coloniser composition (Actinobacteria,
+  Bacilli) across CT1 patients and the Bacteroidia/Fusobacteriia-enriched CT2
+  composition, with largest errors at patients with atypical trajectories (K, L).}
+  \label{fig:dieckow_loo_fits}
+\end{figure}
+
+\subsection{Is mechanistic structure necessary?}
+\label{sec:dieckow_benchmark}
+
+Table~\ref{tab:dieckow_loo} compares mechanistic variants among themselves,
+but leaves open whether the ecological structure is needed at all. To test this
+we benchmarked the gLV model against two baseline families under the identical
+LOO one-step-ahead protocol: classical ML regression (Random Forest, Ridge,
+LASSO, plus persistence and train-mean references) and modern generative models
+(a conditional DDPM and conditional Flow Matching, the ODE-based successor to
+diffusion). The mechanistic model wins decisively
+(Figure~\ref{fig:dieckow_benchmark}): gLV attains LOO-RMSE $\approx0.05$,
+$1.8\times$ below the best ML baseline (Random Forest $0.091$) and $2$--$3\times$
+below the generative models (Flow Matching $0.107$, DDPM $0.166$). The gap holds
+per patient --- gLV achieves the lowest RMSE on all $10$ held-out patients against
+every competitor (one-sided Wilcoxon signed-rank $p=0.001$, the floor at $n=10$).
+
+Two controls localise the cause to the data regime. Flow Matching beats DDPM by
+$36\%$ --- the ODE formulation's training-stability advantage over the stochastic
+reverse process --- yet both still lose to gLV; and augmenting the ML training set
+with diffusion-sampled trajectories \emph{degrades} Ridge and Random Forest,
+confirming that with only $18$ real transitions a generative model injects noise
+rather than recovering the dynamics. With $T=3$ time points, encoding the
+interaction structure is worth more than any amount of model flexibility --- the
+same small-$T$ lesson as the MDSINE2 collapse (Table~\ref{tab:dieckow_loo}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{dieckow_benchmark.pdf}
+  \caption[gLV vs.\ ML and generative baselines]{\textbf{Mechanistic structure
+  beats data-driven and generative baselines on LOO prediction.}
+  \textbf{(a)}~LOO-CV RMSE (mean $\pm$ SD over the $10$ patients) for the
+  one-step-ahead guild-composition task, grouped by family: mechanistic ODE (gLV
+  variants), ML regression, and generative models (conditional Flow Matching and
+  DDPM). \textbf{(b)}~Paired per-patient comparison of the best model against one
+  representative of each competing family; each grey line links the two RMSE
+  values for one held-out patient. gLV wins on all $10$ patients against every
+  competitor (one-sided Wilcoxon signed-rank $p=0.001$, the minimum attainable at
+  $n=10$).}
+  \label{fig:dieckow_benchmark}
+\end{figure}
+
+\subsection{Sign, not magnitude --- the central finding}
+\label{sec:dieckow_signmag}
+
+Two results jointly establish the thesis's organising claim. First, a
+\emph{quantitative} Gaussian prior that ties $A_{ij}$ to the FBA flux magnitude
+($A_{ij}\sim\mathcal{N}(c\,\Phi_{ij},\sigma^2)$, MacArthur-style) \emph{fails
+entirely}, recovering correct signs for only $4$--$11$ of $70$ pairs at any
+concentration $c$: FBA flux magnitude is not ecologically predictive. Second, the
+\emph{sign}-only prior is both accurate (Table~\ref{tab:dieckow_loo}) and stable:
+across the $10$ LOO folds, $31/45$ off-diagonal pairs have perfect sign consistency
+(SC$=1.00$), $40/45$ reach SC$\geq0.90$, and only one falls below $0.70$
+(Figure~\ref{fig:dieckow_stability}). Prior-pinned pairs keep SC$\geq0.80$ even
+when their magnitude is negligible --- the prior fixes direction where the data are
+silent. This is why the penalty in Eq.~\eqref{eq:dieckow_penalty} constrains sign
+and never magnitude: it injects exactly the part of the metabolic evidence that
+transfers (the direction of the interaction) and none of the part that does not
+(its flux-unit size).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fig_loo_stability.pdf}
+  \caption[LOO-CV interaction-sign consistency]{Leave-one-out sign consistency
+  of the fitted $\bA$.
+  \textbf{(a)}~Fraction of $10$ LOO folds in which each pair $(i,j)$ recovers
+  the same sign as the full-data MAP; $31/45$ pairs reach SC$=1.00$, $40/45$
+  reach SC$\geq0.90$.
+  \textbf{(b)}~Coefficient of variation ($\sigma/|\mu|$) of $A_{ij}$ across
+  folds; prior-pinned pairs (dots) remain stable even when magnitudes are small.}
+  \label{fig:dieckow_stability}
+\end{figure}
+
+A direct test of independence confirms that the cross-feeding directions are
+genuine data signal rather than an artefact of the prior.  When the sign
+penalty is removed entirely and the symmetric Hamilton model is re-fitted
+without guidance, it still recovers $78.6\%$ (11/14 pairs) of the
+AGORA-predicted cross-feeding signs --- significantly above a cell-label
+permutation null ($\bar p_{\rm null}=37.7\%$,
+$p=4\times10^{-4}$, $z=+3.79$, $n_{\rm perm}=10{,}000$).
+The asymmetric gLV model shows no such effect ($p=0.96$, $z=-1.47$):
+the Hamilton symmetry constraint mediates the metabolic--ecological
+correspondence.  Only cooperative (cross-feeding) directions are validated;
+competitive interactions carry no detectable signal across patients,
+consistent with competition being shaped by local context rather than
+conserved metabolic architecture.
+
+\subsection{Patient structure and community type}
+\label{sec:dieckow_struct}
+
+The shared $\bA$ captures patient-independent guild ecology; patient-level
+variation is absorbed by the growth vectors $\bb^{(p)}$. A PCA of the fitted
+$\hat\bb^{(p)}$ (Figure~\ref{fig:dieckow_bpca}) separates CT1 from CT2 along PC1
+\emph{without} community-type supervision (CT1: higher Actinobacteria/Bacilli
+intrinsic rates; CT2: higher Fusobacteriia), and the LOO predictions preserve the
+CT1/CT2 discriminant (LDA accuracy $90\%$, only the atypical Patient~A
+misclassified) while spanning the observed compositional manifold rather than
+collapsing to the mean. Off-diagonal interactions are on average twice as strong as
+intrinsic rates ($\overline{|A_{\mathrm{off}}|}=0.35$ vs.\ $\overline{|b|}=0.18$):
+community ecology dominates individual guild growth here.
+
+
+\subsection{Network centrality and keystone structure}
+\label{sec:dieckow_network}
+
+Reading the fitted $\bA$ as a directed weighted graph~\cite{Freilich2020Inference, May1972Stability}
+exposes which guilds organise the community (Figure~\ref{fig:dieckow_centrality}). \emph{Actinobacteria} is the
+dominant hub on every measure: highest outgoing influence ($5.6$), the largest
+positive net effect (out minus in, $+2.0$), and top centrality rank --- a net
+\emph{source} that drives the early-coloniser core. \emph{Bacilli} is the most
+\emph{vulnerable} guild (incoming strength $8.2$): abundant but strongly
+acted-upon. The most ecologically interesting guild is \emph{Fusobacteriia}, which
+carries a large \emph{keystone gap} (centrality rank well above its abundance rank,
+gap $+2$): it is influential out of proportion to how much of it there is --- the
+quantitative signature of a low-abundance bridging organism, the in-vivo guild-level
+echo of the \textit{F.~nucleatum} bridging role seen in vitro
+(Section~\ref{sec:heine_rewiring}). These rankings are stable across the LOO folds,
+so the keystone ordering is a property of the inferred ecology, not of any single
+patient.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.70\textwidth]{dieckow_centrality.pdf}
+  \caption[Guild network centrality]{Guild interaction-network centrality from the
+  fitted $\bA$. Actinobacteria is the top influencer / net source; Bacilli is the
+  most vulnerable (highest incoming strength); Fusobacteriia carries the largest
+  keystone gap (central despite low abundance --- a bridging guild).}
+  \label{fig:dieckow_centrality}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.70\textwidth]{fig_network_backbone_thesis.pdf}
+  \caption[Cross-cohort concordant interaction backbone]{Concordant interaction
+  backbone across Dieckow ($N=10$) and Botelho ($N=15$) cohorts.
+  Strong pairs ($|\hat A_{ij}|>0.1$ in both fits) are shown; $8/9$ agree in sign
+  ($p\approx0.02$, permutation). The Actinobacteria hub is the most concordant
+  node (5/5 edges consistent), confirming its role as a structural hub independent
+  of cohort.}
+  \label{fig:dieckow_backbone}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.70\textwidth]{fig_network_rewiring_thesis.pdf}
+  \caption[CS$\to$DH interaction network rewiring]{Network rewiring from
+  Commensal Static (CS) to Dysbiotic HOBIC (DH) in the Heine 5-species system.
+  Edges that gain strength ($|\Delta A_{ij}|>0.2$) are highlighted; the
+  \textit{Pg}--\textit{Fn} positive edge and the competitive suppression of
+  \textit{An}/\textit{So} are the dominant rewired pairs.}
+  \label{fig:dieckow_rewiring}
+\end{figure}
+
+%==============================================================================
+\section{External Validation: Peri-Implant Dysbiosis}
+\label{sec:dieckow_joshi}
+%==============================================================================
+
+To test transfer beyond the calibration cohort, the Dieckow-derived dysbiosis
+ordering is applied to $127$ independent cross-sectional peri-implant samples
+(Joshi et al.~\cite{joshi2025}: Health/Mucositis/Peri-implantitis). A guild-level
+red/green dysbiosis ratio,
+$\log(\phi_{\mathrm{Fuso}}+\phi_{\mathrm{Bact}}+\phi_{\mathrm{Clos}})-
+\log(\phi_{\mathrm{Bac}}+\phi_{\mathrm{Act}}+\phi_{\mathrm{Neg}})$,
+cleanly separates the diagnostic groups (Table~\ref{tab:dieckow_joshi};
+Figure~\ref{fig:dieckow_joshi}): Health and Mucositis sit together (mean $-2.09$
+vs.\ $-1.74$) while Peri-implantitis shifts sharply positive ($+0.53$).
+Kruskal--Wallis $H=34.7$, $p<10^{-4}$; severity correlation Spearman $\rho=0.46$
+($p=5\times10^{-8}$, $N=127$), rising to $\rho=0.59$ for the binary
+Health-vs-PI contrast. The model thus orders dysbiosis correctly on data it never
+saw; the moderate three-way $\rho$ reflects the near-identity of Health and
+Mucositis in this five-genus space, which would need additional pathogens to
+resolve.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    Diagnosis & $n$ & Mean R/G & Median R/G & vs.\ Health\\
+    \midrule
+    Health           & $56$ & $-2.09$ & $-1.88$ & ---\\
+    Mucositis        & $39$ & $-1.74$ & $-1.65$ & $p=0.47$\\
+    Peri-implantitis & $32$ & $+0.53$ & $+0.76$ & $p<10^{-4}$\\
+    \bottomrule
+    \multicolumn{5}{@{}l}{\small Kruskal--Wallis $H=34.7$, $p<10^{-4}$; Spearman
+    $\rho=0.46$, $p=5\times10^{-8}$.}
+  \end{tabular}
+  \caption[Peri-implant dysbiosis ordering]{Guild-level R/G dysbiosis ratio by
+  diagnosis (Joshi et al., $127$ samples). The Dieckow-derived ordering separates
+  peri-implantitis from health/mucositis on independent cross-sectional data.}
+  \label{tab:dieckow_joshi}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.68\textwidth,height=0.36\textheight,keepaspectratio]{dieckow_joshi.pdf}
+  \caption[Peri-implant dysbiosis attractor analysis]{R/G dysbiosis ratio across
+  Health, Mucositis and Peri-implantitis (Joshi et al., $N=127$). Peri-implantitis
+  separates with a large positive shift; severity correlation $\rho=0.46$
+  ($p=5\times10^{-8}$).}
+  \label{fig:dieckow_joshi}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fig_prior_asymmetry.pdf}
+  \caption[Prior sign agreement by community state]{Sign agreement between the
+  AGORA-predicted cross-feeding signs and the TMCMC posterior, with and without
+  the metabolic prior, across the four Heine attractors.  Health states (CS, CH)
+  gain $+24$ and $+56$ percentage points from the prior; dysbiotic states (DS, DH)
+  lose $-44$ and $-10$ pp, falling below chance.  The metabolic prior is
+  \emph{informative for health-associated ecology and actively harmful for
+  dysbiotic ecology}, where pathogenic interactions override the commensal
+  cross-feeding template.}
+  \label{fig:prior_asymmetry}
+\end{figure}
+
+%==============================================================================
+\section{Discussion}
+\label{sec:dieckow_discussion}
+%==============================================================================
+
+The in-vivo analysis confirms and sharpens the thesis's organising idea. Metabolic
+flux-balance evidence is predictive \emph{as a sign constraint but not as a
+magnitude} (the quantitative MacArthur prior fails outright), and a sign-only prior
+is what generalises: it improves out-of-sample prediction monotonically, stabilises
+the inferred network across folds, and lets community FBA (MICOM) reach perfect
+sign agreement. That MICOM's full consistency comes at a small RMSE cost relative
+to the best gLV reflects the honest tension between biological self-consistency and
+raw predictive accuracy at this cohort size, not a failure of either. The framework
+also out-predicts a fully Bayesian gLV (MDSINE2), which collapses to no interactions
+under three time points --- the practically important lesson that mechanistic sign
+priors substitute for the data a Bayesian model would otherwise need.
+
+The principal limitations are statistical and structural. With $N=10$ patients the
+AGORA/MICOM improvement over L1+L2 is real but only marginally significant
+($p\approx0.07$--$0.08$), so the perfect-sign-agreement result should be read as a
+consistency check rather than a powered effect. The Hamilton symmetry constraint
+$A_{ij}=A_{ji}$ excludes genuinely asymmetric ecological interactions --- precisely
+where the asymmetric gLV gains its edge --- and the prior is curated for a
+caries-recovery context whose transfer to other disease states is untested beyond
+the peri-implant ordering shown above. These motivate the spatial extension of
+Chapter~\ref{ch:integration}, where the same prior-regularised interactions are
+carried into a depth-resolved reaction--diffusion model and confronted with FISH
+imaging.
+A further limitation is that the magnitude of AGORA2-derived cross-feeding
+fluxes cannot be directly calibrated to the gLV interaction scale without
+additional kinetic parameters (Monod half-saturation constants); recovering
+absolute interaction strengths from GEM stoichiometry remains an open problem
+in the field~\cite{Rath2024GEMReliability,Mustri2025GLVABreakdown}.
+
+\paragraph{Statistical power and the sign enrichment as primary evidence.}
+The marginal significance of the MICOM--gLV RMSE comparison ($p\approx0.07$,
+$N=10$) is expected: for a medium effect size ($d=0.5$) and $N=10$ a
+two-sample test has power $\approx0.30$, so the study is structurally
+underpowered for this particular comparison. The primary quantitative
+evidence is therefore the permutation-based cross-feeding sign enrichment
+reported above, which aggregates over all $45\times10$ fold-pair combinations
+and is independent of cohort size in this different sense. A complementary
+robustness check --- neutral-initialised no-prior LOO starting from
+$\mathbf{A}=\mathbf{0}$, which eliminates any warm-start bias --- yields
+$\mathrm{SA}=71.4\%$ ($p=0.027$, permutation test, $n_\pi=10^4$), confirming
+that the cross-feeding enrichment is data-driven and not an artefact of
+warm-starting from the prior-fitted $\mathbf{A}$.

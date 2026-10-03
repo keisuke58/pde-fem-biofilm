@@ -1,0 +1,123 @@
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+This thesis presented three computational contributions for modelling oral biofilm
+and microbiome dynamics, unified by the Extended Hamilton Principle.
+
+\textbf{Chapter~\ref{ch:heine}} demonstrated that GPU-accelerated TMCMC enables
+tractable Bayesian inference of a 15-dimensional interaction matrix from
+limited in-vitro time-course data, achieving ${\sim}200\times$ speedup and
+correctly recovering the qualitative distinction between commensal and dysbiotic
+community dynamics in Heine et al.'s four experimental conditions.
+
+\textbf{Chapter~\ref{ch:dieckow}} showed that three-layer metabolic sign priors
+— constructed from experimental eHOMD data, AGORA2 pFBA, and MICOM community
+FBA — consistently reduce out-of-sample prediction error in leave-one-patient-out
+cross-validation (LOO-RMSE $= 0.0490$, Bray-Curtis $= 0.147$, 47.7\% below
+the persistence null model), with external validation on 127 independent
+peri-implant samples confirming ecological generalisation.
+
+\textbf{Chapter~\ref{ch:integration}} carried the same interactions into space.
+A reaction--diffusion extension of the Hamilton model was formulated, its
+transport operators verified to be second order in the diffusion stencil and
+mass-conserving only in conservative finite-volume form (the diagonal scheme's
+ghost-node boundary is not), and confronted with the three-dimensional structure
+extracted from $84$ FISH fields of view. The imaging delivered the spatial
+work's principal empirical result: dysbiosis is a laterally homogeneous, vertically
+stratified mat with \textit{P.~gingivalis} sequestered at depth beneath
+\textit{F.~nucleatum} ($3$-D Manders overlap collapsing to $0.2$--$0.3$ while the
+lateral projection reads near unity), whereas commensal health is patchy and
+microcolonial ($p=2.2\times10^{-4}$ for the homogenisation contrast). The continuum
+model reproduces the dysbiotic homogenisation but not the commensal patchiness,
+sharply delimiting what a reaction--diffusion field can and cannot explain.
+A finite-element realisation then closed the chain from composition to mechanics:
+embedding the depth composition as the growth driver of a continuum model --- with the
+coupling verified by patch, energy, manufactured-solution and consistent-tangent checks
+--- showed that the dysbiotic structure concentrates a far higher residual stress at the
+implant interface and, at identical mechanical parameters, delaminates the biofilm
+$3.3\times$ further than the commensal control, a modulus-agnostic mechanical route from
+compositional dysbiosis to implant detachment.
+
+Together, these contributions advance the goal of \emph{physics-informed,
+data-driven microbial community modelling}: by anchoring statistical inference
+in thermodynamic variational principles and metabolic network constraints,
+they provide biologically interpretable and computationally scalable methods
+applicable to clinical settings where data are inherently sparse.
+
+\section{Limitations}
+\label{sec:concl_limitations}
+
+Four limitations qualify the conclusions. First, both datasets are small:
+$N=10$ patients with three weekly time points in vivo, and five species under four
+conditions in vitro. The in-vivo metabolic-prior improvement over the
+experimental-only prior is therefore only marginally significant ($p\approx0.07$)
+and should be read as a consistency result rather than a powered effect. Second,
+the Hamilton interaction matrix is constrained symmetric ($A_{ij}=A_{ji}$) by the
+variational derivation; genuinely asymmetric ecological interactions --- where the
+unconstrained gLV gains its small predictive edge --- cannot be represented, and
+the metabolic sign prior usefully constrains interaction direction but not
+magnitude (FBA flux units are not ecological interaction units). Third, the FISH imaging protocol is destructive (fixation kills the biofilm), so
+only $T=5$ discrete timepoints are available; the temporal derivative
+$\partial_t\phi_i$ is too coarsely sampled to identify species diffusivities $D_i$
+quantitatively, and the spatial PDE is therefore validated structurally rather than
+with measured transport coefficients.
+Fourth, the in-vitro commensal and dysbiotic consortia employ distinct
+\textit{P.~gingivalis} strains --- the avirulent ATCC\,20709 under commensal
+conditions and the virulent W83 under dysbiotic conditions --- so that inferred
+interaction differences partly reflect strain-specific virulence factors
+(gingipain and fimbrial gene complement) rather than purely environmental
+selection; disentangling the two effects would require cross-strain experiments
+outside the present dataset.
+
+\section{Outlook}
+\label{sec:concl_outlook}
+
+Several extensions follow directly from the three results chapters, ordered by
+proximity to the existing framework.
+
+\paragraph{Near term: robustness and unified inference.}
+The sign enrichment result ($\mathrm{SA}=78.6\%$, $p=0.0004$) was obtained
+with a warm-started no-prior LOO; a neutral-initialised repeat from
+$\mathbf{A}=\mathbf{0}$ confirms the enrichment is data-driven
+($\mathrm{SA}=71.4\%$, $p=0.027$), ruling out warm-start as a confound. Once confirmed, the two inference frameworks can be
+unified: TMCMC posteriors regularised by the metabolic sign prior would give
+full credible intervals on in-vivo interaction strengths, not merely point
+estimates, even on sparse clinical data. The cross-feeding enrichment being
+confined to positive interactions also motivates a targeted extension: adding an
+asymmetric competition channel to the Hamilton model (relaxing $A_{ij}=A_{ji}$
+for pairs where the metabolic evidence is directional) would test whether the
+competition direction recovers significance that the symmetric constraint
+currently suppresses.
+
+\paragraph{Medium term: spatial and metabolic depth.}
+The falsifiable in-vitro prediction --- omitting \textit{F.~nucleatum} should
+collapse the dysbiotic \textit{Pg} surge --- is a direct co-culture test of the
+inferred network mechanism. On the spatial side, the PINN-fitted diffusivities
+($D_{Fn}$, $D_{Pg}$, advection $u$) are the first quantitative estimates from
+FISH $z$-profiles; extending the fit to a full time-series (rather than
+steady-state slices) and coupling an oxygen-diffusion PDE to the growth rates
+$b_i$ via Monod kinetics would test whether the low $D_{Pg}$ reflects anaerobic
+niche selection or genuine transport limitation. The observed commensal patchiness,
+which the reaction--diffusion model cannot reproduce, motivates coupling the
+continuum field to a stochastic surface-attachment process.
+
+\paragraph{Longer term: clinical translation.}
+The guild-level dysbiosis ordering validated on the Joshi and Szafrański cohorts
+suggests a route to a clinically deployable dysbiosis index: a low-dimensional
+projection of the 10-guild composition onto the commensal--dysbiotic axis,
+calibrated against the inferred attractor states and interpretable in terms of
+the Veillonella cross-feeding backbone. Crucially, such an index is interpretable only
+as a \emph{relative ordering}, not on an absolute scale: on the longitudinal
+periodontitis cohort every patient scores a class-level $\mathrm{GDI}<0$ (the abundant
+commensal classes \textit{Streptococcus}, \textit{Veillonella} and \textit{Actinomyces}
+numerically dominate even in disease), so a fixed $\mathrm{GDI}=0$ cut would mis-classify
+the entire diseased cohort as stable; the predicted bone-loss \emph{ranking} is
+nonetheless invariant to the threshold choice (Spearman $\rho=0.97$ between a
+cohort-relative and an absolute cut), so a deployable index must be anchored to a
+healthy-cohort reference rather than to an absolute zero. Patient-specific MAGs (metagenome-assembled
+genomes) reconstructed from deeper sequencing would replace reference-strain AGORA2
+models with personalised sign priors, tightening the credible intervals on $A_{ij}$
+without requiring additional time points. In each direction the same principle
+recurs: anchoring data-driven inference in mechanistic --- thermodynamic and
+metabolic --- structure is what makes scarce microbiome data yield testable,
+interpretable models.
