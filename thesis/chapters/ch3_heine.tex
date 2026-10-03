@@ -7,9 +7,10 @@ biofilm from the controlled time-course experiments of Heine et al.\
 \cite{Heine2025PeriImplant}. It is the methodological origin of the work --- the
 Hamilton $\bphi$--$\bpsi$ model and the TMCMC machinery introduced abstractly in
 Chapter~\ref{ch:theory} are here grounded in real data and validated against
-measurements that never entered the calibration. The \emph{in-vivo}
-counterpart (10-guild clinical communities) follows in Chapter~\ref{ch:dieckow},
-and the spatial extension of the same model in Chapter~\ref{ch:integration}.
+measurements that never entered the calibration. The last section carries the
+same model to sparse in-vivo data with a metabolic sign prior
+(Section~\ref{sec:heine_signprior}), and Chapter~\ref{ch:ansys} brings the
+point model into a finite element framework.
 
 \medskip\noindent\textit{This chapter is based on the manuscript:} Nishioka K.,
 Klempt F., Geisler H., Soleimani M., Heine N., Doll-Nikutta K., Mukherjee R.,
@@ -402,7 +403,7 @@ commensal network versus a weaker but more distributed dysbiotic attractor.
 but $A_{\text{An,Vd}}\!=\!-0.02$, a one-directional benefit invisible to the symmetric model;
 in DS/DH the Fn--Pg block activates (DS: $A_{\text{An,Pg}}\!=\!+0.49$; DH:
 $A_{\text{Fn,Pg}}\!=\!+0.07$), consistent with the sign-enrichment analysis of
-Chapter~\ref{ch:dieckow}.
+Section~\ref{sec:heine_signprior}.
 
 \begin{figure}[htbp]
   \centering
@@ -593,9 +594,8 @@ with the measured gingipain profile ($r=0.90$), both showing delayed Day-15--21
 onset. The MAP signs are metabolically plausible: \textit{An}$\to$\textit{Vei}
 ($A_{12}=+0.76$) matches lactate/succinate cross-feeding, while
 \textit{So}$\to$\textit{Vei} ($A_{13}=-2.73$) indicates competitive niche overlap.
-A systematic KEGG/eHOMD sign-consistency analysis of these matrices --- and its
-extension to in-vivo data --- is developed in Chapters~\ref{ch:dieckow}
-and~\ref{ch:integration}.
+Section~\ref{sec:heine_signprior} uses such metabolic signs as a prior for
+in-vivo data.
 
 %==============================================================================
 \section{Discussion}
@@ -656,9 +656,8 @@ zero and so reduces the Occam factor --- a model-based signature of ecological
 complexity. Methodologically, the $\sim$$200\times$ GPU speedup makes
 $10{,}000$-particle posteriors routine and is what renders the full-discovery,
 no-locking strategy tractable in $15$ dimensions. These in-vitro interaction
-matrices, and the validation that they predict held-out chemistry, are the
-foundation on which the in-vivo (Chapter~\ref{ch:dieckow}) and spatial
-(Chapter~\ref{ch:integration}) extensions build.
+matrices, and the validation that they predict held-out chemistry, calibrate the
+point model that Chapter~\ref{ch:ansys} brings into space.
 
 \paragraph{Limitations and the symmetry approximation.}
 Three limitations bound interpretation of the in-vitro matrices. First, the
@@ -671,5 +670,96 @@ joint $(\mathbf{A},\psi)$ inference would propagate additional uncertainty
 into the interaction estimates, particularly in dysbiotic conditions where
 the Phase-2 correction is largest. These approximations are consistent with
 the in-vitro setting and motivate the in-vivo cross-validation of
-Chapter~\ref{ch:dieckow}, where the symmetry constraint is re-examined
-against a ten-patient longitudinal dataset.
+Section~\ref{sec:heine_signprior}, where the symmetry constraint is
+re-examined against a ten-patient longitudinal dataset.
+
+%==============================================================================
+\section{From In-Vitro to In-Vivo Data: a Metabolic Sign Prior}
+\label{sec:heine_signprior}
+%==============================================================================
+% Condensed 3 Oct 2026 from the former chapter 4 (chapters/ch4_dieckow.tex,
+% kept in the tree for its full text and figures). Internship work.
+
+The calibration above rests on rich in-vitro data: five species, six time points,
+four controlled conditions. Clinical data are much sparser. This section shows,
+in condensed form, how the same type of model can still be identified there when
+the signs of the interactions are fixed beforehand from metabolic models. The
+work was done during an internship at NIFE together with S.\,P.\ Szafra\'{n}ski
+and is summarised here because it completes the calibration side of the
+thesis; the full analysis is available as an internal report.
+
+\paragraph{Data.} Dieckow et al.~\cite{dieckow2024structure} characterised
+early biofilm formation on implant abutments in $12$ patients. The analysis
+uses $10$ of them, each sampled at three weekly time points. The
+16S~rRNA amplicon reads were aggregated into $10$ class-level guilds and
+normalised to the simplex, $\sum_i\phi_i=1$. With $10$ guilds and three time
+points there are $20$ observations per patient against up to $55$ entries of a
+symmetric interaction matrix, so the inverse problem cannot be solved without
+additional information.
+
+\paragraph{Sign prior.} The prior of Section~\ref{sec:theory_fba} is assembled
+in three layers: experimentally documented production and use of metabolites
+from eHOMD~\cite{Escapa2018eHOMD} and Szafra\'{n}ski et
+al.~\cite{Szafranski2025} ($34$ constrained guild pairs); parsimonious FBA of
+one AGORA2 model per guild~\cite{Heinken2023AGORA2} ($35$ pairs); and
+community FBA with MICOM~\cite{Diener2020MICOM} ($72$ pairs). The directed
+signals are symmetrised for the symmetric model, and the penalty acts only on
+coefficients of the wrong sign.
+
+\paragraph{Model and test.} The replicator form of
+Section~\ref{sec:theory_replicator} is fitted with one interaction matrix
+$\bA$ shared by all patients and a growth vector $\bb^{(p)}$ per patient. It is
+tested by leave-one-patient-out cross-validation: $\bA$ is fitted on nine
+patients and frozen, the held-out patient's $\bb^{(p)}$ is fitted from the
+first week only, and the second and third weeks are predicted.
+Table~\ref{tab:heine_signprior} lists the prediction errors.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    model & prior & sign agreement & LOO-RMSE\\
+    \midrule
+    replicator, symmetric $\bA$ & none            & --        & $0.0595$\\
+    replicator, symmetric $\bA$ & eHOMD + pFBA    & $94\%$    & $0.0516$\\
+    replicator, symmetric $\bA$ & + MICOM         & $100\%$   & $0.0502$\\
+    gLV, asymmetric             & none            & --        & $0.0588$\\
+    gLV, asymmetric             & eHOMD + pFBA    & $97\%$    & $0.0490$\\
+    Bayesian gLV (MDSINE2~\cite{Gibson2021MDSINE2}) & sparsity & -- & $0.0552$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Leave-one-patient-out prediction with a sign prior]{Leave-one-patient-out
+    prediction of the in-vivo guild compositions ($10$ patients of Dieckow et al.).
+    Sign agreement: share of the constrained pairs whose fitted sign matches the
+    prior. The persistence null model has a Bray--Curtis dissimilarity of
+    $0.281$; the best model reaches $0.147$.}
+  \label{tab:heine_signprior}
+\end{table}
+
+\paragraph{Results.}
+\begin{itemize}
+  \item The sign prior improves the symmetric model step by step, from
+        $0.0595$ without prior to $0.0502$ with all three layers. The
+        asymmetric gLV with the first two layers is slightly better
+        ($0.0490$); its directed coefficients add freedom that the symmetric
+        model does not have. The Bayesian gLV collapses to $\bA\approx0$ with
+        three time points.
+  \item Only the sign carries over from the metabolic models. A prior that
+        ties $A_{ij}$ to the magnitude of the predicted fluxes recovers the
+        correct sign for only $4$ to $11$ of $70$ pairs. Fitted without any
+        prior, the symmetric model still recovers $11$ of the $14$
+        cross-feeding signs predicted by AGORA2 ($78.6\,\%$, against $37.7\,\%$
+        under a permutation null, $p=4\times10^{-4}$); the asymmetric gLV
+        shows no such agreement ($p=0.96$).
+  \item On $127$ independent peri-implant samples of Joshi et
+        al.~\cite{joshi2025}, a dysbiosis ratio of the guilds ordered by the
+        model separates peri-implantitis from health and mucositis
+        (Kruskal--Wallis $p<10^{-4}$; Spearman $\rho=0.46$ with severity).
+\end{itemize}
+
+\paragraph{Limits.} With $10$ patients the gain of the community-FBA layer over
+the first two is only marginally significant ($p\approx0.07$). The symmetric
+matrix cannot represent directed effects, which is where the asymmetric gLV
+gains its edge. For the rest of this thesis the result that matters is a
+narrower one: the signs of the interaction matrix are the part of the model
+that is supported by independent evidence, in vitro and in vivo.
