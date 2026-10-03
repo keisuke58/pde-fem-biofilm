@@ -58,6 +58,11 @@ python ansys_usermat\apdl\figs_1005.py    # redraw in Times New Roman with the n
   the pictures.
 - Read the neighbours' sign from the mean-stress panel: tension there would
   match the paper's ring (item 3).
+  Faster, and as a number: `python ansys_usermat\apdl\neighbour_sign.py --csv
+  "$R\all_stress_ds_pv_eq36.csv" --grid 8` prints p per layer around the seed. Python
+  predicts (8^3, 3 Oct): seed -3.8e-5 Pa, first layer +5.8e-6 Pa with 56 % of
+  its elements in tension, second layer +1.6e-6 Pa (79 %). `--grid 8` uses the
+  same assumed numbering as plot_3d, so trust it only if plot_3d printed OK.
 - If time allows: one run with `--post all` writes element centroids, so the
   pictures need no assumed numbering.
 - Still to do on that machine: the ANSYS-vs-reference scatter over all Gauss

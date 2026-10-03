@@ -18,7 +18,7 @@ motion constrained (`assets/fig_model_setup.png`). Parameters: Klempt et al.
 | 2 | Eq. 36 integrated in the material call of the partner's element | done: equals the exact solution sinh/cosh in ANSYS (alpha to 3e-11) | Check 1 (slide 10) |
 | 3 | whole model, Eq. 36 against the element's own growth variable | done: same stress pattern (cosine 1.0000), ratio 0.455 explained (1/2 x 10/11) | Check 2 (slide 11) |
 | 4 | seeded element and its neighbours | done: alpha - 1 = k_alpha phi t; neighbours carry about 25x its von Mises stress | Check 3 (slide 12) |
-| 5 | sign of the neighbours' stress (the paper's ring of tension) | **open**: read on IKMHIWI03 on Monday | `PAPER_CHECK_KLEMPT2024.md` |
+| 5 | sign of the neighbours' stress (the paper's ring of tension) | **open in ANSYS**, read on Monday; Python predicts tension on average in the first layer (+5.8e-6 Pa, seed -3.8e-5 Pa), `ansys_usermat/apdl/neighbour_sign.py` | `PAPER_CHECK_KLEMPT2024.md` |
 | 6 | stiffness line `bio1 + bio1` (typo, should be `bio1 + bio2`) | **open**: fix on Monday, then check whether the one-species stresses change | `PAPER_CHECK_KLEMPT2024.md` |
 | 7 | biofilm spreading towards the nutrient | **not shown in ANSYS**: the element's front term is inactive (reading slip); with the slip fixed in a test copy the front is slow and its direction is undefined where the nutrient is uniform. Recorded as a limitation | `ansys_usermat/apdl/FRONT_TERM_FIX.md` |
 
