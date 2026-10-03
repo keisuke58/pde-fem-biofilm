@@ -18,7 +18,7 @@
 \begin{document}
 {\Large\bfseries Speaker script --- meeting 5 October 2026}\\[2pt]
 Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
-16 slides plus a 3-slide appendix (notation, background), about 20 minutes. Times are rough targets.
+21 slides plus a 3-slide appendix (notation, background), about 27 minutes. Times are rough targets.
 
 % ------------------------------------------------------------------
 \slide{Title}{0:20}
@@ -82,6 +82,59 @@ Equation 36.
 私が加えたのは材料ルーチンの各ガウス点での処理です。場から $\phi$ を受け取り、
 式 36 $\dot\alpha=k_\alpha\phi$ を積分し、その $\alpha$ を検証済みの成長則で
 成長テンソルと応力にします。$k_\alpha$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
+
+% ------------------------------------------------------------------
+\slide{One coupling step at a Gauss point}{1:30}
+\EN This is one time step at one Gauss point, written out. Box one is
+Oliver's element, unchanged: it solves the nutrient and the biofilm field of
+Klempt et al.\ 2024 and gives the amount $\phi_{3D}$ at the Gauss point. Box
+two is what I added in the material call: I integrate Eq.\ 36 with that
+amount, set $\mathbf F_g=\alpha\mathbf I$, and the stress follows from the
+elastic part. Box three is the point model of Klempt et al.\ 2026: I scale
+its state to the amount, advance it by $s\,\Delta t$, and scale it again. It
+only decides the composition; nothing goes back to boxes one and two. The
+footer separates the values from the papers from the ones I assumed.
+\JA 1 つの積分点で 1 ステップに行うことを、式で書き出したものです。①は Oliver さんの
+要素で、変更していません。Klempt 2024 の栄養と成長場を解き、積分点での量 $\phi_{3D}$ を
+出します。②は私が材料ルーチンに追加した部分で、その量で Eq.\ 36 を積分し、
+$\mathbf F_g=\alpha\mathbf I$ から弾性部分を通して応力を出します。③は Klempt 2026 の
+点モデルで、状態を場の量に合わせ、$s\,\Delta t$ だけ進め、もう一度合わせます。決めるのは
+組成だけで、①②には戻りません。下の欄で、論文の値と私が仮定した値を分けています。
+
+% ------------------------------------------------------------------
+\slide{What I implemented, and what I used}{1:30}
+\EN To be clear about what is mine: the growth field and the stiffness are
+Oliver's element, used as it is; I read it and reported what I found. The
+equations of the point model are from the paper; the solver is my own JAX
+code, which reproduces all 14 examples of the paper. Everything else on this
+table I wrote: the growth and composition step inside the element's material
+call, the bridge from Fortran to Python, the sub-stepping, the scripts that
+build and run the custom ANSYS, and the checks.
+\JA 自分の担当をはっきりさせておきます。成長場と剛性は Oliver さんの要素をそのまま
+使い、私は中身を読んで見つけた点を報告しました。点モデルの式は論文のもので、解く
+プログラムは私の JAX のコードです。論文の 14 例をすべて再現しています。表のそれ以外は
+私が書いたものです。要素の材料ルーチンの中の成長と組成の処理、Fortran から Python への
+橋渡し、時間の細分化、ANSYS のビルドと実行のスクリプト、そして検証です。
+
+% ------------------------------------------------------------------
+\slide{The Python side of the coupling}{1:30}
+\EN At each Gauss point and step, the Fortran material call sends the
+point-model state, the amount and the time step through a C binding to a
+small Python server, which runs the point model and sends the new state
+back. Because the point model has no space dependence, this one call is all
+it needs. Two things made it work: splitting each coupling step into
+point-model steps of at most $10^{-4}$, without which the Newton solve
+diverged, and running that chain as one compiled loop, which brought a
+single-element run from about six minutes to under six seconds. Every call
+of an ANSYS run can be replayed in Python, and it agrees bit for bit.
+\JA 各積分点・各ステップで、Fortran の材料ルーチンが点モデルの状態、量、時間刻みを
+C の橋渡しを通して小さな Python のサーバーに送ります。サーバーが点モデルを解いて、
+新しい状態を返します。点モデルは場所に依存しないので、この 1 回の呼び出しで足ります。
+うまく動かすための工夫は 2 つです。1 つは、連成の 1 ステップを $10^{-4}$ 以下の
+細かいステップに分けることで、これをしないと Newton 法が発散しました。もう 1 つは、
+その細かいステップの列をまとめてコンパイルして回すことで、1 要素の計算が約 6 分から
+6 秒弱になりました。ANSYS の計算のすべての呼び出しは Python で再現でき、ビット単位で
+一致します。
 
 % ------------------------------------------------------------------
 \slide{Check 1: exact solution}{1:30}
@@ -219,6 +272,38 @@ $s=0.15$ としました。これは結果に効きます。ケース 6 では $
 どちらも感度を調べてあり、それ以外のパラメータはすべて論文の値です。
 
 % ------------------------------------------------------------------
+\slide{Limits of the parts I added}{1:45}
+\EN These are the limits I know of in my own part. First, the composition
+is local: a point that the biofilm reaches starts from the seed composition,
+it is not carried with the front. I tested how much this matters by
+starting such points from their neighbour's state instead: the mean
+composition changes by at most 0.001, because the diffuse edge of the field
+reaches each point early. Second, the time link is assumed. Third, the
+coupling inherits the behaviour of Eq.\ 34 as printed. Fourth, two growth
+variables are integrated side by side; Check 2 showed how they relate.
+\JA 自分の追加部分について、分かっている限界です。1 つ目、組成は各点で独立していて、
+バイオフィルムが新しく届いた点は初期の組成から始まります。前線と一緒に運ばれません。
+隣の点の状態から始めた場合と比べたところ、平均の組成の差は 0.001 以下でした。
+場の薄い縁が早い時点で各点に届くためです。2 つ目、時間の対応は仮定です。3 つ目、
+連成は印刷どおりの Eq.\ 34 の振る舞いをそのまま受け継ぎます。4 つ目、成長の変数が
+2 つ並行して積分されています。その関係は Check 2 で示しました。
+
+% ------------------------------------------------------------------
+\slide{Klempt et al.\ 2024 test cases, reproduced}{1:45}
+\EN I also reproduced the two test cases of Klempt et al.\ 2024 in Python.
+With Table 2 unchanged, all three curves come within 0.03 to 0.09, under
+two departures from the printed equations and one time scale per
+simulation, which the paper's definition of $T^*$ allows. Three points I
+would like to ask about: which form of Eq.\ 34 and 35 produced the figures,
+the reference time of each run, and the unit of $\mu$. The pressure in
+Table 3 fits $\mu$ read as MPa, not Pa.
+\JA Klempt 2024 の 2 つのテストケースも Python で再現しました。Table 2 の値を変えずに、
+3 本の曲線がすべて 0.03〜0.09 で合います。ただし、印刷された式から 2 か所変えています。
+また、シミュレーションごとに時間スケールを決めていますが、これは論文の $T^*$ の定義で
+許されています。お聞きしたいのは 3 点です。図を作った Eq.\ 34・35 の形、各計算の基準時間、
+そして $\mu$ の単位です。Table 3 の圧力は、$\mu$ を Pa ではなく MPa として読むと合います。
+
+% ------------------------------------------------------------------
 \slide{Earlier work kept: curved substrate}{1:00}
 \EN One earlier result stays in the thesis, on the verified growth law: a growth
 layer on a curved substrate. I found that the layers had been joined only
@@ -241,17 +326,20 @@ to mid December, before I return to Japan.
 
 % ------------------------------------------------------------------
 \slide{Questions for this meeting}{2:00}
-\EN I have four questions. First, the scope: is it agreed that the thesis
+\EN I have five questions. First, the scope: is it agreed that the thesis
 covers one and two species strictly as published, and more species continue
 at Keio? Second, are the two assumptions, the time link and the cap, each
 with a sensitivity study, acceptable for the thesis? Third, is anything
 needed from the Keio side for the double-degree requirements this term? And
 fourth, could Prof.\ Muramatsu attend the presentation online from Japan?
-\JA 4 つお聞きしたいことがあります。1 つ目、範囲について、修論は論文どおりの 1・2 菌種、
+And fifth, on Klempt et al.\ 2024: the form of Eq.\ 34 and 35 behind the
+figures, the reference time of each run, and whether $\mu$ is in Pa or MPa.
+\JA 5 つお聞きしたいことがあります。1 つ目、範囲について、修論は論文どおりの 1・2 菌種、
 それ以上は慶應で続けるという分け方でよろしいでしょうか。2 つ目、時間の対応と上限値という
 2 つの仮定を、感度の検討付きで修論に入れてよいでしょうか。3 つ目、ダブルディグリーの
 要件で、今学期に慶應側で必要なことはありますか。4 つ目、村松先生に日本から
-オンラインで発表に参加していただくことは可能でしょうか。
+オンラインで発表に参加していただくことは可能でしょうか。5 つ目、Klempt 2024 について、
+図を作った Eq.\ 34・35 の形、各計算の基準時間、$\mu$ が Pa か MPa かを教えてください。
 
 % ------------------------------------------------------------------
 \slide{References}{(no talk)}

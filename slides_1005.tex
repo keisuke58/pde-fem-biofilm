@@ -1,7 +1,7 @@
 % Meeting Assoc. Prof. Muramatsu x Prof. Soleimani x Nishioka, 2026-10-05 9:00 CEST / 16:00 JST
 % Build: .\build_slides.ps1   (pdflatex, twice)
 % Speaker script (EN + JA, one section per slide): speaker_notes_1005.tex
-% CONSTRAINT: keep total page count <= 20. Check the built PDF's page count
+% CONSTRAINT: keep total page count <= 25 (raised from 20 on 3 Oct). Check the built PDF's page count
 % before adding a frame; trim an existing frame rather than tacking more on.
 % Wording: no internal labels (run names, switch numbers) -- say what a run
 % does, not what it was called while building it.
@@ -129,6 +129,70 @@ ANSYS 2022 R2, one-species runs.
 \draw[-{Latex}] (f) -- (a); \draw[-{Latex}] (a) -- (s);
 \end{tikzpicture}
 \end{center}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{One coupling step at a Gauss point}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.84\textheight,keepaspectratio]{assets/fig_coupling_equations.png}
+\end{center}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{What I implemented, and what I used}
+\scriptsize
+\begin{tabular}{@{}p{0.30\linewidth}p{0.30\linewidth}p{0.34\linewidth}@{}}
+\toprule
+Part & Source & My work\\
+\midrule
+3D growth field, Eq.\ 34/35; neo-Hookean stiffness &
+Klempt et al.\ 2024; Oliver's ANSYS element &
+used unchanged; read it and reported four findings (previous slides)\\
+Point model equations & Klempt et al.\ 2026 & taken from the paper\\
+Point model solver (Newton per step) & my JAX code &
+all 14 examples of the paper reproduced\\
+Growth Eq.\ 36 and the composition step in the element's material call &
+this work (Fortran, inserted into Oliver's routine by a script) &
+written and checked against a stand-alone reference, difference 0.0\\
+Bridge Fortran $\to$ Python & this work (C binding, local socket, material server) &
+point model called once per Gauss point and step\\
+Sub-stepping and step-size guard & this work &
+point model in steps $\le 10^{-4}$; too large a step asks ANSYS to cut back\\
+ANSYS build and run scripts & this work & custom ANSYS executable, non-interactive\\
+Checks & this work & closed form in ANSYS, replay of every call, about 440 unit tests\\
+Reproductions of Klempt 2024 / 2026 & this work & independent solvers in Python\\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{The Python side of the coupling}
+\small
+\begin{center}
+\begin{tikzpicture}[node distance=0.5cm, every node/.style={font=\scriptsize,align=center}]
+\node[draw,fill=c3!10,rounded corners,text width=2.6cm] (a) {ANSYS, Gauss point\\ material call (Fortran)};
+\node[draw,fill=c3!10,rounded corners,text width=2.4cm,right=of a] (b) {C binding\\ request: state, $\phi_{3D}$, $s\,\Delta t$};
+\node[draw,fill=c3!10,rounded corners,text width=2.4cm,right=of b] (c) {material server\\ (Python, local socket)};
+\node[draw,fill=orange!15,rounded corners,text width=2.8cm,right=of c] (d) {point model:\\ $n_{sub}$ Newton steps in one compiled loop (JAX)};
+\draw[-{Latex}] (a) -- (b); \draw[-{Latex}] (b) -- (c); \draw[-{Latex}] (c) -- (d);
+\draw[-{Latex}] (d.south) to[bend left=18] node[below]{new $\phi_i$, $\psi_i$, $\gamma$; Fortran rescales and stores them} (a.south);
+\end{tikzpicture}
+\end{center}
+\vspace{2pt}
+\footnotesize
+\begin{itemize}
+  \item The point model has no space dependence, so one call per Gauss point and
+        step is all it needs; neighbouring points are not involved
+  \item \textbf{Sub-stepping:} a coupling step is split into
+        $n_{sub}=\lceil s\Delta t/10^{-4}\rceil$ point-model steps. With one
+        coarse step the Newton solve diverged; split, it is stable
+  \item \textbf{Speed:} the whole sub-step chain runs as one compiled loop:
+        1000 sub-steps from about 10\,s to 0.07\,s per call; a single-element
+        ANSYS run from 357\,s to 5.6\,s, with identical output
+  \item \textbf{Checks:} each call equals the chained single steps bit for bit;
+        every call of an ANSYS run is replayed in Python with difference 0.0
+\end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
@@ -287,6 +351,63 @@ All other parameters are the published values.
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Limits of the parts I added}
+\small
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\begin{enumerate}
+  \item \textbf{Composition is local.} A point the biofilm reaches starts from
+        the seed composition; species are not carried with the front.
+        Test (right): starting from the neighbour's state instead changes
+        the mean by $\le 0.001$, at most 0.09 at the last points reached
+  \item \textbf{Time link $s$} chosen at 0.15, where case 6's winner just
+        appears; sensitivity shown, but $s$ has no source in a paper
+  \item \textbf{Input field:} Eq.\ 34 as printed moves the colony rather than
+        growing it (next slide); the coupling inherits this
+  \item \textbf{Two $\alpha$:} the element's own and Eq.\ 36 in the material
+        call are integrated separately (Check 2)
+\end{enumerate}
+\end{column}
+\begin{column}{0.48\textwidth}
+\includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}\\
+\scriptsize Composition at $T^*=1$ of the points first reached at each time;
+growth field of Klempt et al.\ 2024 test case 4.1 (21$^3$ grid, Python);
+Klempt et al.\ 2026 cases 3 and 6. The diffuse edge of the field reaches
+each point early, so its point model runs for most of the time either way.
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Klempt et al.\ 2024 test cases, reproduced in Python}
+\small
+Table 2 unchanged; growth on both faces of the colony and consumption
+proportional to $c$ (two departures from Eq.\ 34/35 as printed); one time
+scale per simulation, since $T^*=t/t_{\rm ref}$ with $t_{\rm ref}$
+``chosen based on the conditions for growth at hand'' (Sec.\ 4).
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+test case & time scale & RMS difference $\phi$ & RMS difference $c$\\
+\midrule
+4.1 directional growth (Fig.\ 4) & 1.5 & 0.03 & 0.05\\
+4.2 ``high'' (Fig.\ 7) & 10 & 0.04 & 0.04\\
+4.2 ``low'' (Fig.\ 7) & 4--5 & 0.09 & 0.05\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
+\begin{itemize}
+  \item Eq.\ 34 as printed does not reach these curves at any time scale
+  \item The nutrient plateau of 4.2 ``high'' (0.489) follows from Table 2 with
+        consumption $g\phi c$: 0.482
+  \item Table 3's pressure ($10^{-4}$ MPa) fits $\mu=3.3557$ read as MPa;
+        with Pa it would be $10^{-9}$ MPa
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Earlier work kept in the thesis: curved substrate}
 \small A curved \textbf{substrate} (no growth) bonded to a thin \textbf{growth
 layer} on top, with the verified growth law.
@@ -339,6 +460,8 @@ layer} on top, with the verified growth law.
   \item \textbf{Keio:} anything needed from the Keio side for the double-degree
         requirements this term?
   \item \textbf{Presentation:} online attendance from Japan possible for Assoc.\ Prof.\ Muramatsu?
+  \item \textbf{Klempt et al.\ 2024:} which form of Eq.\ 34/35 gave the figures;
+        $t_{\rm ref}$ of each simulation; is $\mu=3.3557$ in Pa or MPa?
 \end{enumerate}
 \end{frame}
 
