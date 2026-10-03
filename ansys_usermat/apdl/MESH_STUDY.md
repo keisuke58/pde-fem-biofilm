@@ -153,6 +153,16 @@ Then compare the seed average von Mises and mean stress of the 8^3 run
 about 1.6-1.75 times the 16^3 ones. Use the same `--set`/`--props` as the 8^3
 paper-value runs (see the header of `figs_1005.py`); only the mesh may differ.
 
+Then, in one command (3 Oct):
+```powershell
+python ansys_usermat\apdl\compare_mesh.py "$R\all_stress_ds_pv_eq36.csv" `
+    F:\biofilm_upf_wired\all_stress_ds16_pv_eq36.csv --grid8 8 --track 220
+```
+It prints the seed averages on both meshes, the 16^3/8^3 ratios next to the
+Python ones (0.63 von Mises, 0.67 mean stress), and element 220 against the
+eight 16^3 elements inside it. The seed must come out as 32 and 256 elements
+with the same mean alpha; otherwise the deck mapping is wrong.
+
 ## Volumetric locking (nu = 0.49), 3 Oct
 
 `locking_check.py` solves the same seed problem with B-bar (volumetric part
