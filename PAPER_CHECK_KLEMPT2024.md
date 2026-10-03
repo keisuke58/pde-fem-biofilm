@@ -65,8 +65,17 @@ python ansys_usermat\apdl\figs_1005.py    # redraw in Times New Roman with the n
   point model on/off" comparison.
 - Added 3 Oct: in Oliver's material routine, check how the stiffness adds
   the two species fields. The sources read on 2 Oct had `bio1 + bio1` where
-  `bio1 + bio2` is expected. If the coupled two-species runs go through that
-  line, the stiffness is wrong there (limit 5 in the 3 Oct list).
+  `bio1 + bio2` is expected. Oliver confirmed it is a typo (3 Oct, via the
+  user): fix it to `bio1 + bio2` in the working copy. Then, before trusting
+  the 5 Oct stress numbers:
+  1. find whether the coupled runs pass through that line (one-species runs
+     have bio2 = 0, so `bio1 + bio1` = 2 phi there; if the stiffness uses
+     phi^2 the seed is 4x too stiff);
+  2. if they do, rebuild and re-run the one-species paper-value decks
+     (Eq. 36 and partner variants) and redraw `figs_1005.py`; Checks 2-3 may
+     change in magnitude, the composition results do not (they do not depend
+     on the stiffness);
+  3. note the fix on the "Four things found" slide.
 
 ## Open questions on the paper (3 Oct, for Prof. Soleimani on 5 Oct, then Felix)
 
