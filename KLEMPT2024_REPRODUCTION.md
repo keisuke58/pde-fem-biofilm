@@ -332,3 +332,29 @@ mechanics, so I bounded what the coupling could change:
   were computed without it, as Eq. 33 says.
 So the curves of Fig. 4 and 7 can be compared with a mechanics-free solver;
 the coupling matters for the stress plots (Table 3, Fig. 8), not for φ and c.
+
+## 13. The unit of μ, read off Table 3's pressure (2026-10-03)
+
+Table 2 gives μ = 3.3557 Pa (E = 10 Pa); Table 3 plots the hydrostatic stress
+of test case 4.1 in MPa, legend +3·10⁻⁴ … −6.5·10⁻⁴ MPa.
+`JAXFEM/klempt2024_pressure_scale.py` puts the growth field of the fitted 4.1
+run (§12) into a small-strain linear-elastic solve (stiffness ∝ φ, ν = 0.49,
+eigenstrain (α − 1)I, free cube). The result is linear in E:
+
+| T* | max(α − 1) | p / E |
+|---|---|---|
+| 0.05 | 7.5·10⁻⁵ | −3.4·10⁻⁵ … +1.5·10⁻⁵ |
+| 0.25 | 3.8·10⁻⁴ | −1.9·10⁻⁴ … +7.4·10⁻⁵ |
+| 1.00 | 1.5·10⁻³ | −6.8·10⁻⁴ … +5.3·10⁻⁴ |
+
+- With E = 10 Pa the pressure stays below 7·10⁻⁹ MPa, and Table 3 would be a
+  single colour.
+- With E = 10 read as MPa (ANSYS's µMKS system: lengths in µm, stresses in
+  MPa, so a typed 3.3557 is 3.3557 MPa) the pressure at T* = 0.05 is
+  −3.4·10⁻⁴ … +1.5·10⁻⁴ MPa, the legend's range. Later rows exceed it, which
+  matches their saturated blue interior and red ring.
+
+The plotted stresses fit μ = 3.3557 MPa to within a factor of about two,
+against a factor of 10⁶ for Pa. This is an inference from the plot, not a
+statement of the paper; a question for the authors. It matters wherever the
+stress magnitudes of Klempt 2024 are compared with this work's.
