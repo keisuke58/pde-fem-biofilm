@@ -338,7 +338,30 @@ from the field, integrate the second equation of~\eqref{eq:ch5-field},
 \end{equation}
 and pass $\alpha$ to the growth law. I use the paper's $k_\alpha=10^{-3}$ per unit
 of normalised time $T^*$, in the field and in~\eqref{eq:ch5-eq36} alike, and
-the deck time is $T^*$.}
+the deck time is $T^*$.
+
+The paper prints a second form of this law. Table~1, step~3a, of Klempt et
+al.\ 2024 integrates $\alpha$ from the change of $\phi$,
+$(\alpha_{n+1}-\alpha_n)/((1+\alpha_{n+1})\Delta t)=k_\alpha(\phi_{n+1}-\phi_n)/\Delta t$
+(with $k_\alpha/\eta_\alpha$ read as $k_\alpha$), while its text states that
+$\alpha$ follows Eq.~36. The two differ in where growth happens. On the
+reproduced field of test case~4.1, at $T^*=1$, biofilm present from the start
+reaches $\alpha-1=9.9\times10^{-4}$ with Eq.~36 and stays at zero with
+Table~1, and newly colonised biofilm reaches $5.4\times10^{-4}$ and
+$8.5\times10^{-4}$ (Figure~\ref{fig:ch5-alpha-law}). A seed that is full
+from the start, as in the runs of this chapter, grows only under Eq.~36. I
+follow the text, Eq.~36, as does the partner's element.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_alpha_law.png}
+  \caption[Eq.~36 against Table~1 of Klempt et al.\ 2024]{%
+    The two growth laws of Klempt et al.\ 2024 on the reproduced field of
+    test case~4.1 (Python). Left and middle: $\alpha-1$ at $T^*=1$ on the
+    mid-plane. Right: mean over biofilm present from the start and over
+    newly colonised biofilm.}
+  \label{fig:ch5-alpha-law}
+\end{figure}}
 
 \subsection{Growth counted once per increment}
 % TierA. phi_trace checks on IKMHIWI03; 46 calls / 11 substeps.
@@ -610,6 +633,28 @@ $27\,\%$, with no sign of volumetric locking.
   \label{fig:ch5-element}
 \end{figure}}
 
+% TierA for the Python study (mesh_study_seed.py, locking_check.py);
+% TierB for the ANSYS 16^3 run (MESH_STUDY.md).
+\TierA{%
+\paragraph{Mesh and incompressibility.} The example model has $8^3$
+elements, and its seed is 32 of them. I solved the same mechanical problem
+(seed growth $1.1\times10^{-3}$, the stiffness above) with a linear
+hexahedral solver in Python on $8^3$, $16^3$ and $32^3$ elements. The seed
+averages of von Mises and mean stress on $8^3$ are about $1.6$ to $1.75$
+times those on $16^3$ and $32^3$, which agree with each other; the peaks at
+the corners of the seed do not converge, because those corners are
+singular. I therefore quote seed averages and not peaks. With the element's
+mean-dilatation (B-bar) integration the mean stress hardly changes between
+$\nu=0.49$ and $0.499$ ($-3.8$ and $-4.1\times10^{-5}$~Pa on $8^3$), so
+there is no volumetric locking; full $2\times2\times2$ integration would
+overestimate it by a factor of $3.7$ on $8^3$ and $2.3$ on $16^3$ at
+$\nu=0.49$.}
+
+\TierB{%
+The same comparison in ANSYS, with the example model refined to $16^3$
+elements and every boundary condition mapped by position, is prepared and
+to be run.}
+
 % TierA. SPLIT_COUPLING.md, phi_cap runs on IKMHIWI03 (judge PASS, diff 0.0).
 \TierA{%
 \paragraph{Two species.} With the point model coupled, every traced point of
@@ -637,7 +682,30 @@ which the biofilm spreads within the simulated time, which in this model
 means a nutrient gradient driving the front term of~\eqref{eq:ch5-field}.
 That term is switched off in the element at present, and even when it is
 switched on its direction is undefined where the nutrient is uniform
-(property~4 of \S\ref{sec:ch5-coupling}).}
+(property~4 of \S\ref{sec:ch5-coupling}).
+
+To see what the coupling does on a spreading biofilm, I ran the same scheme
+in Python on the reproduced field of Klempt et al.\ 2024, test case~4.1,
+with the point model at every grid node (Figure~\ref{fig:ch5-spreading}).
+There each point starts its point model when the field first reaches
+$\phi_{\min}$, from the seed composition, because the composition is not
+transported with the biofilm. Starting it instead from the composition of the
+nearest colonised point changes the biomass-weighted mean of
+$\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ from $0.656$ to $0.656$ in case~3 and
+from $0.026$ to $0.027$ in case~6; the largest pointwise change is $0.093$,
+at the points colonised last. The diffusive edge of the field reaches
+$\phi_{\min}$ long before the dense front, so every point runs its point
+model for most of the time.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_spreading.png}
+  \caption[Composition along a spreading front]{%
+    Composition along a spreading front, computed in Python with the coupling
+    scheme of this chapter on the reproduced field of Klempt et al.\ 2024,
+    test case~4.1; Klempt et al.\ 2026, cases~3 and~6.}
+  \label{fig:ch5-spreading}
+\end{figure}}
 
 %-----------------------------------------------------------------------
 \section{Limitations}
@@ -659,7 +727,14 @@ switched on its direction is undefined where the nutrient is uniform
       $\nu=0.49$ it is $1.3\,\%$ of the constrained pressure.
 \item \emph{Incompressibility.} The paper's exact constraint is approximated by
       $\nu=0.49$ with the element's mean-dilatation formulation; the stress
-      changes by $27\,\%$ between $\nu=0.45$ and $0.49$.
+      changes by $27\,\%$ between $\nu=0.45$ and $0.49$, and the mean
+      stress by less than $10\,\%$ between $0.49$ and $0.499$.
+\item \emph{Mesh.} The example model's $8^3$ mesh overestimates the seed
+      averages by a factor of about $1.7$ (Python); peak stresses at the
+      seed corners are mesh dependent and not reported.
+\item \emph{Growth law.} The paper gives two forms of the $\alpha$ law
+      (Eq.~36 and Table~1). I use Eq.~36; under Table~1 a full seed would not
+      grow.
 \item \emph{No spatial composition yet.} In the example model the biofilm
       does not spread within $T^*\le1$, because the element's front term is
       switched off; the composition is therefore uniform. The coupling is
