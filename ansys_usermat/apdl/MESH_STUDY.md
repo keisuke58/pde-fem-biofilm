@@ -152,3 +152,29 @@ Then compare the seed average von Mises and mean stress of the 8^3 run
 (`all_stress_ds_pv_eq36.csv`) with the 16^3 run: Python predicts the 8^3 values
 about 1.6-1.75 times the 16^3 ones. Use the same `--set`/`--props` as the 8^3
 paper-value runs (see the header of `figs_1005.py`); only the mesh may differ.
+
+## Volumetric locking (nu = 0.49), 3 Oct
+
+`locking_check.py` solves the same seed problem with B-bar (volumetric part
+at the centre point, what SOLID185 does with its default KEYOPT(2) = 0; the
+partner's deck sets no KEYOPT) and with full 2x2x2 integration, for several
+nu. Seed averages in Pa:
+
+| mesh | nu | B-bar vM | B-bar p | full vM | full p |
+|---|---|---|---|---|---|
+| 8^3 | 0.30 | 2.48e-5 | -2.56e-5 | 2.30e-5 | -2.74e-5 |
+| 8^3 | 0.49 | 5.70e-5 | -3.77e-5 | 5.96e-5 | -1.41e-4 |
+| 8^3 | 0.499 | 6.44e-5 | -4.08e-5 | 1.01e-4 | -1.13e-3 |
+| 16^3 | 0.30 | 2.19e-5 | -2.19e-5 | 2.12e-5 | -2.26e-5 |
+| 16^3 | 0.49 | 3.59e-5 | -2.52e-5 | 3.41e-5 | -5.69e-5 |
+| 16^3 | 0.499 | 3.79e-5 | -2.58e-5 | 4.81e-5 | -3.20e-4 |
+
+- With B-bar the mean stress hardly moves from nu = 0.49 to 0.499 (8^3: -3.8e-5
+  to -4.1e-5): no locking.
+- Full integration locks: at nu = 0.49 its mean stress is 3.7x (8^3) and
+  2.3x (16^3) the B-bar value, at 0.499 it is 28x and 12x. The von Mises
+  stress is affected much less, as expected (locking is in the pressure).
+- So the ANSYS results are free of locking only if SOLID185 really runs with
+  B-bar together with the user material. To check on IKMHIWI03: `ETLIST`
+  shows KEYOPT(2) = 0 for type 1. The constrained-cube check (homogeneous
+  strain) cannot see locking, so it does not answer this.

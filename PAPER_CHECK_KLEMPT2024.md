@@ -76,6 +76,10 @@ python ansys_usermat\apdl\figs_1005.py    # redraw in Times New Roman with the n
      change in magnitude, the composition results do not (they do not depend
      on the stiffness);
   3. note the fix on the "Four things found" slide.
+- Added 3 Oct: run `ETLIST` in the deck (or read `ds.dat`) and check that
+  type 1 (SOLID185) has KEYOPT(2) = 0, i.e. B-bar. With full integration the
+  mean stress at nu = 0.49 would be 2-4x too large (volumetric locking,
+  `ansys_usermat/apdl/locking_check.py`, MESH_STUDY.md).
 
 ## Open questions on the paper (3 Oct; sent to Felix by email on 3 Oct, also for Prof. Soleimani on 5 Oct)
 

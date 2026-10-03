@@ -38,7 +38,8 @@ E, NU, FLOOR, GROWTH = 10.0, 0.49, 1e-3, 1.1e-3
 CORNERS = [(-1, -1, -1), (1, -1, -1), (-1, 1, -1)]
 
 
-def element_matrices(h):
+def element_matrices(h, nu=NU, full=False):
+    """full=True: volumetric part with 2x2x2 points too (no B-bar), for the locking check."""
     g = np.array([-1, 1]) / np.sqrt(3)
     corners = np.array([[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
                         [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]], float)
@@ -56,8 +57,8 @@ def element_matrices(h):
             b[4, i + 1] = dz; b[4, i + 2] = dy
             b[5, i] = dz; b[5, i + 2] = dx
         return b
-    lam = NU / ((1 + NU) * (1 - 2 * NU))
-    mu = 1 / (2 * (1 + NU))
+    lam = nu / ((1 + nu) * (1 - 2 * nu))
+    mu = 1 / (2 * (1 + nu))
     Dd = np.diag([2 * mu] * 3 + [mu] * 3)
     Dv = np.zeros((6, 6)); Dv[:3, :3] = lam
     m = np.array([1, 1, 1, 0, 0, 0.])
@@ -68,9 +69,12 @@ def element_matrices(h):
                 B = bmat((a, b_, c))
                 Kd += B.T @ Dd @ B * (h / 2) ** 3
                 fd += B.T @ Dd @ m * (h / 2) ** 3
+                if full:
+                    Kd += B.T @ Dv @ B * (h / 2) ** 3
+                    fd += B.T @ Dv @ m * (h / 2) ** 3
     B0 = bmat((0, 0, 0))
-    Kv = B0.T @ Dv @ B0 * h ** 3
-    fv = B0.T @ Dv @ m * h ** 3
+    Kv = 0 if full else B0.T @ Dv @ B0 * h ** 3
+    fv = 0 if full else B0.T @ Dv @ m * h ** 3
     return Kd + Kv, fd + fv, B0, Dd + Dv, m
 
 
@@ -79,9 +83,9 @@ def seed_boxes():
     return np.array([cen[e] for e in seed_ids])            # centroids of the 8^3 seed elements
 
 
-def solve(n, boxes):
+def solve(n, boxes, nu=NU, full=False):
     h = 2.0 / n
-    Ke0, fe0, B0, D, m = element_matrices(h)
+    Ke0, fe0, B0, D, m = element_matrices(h, nu, full)
     ne = n
     idx = np.arange((n + 1) ** 3).reshape(n + 1, n + 1, n + 1)
     off = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
