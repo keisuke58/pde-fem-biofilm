@@ -105,3 +105,28 @@ just the thickness direction once the growth-layer ESIZE gets small enough
 to interact with the circumferential/axial sizing — worth checking with
 `NLIST`/`ESIZE` diagnostics before assuming "elements through thickness"
 alone predicts run cost at finer levels.
+
+## The 512-element model of the 5 Oct slides: seed stress against mesh (3 Oct, Python)
+
+`mesh_study_seed.py` solves the mechanics of Check 3 alone (the 32-element
+seed of the partner's deck grows by alpha - 1 = 1.1e-3, stiffness E (phi^2 + f),
+E = 10 Pa, nu = 0.49, f = 1e-3, three corner nodes constrained) with a
+linear-elastic hex8 solver on three meshes. Stresses in Pa:
+
+| mesh | elements | seed von Mises, mean | seed von Mises, max | seed mean stress | largest von Mises outside |
+|---|---|---|---|---|---|
+| 8^3 (as the ANSYS model) | 512 | 5.70e-5 | 7.51e-5 | -3.77e-5 | 1.63e-5 |
+| 16^3 | 4096 | 3.59e-5 | 8.97e-5 | -2.52e-5 | 2.13e-5 |
+| 32^3 | 32768 | 3.26e-5 | 1.09e-4 | -2.26e-5 | 2.97e-5 |
+
+- Averages over the seed converge: the 8^3 mesh is about 75 % (von Mises) and
+  67 % (mean stress) above the 32^3 values, the 16^3 mesh within 10 %.
+- Maxima do not converge. The seed is a staircase of cubes, and its re-entrant
+  corners are stress singularities: the peaks grow with every refinement.
+- So the 512-element ANSYS stresses are right in pattern and sign but too
+  large in magnitude by up to a factor of about 1.7; quote seed averages from
+  a 16^3 mesh, never peaks. Next: the same comparison in ANSYS itself (a 16^3
+  deck), on IKMHIWI03.
+- The ratio "neighbours about 25x the seeded element" of Check 3 is not this
+  table's last column: there the seeded element is one interior element of
+  the seed, here the comparison is the seed average against the void.
