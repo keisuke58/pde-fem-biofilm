@@ -63,3 +63,18 @@ python ansys_usermat\apdl\figs_1005.py    # redraw in Times New Roman with the n
 - Still to do on that machine: the ANSYS-vs-reference scatter over all Gauss
   points (from the existing trace CSVs) and the "macro unchanged with the
   point model on/off" comparison.
+- Added 3 Oct: in Oliver's material routine, check how the stiffness adds
+  the two species fields. The sources read on 2 Oct had `bio1 + bio1` where
+  `bio1 + bio2` is expected. If the coupled two-species runs go through that
+  line, the stiffness is wrong there (limit 5 in the 3 Oct list).
+
+## Open questions on the paper (3 Oct, for Prof. Soleimani on 5 Oct, then Felix)
+
+Details in `KLEMPT2024_REPRODUCTION.md` sec. 12-13.
+- Which form of Eq. 34/35 produced Fig. 4 and 7: growth on both faces of the
+  colony, consumption g phi c? (Both are needed to reach the curves.)
+- t_ref of each simulation: the curves fit Table 2 with a time scale of 1.5
+  (4.1), 10 (4.2 high) and 4-5 (4.2 low).
+- Is mu = 3.3557 in Pa or MPa? Table 3's pressure fits MPa (ANSYS micro-MKS).
+- The nutrient source of 4.1: the edge line (Table 3) or the 5 um strip of
+  Fig. 2?
