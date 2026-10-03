@@ -22,6 +22,14 @@ hold everywhere.
 
     python JAXFEM/klempt2024_variant_search.py      (about an hour)
         -> JAXFEM/klempt2024_results/variant_search.json
+
+Result (2026-10-03, 36 settings): each curve alone is fitted to an RMS of
+0.03-0.06, but each by a different setting (4.1: k = 1, r x 2, g x 4; 4.2
+"high": k = 0.03, r x 4, g x 1; 4.2 "low": k = 0.03, r x 1, g x 2). The best
+joint setting, k = 0.3, r x 2, g x 2, scores 0.154 / 0.173 / 0.077, its phi
+still off by an RMS of 0.25-0.28 in 4.1 and 4.2 "high"; Table 2 scores
+0.104 / 0.339 / 0.112. No single setting reproduces both test cases.
+See KLEMPT2024_REPRODUCTION.md, sec. 11.
 """
 from __future__ import annotations
 

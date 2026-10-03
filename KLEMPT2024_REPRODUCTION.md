@@ -241,3 +241,31 @@ With §9 this points to first-order consumption in the paper's computations.
 Questions for the authors (add to §9): the growth term actually run (sign,
 both faces?), r and k, and the size of the initial biofilm (the paper's mean
 φ at T* = 0.01 is ten times a one-layer disk).
+
+## 11. One setting for all three curves: a joint search (2026-10-03)
+
+`JAXFEM/klempt2024_variant_search.py` takes the model form §9 and §10 favour
+(growth on both faces, first-order consumption, seed as initial value) and
+searches k ∈ {1, 0.3, 0.1, 0.03}, r × {1, 2, 4}, g × {1, 2, 4} (36 settings;
+results in `JAXFEM/klempt2024_results/variant_search.json`). Per case only the
+strip width (4.1) and the seed thickness (4.2) are free. Score: RMS difference
+to the digitised curves, φ and c averaged; a setting is rated by its worst
+curve.
+
+Each curve alone can be fitted, but by a different setting:
+
+| fitted curve | setting | 4.1 | 4.2 high | 4.2 low |
+|---|---|---|---|---|
+| 4.1 | k = 1, r × 2, g × 4 | **0.028** | 0.264 | 0.122 |
+| 4.2 high | k = 0.03, r × 4, g × 1 | 0.286 | **0.031** | 0.179 |
+| 4.2 low | k = 0.03, r × 1, g × 2 | 0.171 | 0.193 | **0.060** |
+| best joint | k = 0.3, r × 2, g × 2 | 0.154 | 0.173 | 0.077 |
+| Table 2 | k = 1, r × 1, g × 1 | 0.104 | 0.339 | 0.112 |
+
+No setting fits all three: the best joint one still misses φ by an RMS of
+0.25–0.28 in 4.1 and 4.2 "high". The single-curve fits show that the knobs
+are flexible enough to match any one figure, so a match of one figure is weak
+evidence. With one model form and one parameter set for both test cases, the
+paper's figures are not reproduced. Either the cases were run with different
+inputs or by a form not considered here; this is a question for the authors,
+not something more fitting can settle.
