@@ -72,6 +72,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
 | `references/` | Klempt et al. 2024 (BMMB, CC BY 4.0), the paper this work follows: the PDF and a searchable text extraction; licence in `THIRD_PARTY.md` |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
+| `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
 | `thesis_ch5/` | Chapter 5 skeleton with an evidence map, plus `PORTING.md` for merging it into the thesis repository |
 | `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
 | `reports/` | Written progress updates to the supervisors, kept next to the work they describe |
