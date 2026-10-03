@@ -269,3 +269,43 @@ evidence. With one model form and one parameter set for both test cases, the
 paper's figures are not reproduced. Either the cases were run with different
 inputs or by a form not considered here; this is a question for the authors,
 not something more fitting can settle.
+
+## 12. Table 2 unchanged, one time scale per simulation (2026-10-03)
+
+A second careful reading of the paper changed two inputs of §11.
+
+- **The nutrient source of 4.1 is the edge line, not a strip.** Fig. 2 draws a
+  strip about 5 µm wide. Table 3's cut is diagonal (aspect √2, the nutrient
+  corner at the top right): a strip w µm wide would show as w√2 along the top
+  of the cut and w down its side. The cut shows c ≈ 1 only within 2–3 µm of
+  the corner, and the text says "In one of the corners". Fig. 2 is a sketch.
+  4.2's set-up (whole bottom face, a 5 µm disk in the plane above) is as the
+  paper states.
+- **T* is normalised per simulation.** Sec. 4: T* = t/t_ref, "with a
+  reference time t_ref which is chosen based on the conditions for growth at
+  hand". With c quasi-static, a different t_ref is one factor s on every rate
+  of Eq. 34/36 (r, β, k_α).
+
+`JAXFEM/klempt2024_timescale.py` keeps Table 2 as printed (d, g, k, r, β,
+k_α) and the model form of §9–§11 (growth on both faces, first-order
+consumption), and scans s per simulation (results in
+`JAXFEM/klempt2024_results/timescale.json`). RMS difference to the digitised
+curves:
+
+| simulation | best s | φ | c |
+|---|---|---|---|
+| 4.1 (edge line) | 1.5 | 0.03 | 0.05 |
+| 4.2 high | 10 | 0.04 | 0.04 |
+| 4.2 low | 4–5 | 0.09 | 0.05 |
+
+All three curves come within 0.03–0.09 without changing a Table 2 value;
+§11's best joint setting stayed at 0.17. The 1 µm strip is worse at every s
+(0.10 at best, c too high), which agrees with the edge-line reading. The
+early Table 4 panels support the large s for 4.2: at T* = 0.01 the φ = 0.5
+contour already stands about 3.5 µm above the seed, about ten times what
+r·c/(k+c) allows on that axis.
+
+Open: "high" and "low" share one axis in Fig. 7 but want s = 10 and s = 4–5;
+with one s = 7 both are at about 0.09. The two departures from the printed
+equations (both-face growth, first-order consumption) remain. Questions for
+the authors: t_ref of each run, and the form of Eq. 34/35 that was run.
