@@ -121,14 +121,12 @@ in the field \emph{and} in Eq.\ 36; $E=10$ Pa, $\nu=0.49$, stiffness $\propto\ph
 $\beta$, $r$, $k$, $d$, $g$: framework's example input (not from the paper).
 ANSYS 2022 R2, one-species runs.
 \vspace{4pt}
-\begin{center}
-\begin{tikzpicture}[node distance=1.2cm, every node/.style={font=\small}]
-\node[draw,fill=c3!10,rounded corners] (f) {field $\phi$ (Eq.\ 34)};
-\node[draw,fill=c3!10,rounded corners,right=of f] (a) {$\alpha$ (Eq.\ 36)};
-\node[draw,fill=c3!10,rounded corners,right=of a] (s) {$\mathbf F_g$ $\to$ stress};
-\draw[-{Latex}] (f) -- (a); \draw[-{Latex}] (a) -- (s);
-\end{tikzpicture}
-\end{center}
+\colorbox{c3!12}{\parbox{0.97\linewidth}{\footnotesize
+\textbf{Model:} cube of 2 mm, $8\times8\times8=512$ hexahedral elements (0.25 mm).
+\textbf{Mechanics:} only rigid-body motion is suppressed (three corner nodes), so
+uniform growth is stress free and stress comes from differences in growth.
+\textbf{Nutrient:} $c=1$ held in the element layer on one face ($y=-1$ mm).
+\textbf{Biofilm:} $\phi=1$ in a seed of 32 elements at the centre, $\phi=0$ elsewhere.}}
 \end{frame}
 
 % --------------------------------------------------------

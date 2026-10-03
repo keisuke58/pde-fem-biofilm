@@ -77,11 +77,19 @@ integrate Equation 36, $\dot\alpha=k_\alpha\phi$, and turn $\alpha$ into the
 growth tensor and the stress with the verified law. The rate $k_\alpha$ is the
 published value, $10^{-3}$ per unit time, used both in the field and in
 Equation 36.
+The model is a 2 mm cube with 512 elements. Only rigid-body motion is
+suppressed, at three corner nodes, so uniform growth gives no stress and the
+stress comes from differences in growth. The nutrient is held at $c=1$ in the
+element layer on one face, and the biofilm starts as a seed of 32 elements
+at the centre.
 \JA これが組み込みの全体です。Oliver の要素は Klempt 2024 の式 34、つまり拡散、
 成長による生成、栄養で駆動される界面成長を解きます。ここには手を入れていません。
 私が加えたのは材料ルーチンの各ガウス点での処理です。場から $\phi$ を受け取り、
 式 36 $\dot\alpha=k_\alpha\phi$ を積分し、その $\alpha$ を検証済みの成長則で
 成長テンソルと応力にします。$k_\alpha$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
+モデルは 2 mm の立方体、512 要素です。力学は 3 つの角の節点で剛体運動だけを止めているので、
+一様に成長すれば応力はゼロで、応力は成長の差から生じます。栄養は $y=-1$ mm の面の要素層で
+$c=1$ に固定し、バイオフィルムは中心の 32 要素を $\phi=1$ で始めます。
 
 % ------------------------------------------------------------------
 \slide{One coupling step at a Gauss point}{1:30}
