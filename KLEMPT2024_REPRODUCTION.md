@@ -315,3 +315,20 @@ with first-order or printed consumption and s up to 40 (4.2) / 8 (4.1),
 reaches only 0.15 (4.1), 0.17 (4.2 high, final mean φ 0.73 instead of 1) and
 0.13 (4.2 low, φ hardly grows). The printed term moves the colony rather than
 growing it, at any time scale. Both-face growth is needed for every figure.
+
+Two-way coupling with the mechanics, same day. This reproduction has no
+mechanics, so I bounded what the coupling could change:
+- **Swelling.** The material is incompressible (det F_e = 1), so the current
+  volume is exactly J = α³ times the reference volume, and the paper's domain
+  averages are α³-weighted reference averages. With Eq. 36 at the best-fit s,
+  α − 1 stays below 0.0015 (4.1), 0.010 (4.2 high) and 0.004 (4.2 low) at
+  T* = 1, and the weighted means of φ and c differ from the plain ones by at
+  most 0.001. Swelling does not move the curves.
+- **Stress feedback.** Eq. 30 has φμ(I:C_e − 3), which the paper drops
+  (Eq. 33). With elastic strains of the order of the growth mismatch (about
+  10⁻³) the bracket is about 10⁻⁴–10⁻⁶; divided by η_φ = 10⁻¹⁰ the term is
+  10⁴–10⁶ /T*, against a growth term of about 500 /T*. Kept as written it
+  would dominate and stop the growth that every figure shows, so the figures
+  were computed without it, as Eq. 33 says.
+So the curves of Fig. 4 and 7 can be compared with a mechanics-free solver;
+the coupling matters for the stress plots (Table 3, Fig. 8), not for φ and c.
