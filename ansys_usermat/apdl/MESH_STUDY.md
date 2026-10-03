@@ -130,3 +130,25 @@ linear-elastic hex8 solver on three meshes. Stresses in Pa:
 - The ratio "neighbours about 25x the seeded element" of Check 3 is not this
   table's last column: there the seeded element is one interior element of
   the seed, here the comparison is the seed average against the void.
+
+### The same in ANSYS: a 16^3 deck (prepared 3 Oct, run on IKMHIWI03)
+
+`refine_deck.py` writes the partner's deck on an n^3 mesh, every component
+mapped by its place in space (seed 32 -> 256 elements, nutrient layer 64 -> 512,
+the three constrained corner nodes unchanged; `--selftest` reproduces the base
+at n = 8; all 4096 elements keep the base orientation). Steps:
+
+```powershell
+git pull
+python ansys_usermat\apdl\refine_deck.py <stage-1 base>.dat F:\biofilm_upf_wired\ds16_base.dat --n 16
+#   prints: old element 220 -> new elements [2151, 2152, 2167, 2168, 2407, 2408, 2423, 2424]
+python ansys_usermat\apdl\make_wired_deck.py F:\biofilm_upf_wired\ds16_base.dat F:\biofilm_upf_wired\ds16_pv_eq36.dat `
+    --set K_LOCAL1=1e-3 --set K_LOCAL2=0 --set MY_BIOSTART2=0.0 `
+    --set YOUNG_BIO=1e-5 --set POISSON_BIO=0.49 --set YOUNG_VOID=-1e-3 `
+    --props 7=1e-3,28=1 --post both --post-elem 2151
+.\ansys_usermat\apdl\run_apdl.ps1 -Deck ds16_pv_eq36.dat -WorkDir F:\biofilm_upf_wired
+```
+Then compare the seed average von Mises and mean stress of the 8^3 run
+(`all_stress_ds_pv_eq36.csv`) with the 16^3 run: Python predicts the 8^3 values
+about 1.6-1.75 times the 16^3 ones. Use the same `--set`/`--props` as the 8^3
+paper-value runs (see the header of `figs_1005.py`); only the mesh may differ.
