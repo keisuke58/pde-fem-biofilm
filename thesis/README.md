@@ -46,8 +46,17 @@ Needs `algorithm.sty` (Debian/Ubuntu: `texlive-science`).
 | ch5 conclusion | rewritten (file `chapters/ch6_conclusion.tex`) |
 | appendix | AGORA2 strains, TMCMC details, Klempt 2024 reproduction (new) |
 
-Open, for the author to decide:
-- the title on the title page is still the old one ("Hamilton-Principle Models of Oral Biofilm Dysbiosis ..."); it may already be registered with the Pruefungsamt;
-- the title page names Prof. Junker as Betreuer; Meisam Soleimani supervises the work (`../THESIS_ASSIGNMENT.md`);
+Title page (3 Oct 2026) set exactly as registered on the form of 18.08.2026:
+title "Hamilton-Principle Models of Oral Biofilm Dysbiosis: GPU-Accelerated
+Inference, Metabolic Priors, and Spatial Stratification"; Erstpruefer Prof.
+Junker (IKM), Zweitpruefer Dr.-Ing. M. Wangenheim (IDS), Betreuer Dr.-Ing. M.
+Soleimani and Dr.-Ing. H. Geisler. The form itself (personal data) is not in
+the repository.
+
+Open:
+- the registered subtitle names "Spatial Stratification" (the FISH work, now out
+  of scope); the spatial part of the thesis is now the FEM coupling. Ask whether
+  the subtitle can be changed, or describe the spatial composition of chapter 4
+  in those terms;
 - the old ch4 and ch5 files (`chapters/ch4_dieckow.tex`, `chapters/ch5_integration.tex`, `chapters/appendix_unused.tex`) are no longer input and can be deleted once nothing more is taken from them.
 
