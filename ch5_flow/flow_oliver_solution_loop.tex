@@ -49,6 +49,7 @@
   assemble $+$ PARDISO solve $\rightarrow$ temperature field\\[2pt]
   assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut1} field\\[2pt]
   assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut2} field\\[2pt]
+  explicit update $\rightarrow$ biofilm fields \texttt{Bio1}, \texttt{Bio2} ($\phi_1,\phi_2$)\\[2pt]
   \textcolor{gray!55!black}{\texttt{AGPhaseViskoP21V07} — commented out}\\[2pt]
   \textcolor{gray!55!black}{\texttt{CalcLaserIntegralOMP} / \texttt{CALCPYRO}
     — laser \& pyrometer (inherited glass process)}};
@@ -58,32 +59,28 @@
 \draw[arb] (fld.west) -- ++(-0.85,0) |- node[lbl,pos=0.25,left,xshift=-2pt]
   {next substep} (gp.west);
 
-% ── our attachment point ────────────────────────────────────────────
+% ── attachment point of this work ───────────────────────────────────
 \node[Nours, right=1.15cm of gp] (ours) {%
-  \textbf{our contribution attaches here}\\[4pt]
+  \textbf{added in this work}\\[4pt]
   \texttt{BIOFILM\_GROWTH\_VISCO\_V01}\\
   \scriptsize(\texttt{ansys\_usermat/biofilm\_material\_v01.f})\\[4pt]
-  \scriptsize same signature shape as \texttt{AceGenNeoHookV04}, plus the
-  growth variable $\alpha$ and the viscous state $\mathbf F_v$\\[2pt]
-  \scriptsize adds $\mathbf F=\mathbf F_e\mathbf F_v\mathbf F_g$,
-  $\mathbf F_g=(1{+}\alpha)\mathbf I$ over their purely elastic law};
+  \scriptsize growth $\dot\alpha=k_\alpha\phi$ (Klempt 2024, Eq.~36) and
+  $\mathbf F_g=\alpha\mathbf I$ over their elastic law;\\
+  \scriptsize for two species, the point model (Klempt 2026) through
+  the bridge to Python};
 \draw[ar, draw=red!65!black, very thick] (ours) -- (gp);
 
 % ── annotations ─────────────────────────────────────────────────────
 \node[note, right=1.15cm of fld, yshift=0.1cm] (n1) {%
-  Staggered / operator-split: ANSYS solves the mechanics, \texttt{USSFin}
-  solves the transport fields on the NEM operator with MKL PARDISO, and the
-  two alternate substep by substep.\\[3pt]
-  The transport fields are \textbf{not} ANSYS degrees of freedom --- they live
-  entirely in the UPF's own data pool.\\[3pt]
-  \textcolor{red!55!black}{Interpretation, not stated by the code:} the two
-  \texttt{Nut} systems are most likely the biofilm and nutrient fields rather
-  than two nutrients.};
+  Staggered: ANSYS solves the mechanics, \texttt{USSFin} solves the
+  transport fields on the NEM operator with MKL PARDISO, and the two
+  alternate substep by substep.\\[3pt]
+  The transport fields are \textbf{not} ANSYS degrees of freedom: they live
+  in the UPF's own data pool.};
 
 \node[note, right=1.15cm of beg, yshift=0.05cm] {%
-  Because every parameter arrives through \texttt{parevl} into
-  \texttt{/usercm/}, the ANSYS \texttt{prop()} array is unused --- material
-  constants do \emph{not} come in through \texttt{TB,USER} here, unlike our
-  own deck.};
+  The partner's parameters arrive through \texttt{parevl} into
+  \texttt{/usercm/}; the constants of the growth law and the coupling come
+  in through \texttt{TB,USER} (\texttt{prop}).};
 
 \end{tikzpicture}
