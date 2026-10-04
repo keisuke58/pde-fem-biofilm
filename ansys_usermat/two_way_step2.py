@@ -17,9 +17,18 @@ scheme of the ANSYS runs (amount from the field, phi_cap = 0.9, s = 0.15),
 coupling step 0.1. The rates r_i are not from a paper; d is a sensitivity
 parameter.
 
-Check: with d = 0 the run equals the one-way scheme exactly.
+With d = 0 the field is the one-way field (r unchanged, up to round-off).
 
     python ansys_usermat/two_way_step2.py -> assets/fig_two_way_step2.png
+
+Result (4 Oct 2026), T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2):
+  case 3: mean phi 0.704 -> 0.735, biomass-weighted share 0.656 -> 0.656
+  case 6: mean phi 0.704 -> 0.599, share 0.026 -> 0.033
+  largest pointwise change of phi: 0.47 (case 3), 0.63 (case 6)
+Which species wins now decides how fast the biofilm spreads: in case 3 the
+faster species is the majority and the front moves faster; in case 6 the
+slower species takes over and the front falls behind. The composition itself
+hardly changes, because it is set by the point model's own dynamics.
 """
 from __future__ import annotations
 

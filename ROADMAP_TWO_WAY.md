@@ -67,8 +67,13 @@ with a consumption strong enough for c to drop across the seed.
   (divided by eta_phi = 1e-10) would stop all growth (KLEMPT2024_REPRODUCTION.md
   sec. 12). Step 4 needs a different growth law (e.g. Soleimani et al. 2020) and
   realistic stress levels.
-- **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`): result
-  to follow.
+- **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`, on the
+  reproduced Klempt 2024 test case 4.1 field): front growth rate
+  r = sum chi_i r_i with r_1 = 1.5 r, r_2 = 0.5 r (not from a paper). At T* = 1
+  the mean phi goes from 0.704 to 0.735 in case 3 (the faster species is the
+  majority) and to 0.599 in case 6 (the slower species takes over); phi changes
+  by up to 0.47 / 0.63 locally, the composition hardly at all. The feedback is
+  real and large; in ANSYS it needs the element's front term.
 
 ## Checks to carry over
 
