@@ -70,6 +70,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 |---|---|
 | `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
+| `QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Prof. Soleimani and Assoc. Prof. Muramatsu |
 | `references/` | Klempt et al. 2024 (BMMB) and Soleimani et al. 2023 (Sci. Rep., co-aggregation), both CC BY 4.0: PDFs and searchable text extractions; licence in `THIRD_PARTY.md` |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
 | `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
