@@ -112,8 +112,9 @@ Aim: replace assumptions of this work by published precedents. Feng et al.
     would be a published one rather than mine.
   - Species rates: μ₁ = 3e-5 1/s (S. gordonii, measured, Rath et al. 2017,
     FEMS Microbiol. Ecol.), μ₂ = 8e-5 1/s (Veillonella, estimated). Ratio 2.7,
-    i.e. d = (2.7 − 1)/(2.7 + 1) ≈ 0.46, between d = 1/3 (from η) and the
-    sensitivity case d = 0.5. With d in [1/3, 0.5] case 6 gives mean φ
+    i.e. d = (2.7 − 1)/(2.7 + 1) ≈ 0.45, between d = 1/3 (from η) and the
+    sensitivity case d = 0.5. Run (dt 0.025): case 3 0.704 -> 0.746, case 6
+    0.704 -> 0.626. With d in [1/3, 0.5] case 6 gives mean φ
     0.648 to 0.618 at T* = 1.
   - No mechanics, no species-specific stiffness ("fluid-structure interaction
     is not considered").
