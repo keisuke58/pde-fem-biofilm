@@ -162,6 +162,9 @@ Aim: replace assumptions of this work by published precedents. Feng et al.
   the nutrient condition alone. The condition changes the modulus more than any
   species ratio used in step 3 (up to 5).
 - **Consequence:** literature values bound d to about 1/3 to 2/3, but do not
-  fix it, because they are condition dependent and planktonic. A value for this
-  system could come from the Heine time courses themselves (initial growth of
-  each species per condition), i.e. from the data already used for TMCMC.
+  fix it, because they are condition dependent and planktonic.
+- **Not from the TMCMC calibration (note, 4 Oct):** the calibration estimates
+  only the interaction matrix A (15 coefficients). The rates b are not
+  estimated, so the calibrated model gives no species growth-rate ratio. A ratio
+  from the Heine data would need a separate, model-free fit of the early growth
+  of each species, which is not done.
