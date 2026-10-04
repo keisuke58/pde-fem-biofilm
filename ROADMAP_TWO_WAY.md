@@ -93,3 +93,42 @@ Each step must keep the checks that pass today:
 
 Step 2 adds one check of its own: with all `R_s,i` and `gᵢ` equal, it must
 reduce exactly to the one-way scheme.
+
+## Literature for the two-way steps (searched 2026-10-04)
+
+Aim: replace assumptions of this work by published precedents. Read from
+abstracts/summaries so far; **Feng et al. 2021 to be checked in full** before
+anything goes into the thesis.
+
+- **Step 2, composition into the spreading: Feng, Neuweiler, Nogueira,
+  Nackenhorst (2021)**, Bull. Math. Biol., doi:10.1007/s11538-021-00888-2
+  (open access, PMC7990864; Hannover, Nackenhorst group).
+  - Two-species oral biofilm (S. gordonii, Veillonella), continuum, FEM.
+  - The biomass spreads with a potential flow driven by the **sum of the
+    species' growth**: ∇²Φ = g₁/ρ + g₂/ρ in the biofilm, u = ∇Φ. Same idea as
+    step 2 (composition sets how fast the biofilm spreads), so the mechanism
+    would be a published one rather than mine.
+  - Species rates: μ₁ = 3e-5 1/s (S. gordonii, measured, Rath et al. 2017,
+    FEMS Microbiol. Ecol.), μ₂ = 8e-5 1/s (Veillonella, estimated). Ratio 2.7,
+    i.e. d = (2.7 − 1)/(2.7 + 1) ≈ 0.46, between d = 1/3 (from η) and the
+    sensitivity case d = 0.5. With d in [1/3, 0.5] case 6 gives mean φ
+    0.648 to 0.618 at T* = 1.
+  - No mechanics, no species-specific stiffness ("fluid-structure interaction
+    is not considered").
+  - To check: whether g_i there is Monod-limited growth (yes per summary),
+    how it maps onto Klempt 2024's front term, licence for `references/`.
+- **Rath, Feng, Neuweiler, Stumpp, Nackenhorst, Stiesch (2017)**, FEMS
+  Microbiol. Ecol.: measured S. gordonii biofilm growth, the source of μ₁.
+- **Soleimani et al. 2023** (already cited): summing S₁ + S₂ gives the
+  share-weighted rate; same rate for both species (R_s = 500).
+- **Klempt, Soleimani, Junker (2025), arXiv:2509.01274** = the point model
+  (Klempt et al. 2026). Material point model, no mechanics, no spatial
+  extension in the outlook; "a higher viscosity leads to a slower reaction"
+  (Sec. 3.1) supports the direction of the 1/η_i assumption, not its form.
+- **Step 3, species stiffness:** no moduli for oral species found. Species
+  differences in biofilm rheology exist for other species (nonlinear rheology
+  of single-species biofilms, PMC7156450; Peterson et al., viscoelasticity
+  review). Stays a sensitivity parameter.
+- **Step 4, stress into growth:** growth inhibited by compressive stress,
+  coarse-grained to a continuum law without free parameters (arXiv:2603.28630,
+  not yet read); Soleimani 2020 (already cited).
