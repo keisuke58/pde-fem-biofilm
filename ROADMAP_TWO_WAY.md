@@ -71,9 +71,10 @@ with a consumption strong enough for c to drop across the seed.
 - **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`, on the
   reproduced Klempt 2024 test case 4.1 field): front growth rate
   r = sum chi_i r_i with r_1 = 1.5 r, r_2 = 0.5 r (not from a paper). At T* = 1
-  the mean phi goes from 0.704 to 0.735 in case 3 (the faster species is the
-  majority) and to 0.599 in case 6 (the slower species takes over); phi changes
-  by up to 0.47 / 0.63 locally, the composition hardly at all. The feedback is
+  the mean phi goes from 0.704 to 0.750 in case 3 (the faster species is the
+  majority) and to 0.618 in case 6 (the slower species takes over); phi changes
+  by up to 0.41 / 0.55 locally, the composition hardly at all. Converged in the
+  coupling step (0.1 / 0.05 / 0.025: case 6 0.599 / 0.611 / 0.618). The feedback is
   real and large; in ANSYS it needs the element's front term.
 
 ## Checks to carry over

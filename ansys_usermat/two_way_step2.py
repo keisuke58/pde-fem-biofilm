@@ -21,10 +21,15 @@ With d = 0 the field is the one-way field (r unchanged, up to round-off).
 
     python ansys_usermat/two_way_step2.py -> assets/fig_two_way_step2.png
 
-Result (4 Oct 2026), T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2):
-  case 3: mean phi 0.704 -> 0.735, biomass-weighted share 0.656 -> 0.656
-  case 6: mean phi 0.704 -> 0.599, share 0.026 -> 0.033
-  largest pointwise change of phi: 0.47 (case 3), 0.63 (case 6)
+Result (4 Oct 2026), T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2),
+mean phi one-way -> two-way and biomass-weighted share phi_1/(phi_1+phi_2):
+  coupling step   case 3                   case 6
+  0.1             0.704 -> 0.735 (0.656)   0.704 -> 0.599 (0.026 -> 0.033)
+  0.05            0.704 -> 0.749 (0.663)   0.704 -> 0.611 (0.034 -> 0.042)
+  0.025           0.704 -> 0.750 (0.666)   0.704 -> 0.618 (0.041 -> 0.049)
+The figure is made with 0.025 (python ansys_usermat/two_way_step2.py --dt 0.025);
+the mean phi changes by less than 0.01 from 0.05 to 0.025. Largest pointwise
+change of phi at 0.025: 0.41 (case 3), 0.55 (case 6).
 Which species wins now decides how fast the biofilm spreads: in case 3 the
 faster species is the majority and the front moves faster; in case 6 the
 slower species takes over and the front falls behind. The composition itself
