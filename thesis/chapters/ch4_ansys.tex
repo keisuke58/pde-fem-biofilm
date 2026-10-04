@@ -775,3 +775,81 @@ would close the loop, ordered by how well the literature supports them.
 Steps 1 and 2 are the natural first goal of the continuation at Keio; each
 must reduce to the one-way scheme when the species are made equal.}
 
+% Added 4 Oct 2026: ansys_usermat/composition_local_nutrient.py,
+% two_way_step2.py, two_way_step3.py; ROADMAP_TWO_WAY.md.
+\subsection{First steps, computed in Python}
+\label{sec:ch5-outlook-python}
+
+\TierA{%
+I computed the first three steps in Python, outside ANSYS, to see which of them
+change the results. The rates and moduli per species are not known; they are
+sensitivity parameters, not values from a paper.
+
+\paragraph{Step 1: local nutrient.} On the example model of this chapter
+(Figure~\ref{fig:ch5-local-nutrient}), the nutrient is held at the face
+$y=-1$~mm and consumed in the seed; its strength is the Thiele number
+$\Lambda^2=gL^2/d$ with $L=1$~mm, scanned because $d$ and $g$ of the example
+input are not taken from the paper. Each point of the seed runs the point
+model with $c^*=c^*_0\,c$. Case~3 hardly depends on the nutrient level, the
+share $\phi_1/(\phi_1+\phi_2)$ staying at $0.63$ to $0.66$. In case~6 the
+takeover is slower where the nutrient is low: for $\Lambda=4$ the share ranges
+from $0.03$ near the nutrient face to $0.44$ in the interior of the seed. The
+composition thus varies in space without any spreading, which the element
+cannot yet show. The values are converged in the grid ($16^3$, $32^3$) and in
+the coupling step ($0.025$). The bridge already passes the local nutrient to
+the point model; reading it at the Gauss point of the element remains to be
+done.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_local_nutrient_thesis.png}
+  \caption[Local nutrient in the point model]{%
+    Local nutrient in the point model, computed in Python on the example model
+    (section through the seed, $32^3$ grid). Top: nutrient $c$, held at $y=-1$~mm
+    and consumed in the seed (white outline), for three Thiele numbers $\Lambda$.
+    Bottom: share $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ for case~6 of Klempt et
+    al.\ 2026 with $c^*=c^*_0\,c$; grey: no biofilm. Case~3 stays at
+    $0.63$--$0.66$ and is not shown.}
+  \label{fig:ch5-local-nutrient}
+\end{figure}
+
+\paragraph{Step 2: composition into the spreading.} On the reproduced field of
+Klempt et al.\ 2024, test case~4.1, the front growth rate becomes
+$r=\sum_i\chi_i r_i$ with $\chi_i=\phi_i/(\phi_1+\phi_2)$ and
+$r_{1,2}=(1\pm d)\,r$; for $d=0$ the scheme is the one-way one. With $d=0.5$
+the mean $\phi$ at $T^*=1$ rises from $0.704$ to $0.750$ in case~3, where the
+faster species is the majority, and falls to $0.618$ in case~6, where the slower
+species takes over; locally $\phi$ changes by up to $0.55$
+(Figure~\ref{fig:ch5-two-way}). The composition itself hardly changes. Which
+species wins then decides how fast the biofilm spreads. The values are
+converged in the coupling step. In ANSYS this step needs a working front term.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_two_way_step2_thesis.png}
+  \caption[Composition acting on the spreading]{%
+    Composition acting on the spreading, computed in Python on the reproduced
+    field of Klempt et al.\ 2024, test case~4.1 (mid-plane $z=10~\mu$m),
+    with species growth rates $r_{1,2}=(1\pm d)\,r$, $d=0.5$ (not from a paper).
+    Left and middle: $\phi$ at $T^*=1$ for case~6 without and with the feedback.
+    Right: mean $\phi$ over time.}
+  \label{fig:ch5-two-way}
+\end{figure}
+
+\paragraph{Step 3: composition into the stiffness.} With the seed composition
+of step~1 and a ratio of the species moduli up to $5$ at the same mean modulus,
+the average stresses in the seed change by at most $0.2\,\%$. The seed is about
+a thousand times stiffer than the void around it, so the soft surroundings set
+its stress. This step matters only where the biofilm itself carries the load,
+such as a contiguous biofilm on a substrate.
+
+\paragraph{Step 4: stress into growth.} In the example model the mean stress
+in the seed is about $10^{-5}$ times the shear modulus, so a stress-dependent
+growth law would change little with the published parameters, while the
+mechanical term of Klempt et al.\ 2024, Eq.~30, kept as written would stop all
+growth (Appendix~\ref{app:klempt2024}). This step needs a different growth law
+and realistic stress levels.
+
+Of the four steps, step~2 changes the results most and step~1 is the easiest
+to add to the element; both are the first goals of the continuation at Keio.}
+
