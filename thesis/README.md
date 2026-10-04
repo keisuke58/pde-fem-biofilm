@@ -63,3 +63,23 @@ Open:
   final, check every number in the ch3 text against its table or figure (on
   4 Oct one pair of gLV entries had mixed CS and CH values, and the posterior
   was mislabelled NUTS; both fixed).
+
+## Timeline to submission and colloquium (decided 4 Oct)
+
+| when | what |
+|---|---|
+| 5 Oct | meeting 9:00; IKMHIWI03 run sheet `ansys_usermat/apdl/RUN_1005_IKMHIWI03.md` (last ANSYS day before 12 Oct) |
+| 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
+| 12-16 Oct | TMCMC final, ch3 numbers; **full draft to Prof. Soleimani and Dr. Geisler about 16 Oct** |
+| 19-28 Oct | supervisor comments |
+| 29-30 Oct | proofreading, printing, binding |
+| **2 Nov** | **submission** (date to confirm) |
+| 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
+| Dec | colloquium; 3-11 Dec is blocked (travel), so 1-2 Dec or from 14 Dec |
+
+Reading plan while away in November (about one hour a day):
+1. ch1 and ch2 (model and notation) with the variables and equations sheet;
+2. ch4 verification and coupling, redoing the closed-form stress by hand;
+3. ch4 results, assumptions and sensitivity (s, phi_cap, d);
+4. ch3 calibration and ch6;
+5. `QA_1005.md` and new questions, answered aloud.
