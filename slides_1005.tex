@@ -32,17 +32,6 @@
 \begin{document}
 \maketitle
 
-% --------------------------------------------------------
-\begin{frame}{Status (administration)}
-\begin{itemize}
-  \item \textbf{Admission (Zulassung) granted} by the examination office, 18 Aug 2026
-  \item Examiners: first \textbf{Prof.\ Junker (IKM)}, second \textbf{Dr.\ Wangenheim (IDS)}
-  \item Supervisors: Prof.\ Soleimani, Dr.\ Geisler (IKM)
-  \item Thesis written in \textbf{English} (approved on the admission form)
-  \item Submission planned in \textbf{November 2026} (aiming for early November), presentation in December
-  \item 12-week internship at NIFE completed (04.05--24.07); report submitted
-\end{itemize}
-\end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Since the last meeting: the scope of the FEM part is fixed}
@@ -140,13 +129,6 @@ ANSYS 2022 R2, one-species runs.
 \end{itemize}
 \end{frame}
 
-% --------------------------------------------------------
-\begin{frame}{One coupling step at a Gauss point}
-\vspace{-4pt}
-\begin{center}
-\includegraphics[width=\linewidth,height=0.84\textheight,keepaspectratio]{assets/fig_coupling_equations.png}
-\end{center}
-\end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{What I implemented, and what I used}
@@ -157,7 +139,7 @@ Part & Source & My work\\
 \midrule
 3D growth field, Eq.\ 34/35; neo-Hookean stiffness &
 Klempt et al.\ 2024; Oliver's ANSYS element &
-used unchanged; read it and reported four findings (previous slides)\\
+used unchanged; read it and reported four findings (slide 9)\\
 Point model equations & Klempt et al.\ 2026 & taken from the paper\\
 Point model solver (Newton per step) & my JAX code &
 all 14 examples of the paper reproduced\\
@@ -168,78 +150,36 @@ Bridge Fortran $\to$ Python & this work (C binding, local socket, material serve
 point model called once per Gauss point and step\\
 Sub-stepping and step-size guard & this work &
 point model in steps $\le 10^{-4}$; too large a step asks ANSYS to cut back\\
-ANSYS build and run scripts & this work & custom ANSYS executable, non-interactive\\
 Checks & this work & closed form in ANSYS, replay of every call, about 440 unit tests\\
-Reproductions of Klempt 2024 / 2026 & this work & independent solvers in Python\\
 \bottomrule
 \end{tabular}
-\end{frame}
 
-% --------------------------------------------------------
-\begin{frame}{The Python side of the coupling}
-\small
-\begin{center}
-\begin{tikzpicture}[node distance=0.5cm, every node/.style={font=\scriptsize,align=center}]
-\node[draw,fill=c3!10,rounded corners,text width=2.6cm] (a) {ANSYS, Gauss point\\ material call (Fortran)};
-\node[draw,fill=c3!10,rounded corners,text width=2.4cm,right=of a] (b) {C binding\\ request: state, $\phi_{3D}$, $s\,\Delta t$};
-\node[draw,fill=c3!10,rounded corners,text width=2.4cm,right=of b] (c) {material server\\ (Python, local socket)};
-\node[draw,fill=orange!15,rounded corners,text width=2.8cm,right=of c] (d) {point model:\\ $n_{sub}$ Newton steps in one compiled loop (JAX)};
-\draw[-{Latex}] (a) -- (b); \draw[-{Latex}] (b) -- (c); \draw[-{Latex}] (c) -- (d);
-\draw[-{Latex}] (d.south) to[bend left=18] node[below]{new $\phi_i$, $\psi_i$, $\gamma$; Fortran rescales and stores them} (a.south);
-\end{tikzpicture}
-\end{center}
-\vspace{2pt}
+\vspace{4pt}
 \footnotesize
-\begin{itemize}
-  \item The point model has no space dependence, so one call per Gauss point and
-        step is all it needs; neighbouring points are not involved
-  \item \textbf{Sub-stepping:} a coupling step is split into
-        $n_{sub}=\lceil s\Delta t/10^{-4}\rceil$ point-model steps. With one
-        coarse step the Newton solve diverged; split, it is stable
-  \item \textbf{Speed:} the whole sub-step chain runs as one compiled loop:
-        1000 sub-steps from about 10\,s to 0.07\,s per call; a single-element
-        ANSYS run from 357\,s to 5.6\,s, with identical output
-  \item \textbf{Checks:} each call equals the chained single steps bit for bit;
-        every call of an ANSYS run is replayed in Python with difference 0.0
-\end{itemize}
+\textbf{Python side:} one call per Gauss point and step (the point model has no
+space). Each coupling step is split into point-model steps $\le10^{-4}$ (one
+coarse step diverged), run as one compiled loop: a single-element ANSYS run
+from 357\,s to 5.6\,s, same output. Every call of an ANSYS run is replayed in
+Python, difference 0.0.
 \end{frame}
 
-% --------------------------------------------------------
-\begin{frame}{Check 1: exact solution, inside ANSYS}
-\small Where the field has no gradients, Eq.\ 34/36 reduce to
-$\dot\phi=k_\alpha\alpha$, $\dot\alpha=k_\alpha\phi$
-$\Rightarrow$ $\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$.
-\vspace{2pt}
-\begin{center}
-\includegraphics[width=\linewidth,height=0.56\textheight,keepaspectratio]{assets/fig1005_exact.png}
-\end{center}
-\vspace{-4pt}
-ANSYS follows the exact solution of the time-stepping scheme:
-$\alpha$ to $3\times10^{-11}$ (round-off), $\phi$ to $10^{-7}$
-(about $10^{-4}$ relative; this element is not perfectly gradient-free).
-\end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Check 2: whole model, two ways of computing $\alpha$}
+\begin{frame}{Checks 1 and 2: exact solution and whole model}
 \begin{columns}[T]
-\begin{column}{0.52\textwidth}
-\includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{assets/fig1005_whole_model.png}
+\begin{column}{0.5\textwidth}
+\footnotesize\textbf{1. Exact solution inside ANSYS.} Without gradients,
+$\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$.
+\includegraphics[width=\linewidth,height=0.42\textheight,keepaspectratio]{assets/fig1005_exact.png}
+ANSYS follows it: $\alpha$ to $3\times10^{-11}$ (round-off), $\phi$ to $10^{-7}$
+(the element still sees a small gradient).
 \end{column}
-\begin{column}{0.46\textwidth}
-\small
-Von Mises stress of every element (512), computed with
-\begin{itemize}
-  \item Eq.\ 36 in the material routine (this work), or
-  \item the element's own growth variable
-\end{itemize}
-\vspace{2pt}
-Same pattern: \textbf{cosine similarity 1.0000}.\\
-Magnitude: the element's own variable gives \textbf{0.455} times the Eq.\ 36
-result, $\tfrac12\times\tfrac{10}{11}$:
-\begin{itemize}
-  \item $\tfrac12$: it averages over both species fields, also the unused one
-  \item $\tfrac{10}{11}$: it lags one time step
-\end{itemize}
+\begin{column}{0.48\textwidth}
+\footnotesize\textbf{2. Whole model, 512 elements.} Von Mises from Eq.\ 36 (this
+work) vs.\ the element's own growth variable.
+\includegraphics[width=\linewidth,height=0.42\textheight,keepaspectratio]{assets/fig1005_whole_model.png}
+Same pattern, cosine similarity 1.0000; magnitude $0.455=\tfrac12\times\tfrac{10}{11}$
+(mean over both species fields, one-step lag).
 \end{column}
 \end{columns}
 \end{frame}
@@ -388,50 +328,37 @@ each point early, so its point model runs for most of the time either way.
 \end{frame}
 
 
-% --------------------------------------------------------
-\begin{frame}{Earlier work kept in the thesis: curved substrate}
-\small A curved \textbf{substrate} (no growth) bonded to a thin \textbf{growth
-layer} on top, with the verified growth law.
-\begin{itemize}
-  \item \textbf{Bug found:} the layers were joined only at coincident nodes, i.e.\
-        along a few node lines; the ``two-lobe bulge'' reported earlier was the
-        layer lifting between them
-  \item \textbf{Fix:} one shared interface mesh. The bonded layer bulges
-        near-uniformly and converges at second order (2.4k / 19k / 150k elements:
-        profile error $2.7\,\%\to0.58\,\%$)
-  \item \textbf{Consequence:} growth layer $6.3\times$ the substrate von Mises
-        (not $15.2\times$); differences between the 4 clinical conditions
-        ($0.4\,\%$) are of the order of placement effects $\Rightarrow$ no condition
-        effect on stress is claimed
-\end{itemize}
-\end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Timeline to submission}
+\begin{frame}{Status and timeline}
 \centering
-\begin{tikzpicture}[x=3.0cm, y=-0.75cm]
+\begin{tikzpicture}[x=2.6cm, y=-0.55cm]
   \foreach \m/\lbl in {0/Oct, 1/Nov, 2/Dec} {
-    \draw[gray!40] (\m,0) -- (\m,3.6);
-    \node[above] at (\m+0.5,0) {\lbl};
+    \draw[gray!40] (\m,0) -- (\m,3.4);
+    \node[above,font=\scriptsize] at (\m+0.5,0) {\lbl};
   }
-  \draw[gray!40] (3,0) -- (3,3.6);
-  \draw[fill=c3!70] (0,0.7) rectangle (0.75,1.3);
-  \node[white,font=\scriptsize] at (0.375,1.0) {coupling (done)};
-  \draw[fill=c3!45] (0.3,1.7) rectangle (0.95,2.3);
-  \node[font=\scriptsize] at (0.625,2.0) {runs, figures};
-  \draw[fill=c3!25] (0.45,2.7) rectangle (1.25,3.3);
-  \node[font=\scriptsize] at (0.85,3.0) {writing};
-  \draw[fill=warn!25,draw=warn!70] (1.25,0.7) rectangle (2.0,1.3);
-  \draw[fill=warn!70] (1.25,0.7) rectangle (1.4,1.3);
-  \node[font=\scriptsize] at (1.7,1.0) {submit};
-  \draw[fill=warn!40] (2.3,0.7) rectangle (2.7,1.3);
-  \node[font=\scriptsize] at (2.5,1.0) {present};
+  \draw[gray!40] (3,0) -- (3,3.4);
+  \draw[fill=c3!70] (0,0.6) rectangle (0.75,1.3);
+  \node[white,font=\scriptsize] at (0.375,0.95) {coupling (done)};
+  \draw[fill=c3!45] (0.3,1.6) rectangle (0.95,2.3);
+  \node[font=\scriptsize] at (0.625,1.95) {runs, figures};
+  \draw[fill=c3!25] (0.45,2.6) rectangle (1.25,3.3);
+  \node[font=\scriptsize] at (0.85,2.95) {writing};
+  \draw[fill=warn!25,draw=warn!70] (1.25,0.6) rectangle (2.0,1.3);
+  \draw[fill=warn!70] (1.25,0.6) rectangle (1.4,1.3);
+  \node[font=\scriptsize] at (1.7,0.95) {submit};
+  \draw[fill=warn!40] (2.1,0.6) rectangle (2.9,1.3);
+  \node[font=\scriptsize] at (2.5,0.95) {present};
 \end{tikzpicture}
-\vspace{6pt}
+\vspace{4pt}
+\small
 \begin{itemize}
-  \item Submission: within November, aiming for early November
-  \item Presentation: December (before returning to Japan), date to be fixed
-        with both examiners
+  \item Admission granted 18 Aug 2026; examiners \textbf{Prof.\ Junker (IKM)} and
+        \textbf{Dr.\ Wangenheim (IDS)}; supervisors Dr.\ Soleimani, Dr.\ Geisler;
+        thesis in English
+  \item 12-week internship at NIFE completed (04.05--24.07), report submitted
+  \item Submission within November (aiming for early November); presentation
+        in December, date to be fixed with both examiners
 \end{itemize}
 \end{frame}
 

@@ -18,7 +18,7 @@
 \begin{document}
 {\Large\bfseries Speaker script --- meeting 5 October 2026}\\[2pt]
 Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
-21 slides plus a 4-slide appendix (notation, background, Klempt et al.\ 2024 reproduction), about 27 minutes. Times are rough targets.
+16 slides plus a 4-slide appendix (notation, background, Klempt et al.\ 2024 reproduction), about 22 minutes. Times are rough targets.
 
 % ------------------------------------------------------------------
 \slide{Title}{0:20}
@@ -28,14 +28,6 @@ following the papers by Klempt et al.
 \JA お時間をいただきありがとうございます。今日は修論の現状を報告します。
 バイオフィルムの成長モデルを IKM の既存の要素に組み込み、すべて Klempt らの論文に
 沿って進めた結果です。
-
-% ------------------------------------------------------------------
-\slide{Status (administration)}{0:40}
-\EN Briefly the formal side: admission was granted in August, the examiners
-are Prof.\ Junker and Dr.\ Wangenheim, and the thesis is written in English.
-I plan to submit within November, aiming for early November, and to present in December, before I return to Japan.
-\JA まず事務的なことです。8 月に受験資格が認められ、審査員は Junker 先生と
-Wangenheim 先生です。修論は英語で書きます。提出は 11 月中（目標は上旬）、発表は帰国前の 12 月の予定です。
 
 % ------------------------------------------------------------------
 \slide{Since the last meeting: the scope is fixed}{1:30}
@@ -101,24 +93,6 @@ nothing more.
 います。拘束は印を付けた角の 3 節点だけで、剛体運動を止める以外の拘束はありません。
 
 % ------------------------------------------------------------------
-\slide{One coupling step at a Gauss point}{1:30}
-\EN This is one time step at one Gauss point, written out. Box one is
-Oliver's element, unchanged: it solves the nutrient and the biofilm field of
-Klempt et al.\ 2024 and gives the amount $\phi_{3D}$ at the Gauss point. Box
-two is what I added in the material call: I integrate Eq.\ 36 with that
-amount, set $\mathbf F_g=\alpha\mathbf I$, and the stress follows from the
-elastic part. Box three is the point model of Klempt et al.\ 2026: I scale
-its state to the amount, advance it by $s\,\Delta t$, and scale it again. It
-only decides the composition; nothing goes back to boxes one and two. The
-footer separates the values from the papers from the ones I assumed.
-\JA 1 つの積分点で 1 ステップに行うことを、式で書き出したものです。①は Oliver さんの
-要素で、変更していません。Klempt 2024 の栄養と成長場を解き、積分点での量 $\phi_{3D}$ を
-出します。②は私が材料ルーチンに追加した部分で、その量で Eq.\ 36 を積分し、
-$\mathbf F_g=\alpha\mathbf I$ から弾性部分を通して応力を出します。③は Klempt 2026 の
-点モデルで、状態を場の量に合わせ、$s\,\Delta t$ だけ進め、もう一度合わせます。決めるのは
-組成だけで、①②には戻りません。下の欄で、論文の値と私が仮定した値を分けています。
-
-% ------------------------------------------------------------------
 \slide{What I implemented, and what I used}{1:30}
 \EN To be clear about what is mine: the growth field and the stiffness are
 Oliver's element, used as it is; I read it and reported what I found. The
@@ -126,62 +100,37 @@ equations of the point model are from the paper; the solver is my own JAX
 code, which reproduces all 14 examples of the paper. Everything else on this
 table I wrote: the growth and composition step inside the element's material
 call, the bridge from Fortran to Python, the sub-stepping, the scripts that
-build and run the custom ANSYS, and the checks.
+build and run the custom ANSYS, and the checks. On the Python side, each
+Gauss point sends one request per step; splitting the step into point-model
+steps of at most $10^{-4}$ and running them as one compiled loop brought a
+single-element run from about six minutes to under six seconds, and every
+call can be replayed in Python bit for bit.
 \JA 自分の担当をはっきりさせておきます。成長場と剛性は Oliver さんの要素をそのまま
 使い、私は中身を読んで見つけた点を報告しました。点モデルの式は論文のもので、解く
 プログラムは私の JAX のコードです。論文の 14 例をすべて再現しています。表のそれ以外は
 私が書いたものです。要素の材料ルーチンの中の成長と組成の処理、Fortran から Python への
-橋渡し、時間の細分化、ANSYS のビルドと実行のスクリプト、そして検証です。
+橋渡し、時間の細分化、ANSYS のビルドと実行のスクリプト、そして検証です。Python 側では、
+各積分点が 1 ステップに 1 回だけ要求を送ります。1 ステップを $10^{-4}$ 以下に分けて
+まとめてコンパイルして回すことで、1 要素の計算が約 6 分から 6 秒弱になり、
+すべての呼び出しは Python でビット単位まで再現できます。
 
 % ------------------------------------------------------------------
-\slide{The Python side of the coupling}{1:30}
-\EN At each Gauss point and step, the Fortran material call sends the
-point-model state, the amount and the time step through a C binding to a
-small Python server, which runs the point model and sends the new state
-back. Because the point model has no space dependence, this one call is all
-it needs. Two things made it work: splitting each coupling step into
-point-model steps of at most $10^{-4}$, without which the Newton solve
-diverged, and running that chain as one compiled loop, which brought a
-single-element run from about six minutes to under six seconds. Every call
-of an ANSYS run can be replayed in Python, and it agrees bit for bit.
-\JA 各積分点・各ステップで、Fortran の材料ルーチンが点モデルの状態、量、時間刻みを
-C の橋渡しを通して小さな Python のサーバーに送ります。サーバーが点モデルを解いて、
-新しい状態を返します。点モデルは場所に依存しないので、この 1 回の呼び出しで足ります。
-うまく動かすための工夫は 2 つです。1 つは、連成の 1 ステップを $10^{-4}$ 以下の
-細かいステップに分けることで、これをしないと Newton 法が発散しました。もう 1 つは、
-その細かいステップの列をまとめてコンパイルして回すことで、1 要素の計算が約 6 分から
-6 秒弱になりました。ANSYS の計算のすべての呼び出しは Python で再現でき、ビット単位で
-一致します。
-
-% ------------------------------------------------------------------
-\slide{Check 1: exact solution}{1:30}
-\EN The first check uses an exact solution. Where the field has no gradients,
-the two equations reduce to a linear system with the solution $\sinh$ and
-$\cosh$. Left and middle: ANSYS against the exact curves. The dotted line is
-the exact solution of the time-stepping scheme itself, and the right panel
-shows the difference to it: for $\alpha$ it is round-off, $10^{-11}$; for
-$\phi$ it is $10^{-7}$, about $10^{-4}$ relative, because this element
-still sees a little gradient from its neighbours.
-\JA 1 つ目は厳密解による確認です。場に勾配がない所では、2 本の式が線形系になり、
-解は sinh と cosh です。左と中央が ANSYS と厳密解の比較です。点線は時間刻みの
-計算式そのものの厳密解で、右の図がそれとの差です。$\alpha$ は丸め誤差の $10^{-11}$、
-$\phi$ は $10^{-7}$、相対で約 $10^{-4}$ です。この要素も周りからわずかに
-勾配を受けているためです。
-
-% ------------------------------------------------------------------
-\slide{Check 2: whole model}{1:30}
-\EN Second, the whole model. The element already carries its own growth
-variable, so the stress can be computed in two ways: with Equation 36 in the
-material routine, or with the element's variable. Each dot is one element.
-The pattern is the same, cosine similarity 1.0000, but the element's
-variable gives 0.455 times the Equation 36 result. That is one half times ten
-elevenths: the element averages over both species fields, including the
+\slide{Checks 1 and 2: exact solution and whole model}{2:00}
+\EN Two checks of the coupling in ANSYS. On the left, an exact solution: where
+the field has no gradients the equations reduce to a linear system with the
+solution $\sinh$ and $\cosh$, and ANSYS follows it to round-off in $\alpha$
+and to $10^{-7}$ in $\phi$, because this element still sees a little gradient.
+On the right, the whole model: the stress computed with Equation 36 and with
+the element's own growth variable has the same pattern, cosine similarity
+1.0000, and the element's variable gives 0.455 times the result. That is one
+half times ten elevenths: it averages over both species fields, including the
 unused one, and it lags one time step.
-\JA 2 つ目はモデル全体です。要素はもともと独自の成長変数を持っているので、
-応力を 2 通りで計算できます。材料ルーチンで式 36 を使う方法と、要素の変数を使う方法です。
-点 1 つが要素 1 つです。分布の形は同じでコサイン類似度は 1.0000 ですが、
-大きさは要素の変数のほうが 0.455 倍です。これはちょうど 1/2 × 10/11 で、
-要素が使っていない菌種の場も含めて 2 つの場を平均していることと、
+\JA ANSYS での連成の確認を 2 つ示します。左は厳密解です。場に勾配がない所では式が
+線形系になり、解は sinh と cosh です。ANSYS はこれに $\alpha$ で丸め誤差まで、
+$\phi$ で $10^{-7}$ まで一致します。この要素も周りからわずかに勾配を受けているためです。
+右はモデル全体です。式 36 で計算した応力と要素独自の成長変数で計算した応力は、
+分布の形が同じでコサイン類似度は 1.0000、大きさは要素の変数のほうが 0.455 倍です。
+これは 1/2 × 10/11 で、使っていない菌種の場も含めて平均していることと、
 1 ステップ遅れていることで説明できます。
 
 % ------------------------------------------------------------------
@@ -321,25 +270,18 @@ Table 3 fits $\mu$ read as MPa, not Pa.
 そして $\mu$ の単位です。Table 3 の圧力は、$\mu$ を Pa ではなく MPa として読むと合います。
 
 % ------------------------------------------------------------------
-\slide{Earlier work kept: curved substrate}{1:00}
-\EN One earlier result stays in the thesis, on the verified growth law: a growth
-layer on a curved substrate. I found that the layers had been joined only
-along a few node lines; with a shared interface mesh the layer bulges
-uniformly and converges at second order. As a consequence, the differences
-between the four clinical conditions are as small as placement effects, so I
-do not claim a condition effect on stress.
-\JA 以前の結果で修論に残すものが 1 つあります。検証済みの成長則を使った、曲面の基盤上の
-成長層です。2 つの層が数本の節点列でしかつながっていなかったことが分かり、
-界面を共有するメッシュに直すと、層は一様に膨らみ、2 次で収束しました。その結果、
-4 つの臨床条件の違いは配置の影響と同程度しかないので、条件による応力の差は主張しません。
-
-% ------------------------------------------------------------------
-\slide{Timeline}{0:40}
-\EN The coupling for one and two species is done. October is for
-the thesis runs and figures, writing runs in parallel, and I submit within
-November, aiming for the beginning of the month. The presentation follows in December, before I return to Japan.
-\JA 1・2 菌種の組み込みは終わっています。10 月で修論用の計算と図を仕上げ、
-並行して執筆し、11 月中に提出します（目標は上旬）。発表は帰国前の 12 月です。
+\slide{Status and timeline}{1:00}
+\EN On the administrative side, the admission was granted on 18 August, with
+Prof.\ Junker and Dr.\ Wangenheim as examiners, and the internship at NIFE is
+finished. The coupling for one and two species is done. October is for the
+thesis runs and figures, writing runs in parallel, and I submit within
+November, aiming for the beginning of the month. The presentation follows in
+December, before I return to Japan; I would like to fix the date with both
+examiners soon.
+\JA 事務的には、8 月 18 日に登録が認められ、審査は Junker 先生と Wangenheim 先生です。
+NIFE でのインターンも終わっています。1・2 菌種の組み込みは終わっていて、10 月で修論用の
+計算と図を仕上げ、並行して執筆し、11 月中に提出します（目標は上旬）。発表は帰国前の
+12 月で、日程を早めに両先生と決めたいと考えています。
 
 % ------------------------------------------------------------------
 \slide{Questions for this meeting}{2:00}
