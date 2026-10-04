@@ -135,11 +135,11 @@ iteratively narrowed.
 
 Direct joint estimation of $(\mathbf{A},\bpsi)$ is defeated by the multimodality
 of the coupled $\bphi$--$\bpsi$ dynamics. I break the coupling in two phases.
-In \textbf{Phase~1} the viability $\psi_i(t_k)$ is fixed to the measured
+In Phase~1 the viability $\psi_i(t_k)$ is fixed to the measured
 membrane-intact ratios (fix-$\psi$), halving the Jacobian dimension from $2n+2$ to
 $n+2$ and removing the $\psi$-related modes; an initial wide-prior run furnishes
 posterior quantiles and the production run uses the narrowed bounds
-$[q_{0.01}-1.5\sigma,\,q_{0.99}+1.5\sigma]$. In \textbf{Phase~2} the $\psi_i$ are
+$[q_{0.01}-1.5\sigma,\,q_{0.99}+1.5\sigma]$. In Phase~2 the $\psi_i$ are
 released as free variables, the viability data enter the likelihood as a soft
 constraint, and the Phase-1 posterior serves as an informative prior on
 $\mathbf{A}$, yielding a self-consistent joint posterior. Comparing the Phase-1

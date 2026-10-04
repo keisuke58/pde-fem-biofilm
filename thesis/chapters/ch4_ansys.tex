@@ -782,8 +782,9 @@ must reduce to the one-way scheme when the species are made equal.}
 
 \TierA{%
 I computed the first three steps in Python, outside ANSYS, to see which of them
-change the results. The rates and moduli per species are not known; they are
-sensitivity parameters, not values from a paper.
+change the results. The papers give no growth rates or moduli per species.
+The rates are estimated from the dissipation parameters $\eta_i$ under a stated
+assumption, the moduli are sensitivity parameters.
 
 \paragraph{Step 1: local nutrient.} On the example model of this chapter
 (Figure~\ref{fig:ch5-local-nutrient}), the nutrient is held at the face
@@ -815,8 +816,9 @@ done.
 
 \paragraph{Step 2: composition into the spreading.} On the reproduced field of
 Klempt et al.\ 2024, test case~4.1, the front growth rate becomes
-$r=\sum_i\chi_i r_i$ with $\chi_i=\phi_i/(\phi_1+\phi_2)$ and
-$r_{1,2}=(1\pm d)\,r$; for $d=0$ the scheme is the one-way one. The same
+the mean of the species rates weighted by their shares,
+$\bar r=\bigl(\phi_1r_1+\phi_2r_2\bigr)/(\phi_1+\phi_2)$, with
+$r_{1,2}=(1\pm d)\,r$ and $r$ from Table~\ref{tab:theory_klempt2024}; for $d=0$ the scheme is the one-way one. The same
 weighting follows from the two-species model of Soleimani et
 al.~\cite{Soleimani2023CoAggregation} when the growth sources of the two species,
 $R_{s,i}\,\phi_i\,c$, are summed; there the growth is a local reaction, here it is
