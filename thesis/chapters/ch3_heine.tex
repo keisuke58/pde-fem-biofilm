@@ -264,13 +264,16 @@ of $7$--$13\%$ reflect bounded, non-Gaussian support; the high ESS confirms adeq
 
 \subsection{Posterior predictive fits}
 \label{sec:heine_fits}
+% 4 Oct 2026: "NUTS" here changed to "TMCMC": the RMSE values (0.119/0.104/
+% 0.033/0.087) and N_p = 10,000 are those of the TMCMC Phase-2 posterior, and
+% Sec. heine_gpu states that NUTS is not used. Confirm against the figure source.
 
 To assess fit quality independently of the symmetry constraint, I also fit an
 asymmetric gLV model (free $A_{ij} \neq A_{ji}$) by L-BFGS-B point estimation.
 Table~\ref{tab:glv_hamilton_comparison} summarises the two models across four
 axes; Figure~\ref{fig:heine_glv_fit} shows the gLV MAP fits.
 The gLV achieves markedly lower RMSE (CS: 0.032, CH: 0.026, DS: 0.012,
-DH: 0.022) compared to the Hamilton NUTS posterior (CS: 0.119, CH: 0.104,
+DH: 0.022) compared to the Hamilton TMCMC posterior (CS: 0.119, CH: 0.104,
 DS: 0.033, DH: 0.087), confirming that the symmetry constraint
 $A_{ij}=A_{ji}$ limits trajectory accuracy.
 However, gLV's apparent advantage partly reflects over-fitting:
@@ -287,7 +290,7 @@ conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_valida
   \renewcommand{\arraystretch}{1.3}
   \begin{tabular}{@{}lcc@{}}
     \toprule
-    & \textbf{gLV (L-BFGS-B)} & \textbf{Hamilton NUTS} \\
+    & \textbf{gLV (L-BFGS-B)} & \textbf{Hamilton TMCMC} \\
     \midrule
     Interaction matrix $\bA$ & Asymmetric ($25$ entries) & Symmetric ($15$ entries) \\
     Parameters total         & 30 ($A$ + $b$)              & 20 ($A$ + $b$ + $\psi$) \\
@@ -299,7 +302,7 @@ conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_valida
     \bottomrule
   \end{tabular}
   \caption[gLV vs.\ Hamilton model comparison]{Comparison of the asymmetric gLV
-  (L-BFGS-B point estimate) and the Hamilton replicator (NUTS posterior).
+  (L-BFGS-B point estimate) and the Hamilton replicator (TMCMC posterior).
   Lower RMSE for gLV reflects higher model flexibility \emph{and} over-fitting
   ($T=6$ observations, 30 free parameters); cross-condition transfer RMSE
   (Table~\ref{tab:heine_transfer}) largely closes the gap.
@@ -312,7 +315,7 @@ conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_valida
   \centering
   \includegraphics[width=0.80\textwidth]{heine_glv_fit_thesis.pdf}
   \caption[gLV MAP fits across four conditions]{gLV MAP fits of volume fraction
-  $\varphi_i$. Layout identical to Figure~\ref{fig:heine_fits}: columns CS, CH,
+  $\phi_i$. Layout identical to Figure~\ref{fig:heine_fits}: columns CS, CH,
   DS, DH; rows: five species. Solid line: MAP trajectory; circles: experimental
   median; boxes: inter-replicate IQR. \textit{V.~dispar} (commensal) vs.\
   \textit{V.~parvula} (dysbiotic) and \textit{Pg} strain (ATCC\,20709 vs.\
@@ -321,7 +324,7 @@ conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_valida
   \label{fig:heine_glv_fit}
 \end{figure}
 
-Figure~\ref{fig:heine_fits} shows the Hamilton NUTS posterior predictive
+Figure~\ref{fig:heine_fits} shows the Hamilton TMCMC posterior predictive
 trajectories. The model reproduces commensal homeostasis (CS:
 \textit{So}/\textit{An} growth with \textit{Pg} near zero \emph{by inference,
 not locking}; CH: the \textit{So}-dominated ``blue bloom'' under flow), the
@@ -333,10 +336,10 @@ with the increasing effective dimensionality.
 \begin{figure}[p]
   \centering
   \includegraphics[width=0.82\textwidth]{heine_fits_4cond.pdf}
-  \caption[Hamilton NUTS posterior predictive fits across four conditions]{Hamilton
-  NUTS posterior predictive fits of volume fraction $\varphi_i$
+  \caption[Hamilton TMCMC posterior predictive fits across four conditions]{Hamilton
+  TMCMC posterior predictive fits of volume fraction $\phi_i$
   ($N_p=10{,}000$). Columns: CS, CH, DS, DH; rows: five species. Solid: MAP
-  $\varphi_i$; dashed: living fraction $\bar\varphi_i=\varphi_i\psi_i$. Bands:
+  $\phi_i$; dashed: living fraction $\bar\phi_i=\phi_i\psi_i$. Bands:
   $50\%$ (dark) / $80\%$ (light) credible intervals from $100$ posterior
   samples. Circles: experimental median ($N=8$); boxes: inter-replicate IQR.
   \textit{Pg} uses different strains by state: avirulent ATCC\,20709
