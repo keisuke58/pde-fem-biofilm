@@ -135,6 +135,29 @@ for ψ" into a specific, answerable request to the experimental side.
 
 ---
 
+## 9. The basis for two-way step 2 (added 2026-10-04)
+
+The PDF is now in `references/Soleimani2023_coaggregation_SciRep.pdf` (CC BY 4.0,
+`THIRD_PARTY.md`). Read again for `ansys_usermat/two_way_step2.py`:
+
+- **Summing Eqs. 3 and 5 gives a composition-weighted rate.** With both
+  Heaviside factors equal to 1 and no co-aggregation (α = 0),
+  `S₁ + S₂ = (χ₁ R_s1 + χ₂ R_s2) φ c` with `φ = φ₁ + φ₂` and `χᵢ = φᵢ/φ`. This is
+  the same weighting as step 2's `r = Σ χᵢ rᵢ`. The mechanism differs: here the
+  growth is a local reaction, in step 2 it is the front term of the Klempt 2024
+  field. So the weighting itself has a published precedent from the
+  supervisor's group; the front-term form is this work's.
+- **No species-specific values.** Table 1 sets `R_s1 = R_s2 = 500`; the paper
+  gives no rates that differ between species. Step 2's `d` stays a sensitivity
+  parameter.
+- **Eq. 4 as printed** gives `H = 1` for `φ ≤ φ_cri` and 0 above, which would
+  switch growth off once a colony is established; the text ("the minimum level
+  of bacterial density that prevents the bacterial colonies from vanishing")
+  reads as the opposite. Noted, not used here.
+- **Validation is qualitative** (colony shapes, aggregate size; Figs. 3, 6), and
+  the conclusion says so. The averaged curves of Figs. 9-10 come from randomly
+  seeded colonies, so they cannot be reproduced number for number.
+
 ## What to do with this
 
 1. **Cite it.** It is the nearest precedent and it was missing.
