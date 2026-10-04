@@ -85,6 +85,9 @@ def plot(substeps, out):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import figstyle
+    figstyle.apply(11)
 
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(10.4, 4.3),
                                    gridspec_kw={"width_ratios": [1.45, 1]})
@@ -139,7 +142,7 @@ def plot(substeps, out):
 
     cum = substeps[-1]["cum_iter"]
     fig.suptitle(f"Newton convergence, 12240 elements, delivered routine "
-                 f"-- load step finished in {len(substeps)} substeps, "
+                 f": load step finished in {len(substeps)} substeps, "
                  f"{cum} cumulative iterations", fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.savefig(out, dpi=200)

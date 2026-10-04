@@ -47,6 +47,9 @@ def main(argv=None):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import figstyle
+    figstyle.apply(11)
     plt.rcParams.update({"font.size": 9, "axes.edgecolor": INK2,
                          "axes.labelcolor": INK, "xtick.color": INK2,
                          "ytick.color": INK2})

@@ -78,6 +78,9 @@ def plot(free, cons, out):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import figstyle
+    figstyle.apply(11)
     import numpy as np
 
     ideal = constrained_stress(ALPHA, D1)[0]
@@ -158,10 +161,10 @@ def plot(free, cons, out):
              f"agreement to every digit MAPDL prints; the spurious term is "
              f"{100 * spur / pred:.0f}% of it",
              transform=axR.transAxes, ha="center", va="top", fontsize=7.5,
-             color="0.3", family="monospace")
+             color="0.3")
 
     fig.suptitle("Growth kinematics against a closed form, solved in ANSYS "
-                 f"({ALPHA=}, single SOLID185)".replace("ALPHA=", r"$\alpha$="),
+                 f"($\\alpha-1={ALPHA:g}$, single SOLID185)",
                  fontsize=11)
     fig.tight_layout(rect=(0, 0.05, 1, 0.94))
     fig.savefig(out, dpi=200)
