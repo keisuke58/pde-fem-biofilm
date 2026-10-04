@@ -188,3 +188,12 @@ nu. Seed averages in Pa:
   B-bar together with the user material. To check on IKMHIWI03: `ETLIST`
   shows KEYOPT(2) = 0 for type 1. The constrained-cube check (homogeneous
   strain) cannot see locking, so it does not answer this.
+
+### Independent check in CalculiX (4 Oct, cloud)
+
+The same problem in CalculiX 2.21 with C3D8, C3D8I and C3D20R up to 32³:
+`ansys_usermat/calculix/README.md`. The Python solver with full integration
+matches C3D8 to four digits; at 32³ all locking-free elements give a seed von
+Mises mean of 3.05–3.27e-5 Pa and a seed mean stress of −2.3e-5 Pa, so the factor
+of about 1.7 for the 8³ mesh stands. Without B-bar the 8³ mean stress is six times
+too large, which makes the ETLIST check on IKMHIWI03 more than a formality.
