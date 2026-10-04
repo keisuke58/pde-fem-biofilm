@@ -35,6 +35,9 @@ mean phi one-way -> two-way and biomass-weighted share phi_1/(phi_1+phi_2):
   0.1             0.704 -> 0.735 (0.656)   0.704 -> 0.599 (0.026 -> 0.033)
   0.05            0.704 -> 0.749 (0.663)   0.704 -> 0.611 (0.034 -> 0.042)
   0.025           0.704 -> 0.750 (0.666)   0.704 -> 0.618 (0.041 -> 0.049)
+Grid (coupling step 0.05, d = 0.5): n = 21 (the paper's 1 um) one-way 0.704,
+case 3 0.749 (+6 %), case 6 0.611 (-13 %); n = 41 one-way 0.674, case 3 0.709
+(+5 %), case 6 0.618 (-8 %). Sign and order hold, the size is grid dependent.
 The figure is made with 0.025 (python ansys_usermat/two_way_step2.py --dt 0.025);
 the mean phi changes by less than 0.01 from 0.05 to 0.025. Largest pointwise
 change of phi at 0.025: 0.41 (case 3), 0.55 (case 6).

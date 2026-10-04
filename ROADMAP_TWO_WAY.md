@@ -79,6 +79,9 @@ with a consumption strong enough for c to drop across the seed.
   by up to 0.41 / 0.55 locally, the composition hardly at all. Converged in the
   coupling step (0.1 / 0.05 / 0.025: case 6 0.599 / 0.611 / 0.618). The feedback is
   real and large; in ANSYS it needs the element's front term.
+  Grid (dt 0.05, d = 0.5): n = 21 gives +6 % / −13 %, n = 41 (0.5 um) +5 % / −8 %,
+  with the one-way mean phi itself moving 0.704 -> 0.674. Sign and order hold;
+  the size depends on the grid of the reproduced field.
   It reaches the stress: with d = 1/3 the mean von Mises stress in the biofilm
   changes by +4 % (case 3) and −12 % (case 6), about as much as the biofilm volume
   (CalculiX, `ansys_usermat/calculix/README.md`).
