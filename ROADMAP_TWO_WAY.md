@@ -38,11 +38,20 @@ Lambda = 4 the share in the seed ranges from 0.12 near the nutrient face to
 alone gives a composition that varies in space in ANSYS, without the front
 term and without waiting for the authors.
 
-To do it in ANSYS (IKMHIWI03): read the element's nutrient at the Gauss point
-in the material call (the partner's `Nut1`; check that it is available there),
-pass it as a fourth input to the bridge, and set c* = c*_0 c in the material
-server; then re-run case 6 with a consumption strong enough for c to drop
-across the seed.
+**Bridge side done (4 Oct 2026), tested off-machine** (`tests/test_local_nutrient.py`):
+- `material_server.py`: an optional `c_rel` in an ecology request scales c* for
+  that call (c* = c*_0 c_rel; absent or 1: bit-identical to before; negative:
+  refused);
+- `biofilm_py_eval.c`: `biofilm_ecology_eval_c(g, theta, dt, n_sub, c_rel, g_new,
+  phi_int)`; a negative `c_rel` sends nothing;
+- `usermat_py_hook.f`: `biofilm_ecology_hook_c(g, theta, dt, n_sub, c_rel, g_new,
+  phi_int, ok)`.
+
+Left for IKMHIWI03: read the element's nutrient at the Gauss point in the
+material call (the partner's `Nut1`; check that it is available there),
+normalise it by the held value, call `biofilm_ecology_hook_c` instead of
+`biofilm_ecology_hook` in the composition fragment, relink, and re-run case 6
+with a consumption strong enough for c to drop across the seed.
 
 ## Checks to carry over
 

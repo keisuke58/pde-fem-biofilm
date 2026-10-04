@@ -203,6 +203,18 @@ def evaluate_ecology(req: dict) -> bytes:
                              f"{ECOLOGY_CASE['name']}: "
                              f"{ECOLOGY_CASE['theta'][:5]} expected")
         hp = ECOLOGY_CASE["hp"]
+    # Local nutrient (ROADMAP_TWO_WAY.md step 1, 2026-10-04): an optional
+    # "c_rel" scales the nutrient level c* of this call, c* = c*_0 * c_rel,
+    # with c_rel the field's nutrient at the Gauss point (normalised to the
+    # held value 1). Absent, the path is unchanged.
+    if req.get("c_rel") is not None:
+        c_rel = float(req["c_rel"])
+        if not c_rel >= 0.0:
+            raise ValueError(f"c_rel must be >= 0, got {c_rel}")
+        base = hp if hp is not None else {
+            "c": ecology_jax.C_STAR, "alpha": ecology_jax.ALPHA_STAR,
+            "eta": [1.0] * 5}
+        hp = dict(base, c=float(base["c"]) * c_rel)
     g, phi_int = ecology_jax.ecology_substeps(req["g"], req["theta"],
                                               float(req["dt_h"]), n_sub,
                                               n_active, hp)

@@ -59,6 +59,20 @@ C           the C prototype, same reasoning.
             real(c_double), intent(out) :: phi_int
             integer(c_int) :: ierr
           end function biofilm_ecology_eval
+C         The same with the local nutrient c_rel (2026-10-04); a negative
+C         c_rel sends nothing and equals biofilm_ecology_eval.
+          function biofilm_ecology_eval_c(g12, theta20, dt_h, n_sub,
+     &                                     c_rel, g_new12, phi_int)
+     &             bind(C, name="biofilm_ecology_eval_c") result(ierr)
+            import :: c_int, c_double
+            real(c_double), intent(in)  :: g12(12), theta20(20)
+            real(c_double), intent(in), value :: dt_h
+            integer(c_int), intent(in), value :: n_sub
+            real(c_double), intent(in), value :: c_rel
+            real(c_double), intent(out) :: g_new12(12)
+            real(c_double), intent(out) :: phi_int
+            integer(c_int) :: ierr
+          end function biofilm_ecology_eval_c
         end interface
       contains
         subroutine biofilm_py_hook(F, Fv, alpha, C10, C01, D1, eta, mtype,
@@ -116,4 +130,22 @@ C         dt*phi_tot(g_new), once n_sub>1 (coupling/protocol.py).
      &                                  g_new, phi_int)
           ok    = (ierr .eq. 0)
         end subroutine biofilm_ecology_hook
+
+        subroutine biofilm_ecology_hook_c(g, theta, dt, n_sub, c_rel,
+     &                                     g_new, phi_int, ok)
+C         As biofilm_ecology_hook, with the local nutrient c_rel (the
+C         field's nutrient at this Gauss point, normalised to 1): the
+C         server uses c* = c*_0 * c_rel for this call (ROADMAP_TWO_WAY.md,
+C         step 1).
+          real(c_double), intent(in)  :: g(12), theta(20), dt, c_rel
+          integer, intent(in)         :: n_sub
+          real(c_double), intent(out) :: g_new(12)
+          real(c_double), intent(out) :: phi_int
+          logical, intent(out)        :: ok
+          integer(c_int) :: ierr
+          ierr  = biofilm_ecology_eval_c(g, theta, dt,
+     &                                    int(n_sub, c_int), c_rel,
+     &                                    g_new, phi_int)
+          ok    = (ierr .eq. 0)
+        end subroutine biofilm_ecology_hook_c
       end module biofilm_py_bridge
