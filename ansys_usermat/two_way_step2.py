@@ -74,11 +74,13 @@ def run(case, d):
     G = np.zeros((n, 12)); started = np.zeros(n, bool)
     chi = np.full(phi.shape, 0.5)
     rec = {"t": [0.0], "phi": [phi.mean()], "chi": [0.5]}
+    am1 = np.zeros(phi.shape)       # alpha - 1 = k_alpha * int phi dt (Eq. 36), end-of-step phi
     for k in range(1, int(round(1.0 / T.DT)) + 1):
         r_field = 100 * s * ((1 + d) * chi + (1 - d) * (1 - chi))
         K.R, K.BETA, K.K_A = r_field, 2 * s, 1e-3 * s
         _, phi, _ = B.run_setup(phi, B.nutrient_mask("edge"), 1e8, "ic", "first_order", "abs",
                                 t_end=T.DT)
+        am1 += K.K_A * T.DT * phi
         p = np.minimum(phi.ravel(), T.PHI_CAP)
         new = (~started) & (p >= T.PHI_MIN)
         G[new] = T.seed_state(new.sum()); started |= new
@@ -90,6 +92,7 @@ def run(case, d):
         rec["t"].append(k * T.DT); rec["phi"].append(phi.mean())
         rec["chi"].append(float((w * c1).sum() / max(w.sum(), 1e-300)))
     K.R = 100.0                     # restore a scalar for other callers
+    rec["alpha_m1"] = am1
     return rec, phi, chi
 
 
@@ -113,7 +116,7 @@ def main(argv=None):
     if args.save:
         np.savez(args.save, **{f"{c}|{d}|{k}": np.asarray(v) for (c, d), (rec, phi, chi) in res.items()
                                for k, v in (("t", rec["t"]), ("phi_mean", rec["phi"]), ("chi_mean", rec["chi"]),
-                                            ("phi", phi), ("chi", chi))})
+                                            ("phi", phi), ("chi", chi), ("alpha_m1", rec["alpha_m1"]))})
     for c in CASES:
         for d in DS:
             rec = res[(c, d)][0]
