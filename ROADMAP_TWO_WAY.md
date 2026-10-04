@@ -143,3 +143,24 @@ Aim: replace assumptions of this work by published precedents. Feng et al.
 - **Step 4, stress into growth:** growth inhibited by compressive stress,
   coarse-grained to a continuum law without free parameters (arXiv:2603.28630,
   not yet read); Soleimani 2020 (already cited).
+
+### Measured species parameters (searched 2026-10-04)
+
+- **Growth rates, planktonic:** P. gingivalis doubling time about 3 h to 9 h
+  depending on the medium (PMC9788703, PMC4083621, Frontiers fcimb 2023.1193198);
+  oral streptococci and Actinomyces on glucose-supplemented saliva 1.6 h to 4 h
+  (PMC240009-series, Springer bf00393856); S. gordonii μ = 3e-5 1/s, i.e. about
+  6.4 h (Rath 2017, via Feng 2021). A. naeslundii does not grow on saliva alone,
+  S. oralis only weakly and not reproducibly as a biofilm (Palmer group,
+  saliva-grown communities). So the ratio between a fast early coloniser and
+  P. gingivalis is roughly 2 to 5 (d ≈ 0.33 to 0.67), and it depends on the
+  medium at least as much as on the species.
+- **Stiffness:** no Young's modulus per oral species found. Multi-species
+  saliva microcosm biofilms (Pattem et al. 2018, Sci. Rep., AFM): 14 to 41 kPa
+  nutrient-poor, 0.55 to 2.6 kPa with 5 % sucrose, i.e. a factor 10 to 70 from
+  the nutrient condition alone. The condition changes the modulus more than any
+  species ratio used in step 3 (up to 5).
+- **Consequence:** literature values bound d to about 1/3 to 2/3, but do not
+  fix it, because they are condition dependent and planktonic. A value for this
+  system could come from the Heine time courses themselves (initial growth of
+  each species per condition), i.e. from the data already used for TMCMC.
