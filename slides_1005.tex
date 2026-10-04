@@ -9,6 +9,7 @@
 \usetheme{Madrid}
 \usecolortheme{seahorse}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{amsmath,amssymb}
 \usepackage{bm}
 \usepackage{xcolor}
@@ -262,12 +263,13 @@ run on its own (difference 0.0), and so does every point-model call.
 end of the run, $T^*=1$.
 \vspace{4pt}
 \begin{center}
-\begin{tabular}{@{}lccc@{}}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}>{\raggedright\arraybackslash}p{0.26\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}@{}}
 \toprule
-& paper (point model alone) & coupled, $\phi_{\rm cap}=0.9$ & sensitivity 0.85 / 0.95\\
+& paper (point model alone) & coupled, $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.85$ / $0.95$\\
 \midrule
-case 3: coexistence & $\phi_1=0.60$, $\phi_2=0.40$ & $0.667$ & $0.668$ / $0.664$\\
-case 6: one species wins & $\bar\phi_1=0.0$, $\psi_1=0.05$ & $\phi_1/(\phi_1+\phi_2)=0.021$, $\psi_1=0.048$ & ---\\
+case 3: coexistence & $\phi_1=0.60$, $\phi_2=0.40$ & $\phi_1/(\phi_1+\phi_2)=0.667$ & $0.668$ / $0.664$\\
+case 6: one species wins & $\bar\phi_1\approx0$, $\psi_1=0.05$ & $\phi_1/(\phi_1+\phi_2)=0.021$, $\psi_1=0.048$ & --\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -405,7 +407,7 @@ each point early, so its point model runs for most of the time either way.
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
 \textbf{Growth field and mechanics (Klempt et al.\ 2024)}\\[2pt]
-\begin{tabular}{@{}ll@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
 \toprule
 $\phi$ & biofilm volume fraction (0 = void, 1 = dense)\\
 $c$ & nutrient concentration\\
@@ -413,14 +415,14 @@ $\alpha$ & expansion variable, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; gro
 $\mathbf F=\mathbf F_e\mathbf F_g$ & elastic / growth split\\
 $k_\alpha$ & growth factor ($10^{-3}$ per $T^*$)\\
 $\beta$ & phase-field regularisation\\
-$r,\ K$ & front growth rate, Monod constant\\
+$r,\ k$ & front growth rate, Monod constant\\
 $T^*$ & normalised time, $T^*\in[0,1]$\\
 \bottomrule
 \end{tabular}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{Point model (Klempt et al.\ 2026)}\\[2pt]
-\begin{tabular}{@{}ll@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
 \toprule
 $\phi_i$ & volume fraction of species $i$\\
 $\phi_0$ & void, $\phi_0=1-\sum_i\phi_i$\\
@@ -433,7 +435,7 @@ $\eta_i$ & viscosity (time scale) of species $i$\\
 \bottomrule
 \end{tabular}\\[6pt]
 \textbf{Coupling (this work)}\\[2pt]
-\begin{tabular}{@{}ll@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
 \toprule
 $\phi_{3D}$ & amount from the element field\\
 $\phi_i/\sum_j\phi_j$ & composition (share of species $i$)\\
