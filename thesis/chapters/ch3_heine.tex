@@ -243,8 +243,8 @@ in Phase~2. This is a trade-off against the viability channel, since Phase~1 fit
     \toprule
     & \multicolumn{5}{c}{\textbf{Phase 1 (fix-$\psi$)}} & \multicolumn{5}{c}{\textbf{Phase 2 (free $\psi$)}}\\
     \cmidrule(lr){2-6}\cmidrule(lr){7-11}
-    \textbf{Cond.} & \textit{So} & \textit{An} & \textit{Vd} & \textit{Fn} & \textit{Pg}
-                   & \textit{So} & \textit{An} & \textit{Vd} & \textit{Fn} & \textit{Pg}\\
+    \textbf{Cond.} & \textit{So} & \textit{An} & \textit{Vei} & \textit{Fn} & \textit{Pg}
+                   & \textit{So} & \textit{An} & \textit{Vei} & \textit{Fn} & \textit{Pg}\\
     \midrule
     CS & $-0.39$ & $0.80$ & $-3.2$ & $-$ & $-$ & $-0.36$ & $\mathbf{0.91}$ & $-3.7$ & $-$ & $-$\\
     CH & $0.55$ & $0.70$ & $0.59$ & $-$ & $-$ & $0.40$ & $-0.22$ & $-0.14$ & $-$ & $-$\\
@@ -390,7 +390,7 @@ suppressed by the Hamilton symmetry constraint.
   interaction matrices $\mathbf{A}$ (asymmetric). Red: cooperative
   ($A_{ij}>0$); blue: competitive ($A_{ij}<0$). Annotated values indicate
   entries with $|A_{ij}|>0.04$. The CS/CH commensal core
-  (\textit{So}--\textit{An}/\textit{Vd}) and the DS/DH dysbiotic
+  (\textit{So}--\textit{An}/\textit{Vei}; \textit{Vd} in the figure) and the DS/DH dysbiotic
   \textit{Fn}--\textit{Pg} block are consistent with the Hamilton result
   (Figure~\ref{fig:heine_heatmap}), but the asymmetric entries expose
   directionality absent from the symmetric prior.}
@@ -398,12 +398,14 @@ suppressed by the Hamilton symmetry constraint.
 \end{figure}
 
 Two features emerge from the annotated entries.
-\emph{Magnitude contraction in dysbiosis}: the dominant CS/CH entry reaches
-$|A_{ij}|\!\approx\!1.8$ ($A_{\text{Vd,An}}\!=\!+1.67$, $A_{\text{An,Vd}}\!=\!+1.76$),
-whereas all DS/DH entries stay below $0.58$, consistent with a tightly coordinated
+% 4 Oct 2026: values re-read from figures/heine_glv_Amatrix_thesis.pdf; the
+% earlier text paired a CS and a CH entry and called both CS/CH.
+\emph{Magnitude contraction in dysbiosis}: the largest CS/CH entries reach
+$|A_{ij}|\!\approx\!1.8$ (CS: $A_{\text{So,Vei}}\!=\!+1.83$, $A_{\text{Vei,An}}\!=\!+1.67$;
+CH: $A_{\text{An,Vei}}\!=\!+1.76$), whereas no DS/DH entry exceeds $0.58$, consistent with a tightly coordinated
 commensal network versus a weaker but more distributed dysbiotic attractor.
-\emph{Directed asymmetry and late-coloniser activation}: in CS, $A_{\text{Vd,An}}\!=\!+1.67$
-but $A_{\text{An,Vd}}\!=\!-0.02$, a one-directional benefit invisible to the symmetric model;
+\emph{Directed asymmetry and late-coloniser activation}: in CS, $A_{\text{Vei,An}}\!=\!+1.67$
+but $A_{\text{An,Vei}}\!=\!-0.02$, a one-directional benefit invisible to the symmetric model;
 in DS/DH the Fn--Pg block activates (DS: $A_{\text{An,Pg}}\!=\!+0.49$; DH:
 $A_{\text{Fn,Pg}}\!=\!+0.07$), consistent with the sign-enrichment analysis of
 Section~\ref{sec:heine_signprior}.
