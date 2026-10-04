@@ -96,9 +96,8 @@ reduce exactly to the one-way scheme.
 
 ## Literature for the two-way steps (searched 2026-10-04)
 
-Aim: replace assumptions of this work by published precedents. Read from
-abstracts/summaries so far; **Feng et al. 2021 to be checked in full** before
-anything goes into the thesis.
+Aim: replace assumptions of this work by published precedents. Feng et al.
+2021 read in full (PDF in `references/`, 4 Oct); the others from abstracts.
 
 - **Step 2, composition into the spreading: Feng, Neuweiler, Nogueira,
   Nackenhorst (2021)**, Bull. Math. Biol., doi:10.1007/s11538-021-00888-2
@@ -115,8 +114,17 @@ anything goes into the thesis.
     0.648 to 0.618 at T* = 1.
   - No mechanics, no species-specific stiffness ("fluid-structure interaction
     is not considered").
-  - To check: whether g_i there is Monod-limited growth (yes per summary),
-    how it maps onto Klempt 2024's front term, licence for `references/`.
+  - Checked in the PDF (Eq. 1, 3, 4, 14, 15): g_i = ϑ_i ρ μ_i × Monod factors,
+    and with Σϑ_i = 1 the divergence of the growth velocity is
+    ∇·u = Σ_i ϑ_i μ_i (Monod)_i, the **share-weighted rate** of step 2 exactly.
+    Both species move with the same velocity (their assumption, after Alpkvist
+    and Klapper 2007). The difference to step 2: there the weighted rate drives
+    a potential flow of the whole biofilm, here it scales the front term of
+    Klempt 2024.
+  - μ₂ is marked "Estimated" in their Table 1, only μ₁ is measured; so the
+    ratio 2.7 is a literature value for one species and an estimate for the
+    other. Usable as a second, independent choice of d, not as a measurement.
+  - CC BY 4.0, bundled in `references/` with a text extraction.
 - **Rath, Feng, Neuweiler, Stumpp, Nackenhorst, Stiesch (2017)**, FEMS
   Microbiol. Ecol.: measured S. gordonii biofilm growth, the source of μ₁.
 - **Soleimani et al. 2023** (already cited): summing S₁ + S₂ gives the

@@ -54,6 +54,23 @@ bundled verbatim; no changes have been made to it.** Next to it,
 it is a change of format only, under the same licence and credit. Added
 2026-10-04. Reading notes: `SOLEIMANI2023_NOTES.md`.
 
+## `references/Feng2021_symbiotic_biofilm_BMB.pdf` — Feng et al. (2021), two-species oral biofilm, continuum advection-reaction model
+
+> **Modeling of Symbiotic Bacterial Biofilm Growth with an Example of the Streptococcus–Veillonella sp. System**
+> Dianlei Feng, Insa Neuweiler, Regina Nogueira, Udo Nackenhorst
+> *Bulletin of Mathematical Biology* (2021) **83**:48
+> doi:[10.1007/s11538-021-00888-2](https://doi.org/10.1007/s11538-021-00888-2)
+> © The Author(s) 2021
+
+Licensed under the Creative Commons Attribution 4.0 International License
+(<http://creativecommons.org/licenses/by/4.0/>), which permits use and
+redistribution in any medium or format provided the authors and source are
+credited, the licence is linked, and any changes are indicated. **The PDF is
+bundled verbatim; no changes have been made to it.**
+`references/Feng2021_symbiotic_biofilm_BMB.txt` is a plain-text extraction
+(`pdftotext -layout`), a change of format only, under the same licence and
+credit. Added 2026-10-04. Reading notes: `ROADMAP_TWO_WAY.md`, literature section.
+
 ---
 ## `data/heine_species_distribution_biofilm.xlsx`
 
