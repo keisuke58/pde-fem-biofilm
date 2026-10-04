@@ -26,6 +26,24 @@ the species. Chapter 5 states it as a limitation.
   Together they are a natural first goal for the continuation at Keio.
 - Steps 3 and 4 need data or a new formulation.
 
+## Step 1 tried in Python (4 Oct 2026)
+
+`ansys_usermat/composition_local_nutrient.py` puts the local nutrient into the
+point model on the partner's 8^3 model (steady nutrient with first-order
+consumption in the seed, c held at y = -1 mm; Thiele number Lambda scanned
+because the partner's d and g are example inputs). Case 3 hardly changes
+(share 0.596-0.608). In case 6 the takeover is slower where c is low: for
+Lambda = 4 the share in the seed ranges from 0.12 near the nutrient face to
+0.44 in the interior (`assets/fig_composition_local_nutrient.png`). So step 1
+alone gives a composition that varies in space in ANSYS, without the front
+term and without waiting for the authors.
+
+To do it in ANSYS (IKMHIWI03): read the element's nutrient at the Gauss point
+in the material call (the partner's `Nut1`; check that it is available there),
+pass it as a fourth input to the bridge, and set c* = c*_0 c in the material
+server; then re-run case 6 with a consumption strong enough for c to drop
+across the seed.
+
 ## Checks to carry over
 
 Each step must keep the checks that pass today:
