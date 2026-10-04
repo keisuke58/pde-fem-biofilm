@@ -70,7 +70,10 @@ with a consumption strong enough for c to drop across the seed.
   realistic stress levels.
 - **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`, on the
   reproduced Klempt 2024 test case 4.1 field): front growth rate
-  r = sum chi_i r_i with r_1 = 1.5 r, r_2 = 0.5 r (not from a paper). At T* = 1
+  r = sum chi_i r_i with r_{1,2} = (1 +- d) r. d = 1/3 follows from eta_1 = 1,
+  eta_2 = 2 of Klempt 2026 cases 3 and 6 if the front rate scales like 1/eta_i
+  (assumption): case 3 0.704 -> 0.735, case 6 0.704 -> 0.648 (dt 0.025).
+  Sensitivity d = 0.5 (r_1 = 1.5 r, r_2 = 0.5 r): at T* = 1
   the mean phi goes from 0.704 to 0.750 in case 3 (the faster species is the
   majority) and to 0.618 in case 6 (the slower species takes over); phi changes
   by up to 0.41 / 0.55 locally, the composition hardly at all. Converged in the

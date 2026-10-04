@@ -820,12 +820,15 @@ $r_{1,2}=(1\pm d)\,r$; for $d=0$ the scheme is the one-way one. The same
 weighting follows from the two-species model of Soleimani et
 al.~\cite{Soleimani2023CoAggregation} when the growth sources of the two species,
 $R_{s,i}\,\phi_i\,c$, are summed; there the growth is a local reaction, here it is
-the front term of the field. That paper uses the same rate for both species, so
-$d$ remains a sensitivity parameter. With $d=0.5$
-the mean $\phi$ at $T^*=1$ rises from $0.704$ to $0.750$ in case~3, where the
-faster species is the majority, and falls to $0.618$ in case~6, where the slower
-species takes over; locally $\phi$ changes by up to $0.55$
-(Figure~\ref{fig:ch5-two-way}). The composition itself hardly changes. Which
+the front term of the field. That paper uses the same rate for both species. In cases~3 and~6 of Klempt et
+al.\ 2026 the second species has twice the dissipation of the first,
+$\eta_1=1$, $\eta_2=2$; assuming that the front rate of a species scales with
+$1/\eta_i$ gives $r_1/r_2=2$ and $d=1/3$. With $d=1/3$
+the mean $\phi$ at $T^*=1$ rises from $0.704$ to $0.735$ in case~3, where the
+faster species is the majority, and falls to $0.648$ in case~6, where the slower
+species takes over; locally $\phi$ changes by up to $0.47$
+(Figure~\ref{fig:ch5-two-way}). With $d=0.5$ the two values are $0.750$ and
+$0.618$. The composition itself hardly changes. Which
 species wins then decides how fast the biofilm spreads. The values are
 converged in the coupling step. In ANSYS this step needs a working front term.
 
@@ -835,7 +838,8 @@ converged in the coupling step. In ANSYS this step needs a working front term.
   \caption[Composition acting on the spreading]{%
     Composition acting on the spreading, computed in Python on the reproduced
     field of Klempt et al.\ 2024, test case~4.1 (mid-plane $z=10~\mu$m),
-    with species growth rates $r_{1,2}=(1\pm d)\,r$, $d=0.5$ (not from a paper).
+    with species growth rates $r_{1,2}=(1\pm d)\,r$, $d=1/3$ from $\eta_1=1$, $\eta_2=2$
+    of Klempt et al.\ 2026 (assumption: front rate $\propto1/\eta_i$).
     Left and middle: $\phi$ at $T^*=1$ for case~6 without and with the feedback
     (nutrient on the edge at the top right).
     Right: mean $\phi$ over time.}

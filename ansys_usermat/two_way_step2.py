@@ -21,7 +21,15 @@ With d = 0 the field is the one-way field (r unchanged, up to round-off).
 
     python ansys_usermat/two_way_step2.py -> assets/fig_two_way_step2.png
 
-Result (4 Oct 2026), T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2),
+d = 1/3 (main value): the cases 3 and 6 of Klempt et al. 2026 have eta_1 = 1,
+eta_2 = 2, so species 1 relaxes twice as fast; r_1/r_2 = 2 gives d = 1/3. That
+the front rate scales like 1/eta_i is an assumption. At coupling step 0.025:
+case 3 0.704 -> 0.735, case 6 0.704 -> 0.648 (share 0.041 -> 0.046); largest
+pointwise change of phi 0.32 / 0.47. Thesis figure:
+    python ansys_usermat/two_way_step2.py --dt 0.025 --d 0.3333333333 --save s.npz
+    python ansys_usermat/two_way_step2.py --thesis s.npz
+
+Sensitivity, T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2),
 mean phi one-way -> two-way and biomass-weighted share phi_1/(phi_1+phi_2):
   coupling step   case 3                   case 6
   0.1             0.704 -> 0.735 (0.656)   0.704 -> 0.599 (0.026 -> 0.033)
@@ -154,12 +162,14 @@ def thesis_figure(npz):
     caption carries it)."""
     figstyle.apply(size=11)
     z = np.load(npz)
+    dk = next(k.split("|")[1] for k in z.files if k.startswith("2sp_case6|") and k.split("|")[1] != "0.0")
+    dlab = "1/3" if abs(float(dk) - 1 / 3) < 1e-6 else f"{float(dk):g}"
     K = T.K
     kz = K.N // 2
     cmap, norm = figstyle.klempt_cmap()
     fig, ax = plt.subplots(1, 3, figsize=(12, 3.9), gridspec_kw={"width_ratios": [1, 1, 1.25]})
     fig.subplots_adjust(left=0.06, right=0.98, bottom=0.15, top=0.9, wspace=0.35)
-    for a, d, ttl in ((ax[0], 0.0, "one-way"), (ax[1], 0.5, "with feedback, $d=0.5$")):
+    for a, d, ttl in ((ax[0], "0.0", "one-way"), (ax[1], dk, f"with feedback, $d={dlab}$")):
         phi = z[f"2sp_case6|{d}|phi"]
         im = a.imshow(phi[:, :, kz].T, origin="lower", extent=(0, K.L, 0, K.L), cmap=cmap, norm=norm,
                       interpolation="bilinear")
@@ -173,7 +183,7 @@ def thesis_figure(npz):
     for c, col, lab in (("2sp_case3", "C0", "case 3"), ("2sp_case6", "C3", "case 6")):
         b.plot(z[f"{c}|0.0|t"], z[f"{c}|0.0|phi_mean"], color="0.4", lw=1.2,
                label="one-way" if c == "2sp_case3" else None)
-        b.plot(z[f"{c}|0.5|t"], z[f"{c}|0.5|phi_mean"], "--", color=col, lw=1.8, label=f"{lab}, with feedback")
+        b.plot(z[f"{c}|{dk}|t"], z[f"{c}|{dk}|phi_mean"], "--", color=col, lw=1.8, label=f"{lab}, with feedback")
     b.set_xlabel(r"$T^*$"); b.set_ylabel(r"mean $\phi$")
     b.legend(frameon=False, fontsize=9)
     fig.savefig(THESIS_OUT, dpi=300)
