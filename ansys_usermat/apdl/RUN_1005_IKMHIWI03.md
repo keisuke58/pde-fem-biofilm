@@ -81,6 +81,17 @@ Select-String -Path F:\biofilm_upf_wired\*.F -Pattern "Nut1|GetVals|USSFin" | Se
 - 読める → 次はブリッジの4つ目の入力（`c_rel`、クラウド側は実装済み）につなぐだけ。双方向連成ステップ1をANSYSで示せる。
 - 読めない → 「読めない、理由」を記録。修論では「要素側の対応が必要」と書く。
 
+読めた場合、差し込みコードは用意済み（4 Oct、テスト4件）。変数名を指定して貼り直すだけで、
+`prop(33) = c_ref > 0` の点で点モデルの栄養が c* = c*_0 · min(Nut1/c_ref, 1) になる:
+
+```powershell
+python ansys_usermat\apdl\paste_fragments.py F:\biofilm_upf_wired\Usermat_P21-V21_v222.F --nut-var <変数名>
+#   例: --nut-var Sdp_nut1_n  （配列なら vGdp_Nut1_n(ID) の形も可、72桁以内）
+```
+
+再ビルド（`build_wired.ps1`）と case 6 の実行は今回は時間がないので、変数名だけ記録すれば十分。
+`prop(33)` を付けなければ（または `--nut-var` なしで貼れば）、これまでと同じ動作。
+
 ## 5. PR #56 の自動フッターを消す（1分）
 
 `.env`（トークン）は**いつもの作業ツリー**にあるので、そちらで実行する（スクリプトは master にもある）。

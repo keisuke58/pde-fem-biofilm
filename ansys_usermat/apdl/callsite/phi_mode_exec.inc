@@ -169,6 +169,14 @@ C         min(phi_3D, phi_cap) (default 1 - 1e-6). In fully packed
 C         regions phi0 would otherwise be pinned below the point model's
 C         own packing limit and the composition would depend on the
 C         coupling interval; at phi_cap = 0.9 it converges.
+C         prop(33) = c_ref > 0: local nutrient in the point model
+C         (two-way step 1, ROADMAP_TWO_WAY.md). The server uses
+C         c* = c*_0 * c_rel with c_rel = min(max(CM_NUT/c_ref, 0), 1).
+C         CM_NUT is the field's nutrient at this Gauss point; the next
+C         executable line is its source, and paste_fragments.py
+C         --nut-var NAME replaces it with CM_NUT = NAME. As shipped,
+C         CM_NUT = -1 (not available) and prop(33) has no effect.
+          CM_NUT = -1.0D0
           CM_CAP = SP_PHIMAX
           IF (nProp .GE. 32) THEN
             IF (prop(32) .GT. 0.0D0) CM_CAP = MIN(prop(32), SP_PHIMAX)
@@ -220,8 +228,16 @@ C         coupling interval; at phi_cap = 0.9 it converges.
               SP_HITI = 1
             ELSE
               SP_HITI = 0
-              CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
-     &             PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              CM_CREF = 0.0D0
+              IF (nProp .GE. 33) CM_CREF = prop(33)
+              IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GE. 0.0D0) THEN
+                CM_CREL = MIN(MAX(CM_NUT / CM_CREF, 0.0D0), 1.0D0)
+                CALL biofilm_ecology_hook_c(PM_GOLD, PM_TH, CM_DT,
+     &               PM_NSUB, CM_CREL, PM_GNEW, PM_PHIINT, PM_OK)
+              ELSE
+                CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
+     &               PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              END IF
               IF (PM_OK) THEN
                 DO PM_I = 1, 12
                   IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.

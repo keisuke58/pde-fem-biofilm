@@ -2,6 +2,12 @@
 usermat (a local working copy that is never committed), the same way every time.
 
     python ansys_usermat/apdl/paste_fragments.py F:\\biofilm_upf_wired\\Usermat_P21-V21_v222.F
+    python ansys_usermat/apdl/paste_fragments.py <target> --nut-var NAME
+
+--nut-var NAME (optional): the partner's Gauss-point nutrient variable, e.g.
+the pool value of Nut1. It replaces the fragment's line "CM_NUT = -1.0D0" by
+"CM_NUT = NAME", which switches on the local nutrient for prop(33) > 0
+(two-way step 1). Without it the pasted code is the same as before.
 
 What it does:
   1. backs the target up as <target>.prepaste-<timestamp>;
@@ -77,12 +83,33 @@ def find_block(lines, kind):
     return i, j
 
 
-def main(target: Path) -> None:
+NUT_LINE = "          CM_NUT = -1.0D0"
+NUT_VAR = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\([A-Za-z0-9_, ]+\))?$")
+
+
+def set_nut_source(exec_lines: list[str], name: str) -> list[str]:
+    """Replace the fragment's nutrient source line by CM_NUT = name."""
+    if not NUT_VAR.match(name):
+        fail(f"--nut-var {name!r} is not a Fortran variable or array element")
+    new = f"          CM_NUT = {name}"
+    if len(new) > 72:
+        fail(f"--nut-var {name!r} makes the line longer than 72 columns")
+    hits = [i for i, l in enumerate(exec_lines) if l == NUT_LINE]
+    if len(hits) != 1:
+        fail(f"nutrient source line: {len(hits)} matches, expected 1")
+    out = list(exec_lines)
+    out[hits[0]] = new
+    return out
+
+
+def main(target: Path, nut_var: str | None = None) -> None:
     lines = read_lines(target)
     frag = {k: read_lines(CALLSITE / f"phi_mode_{k}.inc") for k in ("decl", "exec")}
     for k in frag:
         while frag[k] and frag[k][-1] == "":
             frag[k].pop()
+    if nut_var:
+        frag["exec"] = set_nut_source(frag["exec"], nut_var)
 
     # locate both blocks on the original, replace the later one first
     d0, d1 = find_block(lines, "decl")
@@ -112,10 +139,19 @@ def main(target: Path) -> None:
     if sum(bool(USE_SPLIT.match(l)) for l in back) != 1:
         fail("use biofilm_split not present exactly once")
     print(f"OK: {target}\n  backup  {backup.name}\n  decl {len(frag['decl'])} lines, "
-          f"exec {len(frag['exec'])} lines, split_rates.f copied")
+          f"exec {len(frag['exec'])} lines, split_rates.f copied"
+          + (f"\n  nutrient source: CM_NUT = {nut_var}" if nut_var else ""))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    args = sys.argv[1:]
+    nut = None
+    if "--nut-var" in args:
+        i = args.index("--nut-var")
+        if i + 1 >= len(args):
+            sys.exit(__doc__)
+        nut = args[i + 1]
+        del args[i:i + 2]
+    if len(args) != 1:
         sys.exit(__doc__)
-    main(Path(sys.argv[1]))
+    main(Path(args[0]), nut)

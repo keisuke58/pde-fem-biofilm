@@ -68,6 +68,13 @@ with a consumption strong enough for c to drop across the seed.
   (divided by eta_phi = 1e-10) would stop all growth (KLEMPT2024_REPRODUCTION.md
   sec. 12). Step 4 needs a different growth law (e.g. Soleimani et al. 2020) and
   realistic stress levels.
+- **Step 1 on the ANSYS side (4 Oct):** the composition fragment takes
+  `prop(33) = c_ref > 0` and calls the bridge with c_rel = min(max(Nut/c_ref,
+  0), 1). The nutrient variable is pasted in by
+  `paste_fragments.py --nut-var NAME` once its name in the partner's routine is
+  known; as shipped (CM_NUT = -1) nothing changes. Mock pre-flight:
+  `tests/test_local_nutrient_fragment.py` (c_rel = 1 equals the plain mode bit
+  for bit, c_rel < 1 reaches the server, only Nut/c_ref enters).
 - **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`, on the
   reproduced Klempt 2024 test case 4.1 field): front growth rate
   r = sum chi_i r_i with r_{1,2} = (1 +- d) r. d = 1/3 follows from eta_1 = 1,
