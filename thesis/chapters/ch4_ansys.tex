@@ -818,14 +818,22 @@ done.
 Klempt et al.\ 2024, test case~4.1, the front growth rate becomes
 the mean of the species rates weighted by their shares,
 $\bar r=\bigl(\phi_1r_1+\phi_2r_2\bigr)/(\phi_1+\phi_2)$, with
-$r_{1,2}=(1\pm d)\,r$ and $r$ from Table~\ref{tab:theory_klempt2024}; for $d=0$ the scheme is the one-way one. The same
-weighting follows from the two-species model of Soleimani et
-al.~\cite{Soleimani2023CoAggregation} when the growth sources of the two species,
-$R_{s,i}\,\phi_i\,c$, are summed; there the growth is a local reaction, here it is
-the front term of the field. That paper uses the same rate for both species. In cases~3 and~6 of Klempt et
+$r_{1,2}=(1\pm d)\,r$ and $r$ from Table~\ref{tab:theory_klempt2024}; for $d=0$ the scheme is the one-way one. The
+weighting has two published precedents. In the two-species oral biofilm model
+of Feng et al.~\cite{Feng2021SymbioticBiofilm}, the biofilm spreads with a
+velocity $\mathbf u$ whose divergence is the sum of the species' growth,
+$\nabla\cdot\mathbf u=\sum_i\phi_i\mu_i\,(\ldots)$ with growth rates $\mu_i$,
+Monod factors $(\ldots)$ and $\sum_i\phi_i=1$ in the biofilm (their Eq.~15, in
+the notation used here), which is the same share-weighted rate; there it
+drives a potential flow of the whole biofilm, here it scales the front term of
+the field. Summing the growth sources $R_{s,i}\,\phi_i\,c$ of Soleimani et
+al.~\cite{Soleimani2023CoAggregation} gives the same weighting for a local
+reaction. The rate contrast has two estimates. In cases~3 and~6 of Klempt et
 al.\ 2026 the second species has twice the dissipation of the first,
 $\eta_1=1$, $\eta_2=2$; assuming that the front rate of a species scales with
-$1/\eta_i$ gives $r_1/r_2=2$ and $d=1/3$. With $d=1/3$
+$1/\eta_i$ gives $r_1/r_2=2$ and $d=1/3$. Feng et al.\ use maximum growth rates
+of $3\times10^{-5}$ and $8\times10^{-5}$~s$^{-1}$ for their two species, the
+first measured and the second estimated, a ratio of $2.7$ and $d\approx0.45$. With $d=1/3$
 the mean $\phi$ at $T^*=1$ rises from $0.704$ to $0.735$ in case~3, where the
 faster species is the majority, and falls to $0.648$ in case~6, where the slower
 species takes over; locally $\phi$ changes by up to $0.47$
