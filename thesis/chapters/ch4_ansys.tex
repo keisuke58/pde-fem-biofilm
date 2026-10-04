@@ -514,6 +514,51 @@ state each as an assumption.
       $k_\alpha T^*\le10^{-3}$, well below the threshold.
 \end{itemize}}
 
+% Added 4 Oct 2026: the whole coupled step in one place
+% (callsite/phi_mode_exec.inc, composition branch; usermat_py_hook.f;
+% coupling/material_server.py).
+\TierA{%
+\paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one
+substep of the coupled run. ANSYS solves only the equilibrium
+$\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method; the
+material routine turns the deformation at a Gauss point into a stress after
+removing the growth, and, for two species, asks the point model for the new
+composition. The composition is stored and does not enter the stress, so it
+does not affect the Newton iteration.}
+
+\begin{algorithm}[htbp]
+\caption{One substep $t_n\to t_{n+1}$ of the coupled run}
+\label{alg:ch5-coupled}
+\begin{algorithmic}[1]
+\REQUIRE at every Gauss point the converged state of $t_n$: $\alpha_n$ and
+  the point-model state $(\phi_i,\psi_i,\gamma)_n$; the element's fields
+  $\phi_1,\phi_2,c$ of $t_n$
+\ENSURE displacements, stresses and state of $t_{n+1}$
+\REPEAT[Newton iteration of ANSYS]
+  \STATE compute the deformation gradient $\mathbf F$ at every Gauss point from the current displacements
+  \FORALL{Gauss points}
+    \STATE $\phi_{3D}\leftarrow\phi_1+\phi_2$ from the element; restore the state of $t_n$
+    \STATE $\alpha_{n+1}\leftarrow\alpha_n+k_\alpha\,\phi_{3D}\,\Delta t$ \COMMENT{Eq.~\eqref{eq:ch5-eq36}}
+    \STATE $\mathbf F_e\leftarrow\mathbf F\,\mathbf F_g^{-1}$ with $\mathbf F_g=\alpha_{n+1}\mathbf I$
+    \STATE stress $\boldsymbol\sigma$ and tangent from $W(\mathbf F_e)$ and $E(\phi)$, Eq.~\eqref{eq:ch5-stiffness}
+    \IF{two species and $\phi_{3D}\ge\phi_{\min}$}
+      \STATE scale the point-model state to $\sum_i\phi_i=\min(\phi_{3D},\phi_{\rm cap})$
+      \IF{this state was already advanced in this substep}
+        \STATE take the stored result
+      \ELSE
+        \STATE send state, parameters, $s\,\Delta t$ and $n_{\rm sub}$ through the bridge (Fortran, C, local socket)
+        \STATE the point model, Eq.~\eqref{eq:ch5-point}, takes $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ and returns $(\phi_i,\psi_i,\gamma)_{n+1}$
+      \ENDIF
+      \STATE scale back to $\phi_{3D}$; store $\phi_i$, $\psi_i$, $\gamma$ as state variables
+    \ENDIF
+    \STATE return $\boldsymbol\sigma$ and the tangent to ANSYS
+  \ENDFOR
+  \STATE assemble the residual and update the displacements
+\UNTIL{the residual meets the convergence criterion}
+\STATE the element advances its fields $\phi_1,\phi_2,c$ to $t_{n+1}$ (Eq.~\eqref{eq:ch5-field}, its own solver)
+\end{algorithmic}
+\end{algorithm}
+
 \begin{table}[htbp]
   \centering
   \caption[Sensitivity to the two coupling assumptions]{%
