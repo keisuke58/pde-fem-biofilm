@@ -1,0 +1,357 @@
+% Speaker script for slides_1005.tex (meeting 5 Oct 2026), English + Japanese.
+% Build: .\build_slides.ps1 -Tex speaker_notes_1005.tex -MaxPages 30   (lualatex, luatexja)
+\documentclass[11pt,a4paper]{article}
+\usepackage{luatexja}
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\definecolor{c3}{RGB}{30,80,160}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\newcounter{sl}
+\newcommand{\slide}[2]{\stepcounter{sl}\vspace{8pt}%
+  {\color{c3}\large\bfseries Slide \thesl\ --- #1}\hfill{\small #2}\par\vspace{2pt}}
+\newcommand{\EN}{\textbf{EN}\quad}
+\newcommand{\JA}{\par\textbf{JA}\quad}
+
+\begin{document}
+{\Large\bfseries Speaker script --- meeting 5 October 2026}\\[2pt]
+Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
+16 slides plus a 4-slide appendix (notation, background, Klempt et al.\ 2024 reproduction), about 22 minutes. Times are rough targets.
+
+% ------------------------------------------------------------------
+\slide{Title}{0:20}
+\EN Thank you for making time. Today I will show where the thesis stands.
+The biofilm growth model is now coupled into the existing IKM element,
+following the papers by Klempt et al.
+\JA お時間をいただきありがとうございます。今日は修論の現状を報告します。
+バイオフィルムの成長モデルを IKM の既存の要素に組み込み、すべて Klempt らの論文に
+沿って進めた結果です。
+
+% ------------------------------------------------------------------
+\slide{Since the last meeting: the scope is fixed}{1:30}
+\EN The main change since the last meeting is that the scope of the FEM part
+is now fixed. The thesis covers one and two species, coupled into Oliver's
+element as Klempt et al.\ 2024 describe it, with the species
+composition taken from the point model of Klempt et al.\ 2026, and all
+parameters from the papers. More species, starting from the four-species
+cases of the 2026 paper and going up to the five oral species, would be continued
+at Keio. For one and two species the papers give numbers I can check
+against; for more species they do not yet.
+\JA 前回からの一番大きな変化は、FEM 部分の範囲が決まったことです。修論では
+1 菌種と 2 菌種を扱い、Oliver の要素に Klempt 2024 のとおりに組み込みます。
+菌種の組成は Klempt 2026 の点モデルから取り、パラメータはすべて論文の値です。
+それ以上の菌種数、つまり 2026 年論文の 4 菌種から始めて口腔の 5 菌種までは、
+慶應で続ける計画です。1・2 菌種なら論文に照合できる数値がありますが、
+それ以上の菌種数にはまだありません。
+
+% ------------------------------------------------------------------
+\slide{Verification of the growth law}{1:15}
+\EN Before coupling anything, the growth law itself was checked. Against closed
+forms: the fully constrained cube matches exactly, and free growth gives zero
+stress to $10^{-10}$. The multi-species point model reproduces all fourteen numerical
+examples of the 2026 paper, where I also found two misprints, and it
+reproduces the figures of Fritsch et al.\ within 0.013.
+\JA 組み込む前に、成長則そのものを確認しました。閉じた解との比較では、
+完全拘束の立方体は厳密に一致し、自由成長では応力が $10^{-10}$ でゼロになります。
+多菌種の点モデルは 2026 年論文の数値例
+14 個をすべて再現し、その過程で論文の誤植を 2 つ見つけました。Fritsch らの図とも
+0.013 以内で一致します。
+
+% ------------------------------------------------------------------
+\slide{The coupling: what the element does and what is added}{2:00}
+\EN This is the coupling. Oliver's element solves the biofilm field of
+Klempt 2024, Equation 34: diffusion, the source from growth, and front
+growth driven by the nutrient. I do not change it. What I add happens at
+each Gauss point of the material routine: I take $\phi$ from the field,
+integrate Equation 36, $\dot\alpha=k_\alpha\phi$, and turn $\alpha$ into the
+growth tensor and the stress with the verified law. The rate $k_\alpha$ is the
+published value, $10^{-3}$ per unit time, used both in the field and in
+Equation 36.
+The model is a 2 mm cube with 512 elements. Only rigid-body motion is
+suppressed, at three corner nodes, so uniform growth gives no stress and the
+stress comes from differences in growth. The nutrient is held at $c=1$ in the
+element layer on one face, and the biofilm starts as a seed of 32 elements
+at the centre.
+\JA これが組み込みの全体です。Oliver の要素は Klempt 2024 の式 34、つまり拡散、
+成長による生成、栄養で駆動される界面成長を解きます。ここには手を入れていません。
+私が加えたのは材料ルーチンの各ガウス点での処理です。場から $\phi$ を受け取り、
+式 36 $\dot\alpha=k_\alpha\phi$ を積分し、その $\alpha$ を検証済みの成長則で
+成長テンソルと応力にします。$k_\alpha$ は論文の値 $10^{-3}$ で、場と式 36 の両方で同じ値です。
+モデルは 2 mm の立方体、512 要素です。力学は 3 つの角の節点で剛体運動だけを止めているので、
+一様に成長すれば応力はゼロで、応力は成長の差から生じます。栄養は $y=-1$ mm の面の要素層で
+$c=1$ に固定し、バイオフィルムは中心の 32 要素を $\phi=1$ で始めます。
+
+% ------------------------------------------------------------------
+\slide{Model and boundary conditions}{0:45}
+\EN Here is the model in 3D. The seed of 32 elements is at the centre, the
+nutrient is held on the layer at the back face, and only the three marked
+corner nodes are constrained, which removes the rigid-body motion and
+nothing more.
+\JA モデルの 3 次元図です。中心に 32 要素の種があり、栄養は奥の面の要素層で固定して
+います。拘束は印を付けた角の 3 節点だけで、剛体運動を止める以外の拘束はありません。
+
+% ------------------------------------------------------------------
+\slide{What I implemented, and what I used}{1:30}
+\EN To be clear about what is mine: the growth field and the stiffness are
+Oliver's element, used as it is; I read it and reported what I found. The
+equations of the point model are from the paper; the solver is my own JAX
+code, which reproduces all 14 examples of the paper. Everything else on this
+table I wrote: the growth and composition step inside the element's material
+call, the bridge from Fortran to Python, the sub-stepping, the scripts that
+build and run the custom ANSYS, and the checks. On the Python side, each
+Gauss point sends one request per step; splitting the step into point-model
+steps of at most $10^{-4}$ and running them as one compiled loop brought a
+single-element run from about six minutes to under six seconds, and every
+call can be replayed in Python bit for bit.
+\JA 自分の担当をはっきりさせておきます。成長場と剛性は Oliver さんの要素をそのまま
+使い、私は中身を読んで見つけた点を報告しました。点モデルの式は論文のもので、解く
+プログラムは私の JAX のコードです。論文の 14 例をすべて再現しています。表のそれ以外は
+私が書いたものです。要素の材料ルーチンの中の成長と組成の処理、Fortran から Python への
+橋渡し、時間の細分化、ANSYS のビルドと実行のスクリプト、そして検証です。Python 側では、
+各積分点が 1 ステップに 1 回だけ要求を送ります。1 ステップを $10^{-4}$ 以下に分けて
+まとめてコンパイルして回すことで、1 要素の計算が約 6 分から 6 秒弱になり、
+すべての呼び出しは Python でビット単位まで再現できます。
+
+% ------------------------------------------------------------------
+\slide{Checks 1 and 2: exact solution and whole model}{2:00}
+\EN Two checks of the coupling in ANSYS. On the left, an exact solution: where
+the field has no gradients the equations reduce to a linear system with the
+solution $\sinh$ and $\cosh$, and ANSYS follows it to round-off in $\alpha$
+and to $10^{-7}$ in $\phi$, because this element still sees a little gradient.
+On the right, the whole model: the stress computed with Equation 36 and with
+the element's own growth variable has the same pattern, cosine similarity
+1.0000, and the element's variable gives 0.455 times the result. That is one
+half times ten elevenths: it averages over both species fields, including the
+unused one, and it lags one time step.
+\JA ANSYS での連成の確認を 2 つ示します。左は厳密解です。場に勾配がない所では式が
+線形系になり、解は sinh と cosh です。ANSYS はこれに $\alpha$ で丸め誤差まで、
+$\phi$ で $10^{-7}$ まで一致します。この要素も周りからわずかに勾配を受けているためです。
+右はモデル全体です。式 36 で計算した応力と要素独自の成長変数で計算した応力は、
+分布の形が同じでコサイン類似度は 1.0000、大きさは要素の変数のほうが 0.455 倍です。
+これは 1/2 × 10/11 で、使っていない菌種の場も含めて平均していることと、
+1 ステップ遅れていることで説明できます。
+
+% ------------------------------------------------------------------
+\slide{Check 3: the seeded element}{1:30}
+\EN Third, the seeded element over time. Its growth $\alpha-1$ increases linearly to
+$1.1\times10^{-3}$, which is exactly $k_\alpha\phi t$. The element itself is
+compressed, and its neighbours carry about 25 times its von Mises stress.
+Klempt et al.\ report pressure inside the biofilm and a ring of tension at its
+edge in their 2024 paper; the compressed seed agrees with that, and whether the
+neighbours are in tension I still have to read from their mean stress. The stresses are tiny, at most $10^{-4}$ Pa, because the published
+growth rate is slow and the biofilm is very soft, $E=10$ Pa, as in their
+Table 2.
+\JA 3 つ目は、種を置いた要素の時間変化です。成長量 $\alpha-1$ は直線的に増えて
+$1.1\times10^{-3}$ になり、これはちょうど $k_\alpha\phi t$ です。要素自体は圧縮され、
+隣の要素はその約 25 倍の von Mises 応力を持ちます。Klempt らの 2024 年の論文では、
+バイオフィルムの内部は圧縮、縁は引張の輪になっています。種の要素が圧縮されている点は
+それと一致し、隣の要素が引張かどうかは平均応力でまだ確認していません。応力は最大 $10^{-4}$ Pa と非常に
+小さいですが、これは論文の成長速度が遅く、バイオフィルムがとても柔らかい
+（Table 2 の $E=10$ Pa）ためです。
+
+% ------------------------------------------------------------------
+\slide{Four things found along the way}{1:45}
+\EN Four findings. First, the element's growth variable is the mean of the two
+species fields, so with one species growth is halved. I would like to ask
+Oliver whether that is intended. Second, start values must satisfy
+$\phi_1+\phi_2\le1$, because the void fraction is one minus all
+species; the example input starts both species at one in the seed, so for one
+species I start the second at zero. Third, the first result set is not in
+equilibrium, because the element returns zero stress while it sets up its
+operators, so I exclude it. Fourth, the element's front-growth term is
+inactive. When the input is read, the weights of the other species are written
+into the weight of species 1, and the last one is zero, so this term is always
+zero. In addition, it multiplies the Laplacian of $\phi$, where Equation 34 has
+the gradient magnitude. In a test copy with both corrected, the seed spreads
+as in the paper's example, but $\phi$ goes above 1. The three checks do not
+depend on this term. I would like to discuss both points with Oliver before
+using the spreading in the thesis. Earlier bring-up runs used larger growth rates
+and the example input's stiffness, 1000 MPa; everything shown today uses the
+published values.
+\JA 見つかったことが 4 つあります。1 つ目、要素の成長変数は 2 つの菌種の場の平均なので、
+1 菌種だと成長が半分になります。意図したものか Oliver に確認したいと思います。
+2 つ目、空隙率は 1 から全菌種を引いたものなので、初期値は $\phi_1+\phi_2\le1$
+でなければなりません。例題の入力では種の領域で両菌種とも 1 から始まっているので、
+1 菌種の計算では 2 つ目を 0 にしました。3 つ目、最初の結果は釣り合っていません。
+要素が演算子を準備している間は応力ゼロを返すためで、この結果は除いています。
+4 つ目、要素の界面成長の項が働いていません。入力を読み込むとき、ほかの菌種の重みが
+菌種 1 の重みに書き込まれていて、最後に読む値が 0 なので、この項は常に 0 になります。
+さらに、この項は $\phi$ のラプラシアンを掛けていますが、式 34 では勾配の大きさです。
+両方を直した試験用のコピーでは、論文の例と同じように種が広がりましたが、$\phi$ が 1 を
+超えました。3 つの確認はこの項に依存しません。広がりを修論で使う前に、この 2 点を
+Oliver と相談したいと思います。
+なお、立ち上げ段階では大きな成長速度と例題入力の剛性（1000 MPa）を使っていましたが、
+今日お見せした結果はすべて論文の値です。
+
+% ------------------------------------------------------------------
+\slide{Two species: composition from the point model}{1:45}
+\EN For two species, the question is how to connect the point model to the 3-D
+field. I chose a split that keeps both papers as they are: the field decides the
+amount, $\phi_{3D}$, and drives growth; the point model decides only the
+composition, that is which species and $\psi$. At each step its state is rescaled
+so that the species add up to the amount from the field. The composition does
+not act back on the stress, because in Klempt 2024 no material parameter
+depends on the species. On ANSYS, every point and every step equals the scheme
+run on its own, with difference zero.
+\JA 2 菌種では、点モデルと 3 次元の場をどうつなぐかが問題です。両方の論文に忠実な
+つなぎ方として、量 $\phi_{3D}$ は場が決めて成長を駆動し、点モデルは組成、つまり
+どの菌種か、そして $\psi$ だけを決めます。各ステップで点モデルの状態を、
+菌種の和が場の量に一致するように合わせ直します。組成は応力に戻りません。
+Klempt 2024 では菌種によって変わる材料定数がないからです。ANSYS 上では、
+全点・全ステップが単独で回した同じ計算と差 0 で一致しました。
+
+% ------------------------------------------------------------------
+\slide{Two species: results in the packed seed}{1:30}
+\EN Results in the fully packed seed, for two cases of Table 1 with the paper's
+parameters. Case 3 is coexistence: the paper gives 0.60 for species 1; coupled
+I get 0.667, and between 0.664 and 0.668 when the cap is varied. Case 6 is
+the case where one species wins: the paper has species 1 at zero with
+$\psi_1=0.05$; I get 0.021 and $\psi_1=0.048$. So the type of outcome is
+kept; the ratio shifts because the amount now comes from the 3-D field, not
+from the point model filling up on its own. The result is converged in the
+coupling time step.
+\JA 種の領域、つまり完全に詰まった所での結果です。Table 1 の 2 ケースを論文の
+パラメータで計算しました。ケース 3 は共存で、論文では菌種 1 が 0.60、組み込んだ計算では
+0.667、上限値を変えても 0.664〜0.668 です。ケース 6 は片方が勝つケースで、論文では
+菌種 1 がゼロ、$\psi_1=0.05$、こちらは 0.021 と 0.048 です。結果の種類は保たれていて、
+比が変わるのは、量が点モデル自身の増え方ではなく 3 次元の場から来るためです。
+結合の時間刻みに対して収束しています。
+
+% ------------------------------------------------------------------
+\slide{Two modelling assumptions}{1:45}
+\EN Two assumptions are needed, and I state them explicitly. First, time: the
+2024 paper runs to $T^*=1$, the 2026 paper counts steps of $10^{-4}$ in its own
+unit, and no paper links the two. So the point model advances $s$ times the
+time step, with $s=0.15$. In case 6 the winner only emerges for $s$ around
+0.15 or larger; in case 3 it moves the result by 0.03 to 0.06. Second, in
+fully packed regions the point model sees at most 0.9 of the amount; without
+that, the result depends on the coupling time step. Both come with a
+sensitivity study, and all other parameters are the published values.
+\JA 仮定が 2 つ必要で、それを明示しています。1 つ目は時間です。2024 年論文は
+$T^*=1$ まで、2026 年論文は独自の単位で $10^{-4}$ のステップを数えていて、
+両者を結ぶ記述はどの論文にもありません。そこで点モデルは時間刻みの $s$ 倍だけ進むとし、
+$s=0.15$ としました。これは結果に効きます。ケース 6 では $s$ が 0.15 程度以上でないと
+勝者が現れず、ケース 3 では結果が 0.03〜0.06 動きます。2 つ目は、完全に詰まった所では
+点モデルが見る量を最大 0.9 にすることです。これがないと結果が結合の時間刻みに依存します。
+どちらも感度を調べてあり、それ以外のパラメータはすべて論文の値です。
+
+% ------------------------------------------------------------------
+\slide{Limits of the parts I added}{1:45}
+\EN These are the limits I know of in my own part. First, the composition
+is local: a point that the biofilm reaches starts from the seed composition,
+it is not carried with the front. I tested how much this matters by
+starting such points from their neighbour's state instead: the mean
+composition changes by at most 0.001, because the diffuse edge of the field
+reaches each point early. Second, the time link is assumed. Third, the
+coupling inherits the behaviour of Eq.\ 34 as printed. Fourth, two growth
+variables are integrated side by side; Check 2 showed how they relate.
+\JA 自分の追加部分について、分かっている限界です。1 つ目、組成は各点で独立していて、
+バイオフィルムが新しく届いた点は初期の組成から始まります。前線と一緒に運ばれません。
+隣の点の状態から始めた場合と比べたところ、平均の組成の差は 0.001 以下でした。
+場の薄い縁が早い時点で各点に届くためです。2 つ目、時間の対応は仮定です。3 つ目、
+連成は印刷どおりの Eq.\ 34 の振る舞いをそのまま受け継ぎます。4 つ目、成長の変数が
+2 つ並行して積分されています。その関係は Check 2 で示しました。
+
+% ------------------------------------------------------------------
+\slide{(Appendix D, only if asked) Klempt et al.\ 2024 test cases, reproduced}{1:45}
+\EN I also reproduced the two test cases of Klempt et al.\ 2024 in Python.
+With Table 2 unchanged, all three curves come within 0.02 to 0.09, under
+two departures from the printed equations and one time scale per
+simulation, which the paper's definition of $T^*$ allows. Three points I
+would like to ask about: which form of Eq.\ 34 and 35 produced the figures,
+the reference time of each run, and the unit of $\mu$. The pressure in
+Table 3 fits $\mu$ read as MPa, not Pa.
+\JA Klempt 2024 の 2 つのテストケースも Python で再現しました。Table 2 の値を変えずに、
+3 本の曲線がすべて 0.03〜0.09 で合います。ただし、印刷された式から 2 か所変えています。
+また、シミュレーションごとに時間スケールを決めていますが、これは論文の $T^*$ の定義で
+許されています。お聞きしたいのは 3 点です。図を作った Eq.\ 34・35 の形、各計算の基準時間、
+そして $\mu$ の単位です。Table 3 の圧力は、$\mu$ を Pa ではなく MPa として読むと合います。
+
+% ------------------------------------------------------------------
+\slide{Status and timeline}{1:00}
+\EN On the administrative side, the admission was granted on 18 August, with
+Prof.\ Junker and Dr.\ Wangenheim as examiners, and the internship at NIFE is
+finished. The coupling for one and two species is done. October is for the
+thesis runs and figures, writing runs in parallel, and I submit within
+November, aiming for the beginning of the month. The presentation follows in
+December, before I return to Japan; I would like to fix the date with both
+examiners soon.
+\JA 事務的には、8 月 18 日に登録が認められ、審査は Junker 先生と Wangenheim 先生です。
+NIFE でのインターンも終わっています。1・2 菌種の組み込みは終わっていて、10 月で修論用の
+計算と図を仕上げ、並行して執筆し、11 月中に提出します（目標は上旬）。発表は帰国前の
+12 月で、日程を早めに両先生と決めたいと考えています。
+
+% ------------------------------------------------------------------
+\slide{Questions for this meeting}{2:00}
+\EN I have six questions. First, the scope: is it agreed that the thesis
+covers one and two species as published, and more species continue
+at Keio? Second, are the two assumptions, the time link and the cap, each
+with a sensitivity study, acceptable for the thesis? Third, is anything
+needed from the Keio side for the double-degree requirements this term?
+Fourth, on Klempt et al.\ 2024: the form of Eq.\ 34 and 35 behind the
+figures, the reference time of each run, whether $\mu$ is in Pa or MPa, and
+whether $\alpha$ follows Eq.\ 36 or the update in Table~1. And fifth, the
+structure of the thesis: the TMCMC calibration of the point model, a short
+section on the metabolic sign prior from my internship, then the ANSYS
+coupling. Is it acceptable to include the internship part? And sixth, the
+submission: how many printed copies, whether an electronic version is needed,
+and whether anything has to be submitted on the Keio side.
+\JA 6 つお聞きしたいことがあります。1 つ目、範囲について、修論は論文どおりの 1・2 菌種、
+それ以上は慶應で続けるという分け方でよろしいでしょうか。2 つ目、時間の対応と上限値という
+2 つの仮定を、感度の検討付きで修論に入れてよいでしょうか。3 つ目、ダブルディグリーの
+要件で、今学期に慶應側で必要なことはありますか。4 つ目、Klempt 2024 について、
+図を作った Eq.\ 34・35 の形、各計算の基準時間、$\mu$ が Pa か MPa か、$\alpha$ は
+Eq.\ 36 と Table~1 のどちらに従うのかを教えてください。5 つ目、修論の構成です。
+TMCMC による点モデルの推定、インターンでの代謝からの符号の事前分布の短い節、
+そのあと ANSYS への組み込み、という順にしたいと考えています。インターンの部分を
+入れてもよいでしょうか。6 つ目、提出について、製本の部数、電子版の要否、
+慶應側にも提出が必要なものがあるかを教えてください。
+
+% ------------------------------------------------------------------
+\slide{References}{(no talk)}
+\EN Leave this slide up only if asked; the four papers are the ones cited on
+the slides. Three appendix slides follow (notation, background of the growth
+field, background of the point model and one coupling step), for questions only.
+\JA 聞かれたときだけ表示します。スライドで引用した 4 本の論文です。その後に付録が
+3 枚（記号の一覧、成長場の背景、点モデルの背景と 1 ステップの流れ）あり、
+質問されたときに使います。
+
+% ------------------------------------------------------------------
+\vspace{12pt}
+{\color{c3}\large\bfseries Possible questions and short answers}
+
+\begin{description}[leftmargin=0pt,itemsep=6pt]
+\item[Why are the stresses so small?]
+\EN The published $k_\alpha=10^{-3}$ with $T^*\le1$ gives $\alpha-1\le10^{-3}$, and the
+published stiffness is $E=10$ Pa, weighted with $\phi^2$. Stress scales
+with both, so other values give other magnitudes, but they would no longer be
+the paper's model. (I checked $\nu=0.45$ against 0.49: the stress changes by
+27\,\% while the bulk modulus changes fivefold, so no sign of locking.)
+\JA 論文の $k_\alpha=10^{-3}$ と $T^*\le1$ では $\alpha-1\le10^{-3}$ にしかならず、剛性も
+論文では $E=10$ Pa で $\phi^2$ に比例します。応力はどちらにも比例するので、
+値を変えれば大きさも変わりますが、それはもう論文のモデルではありません。
+（$\nu=0.45$ と 0.49 を比べると、体積弾性率は 5 倍変わるのに応力の変化は 27\,\% なので、
+要素が硬くなりすぎる兆候はありません。）
+
+\item[Why not the five species right away?]
+\EN There is no published reference beyond four species, and Oliver's element is
+written for two fields; extending it is a rewrite plus new verification.
+\JA 4 菌種を超えると論文の参照値がなく、Oliver の要素も 2 つの場を前提に書かれています。
+拡張は書き直しと新たな検証が必要です。
+
+\item[Is the composition result physical, given it differs from the paper?]
+\EN The type of outcome matches; the ratio differs because the amount is set
+by the field. The point model alone reproduces the paper exactly, so the shift
+is the coupling's effect, and it is converged and insensitive to the cap.
+\JA 結果の種類は一致しています。比の違いは量を場が決めるためです。点モデル単独では
+論文を厳密に再現しているので、この差は結合による効果で、収束しており上限値にも鈍感です。
+
+\item[Why $s=0.15$?]
+\EN It maps the 2026 paper's 1500 steps of $10^{-4}$ onto the 2024 paper's
+horizon $T^*=1$. It is an assumption, which is why it is reported with a sweep.
+\JA 2026 年論文の $10^{-4}$ × 1500 ステップを、2024 年論文の $T^*=1$ に対応させる値です。
+仮定なので、感度の結果と一緒に示しています。
+\end{description}
+\end{document}

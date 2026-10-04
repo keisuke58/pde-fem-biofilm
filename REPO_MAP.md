@@ -12,6 +12,21 @@ overview see the [project site](https://keisuke58.github.io/pde-fem-biofilm/).
 | [`JAXFEM/audit_all.py`](JAXFEM/audit_all.py) | All-in-one thesis-quality audit (`--quick` / `--strict` / `--strict-env`) |
 | [`validate_composition.py`](validate_composition.py) | Model ↔ Heine experiment composition validation (figure + metrics) |
 
+## Source papers, read and reconciled (2026-09-30)
+
+Notes taken from the papers this work builds on, each recording what it settles
+here rather than summarising the paper. [`CLAIMS_AND_EVIDENCE.md`](CLAIMS_AND_EVIDENCE.md)
+is the consolidation; these are the detail behind it.
+
+| File | What it settles |
+|---|---|
+| [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | Why the 2024 PDE is **not** reproduced: the variants that fit are not the paper's, and its own combination is the worst fit |
+| [`SOLEIMANI2023_NOTES.md`](SOLEIMANI2023_NOTES.md) | The nearest precedent, previously uncited. Our condition degeneracy belongs to the **simplex**, not to multi-species modelling; the UserElement question; the group's validation bar |
+| [`SOLEIMANI2019_NOTES.md`](SOLEIMANI2019_NOTES.md) | The unconditionally stable viscous integrator (Eq. 32) our explicit `Fv` update needs; and `E = 10 Pa`, which qualifies the stress comparison |
+| [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) | The Heaviside cap on `α` (Eq. 17), now implemented; resolves `CITATION_AUDIT.md` F1c; the group's own warning about the advection term |
+| [`CHU2018_NOTES.md`](CHU2018_NOTES.md) | What the computed stress is *for*: the ~5 kPa threshold at which the bacterial stress response turns on |
+| [`READING_GAPS.md`](READING_GAPS.md) | References Klempt 2024 rests on that this repository does not cite |
+
 ## Analysis lineages
 
 - **Klempt growth-stress pipeline** (thesis headline) — `gen_tooth_klempt_umat_inp.py`,
@@ -54,11 +69,18 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | Path | What it is |
 |---|---|
 | `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
-| `thesis_ch5/` | Chapter 5 skeleton with an evidence map, plus `PORTING.md` for merging it into the thesis repository |
+| `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
+| `references/` | Klempt et al. 2024 (BMMB, CC BY 4.0), the paper this work follows: the PDF and a searchable text extraction; licence in `THIRD_PARTY.md` |
+| `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
+| `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
+| `thesis/` | **The thesis itself** (from 3 Oct 2026; copied from LUH_summer_2026). `main.tex`, `chapters/`, structure in `thesis/README.md`; the ANSYS chapter is `chapters/ch4_ansys.tex` |
+| `thesis_ch5/` | Evidence map and a stand-alone build check (`_build_check.tex`) of the ANSYS chapter, which now lives in `thesis/chapters/ch4_ansys.tex` |
 | `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
 | `reports/` | Written progress updates to the supervisors, kept next to the work they describe |
 | `DEVIATOR_SCALING_FINDING.md` | A mis-scaled isochoric split in the verified core: a pure pressure error, von Mises unaffected. Documented, not fixed — with the reasoning |
 | `VISCOUS_UPDATE_SCHEME.md` | What the `Fv` update actually is, why "backward Euler" is the wrong name for it, and the step limit that follows |
+| `ansys_usermat/apdl/ONE_SPECIES_COUPLING.md` | The one-species coupling into the partner's element (decided 2026-10-01): Klempt 2024 Eq. 36 at the Gauss point, the call-site recipe, the three questions that must be answered first, and how to verify the first run |
+| `PDE_VERIFICATION_FINDINGS.md` | Code verification of the nutrient/species solvers against exact solutions (Thiele cosh, Klempt Eq. 35's parabola, a Neumann eigenfunction). The zero-flux wall cost one order in 1D and did not converge at all in 2D; fixed in all three places, and the effect on the reported 2D condition spread measured (~1e−6, so that result stands) |
 | `E_SATURATION_FINDING.md` | The production φ→E bridge clips to [10, 1000] Pa, and at the current calibration that bound is active over much of the healthy composition space — so distinct conditions can report identical stiffness |
 | `PINN_DESIGN.md` | A physics-informed surrogate, written up as a Keio design rather than started |
 | `ansys_usermat/biofilm_material_v01.f` | `BIOFILM_GROWTH_VISCO_V01` — the routine handed over, an adapter around the verified core |

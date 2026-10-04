@@ -105,3 +105,86 @@ just the thickness direction once the growth-layer ESIZE gets small enough
 to interact with the circumferential/axial sizing — worth checking with
 `NLIST`/`ESIZE` diagnostics before assuming "elements through thickness"
 alone predicts run cost at finer levels.
+
+## The 512-element model of the 5 Oct slides: seed stress against mesh (3 Oct, Python)
+
+`mesh_study_seed.py` solves the mechanics of Check 3 alone (the 32-element
+seed of the partner's deck grows by alpha - 1 = 1.1e-3, stiffness E (phi^2 + f),
+E = 10 Pa, nu = 0.49, f = 1e-3, three corner nodes constrained) with a
+linear-elastic hex8 solver on three meshes. Stresses in Pa:
+
+| mesh | elements | seed von Mises, mean | seed von Mises, max | seed mean stress | largest von Mises outside |
+|---|---|---|---|---|---|
+| 8^3 (as the ANSYS model) | 512 | 5.70e-5 | 7.51e-5 | -3.77e-5 | 1.63e-5 |
+| 16^3 | 4096 | 3.59e-5 | 8.97e-5 | -2.52e-5 | 2.13e-5 |
+| 32^3 | 32768 | 3.26e-5 | 1.09e-4 | -2.26e-5 | 2.97e-5 |
+
+- Averages over the seed converge: the 8^3 mesh is about 75 % (von Mises) and
+  67 % (mean stress) above the 32^3 values, the 16^3 mesh within 10 %.
+- Maxima do not converge. The seed is a staircase of cubes, and its re-entrant
+  corners are stress singularities: the peaks grow with every refinement.
+- So the 512-element ANSYS stresses are right in pattern and sign but too
+  large in magnitude by up to a factor of about 1.7; quote seed averages from
+  a 16^3 mesh, never peaks. Next: the same comparison in ANSYS itself (a 16^3
+  deck), on IKMHIWI03.
+- The ratio "neighbours about 25x the seeded element" of Check 3 is not this
+  table's last column: there the seeded element is one interior element of
+  the seed, here the comparison is the seed average against the void.
+
+### The same in ANSYS: a 16^3 deck (prepared 3 Oct, run on IKMHIWI03)
+
+`refine_deck.py` writes the partner's deck on an n^3 mesh, every component
+mapped by its place in space (seed 32 -> 256 elements, nutrient layer 64 -> 512,
+the three constrained corner nodes unchanged; `--selftest` reproduces the base
+at n = 8; all 4096 elements keep the base orientation). Steps:
+
+```powershell
+git pull
+python ansys_usermat\apdl\refine_deck.py <stage-1 base>.dat F:\biofilm_upf_wired\ds16_base.dat --n 16
+#   prints: old element 220 -> new elements [2151, 2152, 2167, 2168, 2407, 2408, 2423, 2424]
+python ansys_usermat\apdl\make_wired_deck.py F:\biofilm_upf_wired\ds16_base.dat F:\biofilm_upf_wired\ds16_pv_eq36.dat `
+    --set K_LOCAL1=1e-3 --set K_LOCAL2=0 --set MY_BIOSTART2=0.0 `
+    --set YOUNG_BIO=1e-5 --set POISSON_BIO=0.49 --set YOUNG_VOID=-1e-3 `
+    --props 7=1e-3,28=1 --post both --post-elem 2151
+.\ansys_usermat\apdl\run_apdl.ps1 -Deck ds16_pv_eq36.dat -WorkDir F:\biofilm_upf_wired
+```
+Then compare the seed average von Mises and mean stress of the 8^3 run
+(`all_stress_ds_pv_eq36.csv`) with the 16^3 run: Python predicts the 8^3 values
+about 1.6-1.75 times the 16^3 ones. Use the same `--set`/`--props` as the 8^3
+paper-value runs (see the header of `figs_1005.py`); only the mesh may differ.
+
+Then, in one command (3 Oct):
+```powershell
+python ansys_usermat\apdl\compare_mesh.py "$R\all_stress_ds_pv_eq36.csv" `
+    F:\biofilm_upf_wired\all_stress_ds16_pv_eq36.csv --grid8 8 --track 220
+```
+It prints the seed averages on both meshes, the 16^3/8^3 ratios next to the
+Python ones (0.63 von Mises, 0.67 mean stress), and element 220 against the
+eight 16^3 elements inside it. The seed must come out as 32 and 256 elements
+with the same mean alpha; otherwise the deck mapping is wrong.
+
+## Volumetric locking (nu = 0.49), 3 Oct
+
+`locking_check.py` solves the same seed problem with B-bar (volumetric part
+at the centre point, what SOLID185 does with its default KEYOPT(2) = 0; the
+partner's deck sets no KEYOPT) and with full 2x2x2 integration, for several
+nu. Seed averages in Pa:
+
+| mesh | nu | B-bar vM | B-bar p | full vM | full p |
+|---|---|---|---|---|---|
+| 8^3 | 0.30 | 2.48e-5 | -2.56e-5 | 2.30e-5 | -2.74e-5 |
+| 8^3 | 0.49 | 5.70e-5 | -3.77e-5 | 5.96e-5 | -1.41e-4 |
+| 8^3 | 0.499 | 6.44e-5 | -4.08e-5 | 1.01e-4 | -1.13e-3 |
+| 16^3 | 0.30 | 2.19e-5 | -2.19e-5 | 2.12e-5 | -2.26e-5 |
+| 16^3 | 0.49 | 3.59e-5 | -2.52e-5 | 3.41e-5 | -5.69e-5 |
+| 16^3 | 0.499 | 3.79e-5 | -2.58e-5 | 4.81e-5 | -3.20e-4 |
+
+- With B-bar the mean stress hardly moves from nu = 0.49 to 0.499 (8^3: -3.8e-5
+  to -4.1e-5): no locking.
+- Full integration locks: at nu = 0.49 its mean stress is 3.7x (8^3) and
+  2.3x (16^3) the B-bar value, at 0.499 it is 28x and 12x. The von Mises
+  stress is affected much less, as expected (locking is in the pressure).
+- So the ANSYS results are free of locking only if SOLID185 really runs with
+  B-bar together with the user material. To check on IKMHIWI03: `ETLIST`
+  shows KEYOPT(2) = 0 for type 1. The constrained-cube check (homogeneous
+  strain) cannot see locking, so it does not answer this.

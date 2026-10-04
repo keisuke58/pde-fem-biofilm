@@ -1,0 +1,89 @@
+\chapter{AGORA2 Representative Strains and Oral-Fluid Medium}
+\label{app:agora}
+
+Table~\ref{tab:agora_strains} lists the AGORA2 v2.01 genome-scale model chosen as
+the representative for each guild in the L2/L3 metabolic sign prior of
+Section~\ref{sec:heine_signprior}. The \emph{Other} guild has no representative, so guild
+pairs involving it receive no FBA-based prior.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Guild & AGORA2 representative strain\\
+    \midrule
+    Actinobacteria      & \textit{Actinomyces naeslundii} Howell 279\\
+    Bacilli             & \textit{Streptococcus gordonii} CH1\\
+    Negativicutes       & \textit{Veillonella parvula} Te3 DSM~2008\\
+    Bacteroidia         & \textit{Porphyromonas melaninogenica} ATCC~25845\\
+    Fusobacteriia       & \textit{Fusobacterium nucleatum} ATCC~25586\\
+    Clostridia          & \textit{Parvimonas micra} ATCC~33270\\
+    Coriobacteriia      & \textit{Atopobium parvulum} DSM~20469\\
+    Gammaproteobacteria & \textit{Haemophilus parainfluenzae} T3T1\\
+    Betaproteobacteria  & \textit{Eikenella corrodens} ATCC~23834\\
+    Other               & no AGORA representative (L3 absent)\\
+    \bottomrule
+  \end{tabular}
+  \caption[AGORA2 representative strains]{AGORA2 representative strains per guild
+  used for the pFBA (L2) and MICOM community-FBA (L3) layers.}
+  \label{tab:agora_strains}
+\end{table}
+
+\paragraph{Oral-fluid medium.}
+The shared medium was assembled in two steps. First, quantified metabolite
+concentrations in unstimulated whole saliva were drawn from the literature and
+converted to exchange bounds (mmol\,gDW$^{-1}$\,h$^{-1}$) assuming a biofilm density
+of ${\sim}2$\,gDW\,L$^{-1}$ and a reference growth rate of $0.1$\,h$^{-1}$:
+sugars (glucose, fructose, sucrose, lactate), all twenty amino acids plus cysteine
+and ornithine, B-vitamins, trace metals, purines, and inorganic salts.
+Concentrations were set at the blood-plasma scale (${\sim}100\times$ realistic
+saliva) so that every model remains feasible; a realistic-concentration variant
+produced non-specific competition (growth suppressed $>50\%$ in $81/90$ pairs) and
+was not used. Second, AGORA2-specific cofactors absent from the saliva list were
+added at minimal bounds where required for feasibility (protoheme/siroheme,
+menaquinones, \textit{meso}-diaminopimelate, long-chain fatty acids,
+4-hydroxybenzoate, adenosylcobalamin, glutathione, polyamines, cytidine). The four
+strictly anaerobic guilds had their O$_2$ exchange shut off before optimisation.
+
+\chapter{TMCMC Implementation Details}
+\label{app:tmcmc}
+
+The two-phase GPU-accelerated TMCMC procedure of Chapter~\ref{ch:heine} is
+summarised in Algorithm~\ref{alg:tmcmc}. The end-to-end GPU speedup ($\sim$$200\times$
+on the matched benchmark) and production wall-clock are reported in
+Table~\ref{tab:heine_timing}; the per-condition acceptance rates, log-evidence, and
+fit metrics are in Table~\ref{tab:heine_rmse}.
+
+\begin{algorithm}[htbp]
+\caption{Two-phase GPU-accelerated TMCMC}
+\label{alg:tmcmc}
+\begin{algorithmic}[1]
+\REQUIRE Data $\yobs$, viability data $\psi_i^{\mathrm{exp}}(t_k)$, $N_p$ particles, GPU device
+\ENSURE MAP $\hat{\btheta}$, posterior samples, log-evidence $\ln\hat Z$
+\STATE $\triangleright$ \textbf{Phase 1a: fix-$\psi$, wide prior}
+\STATE Fix $\psi_i(t_k)\leftarrow\psi_i^{\mathrm{exp}}(t_k)$; draw $\{\btheta_j\}$ from the wide prior; $\beta_0\leftarrow0$
+\WHILE{$\beta_m<1$}
+  \STATE find $\beta_{m+1}$ s.t.\ $\mathrm{CoV}[\{w_j\}]=\delta_{\mathrm{target}}$ by bisection
+  \STATE weights $w_j\leftarrow p(\yobs\mid\btheta_j)^{\beta_{m+1}-\beta_m}$; resample $\propto w_j$
+  \STATE estimate weighted covariance $\hat{\boldsymbol\Sigma}^{(m)}$
+  \FOR{$k=1$ \TO $K$}
+    \STATE propose $\btheta_j'\sim\mathcal{N}(\btheta_j,\gamma^2\hat{\boldsymbol\Sigma}^{(m)})$ for all $j$
+    \STATE evaluate all $N_p$ likelihoods in parallel via \texttt{jax.vmap} on GPU
+    \STATE accept/reject (Metropolis--Hastings); clip to prior bounds
+  \ENDFOR
+\ENDWHILE
+\STATE record posterior quantiles $q_{0.01},q_{0.99}$ and $\sigma$ per parameter
+\STATE $\triangleright$ \textbf{Phase 1b: fix-$\psi$, narrowed prior} $[q_{0.01}-1.5\sigma,\,q_{0.99}+1.5\sigma]$; repeat
+\STATE $\triangleright$ \textbf{Phase 2: free $\psi$, informative $\btheta$-prior from Phase 1b}
+\STATE release $\psi_i$; augment likelihood with $-\sum_{k,i}(\psi_i(t_k)-\psi_i^{\mathrm{exp}}(t_k))^2/(2\sigma_\psi^2)$; repeat ($N_p=10{,}000$)
+\RETURN $\hat{\btheta}$, $\hat{\bpsi}$, posterior samples, $\ln\hat Z$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Hyperparameters.}
+Adaptive tempering with CoV target $\delta_{\mathrm{target}}=1.0$; proposal scale
+$\gamma^2=2.38^2/d$ adapted online toward acceptance $\bar\alpha\approx23\%$;
+$K=20$ mutation steps per stage; forward model by implicit-Euler Newton
+($\Delta t=10^{-4}$, $2{,}500$ steps), gauge $c^*=25$, barrier $K_p=10^{-4}$.
+Convergence checked by $\mathrm{ESS}=N_p$ at the final stage and a two-seed
+Gelman--Rubin criterion $\hat R<1.1$ on all active parameters.

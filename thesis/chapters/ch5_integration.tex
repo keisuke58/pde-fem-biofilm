@@ -1,0 +1,1345 @@
+\chapter{Integration and Outlook}
+\label{ch:integration}
+
+\section{Complementarity of the Two Frameworks}
+\label{sec:integration_compare}
+
+Chapters~\ref{ch:heine} and~\ref{ch:dieckow} attack the same problem --- inferring
+species interactions from compositional time series under the Extended Hamilton
+Principle --- from opposite ends of the controlled/clinical spectrum. They are
+deliberately complementary rather than redundant (Table~\ref{tab:complementarity}).
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Aspect} & \textbf{Ch.~\ref{ch:heine} (Heine, in-vitro)} & \textbf{Ch.~\ref{ch:dieckow} (Dieckow, in-vivo)}\\
+    \midrule
+    Data           & in-vitro, controlled & in-vivo, clinical\\
+    Dimension      & $5$ species          & $10$ class-level guilds\\
+    Model          & Hamilton $\bphi$--$\bpsi$ (viability) & Hamilton replicator ($\bphi$ only)\\
+    Inference      & Bayesian TMCMC (full posterior) & L-BFGS-B point estimate $+$ LOO\\
+    Regulariser    & iteratively narrowed priors & metabolic FBA \emph{sign} prior\\
+    Acceleration   & GPU \texttt{vmap} ($\sim$$200\times$) & JAX-JIT autodiff\\
+    Validation     & $4$ conditions $+$ held-out pH & $10$-fold LOO $+$ Joshi external\\
+    \bottomrule
+  \end{tabular}
+  \caption[Complementarity of the in-vitro and in-vivo frameworks]{The two
+  inference frameworks are complementary: controlled identifiability and full
+  posteriors in vitro; clinical relevance and metabolic-prior identifiability in
+  vivo.}
+  \label{tab:complementarity}
+\end{table}
+
+The in-vitro setting (Chapter~\ref{ch:heine}) trades realism for control. With
+defined strains, replicated conditions, and measured viability, it can afford a
+\emph{full Bayesian posterior} over a $15$-parameter symmetric matrix and a
+$\bphi$--$\bpsi$ model that resolves living from total biomass --- at the cost of
+applying only to a five-species laboratory consortium. The data are rich enough
+that the regulariser need only be an iteratively narrowed prior; the posterior
+itself recovers biological sparsity without metabolic input.
+
+The in-vivo setting (Chapter~\ref{ch:dieckow}) inverts every term of that trade.
+Ten guilds, three time points, and ten patients leave the interaction matrix
+underdetermined, so a point estimate replaces the posterior and an external
+\emph{metabolic sign prior} supplies the identifiability the data cannot. What the
+clinical setting loses in statistical luxury it gains in reach: out-of-sample LOO
+generalisation and transfer to an independent peri-implant cohort.
+
+Crucially, the two share a backbone. Both are replicator dynamics on the simplex
+with a symmetric interaction matrix derived from the same variational principle
+(Chapter~\ref{ch:theory}), and both find that interaction \emph{sign} is the
+robust, transferable quantity --- recovered emergently from rich in-vitro data and
+imposed as a prior on sparse in-vivo data. Read together they form a single
+pipeline: controlled in-vitro estimation calibrates the model and validates the
+sign structure that the in-vivo prior then exploits where data are scarce, and the
+spatial extension of this chapter carries the same interactions into depth-resolved
+prediction.
+A structural echo of this complementarity is visible in the COMSTAT biofilm metrics:
+the roughness coefficient $R_a$ of \textit{P.~gingivalis} is significantly higher
+in the dysbiotic-HOBIC condition than in the commensal one (Mann--Whitney
+$p < 0.001$), which mirrors the Hamilton posterior showing a stronger
+Fn$\to$Pg interaction in DH ($\mathrm{P}(a_{Fn\to Pg}>0)=1.00$) versus CH
+($\mathrm{P}=0.82$) --- a suggestive co-variation between spatial surface roughness
+and inferred network interaction strength, consistent with the picture that
+stronger Fn facilitation allows Pg to form more structurally complex colonies.
+
+A deeper complementarity concerns what each framework \emph{measures}.
+The Hamilton ODE equilibrium (300 posterior samples, uniform initialisation)
+converges to Pg~$+$~Fn dominance
+($\phi_\mathrm{Pg}^\mathrm{CH}\!\approx 0.49$; $\phi_\mathrm{Fn+Pg}^\mathrm{DH}\!\approx 1.0$),
+yet COMSTAT shows near-uniform substrate coverage across all five species
+($0.19$--$0.26$; $r = 0.07$ CH, $r = 0.52$ DH with the ODE).
+The discrepancy is resolved by vertical stratification: competitive exclusion in the
+mean-field model corresponds to depth-niche partitioning in the real biofilm,
+which COMSTAT's 2-D projection cannot detect but FISH can (Section~\ref{sec:pde_fish}).
+Figure~\ref{fig:hamilton_vs_comstat} shows the ODE--COMSTAT correlation explicitly.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.74\textwidth]{fig_hamilton_vs_comstat.pdf}
+  \caption[Hamilton ODE equilibrium vs COMSTAT substrate coverage]{Hamilton ODE
+  equilibrium composition (posterior median, $n=300$ samples) versus COMSTAT
+  substrate coverage fraction for all five species in CH and DH.
+  The low correlation ($r=0.07$ CH, $r=0.52$ DH) reflects the fundamental
+  difference between volume-averaged abundance (ODE) and 2-D areal coverage
+  (COMSTAT), not a model failure.}
+  \label{fig:hamilton_vs_comstat}
+\end{figure}
+
+\section{Towards a Unified Bayesian-Metabolic Framework}
+\label{sec:integration_unified}
+
+The two inference frameworks are, at present, methodologically disjoint: the
+in-vitro analysis (Chapter~\ref{ch:heine}) produces a full Bayesian posterior but
+uses only an uninformative, iteratively narrowed prior, while the in-vivo analysis
+(Chapter~\ref{ch:dieckow}) injects the metabolic sign prior but collapses to a point
+estimate. Their natural synthesis is a single scheme that does both --- a
+\emph{metabolically-regularised TMCMC posterior}.
+
+\paragraph{A unified objective.}
+Concretely, the metabolic sign penalty $\calP(\bA;\bF)$ of
+Eq.~\eqref{eq:dieckow_penalty} is a log-prior: $\log p_{\mathrm{sign}}(\bA) =
+-\calP(\bA;\bF)$, the half-normal density that is flat for correct-sign entries and
+quadratically suppresses sign violations in proportion to the metabolic evidence
+$|F_{ij}|$. Adding it to the TMCMC prior of Section~\ref{sec:theory_tmcmc} gives the
+tempered target
+\begin{equation}
+  p_m(\btheta) \;\propto\; p(\yobs\mid\btheta)^{\beta_m}\;
+    \underbrace{p_0(\btheta)\,
+    \exp\!\bigl[-\calP(\bA;\bF)\bigr]}_{\text{metabolically-informed prior}},
+  \label{eq:unified}
+\end{equation}
+so the sampler explores the \emph{full} posterior --- credible intervals,
+multimodality, model evidence --- while the metabolic prior supplies exactly the
+identifiability that sparse clinical data lack. This directly targets the principal
+limitation of Chapter~\ref{ch:dieckow} (the AGORA improvement was only marginally
+significant at $N=10$, $p\!\approx\!0.07$): with posterior uncertainty made explicit,
+the question shifts from a single point estimate to whether the metabolic prior
+sharpens the posterior on the constrained entries, a quantity that remains
+informative even in small cohorts. We ran exactly this coupling on the in-vitro
+data --- a sign-prior-regularised TMCMC ($\sigma_{\mathrm{KEGG}}=0.15$ commensal,
+$0.08$ dysbiotic) whose MAP matrix is scored against a KEGG/eHOMD net-flow matrix.
+The result is informative precisely because it is \emph{asymmetric}: the metabolic
+prior raises the MAP sign agreement in the commensal conditions (CS $56\!\to\!80\%$,
+CH $25\!\to\!81\%$) but lowers it in the dysbiotic ones (DS $88\!\to\!44\%$,
+DH $53\!\to\!44\%$). The prior aligns with health, where metabolite-mediated
+mutualism organises the community, yet conflicts with dysbiosis, where the data
+demand sign reversals --- concentrated on the \textit{F.~nucleatum} edges, where
+shear-driven competition overrides metabolic mutualism --- that the caries-context
+metabolic network does not encode. This recovers, in vitro, the very pattern the
+in-vivo analysis made central: interaction sign is metabolically predictable in
+health, but in dysbiosis the data must be allowed to override the prior.
+
+\paragraph{Scaling and personalisation.}
+With larger clinical series the Bayesian machinery quantifies heterogeneity a point
+estimate hides; a hierarchical extension --- shared $\bA^{\mathrm{pop}}$ with
+patient-specific deviations --- would partition community ecology from individual
+variation. Personalising the prior via patient-specific MICOM fluxes $\bF^{(p)}$
+would turn sign regularisation into a route toward individualised dysbiosis prediction.
+
+\section{Spatial Extension: Reaction--Diffusion PDE}
+\label{sec:integration_pde}
+
+The $0$D model of Chapter~\ref{ch:heine} describes a well-mixed material point.
+To resolve the depth stratification seen in confocal (FISH) imaging, we promote the
+species fractions to fields $\phi_i(z,t)$ over the biofilm thickness $z\in[0,L]$ and
+add molecular transport to the Hamilton reaction, giving a reaction--diffusion--advection
+system in the long tradition of reaction--diffusion models of pattern formation and
+biofilms~\cite{Turing1952Morphogenesis, Murray2003MathBiologyII, Kreft2001IbmBiofilm, Ward2003MathBiofilm}.
+
+\subsection{Strong form}
+\label{sec:pde_strong}
+Each species field obeys
+\begin{equation}
+  \frac{\partial \phi_i}{\partial t}
+  = \underbrace{D_i\,\frac{\partial^2 \phi_i}{\partial z^2}}_{\text{diffusion}}
+    \;-\; \underbrace{u\,\frac{\partial \phi_i}{\partial z}}_{\text{advection}}
+    \;+\; \underbrace{R_i(\bphi,\bpsi)}_{\text{NSP reaction}},
+  \qquad i = 1,\dots,n,
+  \label{eq:pde_strong}
+\end{equation}
+where $R_i$ is the per-point NSP reaction of Section~\ref{sec:theory_replicator}
+(carrying the viability $\psi_i$, void fraction $\phi_0$, and constraint multiplier
+$\gamma$), $D_i$ are species diffusivities, and $u$ is a common advective drift towards
+the bulk. Diffusion and advection act on $\phi_i$ only; the reaction acts on the full NSP
+state $\mathbf{g}(z)=(\phi_1,\dots,\phi_n,\phi_0,\psi_1,\dots,\psi_n,\gamma)$ at each $z$.
+
+\paragraph{Boundary and initial conditions.}
+At the substratum a no-flux (homogeneous Neumann) condition $\partial_z\phi_i|_{z=0}=0$
+expresses the impermeable surface; at the biofilm--bulk interface a Dirichlet condition
+$\phi_i(L,t)=\phi_{\mathrm{bulk},i}$ fixes the planktonic composition (taken as the
+Day-1 median). The diffusivities $D_i$ and drift $u$ are structural parameters of
+the model; with only $T=5$ FISH timepoints available (Days 1, 6, 10, 15, 21),
+the temporal derivative $\partial_t\phi_i$ is too coarsely sampled to identify $D_i$
+quantitatively by finite differencing~\cite{Stewart1998Diffusion}.
+A PINN inverse fit to the same profiles (Section~\ref{sec:pde_fish}) yields
+$D_i \approx 8\times10^{-4}$ (DH) and $D_i \approx 8\times10^{-3}$ (CH) in
+normalised units, with advection $u$ reversing sign between conditions.
+
+\subsection{Numerical scheme}
+\label{sec:pde_numerics}
+Equation~\eqref{eq:pde_strong} is discretised by the \emph{method of lines} with
+\emph{Lie operator splitting} of the stiff reaction from the transport:
+\begin{equation}
+  \bphi^{\,n+1} \;=\; \mathcal{T}_{\Delta t}\bigl(\mathcal{R}_{\Delta t}(\bphi^{\,n})\bigr),
+  \label{eq:splitting}
+\end{equation}
+a first-order ($\mathcal{O}(\Delta t)$) splitting.
+
+\paragraph{Reaction substep $\mathcal{R}$.}
+At every grid node the NSP material-point system is advanced by \emph{implicit Euler}
+and solved with Newton's method ($n_{\mathrm R}=5$ iterations, internal step
+$\Delta t_h=10^{-3}$), vectorised across nodes (one \texttt{vmap} over the $z$-axis).
+Implicit integration is chosen because the reaction is stiff near the simplex boundary,
+where the logarithmic barrier ($K_p=10^{-4}$) stiffens the Jacobian.
+
+\paragraph{Transport substep $\mathcal{T}$ (diagonal baseline).}
+Diffusion uses a second-order central stencil; advection uses first-order upwind, giving a
+globally first-order ($\mathcal{O}(\Delta z)$) spatial scheme. The no-flux wall is imposed
+by a ghost node; the Dirichlet bulk value is written into the last node. Explicit Euler
+advances the transport; the numerical diffusion $\tfrac12 u\,\Delta z$ must be kept below
+the physical $D_i$, which constrains $\Delta z$.
+
+\subsection{Simplex preservation: volume-filling cross-diffusion}
+\label{sec:pde_xdiff}
+The diagonal scheme diffuses each $\phi_i$ independently and then closes the simplex by
+re-setting $\phi_0=1-\sum_i\phi_i$ and clipping to $[0,1]$; this is a deliberate but
+\emph{non-conservative} approximation. A simplex-preserving formulation replaces it with a
+\emph{volume-filling} (size-exclusion) cross-diffusion flux~\cite{PainterHillen2002VolumeFilling}
+\begin{equation}
+  J_i = -D_i\Bigl[(1-\rho)\,\partial_z\phi_i + \phi_i\,\partial_z\rho\Bigr],
+  \quad \rho=\sum_{j}\phi_j,
+  \qquad
+  \frac{\partial\phi_i}{\partial t} = -\partial_z J_i - u\,\partial_z\phi_i + R_i,
+  \label{eq:xdiff}
+\end{equation}
+discretised conservatively by finite volumes (fluxes evaluated on cell faces). The flux is
+\emph{degenerate}, $J_i\to0$ as $\rho\to1$ or $\phi_i\to0$, so $0\le\phi_i,\rho\le1$ are
+preserved \emph{by construction} and $\phi_0=1-\rho$ is a genuine void fraction rather than
+a patched residual. Crucially, cross-coupling enters only through the shared crowding
+gradient $\partial_z\rho$, so the model retains exactly $n$ free self-mobilities $D_i$
+(no $n^2$ blow-up) and remains identifiable from $z$-profiles. Both schemes share the same
+sign structure and fixed points; the cross-diffusion form is used wherever conservation and
+boundedness matter.
+
+\subsection{Stability, conservation, and verification}
+\label{sec:pde_verification}
+The explicit transport substep is conditionally stable. The diffusive and advective
+Courant--Friedrichs--Lewy (CFL) limits
+\begin{equation}
+  \Delta t \;\le\; \tfrac12\,\frac{\Delta z^2}{\max_i D_i}
+  \qquad\text{and}\qquad
+  \frac{u\,\Delta t}{\Delta z} \;\le\; 1
+  \label{eq:cfl}
+\end{equation}
+must both hold; the cross-diffusion solver enforces the diffusive bound automatically
+(clamping $\Delta t$ to $0.9$ of the limit), and production runs are reported at a fixed
+sub-CFL $\Delta t$ satisfying both.
+
+Verification in a closed-box setting (reaction off, $u=0$) confirms $\mathcal{O}(\Delta z^2)$ interior convergence, $\mathcal{O}(\Delta z)$ boundary order at the ghost-node wall, and exact mass conservation for the finite-volume cross-diffusion scheme; the diagonal scheme drifts by $+2.2\times10^{-3}$ in the sub-critical regime and overshoots $\rho>1$ when crowded. Full convergence plots and conservation table are in Appendix~\ref{app:pde}.
+
+\paragraph{Qualitative model--data comparison.}
+Figure~\ref{fig:pde_ch_profile} shows the CH attractor depth profile from the
+cross-diffusion PDE alongside the corresponding FISH $z$-profile (Day~1 median,
+normalised), using diffusivities fit to the commensal-HOBIC data
+($D_{\mathrm{CH}}$, loss $\approx 0.015$, volume-filling cross-diffusion scheme,
+$N_z=32$).  The model reproduces the qualitative features: \textit{S.~oralis}
+dominates the outer layer and \textit{P.~gingivalis} is confined near the
+substrate, consistent with the depth-ordering and Manders results of
+Section~\ref{sec:pde_fish}.  Quantitative agreement is limited by the coarse
+temporal sampling ($T=5$ FISH timepoints), which prevents full identification of
+the $D_i$ (Section~\ref{sec:pde_strong}); fitted values should be read as
+order-of-magnitude estimates rather than measured transport coefficients.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.74\textwidth]{fig_pde_ch_profile.pdf}
+  \caption[PDE depth profile vs.\ FISH observation (CH attractor)]{%
+  Qualitative comparison of the reaction--diffusion model and the FISH
+  $z$-profile for the commensal-HOBIC (CH) attractor.
+  \textbf{(a)}~FISH median depth profile (Day~1, $N_z=32$ bins, normalised
+  relative abundance). \textbf{(b)}~Steady-state $z$-profile from the
+  volume-filling cross-diffusion PDE with diffusivities fit to the CH
+  $z$-profiles (loss $= 0.015$).
+  The outer-layer dominance of \textit{S.~oralis} (blue) and inner
+  sequestration of \textit{P.~gingivalis} (red) are reproduced qualitatively;
+  quantitative fits await continuous live-imaging data for full $D_i$
+  identification.}
+  \label{fig:pde_ch_profile}
+\end{figure}
+
+\subsection{Empirical depth structure from 3-D FISH imaging}
+\label{sec:pde_fish}
+The spatial model is ultimately answerable to the real depth structure of the
+biofilm. We extracted the full three-dimensional $(x,y,z)$ organisation of the five
+species from the Heine HOBIC FISH dataset --- $84$ titanium fields of view across
+all $11$ confocal \texttt{.lif} acquisitions, decoded \emph{per voxel} (without the
+usual $xy$-averaging) into the five-species channels. Two findings, both resting on
+billions of voxels, emerge and are the principal empirical result of the spatial
+work; the reaction--diffusion model is the methodology that confronts them.
+As a sanity check, Figure~\ref{fig:fish_vs_experiment} confirms that the
+$z$-integrated FISH composition at day~21 agrees with the Heine bulk culture
+measurements, validating the voxel decoding pipeline.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.68\textwidth]{fig_fish_vs_experiment.pdf}
+  \caption[FISH voxel composition vs Heine culture experiment]{%
+  Species fractions from $z$-integrated FISH voxel counts (day~21, all FOVs)
+  versus the Heine et al.\ culture-experiment replicate medians (day~21 HOBIC).
+  Good agreement validates the voxel-level channel decoding; residuals reflect
+  the difference between single-FOV local composition and the bulk-culture mean.}
+  \label{fig:fish_vs_experiment}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\linewidth]{fig_fish_clsm_feature.png}
+  \caption[HOBIC FISH: top-down view and depth cross-section]{%
+  Single-FOV CLSM summary (commensal-HOBIC, Day~1).
+  \textbf{Left:} $xy$ maximum-intensity projection (MIP); the five-species composite
+  shows a patchy, microcolonial architecture dominated by
+  \textit{S.~oralis} (blue) and \textit{Vd/Vp} (yellow).
+  \textbf{Right:} $xz$ depth cross-section MIP; the vertical extent of
+  each species reveals the stratification structure that motivates the
+  reaction--diffusion model of Section~\ref{sec:integration_pde}.}
+  \label{fig:fish_clsm_feature}
+\end{figure}
+
+\paragraph{\textit{Fn}--\textit{Pg} decoupling is a depth separation.} In the
+dysbiotic-HOBIC condition the lateral ($xy$-projected) Manders overlap
+coefficient~\cite{Manders1993Colocalization} of
+\textit{F.~nucleatum} and \textit{P.~gingivalis} is near unity --- the two species
+occupy the same lateral footprint --- yet their true \emph{three-dimensional}
+voxel-wise overlap collapses to $M_1\approx0.22$--$0.33$ from Day~6 onward (versus
+$0.4$--$0.7$ in the commensal-HOBIC control; Figure~\ref{fig:fish_coloc}). The two
+species therefore share an $(x,y)$ position but sit at \emph{different depths}: \textit{Pg}
+settles \emph{beneath} \textit{Fn}. This is a direct 3-D confirmation of \textit{Pg}
+deep-layer sequestration, invisible to any 2-D (depth-collapsed) analysis.
+
+\paragraph{Fn--Pg co-aggregation collapses by Day~6 in DH.}
+To quantify \emph{when} the depth separation emerges, we compute the pair
+cross-correlation function $g(r)$ between \textit{F.~nucleatum} (Fn) and
+\textit{P.~gingivalis} (Pg) voxels following Valm et al.~\cite{Valm2012PairCorrelation}:
+$g(r) > 1$ indicates co-aggregation at distance~$r$, $g(r) = 1$ the Poisson
+(random) baseline, and $g(r) < 1$ mutual avoidance.
+In the dysbiotic-HOBIC condition (Figure~\ref{fig:fish_pair_correlation}b), Day~1
+shows a pronounced short-range peak ($g \approx 2.8$ at $r < 2\,\mu\text{m}$):
+Fn and Pg are initially co-localised, as expected immediately after inoculation.
+By Day~6 the same short-range signal collapses to $g \approx 0.3$, a strong
+avoidance signature, and remains below unity through Day~21. This temporal
+transition marks the onset of the depth-stratification event: Pg migrates to the
+anaerobic inner layer beneath Fn within the first five experimental days, and the
+two species thereafter occupy spatially exclusive zones even at sub-5\,$\mu$m
+scales. In the commensal-HOBIC condition (Figure~\ref{fig:fish_pair_correlation}a),
+$g(r) \approx 1$ throughout, with modest co-aggregation fluctuations consistent
+with the patchy, microcolonial architecture. The $g(r)$ analysis thus provides a
+statistical timestamp for the dysbiotic spatial reorganisation that complements the
+depth-profile and Manders data.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fish_pair_correlation.pdf}
+  \caption[Fn--Pg pair cross-correlation $g(r)$]{Pair cross-correlation function
+  $g(r)$ between \textit{F.~nucleatum} and \textit{P.~gingivalis} voxels across
+  days for commensal-HOBIC (\textbf{a}) and dysbiotic-HOBIC (\textbf{b}).
+  In DH, $g$ collapses from $>2.5$ (Day~1, co-aggregation) to $<0.5$ (Day~6,
+  avoidance) at short range ($r < 5\,\mu$m), marking the onset of depth
+  stratification. CH shows $g \approx 1$ throughout. Computed from 3-D FISH voxel
+  stacks ($\phi_i > 0.15$ threshold, $8\times10^4$ random pairs per bin;
+  Valm et al.\ 2012).}
+  \label{fig:fish_pair_correlation}
+\end{figure}
+
+\paragraph{Dysbiosis is laterally homogeneous.} Quantifying lateral patchiness by
+the per-voxel coefficient of variation (CV) of each species across the $xy$ plane,
+the dysbiotic-HOBIC biofilm is markedly \emph{more homogeneous} than the commensal
+one (Figure~\ref{fig:fish_lateral}): the across-species mean lateral CV is
+$0.75$ (commensal, $n=67$ FOV) versus $0.52$ (dysbiotic, $n=17$ FOV), a difference
+significant for every species (Mann--Whitney $\mathrm{CH}\!>\!\mathrm{DH}$,
+$p=2.2\times10^{-4}$ pooled; per species \textit{So}/\textit{An}/\textit{Fn}
+$p<0.001$, \textit{Veillonella} $p=0.003$, \textit{Pg} $p=0.041$). \textit{P.\
+gingivalis} shows the weakest homogenisation, retaining the most patchiness. The
+commensal biofilm is, by contrast, organised into discrete microcolonies
+(CV $0.4$--$0.9$). Taken together: \emph{dysbiosis = a laterally confluent,
+vertically stratified mat with \textit{Pg} sequestered at depth; commensal health =
+a patchy, microcolonial structure}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fig_fish_fnpg_coloc_thesis.pdf}
+  \caption[3-D \textit{Fn}--\textit{Pg} colocalisation]{\textit{Fn}--\textit{Pg}
+  colocalisation from 3-D FISH. The lateral ($xy$-projected) Manders overlap is near
+  unity, but the true voxel-wise 3-D overlap drops to $M_1\approx0.22$--$0.33$ in
+  dysbiotic-HOBIC from Day~6 --- the two species share a lateral footprint but
+  separate in depth (\textit{Pg} below \textit{Fn}).}
+  \label{fig:fish_coloc}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fig_fish_lateral_heterogeneity_thesis.pdf}
+  \caption[Lateral homogenisation in dysbiosis]{Lateral heterogeneity (per-voxel
+  $xy$ coefficient of variation) by species and condition. Dysbiotic-HOBIC is
+  significantly more homogeneous than commensal-HOBIC for every species (pooled
+  Mann--Whitney $p=2.2\times10^{-4}$, $84$ FOV); \textit{Pg} homogenises least.}
+  \label{fig:fish_lateral}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\linewidth,height=0.50\textheight,keepaspectratio]{fig_fish_zprofile_temporal.pdf}
+  \caption[Temporal evolution of biofilm depth profiles]{Biofilm species composition
+  as a function of depth ($z=0$: substrate) across days 1--21 for commensal-HOBIC (CH,
+  top) and dysbiotic-HOBIC (DH, bottom).  Stratification intensifies over time;
+  by day~6 \textit{S.~oralis} (blue) occupies the outer layers while
+  \textit{P.~gingivalis} (red) retreats toward the substrate in CH, and the DH
+  profiles become progressively more species-uniform at each depth --- consistent
+  with the lateral homogenisation result (Figure~\ref{fig:fish_lateral}).}
+  \label{fig:fish_zprofile_temporal}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fish_cooccurrence_depth.pdf}
+  \caption[Spatial co-occurrence vs.\ predicted interaction sign]{Spatial co-occurrence
+  analysis: Pearson $r$ between species-pair voxel intensities at each normalised
+  depth, with Pg-involved pairs highlighted. \textbf{(Left)} CH and DH depth profiles
+  for So/An/Vd-Vp/Fn vs.\ Pg; negative $r$ (anti-correlation) builds in the Pg zone
+  (shaded) consistent with competitive exclusion. \textbf{(Centre)} Pg-involved pairs
+  agree with the ODE interaction sign in 4/4 CH pairs ($p=0.06$, binomial) vs.\ 2/4 DH
+  pairs; non-Pg pairs agree at chance. \textbf{(Right)} Day-by-day agreement: signal
+  strengthens as the biofilm matures.}
+  \label{fig:fish_cooccurrence}
+\end{figure}
+
+\paragraph{\textit{S.~oralis}--\textit{Veillonella} depth ordering confirms metabolic cross-feeding.}
+The AGORA metabolic backbone predicts lactate flux from \textit{S.~oralis} (producer)
+to \textit{Veillonella} spp.\ (consumer), implying the consumer should sit closer to
+the bulk to intercept outward-diffusing substrate.
+We computed species centre-of-mass depth $\bar{z}_i$ for each condition--day
+combination ($n=10$): \textit{Veillonella} is shallower than \textit{S.~oralis} in
+all 10 timepoints ($\Delta z = -2.81\,\mu\mathrm{m}$, $p=0.002$,
+Figure~\ref{fig:welch_so_vei_depth}), consistent with Welch et al.\
+\cite{Welch2016Biogeography} and constituting a geometry-based validation of the
+So$\to$Vei cross-feeding edge.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.74\textwidth, height=0.30\textheight, keepaspectratio]{fig_welch_so_vei_depth.pdf}
+  \caption[Metabolic depth ordering: \textit{S.~oralis} deeper than \textit{Veillonella}]{%
+  Spatial cross-feeding signature: \textit{Veillonella} (lactate consumer) sits
+  consistently shallower than \textit{S.~oralis} (lactate producer).
+  \textbf{(a)}~Species centre-of-mass depth across days for CH (circles, solid)
+  and DH (squares, dashed); shading marks the consumer--producer gap.
+  \textbf{(b)}~Signed depth difference $\Delta z = z_\mathrm{Vei} - z_\mathrm{So}$
+  per timepoint; negative in 10/10 cases (two-sided sign test $p=0.002$, $n=10$).
+  \textbf{(c)}~Comparison with Welch et al.\ (2016), who reported interdigitated
+  \textit{Veillonella}--\textit{Streptococcus} co-localisation in supragingival
+  CLASI-FISH; our signed depth metric ($-2.81\,\mu$m mean) provides a quantitative
+  extension to subgingival titanium biofilm.}
+  \label{fig:welch_so_vei_depth}
+\end{figure}
+
+\paragraph{All five species: \textit{Veillonella} is the community's shallowest member.}
+Extending the CoM analysis to all five species (Figure~\ref{fig:depth_ordering_all5sp}),
+\textit{Veillonella} is the shallowest in every timepoint,
+significantly above So ($p=0.001$), An ($p=0.006$), and Fn ($p=0.006$);
+the remaining four species cluster at $25$--$27\,\mu\mathrm{m}$ without significant
+pairwise ordering.
+The So$\to$Vei and An$\to$Vei edges predicted by AGORA are both confirmed; the
+Fn$\to$Vei separation is an additional finding not encoded in the FBA network.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth, height=0.29\textheight, keepaspectratio]{fig_depth_ordering_all5sp.pdf}
+  \caption[All-species centre-of-mass depth ordering]{Centre-of-mass depth ranking
+  for all five species ($n=10$ condition--day combinations).
+  \textbf{(a)}~Mean $\pm$ s.d.\ CoM depth per species (sorted shallow to deep).
+  \textbf{(b)}~Pairwise depth difference matrix
+  $\Delta z = \bar{z}_\mathrm{col} - \bar{z}_\mathrm{row}$; stars mark
+  Wilcoxon-significant pairs (* $p<0.05$, ** $p<0.01$, *** $p<0.001$).
+  \textbf{(c)}~Schematic depth cartoon with arrows indicating significant pairs.
+  \textit{Veillonella} is the shallowest species in all three representations,
+  separated from all others at $p \le 0.006$.}
+  \label{fig:depth_ordering_all5sp}
+\end{figure}
+
+\paragraph{PINN-inferred transport parameters.}
+To move beyond order-of-magnitude placeholders, a physics-informed neural network
+(PINN) was fitted to the FISH $\phi_i(z,t)$ profiles using the same PDE operator
+(Eq.~\eqref{eq:pde_strong}), with $D_i$ and $u$ as jointly trainable parameters
+alongside the network weights \cite{Karniadakis2021PINN}.
+The inferred diffusivities are $D_i \approx 8\times10^{-4}$ (normalised) in DH and
+$D_i \approx 8\times10^{-3}$ in CH --- a tenfold reduction in matrix permeability
+under dysbiotic conditions that is uniform across all five species
+(Figure~\ref{fig:pinn_diffusivity}).
+The dominant condition contrast lies instead in the advection sign:
+$u_\mathrm{DH} = -1.76$ (inward, toward the substratum) versus
+$u_\mathrm{CH} = +3.02$ (outward, toward the bulk).
+Depth sequestration of \textit{P.~gingivalis} in dysbiosis is therefore
+advection-driven rather than reflecting a species-specific diffusivity deficit;
+globally denser matrix and reversed bulk flow jointly account for the stratification
+observed in FISH.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{fig_pinn_diffusivity.pdf}
+  \caption[PINN-inferred diffusivities and advection: DH vs CH]{%
+  Physics-informed neural network (PINN) transport parameter estimates.
+  \textbf{(a)}~Observed FISH depth profiles for Dysbiotic HOBIC (day 21),
+  showing the late-stage Pg enrichment at depth.
+  \textbf{(b)}~PINN-inferred diffusivities $D_i$ for all five species under DH
+  (red) and CH (blue) conditions; all species show a ${\sim}10$-fold reduction
+  in DH. The advection parameter $u$ reverses sign between conditions
+  ($u_\mathrm{DH}=-1.76$, $u_\mathrm{CH}=+3.02$, normalised units),
+  indicating inward bulk flow in dysbiosis as the primary driver of
+  \textit{Pg} depth sequestration.}
+  \label{fig:pinn_diffusivity}
+\end{figure}
+
+\paragraph{Interpretation of transport parameters.}
+The tenfold global reduction in $D_i$ in DH is consistent with the denser,
+more structured extracellular matrix of a mature dysbiotic biofilm: higher
+exopolysaccharide content and closer species packing physically restrict molecular
+diffusion for all guild members equally, without invoking any species-specific
+mechanism.
+The advection term $u$ captures net bulk fluid flow relative to the growing biofilm
+front; its sign reversal ($u<0$ inward in DH, $u>0$ outward in CH) may reflect
+the anaerobic pocket dynamics of the DH condition, where oxygen depletion at depth
+creates a nutrient gradient that drives net inward transport of solutes and,
+secondarily, the microbial community it supports.
+The finding that $D_\mathrm{Pg}$ is not distinctively low compared with the other four
+species implies that spatial sequestration of \textit{P.~gingivalis} at the
+substratum is not a passive diffusion barrier effect but an active advective process,
+consistent with the known motility-independence of \textit{Pg} and its reliance on
+community structure for niche establishment \cite{Hajishengallis2014Polymicrobial}.
+
+\paragraph{What the model captures --- and what it does not.} Confronted with these
+data, the reaction--diffusion model of this section reproduces the dysbiotic lateral
+homogenisation: under reaction-dominated dynamics with a laterally uniform boundary,
+any initial lateral structure decays (the cross-diffusion variant retains only
+marginally more). It does \emph{not} reproduce the commensal microcolonial
+patchiness --- a continuum reaction--diffusion field has no mechanism to sustain
+discrete colonies against diffusive smoothing. The honest reading is that the
+\emph{depth} stratification and the dysbiotic homogenisation are within the model's
+reach, whereas commensal patchiness points beyond it, to stochastic colonisation or
+adhesion-driven pattern formation not encoded in Eq.~\eqref{eq:pde_strong}. The
+scientific weight here sits on the data; the PDE is the lens that makes precise
+which features it can and cannot explain.
+
+\subsection{Scope and limits of the mean-field description}
+\label{sec:discussion_mismatch}
+
+The ODE/COMSTAT mismatch noted above --- competitive exclusion in the volume-averaged
+model against near-uniform 2-D coverage, reconciled by the vertical niche partitioning of
+Section~\ref{sec:pde_fish} --- marks the boundary of the mean-field model's applicability and
+is the primary motivation for the spatial PDE extension of this chapter. Full closure would
+require jointly inferring $\mathbf{A}$ from temporal abundance data and spatial coverage
+metrics simultaneously.
+
+\section{Mechanical Stratification: Finite-Element Realisation}
+\label{sec:integration_fem}
+
+The spatial analysis of Section~\ref{sec:integration_pde} establishes \emph{where}
+each species resides --- the depth-resolved composition $\phi_i(z)$ and, in
+particular, the substratum sequestration of \textit{P.~gingivalis}. It leaves open
+the mechanical question that the Extended Hamilton Principle of
+Chapter~\ref{ch:theory} was, in its biofilm-mechanics reading, built to answer: what
+\emph{stress state} does a given community structure imprint on the film? Because
+the local biomass fraction sets the local growth, a depth-varying composition drives
+a depth-varying growth and hence --- once the film is constrained by the implant
+surface --- a depth-varying residual stress. This section realises that chain
+numerically, embedding the composition field as the growth driver of a finite-element
+continuum model and reading off the mechanical stratification it produces. It is the
+mechanical completion of the ``Spatial Stratification'' the title promises:
+composition depth-structure $\rightarrow$ mechanical state $\rightarrow$ clinic.
+
+\subsection{Coupling concept and constitutive model}
+\label{sec:fem_method}
+
+The biofilm material model is invoked \emph{at each Gauss point}, replacing the
+phenomenological constitutive law of a host finite-element framework with the
+composition-driven growth mechanics derived here. Kinematically we adopt the
+classical multiplicative growth split~\cite{Rodriguez1994Growth}
+\begin{equation}
+  \bF = \bF_{\!e}\,\bF_{\!g},
+  \qquad
+  \bF_{\!g} = \operatorname{diag}\!\bigl(1,\,1,\,\lambda_z(\phi_\mathrm{Pg})\bigr),
+  \label{eq:growth_split}
+\end{equation}
+in which the inelastic factor $\bF_{\!g}$ describes stress-free volumetric growth and
+the elastic factor $\bF_{\!e}=\bF\bF_{\!g}^{-1}$ carries the stress. Its magnitude is
+set point-wise by the local \textit{P.~gingivalis} fraction $\phi_\mathrm{Pg}(z)$ from
+the ecological model; its kinematic form follows the constraint. For \emph{unconfined}
+thickening --- the free-swelling calibration of Section~\ref{sec:fem_growth} --- growth
+is anisotropic and substratum-normal, $\bF_{\!g}=\operatorname{diag}(1,1,\lambda_z)$ as
+in Eq.~\eqref{eq:growth_split}, new biomass accreting away from the implant surface. For
+the laterally \emph{confined} residual-stress column of Section~\ref{sec:fem_residual},
+however, a purely substratum-normal growth would relax freely against the traction-free
+top and develop \emph{no} in-plane stress; the in-plane residual stress is generated by
+the confinement of \emph{lateral} growth, so there growth is modelled as isotropic,
+$\bF_{\!g}=J_g^{1/3}\bI$, with the volume factor $J_g$ matched to the same CLSM volume
+increase $J_g=\lambda_z(\phi_\mathrm{Pg})$. Because the true growth anisotropy is not
+measured, this volume-matched isotropy is an explicit modelling choice; it fixes the
+residual-stress \emph{shape} from $\phi_\mathrm{Pg}(z)$ but leaves its absolute
+\emph{scale} model-dependent (Section~\ref{sec:fem_validation}). The elastic response
+uses a compressible neo-Hookean potential
+\cite{Holzapfel2000}, giving the Cauchy stress
+\begin{equation}
+  \bsigma
+  = \frac{\mu}{J_e}\bigl(\bb_e-\bI\bigr)
+  + \frac{\lambda}{J_e}\,\ln J_e\,\bI,
+  \qquad
+  \bb_e=\bF_{\!e}\bF_{\!e}^{\!\top},\;\;J_e=\det\bF_{\!e},
+  \label{eq:neo_hookean}
+\end{equation}
+with the consistent material tangent supplied analytically to preserve the quadratic
+convergence of the global Newton solve. The neo-Hookean elastic factor is a
+deliberate \emph{fast-elastic} idealisation: over the seconds-to-minutes timescale on
+which the depth structure is mechanically interrogated, biofilms respond essentially
+elastically~\cite{Stoodley2002Material}, so Eq.~\eqref{eq:neo_hookean} returns the
+short-time stress \emph{before} viscous relaxation (the long-time complement is
+treated in Section~\ref{sec:fem_validation}).
+
+Two coupling implementations were realised. A self-contained user-material
+subroutine communicates with the model over a local socket (a Fortran
+\texttt{ISO\_C\_BINDING} client, requiring no external link step), which is
+convenient for prototyping; for production and for portability to a second solver the
+growth driver $\phi_\mathrm{Pg}(z)$ is instead delivered as a \emph{predefined field
+variable}, evaluated per Gauss point from the element coordinates. The latter path
+contains no inter-process communication and maps one-to-one onto the field-variable
+mechanism of other commercial solvers, so the constitutive routine is portable
+essentially unchanged.
+
+\paragraph{Material parameters, boundary conditions, and loading.}
+The coupled implant--tooth--bone models of Section~\ref{sec:fem_tooth} use the
+linear-elastic isotropic parameter set of Table~\ref{tab:fem_materials}, in
+consistent mm--N--MPa units (stresses in MPa). The values are standard for dental
+implant finite-element analysis \cite{Geng2001,Sevimay2005}; the PDL modulus is the
+linear secant value of \citet{ReesJacobsen1997} and the dentin modulus follows
+\citet{Kinney2003}. The periodontal ligament (PDL) and the biofilm are
+deliberate linear idealisations of nonlinear/uncertain materials (the true PDL is
+nonlinear/hyperelastic \cite{Cattaneo2005}), so every
+biofilm-driven result is reported as a dimensionless dysbiosis \emph{ratio}
+(DH/CH$\,\approx\,2.3$--$3.3\times$ across all models) rather than an absolute stress,
+and the PDL enters only through the implant-versus-tooth \emph{contrast}. The crown
+stiffness is near-rigid relative to the load path: it scarcely affects the
+peri-implant bone stress, which is governed by the load resultant and its moment arm.
+The bone is held fully fixed on the artificial crop faces ($U_1{=}U_2{=}U_3{=}0$; a
+St.-Venant truncation, verified non-artefactual by a periodic representative-volume
+closure). Osseointegration is modelled as a tied interface (\texttt{*TIE},
+\texttt{ADJUST=NO}), the crown is tied to the abutment top, and a frictional general
+contact ($\mu=0.3$) is used only for the de-integrated micromotion variant. Biofilm
+growth is imposed as an isotropic volumetric eigenstrain ($\varepsilon_\mathrm{g}=0.19$,
+thermal analogy) in a first step; the occlusal bite (a $100\,$N resultant at
+$30^\circ$ to the axis, per ISO~14801) is applied in a second step, on the abutment
+top for the bare case and --- crucially --- on the \emph{crown occlusal table} once a
+restoration is present, which lengthens the moment arm (Section~\ref{sec:fem_tooth}).
+The large coupled assembly uses linear tetrahedra (C3D4, ${\sim}2.7\times10^{5}$
+elements); the ISO~14801 design and bone-loss coupons use quadratic tetrahedra (C3D10),
+since linear elements under-predict the thread-root concentration by $9$--$15\%$. Mesh
+convergence on the coupon thread-root peak is within $\pm7\%$.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lrrl@{}}
+    \toprule
+    \textbf{Material} & $E$ & $\nu$ & \textbf{Role / basis}\\
+     & (MPa) & & \\
+    \midrule
+    Titanium (Ti-6Al-4V)        & $110\,000$ & $0.34$ & implant fixture + abutment\\
+    Cortical bone               & $13\,700$  & $0.30$ & dense shell / lamina dura ($1.8$\,mm)\\
+    Cancellous bone             & $1\,000$   & $0.30$ & trabecular core (type III--IV)\\
+    Dentin                      & $18\,000$  & $0.31$ & natural neighbour tooth\\
+    PDL                         & $50$       & $0.45$ & $0.25$\,mm ligament (linear idealisation)\\
+    Crown (lithium-disilicate)  & $95\,000$  & $0.30$ & load-bearing restoration ($210\,000$ for zirconia)\\
+    Gingiva (mucosa)            & $3$        & $0.45$ & peri-implant soft-tissue cuff\\
+    Biofilm                     & $1.0$      & $0.45$ & growth collar ($+\,\varepsilon_\mathrm{g}=0.19$; modulus uncertain $\Rightarrow$ ratios)\\
+    \bottomrule
+  \end{tabular}
+  \caption[Finite-element material parameters]{Linear-elastic isotropic material
+  parameters for the coupled implant--tooth--bone models (mm--N--MPa units). PDL and
+  biofilm are explicit idealisations of nonlinear/uncertain materials; biofilm-driven
+  outputs are reported as dysbiosis ratios, not absolute stresses.}
+  \label{tab:fem_materials}
+\end{table}
+
+\subsection{Growth kinematics from confocal data}
+\label{sec:fem_growth}
+
+The single free magnitude of Eq.~\eqref{eq:growth_split}, the growth stretch
+$\lambda_z$, is calibrated against the CLSM depth data of
+Section~\ref{sec:pde_fish}. Regressing the local biofilm thickening on the local
+\textit{P.~gingivalis} fraction yields a clear monotone relation in the dysbiotic
+condition (Figure~\ref{fig:fem_calibration}; Pearson $r=0.88$, slope
+$\beta_\mathrm{depth}\approx17$), whereas the commensal control shows no comparable
+thickening. The growth law is therefore data-anchored in shape: a
+\textit{Pg}-enriched depth grows more, exactly where FISH places the organism. As
+discussed in Section~\ref{sec:fem_validation} we treat the calibration as fixing the
+\emph{shape} of $\lambda_z(\phi_\mathrm{Pg})$ while leaving its absolute scale a
+single parameter $\gamma$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.56\textwidth]{fem_growth_calibration.pdf}
+  \caption[Growth calibration from CLSM depth data]{Depth-resolved growth strain
+  versus local \textit{P.~gingivalis} fraction (dysbiotic-HOBIC). The growth that
+  Eq.~\eqref{eq:growth_split} requires is set by where \textit{Pg} sits: the
+  thickening correlates with $\phi_\mathrm{Pg}$ at $r=0.88$
+  ($\beta_\mathrm{depth}\approx17$); the commensal control shows no such trend.}
+  \label{fig:fem_calibration}
+\end{figure}
+
+\subsection{Verification}
+\label{sec:fem_verification}
+
+Before any biofilm-specific result is reported, the coupled implementation is
+verified against analytic expectations by four independent checks
+(Table~\ref{tab:fem_verification}), in the spirit of code verification by
+manufactured solutions~\cite{Roache2002MMS}. (i)~A \emph{patch test} under spatially
+uniform growth returns a spatially uniform interior stress: all interior elements of
+a multi-element block reproduce an \emph{identical} in-plane stress to machine
+precision, the free surface carrying the expected single-element boundary layer.
+(ii)~An \emph{energy-conservation} test, with growth switched off and a prescribed
+stretch applied, reproduces the closed-form neo-Hookean stored energy: the external
+work equals the analytic strain energy to a relative difference of
+$1.3\times10^{-4}$, confirming the absence of spurious numerical dissipation and a
+correct (symmetric Poisson) response. (iii)~A \emph{method-of-manufactured-solutions}
+study, in which a non-trivial displacement field is forced by the corresponding
+analytic body load, recovers the theoretical convergence order of the trilinear
+hexahedral element: the $L^2$ displacement error decays as $h^{1.95}\approx h^2$
+under uniform refinement. (iv)~The analytically supplied consistent tangent is
+confirmed against a finite-difference (Kirchhoff/Jaumann) tangent, which it reproduces
+to a relative error of $5\times10^{-8}$ across the full calibrated growth range,
+guaranteeing the quadratic convergence of the global Newton solve. Finally, the growth
+column used for the production results below is mesh-converged
+(Figure~\ref{fig:fem_convergence}): under spatially uniform growth the confined
+plateau stress is mesh-independent to machine precision, and for the depth-graded
+column the confined interface stress at $N=16$ elements lies within $0.27\%$ of the
+$N=32$ value.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}llp{5.6cm}@{}}
+    \toprule
+    \textbf{Check} & \textbf{Quantity} & \textbf{Result}\\
+    \midrule
+    Patch test            & interior stress uniformity & identical interior stress (machine precision)\\
+    Energy conservation   & $\lvert W_\mathrm{ext}-U_\mathrm{NH}\rvert/W_\mathrm{ext}$ & $1.3\times10^{-4}$ (no dissipation)\\
+    Manufactured solution & $L^2$ order $p$            & $p=1.95\approx2$ (trilinear hexahedron)\\
+    Consistent tangent    & analytic vs FD (rel.\ err.) & $5\times10^{-8}$ (full growth range)\\
+    Mesh convergence      & interface stress, $N{=}16$ vs $32$ & within $0.27\%$ (uniform: exact)\\
+    \bottomrule
+  \end{tabular}
+  \caption[Verification of the finite-element coupling]{Verification of the coupled
+  growth--mechanics implementation against analytic expectations. The three code
+  checks are independent of any biofilm parameter.}
+  \label{tab:fem_verification}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.56\textwidth]{fem_mesh_convergence.pdf}
+  \caption[Mesh convergence of the growth column]{Confined in-plane stress versus the
+  number of elements through the depth. Under spatially uniform growth the plateau
+  stress is mesh-independent to machine precision (lower curve); for the depth-graded
+  column the confined interface stress converges by $N=16$ (within $0.27\%$ of $N=32$);
+  production runs use $N=16$.}
+  \label{fig:fem_convergence}
+\end{figure}
+
+\subsection{Result: composition-resolved residual stress}
+\label{sec:fem_residual}
+
+The central mechanical result follows from confining the growth column to the
+substrate (bonded base, traction-free top, laterally constrained), so that the lateral
+growth cannot relax by free expansion and instead develops an in-plane residual stress.
+Figure~\ref{fig:fem_residual} shows the resulting profile $\sigma_{xx}(z)$ together with
+its compositional driver. The residual stress is \emph{not} distributed through the
+depth but concentrates in a boundary layer at the substratum --- the implant interface
+--- of order one column width deep: there the confined growth is held, whereas higher in
+the film the traction-free surface relieves the growth by free upward expansion and the
+in-plane stress decays to zero (above the layer the column simply grows taller at
+$\sigma\approx0$, regardless of $\phi_\mathrm{Pg}$). \emph{Within} the interface layer
+the stress tracks $\phi_\mathrm{Pg}$ monotonically --- more \textit{P.~gingivalis} drives
+more confined growth and hence more compression. The condition contrast is therefore
+concentrated exactly where it is clinically decisive: the dysbiotic film,
+\textit{Pg}-enriched at the base, carries a far larger interface stress than the
+commensal one --- at identical material parameters its peak exceeds the commensal by
+$6.4\times$ and its mean interface stress by $\approx10\times$, while the commensal
+profile is weak and nearly featureless. The mechanical state is thus the
+\emph{composition-resolved} substratum stress that a particular dysbiotic community
+imprints on the implant interface, a stress the laterally homogeneous commensal biofilm
+does not develop. Because the elastic modulus of oral biofilm is uncertain by orders
+of magnitude (Section~\ref{sec:fem_validation}), the stress is reported relative to
+the shear modulus $\mu$, leaving the result modulus-agnostic.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_residual_stress.pdf}
+  \caption[Composition-resolved substratum-interface residual stress: dysbiotic vs
+  commensal]{\textbf{(left)} In-plane residual stress $\sigma_{xx}(z)/\mu$ from the
+  substrate-bonded growth column and \textbf{(right)} its compositional driver
+  $\phi_\mathrm{Pg}(z)$, for the dysbiotic (DH) and commensal (CH) conditions
+  ($z/H=0$ at the implant interface). The stress concentrates in the substratum
+  boundary layer (shaded); above it the traction-free surface relieves the growth and
+  the in-plane stress decays to zero. The dysbiotic interface stress far exceeds the
+  commensal (peak $6.4\times$, mean $\approx10\times$); \emph{within} the layer it
+  tracks $\phi_\mathrm{Pg}$. This is the mechanical signature of the depth composition
+  documented in Section~\ref{sec:pde_fish}.}
+  \label{fig:fem_residual}
+\end{figure}
+
+\subsection{Clinical reading: residual stress drives delamination}
+\label{sec:fem_delamination}
+
+The residual stress acquires clinical meaning at the implant interface. Replacing the
+perfectly bonded base of the growth column with a \emph{cohesive} interface (a
+traction--separation law with a quadratic-stress damage-initiation criterion and
+energy-based evolution) lets the growth-induced stress do mechanical work against the
+film--substrate bond. The growth-induced shear concentrates at the free edge, where
+cohesive damage initiates and a delamination front then propagates inward
+(Figure~\ref{fig:fem_delamination}). The condition contrast is decisive: at an
+\emph{identical} interface strength, the dysbiotic film delaminates over $83\%$ of
+the interface against only $25\%$ for the commensal film --- a $3.3\times$ difference
+whose sole cause is the \textit{Pg} depth profile that sets the growth. This is a
+direct finite-element test of the dysbiosis$\rightarrow$detachment hypothesis: the
+same compositional shift that the ecological model identifies as dysbiotic produces,
+through its mechanical realisation, a markedly larger tendency for the biofilm to
+detach from the implant --- the mechanical event that seeds peri-implant soft-tissue
+exposure. It connects the spatial composition result directly to the clinical
+translation of Section~\ref{sec:integration_clinical}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_delamination.pdf}
+  \caption[Growth-driven delamination: dysbiotic vs commensal]{\textbf{(left)}
+  Cohesive interface damage along the film for the two conditions at full growth: the
+  damage front reaches far deeper into the dysbiotic interface. \textbf{(right)}
+  Delaminated fraction of the interface versus interface strength; at every strength
+  the dysbiotic film detaches further, by up to $3.3\times$. Identical material and
+  interface parameters --- only the $\phi_\mathrm{Pg}$ depth profile differs.}
+  \label{fig:fem_delamination}
+\end{figure}
+
+\paragraph{Re-solving on an actual implant thread.} The growth column and cohesive test keep
+the substratum flat, whereas the peri-implant biofilm of the Dieckow cohort grows on a
+threaded, micro-rough titanium abutment. Re-solving the same CLSM-calibrated growth on a smooth
+threaded titanium cross-section --- a base-bonded biofilm patch in plane strain, the
+volume-matched growth imposed as a thermal eigenstrain so that no user material is needed, with a
+mesh-convergent interface stress (the interior peak, with the bonded-base/free-edge corner
+singularity excluded, bounded within $\pm7\%$ for $\ge24$ elements per thread period;
+Figure~\ref{fig:fem_implant}B) --- makes the implant thread the central geometric feature of the
+result. First, the thread is what \emph{generates} the interface stress --- the driver of thin-film
+delamination from the substrate~\cite{HutchinsonSuo1992}: a flat titanium surface
+lets the laterally-relaxed growth expand almost stress-free, whereas the thread frustrates it,
+and the interior interface stress rises monotonically with thread depth --- roughly an order of
+magnitude from flat to a deep thread (Figure~\ref{fig:fem_implant}C) --- concentrating at the
+bonded thread roots (Figure~\ref{fig:fem_implant}A). Second, the dysbiosis contrast rides on top
+of this geometric stress and is preserved: the dysbiotic interior interface von~Mises stress is
+$\approx\!2.5\times$ the commensal, the same ordering as the flat-column residual-stress and
+cohesive-delamination contrasts (Sections~\ref{sec:fem_residual}--\ref{sec:fem_delamination}).
+This is not a finite-size artefact of the free patch edges: a periodic-RVE unit cell --- a single
+thread period with left--right periodicity, the laterally-infinite-film limit, which removes the
+free edge entirely so the whole bonded interface is interior --- gives the same picture, the flat
+interface remaining essentially stress-free while the thread generates the interface stress
+($\mathrm{DH/CH}=2.3\times$ in the RVE). The thread is therefore the geometric origin of the
+interface stress in both the finite-patch and the laterally-infinite limit, and the dysbiosis
+contrast survives in each; the implant geometry is the native setting for the result. The eigenstrain deck is small-strain, whereas the
+calibrated growth ($\lambda_z\!\sim\!1.4$) is finite; re-solving the identical thread with the
+multiplicative growth split $\bF=\bF_{\!e}\bF_{\!g}$ (compressible neo-Hookean, the socket-free
+\texttt{umat\_growth\_phi} UMAT under NLGEOM) reproduces the same scale-free contrasts ---
+$\mathrm{DH/CH}=2.7\times$ and thread/flat $=3.6\times$, against $2.5\times$ and $4.1\times$
+small-strain (Figure~\ref{fig:fem_implant}D) --- so the linearisation is adequate for this geometric
+study and the conclusions are not an artefact of it.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{fem_implant_thread.pdf}
+  \caption[Implant-thread FEM: field, convergence, thread-depth sweep, finite-strain check]{Base-bonded
+  biofilm patch on a smooth threaded titanium section (CPE4 plane strain; CLSM-calibrated
+  volume-matched growth). \textbf{(A)}~von~Mises stress over interior thread periods: the
+  growth-induced stress concentrates at the bonded thread. \textbf{(B)}~mesh convergence of the
+  interior peak interface stress (the bonded-base/free-edge corner, a boundary-condition singularity,
+  is excluded), bounded within $\pm7\%$ for $\ge24$ elements per thread period. \textbf{(C)}~thread-depth
+  ($A/h$) sweep: a flat substrate ($A=0$) relaxes nearly stress-free, while the thread generates the
+  interface stress, rising monotonically with depth. \textbf{(D)}~the scale-free $\mathrm{DH/CH}$ and
+  thread/flat ratios under the small-strain eigenstrain versus the finite-strain $\bF=\bF_{\!e}\bF_{\!g}$
+  UMAT agree, confirming the linearisation. The dysbiotic film adds a further
+  $\mathrm{DH/CH}\approx2.5$--$2.7\times$ on top of the geometric stress.}
+  \label{fig:fem_implant}
+\end{figure}
+
+The full composition$\rightarrow$stress$\rightarrow$detachment chain on the implant is
+summarised intuitively in Figure~\ref{fig:fem_schematic}: the \textit{P.~gingivalis}-enriched
+dysbiotic film carries a hot interface stress band over the thread and delaminates, whereas the
+commensal film, with its weak and depth-spread stress, stays bonded.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.70\textwidth]{fem_clinical_schematic.pdf}
+  \caption[Mechanism schematic: why dysbiosis detaches the biofilm at the implant
+  interface]{Cross-section of a titanium implant thread under the commensal (CH) and
+  dysbiotic (DH) biofilm. \textit{P.~gingivalis} (dots) and the resulting growth-induced
+  interface stress (red band) follow the measured depth composition: spread through the thin
+  commensal film (faint interface stress, stays bonded) versus packed at the substratum in the
+  thicker dysbiotic film (concentrated interface stress, delamination crack). The bar reports
+  the interface von~Mises stress, $\approx\!2.5\times$ larger for the dysbiotic condition
+  (implant-thread FEM interior peak, Figure~\ref{fig:fem_implant}).}
+  \label{fig:fem_schematic}
+\end{figure}
+
+\paragraph{From the in-vitro contrast to a patient-level risk ranking.} The same kernel that
+distinguishes the dysbiotic from the commensal film in vitro also \emph{ranks individual
+patients}: carrying $J$ across the Dieckow cohort orders the ten over a more-than-twentyfold
+range of detachment risk, fixed almost entirely by the
+measured \textit{P.~gingivalis} abundance (the shape being a $34\times$ weaker lever). A
+routine 0-D readout --- relative \textit{Pg} load from a peri-implant 16S or qPCR swab, no
+depth imaging --- is therefore an adequate ordinal surrogate for the mechanical detachment
+risk the full depth-resolved model would assign, turning an abundance the clinician already
+measures into a ranking of the event that seeds peri-implant exposure. The claim is ordinal,
+not absolute: $J$ ranks risk, while the per-patient failure threshold stays parametric
+(Section~\ref{sec:fem_validation}).
+
+\subsection{Relation to prior art, validation, and limits}
+\label{sec:fem_validation}
+
+The mechanical framework used here is closest in spirit to the finite-growth biofilm
+models of B{\"o}l and co-workers, who likewise build on the multiplicative
+decomposition $\bF=\bF_{\!e}\bF_{\!g}$ and even derive the resulting residual-stress
+field directly from confocal biofilm geometries~\cite{Bol2009Detachment,
+BoleaAlbero2014}. Two differences delimit the present contribution. First, in those
+models growth is a \emph{phenomenological isotropic deposition} of new matrix, and
+the attendant residual stress is continuously relaxed by a pressure-restricted,
+fluid-like viscous flow; here growth is instead driven by a \emph{species-resolved
+field} $\phi_\mathrm{Pg}(z)$ from the Hamilton-principle ecological model, calibrated
+against CLSM depth profiles, and is anisotropic and substratum-normal. The stress we
+report is therefore the \emph{composition-resolved} residual stress that a given
+dysbiotic community imprints --- a quantity the deposition models, blind to who grows
+where, cannot produce. Second, we deliberately model the fast, elastic limit; the
+fluid-like relaxation of Bolea Albero et al.\ is the long-time complement of our
+model. Incorporating it as a Prony relaxation of the elastic stress, with the shear
+relaxation spectrum taken from biofilm rheometry~\cite{Shaw2004Burger}, was verified
+against the analytic relaxation modulus (Figure~\ref{fig:fem_viscoelastic}; the
+relaxed-to-instantaneous stress ratio matches theory to $0.0544$ vs $0.0543$, RMS
+error $9\times10^{-4}$ over the full curve), confirming that the elastic result is the
+short-time end of a consistent viscoelastic description.
+
+The pressure-restricted picture of Bolea Albero et al.\ has, in addition, a
+\emph{poroelastic} reading: the biofilm is a fluid-saturated porous matrix, so the
+growth-induced pressure also relaxes by drainage of pore fluid through the matrix.
+Modelling the growth pressurisation as an excess pore pressure in a column drained at
+the biofilm--bulk surface and sealed at the substratum gives a one-dimensional Terzaghi
+consolidation~\cite{Biot1941Consolidation} with drainage timescale
+$\tau = H^2/c_v$, $c_v = k\,E_{\mathrm{oed}}/\gamma_w$. A finite-difference solution
+matches the closed-form Terzaghi series to an RMS of $1.8\times10^{-3}$
+(Figure~\ref{fig:fem_poroelastic}): the effective interface stress is half-relaxed at
+$t\approx0.20\,\tau$ and essentially gone by $t\approx\tau$. The elastic residual stress
+of Section~\ref{sec:fem_residual} is therefore the common short-time limit of \emph{two}
+distinct relaxation channels --- viscoelastic creep of the matrix and poroelastic
+drainage of the pore fluid --- both of which carry the system toward the long-time,
+pressure-restricted state; which dominates is set by the ratio of the rheological to the
+consolidation timescale.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_poroelastic.pdf}
+  \caption[Poroelastic drainage of the growth-induced stress]{Poroelastic relaxation of
+  the residual stress by pore-fluid drainage (Terzaghi consolidation).
+  \textbf{(left)}~excess pore pressure dissipating from the drained biofilm--bulk surface
+  toward the sealed substratum at successive times; \textbf{(right)}~the residual-stress
+  fraction $1-U(t)$ versus $t/\tau$, the finite-difference solver matching the analytic
+  Terzaghi series (RMS $1.8\times10^{-3}$). The elastic result is the $t\!\to\!0$ limit;
+  the drained, pressure-restricted state is the $t\!\to\!\infty$ limit.}
+  \label{fig:fem_poroelastic}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.56\textwidth]{fem_ve_relaxation.pdf}
+  \caption[Viscoelastic stress relaxation against analytic Prony series]{Shear-stress
+  relaxation of the biofilm under a held strain (two-term Prony series fitted to a
+  biofilm Burgers creep model). The finite-element relaxation matches the analytic
+  modulus (RMS $9\times10^{-4}$); the elastic residual stress of
+  Section~\ref{sec:fem_residual} is the short-time limit of this curve.}
+  \label{fig:fem_viscoelastic}
+\end{figure}
+
+\paragraph{What is and is not validated.} The growth \emph{shape} is calibrated
+($\phi_\mathrm{Pg}$-driven, $r=0.88$), the elastic and viscoelastic constitutive
+behaviour is verified against closed-form solutions, and all condition contrasts
+(residual stress, delamination) are reported at identical parameters so that only the
+composition differs. What remains parametric is the absolute stress \emph{scale}: the
+biofilm modulus spans roughly \emph{seven orders of magnitude} --- from
+$E\sim\mathrm{O}(1)\,\mathrm{MPa}$ by short-time AFM nanoindentation of oral
+biofilm~\cite{Cense2021OralBiofilm}, through $G'\sim\mathrm{O}(10)\,\mathrm{kPa}$ by
+oscillatory shear rheology~\cite{BiofilmMatrixMechanics2025}, down to
+$G\sim\mathrm{O}(1\text{--}10)\,\mathrm{Pa}$ by long-time creep
+rheometry~\cite{Stoodley2002Material}, with no depth-resolved oral-biofilm modulus or
+residual-stress measurement available --- which is why the result is reported
+modulus-agnostically as $\sigma/\mu$, calibrated in shape but parametric in scale
+($\gamma$), with depth-resolved AFM nanoindentation or shear-flow detachment onset versus
+\textit{P.~gingivalis} load identified as the next experiment.
+
+\paragraph{Per-field heterogeneity and the level of the claim.} The depth shape that drives
+the eigenstrain is pooled across confocal fields of view. Resolving it instead per individual
+field --- all $84$ titanium fields, recovered by the same colocalisation decode --- shows that
+the detachment driver $J$ does \emph{not} separate the dysbiotic from the commensal condition
+field-by-field (Mann--Whitney $p\approx0.8$; Figure~\ref{fig:fem_perfov}), and that the
+dysbiotic fields are the more heterogeneous (coefficient of variation $0.56$ against $0.34$).
+The condition contrast is therefore a property of the \emph{pooled} profile and its time course
+--- the absolute, base-localised \textit{P.~gingivalis} that accumulates over the dysbiotic
+series --- and not of any single field's composition, which is too variable (and, for the
+dysbiotic arm, too sparsely sampled: $2$--$3$ fields at the later days) to classify
+mechanically. The dysbiosis$\rightarrow$detachment claim is accordingly made at the population
+and trajectory level; a per-field mechanical risk map is explicitly \emph{not} supported by the
+present data, and the pooled depth shape used throughout is the appropriate level of resolution
+for it.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_perfov_heterogeneity.pdf}
+  \caption[Per-field-of-view detachment driver: no single-field separation]{\textbf{(left)}
+  Depth-resolved \textit{P.~gingivalis} composition $\phi_\mathrm{Pg}(z)$ for all $84$ confocal
+  fields (faint) with per-condition means; \textbf{(right)} the per-field detachment driver $J$,
+  which does not separate the conditions (Mann--Whitney $p\approx0.8$) and is markedly more
+  heterogeneous for the dysbiotic arm. The mechanical contrast lives in the pooled,
+  absolute-magnitude profile and its time course, not in single-field composition.}
+  \label{fig:fem_perfov}
+\end{figure}
+
+\paragraph{Two real datasets, two layers, and the strength of each.} The framework is driven
+by real data at two layers that must not be conflated: the patient cohort (Dieckow~\textit{et
+al.}\ peri-implant 16S~\cite{dieckow2024}) is real but composition-only and drives the
+ecological model of Chapters~\ref{ch:heine}--\ref{ch:dieckow}, while the depth profile
+$\phi_\mathrm{Pg}(z)$ that sets the eigenstrain is \emph{borrowed} from the in-vitro HOBIC
+confocal imaging~\cite{Heine2025PeriImplant} (colocalisation decode of
+Section~\ref{sec:fem_growth}), so the two join as a measured patient \emph{load} $\times$ an
+in-vitro depth \emph{shape}. The borrowed shape is a weak lever and the measured load the strong
+one: projecting the cohort through the boundary-layer driver
+$J=\langle e^{-z/z_0}\phi_\mathrm{Pg}(z)\rangle_z$ ($z_0=0.25$, Section~\ref{sec:fem_residual})
+gives a large detachment-risk range set entirely by the measured Pg load (CV $0.86$,
+$J\in[0,\,0.028]$), whereas substituting the entire commensal shape for the dysbiotic one at
+fixed load changes $J$ by only $8\%$ --- the inter-patient spread is thus $34\times$ wider than
+the shape-uncertainty band, so per-patient risk is governed by the 0-D load the clinic can
+measure. This low shape-leverage holds for the driver $J$ that ranks risk, not for the absolute
+stress \emph{scale} (parametric in the biofilm modulus) nor for the near-substratum depth
+\emph{kernel} on which the real-tooth run (Section~\ref{sec:fem_tooth}) still relies; removing
+the borrowing needs depth-resolved imaging of a patient biofilm and per-patient detachment onset
+versus Pg load to test the linear $J$--load law.
+
+\paragraph{Surface wrinkling: a second mechanical signature of dysbiosis.}
+Delamination is the failure of the film--substrate interface; the growth-induced
+compression also destabilises the \emph{free surface}. A stiff matrix crust growing on a
+softer, non-growing foundation (a two-material film, the configuration of a mature
+biofilm with a denser surface layer) is forced into in-plane compression and wrinkles.
+Carrying this to elevated growth, the system stiffness matrix develops negative
+eigenvalues at a critical growth --- a genuine bifurcation, not merely an amplified
+imperfection --- and the post-bifurcation surface selects a wavelength that is
+\emph{condition-specific}: the dysbiotic crust crosses the threshold into a short-wavelength
+wrinkle, whereas the commensal crust, growing less, remains in the long-wavelength
+global-bending mode and does not wrinkle (Figure~\ref{fig:fem_wrinkling}). Surface
+wrinkling thus joins interface delamination as a mechanical instability that the
+dysbiotic composition triggers and the commensal one does not, both driven by the same
+$\phi_\mathrm{Pg}$-set growth.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_wrinkling.pdf}
+  \caption[Growth-induced surface wrinkling: dysbiotic vs commensal]{Growth-induced
+  wrinkling of a stiff crust on a soft foundation. \textbf{(left)}~surface-deflection
+  amplitude versus growth: a super-linear onset marks the instability;
+  \textbf{(right)}~the final surface profile --- the dysbiotic crust selects a short
+  wrinkle wavelength ($\lambda\!\approx\!1.8$), while the commensal crust stays in the
+  long-wavelength bending mode. Identical material and imperfection; only
+  $\phi_\mathrm{Pg}$ differs.}
+  \label{fig:fem_wrinkling}
+\end{figure}
+
+\paragraph{Outlook.} Two further extensions are left for future work. The constitutive
+routine ports to a second commercial solver essentially unchanged via the
+predefined-field path of Section~\ref{sec:fem_method}, enabling its integration into an
+established implant-mechanics framework. And the crude neo-Hookean elastic factor can be
+replaced by the worm-like-chain network model of EPS
+mechanics~\cite{EhretBol2013} for a more physical constitutive law that captures the
+strain-stiffening the present model omits.
+
+\paragraph{Implant-thread extensions.} Beyond the threaded result of
+Section~\ref{sec:fem_delamination}, a family of finite-element extensions on the implant
+geometry (Figure~\ref{fig:fem_implant_ext}) probes robustness. A superimposed micro-thread
+concentrates the interior interface stress further (peak $\sigma_\mathrm{vM}\!\sim\!1030$ against
+$\sim\!610$ for the plain thread), and an AT2 phase-field damage field driven by the measured
+interface-stress profile delaminates the dysbiotic interface $2.3\times$ more than the commensal.
+The time-dependent interface state is coupling-dependent: the biofilm Prony series relaxes the
+thread stress \emph{viscoelastically} to $\sim\!10\%$ of its instantaneous value over $t\gg\tau$,
+whereas a coupled \emph{poroelastic} model (CPE4P) with growth carried as a skeleton eigenstrain
+gives the opposite sign --- drainage \emph{raises} the effective interface stress ($\approx\!1.55\times$,
+toward the drained elastic value), opposite to the Terzaghi picture of
+Section~\ref{sec:fem_validation}, so the long-time state depends on which growth--fluid coupling
+dominates. Curvature adds a three-dimensional effect a plane-strain section omits: an axisymmetric
+screw carries an inner-interface hoop stress scaling with $1/R_0$, and a full three-dimensional
+helical model (C3D8; Figure~\ref{fig:fem_implant_3d}) shows the growth-induced stress wrapping the
+screw as a helical band that, under occlusal loading, acquires a cyclic amplitude
+($\Delta\sigma_\mathrm{vM}\!\sim\!230$ at the dysbiotic interface) driving interface fatigue over
+$\sim\!10^6$ chewing cycles, fastest at the dysbiotic interface ($\approx\!3\times$ the commensal mean),
+with the outer flow-shear traction adding only $\sim\!2\%$. A two-way chemo--mechanical coupling through
+a stress-dependent permeability is the natural closure; the production continuation is a user-material
+implementation in the institute's ANSYS implant-mechanics framework.
+
+\paragraph{Generic-implant design study.} Replacing the patient tooth-23 root with a generic standard
+screw ($\varnothing 4.1$\,mm, $1.0$\,mm pitch) osseointegrated in the real two-layer mandible and loaded
+at the ISO~14801 $30^\circ$ oblique condition reproduces the same mechanics while adding a quantitative
+design map (Figure~\ref{fig:fem_implant_design}). Peri-implant stress is governed first by diameter:
+widening the screw from $\varnothing 3.5$ to $\varnothing 4.8$\,mm lowers the thread-root peak von~Mises
+stress from $171$ to $60$\,MPa and raises the coupon stiffness $3.5\times$, whereas length
+($8$--$12$\,mm) and pitch ($0.6$--$1.0$\,mm) are secondary; the load \emph{angle} dominates, a $30^\circ$
+oblique bite raising thread-root stress $\approx\!9\times$ and crestal-bone stress $\approx\!7\times$ over
+axial load. Resolving the concentration requires quadratic elements (linear C3D4 under-predict by
+$\sim\!10\%$, so C3D10 are used); all peak titanium stresses ($60$--$230$\,MPa) stay within the
+Ti-6Al-4V yield. This connects the detachment mechanism to a design guideline --- wide diameter,
+near-axial loading --- and feeds the ANSYS framework above.
+
+\paragraph{From mechanics to disease dynamics: bistability.} The mechanical results feed a host-response
+cascade that closes the loop of this thesis: dysbiotic drive raises inflammation, inflammation
+up-regulates RANKL/OPG and osteoclastic bone loss, and the resulting recession concentrates crestal
+stress that --- only under inflammation --- aggravates resorption, while inflammation also feeds the
+anaerobes back (heme-iron for \emph{P.\,gingivalis}), closing an ecology--host positive-feedback loop.
+With this loop the system becomes \emph{bistable} (Figure~\ref{fig:fem_bistability}): healthy and
+diseased attractors coexist across a threshold, so a transient insult can lock the implant into
+progressive loss with hysteresis, reframing peri-implantitis as a tipping-point disease and giving a
+mechanistic basis for the primacy of prevention. Companion analyses (a reversibility-window map, an
+anti-RANKL therapy-node comparison, a literature-anchored bone-loss rate $k_L=0.022\,\mathrm{wk}^{-1}$,
+and a design-buys-time coupling) are reported in the project record; all are ODE/post-processing models,
+and a per-timepoint Bayesian calibration is the natural next step once a longitudinal cohort pairing
+microbiome with radiographic bone loss (e.g.\ ENA~PRJNA1215005) becomes available.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{fem_implant_extensions.pdf}
+  \caption[Implant-thread finite-element extensions]{Extensions on the threaded geometry.
+  \textbf{(A)}~a superimposed micro-thread (two-scale roughness) concentrates the interface stress.
+  \textbf{(B)}~an AT2 phase-field damage field driven by the measured thread interface-stress profile:
+  the dysbiotic interface accrues $2.3\times$ more damage than the commensal. \textbf{(C)}~with the
+  biofilm Prony series the thread interface von~Mises stress relaxes to $\sim\!10\%$ of its
+  instantaneous value over $t\gg\tau$.}
+  \label{fig:fem_implant_ext}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.76\textwidth]{fem_implant_3d.pdf}
+  \caption[Three-dimensional helical implant-screw FEM]{Full 3-D helical implant-screw biofilm
+  (C3D8, isotropic volume-matched growth). \textbf{(A)}~the bonded interface coloured by von~Mises
+  stress; \textbf{(B)}~the same interface unrolled in (azimuth, axial height), where the helical thread
+  appears as diagonal stress bands. The growth-induced interface stress follows the thread helix; it
+  is the substrate for the occlusal-fatigue and flow-shear load cases discussed in the text.}
+  \label{fig:fem_implant_3d}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{fem_implant_design.pdf}
+  \caption[Generic-implant design study (ISO 14801 coupon)]{Generic screw-implant design map from an
+  ISO~14801-style coupon (titanium screw osseointegrated in a clamped bone holder, loaded at $30^\circ$).
+  \textbf{(A)}~implant \emph{diameter} dominates: thread-root von~Mises stress falls and coupon stiffness
+  rises sharply with $\varnothing$. \textbf{(B)}~length, pitch and taper are secondary (bars near the
+  baseline, dashed). \textbf{(C)}~load \emph{angle} dominates over geometry --- a $30^\circ$ oblique bite
+  multiplies the thread-root stress, crestal-bone stress and displacement by $\approx\!9$, $7$ and $27$
+  over axial loading (log scale). \textbf{(D)}~quadratic C3D10 elements capture the thread-root
+  concentration that linear C3D4 under-predict.}
+  \label{fig:fem_implant_design}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{fem_periimplantitis_bistability.pdf}
+  \caption[Bistability and hysteresis of the peri-implantitis cascade]{Closing the ecology--host
+  feedback loop makes the disease cascade bistable. \textbf{(A)}~phase plane of dysbiotic load $B$ versus
+  inflammation $I$ with two stable fixed points (healthy / diseased). \textbf{(B)}~the RANKL/OPG ratio
+  traced as the plaque burden is raised then lowered describes a hysteresis loop --- the diseased branch
+  persists well below the burden that triggered it (prevention $\ll$ cure). \textbf{(C)}~a transient
+  insult tips the patient permanently into the diseased basin.}
+  \label{fig:fem_bistability}
+\end{figure}
+
+\subsection{Generalisation to patient-specific geometry}
+\label{sec:fem_tooth}
+
+\paragraph{The substratum is, in vivo, a titanium implant.} This work's clinical setting, and
+the Dieckow cohort's, is peri-implant: the biofilm colonises the transmucosal abutment in the
+peri-implant sulcus~\cite{dieckow2024}, and the substratum used throughout (the Ti-mounted
+in-vitro biofilm of Section~\ref{sec:fem_growth}) is already titanium. The implant is thus
+solved directly --- the threaded-titanium FEM of Section~\ref{sec:fem_delamination}
+(Figure~\ref{fig:fem_implant}; mechanism in Figure~\ref{fig:fem_schematic}) is the
+\emph{primary} geometric result. The conformal real-tooth run that follows is therefore only a
+smooth-geometry robustness control on an independent curved anatomy, not a claim that the tooth
+is the operative surface.
+
+The idealised column isolates the substratum-interface mechanism but abstracts away the
+curved, patient-specific anatomy on which a biofilm actually grows. To establish that the
+result is not an artefact of the simplified geometry, the \emph{identical}
+composition-driven growth model was applied to a conformal biofilm mesh on a \emph{real
+human tooth} (tooth~23 of the open-access Open-Full-Jaw
+dataset~\cite{gholamalizadeh2022open}): a thin biofilm of $86\,160$ tetrahedra bonded at
+its inner surface to the tooth (the substratum) and free at its outer surface
+(Figure~\ref{fig:fem_tooth}). Four measures make the transfer examiner-robust. First, to
+avoid the volumetric locking of linear tetrahedra near incompressibility, \emph{hybrid}
+elements (C3D4H) are used at the same Poisson ratio $\nu=0.45$ as the column; the
+field-driven user material and its consistent tangent carry over unchanged, converging in
+one to two Newton iterations per increment, and a single-tetrahedron free-swelling test
+reproduces the prescribed growth at machine-zero stress ($J_g=1.20$,
+$\lvert\sigma\rvert\sim10^{-9}\mu$), confirming the implementation on the tetrahedral
+element. Second, the conformal mesh is \emph{mesh-converged} on the real geometry:
+refining the through-thickness resolution $N_\ell=4\!\to\!8\!\to\!16$ changes the peak
+stress by only $-0.8\%$ then $-0.2\%$ (Figure~\ref{fig:fem_tooth}, right), so the
+eight-layer mesh is converged. Third, the growth is driven by the \emph{measured DH depth
+profile} $\phi_\mathrm{Pg}(z)$ (Section~\ref{sec:fem_growth}) mapped through the biofilm
+thickness, not a uniform value. Fourth, the stress is reported as $\sigma/\mu$; the
+von~Mises invariant is used because the curved surface has no global in-plane axis, but
+the substratum layer is in fact \emph{uniformly compressive}
+($\sigma_{\min}\approx-0.57\,\mu$ at every interface element), consistent with the
+compressive in-plane stress of the column (Section~\ref{sec:fem_residual}).
+
+With these controls the composition-resolved coupling survives the transfer to real
+anatomy. The reading is deliberately honest: because the growth is driven by
+$\phi_\mathrm{Pg}$, a correlation between stress and composition is \emph{built into} the
+model; what the real-geometry run tests is whether the curvature, the thin conformal layer
+and the tie to the tooth \emph{destroy} it --- and they do not. Through the biofilm
+thickness the residual stress tracks the local \textit{P.~gingivalis} fraction with a
+per-element Pearson correlation $r=0.92$ (Spearman $0.90$). Running the \emph{commensal}
+profile through the identical model then recovers the clinical contrast on the real tooth:
+with only the composition changed, the dysbiotic film develops a far more
+\emph{stratified} stress field than the commensal one --- $3.8\times$ the through-depth
+amplitude and a $1.4\times$ higher peak (Figure~\ref{fig:fem_tooth}, centre), the
+heterogeneity that drives interfacial failure. The
+composition\,$\rightarrow$\,growth\,$\rightarrow$\,residual-stress chain is thus
+geometry-portable: with the same verified material model and a public clinical mesh it
+reproduces, on patient-specific anatomy, both the composition tracking and the
+dysbiotic-versus-commensal contrast of the idealised column.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{fem_tooth_geometry.pdf}
+  \caption[Composition-resolved residual stress on a real tooth]{\textbf{(left)} The
+  depth-graded DH growth model on a conformal biofilm over a real tooth (Open-Full-Jaw
+  tooth~23; hybrid C3D4H, $\nu=0.45$), coloured by residual von~Mises stress
+  $\sigma_\mathrm{vM}/\mu$. \textbf{(centre)} Through-thickness profiles: with only the
+  composition changed, the dysbiotic film is $3.8\times$ more stratified than the
+  commensal one (per-element $\sigma$--$\phi_\mathrm{Pg}$ correlation $r=0.92$ for DH).
+  \textbf{(right)} The result is mesh-converged on the real geometry (peak stress
+  $N_\ell=8\to16$: $-0.2\%$). This is a \emph{smooth-geometry robustness control} for the
+  threaded-implant result (Figure~\ref{fig:fem_implant}): the composition-resolved mechanism and
+  the dysbiotic-versus-commensal contrast of Section~\ref{sec:fem_residual} survive transfer to
+  an independent, curved patient anatomy.}
+  \label{fig:fem_tooth}
+\end{figure}
+
+\paragraph{A full peri-implant assembly: implant, tooth, and shared bone.} The single-column
+and single-tooth runs isolate the substratum-interface mechanism; the clinical reality is a
+titanium implant standing \emph{next to} natural teeth in a shared alveolar bone, which is the
+setting peri-implant disease actually occupies. To close that gap the same composition-driven
+growth model was embedded in a coupled multi-material assembly --- a threaded titanium screw
+implant at the (extracted) tooth-23 site, the neighbouring tooth-24 with its periodontal ligament, a
+conforming dysbiotic biofilm collar, and the shared mandibular bone (real Open-Full-Jaw
+anatomy)~\cite{gholamalizadeh2022open} --- and loaded occlusally
+(Figure~\ref{fig:fem_tier2b}). The assembly reproduces the textbook contrast that motivates
+the whole chapter: load transmitted through the shared bone concentrates at the
+\emph{crestal} peri-implant bone around the osseointegrated, ligament-free implant, whereas the
+neighbouring tooth distributes it along the periodontal ligament down the root --- the
+mechanical signature of peri-implant marginal bone loss. The composition-resolved biofilm
+mechanism of this chapter thus sits, without modification, inside a realistic implant--tooth--bone
+model: the geometry that defines implant dentistry.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.78\textwidth]{fem_implant_screw3d.pdf}
+  \caption[Coupled implant--tooth--bone peri-implant assembly]{The composition-driven model in
+  a full peri-implant assembly, rendered from the real tetrahedral mesh (51k nodes, 252k C3D4)
+  as shaded boundary surfaces with the front alveolar bone clipped away.
+  \textbf{(A)}~the multi-material geometry: a threaded titanium screw implant (tooth-23 site),
+  the neighbouring tooth-24 with periodontal ligament and dentin, dysbiotic biofilm collars, in
+  shared alveolar bone. \textbf{(B)}~occlusal-load von~Mises stress: load through the shared bone
+  concentrates at the \emph{crestal} bone around the ligament-free implant while the tooth
+  distributes it along the root --- the peri-implant marginal-bone-loss signature. The
+  composition-resolved biofilm mechanism transfers unchanged into this realistic setting.}
+  \label{fig:fem_tier2b}
+\end{figure}
+
+\section{Clinical Applications}
+\label{sec:integration_clinical}
+
+The modelling framework has three concrete clinical translational directions, each
+grounded in results from the preceding chapters.
+
+\paragraph{Early dysbiosis detection.}
+The guild-level red/green dysbiosis ratio derived from the Dieckow interaction matrix
+separates peri-implantitis from health/mucositis on 127 independent cross-sectional
+samples (Spearman $\rho=0.46$, $p=5\times10^{-8}$; Chapter~\ref{ch:dieckow}).
+Applied to routine 16S amplicon data from implant abutment plaque, the ratio requires
+no model fitting --- only taxonomic classification to the ten guild taxonomy
+(Table~\ref{tab:dieckow_guilds}) followed by a log-ratio calculation.
+This makes it deployable as a single-number peri-implant risk score, with the
+current threshold ($\mathrm{R/G}=0$) distinguishing healthy and mucositic from
+peri-implantitis patients ($p<10^{-4}$). Extending the Joshi validation to
+longitudinal series from implant maintenance visits would enable prospective
+monitoring of trajectory toward or away from dysbiosis.
+
+\paragraph{Treatment optimisation via growth-vector personalisation.}
+The Hamilton model separates shared ecology ($\bA$, community-level interaction
+structure) from patient-specific growth rates ($\bb^{(p)}$). Since $\bb^{(p)}$ is
+identifiable from a single W1 sample, a personalised forward simulation is
+available at the first clinical timepoint. In principle, any intervention that
+shifts $b_i^{(p)}$ --- antibiotic suppression of late colonisers, probiotic
+supplementation of early colonisers, or mechanical debridement that resets the
+initial condition --- can be evaluated \emph{in silico} before application. The CT1/CT2
+clustering of growth vectors (Figure~\ref{fig:dieckow_bpca} in
+Appendix~\ref{app:dieckow_supp}) shows that this personalisation is clinically
+meaningful: the two community types differ systematically in which guilds carry
+strong positive $b_i$.
+
+\paragraph{Probiotic and microbiome-steering design.}
+The UMAP analysis of the in-vitro posteriors (Chapter~\ref{ch:heine}) identifies the
+commensal CS/CH attractors as the target region of the interaction-matrix landscape.
+The depth-ordering result confirms that the $\textit{So}\to\textit{Vei}$ cross-feeding
+edge (Chapter~\ref{ch:integration}) is spatially encoded and therefore structure-dependent:
+steering toward the commensal attractor requires not just population-level abundance
+shifts but restoration of the stratified biofilm architecture. A probiotic strategy
+that enriches early colonisers (\textit{S.~oralis}, \textit{Actinomyces}) to shift
+the community away from the Fn--Pg co-aggregation block is consistent with both the
+ODE attractor landscape and the FISH depth-ordering data.
+
+\section{Outlook: A Unified Gradient-Flow Perspective}
+\label{sec:integration_outlook}
+
+The three layers of this chapter --- Bayesian interaction inference, the
+reaction--diffusion spatial extension, and the finite-element mechanical realisation
+--- are not disjoint models but three readings of one variational structure. The
+Extended Hamilton Principle of Chapter~\ref{ch:theory}, applied to an overdamped
+internal-variable field with a quadratic dissipation potential, yields by stationarity
+an $L^2$ gradient flow of the free energy --- the mathematical core of the phase-field
+method~\cite{AllenCahn1979} --- whose monotone Lyapunov decay is exactly the
+thermodynamic consistency of Section~\ref{sec:theory_hamilton}. Which model results is
+selected only by the metric and by whether the field is conserved:
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+metric / conservation & resulting equation & instance in this thesis\\
+\midrule
+Euclidean, non-conserved & Allen--Cahn          & damage / fracture field\\
+conserved flux           & Cahn--Hilliard       & biomass demixing with depth\\
+Fisher--Shahshahani      & replicator           & inference of Ch.~\ref{ch:heine}--\ref{ch:dieckow}\\
+\bottomrule
+\end{tabular}
+\end{center}
+Closing the spatial model in conserved form recovers a reactive Cahn--Hilliard
+description~\cite{CahnHilliard1958} in which the vertical \textit{P.~gingivalis}
+sequestration of FISH (Section~\ref{sec:pde_fish}) is a spinodal-like demixing into
+depth niches; regularising the cohesive delamination of
+Section~\ref{sec:fem_delamination} with a damage field recovers AT2 phase-field
+fracture~\cite{Bourdin2008Variational,Miehe2010PhaseField} driven by the same growth
+energy. Growth, fracture, and ecological inference are therefore one Extended-Hamilton
+gradient flow under different metrics and interface terms, and this phase-field
+completion --- not extrapolation but continuation --- is the principal methodological
+direction beyond this thesis.

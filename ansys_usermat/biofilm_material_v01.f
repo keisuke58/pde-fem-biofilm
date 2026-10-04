@@ -105,6 +105,7 @@ C     out
 
 C     --- locals ----------------------------------------------------
       double precision C10, C01, D1, MU, BULK, EBLEND, NUBLEND
+      double precision PHIK
       double precision FG_INV(3,3), FGSC
       double precision SV0(6), SVP(6), DFP(3,3), FV_DUM(3,3)
       double precision SSE_C, SPD_C, DETFE, PERT, SYMF
@@ -162,6 +163,25 @@ C         mu = 2(C10+C01),  K = 2/D1
       MU   = EBLEND / (2.0d0 * (1.0d0 + NUBLEND))
       BULK = EBLEND / (3.0d0 * (1.0d0 - 2.0d0 * NUBLEND))
       if (BULK .lt. 1.0d-20) BULK = 1.0d-20
+
+C     --- Klempt et al. 2024 stiffness, selected by sYoungL < 0 (a negative
+C         modulus has no other meaning). Their energy (Eq. 20) weights the
+C         elastic term with phi**2 and gives the void no stiffness; here
+C         E(phi) = (phi**2 + f) * sYoung with f = -sYoungL a small floor that
+C         keeps the void solvable, and nu = sNu throughout (Table 2:
+C         E = 10 Pa, nu = 0.49). Default (sYoungL >= 0): the linear blend
+C         above, unchanged.
+      if (sYoungL .lt. 0.0d0) then
+        PHIK = min(max(sBiofilm, 0.0d0), 1.0d0)
+        NUBLEND = sNu
+        if (NUBLEND .gt.  0.49999d0) NUBLEND =  0.49999d0
+        if (NUBLEND .lt. -0.99999d0) NUBLEND = -0.99999d0
+        EBLEND = (PHIK * PHIK - sYoungL) * sYoung
+        if (EBLEND .lt. 1.0d-30) EBLEND = 1.0d-30
+        MU   = EBLEND / (2.0d0 * (1.0d0 + NUBLEND))
+        BULK = EBLEND / (3.0d0 * (1.0d0 - 2.0d0 * NUBLEND))
+        if (BULK .lt. 1.0d-30) BULK = 1.0d-30
+      end if
       C10 = 0.5d0 * MU / (1.0d0 + sC01Ratio)
       C01 = C10 * sC01Ratio
       D1  = 2.0d0 / BULK

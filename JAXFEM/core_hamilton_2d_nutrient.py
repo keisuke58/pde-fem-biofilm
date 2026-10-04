@@ -228,7 +228,10 @@ def residual(g_new, g_prev, params):
     fn = jnp.maximum(phi_new[3] * psi_new[3], 0.0)
     num = fn**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_mask
+    # gate off (K_hill = 0 or species 5 inactive) leaves the interaction
+    # unchanged, as TMCMC's BiofilmNewtonSolver5S does; it used to multiply
+    # it by 0 (found 2026-10-01, coupling/ODE_TMCMC_CROSSCHECK.md)
+    factor = jnp.where(hill_mask > 0, jnp.where(den > eps, num / den, 0.0), 1.0)
     Ia = Ia.at[4].set(Ia[4] * factor)
 
     Q = jnp.zeros(12, dtype=jnp.float64)
@@ -379,16 +382,23 @@ def laplacian_2d_neumann(u, dx, dy):
     lap_x = jnp.zeros_like(u)
     # Interior
     lap_x = lap_x.at[1:-1, :].set((u[:-2, :] + u[2:, :] - 2.0 * u[1:-1, :]) / (dx * dx))
-    # Neumann at x=0: ghost u[-1] = u[0], so d2u/dx2 = (u[1] - u[0]) / dx^2
-    lap_x = lap_x.at[0, :].set((u[1, :] - u[0, :]) / (dx * dx))
+    # Neumann at x=0: ghost u[-1] = u[1] reflects about node 0, so
+    #   d2u/dx2 = (u[1] - 2u[0] + u[1])/dx^2 = 2(u[1] - u[0])/dx^2
+    # (the finite-volume half-cell reading gives the same factor 2).
+    # This used ghost u[-1] = u[0] until 2026-09-30, i.e. half of the above,
+    # which places the zero-flux wall half a cell outside the node. Measured
+    # against the exact Neumann eigenfunction that made the operator
+    # INCONSISTENT at the wall -- the error did not shrink with h at all --
+    # and leaked ~5% of the species mass. See PDE_VERIFICATION_FINDINGS.md.
+    lap_x = lap_x.at[0, :].set(2.0 * (u[1, :] - u[0, :]) / (dx * dx))
     # Neumann at x=Lx:
-    lap_x = lap_x.at[-1, :].set((u[-2, :] - u[-1, :]) / (dx * dx))
+    lap_x = lap_x.at[-1, :].set(2.0 * (u[-2, :] - u[-1, :]) / (dx * dx))
 
     # y-direction: d^2u/dy^2
     lap_y = jnp.zeros_like(u)
     lap_y = lap_y.at[:, 1:-1].set((u[:, :-2] + u[:, 2:] - 2.0 * u[:, 1:-1]) / (dy * dy))
-    lap_y = lap_y.at[:, 0].set((u[:, 1] - u[:, 0]) / (dy * dy))
-    lap_y = lap_y.at[:, -1].set((u[:, -2] - u[:, -1]) / (dy * dy))
+    lap_y = lap_y.at[:, 0].set(2.0 * (u[:, 1] - u[:, 0]) / (dy * dy))
+    lap_y = lap_y.at[:, -1].set(2.0 * (u[:, -2] - u[:, -1]) / (dy * dy))
 
     return lap_x + lap_y
 
@@ -724,7 +734,10 @@ def residual_c(g_new, g_prev, c_node, params):
     fn = jnp.maximum(phi_new[3] * psi_new[3], 0.0)
     num = fn**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_mask
+    # gate off (K_hill = 0 or species 5 inactive) leaves the interaction
+    # unchanged, as TMCMC's BiofilmNewtonSolver5S does; it used to multiply
+    # it by 0 (found 2026-10-01, coupling/ODE_TMCMC_CROSSCHECK.md)
+    factor = jnp.where(hill_mask > 0, jnp.where(den > eps, num / den, 0.0), 1.0)
     Ia = Ia.at[4].set(Ia[4] * factor)
 
     Q = jnp.zeros(12, dtype=jnp.float64)
@@ -910,16 +923,20 @@ def _make_nutrient_step_mixed(n_sub_c):
             # Custom padding for mixed BCs
             c_pad = np.zeros((Nx + 2, Ny + 2))
             c_pad[1:-1, 1:-1] = c_np
-            # x=0, x=Lx: Neumann (zero-flux) → ghost = boundary
-            c_pad[0, 1:-1] = c_np[0, :]
-            c_pad[-1, 1:-1] = c_np[-1, :]
-            # y=0 (bottom/tooth): Neumann → ghost = boundary
-            c_pad[1:-1, 0] = c_np[:, 0]
+            # x=0, x=Lx: Neumann (zero-flux) → ghost mirrors about the
+            # boundary node (ghost = node 1), which is what puts the wall ON
+            # the node and keeps the 3-point stencil second order. Until
+            # 2026-09-30 this used ghost = boundary, half the correct second
+            # difference -- see PDE_VERIFICATION_FINDINGS.md.
+            c_pad[0, 1:-1] = c_np[1, :]
+            c_pad[-1, 1:-1] = c_np[-2, :]
+            # y=0 (bottom/tooth): Neumann → ghost mirrors about the node
+            c_pad[1:-1, 0] = c_np[:, 1]
             # y=Ly (top/saliva): Dirichlet c = c_bc
             c_pad[1:-1, -1] = cb
             # Corners
-            c_pad[0, 0] = c_np[0, 0]
-            c_pad[-1, 0] = c_np[-1, 0]
+            c_pad[0, 0] = c_np[1, 1]
+            c_pad[-1, 0] = c_np[-2, 1]
             c_pad[0, -1] = cb
             c_pad[-1, -1] = cb
 

@@ -30,6 +30,8 @@ Abaqus run is possible here but nothing has been run here yet.
 - `tier2b_real/`, `configs/`, `runs/` — Abaqus coupon/implant job generation,
   configs, and run logs.
 - `tests/` — pytest unit tests (`pytest tests/`).
+- `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, with
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
@@ -124,6 +126,9 @@ this machine's specific workflow.
 
 ## Working style for this repo
 
+- **Always reply to the user in Japanese, and keep replies short**
+  (decided 2026-10-02). Documents keep their own language (thesis and decks
+  in English unless asked otherwise).
 - Keep changes scoped to named files; don't touch the pre-existing
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
@@ -191,6 +196,80 @@ this machine's specific workflow.
   **GitHub counts co-authors as contributors**, so such a trailer puts
   Claude on the Contributors page just as surely. `pre-commit` does not
   receive the commit message; only `commit-msg` does.
+
+## People and how to address them (2026-10-04)
+
+- **Meisam Soleimani is a professor**: write "Prof. Soleimani" (title page:
+  Prof. Dr.-Ing. Meisam Soleimani), not "Dr.", even though the registration
+  form of 18.08.2026 lists him as "Dr.-Ing. M. Soleimani".
+- **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
+  Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
+  contact page). Not part of the December colloquium.
+- Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
+  Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
+  Soleimani and Dr.-Ing. Hendrik Geisler.
+
+## Slides, notes and other documents for supervisors (decided 2026-10-02)
+
+These apply to every deck, speaker script, email draft or report written for
+the supervisors (Prof. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
+examiners). Check each one before the document is handed over.
+
+- **Abaqus is not part of this thesis.** Abaqus work is the Keio
+  continuation. Do not list Abaqus runs or ANSYS-vs-Abaqus comparisons as
+  done work in thesis material. Mentioning Abaqus as *future work at Keio*
+  is fine.
+- **First person singular.** Write "I", not "we" or "our". Use neutral
+  wording such as "this work" or "added in this work" where "I" reads
+  badly. In Japanese, write 私, not 私たち.
+- **Avoid wording that reads as AI-generated.**
+  - Avoid emphatic slogans: "strictly", "exactly as published", "nothing
+    else is tuned", "a property of X, not of Y", "The reason is simple",
+    "This matters:".
+  - Do not use dashes (---) as the main punctuation; use commas, colons or
+    a new sentence.
+  - Keep bold to a few key numbers.
+  - State the result plainly and let the numbers carry it.
+- **Klempt et al. 2024 is the reference this work follows.** The paper is in
+  the repository: `references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf`
+  (CC BY 4.0; searchable text in the `.txt` next to it). Check the model,
+  parameters and notation against it, not against memory or older notes.
+- **Notation as in the papers** (decided 2026-10-02), in every document and
+  figure:
+  - $\phi$ (`\phi`, not `\varphi`) for volume fractions, as printed in
+    Klempt 2024, Klempt et al. 2026 and PAMM 2023;
+  - $\alpha$ with $\mathbf F_g=\alpha\mathbf I$ and $\alpha(0)=1$ (Klempt 2024);
+    the growth is written $\alpha-1$. Do not use $\alpha_K$ or
+    $\mathbf F_g=(1+\alpha)\mathbf I$ in documents (the UMAT's internal
+    variable is $\alpha-1$; say so where code values are quoted);
+  - $k_\alpha$ for the growth rate (Klempt 2024 Eq. 34/36, Table 2);
+  - point model (Klempt et al. 2026): $\phi_i$, $\psi_i$,
+    $\bar\phi_i=\phi_i\psi_i$, $\phi_0$, $\gamma$, $\eta_i$, $c^*$, $\alpha^*$.
+    The papers have no symbol for the share of a species: write
+    $\phi_1/(\phi_1+\phi_2)$, not a new symbol such as $\chi_i$.
+- **Follow Klempt et al. 2024 (Felix) for the model and its parameters.**
+  - Any value not taken from a paper must be marked as such on the slide,
+    e.g. the bring-up growth rates or the partner's example-input
+    stiffness.
+  - Modelling assumptions (e.g. the time link s, φ_cap) are stated as
+    assumptions, each with its sensitivity study.
+- **Units.** The partner's decks are `/units,MPA`, so `YOUNG_BIO = 1000`
+  means 1000 MPa. Give units for every material constant. The Klempt 2024
+  values are μ = 3.3557 Pa (E = 10 Pa, ν = 0.49).
+- **Background appendix.** Every deck gets an appendix with the notation
+  (basic variables of the growth field, the point model and the coupling)
+  and the background equations, so questions can be answered from the
+  slides. The 5 Oct deck (`slides_1005.tex`, appendix A–C) is the template.
+- **No internal labels** (stage numbers, `prop(28)` modes, run names) in
+  anything the partner or the supervisors see. Describe what a run does.
+- **Figures in Times New Roman** (decided 2026-10-02). Every figure script
+  calls `figstyle.apply()` from `ansys_usermat/figstyle.py` (Times New Roman,
+  Liberation Serif where it is not installed, STIX mathematics). New figure
+  scripts use it too; do not set fonts per script.
+- **Build and check before handing over.** Keep the deck at 20 pages or
+  fewer, with no LaTeX errors and no overfull frames, and look at the
+  rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
+  pdflatex/lualatex in a cloud session.
 
 ## This PC vs. claude.ai (web) — don't mix them up
 

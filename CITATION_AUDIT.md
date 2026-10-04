@@ -95,7 +95,26 @@ species-interaction model.**
 haven't been individually re-pointed at the correct one of the two papers —
 that still needs a pass with both PDFs open (both now confirmed available).
 
-## 🔴 F1c. New discrepancy found while confirming F1b: `Fg = αI`, not `Fg = (1+α)I`
+## 🟢 F1c. RESOLVED 2026-09-30 — `Fg = (1+α)I` is the same author's own convention
+
+> Soleimani, Haverich & Wriggers (2021), *Arch Comput Methods Eng* 28:4263, Eq. 15:
+> "`Fg = (1 + α)I`. Here, the scalar α is introduced to capture the overgrowth.
+> **The initial value of α is set to be zero.**"
+>
+> That is this repository's convention verbatim, from the author of the
+> growth-model lineage. Explanation (a) below is the right one — our α is
+> Klempt's minus 1 — and it is not an undocumented deviation but a form the
+> group itself publishes. Cite Eq. 15 at the point `Fg` is introduced.
+> See [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) §1.
+>
+> **The citation now exists**: `Soleimani2021Atherosclerosis` in
+> `biofilm_3tooth_refs.bib` (added 2026-09-30, DOI verified from the PDF). It
+> still has to be *used* at that point in the text — the bibliography entry is
+> not the citation. See [`READING_GAPS.md`](READING_GAPS.md) for the full list
+> of where each new entry belongs.
+
+### Original finding, kept for the record
+
 
 Reading the confirmed 2024 paper directly (Sec. 2.1, kinematics of growth)
 turned up a second, independent problem: **the paper's own definition is

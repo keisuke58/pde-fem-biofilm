@@ -91,7 +91,10 @@ def residual_c(g_new, g_prev, c_node, params):
     fn = jnp.maximum(phi_new[3] * psi_new[3], 0.0)
     num = fn**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_mask
+    # gate off (K_hill = 0 or species 5 inactive) leaves the interaction
+    # unchanged, as TMCMC's BiofilmNewtonSolver5S does; it used to multiply
+    # it by 0 (found 2026-10-01, coupling/ODE_TMCMC_CROSSCHECK.md)
+    factor = jnp.where(hill_mask > 0, jnp.where(den > eps, num / den, 0.0), 1.0)
     Ia = Ia.at[4].set(Ia[4] * factor)
 
     Q = jnp.zeros(12, dtype=jnp.float64)
@@ -225,8 +228,15 @@ def nutrient_step(c_field, phi_total, params):
         lap = jnp.zeros_like(c)
         interior = (c[:-2] + c[2:] - 2.0 * c[1:-1]) / (dx * dx)
         lap = lap.at[1:-1].set(interior)
-        # Neumann BC at x=0: ghost node approach → lap[0] = (c[1]-c[0])/(dx²)
-        lap = lap.at[0].set((c[1] - c[0]) / (dx * dx))
+        # Neumann BC at x=0: ghost node c[-1] = c[1] reflects about node 0
+        # (the zero-flux wall sits ON the node), giving
+        #   lap[0] = (c[1] - 2c[0] + c[1])/dx² = 2(c[1]-c[0])/dx²
+        # The finite-volume reading agrees: a half-width control volume at
+        # node 0 takes flux D(c[1]-c[0])/dx across a cell of width dx/2.
+        # This carried a factor 1 instead of 2 until 2026-09-30, which put the
+        # wall half a cell outside the node and cost one order of accuracy --
+        # measured against exact solutions in PDE_VERIFICATION_FINDINGS.md.
+        lap = lap.at[0].set(2.0 * (c[1] - c[0]) / (dx * dx))
         # Dirichlet at x=L: c[-1] は更新しない
 
         # 反応項: Monod 型消費

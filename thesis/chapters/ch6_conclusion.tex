@@ -1,0 +1,108 @@
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md. Numbers as in
+% chapters 3 and 4.
+
+The task of this thesis was to bring a point model of a multi-species biofilm
+into an existing finite element framework, so that its composition, its growth
+and the resulting stresses can be computed in space. Three contributions serve
+this task.
+
+\paragraph{A calibrated point model (Chapter~\ref{ch:heine}).}
+The 15 interaction coefficients of a five-species point model were estimated
+with TMCMC from the in-vitro time courses of Heine et al.\ under four
+conditions. Compiled with JAX, the forward model runs about 200 times faster
+than on the CPU, which makes posteriors with $10{,}000$ samples routine. The
+inferred matrices separate the commensal from the dysbiotic conditions and
+predict a quantity that never entered the calibration: the pH of the flow
+reactor, with $R^2=0.78$. With a metabolic sign prior, the same type of model
+also predicts sparse in-vivo data of ten patients out of sample.
+
+\paragraph{A growth law in the finite element framework (Chapter~\ref{ch:ansys}).}
+The growth kinematics $\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, of Klempt et
+al.\ 2024 was implemented as an ANSYS user material and verified against
+closed-form solutions. It was coupled to the biofilm field of the IKM element
+through the growth equation $\dot\alpha=k_\alpha\phi$ at every Gauss point.
+Inside ANSYS, the coupled run follows the exact solution of a gradient-free
+region to $3\times10^{-11}$ in $\alpha$. With the published parameters the
+growth stays below $\alpha-1=1.1\times10^{-3}$ up to $T^*=1.1$ and the seeded
+region is compressed; a finer model of the same problem predicts tension in
+its surroundings on average, the ring of tension reported by Klempt et al.
+
+\paragraph{The composition at every Gauss point (Chapter~\ref{ch:ansys}).}
+For two species, the point model of Klempt et al.\ 2026 runs at every Gauss
+point alongside the field: the field sets the amount, the point model the
+composition. Every call from ANSYS to the point model is reproduced in Python
+bit for bit, and the coupled run keeps the type of outcome of the published
+cases: coexistence in case~3 and one surviving species in case~6.
+
+Together these steps connect a calibrated description of what a biofilm
+consists of with a finite element description of how it grows and what
+stresses it carries, for one and two species.
+
+\section{Limitations}
+\label{sec:concl_limitations}
+
+\begin{itemize}
+  \item \emph{Verification, not validation.} The finite element results are
+        verified against closed forms and against the published models. No
+        measured stress of a growing oral biofilm was available to validate
+        them.
+  \item \emph{One-way coupling.} The composition does not act on the
+        stiffness, the spreading or the stress, following Klempt et al.\ 2024,
+        who drop the mechanical term in the growth equation.
+  \item \emph{Spreading in ANSYS.} The front term of the element is inactive,
+        so the biofilm does not spread in the ANSYS runs and the composition
+        there is uniform. The spatial effect of the coupling was shown in
+        Python on the reproduced field of Klempt et al.\ 2024, not in ANSYS.
+  \item \emph{Assumptions.} The link between the time of the point model and
+        that of the field, and the cap on the amount handed to the point
+        model, are not given by the papers. Both are reported with their
+        sensitivity.
+  \item \emph{The source model.} The test cases of Klempt et al.\ 2024 are
+        reproduced only with stated departures from the printed equations
+        (Appendix~\ref{app:klempt2024}), and the paper gives two forms of the
+        law for $\alpha$. I follow its Eq.~36.
+  \item \emph{Mesh and magnitude.} The example model's mesh overestimates the
+        averaged stresses of the seed by a factor of about 1.7; peaks at its
+        corners are mesh dependent. With the published parameters the stresses
+        are of order $10^{-4}$~Pa.
+  \item \emph{Data.} The calibration rests on five species under four
+        conditions in vitro and ten patients in vivo. The commensal and
+        dysbiotic consortia used different \textit{P.~gingivalis} strains, so
+        part of the difference between the inferred matrices reflects the
+        strains. The symmetric interaction matrix cannot represent directed
+        effects.
+\end{itemize}
+
+\section{Outlook}
+\label{sec:concl_outlook}
+
+The work continues at Keio University. The steps follow from the limitations,
+in order of how well the literature supports them.
+\begin{enumerate}
+  \item \emph{More species.} The five-species point model calibrated in
+        Chapter~\ref{ch:heine} and the bridge from ANSYS to Python already
+        exist; with the scheme of Chapter~\ref{ch:ansys} the field stays a
+        single variable, so only the state of the point model and its
+        parameters need to be widened.
+  \item \emph{A working front term.} Once the element spreads the biofilm, the
+        composition can vary in space in ANSYS as it does in the Python
+        demonstration. Where the nutrient is uniform the direction of the
+        front term is undefined; how to treat this is a question for the
+        authors of the model.
+  \item \emph{Local nutrient and composition-dependent spreading.} Replacing
+        the constant nutrient level $c^*$ of the point model by the local
+        nutrient of the field, and letting the growth and consumption of the
+        field depend on the composition, would close the loop between the two
+        models.
+  \item \emph{Composition into stiffness and stress into growth.} Species-specific
+        stiffness and stress-dependent growth would let the composition reach
+        the stress directly and the stress act back. Both need parameters that
+        are not yet available.
+  \item \emph{A test of the inferred network.} The calibrated matrices predict
+        that removing \textit{F.~nucleatum} from the dysbiotic consortium
+        suppresses the late growth of \textit{P.~gingivalis}; a co-culture
+        without it would test this.
+\end{enumerate}

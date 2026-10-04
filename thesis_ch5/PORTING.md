@@ -9,7 +9,7 @@ structure rather than to match a known one.
 
 | From here | To |
 |---|---|
-| `thesis_ch5/ch5_ansys_contribution.tex` | the chapter file, merged section by section |
+| `thesis/chapters/ch4_ansys.tex` (moved 3 Oct; the thesis is now written in `../thesis/`, so no porting is needed) | the chapter file, merged section by section |
 | `assets/flow_oliver_solution_loop.png` | wherever that tree keeps figures |
 | the `Klempt2024DiffusionDrivenGrowth` and `Klempt2026ContinuumBacterialGrowth` entries from `biofilm_3tooth_refs.bib` | its `.bib`, if not already there |
 

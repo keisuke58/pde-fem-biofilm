@@ -1,8 +1,10 @@
-% 3者MTG (Muramatsu x Soleimani x Nishioka) 2026-10-05 9:00 CEST / 16:00 JST
-% pdflatex でビルド（研究室PCの lualatex+metropolis 環境なら theme を差し替え可）
-% CONSTRAINT: keep total page count <= 20 (currently 20, at the cap). Check
-% the built PDF's page count before adding another frame; trim an existing
-% frame before growing past the cap rather than just tacking more on.
+% Meeting Assoc. Prof. Muramatsu x Prof. Soleimani x Nishioka, 2026-10-05 9:00 CEST / 16:00 JST
+% Build: .\build_slides.ps1   (pdflatex, twice)
+% Speaker script (EN + JA, one section per slide): speaker_notes_1005.tex
+% CONSTRAINT: keep total page count <= 25 (raised from 20 on 3 Oct). Check the built PDF's page count
+% before adding a frame; trim an existing frame rather than tacking more on.
+% Wording: no internal labels (run names, switch numbers) -- say what a run
+% does, not what it was called while building it.
 \documentclass[aspectratio=169,11pt]{beamer}
 \usetheme{Madrid}
 \usecolortheme{seahorse}
@@ -12,16 +14,15 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
-\graphicspath{{../figures/}}
+\usetikzlibrary{arrows.meta,positioning}
 
 \definecolor{c3}{RGB}{30,80,160}
-\definecolor{todo}{RGB}{200,30,30}
+\definecolor{warn}{RGB}{200,30,30}
 \setbeamercolor{frametitle}{bg=c3, fg=white}
-\newcommand{\TODO}[1]{\textcolor{todo}{\textbf{[TODO: #1]}}}
+\setbeamertemplate{navigation symbols}{}
 
-\title{Master's Thesis --- Status and Plan}
-\subtitle{Joint kickoff meeting: Prof.\ Muramatsu $\times$ Dr.\ Soleimani}
+\title{Master's Thesis: Status and Plan}
+\subtitle{Biofilm growth coupled into the IKM FEM element, following Klempt et al.}
 \author[Keisuke Nishioka]{Keisuke Nishioka}
 \institute[IKM, LUH]{%
 \small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
@@ -31,446 +32,501 @@
 \begin{document}
 \maketitle
 
+
 % --------------------------------------------------------
-\begin{frame}{Where we stand (administration)}
+\begin{frame}{Since the last meeting: the scope of the FEM part is fixed}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\colorbox{c3!12}{\parbox{0.95\linewidth}{%
+\textbf{Thesis (this semester)}\\[3pt]\small
+Biofilm growth for \textbf{one and two species}, coupled into the
+existing IKM element (Oliver's) as described in
+Klempt et al.\ 2024:
 \begin{itemize}
-  \item \textbf{Admission (Zulassung) granted} by the examination office --- 18 Aug 2026
-  \item Examiners fixed:\quad first: \textbf{Prof.\ Junker (IKM)}\quad second: \textbf{Dr.\ Wangenheim (IDS)}
-  \item Supervisors: Dr.\ Soleimani, Dr.\ Geisler (IKM)
-  \item Thesis written in \textbf{English} (approved on the admission form)
-  \item Topic issue (Themenausgabe): \TODO{date, expected end of Sep} \quad
-        $\Rightarrow$ submission planned \textbf{December 2026}, presentation in December
-  \item 12-week internship at NIFE completed (04.05--24.07); report submitted
+  \item verified on real ANSYS runs
+  \item species composition from the multi-species point model of
+        Klempt et al.\ 2026
+  \item all parameters taken from the papers
+\end{itemize}}}
+\end{column}
+\begin{column}{0.48\textwidth}
+\colorbox{gray!12}{\parbox{0.95\linewidth}{%
+\textbf{Continuation at Keio}\\[3pt]\small
+\begin{itemize}
+  \item more species, starting from the \textbf{four-species} cases of
+        Klempt et al.\ 2026
+  \item up to the five oral species of the calibration work
+  \item two-way coupling (composition $\to$ mechanics)
+\end{itemize}}}
+\end{column}
+\end{columns}
+\vspace{8pt}
+\small One and two species can be checked against published examples.
+For more species there is no published reference yet.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Verification of the growth law (before coupling)}
+\small Growth law $\mathbf F=\mathbf F_e\mathbf F_g$, $\mathbf F_g=\alpha\mathbf I$
+(Klempt et al.\ 2024), as an ANSYS user material.
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Check & Reference & Result\\
+\midrule
+Fully constrained cube, 4 cases & closed form & exact match\\
+Free growth (only rigid-body modes fixed) & stress $\equiv 0$ & $\sim 10^{-10}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
+\begin{itemize}
+  \item Multi-species point model (Klempt et al.\ 2026): all 14 numerical
+        examples of the paper reproduced (two misprints in the paper identified)
+  \item Same model in Fritsch et al.\ 2025: reproduces their figures within 0.013
 \end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Thesis in one slide}
-\textbf{Title:} \emph{Hamilton-Principle Models of Oral Biofilm Dysbiosis:\\
-GPU-Accelerated Inference, Metabolic Priors, and Spatial Stratification}
-\vspace{6pt}
-Three pillars, all under the extended Hamilton principle:
+\begin{frame}{The coupling: what the element does and what is added}
+\small
+\textbf{The element (Oliver's, unchanged)} solves the biofilm field of
+Klempt et al.\ 2024, Eq.\ 34, at its points (front term: see ``found along the way''):
+\[
+\dot\phi-\beta\,\Delta\phi-k_\alpha\,\alpha
++|\nabla\phi|\,r\,\frac{c}{k+c}\,\mathbf n_\phi\!\cdot\mathbf n_c=0,
+\qquad \dot\alpha=k_\alpha\,\phi\quad\text{(Eq.\ 36)}
+\]
+\textbf{Added in this work}, at every Gauss point of the material routine:
+\begin{itemize}
+  \item take $\phi$ from the field and integrate Eq.\ 36:
+        $\alpha_{n+1}=\alpha_n+k_\alpha\,\phi\,\Delta t$
+  \item growth $\mathbf F_g=\alpha\mathbf I$ $\to$ stress (verified law, previous slide)
+\end{itemize}
+\vspace{2pt}
+Parameters: Klempt et al.\ 2024 Table 2, $k_\alpha=10^{-3}$ per unit time $T^*$,
+in the field \emph{and} in Eq.\ 36; $E=10$ Pa, $\nu=0.49$, stiffness $\propto\phi^2$.
+$\beta$, $r$, $k$, $d$, $g$: framework's example input (not from the paper).
+ANSYS 2022 R2, one-species runs.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Model and boundary conditions}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{assets/fig_model_setup.png}
+\end{center}
+\vspace{-6pt}
+\footnotesize
+\begin{itemize}
+  \item \textbf{Mechanics:} only rigid-body motion is suppressed (three corner nodes);
+        uniform growth is stress free, stress comes from differences in growth
+  \item \textbf{Nutrient:} $c=1$ held in the element layer on the face $y=-1$ mm.
+        \textbf{Biofilm:} $\phi=1$ in the seed of 32 elements at the start, $\phi=0$ elsewhere
+  \item Checks 1--3 and the two-species results use this model (ANSYS, 1--2 Oct);
+        the Klempt et al.\ 2024 reproduction uses the paper's own 20\,$\mu$m cube (Python)
+\end{itemize}
+\end{frame}
+
+
+% --------------------------------------------------------
+\begin{frame}{What I implemented, and what I used}
+\scriptsize
+\begin{tabular}{@{}p{0.30\linewidth}p{0.30\linewidth}p{0.34\linewidth}@{}}
+\toprule
+Part & Source & My work\\
+\midrule
+3D growth field, Eq.\ 34/35; neo-Hookean stiffness &
+Klempt et al.\ 2024; Oliver's ANSYS element &
+used unchanged; read it and reported four findings (slide 9)\\
+Point model equations & Klempt et al.\ 2026 & taken from the paper\\
+Point model solver (Newton per step) & my JAX code &
+all 14 examples of the paper reproduced\\
+Growth Eq.\ 36 and the composition step in the element's material call &
+this work (Fortran, inserted into Oliver's routine by a script) &
+written and checked against a stand-alone reference, difference 0.0\\
+Bridge Fortran $\to$ Python & this work (C binding, local socket, material server) &
+point model called once per Gauss point and step\\
+Sub-stepping and step-size guard & this work &
+point model in steps $\le 10^{-4}$; too large a step asks ANSYS to cut back\\
+Checks & this work & closed form in ANSYS, replay of every call, about 440 unit tests\\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}
+\footnotesize
+\textbf{Python side:} one call per Gauss point and step (the point model has no
+space). Each coupling step is split into point-model steps $\le10^{-4}$ (one
+coarse step diverged), run as one compiled loop: a single-element ANSYS run
+from 357\,s to 5.6\,s, same output. Every call of an ANSYS run is replayed in
+Python, difference 0.0.
+\end{frame}
+
+
+% --------------------------------------------------------
+\begin{frame}{Checks 1 and 2: exact solution and whole model}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\footnotesize\textbf{1. Exact solution inside ANSYS.} Without gradients,
+$\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$.
+\includegraphics[width=\linewidth,height=0.42\textheight,keepaspectratio]{assets/fig1005_exact.png}
+ANSYS follows it: $\alpha$ to $3\times10^{-11}$ (round-off), $\phi$ to $10^{-7}$
+(the element still sees a small gradient).
+\end{column}
+\begin{column}{0.48\textwidth}
+\footnotesize\textbf{2. Whole model, 512 elements.} Von Mises from Eq.\ 36 (this
+work) vs.\ the element's own growth variable.
+\includegraphics[width=\linewidth,height=0.42\textheight,keepaspectratio]{assets/fig1005_whole_model.png}
+Same pattern, cosine similarity 1.0000; magnitude $0.455=\tfrac12\times\tfrac{10}{11}$
+(mean over both species fields, one-step lag).
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Check 3: the seeded element and its neighbours}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig1005_element220.png}
+\end{center}
+\vspace{-6pt}
+\small
+\begin{itemize}
+  \item $\alpha-1=1.1\times10^{-3}=k_\alpha\,\phi\,t$ at $T^*=1.1$, exactly as Eq.\ 36 says
+  \item The element is compressed; its neighbours carry about 25$\times$ its
+        von Mises stress (Klempt et al.\ 2024 report pressure inside and a ring
+        of tension at the edge; the sign in the neighbours is still to be read)
+  \item Stresses are tiny ($\le 10^{-4}$ Pa): the published growth rate
+        $k_\alpha=10^{-3}$ is slow and the biofilm is soft ($E=10$ Pa)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Four things found along the way}
+\small
 \begin{enumerate}
-  \item \textbf{ch.\,3} GPU Bayesian inference (TMCMC) on \emph{in vitro} data
-  \item \textbf{ch.\,4} Metabolic-prior replicator dynamics \emph{in vivo}
-  \item \textbf{ch.\,5} Spatial reaction--diffusion + 3-D FISH validation
+  \item \textbf{The element's growth variable is the mean of the two species fields.}
+        With one species, the unused field stays at its start value, so growth is halved.
+        $\Rightarrow$ question to Oliver: intended?
+  \item \textbf{Start values must satisfy $\phi_1+\phi_2\le 1$}
+        (the void fraction is $\phi_0=1-\sum\phi_i$). The example input starts
+        both species at 1 in the seed; for one species I start the second at 0.
+  \item \textbf{The first result set is not in equilibrium:} the element returns zero
+        stress on its first calls while it sets up its operators. This set is excluded.
+  \item \textbf{The element's front-growth term is inactive:} a copy slip in reading
+        its weights sets the weight of species 1 to zero. It also uses
+        $|\Delta\phi|$ where Eq.\ 34 has $|\nabla\phi|$. With both corrected in a
+        test copy the seed spreads, but $\phi$ exceeds 1. Checks 1--3 do not
+        depend on this term. $\Rightarrow$ to discuss with Oliver.
 \end{enumerate}
-\vspace{4pt}
-{\scriptsize \TODO{figure: Hamilton principle vs.\ comparison-statics --- pending}}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{New since August: coupling the model into the IKM FEM framework}
-\textbf{Goal:} call the Hamilton-principle biofilm constitutive law at
-\emph{every Gauss point} of a 2-D FEM mesh (state $\varphi$, internal variables $\psi$).
-\vspace{4pt}
-\begin{table}
-\centering\small
-\begin{tabular}{@{}llll@{}}
-\toprule
-Route & Mechanism & Call cost & Effort\\
-\midrule
-1. FEM $\leftrightarrow$ Python & inter-process & highest & lowest\\
-2. User element (UEL) & native & lowest & highest\\
-3. \textbf{User material (UMAT)} & Fortran + C-binding & low & medium\\
-\bottomrule
-\end{tabular}
-\end{table}
-\vspace{2pt}
-Cost driver: $>400$ Gauss-point calls per form per time step.\\
-\textbf{Decision:} route \textbf{3 (UMAT)} --- ANSYS USERMAT already verified
-bit-identical to the Abaqus UMAT reference (0 ULP over 8017 states, \texttt{SOLID185}),
-with an optional embedded Python hook at the Gauss point rather than a separate IPC layer.
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Implementation architecture: where Python meets the FEM solver}
-\centering
-\resizebox{\linewidth}{!}{\input{ch5_flow/flow_impl_architecture.tex}}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Benchmark: cost per Gauss-point call}
-\begin{columns}[T]
-\begin{column}{0.55\textwidth}
-\begin{table}
-\centering\small
-\begin{tabular}{@{}lrr@{}}
-\toprule
-Route & $\mu$s / call & s / 1000 steps\\
-\midrule
-Python IPC (socket)     & 27.6 & 11.0\\
-ctypes (in-process)     & 0.30 & 0.12\\
-Fortran (native, direct)& 0.00068 & 0.00027\\
-\bottomrule
-\end{tabular}
-\end{table}
-{\scriptsize Toy law, own machine (IKMHIWI03), measured 19 Aug 2026, before the
-custom ANSYS build succeeded; native Fortran number is a lower-bound proxy for
-the in-process UMAT call path. The real UMAT now builds and runs inside ANSYS
-itself --- next slide.}
-\end{column}
-\begin{column}{0.45\textwidth}
-IPC is $\sim$40,000$\times$ slower than a native call; ctypes closes most of
-that gap but still $\sim$440$\times$ slower than native --- confirms UMAT
-(route 3) over both alternatives.
-\end{column}
-\end{columns}
-\vspace{4pt}
-Setup: toy constitutive law, 400 elements $\times$ 1 Gauss point (i.e.\ 400
-Gauss-point calls/step, matching the cost-driver figure above), 1000 time steps.
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Model parameters, at a glance}
-\small
-Multiplicative split $\mathbf F = \mathbf F_e \mathbf F_g$ (elastic $\times$ growth)
---- standard finite-growth kinematics (Rodriguez et al.\ 1994; Klempt 2024 for this
-biofilm law specifically).
-\vspace{4pt}
-\begin{table}
-\centering\small
-\begin{tabular}{@{}clr@{}}
-\toprule
-Symbol & Meaning & Used here\\
-\midrule
-$\mathbf F$ & total deformation gradient & $=\mathbf I$ (fully constrained)\\
-$\alpha$ & growth stretch parameter (dimensionless) & $0.05$ or $0.20$\\
-$\mathbf F_g=(1{+}\alpha)\mathbf I$ & growth part --- how much the material & ---\\
- & \emph{wants} to expand, isotropically & \\
-$\mathbf F_e=\mathbf F\mathbf F_g^{-1}$ & elastic part --- what actually stretches & determines $\boldsymbol\sigma$\\
-$J_e=\det\mathbf F_e$ & elastic volume ratio & $<1$ = compressed\\
-$C_{10}, C_{01}$ & Mooney--Rivlin constants (Neo-Hookean & $2\times10^{-4}, 0$\\
- & if $C_{01}{=}0$) --- shear stiffness [stress] & \\
-$D_1$ & compressibility (large $\Rightarrow$ near-incompressible) & $5\times10^{3}$\\
-$\eta$ & viscosity [stress$\cdot$time] --- $0$ = purely elastic & $0$ or $8\times10^{-3}$\\
-\bottomrule
-\end{tabular}
-\end{table}
-{\scriptsize $\alpha$ is the biological growth driver from the ecology model
-(ch.\,4/5); $C_{10},C_{01},D_1,\eta$ are calibrated tissue-mechanics
-constants (Klempt 2024) --- both feed the same constitutive law.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Verification setup: what's actually being checked}
-\begin{columns}[T]
-\begin{column}{0.55\textwidth}
-  \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{assets/growth_bc_3d.png}
-\end{column}
-\begin{column}{0.45\textwidth}
-\small
-Single \texttt{SOLID185}, unit cube, \textbf{all 8 nodes fully fixed}.
-\vspace{4pt}
-\begin{itemize}
-  \item Constraint forces $\mathbf F=\mathbf I$ exactly at every Gauss point
-        --- no FE solve needed to know the deformation
-  \item $\mathbf F_g=(1{+}\alpha)\mathbf I$ makes the material want to grow
-        isotropically and it can't $\Rightarrow$ pure hydrostatic compression,
-        \textbf{known in closed form}
-  \item The 4 cases (next slide): elastic/viscous $\times$
-        $\alpha{=}0.05/0.20$ --- same cube, same BCs, different growth/viscosity
-\end{itemize}
-\end{column}
-\end{columns}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Caveat: this cube is a math check, not the biofilm's actual shape}
-\small
-The single constrained cube isolates the \textbf{growth law itself} --- it
-says nothing about real geometry. Real oral biofilms are considerably more
-structured:
-\vspace{4pt}
-\begin{itemize}
-  \item \textbf{Mushroom/pillar + water channels} --- typical under flow
-        (rivers, catheters); the textbook confocal image
-  \item \textbf{Flat, layered mat} (tens--hundreds of \textmu m thick) ---
-        typical of static, nutrient-rich, diffusion-limited conditions ---
-        \textbf{closer to dental plaque}
-  \item Tooth/implant surfaces are \textbf{curved, heterogeneous substrates},
-        not flat or cubic --- early colonizers (\emph{S.\ oralis},
-        \emph{A.\ naeslundii}) form a thin base layer, late pathogens
-        (\emph{P.\ gingivalis}) colonize \textbf{patchily} on top
-        (the composition variability CLSM measures)
-  \item Gingival sulcus / peri-implant gap geometry itself constrains the
-        mechanics --- not captured by a free cube
-\end{itemize}
-\vspace{4pt}
-{\scriptsize The real geometry path (patient-specific STL/CT $\to$ conformal
-mesh) is separate machinery (\texttt{biofilm\_conformal\_tet.py},
-\texttt{openjaw\_*.py}) --- not run for tonight's verification.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Update: the growth branch now runs inside real ANSYS}
-\textbf{Since the benchmark slide:} built the custom ANSYS 2022 R2 executable
-with \texttt{usermat\_biofilm.f} linked in, and ran the closed-form
-growth-branch check (element fully constrained, $\mathbf F=\mathbf I$, so
-$\boldsymbol\sigma$ is known analytically --- no FE solve needed to predict it).
-\vspace{2pt}
-\begin{columns}[T]
-\begin{column}{0.5\textwidth}
-\small
-\begin{table}
-\centering\scriptsize
-\begin{tabular}{@{}llr@{}}
-\toprule
-Case & \texttt{KEYOPT} & \\
-\midrule
-elastic, $\alpha{=}0.05$ & 0/2/3 & \textbf{match, all 3}\\
-viscous, $\alpha{=}0.05$ & 0 & \textbf{match}\\
-elastic, $\alpha{=}0.20$ & 0 & \textbf{match}\\
-viscous, $\alpha{=}0.20$ & 0 & \textbf{match}\\
-\bottomrule
-\end{tabular}
-\end{table}
-All 4 reference cases \emph{and} the \texttt{KEYOPT} formulation sweep
-(B-bar / enhanced / simplified enhanced strain) match exactly --- no
-volumetric locking on this load. First time the growth branch has run
-end-to-end inside ANSYS, not just the standalone crosscheck driver.
-\end{column}
-\begin{column}{0.5\textwidth}
-  \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{assets/growth_verify_parity.png}
-\end{column}
-\end{columns}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Two real bugs found along the way --- both fixed}
-\begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\begin{center}
-\colorbox{c3!12}{\parbox{0.95\linewidth}{\centering
-\textbf{\textcolor{c3}{Bug 1 --- link error}}\\[3pt]
-\footnotesize
-\textbf{Symptom:} unresolved symbol\\[2pt]
-\textbf{Looked like:} compiler mismatch\\[2pt]
-\textbf{Actually:} 1 line missing from\\ ANSYS's own link script\\[2pt]
-\textbf{Fix:} 1 line, no reinstall
-}}
-\end{center}
-\end{column}
-\begin{column}{0.48\textwidth}
-\begin{center}
-\colorbox{todo!10}{\parbox{0.95\linewidth}{\centering
-\textbf{\textcolor{todo}{Bug 2 --- silent state bug}}\\[3pt]
-\footnotesize
-\textbf{Symptom:} viscous case = elastic\\ case, no crash\\[2pt]
-\textbf{Cause:} \texttt{TBDATA} caps at\\ 6 values/call --- deck's 9-value\\
-init silently dropped the tail\\[2pt]
-\textbf{Fix:} split into 2 calls
-}}
-\end{center}
-\end{column}
-\end{columns}
-\vspace{10pt}
-\centering
-{\scriptsize Full writeup: \texttt{ansys\_usermat/apdl/RUNBOOK.md} ---
-diagnosed by instrumenting the UMAT with debug output and tracing exactly
-what ANSYS passed to the material.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{A second, independent closed-form check: free growth}
-\small The constrained cube forces $\mathbf F=\mathbf I$ regardless of
-whether $\mathbf F_g$/$\mathbf F_g^{-1}$ are wired with the right sign --- a
-sign error and its inverse could in principle cancel out under that much
-kinematic constraint. So: same cube, opposite extreme. Only the 6 rigid-body
-modes removed, everything else traction-free --- the element is free to
-actually grow.
-\vspace{4pt}
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-& Closed form & ANSYS (custom UMAT)\\
-\midrule
-stress & $\equiv 0$ (any $\alpha,\eta$) & $\sim\!1.9\times10^{-10}$\\
-shear & $0$ & $\sim\!1.8\times10^{-14}$\\
-\bottomrule
-\end{tabular}
-\end{center}
-\vspace{4pt}
-Zero to solver tolerance --- nine orders of magnitude below the constrained
-case's stress scale. Two independent closed-form checks now agree, from
-opposite kinematic extremes.
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Verification chain closed: Abaqus $\equiv$ ANSYS $\equiv$ Python core}
-\small Three independent implementations of the same growth constitutive
-law, checked directly against each other rather than each just against
-itself:
-\vspace{4pt}
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Pair & Battery & Result\\
-\midrule
-Abaqus UMAT $\equiv$ ANSYS USERMAT & 2037 cases (curated + adversarial fuzz) & \textbf{0 ULP}\\
-Abaqus UMAT $\equiv$ Python core & 28 cases (named + random finite-strain) & \textbf{6.8e--14 rel.}\\
-\bottomrule
-\end{tabular}
-\end{center}
-\vspace{2pt}
-$\Rightarrow$ transitively, ANSYS USERMAT $\equiv$ Python core too --- the
-adversarial sweep includes a physical frame-indifference probe
-($\sigma(QF)=Q\sigma(F)Q^\top$) and deliberately drives the \texttt{detFe}
-clamp (near-singular states), not just nice cases.
-\vspace{4pt}
-{\scriptsize All reproducible, bilingual (EN/JA) Jupyter notebooks under
-version control: \texttt{ansys\_usermat/crosscheck/crosscheck\_analysis.ipynb},
-\texttt{ansys\_usermat/coupling/python\_core\_vs\_fortran\_verification.ipynb}.
-This is the evidence package for Felix / Olli / Meisam / Hendrik that the
-USERMAT port is trustworthy before it replaces the phenomenological law in
-the existing ANSYS model.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Real solver runs: single element, partial constraint, both solvers}
-\small Beyond the closed-form cube: does the interface actually converge
-under a load a real mesh would produce (base fixed, top free, growth +
-viscosity together, no analytic answer to check against)?
-\vspace{4pt}
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-& Abaqus 2024 (production UMAT) & ANSYS 2022 R2 (USERMAT)\\
-\midrule
-Constraint & \texttt{BOT} face \texttt{ENCASTRE} & \texttt{Z=0} face fixed\\
-Result & \textbf{completed successfully}, 7 increments & \textbf{0 errors}, 2 benign warnings\\
-\bottomrule
-\end{tabular}
-\end{center}
-\vspace{4pt}
-Both: base-clamped growth resisted (higher stress near the fixed face),
-free face spreads outward under its own growth drive --- qualitatively
-sensible, real solver convergence, on both solvers independently.
-\vspace{4pt}
-{\scriptsize \texttt{umat\_tangent\_test/abaqus\_1elem/abaqus\_visco\_1elem\_analysis.ipynb},
-\texttt{ansys\_usermat/apdl/growth\_baseclamped\_smoke\_test.ipynb} --- the
-ANSYS one done ahead of Felix's UserElement code, as the smoke test
-\texttt{HANDOFF.md} asks him for.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Next: moving past the cube --- a bonding bug, found and fixed}
-\small A curved \textbf{substrate} (no growth) bonded to a thin \textbf{growth
-layer} (biofilm) on top.
-\vspace{4pt}
-\begin{itemize}
-  \item \textbf{Bug:} the two layers were meshed separately and joined with
-        \texttt{NUMMRG}, which merges only coincident nodes --- the layers
-        were bonded along a few node lines only (4 corner nodes in the
-        4-condition deck). The ``two-lobe bulge'' reported earlier was the
-        layer lifting between those lines, \textbf{not} a buckling mode
-  \item \textbf{Fix:} \texttt{VGLUE} (one shared interface mesh). The bonded
-        cylinder bulges near-uniformly and converges at second order under
-        refinement (2.4k/19k/150k elements: profile error
-        $2.7\,\% \to 0.58\,\%$)
-  \item \textbf{Consequence:} every stress from the old decks is re-derived.
-        4 clinical conditions: growth layer $6.3\times$ the substrate von
-        Mises (not $15.2\times$), $0.4\,\%$ spread between conditions (not
-        $9.1\,\%$), with placement effects of the same order, so no
-        condition effect on stress can be claimed. The old $\alpha{\approx}0.01$
-        convergence limit is gone: bonded, it converges with 0 errors up to
-        $\alpha=0.2$ (beyond the cube's target $0.05$)
-\end{itemize}
-\vspace{2pt}
-{\scriptsize Constants now match the TMCMC calibration ($c^*=25$, no Hill
-gate, $\alpha^*=0$).}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{UserElement vs.\ UserMat: proposal}
-\small
-\begin{itemize}
-  \item \textbf{Proposal:} thesis results on my own implementation ---
-        the paper-faithful ecology (reproduces all 14 numerical examples of
-        Klempt et al.\ 2026) $\to$ JAX PDE computes $\alpha(\mathbf x)$
-        $\to$ ANSYS USERMAT (one-way coupling)
-  \item \textbf{Why not Oliver's UserElement for the thesis:} different
-        interaction term, written for 2 species (5 species means rewriting
-        its PDE assembly), an open time-unit question, and new verification
-        with nothing to compare against --- roughly 1--2 months
-  \item \textbf{What one-way coupling gives up} is mainly stress$\to$growth
-        feedback, which Klempt et al.\ 2024 neglect as well
-  \item \textbf{Limitation:} the ANSYS side is material-point only; the
-        spatial fields live in the JAX PDE, not yet checked against an
-        external reference
-\end{itemize}
-\vspace{4pt}
-\centering
-\colorbox{c3!12}{\parbox{0.9\linewidth}{\centering\small
-Entry point into Oliver's element exists (runs, 0 errors); real coupling
-listed as \textbf{future work} --- being discussed with Oliver on 1 Oct}}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Validation on the 2-D mesh}
-\begin{itemize}
-  \item Stress--strain relation checked at Gauss-point level
-  \item Equilibrium $\operatorname{div}\boldsymbol{\sigma}=\mathbf{0}$:
-        patch test / manufactured solution
-  \item Residual convergence under mesh refinement
-\end{itemize}
-\vspace{4pt}
-{\scriptsize \TODO{figure: FEM residual convergence plot --- pending}}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Species count: keeping the full 5-species model}
-\begin{itemize}
-  \item Full model: 5 oral species (\emph{S.\ oralis}, \emph{A.\ naeslundii},
-        \emph{Veillonella}, \emph{F.\ nucleatum}, \emph{P.\ gingivalis}) --- early
-        colonizers through the late pathogen
-  \item Decision: \textbf{no reduction} --- keep all 5 inside the Gauss-point
-        loop; the UMAT coupling (route 3) keeps the per-call cost low enough
-        that a cut is not needed
-  \item Outlook: scale back up further (100+ species, clinical metagenomes)
-        once the coupling is efficient
-\end{itemize}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Timeline to submission}
-\centering
-\begin{tikzpicture}[x=3.0cm, y=-0.75cm]
-  % month gridlines
-  \foreach \m/\lbl in {0/Oct, 1/Nov, 2/Dec} {
-    \draw[gray!40] (\m,0) -- (\m,3.6);
-    \node[above] at (\m+0.5,0) {\lbl};
-  }
-  \draw[gray!40] (3,0) -- (3,3.6);
-  % row 1: UMAT/FEM coupling
-  \draw[fill=c3!70] (0,0.7) rectangle (1.15,1.3);
-  \node[white,font=\scriptsize] at (0.575,1.0) {FEM coupling (UMAT)};
-  % row 2: ch.5 experiments / validation
-  \draw[fill=c3!45] (0.5,1.7) rectangle (1.8,2.3);
-  \node[font=\scriptsize] at (1.15,2.0) {Ch.\,5 experiments / validation};
-  % row 3: writing
-  \draw[fill=c3!25] (1.0,2.7) rectangle (2.7,3.3);
-  \node[font=\scriptsize] at (1.85,3.0) {Writing};
-  % row 4: submit + present
-  \draw[fill=todo!70] (2.7,0.7) rectangle (3.0,1.3);
-  \node[font=\scriptsize,anchor=west] at (3.05,1.0) {Submit + present};
-\end{tikzpicture}
 \vspace{6pt}
+\colorbox{c3!12}{\parbox{0.95\linewidth}{\small
+Earlier bring-up runs used larger growth rates (0.1, 0.5) and the example input's
+stiffness (1000 MPa); all results on these slides use the published values.}}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two species: composition from the point model (Klempt et al.\ 2026)}
+\small
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
 \begin{itemize}
-  \item Submission: early--mid December (before returning to Japan)
-  \item Presentation: December, date to be fixed with both examiners
-  \item Keio side: credit transfer / DD paperwork \TODO{ask Prof.\ Muramatsu}
+  \item \textbf{Amount} $\phi_{3D}=\phi_1+\phi_2$: from the element's field
+        (Klempt et al.\ 2024, unchanged), drives growth (Eq.\ 36)
+  \item \textbf{Composition} $\phi_i/\sum_j\phi_j$ and $\psi_i$: from the
+        point model at each Gauss point, rescaled every step so that
+        $\sum\phi_i=\phi_{3D}$ (void $\phi_0=1-\phi_{3D}$)
+  \item Composition does not act back on the stress: in Klempt et al.\ 2024 no
+        material parameter depends on the species
+\end{itemize}
+\end{column}
+\begin{column}{0.43\textwidth}
+\begin{tikzpicture}[node distance=0.55cm, every node/.style={font=\scriptsize}]
+\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center] (f) {element field\\ amount $\phi_{3D}$};
+\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center,below=of f] (p) {point model (Klempt et al.\ 2026)\\ composition $\phi_i/\sum_j\phi_j$, $\psi_i$};
+\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center,below=of p] (s) {growth $\alpha$ $\to$ stress};
+\draw[-{Latex}] (f) -- node[right]{rescale} (p);
+\draw[-{Latex}] (f.east) to[bend left=40] node[right]{Eq.\ 36} (s.east);
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\vspace{6pt}
+\textbf{Implementation check (ANSYS):} every point and step equals the same scheme
+run on its own (difference 0.0), and so does every point-model call.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two species: results in the fully packed seed (ANSYS)}
+\small Klempt et al.\ 2026 Table 1 cases, paper parameters ($c^*=100$, $\alpha^*=10$);
+end of the run, $T^*=1$.
+\vspace{4pt}
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+& paper (point model alone) & coupled, $\phi_{\rm cap}=0.9$ & sensitivity 0.85 / 0.95\\
+\midrule
+case 3: coexistence & $\phi_1=0.60$, $\phi_2=0.40$ & $0.667$ & $0.668$ / $0.664$\\
+case 6: one species wins & $\bar\phi_1=0.0$, $\psi_1=0.05$ & $\phi_1/(\phi_1+\phi_2)=0.021$, $\psi_1=0.048$ & ---\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{4pt}
+\begin{itemize}
+  \item Same type of outcome (coexistence / one winner); the ratio shifts
+        because the amount is set by the 3D field instead of the point model's
+        own filling
+  \item Converged in the coupling time step (0.025 and finer)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two modelling assumptions, stated explicitly}
+\small
+\begin{enumerate}
+  \item \textbf{Time link $s$.} Klempt et al.\ 2024 run to $T^*=1$; Klempt et al.\ 2026 run
+        500--1500 steps of $10^{-4}$ in its own unit. No paper links the two.
+        The point model advances $s\,\Delta t$ per step; here $s=0.15$.
+        \begin{itemize}
+          \item case 6: the winner emerges only for $s\gtrsim0.15$
+          \item case 3: $s$ moves $\phi_1/(\phi_1+\phi_2)$ by 0.03--0.06
+        \end{itemize}
+  \item \textbf{Packed regions, $\phi_{\rm cap}=0.9$.} Where the field is fully
+        packed ($\phi_{3D}\to1$) the point model sees at most 0.9; otherwise the
+        result depends on the coupling time step. Sensitivity: 0.664--0.668 (case 3).
+\end{enumerate}
+\vspace{6pt}
+All other parameters are the published values.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Limits of the parts I added}
+\small
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\begin{enumerate}
+  \item \textbf{Composition is local.} A point the biofilm reaches starts from
+        the seed composition; species are not carried with the front.
+        Test (right): starting from the neighbour's state instead changes
+        the mean by $\le 0.001$, at most 0.09 at the last points reached
+  \item \textbf{Time link $s$} chosen at 0.15, where case 6's winner just
+        appears; sensitivity shown, but $s$ has no source in a paper
+  \item \textbf{Input field:} Eq.\ 34 as printed moves the colony rather than
+        growing it (Appendix D); the coupling inherits this
+  \item \textbf{Two $\alpha$:} the element's own and Eq.\ 36 in the material
+        call are integrated separately (Check 2)
+\end{enumerate}
+\end{column}
+\begin{column}{0.48\textwidth}
+\includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}\\
+\scriptsize Composition at $T^*=1$ of the points first reached at each time;
+growth field of Klempt et al.\ 2024 test case 4.1 (Python, the paper's 20\,$\mu$m cube, 21$^3$ grid, not the ANSYS model);
+Klempt et al.\ 2026 cases 3 and 6. The diffuse edge of the field reaches
+each point early, so its point model runs for most of the time either way.
+\end{column}
+\end{columns}
+\end{frame}
+
+
+
+% --------------------------------------------------------
+\begin{frame}{Status and timeline}
+\centering
+\begin{tikzpicture}[x=2.6cm, y=-0.55cm]
+  \foreach \m/\lbl in {0/Oct, 1/Nov, 2/Dec} {
+    \draw[gray!40] (\m,0) -- (\m,3.4);
+    \node[above,font=\scriptsize] at (\m+0.5,0) {\lbl};
+  }
+  \draw[gray!40] (3,0) -- (3,3.4);
+  \draw[fill=c3!70] (0,0.6) rectangle (0.75,1.3);
+  \node[white,font=\scriptsize] at (0.375,0.95) {coupling (done)};
+  \draw[fill=c3!45] (0.3,1.6) rectangle (0.95,2.3);
+  \node[font=\scriptsize] at (0.625,1.95) {runs, figures};
+  \draw[fill=c3!25] (0.45,2.6) rectangle (1.25,3.3);
+  \node[font=\scriptsize] at (0.85,2.95) {writing};
+  \draw[fill=warn!25,draw=warn!70] (1.25,0.6) rectangle (2.0,1.3);
+  \draw[fill=warn!70] (1.25,0.6) rectangle (1.4,1.3);
+  \node[font=\scriptsize] at (1.7,0.95) {submit};
+  \draw[fill=warn!40] (2.1,0.6) rectangle (2.9,1.3);
+  \node[font=\scriptsize] at (2.5,0.95) {present};
+\end{tikzpicture}
+\vspace{4pt}
+\small
+\begin{itemize}
+  \item Admission granted 18 Aug 2026; examiners \textbf{Prof.\ Junker (IKM)} and
+        \textbf{Dr.\ Wangenheim (IDS)}; supervisors Prof.\ Soleimani, Dr.\ Geisler;
+        thesis in English
+  \item 12-week internship at NIFE completed (04.05--24.07), report submitted
+  \item Submission within November (aiming for early November); presentation
+        in December, date to be fixed with both examiners
 \end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Questions for this meeting}
 \begin{enumerate}
-  \item Keio: anything needed from the Keio side for the DD requirements this term?
-  \item UserElement vs.\ UserMat: is the proposal above (own implementation
-        for the thesis, merge into Oliver's element as future work) acceptable?
-  \item Presentation: online attendance from Japan possible for Prof.\ Muramatsu?
+  \item \textbf{Scope:} thesis = one and two species as published;
+        more species (from four) continued at Keio. Agreed?
+  \item \textbf{Assumptions:} are the time link $s$ and $\phi_{\rm cap}$, each with a
+        sensitivity study, acceptable for the thesis?
+  \item \textbf{Keio:} anything needed from the Keio side for the double-degree
+        requirements this term?
+  \item \textbf{Klempt et al.\ 2024:} which form of Eq.\ 34/35 gave the figures;
+        $t_{\rm ref}$ of each simulation; is $\mu=3.3557$ in Pa or MPa?
+        $\alpha$ by Eq.\ 36 or by Table~1?
+  \item \textbf{Thesis structure:} TMCMC calibration of the point model, a short
+        section on the metabolic sign prior (internship work), then the ANSYS
+        coupling. Is the internship part acceptable in the thesis?
+  \item \textbf{Submission:} number of printed copies, electronic version, and
+        anything to submit on the Keio side?
 \end{enumerate}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{References}
+\small
+\begin{itemize}
+  \item Klempt, Soleimani, Junker (2023), PAMM: precursor spatial model
+  \item Klempt, Soleimani, Wriggers, Junker (2024), Biomech.\ Model.\ Mechanobiol.:
+        growth field, Eq.\ 34/36, Table 2
+  \item Klempt, Geisler, Soleimani, Junker (2026), Arch.\ Appl.\ Mech.:
+        multi-species point model, Table 1 cases
+  \item Fritsch et al.\ (2025), arXiv:2512.15145: Bayesian updating, same model
+\end{itemize}
+\end{frame}
+
+
+% ========================================================
+% Appendix: notation and background
+% ========================================================
+\appendix
+\begin{frame}{Appendix A: notation}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Growth field and mechanics (Klempt et al.\ 2024)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi$ & biofilm volume fraction (0 = void, 1 = dense)\\
+$c$ & nutrient concentration\\
+$\alpha$ & expansion variable, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; growth is $\alpha-1$\\
+$\mathbf F=\mathbf F_e\mathbf F_g$ & elastic / growth split\\
+$k_\alpha$ & growth factor ($10^{-3}$ per $T^*$)\\
+$\beta$ & phase-field regularisation\\
+$r,\ K$ & front growth rate, Monod constant\\
+$T^*$ & normalised time, $T^*\in[0,1]$\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Point model (Klempt et al.\ 2026)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi_i$ & volume fraction of species $i$\\
+$\phi_0$ & void, $\phi_0=1-\sum_i\phi_i$\\
+$\psi_i$ & living fraction (viability) of species $i$\\
+$\gamma$ & Lagrange multiplier for $\sum\phi_i+\phi_0=1$\\
+$A_{ij}$ & interaction matrix (self, cooperation, competition)\\
+$b_i$ & sensitivity to the antibiotic\\
+$c^*,\ \alpha^*$ & nutrient, antibiotic concentration\\
+$\eta_i$ & viscosity (time scale) of species $i$\\
+\bottomrule
+\end{tabular}\\[6pt]
+\textbf{Coupling (this work)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi_{3D}$ & amount from the element field\\
+$\phi_i/\sum_j\phi_j$ & composition (share of species $i$)\\
+$s$ & time link: point model advances $s\,\Delta t$\\
+$\phi_{\rm cap}$ & largest amount the point model sees\\
+\bottomrule
+\end{tabular}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix B: background, growth field and mechanics}
+\small
+\textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
+isotropic $\mathbf F_g=\alpha\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
+A body that can grow freely stays stress free; stress appears where growth is constrained.\\
+\textbf{Material} (Klempt et al.\ 2024, Eq.\ 20 and Table 2): $E=10$ Pa, $\nu=0.49$,
+stiffness weighted with $\phi^2$ (void: floor $10^{-3}E$); no viscosity.
+Stresses scale linearly with $E$ (the example input's 1000 MPa gives $10^8\times$ larger values).
+\vspace{4pt}
+
+\textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
+\[
+\dot\phi=\underbrace{\beta\,\Delta\phi}_{\text{diffusion}}
++\underbrace{k_\alpha\,\alpha}_{\text{local source}}
+-\underbrace{r\,\frac{c}{k+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|}}_{\text{front growth towards nutrient}},
+\qquad
+\dot\alpha=k_\alpha\,\phi
+\]
+\begin{itemize}
+  \item $\phi$ and $c$ are nodal fields of the element; $\alpha$ is an internal
+        variable at the Gauss points
+  \item The front term moves the biofilm boundary up the nutrient gradient; it vanishes
+        where $\phi$ or $c$ is uniform
+  \item The nutrient diffuses much faster than the biofilm grows (quasi-static $c$)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix C: background, point model and one coupling step}
+\small
+\textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence:
+\[
+\begin{aligned}
+(\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\
+\eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier})
+\end{aligned}
+\]
+with $\sum_i\phi_i+\phi_0=1$; the barrier terms keep $\phi_i,\psi_i$ in $(0,1)$.
+Implicit time stepping, $\Delta t=10^{-4}$.
+\vspace{4pt}
+
+\textbf{One time step of the coupled ANSYS run}
+\begin{enumerate}
+  \item The element updates its field $\phi$ (Eq.\ 34)
+  \item At each Gauss point: $\phi_{3D}\to\alpha$ (Eq.\ 36) $\to\mathbf F_g\to$ stress
+  \item Two species: the point model is scaled to $\min(\phi_{3D},\phi_{\rm cap})$,
+        advanced by $s\,\Delta t$, scaled again; $\phi_i,\psi_i$ are stored as state variables
+\end{enumerate}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix D: Klempt et al.\ 2024 test cases, reproduced in Python}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{assets/fig_klempt2024_fig3.png}
+\end{center}
+\vspace{-8pt}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+test case & time scale & RMS $\phi$ & RMS $c$\\
+\midrule
+4.1 (Fig.\ 4) & 2 & 0.03 & 0.02\\
+4.2 ``high'' (Fig.\ 7) & 10 & 0.04 & 0.04\\
+4.2 ``low'' (Fig.\ 7) & 4--5 & 0.09 & 0.05\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.51\textwidth}
+Independent solver on the paper's 20\,$\mu$m cube, not the ANSYS model.
+Table 2 unchanged; growth on both faces and consumption $g\phi c$ (two
+departures from Eq.\ 34/35 as printed); nutrient in a 2\,$\mu$m corner block;
+one time scale per run ($T^*=t/t_{\rm ref}$, Sec.\ 4). Curves agree; the
+shape agrees in kind (egg towards the corner) but is more slender, also with
+other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
+\end{column}
+\end{columns}
 \end{frame}
 
 \end{document}

@@ -1,0 +1,82 @@
+\chapter{Introduction}
+\label{ch:intro}
+
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md. The clinical
+% background is kept from the earlier draft; the model overview and the
+% objectives are new.
+
+\section{Clinical Background: Oral Biofilm and Peri-implantitis}
+\label{sec:intro_clinical}
+
+Dental implants have become the standard of care for restoring missing teeth, with an estimated 15 million implants placed annually worldwide~\cite{Kolenbrander2010OralMultispecies}.
+Peri-implantitis, a progressive inflammatory condition of the tissue around an implant driven by biofilm, affects 20--35\% of implant patients and is the leading cause of implant failure~\cite{Marsh2003Dental, Berglundh2018Peri, Schwarz2022PeriImplantitis, Sedghi2021PeriImplant}.
+It is linked to the multi-species communities that colonise the implant surface: dysbiotic shifts in the oral microbiome, driven by pathobionts such as \textit{Porphyromonas gingivalis} (\textit{Pg})~\cite{Mysak2014Pg}, trigger host immune responses that lead to bone resorption~\cite{Hajishengallis2012Dysbiosis, Lamont2018Periodontal}.
+
+The oral microbiome comprises more than 700 taxa that interact through mutualism, competition and metabolic cross-feeding~\cite{Kolenbrander2010OralMultispecies, Dewhirst2010HOMD}.
+In a healthy host the community is dominated by early colonisers such as \textit{Streptococcus oralis} (\textit{So}) and \textit{Actinomyces naeslundii} (\textit{An}).
+A perturbation can shift it to a dysbiotic state in which late colonisers, most notably the low-abundance keystone pathogen \textit{Pg}~\cite{Hajishengallis2014Polymicrobial}, sustain a positive feedback loop with the immune system~\cite{Marsh2003Dental}.
+
+A biofilm is also a mechanical body.
+It grows on a surface, and where it grows unevenly, or against a stiff substrate, it carries stresses that bear on detachment and on the loading of the tissue beneath.
+Which species are present, and where, therefore matters for the mechanics as well as for the biology.
+This thesis is about bringing these two descriptions together in a finite element setting.
+
+\section{Models of Biofilm Composition and Growth}
+\label{sec:intro_models}
+
+\subsection{Composition at a material point}
+
+The generalised Lotka--Volterra (gLV) system, with roots in classical population ecology~\cite{Lotka1925Elements, May1972Stability}, is the common model of microbial community dynamics~\cite{Gonze2018gLV, Stein2013gLV, Venturelli2018Deciphering, Marsland2019MicrobialCRM}:
+\begin{equation}
+  \dot{\phi}_i = \phi_i \Bigl( r_i + \sum_j A_{ij} \phi_j \Bigr), \quad i = 1,\dots,n,
+  \label{eq:glv}
+\end{equation}
+with growth rates $r_i$ and interaction coefficients $A_{ij}$.
+Its $n^2$ interaction coefficients are poorly determined by typical time-course data~\cite{Stein2013gLV, Cao2017Identifiability}, and relative-abundance data carry a unit-sum constraint that the model does not respect~\cite{Aitchison1986Compositional, Gloor2017Microbiome}.
+
+The extended Hamilton principle~\cite{JunkerBalzani2021ExtendedHamilton} derives the evolution of a biofilm from an energy and a dissipation functional.
+Applied to a material point with several species, it gives the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}: volume fractions $\phi_i$ and viabilities $\psi_i$, the living fraction $\bar\phi_i=\phi_i\psi_i$, a symmetric interaction matrix $A_{ij}$ and a nutrient level $c^*$.
+Symmetry follows from the quadratic form of the energy and reduces the number of interaction coefficients to $n(n+1)/2$, 15 for five species.
+The model describes how the composition at one point evolves in time; it has no space.
+
+\subsection{Identifying the interactions}
+
+The interaction coefficients have to be estimated from measurements, and with five species and a few time points the problem is poorly posed.
+Bayesian inference quantifies the remaining uncertainty~\cite{Gelman2013BDA}.
+Transitional Markov chain Monte Carlo (TMCMC)~\cite{ChingChen2007TMCMC, Betz2016TMCMC} passes from the prior to the posterior through a sequence of tempered distributions, which copes with the multimodal posteriors of this problem and parallelises over the samples; compiled with JAX~\cite{jax2018github}, the forward model runs fast enough to make it practical.
+Where data are sparse, the signs of the interactions can be fixed beforehand from metabolic network models~\cite{OrthThiele2010WhatIsFBA, Diener2020MICOM, Heinken2023AGORA2}: a species that feeds another implies $A_{ij}>0$, competition implies $A_{ij}<0$.
+
+\subsection{Growth in space}
+
+Continuum models of biofilm growth describe the biofilm as a field.
+In the model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}, also derived from the extended Hamilton principle, a biofilm field $\phi(\mathbf X,t)$ spreads towards a diffusing nutrient $c(\mathbf X,t)$, and the local growth enters the kinematics through the split $\mathbf F=\mathbf F_e\mathbf F_g$ with $\mathbf F_g=\alpha\mathbf I$.
+Where the growth is uneven or constrained, the elastic part $\mathbf F_e$ carries stress.
+The authors solve this model with a user element in ANSYS, and an earlier comparison of growth models showed pressure inside a growing biofilm and tension at its edge~\cite{Klempt2023NumericalComparison}.
+The field model has one biofilm variable; it does not say which species the biofilm consists of.
+
+\section{Objectives and Thesis Structure}
+\label{sec:intro_structure}
+
+The point model gives the composition but no space; the field model gives space and stress but no composition.
+The task of this thesis is to bring the point model into an existing, working finite element framework, so that the composition, the growth and the resulting stresses can be computed in space.
+The framework is the biofilm element developed at the Institut für Kontinuumsmechanik, which solves the field model of Klempt et al.\ 2024 in ANSYS.
+
+I make three contributions:
+\begin{enumerate}
+  \item \emph{A calibrated point model} (Chapter~\ref{ch:heine}).
+    The 15 interaction coefficients of a five-species point model are estimated with TMCMC from the in-vitro time courses of Heine et al.~\cite{Heine2025PeriImplant} under four conditions (commensal and dysbiotic, static and in a HOBIC flow reactor).
+    A final section shows how sign constraints from metabolic models carry the same model to sparse in-vivo data; this part was done during an internship.
+  \item \emph{A growth law in the finite element framework} (Chapter~\ref{ch:ansys}).
+    The growth kinematics $\mathbf F_g=\alpha\mathbf I$ is implemented as an ANSYS user material, verified against closed-form solutions, and coupled to the element's biofilm field through the growth equation of Klempt et al.\ 2024 at every Gauss point.
+  \item \emph{The composition at every Gauss point} (Chapter~\ref{ch:ansys}).
+    For two species, the point model of Klempt et al.\ 2026 runs at every Gauss point alongside the field: the field sets the amount of biofilm, the point model sets its composition.
+    Every call from ANSYS to the point model is reproduced in Python, and the coupled results are compared with the published cases.
+\end{enumerate}
+
+The thesis covers one and two species, for which the papers give numbers to check against.
+More species and a coupling in which the composition acts back on growth and stiffness are left to the continuation of this work at Keio University.
+
+Chapter~\ref{ch:theory} sets out the background: the extended Hamilton principle, the field model of Klempt et al.\ 2024, the point model of Klempt et al.\ 2026 and Bayesian inference with TMCMC.
+Chapter~\ref{ch:heine} calibrates the point model.
+Chapter~\ref{ch:ansys} brings it into the ANSYS element, with the verification, the results for one and two species and their limits.
+Chapter~\ref{ch:conclusion} summarises the results and outlines the continuation.

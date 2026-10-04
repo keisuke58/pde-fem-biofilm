@@ -37,9 +37,63 @@ RESULT (2026-09-29, klempt2024_results/summary.json): not reproduced.
     reaches phi 0.79 at T* = 1 where the paper fills the cube by 0.2), though
     its c(phi) relation tends to the paper's 0.49 plateau as phi -> 1, which
     supports first-order consumption.
-  - Likely remaining causes, not pinned down: the one-node-thick initial
-    disk and the front speed of an upwind FD scheme vs. the paper's Galerkin
-    FEM. Stopped here; treat the 2024 PDE as not independently reproduced.
+  - klempt2024_sensitivity.py has since tested the guesses this file used to
+    name. The one-node seed is cleared directly: six nodes only reaches
+    phi(0.20) = 0.238 against the paper's 1.000, and it scales with the seed
+    rather than changing the rate. Nutrient starvation is cleared too --
+    consumption a hundredfold weaker moves 0.105 to 0.108. The upwind front
+    speed was NOT tested directly (no grid-refinement study was run); what can
+    be said is that the two terms below account for the gap on their own,
+    which leaves little for it to explain.
+  - Where it does live, one change at a time from this file's own baseline:
+    dropping Eq. 34's n_gradphi . n_gradc projection is worth 3.2x (0.105 ->
+    0.333 -- the projection is ~0 on the colony's sides, so it grows upward as
+    a column instead of spreading, and filling a cube needs the spreading),
+    and K_M = 0.01 in place of Table 2's 1.0 is worth another 2.7x (0.333 ->
+    0.886, against the paper's 1.000). Table 2's K_M with the paper's own
+    plotted c holds f = c/(K_M+c) below 0.5.
+  - ROOT CAUSE, 2026-09-30, read off the paper itself (it is bundled at the
+    repository root; see THIRD_PARTY.md). The two variants that fit best are
+    the two the paper does not use, and the combination the paper does use is
+    the worst fit here. That is the finding, and it is not a small discrepancy.
+      * Growth. Eq. 34 is phi_dot - beta lap(phi) - k_a alpha
+        + ||grad phi|| (r c)/(k+c) n_gradphi . n_gradc = 0, a plain dot
+        product with no absolute value, and sec. 4.1 leans on exactly that:
+        "the gradient of biofilm and the gradient of nutrients are almost
+        perpendicular to each other resulting in a small value for the vector
+        product and consequently in minimal to no growth", which is what gives
+        Fig. 3 its egg shape. So growth="abs" is not a reading of the paper,
+        it contradicts the mechanism the paper describes.
+      * Consumption. Eq. 35 is c_dot - d lap(c) + g phi = 0 and Eq. 24 fixes
+        it: g*_c = g_bar phi, "the simplest possible functional dependency, a
+        linear relation". Zeroth order in c. So consumption="first_order" is
+        not the paper either.
+      * The constants are right, which removes the other suspicion. Table 2's
+        values are post-division: the paper sets eta_phi = eta_c = 1e-10 and
+        says "parameters which have been divided by their respective eta will
+        lose their bar", so d = 1e10, beta = 2, k_a = 1e-3, k = 1, g = 1e8 and
+        r = 100 are already the coefficients of Eqs. 34-36 and no eta enters
+        separately. The eta_phi visible in Table 1's weak form is the
+        pre-division form of the same thing.
+      * One genuine inconsistency in the paper: Table 1's step 3a solves
+        (alpha_n1 - alpha_n)/((1+alpha_n1) dt) - (k_a/alpha_n)(phi_n1 -
+        phi_n)/dt = 0, which is driven by phi_dot, while Eq. 36 is
+        alpha_dot = k_a phi, driven by phi. Which one was run is not
+        recoverable from the text. It barely moves phi here (k_a alpha ~ 1e-3
+        against a growth term of order 50), so it is not the factor of ten,
+        but it does mean "the paper's alpha equation" is ambiguous.
+  - What is left, and not yet separated: an explicit upwind finite-difference
+    scheme against the paper's implicit Galerkin FEM with bisection to as many
+    as 1e6 substeps; a fixed grid here against a domain that swells there,
+    since Fg feeds back into the geometry the averages are taken over; and the
+    clip of phi to [0,1] here, which the paper does not have.
+  - So this is a localisation, NOT a reproduction, and the earlier "Fig. 4
+    within 0.17/0.10" must not be quoted as agreement with Klempt 2024: it is
+    the agreement of a variant the paper does not use. Either Fig. 7 came from
+    something other than the
+    literal Eq. 34 / Table 2, or c is normalised differently than its axis
+    suggests -- a question for the authors. Treat the 2024 PDE as not
+    independently reproduced.
 
 Nothing here uses this repo's 5-species model: Klempt 2024 is a different
 (single-species, interface-growth) PDE. Only Eq. 36, alpha_dot = k_a phi, is
@@ -187,7 +241,9 @@ def run(case, variant, growth="printed", dt=DT, t_end=T_END):
     -- a transport of phi towards the nutrient (the back of the colony erodes).
     growth="abs": |grad phi . n_c| as a source -- growth on both faces aligned
     with the nutrient gradient, none on the faces perpendicular to it, which
-    is what the paper's text and Fig. 3/Table 4 describe."""
+    is what the paper's text and Fig. 3/Table 4 describe.
+    growth="lap": the partner element's front term, |lap phi| r c/(k+c)
+    n_phi.n_c (central differences), for comparison (2026-10-02)."""
     phi, mask, g = setup(case)
     alpha = np.ones_like(phi)
     c = solve_c(phi, g, mask, variant)
@@ -200,6 +256,16 @@ def run(case, variant, growth="printed", dt=DT, t_end=T_END):
         v = (speed * gx, speed * gy, speed * gz)
         if growth == "abs":
             src = np.abs(upwind_dot(phi, v))
+        elif growth == "lap":
+            # the partner element's form: |lap phi| in place of |grad phi|,
+            # times r c/(k+c) and the orientation n_gradphi . n_gradc
+            px, py, pz = grad_c(phi)
+            mp = np.sqrt(px**2 + py**2 + pz**2)
+            mc = np.sqrt(gx**2 + gy**2 + gz**2)
+            nd = np.where((mc > 1e-14) & (mp > 1e-14),
+                          (px * gx + py * gy + pz * gz)
+                          / np.maximum(mc * mp, 1e-30), 0.0)
+            src = -np.abs(lap(phi)) * R * c / (K_M + c) * nd
         else:
             src = -upwind_dot(phi, v)
         phi = phi + dt * (BETA * lap(phi) + K_A * alpha + src)

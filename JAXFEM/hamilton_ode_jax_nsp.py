@@ -134,7 +134,9 @@ def _residual(g_new, g_prev, params):
     fn_val = jnp.maximum(phi_new[gating] * psi_new[gating], 0.0)
     num = fn_val**n_hill
     den = K_hill**n_hill + num
-    factor = jnp.where(den > eps, num / den, 0.0) * hill_active
+    # gate off (K_hill = 0) leaves the interaction unchanged, as TMCMC's
+    # solver does; it used to multiply it by 0 (2026-10-01)
+    factor = jnp.where(hill_active, jnp.where(den > eps, num / den, 0.0), 1.0)
     # Apply gate only to gated species
     Ia_gated = Ia[gated] * factor
     Ia = jnp.where(jnp.arange(n_sp) == gated, Ia_gated, Ia)

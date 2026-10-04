@@ -1,0 +1,401 @@
+\chapter{Theoretical Background}
+\label{ch:theory}
+
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md. Sections 2.1-2.3
+% checked against Klempt et al. 2024 (references/, Eqs. 19-36, Table 2) and
+% against the point-model code that reproduces all 14 examples of Klempt et
+% al. 2026 (JAXFEM/klempt2026_reproduction.py, klempt2026_cases.py).
+
+This chapter collects the two models that the thesis connects and the
+inference method used to calibrate one of them. Both models are derived from
+the extended Hamilton principle (Section~\ref{sec:theory_hamilton}). The field
+model of Klempt et al.\ 2024 describes a single biofilm phase that grows in
+space and carries stress (Section~\ref{sec:theory_field}); the point model of
+Klempt et al.\ 2026 describes the composition of several species at one
+material point (Section~\ref{sec:theory_point}). Section~\ref{sec:theory_link}
+states how the two are combined in this thesis, and
+Sections~\ref{sec:theory_tmcmc} and~\ref{sec:theory_fba} cover Bayesian
+inference with TMCMC and the metabolic sign prior.
+
+%=======================================================================
+\section{Extended Hamilton Principle}
+\label{sec:theory_hamilton}
+
+The extended Hamilton principle~\cite{JunkerBalzani2021ExtendedHamilton}
+derives the governing equations of a dissipative material from one stationarity
+condition. For a quasi-static, isothermal process it reads, in the form used by
+Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth} (their Eq.~19),
+\begin{equation}
+  \mathcal H=\int_\tau\bigl(\mathcal G+\mathcal C-\mathcal B+\mathcal D\bigr)\,\mathrm dt
+  \;\to\;\operatorname*{stat}_{\mathbf u,\boldsymbol\xi},
+  \label{eq:hamilton_principle}
+\end{equation}
+with the Gibbs energy $\mathcal G$ of the body (stored energy minus the work of
+external loads), constraint terms $\mathcal C$, a non-conservative source
+$\mathcal B$ (growth), and the dissipation $\mathcal D$. The displacement
+$\mathbf u$ and the internal variables $\boldsymbol\xi$ are varied
+independently. The dissipation is modelled by a dissipation function, here
+rate-dependent and quadratic,
+$\Delta^{\rm diss}=\tfrac{\eta}{2}\|\dot{\boldsymbol\xi}\|^2$, whose derivative
+$\partial\Delta^{\rm diss}/\partial\dot{\boldsymbol\xi}$ gives the
+non-conservative forces. Stationarity with respect to $\mathbf u$ gives the
+balance of linear momentum in weak form; stationarity with respect to each
+internal variable gives its evolution equation. A model is then fixed by
+choosing the energy, the source and the dissipation function.
+
+%=======================================================================
+\section{The Growth Field of Klempt et al.\ 2024}
+\label{sec:theory_field}
+
+\subsection{Variables and kinematics}
+
+Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth} describe a biofilm growing
+into a void that holds a nutrient. The state is given by the displacement
+$\mathbf u(\mathbf X,t)$ and three internal variables:
+\begin{itemize}
+  \item the biofilm state variable $\phi(\mathbf X,t)\in[0,1]$, $1$ in biofilm
+        and $0$ in the void;
+  \item the nutrient concentration $c(\mathbf X,t)$;
+  \item the local expansion $\alpha(\mathbf X,t)$, an internal variable at the
+        Gauss points.
+\end{itemize}
+Growth enters the kinematics through the multiplicative split of the
+deformation gradient~\cite{Rodriguez1994Growth},
+\begin{equation}
+  \bF=\bF_e\bF_g,\qquad \bF_g=\alpha\,\bI,\qquad \alpha(t=0)=1,
+  \label{eq:theory_split}
+\end{equation}
+so that $\alpha-1$ is the isotropic growth strain. The elastic part $\bF_e$
+carries the stress. The paper treats the biofilm as incompressible,
+$\det\bF_e=1$, enforced by a pressure $p$; in this thesis the constraint is
+replaced by a nearly incompressible material with $\nu=0.49$
+(Chapter~\ref{ch:ansys}).
+
+\subsection{Energy, growth and consumption}
+
+The energy density (Eq.~20 of the paper) is
+\begin{equation}
+  \Psi=\phi^2\,\frac{\mu}{2}\bigl(\bI:\mathbf C_e-3\bigr)
+       +\frac{\bar\beta}{2}\|\nabla_X\phi\|^2
+       +\frac{\bar d}{2}\|\nabla_X c\|^2
+       -\bar k_\alpha\,\alpha\,\phi ,
+  \label{eq:theory_energy}
+\end{equation}
+with $\mathbf C_e=\bF_e^{\rm T}\bF_e$. The first term is a neo-Hookean
+material whose stiffness is weighted by $\phi^2$, so the void carries no
+stiffness. The two gradient terms regularise $\phi$ and $c$, and the last term
+links the expansion $\alpha$ to the biofilm.
+
+The growth source spreads the biofilm towards the nutrient. It is the product of
+a Monod function and an orientation function (Eqs.~21--23),
+\begin{equation}
+  h^*_\phi=\tilde r(c)\,o(\nabla_X\phi,\nabla_X c),\qquad
+  \tilde r(c)=\|\nabla_X\phi\|\,\frac{\bar r\,c}{k+c},\qquad
+  o=\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c},
+  \label{eq:theory_growth}
+\end{equation}
+with the unit vectors $\mathbf n_{\nabla\phi}=\nabla_X\phi/\|\nabla_X\phi\|$
+and $\mathbf n_{\nabla c}=\nabla_X c/\|\nabla_X c\|$. The factor
+$\|\nabla_X\phi\|$ restricts this growth to the interface between biofilm and
+void. Consumption is linear in the biofilm (Eq.~24), $g^*_c=\bar g\,\phi$.
+
+\subsection{Evolution equations}
+
+Stationarity of~\eqref{eq:hamilton_principle} with respect to $\phi$, $c$ and
+$\alpha$ gives three evolution equations. The paper neglects the mechanical
+term $\phi\mu(\bI:\mathbf C_e-3)$ in the equation for $\phi$, so that growth
+is driven by the nutrient only and the coupling to the mechanics is one way.
+After division by the viscosities, and with the parameters written without the
+bar, the equations are (Eqs.~34--36)
+\begin{align}
+  &\dot\phi-\beta\nabla_X^2\phi-k_\alpha\,\alpha
+   +\|\nabla_X\phi\|\,\frac{r\,c}{k+c}\,\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}=0,
+   \label{eq:theory_phi}\\
+  &\dot c-d\,\nabla_X^2 c+g\,\phi=0,
+   \label{eq:theory_c}\\
+  &\dot\alpha-k_\alpha\,\phi=0,
+   \label{eq:theory_alpha}
+\end{align}
+with zero-flux conditions for $\phi$ and $c$ on the boundary. Time is
+normalised, $T^*$. The parameters of Table~2 of the paper are listed in
+Table~\ref{tab:theory_klempt2024}.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Parameters of Klempt et al.\ 2024]{Parameters of Klempt et
+    al.~\cite{Klempt2024DiffusionDrivenGrowth}, Table~2. The shear modulus
+    corresponds to $E=10$~Pa and $\nu=0.49$.}
+  \label{tab:theory_klempt2024}
+  \begin{tabular}{llll}
+    \hline
+    parameter & symbol & value & unit\\
+    \hline
+    shear modulus & $\mu$ & $3.3557$ & Pa\\
+    nutrient diffusivity & $d$ & $10^{10}$ & $\mu$m$^2\,T^{*-1}$\\
+    phase-field regularisation & $\beta$ & $2$ & $\mu$m$^2\,T^{*-1}$\\
+    growth factor & $k_\alpha$ & $10^{-3}$ & $T^{*-1}$\\
+    half-velocity constant & $k$ & $1$ & --\\
+    consumption & $g$ & $10^{8}$ & $T^{*-1}$\\
+    growth parameter & $r$ & $100$ & $T^{*-1}$\\
+    \hline
+  \end{tabular}
+\end{table}
+
+Three points of the paper matter for this thesis and are stated here once.
+\begin{itemize}
+  \item \emph{The law for $\alpha$.} Equation~\eqref{eq:theory_alpha} lets the
+        biofilm expand wherever it is present. The algorithm in Table~1 of the
+        paper instead updates $\alpha$ from the change of $\phi$, which makes a
+        biofilm that is full from the start not grow. The text says that
+        $\alpha$ is governed by Eq.~36; I follow
+        Eq.~\eqref{eq:theory_alpha}, as does the element used in
+        Chapter~\ref{ch:ansys}.
+  \item \emph{The unit of $\mu$.} The text gives $\mu$ in MPa, Table~2 in Pa.
+        I use the table.
+  \item \emph{The printed growth term.} Solved as printed,
+        Eq.~\eqref{eq:theory_phi} moves the seeded colony towards the
+        nutrient rather than enlarging it, and the published curves of mean
+        $\phi$ are not reached. My reproduction of the paper's test cases
+        needs growth on both faces of the colony and a consumption
+        proportional to $\phi c$ (Appendix~\ref{app:klempt2024}). These
+        questions have been sent to the authors.
+\end{itemize}
+
+%=======================================================================
+\section{The Point Model of Klempt et al.\ 2026}
+\label{sec:theory_point}
+
+\subsection{State variables}
+
+Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth} describe several
+interacting species at one material point. Species $i=1,\dots,n$ has the volume
+fraction $\phi_i\in[0,1]$ and the viability $\psi_i\in[0,1]$, the fraction of
+living cells in it. The living volume fraction is
+\begin{equation}
+  \bar{\phi}_i := \phi_i\,\psi_i, \qquad i = 1,\dots,n.
+  \label{eq:living}
+\end{equation}
+A further fraction $\phi_0$ represents the empty space, and the fractions sum to
+one,
+\begin{equation}
+  \sum_{l=0}^{n} \phi_l(t) = 1 \quad \forall\, t.
+  \label{eq:constraint}
+\end{equation}
+The authors describe $\phi_0$ as a numerical auxiliary variable and caution
+against reading it as physical void.
+
+\subsection{Energy, dissipation and evolution equations}
+
+The energy contains the nutrient-driven interaction of the living fractions
+and the effect of an antibiotic on the viabilities,
+\begin{equation}
+  \Psi = -\tfrac{1}{2}\,c^*\,\bar{\bphi}^{\rm T} \bA\,\bar{\bphi}
+        + \tfrac{1}{2}\,\alpha^*\,\bpsi^{\rm T} \mathbf{B}\,\bpsi,
+  \label{eq:free_energy}
+\end{equation}
+with the nutrient level $c^*$, the antibiotic level $\alpha^*$, the symmetric
+interaction matrix $\bA$ and $\mathbf B=\mathrm{diag}(b_1,\dots,b_n)$. The
+constraint~\eqref{eq:constraint} enters with a Lagrange multiplier $\gamma$,
+and the dissipation is
+\begin{equation}
+  \mathcal{D} = \tfrac{1}{2}\,\dot{\bar{\bphi}}^{\rm T} \boldsymbol{\eta}\,\dot{\bar{\bphi}}
+              + \tfrac{1}{2}\,\dot{\bphi}^{\rm T} \boldsymbol{\eta}\,\dot{\bphi},
+  \qquad \boldsymbol{\eta} = \mathrm{diag}(\eta_1,\dots,\eta_n).
+  \label{eq:dissipation}
+\end{equation}
+The second term is needed because the first alone gives a singular system:
+$\bar\phi_i=\phi_i\psi_i$ couples the two rates.
+
+Stationarity with respect to $\phi_i$, $\psi_i$, $\phi_0$ and $\gamma$ gives
+\begin{align}
+  0 &= -c^*\,\psi_i\,\bigl(\bA\bar{\bphi}\bigr)_i
+      + \eta_i\bigl(\dot\phi_i\,\psi_i^2 + \bar\phi_i\,\dot\psi_i + \dot\phi_i\bigr)
+      + \gamma,
+  \label{eq:gov_phi}\\
+  0 &= -c^*\,\phi_i\,\bigl(\bA\bar{\bphi}\bigr)_i
+      + \alpha^*\,b_i\,\psi_i
+      + \eta_i\bigl(\dot\psi_i\,\phi_i^2 + \bar\phi_i\,\dot\phi_i\bigr),
+  \label{eq:gov_psi}\\
+  0 &= \gamma + \dot\phi_0, \qquad
+  0 = \sum_{l=0}^{n}\phi_l - 1 .
+  \label{eq:gov_void}
+\end{align}
+The equation for $\psi_i$ has no $\gamma$, because $\psi_i$ does not appear in
+the constraint. The paper prints Eq.~17 with a $+\gamma$; with it, even the
+two-species examples of the paper are not reproduced, without it all fourteen
+examples are (Section~\ref{sec:theory_point_check}).
+
+The system~\eqref{eq:gov_phi}--\eqref{eq:gov_void} has $2n+2$ unknowns. It is
+integrated with the implicit Euler method and Newton iterations; a logarithmic
+barrier with $K_p=\eta_i\times10^{-4}$ keeps $\phi_i$, $\psi_i$ and $\phi_0$
+inside $(0,1)$ and is omitted above.
+
+\subsection{Symmetry and scale}
+
+The antisymmetric part of $\bA$ does not contribute to the quadratic
+form~\eqref{eq:free_energy}, so $\bA$ is taken symmetric; this halves the
+number of interaction coefficients to $n(n+1)/2$ and keeps the gradient-flow
+structure that the variational derivation provides~\cite{JunkerBalzani2021ExtendedHamilton}.
+Biologically, symmetry is a reasonable approximation for interactions mediated
+by metabolites in a shared pool~\cite{Kolenbrander2010OralMultispecies}; directional
+effects such as toxin secretion are excluded.
+
+The nutrient level enters only through the product $c^*\bA$, so $c^*$ and the
+scale of $\bA$ cannot be identified separately. In the calibration of
+Chapter~\ref{ch:heine} I fix $c^*=25$ and $\eta_i=1$, which keeps the
+coefficients of order one; the paper's examples use $c^*=100$ and
+species-dependent $\eta_i$. The data of Heine et al.\ involve no antibiotic,
+so $\alpha^*=0$ there.
+
+\subsection{Check against the paper}
+\label{sec:theory_point_check}
+
+The integrator used in this thesis reproduces all fourteen numerical examples
+of the paper (six two-species cases of its Table~1, four variants of its
+Appendix~A and the four four-species cases), within the accuracy with which
+values can be read off its figures. Two printed details disagree with the
+paper's own figures: the $+\gamma$ in Eq.~17 discussed above, and a factor
+$\tfrac12$ in front of the four-species matrix of Eq.~19, without which the
+four-species figures are reproduced. For two species, case~3 ends at
+$\bar\phi_1=0.5945$, $\bar\phi_2=0.3926$, against $0.60$ and $0.40$ read
+from the paper.
+
+%=======================================================================
+\section{Relation to the Replicator Equation}
+\label{sec:theory_replicator}
+
+It is useful to relate the point model to the \emph{replicator equation} of
+evolutionary game theory~\cite{Hofbauer1998EGT,TaylorJonker1978Replicator},
+\begin{equation}
+  \dot{\phi}_i = \phi_i \Bigl[ \bigl(\bA\bphi\bigr)_i - \bphi^{\rm T} \bA \bphi \Bigr],
+  \qquad \sum_i \phi_i = 1,
+  \label{eq:replicator}
+\end{equation}
+in which the mean fitness $\bphi^{\rm T}\bA\bphi$ keeps the composition on the
+simplex. For a symmetric $\bA$, \eqref{eq:replicator} is a gradient flow of
+$W(\bphi)=\tfrac12\bphi^{\rm T}\bA\bphi$ with respect to the Shahshahani metric
+$g_{ij}=\delta_{ij}/\phi_i$, and $W$ increases monotonically~\cite{Hofbauer1998EGT, Shahshahani1979}.
+The point model uses a constant viscosity instead of this $\phi_i$-weighted
+metric; with $\psi_i\equiv1$ its well-mixed limit is the affine projection
+$\dot\phi_i\propto(\bA\bphi)_i-\langle\bA\bphi\rangle$. The two have the same
+fixed points and the same sign structure.
+
+Compared with the generalised Lotka--Volterra model~\eqref{eq:glv}, the
+replicator form has a symmetric $\bA$ with $n(n+1)/2$ coefficients and keeps
+$\sum_i\phi_i=1$ without a separate normalisation. Its interior fixed points
+satisfy $(\bA\bphi^*)_i=\bphi^{*\rm T}\bA\bphi^*$ for every $i$ with
+$\phi^*_i>0$; for a positive definite $\bA$ there is a unique one, and it is
+globally stable on the simplex.
+
+%=======================================================================
+\section{Combining the Two Models}
+\label{sec:theory_link}
+
+The field model has a single biofilm variable $\phi$ and says where the
+biofilm is and how much there is; it does not distinguish species. The point
+model distinguishes species but has no space. Klempt et al.\ 2024 drop the
+mechanical term in the equation for $\phi$, so in their model the stress does
+not act back on growth. I combine the two models in the same one-way manner:
+\begin{itemize}
+  \item the field model, solved by the element, gives the amount of biofilm
+        $\phi$ at every Gauss point and, through
+        Eq.~\eqref{eq:theory_alpha}, the growth $\alpha$ and the stress;
+  \item the point model runs at every Gauss point and gives the composition,
+        the shares $\phi_i/\sum_j\phi_j$ and the viabilities $\psi_i$, with
+        its amount scaled to the field's $\phi$.
+\end{itemize}
+How the two time scales are linked, and the assumptions this needs, are given
+in Chapter~\ref{ch:ansys}. In this one-way form the composition does not act
+on the stiffness or on the spreading; a coupling in that direction is outlined
+as future work.
+
+%=======================================================================
+\section{Bayesian Inference and TMCMC}
+\label{sec:theory_tmcmc}
+
+\subsection{Bayesian parameter identification}
+
+Given observed species trajectories $\mathbf{y} = \{\mathbf{y}_t\}_{t=1}^{N_t}$
+and a forward model parameterised by the interaction vector
+$\btheta \in \Real^{15}$, Bayesian inference seeks the posterior distribution
+\begin{equation}
+  p(\btheta \mid \mathbf{y}) \;\propto\; \mathcal{L}(\mathbf{y} \mid \btheta)\,p(\btheta),
+  \label{eq:bayes}
+\end{equation}
+with the likelihood $\mathcal{L}(\mathbf{y} \mid \btheta)$ and the prior
+$p(\btheta)$. I use a Gaussian likelihood with isotropic noise,
+\begin{equation}
+  \mathcal{L}(\mathbf{y} \mid \btheta)
+  = \prod_{t,i} \mathcal{N}\!\left(y_{t,i} \mid \hat\phi_i(t;\btheta),\,\sigma^2\right),
+\end{equation}
+where $\hat\phi_i(t;\btheta)$ is the solution of the point model at time $t$.
+
+\subsection{Transitional Markov chain Monte Carlo}
+
+TMCMC~\cite{ChingChen2007TMCMC, Betz2016TMCMC} constructs a sequence of
+intermediate distributions between the prior and the posterior through a
+tempering schedule $0 = \beta_0 < \beta_1 < \cdots < \beta_J = 1$,
+\begin{equation}
+  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{\beta_j}\,p(\btheta).
+  \label{eq:tmcmc_intermediate}
+\end{equation}
+At each stage $j$ the samples are weighted by
+$w_j^{(k)} \propto \mathcal{L}^{\beta_j - \beta_{j-1}}$, resampled, and moved
+by short Metropolis--Hastings chains. The next exponent $\beta_j$ is chosen so
+that the coefficient of variation of the weights stays at a target value,
+typically $c_v=1$.
+
+\paragraph{Computation on the GPU.}
+The cost lies in the forward model, evaluated for every sample at every stage.
+I compile the point model with JAX~\cite{jax2018github} and evaluate the whole
+ensemble, typically $N = 2{,}000$ samples, in one batched call
+(\texttt{jax.vmap}). This is about 200 times faster than the CPU baseline
+(Section~\ref{sec:heine_gpu}).
+
+\paragraph{Narrowed priors.}
+For the multimodal posterior of the dysbiotic condition I run TMCMC twice: the
+mean and standard deviation of the first posterior define a narrower prior for
+the second run.
+
+\paragraph{Identifiability.}
+To see which parameters the data determine, I use the ratio
+\begin{equation}
+  r_i \;=\; \frac{\sigma_{\mathrm{post},i}}{\Delta_{\mathrm{prior},i}}
+  \label{eq:effdim}
+\end{equation}
+of the posterior standard deviation of $\theta_i$ to its prior width. A value
+$r_i \ll 1$ means the data constrain $\theta_i$; $r_i \to 1$ means the prior
+does. In Chapter~\ref{ch:heine} all 15 entries have $r_i < 0.43$.
+
+%=======================================================================
+\section{Metabolic Sign Priors}
+\label{sec:theory_fba}
+
+Where the data are too sparse to determine the interaction coefficients, their
+signs can be fixed beforehand from metabolic models. Flux balance analysis
+(FBA) predicts the metabolic fluxes $\mathbf v$ of an organism at steady
+state~\cite{OrthThiele2010WhatIsFBA, Heinken2023AGORA2},
+\begin{equation}
+  \max_{\mathbf{v}}\; \mathbf{c}^{\rm T}\mathbf{v}
+  \quad \text{s.t.} \quad S\mathbf{v} = \mathbf{0},\; \mathbf{lb} \le \mathbf{v} \le \mathbf{ub},
+\end{equation}
+with the stoichiometric matrix $S$, an objective $\mathbf c$ (usually biomass
+production) and bounds on the fluxes. Parsimonious FBA~\cite{Lewis2012pFBA}
+additionally minimises the total flux, and MICOM~\cite{Diener2020MICOM}
+couples the models of several species through shared metabolites. From the
+predicted exchange between two species follows the sign of their interaction:
+a species that feeds another implies $A_{ij}>0$, competition implies
+$A_{ij}<0$.
+
+The sign prior $\mathbf S\in\{-1,0,+1\}^{n\times n}$ enters the inference as a
+penalty on coefficients of the wrong sign,
+\begin{equation}
+  \mathcal{R}(\btheta; \mathbf{S}) = \lambda \sum_{i,j:\, S_{ij}\neq 0}
+  \max\!\bigl(0,\; -S_{ij}\,A_{ij}\bigr)^2,
+\end{equation}
+and leaves coefficients of the right sign free. Only the sign is used, not the
+magnitude: predicted interaction strengths of genome-scale models agree poorly
+with measured ones, while their signs carry useful
+information~\cite{Rath2024GEMReliability}, and no derivation links metabolic
+fluxes to the dimensionless coefficients of $\bA$~\cite{Marsland2020MiCRM, Mustri2025GLVABreakdown}.
+Section~\ref{sec:heine_signprior} applies this prior to in-vivo data.

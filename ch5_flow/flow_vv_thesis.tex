@@ -1,0 +1,63 @@
+% flow_vv_hierarchy.tex — Verification & Validation (V&V) hierarchy pyramid
+% Code verification -> solution verification -> validation -> prediction/UQ,
+% mapped to the concrete rigor evidence in this project (ASME V&V 10 / Oberkampf-Roy).
+% Usage: \resizebox{\linewidth}{!}{\input{flow_vv_hierarchy.tex}}
+\begin{tikzpicture}[
+  every node/.style = {font=\small},
+  band/.style = {thick, draw=black},
+  blab/.style = {font=\footnotesize\bfseries, align=center},
+  call/.style = {draw, rounded corners=3pt, align=left, thick, inner sep=4pt,
+                 fill=gray!8, font=\scriptsize, text width=5.0cm},
+  lead/.style = {-Stealth, thick, gray!55},
+  qbox/.style = {draw, rounded corners=3pt, align=center, thick, inner sep=5pt,
+                 font=\footnotesize, text width=5.6cm},
+]
+
+% ── pyramid bands (trapezoids), foundation -> apex ──────────────────
+\fill[cyan!16, band]   (-5,0)     -- (5,0)     -- (3.75,1.75) -- (-3.75,1.75) -- cycle;
+\fill[teal!16, band]   (-3.75,1.75) -- (3.75,1.75) -- (2.5,3.5) -- (-2.5,3.5) -- cycle;
+\fill[orange!17, band] (-2.5,3.5) -- (2.5,3.5) -- (1.25,5.25) -- (-1.25,5.25) -- cycle;
+\fill[purple!16, band] (-1.25,5.25) -- (1.25,5.25) -- (0,7) -- cycle;
+
+\node[blab] at (0,0.75) {Code verification};
+\node[blab] at (0,2.55) {Solution verification};
+\node[blab] at (0,4.25) {Validation};
+\node[blab, font=\scriptsize\bfseries] at (0,5.75) {Prediction\\/ UQ};
+
+% ── evidence callouts: this thesis only (ANSYS; no Abaqus, see CLAUDE.md) ──
+\node[call, anchor=west] at (5.6,0.85) (c1) {%
+  \textbf{code verification}\\
+  growth in one element vs closed form (free: $10^{-11}$, constrained: exact);
+  delivered routine = verified core at zero tolerance;
+  tangent vs automatic differentiation, 648 cases, worst $1.1\times10^{-6}$;
+  point model: all 14 examples of Klempt et al.\ 2026};
+\draw[lead] (3.4,0.85) -- (c1.west);
+
+\node[call, anchor=east] at (-5.6,2.6) (c2) {%
+  \textbf{solution verification}\\
+  coupled run vs exact $\sinh/\cosh$ solution inside ANSYS ($3\times10^{-11}$);
+  curved shell: second-order mesh convergence;
+  composition converged in the coupling time step};
+\draw[lead] (-2.9,2.6) -- (c2.east);
+
+\node[call, anchor=west] at (5.6,4.3) (c3) {%
+  \textbf{validation}\\
+  not attempted for stress (no measured stress available);
+  qualitative only: stress ring around the biofilm as in Klempt et al.};
+\draw[lead] (2.0,4.3) -- (c3.west);
+
+\node[call, anchor=east] at (-5.6,5.7) (c4) {%
+  \textbf{prediction}\\
+  outside the scope of this thesis};
+\draw[lead] (-0.9,5.7) -- (c4.east);
+
+% ── the two V&V questions (bottom) ──────────────────────────────────
+\node[qbox, fill=cyan!6, anchor=north] at (-3.0,-1.0)
+  {\textbf{Verification} (mathematics)\\ \emph{are the equations solved right?}};
+\node[qbox, fill=orange!6, anchor=north] at (3.0,-1.0)
+  {\textbf{Validation} (physics / experiment)\\ \emph{are they the right equations?}};
+
+\node[font=\scriptsize\itshape, text=gray!60, anchor=north] at (0,-2.5)
+  {each level rests on those below: validation needs verification first};
+
+\end{tikzpicture}

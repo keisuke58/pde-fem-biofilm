@@ -61,7 +61,7 @@ Model parameters are passed as **APDL parameters** (`*SET`), not through
 ### Biofilm parameters already present
 
 ```
-YOUNG_BIO   = 1000        ! Pa
+YOUNG_BIO   = 1000        ! solver units: the deck has /units,MPA (see below)
 YOUNG_VOID  = 1.0         ! void/empty-region stiffness
 POISSON_BIO = 0.3
 MY_BIOSTART1 = 1.0   MY_BIOSTART2 = 0.0      ! biofilm initial condition, two regions
@@ -70,8 +70,13 @@ MY_BETA1 = 1.0e-4    MY_BETA2 = 5.0e-2       ! growth rates
 MY_DIFF1 = 1.0       MY_DIFF2 = 1.0          ! diffusion coefficients
 ```
 
-**The scales agree with this repo.** `YOUNG_BIO = 1000` Pa matches
-`material_models.E_MAX_PA = 1000`, and `POISSON_BIO = 0.3` matches the ν
+**Correction, 2026-10-01: the scales do not agree.** The deck is in
+`/units,MPA` (the `ds_oliver_wired_*.dat` decks here, line 22, say so), and
+`YOUNG_BIO` is marked `![UNIT]`, i.e. solver units: `YOUNG_BIO = 1000` is
+**1000 MPa**, `YOUNG_VOID = 1` is 1 MPa. Earlier this note read it as 1000 Pa
+and said it matched `material_models.E_MAX_PA = 1000`; it does not, by a
+factor of 10⁶. Stresses from these decks are in MPa and scale linearly with E.
+`POISSON_BIO = 0.3` (and `POISSON_VOID = 0.3`) does match the ν
 default in [`coupling/composition_to_material.py`](coupling/composition_to_material.py).
 A two-field (biofilm + nutrient) reaction–diffusion structure is also what
 `JAXFEM/` implements for the Klempt model.
@@ -245,7 +250,7 @@ What is commented out is the *other* model, and the block says whose:
 path. So the disabled branch is the glass model and the live one is the
 biofilm model, not the other way round.
 
-### ⚠️ `sAlpha` in that routine is NOT the growth α
+### ⚠️ ~~`sAlpha` in that routine is NOT the growth α~~ — WRONG, see Correction 2 at the end
 
 Worth stating explicitly, because the name invites exactly the wrong
 assumption. The two biofilm arguments are fed from:
@@ -651,12 +656,15 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
 ## Open questions for Oliver
 
 1. ~~**The USERMAT Fortran source**~~ — **received** (`Nishioka_Hoechel.zip`).
-2. **Which ANSYS release do we target?** His pool is built for **2024 R2 on
+2. **Which ANSYS release do we target?** — **1 Oct: 2024**, the version
+   Felix gave him. His pool is built for **2024 R2 on
    Linux** via `ANSUSERSHARED`; IKMHIWI03 has **v222 on Windows** via
    `ANSCUST.BAT`. The `usermat` signatures differ (41 vs 42 arguments — see
    above), so the two cannot share one source file unguarded. Either we adapt
    to 2024 R2 and work on the cluster, or he confirms a v222 build is viable.
-3. **Who computes φ?** His NEM solves the field, which makes this repo's
+3. **Who computes φ?** — **1 Oct:** the 3D model computes one homogeneous
+   `φ` per quadrature point; the point model is kept separate and bridged by
+   inner sub-stepping (`apdl/ONE_SPECIES_COUPLING.md`). His NEM solves the field, which makes this repo's
    α-field mapping (`ustatev(10)`) redundant under option (A) and points at
    (A) as the real integration path — but that is his call, not an inference
    we should act on unilaterally.
@@ -664,7 +672,10 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
    live, recent and biofilm-specific, but purely elastic — no viscosity, no
    growth. Is a viscous biofilm law planned (which is what we would bring), or
    is elastic the intended scope? Related: is the `Sdp_bio1_n + Sdp_bio1_n`
-   above a typo?
+   above a typo? — **2026-10-01: Oliver thinks it is a typo** for
+   `Sdp_bio1_n + Sdp_bio2_n`, not yet verified by him; biofilm 2 starts at
+   zero in his minimal working example, so it has no influence today. We fix
+   it in our working copy (`apdl/apply_partner_patches.py`).
 5. **`sGi_nnz_T` is `INTEGER(KIND=8)` but reaches the pool routines as a
    default `INTEGER` `sz`.** Works at this mesh size; would truncate on a much
    larger one. Deliberate, or worth widening the pool API?
@@ -678,3 +689,38 @@ Details and what to do about each: [`apdl/V222_PORT_INSTRUCTIONS.md`](apdl/V222_
 *Both deliveries inspected 2026-09-01. Internal file paths and cluster
 usernames from the originals are deliberately not reproduced here — this
 repository is public, and the source pool is another group's code.*
+
+## Correction from the 1 October meeting
+
+§7 above calls the Mathematica notebook "the same growth model" as the
+Fortran. Oliver corrected this: the notebook (four species) is the **point
+model** — the microscopic, species-resolved one — while the Fortran is the
+**macroscopic 3D model**, which deliberately treats the biofilm as one
+homogeneous phase. They answer different questions at different scales and
+are meant to be bridged, not merged.
+
+## Correction 2 — stage 3 on IKMHIWI03, 1 October: the growth IS there
+
+**Two claims above are wrong.** §6 says `sAlpha` "is NOT the growth α" and
+that "there is still no growth kinematics anywhere in the pool"; the 1
+September email's question 2 rested on the same reading. Running the coupling
+on the real deck showed otherwise:
+
+- `locbio` **is** Klempt's `α_K`. `USSFin` (around line 2306) integrates
+  `locbio_n = locbio_{n−1} + dt·K_LOCAL1·bio_{n−1}` — Eq. 36, explicit in
+  `bio`, starting at 1 (`K_LOCAL1 = 0.01` in the deck).
+- `AceGenNeoHookV04` uses `sAlpha = Sdp_sumLocal = (locbio1 + locbio2)/2` as
+  `Fg = α_K I` (`v(23) = F11/sAlpha`, …).
+- With `k_α = K_LOCAL1`, our `BIOFILM_ALPHA_FROM_PHI` reproduces
+  `locbio1 − 1` to every printed digit, one sub-step apart (they integrate
+  with `bio` from the previous sub-step) — two independent implementations
+  of Eq. 36 agreeing.
+
+So the partner's element already grows, by Klempt's law; what we bring is
+not `Fg` but the bridge to the point model. One open question for Oliver:
+`sAlpha` takes the **mean** of the two `α_K`, so the element always grows by
+**half the summed growth**: `sAlpha − 1 = [(α_K1 − 1) + (α_K2 − 1)]/2`.
+Measured in stage 4: ours (the sum) / theirs = 2.000000 at every traced point,
+with or without biofilm 2 (n = 46). An earlier version of this note said the
+growth halves "when biofilm 2 is absent" — that is only a special case.
+Whether the mean (rather than the sum) is intended is his to say.

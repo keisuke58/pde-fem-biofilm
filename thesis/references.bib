@@ -1,0 +1,2020 @@
+% ══════════════════════════════════════════════════════════════════════════════
+% Masterarbeit — references.bib
+% ══════════════════════════════════════════════════════════════════════════════
+%
+% RECOMMENDED KEY RENAMES (cosmetic — the rendered citation already uses the
+% correct year field, so output is correct; keys were KEPT to avoid breaking any
+% \cite in the shared Overleaf. Apply with find-replace if you want clean keys):
+%   Schwarz2022PeriImplantitis    -> Schwarz2018PeriImplantitis     (year 2018)
+%   Hajishengallis2012Dysbiosis   -> Hajishengallis2011Dysbiosis    (year 2011)
+%   Hajishengallis2014Polymicrobial -> Hajishengallis2012Keystone   (2012; "keystone-pathogen hypothesis")
+%   Kolenbrander2006FnBridge      -> Kolenbrander2002Communication  (2002; general review, NOT an Fn-bridge paper)
+%   Lewis2012pFBA                 -> Lewis2010pFBA                  (year 2010)
+%   Freilich2020Inference         -> Freilich2018Cooccurrence       (2018; co-occurrence networks)
+%   Hairer1996ODE                 -> Hairer1993ODE                  (year field is 1993)
+%   Sedghi2021PeriImplant         -> Sedghi2021Periodontal          (title = periodontal disease)
+%   Maugin1992NonequilibriumTD    -> Maugin1992Thermomechanics      (title = Thermomechanics of Plasticity and Fracture)
+%   Ziegler1963MaximumEntropy     -> Ziegler1963ExtremumPrinciples  (Ziegler's principle = max dissipation)
+%
+% VERIFY BEFORE SUBMISSION:
+%   Ward2003MathBiofilm  — the cited title is about DRUG TRANSPORT IN TUMOUR SPHEROIDS,
+%                          not biofilms. This is likely the wrong reference; confirm intent.
+%   Gibson2021MDSINE2    — currently the bioRxiv preprint; replace with the published
+%                          Nature Microbiology (2025) version once you cite it.
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Hamilton Principle & Biofilm Model ────────────────────────────────────────
+
+@article{JunkerBalzani2021ExtendedHamilton,
+  author  = {Junker, Philipp and Balzani, Daniel},
+  title   = {An extended {Hamilton} principle as unifying theory for coupled
+             problems and dissipative microstructure evolution},
+  journal = {Continuum Mechanics and Thermodynamics},
+  year    = {2021},
+  volume  = {33},
+  number  = {4},
+  pages   = {1931--1956},
+  doi     = {10.1007/s00161-021-01017-z},
+}
+
+@misc{Klempt2025ContinuumBiofilm,
+  author        = {Klempt, Felix and Geisler, Hendrik and Soleimani, Meisam
+                   and Junker, Philipp},
+  title         = {A continuum multi-species biofilm model with a novel
+                   interaction scheme},
+  year          = {2025},
+  eprint        = {2509.01274},
+  archivePrefix = {arXiv},
+  primaryClass  = {q-bio.QM},
+}
+
+@article{Klempt2024ContinuumGrowth,
+  author  = {Klempt, Felix and Soleimani, Meisam and Wriggers, Peter
+             and Junker, Philipp},
+  title   = {A {Hamilton} principle-based model for diffusion-driven
+             biofilm growth},
+  journal = {Biomechanics and Modeling in Mechanobiology},
+  year    = {2024},
+  volume  = {23},
+  number  = {6},
+  pages   = {2091--2113},
+  doi     = {10.1007/s10237-024-01883-x},
+}
+
+@misc{Fritsch2025BayesianMicrofilms,
+  author        = {Fritsch, Lukas and Geisler, Hendrik and Grashorn, Jan
+                   and Klempt, Felix and Soleimani, Meisam and Broggi, Matteo
+                   and Junker, Philipp and Beer, Michael},
+  title         = {Bayesian Updating of constitutive parameters under hybrid
+                   uncertainties with a novel surrogate model applied to biofilms},
+  year          = {2025},
+  eprint        = {2512.15145},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CE},
+}
+
+% ── Experimental Data ─────────────────────────────────────────────────────────
+
+@article{Heine2025PeriImplant,
+  author  = {Heine, Nils and Bittroff, Kristina and Szafra{\'n}ski, Szymon P.
+             and Duitscher, Maya and Behrens, Wiebke and Vollmer, Clarissa
+             and Mikolai, Carina and Kommerein, Nadine and Debener, Nicolas
+             and Frings, Katharina and Heisterkamp, Alexander and Scheper, Thomas
+             and Torres-Mapa, Maria L. and Bahnemann, Janina and Stiesch, Meike
+             and Doll-Nikutta, Katharina},
+  title   = {Influence of species composition and cultivation condition on
+             peri-implant biofilm dysbiosis in vitro},
+  journal = {Frontiers in Oral Health},
+  year    = {2025},
+  volume  = {6},
+  pages   = {1649419},
+  doi     = {10.3389/froh.2025.1649419},
+}
+
+% alias key used in heine_paper/references_ikm.bib
+@article{heine2025influence,
+  author  = {Heine, Nils and Bittroff, Kristina and Szafra{\'n}ski, Szymon P.
+             and Duitscher, Maya and Behrens, Wiebke and Vollmer, Clarissa
+             and Mikolai, Carina and Kommerein, Nadine and Debener, Nicolas
+             and Frings, Katharina and Heisterkamp, Alexander and Scheper, Thomas
+             and Torres-Mapa, Maria L. and Bahnemann, Janina and Stiesch, Meike
+             and Doll-Nikutta, Katharina},
+  title   = {Influence of species composition and cultivation condition on
+             peri-implant biofilm dysbiosis in vitro},
+  journal = {Frontiers in Oral Health},
+  year    = {2025},
+  volume  = {6},
+  pages   = {1649419},
+  doi     = {10.3389/froh.2025.1649419},
+}
+
+@article{dieckow2024,
+  author  = {Dieckow, Sven and Szafra{\'n}ski, Szymon P. and others},
+  title   = {Longitudinal dynamics of subgingival biofilm microbiome during
+             caries recovery on titanium implant abutments},
+  journal = {npj Biofilms and Microbiomes},
+  year    = {2024},
+  volume  = {10},
+  pages   = {85},
+  note    = {ENA accession PRJEB71108; 10 patients $\times$ 3 weeks
+             (primary longitudinal fit/LOO dataset)},
+}
+
+@article{joshi2025,
+  author  = {Joshi, Amruta A. and Szafra{\'n}ski, Szymon P. and Steglich,
+             Matthias and Yang, Ines and Qu, Taoran and Schaefer-Dreyer,
+             Paula and Xiao, Xing and Behrens, Wiebke and Grischke, Jasmin
+             and H{\"a}ussler, Susanne and Stiesch, Meike},
+  title   = {Integrative microbiome- and metatranscriptome-based analyses
+             reveal diagnostic biomarkers for peri-implantitis},
+  journal = {npj Biofilms and Microbiomes},
+  year    = {2025},
+  volume  = {11},
+  number  = {1},
+  pages   = {175},
+  doi     = {10.1038/s41522-025-00807-6},
+  note    = {Published 26 August 2025; SIIRI peri-implant biofilm cohort
+             with paired full-length 16S rRNA gene amplicon sequencing and
+             metatranscriptomics},
+}
+
+% ── Oral Microbiology ─────────────────────────────────────────────────────────
+
+@article{Kolenbrander2010OralMultispecies,
+  author  = {Kolenbrander, Paul E and Palmer, Robert J and Periasamy, Saravanan
+             and Jakubovics, Nicholas S},
+  title   = {Oral multispecies biofilm development and the key role of cell-cell
+             distance},
+  journal = {Nature Reviews Microbiology},
+  year    = {2010},
+  volume  = {8},
+  number  = {7},
+  pages   = {471--480},
+  doi     = {10.1038/nrmicro2381},
+}
+
+@article{Marsh2003Dental,
+  author  = {Marsh, Philip D},
+  title   = {Are dental diseases examples of ecological catastrophes?},
+  journal = {Microbiology},
+  year    = {2003},
+  volume  = {149},
+  number  = {2},
+  pages   = {279--294},
+  doi     = {10.1099/mic.0.26082-0},
+}
+
+% ── Microbial Community Modelling ─────────────────────────────────────────────
+
+@article{Gonze2018gLV,
+  author  = {Gonze, Didier and Coyte, Katharine Z and Lahti, Leo
+             and Faust, Karoline},
+  title   = {Microbial communities as dynamical systems},
+  journal = {Current Opinion in Microbiology},
+  year    = {2018},
+  volume  = {44},
+  pages   = {41--49},
+  doi     = {10.1016/j.mib.2018.07.004},
+}
+
+@article{Coyte2015Ecology,
+  author  = {Coyte, Katharine Z and Schluter, Jonas and Foster, Kevin R},
+  title   = {The ecology of the microbiome: networks, competition, and stability},
+  journal = {Science},
+  year    = {2015},
+  volume  = {350},
+  pages   = {663--666},
+  doi     = {10.1126/science.aad2602},
+}
+
+@book{Hofbauer1998EGT,
+  author    = {Hofbauer, Josef and Sigmund, Karl},
+  title     = {Evolutionary Games and Population Dynamics},
+  publisher = {Cambridge University Press},
+  year      = {1998},
+  doi       = {10.1017/CBO9781139173179},
+}
+
+% ── Bayesian Inference & TMCMC ────────────────────────────────────────────────
+
+@article{ChingChen2007TMCMC,
+  author  = {Ching, Jianye and Chen, Yi-Chu},
+  title   = {Transitional {Markov} Chain {Monte Carlo} method for {Bayesian}
+             model updating, model class selection, and model averaging},
+  journal = {Journal of Engineering Mechanics},
+  year    = {2007},
+  volume  = {133},
+  pages   = {816--832},
+  doi     = {10.1061/(ASCE)0733-9399(2007)133:7(816)},
+}
+
+@article{Betz2016TMCMC,
+  author  = {Betz, Wolfgang and Papaioannou, Iason and Straub, Daniel},
+  title   = {Transitional {Markov} Chain {Monte Carlo}: observations and
+             improvements},
+  journal = {Journal of Engineering Mechanics},
+  year    = {2016},
+  volume  = {142},
+  number  = {5},
+  pages   = {04016016},
+  doi     = {10.1061/(ASCE)EM.1943-7889.0001066},
+}
+
+@article{Chopin2002SMC,
+  author  = {Chopin, Nicolas},
+  title   = {A sequential particle filter method for static models},
+  journal = {Biometrika},
+  year    = {2002},
+  volume  = {89},
+  pages   = {539--551},
+  doi     = {10.1093/biomet/89.3.539},
+}
+
+@book{RobertCasella2004MonteCarlo,
+  author    = {Robert, Christian P and Casella, George},
+  title     = {Monte Carlo Statistical Methods},
+  edition   = {2nd},
+  publisher = {Springer},
+  year      = {2004},
+}
+
+% ── GPU / JAX / Neural Operators ─────────────────────────────────────────────
+
+@misc{jax2018github,
+  author = {Bradbury, James and Frostig, Roy and Hawkins, Peter
+            and Johnson, Matthew James and Leary, Chris
+            and Maclaurin, Dougal and Necula, George
+            and Paszke, Adam and Vander{P}las, Jake
+            and Wanderman-{M}ilne, Skye and Zhang, Qiao},
+  title  = {{JAX}: composable transformations of {Python}+{NumPy} programs},
+  year   = {2018},
+  url    = {http://github.com/google/jax},
+}
+
+@article{Lu2021DeepONet,
+  author  = {Lu, Lu and Jin, Pengzhan and Pang, Guofei
+             and Zhang, Zhongqiang and Karniadakis, George Em},
+  title   = {Learning nonlinear operators via {DeepONet} based on the universal
+             approximation theorem of operators},
+  journal = {Nature Machine Intelligence},
+  year    = {2021},
+  volume  = {3},
+  pages   = {218--229},
+  doi     = {10.1038/s42256-021-00302-5},
+}
+
+% ── Metabolic Modelling ───────────────────────────────────────────────────────
+
+@article{Heinken2023AGORA2,
+  author  = {Heinken, Almut and Hertel, Johannes and Acharya, Giriraj
+             and Ravcheev, Dmitry A and Nyga, Malgorzata
+             and Okpala, Onyekachi Emmanuel and Hogan, Marina
+             and Magnusd{\'o}ttir, Stefania and Martinelli, Filippo
+             and Bhattacharyya, Monika and Noronha, Alberto
+             and Patil, Kiran R and Thiele, Ines},
+  title   = {Genome-scale metabolic reconstruction of 7,302 human microorganisms
+             for personalized medicine},
+  journal = {Nature Biotechnology},
+  year    = {2023},
+  volume  = {41},
+  pages   = {1320--1331},
+  doi     = {10.1038/s41587-022-01628-0},
+}
+
+@article{Diener2020MICOM,
+  author  = {Diener, Christian and Gibbons, Sean M and Resendis-Antonio, Osbaldo},
+  title   = {{MICOM}: metagenome-scale modeling to infer metabolic interactions
+             in the gut microbiota},
+  journal = {{mSystems}},
+  year    = {2020},
+  volume  = {5},
+  number  = {1},
+  pages   = {e00606--19},
+  doi     = {10.1128/mSystems.00606-19},
+}
+
+@article{Lewis2012pFBA,
+  author  = {Lewis, Nathan E and Hixson, Kim K and Conrad, Tom M
+             and Lerman, Joshua A and Charusanti, Pep
+             and Polpitiya, Ashoka D and Adkins, Joshua N
+             and Schramm, Georg and Purvine, Samuel O
+             and Lopez-Ferrer, Daniel and Weitz, Karl K
+             and Eils, Roland and K{\"o}nig, Rainer
+             and Smith, Richard D and Palsson, Bernhard {\O}},
+  title   = {Omic data from evolved {E. coli} are consistent with computed
+             optimal growth from genome-scale models},
+  journal = {Molecular Systems Biology},
+  year    = {2010},
+  volume  = {6},
+  pages   = {390},
+  doi     = {10.1038/msb.2010.47},
+}
+
+% ── FBA–gLV unit bridge (added 2026-06-10) ───────────────────────────────────
+
+@article{Rath2024GEMReliability,
+  author  = {Rath, Stefanie and Rottler, Stefanie and Kump, Philipp and
+             Hilber, Sebastian and Leber, Bettina and Horvath, Angela and
+             Stadlbauer, Vanessa},
+  title   = {Prediction of growth rates with flux balance analysis using
+             semi-curated genome-scale metabolic models is not sufficiently
+             accurate to predict interaction strengths},
+  journal = {BMC Bioinformatics},
+  year    = {2024},
+  volume  = {25},
+  pages   = {50},
+  doi     = {10.1186/s12859-024-05651-7},
+  note    = {PMC10804772},
+}
+
+@article{Mustri2025GLVABreakdown,
+  author  = {Mustri, Rafael and Cenci{\'o}n, Miquel and Goyal, Sidhartha},
+  title   = {When does the generalized {Lotka--Volterra} approximation accurately
+             represent microbial consumer-resource dynamics?},
+  journal = {PLOS Computational Biology},
+  year    = {2025},
+  volume  = {21},
+  number  = {12},
+  pages   = {e1013719},
+  doi     = {10.1371/journal.pcbi.1013719},
+  note    = {PMC12688139},
+}
+
+@article{Marsland2020MiCRM,
+  author  = {Marsland III, Robert and Cui, Wenping and Mehta, Pankaj},
+  title   = {A minimal model for microbial biodiversity can reproduce
+             experimentally observed ecological patterns},
+  journal = {Scientific Reports},
+  year    = {2020},
+  volume  = {10},
+  pages   = {3308},
+  doi     = {10.1038/s41598-020-60130-2},
+}
+
+% ── Additional ───────────────────────────────────────────────────────────────
+
+% ── Peri-implantitis & Oral Pathogens ────────────────────────────────────────
+
+@article{Berglundh2018Peri,
+  author  = {Berglundh, Tord and Armitage, Gary and Araujo, Mauricio G
+             and Avila-Ortiz, Gustavo and Blanco, Juan and Camargo, Paulo M
+             and Chen, Stephen and Cochran, David and Derks, Jan
+             and Figuero, Elena and Hammerle, Christoph H F},
+  title   = {Peri-implant diseases and conditions: Consensus report of
+             workgroup 4 of the 2017 World Workshop on the Classification
+             of Periodontal and Peri-Implant Diseases and Conditions},
+  journal = {Journal of Periodontology},
+  year    = {2018},
+  volume  = {89},
+  pages   = {S313--S318},
+  doi     = {10.1002/JPER.17-0739},
+}
+
+@article{Schwarz2022PeriImplantitis,
+  author  = {Schwarz, Frank and Derks, Jan and Monje, Alberto and Wang, Hom-Lay},
+  title   = {Peri-implantitis},
+  journal = {Journal of Clinical Periodontology},
+  year    = {2018},
+  volume  = {45},
+  pages   = {S246--S266},
+  doi     = {10.1111/jcpe.12954},
+}
+
+@article{Hajishengallis2012Dysbiosis,
+  author  = {Hajishengallis, George and Liang, Shuang and Payne, Mark A
+             and Hashim, Ahmed and Jotwani, Ravi and Eskan, Mehmet A
+             and McIntosh, M. Lamont and Alsam, Ahmed and Kirkwood, Keith L
+             and Lambris, John D and Darveau, Richard P and Curtis, Michael A},
+  title   = {Low-abundance biofilm species orchestrates inflammatory periodontal
+             disease through the commensal microbiota and complement},
+  journal = {Cell Host \& Microbe},
+  year    = {2011},
+  volume  = {10},
+  pages   = {497--506},
+  doi     = {10.1016/j.chom.2011.10.006},
+}
+
+@article{Mysak2014Pg,
+  author  = {Mys{\'a}k, Jaroslav and Panda, Jan and Plachy, Jan
+             and Reissmanová, Jitka and Sl{\'a}dek, Vladim{\'i}r
+             and Kl{\'i}ma, Jan},
+  title   = {\textit{{Porphyromonas gingivalis}: Major Periodontopathic Pathogen
+             Overview}},
+  journal = {Journal of Immunology Research},
+  year    = {2014},
+  volume  = {2014},
+  pages   = {476068},
+  doi     = {10.1155/2014/476068},
+}
+
+@article{Lamont2018Periodontal,
+  author  = {Lamont, Richard J and Koo, Hyun and Hajishengallis, George},
+  title   = {The oral microbiota: dynamic communities and host interactions},
+  journal = {Nature Reviews Microbiology},
+  year    = {2018},
+  volume  = {16},
+  pages   = {745--759},
+  doi     = {10.1038/s41579-018-0089-x},
+}
+
+@article{Hajishengallis2014Polymicrobial,
+  author  = {Hajishengallis, George and Darveau, Richard P and Curtis, Michael A},
+  title   = {The keystone-pathogen hypothesis},
+  journal = {Nature Reviews Microbiology},
+  year    = {2012},
+  volume  = {10},
+  pages   = {717--725},
+  doi     = {10.1038/nrmicro2873},
+}
+
+@article{Sedghi2021PeriImplant,
+  author  = {Sedghi, Lea M and Bacino, Margot and Kapila, Yvonne L},
+  title   = {Periodontal disease: the good, the bad, and the unknown},
+  journal = {Frontiers in Cellular and Infection Microbiology},
+  year    = {2021},
+  volume  = {11},
+  pages   = {766944},
+  doi     = {10.3389/fcimb.2021.766944},
+}
+
+% ── gLV & Microbiome Dynamics ─────────────────────────────────────────────────
+
+@article{Stein2013gLV,
+  author  = {Stein, Richard R and Bucci, Vanni and Toussaint, Nora C
+             and Buffie, Charlie G and R{\"a}tsch, Gunnar
+             and Pamer, Eric G and Sander, Chris and Xavier, Jo{\~a}o B},
+  title   = {Ecological modeling from time-series inference: insight into
+             dynamics and stability of intestinal microbiota},
+  journal = {PLOS Computational Biology},
+  year    = {2013},
+  volume  = {9},
+  pages   = {e1003388},
+  doi     = {10.1371/journal.pcbi.1003388},
+}
+
+@article{Bucci2016MDSINE,
+  author  = {Bucci, Vanni and Tzen, Belinda and Li, Ning and Simmons, Matthew
+             and Tanoue, Takeshi and Bogart, Elijah and Deng, Lina
+             and Yeliseyev, Vladimir and Delaney, Mary L and Liu, Qian
+             and Olle, Bernat and Stein, Richard R and Honda, Kenya
+             and Bry, Lynn and Gerber, Georg K},
+  title   = {{MDSINE}: {Microbial} {Dynamical} {Systems} {INference} {Engine}
+             for microbiome time-series analyses},
+  journal = {Genome Biology},
+  year    = {2016},
+  volume  = {17},
+  pages   = {121},
+  doi     = {10.1186/s13059-016-0980-6},
+}
+
+@article{Gibson2021MDSINE2,
+  author  = {Gibson, Travis E and Gerber, Georg K},
+  title   = {Microbial dynamics inference at ecosystem-scale},
+  journal = {bioRxiv},
+  year    = {2021},
+  doi     = {10.1101/2021.12.14.469105},
+  note    = {Preprint; published in \emph{Nature Microbiology} 2025},
+}
+
+@article{Cao2017Identifiability,
+  author  = {Cao, Hsiao-Tung and Gibson, Travis E and Bashan, Amir
+             and Liu, Yang-Yu},
+  title   = {Inferring human microbial dynamics from temporal metagenomics data:
+             pitfalls and lessons},
+  journal = {BioEssays},
+  year    = {2017},
+  volume  = {39},
+  pages   = {1600188},
+  doi     = {10.1002/bies.201600188},
+}
+
+@article{Freilich2020Inference,
+  author  = {Freilich, Mick A and Wieters, Elisa and Broitman, Bernardo R
+             and Marquet, Pablo A and Navarrete, Sergio A},
+  title   = {Species co-occurrence networks: can they reveal trophic and
+             non-trophic interactions in ecological communities?},
+  journal = {Ecology},
+  year    = {2018},
+  volume  = {99},
+  pages   = {690--699},
+  doi     = {10.1002/ecy.2142},
+}
+
+@article{Venturelli2018Deciphering,
+  author  = {Venturelli, Ophelia S and Carr, Alex V and Fisher, Gavin
+             and Hsu, Ryan H and Lau, Rebecca and Bowen, Benjamin P
+             and Hromada, Susan and Northen, Trent and Arkin, Adam P},
+  title   = {Deciphering microbial interactions in synthetic human gut
+             microbiome communities},
+  journal = {Molecular Systems Biology},
+  year    = {2018},
+  volume  = {14},
+  pages   = {e8157},
+  doi     = {10.15252/msb.20178157},
+}
+
+% ── 16S rRNA & Microbiome Methods ─────────────────────────────────────────────
+
+@article{Callahan2016DADA2,
+  author  = {Callahan, Benjamin J and McMurdie, Paul J and Rosen, Michael J
+             and Han, Andrew W and Johnson, Amy Jo A and Holmes, Susan P},
+  title   = {{DADA2}: High-resolution sample inference from {Illumina}
+             amplicon data},
+  journal = {Nature Methods},
+  year    = {2016},
+  volume  = {13},
+  pages   = {581--583},
+  doi     = {10.1038/nmeth.3869},
+}
+
+@article{Bolyen2019QIIME2,
+  author  = {Bolyen, Evan and Rideout, Jai Ram and Dillon, Matthew R
+             and Bokulich, Nicholas A and Abnet, Christian C
+             and Al-Ghalith, Gabriel A and Alexander, Harriet
+             and Alm, Eric J and Arumugam, Manimozhiyan and Asnicar, Francesco
+             and Bai, Yang and Bisanz, Jordan E and Bittinger, Kyle},
+  title   = {Reproducible, interactive, scalable and extensible microbiome
+             data science using {QIIME 2}},
+  journal = {Nature Biotechnology},
+  year    = {2019},
+  volume  = {37},
+  pages   = {852--857},
+  doi     = {10.1038/s41587-019-0209-9},
+}
+
+@article{Gloor2017Microbiome,
+  author  = {Gloor, Gregory B and Macklaim, Jean M and Pawlowsky-Glahn, Vera
+             and Egozcue, Juan J},
+  title   = {Microbiome datasets are compositional: and this is not optional},
+  journal = {Frontiers in Microbiology},
+  year    = {2017},
+  volume  = {8},
+  pages   = {2224},
+  doi     = {10.3389/fmicb.2017.02224},
+}
+
+@article{Aitchison1982Compositional,
+  author  = {Aitchison, John},
+  title   = {The statistical analysis of compositional data},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  year    = {1982},
+  volume  = {44},
+  pages   = {139--177},
+}
+
+% ── Reaction-Diffusion & Biofilm Spatial Models ───────────────────────────────
+
+@article{Stewart1998Diffusion,
+  author  = {Stewart, Philip S},
+  title   = {A review of experimental measurements of effective diffusive
+             permeabilities and effective diffusion coefficients in biofilms},
+  journal = {Biotechnology and Bioengineering},
+  year    = {1998},
+  volume  = {59},
+  pages   = {261--272},
+}
+
+@article{Kreft2001IbmBiofilm,
+  author  = {Kreft, Jan-Ulrich and Picioreanu, Cristian
+             and Wimpenny, Julian W T and van Loosdrecht, Mark C M},
+  title   = {Individual-based modelling of biofilms},
+  journal = {Microbiology},
+  year    = {2001},
+  volume  = {147},
+  pages   = {2897--2912},
+  doi     = {10.1099/00221287-147-11-2897},
+}
+
+@article{Ward2003MathBiofilm,
+  author  = {Ward, John P and King, John R},
+  title   = {Mathematical modelling of drug transport in tumour multicell
+             spheroids and monolayer cultures},
+  journal = {Mathematical Biosciences},
+  year    = {2003},
+  volume  = {181},
+  pages   = {177--207},
+}
+
+% ── Model Selection & Information Criteria ────────────────────────────────────
+
+@article{Burnham2004AIC,
+  author  = {Burnham, Kenneth P and Anderson, David R},
+  title   = {Multimodel inference: understanding {AIC} and {BIC} in model
+             selection},
+  journal = {Sociological Methods \& Research},
+  year    = {2004},
+  volume  = {33},
+  pages   = {261--304},
+  doi     = {10.1177/0049124104268644},
+}
+
+@article{Kass1995Bayes,
+  author  = {Kass, Robert E and Raftery, Adrian E},
+  title   = {Bayes Factors},
+  journal = {Journal of the American Statistical Association},
+  year    = {1995},
+  volume  = {90},
+  pages   = {773--795},
+  doi     = {10.1080/01621459.1995.10476572},
+}
+
+% ── GPU / Differentiable Programming ─────────────────────────────────────────
+
+@misc{Lao2020TFP,
+  author        = {Lao, Junpeng and Suter, Christopher and Langmore, Ian
+                   and Chimisov, Cyrill and Saxena, Ashish and Sountsov, Pavel
+                   and Moore, Dave and Saurous, Rif A and Hoffman, Matthew D
+                   and Dillon, Joshua V},
+  title         = {$\mathtt{tfp.mcmc}$: Modern {Markov} Chain {Monte Carlo}
+                   Tools Built for Modern Hardware},
+  year          = {2020},
+  eprint        = {2002.01184},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.CO},
+}
+
+@misc{Phan2019NumPyro,
+  author        = {Phan, Du and Pradhan, Neeraj and Jankowiak, Martin},
+  title         = {Composable effects for flexible and accelerated probabilistic
+                   programming in {NumPyro}},
+  year          = {2019},
+  eprint        = {1912.11554},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+}
+
+% ── Scientific Machine Learning ───────────────────────────────────────────────
+
+@misc{Rackauckas2020DiffEq,
+  author        = {Rackauckas, Christopher and Ma, Yingbo and Martensen, Julius
+                   and Warner, Collin and Zubov, Kirill and Supekar, Rohit
+                   and Skinner, Dominic and Ramadhan, Ali and Edelman, Alan},
+  title         = {Universal differential equations for scientific machine learning},
+  year          = {2020},
+  eprint        = {2001.04385},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+}
+
+@article{Karniadakis2021PINN,
+  author  = {Karniadakis, George Em and Kevrekidis, Ioannis G and Lu, Lu
+             and Perdikaris, Paris and Wang, Sifan and Yang, Liu},
+  title   = {Physics-informed machine learning},
+  journal = {Nature Reviews Physics},
+  year    = {2021},
+  volume  = {3},
+  pages   = {422--440},
+  doi     = {10.1038/s42254-021-00314-5},
+}
+
+@article{Chen1995Universal,
+  author  = {Chen, Tianping and Chen, Hong},
+  title   = {Universal approximation to nonlinear operators by neural networks
+             with arbitrary activation functions and its application to
+             dynamical systems},
+  journal = {IEEE Transactions on Neural Networks},
+  year    = {1995},
+  volume  = {6},
+  pages   = {911--917},
+  doi     = {10.1109/72.392253},
+}
+
+% ── Dimensionality Reduction ──────────────────────────────────────────────────
+
+% ── Oral Microbiome Database ──────────────────────────────────────────────────
+
+@article{Dewhirst2010HOMD,
+  author  = {Dewhirst, Floyd E and Chen, Tanja and Izard, Jacques
+             and Paster, Bruce J and Tanner, Anne C R and Yu, Wen-Han
+             and Lakshmanan, Abirami and Wade, William G},
+  title   = {The Human Oral Microbiome},
+  journal = {Journal of Bacteriology},
+  year    = {2010},
+  volume  = {192},
+  pages   = {5002--5017},
+  doi     = {10.1128/JB.00542-10},
+}
+
+@article{Escapa2018eHOMD,
+  author  = {Escapa, Isabel F and Chen, Tanja and Huang, Yanmei
+             and Gajare, Prasad and Dewhirst, Floyd E
+             and Lemon, Katherine P},
+  title   = {New insights into human nostril microbiome from the expanded
+             {Human Oral Microbiome Database} ({eHOMD}): a resource for the
+             microbiome of the human aerodigestive tract},
+  journal = {{mSystems}},
+  year    = {2018},
+  volume  = {3},
+  pages   = {e00187--18},
+  doi     = {10.1128/mSystems.00187-18},
+}
+
+% ── Fn Bridge Species ─────────────────────────────────────────────────────────
+
+@article{Kolenbrander2006FnBridge,
+  author  = {Kolenbrander, Paul E and Andersen, Rachel N and Blehert, David S
+             and Egland, Paul G and Foster, Jamie S and Palmer Jr, Robert J},
+  title   = {Communication among oral bacteria},
+  journal = {Microbiology and Molecular Biology Reviews},
+  year    = {2002},
+  volume  = {66},
+  pages   = {486--505},
+  doi     = {10.1128/MMBR.66.3.486-505.2002},
+}
+
+@article{Signat2011Fn,
+  author  = {Signat, Beatrice and Roques, Christine and Poulet, Pierre
+             and Duffaut, Dina},
+  title   = {\textit{{Fusobacterium nucleatum}} in periodontal health and
+             disease},
+  journal = {Current Issues in Molecular Biology},
+  year    = {2011},
+  volume  = {13},
+  pages   = {25--36},
+}
+
+% ── Hamiltonian Monte Carlo ───────────────────────────────────────────────────
+
+@misc{Betancourt2017HMC,
+  author        = {Betancourt, Michael},
+  title         = {A Conceptual Introduction to {Hamiltonian Monte Carlo}},
+  year          = {2017},
+  eprint        = {1701.02434},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME},
+}
+
+@article{Hoffman2014NUTS,
+  author  = {Hoffman, Matthew D and Gelman, Andrew},
+  title   = {The {No-U-Turn Sampler}: adaptively setting path lengths in
+             {Hamiltonian Monte Carlo}},
+  journal = {Journal of Machine Learning Research},
+  year    = {2014},
+  volume  = {15},
+  pages   = {1593--1623},
+}
+
+% ── Sequential Monte Carlo ────────────────────────────────────────────────────
+
+@incollection{Doucet2001SMC,
+  author    = {Doucet, Arnaud and de Freitas, Nando and Gordon, Neil},
+  title     = {An introduction to sequential {Monte Carlo} methods},
+  booktitle = {Sequential Monte Carlo Methods in Practice},
+  editor    = {Doucet, Arnaud and de Freitas, Nando and Gordon, Neil},
+  publisher = {Springer},
+  year      = {2001},
+  pages     = {3--14},
+  doi       = {10.1007/978-1-4757-3437-9_1},
+}
+
+@article{DelMoral2006SMCSamplers,
+  author  = {Del Moral, Pierre and Doucet, Arnaud and Jasra, Ajay},
+  title   = {Sequential {Monte Carlo} samplers},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  year    = {2006},
+  volume  = {68},
+  pages   = {411--436},
+  doi     = {10.1111/j.1467-9868.2006.00553.x},
+}
+
+% ── Ecological Metrics ────────────────────────────────────────────────────────
+
+@article{Bray1957BrayCurtis,
+  author  = {Bray, J Roger and Curtis, John T},
+  title   = {An ordination of the upland forest communities of southern
+             {Wisconsin}},
+  journal = {Ecological Monographs},
+  year    = {1957},
+  volume  = {27},
+  pages   = {325--349},
+  doi     = {10.2307/1942268},
+}
+
+@article{Whittaker1960Diversity,
+  author  = {Whittaker, Robert H},
+  title   = {Vegetation of the {Siskiyou Mountains}, {Oregon} and {California}},
+  journal = {Ecological Monographs},
+  year    = {1960},
+  volume  = {30},
+  pages   = {279--338},
+}
+
+% ── Neural ODEs ───────────────────────────────────────────────────────────────
+
+@inproceedings{Chen2018NeuralODE,
+  author    = {Chen, Ricky T Q and Rubanova, Yulia and Bettencourt, Jesse
+               and Duvenaud, David K},
+  title     = {Neural Ordinary Differential Equations},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2018},
+  volume    = {31},
+  pages     = {6571--6583},
+}
+
+% ── Numerical Methods ─────────────────────────────────────────────────────────
+
+@book{Hairer1996ODE,
+  author    = {Hairer, Ernst and N{\o}rsett, Syvert Paul and Wanner, Gerhard},
+  title     = {Solving Ordinary Differential Equations I: Nonstiff Problems},
+  edition   = {2nd},
+  publisher = {Springer},
+  year      = {1993},
+}
+
+@article{Dormand1980RK45,
+  author  = {Dormand, John R and Prince, Peter J},
+  title   = {A family of embedded {Runge-Kutta} formulae},
+  journal = {Journal of Computational and Applied Mathematics},
+  year    = {1980},
+  volume  = {6},
+  pages   = {19--26},
+  doi     = {10.1016/0771-050X(80)90013-3},
+}
+
+% ── Thermodynamics & Variational Principles ───────────────────────────────────
+
+@book{Maugin1992NonequilibriumTD,
+  author    = {Maugin, G{\'e}rard A},
+  title     = {The Thermomechanics of Plasticity and Fracture},
+  publisher = {Cambridge University Press},
+  year      = {1992},
+}
+
+@article{Ziegler1963MaximumEntropy,
+  author  = {Ziegler, Hans},
+  title   = {Some extremum principles in irreversible thermodynamics with
+             application to continuum mechanics},
+  journal = {Progress in Solid Mechanics},
+  year    = {1963},
+  volume  = {4},
+  pages   = {91--193},
+}
+
+% ── Compositional Data Analysis ───────────────────────────────────────────────
+
+@book{Aitchison1986Compositional,
+  author    = {Aitchison, John},
+  title     = {The Statistical Analysis of Compositional Data},
+  publisher = {Chapman and Hall},
+  year      = {1986},
+}
+
+@book{PawlowskyGlahn2015Compositional,
+  author    = {Pawlowsky-Glahn, Vera and Egozcue, Juan Jos{\'e}
+               and Tolosana-Delgado, Raimon},
+  title     = {Modeling and Analysis of Compositional Data},
+  series    = {Statistics in Practice},
+  publisher = {Wiley},
+  address   = {Chichester},
+  year      = {2015},
+  doi       = {10.1002/9781119003144},
+}
+
+% ── Bayesian Computation (Stan / NumPyro) ─────────────────────────────────────
+
+@article{Carpenter2017Stan,
+  author  = {Carpenter, Bob and Gelman, Andrew and Hoffman, Matthew D
+             and Lee, Daniel and Goodrich, Ben and Betancourt, Michael
+             and Brubaker, Marcus A and Guo, Jiqiang and Li, Peter
+             and Riddell, Allen},
+  title   = {Stan: a probabilistic programming language},
+  journal = {Journal of Statistical Software},
+  year    = {2017},
+  volume  = {76},
+  pages   = {1--32},
+  doi     = {10.18637/jss.v076.i01},
+}
+
+@book{Gelman2013BDA,
+  author    = {Gelman, Andrew and Carlin, John B and Stern, Hal S
+               and Dunson, David B and Vehtari, Aki and Rubin, Donald B},
+  title     = {Bayesian Data Analysis},
+  edition   = {3rd},
+  publisher = {CRC Press},
+  year      = {2013},
+}
+
+@article{VanDerMaaten2008tSNE,
+  author  = {van der Maaten, Laurens and Hinton, Geoffrey},
+  title   = {Visualizing data using {t-SNE}},
+  journal = {Journal of Machine Learning Research},
+  year    = {2008},
+  volume  = {9},
+  pages   = {2579--2605},
+}
+
+@article{Roberts2001Optimal,
+  author  = {Roberts, Gareth O and Rosenthal, Jeffrey S},
+  title   = {Optimal scaling for various {Metropolis--Hastings} algorithms},
+  journal = {Statistical Science},
+  year    = {2001},
+  volume  = {16},
+  pages   = {351--367},
+  doi     = {10.1214/ss/1015346320},
+}
+
+@misc{McInnes2018UMAP,
+  author        = {McInnes, Leland and Healy, John and Melville, James},
+  title         = {{UMAP}: Uniform Manifold Approximation and Projection for
+                   Dimension Reduction},
+  year          = {2018},
+  eprint        = {1802.03426},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ML},
+}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% Additions 2026-06-04 — verified via Crossref/PubMed/arXiv/dblp (DOIs confirmed,
+% not fabricated). Project-paper details mined from the source bibs in nife
+% (heine_paper/references_ikm.bib, dieckow_paper/references.bib).
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Additional Datasets (project) ─────────────────────────────────────────────
+
+@article{Szafranski2025,
+  author  = {Szafra{\'n}ski, Szymon P. and Nishioka, Keisuke and others},
+  title   = {Metabolic interaction network for the peri-implant oral microbiome},
+  journal = {{mSystems}},
+  year    = {2025},
+  note    = {in preparation; 127 cross-sectional 16S samples, 5 genera
+             (\emph{Actinomyces}, \emph{Fusobacterium}, \emph{Porphyromonas},
+             \emph{Streptococcus}, \emph{Veillonella}); source of the L1/L2
+             metabolic sign-prior evidence layers.
+             [TODO: confirm venue / volume / DOI before submission]},
+}
+
+@misc{Botelho2021,
+  author = {Botelho and others},
+  title  = {Longitudinal subgingival 16S validation cohort},
+  year   = {2021},
+  note   = {ENA accession PRJNA725874; 15 patients $\times$ 7 timepoints;
+            independent longitudinal cohort for cross-cohort sign validation.
+            [TODO: verify author list / title / venue / DOI]},
+}
+
+% ── Spatial PDE / Pattern Formation ───────────────────────────────────────────
+
+@article{Turing1952Morphogenesis,
+  author    = {Turing, Alan Mathison},
+  title     = {The Chemical Basis of Morphogenesis},
+  journal   = {Philosophical Transactions of the Royal Society of London.
+               Series {B}, Biological Sciences},
+  year      = {1952},
+  volume    = {237},
+  number    = {641},
+  pages     = {37--72},
+  doi       = {10.1098/rstb.1952.0012},
+  publisher = {The Royal Society},
+}
+
+@book{Murray2003MathBiologyII,
+  author    = {Murray, James D.},
+  title     = {Mathematical Biology II: Spatial Models and Biomedical Applications},
+  edition   = {3rd},
+  series    = {Interdisciplinary Applied Mathematics},
+  volume    = {18},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2003},
+  doi       = {10.1007/b98869},
+}
+
+@article{PainterHillen2002VolumeFilling,
+  author  = {Painter, Kevin J. and Hillen, Thomas},
+  title   = {Volume-filling and quorum-sensing in models for chemosensitive movement},
+  journal = {Canadian Applied Mathematics Quarterly},
+  year    = {2002},
+  volume  = {10},
+  number  = {4},
+  pages   = {501--543},
+}
+
+% ── Neural Operators / Optimisation ───────────────────────────────────────────
+
+@inproceedings{Li2021FNO,
+  author        = {Li, Zongyi and Kovachki, Nikola and Azizzadenesheli, Kamyar
+                   and Liu, Burigede and Bhattacharya, Kaushik and Stuart, Andrew
+                   and Anandkumar, Anima},
+  title         = {{Fourier} Neural Operator for Parametric Partial Differential
+                   Equations},
+  booktitle     = {International Conference on Learning Representations ({ICLR})},
+  year          = {2021},
+  eprint        = {2010.08895},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://openreview.net/forum?id=c8P9NQVtmnO},
+}
+
+@inproceedings{KingmaBa2015Adam,
+  author        = {Kingma, Diederik P. and Ba, Jimmy},
+  title         = {{Adam}: A Method for Stochastic Optimization},
+  booktitle     = {3rd International Conference on Learning Representations ({ICLR})},
+  address       = {San Diego, CA, USA},
+  year          = {2015},
+  eprint        = {1412.6980},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  doi           = {10.48550/arXiv.1412.6980},
+}
+
+% ── Confocal Imaging / Colocalization ─────────────────────────────────────────
+
+@article{Manders1993Colocalization,
+  author  = {Manders, E. M. M. and Verbeek, F. J. and Aten, J. A.},
+  title   = {Measurement of co-localization of objects in dual-colour confocal images},
+  journal = {Journal of Microscopy},
+  year    = {1993},
+  volume  = {169},
+  number  = {3},
+  pages   = {375--382},
+  doi     = {10.1111/j.1365-2818.1993.tb03313.x},
+}
+
+% ── Microbial Community Modelling (foundational) ──────────────────────────────
+
+@article{May1972Stability,
+  author  = {May, Robert M.},
+  title   = {Will a Large Complex System be Stable?},
+  journal = {Nature},
+  year    = {1972},
+  volume  = {238},
+  number  = {5364},
+  pages   = {413--414},
+  doi     = {10.1038/238413a0},
+}
+
+@article{TaylorJonker1978Replicator,
+  author  = {Taylor, Peter D. and Jonker, Leo B.},
+  title   = {Evolutionarily stable strategies and game dynamics},
+  journal = {Mathematical Biosciences},
+  year    = {1978},
+  volume  = {40},
+  number  = {1--2},
+  pages   = {145--156},
+  doi     = {10.1016/0025-5564(78)90077-9},
+}
+
+@book{Lotka1925Elements,
+  author    = {Lotka, Alfred J.},
+  title     = {Elements of Physical Biology},
+  publisher = {Williams \& Wilkins},
+  address   = {Baltimore},
+  year      = {1925},
+  note      = {Reprinted 1956 as \emph{Elements of Mathematical Biology}, Dover},
+}
+
+@article{Marsland2019MicrobialCRM,
+  author  = {Marsland III, Robert and Cui, Wenping and Goldford, Joshua
+             and Sanchez, Alvaro and Korolev, Kirill and Mehta, Pankaj},
+  title   = {Available energy fluxes drive a transition in the diversity,
+             stability, and functional structure of microbial communities},
+  journal = {PLOS Computational Biology},
+  year    = {2019},
+  volume  = {15},
+  number  = {2},
+  pages   = {e1006793},
+  doi     = {10.1371/journal.pcbi.1006793},
+}
+
+% ── Metabolic Modelling (FBA / dFBA / COMETS) ─────────────────────────────────
+
+@article{OrthThiele2010WhatIsFBA,
+  author  = {Orth, Jeffrey D. and Thiele, Ines and Palsson, Bernhard {\O}.},
+  title   = {What is flux balance analysis?},
+  journal = {Nature Biotechnology},
+  year    = {2010},
+  volume  = {28},
+  number  = {3},
+  pages   = {245--248},
+  doi     = {10.1038/nbt.1614},
+}
+
+@article{Mahadevan2002DynamicFBA,
+  author  = {Mahadevan, Radhakrishnan and Edwards, Jeremy S. and Doyle III, Francis J.},
+  title   = {Dynamic Flux Balance Analysis of Diauxic Growth in {Escherichia coli}},
+  journal = {Biophysical Journal},
+  year    = {2002},
+  volume  = {83},
+  number  = {3},
+  pages   = {1331--1340},
+  doi     = {10.1016/S0006-3495(02)73903-9},
+}
+
+@article{Ebrahim2013COBRApy,
+  author  = {Ebrahim, Ali and Lerman, Joshua A. and Palsson, Bernhard O.
+             and Hyduke, Daniel R.},
+  title   = {{COBRApy}: {COnstraints}-{Based} {Reconstruction} and {Analysis}
+             for {Python}},
+  journal = {BMC Systems Biology},
+  year    = {2013},
+  volume  = {7},
+  number  = {1},
+  pages   = {74},
+  doi     = {10.1186/1752-0509-7-74},
+}
+
+@article{Dukovski2021COMETS,
+  author    = {Dukovski, Ilija and Baji{\'c}, Djordje and Chac{\'o}n, Jeremy M.
+               and Quintin, Michael and Vila, Jean C. C. and Sulheim, Snorre
+               and Pacheco, Alan R. and Bernstein, David B. and Riehl, William J.
+               and Korolev, Kirill S. and Sanchez, Alvaro and Harcombe, William R.
+               and Segr{\`e}, Daniel},
+  title     = {A metabolic modeling platform for the computation of microbial
+               ecosystems in time and space ({COMETS})},
+  journal   = {Nature Protocols},
+  year      = {2021},
+  volume    = {16},
+  number    = {11},
+  pages     = {5030--5082},
+  doi       = {10.1038/s41596-021-00593-3},
+}
+
+% ── 16S / Metagenomics Tooling ────────────────────────────────────────────────
+
+@article{Rognes2016VSEARCH,
+  author  = {Rognes, Torbj{\o}rn and Flouri, Tom{\'a}{\v{s}} and Nichols, Ben
+             and Quince, Christopher and Mah{\'e}, Fr{\'e}d{\'e}ric},
+  title   = {{VSEARCH}: a versatile open source tool for metagenomics},
+  journal = {PeerJ},
+  year    = {2016},
+  volume  = {4},
+  pages   = {e2584},
+  doi     = {10.7717/peerj.2584},
+}
+
+@article{Quast2013SILVA,
+  author  = {Quast, Christian and Pruesse, Elmar and Yilmaz, Pelin and Gerken, Jan
+             and Schweer, Timmy and Yarza, Pablo and Peplies, J{\"o}rg
+             and Gl{\"o}ckner, Frank Oliver},
+  title   = {The {SILVA} ribosomal {RNA} gene database project: improved data
+             processing and web-based tools},
+  journal = {Nucleic Acids Research},
+  year    = {2013},
+  volume  = {41},
+  number  = {D1},
+  pages   = {D590--D596},
+  doi     = {10.1093/nar/gks1219},
+}
+
+@article{Robeson2021RESCRIPt,
+  author  = {Robeson II, Michael S. and O'Rourke, Devon R. and Kaehler, Benjamin D.
+             and Ziemski, Michal and Dillon, Matthew R. and Foster, Jeffrey T.
+             and Bokulich, Nicholas A.},
+  title   = {{RESCRIPt}: Reproducible sequence taxonomy reference database management},
+  journal = {PLOS Computational Biology},
+  year    = {2021},
+  volume  = {17},
+  number  = {11},
+  pages   = {e1009581},
+  doi     = {10.1371/journal.pcbi.1009581},
+}
+
+@article{Bokulich2018FeatureClassifier,
+  author  = {Bokulich, Nicholas A. and Kaehler, Benjamin D. and Rideout, Jai Ram
+             and Dillon, Matthew and Bolyen, Evan and Knight, Rob
+             and Huttley, Gavin A. and Caporaso, J. Gregory},
+  title   = {Optimizing taxonomic classification of marker-gene amplicon sequences
+             with {QIIME~2}'s q2-feature-classifier plugin},
+  journal = {Microbiome},
+  year    = {2018},
+  volume  = {6},
+  pages   = {90},
+  doi     = {10.1186/s40168-018-0470-z},
+}
+
+@article{Blanco2023MetaPhlAn4,
+  author  = {Blanco-M{\'i}guez, Aitor and Beghini, Francesco and Cumbo, Fabio
+             and McIver, Lauren J. and Thompson, Kelsey N. and Zolfo, Moreno
+             and Manghi, Paolo and Dubois, Leonard and Huang, Kun D.
+             and Thomas, Andrew Maltez and Nickols, William A. and Piccinno, Gianmarco
+             and Piperni, Elisa and Pun{\v{c}}och{\'a}{\v{r}}, Michal
+             and Valles-Colomer, Mireia and Tett, Adrian and Giordano, Francesca
+             and Davies, Richard and Wolf, Jonathan and Berry, Sarah E.
+             and Spector, Tim D. and Franzosa, Eric A. and Pasolli, Edoardo
+             and Asnicar, Francesco and Huttenhower, Curtis and Segata, Nicola},
+  title   = {Extending and Improving Metagenomic Taxonomic Profiling with
+             Uncharacterized Species Using {MetaPhlAn}~4},
+  journal = {Nature Biotechnology},
+  year    = {2023},
+  volume  = {41},
+  number  = {11},
+  pages   = {1633--1644},
+  doi     = {10.1038/s41587-023-01688-w},
+}
+
+@article{DiTommaso2017Nextflow,
+  author  = {Di Tommaso, Paolo and Chatzou, Maria and Floden, Evan W.
+             and Prieto Barja, Pablo and Palumbo, Emilio and Notredame, Cedric},
+  title   = {{Nextflow} enables reproducible computational workflows},
+  journal = {Nature Biotechnology},
+  year    = {2017},
+  volume  = {35},
+  number  = {4},
+  pages   = {316--319},
+  doi     = {10.1038/nbt.3820},
+}
+
+% ── Statistics ────────────────────────────────────────────────────────────────
+
+@book{Good2000Permutation,
+  author    = {Good, Phillip I.},
+  title     = {Permutation Tests: A Practical Guide to Resampling Methods for
+               Testing Hypotheses},
+  edition   = {2nd},
+  series    = {Springer Series in Statistics},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2000},
+  doi       = {10.1007/978-1-4757-3235-1},
+}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% Additions merged from heine_paper/references_ikm.bib — 2026-06-04
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Biofilm Mechanics ─────────────────────────────────────────────────────────
+
+@article{EhretBol2013,
+  author  = {Ehret, Alexander E. and B{\"o}l, Markus},
+  title   = {Modelling mechanical characteristics of microbial biofilms by
+             network theory},
+  journal = {Journal of the Royal Society Interface},
+  year    = {2013},
+  volume  = {10},
+  number  = {78},
+  pages   = {20120676},
+  doi     = {10.1098/rsif.2012.0676},
+}
+
+@article{Laspidou2014,
+  author  = {Laspidou, Chrysi S. and Liakopoulos, Anastasios and Bhatt, Meghana G.},
+  title   = {Structural and mechanical characterization of old biofilms and
+             their bridging to the bulk liquid},
+  journal = {Biofouling},
+  year    = {2014},
+  volume  = {30},
+  number  = {9},
+  pages   = {1081--1093},
+  doi     = {10.1080/08927014.2014.960943},
+}
+
+@book{Holzapfel2000,
+  author    = {Holzapfel, Gerhard A.},
+  title     = {Nonlinear Solid Mechanics: A Continuum Approach for Engineering},
+  publisher = {Wiley},
+  year      = {2000},
+}
+
+@book{Fung1993,
+  author    = {Fung, Yuan-Cheng},
+  title     = {Biomechanics: Mechanical Properties of Living Tissues},
+  publisher = {Springer},
+  year      = {1993},
+  edition   = {2nd},
+}
+
+% note: key "Pattem" for first-author Ccahuana-Vásquez is intentional shorthand
+@article{Pattem2018,
+  author  = {Ccahuana-V{\'a}squez, Renzo A. and Cury, Jaime A.},
+  title   = {Effect of sucrose concentration on the mechanical properties of
+             oral biofilms},
+  journal = {Scientific Reports},
+  year    = {2018},
+  volume  = {8},
+  pages   = {5110},
+  doi     = {10.1038/s41598-018-23340-z},
+  note    = {PMC5890245. AFM nanoindentation: low-sucrose 14.35~kPa vs
+             high-sucrose 0.55~kPa},
+}
+
+@article{Pattem2021,
+  author  = {Ccahuana-V{\'a}squez, Renzo A. and others},
+  title   = {Mechanical characterisation of hydrated oral biofilms by
+             micro-indentation},
+  journal = {Scientific Reports},
+  year    = {2021},
+  volume  = {11},
+  pages   = {3608},
+  doi     = {10.1038/s41598-021-83138-2},
+  note    = {PMC8355335. Hydrated: LC 10.4~kPa vs HC 2.8~kPa},
+}
+
+@article{Gloag2019,
+  author  = {Gloag, Erin S. and Fabbri, Silvio and Wozniak, Daniel J.
+             and Stoodley, Paul},
+  title   = {Biofilm mechanics: implications in infection and survival},
+  journal = {Biofilm},
+  year    = {2019},
+  volume  = {2},
+  pages   = {100017},
+  doi     = {10.1016/j.bioflm.2019.100017},
+  note    = {PMC6707914},
+}
+
+@article{Hohne2025,
+  author  = {H{\"o}hne, Dominik N. and others},
+  title   = {Extracellular matrix composition determines biofilm mechanical
+             properties},
+  journal = {npj Biofilms and Microbiomes},
+  year    = {2025},
+  note    = {Quantitative ECM composition--stiffness relationship,
+             16--51~kPa range},
+}
+
+@article{Ohmura2024,
+  author  = {Ohmura, Takuya and Skinner, Dominic J. and Neuhaus, Konstantin
+             and Choi, Gary P. T. and Dunkel, J{\"o}rn and Drescher, Knut},
+  title   = {In vivo microrheology reveals local elastic and plastic responses
+             inside {3D} bacterial biofilms},
+  journal = {Advanced Materials},
+  year    = {2024},
+  volume  = {36},
+  number  = {29},
+  pages   = {2314059},
+  doi     = {10.1002/adma.202314059},
+}
+
+% ── Numerical Methods ─────────────────────────────────────────────────────────
+
+@article{Martins2003ComplexStep,
+  author  = {Martins, Joaquim R. R. A. and Sturdza, Peter and Alonso, Juan J.},
+  title   = {The complex-step derivative approximation},
+  journal = {ACM Transactions on Mathematical Software},
+  year    = {2003},
+  volume  = {29},
+  number  = {3},
+  pages   = {245--262},
+  doi     = {10.1145/838250.838251},
+}
+
+% ── Bayesian / SMC methods (additional keys) ──────────────────────────────────
+
+@article{Holmes2017Power,
+  author  = {Holmes, Chris C. and Walker, Stephen G.},
+  title   = {Assigning a value to a power likelihood in a general {Bayesian}
+             model},
+  journal = {Biometrika},
+  year    = {2017},
+  volume  = {104},
+  number  = {2},
+  pages   = {497--503},
+  doi     = {10.1093/biomet/asx010},
+}
+
+@article{VarinReid2011,
+  author  = {Varin, Cristiano and Reid, Nancy and Firth, David},
+  title   = {An overview of composite likelihood methods},
+  journal = {Statistica Sinica},
+  year    = {2011},
+  volume  = {21},
+  number  = {1},
+  pages   = {5--42},
+}
+
+@article{Neal2011HMC,
+  author    = {Neal, Radford M.},
+  title     = {{MCMC} using {Hamiltonian} dynamics},
+  journal   = {Handbook of Markov Chain Monte Carlo},
+  year      = {2011},
+  pages     = {113--162},
+  publisher = {Chapman and Hall/CRC},
+}
+
+@inproceedings{Dance2025FSM,
+  author    = {Dance, Hugh and Glaser, Pierre and Orbanz, Peter
+               and Adams, Ryan P.},
+  title     = {Efficiently Vectorized {MCMC} on Modern Accelerators},
+  booktitle = {ICML 2025 Spotlight},
+  year      = {2025},
+  note      = {arXiv:2503.17405},
+}
+
+% alternate keys used in heine_paper/references_ikm.bib (same articles as
+% Kass1995Bayes, Roberts2001Optimal, Hoffman2014NUTS, DelMoral2006SMCSamplers)
+@article{KassRaftery1995BayesFactor,
+  author  = {Kass, Robert E. and Raftery, Adrian E.},
+  title   = {Bayes Factors},
+  journal = {Journal of the American Statistical Association},
+  year    = {1995},
+  volume  = {90},
+  number  = {430},
+  pages   = {773--795},
+  doi     = {10.1080/01621459.1995.10476572},
+}
+
+@article{RobertsRosenthal2001Optimal,
+  author  = {Roberts, Gareth O. and Rosenthal, Jeffrey S.},
+  title   = {Optimal scaling for various {Metropolis--Hastings} algorithms},
+  journal = {Statistical Science},
+  year    = {2001},
+  volume  = {16},
+  number  = {4},
+  pages   = {351--367},
+  doi     = {10.1214/ss/1015346320},
+}
+
+@article{HoffmanGelman2014NUTS,
+  author  = {Hoffman, Matthew D. and Gelman, Andrew},
+  title   = {The {No-U-Turn} sampler: adaptively setting path lengths in
+             {Hamiltonian Monte Carlo}},
+  journal = {Journal of Machine Learning Research},
+  year    = {2014},
+  volume  = {15},
+  pages   = {1593--1623},
+}
+
+@article{DelMoral2006SMC,
+  author  = {Del Moral, Pierre and Doucet, Arnaud and Jasra, Ajay},
+  title   = {Sequential {Monte Carlo} samplers},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  year    = {2006},
+  volume  = {68},
+  number  = {3},
+  pages   = {411--436},
+  doi     = {10.1111/j.1467-9868.2006.00553.x},
+}
+
+% ── ML / Deep Learning ────────────────────────────────────────────────────────
+
+@article{Weinan2018DEM,
+  author  = {E, Weinan and Yu, Bing},
+  title   = {The deep {Ritz} method: a deep learning-based numerical method
+             for solving variational problems},
+  journal = {Communications in Mathematics and Statistics},
+  year    = {2018},
+  volume  = {6},
+  pages   = {1--12},
+  doi     = {10.1007/s40304-018-0127-z},
+}
+
+% alternate citation form for JAX (note: jax2018github already present above)
+@article{Bradbury2018JAX,
+  author  = {Bradbury, James and Frostig, Roy and Hawkins, Peter
+             and Johnson, Matthew James and Leary, Chris and Maclaurin, Dougal
+             and Necula, George and Paszke, Adam and VanderPlas, Jake
+             and Wanderman-Milne, Skye and Zhang, Qiao},
+  title   = {{JAX}: composable transformations of {Python}+{NumPy} programs},
+  year    = {2018},
+  note    = {Software available from \url{https://github.com/google/jax}},
+}
+
+@inproceedings{Kipf2017GCN,
+  author    = {Kipf, Thomas N. and Welling, Max},
+  title     = {Semi-supervised classification with graph convolutional networks},
+  booktitle = {International Conference on Learning Representations ({ICLR})},
+  year      = {2017},
+}
+
+@article{AlphaVIDeepONet2025,
+  author  = {Garg, Somnath and Chakraborty, Souvik and Mahadevan, Sankaran},
+  title   = {$\alpha$-{VI} {DeepONet}: A prior-robust variational {Bayesian}
+             approach for enhancing {DeepONets} with uncertainty quantification},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  year    = {2025},
+  note    = {arXiv:2408.00681},
+}
+
+% ── IKM Group Papers ──────────────────────────────────────────────────────────
+
+@article{Soleimani2016SPHBiofilm,
+  author  = {Soleimani, Meisam and Wriggers, Peter and Stiesch, Meike
+             and others},
+  title   = {Numerical simulation and experimental validation of biofilm in a
+             multi-physics framework using an {SPH} based method},
+  journal = {Computational Mechanics},
+  year    = {2016},
+  volume  = {58},
+  number  = {4},
+  pages   = {619--633},
+  doi     = {10.1007/s00466-016-1308-9},
+}
+
+@article{Soleimani2019ViscoElasticGrowth,
+  author  = {Soleimani, Meisam},
+  title   = {Finite strain visco-elastic growth driven by nutrient diffusion:
+             theory, {FEM} implementation and an application to the biofilm
+             growth},
+  journal = {Computational Mechanics},
+  year    = {2019},
+  volume  = {64},
+  pages   = {1289--1301},
+  doi     = {10.1007/s00466-019-01708-0},
+}
+
+@article{Soleimani2020AnisotropicGrowth,
+  author  = {Soleimani, Meisam and Muthyala, Nikhil and Marino, Michele
+             and Wriggers, Peter},
+  title   = {A novel stress-induced anisotropic growth model driven by nutrient
+             diffusion: Theory, {FEM} implementation and applications in
+             bio-mechanical problems},
+  journal = {Journal of the Mechanics and Physics of Solids},
+  year    = {2020},
+  volume  = {144},
+  pages   = {104097},
+  doi     = {10.1016/j.jmps.2020.104097},
+}
+
+@article{Soleimani2023CoAggregation,
+  author  = {Soleimani, Meisam and Szafranski, Szymon P. and Qu, Taoran
+             and Mukherjee, Rumjhum and Stiesch, Meike and Wriggers, Peter
+             and Junker, Philipp},
+  title   = {Numerical and experimental investigation of multi-species
+             bacterial co-aggregation},
+  journal = {Scientific Reports},
+  year    = {2023},
+  volume  = {13},
+  pages   = {11839},
+  doi     = {10.1038/s41598-023-38806-2},
+}
+
+@article{Klempt2023PAMMBiofilm,
+  author  = {Klempt, Felix and Soleimani, Meisam and Junker, Philipp},
+  title   = {Numerical comparison of biofilm growth models using prominent
+             modeling approaches},
+  journal = {PAMM},
+  year    = {2023},
+  volume  = {22},
+  number  = {1},
+  pages   = {e202200054},
+  doi     = {10.1002/pamm.202200054},
+}
+
+@article{Mukherjee2025PgTitanium,
+  author  = {Mukherjee, Rumjhum and Klempt, Felix and Fuchs, Florian
+             and Doll-Nikutta, Katharina and Soleimani, Meisam and Wriggers, Peter
+             and Junker, Philipp and Stiesch, Meike and Szafranski, Szymon P.},
+  title   = {Biofilm development of \textit{{P}orphyromonas gingivalis} on
+             titanium surfaces in response to 1,4-dihydroxy-2-naphthoic acid
+             --- a hybrid in vitro--in silico approach},
+  journal = {Microbiology Spectrum},
+  year    = {2025},
+  volume  = {13},
+  number  = {10},
+  pages   = {e00410-25},
+  doi     = {10.1128/spectrum.00410-25},
+}
+
+@article{Kommerein2018HOBIC,
+  author  = {Kommerein, Nadine and Doll, Katharina and Stumpp, Nico S.
+             and Stiesch, Meike},
+  title   = {Development and characterization of an oral multispecies biofilm
+             implant flow chamber model},
+  journal = {PLOS ONE},
+  year    = {2018},
+  volume  = {13},
+  number  = {5},
+  pages   = {e0196967},
+  doi     = {10.1371/journal.pone.0196967},
+}
+
+@article{Bode2025ConstraintConforming,
+  author  = {Bode, Tobias and Soleimani, Meisam and Erdogan, Cem
+             and Hackl, Klaus and Wriggers, Peter and Junker, Philipp},
+  title   = {On constraint-conforming numerical discretizations in constitutive
+             material modeling},
+  journal = {Computational Mechanics},
+  year    = {2025},
+  volume  = {75},
+  number  = {3},
+  pages   = {1015--1031},
+  doi     = {10.1007/s00466-024-02548-3},
+}
+
+@article{GeislerJunker2025TSM,
+  author  = {Geisler, Hendrik and Erdogan, Cem and Nagel, Jan and others},
+  title   = {A new paradigm for the efficient inclusion of stochasticity in
+             engineering simulations: Time-separated stochastic mechanics},
+  journal = {Computational Mechanics},
+  year    = {2025},
+  volume  = {75},
+  number  = {1},
+  pages   = {211--235},
+  doi     = {10.1007/s00466-024-02500-5},
+}
+
+@article{Soleimani2025Atherosclerosis,
+  author  = {Soleimani, Meisam and Pourbandari, Danial and Chemaly, Melody
+             and Junker, Philipp and Haverich, Axel and Wriggers, Peter},
+  title   = {Combining Inflammation and Tissue Turnover in the Modeling of
+             Atherosclerosis Development Following the Outside-In Disease
+             Approach},
+  journal = {International Journal for Numerical Methods in Biomedical
+             Engineering},
+  year    = {2025},
+  volume  = {41},
+  number  = {12},
+  pages   = {e70131},
+  doi     = {10.1002/cnm.70131},
+}
+
+@article{JunkerBodeHackl2025Holistic,
+  author  = {Junker, Philipp and Bode, Tobias and Hackl, Klaus},
+  title   = {On a holistic variational formulation for material modeling
+             including dissipative evolution},
+  journal = {Journal of the Mechanics and Physics of Solids},
+  year    = {2025},
+  volume  = {200},
+  pages   = {106133},
+  doi     = {10.1016/j.jmps.2025.106133},
+}
+
+% ── Microbiology / Experimental Data ─────────────────────────────────────────
+
+@article{BayesianMultimodel2025NatComm,
+  author  = {Sch{\"a}lte, Yannik and Hasenauer, Jan},
+  title   = {Increasing certainty in systems biology models using {Bayesian}
+             multimodel inference},
+  journal = {Nature Communications},
+  year    = {2025},
+  doi     = {10.1038/s41467-025-62415-4},
+}
+
+@article{ShannonDiversityGuidelines2024,
+  author  = {Garc{\'i}a-Garc{\'i}a, Nuria and Tamames, Javier
+             and Linz, Alexandra M. and Pedr{\'o}s-Ali{\'o}, Carlos
+             and Puente-S{\'a}nchez, Fernando},
+  title   = {Key features and guidelines for the application of microbial
+             alpha diversity metrics},
+  journal = {Scientific Reports},
+  year    = {2024},
+  volume  = {14},
+  doi     = {10.1038/s41598-024-77864-y},
+}
+
+% correct version of EarlyImplantBiofilm2024 in references_ikm.bib
+@article{dieckow2024structure,
+  author  = {Dieckow, Sophie and Szafra{\'n}ski, Szymon P. and Grischke, Jasmin
+             and Qu, Taoran and Doll-Nikutta, Katharina and Steglich, Matthias
+             and Yang, Ines and H{\"a}ussler, Susanne and Stiesch, Meike},
+  title   = {Structure and composition of early biofilms formed on dental
+             implants are complex, diverse, subject-specific and dynamic},
+  journal = {npj Biofilms and Microbiomes},
+  year    = {2024},
+  volume  = {10},
+  pages   = {155},
+  doi     = {10.1038/s41522-024-00624-3},
+}
+
+% correct version of PeriImplantitisDysbiosis2025 in references_ikm.bib
+@article{cui2025microbial,
+  author  = {Cui, Ziwei and Wang, Peng and Gao, Weiyue},
+  title   = {Microbial dysbiosis in periodontitis and peri-implantitis:
+             pathogenesis, immune responses, and therapeutic},
+  journal = {Frontiers in Cellular and Infection Microbiology},
+  year    = {2025},
+  volume  = {15},
+  pages   = {1517154},
+  doi     = {10.3389/fcimb.2025.1517154},
+}
+
+@article{BiofilmMatrixMechanics2025,
+  author  = {Kold{\o}y, Sara and others},
+  title   = {Mechanical comparison of biofilms with altered matrix composition:
+             a study combining shear-rheology and microindentation},
+  year    = {2025},
+  note    = {PMC12264770},
+}
+
+@article{Villaverde2022BayesianSysBio,
+  author  = {Villaverde, Alejandro F. and Pathirana, Dilan
+             and Fr{\"o}hlich, Fabian and Hasenauer, Jan and Banga, Julio R.},
+  title   = {A protocol for dynamic model calibration},
+  journal = {Briefings in Bioinformatics},
+  year    = {2022},
+  volume  = {23},
+  number  = {1},
+  pages   = {bbab387},
+  doi     = {10.1093/bib/bbab387},
+}
+
+@book{Bergey2009,
+  author    = {Krieg, Noel R. and Staley, James T. and Brown, David R.
+               and Hedlund, Brian P. and Paster, Bruce J. and Ward, Naomi L.
+               and Ludwig, Wolfgang and Whitman, William B.},
+  title     = {Bergey's Manual of Systematic Bacteriology, Volume 3:
+               The Firmicutes},
+  publisher = {Springer},
+  year      = {2009},
+  edition   = {2nd},
+  doi       = {10.1007/978-0-387-68489-5},
+}
+
+% key says 1965 but year field is 1964 (actual publication year); cosmetic only
+@article{Rogosa1965Veillonella,
+  author  = {Rogosa, M.},
+  title   = {The genus \textit{Veillonella}: {I}. General cultural, ecological,
+             and biochemical considerations},
+  journal = {Journal of Bacteriology},
+  year    = {1964},
+  volume  = {87},
+  number  = {1},
+  pages   = {162--170},
+  doi     = {10.1128/jb.87.1.162-170.1964},
+}
+
+% key says 2021 (submission year); year field is 2022 (print publication)
+@article{Siddiqui2021Biofilm,
+  author  = {Siddiqui, Danish A. and Fidai, Arshad B. and Natarajan, Srinivasan G.
+             and Rodrigues, Danieli C.},
+  title   = {Multispecies oral biofilm formation on titanium implant surfaces:
+             an in vitro time-course study},
+  journal = {Dental Materials},
+  year    = {2022},
+  volume  = {38},
+  number  = {3},
+  pages   = {384--396},
+  doi     = {10.1016/j.dental.2021.12.020},
+}
+
+@article{Szafranski2025CT,
+  author  = {Szafra{\'n}ski, Szymon P. and Mukherjee, Rumjhum and Stiesch, Meike},
+  title   = {Integrated ecosystem analysis reveals community-type stratification
+             in peri-implant biofilms},
+  journal = {ISME Journal},
+  year    = {2025},
+  note    = {in review},
+}
+
+@article{Valm2012PairCorrelation,
+  author  = {Valm, Alexander M. and Mark Welch, Jessica L. and Rieken, Christopher W.
+             and Hasegawa, Yuki and Sogin, Mitchell L. and Oldenbourg, Rudolf
+             and Dewhirst, Floyd E. and Borisy, Gary G.},
+  title   = {Systems-level analysis of microbial community organization through
+             combinatorial labeling and spectral imaging},
+  journal = {PLOS ONE},
+  volume  = {7},
+  number  = {5},
+  pages   = {e36559},
+  year    = {2012},
+  doi     = {10.1371/journal.pone.0036559},
+}
+
+@article{Phalak2016Biofilm,
+  author  = {Phalak, Poonam and Chen, Jiun and Carlson, Ross P. and Henson, Michael A.},
+  title   = {Metabolic modeling of a chronic wound biofilm consortium predicts
+             spatial partitioning of bacterial species},
+  journal = {BMC Systems Biology},
+  volume  = {10},
+  pages   = {90},
+  year    = {2016},
+  doi     = {10.1186/s12918-016-0334-8},
+}
+
+@article{Giverso2024Colony,
+  author  = {Giverso, Chiara and Lorenzi, Tommaso and Preziosi, Luigi},
+  title   = {Mechanical and biological determinants of colony shape in
+             growing bacterial populations},
+  journal = {Journal of the Royal Society Interface},
+  volume  = {21},
+  pages   = {20230618},
+  year    = {2024},
+  doi     = {10.1098/rsif.2023.0618},
+}
+
+@article{Welch2016Biogeography,
+  author  = {Welch, Jessica L. Mark and Rossetti, Bjorn J. and Rieken, Christopher W. and Dewhirst, Floyd E. and Borisy, Gary G.},
+  title   = {Biogeography of a human oral microbiome at the micron scale},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {113},
+  number  = {6},
+  pages   = {E791--E800},
+  year    = {2016},
+  doi     = {10.1073/pnas.1522149113},
+}
+
+@misc{Shahshahani1979,
+  author    = {Shahshahani, Siavash},
+  title     = {A New Mathematical Framework for the Study of Linkage and Selection},
+  year      = {1979},
+  publisher = {American Mathematical Society},
+  series    = {Memoirs of the American Mathematical Society},
+  volume    = {211},
+  note      = {Introduced the Riemannian metric on the simplex now bearing the author's name; connection to replicator dynamics established in Hofbauer \& Sigmund (1998).},
+}
+
+@article{BoleaAlbero2014,
+  author  = {Bolea Albero, A. and Ehret, Alexander E. and B{\"o}l, Markus},
+  title   = {A new approach to the simulation of microbial biofilms by a theory
+             of fluid-like pressure-restricted finite growth},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  year    = {2014},
+  volume  = {272},
+  pages   = {271--289},
+  doi     = {10.1016/j.cma.2014.01.001},
+}
+
+@article{Bol2009Detachment,
+  author  = {B{\"o}l, Markus and M{\"o}hle, Ren{\'e} B. and Haesner, Marc and
+             Neu, Thomas R. and Horn, Harald and Krull, Rainer},
+  title   = {{3D} finite element model of biofilm detachment using real biofilm
+             structures from {CLSM} data},
+  journal = {Biotechnology and Bioengineering},
+  year    = {2009},
+  volume  = {103},
+  number  = {1},
+  pages   = {177--186},
+  doi     = {10.1002/bit.22235},
+}
+
+@article{Stoodley2002Material,
+  author  = {Stoodley, Paul and Cargo, Robert and Rupp, Charles J. and
+             Wilson, Steve and Klapper, Isaac},
+  title   = {Biofilm material properties as related to shear-induced deformation
+             and detachment phenomena},
+  journal = {Journal of Industrial Microbiology and Biotechnology},
+  year    = {2002},
+  volume  = {29},
+  number  = {6},
+  pages   = {361--367},
+  doi     = {10.1038/sj.jim.7000282},
+}
+
+@article{Shaw2004Burger,
+  author  = {Shaw, T. and Winston, M. and Rupp, C. J. and Klapper, I. and
+             Stoodley, P.},
+  title   = {Commonality of elastic relaxation times in biofilms},
+  journal = {Physical Review Letters},
+  year    = {2004},
+  volume  = {93},
+  number  = {9},
+  pages   = {098102},
+  doi     = {10.1103/PhysRevLett.93.098102},
+}
+
+@article{Cense2021OralBiofilm,
+  author  = {Auerkari, Elza I. and others},
+  title   = {Dependency of hydration and growth conditions on the mechanical
+             properties of oral biofilms},
+  journal = {Scientific Reports},
+  year    = {2021},
+  volume  = {11},
+  pages   = {16902},
+  doi     = {10.1038/s41598-021-96382-9},
+}
+
+@article{Rodriguez1994Growth,
+  author  = {Rodriguez, Edward K. and Hoger, Anne and McCulloch, Andrew D.},
+  title   = {Stress-dependent finite growth in soft elastic tissues},
+  journal = {Journal of Biomechanics},
+  year    = {1994},
+  volume  = {27},
+  number  = {4},
+  pages   = {455--467},
+  doi     = {10.1016/0021-9290(94)90021-3},
+}
+
+@article{Roache2002MMS,
+  author  = {Roache, Patrick J.},
+  title   = {Code verification by the method of manufactured solutions},
+  journal = {Journal of Fluids Engineering},
+  year    = {2002},
+  volume  = {124},
+  number  = {1},
+  pages   = {4--10},
+  doi     = {10.1115/1.1436090},
+}
+
+@article{Biot1941Consolidation,
+  author  = {Biot, Maurice A.},
+  title   = {General theory of three-dimensional consolidation},
+  journal = {Journal of Applied Physics},
+  year    = {1941},
+  volume  = {12},
+  number  = {2},
+  pages   = {155--164},
+  doi     = {10.1063/1.1712886},
+}
+
+@article{CahnHilliard1958,
+  author  = {Cahn, John W. and Hilliard, John E.},
+  title   = {Free Energy of a Nonuniform System. {I}. Interfacial Free Energy},
+  journal = {The Journal of Chemical Physics},
+  volume  = {28}, number = {2}, pages = {258--267}, year = {1958},
+}
+@article{AllenCahn1979,
+  author  = {Allen, Samuel M. and Cahn, John W.},
+  title   = {A microscopic theory for antiphase boundary motion and its application
+             to antiphase domain coarsening},
+  journal = {Acta Metallurgica}, volume = {27}, number = {6}, pages = {1085--1095}, year = {1979},
+}
+@article{Bourdin2008Variational,
+  author  = {Bourdin, Blaise and Francfort, Gilles A. and Marigo, Jean-Jacques},
+  title   = {The Variational Approach to Fracture},
+  journal = {Journal of Elasticity}, volume = {91}, number = {1--3}, pages = {5--148}, year = {2008},
+}
+@article{Miehe2010PhaseField,
+  author  = {Miehe, C. and Welschinger, F. and Hofacker, M.},
+  title   = {Thermodynamically consistent phase-field models of fracture: Variational
+             principles and multi-field {FE} implementations},
+  journal = {International Journal for Numerical Methods in Engineering},
+  volume  = {83}, number = {10}, pages = {1273--1311}, year = {2010},
+}
+
+@article{gholamalizadeh2022open,
+  author  = {Gholamalizadeh, Torkan and Moshfeghifar, Faezeh and Ferguson, Zachary and
+             Schneider, Teseo and Panozzo, Daniele and Darkner, Sune and Makaremi, Masrour and
+             Chan, Fran{\c{c}}ois and S{\o}ndergaard, Peter Lampel and Erleben, Kenny},
+  title   = {Open-Full-Jaw: An open-access dataset and pipeline for finite element models
+             of human jaw},
+  journal = {Computer Methods and Programs in Biomedicine},
+  volume  = {224}, pages = {107009}, year = {2022}, publisher = {Elsevier},
+}
+
+@incollection{HutchinsonSuo1992,
+  author    = {Hutchinson, J. W. and Suo, Z.},
+  title     = {Mixed Mode Cracking in Layered Materials},
+  booktitle = {Advances in Applied Mechanics},
+  editor    = {Hutchinson, J. W. and Wu, T. Y.},
+  volume    = {29}, pages = {63--191}, year = {1992}, publisher = {Elsevier},
+}
+
+@article{Geng2001,
+  author    = {Geng, Jian-Ping and Tan, Keson B. C. and Liu, Gui-Rong},
+  title     = {Application of finite element analysis in implant dentistry: a review of the literature},
+  journal   = {The Journal of Prosthetic Dentistry},
+  volume    = {85}, number = {6}, pages = {585--598}, year = {2001}}
+
+@article{Sevimay2005,
+  author    = {Sevimay, M. and Turhan, F. and K{\i}l{\i}{\c{c}}arslan, M. A. and Eskitascioglu, G.},
+  title     = {Three-dimensional finite element analysis of the effect of different bone quality on stress distribution in an implant-supported crown},
+  journal   = {The Journal of Prosthetic Dentistry},
+  volume    = {93}, number = {3}, pages = {227--233}, year = {2005}}
+
+@article{ReesJacobsen1997,
+  author    = {Rees, J. S. and Jacobsen, P. H.},
+  title     = {Elastic modulus of the periodontal ligament},
+  journal   = {Biomaterials},
+  volume    = {18}, number = {14}, pages = {995--999}, year = {1997}}
+
+@article{Cattaneo2005,
+  author    = {Cattaneo, P. M. and Dalstra, M. and Melsen, B.},
+  title     = {The finite element method: a tool to study orthodontic tooth movement},
+  journal   = {Journal of Dental Research},
+  volume    = {84}, number = {5}, pages = {428--433}, year = {2005}}
+
+@article{Kinney2003,
+  author    = {Kinney, J. H. and Marshall, S. J. and Marshall, G. W.},
+  title     = {The mechanical properties of human dentin: a critical review and re-evaluation of the dental literature},
+  journal   = {Critical Reviews in Oral Biology \& Medicine},
+  volume    = {14}, number = {1}, pages = {13--29}, year = {2003}}
+
+% ---- added 3 Oct 2026 with the ANSYS chapter (from ../biofilm_3tooth_refs.bib) ----
+@article{Klempt2024DiffusionDrivenGrowth,
+  author  = {Klempt, F. and Soleimani, M. and Wriggers, P. and Junker, P.},
+  title   = {A {H}amilton principle-based model for diffusion-driven biofilm growth},
+  journal = {Biomechanics and Modeling in Mechanobiology},
+  volume  = {23},
+  year    = {2024},
+  pages   = {2091--2113},
+  doi     = {10.1007/s10237-024-01883-x},
+  annote  = {Growth kinematics constitutive basis of this work: $F=F_e F_g$
+             (Sec. 2.1). NOTE: this paper's own $F_g=\alpha I$, not
+             $F_g=(1+\alpha)I$ as used elsewhere in this repo -- see the
+             comment above; unresolved as of 2026-08-20}
+}
+
+@article{Klempt2026ContinuumBacterialGrowth,
+  author  = {Klempt, F. and Geisler, H. and Soleimani, M. and Junker, P.},
+  title   = {A continuum multi-species bacterial growth model with a novel interaction scheme},
+  journal = {Archive of Applied Mechanics},
+  volume  = {96},
+  number  = {164},
+  year    = {2026},
+  doi     = {10.1007/s00419-026-03160-y},
+  annote  = {Published version of arXiv:2509.01274; 0-D material-point model
+             for the 5-species phi/psi interaction dynamics (Hamilton
+             principle, Eqs. 16-18). NOT the growth-kinematics source -- see
+             Klempt2024DiffusionDrivenGrowth for F=Fe*Fg, Fg=alpha I, alpha(0)=1}
+}
+
+@article{Klempt2023NumericalComparison,
+  author  = {Klempt, F. and Soleimani, M. and Junker, P.},
+  title   = {Numerical comparison of biofilm growth models using prominent
+             modeling approaches},
+  journal = {Proceedings in Applied Mathematics and Mechanics (PAMM)},
+  volume  = {22},
+  number  = {1},
+  pages   = {e202200054},
+  year    = {2023},
+  doi     = {10.1002/pamm.202200054},
+  annote  = {Read from the PDF (2026-10-01). Precursor spatial model: source
+             term scaled by a species-dependent factor $R_s$, consumption $g$
+             species-dependent; hydrostatic pressure inside the biofilm and
+             tension at its edge.}
+}
+
+@article{Bol2013BiofilmMechanicalCharacterisation,
+  author  = {B{\"o}l, M. and Ehret, A. E. and Bolea Albero, A. and
+             Hellriegel, J. and Krull, R.},
+  title   = {Recent advances in mechanical characterisation of biofilm and
+             their significance for material modelling},
+  journal = {Critical Reviews in Biotechnology},
+  volume  = {33},
+  number  = {2},
+  pages   = {145--171},
+  year    = {2013},
+  doi     = {10.3109/07388551.2012.679250},
+  annote  = {Cite where E\_SPEC is disclosed as an assumption: this is why no
+             better number exists. Verified against Crossref 2026-10-02}
+}
+
