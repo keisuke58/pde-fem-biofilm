@@ -197,6 +197,18 @@ this machine's specific workflow.
   Claude on the Contributors page just as surely. `pre-commit` does not
   receive the commit message; only `commit-msg` does.
 
+## People and how to address them (2026-10-04)
+
+- **Meisam Soleimani is a professor**: write "Prof. Soleimani" (title page:
+  Prof. Dr.-Ing. Meisam Soleimani), not "Dr.", even though the registration
+  form of 18.08.2026 lists him as "Dr.-Ing. M. Soleimani".
+- **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
+  Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
+  contact page). Not part of the December colloquium.
+- Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
+  Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
+  Soleimani and Dr.-Ing. Hendrik Geisler.
+
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
 These apply to every deck, speaker script, email draft or report written for
