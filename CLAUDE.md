@@ -30,7 +30,9 @@ Abaqus run is possible here but nothing has been run here yet.
 - `tier2b_real/`, `configs/`, `runs/` — Abaqus coupon/implant job generation,
   configs, and run logs.
 - `tests/` — pytest unit tests (`pytest tests/`).
-- `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, with
+- `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, and
+  Soleimani et al. 2023 (Sci. Rep., two-species co-aggregation in an ANSYS user
+  element), each with
   a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path

@@ -207,6 +207,20 @@ def neumann_laplacian():
 LAP = neumann_laplacian()
 
 
+def set_grid(n):
+    """Switch the whole module to an n^3 grid on the same 20 um cube (grid
+    convergence studies, 2026-10-04). Default n = 21, the paper's grid."""
+    global N, H, X, Y, Z, W, LAP, _ax, _w1
+    N = int(n)
+    H = L / (N - 1)
+    _ax = np.arange(N) * H
+    X, Y, Z = np.meshgrid(_ax, _ax, _ax, indexing="ij")
+    _w1 = np.ones(N); _w1[0] = _w1[-1] = 0.5
+    W = _w1[:, None, None] * _w1[None, :, None] * _w1[None, None, :]
+    W = W / W.sum()
+    LAP = neumann_laplacian()
+
+
 def solve_c(phi, g, dir_mask, variant):
     """Quasi-static Eq. 35: d lap(c) = g phi [c]; c = 1 on dir_mask."""
     free = ~dir_mask.ravel()

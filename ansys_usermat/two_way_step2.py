@@ -91,11 +91,13 @@ def main(argv=None):
     ap.add_argument("--dt", type=float, default=T.DT, help="coupling step (default 0.1)")
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--save", help="write the results to this .npz")
+    ap.add_argument("--n", type=int, default=21, help="grid nodes per edge (21 = the paper's)")
     ap.add_argument("--thesis", help="only draw the thesis figure from this .npz")
     args = ap.parse_args(argv)
     if args.thesis:
         return thesis_figure(args.thesis)
     T.DT = args.dt
+    T.K.set_grid(args.n)
     figstyle.apply(size=11)
     res = {(c, d): run(c, d) for c in CASES for d in DS}
     if args.save:

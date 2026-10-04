@@ -143,3 +143,6 @@ thesis/*.lof
 thesis/*.lot
 thesis/*.toc
 thesis/*.out
+
+# papers bundled under their licence (THIRD_PARTY.md)
+!references/*.pdf

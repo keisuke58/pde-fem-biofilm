@@ -36,6 +36,25 @@ numerical examples are reproduced in `JAXFEM/klempt2026_reproduction.py`.
 
 ---
 
+## `references/Soleimani2023_coaggregation_SciRep.pdf` — Soleimani et al. (2023), two-species co-aggregation model in an ANSYS user element
+
+> **Numerical and experimental investigation of multi-species bacterial co-aggregation**
+> Meisam Soleimani, Szymon P. Szafranski, Taoran Qu, Rumjhum Mukherjee, Meike Stiesch, Peter Wriggers, Philipp Junker
+> *Scientific Reports* (2023) **13**:11839
+> doi:[10.1038/s41598-023-38806-2](https://doi.org/10.1038/s41598-023-38806-2)
+> © The Author(s) 2023
+
+Licensed under the Creative Commons Attribution 4.0 International License
+(<http://creativecommons.org/licenses/by/4.0/>), which permits use and
+redistribution in any medium or format provided the authors and source are
+credited, the licence is linked, and any changes are indicated. **The PDF is
+bundled verbatim; no changes have been made to it.** Next to it,
+`references/Soleimani2023_coaggregation_SciRep.txt` is a plain-text extraction
+(`pdftotext -layout`) of the same article, added so the text can be searched;
+it is a change of format only, under the same licence and credit. Added
+2026-10-04. Reading notes: `SOLEIMANI2023_NOTES.md`.
+
+---
 ## `data/heine_species_distribution_biofilm.xlsx`
 
 Unpublished experimental data provided by the experimental side (Heine) for the
