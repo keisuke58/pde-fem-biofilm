@@ -81,11 +81,20 @@
 
 \vspace{14pt}
 \small Each step is checked before the next one builds on it.
+\begin{itemize}\footnotesize
+  \item point model: two misprints in Klempt et al.\ 2026 identified (no $+\gamma$ in Eq.\ 17, no $\tfrac12$ in Eq.\ 19)
+  \item same point model in Fritsch et al.\ 2025: their figures reproduced within 0.013
+\end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{The coupling: what the element does and what is added}
 \centering
+\small The element solves the biofilm field of Klempt et al.\ 2024 (Eq.\ 34):
+\[
+\dot\phi-\beta\,\Delta\phi-k_\alpha\,\alpha
++|\nabla\phi|\,r\,\frac{c}{k+c}\,\mathbf n_\phi\!\cdot\mathbf n_c=0
+\]
 \begin{tikzpicture}[ node distance=0.45cm and 0.55cm]
 \node[used,fbox=2.6cm] (f) {element field\\ (Klempt 2024)\\ $\phi$, $c$};
 \node[mine,fbox=2.4cm,right=of f] (e) {Eq.\ 36 at each\\ Gauss point\\ $\dot\alpha=k_\alpha\phi$};
@@ -107,13 +116,16 @@ $\beta,r,k,d,g$: the framework's example input, not from the paper.
 \begin{frame}{Model and boundary conditions}
 \vspace{-6pt}
 \begin{center}
-\includegraphics[width=\linewidth,height=0.6\textheight,keepaspectratio]{assets/fig_model_setup.png}
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig_model_setup.png}
 \end{center}
 \vspace{-6pt}
-\small
+\footnotesize
 \begin{itemize}
   \item 2 mm cube, 512 elements; only rigid-body motion fixed
   \item nutrient $c=1$ on the face $y=-1$ mm; seed of 32 elements with $\phi=1$
+  \item uniform growth is stress free; stress comes from differences in growth
+  \item used for Checks 1--3 and the two-species runs (ANSYS); the Klempt 2024
+        reproduction uses the paper's 20\,$\mu$m cube (Python)
 \end{itemize}
 \end{frame}
 
@@ -123,21 +135,38 @@ $\beta,r,k,d,g$: the framework's example input, not from the paper.
 \centering
 \begin{tikzpicture}[ node distance=0.5cm and 0.45cm]
 \node[used,fbox=2.2cm] (a) {ANSYS\\ IKM element};
-\node[mine,fbox=2.7cm,right=of a] (b) {material call (Fortran)\\ Eq.\ 36, composition};
+\node[mine,fbox=3.3cm,right=of a] (b) {material call (Fortran)\\ Eq.\ 36, composition};
 \node[mine,fbox=2.0cm,right=of b] (c) {bridge\\ C + socket};
 \node[mine,fbox=2.4cm,right=of c] (d) {point model\\ Python / JAX};
 \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
 \draw[arr] (d.south) to[bend left=22] node[below,font=\scriptsize]{new $\phi_i$, $\psi_i$ back to every Gauss point} (b.south);
 \end{tikzpicture}
 
-\vspace{20pt}
+\vspace{10pt}
 \begin{tabular}{@{}ll@{}}
 \textbf{speed} & single-element run 357\,s $\to$ \textbf{5.6\,s}\\
 \textbf{check} & every ANSYS call replayed in Python, difference 0\\
 \end{tabular}
 
 \vspace{6pt}
-\scriptsize\textcolor{gray}{grey: used as it is}\quad \textcolor{c3}{blue: written in this work}
+\begin{columns}[T]
+\begin{column}{0.42\textwidth}\footnotesize
+\textcolor{gray}{\textbf{used as it is}}
+\begin{itemize}
+  \item IKM element: field, stiffness
+  \item point-model equations (Klempt et al.\ 2026)
+\end{itemize}
+\end{column}
+\begin{column}{0.56\textwidth}\footnotesize
+\textcolor{c3}{\textbf{written in this work}}
+\begin{itemize}
+  \item Eq.\ 36 and the composition step in the material call
+  \item Fortran $\to$ Python bridge, sub-stepping
+  \item point-model solver (JAX): all 14 paper examples
+  \item checks: closed form in ANSYS, call replay, about 440 tests
+\end{itemize}
+\end{column}
+\end{columns}
 \end{frame}
 
 
@@ -175,10 +204,14 @@ same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
 % --------------------------------------------------------
 \begin{frame}{Four things found along the way (partner element)}
 \begin{enumerate}
-  \item growth variable = mean of both species fields $\Rightarrow$ halved with one species
-  \item start values must satisfy $\phi_1+\phi_2\le1$
-  \item first result set not in equilibrium $\Rightarrow$ excluded
-  \item front-growth term inactive (reading slip) $\Rightarrow$ the seed does not spread
+  \item growth variable = mean of both species fields $\Rightarrow$ halved with one species\\
+        {\footnotesize the unused field stays at its start value; intended?}
+  \item start values must satisfy $\phi_1+\phi_2\le1$\\
+        {\footnotesize the example input starts both at 1; for one species I start the second at 0}
+  \item first result set not in equilibrium $\Rightarrow$ excluded\\
+        {\footnotesize zero stress on the first calls while the element sets up its operators}
+  \item front-growth term inactive (reading slip) $\Rightarrow$ the seed does not spread\\
+        {\footnotesize it also uses $|\Delta\phi|$ where Eq.\ 34 has $|\nabla\phi|$; corrected in a test copy, $\phi$ exceeds 1}
 \end{enumerate}
 \vspace{8pt}
 \small Questions for Oliver. Checks 1--3 do not depend on them.
@@ -201,15 +234,15 @@ same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
 % --------------------------------------------------------
 \begin{frame}{Two species: results in the packed seed (ANSYS, $T^*=1$)}
 \centering
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}llll@{}}
 \toprule
-case (Klempt et al.\ 2026) & paper & coupled\\
+case (Klempt et al.\ 2026) & paper & coupled, $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.85$ / $0.95$\\
 \midrule
-3: coexistence & $0.60$ & $0.667$\\
-6: one species wins & $\approx0$ & $0.021$\\
+3: coexistence & $0.60$ & $0.667$ & $0.668$ / $0.664$\\
+6: one species wins & $\approx0$ ($\psi_1=0.05$) & $0.021$ ($\psi_1=0.048$) & --\\
 \bottomrule
 \end{tabular}\\[4pt]
-\footnotesize share $\phi_1/(\phi_1+\phi_2)$ (paper: point model alone)
+\footnotesize share $\phi_1/(\phi_1+\phi_2)$; paper: point model alone; parameters $c^*=100$, $\alpha^*=10$
 \vspace{10pt}
 \begin{itemize}\small
   \item same type of outcome; the ratio shifts because the field sets the amount
@@ -239,10 +272,13 @@ case (Klempt et al.\ 2026) & paper & coupled\\
         $\le0.001$ (right, Python)
   \item $s$ has no source in a paper
   \item Eq.\ 34 as printed moves the colony instead of growing it (Appendix D)
+  \item two $\alpha$: the element's own and Eq.\ 36 are integrated separately (Check 2)
 \end{itemize}
 \end{column}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}
+\includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}\\
+\scriptsize Composition at $T^*=1$ of the points first reached at each time; Klempt 2024
+test case 4.1 field (Python, 20\,$\mu$m cube), Klempt 2026 cases 3 and 6.
 \end{column}
 \end{columns}
 \end{frame}
@@ -273,9 +309,11 @@ case (Klempt et al.\ 2026) & paper & coupled\\
 \vspace{4pt}
 \small
 \begin{itemize}
-  \item admission granted 18 Aug; examiners Prof.\ Junker, Dr.\ Wangenheim
-  \item NIFE internship completed, report submitted
-  \item \textbf{submission in November}, presentation in December
+  \item admission granted 18 Aug 2026; examiners Prof.\ Junker (IKM), Dr.\ Wangenheim (IDS);
+        supervisors Prof.\ Soleimani, Dr.\ Geisler; thesis in English
+  \item NIFE internship completed (04.05--24.07), report submitted
+  \item \textbf{submission in November} (aiming for early November); presentation in
+        December, date to be fixed with both examiners
 \end{itemize}
 \end{frame}
 
