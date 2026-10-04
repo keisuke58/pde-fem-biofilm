@@ -135,9 +135,12 @@ def main(argv=None):
     ap.add_argument("--n", type=int, default=8, help="cells per edge (8 = the ANSYS mesh)")
     ap.add_argument("--dt", type=float, default=T.DT, help="coupling step (default 0.1)")
     ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--thesis", action="store_true", help="the thesis figure instead")
     args = ap.parse_args(argv)
     N, H = args.n, 2.0 / args.n
     T.DT = args.dt
+    if args.thesis:
+        return thesis_figure()
     figstyle.apply(size=11)
     S, D = grid_masks()
     cmap, norm = figstyle.klempt_cmap()
@@ -175,6 +178,42 @@ def main(argv=None):
                  fontsize=11.5)
     fig.savefig(args.out, dpi=200)
     print("wrote", args.out)
+
+
+THESIS_OUT = HERE.parent / "assets" / "fig_composition_local_nutrient_thesis.png"
+
+
+def thesis_figure(lams=(2.0, 3.0, 4.0)):
+    """Thesis version: nutrient c and the case-6 share on the section through the
+    seed, for three Thiele numbers. No title (the caption carries it)."""
+    figstyle.apply(size=11)
+    S, D = grid_masks()
+    cmap, norm = figstyle.klempt_cmap()
+    kx = N // 2 - 1
+    ext = (-1, 1, -1, 1)
+    fig, ax = plt.subplots(2, len(lams), figsize=(10, 6.6))
+    fig.subplots_adjust(left=0.08, right=0.86, bottom=0.09, top=0.94, wspace=0.08, hspace=0.12)
+    g = np.linspace(-1 + H / 2, 1 - H / 2, N)
+    for col, lam in enumerate(lams):
+        c = nutrient(S, D, lam)
+        sh = np.full((N,) * 3, np.nan)
+        sh[S] = shares("2sp_case6", c[S])
+        imc = ax[0, col].imshow(c[kx], origin="lower", extent=ext, cmap=cmap, norm=norm)
+        ims = ax[1, col].imshow(sh[kx], origin="lower", extent=ext, cmap=cmap, norm=norm)
+        ax[1, col].set_facecolor("#d9dde2")
+        ax[0, col].contour(g, g, S[kx].astype(float), [0.5], colors="white", linewidths=1.0)
+        ax[0, col].set_title(rf"$\Lambda={lam:g}$")
+        for r in range(2):
+            a = ax[r, col]; a.grid(False)
+            a.set_xticks([-1, 0, 1]); a.set_yticks([-1, 0, 1])
+            if col: a.set_yticklabels([])
+            if r == 0: a.set_xticklabels([])
+        ax[1, col].set_xlabel(r"$z$ [mm]")
+    ax[0, 0].set_ylabel("$y$ [mm]"); ax[1, 0].set_ylabel("$y$ [mm]")
+    c1 = fig.add_axes([0.88, 0.54, 0.015, 0.40]); fig.colorbar(imc, cax=c1, label="nutrient $c$ [-]")
+    c2 = fig.add_axes([0.88, 0.09, 0.015, 0.40]); fig.colorbar(ims, cax=c2, label=r"$\phi_1/(\phi_1+\phi_2)$, case 6")
+    fig.savefig(THESIS_OUT, dpi=300)
+    print("wrote", THESIS_OUT)
 
 
 if __name__ == "__main__":

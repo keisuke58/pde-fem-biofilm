@@ -90,10 +90,18 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dt", type=float, default=T.DT, help="coupling step (default 0.1)")
     ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--save", help="write the results to this .npz")
+    ap.add_argument("--thesis", help="only draw the thesis figure from this .npz")
     args = ap.parse_args(argv)
+    if args.thesis:
+        return thesis_figure(args.thesis)
     T.DT = args.dt
     figstyle.apply(size=11)
     res = {(c, d): run(c, d) for c in CASES for d in DS}
+    if args.save:
+        np.savez(args.save, **{f"{c}|{d}|{k}": np.asarray(v) for (c, d), (rec, phi, chi) in res.items()
+                               for k, v in (("t", rec["t"]), ("phi_mean", rec["phi"]), ("chi_mean", rec["chi"]),
+                                            ("phi", phi), ("chi", chi))})
     for c in CASES:
         for d in DS:
             rec = res[(c, d)][0]
@@ -131,6 +139,41 @@ def main(argv=None):
                  "mid-plane $z=10\\ \\mu$m, black: $\\phi=0.5$, grey: no biofilm", fontsize=11.5)
     fig.savefig(args.out, dpi=200)
     print("wrote", args.out)
+
+
+THESIS_OUT = HERE.parent / "assets" / "fig_two_way_step2_thesis.png"
+
+
+def thesis_figure(npz):
+    """Thesis version: phi at T* = 1 on the mid-plane for case 6 without and with
+    the feedback, and the mean phi of both cases over time. No title (the
+    caption carries it)."""
+    figstyle.apply(size=11)
+    z = np.load(npz)
+    K = T.K
+    kz = K.N // 2
+    cmap, norm = figstyle.klempt_cmap()
+    fig, ax = plt.subplots(1, 3, figsize=(12, 3.9), gridspec_kw={"width_ratios": [1, 1, 1.25]})
+    fig.subplots_adjust(left=0.06, right=0.98, bottom=0.15, top=0.9, wspace=0.35)
+    for a, d, ttl in ((ax[0], 0.0, "one-way"), (ax[1], 0.5, "with feedback, $d=0.5$")):
+        phi = z[f"2sp_case6|{d}|phi"]
+        im = a.imshow(phi[:, :, kz].T, origin="lower", extent=(0, K.L, 0, K.L), cmap=cmap, norm=norm,
+                      interpolation="bilinear")
+        a.set_title(f"case 6, {ttl}", fontsize=11)
+        a.set_xlabel(r"$x$ [$\mu$m]"); a.grid(False)
+        a.set_xticks([0, 10, 20]); a.set_yticks([0, 10, 20])
+    ax[0].set_ylabel(r"$y$ [$\mu$m]"); ax[1].set_yticklabels([])
+    cb = fig.colorbar(im, ax=ax[:2], shrink=0.9, pad=0.02)
+    cb.set_label(r"$\phi$ at $T^*=1$")
+    b = ax[2]
+    for c, col, lab in (("2sp_case3", "C0", "case 3"), ("2sp_case6", "C3", "case 6")):
+        b.plot(z[f"{c}|0.0|t"], z[f"{c}|0.0|phi_mean"], color="0.4", lw=1.2,
+               label="one-way" if c == "2sp_case3" else None)
+        b.plot(z[f"{c}|0.5|t"], z[f"{c}|0.5|phi_mean"], "--", color=col, lw=1.8, label=f"{lab}, with feedback")
+    b.set_xlabel(r"$T^*$"); b.set_ylabel(r"mean $\phi$")
+    b.legend(frameon=False, fontsize=9)
+    fig.savefig(THESIS_OUT, dpi=300)
+    print("wrote", THESIS_OUT)
 
 
 if __name__ == "__main__":
