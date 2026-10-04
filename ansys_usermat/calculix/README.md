@@ -53,3 +53,21 @@ Seed von Mises mean / seed mean stress, Pa:
   factor 1.6 and a factor 6 on the pressure.
 - Maxima grow with refinement for the linear elements (re-entrant corners of the
   staircase seed); quote averages, not peaks.
+
+## Does step 2 reach the stress? (2026-10-04)
+
+`two_way_stress.py` on the fields of `two_way_step2.py --dt 0.025 --d 0.3333333333 --save`
+(Klempt 2024 test case 4.1, alpha − 1 = k_alpha ∫phi dt up to 1.5e-3, C3D8I on the
+20³ grid, E (phi² + f), rigid-body constraints only). Biofilm = elements with phi ≥ 0.5;
+stresses in Pa:
+
+| case, d | biofilm volume | von Mises mean | von Mises 99 % | mean stress, mean |
+|---|---|---|---|---|
+| one-way (d = 0) | 0.735 | 3.43e-3 | 6.21e-3 | −1.72e-4 |
+| case 3, d = 1/3 | 0.768 (+4.5 %) | 3.57e-3 (+4 %) | 6.34e-3 (+2 %) | −1.46e-4 |
+| case 6, d = 1/3 | 0.657 (−11 %) | 3.01e-3 (−12 %) | 5.70e-3 (−8 %) | −2.43e-4 |
+
+The change in spreading carries over to the stress at about the same relative
+size: the composition reaches the stress through the amount of biofilm, without
+any species-dependent stiffness. Recorded as a cloud check; not in the thesis
+(decided 2026-10-04).
