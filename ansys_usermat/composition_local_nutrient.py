@@ -18,15 +18,19 @@ y = -1 mm), without ANSYS:
     runs the coupled scheme of the ANSYS runs (amount phi_cap = 0.9, 10 coupling
     steps of 0.1, s = 0.15) with c* = c*_0 * c(x).
 
-    python ansys_usermat/composition_local_nutrient.py
+    python ansys_usermat/composition_local_nutrient.py --n 32 --dt 0.025
         -> assets/fig_composition_local_nutrient.png
 
-Result (4 Oct 2026), share phi_1/(phi_1+phi_2) in the 32 seed elements:
-  Lambda = 1 (c in the seed 0.86-0.91): case 3 0.608, case 6 0.014-0.015
-  Lambda = 2 (0.60-0.73):               case 3 0.604-0.606, case 6 0.015-0.017
-  Lambda = 3 (0.38-0.57):               case 3 0.600-0.604, case 6 0.017-0.231
-  Lambda = 4 (0.23-0.44):               case 3 0.596-0.601, case 6 0.118-0.437
-Case 3 (coexistence) hardly depends on the nutrient level. In case 6 the
+Result (4 Oct 2026), share phi_1/(phi_1+phi_2) in the seed, converged
+(32^3 grid, coupling step 0.025; the figure is made with these settings):
+  Lambda = 3: case 3 0.652-0.665, case 6 0.024-0.219
+  Lambda = 4: case 3 0.627-0.664, case 6 0.025-0.438
+Convergence: from 16^3 to 32^3 the case-6 range at Lambda = 4 stays at
+0.03-0.44; the coupling step matters more for case 3 (0.60 at 0.1, 0.66 at
+0.025, the converged value of the ANSYS runs being 0.667). On the 8^3 ANSYS
+mesh with step 0.1 the case-6 range is 0.12-0.44: the interior is resolved,
+the edge facing the nutrient is not.
+Case 3 (coexistence) depends little on the nutrient level. In case 6 the
 takeover by species 2 is slower where the nutrient is low, so the seed's
 interior, far from the nutrient face, keeps more of species 1: a composition
 that varies in space without any spreading, once the consumption is strong
@@ -52,19 +56,23 @@ import figstyle  # noqa: E402
 import model_setup_fig as M  # noqa: E402
 
 OUT = HERE.parent / "assets" / "fig_composition_local_nutrient.png"
-N, H = 8, 0.25
+N, H = 8, 0.25                                   # set by --n
 LAMBDAS = [1.0, 2.0, 3.0, 4.0]
 
 
 def grid_masks():
+    """Seed and nutrient layer of the 8^3 deck, mapped by position onto an N^3 grid
+    (a cell belongs to them when its centre lies in one of their 8^3 elements)."""
     _, cen, seed, nut, _ = M.read_deck(M.DECK)
-    idx = lambda p: tuple(int(round((v + 1) / H - 0.5)) for v in p)
-    S = np.zeros((N,) * 3, bool); D = np.zeros((N,) * 3, bool)
-    for e in seed:
-        S[idx(cen[e])] = True
-    for e in nut:
-        D[idx(cen[e])] = True
-    return S, D
+    ax = -1 + H * (np.arange(N) + 0.5)
+    X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
+    P = np.stack([X, Y, Z], -1)
+    def inside(ids):
+        m = np.zeros((N,) * 3, bool)
+        for e in ids:
+            m |= np.all(np.abs(P - np.asarray(cen[e])) < 0.125 + 1e-9, axis=-1)
+        return m
+    return inside(seed), inside(nut)
 
 
 def nutrient(S, D, lam):
@@ -92,27 +100,50 @@ def nutrient(S, D, lam):
 
 
 def shares(case, cvals):
+    """phi_1/(phi_1+phi_2) at T* = 1 for every nutrient level in cvals, in one
+    vectorised call: c* = c*_0 * c per point, otherwise the coupled scheme of
+    composition_transport_check (rescale, advance s*DT, rescale)."""
+    import math
+    import jax
+    import jax.numpy as jnp
+    eco = T.eco
     T.ms.set_case(case)
     th, hp = T.ms.ECOLOGY_CASE["theta"], dict(T.ms.ECOLOGY_CASE["hp"])
     T.ms.set_case(None)
-    out = []
-    for c in cvals:
-        h = dict(hp); h["c"] = hp["c"] * c
-        adv = T.stepper(th, h)
-        G = T.seed_state(1); p = np.array([T.PHI_CAP])
-        for _ in range(10):
-            G = T.rescale(G, p); G = T.rescale(adv(G), p)
-        out.append(G[0, 0] / (G[0, 0] + G[0, 1]))
-    return np.array(out)
+    dt_pm = T.S * T.DT
+    n_sub = max(1, math.ceil(dt_pm / 1e-4 - 1e-9))
+    mask = eco.active_mask(2)
+    tht = jnp.asarray(th, dtype=jnp.float64)
+    eta = jnp.asarray(hp["eta"], dtype=jnp.float64)
+    steps = jnp.arange(n_sub)
+    run = jax.jit(jax.vmap(lambda g, c: eco._substep_scan(
+        g, tht, dt_pm / n_sub, steps, mask, c, jnp.float64(hp["alpha"]), eta)[0]))
+    cv = np.asarray(cvals, dtype=float)
+    G = T.seed_state(cv.size)
+    p = np.full(cv.size, T.PHI_CAP)
+    cst = jnp.asarray(hp["c"] * cv)
+    for _ in range(int(round(1.0 / T.DT))):
+        G = T.rescale(G, p)
+        G = T.rescale(np.asarray(run(jnp.asarray(G), cst)), p)
+    return G[:, 0] / (G[:, 0] + G[:, 1])
 
 
-def main():
+def main(argv=None):
+    import argparse
+    global N, H
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", type=int, default=8, help="cells per edge (8 = the ANSYS mesh)")
+    ap.add_argument("--dt", type=float, default=T.DT, help="coupling step (default 0.1)")
+    ap.add_argument("--out", default=str(OUT))
+    args = ap.parse_args(argv)
+    N, H = args.n, 2.0 / args.n
+    T.DT = args.dt
     figstyle.apply(size=11)
     S, D = grid_masks()
     cmap, norm = figstyle.klempt_cmap()
     fig, ax = plt.subplots(3, len(LAMBDAS), figsize=(13.5, 10))
     ext = (-1, 1, -1, 1)
-    kx = 3                                            # section x = -0.125 mm (through the seed)
+    kx = N // 2 - 1                                  # section just below x = 0 (through the seed)
     for col, lam in enumerate(LAMBDAS):
         c = nutrient(S, D, lam)
         cs = c[S]
@@ -127,7 +158,7 @@ def main():
         ax[0, col].set_title(rf"$\Lambda={lam:g}$")
         for r in range(3):
             a = ax[r, col]; a.grid(False)
-            figstyle.element_grid(a, np.linspace(-1, 1, N + 1), np.linspace(-1, 1, N + 1), alpha=0.25)
+            figstyle.element_grid(a, np.linspace(-1, 1, 9), np.linspace(-1, 1, 9), alpha=0.25)
             a.set_xticks([-1, 0, 1]); a.set_yticks([-1, 0, 1])
             if col: a.set_yticklabels([])
             if r < 2: a.set_xticklabels([])
@@ -138,11 +169,12 @@ def main():
         a.set_xlabel(r"$z$ [mm]")
     fig.colorbar(imc, ax=ax[0, :], label="$c$ [-]", shrink=0.9, pad=0.015)
     fig.colorbar(im, ax=ax[1:, :], label=r"$\phi_1/(\phi_1+\phi_2)$", shrink=0.9, pad=0.015)
-    fig.suptitle("Local nutrient in the point model (Python, ANSYS model 2 mm, section $x=-0.125$ mm);\n"
+    fig.suptitle(f"Local nutrient in the point model (Python, ANSYS model 2 mm on a {N}$^3$ grid, coupling step {T.DT:g}, "
+                 f"section $x={-H / 2:g}$ mm);\n"
                  r"nutrient held at $y=-1$ mm, consumed in the seed; $\Lambda^2=gL^2/d$; grey: no biofilm",
                  fontsize=11.5)
-    fig.savefig(OUT, dpi=200)
-    print("wrote", OUT)
+    fig.savefig(args.out, dpi=200)
+    print("wrote", args.out)
 
 
 if __name__ == "__main__":

@@ -32,9 +32,10 @@ the species. Chapter 5 states it as a limitation.
 point model on the partner's 8^3 model (steady nutrient with first-order
 consumption in the seed, c held at y = -1 mm; Thiele number Lambda scanned
 because the partner's d and g are example inputs). Case 3 hardly changes
-(share 0.596-0.608). In case 6 the takeover is slower where c is low: for
-Lambda = 4 the share in the seed ranges from 0.12 near the nutrient face to
-0.44 in the interior (`assets/fig_composition_local_nutrient.png`). So step 1
+(share 0.63-0.66). In case 6 the takeover is slower where c is low: for
+Lambda = 4 the share in the seed ranges from 0.03 near the nutrient face to
+0.44 in the interior, converged in grid (16^3, 32^3) and coupling step (0.025)
+(`assets/fig_composition_local_nutrient.png`). So step 1
 alone gives a composition that varies in space in ANSYS, without the front
 term and without waiting for the authors.
 

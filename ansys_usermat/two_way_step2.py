@@ -61,7 +61,7 @@ def run(case, d):
     G = np.zeros((n, 12)); started = np.zeros(n, bool)
     chi = np.full(phi.shape, 0.5)
     rec = {"t": [0.0], "phi": [phi.mean()], "chi": [0.5]}
-    for k in range(1, 11):
+    for k in range(1, int(round(1.0 / T.DT)) + 1):
         r_field = 100 * s * ((1 + d) * chi + (1 - d) * (1 - chi))
         K.R, K.BETA, K.K_A = r_field, 2 * s, 1e-3 * s
         _, phi, _ = B.run_setup(phi, B.nutrient_mask("edge"), 1e8, "ic", "first_order", "abs",
@@ -80,7 +80,13 @@ def run(case, d):
     return rec, phi, chi
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dt", type=float, default=T.DT, help="coupling step (default 0.1)")
+    ap.add_argument("--out", default=str(OUT))
+    args = ap.parse_args(argv)
+    T.DT = args.dt
     figstyle.apply(size=11)
     res = {(c, d): run(c, d) for c in CASES for d in DS}
     for c in CASES:
@@ -118,8 +124,8 @@ def main():
     fig.suptitle("Two-way coupling, step 2 (Python): front growth rate $r=\\sum_i\\chi_i r_i$, "
                  "$r_{1,2}=(1\\pm d)\\,r$ (not from a paper);\nKlempt 2024 test case 4.1 field, "
                  "mid-plane $z=10\\ \\mu$m, black: $\\phi=0.5$, grey: no biofilm", fontsize=11.5)
-    fig.savefig(OUT, dpi=200)
-    print("wrote", OUT)
+    fig.savefig(args.out, dpi=200)
+    print("wrote", args.out)
 
 
 if __name__ == "__main__":
