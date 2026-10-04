@@ -210,6 +210,10 @@ this machine's specific workflow.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.
+- Addresses (from earlier mail): junker@ikm.uni-hannover.de,
+  soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
+  klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
+  (4 Oct) already has To: Junker, Wangenheim; Cc: Soleimani, Geisler.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
