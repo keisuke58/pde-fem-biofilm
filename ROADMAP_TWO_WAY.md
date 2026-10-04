@@ -53,6 +53,23 @@ normalise it by the held value, call `biofilm_ecology_hook_c` instead of
 `biofilm_ecology_hook` in the composition fragment, relink, and re-run case 6
 with a consumption strong enough for c to drop across the seed.
 
+## Steps 2-4 prototyped in Python (4 Oct 2026)
+
+- **Step 3, composition -> stiffness** (`ansys_usermat/two_way_step3.py`): with the
+  seed composition of step 1 (case 6, chi_1 = 0.12-0.44) and E_2/E_1 up to 5 at
+  the same mean modulus, the seed's average stresses change by at most 0.2 %.
+  The seed is about 1000 times stiffer than the void, so the soft surroundings
+  set its stress. The step matters only where the biofilm itself carries the
+  load (a contiguous biofilm on a substrate), not for a seed in a void.
+- **Step 4, stress -> growth**: in this model |p|/mu in the seed is about
+  4e-5 Pa / 3.36 Pa = 1e-5, so a stress-dependent growth law changes nothing
+  with the Klempt 2024 parameters, while Eq. 30's mechanical term as written
+  (divided by eta_phi = 1e-10) would stop all growth (KLEMPT2024_REPRODUCTION.md
+  sec. 12). Step 4 needs a different growth law (e.g. Soleimani et al. 2020) and
+  realistic stress levels.
+- **Step 2, composition -> spreading** (`ansys_usermat/two_way_step2.py`): result
+  to follow.
+
 ## Checks to carry over
 
 Each step must keep the checks that pass today:
