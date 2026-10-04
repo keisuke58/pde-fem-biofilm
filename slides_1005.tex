@@ -19,6 +19,11 @@
 
 \definecolor{c3}{RGB}{30,80,160}
 \definecolor{warn}{RGB}{200,30,30}
+\tikzset{fbox/.style={draw,rounded corners,align=center,font=\footnotesize,minimum height=0.95cm,text width=#1},
+  fbox/.default=2.3cm,
+  used/.style={fbox,fill=gray!15},
+  mine/.style={fbox,fill=c3!18,draw=c3},
+  arr/.style={-{Latex[length=2mm]},thick}}
 \setbeamercolor{frametitle}{bg=c3, fg=white}
 \setbeamertemplate{navigation symbols}{}
 
@@ -60,33 +65,40 @@
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Verification of the growth law (before coupling)}
+\begin{frame}{Verification, step by step}
 \centering
-$\mathbf F=\mathbf F_e\mathbf F_g$, $\mathbf F_g=\alpha\mathbf I$ as an ANSYS user material\\[8pt]
-\begin{tabular}{@{}lll@{}}
-\toprule
-Check & Reference & Result\\
-\midrule
-Fully constrained cube & closed form & exact\\
-Free growth & stress $=0$ & $10^{-10}$\\
-Point model, 14 examples of Klempt et al.\ 2026 & paper figures & reproduced\\
-\bottomrule
-\end{tabular}
+\begin{tikzpicture}[ node distance=0.35cm and 0.5cm]
+\node[mine] (a) {growth law\\ $\mathbf F_g=\alpha\mathbf I$};
+\node[mine,right=of a] (b) {point model\\ (Klempt 2026)};
+\node[mine,right=of b] (c) {coupling at\\ one point};
+\node[mine,right=of c] (d) {whole model\\ 512 elements};
+\draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\node[below=0.25cm of a,font=\scriptsize,text width=2.3cm,align=center] {closed form exact;\\ free growth $10^{-10}$};
+\node[below=0.25cm of b,font=\scriptsize,text width=2.3cm,align=center] {14 paper examples\\ reproduced};
+\node[below=0.25cm of c,font=\scriptsize,text width=2.3cm,align=center] {exact solution\\ to $3\times10^{-11}$};
+\node[below=0.25cm of d,font=\scriptsize,text width=2.3cm,align=center] {same pattern\\ cosine 1.0000};
+\end{tikzpicture}
+
+\vspace{14pt}
+\small Each step is checked before the next one builds on it.
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{The coupling: what the element does and what is added}
-\textbf{The element (unchanged)} solves the biofilm field of Klempt et al.\ 2024:
-\[
-\dot\phi-\beta\,\Delta\phi-k_\alpha\,\alpha
-+|\nabla\phi|\,r\,\frac{c}{k+c}\,\mathbf n_\phi\!\cdot\mathbf n_c=0
-\]
-\textbf{Added in this work}, at every Gauss point:
-\[
-\alpha_{n+1}=\alpha_n+k_\alpha\,\phi\,\Delta t\ \ \text{(Eq.\ 36)}
-\quad\longrightarrow\quad \mathbf F_g=\alpha\mathbf I\ \longrightarrow\ \text{stress}
-\]
-\vspace{4pt}
+\centering
+\begin{tikzpicture}[ node distance=0.45cm and 0.55cm]
+\node[used,fbox=2.6cm] (f) {element field\\ (Klempt 2024)\\ $\phi$, $c$};
+\node[mine,fbox=2.4cm,right=of f] (e) {Eq.\ 36 at each\\ Gauss point\\ $\dot\alpha=k_\alpha\phi$};
+\node[mine,fbox=2.0cm,right=of e] (g) {growth\\ $\mathbf F_g=\alpha\mathbf I$};
+\node[mine,fbox=1.7cm,right=of g] (s) {stress};
+\draw[arr] (f)--node[above,font=\scriptsize]{$\phi$}(e);
+\draw[arr] (e)--node[above,font=\scriptsize]{$\alpha$}(g);
+\draw[arr] (g)--(s);
+\node[above=0.15cm of f,font=\scriptsize,text=gray] {unchanged};
+\node[above=0.15cm of g,font=\scriptsize,text=c3] {added in this work};
+\end{tikzpicture}
+
+\vspace{12pt}
 \footnotesize Klempt 2024 Table 2: $k_\alpha=10^{-3}$, $E=10$ Pa, $\nu=0.49$.
 $\beta,r,k,d,g$: the framework's example input, not from the paper.
 \end{frame}
@@ -107,28 +119,25 @@ $\beta,r,k,d,g$: the framework's example input, not from the paper.
 
 
 % --------------------------------------------------------
-\begin{frame}{What I implemented, and what I used}
-\begin{columns}[T]
-\begin{column}{0.42\textwidth}
-\colorbox{gray!12}{\parbox{0.95\linewidth}{%
-\textbf{Used}\\[3pt]\small
-\begin{itemize}
-  \item IKM element: field and stiffness
-  \item point-model equations (Klempt et al.\ 2026)
-\end{itemize}}}
-\end{column}
-\begin{column}{0.56\textwidth}
-\colorbox{c3!12}{\parbox{0.95\linewidth}{%
-\textbf{Mine}\\[3pt]\small
-\begin{itemize}
-  \item Eq.\ 36 and the composition step in the element's material call
-  \item bridge Fortran $\to$ Python: one call per Gauss point and step;
-        \textbf{357\,s $\to$ 5.6\,s}
-  \item point-model solver (JAX): all 14 paper examples
-  \item checks: every ANSYS call replayed in Python, difference 0
-\end{itemize}}}
-\end{column}
-\end{columns}
+\begin{frame}{What I implemented}
+\centering
+\begin{tikzpicture}[ node distance=0.5cm and 0.45cm]
+\node[used,fbox=2.2cm] (a) {ANSYS\\ IKM element};
+\node[mine,fbox=2.7cm,right=of a] (b) {material call (Fortran)\\ Eq.\ 36, composition};
+\node[mine,fbox=2.0cm,right=of b] (c) {bridge\\ C + socket};
+\node[mine,fbox=2.4cm,right=of c] (d) {point model\\ Python / JAX};
+\draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\draw[arr] (d.south) to[bend left=22] node[below,font=\scriptsize]{new $\phi_i$, $\psi_i$ back to every Gauss point} (b.south);
+\end{tikzpicture}
+
+\vspace{20pt}
+\begin{tabular}{@{}ll@{}}
+\textbf{speed} & single-element run 357\,s $\to$ \textbf{5.6\,s}\\
+\textbf{check} & every ANSYS call replayed in Python, difference 0\\
+\end{tabular}
+
+\vspace{6pt}
+\scriptsize\textcolor{gray}{grey: used as it is}\quad \textcolor{c3}{blue: written in this work}
 \end{frame}
 
 
@@ -177,25 +186,16 @@ same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
 
 % --------------------------------------------------------
 \begin{frame}{Two species: composition from the point model (Klempt et al.\ 2026)}
-\begin{columns}[T]
-\begin{column}{0.52\textwidth}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{assets/fig_coupling_schematic.png}
+\end{center}
+\vspace{-6pt}
+\small
 \begin{itemize}
-  \item \textbf{amount} $\phi_{3D}$ from the element's field
-  \item \textbf{composition} $\phi_i/\sum_j\phi_j$, $\psi_i$ from the point
-        model at each Gauss point
-  \item one-way: composition does not act on the stress
+  \item the field sets the \textbf{amount}, the point model the \textbf{composition}
+  \item one-way: the composition does not act on the stress
 \end{itemize}
-\end{column}
-\begin{column}{0.46\textwidth}
-\begin{tikzpicture}[node distance=0.55cm, every node/.style={font=\scriptsize}]
-\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center] (f) {element field\\ amount $\phi_{3D}$};
-\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center,below=of f] (p) {point model\\ composition $\phi_i/\sum_j\phi_j$, $\psi_i$};
-\node[draw,fill=c3!10,rounded corners,text width=3.6cm,align=center,below=of p] (s) {growth $\alpha$ $\to$ stress};
-\draw[-{Latex}] (f) -- node[right]{rescale} (p);
-\draw[-{Latex}] (f.east) to[bend left=40] node[right]{Eq.\ 36} (s.east);
-\end{tikzpicture}
-\end{column}
-\end{columns}
 \end{frame}
 
 % --------------------------------------------------------
