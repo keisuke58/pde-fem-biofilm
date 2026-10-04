@@ -521,25 +521,27 @@ state each as an assumption.
     case~6, one species wins). Computed with the same scheme the ANSYS runs
     use. ``Front'' is a point the field fills from $0.05$ to $1$.}
   \label{tab:ch5-sensitivity}
-  \begin{tabular}{lccc}
+  \begin{tabular}{lcccc}
     \hline
-    & $s=0.05$ & $s=0.15$ & $s=0.5$\\
+    & $s=0.05$ & $s=0.15$ & $s=0.5$ & $s=1$\\
     \hline
-    case 3, front & 0.638 & 0.672 & 0.701\\
-    case 6, front & 0.230 & 0.014 & 0.014\\
+    case 3, front & 0.638 & 0.672 & 0.701 & 0.744\\
+    case 6, front & 0.230 & 0.014 & 0.014 & 0.014\\
     \hline
-    & $\phi_{\rm cap}=0.85$ & $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.95$\\
+    & $\phi_{\rm cap}=0.85$ & $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.95$ &\\
     \hline
-    case 3, packed seed & 0.668 & 0.667 & 0.664\\
-    case 6, packed seed & 0.023 & 0.021 & 0.014\\
+    case 3, packed seed & 0.668 & 0.667 & 0.664 &\\
+    case 6, packed seed & 0.023 & 0.021 & 0.014 &\\
     \hline
   \end{tabular}
 \end{table}
 
 \TierA{%
 Table~\ref{tab:ch5-sensitivity} shows what the assumptions do. The time link
-matters: in case~6 the winner only emerges for $s\gtrsim0.15$, and in case~3 it
-moves $\phi_1/(\phi_1+\phi_2)$ by $0.03$ to $0.06$. The cap does not: between $0.85$ and $0.9$
+matters: in case~6 the winner only emerges for $s\gtrsim0.15$ and the result
+does not change for larger $s$; in case~3 the share keeps rising slowly with $s$,
+from $0.672$ at $s=0.15$ to $0.744$ at $s=1$, while the outcome, coexistence,
+stays the same. The cap does not: between $0.85$ and $0.9$
 the packed seed and the interior agree, so the composition is continuous across
 the edge of the packed region. With $\phi_{\rm cap}=0.9$ the result is
 converged at a coupling time step of $0.025$ (to $0.0016$ against $0.0125$);
