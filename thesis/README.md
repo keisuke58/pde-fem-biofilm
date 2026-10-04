@@ -75,7 +75,7 @@ Open:
 | 29-30 Oct | proofreading, printing, binding |
 | **2 Nov** | **submission** (date to confirm) |
 | 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| 30 Nov-2 Dec | colloquium, before the December trip (3-11 Dec) |
+| Dec | colloquium, any date offered to the examiners; the December trip is booked after it is fixed |
 
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
