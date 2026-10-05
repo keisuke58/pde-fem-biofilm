@@ -9,8 +9,9 @@ push them when the chain ends.
 
 -Runs      deck names without .dat (in -WorkDir), each optionally ":case" (material
            server case for run_wired.ps1 -Case) and ":minutes" (timeout, default 150)
--WaitFor   a log of another chain: start only after it contains "chain end" or
-           "CHAIN EXCEPTION" (one ANSYS run at a time: one material-server port)
+-WaitFor   a log of another chain or script: start only after it contains
+           "<word> end" (chain end, after18 end, ...) or "EXCEPTION", and no ANSYS
+           process is left (one ANSYS run at a time: one material-server port)
 -Export    after the last run, export_runs_json.py writes <run>.json into this
            repo-relative folder; with -Push the JSON files are committed
            (commit.ps1, only those files) and the current branch is pushed (push.ps1)
@@ -70,7 +71,8 @@ try {
     L "chain start: $($Runs -join ', ')"
     if ($WaitFor) {
         L "waiting for $WaitFor"
-        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -match 'chain end|CHAIN EXCEPTION'))) { Start-Sleep 30 }
+        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -match '(?m)^\S+ \w+ end\s*$|EXCEPTION'))) { Start-Sleep 30 }
+        while (Get-Process ANSYS -ErrorAction SilentlyContinue) { Start-Sleep 30 }
         Start-Sleep 10
     }
     $done = @()
