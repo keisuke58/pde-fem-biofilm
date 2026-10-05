@@ -103,10 +103,52 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   growth="printed": mean phi 0.030, mean c 0.972 at T* = 0.2). Running.
 - **Parallel**: one species, 16^3, cpus = 4 gives the same printed values as one
   CPU (largest relative difference 0.0), in 0.6 min. `run_comp.ps1 -Cpus`.
-- **Abaqus-only mesh series** 8^3 ... 48^3 (one species, beta = 0.02, the
-  ANSYS 8^3 seed region, 6 CPUs): `_abqconv_1005.log`. ANSYS stops at 24^3
-  (32^3 out of memory); this gives the converged values the ANSYS runs approach.
-- 16^3 two species (no nutrient, consumption 6) against ANSYS: `_abq16_1005.log`.
+- **Abaqus-only mesh series** (done; one species, beta = 0.02, dt = 0.025,
+  T* = 1.1, the ANSYS 8^3 seed region, `--ic fraction`, 6 CPUs), Pa:
+
+  | mesh | seed von Mises | seed p | layer-1 p | minutes |
+  |---|---|---|---|---|
+  | 8^3 | 2.48e-4 | -1.61e-4 | 3.43e-5 | 0.4 |
+  | 16^3 | 4.91e-4 | -2.11e-4 | 4.87e-5 | 0.6 |
+  | 24^3 | 5.55e-4 | -2.24e-4 | 5.24e-5 | 1.9 |
+  | 32^3 | 5.79e-4 | -2.28e-4 | 5.38e-5 | 5.4 |
+  | 40^3 | 5.90e-4 | -2.30e-4 | 5.44e-5 | 16.1 |
+  | h -> 0 (second order, 24/32/40) | 6.09e-4 | -2.34e-4 | 5.55e-5 | |
+  | ANSYS 24^3 | 6.06e-4 (-0.5 %) | -2.45e-4 (+5 %) | 5.85e-5 (+5 %) | ~120 |
+
+  The differences 24->32->40 shrink by 2.1-2.2, as second-order convergence
+  predicts. ANSYS stops at 24^3 (32^3 out of memory); against the extrapolated
+  values its 24^3 seed von Mises is within 0.5 % and its mean stresses ~5 % high
+  (its seed is a jump at the integration points). 48^3 (470,596 equations,
+  unsymmetric direct solver) stopped in the first solve, most likely out of
+  memory; `*SOLUTION TECHNIQUE, TYPE=SEPARATED` would split the system.
+- **Front term, Klempt 2024 fig7_high** (done, 20^3, dt 0.002, T* = 0.2): the
+  domain mean phi agrees with the finite-difference reproduction at T* = 0.04
+  (0.0061 / 0.0068) and then falls behind (0.012 / 0.030 at 0.2). In both the
+  seed is eroded (max phi 0.11 / 0.17) and phi spreads thinly above it. Not a
+  usable check of the implementation: Eq. 34 as printed moves phi with the full
+  speed r c/(k+c) along n_c = grad c / |grad c|, and above the seed, where the
+  nutrient is hardly consumed, grad c ~ 0 and its direction is set by
+  discretisation noise (finite differences there, shape functions here). The
+  same ill-posedness as in the partner element (direction undefined where the
+  nutrient is uniform). A check needs a case with a well-defined grad c
+  everywhere (e.g. c held 1 / 0 on two faces, no consumption) or a regularised
+  n_c.
+- **16^3 two species against ANSYS** (done, ratio Abaqus / ANSYS, 8^3 -> 16^3):
+
+  | measure | 8^3 | 16^3 |
+  |---|---|---|
+  | no nutrient: seed share mean | 1.25 | 1.05 |
+  | no nutrient: layer-1 share | 0.81 | 0.96 |
+  | consumption 6: seed share mean | 0.67 | 0.85 |
+  | consumption 6: seed share min | 0.70 | 1.01 |
+  | consumption 6: layer-1 share | 0.77 | 0.97 |
+  | consumption 6: c seed min / mean | 1.30 / 1.06 | 1.13 / 1.02 |
+
+  Composition and nutrient approach ANSYS under refinement as the one-species
+  measures do.
+- **Four species, 8^3 cube** (done): seed phi sum 0.447, shares
+  0.395 / 0.268 / 0.187 / 0.150.
 
 ## Note
 
