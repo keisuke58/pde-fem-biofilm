@@ -260,6 +260,12 @@ examiners). Check each one before the document is handed over.
     stiffness.
   - Modelling assumptions (e.g. the time link s, φ_cap) are stated as
     assumptions, each with its sensitivity study.
+  - **β (diffusion of φ, Eq. 34) = 0.02 mm²/T*** in the ANSYS runs
+    (decided 2026-10-05): Klempt 2024 Table 2 (β = 2) converted to the
+    partner's 2 mm cube (KLEMPT2024_REPRODUCTION.md §8). The partner's
+    example value 1e−4 is shown only as a sensitivity case: its diffusion
+    length (~0.01 mm) is below every mesh, so the seed stress does not
+    converge. The conversion is an assumption and is stated as such.
 - **Units.** The partner's decks are `/units,MPA`, so `YOUNG_BIO = 1000`
   means 1000 MPa. Give units for every material constant. The Klempt 2024
   values are μ = 3.3557 Pa (E = 10 Pa, ν = 0.49).
