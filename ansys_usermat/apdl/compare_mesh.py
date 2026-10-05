@@ -5,8 +5,10 @@
         [--grid8 8] [--track 220]
 
 Both CSVs come from post_all_stress.mac (elem, seqv, sx, sy, sz, alpha,
-centroid). A CSV without centroid columns needs --grid8 8 (the 8^3 one from
-before 2 Oct; same assumed numbering as plot_3d.py). Stresses MPa -> Pa.
+centroid). An 8^3 CSV without centroid columns (before 2 Oct) needs the deck it
+was run with, --deck8 run.dat; --grid8 8 assumes x-fastest numbering, which the
+partner's deck does not have (5 Oct), so --track then picks the wrong 16^3
+elements. Stresses MPa -> Pa.
 
 Printed per mesh: seed size (alpha above half its maximum), the seed averages
 of alpha, von Mises and mean stress, the largest von Mises outside the seed,
@@ -47,9 +49,14 @@ def main(argv=None):
     ap.add_argument("csv8")
     ap.add_argument("csv16")
     ap.add_argument("--grid8", type=int, default=None)
+    ap.add_argument("--deck8", help="the 8^3 run's deck, for an 8^3 CSV without centroid columns "
+                                    "(use this, not --grid8: the deck is not numbered x fastest)")
     ap.add_argument("--track", type=int, default=220)
     a = ap.parse_args(argv)
-    c8 = read(a.csv8, a.grid8, 2.0)
+    c8 = read(a.csv8, a.grid8, 2.0, a.deck8)
+    if c8["_centroids"] == "grid":
+        print("WARNING: 8^3 centroids from --grid8 (assumed numbering); --track compares the wrong place "
+              "on the partner's deck, pass --deck8")
     c16 = read(a.csv16)
     s8, s16 = summary(c8), summary(c16)
     print(f"{'':22s} {'8^3':>11s} {'16^3':>11s} {'16/8':>7s} {'Python 16/8':>12s}")

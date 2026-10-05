@@ -72,10 +72,10 @@ def tensor(v):
     return np.array([[v[0], v[3], v[5]], [v[3], v[1], v[4]], [v[5], v[4], v[2]]])
 
 
-def from_csv(path, grid=None, size=2.0):
+def from_csv(path, grid=None, size=2.0, deck=None):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from plot_3d import read
-    col = read(path, grid, size)
+    col = read(path, grid, size, deck)
     cen = np.stack([col["cx"], col["cy"], col["cz"]], 1)
     ins = col["alpha"] > 0.5 * col["alpha"].max()
     h = np.min(np.diff(np.unique(np.round(cen[:, 0], 9))))
@@ -94,7 +94,8 @@ def from_csv(path, grid=None, size=2.0):
 def main():
     if "--csv" in sys.argv:
         g = int(sys.argv[sys.argv.index("--grid") + 1]) if "--grid" in sys.argv else None
-        return from_csv(sys.argv[sys.argv.index("--csv") + 1], g)
+        dk = sys.argv[sys.argv.index("--deck") + 1] if "--deck" in sys.argv else None
+        return from_csv(sys.argv[sys.argv.index("--csv") + 1], g, deck=dk)
     boxes = S.seed_boxes()
     print("stresses in Pa; layer = distance from the seed in 8^3 element sizes (0.25 mm)")
     for n in (8, 16):

@@ -12,7 +12,7 @@ F:\biofilm_upf_wired, with the material server around it.
 - refuses to start when port 8765 is taken (a leftover server would answer
   with its own case / species count);
 - copies the post-processing macros (callsite/post_*.mac) into the work dir;
-- moves comp/pm/phi traces and all_stress.csv / elem_stress.csv aside first
+- moves comp/pm/phi traces, all_stress.csv / elem_stress.csv and nut_field.csv aside first
   (<name>_prev_<time>.csv), so they hold this run only, and afterwards copies
   each one written to <name>_<job>.csv;
 - starts material_server.py (--case or --active-species), stops it afterwards
@@ -50,7 +50,8 @@ function Stop-Tree([int]$id) {
 }
 
 Copy-Item (Join-Path $PSScriptRoot 'callsite\post_*.mac') $WorkDir -Force
-$outputs = 'comp_trace.csv', 'age_trace.csv', 'pm_trace.csv', 'phi_trace.csv', 'all_stress.csv', 'elem_stress.csv'
+$outputs = 'comp_trace.csv', 'age_trace.csv', 'pm_trace.csv', 'phi_trace.csv', 'all_stress.csv', 'elem_stress.csv',
+    'nut_field.csv'                                      # callsite/post_nut.mac
 $ts = Get-Date -Format 'HHmmssfff'
 foreach ($f in $outputs) {
     $p = Join-Path $WorkDir $f

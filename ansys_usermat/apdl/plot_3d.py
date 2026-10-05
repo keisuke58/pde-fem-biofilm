@@ -5,12 +5,12 @@
     python ansys_usermat/apdl/plot_3d.py old_all_stress.csv --grid 8 --size 2.0
 
 The element centroids come from the cx, cy, cz columns of
-callsite/post_all_stress.mac. CSVs written before those columns existed can
-be drawn with --grid N --size L, which ASSUMES a regular N^3 block of side L
-centred at 0, elements numbered x fastest, then y, then z. The script prints
-a check of that assumption (where the largest alpha lands, and whether its
-six face neighbours are among the most stressed elements); do not use the
-picture if the check fails.
+callsite/post_all_stress.mac. For CSVs written before those columns existed,
+pass the deck the run used (--deck run.dat): the centroids are then computed
+from its nblock/eblock. --grid N --size L instead ASSUMES a regular N^3 block
+numbered x fastest, then y, then z; the partner's decks are not numbered that
+way (5 Oct: 8^3 runs x reversed, then z, then y), so the picture comes out
+mirrored and with axes swapped. Use --grid only without the deck.
 
 The block x >= x_seed, y < y_seed is cut away so the seed and the elements
 around it are visible. Left: von Mises in Pa on a log scale (the stress drops
@@ -27,20 +27,50 @@ from pathlib import Path
 import numpy as np
 
 
-def read(path, grid=None, size=None):
+def deck_centroids(deck):
+    """element number -> centroid, from the deck's nblock and eblock (solid format)."""
+    lines = Path(deck).read_text(encoding="latin-1").splitlines()
+    nodes, cen, i = {}, {}, 0
+    while i < len(lines):
+        s = lines[i].strip().lower()
+        if s.startswith("nblock"):
+            i += 2
+            while not lines[i].strip().startswith("-1") and not lines[i].strip().upper().startswith("N,"):
+                f = lines[i].split()
+                nodes[int(f[0])] = np.array([float(x) for x in f[-3:]])
+                i += 1
+        elif s.startswith("eblock"):
+            i += 2
+            while not lines[i].strip().startswith("-1"):
+                f = [int(x) for x in lines[i].split()]
+                cen[f[10]] = np.mean([nodes[n] for n in f[11:19]], axis=0)
+                i += 1
+        i += 1
+    return cen
+
+
+def read(path, grid=None, size=None, deck=None):
     with open(path, newline="") as f:
         rows = [r for r in csv.reader(f) if r]
     head = [h.strip() for h in rows[0]]
     a = np.array([[float(x) for x in r] for r in rows[1:]])
     col = {h: a[:, i] for i, h in enumerate(head)}
+    col["_centroids"] = "csv"
     if not {"cx", "cy", "cz"} <= set(head):
-        if grid is None:
-            raise SystemExit("no centroid columns: re-run with the updated "
-                             "post_all_stress.mac, or pass --grid/--size")
-        e = col["elem"].astype(int) - 1
-        h = size / grid
-        for k, name in enumerate(("cx", "cy", "cz")):
-            col[name] = -size / 2 + h * ((e // grid ** k) % grid + 0.5)
+        if deck is not None:
+            cen = deck_centroids(deck)
+            c = np.array([cen[int(e)] for e in col["elem"]])
+            col["cx"], col["cy"], col["cz"] = c[:, 0], c[:, 1], c[:, 2]
+            col["_centroids"] = "deck"
+        elif grid is not None:
+            e = col["elem"].astype(int) - 1
+            h = size / grid
+            for k, name in enumerate(("cx", "cy", "cz")):
+                col[name] = -size / 2 + h * ((e // grid ** k) % grid + 0.5)
+            col["_centroids"] = "grid"
+        else:
+            raise SystemExit("no centroid columns: pass the run's deck (--deck), "
+                             "or --grid/--size (assumed numbering)")
     col["p"] = (col["sx"] + col["sy"] + col["sz"]) / 3.0
     return col
 
@@ -97,10 +127,15 @@ def main(argv=None):
     ap.add_argument("--title", default="")
     ap.add_argument("--grid", type=int)
     ap.add_argument("--size", type=float)
+    ap.add_argument("--deck", help="the run's deck, for CSVs without centroid columns")
     a = ap.parse_args(argv)
 
-    g, axes = to_grid(read(a.csv, a.grid, a.size))
-    s, _ = check(g)
+    col = read(a.csv, a.grid, a.size, a.deck)
+    g, axes = to_grid(col)
+    if col["_centroids"] == "grid":
+        s, _ = check(g)
+    else:
+        s = np.unravel_index(np.nanargmax(g["alpha"]), g["alpha"].shape)
     q, p = g["seqv"] * 1e6, g["p"] * 1e6          # MPa -> Pa
     n = q.shape
     edges = []
