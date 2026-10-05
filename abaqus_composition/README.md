@@ -67,6 +67,29 @@ So the seed values on coarse meshes are set largely by how the initial seed is
 represented; the ring of tension is the same in both programs on every mesh.
 24^3 in Abaqus: 6 minutes on one core.
 
+## Two species and the nutrient field (5 Oct 2026)
+
+`make_cube_inp.py --case 2sp_case6` runs the composition mode (prop(28) = 7) with
+phi from the temperature. `--cons g` overlays a user element (`UEL` in
+`make_umat.py`, DOF 12 = c, DOF 11 = phi read only) that solves Eq. 35 as the
+partner's element does (quasi-static, zero order: d lap c = g phi), c = 1 held
+on the NUTRIENT1 layer (y <= -0.75 mm); the UMAT reads c at its integration
+point from a shared module (one iteration later) and keeps it in SDV51.
+Step `UNSYMM=YES` (the c-phi coupling block).
+
+8^3, case 6, beta = 0.02, s = 0.15, against ANSYS:
+
+| | Abaqus | ANSYS |
+|---|---|---|
+| no nutrient: seed share mean | 0.061 | 0.049 |
+| consumption 6: c in the seed | 0.33-0.63 | 0.26-0.56 |
+| consumption 6: mean c | 0.63 | 0.59 |
+| consumption 6: seed share | 0.08-0.34 | 0.12-0.46 |
+
+The same behaviour (the local nutrient lifts species 1 from ~0.05 to 0.1-0.4);
+the 8^3 differences are of the size of the one-species ones (seed
+representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
+
 ## Note
 
 Abaqus shortens the last increment by ~5e-16 to land on T* = 1; the judge now
