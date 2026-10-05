@@ -90,6 +90,12 @@ try {
     $err = $counts | Where-Object { $_.Line -match 'ERROR\s+MESSAGES ENCOUNTERED=\s*(\d+)' } |
         ForEach-Object { [int]$Matches[1] }
     if ($rc -eq 0 -and $err -gt 0) { $rc = 2 }
+    # a FATAL stop prints no message counts and still exits 0 (32^3 run, 5 Oct)
+    $fatal = Select-String (Join-Path $WorkDir $out) -Pattern '\*\*\* FATAL \*\*\*' -Context 0, 1
+    if ($fatal) {
+        $fatal | ForEach-Object { "FATAL: $($_.Context.PostContext[0].Trim())" }
+        if ($rc -eq 0) { $rc = 3 }
+    }
 } finally {
     if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Confirm:$false }
     'material server stopped'
