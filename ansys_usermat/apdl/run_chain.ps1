@@ -15,6 +15,14 @@ push them when the chain ends.
 -Export    after the last run, export_runs_json.py writes <run>.json into this
            repo-relative folder; with -Push the JSON files are committed
            (commit.ps1, only those files) and the current branch is pushed (push.ps1)
+-PushEvery n   with -Export -Push: export, commit and push after every n finished runs
+           as well, so results show up on GitHub while a long chain is still running
+-SkipDone  skip a run whose all_stress_<run>.csv is newer than its deck (to restart a
+           chain after a reboot without repeating finished runs)
+
+A run that fails within 3 minutes without writing any result (licence server
+not reachable, network gone) is retried up to 3 times, 30 minutes apart; a run
+that fails after solving is not retried.
 
 The caller returns at once and prints the PID and the log path. Progress:
 <WorkDir>\_chain_<Name>.log (START / DONE rc= per run, run_wired's summary);
@@ -30,6 +38,8 @@ param(
     [string]$WaitFor = '',
     [string]$Export = '',
     [switch]$Push,
+    [int]$PushEvery = 0,
+    [switch]$SkipDone,
     [string]$WorkDir = 'F:\biofilm_upf_wired',
     [switch]$DryRun,          # log START/DONE without running ANSYS (to test the chain itself)
     [switch]$Worker,
@@ -51,6 +61,8 @@ if (-not $Worker) {
     if ($WaitFor) { $args_ += @('-WaitFor', "`"$WaitFor`"") }
     if ($Export) { $args_ += @('-Export', "`"$Export`"") }
     if ($Push) { $args_ += '-Push' }
+    if ($PushEvery) { $args_ += @('-PushEvery', "$PushEvery") }
+    if ($SkipDone) { $args_ += '-SkipDone' }
     if ($DryRun) { $args_ += '-DryRun' }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($args_ -join ' ')"; CurrentDirectory = $repo }
@@ -66,6 +78,24 @@ function L($m) {
     for ($i = 0; $i -lt 5; $i++) { try { [IO.File]::AppendAllText($log, $line + "`r`n"); break } catch { Start-Sleep -Milliseconds 300 } }
 }
 $Runs = @($Runs -join ',' -split ',' | Where-Object { $_ })        # one comma-joined string from the launcher
+function ExportPush($list, $tag) {
+    $list = @($list)                       # one run arrives as a bare string, and @string splats per character
+    if (-not $Export -or -not $list) { return }
+    . (Join-Path $repo 'dev-env.ps1') | Out-Null
+    $o = & python (Join-Path $repo 'ansys_usermat\apdl\export_runs_json.py') (Join-Path $repo $Export) @list 2>&1
+    $o | ForEach-Object { L "  export: $_" }
+    if (-not $Push) { return }
+    $env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;" + $env:Path
+    $rel = $Export -replace '\\', '/'
+    $files = $list | Where-Object { Test-Path (Join-Path $repo "$Export\$_.json") } | ForEach-Object { "$rel/$_.json" }
+    if (-not $files) { L '  push: nothing to commit'; return }
+    $summary = (Get-Content $log | Where-Object { $_ -match 'DONE|ERROR   MESSAGES|FATAL' } | Select-Object -Last 40) -join "`n"
+    $msg = "ANSYS run chain $Name as JSON ($tag, automatic export)`n`nNo analysis yet. Runs: $($list -join ', ').`n`nChain log (last lines):`n$summary"
+    $o = & (Join-Path $repo 'commit.ps1') -Files $files -Message $msg 2>&1; $o | ForEach-Object { L "  commit: $_" }
+    & git fetch origin $Branch 2>$null
+    & git rebase --autostash FETCH_HEAD *> $null
+    $o = & (Join-Path $repo 'push.ps1') -Branch $Branch 2>&1; $o | ForEach-Object { L "  push: $_" }
+}
 try {
     Set-Location $repo
     L "chain start: $($Runs -join ', ')"
@@ -75,39 +105,40 @@ try {
         while (Get-Process ANSYS -ErrorAction SilentlyContinue) { Start-Sleep 30 }
         Start-Sleep 10
     }
-    $done = @()
+    $done = @(); $batch = @(); $k = 0
     foreach ($r in $Runs) {
+        $k++
         $p = $r -split ':'
         $d = $p[0]; $case = if ($p.Count -gt 1) { $p[1] } else { '' }
         $tmo = if ($p.Count -gt 2 -and $p[2]) { $p[2] } else { '150' }
-        L "START $d$(if ($case) { " case $case" }) timeout $tmo min"
-        $rc = -1
-        if ($DryRun) { Start-Sleep 2; L "DONE $d rc=0 (dry run)"; $done += $d; continue }
-        try {
-            $o = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'ansys_usermat\apdl\run_wired.ps1') @(
-                '-Deck', "$d.dat", '-TimeoutMin', $tmo, '-WorkDir', $WorkDir) @(if ($case) { '-Case', $case }) 2>&1
-            $rc = $LASTEXITCODE
-            $o | ForEach-Object { L "  $_" }
-        } catch { L "  exception: $_" }
-        L "DONE $d rc=$rc"
-        $done += $d
-    }
-    if ($Export) {
-        . (Join-Path $repo 'dev-env.ps1') | Out-Null
-        $o = & python (Join-Path $repo 'ansys_usermat\apdl\export_runs_json.py') (Join-Path $repo $Export) @done 2>&1
-        $o | ForEach-Object { L "  export: $_" }
-        if ($Push) {
-            $env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;" + $env:Path
-            $rel = $Export -replace '\\', '/'
-            $files = $done | Where-Object { Test-Path (Join-Path $repo "$Export\$_.json") } | ForEach-Object { "$rel/$_.json" }
-            $summary = (Get-Content $log | Where-Object { $_ -match 'DONE|ERROR   MESSAGES|FATAL' }) -join "`n"
-            $msg = "ANSYS run chain $Name as JSON (automatic export)`n`nNo analysis yet. Runs: $($done -join ', ').`n`nChain log:`n$summary"
-            $o = & (Join-Path $repo 'commit.ps1') -Files $files -Message $msg 2>&1; $o | ForEach-Object { L "  commit: $_" }
-            & git fetch origin $Branch 2>$null
-            & git rebase --autostash FETCH_HEAD *> $null
-            $o = & (Join-Path $repo 'push.ps1') -Branch $Branch 2>&1; $o | ForEach-Object { L "  push: $_" }
+        $res = Join-Path $WorkDir "all_stress_$d.csv"
+        if ($SkipDone -and (Test-Path $res) -and
+            (Get-Item $res).LastWriteTime -gt (Get-Item (Join-Path $WorkDir "$d.dat")).LastWriteTime) {
+            L "SKIP $d (finished earlier)"; continue
         }
+        if ($DryRun) { L "START $d ($k/$($Runs.Count))"; Start-Sleep 2; L "DONE $d rc=0 (dry run)" }
+        for ($try = 1; $try -le 4 -and -not $DryRun; $try++) {
+            L "START $d ($k/$($Runs.Count))$(if ($case) { " case $case" }) timeout $tmo min$(if ($try -gt 1) { " retry $($try - 1)" })"
+            $rc = -1; $t0 = Get-Date
+            $lock = Join-Path $WorkDir "$d.lock"
+            if ((Test-Path $lock) -and -not (Get-Process ANSYS -ErrorAction SilentlyContinue)) { Remove-Item $lock -Force; L "  removed stale $d.lock" }
+            try {
+                $o = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'ansys_usermat\apdl\run_wired.ps1') @(
+                    '-Deck', "$d.dat", '-TimeoutMin', $tmo, '-WorkDir', $WorkDir) @(if ($case) { '-Case', $case }) 2>&1
+                $rc = $LASTEXITCODE
+                $o | ForEach-Object { L "  $_" }
+            } catch { L "  exception: $_" }
+            L "DONE $d rc=$rc"
+            $quick = ((Get-Date) - $t0).TotalMinutes -lt 3
+            $wrote = (Test-Path $res) -and (Get-Item $res).LastWriteTime -gt $t0
+            if ($rc -eq 0 -or $wrote -or -not $quick -or $try -eq 4) { break }
+            L "  failed within 3 min without results: waiting 30 min before retrying (licence/network?)"
+            Start-Sleep 1800
+        }
+        $done += $d; $batch += $d
+        if ($PushEvery -gt 0 -and $batch.Count -ge $PushEvery) { ExportPush $batch "$($done.Count) of $($Runs.Count)"; $batch = @() }
     }
+    ExportPush $(if ($PushEvery -gt 0) { $batch } else { $done }) 'end'
     L 'chain end'
 } catch {
     L "CHAIN EXCEPTION: $_"
