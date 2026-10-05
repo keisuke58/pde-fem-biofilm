@@ -285,7 +285,9 @@ python scripts\strip_pr_ai_footer.py --pr 56 --apply  # 書き換え
 - 消費 4 では、栄養の少ない奥ほど種1が残る（種2による置き換えが遅い）。Python の
   `composition_local_nutrient.py` と同じ向きだが、Python の方が幅が大きい（Λ = 4 で 0.03–0.44）。
 - 相方の栄養方程式は準定常で、消費は **0 次**: `D1 ∇²c = CONSUMPTION11·bio1 + CONSUMPTION12·bio2`
-  （Ussfin 2682–2690 行）。Python が仮定した 1 次消費（g φ c）とは違う。そのため消費 8 では c が負になり、
+  （Ussfin 2682–2690 行）。Klempt 2024 Eq. 35（`ċ − d∇²c + gφ = 0`、論文 txt 508 行）も 0 次で、相方は ċ を
+  落とした準定常形。Python が仮定した 1 次消費（g φ c）は論文の式ではない（10/3 に Felix へ「図を再現するには
+  g φ c が必要」と質問済み）。そのため消費 8 では c が負になり、
   c_rel は 0 で頭打ちになる（相方の Monod 項にも負の c が入る）。消費 8 は有効範囲の外。
 - CONSUMPTION11 と MY_DIFF1 は相方の入力例の値で、論文値ではない。
 
