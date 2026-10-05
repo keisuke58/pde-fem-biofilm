@@ -60,7 +60,7 @@ def part_lines(p: Path) -> list[str]:
 NUT = """\
 C=======================================================================
 C  biofilm_nut_store: the nutrient c at the integration points, written
-C  by the nutrient UEL, read by the UMAT (one iteration later; the
+C  by the nutrient UEL, read by UMAT/UMATHT as committed at the start of the increment (the
 C  partner's element too hands the material the c of the previous
 C  sub-step). Indexed by the solid element and its integration point;
 C  c = 1 (MY_NUTSTART1) until the UEL has written a value.

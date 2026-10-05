@@ -103,6 +103,20 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   growth="printed": mean phi 0.030, mean c 0.972 at T* = 0.2). Running.
 - **Parallel**: one species, 16^3, cpus = 4 gives the same printed values as one
   CPU (largest relative difference 0.0), in 0.6 min. `run_comp.ps1 -Cpus`.
+  With the nutrient UEL the first version crashed on 4 CPUs (the store was
+  grown on demand) and then differed from 1 CPU by 0.6 % (UMAT read c from
+  whichever iteration the UEL had reached). Now the store is allocated once in
+  `UEXTERNALDB` (LOP = 0; size `BIOFILM_NUT_NEL`, default 200000 elements) and
+  UMAT/UMATHT read the c and grad c committed at the start of each increment
+  (LOP = 1, the converged previous increment, as the partner's element hands
+  the material the c of the previous sub-step): two species with consumption
+  6 on 8^3, 4 CPUs = 1 CPU to all printed digits.
+- **Front term, well-posed check** (`--case advect`, `check_advect.py`): c held
+  1 / 0 on bottom / top, no consumption, ball of phi = 1 (radius 3 um) at the
+  centre. The phi centroid moves down as the ODE dz/dt = -r c/(k+c) says:
+  by T* = 0.1, 3.41 um in Abaqus (20^3), 3.65 um finite differences, 3.70 um
+  ODE; Abaqus starts one increment late (grad c committed) and then runs ~7 %
+  slower on this coarse mesh (ball 6 elements across). 40^3 running.
 - **Abaqus-only mesh series** (done; one species, beta = 0.02, dt = 0.025,
   T* = 1.1, the ANSYS 8^3 seed region, `--ic fraction`, 6 CPUs), Pa:
 
