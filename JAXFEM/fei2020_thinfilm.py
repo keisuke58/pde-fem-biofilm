@@ -154,7 +154,8 @@ def load_data(root: Path):
         m = sio.loadmat(root / "paper data" / "Fig 2" / "velocity profile" / f"velocity-profile-0.7-{hr}h.mat")
         d[hr] = (m["r"].ravel(), m["v_avg"].ravel(), m["v_std"].ravel())   # mm, um/min
     k = sio.loadmat(root / "paper data" / "Fig 1" / "kymograph" / "kymo-0.7.mat")
-    t, rb = k["tAll"].ravel(), k["Rout"].ravel() / 1000.0                     # h, mm
+    # info.txt says um, but the values are mm (1.97 at t = 0, R_b0 = 2 mm)
+    t, rb = k["tAll"].ravel(), k["Rout"].ravel()                               # h, mm
     d["radius"] = {hr: float(rb[np.argmin(np.abs(t - hr))]) for hr in HOURS}
     return d
 
