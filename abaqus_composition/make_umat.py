@@ -150,7 +150,8 @@ C  solves it: quasi-static, zero order, d lap(c) = g phi) on the nodes of
 C  the C3D8T mesh, overlaid on it. DOF 12 = c; DOF 11 = phi is read only
 C  (no residual, the C3D8T elements carry it). 8 nodes, trilinear,
 C  2x2x2 Gauss points in Abaqus' C3D8 order. Properties: d, g, offset
-C  (UEL element number - offset = the C3D8T element it overlays).
+C  (UEL element number - offset = the C3D8T element it overlays) and,
+C  optionally, 1 for first-order consumption g phi c (PROPERTIES=4).
 C  *USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=3, COORDINATES=3,
 C  VARIABLES=1, UNSYMM  /  11, 12
 C=======================================================================
@@ -245,17 +246,29 @@ C=======================================================================
         END DO
         CALL NUT_PUT(JELEM - IOFF, IGP, C, GX, GY, GZ)
         W = DET
+C       consumption g phi (Eq. 35, zero order) or, with property 4 = 1,
+C       g phi c (first order; not the paper's Eq. 24/35, the form that
+C       reproduces its figures, KLEMPT2024_REPRODUCTION.md sec. 10-15)
+        CO = 1.0D0
+        CD = 0.0D0
+        IF (NPROPS .GE. 4) THEN
+          IF (PROPS(4) .GT. 0.5D0) THEN
+            CO = C
+            CD = PHI
+          END IF
+        END IF
         DO IA = 1, 8
           IR = 2 * IA
           RES = D * (DNX(1,IA) * GX + DNX(2,IA) * GY + DNX(3,IA) * GZ)
-     1        + G * PHI * GN(IA)
+     1        + G * PHI * CO * GN(IA)
           RHS(IR, 1) = RHS(IR, 1) - RES * W
           DO IB = 1, 8
             AMATRX(IR, 2 * IB) = AMATRX(IR, 2 * IB) + W * D *
      1        (DNX(1,IA) * DNX(1,IB) + DNX(2,IA) * DNX(2,IB)
      2         + DNX(3,IA) * DNX(3,IB))
+     3        + W * G * CD * GN(IA) * GN(IB)
             AMATRX(IR, 2 * IB - 1) = AMATRX(IR, 2 * IB - 1)
-     1        + W * G * GN(IA) * GN(IB)
+     1        + W * G * CO * GN(IA) * GN(IB)
           END DO
         END DO
       END DO
@@ -341,6 +354,12 @@ C  diffusion v h / 2 along n_c (the cell Peclet number is ~10 here).
 C  Optional constant 7, eps > 0: n_c = grad c / sqrt(|grad c|^2 + eps^2)
 C  (as eps in klempt2024_quantitative.run), the transport fading out where
 C  the nutrient is uniform; an assumption of this work, not in the paper.
+C  Optional constant 8, w: the front term replaced by growth on every face,
+C      + r c/(k+c) ( w |grad phi| + (1 - w) |n_c . grad phi| )
+C  (growth "blend<w>" of JAXFEM/klempt2024_case1_bc.py, the closest
+C  reproduction of Klempt 2024's figures, KLEMPT2024_REPRODUCTION.md sec. 15;
+C  a hypothesis, not the printed Eq. 34), with artificial diffusion
+C  w v h/2 (isotropic) + (1 - w) v h/2 along n_c, as first-order upwinding.
 C  Needs *DENSITY 1.
 C=======================================================================
       SUBROUTINE UMATHT(U, DUDT, DUDG, FLUX, DFDT, DFDG,
@@ -369,6 +388,8 @@ C=======================================================================
       END IF
       V = 0.0D0
       BS = 0.0D0
+      BI = 0.0D0
+      W = -1.0D0
       DO I = 1, 3
         EN(I) = 0.0D0
       END DO
@@ -379,8 +400,9 @@ C=======================================================================
           GM = SQRT(GC(1)**2 + GC(2)**2 + GC(3)**2)
           EPS = 0.0D0
           IF (NPROPS .GE. 7) EPS = PROPS(7)
+          IF (NPROPS .GE. 8) W = PROPS(8)
+          V = PROPS(4) * C / (PROPS(5) + C)
           IF (GM .GT. 1.0D-14) THEN
-            V = PROPS(4) * C / (PROPS(5) + C)
             GR = SQRT(GM**2 + EPS**2)
             DO I = 1, 3
               EN(I) = GC(I) / GR
@@ -388,23 +410,42 @@ C=======================================================================
 C           streamline diffusion |v| h/2 along v/|v|, v = V EN, |EN| = GM/GR
             BS = 0.5D0 * V * PROPS(6) * GR / GM
           END IF
+          IF (W .GE. 0.0D0) THEN
+            BI = 0.5D0 * W * V * PROPS(6)
+            BS = (1.0D0 - W) * BS
+          END IF
         END IF
       END IF
       VG = 0.0D0
+      GP2 = 0.0D0
       DO I = 1, NTGRD
         VG = VG + EN(I) * DTEMDX(I)
+        GP2 = GP2 + DTEMDX(I)**2
       END DO
-      SRC = SRC - V * VG
+      IF (W .GE. 0.0D0) THEN
+C       growth on every face: w |grad phi| + (1 - w) |n_c . grad phi|
+        GPM = SQRT(GP2 + 1.0D-20)
+        SG = SIGN(1.0D0, VG)
+        SRC = SRC + V * (W * GPM + (1.0D0 - W) * ABS(VG))
+        DO I = 1, NTGRD
+          DUDG(I) = -V * (W * DTEMDX(I) / GPM
+     1              + (1.0D0 - W) * SG * EN(I)) * DTIME
+        END DO
+      ELSE
+        SRC = SRC - V * VG
+        DO I = 1, NTGRD
+          DUDG(I) = V * EN(I) * DTIME
+        END DO
+      END IF
       U = U + DTEMP - SRC * DTIME
       DUDT = 1.0D0 - DSRC * DTIME
       DO I = 1, NTGRD
-        DUDG(I) = V * EN(I) * DTIME
         DFDT(I) = 0.0D0
-        FLUX(I) = -BETA * DTEMDX(I) - BS * EN(I) * VG
+        FLUX(I) = -(BETA + BI) * DTEMDX(I) - BS * EN(I) * VG
         DO J = 1, NTGRD
           DFDG(I, J) = -BS * EN(I) * EN(J)
         END DO
-        DFDG(I, I) = DFDG(I, I) - BETA
+        DFDG(I, I) = DFDG(I, I) - BETA - BI
       END DO
       RETURN
       END

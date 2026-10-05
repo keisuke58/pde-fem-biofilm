@@ -25,7 +25,7 @@ from pathlib import Path
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
-    ap.add_argument("--case", choices=("fig7_high", "fig7_low", "fig4_edge", "advect"), default="fig7_high")
+    ap.add_argument("--case", choices=("fig7_high", "fig7_low", "fig4_edge", "fig4_corner", "advect"), default="fig7_high")
     ap.add_argument("--n", type=int, default=20)
     ap.add_argument("--dt", type=float, default=0.002)
     ap.add_argument("--T", type=float, default=0.2)
@@ -36,6 +36,13 @@ def main():
     ap.add_argument("--seed-field", action="store_true",
                     help="initial phi = the paper-grid seed as its trilinear interpolant (seed_field in the "
                          "reproduction): the same continuous seed on any n (grid studies)")
+    ap.add_argument("--blend", type=float, default=None,
+                    help="w: growth on every face, r c/(k+c) (w |grad phi| + (1-w) |n_c . grad phi|), in place of "
+                         "the printed front term (KLEMPT2024_REPRODUCTION.md sec. 15; a hypothesis)")
+    ap.add_argument("--first-order", action="store_true", help="consumption g phi c (not the paper's g phi)")
+    ap.add_argument("--scale", type=float, default=1.0, help="time scale s: beta, k_alpha and r times s (sec. 12)")
+    ap.add_argument("--E", type=float, default=1e-5, help="YOUNG_BIO (default 1e-5: E = 10 Pa in MPa)")
+    ap.add_argument("--s-every", type=int, default=0, help="also print S and SDV84 every this many increments")
     a = ap.parse_args()
     L, n = 20.0, a.n
     h = L / n
@@ -57,6 +64,9 @@ def main():
         seed = [q for q, x, y, z in nodes if (x - 10) ** 2 + (y - 10) ** 2 + (z - 10) ** 2 <= 9 + tol]
         src = [q for q, x, y, z in nodes if abs(z) < tol]          # no consumption: c linear in z,
         top = [q for q, x, y, z in nodes if abs(z - L) < tol]      # grad c the same everywhere
+    elif a.case == "fig4_corner":                    # sec. 14: the nutrient in a 2 um block at the corner
+        seed = [q for q, x, y, z in nodes if (x - 10) ** 2 + (y - 10) ** 2 + (z - 10) ** 2 <= 25 + tol]
+        src = [q for q, x, y, z in nodes if min(x, y, z) >= L - 2 - tol]
     elif a.case == "fig4_edge":
         seed = [q for q, x, y, z in nodes if (x - 10) ** 2 + (y - 10) ** 2 + (z - 10) ** 2 <= 25 + tol]
         src = [q for q, x, y, z in nodes if abs(x - L) < tol and abs(y - L) < tol]
@@ -68,30 +78,35 @@ def main():
         import sys
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "JAXFEM"))
         import klempt2024_quantitative as kq
-        val = kq.seed_field(a.case, *(np.array([q[i] for q in nodes]) for i in (1, 2, 3)))
+        val = kq.seed_field(a.case.replace("fig4_corner", "fig4_edge"),*(np.array([q[i] for q in nodes]) for i in (1, 2, 3)))
         ic = chr(10).join(f"{q[0]}, {v:.10g}" for q, v in zip(nodes, val) if v > 1e-12)
     g = 1e10 if a.case == "fig7_low" else (0.0 if a.case == "advect" else 1e8)
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     p = [0.0] * 47
-    p[0], p[6], p[27] = 1.0, 1e-3, 1.0
-    p[42], p[43], p[44], p[45] = 1e-5, -1e-3, 0.49, 0.3
+    s = a.scale
+    p[0], p[6], p[27] = 1.0, 1e-3 * s, 1.0
+    p[42], p[43], p[44], p[45] = a.E, -1e-3, 0.49, 0.3
     p[46] = 1.0
     p += [1.0]                                       # constant 48: c from the UEL
     rows = "\n".join(", ".join(f"{x:.17g}" for x in p[i:i + 8]) for i in range(0, len(p), 8))
     OFF = 1000000
-    r = 0.0 if a.no_front else 100.0
+    r = 0.0 if a.no_front else 100.0 * s
+    therm = [2.0 * s, 1e-3 * s, a.pen, r, 1.0, h, a.eps] + ([a.blend] if a.blend is not None else [])
+    uprop = [1.0, g / 1e10, OFF] + ([1.0] if a.first_order else [])
+    sprint = (f"*EL PRINT, ELSET=EALL, FREQUENCY={a.s_every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO\n"
+              "S, SDV84\n") if a.s_every else ""
     txt = f"""*HEADING
  Klempt 2024 {a.case} in Abaqus: 20 um cube, {n}^3 C3D8T, Eq. 34 as printed (front term r = {r}), Eq. 35 zero order
 *NODE
 {chr(10).join(f"{i}, {x:.10g}, {y:.10g}, {z:.10g}" for i, x, y, z in nodes)}
 *ELEMENT, TYPE=C3D8T, ELSET=EALL
 {chr(10).join(f"{i}, " + ", ".join(map(str, c)) for i, c in elems)}
-*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=3, COORDINATES=3, VARIABLES=1, UNSYMM
+*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(uprop)}, COORDINATES=3, VARIABLES=1, UNSYMM
 11, 12
 *ELEMENT, TYPE=U1, ELSET=NUTEL
 {chr(10).join(f"{i + OFF}, " + ", ".join(map(str, c)) for i, c in elems)}
 *UEL PROPERTY, ELSET=NUTEL
-1.0, {g / 1e10:.10g}, {OFF}
+{", ".join(f"{x:.10g}" for x in uprop)}
 *NSET, NSET=NALL, GENERATE
 1, {(n + 1) ** 3}, 1
 *NSET, NSET=NSEED
@@ -105,8 +120,8 @@ def main():
 1.0
 *USER MATERIAL, CONSTANTS={len(p)}, TYPE=MECHANICAL
 {rows}
-*USER MATERIAL, CONSTANTS=7, TYPE=THERMAL
-2.0, 1e-3, {a.pen}, {r}, 1.0, {h}, {a.eps}
+*USER MATERIAL, CONSTANTS={len(therm)}, TYPE=THERMAL
+{", ".join(f"{x:.10g}" for x in therm)}
 *DEPVAR
 100
 *INITIAL CONDITIONS, TYPE=TEMPERATURE
@@ -122,7 +137,7 @@ NALL, 0.0
 NSRC, 12, 12, 1.0
 {"NTOP, 12, 12, 0.0" + chr(10) if top else ""}*EL PRINT, ELSET=EALL, FREQUENCY={a.every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
 TEMP, SDV51
-*OUTPUT, FIELD, FREQUENCY={a.every}
+{sprint}*OUTPUT, FIELD, FREQUENCY={a.every}
 *NODE OUTPUT
 NT
 *END STEP
