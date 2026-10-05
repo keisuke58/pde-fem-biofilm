@@ -21,6 +21,77 @@ Assoc.\ Prof.\ Muramatsu $\times$ Prof.\ Soleimani $\times$ Nishioka.
 16 slides plus a 4-slide appendix (notation, background, Klempt et al.\ 2024 reproduction), about 22 minutes. Times are rough targets.
 
 % ------------------------------------------------------------------
+{\large\bfseries Part 1: TMCMC paper (SIIRI\_biofilm\_TMCMC\_nishioka.pptx, about 6 min)}\par
+
+\slide{TMCMC: title}{0:20}
+\EN First, briefly, the TMCMC paper: GPU-accelerated Bayesian inference of
+the interaction parameters of a multi-species biofilm. My co-authors have
+reviewed the manuscript, and I am now revising it based on their comments.
+\JA まず TMCMC の論文を簡単に紹介します。多菌種バイオフィルムの相互作用パラメータを、
+GPU で高速化したベイズ推定で求めたものです。共著者に原稿を見てもらい、
+いまそのコメントをもとに修正しています。
+
+\slide{TMCMC: introduction}{1:00}
+\EN Heine et al.\ cultured five-species oral biofilms under four conditions,
+commensal or dysbiotic, static or in the HOBIC flow, and measured the volume
+fraction of each species by CLSM from day 1 to day 21. The dysbiotic flow
+case shows the late surge of \textit{P.~gingivalis} seen in peri-implantitis.
+The data show what happens, but not how strongly the species promote or
+suppress each other. The question is whether the 15 free parameters of the
+symmetric interaction matrix $A$ can be inferred from these data.
+\JA Heine らは 5 菌種の口腔バイオフィルムを 4 条件（共生・病的 × 静置・HOBIC 流れ）で培養し、
+各菌種の体積分率を 1〜21 日目まで CLSM で測りました。病的・流れありの条件では、
+インプラント周囲炎で見られる P. gingivalis の後期の急増が出ます。データからは何が起きたかは
+分かりますが、菌種どうしがどれだけ促進・抑制し合うかは読み取れません。問いは、対称な相互作用
+行列 $A$ の 15 個のパラメータをこのデータから推定できるか、です。
+
+\slide{TMCMC: model}{1:00}
+\EN The model follows from the extended Hamilton principle, Klempt et al.\ 2026.
+The interaction matrix enters the free energy, so it is symmetric: 15
+parameters instead of 25. Each species has a volume fraction $\phi_i$ and a
+viability $\psi_i$, and growth is driven by the living fraction $\phi_i\psi_i$,
+so the model can tell a shrinking colony from a dying one.
+\JA モデルは拡張ハミルトン原理から導かれます（Klempt ら 2026）。相互作用行列は自由エネルギーに
+入るので対称になり、パラメータは 25 ではなく 15 個です。各菌種は体積分率 $\phi_i$ と生存率
+$\psi_i$ を持ち、成長は生きている分 $\phi_i\psi_i$ で決まるので、縮んでいるのか死んでいるのかを
+区別できます。
+
+\slide{TMCMC: implementation}{1:00}
+\EN The inverse problem is solved with transitional Markov chain Monte Carlo,
+in two phases: first with the viability fixed to the measured values, to
+isolate $A$, then with the viability released. The posterior is multimodal,
+and this keeps the mode. Everything runs on the true ODEs, compiled with JAX
+on GPUs, about 200 times faster than on the CPU, so no surrogate is needed.
+\JA 逆問題は TMCMC で解きます。2 段階で、まず生存率を測定値に固定して $A$ だけを推定し、
+次に生存率も自由にします。事後分布は多峰なので、こうするとモードを見失いません。
+すべて元の ODE をそのまま JAX で GPU 上で解いていて、CPU より約 200 倍速いので、
+代理モデルは要りません。
+
+\slide{TMCMC: results}{1:00}
+\EN The fitted trajectories follow the measured medians in all four
+conditions, with RMSE between 0.03 and 0.12. In the commensal cases
+\textit{S.~oralis} dominates early and \textit{A.~naeslundii} later; in the
+dysbiotic flow case the model reproduces the late growth of
+\textit{F.~nucleatum} and \textit{P.~gingivalis} after day 15.
+\JA 推定した軌跡は 4 条件すべてで測定の中央値に沿い、RMSE は 0.03〜0.12 です。共生条件では
+初期に S. oralis、後半に A. naeslundii が優勢になり、病的・流れありでは 15 日目以降の
+F. nucleatum と P. gingivalis の増加を再現します。
+
+\slide{TMCMC: validation and conclusion}{1:00}
+\EN As an independent check, the pH, which never entered the calibration, is
+predicted with $R^2=0.78$, and the gingipain activity correlates with the
+predicted \textit{P.~gingivalis} at $r=0.90$. Without being told, the
+inference finds the \textit{F.~nucleatum}--\textit{P.~gingivalis} cooperation
+in the dysbiotic case. The model is well mixed; the spatial and mechanical
+side is what the rest of today is about.
+Do you have a recommendation for a journal to submit it to?
+\JA 独立した検証として、較正に使っていない pH を $R^2=0.78$ で予測でき、ジンジパイン活性は
+予測した P. gingivalis と $r=0.90$ で相関します。教えていないのに、病的条件での
+F. nucleatum と P. gingivalis の協力関係が推定で出てきます。このモデルは空間のない
+混合モデルで、空間と力学の部分が今日の残りの話です。投稿先のおすすめがあれば教えてください。
+
+\vspace{6pt}{\large\bfseries Part 2: FEM coupling (slides\_1005)}\par
+
 \slide{Title}{0:20}
 \EN Thank you for making time. Today I will show where the thesis stands.
 The biofilm growth model is now coupled into the existing IKM element,
