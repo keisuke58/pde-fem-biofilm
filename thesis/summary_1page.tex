@@ -1,0 +1,73 @@
+\documentclass[11pt,a4paper]{article}
+% One-page summary of the master's thesis (for the examiners, colloquium email).
+\usepackage[margin=22mm,top=20mm,bottom=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\definecolor{c3}{RGB}{30,80,160}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\setlist{nosep,leftmargin=1.2em}
+\pagestyle{empty}
+\newcommand{\sect}[1]{\par\vspace{5pt}{\color{c3}\bfseries #1}\par\vspace{1pt}}
+
+\begin{document}
+{\large\bfseries Hamilton-Principle Models of Oral Biofilm Dysbiosis:
+GPU-Accelerated Inference, Metabolic Priors, and Spatial Stratification}\par
+\vspace{3pt}
+Master's thesis, Keisuke Nishioka, Institut für Kontinuumsmechanik, Leibniz
+Universität Hannover (double degree with Keio University).\\
+Examiners: Prof.\ Dr.-Ing.\ Philipp Junker, Dr.-Ing.\ Matthias Wangenheim.
+Supervisors: Prof.\ Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler.
+\par\vspace{2pt}\hrule
+
+\sect{Motivation}
+Peri-implantitis is driven by multi-species biofilms whose composition shifts
+from commensal to dysbiotic. A point model of a multi-species biofilm (Klempt
+et al.\ 2026) describes how the composition at one material point evolves, but
+has no space. A continuum growth model (Klempt et al.\ 2024) describes where a
+biofilm grows and which stresses it carries, but does not distinguish species.
+Both follow from the extended Hamilton principle. The task of this thesis is to
+bring the point model into the existing finite element framework of the IKM, so
+that composition, growth and stress can be computed together.
+
+\sect{Contributions}
+\begin{enumerate}
+\item \textbf{A calibrated point model.} The 15 interaction coefficients of a
+  five-species point model are estimated with transitional Markov chain Monte
+  Carlo from the in-vitro time courses of Heine et al.\ (2025) under four
+  conditions. Compiled with JAX, the forward model runs about 200 times faster
+  on the GPU than on the CPU. The fits follow all four conditions (RMSE 0.03 to
+  0.12), and the pH, which was not used in the calibration, is predicted with
+  $R^2=0.78$. A metabolic sign prior carries the same type of model to sparse
+  in-vivo data of ten patients.
+\item \textbf{A growth law in the finite element framework.} The growth
+  kinematics $\mathbf F=\mathbf F_e\mathbf F_g$, $\mathbf F_g=\alpha\mathbf I$,
+  is implemented as an ANSYS user material, verified against closed-form
+  solutions, and coupled to the biofilm field of the IKM element through the
+  growth equation $\dot\alpha=k_\alpha\phi$ at every Gauss point. In ANSYS the
+  coupled run follows the exact solution of a gradient-free region to
+  $3\times10^{-11}$ in $\alpha$.
+\item \textbf{The composition at every Gauss point.} For two species, the point
+  model runs at every Gauss point through a bridge from Fortran to Python: the
+  field sets the amount of biofilm, the point model its composition. Every call
+  is reproduced in Python bit for bit, and the published outcomes, coexistence
+  and the survival of one species, are kept.
+\end{enumerate}
+
+\sect{Towards a two-way coupling}
+Computed in Python on the reproduced field of Klempt et al.\ (2024): with the
+local nutrient in the point model the composition varies across the biofilm, and
+with a composition-dependent front rate, as in Soleimani et al.\ (2023) and Feng
+et al.\ (2021), the amount of biofilm changes by 4 to 13\,\%, depending on the rate contrast. Measured
+expansion data of Fei et al.\ (2020) indicate that the growth rate must depend on
+the local nutrient.
+
+\sect{Limitations and outlook}
+All finite element results are verified, not validated: no measured stress of a
+growing oral biofilm is available. The coupling in ANSYS is one-way, and the
+front term of the element is inactive, so the biofilm does not spread in the
+ANSYS runs. More species, the local nutrient in the element and a validation of
+the mechanics continue at Keio University.
+\end{document}
