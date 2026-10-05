@@ -421,28 +421,41 @@ Stresses scale linearly with $E$ (the example input's 1000 MPa gives $10^8\times
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix C: background, point model and one coupling step}
-\small
-\textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence:
+\begin{frame}{Appendix C: point model and one substep of the coupled run}
+\footnotesize
+\textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence, implicit, $\Delta t=10^{-4}$:
+\vspace{-4pt}
 \[
 \begin{aligned}
 (\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
-&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\[-2pt]
 \eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
-&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier})
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier}),
+\qquad \textstyle\sum_i\phi_i+\phi_0=1
 \end{aligned}
 \]
-with $\sum_i\phi_i+\phi_0=1$; the barrier terms keep $\phi_i,\psi_i$ in $(0,1)$.
-Implicit time stepping, $\Delta t=10^{-4}$.
-\vspace{4pt}
+\vspace{-6pt}
 
-\textbf{One time step of the coupled ANSYS run}
-\begin{enumerate}
-  \item The element updates its field $\phi$ (Eq.\ 34)
-  \item At each Gauss point: $\phi_{3D}\to\alpha$ (Eq.\ 36) $\to\mathbf F_g\to$ stress
-  \item Two species: the point model is scaled to $\min(\phi_{3D},\phi_{\rm cap})$,
-        advanced by $s\,\Delta t$, scaled again; $\phi_i,\psi_i$ are stored as state variables
-\end{enumerate}
+\textbf{One substep $t_n\to t_{n+1}$}: ANSYS solves only $\operatorname{div}\boldsymbol\sigma=\mathbf 0$;
+the material routine turns $\mathbf F$ into $\boldsymbol\sigma$ after removing the growth.\\[2pt]
+\scriptsize
+\renewcommand{\arraystretch}{1.0}
+\begin{tabular}{@{}r@{\hspace{6pt}}l@{}}
+\textcolor{gray}{1} & \textbf{repeat} \textcolor{gray}{(Newton iteration of ANSYS)}\\
+\textcolor{gray}{2} & \quad $\mathbf F$ at every Gauss point from the current displacements\\
+\textcolor{gray}{3} & \quad \textbf{for each Gauss point}\\
+\textcolor{gray}{4} & \quad\quad $\phi_{3D}=\phi_1+\phi_2$ from the element; restore the converged state of $t_n$\\
+\textcolor{gray}{5} & \quad\quad $\alpha_{n+1}=\alpha_n+k_\alpha\,\phi_{3D}\,\Delta t$ \hfill\textcolor{gray}{Eq.\ 36}\\
+\textcolor{gray}{6} & \quad\quad $\mathbf F_e=\mathbf F\,\mathbf F_g^{-1}$, $\mathbf F_g=\alpha_{n+1}\mathbf I$ $\;\to\;$ $\boldsymbol\sigma$, tangent\\
+\textcolor{gray}{7} & \quad\quad \textbf{if} two species and $\phi_{3D}\ge\phi_{\min}$:\\
+\textcolor{gray}{8} & \quad\quad\quad scale the point model to $\min(\phi_{3D},\phi_{\rm cap})$\\
+\textcolor{gray}{9} & \quad\quad\quad bridge (Fortran $\to$ C $\to$ socket $\to$ Python): $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$\\
+\textcolor{gray}{10} & \quad\quad\quad scale back; store $\phi_i,\psi_i,\gamma$ as state variables\\
+\textcolor{gray}{11} & \quad\quad return $\boldsymbol\sigma$ and the tangent to ANSYS\\
+\textcolor{gray}{12} & \quad assemble the residual, update the displacements\\
+\textcolor{gray}{13} & \textbf{until} converged\\
+\textcolor{gray}{14} & the element advances $\phi_1,\phi_2,c$ to $t_{n+1}$ (its own solver)\\
+\end{tabular}
 \end{frame}
 
 % --------------------------------------------------------
