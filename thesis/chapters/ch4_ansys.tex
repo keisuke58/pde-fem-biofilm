@@ -710,10 +710,16 @@ Mises stress to $0.1\,\%$ on both meshes. On $24^3$ elements the step grows
 to $1.76\,\%$ and the seed von Mises stress to $1.5\times10^{-4}$~Pa; the mean
 stress ($-3.5$, $-2.8$, $-3.6\times10^{-5}$~Pa on $8^3$, $16^3$, $24^3$) does
 not settle either. A $32^3$ run exceeds the memory of the workstation in the
-nutrient solve. The seed stresses are therefore not converged in the mesh,
-and I quote them only as an order of magnitude. The cause is the update of
-$\phi$ at the sharp seed boundary, which depends on the element size; the
-mechanics with a given $\alpha$ is converged. The stress outside the seed
+nutrient solve. The step comes from the diffusion term $\beta\Delta\phi$ of
+the field equation: with $\beta=0$ it vanishes, with $2\beta$ it doubles. With
+the example input, $\beta=10^{-4}$, the diffusion length
+$\sqrt{\beta T^*}\approx0.01$~mm is far below every element size used here
+($0.25$ to $0.08$~mm), so the layer is not resolved and the leak grows as the
+elements become smaller. With $\beta=0$ the ratios $16^3/8^3$ are $0.60$ for
+von Mises and $0.71$ for the mean stress, as predicted from the Python and
+CalculiX studies. The seed stresses of these runs are therefore not converged
+in the mesh, and I quote them only as an order of magnitude; the mechanics
+with a given $\alpha$ is converged. The stress outside the seed
 ($5.0$, $4.7$, $5.5\times10^{-6}$~Pa) and the pattern, a compressed seed in
 a ring of tension, hold on all three meshes.}
 
@@ -876,14 +882,19 @@ example value $0.5$ to $4$ (an example input, not a paper value), the
 nutrient in the seed falls to $0.44$--$0.66$ and the share
 $\phi_1/(\phi_1+\phi_2)$ ranges from $0.025$ at the side facing the nutrient
 to $0.14$ at the far side (correlation with $c$: $-0.83$); with the example
-consumption it is $0.021$ everywhere. This is the first composition in the
+consumption it is $0.021$ everywhere. Halving the time step changes the mean
+share by $2\,\%$. With consumption $6$, the strongest that keeps $c$ positive,
+the nutrient falls to $0.15$--$0.48$ and the share ranges from $0.11$ to
+$0.48$ (correlation $-0.99$). Case~3 hardly depends on the nutrient
+($0.656$--$0.664$ at consumption $4$), as predicted. This is the first composition in the
 element that varies in space. Python gives the same: with the consumption set
 so that the lowest nutrient in the seed is $0.435$, as in ANSYS, the share
 ranges from $0.026$ to $0.139$. This holds whether the consumption is
 independent of $c$ (zero order, as in the element) or proportional to $c$
-(first order, as in the Python study above); the order changes only how low
-$c$ falls. The wider range of Figure~\ref{fig:ch5-local-nutrient} comes from
-a lower nutrient. With zero-order consumption a stronger consumption ($8$)
+(first order, as in the Python study above). For consumption $6$ the zero-order
+Python model gives $0.105$ to $0.481$, again as ANSYS. The share follows the
+local nutrient; the order of the consumption changes how $c$ is distributed,
+and with it the range once the consumption is strong. With zero-order consumption a stronger consumption ($8$)
 drives $c$ below zero, which is outside the valid range of the model.
 
 \begin{figure}[htbp]
