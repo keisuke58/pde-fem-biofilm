@@ -469,3 +469,30 @@ Fine scan of w (`JAXFEM/klempt2024_blend_scan.py`, results in
 curves stays at 0.029-0.032, so the curves do not pin w down; at w = 0.5 the
 three are 0.013 (4.1, s = 1), 0.021 (4.2 high, s = 5) and 0.030 (4.2 low,
 s = 3). The shapes, not the curves, would have to decide w.
+
+## 16. The shapes do not decide w either (2026-10-06)
+
+`JAXFEM/klempt2024_shape_scan.py` reads the paper's contour panels back into
+phi by their seven colour bands (Table 3: 4.1, diagonal cut; Table 4: 4.2
+"high" and "low", vertical mid-plane; 16 panels) and compares them with the
+reproduction on the same cut, each w at the time scale that fits its curves
+best. IoU = overlap of the regions phi >= 4/7, averaged over a case's panels
+(results in `klempt2024_results/shape_scan.json`):
+
+| w | 4.1 | 4.2 high | 4.2 low | mean |
+|---|---|---|---|---|
+| 0 (both faces only) | 0.81 | 0.73 | 0.45 | 0.66 |
+| 0.25 | 0.84 | 0.84 | 0.68 | **0.79** |
+| 0.4 | 0.83 | 0.85 | 0.66 | 0.78 |
+| 0.5 | 0.80 | 0.82 | 0.69 | 0.77 |
+| 0.7 | 0.74 | 0.82 | 0.69 | 0.75 |
+
+w = 0 is clearly worse (the "low" dome cannot widen: IoU 0.21 at 7 % and
+13 %), so growth on every face is supported by the shapes as well. Between
+w = 0.25 and 0.6 the mean moves by 0.02, less than the spread between panels;
+the shapes do not pin w down more than the curves do. The remaining
+differences (the thin tip towards the corner in 4.1, the early "low" dome)
+are of the same size for every w in that range. With the curves, the shapes
+and an independent FE solver (Abaqus, `abaqus_composition/README.md`)
+agreeing on this, I take w = 0.25-0.6 as the range the figures allow; a
+single value needs the form of Eq. 34 the authors ran.
