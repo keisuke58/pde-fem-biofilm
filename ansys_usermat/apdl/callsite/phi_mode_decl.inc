@@ -13,6 +13,12 @@ C     stride sampling missed the seeded region (phi = 1) in the stage 3
 C     run, so the trace never saw the points that grow fastest.
       DOUBLE PRECISION TRACE_PHI_MIN
       PARAMETER (TRACE_PHI_MIN = 0.5D0)
+C     comp_trace.csv only: every point where the point model may run
+C     (phi >= 0.01), so the seed and layer means over time are not
+C     limited to phi >= 0.5 (5 Oct: with beta = 0.02 phi leaves the seed
+C     and the 0.5 threshold dropped 15 of 32 seed points by T* = 1)
+      DOUBLE PRECISION CM_TRACE_PHI_MIN
+      PARAMETER (CM_TRACE_PHI_MIN = 1.0D-2)
       LOGICAL TRACE_OPEN
       SAVE TRACE_OPEN
       DATA TRACE_OPEN /.FALSE./

@@ -22,7 +22,8 @@ push them when the chain ends.
 
 A run that fails within 3 minutes without writing any result (licence server
 not reachable, network gone) is retried up to 3 times, 30 minutes apart; a run
-that fails after solving is not retried.
+that fails after solving, or stops with a FATAL message that is not about the
+licence (e.g. out of memory), is not retried.
 
 The caller returns at once and prints the PID and the log path. Progress:
 <WorkDir>\_chain_<Name>.log (START / DONE rc= per run, run_wired's summary);
@@ -131,7 +132,11 @@ try {
             L "DONE $d rc=$rc"
             $quick = ((Get-Date) - $t0).TotalMinutes -lt 3
             $wrote = (Test-Path $res) -and (Get-Item $res).LastWriteTime -gt $t0
-            if ($rc -eq 0 -or $wrote -or -not $quick -or $try -eq 4) { break }
+            $outf = Join-Path $WorkDir "out_$d.txt"
+            $fm = if (Test-Path $outf) { @(Select-String $outf -Pattern '\*\*\* FATAL \*\*\*' -Context 0, 3) } else { @() }
+            # the banner of every output says "LICENSORS": look at the FATAL message itself only
+            $fatal = $fm.Count -gt 0 -and -not ($fm | Where-Object { ($_.Line + ' ' + ($_.Context.PostContext -join ' ')) -match 'licen[cs]' })
+            if ($rc -eq 0 -or $wrote -or -not $quick -or $fatal -or $try -eq 4) { break }
             L "  failed within 3 min without results: waiting 30 min before retrying (licence/network?)"
             Start-Sleep 1800
         }

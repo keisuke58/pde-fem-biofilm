@@ -275,7 +275,7 @@ C         the seed's start cannot be varied apart (5 Oct runs).
      &                                dTime, ALPHA_NEW)
           IF (kDomIntPt .EQ. 1 .AND.
      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
-     &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+     &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
             IF (.NOT. CM_TRACE_OPEN) THEN
               OPEN(96, FILE='comp_trace.csv', STATUS='UNKNOWN',
      &             POSITION='APPEND')

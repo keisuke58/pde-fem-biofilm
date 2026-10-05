@@ -33,9 +33,24 @@ One species, `w<mesh>_1sp_b<beta>[_dt<dt>][_T<T>]`
 - beta = 0.1 on 16^3 and 0.05 on 24^3 use dt 0.0125 (explicit phi update, keeps
   dt beta / h^2 below about 0.1)
 
-## Order
+One species variants for ch4 (cloud review, `../../CLOUD_REVIEW_1005_ANSWERS.md`):
+`w<mesh>_1sppartner_b002` the partner's own growth variable (prop(28) = 3),
+`w<mesh>_1spnu0499_b002` nu = 0.499, `w<mesh>_1spEex_b002` the example stiffness
+(1000 MPa, nu = 0.3, linear blend).
 
-1. two species 8^3 (82 runs, about 3-15 min each)
+`share_history` in each two-species JSON: seed and layer 1/2 mean, min, max of
+phi_1/(phi_1+phi_2), mean amount, number of points, per substep (from
+comp_trace). The executable of 5 Oct evening traces every point with
+phi >= 0.01; `points` in the JSON says which rule a run had. Nut1 over time is
+not traced (only the last step, in nut_field).
+
+## Order (118 runs)
+
+0. one species, ch4 variants, 8^3 and 16^3 (6 runs)
+1. two species 8^3 (74 runs, about 3-15 min each)
 2. one species 8^3 / 16^3 (11 runs)
 3. two species 16^3 (15 runs, about 30-60 min each)
 4. one species 24^3, beta 0.01 and 0.05 (2 runs, 2-4 h each)
+5. idle days: two species 24^3 case 6, consumption 6 and 0 (memory unchecked;
+   a FATAL stop is not retried), one species T* = 5 on 8^3 / 16^3, six more
+   16^3 two-species runs
