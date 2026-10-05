@@ -71,16 +71,82 @@ C=======================================================================
       CHARACTER*80 CMNAME
       DIMENSION STRESS(NTENS), STATEV(NSTATV), DDSDDE(NTENS,NTENS),
      1 DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS),
-     2 TIME(2), PREDEF(1), DPRED(1), PROPS(NPROPS), COORDS(3),
+     2 TIME(2), PREDEF(*), DPRED(*), PROPS(NPROPS), COORDS(3),
      3 DROT(3,3), DFGRD0(3,3), DFGRD1(3,3), JSTEP(4)
       IF (NTENS .NE. 6 .OR. NSTATV .LT. 100 .OR. NPROPS .LT. 46) THEN
         WRITE(7,*) 'BIOFILM UMAT needs NTENS = 6, *DEPVAR >= 100',
      1             ' and 46 constants'
         CALL XIT
       END IF
+C     phi: the temperature of a coupled temperature-displacement run
+C     (constant 47 = 1, solved by UMATHT below) or field variable 1;
+C     c: field variable 2 (not read when phi is the temperature)
+      IF (NPROPS .GE. 47 .AND. PROPS(47) .GT. 0.5D0) THEN
+        PHI = TEMP + DTEMP
+        CN = -1.0D30
+      ELSE
+        PHI = PREDEF(1) + DPRED(1)
+        CN = PREDEF(2) + DPRED(2)
+      END IF
       CALL BIOFILM_COMP_UMAT(STRESS, STATEV, DDSDDE, SSE, DTIME,
-     1  PREDEF, DPRED, NSTATV, PROPS, NPROPS, PNEWDT, DFGRD1,
+     1  PHI, CN, NSTATV, PROPS, NPROPS, PNEWDT, DFGRD1,
      2  NOEL, NPT, JSTEP(1), KINC)
+C     no thermal coupling terms in the stress (growth enters through
+C     alpha, a state variable) and no heat from mechanical work
+      DO I = 1, NTENS
+        DDSDDT(I) = 0.0D0
+        DRPLDE(I) = 0.0D0
+      END DO
+      RPL = 0.0D0
+      DRPLDT = 0.0D0
+      RETURN
+      END
+
+C=======================================================================
+C  UMATHT: phi as the temperature, Klempt et al. 2024 Eq. 34 as the
+C  partner's element solves it (its front term is inactive, see
+C  FRONT_TERM_FIX.md), with its penalty that keeps phi in [0, 1]:
+C      phi_dot = beta lap(phi) + k_alpha alpha_K
+C                - P (max(0, phi - 1) + min(0, phi))
+C  alpha_K = 1 + alpha (state variable 84, shared with UMAT).
+C  Abaqus solves  dU/dt + div(f) = 0  here with f = -beta grad(phi) and
+C  U = phi - (integral of the source), so the source sits in U.
+C  Constants (*USER MATERIAL, TYPE=THERMAL): beta, k_alpha, P.
+C  Needs *DENSITY 1.
+C=======================================================================
+      SUBROUTINE UMATHT(U, DUDT, DUDG, FLUX, DFDT, DFDG,
+     1 STATEV, TEMP, DTEMP, DTEMDX, TIME, DTIME, PREDEF, DPRED,
+     2 CMNAME, NTGRD, NSTATV, PROPS, NPROPS, COORDS, PNEWDT,
+     3 NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
+      INCLUDE 'ABA_PARAM.INC'
+      CHARACTER*80 CMNAME
+      DIMENSION DUDG(NTGRD), FLUX(NTGRD), DFDT(NTGRD),
+     1 DFDG(NTGRD,NTGRD), STATEV(NSTATV), DTEMDX(NTGRD),
+     2 TIME(2), PREDEF(1), DPRED(1), PROPS(NPROPS), COORDS(3)
+      BETA = PROPS(1)
+      AK = PROPS(2)
+      PEN = PROPS(3)
+      PHI = TEMP + DTEMP
+      SRC = AK * (1.0D0 + STATEV(84))
+      DSRC = 0.0D0
+      IF (PHI .GT. 1.0D0) THEN
+        SRC = SRC - PEN * (PHI - 1.0D0)
+        DSRC = -PEN
+      ELSE IF (PHI .LT. 0.0D0) THEN
+        SRC = SRC - PEN * PHI
+        DSRC = -PEN
+      END IF
+      U = U + DTEMP - SRC * DTIME
+      DUDT = 1.0D0 - DSRC * DTIME
+      DO I = 1, NTGRD
+        DUDG(I) = 0.0D0
+        DFDT(I) = 0.0D0
+        FLUX(I) = -BETA * DTEMDX(I)
+        DO J = 1, NTGRD
+          DFDG(I, J) = 0.0D0
+        END DO
+        DFDG(I, I) = -BETA
+      END DO
       RETURN
       END
 
@@ -88,14 +154,14 @@ C=======================================================================
 C  BIOFILM_COMP_UMAT: the ANSYS call-site fragments in an Abaqus UMAT
 C=======================================================================
       SUBROUTINE BIOFILM_COMP_UMAT(STRESS, ustatev, DDSDDE, SSE,
-     1  dTime, PREDEF, DPRED, NSTATV, prop, nProp, PNEWDT, DFGRD1,
+     1  dTime, AB_PHI, AB_CN, NSTATV, prop, nProp, PNEWDT, DFGRD1,
      2  elemId, kDomIntPt, ldstep, isubst)
       USE biofilm_py_bridge
       USE biofilm_split
       IMPLICIT NONE
       INTEGER NSTATV, nProp, elemId, kDomIntPt, ldstep, isubst
       DOUBLE PRECISION STRESS(6), ustatev(NSTATV), DDSDDE(6,6), SSE
-      DOUBLE PRECISION dTime, PREDEF(*), DPRED(*), prop(nProp)
+      DOUBLE PRECISION dTime, AB_PHI, AB_CN, prop(nProp)
       DOUBLE PRECISION PNEWDT, DFGRD1(3,3)
 C     names the fragments expect from the partner's usermat
       DOUBLE PRECISION Sdp_bio1_n, Sdp_locbio1_n, Sdp_bio2_n
@@ -116,13 +182,13 @@ C     in the job's output directory
       CHARACTER*256 AB_DIR
       INTEGER AB_LD
 {decl}
-C     --- host values: phi and c from field variables 1 and 2 ----------
-      Sdp_bio1_n = PREDEF(1) + DPRED(1)
+C     --- host values: phi and c as UMAT found them --------------------
+      Sdp_bio1_n = AB_PHI
       Sdp_bio2_n = 0.0D0
       Sdp_locbio1_n = 1.0D0
       Sdp_locbio2_n = 1.0D0
       Sdp_sumLocal = 1.0D0
-      AB_C = PREDEF(2) + DPRED(2)
+      AB_C = AB_CN
       Sbio_GrowthConst = ustatev(84)
       keycut = 0
       IF (.NOT. AB_OPENED) THEN
