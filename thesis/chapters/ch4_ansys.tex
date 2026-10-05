@@ -877,11 +877,14 @@ nutrient in the seed falls to $0.44$--$0.66$ and the share
 $\phi_1/(\phi_1+\phi_2)$ ranges from $0.025$ at the side facing the nutrient
 to $0.14$ at the far side (correlation with $c$: $-0.83$); with the example
 consumption it is $0.021$ everywhere. This is the first composition in the
-element that varies in space. The direction agrees with Python, the range is
-smaller. The two differ in the consumption: the element consumes at a rate
-independent of $c$ (zero order), Python at a rate proportional to $c$. With
-zero-order consumption a stronger consumption ($8$) drives $c$ below zero,
-which is outside the valid range of the model.
+element that varies in space. Python gives the same: with the consumption set
+so that the lowest nutrient in the seed is $0.435$, as in ANSYS, the share
+ranges from $0.026$ to $0.139$. This holds whether the consumption is
+independent of $c$ (zero order, as in the element) or proportional to $c$
+(first order, as in the Python study above); the order changes only how low
+$c$ falls. The wider range of Figure~\ref{fig:ch5-local-nutrient} comes from
+a lower nutrient. With zero-order consumption a stronger consumption ($8$)
+drives $c$ below zero, which is outside the valid range of the model.
 
 \begin{figure}[htbp]
   \centering
