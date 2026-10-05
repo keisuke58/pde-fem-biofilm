@@ -54,3 +54,22 @@ data allow (`ROADMAP_TWO_WAY.md`, literature section).
 3. **Friction with the substrate** is the constraint that creates the stress
    there; in the example model here the constraint is the soft surroundings of
    the seed. Worth one sentence in the thesis outlook, not more.
+
+## Their data and code (looked at 5 Oct)
+
+`git clone --depth 1 https://github.com/f-chenyi/biofilm-mechanics-theory` (91 MB).
+**No licence file**, so nothing of it is copied into this repository; clone it
+where needed.
+
+| file | content |
+|---|---|
+| `paper data/Fig 2/velocity profile/velocity-profile-0.7-{1,6,16}h.mat` | measured radial velocity on 0.7 % agar: `r` (23 points, up to about 4.7 mm), `v_avg`, `v_std` (µm/min). **The quantitative target of the paper** |
+| `paper data/Fig 1/kymograph/kymo-0.{4,7}.mat` | biofilm radius `Rout`, radii of the radial and zigzag patterns over time `tAll` (241 points, h) |
+| `paper data/Fig 1/surface profiling/line-profile-0.6.mat` | height profile `z(dr1)`: leading angle, thickness, wrinkle wavelength |
+| `paper data/Fig 2/leading angle/` | leading angles (3 biological replicates) and the fitted scaled friction |
+| `biofilm_morphogenesis_circle_CLEANED.py` | the FEniCS model (377 lines), axisymmetric disc, dimensionless (Rc = 1, T = 6) |
+
+What a comparison here would need: the radius `Rout(t)` and the velocity
+profiles are the observables; matching them requires a thin film on a
+substrate with friction (their Eq. 2), which neither the ANSYS example model
+nor the Python field has. A task for the continuation, not for the thesis.
