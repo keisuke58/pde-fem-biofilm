@@ -22,6 +22,7 @@ is the consolidation; these are the detail behind it.
 |---|---|
 | [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | Why the 2024 PDE is **not** reproduced: the variants that fit are not the paper's, and its own combination is the worst fit |
 | [`SOLEIMANI2023_NOTES.md`](SOLEIMANI2023_NOTES.md) | The nearest precedent, previously uncited. Our condition degeneracy belongs to the **simplex**, not to multi-species modelling; the UserElement question; the group's validation bar |
+| [`FEI2020_NOTES.md`](FEI2020_NOTES.md) | Fei et al. 2020 (PNAS): growth-induced stress and wrinkling of V. cholerae biofilms, F = Fe·Fg with Monod growth, compared quantitatively with experiment; a validation target for the mechanics. PDF not bundled (PNAS licence) |
 | [`SOLEIMANI2019_NOTES.md`](SOLEIMANI2019_NOTES.md) | The unconditionally stable viscous integrator (Eq. 32) our explicit `Fv` update needs; and `E = 10 Pa`, which qualifies the stress comparison |
 | [`SOLEIMANI2021_NOTES.md`](SOLEIMANI2021_NOTES.md) | The Heaviside cap on `α` (Eq. 17), now implemented; resolves `CITATION_AUDIT.md` F1c; the group's own warning about the advection term |
 | [`CHU2018_NOTES.md`](CHU2018_NOTES.md) | What the computed stress is *for*: the ~5 kPa threshold at which the bacterial stress response turns on |
