@@ -706,10 +706,16 @@ $\alpha$ is lower in the outer layer of seed elements: by $0.43\,\%$ on $8^3$
 and $0.93\,\%$ on $16^3$. The seed grows almost freely inside the soft void,
 so this small step in $\alpha$ sets its von Mises stress. With the element
 values of $\alpha$ from ANSYS, the Python solver gives the ANSYS seed von
-Mises stress to $0.1\,\%$ on both meshes. The mean stress depends less on the
-step and is the more robust quantity to quote. Whether the step converges with
-the mesh is open; a $32^3$ run exceeds the memory of the workstation in the
-nutrient solve, and a $24^3$ run is in progress.}
+Mises stress to $0.1\,\%$ on both meshes. On $24^3$ elements the step grows
+to $1.76\,\%$ and the seed von Mises stress to $1.5\times10^{-4}$~Pa; the mean
+stress ($-3.5$, $-2.8$, $-3.6\times10^{-5}$~Pa on $8^3$, $16^3$, $24^3$) does
+not settle either. A $32^3$ run exceeds the memory of the workstation in the
+nutrient solve. The seed stresses are therefore not converged in the mesh,
+and I quote them only as an order of magnitude. The cause is the update of
+$\phi$ at the sharp seed boundary, which depends on the element size; the
+mechanics with a given $\alpha$ is converged. The stress outside the seed
+($5.0$, $4.7$, $5.5\times10^{-6}$~Pa) and the pattern, a compressed seed in
+a ring of tension, hold on all three meshes.}
 
 % TierA. SPLIT_COUPLING.md, phi_cap runs on IKMHIWI03 (judge PASS, diff 0.0).
 \TierA{%
@@ -858,10 +864,24 @@ share $\phi_1/(\phi_1+\phi_2)$ staying at $0.63$ to $0.66$. In case~6 the
 takeover is slower where the nutrient is low: for $\Lambda=4$ the share ranges
 from $0.03$ near the nutrient face to $0.44$ in the interior of the seed. The
 composition thus varies in space without any spreading, which the element
-cannot yet show. The values are converged in the grid ($16^3$, $32^3$) and in
-the coupling step ($0.025$). The bridge already passes the local nutrient to
-the point model; reading it at the Gauss point of the element remains to be
-done.
+cannot show with a constant $c^*$. The values are converged in the grid
+($16^3$, $32^3$) and in the coupling step ($0.025$).
+
+The same step then ran in ANSYS. The nutrient that the element solves at each
+Gauss point is passed to the point model as $c^*=c^*_0\,\min(c/c_\mathrm{ref},1)$
+with $c_\mathrm{ref}=1$, the held value; without this input the new build gives
+the earlier results to the last digit. On the $8^3$ example model, case~6, with
+the point model in all 512 elements and the consumption raised from the
+example value $0.5$ to $4$ (an example input, not a paper value), the
+nutrient in the seed falls to $0.44$--$0.66$ and the share
+$\phi_1/(\phi_1+\phi_2)$ ranges from $0.025$ at the side facing the nutrient
+to $0.14$ at the far side (correlation with $c$: $-0.83$); with the example
+consumption it is $0.021$ everywhere. This is the first composition in the
+element that varies in space. The direction agrees with Python, the range is
+smaller. The two differ in the consumption: the element consumes at a rate
+independent of $c$ (zero order), Python at a rate proportional to $c$. With
+zero-order consumption a stronger consumption ($8$) drives $c$ below zero,
+which is outside the valid range of the model.
 
 \begin{figure}[htbp]
   \centering
@@ -937,6 +957,6 @@ mechanical term of Klempt et al.\ 2024, Eq.~30, kept as written would stop all
 growth (Appendix~\ref{app:klempt2024}). This step needs a different growth law
 and realistic stress levels.
 
-Of the four steps, step~2 changes the results most and step~1 is the easiest
-to add to the element; both are the first goals of the continuation at Keio.}
+Of the four steps, step~2 changes the results most, and step~1 already runs in
+the element.}
 

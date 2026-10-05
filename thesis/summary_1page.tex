@@ -60,13 +60,17 @@ that composition, growth and stress can be computed together.
 Computed in Python on the reproduced field of Klempt et al.\ (2024): with the
 local nutrient in the point model the composition varies across the biofilm, and
 with a composition-dependent front rate, as in Soleimani et al.\ (2023) and Feng
-et al.\ (2021), the amount of biofilm changes by 4 to 13\,\%, depending on the rate contrast. Measured
+et al.\ (2021), the amount of biofilm changes by 4 to 13\,\%, depending on the rate contrast.
+The first of these steps also runs in ANSYS: with the element's nutrient passed
+to the point model, the composition in the seed varies in space. Measured
 expansion data of Fei et al.\ (2020) indicate that the growth rate must depend on
 the local nutrient.
 
 \sect{Limitations and outlook}
 All finite element results are verified, not validated: no measured stress of a
-growing oral biofilm is available. The coupling in ANSYS is one-way, and the
+growing oral biofilm is available. The stress in the seed is not converged in
+the mesh, because the growth field at the seed surface depends on the element
+size. In ANSYS only the local nutrient acts back on the point model, and the
 front term of the element is inactive, so the biofilm does not spread in the
 ANSYS runs. More species, the local nutrient in the element and a validation of
 the mechanics continue at Keio University.
