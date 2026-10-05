@@ -21,24 +21,24 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def series(dat):
-    t, phi, c, cur, rows = [], [], [], None, {}
+    t, phi, c, cur, rows, tab_t = [], [], [], None, {}, None
     for l in Path(dat).read_text(errors="replace").splitlines():
         m = re.search(r"STEP TIME COMPLETED\s+([0-9.Ee+-]+)", l)
         if m:
             cur = float(m.group(1).rstrip(","))
             continue
         if "ELEMENT  FOOT-" in l:
-            if rows and cur is not None:
+            if rows and tab_t is not None:
                 v = np.array(list(rows.values()))
-                t.append(cur); phi.append(v[:, 0].mean()); c.append(v[:, 1].mean())
-            rows = {}
+                t.append(tab_t); phi.append(v[:, 0].mean()); c.append(v[:, 1].mean())
+            rows, tab_t = {}, cur                    # the increment summary comes before its table
             continue
         m = re.match(r"^\s+(\d+)\s+((?:[-+]?\d+\.\d*(?:E[-+]\d+)?\s*){2})$", l)
         if m:
             rows[int(m.group(1))] = [float(x) for x in m.group(2).split()]
-    if rows and cur is not None:
+    if rows and tab_t is not None:
         v = np.array(list(rows.values()))
-        t.append(cur); phi.append(v[:, 0].mean()); c.append(v[:, 1].mean())
+        t.append(tab_t); phi.append(v[:, 0].mean()); c.append(v[:, 1].mean())
     return np.array(t), np.array(phi), np.array(c)
 
 

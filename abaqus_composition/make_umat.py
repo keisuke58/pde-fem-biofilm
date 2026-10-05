@@ -68,29 +68,36 @@ C=======================================================================
       MODULE biofilm_nut_store
       IMPLICIT NONE
       DOUBLE PRECISION, ALLOCATABLE, SAVE :: NUT_GP(:,:), NUT_GR(:,:,:)
+      DOUBLE PRECISION, ALLOCATABLE, SAVE :: NUT_OLD(:,:), NUT_GOLD(:,:,:)
       CONTAINS
+      SUBROUTINE NUT_INIT(N)
+C     once, before any element call (UEXTERNALDB, LOP = 0, one thread):
+C     never reallocated afterwards, so threads only write their own
+C     entries (5 Oct: growing it on demand crashed a 4-CPU run)
+      INTEGER N
+      IF (ALLOCATED(NUT_GP)) RETURN
+      ALLOCATE(NUT_GP(8, N), NUT_GR(3, 8, N))
+      ALLOCATE(NUT_OLD(8, N), NUT_GOLD(3, 8, N))
+      NUT_GP = 1.0D0
+      NUT_GR = 0.0D0
+      NUT_OLD = 1.0D0
+      NUT_GOLD = 0.0D0
+      END SUBROUTINE
+      SUBROUTINE NUT_COMMIT
+C     start of an increment (UEXTERNALDB, LOP = 1, one thread): the UEL's
+C     last values, those of the converged increment, become what UMAT
+C     and UMATHT read in this increment. Without this they read whatever
+C     iteration the UEL had reached, which depends on the thread order
+C     (4 CPUs differed from 1 CPU by 0.6 %, 5 Oct).
+      IF (.NOT. ALLOCATED(NUT_GP)) RETURN
+      NUT_OLD = NUT_GP
+      NUT_GOLD = NUT_GR
+      END SUBROUTINE
       SUBROUTINE NUT_PUT(IEL, IGP, C, GX, GY, GZ)
-      INTEGER IEL, IGP, N
+      INTEGER IEL, IGP
       DOUBLE PRECISION C, GX, GY, GZ
-      DOUBLE PRECISION, ALLOCATABLE :: TMP(:,:), TMG(:,:,:)
-      IF (IEL .LT. 1) RETURN
-      IF (.NOT. ALLOCATED(NUT_GP)) THEN
-        ALLOCATE(NUT_GP(8, MAX(IEL, 1000)))
-        ALLOCATE(NUT_GR(3, 8, MAX(IEL, 1000)))
-        NUT_GP = 1.0D0
-        NUT_GR = 0.0D0
-      END IF
-      N = SIZE(NUT_GP, 2)
-      IF (IEL .GT. N) THEN
-        ALLOCATE(TMP(8, MAX(IEL, 2 * N)))
-        ALLOCATE(TMG(3, 8, MAX(IEL, 2 * N)))
-        TMP = 1.0D0
-        TMG = 0.0D0
-        TMP(:, 1:N) = NUT_GP
-        TMG(:, :, 1:N) = NUT_GR
-        CALL MOVE_ALLOC(TMP, NUT_GP)
-        CALL MOVE_ALLOC(TMG, NUT_GR)
-      END IF
+      IF (.NOT. ALLOCATED(NUT_GP)) RETURN
+      IF (IEL .LT. 1 .OR. IEL .GT. SIZE(NUT_GP, 2)) RETURN
       NUT_GP(IGP, IEL) = C
       NUT_GR(1, IGP, IEL) = GX
       NUT_GR(2, IGP, IEL) = GY
@@ -102,16 +109,40 @@ C=======================================================================
       G = 0.0D0
       IF (.NOT. ALLOCATED(NUT_GR)) RETURN
       IF (IEL .LT. 1 .OR. IEL .GT. SIZE(NUT_GR, 3)) RETURN
-      G = NUT_GR(:, IGP, IEL)
+      G = NUT_GOLD(:, IGP, IEL)
       END SUBROUTINE
       DOUBLE PRECISION FUNCTION NUT_GET(IEL, IGP)
       INTEGER IEL, IGP
       NUT_GET = 1.0D0
       IF (.NOT. ALLOCATED(NUT_GP)) RETURN
       IF (IEL .LT. 1 .OR. IEL .GT. SIZE(NUT_GP, 2)) RETURN
-      NUT_GET = NUT_GP(IGP, IEL)
+      NUT_GET = NUT_OLD(IGP, IEL)
       END FUNCTION
       END MODULE biofilm_nut_store
+
+C=======================================================================
+C  UEXTERNALDB: allocates the nutrient store at the start of the
+C  analysis (single-threaded there). Size: environment variable
+C  BIOFILM_NUT_NEL (largest solid element number), default 200000.
+C=======================================================================
+      SUBROUTINE UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
+      USE biofilm_nut_store
+      INCLUDE 'ABA_PARAM.INC'
+      DIMENSION TIME(2)
+      CHARACTER*32 ENVV
+      INTEGER NEL, ISTAT
+      IF (LOP .EQ. 0) THEN
+        NEL = 200000
+        CALL GET_ENVIRONMENT_VARIABLE('BIOFILM_NUT_NEL', ENVV,
+     1                                STATUS=ISTAT)
+        IF (ISTAT .EQ. 0) READ(ENVV, *, IOSTAT=ISTAT) NEL
+        IF (ISTAT .NE. 0) NEL = 200000
+        CALL NUT_INIT(MAX(NEL, 1))
+      ELSE IF (LOP .EQ. 1) THEN
+        CALL NUT_COMMIT
+      END IF
+      RETURN
+      END
 
 C=======================================================================
 C  UEL: the nutrient c (Klempt 2024 Eq. 35 as the partner's element

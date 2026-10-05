@@ -23,7 +23,7 @@ from pathlib import Path
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
-    ap.add_argument("--case", choices=("fig7_high", "fig7_low", "fig4_edge"), default="fig7_high")
+    ap.add_argument("--case", choices=("fig7_high", "fig7_low", "fig4_edge", "advect"), default="fig7_high")
     ap.add_argument("--n", type=int, default=20)
     ap.add_argument("--dt", type=float, default=0.002)
     ap.add_argument("--T", type=float, default=0.2)
@@ -46,13 +46,18 @@ def main():
                                   nid(i, j, k + 1), nid(i + 1, j, k + 1), nid(i + 1, j + 1, k + 1),
                                   nid(i, j + 1, k + 1)]))
     tol = 1e-9
-    if a.case == "fig4_edge":
+    top = []
+    if a.case == "advect":                           # check of the front term: c = 1 / 0 on bottom / top,
+        seed = [q for q, x, y, z in nodes if (x - 10) ** 2 + (y - 10) ** 2 + (z - 10) ** 2 <= 9 + tol]
+        src = [q for q, x, y, z in nodes if abs(z) < tol]          # no consumption: c linear in z,
+        top = [q for q, x, y, z in nodes if abs(z - L) < tol]      # grad c the same everywhere
+    elif a.case == "fig4_edge":
         seed = [q for q, x, y, z in nodes if (x - 10) ** 2 + (y - 10) ** 2 + (z - 10) ** 2 <= 25 + tol]
         src = [q for q, x, y, z in nodes if abs(x - L) < tol and abs(y - L) < tol]
     else:
         seed = [q for q, x, y, z in nodes if abs(z - h) < tol and (x - 10) ** 2 + (y - 10) ** 2 <= 6.25 + tol]
         src = [q for q, x, y, z in nodes if abs(z) < tol]
-    g = 1e10 if a.case == "fig7_low" else 1e8
+    g = 1e10 if a.case == "fig7_low" else (0.0 if a.case == "advect" else 1e8)
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     p = [0.0] * 47
     p[0], p[6], p[27] = 1.0, 1e-3, 1.0
@@ -80,6 +85,7 @@ def main():
 {lst(seed)}
 *NSET, NSET=NSRC
 {lst(src)}
+{("*NSET, NSET=NTOP" + chr(10) + lst(top)) if top else "** no top face"}
 *SOLID SECTION, ELSET=EALL, MATERIAL=BIOFILM
 *MATERIAL, NAME=BIOFILM
 *DENSITY
@@ -101,7 +107,7 @@ NSEED, 1.0
 {nid(n, 0, 0)}, 2, 3
 {nid(0, n, 0)}, 3, 3
 NSRC, 12, 12, 1.0
-*EL PRINT, ELSET=EALL, FREQUENCY={a.every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
+{"NTOP, 12, 12, 0.0" + chr(10) if top else ""}*EL PRINT, ELSET=EALL, FREQUENCY={a.every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
 TEMP, SDV51
 *OUTPUT, FIELD, FREQUENCY={a.every}
 *NODE OUTPUT
