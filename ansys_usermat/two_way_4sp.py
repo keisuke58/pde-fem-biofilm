@@ -17,6 +17,18 @@ from the case's initial shares (case 1 equal, case 2 species 4 ten times the
 others), psi_i = 0.999.
 
     python ansys_usermat/two_way_4sp.py [--dt 0.05] -> assets/fig_two_way_4sp.png
+
+Result (5 Oct 2026, coupling step 0.1, 21^3), mean phi at T* = 1 and
+biomass-weighted shares:
+  case 1: one-way 0.704, two-way 0.744 (+6 %); shares 0.418/0.255/0.173/0.154
+  case 2: one-way 0.704, two-way 0.744 (+6 %); shares 0.418/0.255/0.172/0.155
+Largest pointwise change of phi 0.50 / 0.54. Both cases reach the same
+composition (the four-species coexistence of the paper, species 1 largest)
+within T* ~ 0.3, so r/r_bar is 1.08-1.14 everywhere in the biofilm and the
+front is faster, as for case 3 of two species. With four species the
+composition hardly varies in space here; a spatial pattern needs a local
+input such as the nutrient (step 1). Convergence in the coupling step not
+yet checked (two species: < 0.01 from 0.05 to 0.025).
 """
 from __future__ import annotations
 
