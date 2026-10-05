@@ -5,7 +5,7 @@ usermat (a local working copy that is never committed), the same way every time.
     python ansys_usermat/apdl/paste_fragments.py <target> --nut-var NAME
 
 --nut-var NAME (optional): the partner's Gauss-point nutrient variable, e.g.
-the pool value of Nut1. It replaces the fragment's line "CM_NUT = -1.0D0" by
+the pool value of Nut1. It replaces the fragment's line "CM_NUT = -1.0D30" by
 "CM_NUT = NAME", which switches on the local nutrient for prop(33) > 0
 (two-way step 1). Without it the pasted code is the same as before.
 
@@ -83,7 +83,7 @@ def find_block(lines, kind):
     return i, j
 
 
-NUT_LINE = "          CM_NUT = -1.0D0"
+NUT_LINE = "          CM_NUT = -1.0D30"     # "no nutrient": the field's c itself can be < 0
 NUT_VAR = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\([A-Za-z0-9_, ]+\))?$")
 
 

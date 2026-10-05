@@ -175,13 +175,16 @@ C         c* = c*_0 * c_rel with c_rel = min(max(CM_NUT/c_ref, 0), 1).
 C         CM_NUT is the field's nutrient at this Gauss point; the next
 C         executable line is its source, and paste_fragments.py
 C         --nut-var NAME replaces it with CM_NUT = NAME. As shipped,
-C         CM_NUT = -1 (not available) and prop(33) has no effect.
+C         CM_NUT = -1D30 (not available) and prop(33) has no effect.
+C         The field's c itself can be < 0 (zero-order consumption), so
+C         "not available" is -1D30, not -1: a negative c gives c_rel = 0
+C         (5 Oct: with -1 as the mark, c < 0 fell back to c_rel = 1).
 C         prop(35) > 0: chi_1 at the first call for points the biofilm
 C         reaches later (phi_3D below phi_min at their first call); the
 C         points that hold biofilm from the start keep prop(30). Without
 C         it prop(30) sets both, so the composition behind the front and
 C         the seed's start cannot be varied apart (5 Oct runs).
-          CM_NUT = -1.0D0
+          CM_NUT = -1.0D30
           CM_CAP = SP_PHIMAX
           IF (nProp .GE. 32) THEN
             IF (prop(32) .GT. 0.0D0) CM_CAP = MIN(prop(32), SP_PHIMAX)
@@ -239,7 +242,7 @@ C         the seed's start cannot be varied apart (5 Oct runs).
               SP_HITI = 0
               CM_CREF = 0.0D0
               IF (nProp .GE. 33) CM_CREF = prop(33)
-              IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GE. 0.0D0) THEN
+              IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GT. -1.0D29) THEN
                 CM_CREL = MIN(MAX(CM_NUT / CM_CREF, 0.0D0), 1.0D0)
                 CALL biofilm_ecology_hook_c(PM_GOLD, PM_TH, CM_DT,
      &               PM_NSUB, CM_CREL, PM_GNEW, PM_PHIINT, PM_OK)

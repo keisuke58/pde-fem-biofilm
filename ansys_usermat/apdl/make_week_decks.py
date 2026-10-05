@@ -16,6 +16,10 @@ results are there whichever way they are decided:
   - two species, 16^3: the consumption series and the main sensitivities;
   - one species: beta 0.005 ... 0.1 on 8^3 / 16^3 / 24^3, T* = 2, dt on 16^3;
   - then the idle days: two species on 24^3, one species to T* = 5, more 16^3.
+Consumption 1 (with MY_DIFF1 = 1) is Klempt 2024 Table 2 (d = 1e10 um^2/T*,
+g = 1e8 /T*) scaled to the 2 mm cube like beta (lengths x 100 from the paper's
+20 um cube): the quasi-static Eq. 35 depends on g/d only, penetration length
+sqrt(d/g) = half the cube in both. Consumption 0/2/4/6 are example inputs.
 The phi update is explicit, so dt beta / h^2 is kept below about 0.1
 (3-D limit 1/6): beta = 0.1 on 16^3 and beta = 0.05 on 24^3 use dt 0.0125.
 --check only prints the list (no deck is written).
@@ -77,13 +81,13 @@ def runs():
         one(n, 0.02, tag="Eex", sets=("YOUNG_BIO=1000", "YOUNG_VOID=1", "POISSON_BIO=0.3"))
     # 1. two species, 8^3 (about 3-15 min each); s = 1.0 only with consumption 4/6
     for c in ("c6", "c3"):
-        for cons in (0, 2, 4, 6):
+        for cons in (1, 0, 2, 4, 6):
             for s in (0.05, 0.1, 0.15, 0.25, 0.5, 1.0):
                 if s == 1.0 and cons < 4:
                     continue
                 two(8, c, cons=cons, s=s)
         for s in (0.05, 0.15, 0.5):
-            for cons in (0, 6):
+            for cons in (1, 0, 6):
                 two(8, c, cons=cons, s=s, T=2.0)
         for cap in (0.85, 0.95):
             two(8, c, cap=cap)
@@ -101,7 +105,7 @@ def runs():
     one(16, 0.02, dt=0.0125)
     # 3. two species, 16^3 (about 30-60 min each)
     for c in ("c6", "c3"):
-        for cons in (6, 0, 4, 2):
+        for cons in (1, 6, 0, 4, 2):
             two(16, c, cons=cons)
     two(16, "c6", s=0.05); two(16, "c6", s=0.5)
     two(16, "c6", late=0.2); two(16, "c6", late=0.8)
@@ -112,7 +116,7 @@ def runs():
     # 5. the idle days (cloud review): two species on 24^3 (third mesh for the
     #    composition; memory not checked, a FATAL stop is not retried), one
     #    species to T* = 5, then a denser 16^3 s x consumption grid
-    two(24, "c6", cons=6); two(24, "c6", cons=0)
+    two(24, "c6", cons=1); two(24, "c6", cons=6); two(24, "c6", cons=0)
     one(8, 0.02, T=5.0); one(16, 0.02, T=5.0)
     for s in (0.1, 0.25):
         two(16, "c6", s=s)

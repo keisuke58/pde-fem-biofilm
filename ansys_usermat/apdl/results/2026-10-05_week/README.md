@@ -19,7 +19,9 @@ Numbers drop the decimal point: `s015` = 0.15, `b005` = 0.05, `b0005` = 0.005,
 
 Two species, `w<mesh>_<c3|c6>_g<consumption>_s<s>[...]`
 - mesh 8 or 16 (8^3 / 16^3 elements), case 3 or case 6 of Klempt et al. 2026
-- `g` = CONSUMPTION11 (0 = no consumption: c = 1 everywhere), example input
+- `g` = CONSUMPTION11 (0 = no consumption: c = 1 everywhere). `g1` is Klempt
+  2024 Table 2 scaled to the 2 mm cube like beta (g/d with d = MY_DIFF1 = 1;
+  see make_week_decks.py); 2/4/6 are example inputs
 - `s` = clock of the point model (prop(31)), an assumption
 - optional: `_cap` phi_cap (prop(32), default 0.9), `_chi` start share (prop(30),
   default 0.5), `_late` start share of points reached later (prop(35), default
@@ -44,13 +46,13 @@ comp_trace). The executable of 5 Oct evening traces every point with
 phi >= 0.01; `points` in the JSON says which rule a run had. Nut1 over time is
 not traced (only the last step, in nut_field).
 
-## Order (118 runs)
+## Order (137 runs)
 
 0. one species, ch4 variants, 8^3 and 16^3 (6 runs)
-1. two species 8^3 (74 runs, about 3-15 min each)
+1. two species 8^3 (90 runs, about 3-15 min each)
 2. one species 8^3 / 16^3 (11 runs)
-3. two species 16^3 (15 runs, about 30-60 min each)
+3. two species 16^3 (17 runs, about 30-60 min each)
 4. one species 24^3, beta 0.01 and 0.05 (2 runs, 2-4 h each)
-5. idle days: two species 24^3 case 6, consumption 6 and 0 (memory unchecked;
+5. idle days: two species 24^3 case 6, consumption 1, 6 and 0 (memory unchecked;
    a FATAL stop is not retried), one species T* = 5 on 8^3 / 16^3, six more
    16^3 two-species runs

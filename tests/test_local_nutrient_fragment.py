@@ -1,11 +1,11 @@
 """Pre-flight for the local nutrient in the composition mode (prop(28) = 7,
 prop(33) = c_ref > 0; two-way step 1 of ROADMAP_TWO_WAY.md).
 
-The fragment's nutrient source line (CM_NUT = -1.0D0) is replaced, as
+The fragment's nutrient source line (CM_NUT = -1.0D30) is replaced, as
 paste_fragments.py --nut-var does, by CM_NUT = prop(34) so the test can
 prescribe the nutrient. One packed Gauss point, case 6 of Klempt et al. 2026.
 Checked:
-  - as shipped (CM_NUT = -1) prop(33) has no effect;
+  - as shipped (CM_NUT = -1D30) prop(33) has no effect;
   - c_rel = 1 gives the plain composition mode bit for bit;
   - c_rel < 1 reaches the server and changes the composition, by exactly
     what the server gives for that c_rel;
@@ -135,6 +135,15 @@ def test_low_nutrient_reaches_the_server(server, builds):
     assert abs(share(low) - share(base)) > 1e-6
     # same as c_ref = 2, nut = 0.6 (only the ratio enters)
     assert np.array_equal(_run(server, builds["patched"], 2.0, 0.6), low)
+
+
+def test_negative_nutrient_is_starved_not_full(server, builds):
+    # zero-order consumption lets the field's c go below 0 (5 Oct, consumption > 6);
+    # such a point must see c_rel = 0, not fall back to the plain mode (c_rel = 1)
+    base = _run(server, builds["patched"], 0.0, 0.0)
+    zero = _run(server, builds["patched"], 1.0, 0.0)
+    assert not np.array_equal(zero, base)
+    assert np.array_equal(_run(server, builds["patched"], 1.0, -0.3), zero)
 
 
 def test_set_nut_source_refuses_bad_names():
