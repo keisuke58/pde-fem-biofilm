@@ -114,9 +114,17 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
 - **Front term, well-posed check** (`--case advect`, `check_advect.py`): c held
   1 / 0 on bottom / top, no consumption, ball of phi = 1 (radius 3 um) at the
   centre. The phi centroid moves down as the ODE dz/dt = -r c/(k+c) says:
-  by T* = 0.1, 3.41 um in Abaqus (20^3), 3.65 um finite differences, 3.70 um
-  ODE; Abaqus starts one increment late (grad c committed) and then runs ~7 %
-  slower on this coarse mesh (ball 6 elements across). 40^3 running.
+  by T* = 0.1 (um moved, share of the ODE's):
+
+  | | 20^3 | 40^3 |
+  |---|---|---|
+  | Abaqus | 3.41 (92 %) | 3.59 (97 %) |
+  | finite differences (20^3) | 3.65 (99 %) | |
+  | ODE | 3.70 | 3.70 |
+
+  Abaqus starts one increment late (grad c is the committed one) and then
+  moves at 93 % (20^3) / 97 % (40^3) of the ODE speed (T* = 0.05-0.1): the gap
+  halves with h, the first-order streamline diffusion. 40^3: 130 min on 6 CPUs.
 - **Abaqus-only mesh series** (done; one species, beta = 0.02, dt = 0.025,
   T* = 1.1, the ANSYS 8^3 seed region, `--ic fraction`, 6 CPUs), Pa:
 
@@ -126,28 +134,38 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   | 16^3 | 4.91e-4 | -2.11e-4 | 4.87e-5 | 0.6 |
   | 24^3 | 5.55e-4 | -2.24e-4 | 5.24e-5 | 1.9 |
   | 32^3 | 5.79e-4 | -2.28e-4 | 5.38e-5 | 5.4 |
-  | 40^3 | 5.90e-4 | -2.30e-4 | 5.44e-5 | 16.1 |
-  | h -> 0 (second order, 24/32/40) | 6.09e-4 | -2.34e-4 | 5.55e-5 | |
-  | ANSYS 24^3 | 6.06e-4 (-0.5 %) | -2.45e-4 (+5 %) | 5.85e-5 (+5 %) | ~120 |
+  | 40^3 | 5.90e-4 | -2.30e-4 | 5.44e-5 | 16.1 (6.7 separated) |
+  | 48^3 (separated) | 5.96e-4 | -2.31e-4 | 5.47e-5 | 16.7 |
+  | h -> 0 (second order, 40/48) | 6.10e-4 | -2.34e-4 | 5.55e-5 | |
+  | ANSYS 24^3 | 6.06e-4 (-0.7 %) | -2.45e-4 (+5 %) | 5.85e-5 (+5 %) | ~120 |
 
-  The differences 24->32->40 shrink by 2.1-2.2, as second-order convergence
-  predicts. ANSYS stops at 24^3 (32^3 out of memory); against the extrapolated
-  values its 24^3 seed von Mises is within 0.5 % and its mean stresses ~5 % high
-  (its seed is a jump at the integration points). 48^3 (470,596 equations,
-  unsymmetric direct solver) stopped in the first solve, most likely out of
-  memory; `*SOLUTION TECHNIQUE, TYPE=SEPARATED` would split the system.
+  The differences 24->32->40 shrink by 2.1-2.2 and 32->40->48 by 1.7 (1.8 for
+  second order). ANSYS stops at 24^3 (32^3 out of memory); against the
+  extrapolated values its 24^3 seed von Mises is within 1 % and its mean
+  stresses ~5 % high (its seed is a jump at the integration points). 48^3 ran
+  out of memory with the default unsymmetric coupled solve;
+  `make_cube_inp.py --separated` (`*SOLUTION TECHNIQUE, TYPE=SEPARATED` and a
+  symmetric solve, possible because phi does not depend on the displacement)
+  runs it. On 40^3 it gives the same values as the coupled solve to all printed
+  digits, in 6.7 instead of 16.1 minutes.
 - **Front term, Klempt 2024 fig7_high** (done, 20^3, dt 0.002, T* = 0.2): the
   domain mean phi agrees with the finite-difference reproduction at T* = 0.04
   (0.0061 / 0.0068) and then falls behind (0.012 / 0.030 at 0.2). In both the
-  seed is eroded (max phi 0.11 / 0.17) and phi spreads thinly above it. Not a
-  usable check of the implementation: Eq. 34 as printed moves phi with the full
-  speed r c/(k+c) along n_c = grad c / |grad c|, and above the seed, where the
-  nutrient is hardly consumed, grad c ~ 0 and its direction is set by
-  discretisation noise (finite differences there, shape functions here). The
-  same ill-posedness as in the partner element (direction undefined where the
-  nutrient is uniform). A check needs a case with a well-defined grad c
-  everywhere (e.g. c held 1 / 0 on two faces, no consumption) or a regularised
-  n_c.
+  seed is eroded (max phi 0.11 / 0.17) and phi spreads thinly above it.
+  Where the extra phi comes from (finite differences, T* = 0.2): source
+  k_alpha alpha 0.0002, clipping to [0, 1] 0.0000, the front term 0.027. The
+  front term -v . grad(phi) is not conservative: it adds phi div v, and
+  v = r c/(k+c) grad c/|grad c| has a large divergence around the seed, where
+  the c isolines bend round the small consuming colony. That is a
+  grid-scale quantity on 20^3.
+  Regularised direction, n_c = grad c / sqrt(|grad c|^2 + eps^2)
+  (`--eps`, also in the reproduction's `run(eps=)`; an assumption of this
+  work), mean phi at T* = 0.2 (Abaqus / finite differences): eps = 0
+  0.012 / 0.030, 1e-4 0.014 / 0.030, 1e-3 0.011 / 0.020 (|grad c| at t = 0:
+  median 1e-5, max 3e-3 per um). eps = 1e-4 switches the term off where c is
+  uniform and changes nothing in the reproduction, so the noise direction
+  where grad c ~ 0 is not what separates the two. Both on finer grids from
+  the same continuous seed (`--seed-field`, `--fd-n`): running.
 - **16^3 two species against ANSYS** (done, ratio Abaqus / ANSYS, 8^3 -> 16^3):
 
   | measure | 8^3 | 16^3 |
@@ -163,6 +181,37 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   measures do.
 - **Four species, 8^3 cube** (done): seed phi sum 0.447, shares
   0.395 / 0.268 / 0.187 / 0.150.
+
+## Next: species carried in space (design, not implemented)
+
+Now only the amount phi is a field. The composition lives in the point model at
+each integration point and does not move: where phi spreads into a point, that
+point's model starts from the start share (prop(35)), not from the composition
+of the biofilm that arrived. With the same beta for every species, conservation
+of each species gives for n species n - 1 more fields, e.g. for two
+species the amount of species 1, phi_1 (phi_2 = phi - phi_1):
+
+    d phi_1/dt = beta lap(phi_1) + R_1,
+
+R_1 = the point model's rate of species 1. In Abaqus this is one more DOF (13)
+on the nutrient UEL, with R_1 committed per increment as c is. The open
+question is the point model's state: it would have to take phi_1 from the field
+at the start of each increment instead of carrying it, which changes the
+call-site fragments (now unchanged from ANSYS) and the stand-alone check.
+
+Does it matter? The 16^3 two-species runs (case 6, start share 0.5), share
+phi_1/(phi_1+phi_2) at T* = 1.1, Abaqus (ANSYS the same within 5 %):
+
+| | seed | layer 1 | layer 2 |
+|---|---|---|---|
+| no nutrient | 0.055 | 0.34 | 0.50 |
+| consumption 6 | 0.25 | 0.40 | 0.50 |
+
+One element outside the seed the share is 0.34-0.40 instead of the seed's
+0.05-0.25, two elements out it is the start value: the composition of the
+spreading biofilm is set by the start share, not by the biofilm it came
+from. The stress does not see this as long as the growth uses the total
+(prop(36) = 0); with species-weighted growth it would.
 
 ## Note
 

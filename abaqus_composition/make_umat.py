@@ -338,6 +338,9 @@ C      v = r c/(k+c) n_c,  n_c = grad c / |grad c|  (0 where grad c = 0),
 C  c and grad c from the nutrient UEL (biofilm_nut_store), and, as the
 C  first-order upwind of the finite-difference reproduction, streamline
 C  diffusion v h / 2 along n_c (the cell Peclet number is ~10 here).
+C  Optional constant 7, eps > 0: n_c = grad c / sqrt(|grad c|^2 + eps^2)
+C  (as eps in klempt2024_quantitative.run), the transport fading out where
+C  the nutrient is uniform; an assumption of this work, not in the paper.
 C  Needs *DENSITY 1.
 C=======================================================================
       SUBROUTINE UMATHT(U, DUDT, DUDG, FLUX, DFDT, DFDG,
@@ -374,12 +377,16 @@ C=======================================================================
           C = MAX(NUT_GET(NOEL, NPT), 0.0D0)
           CALL NUT_GRAD(NOEL, NPT, GC)
           GM = SQRT(GC(1)**2 + GC(2)**2 + GC(3)**2)
+          EPS = 0.0D0
+          IF (NPROPS .GE. 7) EPS = PROPS(7)
           IF (GM .GT. 1.0D-14) THEN
             V = PROPS(4) * C / (PROPS(5) + C)
+            GR = SQRT(GM**2 + EPS**2)
             DO I = 1, 3
-              EN(I) = GC(I) / GM
+              EN(I) = GC(I) / GR
             END DO
-            BS = 0.5D0 * V * PROPS(6)
+C           streamline diffusion |v| h/2 along v/|v|, v = V EN, |EN| = GM/GR
+            BS = 0.5D0 * V * PROPS(6) * GR / GM
           END IF
         END IF
       END IF

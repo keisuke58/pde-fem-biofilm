@@ -1,6 +1,6 @@
 """check_advect.py -- a well-posed check of the front term of Eq. 34 in Abaqus.
 
-    python abaqus_composition/check_advect.py JOB.dat
+    python abaqus_composition/check_advect.py JOB.dat [n]
 
 make_klempt_inp.py --case advect: 20 um cube, c held at 1 on the bottom and 0 on
 the top, no consumption, so c = 1 - z/20 and n_c = grad c/|grad c| = (0, 0, -1)
@@ -77,8 +77,8 @@ def ode(ts, z0=10.0, dt=1e-5):
     return np.array(out)
 
 
-def main(dat):
-    ta, za = abaqus(dat)
+def main(dat, n=20):
+    ta, za = abaqus(dat, n)
     tf, zf = fd(float(ta[-1]))
     zo = ode(ta)
     print(f"{'T*':>6s} {'z Abaqus':>9s} {'z FD':>8s} {'z ODE':>8s}   (centroid height, um; start 10)")
@@ -88,4 +88,4 @@ def main(dat):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else 20)

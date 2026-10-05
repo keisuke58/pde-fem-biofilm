@@ -2,7 +2,7 @@
 make_klempt_inp.py, next to the finite-difference reproduction
 (JAXFEM/klempt2024_quantitative.py, growth="printed", zero-order consumption).
 
-    python abaqus_composition/compare_klempt.py JOB.dat [--case fig7_high] [--ref ref.json]
+    python abaqus_composition/compare_klempt.py JOB.dat [--case fig7_high] [--ref ref.json] [--eps 0] [--fd-n 41]
 
 The mean of the centroid values of a trilinear field over equal hexahedra is
 its volume mean, the same quantity as the reproduction's trapezoid average.
@@ -47,6 +47,9 @@ def main():
     ap.add_argument("dat")
     ap.add_argument("--case", default="fig7_high")
     ap.add_argument("--ref", default=None)
+    ap.add_argument("--eps", type=float, default=0.0)
+    ap.add_argument("--fd-n", type=int, default=None,
+                    help="reproduction on an fd-n^3 node grid, started from seed_field (the paper-grid seed)")
     a = ap.parse_args()
     t, phi, c = series(a.dat)
     if a.ref:
@@ -54,7 +57,11 @@ def main():
     else:
         sys.path.insert(0, str(ROOT / "JAXFEM"))
         import klempt2024_quantitative as k
-        ref = k.run(a.case, "zero_order", growth="printed", t_end=float(t[-1]))
+        phi0 = None
+        if a.fd_n:
+            k.set_grid(a.fd_n)
+            phi0 = k.seed_field(a.case, k.X, k.Y, k.Z)
+        ref = k.run(a.case, "zero_order", growth="printed", t_end=float(t[-1]), eps=a.eps, phi0=phi0)
     rt = np.array(ref["t"])
     print(f"{'T*':>6s} {'phi Abaqus':>11s} {'phi FD':>9s} {'ratio':>7s} {'c Abaqus':>9s} {'c FD':>8s}")
     for ti, p, cc in zip(t, phi, c):

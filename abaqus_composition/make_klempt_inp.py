@@ -4,7 +4,7 @@ compared with the independent finite-difference reproduction
 JAXFEM/klempt2024_quantitative.py (growth="printed", zero-order consumption).
 
     python abaqus_composition/make_klempt_inp.py OUT.inp [--case fig7_high|fig4_edge]
-        [--n 20] [--dt 0.002] [--T 0.2] [--pen 100] [--every 10]
+        [--n 20] [--dt 0.002] [--T 0.2] [--pen 100] [--every 10] [--eps 0]
 
 The paper's 20 um cube in um (n^3 C3D8T, nodes on the reproduction's grid
 for n = 20), Table 2 values: beta = 2 um^2/T*, k_alpha = 1e-3, r = 100 um/T*,
@@ -14,9 +14,11 @@ axis, c = 1 on the bottom face. fig4_edge: phi = 1 at the nodes within 5 um of
 the centre, c = 1 on the edge x = y = 20 um. The reproduction clips phi to
 [0, 1]; here a stiff penalty (P = 100) does that. Mechanics as in the
 one-species runs (it does not act back on phi). Prints the centroid phi
-(TEMP) and c (SDV51) every --every increments.
+(TEMP) and c (SDV51) every --every increments. --eps (1/um): regularised
+n_c = grad c / sqrt(|grad c|^2 + eps^2), as eps in the reproduction's run().
 """
 import argparse
+import numpy as np
 from pathlib import Path
 
 
@@ -30,6 +32,10 @@ def main():
     ap.add_argument("--pen", type=float, default=100.0)
     ap.add_argument("--every", type=int, default=10)
     ap.add_argument("--no-front", action="store_true")
+    ap.add_argument("--eps", type=float, default=0.0)
+    ap.add_argument("--seed-field", action="store_true",
+                    help="initial phi = the paper-grid seed as its trilinear interpolant (seed_field in the "
+                         "reproduction): the same continuous seed on any n (grid studies)")
     a = ap.parse_args()
     L, n = 20.0, a.n
     h = L / n
@@ -57,6 +63,13 @@ def main():
     else:
         seed = [q for q, x, y, z in nodes if abs(z - h) < tol and (x - 10) ** 2 + (y - 10) ** 2 <= 6.25 + tol]
         src = [q for q, x, y, z in nodes if abs(z) < tol]
+    ic = "NSEED, 1.0"
+    if a.seed_field and a.case != "advect":
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "JAXFEM"))
+        import klempt2024_quantitative as kq
+        val = kq.seed_field(a.case, *(np.array([q[i] for q in nodes]) for i in (1, 2, 3)))
+        ic = chr(10).join(f"{q[0]}, {v:.10g}" for q, v in zip(nodes, val) if v > 1e-12)
     g = 1e10 if a.case == "fig7_low" else (0.0 if a.case == "advect" else 1e8)
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     p = [0.0] * 47
@@ -92,13 +105,13 @@ def main():
 1.0
 *USER MATERIAL, CONSTANTS={len(p)}, TYPE=MECHANICAL
 {rows}
-*USER MATERIAL, CONSTANTS=6, TYPE=THERMAL
-2.0, 1e-3, {a.pen}, {r}, 1.0, {h}
+*USER MATERIAL, CONSTANTS=7, TYPE=THERMAL
+2.0, 1e-3, {a.pen}, {r}, 1.0, {h}, {a.eps}
 *DEPVAR
 100
 *INITIAL CONDITIONS, TYPE=TEMPERATURE
 NALL, 0.0
-NSEED, 1.0
+{ic}
 *STEP, NLGEOM=YES, INC=100000, UNSYMM=YES
 *COUPLED TEMPERATURE-DISPLACEMENT
 {a.dt}, {a.T}

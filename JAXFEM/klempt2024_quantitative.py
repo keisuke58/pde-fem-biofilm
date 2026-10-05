@@ -221,6 +221,21 @@ def set_grid(n):
     LAP = neumann_laplacian()
 
 
+def seed_field(case, x, y, z):
+    """The paper-grid (21^3) initial phi of setup(case) as its trilinear
+    interpolant, at the points x, y, z: the same continuous seed on any grid."""
+    from scipy.interpolate import RegularGridInterpolator
+    ax = np.arange(21) * (L / 20)
+    G = np.meshgrid(ax, ax, ax, indexing="ij")
+    if case == "fig4_edge":
+        p = ((G[0] - 10)**2 + (G[1] - 10)**2 + (G[2] - 10)**2 <= 5.0**2)
+    else:
+        p = (np.isclose(G[2], 1.0) & ((G[0] - 10)**2 + (G[1] - 10)**2 <= 2.5**2))
+    f = RegularGridInterpolator((ax, ax, ax), p.astype(float))
+    pts = np.stack([np.ravel(x), np.ravel(y), np.ravel(z)], axis=-1)
+    return f(pts).reshape(np.shape(x))
+
+
 def solve_c(phi, g, dir_mask, variant):
     """Quasi-static Eq. 35: d lap(c) = g phi [c]; c = 1 on dir_mask."""
     free = ~dir_mask.ravel()
@@ -250,15 +265,23 @@ def setup(case):
     return phi, mask, g
 
 
-def run(case, variant, growth="printed", dt=DT, t_end=T_END):
+def run(case, variant, growth="printed", dt=DT, t_end=T_END, eps=0.0, phi0=None):
     """growth="printed": Eq. 34 as printed, |grad phi| n_phi.n_c = grad phi . n_c
     -- a transport of phi towards the nutrient (the back of the colony erodes).
     growth="abs": |grad phi . n_c| as a source -- growth on both faces aligned
     with the nutrient gradient, none on the faces perpendicular to it, which
     is what the paper's text and Fig. 3/Table 4 describe.
     growth="lap": the partner element's front term, |lap phi| r c/(k+c)
-    n_phi.n_c (central differences), for comparison (2026-10-02)."""
+    n_phi.n_c (central differences), for comparison (2026-10-02).
+    eps > 0 (1/um): n_c regularised to grad c / sqrt(|grad c|^2 + eps^2), so
+    the transport fades out where the nutrient is uniform instead of running
+    at full speed along a direction set by round-off (an assumption of this
+    work, not in the paper; 2026-10-05).
+    phi0: initial phi on the current grid in place of setup()'s (grid studies
+    keep the same continuous seed, see seed_field)."""
     phi, mask, g = setup(case)
+    if phi0 is not None:
+        phi = np.array(phi0, dtype=float)
     alpha = np.ones_like(phi)
     c = solve_c(phi, g, mask, variant)
     n = int(round(t_end / dt))
@@ -266,7 +289,10 @@ def run(case, variant, growth="printed", dt=DT, t_end=T_END):
     for s in range(1, n + 1):
         gx, gy, gz = grad_c(c)
         mag = np.sqrt(gx**2 + gy**2 + gz**2)
-        speed = np.where(mag > 1e-14, R * c / (K_M + c) / np.maximum(mag, 1e-14), 0.0)
+        if eps > 0.0:
+            speed = R * c / (K_M + c) / np.sqrt(mag**2 + eps**2)
+        else:
+            speed = np.where(mag > 1e-14, R * c / (K_M + c) / np.maximum(mag, 1e-14), 0.0)
         v = (speed * gx, speed * gy, speed * gz)
         if growth == "abs":
             src = np.abs(upwind_dot(phi, v))

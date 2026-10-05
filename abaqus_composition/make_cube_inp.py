@@ -42,6 +42,10 @@ def main():
                     help="phi at t = 0: 1 at every node of a seed element (nodes), or the share of "
                          "seed elements among the elements around the node (fraction; closer to the "
                          "partner element, whose phi lives at the integration points: 1 at the seed's, 0 elsewhere)")
+    ap.add_argument("--separated", action="store_true",
+                    help="*SOLUTION TECHNIQUE, TYPE=SEPARATED and, without the nutrient UEL, a symmetric solve: "
+                         "less memory for fine meshes (phi does not depend on the displacement, so dropping the "
+                         "coupling blocks of the Jacobian changes the iterations, not the converged solution)")
     a = ap.parse_args()
     n, h = a.n, 2.0 / a.n
     rec = json.loads(Path(a.json).read_text())
@@ -135,10 +139,10 @@ def main():
 *INITIAL CONDITIONS, TYPE=TEMPERATURE
 NALL, 0.0
 {ic}
-*STEP, NLGEOM=YES, INC=100000, UNSYMM=YES
+*STEP, NLGEOM=YES, INC=100000, UNSYMM={"NO" if a.separated and a.cons is None else "YES"}
 *COUPLED TEMPERATURE-DISPLACEMENT
 {a.dt}, {a.T}
-*BOUNDARY
+{"*SOLUTION TECHNIQUE, TYPE=SEPARATED" + chr(10) if a.separated else ""}*BOUNDARY
 {c1}, 1, 3
 {c2}, 2, 3
 {c3}, 3, 3
