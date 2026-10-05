@@ -67,25 +67,42 @@ C  c = 1 (MY_NUTSTART1) until the UEL has written a value.
 C=======================================================================
       MODULE biofilm_nut_store
       IMPLICIT NONE
-      DOUBLE PRECISION, ALLOCATABLE, SAVE :: NUT_GP(:,:)
+      DOUBLE PRECISION, ALLOCATABLE, SAVE :: NUT_GP(:,:), NUT_GR(:,:,:)
       CONTAINS
-      SUBROUTINE NUT_PUT(IEL, IGP, C)
+      SUBROUTINE NUT_PUT(IEL, IGP, C, GX, GY, GZ)
       INTEGER IEL, IGP, N
-      DOUBLE PRECISION C
-      DOUBLE PRECISION, ALLOCATABLE :: TMP(:,:)
+      DOUBLE PRECISION C, GX, GY, GZ
+      DOUBLE PRECISION, ALLOCATABLE :: TMP(:,:), TMG(:,:,:)
       IF (IEL .LT. 1) RETURN
       IF (.NOT. ALLOCATED(NUT_GP)) THEN
         ALLOCATE(NUT_GP(8, MAX(IEL, 1000)))
+        ALLOCATE(NUT_GR(3, 8, MAX(IEL, 1000)))
         NUT_GP = 1.0D0
+        NUT_GR = 0.0D0
       END IF
       N = SIZE(NUT_GP, 2)
       IF (IEL .GT. N) THEN
         ALLOCATE(TMP(8, MAX(IEL, 2 * N)))
+        ALLOCATE(TMG(3, 8, MAX(IEL, 2 * N)))
         TMP = 1.0D0
+        TMG = 0.0D0
         TMP(:, 1:N) = NUT_GP
+        TMG(:, :, 1:N) = NUT_GR
         CALL MOVE_ALLOC(TMP, NUT_GP)
+        CALL MOVE_ALLOC(TMG, NUT_GR)
       END IF
       NUT_GP(IGP, IEL) = C
+      NUT_GR(1, IGP, IEL) = GX
+      NUT_GR(2, IGP, IEL) = GY
+      NUT_GR(3, IGP, IEL) = GZ
+      END SUBROUTINE
+      SUBROUTINE NUT_GRAD(IEL, IGP, G)
+      INTEGER IEL, IGP
+      DOUBLE PRECISION G(3)
+      G = 0.0D0
+      IF (.NOT. ALLOCATED(NUT_GR)) RETURN
+      IF (IEL .LT. 1 .OR. IEL .GT. SIZE(NUT_GR, 3)) RETURN
+      G = NUT_GR(:, IGP, IEL)
       END SUBROUTINE
       DOUBLE PRECISION FUNCTION NUT_GET(IEL, IGP)
       INTEGER IEL, IGP
@@ -195,7 +212,7 @@ C=======================================================================
           GY = GY + DNX(2, IA) * U(2 * IA)
           GZ = GZ + DNX(3, IA) * U(2 * IA)
         END DO
-        CALL NUT_PUT(JELEM - IOFF, IGP, C)
+        CALL NUT_PUT(JELEM - IOFF, IGP, C, GX, GY, GZ)
         W = DET
         DO IA = 1, 8
           IR = 2 * IA
@@ -282,18 +299,27 @@ C                - P (max(0, phi - 1) + min(0, phi))
 C  alpha_K = 1 + alpha (state variable 84, shared with UMAT).
 C  Abaqus solves  dU/dt + div(f) = 0  here with f = -beta grad(phi) and
 C  U = phi - (integral of the source), so the source sits in U.
-C  Constants (*USER MATERIAL, TYPE=THERMAL): beta, k_alpha, P.
+C  Constants (*USER MATERIAL, TYPE=THERMAL): beta, k_alpha, P and,
+C  optionally, r, k (half-velocity), h (element size): with r > 0 the
+C  front term of Eq. 34 as printed is added,
+C      - |grad phi| r c/(k+c) n_gradphi . n_gradc = - v . grad(phi),
+C      v = r c/(k+c) n_c,  n_c = grad c / |grad c|  (0 where grad c = 0),
+C  c and grad c from the nutrient UEL (biofilm_nut_store), and, as the
+C  first-order upwind of the finite-difference reproduction, streamline
+C  diffusion v h / 2 along n_c (the cell Peclet number is ~10 here).
 C  Needs *DENSITY 1.
 C=======================================================================
       SUBROUTINE UMATHT(U, DUDT, DUDG, FLUX, DFDT, DFDG,
      1 STATEV, TEMP, DTEMP, DTEMDX, TIME, DTIME, PREDEF, DPRED,
      2 CMNAME, NTGRD, NSTATV, PROPS, NPROPS, COORDS, PNEWDT,
      3 NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
+      USE biofilm_nut_store
       INCLUDE 'ABA_PARAM.INC'
       CHARACTER*80 CMNAME
       DIMENSION DUDG(NTGRD), FLUX(NTGRD), DFDT(NTGRD),
      1 DFDG(NTGRD,NTGRD), STATEV(NSTATV), DTEMDX(NTGRD),
      2 TIME(2), PREDEF(1), DPRED(1), PROPS(NPROPS), COORDS(3)
+      DIMENSION GC(3), EN(3)
       BETA = PROPS(1)
       AK = PROPS(2)
       PEN = PROPS(3)
@@ -307,16 +333,40 @@ C=======================================================================
         SRC = SRC - PEN * PHI
         DSRC = -PEN
       END IF
+      V = 0.0D0
+      BS = 0.0D0
+      DO I = 1, 3
+        EN(I) = 0.0D0
+      END DO
+      IF (NPROPS .GE. 6) THEN
+        IF (PROPS(4) .GT. 0.0D0) THEN
+          C = MAX(NUT_GET(NOEL, NPT), 0.0D0)
+          CALL NUT_GRAD(NOEL, NPT, GC)
+          GM = SQRT(GC(1)**2 + GC(2)**2 + GC(3)**2)
+          IF (GM .GT. 1.0D-14) THEN
+            V = PROPS(4) * C / (PROPS(5) + C)
+            DO I = 1, 3
+              EN(I) = GC(I) / GM
+            END DO
+            BS = 0.5D0 * V * PROPS(6)
+          END IF
+        END IF
+      END IF
+      VG = 0.0D0
+      DO I = 1, NTGRD
+        VG = VG + EN(I) * DTEMDX(I)
+      END DO
+      SRC = SRC - V * VG
       U = U + DTEMP - SRC * DTIME
       DUDT = 1.0D0 - DSRC * DTIME
       DO I = 1, NTGRD
-        DUDG(I) = 0.0D0
+        DUDG(I) = V * EN(I) * DTIME
         DFDT(I) = 0.0D0
-        FLUX(I) = -BETA * DTEMDX(I)
+        FLUX(I) = -BETA * DTEMDX(I) - BS * EN(I) * VG
         DO J = 1, NTGRD
-          DFDG(I, J) = 0.0D0
+          DFDG(I, J) = -BS * EN(I) * EN(J)
         END DO
-        DFDG(I, I) = -BETA
+        DFDG(I, I) = DFDG(I, I) - BETA
       END DO
       RETURN
       END

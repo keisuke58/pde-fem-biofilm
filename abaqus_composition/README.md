@@ -90,6 +90,24 @@ The same behaviour (the local nutrient lifts species 1 from ~0.05 to 0.1-0.4);
 the 8^3 differences are of the size of the one-species ones (seed
 representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
 
+## In progress (5 Oct 2026, evening; logs in F:\abaqus_work)
+
+- **Four species**: one element, `4sp_case1`, prop(37) = 4: the trace equals the
+  stand-alone scheme (n = 4) exactly (difference 0.0); end shares
+  0.415 / 0.258 / 0.176 / 0.151, sum phi = 0.9 = phi_cap. Cube 8^3: `_abq4sp_1005.log`.
+- **Front term of Eq. 34 as printed** (UMATHT constants 4-6: r, k, h; c and
+  grad c from the nutrient UEL; streamline diffusion v h / 2):
+  `make_klempt_inp.py` builds Klempt 2024's own fig7_high case (20 um cube,
+  20^3), `compare_klempt.py` compares the domain means with the
+  finite-difference reproduction (`JAXFEM/klempt2024_quantitative.py`,
+  growth="printed": mean phi 0.030, mean c 0.972 at T* = 0.2). Running.
+- **Parallel**: one species, 16^3, cpus = 4 gives the same printed values as one
+  CPU (largest relative difference 0.0), in 0.6 min. `run_comp.ps1 -Cpus`.
+- **Abaqus-only mesh series** 8^3 ... 48^3 (one species, beta = 0.02, the
+  ANSYS 8^3 seed region, 6 CPUs): `_abqconv_1005.log`. ANSYS stops at 24^3
+  (32^3 out of memory); this gives the converged values the ANSYS runs approach.
+- 16^3 two species (no nutrient, consumption 6) against ANSYS: `_abq16_1005.log`.
+
 ## Note
 
 Abaqus shortens the last increment by ~5e-16 to land on T* = 1; the judge now

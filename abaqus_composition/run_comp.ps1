@@ -16,6 +16,7 @@ param(
     [Parameter(Mandatory)] [string]$Inp,
     [string]$Case = '2sp_case6',
     [int]$Port = 8766,
+    [int]$Cpus = 1,
     [string]$WorkRoot = 'F:\abaqus_work'
 )
 $ErrorActionPreference = 'Stop'
@@ -64,7 +65,7 @@ try {
         if (-not $up) { throw "material server did not open port $Port" }
         $env:BIOFILM_PY_PORT = "$Port"
         $ErrorActionPreference = 'Continue'
-        & abaqus job=$job input="$job.inp" user=umat_comp.for cpus=1 interactive ask_delete=OFF 2>&1 | Tee-Object -FilePath (Join-Path $wd 'abaqus_out.txt') | Select-Object -Last 15
+        & abaqus job=$job input="$job.inp" user=umat_comp.for cpus=$Cpus interactive ask_delete=OFF 2>&1 | Tee-Object -FilePath (Join-Path $wd 'abaqus_out.txt') | Select-Object -Last 15
         $ErrorActionPreference = 'Stop'
     } finally {
         if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Force }

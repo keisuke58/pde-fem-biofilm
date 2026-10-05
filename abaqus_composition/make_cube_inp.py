@@ -32,6 +32,7 @@ def main():
     ap.add_argument("--s", type=float, default=0.15)
     ap.add_argument("--cap", type=float, default=0.9)
     ap.add_argument("--chi0", type=float, default=0.5)
+    ap.add_argument("--nsp", type=int, default=2, help="number of species, prop(37) (2..5; the case must match)")
     ap.add_argument("--cons", type=float, default=None,
                     help="nutrient c solved by the UEL (Eq. 35 quasi-static, d lap c = g phi) with this g "
                          "(CONSUMPTION11); c = 1 held on the nodes of the NUTRIENT1 layer (y <= -0.75 mm)")
@@ -47,6 +48,11 @@ def main():
     st = rec["all_stress"]
     cen = {e: (x, y, z) for e, x, y, z in zip(st["elem"], st["cx"], st["cy"], st["cz"])}
     seed_c = [cen[e] for e in rec["seed_BIOFILM1"]]
+    # the JSON run's element size: a new element belongs to the seed when its
+    # centroid lies inside one of the run's seed elements (so a finer mesh than
+    # the run's keeps the same seed region; the same mesh picks the same elements)
+    xs = sorted({round(v[0], 9) for v in cen.values()})
+    h0 = min(b - a_ for a_, b in zip(xs, xs[1:]))
 
     nid = lambda i, j, k: 1 + i + (n + 1) * j + (n + 1) ** 2 * k  # noqa: E731
     nodes = [(nid(i, j, k), -1 + h * i, -1 + h * j, -1 + h * k)
@@ -64,12 +70,13 @@ def main():
                 for q in con:
                     around.setdefault(q, [0, 0])[0] += 1
                 c = (-1 + h * (i + 0.5), -1 + h * (j + 0.5), -1 + h * (k + 0.5))
-                if any(max(abs(c[q] - s[q]) for q in range(3)) < 1e-6 for s in seed_c):
+                if any(max(abs(c[q] - s[q]) for q in range(3)) < h0 / 2 - 1e-9 for s in seed_c):
                     seed.append(e)
                     seed_nodes.update(con)
                     for q in con:
                         around[q][1] += 1
-    assert len(seed) == len(seed_c), f"seed: {len(seed)} of {len(seed_c)} centroids found"
+    want = len(seed_c) * round(h0 / h) ** 3
+    assert len(seed) == want, f"seed: {len(seed)} elements, expected {want}"
 
     p = [0.0] * 47
     p[0], p[6], p[27] = 1.0, a.kalpha, 1.0          # prop(28) = 1: one species, Eq. 36
@@ -83,6 +90,7 @@ def main():
         ms.set_case(a.case)
         p[7:27] = list(ms.ECOLOGY_CASE["theta"])
         p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap
+        p[36] = float(a.nsp)
     OFF = 1000000
     uel = bc_nut = ""
     if a.cons is not None:                           # nutrient UEL overlaid on every element
@@ -110,8 +118,7 @@ def main():
 {chr(10).join(f"{i}, " + ", ".join(map(str, c)) for i, c in elems)}
 *NSET, NSET=NALL, GENERATE
 1, {(n + 1) ** 3}, 1
-{uel}
-*NSET, NSET=NSEED
+{uel}*NSET, NSET=NSEED
 {lst(sorted(seed_nodes))}
 *ELSET, ELSET=SEED
 {lst(seed)}
@@ -138,7 +145,7 @@ NALL, 0.0
 {bc_nut}*EL PRINT, ELSET=EALL, FREQUENCY=100000, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
 S
 *EL PRINT, ELSET=EALL, FREQUENCY=100000, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
-SDV84, TEMP, SDV72, SDV73, SDV51
+SDV84, TEMP, SDV72, SDV73, SDV51, SDV74, SDV75
 *OUTPUT, FIELD
 *ELEMENT OUTPUT
 S, SDV
