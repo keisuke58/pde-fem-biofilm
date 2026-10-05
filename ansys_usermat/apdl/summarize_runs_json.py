@@ -87,7 +87,38 @@ def summarize(rec):
               + "".join(f";  layer {k} mean {np.nanmean(share[(L == k) & ran]):.4f}" for k in (1, 2) if ((L == k) & ran).any()))
 
 
+def compact(rec):
+    """one table row: elements, seed vM, seed p, layer-1 p, alpha step (for mesh / dt series)."""
+    a = rec.get("all_stress")
+    if not a or "cx" not in a:
+        return f"| {rec['run']} | no data |"
+    elem = np.array(a["elem"], int)
+    cen = np.stack([a["cx"], a["cy"], a["cz"]], 1)
+    seed = np.isin(elem, rec.get("seed_BIOFILM1", []))
+    lay, h = layers(cen, seed)
+    vm = np.array(a["seqv"]) * 1e6
+    p = (np.array(a["sx"]) + np.array(a["sy"]) + np.array(a["sz"])) / 3 * 1e6
+    al = np.array(a["alpha"]); surf = surface(cen, seed, h); inner = seed & ~surf
+    step = (al[inner].mean() - al[surf].mean()) / al[inner].mean() * 100 if inner.any() else np.nan
+    return (f"| {rec['run']} | {len(elem)} | {vm[seed].mean():.4e} | {p[seed].mean():.4e} | "
+            f"{p[lay == 1].mean():.4e} | {step:.2f} |")
+
+
 def main(argv):
+    if "--compact" in argv:
+        argv.remove("--compact")
+        global summarize
+        rows = []
+        summarize = lambda rec: rows.append(compact(rec))  # noqa: E731
+        print("| run | elements | seed vM [Pa] | seed p [Pa] | layer-1 p [Pa] | alpha step % |")
+        print("|---|---|---|---|---|---|")
+        _main(argv)
+        print("\n".join(rows))
+        return
+    _main(argv)
+
+
+def _main(argv):
     runs = None
     if "--runs" in argv:
         i = argv.index("--runs"); runs = argv[i + 1].split(","); del argv[i:i + 2]

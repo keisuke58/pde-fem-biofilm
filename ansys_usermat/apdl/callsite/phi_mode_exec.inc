@@ -176,6 +176,11 @@ C         CM_NUT is the field's nutrient at this Gauss point; the next
 C         executable line is its source, and paste_fragments.py
 C         --nut-var NAME replaces it with CM_NUT = NAME. As shipped,
 C         CM_NUT = -1 (not available) and prop(33) has no effect.
+C         prop(35) > 0: chi_1 at the first call for points the biofilm
+C         reaches later (phi_3D below phi_min at their first call); the
+C         points that hold biofilm from the start keep prop(30). Without
+C         it prop(30) sets both, so the composition behind the front and
+C         the seed's start cannot be varied apart (5 Oct runs).
           CM_NUT = -1.0D0
           CM_CAP = SP_PHIMAX
           IF (nProp .GE. 32) THEN
@@ -185,9 +190,15 @@ C         CM_NUT = -1 (not available) and prop(33) has no effect.
           DO PM_I = 1, 12
             PM_GOLD(PM_I) = ustatev(71 + PM_I)
           END DO
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
           IF (PM_GOLD(7) .EQ. 0.0D0) THEN
             CM_CHI1 = 0.5D0
             IF (nProp .GE. 30) CM_CHI1 = prop(30)
+            IF (nProp .GE. 35) THEN
+              IF (prop(35) .GT. 0.0D0 .AND. (SP_SUM .LT. SP_MIN
+     &            .OR. SP_SUM .LE. 0.0D0)) CM_CHI1 = prop(35)
+            END IF
             DO PM_I = 1, 12
               PM_GOLD(PM_I) = 0.0D0
             END DO
@@ -196,8 +207,6 @@ C         CM_NUT = -1 (not available) and prop(33) has no effect.
             PM_GOLD(7) = 0.999D0
             PM_GOLD(8) = 0.999D0
           END IF
-          SP_MIN = 0.0D0
-          IF (nProp .GE. 29) SP_MIN = prop(29)
           DO PM_I = 1, 20
             PM_TH(PM_I) = prop(7 + PM_I)
           END DO
