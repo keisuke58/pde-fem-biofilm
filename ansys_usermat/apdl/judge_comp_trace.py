@@ -70,7 +70,9 @@ def main() -> int:
                                    phi_init=tuple(a.phi_init))
         else:
             ref = cr.reference([r["phi3"] for r in seq], theta, hp,
-                               seq[0]["dtime"], phi_min=a.phi_min, s=s_pt)
+                               seq[0]["dtime"], phi_min=a.phi_min, s=s_pt,
+                               dt_pm_series=None if a.s is not None
+                               else [r["dt_pm"] for r in seq])
         d = max(float(np.max(np.abs(np.asarray(r["g_new"]) - g)))
                 for r, g in zip(seq, ref))
         worst = max(worst, d)
