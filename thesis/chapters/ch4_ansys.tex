@@ -655,8 +655,11 @@ equation~\eqref{eq:ch5-eq36} requires. The element is compressed, and its
 neighbours carry about $25$ times its von Mises stress. Klempt et
 al.~\cite{Klempt2024DiffusionDrivenGrowth,Klempt2023NumericalComparison}
 report pressure inside the biofilm and a ring of tension at its edge; the
-compressed seed agrees with that, and whether its neighbours are in tension
-is to be read from their mean stress, which these runs have not yet output. The element's von Mises stress is $4.0\times10^{-6}$~Pa and the largest
+compressed seed agrees with that. Read from the mean stress of every element,
+grouped by distance from the seed: the seed averages $-3.5\times10^{-5}$~Pa,
+the first layer around it $+5.4\times10^{-6}$~Pa with $56\,\%$ of its
+elements in tension, and the second layer $+1.5\times10^{-6}$~Pa with
+$79\,\%$ in tension, which is the ring of tension of the paper. The element's von Mises stress is $4.0\times10^{-6}$~Pa and the largest
 in the model $9.9\times10^{-5}$~Pa. The growth variable of the element still
 gives $0.455$ times the stress of~\eqref{eq:ch5-eq36}. Compared with the
 framework's example stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly), the
@@ -675,7 +678,7 @@ $27\,\%$, with no sign of volumetric locking.
 \end{figure}}
 
 % TierA for the Python study (mesh_study_seed.py, locking_check.py);
-% TierB for the ANSYS 16^3 run (MESH_STUDY.md).
+% ANSYS 16^3 run: RUN_1005_IKMHIWI03.md (5 Oct).
 \TierA{%
 \paragraph{Mesh and incompressibility.} The example model has $8^3$
 elements, and its seed is 32 of them. I solved the same mechanical problem
@@ -691,10 +694,22 @@ there is no volumetric locking; full $2\times2\times2$ integration would
 overestimate it by a factor of $3.7$ on $8^3$ and $2.3$ on $16^3$ at
 $\nu=0.49$.}
 
-\TierB{%
-The same comparison in ANSYS, with the example model refined to $16^3$
-elements and every boundary condition mapped by position, is prepared and
-to be run.}
+\TierA{%
+The ANSYS model uses the same integration (SOLID185, KEYOPT(2) $=0$, B-bar).
+In ANSYS, with the example model refined to $16^3$ elements and every
+boundary condition mapped by position, the seed averages do not fall as in the
+Python study: von Mises $8.4\times10^{-5}$~Pa (ratio $1.12$ to $8^3$) and mean
+stress $-2.8\times10^{-5}$~Pa (ratio $0.81$). The cause is the growth field,
+not the mechanics. The Python study assumes the same $\alpha$ in every seed
+element. In ANSYS, $\phi$ leaks from the seed surface into the void, so
+$\alpha$ is lower in the outer layer of seed elements: by $0.43\,\%$ on $8^3$
+and $0.93\,\%$ on $16^3$. The seed grows almost freely inside the soft void,
+so this small step in $\alpha$ sets its von Mises stress. With the element
+values of $\alpha$ from ANSYS, the Python solver gives the ANSYS seed von
+Mises stress to $0.1\,\%$ on both meshes. The mean stress depends less on the
+step and is the more robust quantity to quote. Whether the step converges with
+the mesh is open; a $32^3$ run exceeds the memory of the workstation in the
+nutrient solve, and a $24^3$ run is in progress.}
 
 % TierA. SPLIT_COUPLING.md, phi_cap runs on IKMHIWI03 (judge PASS, diff 0.0).
 \TierA{%
