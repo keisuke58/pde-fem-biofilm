@@ -26,7 +26,8 @@ Two species, `w<mesh>_<c3|c6>_g<consumption>_s<s>[...]`
 - optional: `_cap` phi_cap (prop(32), default 0.9), `_chi` start share (prop(30),
   default 0.5), `_late` start share of points reached later (prop(35), default
   off = prop(30)), `_cref` c_ref (prop(33), default 1), `_b` beta, `_T` end time
-  (default T* = 1)
+  (default T* = 1), `_gw` the species-weighted growth law prop(36) = d
+  (`gw0333` = 1/3; an assumption, not from a paper; absent = Eq. 36)
 - stiffness: Klempt 2024 (E = 10 Pa, nu = 0.49), unlike the two-species runs in
   `../2026-10-05_ansys/` (example input 1000 MPa); composition does not depend on it
 
@@ -46,9 +47,10 @@ comp_trace). The executable of 5 Oct evening traces every point with
 phi >= 0.01; `points` in the JSON says which rule a run had. Nut1 over time is
 not traced (only the last step, in nut_field).
 
-## Order (137 runs)
+## Order (146 runs)
 
-0. one species, ch4 variants, 8^3 and 16^3 (6 runs)
+0. one species, ch4 variants, 8^3 and 16^3 (6 runs); then the species-weighted
+   growth law, d = 1/3 on 8^3 and 16^3, d = 0.5 once (9 runs)
 1. two species 8^3 (90 runs, about 3-15 min each)
 2. one species 8^3 / 16^3 (11 runs)
 3. two species 16^3 (17 runs, about 30-60 min each)
