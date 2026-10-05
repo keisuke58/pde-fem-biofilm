@@ -1,0 +1,39 @@
+! post_nut.mac -- every element at the last result set, for two-way step 1
+! (local nutrient in the point model): nut_field.csv with
+! elem, Nut1 at the Gauss points (SVAR 51, the partner's ustatev(51)),
+! the point model's phi_1, phi_2 (SVAR 72, 73), alpha (SVAR 84),
+! centroid x, y, z. Element (centroid) values.
+/POST1
+SET,LAST
+ALLSEL
+*GET,EMAX_,ELEM,0,NUM,MAX
+ETABLE,EN51,SVAR,51
+ETABLE,EP72,SVAR,72
+ETABLE,EP73,SVAR,73
+ETABLE,EA84,SVAR,84
+ETABLE,ECX,CENT,X
+ETABLE,ECY,CENT,Y
+ETABLE,ECZ,CENT,Z
+*DIM,EID_,ARRAY,EMAX_
+*DIM,EN_,ARRAY,EMAX_
+*DIM,EP1_,ARRAY,EMAX_
+*DIM,EP2_,ARRAY,EMAX_
+*DIM,EAL_,ARRAY,EMAX_
+*DIM,ECX_,ARRAY,EMAX_
+*DIM,ECY_,ARRAY,EMAX_
+*DIM,ECZ_,ARRAY,EMAX_
+*VFILL,EID_(1),RAMP,1,1
+*VGET,EN_(1),ELEM,1,ETAB,EN51
+*VGET,EP1_(1),ELEM,1,ETAB,EP72
+*VGET,EP2_(1),ELEM,1,ETAB,EP73
+*VGET,EAL_(1),ELEM,1,ETAB,EA84
+*VGET,ECX_(1),ELEM,1,ETAB,ECX
+*VGET,ECY_(1),ELEM,1,ETAB,ECY
+*VGET,ECZ_(1),ELEM,1,ETAB,ECZ
+*CFOPEN,nut_field,csv
+*VWRITE
+('elem,nut1,phi1,phi2,alpha,cx,cy,cz')
+*VWRITE,EID_(1),EN_(1),EP1_(1),EP2_(1),EAL_(1),ECX_(1),ECY_(1),ECZ_(1)
+(F8.0,7(',',E24.16))
+*CFCLOS
+FINISH

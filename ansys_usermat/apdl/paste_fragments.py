@@ -124,6 +124,13 @@ def main(target: Path, nut_var: str | None = None) -> None:
         u = one(out, USE_BRIDGE.match, "use biofilm_py_bridge")
         out.insert(u + 1, "      use biofilm_split")
 
+    # the exec fragment calls biofilm_ecology_hook_c; an "only:" list without
+    # it leaves the call an unresolved external at link time (5 Oct)
+    u = one(out, USE_BRIDGE.match, "use biofilm_py_bridge")
+    if "only" in out[u].lower() and "biofilm_ecology_hook_c" not in "\n".join(out[u:u + 3]).lower():
+        out[u:u + 1] = ["      use biofilm_py_bridge, only: biofilm_ecology_hook,",
+                        "     &                             biofilm_ecology_hook_c"]
+
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = target.with_name(target.name + f".prepaste-{stamp}")
     shutil.copy2(target, backup)
