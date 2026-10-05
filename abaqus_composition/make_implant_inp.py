@@ -3,7 +3,12 @@ around the transmucosal collar of a dental implant, phi, nutrient and
 composition solved by Abaqus as on the cube (make_cube_inp.py --case --cons).
 
     python abaqus_composition/make_implant_inp.py OUT.inp [--nr 6] [--nt 24] [--nz 20]
-        [--case 2sp_case6] [--cons 6] [--T 1.1] [--dt 0.025]
+        [--case 2sp_case6] [--cons 6] [--T 1.1] [--dt 0.025] [--gw 0]
+
+With zero-order consumption c goes negative where g phi H^2 / (2 d) > 1
+(H the depth below the margin): --cons 6 on 2 mm gives c down to -0.9 (the
+point model then counts the point as starved); --cons 1 (Klempt 2024 Table 2,
+as the ANSYS runs) keeps c > 0.6.
 
 Geometry (mm), all values chosen for this work, not from a paper: implant
 collar radius 2.05 (a 4.1 mm implant), biofilm layer 0.25 thick, 2.0 high (a
@@ -51,6 +56,9 @@ def main():
     ap.add_argument("--chi0", type=float, default=0.5)
     ap.add_argument("--dt", type=float, default=0.025)
     ap.add_argument("--T", type=float, default=1.1)
+    ap.add_argument("--gw", type=float, default=0.0,
+                    help="prop(36) = d: species-weighted growth, alpha_dot = k_alpha phi (1 + d (2 chi_1 - 1)) "
+                         "(not from a paper; 0 = Eq. 36)")
     a = ap.parse_args()
     nr, nt, nz = a.nr, a.nt, a.nz
     ro = a.ri + a.thick
@@ -94,6 +102,7 @@ def main():
     p[7:27] = list(ms.ECOLOGY_CASE["theta"])
     p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap
     p[32] = a.cref
+    p[35] = a.gw
     p[36] = float(a.nsp)
     p[42], p[43], p[44], p[45] = 1e-5, -1e-3, 0.49, 0.3
     p[46] = 1.0                                      # phi = temperature

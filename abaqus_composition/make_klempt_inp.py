@@ -43,6 +43,9 @@ def main():
     ap.add_argument("--scale", type=float, default=1.0, help="time scale s: beta, k_alpha and r times s (sec. 12)")
     ap.add_argument("--E", type=float, default=1e-5, help="YOUNG_BIO (default 1e-5: E = 10 Pa in MPa)")
     ap.add_argument("--s-every", type=int, default=0, help="also print S and SDV84 every this many increments")
+    ap.add_argument("--hstab", type=float, default=None,
+                    help="length in the artificial diffusion v hstab/2 of the front term (default: the element "
+                         "size; 0 = none: with the growth form --blend it slowed the front, 4.2 high)")
     a = ap.parse_args()
     L, n = 20.0, a.n
     h = L / n
@@ -91,7 +94,7 @@ def main():
     rows = "\n".join(", ".join(f"{x:.17g}" for x in p[i:i + 8]) for i in range(0, len(p), 8))
     OFF = 1000000
     r = 0.0 if a.no_front else 100.0 * s
-    therm = [2.0 * s, 1e-3 * s, a.pen, r, 1.0, h, a.eps] + ([a.blend] if a.blend is not None else [])
+    therm = [2.0 * s, 1e-3 * s, a.pen, r, 1.0, h if a.hstab is None else a.hstab, a.eps] + ([a.blend] if a.blend is not None else [])
     uprop = [1.0, g / 1e10, OFF] + ([1.0] if a.first_order else [])
     sprint = (f"*EL PRINT, ELSET=EALL, FREQUENCY={a.s_every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO\n"
               "S, SDV84\n") if a.s_every else ""
