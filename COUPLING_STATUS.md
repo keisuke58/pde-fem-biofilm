@@ -65,7 +65,14 @@ depends on the assumed start value.
 
 ## More than two species
 
-Not in the thesis (continued at Keio). The parts exist: the five-species
+Not in the thesis (continued at Keio). Prepared on 5 Oct in the cloud, not yet run in
+ANSYS: prop(37) = n (2..5) in the composition fragment carries phi_1..phi_n
+and psi_1..psi_n, starts from equal shares, and with prop(36) != 0 weights
+the growth by f_i = prop(37 + i). The server reads the constant four-species
+cases of Klempt et al. 2026 (`--case 4sp_case1`, `4sp_case2`). Tests:
+`tests/test_composition_4sp_fragment.py` (mock usermat equals
+composition_reference(n = 4) bit for bit; the server's case equals the paper
+reproduction). Field-level study in Python: `ansys_usermat/two_way_4sp.py`. The parts exist: the five-species
 point model (TMCMC-calibrated, c* = 25), the same bridge, and five-species
 runs on this repository's own cylinder test decks. With the scheme used for
 two species (amount from the field, composition from the point model) the

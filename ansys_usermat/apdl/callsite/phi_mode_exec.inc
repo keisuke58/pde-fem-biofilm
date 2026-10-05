@@ -179,12 +179,22 @@ C         CM_NUT = -1D30 (not available) and prop(33) has no effect.
 C         The field's c itself can be < 0 (zero-order consumption), so
 C         "not available" is -1D30, not -1: a negative c gives c_rel = 0
 C         (5 Oct: with -1 as the mark, c < 0 fell back to c_rel = 1).
+C         prop(37) = n, the number of species (2..5, default 2; 5 Oct):
+C         the point model's state holds phi_1..phi_n, psi_1..psi_n. Two
+C         species start from chi_1 = prop(30) / prop(35); more species
+C         start from equal shares 1/n. The server must run the same case
+C         (--case, e.g. 4sp_case1, sets n there).
 C         prop(35) > 0: chi_1 at the first call for points the biofilm
 C         reaches later (phi_3D below phi_min at their first call); the
 C         points that hold biofilm from the start keep prop(30). Without
 C         it prop(30) sets both, so the composition behind the front and
 C         the seed's start cannot be varied apart (5 Oct runs).
           CM_NUT = -1.0D30
+          CM_NSP = 2
+          IF (nProp .GE. 37) THEN
+            IF (prop(37) .GT. 0.0D0) CM_NSP = MIN(MAX(NINT(prop(37)),
+     &                                          2), 5)
+          END IF
           CM_CAP = SP_PHIMAX
           IF (nProp .GE. 32) THEN
             IF (prop(32) .GT. 0.0D0) CM_CAP = MIN(prop(32), SP_PHIMAX)
@@ -205,10 +215,17 @@ C         the seed's start cannot be varied apart (5 Oct runs).
             DO PM_I = 1, 12
               PM_GOLD(PM_I) = 0.0D0
             END DO
-            PM_GOLD(1) = CM_CHI1
-            PM_GOLD(2) = 1.0D0 - CM_CHI1
-            PM_GOLD(7) = 0.999D0
-            PM_GOLD(8) = 0.999D0
+            IF (CM_NSP .EQ. 2) THEN
+              PM_GOLD(1) = CM_CHI1
+              PM_GOLD(2) = 1.0D0 - CM_CHI1
+            ELSE
+              DO PM_I = 1, CM_NSP
+                PM_GOLD(PM_I) = 1.0D0 / DBLE(CM_NSP)
+              END DO
+            END IF
+            DO PM_I = 1, CM_NSP
+              PM_GOLD(6 + PM_I) = 0.999D0
+            END DO
           END IF
           DO PM_I = 1, 20
             PM_TH(PM_I) = prop(7 + PM_I)
@@ -229,10 +246,14 @@ C         the seed's start cannot be varied apart (5 Oct runs).
               PM_GNEW(PM_I) = PM_GOLD(PM_I)
             END DO
           ELSE
-            CM_S = PM_GOLD(1) + PM_GOLD(2)
+            CM_S = PM_GOLD(1)
+            DO PM_I = 2, CM_NSP
+              CM_S = CM_S + PM_GOLD(PM_I)
+            END DO
             CM_F = SP_SUM / CM_S
-            PM_GOLD(1) = PM_GOLD(1) * CM_F
-            PM_GOLD(2) = PM_GOLD(2) * CM_F
+            DO PM_I = 1, CM_NSP
+              PM_GOLD(PM_I) = PM_GOLD(PM_I) * CM_F
+            END DO
             PM_GOLD(6) = 1.0D0 - SP_SUM
             CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
      &                           PM_GNEW, PM_PHIINT, SP_HIT)
@@ -254,13 +275,21 @@ C         the seed's start cannot be varied apart (5 Oct runs).
                 DO PM_I = 1, 12
                   IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
                 END DO
-                IF (PM_GNEW(1) + PM_GNEW(2) .LE. 0.0D0) PM_OK = .FALSE.
+                CM_S = PM_GNEW(1)
+                DO PM_I = 2, CM_NSP
+                  CM_S = CM_S + PM_GNEW(PM_I)
+                END DO
+                IF (CM_S .LE. 0.0D0) PM_OK = .FALSE.
               END IF
               IF (PM_OK) THEN
-                CM_S = PM_GNEW(1) + PM_GNEW(2)
+                CM_S = PM_GNEW(1)
+                DO PM_I = 2, CM_NSP
+                  CM_S = CM_S + PM_GNEW(PM_I)
+                END DO
                 CM_F = SP_SUM / CM_S
-                PM_GNEW(1) = PM_GNEW(1) * CM_F
-                PM_GNEW(2) = PM_GNEW(2) * CM_F
+                DO PM_I = 1, CM_NSP
+                  PM_GNEW(PM_I) = PM_GNEW(PM_I) * CM_F
+                END DO
                 PM_GNEW(6) = 1.0D0 - SP_SUM
                 CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst, PM_GOLD,
      &                               PM_GNEW, PM_PHIINT)
@@ -278,15 +307,27 @@ C         the seed's start cannot be varied apart (5 Oct runs).
      &                                dTime, ALPHA_NEW)
 C         prop(36) = d (not 0): species-weighted growth law, the
 C         composition into the growth (5 Oct, two_way_growth_rate.py):
-C         alpha_dot = k_alpha phi (f_1 chi_1 + f_2 chi_2), f = 1 +- d,
-C         chi from the point model's state after this step. Not from a
-C         paper; d = 0 (default) is Eq. 36 unchanged.
+C         alpha_dot = k_alpha phi sum_i f_i chi_i, chi from the point
+C         model's state after this step. Two species: f = 1 +- d. More
+C         species (prop(37) = n > 2): f_i = prop(37 + i), i = 1..n.
+C         Not from a paper; d = 0 (default) is Eq. 36 unchanged.
           IF (nProp .GE. 36) THEN
             IF (prop(36) .NE. 0.0D0 .AND. PM_OK) THEN
-              CM_S = PM_GNEW(1) + PM_GNEW(2)
+              CM_S = PM_GNEW(1)
+              DO PM_I = 2, CM_NSP
+                CM_S = CM_S + PM_GNEW(PM_I)
+              END DO
               IF (CM_S .GT. 0.0D0) THEN
-                CM_GF = 1.0D0 + prop(36) * (2.0D0 * PM_GNEW(1) / CM_S
-     &                  - 1.0D0)
+                IF (CM_NSP .EQ. 2) THEN
+                  CM_GF = 1.0D0 + prop(36) * (2.0D0 * PM_GNEW(1)
+     &                    / CM_S - 1.0D0)
+                ELSE
+                  CM_GF = 0.0D0
+                  DO PM_I = 1, CM_NSP
+                    IF (nProp .GE. 37 + PM_I) CM_GF = CM_GF
+     &                  + prop(37 + PM_I) * PM_GNEW(PM_I) / CM_S
+                  END DO
+                END IF
                 ALPHA_NEW = ALPHA_N + CM_GF * (ALPHA_NEW - ALPHA_N)
               END IF
             END IF

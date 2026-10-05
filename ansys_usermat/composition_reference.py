@@ -25,44 +25,52 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "coupling"))
 PHIMAX = 1.0 - 1.0e-6
 
 
-def rescale(g, phi3):
-    """Same operations, same order as the Fortran."""
+def rescale(g, phi3, n=2):
+    """Same operations, same order as the Fortran (n species, prop(37))."""
     g = np.array(g, dtype=np.float64)
-    s = g[0] + g[1]
+    s = g[0]
+    for i in range(1, n):
+        s = s + g[i]
     f = phi3 / s
-    g[0] = g[0] * f
-    g[1] = g[1] * f
+    for i in range(n):
+        g[i] = g[i] * f
     g[5] = 1.0 - phi3
     return g
 
 
-def seed(chi1=0.5):
+def seed(chi1=0.5, n=2):
+    """Start state: chi1 / 1 - chi1 for two species, equal shares 1/n for
+    more (prop(30) and prop(35) apply to two species only)."""
     g = np.zeros(12)
-    g[0], g[1], g[6], g[7] = chi1, 1.0 - chi1, 0.999, 0.999
+    if n == 2:
+        g[0], g[1] = chi1, 1.0 - chi1
+    else:
+        g[:n] = 1.0 / n
+    g[6:6 + n] = 0.999
     return g
 
 
-def step(g, phi3, theta, hp, dt, n_sub):
+def step(g, phi3, theta, hp, dt, n_sub, n=2):
     """One substep: rescale in, integrate, rescale out."""
     import ecology_jax as eco
-    g = rescale(g, phi3)
-    gn, _ = eco.ecology_substeps(g, theta, dt, n_sub, 2, hp)
-    return rescale(np.asarray(gn), phi3)
+    g = rescale(g, phi3, n)
+    gn, _ = eco.ecology_substeps(g, theta, dt, n_sub, n, hp)
+    return rescale(np.asarray(gn), phi3, n)
 
 
 def reference(phi3_series, theta, hp, dt, dt_max=1.0e-4, chi1=0.5,
-              phi_min=0.0, s=1.0, phi_cap=PHIMAX):
+              phi_min=0.0, s=1.0, phi_cap=PHIMAX, n=2):
     """Stand-alone scheme for phi_3D(t) given per substep; returns states.
     s: the point model's clock, dt_pm = s * dt (prop(31)).
     phi_cap: the point model sees min(phi_3D, phi_cap) (prop(32))."""
-    g = seed(chi1)
+    g = seed(chi1, n)
     dt_pm = s * dt
     n_sub = 1 if dt_pm <= dt_max else math.ceil(dt_pm / dt_max)
     out = []
     for p in phi3_series:
         p = min(max(p, 0.0), min(phi_cap, PHIMAX))
         if p >= phi_min and p > 0.0:
-            g = step(g, p, theta, hp, dt_pm, n_sub)
+            g = step(g, p, theta, hp, dt_pm, n_sub, n)
         out.append(g.copy())
     return out
 

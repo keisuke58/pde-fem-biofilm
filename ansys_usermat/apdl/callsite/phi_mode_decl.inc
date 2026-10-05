@@ -44,6 +44,7 @@ C     Needs USE biofilm_split next to USE biofilm_py_bridge.
 C     --- composition from the point model (prop(28) = 7) --------------
       DOUBLE PRECISION CM_CHI1, CM_S, CM_F, CM_TS, CM_DT, CM_CAP
       DOUBLE PRECISION CM_NUT, CM_CREF, CM_CREL, CM_GF
+      INTEGER CM_NSP
       LOGICAL CM_TRACE_OPEN
       SAVE CM_TRACE_OPEN
       DATA CM_TRACE_OPEN /.FALSE./

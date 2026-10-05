@@ -154,8 +154,18 @@ def set_active_species(n: int) -> None:
 ECOLOGY_CASE: dict | None = None
 
 
+# theta slots of the five-species encoding (theta_to_matrices) for A_ij, i <= j,
+# and b_i; species 1-4 fill every pair (5 Oct: four-species cases).
+_THETA_A = {(0, 0): 0, (0, 1): 1, (1, 1): 2, (2, 2): 5, (2, 3): 6, (3, 3): 7,
+            (0, 2): 10, (0, 3): 11, (1, 2): 12, (1, 3): 13}
+_THETA_B = {0: 3, 1: 4, 2: 8, 3: 9}
+
+
 def set_case(name: str | None) -> None:
-    """Load a two-species case from JAXFEM/klempt2026_cases.py (None: off)."""
+    """Load a case from JAXFEM/klempt2026_cases.py (None: off): the
+    constant two-species cases and, since 5 Oct, the constant four-species
+    cases (4sp_case1, 4sp_case2; A with the figures' scale, see
+    klempt2026_cases.py)."""
     global ECOLOGY_CASE
     if name is None:
         ECOLOGY_CASE = None
@@ -163,18 +173,21 @@ def set_case(name: str | None) -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "JAXFEM"))
     from klempt2026_cases import CASES
     case = CASES[name]
-    if case["n"] != 2 or callable(case["c_star"]) or \
+    n = case["n"]
+    if n not in (2, 4) or callable(case["c_star"]) or \
             callable(case["alpha_star"]):
-        raise ValueError(f"{name}: only constant two-species cases")
-    (a11, a12), (_, a22) = case["A"]
+        raise ValueError(f"{name}: only constant two- or four-species cases")
+    scale = case.get("A_figure_scale", 1.0)
     theta = [0.0] * 20
-    theta[0], theta[1], theta[2] = a11, a12, a22
-    theta[3], theta[4] = case["b"]
+    for i in range(n):
+        for j in range(i, n):
+            theta[_THETA_A[(i, j)]] = float(case["A"][i][j]) * scale
+        theta[_THETA_B[i]] = float(case["b"][i])
     ECOLOGY_CASE = {"name": name, "theta": theta,
                     "hp": {"c": float(case["c_star"]),
                            "alpha": float(case["alpha_star"]),
-                           "eta": list(case["eta"]) + [1.0, 1.0, 1.0]}}
-    set_active_species(2)
+                           "eta": list(case["eta"]) + [1.0] * (5 - n)}}
+    set_active_species(n)
 
 
 def evaluate_ecology(req: dict) -> bytes:
