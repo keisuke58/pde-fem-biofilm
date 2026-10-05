@@ -42,6 +42,7 @@ is the consolidation; these are the detail behind it.
 | `umat_biofilm_visco.f`, `umat_biofilm_visco_2ch.f`, `umat_biofilm_visco_phase2.f` | Verified Abaqus viscoelastic UMATs |
 | `usdfld_biofilm.f` | USDFLD growth-driver field routine |
 | [`ansys_usermat/`](ansys_usermat/) | ANSYS USERMAT port + `crosscheck/` (dual-solver equivalence, 0 ULP) |
+| [`abaqus_composition/`](abaqus_composition/) | The composition coupling of the ANSYS runs (point model through the Python bridge) in an Abaqus UMAT built from the same fragments; one-element checks in Abaqus 2024 (5 Oct 2026). Keio continuation, not thesis work |
 | `material_models.py` | Python material model (E(φ), E(DI), viscoelastic) |
 
 ## PDE / ecology model (JAX)
