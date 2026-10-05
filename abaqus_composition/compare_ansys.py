@@ -57,6 +57,24 @@ def measures(elem, cen, seed_ids, s6, alpha, phi):
     return out
 
 
+def shares(elem, cen, seed_ids, p1, p2):
+    """phi_1/(phi_1+phi_2) where the point model ran (sum < 0.95: never-run points
+    keep the 0.5/0.5 start, as in summarize_runs_json.py)."""
+    seed = np.isin(elem, seed_ids)
+    lay, _ = layers(cen, seed)
+    s = p1 + p2
+    ran = (s > 1e-6) & (s < 0.95)
+    sh = np.where(ran, p1 / np.where(ran, s, 1), np.nan)
+    out = {"ran (elements)": float(ran.sum()),
+           "share seed mean": np.nanmean(sh[seed]), "share seed min": np.nanmin(sh[seed]),
+           "share seed max": np.nanmax(sh[seed])}
+    for k in (1, 2):
+        m = (lay == k) & ran
+        if m.any():
+            out[f"share layer {k}"] = np.nanmean(sh[m])
+    return out
+
+
 def main(dat, js):
     t = last_tables(dat)
     S = next(x for x in t if x["head"][:1] == ["S11"])["rows"]
@@ -83,6 +101,23 @@ def main(dat, js):
                     a.get("sxz", np.zeros(len(ael))), a.get("syz", np.zeros(len(ael)))], 1) * 1e6
     an = measures(ael, acen, rec["seed_BIOFILM1"], as6, np.array(a["alpha"]), None)
     an["seed vM"] = float(np.mean(np.array(a["seqv"])[np.isin(ael, rec["seed_BIOFILM1"])]) * 1e6)
+    if "SDV72" in V["head"] and rec.get("nut_field"):
+        i1, i2 = V["head"].index("SDV72"), V["head"].index("SDV73")
+        p1 = np.array([V["rows"][e][i1] for e in el])
+        p2 = np.array([V["rows"][e][i2] for e in el])
+        ab.update(shares(el, cen, seed_ids, p1, p2))
+        nf = rec["nut_field"]
+        ne = np.array(nf["elem"], int)
+        idx = {e: i for i, e in enumerate(ael)}
+        o = np.array([idx[e] for e in ne])
+        an.update(shares(ne, acen[o], rec["seed_BIOFILM1"], np.array(nf["phi1"]), np.array(nf["phi2"])))
+        if "SDV51" in V["head"]:                     # nutrient c (the UEL's, at the centroid)
+            c_ab = np.array([V["rows"][e][V["head"].index("SDV51")] for e in el])
+            c_an = np.array(nf["nut1"])
+            for tag, cc, ee, ids in (("ab", c_ab, el, seed_ids), ("an", c_an, ne, rec["seed_BIOFILM1"])):
+                sd = np.isin(ee, ids)
+                d = ab if tag == "ab" else an
+                d.update({"c seed min": cc[sd].min(), "c seed max": cc[sd].max(), "c mean": cc.mean()})
     print(f"{'measure':20s} {'Abaqus':>12s} {'ANSYS':>12s} {'ratio':>8s}")
     for k in ab:
         x, y = ab[k], an.get(k)

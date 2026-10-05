@@ -57,6 +57,172 @@ def part_lines(p: Path) -> list[str]:
         lines = lines[next(i for i, l in enumerate(lines) if l.strip().startswith(key)):]
     return lines
 
+NUT = """\
+C=======================================================================
+C  biofilm_nut_store: the nutrient c at the integration points, written
+C  by the nutrient UEL, read by the UMAT (one iteration later; the
+C  partner's element too hands the material the c of the previous
+C  sub-step). Indexed by the solid element and its integration point;
+C  c = 1 (MY_NUTSTART1) until the UEL has written a value.
+C=======================================================================
+      MODULE biofilm_nut_store
+      IMPLICIT NONE
+      DOUBLE PRECISION, ALLOCATABLE, SAVE :: NUT_GP(:,:)
+      CONTAINS
+      SUBROUTINE NUT_PUT(IEL, IGP, C)
+      INTEGER IEL, IGP, N
+      DOUBLE PRECISION C
+      DOUBLE PRECISION, ALLOCATABLE :: TMP(:,:)
+      IF (IEL .LT. 1) RETURN
+      IF (.NOT. ALLOCATED(NUT_GP)) THEN
+        ALLOCATE(NUT_GP(8, MAX(IEL, 1000)))
+        NUT_GP = 1.0D0
+      END IF
+      N = SIZE(NUT_GP, 2)
+      IF (IEL .GT. N) THEN
+        ALLOCATE(TMP(8, MAX(IEL, 2 * N)))
+        TMP = 1.0D0
+        TMP(:, 1:N) = NUT_GP
+        CALL MOVE_ALLOC(TMP, NUT_GP)
+      END IF
+      NUT_GP(IGP, IEL) = C
+      END SUBROUTINE
+      DOUBLE PRECISION FUNCTION NUT_GET(IEL, IGP)
+      INTEGER IEL, IGP
+      NUT_GET = 1.0D0
+      IF (.NOT. ALLOCATED(NUT_GP)) RETURN
+      IF (IEL .LT. 1 .OR. IEL .GT. SIZE(NUT_GP, 2)) RETURN
+      NUT_GET = NUT_GP(IGP, IEL)
+      END FUNCTION
+      END MODULE biofilm_nut_store
+
+C=======================================================================
+C  UEL: the nutrient c (Klempt 2024 Eq. 35 as the partner's element
+C  solves it: quasi-static, zero order, d lap(c) = g phi) on the nodes of
+C  the C3D8T mesh, overlaid on it. DOF 12 = c; DOF 11 = phi is read only
+C  (no residual, the C3D8T elements carry it). 8 nodes, trilinear,
+C  2x2x2 Gauss points in Abaqus' C3D8 order. Properties: d, g, offset
+C  (UEL element number - offset = the C3D8T element it overlays).
+C  *USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=3, COORDINATES=3,
+C  VARIABLES=1, UNSYMM  /  11, 12
+C=======================================================================
+      SUBROUTINE UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS,
+     1 PROPS, NPROPS, COORDS, MCRD, NNODE, U, DU, V, A, JTYPE, TIME,
+     2 DTIME, KSTEP, KINC, JELEM, PARAMS, NDLOAD, JDLTYP, ADLMAG,
+     3 PREDEF, NPREDF, LFLAGS, MLVARX, DDLMAG, MDLOAD, PNEWDT, JPROPS,
+     4 NJPROP, PERIOD)
+      USE biofilm_nut_store
+      INCLUDE 'ABA_PARAM.INC'
+      DIMENSION RHS(MLVARX,*), AMATRX(NDOFEL,NDOFEL), PROPS(*),
+     1 SVARS(*), ENERGY(8), COORDS(MCRD,NNODE), U(NDOFEL),
+     2 DU(MLVARX,*), V(NDOFEL), A(NDOFEL), TIME(2), PARAMS(*),
+     3 JDLTYP(MDLOAD,*), ADLMAG(MDLOAD,*), DDLMAG(MDLOAD,*),
+     4 PREDEF(2,NPREDF,NNODE), LFLAGS(*), JPROPS(*)
+      DIMENSION XI(3,8), GN(8), DNX(3,8), DNL(3,8), XJ(3,3), XJI(3,3)
+      DATA XI / -1.D0,-1.D0,-1.D0,  1.D0,-1.D0,-1.D0,  1.D0, 1.D0,-1.D0,
+     1          -1.D0, 1.D0,-1.D0, -1.D0,-1.D0, 1.D0,  1.D0,-1.D0, 1.D0,
+     2           1.D0, 1.D0, 1.D0, -1.D0, 1.D0, 1.D0 /
+      D = PROPS(1)
+      G = PROPS(2)
+      IOFF = NINT(PROPS(3))
+      DO I = 1, NDOFEL
+        DO J = 1, NRHS
+          RHS(I, J) = 0.0D0
+        END DO
+        DO J = 1, NDOFEL
+          AMATRX(I, J) = 0.0D0
+        END DO
+      END DO
+      DO I = 1, 8
+        ENERGY(I) = 0.0D0
+      END DO
+      IF (LFLAGS(3) .NE. 1 .AND. LFLAGS(3) .NE. 2 .AND.
+     1    LFLAGS(3) .NE. 5) RETURN
+      GP = 1.0D0 / SQRT(3.0D0)
+      IGP = 0
+      DO KZ = 1, 2
+      DO KY = 1, 2
+      DO KX = 1, 2
+        IGP = IGP + 1
+        S1 = GP * (2 * KX - 3)
+        S2 = GP * (2 * KY - 3)
+        S3 = GP * (2 * KZ - 3)
+        DO IA = 1, 8
+          GN(IA) = 0.125D0 * (1 + XI(1,IA) * S1) * (1 + XI(2,IA) * S2)
+     1             * (1 + XI(3,IA) * S3)
+          DNL(1,IA) = 0.125D0 * XI(1,IA) * (1 + XI(2,IA) * S2)
+     1                * (1 + XI(3,IA) * S3)
+          DNL(2,IA) = 0.125D0 * XI(2,IA) * (1 + XI(1,IA) * S1)
+     1                * (1 + XI(3,IA) * S3)
+          DNL(3,IA) = 0.125D0 * XI(3,IA) * (1 + XI(1,IA) * S1)
+     1                * (1 + XI(2,IA) * S2)
+        END DO
+        DO I = 1, 3
+          DO J = 1, 3
+            XJ(I, J) = 0.0D0
+            DO IA = 1, 8
+              XJ(I, J) = XJ(I, J) + DNL(I, IA) * COORDS(J, IA)
+            END DO
+          END DO
+        END DO
+        DET = XJ(1,1) * (XJ(2,2) * XJ(3,3) - XJ(2,3) * XJ(3,2))
+     1      - XJ(1,2) * (XJ(2,1) * XJ(3,3) - XJ(2,3) * XJ(3,1))
+     2      + XJ(1,3) * (XJ(2,1) * XJ(3,2) - XJ(2,2) * XJ(3,1))
+        XJI(1,1) = (XJ(2,2) * XJ(3,3) - XJ(2,3) * XJ(3,2)) / DET
+        XJI(1,2) = (XJ(1,3) * XJ(3,2) - XJ(1,2) * XJ(3,3)) / DET
+        XJI(1,3) = (XJ(1,2) * XJ(2,3) - XJ(1,3) * XJ(2,2)) / DET
+        XJI(2,1) = (XJ(2,3) * XJ(3,1) - XJ(2,1) * XJ(3,3)) / DET
+        XJI(2,2) = (XJ(1,1) * XJ(3,3) - XJ(1,3) * XJ(3,1)) / DET
+        XJI(2,3) = (XJ(1,3) * XJ(2,1) - XJ(1,1) * XJ(2,3)) / DET
+        XJI(3,1) = (XJ(2,1) * XJ(3,2) - XJ(2,2) * XJ(3,1)) / DET
+        XJI(3,2) = (XJ(1,2) * XJ(3,1) - XJ(1,1) * XJ(3,2)) / DET
+        XJI(3,3) = (XJ(1,1) * XJ(2,2) - XJ(1,2) * XJ(2,1)) / DET
+        DO IA = 1, 8
+          DO I = 1, 3
+            DNX(I, IA) = XJI(I,1) * DNL(1,IA) + XJI(I,2) * DNL(2,IA)
+     1                 + XJI(I,3) * DNL(3,IA)
+          END DO
+        END DO
+        PHI = 0.0D0
+        C = 0.0D0
+        GX = 0.0D0
+        GY = 0.0D0
+        GZ = 0.0D0
+        DO IA = 1, 8
+          PHI = PHI + GN(IA) * U(2 * IA - 1)
+          C = C + GN(IA) * U(2 * IA)
+          GX = GX + DNX(1, IA) * U(2 * IA)
+          GY = GY + DNX(2, IA) * U(2 * IA)
+          GZ = GZ + DNX(3, IA) * U(2 * IA)
+        END DO
+        CALL NUT_PUT(JELEM - IOFF, IGP, C)
+        W = DET
+        DO IA = 1, 8
+          IR = 2 * IA
+          RES = D * (DNX(1,IA) * GX + DNX(2,IA) * GY + DNX(3,IA) * GZ)
+     1        + G * PHI * GN(IA)
+          RHS(IR, 1) = RHS(IR, 1) - RES * W
+          DO IB = 1, 8
+            AMATRX(IR, 2 * IB) = AMATRX(IR, 2 * IB) + W * D *
+     1        (DNX(1,IA) * DNX(1,IB) + DNX(2,IA) * DNX(2,IB)
+     2         + DNX(3,IA) * DNX(3,IB))
+            AMATRX(IR, 2 * IB - 1) = AMATRX(IR, 2 * IB - 1)
+     1        + W * G * GN(IA) * GN(IB)
+          END DO
+        END DO
+      END DO
+      END DO
+      END DO
+      IF (LFLAGS(3) .EQ. 2) THEN
+        DO I = 1, NDOFEL
+          RHS(I, 1) = 0.0D0
+        END DO
+      END IF
+      RETURN
+      END
+
+"""
+
 UMAT = """\
 C=======================================================================
 C  UMAT: Abaqus entry point (generated by abaqus_composition/make_umat.py)
@@ -67,6 +233,7 @@ C=======================================================================
      3 CMNAME, NDI, NSHR, NTENS, NSTATV, PROPS, NPROPS, COORDS,
      4 DROT, PNEWDT, CELENT, DFGRD0, DFGRD1, NOEL, NPT, LAYER,
      5 KSPT, JSTEP, KINC)
+      USE biofilm_nut_store
       INCLUDE 'ABA_PARAM.INC'
       CHARACTER*80 CMNAME
       DIMENSION STRESS(NTENS), STATEV(NSTATV), DDSDDE(NTENS,NTENS),
@@ -87,6 +254,10 @@ C     c: field variable 2 (not read when phi is the temperature)
       ELSE
         PHI = PREDEF(1) + DPRED(1)
         CN = PREDEF(2) + DPRED(2)
+      END IF
+C     constant 48 = 1: c from the nutrient UEL overlaid on this element
+      IF (NPROPS .GE. 48) THEN
+        IF (PROPS(48) .GT. 0.5D0) CN = NUT_GET(NOEL, NPT)
       END IF
       CALL BIOFILM_COMP_UMAT(STRESS, STATEV, DDSDDE, SSE, DTIME,
      1  PHI, CN, NSTATV, PROPS, NPROPS, PNEWDT, DFGRD1,
@@ -189,6 +360,7 @@ C     --- host values: phi and c as UMAT found them --------------------
       Sdp_locbio2_n = 1.0D0
       Sdp_sumLocal = 1.0D0
       AB_C = AB_CN
+      IF (AB_C .GT. -1.0D29) ustatev(51) = AB_C
       Sbio_GrowthConst = ustatev(84)
       keycut = 0
       IF (.NOT. AB_OPENED) THEN
@@ -258,6 +430,7 @@ def build() -> str:
            "C  phi_mode_decl.inc, phi_mode_exec.inc -- do not edit, regenerate"]
     for p in PARTS:
         out += [f"C ---- {p.relative_to(ROOT).as_posix()} ----"] + part_lines(p)
+    out += NUT.splitlines()
     out += UMAT.format(decl="\n".join(decl), exec="\n".join(exe)).splitlines()
     return "\n".join(out) + "\n"
 
