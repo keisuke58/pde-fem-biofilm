@@ -276,6 +276,21 @@ C         the seed's start cannot be varied apart (5 Oct runs).
           END IF
           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
      &                                dTime, ALPHA_NEW)
+C         prop(36) = d (not 0): species-weighted growth law, the
+C         composition into the growth (5 Oct, two_way_growth_rate.py):
+C         alpha_dot = k_alpha phi (f_1 chi_1 + f_2 chi_2), f = 1 +- d,
+C         chi from the point model's state after this step. Not from a
+C         paper; d = 0 (default) is Eq. 36 unchanged.
+          IF (nProp .GE. 36) THEN
+            IF (prop(36) .NE. 0.0D0 .AND. PM_OK) THEN
+              CM_S = PM_GNEW(1) + PM_GNEW(2)
+              IF (CM_S .GT. 0.0D0) THEN
+                CM_GF = 1.0D0 + prop(36) * (2.0D0 * PM_GNEW(1) / CM_S
+     &                  - 1.0D0)
+                ALPHA_NEW = ALPHA_N + CM_GF * (ALPHA_NEW - ALPHA_N)
+              END IF
+            END IF
+          END IF
           IF (kDomIntPt .EQ. 1 .AND.
      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
      &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN

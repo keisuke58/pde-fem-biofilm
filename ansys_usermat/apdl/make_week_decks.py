@@ -47,7 +47,8 @@ def runs():
     """(name, base, props, sets, deltim, time, case, minutes) in run order."""
     out = []
 
-    def two(n, c, cons=6, s=0.15, cap=None, chi0=None, late=None, cref=None, beta=None, T=None):
+    def two(n, c, cons=6, s=0.15, cap=None, chi0=None, late=None, cref=None, beta=None, T=None,
+            gw=None):
         name = f"w{n}_{c}_g{cons}_s{num(s)}"
         props = {31: s}
         if cap is not None:
@@ -58,6 +59,8 @@ def runs():
             props[35] = late; name += f"_late{num(late)}"
         if cref is not None:
             props[33] = cref; name += f"_cref{num(cref)}"
+        if gw is not None:
+            props[36] = gw; name += f"_gw{num(round(gw, 3))}"
         sets = E10 + [f"CONSUMPTION11={cons}"]
         if beta is not None:
             sets.append(f"MY_BETA1={beta}"); name += f"_b{num(beta)}"
@@ -79,6 +82,13 @@ def runs():
         one(n, 0.02, tag="partner", props={28: 3})
         one(n, 0.02, tag="nu0499", sets=("POISSON_BIO=0.499",))
         one(n, 0.02, tag="Eex", sets=("YOUNG_BIO=1000", "YOUNG_VOID=1", "POISSON_BIO=0.3"))
+    # 0b. species-weighted growth law, prop(36) = d (cloud, 5 Oct evening;
+    #     needs the rebuild of tonight, two_way_growth_rate.py): case 6 with
+    #     consumption 1 (Table 2) and 6, case 3 with 6; d = 1/3, and 0.5 once
+    for n in (8, 16):
+        two(n, "c6", cons=1, gw=1 / 3); two(n, "c6", cons=6, gw=1 / 3)
+        two(n, "c3", cons=6, gw=1 / 3); two(n, "c6", cons=0, gw=1 / 3)
+    two(8, "c6", cons=6, gw=0.5)
     # 1. two species, 8^3 (about 3-15 min each); s = 1.0 only with consumption 4/6
     for c in ("c6", "c3"):
         for cons in (1, 0, 2, 4, 6):
