@@ -1,0 +1,14 @@
+# cs40_c6_g6  (2026-10-06 16:44, 1.6 min, 4 CPUs, Fortran point model)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_ansys\ds_c6_nut_g6_b002.json --case 2sp_case6 --T 1.0 --n 40 --cons 6
+# NOT COMPLETE: see F:\abaqus_work\comp_cs40_c6_g6 (cs40_c6_g6.msg / cs40_c6_g6.log)
+# columns: Abaqus | ANSYS ds_c6_nut_g6_b002 | ratio
+Traceback (most recent call last):
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 129, in <module>
+    main(sys.argv[1], sys.argv[2])
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 79, in main
+    t = last_tables(dat)
+        ^^^^^^^^^^^^^^^^
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 28, in last_tables
+    start = max(i for i, l in enumerate(lines) if re.search(r"INCREMENT\s+\d+ SUMMARY", l))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: max() iterable argument is empty
