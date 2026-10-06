@@ -211,9 +211,11 @@ this machine's specific workflow.
 
 ## People and how to address them (2026-10-04)
 
-- **Meisam Soleimani is a professor**: write "Prof. Soleimani" (title page:
-  Prof. Dr.-Ing. Meisam Soleimani), not "Dr.", even though the registration
-  form of 18.08.2026 lists him as "Dr.-Ing. M. Soleimani".
+- **Meisam Soleimani is not a professor** (his own clarification, mail of
+  6 Oct 2026: he teaches as a lecturer). Write "Dr. Soleimani" (title page:
+  Dr.-Ing. Meisam Soleimani); in mail he is fine with "Meisam". This
+  replaces the 2026-10-04 rule "Prof. Soleimani"; documents already handed
+  over keep their wording.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
@@ -228,7 +230,7 @@ this machine's specific workflow.
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
 These apply to every deck, speaker script, email draft or report written for
-the supervisors (Prof. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
+the supervisors (Dr. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
 examiners). Check each one before the document is handed over.
 
 - **Abaqus is not part of this thesis.** Abaqus work is the Keio

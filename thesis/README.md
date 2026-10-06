@@ -70,7 +70,7 @@ Open:
 |---|---|
 | 5 Oct | meeting 9:00; IKMHIWI03 run sheet `ansys_usermat/apdl/RUN_1005_IKMHIWI03.md` (last ANSYS day before 12 Oct) |
 | 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
-| 12-16 Oct | TMCMC final, ch3 numbers; **full draft to Prof. Soleimani and Dr. Geisler about 16 Oct** |
+| 12-16 Oct | TMCMC final, ch3 numbers; **full draft to Dr. Soleimani and Dr. Geisler about 16 Oct** |
 | 19-28 Oct | supervisor comments |
 | 29-30 Oct | proofreading, printing, binding |
 | **2 Nov** | **submission** (date to confirm) |

@@ -318,7 +318,7 @@ front-term runs are labelled:
 - grad c/(|grad c| + eps) with eps about 1e-8 to 1e-12 (here
   grad c/sqrt(|grad c|^2 + eps^2), the same for these values).
 - Consumption: "I think g phi" (zero order, Eq. 35), to be checked in the
-  AceGen file (with Prof. Soleimani). Simulation length 1 in every test
+  AceGen file (with Dr. Soleimani). Simulation length 1 in every test
   case. Test case 1: nutrient only at the corner.
 - beta: chosen to give sensible results, dependent on the mesh; beta =
   0.02 mm^2/T* stays an assumption.
