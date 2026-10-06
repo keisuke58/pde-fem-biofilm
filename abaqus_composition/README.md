@@ -332,6 +332,34 @@ Assumptions, to be stated wherever these results are shown:
 - **Front term:** growth on every face, w = 0.5, without artificial diffusion. This is the form that reproduces Klempt 2024's figures (sections above; KLEMPT2024_REPRODUCTION.md sec. 15-16), **not Eq. 34 as printed**. The printed form does not converge in the grid in my FD code. Felix Klempt (5 Oct) confirms the printed form as his implementation, so w = 0.5 is my modification. r = 10 mm/T* and k = 1 are Table 2 converted to the 2 mm cube (KLEMPT2024_REPRODUCTION.md sec. 8).
 - **Consumption:** 1 in the front-term runs is Table 2 converted to the 2 mm cube. 6 in the mesh series is an example input value (the partner's deck), about six times Table 2. With the paper's zero-order form, c can drop below 0 where the biofilm is dense (-0.19 on 8^3 at T* = 0.1). The point model then takes c_rel = min(max(c/c_ref, 0), 1) = 0, i.e. no nutrient: `phi_mode_exec.inc`, the same fragment in ANSYS and Abaqus.
 
+## Klempt 2024 test cases with the set-up the first author described (6 Oct 2026)
+
+`make_klempt_inp.py` with Felix Klempt's answers of 5 Oct: Eq. 34 as printed,
+n_c = grad c/(|grad c| + eps) with eps = 1e-8, Table 2 with T* = 0..1 (no time
+scale per run), the nutrient at the corner only (4.1), no artificial
+diffusion (`--hstab 0`), the paper's 1 um mesh (20^3), dt = 1e-3, E = 10 kPa;
+phi unbounded (`--pen 0`) or held in [0, 1] (`--pen 100`).
+`compare_paper.py`, RMS difference of the mean phi / c curves (averaged) to
+the digitised figures (`results_1006/fx*.txt`):
+
+| | 4.1 | 4.2 high | 4.2 low |
+|---|---|---|---|
+| consumption g phi (as he described), phi unbounded | 0.32 | 0.46 | 0.22 |
+| the same, phi held in [0, 1] | 0.32 | 0.54 | 0.24 |
+| consumption g phi c, phi unbounded | 0.045 | 0.45 | 0.27 |
+| growth on every face (w = 0.5), g phi c, time scale per run (above) | 0.025 | 0.021 | 0.030 |
+
+- With g phi and Table 2 the nutrient is used up at once and goes below 0
+  (4.1: mean c 0.004 at T* = 0.05 against the paper's 0.33); the front term
+  r c/(k+c) then vanishes and phi hardly grows (0.065 to 0.071).
+- With g phi c, 4.1 comes within 0.045 (mean phi 0.61 against 0.74 at
+  T* = 1); 4.2 is not reproduced by either form.
+- The first author's current implementation (`../ansys_usermat/FELIX_VS_PARTNER_DIFF.md`,
+  compared in words only) adds front growth only where it is positive and
+  lets it fade as phi approaches 1. None of the runs above has that form; it
+  is the next one to test, stated as "as in the first author's current
+  implementation".
+
 ## Biofilm on an implant collar (6 Oct 2026)
 
 `make_implant_inp.py`, `summarize_implant.py`: a 0.25 mm biofilm layer on a
