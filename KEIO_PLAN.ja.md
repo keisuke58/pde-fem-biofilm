@@ -107,7 +107,8 @@ WP0 と WP1 は今すぐ動かせる（WP1 は IKMHIWI03 で実行中）。WP2 �
 Felix によると、彼の実装も相方の要素も NEM（Neighbored Element Method）で φ の場を解いている。
 紹介された2本のうち、Rudolf et al. 2025（FEAD 249, 104353、著者に Felix、Meisam、Junker 先生）を
 `references/` に入れた（CC BY 4.0）。CMAME 2022（S0045782522000755）は、FEAD 論文の文献 [23]（Blaszczyk, Jantos, Junker,
-CMAME 393, 114698：Taylor 展開と重み付き最小二乗の元の論文）とみられる。PDF はまだ手元にない。
+CMAME 393, 114698, 2022、doi:10.1016/j.cma.2022.114698：Taylor 展開と重み付き最小二乗の元の論文、
+トポロジー最適化への応用）と確認した。Elsevier の著作権なので PDF はリポジトリに入れない（引用のみ）。
 詳しい人：Tobias Rudolf、Ilayda Kök、May v. Zabiensky。
 
 要点：
