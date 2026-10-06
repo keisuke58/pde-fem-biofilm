@@ -247,7 +247,7 @@ too long for 6 iterations to converge, both versions end at the clip bounds
 in round-off-dependent places (seen with THETA_DEMO, c* = 25, one step of
 0.01 from the default state); the composition runs' steps converge.
 
-## Front term with two species; composition mesh series (6 Oct 2026, running)
+## Front term with two species; composition mesh series (6 Oct 2026)
 
 Runs one at a time on 4 CPUs (`F:\abaqus_work\_req3_1006.ps1`; since 11:15
 with the Fortran point model, `-Native`), each result in
@@ -266,8 +266,70 @@ beta = 0.02 mm^2/T*, s = 0.15, the seed of the ANSYS 8^3 run, T* = 1.0.
    `cs24_c6_g6`, `cs32_c6_g6` (ANSYS column: the 8^3 run
    `ds_c6_nut_g6_b002`, a reference only for the trend).
 
+Results, T* = 1.0 (stress in MPa with E = 10 Pa; seed = the ANSYS seed elements):
+
+| run | seed vM | seed p | alpha-1 interior | phi seed | share seed | share layer 1 | c seed min | c mean |
+|---|---|---|---|---|---|---|---|---|
+| ANSYS `w8_c6_g1_s015` (8^3) | 4.68e-4 | -2.38e-4 | 8.62e-4 | | 0.051 | 0.334 | 0.876 | 0.932 |
+| `nf8_c6_g1` (no front term) | 2.39e-4 | -1.51e-4 | 7.15e-4 | 0.447 | 0.063 | 0.268 | 0.889 | 0.938 |
+| `fr8_c6_g1` (front, w = 0.5) | 6.35e-4 | -3.08e-3 | 1.16e-3 | 1.070 | 0.324 | 0.267 | -0.021 | 0.323 |
+| `fr16_c6_g1` (front, w = 0.5) | 7.88e-4 | -3.29e-3 | 1.23e-3 | 1.089 | 0.361 | 0.279 | -0.048 | 0.323 |
+
+- Without the front term, Abaqus and ANSYS agree on the nutrient (c within
+  1.5 %) and on the composition far from the seed (share in layer 2: 0.4994
+  vs 0.4995). The seed stress on 8^3 is 0.51 (vM) and 0.64 (p) of ANSYS:
+  the same ratio as the one-species 8^3 run (0.64), which approached ANSYS
+  under refinement (0.83 / 0.91 on 16^3 / 24^3). `nf16_c6_g1` and
+  `nf24_c6_g1` against the ANSYS week runs at 16^3 (and 24^3 when it is
+  done) follow.
+- With the front term (r = 10 mm/T*, w = 0.5) the biofilm fills the whole
+  cube by T* = 1 (phi about 1.07-1.09 everywhere; Eq. 34 has no upper
+  bound on phi). The nutrient is consumed down to c mean 0.32 (minimum just
+  below 0), the share at the seed rises from 0.06 to 0.32-0.36, and the
+  pressure is about 20 times the run without the front term, because the
+  whole cube grows against the fixed base. 8^3 to 16^3 changes seed vM by
+  24 % and p by 7 %.
+
+Composition mesh series (consumption 6, no front term):
+
+| | 16^3 | 24^3 | 32^3 | extrapolated |
+|---|---|---|---|---|
+| seed vM | 4.77e-4 | 5.41e-4 | 5.65e-4 | 6.0e-4 (order 1.8) |
+| seed p | -2.00e-4 | -2.13e-4 | -2.17e-4 | -2.23e-4 (order 2.0) |
+| share seed mean | 0.250 | 0.256 | 0.258 | |
+| share layer 1 | 0.400 | 0.408 | 0.409 | |
+| c seed min | 0.278 | 0.266 | 0.262 | |
+
+The composition and the nutrient change by about 1 % from 24^3 to 32^3; the
+seed stress by 4 %, 6 % below the extrapolated value at 32^3. (alpha - 1
+at the surface elements keeps falling, 5.05/4.88/4.71e-4, because the
+surface element's centroid moves closer to the free surface as the mesh is
+refined; it is a measure of the element, not of a point.) A 40^3 run follows.
+
+**Felix Klempt's answers (mail of 5 Oct 2026)**, which change how the
+front-term runs are labelled:
+- Eq. 34 **as printed** is the form in his implementation: where the
+  nutrient gradient behind the biofilm points towards it, the biofilm does
+  not grow there (more consumption or more nutrient diffusion changes
+  that). The growth on every face with w = 0.5 is therefore my
+  modification, chosen because it reproduces the paper's figures in my
+  code; it is not his model. Runs with the printed form (`pr8_c6_g1`,
+  `pr16_c6_g1`) follow.
+- grad c/(|grad c| + eps) with eps about 1e-8 to 1e-12 (here
+  grad c/sqrt(|grad c|^2 + eps^2), the same for these values).
+- Consumption: "I think g phi" (zero order, Eq. 35), to be checked in the
+  AceGen file (with Prof. Soleimani). Simulation length 1 in every test
+  case. Test case 1: nutrient only at the corner.
+- beta: chosen to give sensible results, dependent on the mesh; beta =
+  0.02 mm^2/T* stays an assumption.
+- Stiffness: the paper's units may be wrong; he suggests E = 10 kPa (mu
+  about 3.3 kPa). With growth as the only load the stress is proportional
+  to E, so all stresses here scale by 1000 for that value.
+- Composition at points the biofilm reaches later: not part of the model;
+  his idea is the neighbour's composition or the neighbours' average.
+
 Assumptions, to be stated wherever these results are shown:
-- **Front term:** growth on every face, w = 0.5, without artificial diffusion. This is the form that reproduces Klempt 2024's figures (sections above; KLEMPT2024_REPRODUCTION.md sec. 15-16), **not Eq. 34 as printed**. The printed form does not converge in the grid. The form actually run is an open question to Felix Klempt. r = 10 mm/T* and k = 1 are Table 2 converted to the 2 mm cube (KLEMPT2024_REPRODUCTION.md sec. 8).
+- **Front term:** growth on every face, w = 0.5, without artificial diffusion. This is the form that reproduces Klempt 2024's figures (sections above; KLEMPT2024_REPRODUCTION.md sec. 15-16), **not Eq. 34 as printed**. The printed form does not converge in the grid in my FD code. Felix Klempt (5 Oct) confirms the printed form as his implementation, so w = 0.5 is my modification. r = 10 mm/T* and k = 1 are Table 2 converted to the 2 mm cube (KLEMPT2024_REPRODUCTION.md sec. 8).
 - **Consumption:** 1 in the front-term runs is Table 2 converted to the 2 mm cube. 6 in the mesh series is an example input value (the partner's deck), about six times Table 2. With the paper's zero-order form, c can drop below 0 where the biofilm is dense (-0.19 on 8^3 at T* = 0.1). The point model then takes c_rel = min(max(c/c_ref, 0), 1) = 0, i.e. no nutrient: `phi_mode_exec.inc`, the same fragment in ANSYS and Abaqus.
 
 ## Biofilm on an implant collar (6 Oct 2026)
