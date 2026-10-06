@@ -364,6 +364,12 @@ C  (growth "blend<w>" of JAXFEM/klempt2024_case1_bc.py, the closest
 C  reproduction of Klempt 2024's figures, KLEMPT2024_REPRODUCTION.md sec. 15;
 C  a hypothesis, not the printed Eq. 34), with artificial diffusion
 C  w v h/2 (isotropic) + (1 - w) v h/2 along n_c, as first-order upwinding.
+C  Optional constant 9 > 0.5 (with w < 0): the front term as in the first
+C  author's current implementation (FELIX_VS_PARTNER_DIFF.md, compared in
+C  words only): with H = - v . grad(phi) and phi_n the value at the start
+C  of the increment, H is added only where it is positive and fades out as
+C  phi approaches 1, H (1 - phi), while phi_n < 1; where phi_n >= 1 the
+C  signed H is added and the penalty P holds phi near 1.
 C  Needs *DENSITY 1.
 C=======================================================================
       SUBROUTINE UMATHT(U, DUDT, DUDG, FLUX, DFDT, DFDG,
@@ -394,6 +400,8 @@ C=======================================================================
       BS = 0.0D0
       BI = 0.0D0
       W = -1.0D0
+      FEL = 0.0D0
+      IF (NPROPS .GE. 9) FEL = PROPS(9)
       DO I = 1, 3
         EN(I) = 0.0D0
       END DO
@@ -435,6 +443,25 @@ C       growth on every face: w |grad phi| + (1 - w) |n_c . grad phi|
           DUDG(I) = -V * (W * DTEMDX(I) / GPM
      1              + (1.0D0 - W) * SG * EN(I)) * DTIME
         END DO
+      ELSE IF (FEL .GT. 0.5D0) THEN
+C       one-sided, saturating front growth (first author's implementation)
+        H = -V * VG
+        IF (TEMP .GE. 1.0D0) THEN
+          SRC = SRC + H
+          DO I = 1, NTGRD
+            DUDG(I) = V * EN(I) * DTIME
+          END DO
+        ELSE IF (H .GT. 0.0D0) THEN
+          SRC = SRC + H * (1.0D0 - PHI)
+          DSRC = DSRC - H
+          DO I = 1, NTGRD
+            DUDG(I) = V * EN(I) * (1.0D0 - PHI) * DTIME
+          END DO
+        ELSE
+          DO I = 1, NTGRD
+            DUDG(I) = 0.0D0
+          END DO
+        END IF
       ELSE
         SRC = SRC - V * VG
         DO I = 1, NTGRD

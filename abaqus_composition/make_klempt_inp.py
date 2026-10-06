@@ -40,6 +40,9 @@ def main():
                     help="w: growth on every face, r c/(k+c) (w |grad phi| + (1-w) |n_c . grad phi|), in place of "
                          "the printed front term (KLEMPT2024_REPRODUCTION.md sec. 15; a hypothesis)")
     ap.add_argument("--first-order", action="store_true", help="consumption g phi c (not the paper's g phi)")
+    ap.add_argument("--felix", action="store_true",
+                    help="front term as in the first author's current implementation: added only where positive, "
+                         "times (1 - phi) below phi = 1 (UMATHT constant 9; ansys_usermat/FELIX_VS_PARTNER_DIFF.md)")
     ap.add_argument("--scale", type=float, default=1.0, help="time scale s: beta, k_alpha and r times s (sec. 12)")
     ap.add_argument("--E", type=float, default=1e-5, help="YOUNG_BIO (default 1e-5: E = 10 Pa in MPa)")
     ap.add_argument("--s-every", type=int, default=0, help="also print S and SDV84 every this many increments")
@@ -95,6 +98,9 @@ def main():
     OFF = 1000000
     r = 0.0 if a.no_front else 100.0 * s
     therm = [2.0 * s, 1e-3 * s, a.pen, r, 1.0, h if a.hstab is None else a.hstab, a.eps] + ([a.blend] if a.blend is not None else [])
+    if a.felix:
+        assert a.blend is None, "--felix replaces --blend"
+        therm += [-1.0, 1.0]
     uprop = [1.0, g / 1e10, OFF] + ([1.0] if a.first_order else [])
     sprint = (f"*EL PRINT, ELSET=EALL, FREQUENCY={a.s_every}, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO\n"
               "S, SDV84\n") if a.s_every else ""
@@ -124,7 +130,7 @@ def main():
 *USER MATERIAL, CONSTANTS={len(p)}, TYPE=MECHANICAL
 {rows}
 *USER MATERIAL, CONSTANTS={len(therm)}, TYPE=THERMAL
-{", ".join(f"{x:.10g}" for x in therm)}
+{chr(10).join(", ".join(f"{x:.10g}" for x in therm[i:i + 8]) for i in range(0, len(therm), 8))}
 *DEPVAR
 100
 *INITIAL CONDITIONS, TYPE=TEMPERATURE
