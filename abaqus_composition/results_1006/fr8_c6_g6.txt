@@ -1,0 +1,27 @@
+# fr8_c6_g6  (2026-10-06 11:00, 21.7 min, 4 CPUs)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_ansys\ds_c6_nut_g6_b002.json --case 2sp_case6 --cons 6 --T 1.0 --n 8 --front 10 --blend 0.5 --dt 0.01
+# PASS: fr8_c6_g6 completed
+# columns: Abaqus | ANSYS 8^3 (ds_c6_nut_g6_b002; a reference only on 8^3) | ratio
+measure                    Abaqus        ANSYS    ratio
+seed vM                8.7188e-04   1.0002e+05   0.0000
+seed p                -5.5530e-04  -1.0629e+05   0.0000
+layer 1 p             -2.2060e-04   2.4203e+04  -0.0000
+layer 1 tension        6.5625e-01   1.0000e+00   0.6562
+layer 2 p              8.8201e-05   1.1121e+03   0.0000
+layer 2 tension        9.1176e-01   1.0000e+00   0.9118
+layer 3 p              2.7611e-04   7.2806e+01   0.0000
+layer 3 tension        9.0000e-01   1.0000e+00   0.9000
+alpha interior         8.8605e-04   8.6166e-04   1.0283
+alpha surface          7.1707e-04   6.1300e-04   1.1698
+alpha step %           1.9070e+01   2.8858e+01   0.6608
+phi seed               7.2831e-01 
+phi layer 1            5.3903e-01 
+ran (elements)         5.0000e+02   3.0400e+02   1.6447
+share seed mean        4.8917e-01   3.2382e-01   1.5106
+share seed min         4.8514e-01   1.1670e-01   4.1573
+share seed max         4.9050e-01   4.5850e-01   1.0698
+share layer 1          4.3106e-01   4.0628e-01   1.0610
+share layer 2          3.6771e-01   4.9951e-01   0.7361
+c seed min            -8.8390e-01   2.5556e-01  -3.4587
+c seed max            -2.2030e-01   5.5667e-01  -0.3957
+c mean                -2.4860e-01   5.9263e-01  -0.4195
