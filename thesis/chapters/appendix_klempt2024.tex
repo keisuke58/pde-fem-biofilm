@@ -150,11 +150,13 @@ open:
   \item \emph{Direction where the nutrient is uniform.} The implementation
         uses $\nabla_X c/(\|\nabla_X c\|+\varepsilon)$ with a small
         $\varepsilon$, of order $10^{-8}$ to $10^{-12}$.
-  \item \emph{Consumption.} He recalls $g\,\phi$, as printed, but was not
+  \item \emph{Consumption.} He recalled $g\,\phi$, as printed, but was not
         certain. The steady nutrient level of case 4.2 ``high'' (0.489 in
         the paper) follows from $g\,\phi\,c$ and not from $g\,\phi$
-        (0.482 against 0.139, see above). This remains open until the
-        original implementation is checked.
+        (0.482 against 0.139, see above). Dr.\ Soleimani, who computed the
+        published examples, confirmed on 6 October 2026 that $g\,\phi\,c$
+        is correct. The consumption term of Eq.~35 is therefore
+        $g\,\phi\,c$, as in the reproduction.
   \item \emph{Time.} Every simulation ran over a length of $1$. The time
         scales $s=5$ and $3$ that the reproduction needs for case 4.2 are
         therefore not explained by different reference times.
