@@ -55,10 +55,13 @@ Other differences (6):
   two species' local growth variables, each starting at 1. In a run with one
   species, the other stays at 1, so the growth seen by the stress is half of
   that species' own growth. This explains the factor 1/2 in the ratio 0.49
-  of chapter 5, where the partner's own growth variable was compared with
+  in thesis chapter 4 (`thesis/chapters/ch4_ansys.tex`), where the partner's own growth variable was compared with
   Eq. 36 for one species. It does not affect this work's ANSYS runs, which
-  compute the growth from Eq. 36 at the Gauss point instead. To be confirmed
-  with Felix before it is used in a document.
+  compute the growth from Eq. 36 at the Gauss point instead. For the 2024
+  test cases run in his code with one species, the averaging changes only
+  the stress (Table 3), not phi and c (Fig. 4 and 7): the stresses are to be
+  compared with the factor 1/2 taken into account. To be confirmed with
+  Felix before it is used in a document.
 
 ## Values in his Workbench project (6 Oct 2026, read on IKMHIWI03, kept outside git)
 
