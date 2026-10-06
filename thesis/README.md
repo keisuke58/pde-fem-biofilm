@@ -64,16 +64,18 @@ Open:
   4 Oct one pair of gLV entries had mixed CS and CH values, and the posterior
   was mislabelled NUTS; both fixed).
 
-## Timeline to submission and colloquium (decided 4 Oct)
+## Timeline to submission and colloquium (decided 4 Oct, revised 6 Oct)
 
 | when | what |
 |---|---|
 | 5 Oct | meeting 9:00; IKMHIWI03 run sheet `ansys_usermat/apdl/RUN_1005_IKMHIWI03.md` (last ANSYS day before 12 Oct) |
 | 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
-| 12-16 Oct | TMCMC final, ch3 numbers; **full draft to Dr. Soleimani and Dr. Geisler about 16 Oct** |
-| 19-28 Oct | supervisor comments |
-| 29-30 Oct | proofreading, printing, binding |
-| **2 Nov** | **submission** (date to confirm) |
+| **12 Oct** | **nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
+| 16 Oct | his comments on the format |
+| 19 Oct | last changes, printing, binding |
+| **20 Oct** | **submission**: two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
+| 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
+| 2 Nov | meeting with Assoc. Prof. Muramatsu (`slides_1102_nem_ja.tex`) |
 | 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
 | Dec | colloquium, any date offered to the examiners; the December trip is booked after it is fixed |
 
