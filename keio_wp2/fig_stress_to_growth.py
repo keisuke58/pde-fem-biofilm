@@ -63,5 +63,34 @@ def main():
     print("wrote", out)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and "--3d" not in sys.argv:
     main()
+
+
+def fig3d():
+    """seed phi at T* = 1 (relative to mu* = 0) against Pi, 2D and 3D (sphere, cube)."""
+    figstyle.apply(size=10)
+    fig, ax = plt.subplots(figsize=(5.2, 3.8))
+    d2 = json.loads((HERE / "results.json").read_text())
+    sw = [r for r in d2["runs"] if r["set"] == "sweep"]
+    p0 = sw[0]["hist"][-1][2]
+    ax.semilogx([r["mu_star"] * d2["c_seed"] * K_ALPHA ** 2 for r in sw[1:]],
+                [r["hist"][-1][2] / p0 for r in sw[1:]], "o-", label="2D plane strain, c = 3.4 (seed)")
+    d3 = json.loads((HERE / "results_3d_n16.json").read_text())
+    for seed, mk in (("sphere", "s-"), ("cube", "^-")):
+        rr = [r for r in d3["runs"] if r["seed"] == seed]
+        crim = rr[0]["hist"][-1][6]
+        q0 = rr[0]["hist"][-1][2]
+        ax.semilogx([r["mu_star"] * crim * K_ALPHA ** 2 for r in rr[1:]], [r["hist"][-1][2] / q0 for r in rr[1:]],
+                    mk, label=f"3D {seed}, c = {crim:.1f} (seed surface)")
+    ax.axvline(1, color="0.5", ls=":", lw=1)
+    ax.set(xlabel=r"$\Pi=\mu^*\,c\,(k_\alpha T^*)^2$", ylabel=r"seed $\phi$ at $T^*=1$ / without the term")
+    ax.legend(fontsize=7, frameon=False)
+    fig.tight_layout()
+    out = HERE.parent / "assets" / "fig_stress_to_growth_3d.png"
+    fig.savefig(out, dpi=200)
+    print("wrote", out)
+
+
+if __name__ == "__main__" and "--3d" in sys.argv:
+    fig3d()
