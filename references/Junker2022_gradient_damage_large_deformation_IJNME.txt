@@ -1,0 +1,1148 @@
+Received: 15 February 2021    Revised: 7 July 2021     Accepted: 24 September 2021
+
+DOI: 10.1002/nme.6876
+
+
+RESEARCH ARTICLE
+
+
+
+
+Efficient and robust numerical treatment of a
+gradient-enhanced damage model at large deformations
+
+Philipp Junker1                    Johannes Riesselmann2                             Daniel Balzani2
+
+1
+  Institute of Continuum Mechanics,
+Leibniz University Hannover, Hannover,               Abstract
+Germany                                              The modeling of damage processes in materials constitutes an ill-posed math-
+2
+  Chair of Continuum Mechanics, Ruhr                 ematical problem which manifests in mesh-dependent finite element results.
+University Bochum, Bochum, Germany
+                                                     The loss of ellipticity of the discrete system of equations is counteracted by reg-
+Correspondence                                       ularization schemes of which the gradient enhancement of the strain energy
+Philipp Junker, Institute of Continuum               density is often used. In this contribution, we present an extension of the effi-
+Mechanics, Leibniz University Hannover,
+Hannover, Germany.
+                                                     cient numerical treatment, which has been proposed by Junker et al. in 2019, to
+Email: philipp.junker@rub.de                         materials that are subjected to large deformations. Along with the model deriva-
+                                                     tion, we present a technique for element erosion in the case of severely damaged
+                                                     materials. Efficiency and robustness of our approach is demonstrated by two
+                                                     numerical examples including snapback and springback phenomena.
+
+                                                     KEYWORDS
+                                                     element erosion technique, finite difference methods, finite element methods,
+                                                     gradient-enhanced damage, snapback, springback
+
+
+
+
+1         I N T RO DU CT ION
+
+The modeling of damage at finite strains roots back to the eighties of the 20th century when first phenomenological mod-
+els related to material degradation were developed. These models were mainly constructed based on the original ideas
+for small strains where damage was considered as a reduction of the effective cross section area on which the load acts
+resulting from the nucleation and evolution of cavities. The reduced cross section thus softens the material which gives
+rise to the stress- and strain-softening effects. On a material point level, this means that the stress reduces with increasing
+strains after a critical threshold value is reached. This phenomenological approach of describing the complex microstruc-
+tural processes during material failure, that might be accompanied by the evolution of dislocations, micro-cracks and
+delamination effects, provides a convincing method for material modeling. Unfortunately, softening may also be accom-
+panied by a loss of ellipticity of the system of governing equations once a certain amount of damage has evolved which
+renders boundary value problems ill-posed. An obvious indicator for such problems are severe dependencies of the finite
+element results on the individual mesh discretization: the smaller the finite element size is chosen, the more localized
+resulting damage bands will be. Furthermore, and even worse, the numerical solution of such problems does not converge
+and might be unstable regarding small perturbations of the boundary conditions, that is, they lack numerical robustness.
+These effects are not only observed at the level of spatial distribution of the damage variable but also for the global behav-
+ior in terms of reaction forces.1,2 Consequently, a mathematical correction of the problem is inevitable. This process is
+referred to as regularization which might be performed in time and space. Overview articles may be found, for example,
+in References 3 and 4.
+This is an open access article under the terms of the Creative Commons Attribution-NonCommercial License, which permits use, distribution and reproduction in any
+medium, provided the original work is properly cited and is not used for commercial purposes.
+© 2021 The Authors. International Journal for Numerical Methods in Engineering published by John Wiley & Sons Ltd.
+
+774      wileyonlinelibrary.com/journal/nme                                                                            Int J Numer Methods Eng. 2022;123:774–793.
+                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                              775
+
+
+
+     Alternatively, a relaxed variational formulation might be employed which relies on a careful analysis of the convexity
+properties of the underlying energy. This energetic analysis demands a direct formulation of the damage variable as pure
+function of the deformation state such that the condensed energy (energy plus time-integrated dissipation) may be relaxed.
+It is thus convenient to formulate the model in a time-incremental way, compare References 5-8. Thereby, a dissipative
+material behavior may be described by an incrementally hyperelastic representation, which is thus open for analysis with
+respect to generalized convexity conditions. This enables the construction of convex hulls (see Reference 9 for small
+strains and References 10 and 11 for finite strains) which on the one hand ensures the recovery of ellipticity and on the
+other hand guarantees the existence of minimizers. In contrast to spacial regularization approaches, no internal length
+scale parameter has to be chosen since the micromechanical parameters are obtained as result of the convexification
+procedure. On the other hand, the effort at the material point level may be increased if a nonconvex minimization problem
+is solved as part of the convexification at each integration point, which yields an increased expense in the assembling
+procedure. Another drawback may be seen in the fact that although the stress softening hysteresis as explained above
+may in principle be captured, a softening in the sense of negative tangents in stress-strain curves can not yet be modeled
+at the material point. One exception so far is the approach of Schwarz et al. in Reference 12 for small strains, where a
+simplified microstructure consisting of damaged, linear elastic materials and whose resulting convexified energy indeed
+enables the description of strain-softening.
+     In the context of time-wise regularization, viscous effects are included into the model. Examples for such models may
+be found in References 3,13-17. These models introduce a rate-dependence of the damage evolution which damps the local
+reduction of stiffness. Consequently, damage evolves also at neighbored material points to keep the amount of dissipated
+energy constant. A huge benefit of such models (as well as of relaxed incremental formulations) is their implementability
+in any finite element framework using solely the material law interface. However, viscous damage models possess a
+remarkable drawback: the viscosity associated to damage evolution has to be chosen quite high, reaching values that are
+unphysical in order to obtain the desired regularization. Furthermore, the effectiveness of viscous regularization strongly
+depends on the applied loading velocity which does not necessarily need to agree with experimental velocities. Finally,
+the interplay of viscosity and loading velocity has to be set and thus well-posedness has to be proven for each individual
+boundary value problem rendering such approaches rather impractical for application.
+     Spacial regularization “homogenizes” the damage evolution on a local level. To this end, either integral formula-
+tions are introduced or a gradient enhancement of the strain energy is employed. A major benefit of such models as
+compared to viscous regularization is that it can be shown that they are inherently well-posed. Examples for spatially
+regularized damage models may be found, for example, in References 1,2,18-23. Also for the finite-strain regime, they
+have been used, compare References 24-31. Such models may be applied to arbitrary loading velocities since any depen-
+dence of the material behavior on this boundary condition is included in a physically sound manner. Furthermore, they
+might be coupled to other physical processes as for instance plasticity and temperature dependence without unphysical
+parameters being present in the complete system of model equations. For gradient regularization, we refer to the pro-
+totype approach of References 19,20 and similarly Reference 21, and its finite-strain extension in Reference 30, where
+a nonlocal function carries information on the damage state. This procedure transforms the associated equation for
+the damage state from a local evolution equation at the material point (as is the case for viscous regularization) to a
+field equation (integral equation for integral regularization or partial differential equation for gradient regularization)
+which has to be solved along with the balance of linear momentum for the displacements. Consequently, the number
+of unknowns increases during numerical treatment, for example, the number of nodal variables increases from three
+(displacements) to four (displacements + damage state variable) in a mixed finite element implementation. While ther-
+modynamic consistency and mesh-independent simulations can be ensured with these approaches, unfortunately, the
+increased number of degrees of freedom in the discrete global system of equations significantly increases computational
+costs.
+     To limit the usual numerical deficiency of gradient regularization, we present in this contribution a novel finite strain
+gradient damage formulation. A similar approach for the small strain regime has been introduced in Reference 32 (see
+also Reference 33 for a detailed numerical analysis including mesh adaptivity). The model for the small strain regime
+has proven to consume a limited amount of extra computation effort than purely elastic simulations which constitute the
+reference for the shortest simulation time. Furthermore, the model has proven to be numerically robust, compare Ref-
+erence 33. Both aspects, computation speed and numerical robustness, are investigated for the novel gradient-enhanced
+damage model when formulated and evaluated for the finite strain regime in this contribution. To this end, we begin with
+the variational derivation of the damage model that is formulated in terms of a partial differential inequality which com-
+plements the partial differential equation describing the balance of linear momentum. Then, we apply the neighbored
+                                                                                                                                           10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+776                                                                                                                        JUNKER et al.
+
+
+
+element method which has proven to be beneficial for a robust and time-efficient numerical evaluation of the set of gov-
+erning equations given by the balance of linear momentum and an additional field equation. Examples have been given in
+the context of small-strain damage32,33 and small-strain34 and finite-strain topology optimization.35 The neighbored ele-
+ment method combines a finite element approach for the balance of linear momentum and a finite difference approach
+for the additional field equation along with operator splitting techniques. Thereby, the neighbored element method con-
+serves the size of the global system of equations resulting from the finite element formulation for the displacements: to
+be more precise, the number of nodal unknowns for the finite elements remains unchanged from a corresponding purely
+elastic formulation. The partial differential inequality for the damage state, however, is solved through a correspondingly
+modified internal update procedure. Furthermore, a novel stabilization technique based on element erosion methods
+enables us to obtain numerical results even for substantial deformation states including regions of highly damaged mate-
+rial for which the model is close to the loss of its validity. The numerical results show mesh-independence while requiring
+minimal extra computation time compared to purely hyperelastic simulations.
+
+
+2       A G RADIENT-ENHANCED DAMAG E MODEL AT FINITE STRAINS
+
+There exist various strategies for the derivation of fundamental material models of which an extended Hamilton principle
+offers a variational approach. Its stationarity conditions agree with the second Law of Thermodynamics and Onsager’s
+principle by construction if physically reasonable ansatzes for the strain energy density and the dissipation function are
+chosen. For details on the extended Hamilton principle and its relation to thermodynamics and other modeling strategies,
+such as the principle of virtual work or the principle of the minimum of the dissipation potential, we refer to Reference 36.
+    The extended Hamilton principle is related to the stationarity of the action function. It can be shown, compare Ref-
+erence 36, that it constitutes as the following condition: for the quasi-static case, the sum of the Gibbs energy , which is
+also referred to as total potential, and the work due to dissipative processes  tends to be stationary:
+
+                                               [u, 𝛼] ∶= [u, 𝛼] + [𝛼] → stat.                                                    (1)
+                                                                                  u,𝛼
+
+
+    A detailed investigation of the extended Hamilton principle as unifying theory for coupled problems, that is,
+thermo-mechanical processes, and dissipative microstructure evolution has been presented in Reference 36.
+    In (1), the displacements are denoted by u and the state of microstructure is expressed in terms of the internal variable
+𝛼. The Gibbs energy reads
+
+
+                                 [u, 𝛼] =         Ψ(C, 𝛼) dV −        b⋆ ⋅ u dV −         t⋆ ⋅ u dA                                (2)
+                                              ∫Ω                  ∫Ω                 ∫𝜕Ω
+
+with the strain energy density Ψ, the prescribed body forces b⋆ , and the traction vector t⋆ . The integrals are evaluated
+for the body’s volume Ω and its surface 𝜕Ω in its reference configuration with the position vector X. The deformation
+is measured by the right Cauchy Green tensor C ∶= FT F with the deformation gradient F = 𝜕x∕𝜕X = I + u ⊗ ∇ and the
+spatial coordinate x = X + u in the current configuration. Throughout this contribution, the nabla operator is computed
+with respect to the reference configuration, that is, ∇ ≡ ∇X .
+    The work due to dissipative processes is given by
+
+                                                      [𝛼] ∶=        pdiss 𝛼 dV                                                     (3)
+                                                                ∫Ω
+
+when the non-conservative force pdiss performs work “along” the microstructure state which is described in terms of the
+internal variable 𝛼. The stationarity condition of (1) thus reads
+
+                            𝛿[u, 𝛼](𝛿u, 𝛿𝛼) = 𝛿[u, 𝛼](𝛿u, 𝛿𝛼) + 𝛿[𝛼](𝛿𝛼) = 0                 ∀ 𝛿u, 𝛿𝛼                            (4)
+
+with
+
+                 𝛿[u, 𝛼](𝛿u, 𝛿𝛼) =        (𝛿u Ψ(C, 𝛼) dV + 𝛿𝛼 Ψ(C, 𝛼)) dV −           b⋆ ⋅ 𝛿u dV −          t⋆ ⋅ 𝛿u dA.            (5)
+                                      ∫Ω                                          ∫Ω                   ∫𝜕Ω
+                                                                                                                                10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                             777
+
+
+
+    The non-conservative force is assumed to be a material-specific quantity which is determined once the process con-
+ditions are set, similarly as the external forces b⋆ and t⋆ . Consequently, it does not follow from a stationarity condition
+but it needs to be modeled. This implies 𝛿𝛼 pdiss = 0 such that the variation of the dissipated energy reads
+
+
+                                               𝛿[𝛼](𝛿𝛼) =             pdiss 𝛿𝛼 dV.                                       (6)
+                                                                  ∫Ω
+
+    Since the variations for displacements and microstructural state are independent, we obtain
+                           {
+                               ∫Ω 𝛿u Ψ(C, 𝛼) dV − ∫Ω b⋆ ⋅ 𝛿u dV − ∫𝜕Ω t⋆ ⋅ 𝛿u dA = 0      ∀ 𝛿u
+                                                                                                 .                        (7)
+                               ∫Ω 𝛿𝛼 Ψ(C, 𝛼) dV + ∫Ω p   diss
+                                                                𝛿𝛼 dV = 0                 ∀𝛿𝛼
+
+    Specifications of the strain energy density Ψ and the non-conservative force pdiss allow the application of the lat-
+ter equations for the derivation of models for various materials. The condition (7)2 is valid both for rate-independent
+and rate-dependent processes. For the rate-independent case, this condition immediately defines the evolution equation
+for the internal variable 𝛼. However, the necessary damage criterion is received later by performing a Legendre
+transformation of the dissipation function which defines the non-conservative force pdiss . More details are presented
+later.
+    Based thereon, let us provide specific formulas for a gradient-enhanced damage model by first setting the internal
+variable 𝛼 as damage variable. Then, we define the strain energy density by
+
+                                                                      1
+                                         Ψ(C, 𝛼) = (1 − D(𝛼)) Ψ0 (C) + 𝛽||∇f ||2                                          (8)
+                                                                      2
+
+with the damage function D(𝛼) ∶= 1 − f (𝛼) and f (𝛼) = exp(−𝛼). The damage function needs to be bounded such that
+D ∈ [0, 1] where D = 0 refers to the undamaged and D = 1 to the fully damaged state. The relations for f are thus, f = 1
+for the intact material and f = 0 for the failed material. We consequently demand f = [0, 1] which is ensured for our
+choice f = exp(−𝛼) when 𝛼 ∈ [0, ∞[. Then, the undamaged state can be indicated by 𝛼 = 0 and the fully damaged state
+by 𝛼 → ∞. Concluding, the damage state can be equivalently be expressed in terms of D, f , and 𝛼. The motivation for the
+introduction of these quantities is that the relation 1 − D(𝛼) corresponds to the primal idea of modeling damage by relating
+the intact and failed cross section areas to each other, compare References 37,38. Then, the damage function D(𝛼) must be
+a monotonically increasing function in the damage variable 𝛼. An suitable representation is provided by D(𝛼) = 1 − f (𝛼)
+when f is monotonically decreasing. Here, different approaches are possible, for example, polynomials, see Reference 16.
+However, for our model, the exponential choice, which was proposed in Reference 21, is more convenient due to the
+property f ′ = −f as will be seen later.
+    The parameter 𝛽 serves as regularization parameter and thus controls the thickness of the damage zone. The formula-
+tion of the strain energy density is the same approach as in Reference 32; however, in contrast to the original work which
+was restricted to small deformations, we now make use of a hyperelastic strain energy density of the undamaged material
+Ψ0 = Ψ0 (C).
+    The non-conservative force is usually derived from a dissipation function Δdiss such that
+
+                                                                    𝜕Δdiss
+                                                          pdiss =                                                         (9)
+                                                                     𝜕 𝛼̇
+
+holds. Therefore, it is rather the dissipation function Δdiss which needs to be modeled instead of the non-conservative force
+pdiss . This agrees to other modeling principles, for example, the principle of maximum dissipation for elasto-plasticity,
+in which the yield function is modeled directly. The associated dissipation function could then be obtained by Legendre
+transforming the yield function. For more details on the relation of these modeling principles and their thermodynamic
+relation, we refer, for example, to References 36,39,40. For rate-independent microstructural evolution, which is the case
+for the present model for damage evolution, functions have to be used that are homogeneous of order one. Hence, the
+dissipation function
+
+                                                                      ̇
+                                                           Δdiss ∶= r|𝛼|                                                (10)
+                                                                                                                                               10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+778                                                                                                                            JUNKER et al.
+
+
+
+is used32 from which
+                                                                                { 𝛼̇
+                                                                                 r |𝛼|̇            for 𝛼̇ ≠ 0
+                                                 p   diss
+                                                             = 𝜕Δ   diss
+                                                                           ∶=                                                          (11)
+                                                                                   {−r, r} for 𝛼̇ = 0
+
+follows. The parameter r is referred to as dissipation parameter and it will become obvious that it represents an energetic
+threshold value for the onset and evolution of damage. It is worth mentioning that the partial derivative in (9) transforms
+to a subdifferential in our case since 𝜕Δdiss ∕𝜕 𝛼̇ is not unique at 𝛼̇ = 0 for our rate-independent ansatz for Δdiss in (10).
+Then, the stationarity condition (7)1 result in the weak form of the balance of linear momentum
+
+                                            1
+                                    S∶        𝛿C dV −    b⋆ ⋅ 𝛿u dV −     t⋆ ⋅ 𝛿u dA = 0                              ∀ 𝛿u,            (12)
+                               ∫Ω           2         ∫Ω              ∫𝜕Ω
+
+where S = 2𝜕Ψ(C, 𝛼)∕𝜕C denotes the Second Piola Kirchhoff stress tensor. The stationarity condition in (7)2 reads
+
+
+                                        f ′ Ψ0 𝛿𝛼 dV +             𝛽∇f ⋅ ∇(f ′ 𝛿𝛼) dV +                  𝜕Δdiss 𝛿𝛼 dV = 0              (13)
+                                   ∫Ω                         ∫Ω                                    ∫Ω
+
+where we considered 𝛿𝛼 f = f ′ 𝛿𝛼. Integration by parts of the second term results in
+
+
+                                    𝛽f ′ ∇f ⋅ ∇𝛿𝛼 dV =                     𝛽f ′ n0 ⋅ ∇f 𝛿𝛼 dA −               𝛽f ′ △ f 𝛿𝛼 dV           (14)
+                               ∫Ω                                ∫𝜕Ω                                     ∫Ω
+
+and thus, (13) transforms to
+
+                                        (                      )
+                               −         f Ψ0 − 𝛽f △ f − 𝜕Δdiss 𝛿𝛼 dV −                              𝛽f n0 ⋅ ∇f 𝛿𝛼 dA = 0              (15)
+                                   ∫Ω                                                          ∫𝜕Ω
+
+due to f ′ = −f . The local evaluation of the first integral in (15) results in the differential inclusion
+
+                                                  f Ψ0 − 𝛽f △ f − 𝜕Δdiss ∋ 0 ∀X ∈ Ω                                                    (16)
+
+due to the set-valued character of the subdifferential 𝜕Δdiss . Therefore, it is convenient to perform a Legendre transfor-
+mation such that we transform the dissipation function, which is formulated in terms of the thermodynamic flux 𝛼,    ̇ into
+           ̃ diss which depends on the thermodynamic force p ∶= f Ψ0 − 𝛽f △ f . Consequently, we obtain
+a function Δ
+                                                        {           }     {                }
+                                            ̃ diss = sup p𝛼̇ − Δdiss = sup |𝛼|(p
+                                            Δ                               ̇    sgn𝛼̇ − r) .                                          (17)
+                                                        𝛼̇                                𝛼̇
+
+
+    Healing in the sense of an increasing stiffness contradicts our motivation to model damage. Thus, the sign of the rate
+of the damage variable is sgn𝛼̇ = {0, 1} and the Legendre transform reads
+                                                                           {
+                                                                            0       if p − r ≤ 0
+                                                             ̃
+                                                             Δ
+                                                               diss
+                                                                      =                                                                (18)
+                                                                              ∞     else
+
+which is the indicator function associated to the current damage model. From the first case, we identify
+                                                                   {
+                                                                       p<r∶          𝛼̇ = 0
+                                                                                               .                                       (19)
+                                                                       p=r∶          𝛼̇ > 0
+
+    It is thus convenient to introduce the function Φ ∶= p − r which separates stationarity of the damage state for Φ < 0
+and evolution of the damage state for Φ = 0. The function fulfills a similar purpose as yield functions in models for
+elasto-plasticity. The parameter r has a similar meaning as a scalar-valued yield stress. However, it is an energetic thresh-
+old value for the present case of damage. In case a weakened softening behavior shall be considered, the model can be
+                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                              779
+
+
+
+easily adapted by choosing a non-constant dissipation parameter r = r(𝛼) which is a monotonically increasing function
+in 𝛼. This adaption of the model results in a behavior which can be compared to hardening in plasticity. Consequently,
+the evolution of damage is slowed down. The entire model derivation remains unmodified. In the current work, how-
+ever, we concentrate on the perfectly brittle damage behavior with maximum damage evolution and a sudden failure of
+the component. This is associated by a vertical branch in the force/displacement curve. This behavior indicates that the
+non-coercivity of the related condensed energy Ψc ∶= (1 − D(𝛼))Ψ0 (C) + ∫ Δdiss dt has maximum intensity for the brittle
+case such that it constitutes the most complex behavior from a numerical perspective. Furthermore, the model accounts
+only for two stages of material behavior, that is, for the elastic case and the case of damage evolution. To be more precise,
+the applicability of the model to practical applications can be significantly increased by including also the evolution of
+plastic deformations. Examples on the modeling of plasticity by using Hamilton’s principle or related variational princi-
+ples are given, for example, in References 36,41. In addition to that, structural boundary value problems may occur where
+large deformations appear while the strains stay only moderate. Then, even materials not behaving plastically may be
+considered in structural problems where large deformations occur. This is why we included the u-shaped specimen in the
+numerical results, see Figure 8. In these cases of large deformations, it becomes obvious that equilibrium of forces has to
+be computed in the current configuration. This is a priori included in the geometrically nonlinear setting of finite deforma-
+tions. Note that although classical engineering materials allowing for large strains usually include plastic deformations,
+there exist materials such as soft biological tissues where the plastic deformations are small although large strains and a
+softening response appear. Concluding, we limit ourselves to the case without plasticity for the current presentation and
+postpone it to future investigations.
+    Finally, we can collect the governing equations for damage evolution in the following form
+
+                            𝛼̇ ≥ 0,     Φ ∶= f Ψ0 − 𝛽f △ f − r ≤ 0,        Φ 𝛼̇ = 0      ∀X∈Ω                            (20)
+
+which are identified as Karush Kuhn Tucker conditions. It is worth mentioning that we obtain a similar equation as
+other works with gradient enhancement of the free energy density (e.g., References 19,21. However, in contrast to other
+works, the Laplace term in the governing Equation (20) is scaled by f . Consequently, the impact of the Laplace term
+is continuously reduced as damages evolves and consequently f → 0. Therefrom, it can be concluded that the partial
+differential inequality reduces to −r ≤ 0 for complete damage, that is, when f = 0; it is thus identically fulfilled. This
+property is not ensured a priori when the usual gradient of the damage variable is considered such that an inequality of
+the form f Ψ0 − 𝛽 △𝛼 − r ≤ needs to be fulfilled. This inequality reduces to −𝛽 △𝛼 − r ≤ 0 for f → 0 which might not
+possess a (local) solution when △𝛼 < 0. However, a rigorous mathematical analysis of the natural modification of the
+Laplace term when the gradient of f is used instead of the gradient of 𝛼, unfortunately, cannot be given in this contribution,
+but remains an open problem. As will be shown by the numerical results, we observe a smooth and fast convergence of
+the model both for mesh and time discretization, compare Section 4.
+    The surface integral in (15) constitutes as Neumann condition
+
+                                                 n0 ⋅ ∇f = 0      ∀ X ∈ 𝜕Ω                                               (21)
+
+for f . Here, n0 denotes the normal vector on the surface 𝜕Ω in the reference configuration. More details on the
+fundamentals of the damage model can be found in the original publication.32
+
+
+3       NUMERICAL TREATMENT
+
+The model above consists of two unknowns: the displacement field u and the damage variable 𝛼. They can be determined
+by solving
+                         {
+                             ∫Ω S ∶ 12 𝛿C dV − ∫Ω b⋆ ⋅ 𝛿u dV − ∫𝜕Ω t⋆ ⋅ 𝛿u dA = 0 ∀ 𝛿u
+                                                                                                                 (22)
+                             f Ψ0 − 𝛽f △ f − r ≤ 0                                ∀x∈Ω
+
+with the Dirichlet and Neumann boundary conditions u = u⋆ ∀X ∈ 𝜕Ωu and FSn0 = t⋆ ∀X ∈ 𝜕Ω𝜎 with 𝜕Ω = 𝜕Ωu ∪ 𝜕Ω𝜎
+and 𝜕Ω ∩ 𝜕Ω𝜎 = ∅ for (22)1 . For (22)2 , the initial condition f (t = 0) = 1 ∀X ∈ Ω and the Neumann condition n0 ⋅ ∇f =
+0 ∀X ∈ 𝜕Ω apply.
+                                                                                                                                                                               10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+780                                                                                                                                                            JUNKER et al.
+
+
+
+   From (22)2 , we recognize that a partial differential inequality has to be solved for the primal variable f . Once f is deter-
+mined, the value of the damage variable could be computed subsequently for each material point X by 𝛼 = − log[f (X)];
+however, this information is of minor interest. More importantly, the damage function D = 1 − f can be computed which
+governs the stresses by
+                                                                                𝜕Ψ
+                                         S = (1 − D)S0       with      S0 ∶= 2 0 .                                           (23)
+                                                                                 𝜕C
+
+     The partial differential inequality in (22)2 is rather untypical in the context here and a standard finite element treat-
+ment would be complex due to the subdifferential in its weak form, compare (13). Furthermore, additional degrees of
+freedom at the nodes would be present in the numerical solution scheme. To avoid both drawbacks, we follow Reference
+32 and make use of the neighbored element method: standard finite element approaches are applied to the weak form of
+the balance of linear momentum whereas a finite difference approach for unstructured grids is used for discretizing the
+strong form of the evolution equation for f . The neighbored element method is completed by utilization of an operator
+split, that is, the discretized equations are solved in a staggered manner. This procedure of combining staggered FEM and
+FDM has also been proven advantageous for the small-strain regime in Reference 32. In Reference 33, it has been demon-
+strated that convergence is achieved which justifies the operator split. The finite element treatment of the nonlinear weak
+form of the balance of linear momentum is standard such that we dispense with a detailed presentation. More details on
+the finite element method can be found in standard textbooks as in, for example, Reference 42. The only modification
+is, of course, that both the stress and the stiffness are scaled by the damage state, compare (23). Operator splitting for a
+phase field approach in damage modeling for linearized kinematics can be found, for example, in Reference 43.
+     For the derivation of an appropriate finite difference method that also operates on unstructured grids, we employ a
+Taylor series expansion up to order two in order to approximate f . Usually, the value of the function, that is, its zeroth
+derivatives, along with the derivatives of higher order are known when a Taylor series expansion is used. Then, due to
+the chosen spatial increment, the value of the function can be approximated at a neighbored spatial point. This operation
+is inverted here: the value of the damage function at specific points are all known. These points are the centers of gravity
+of all finite elements. Then, the spatial increments in the Taylor series expansion are given by the spatial increments
+of the centers of gravity; they remain fixed if no mesh adaptation is employed during the computation. Consequently,
+the only unknown in the Taylor series expansion are the (mixed) derivatives of order ≥ 1. Collecting an appropriate set
+of neighbored elements, a linear system of algebraic equations can be constructed to compute the individual (partial)
+derivatives from which the local value of the Laplace operator follows by simple summation of the unmixed derivatives
+of order two.
+     Our finite differences approach at unstructured meshes can be recast in mathematical formulas by first introducing
+the Taylor series expansion as                                        ∑ (i,k) (e)
+                                                        (e)
+                                                    f (k ) = f (e) +  Ao f𝜕,o                                            (24)
+                                                                                            o
+
+        (e)
+where f𝜕,o  stores the value of the partial derivatives of varying order o ≥ 1, such that a matrix including all derivatives can
+be defined as
+                                     ( (e)                                                                             )
+                             f𝜕(e) ∶= 𝜕f     𝜕f (e) 𝜕f (e) 𝜕 2 f (e) 𝜕 2 f (e) 𝜕 2 f (e) 𝜕 2 f (e) 𝜕 2 f (e) 𝜕 2 f (e)
+                                                                                                                         .  (25)
+                                            𝜕X        𝜕Y      𝜕Z          𝜕X𝜕Y         𝜕Y 𝜕Z    2   𝜕X𝜕Z  2    𝜕X  2     𝜕Y       𝜕Z
+
+
+    The quantity Ao(i,k) comprises all spatial increments with varying power such that again the associated column matrix
+is defined as
+                           ( ( )         (    )     (  )    (   ) (    )   (    ) (    )    (    ) (    )
+                                   k(e)           k(e)       k(e)                k(e)        k(e)          k(e)     k(e)           k(e)        k(e)
+                  A(k) ∶=        XΔ           YΔ             ZΔ                   XΔ        YΔ             YΔ           ZΔ            XΔ           ZΔ
+
+                                   ( ( ) )2                  ( ( ) )2                    ( ( ) )2
+                                      k(e)                      k(e)                      k(e)
+                                                                                                  ⎞
+                                 1                         1                           1          ⎟
+                                    XΔ                        YΔ                          ZΔ                                                                           (26)
+                                 2                         2                           2          ⎟
+                                                                                                  ⎠
+
+with
+                      (      )          (      )                  (           )          (      )                   (      )          (      )
+                       k(e)             k(e)                        k(e)               k(e)                      k(e)             k(e)
+                     XΔ          ∶= X              −X ,(e)
+                                                              YΔ                  ∶= Y              −Y , (e)
+                                                                                                                 ZΔ            ∶= Z               − Z (e) .
+                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                              781
+
+
+
+To ensure that only the required number of elements and thus extrapolation points is used, the quantity k(e) has been
+introduced:  (e) is the set of neighbored elements around element (e) and, hence, k(e) returns the global element number
+for kth neighbor. All column matrices A(k) in the neighborhood k(e) of the element of interest (e) are collected in the
+matrix A(e) . Then, by defining
+                                                                     (e)
+                                                        (e)
+                                                       fΔ,k ∶= f (k ) − f (e) ,                                         (27)
+
+we can shortly write for the Taylor series expansion (24)
+
+                                                           fΔ(e) = A(e) f𝜕(e)                                            (28)
+
+such that the unknown vector of derivatives follows from
+
+                                                         f𝜕(e) = A(e)−1 fΔ(e) .                                          (29)
+
+    The Laplace operator can be computed by aid of f𝜕(e) according to
+
+                                                𝜕 2 f (e) 𝜕 2 f (e) 𝜕 2 f (e)    (e)    (e)    (e)
+                                     △f (e) =            +         +          = f𝜕,7 + f𝜕,8 + f𝜕,9 ,                     (30)
+                                                 𝜕X 2      𝜕Y 2      𝜕Z 2
+
+compare (25). Consequently, only some components of f𝜕(e) are of interest. Introducing
+                                              (                 )
+                                          a ∶= 0 0 0 0 0 0 1 1 1 ,                                                       (31)
+
+the Laplace operator is simply given by
+                                                         △f (e) = l(e) ⋅ fΔ(e)                                           (32)
+
+where the vector
+                                                         l(e) ∶= aT A(e) −1                                              (33)
+
+can be computed once for each element (e) in advance of the actual solution of the boundary value problem. In con-
+trast, the evaluation of (32) has to be repeated during computational evaluation of (22)2 to find the (current) field f ; this
+evaluation, however, is computationally very cheap. It is worth mentioning that the dimension of A(e) depends on car-
+dinality of the set of neighbored elements  (e) : to close the system of equations in (28), that is, to ensure that A(e) is a
+regular matrix, the cardinality of the set of neighbored elements has at least to equal the length of f𝜕(e) = 9 in the consid-
+ered three-dimensional case. For boundary elements, however, we usually find a smaller cardinality of  (e) , that is, less
+than nine neighbored elements can be identified. To circumvent this problem, we introduce ghost elements at the bound-
+ary which mirror the value of the damage field inside of Ω to the outer vicinity of the boundary 𝜕Ω which agrees to the
+usual treatment in the finite difference method. It is worth mentioning that (21) is fulfilled identically by usage of ghost
+elements. For the elements inside of Ω, the opposite case is present: considering all neighbored elements around (e) in a
+hexahedra finite element mesh, that is, the stencil of six elements plus eight diagonal elements plus twelve elements in
+each “plane,” results in an overdetermined system of equations for (28). Here, two possibilities can be employed: the first
+option is to take into account element (e) and all 26 neighbored elements and compute the inverse of A(e) by use of the
+right-inverse as
+                                                                (           )−1
+                                                A(e) −1 = A(e) T A(e) A(e) T ,                                            (34)
+
+compare Reference 33. The second option is to use the six stencil elements plus three diagonal elements with closest dis-
+tance to the center element (e) as neighborhood. For sufficiently regular meshes, A(e) contains full rank and is regular,
+compare Reference 33. In all computational results we present later, we made use of the latter option. We refer to Refer-
+ences 32-34 for more details on the neighbored element method. For other types of finite elements, for example, tetrahedra
+elements, the neighborhood is less intuitively defined than described for hexahedra elements. However, a least squares
+                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+782                                                                                                              JUNKER et al.
+
+
+
+approach can be used in this case which replaces the demand of applying the right-inverse. A more detailed investigation
+of the least squares approach is subject of future investigations.
+    Finally, it is mandatory to choose a strategy for solving the discretized form of (22)2 given by
+
+                                                           (e)
+                                           Φ(e) = f (e) Ψ0 − 𝛽f (e) l(e) ⋅ fΔ(e) − r ≤ 0                                 (35)
+
+where we introduced the strain energy density averaged for each finite element as
+
+                                                     (e)          1
+                                                  Ψ0 ∶=                     Ψ0 dV.                                       (36)
+                                                                 Ω(e) ∫Ω(e)
+
+    The Laplace operator turns (35) into a system of coupled inequalities which could be solved in a monolithic manner.
+Although being the obvious strategy, the coupling demands the usage of (external) solver routines. In combination with
+the inequalities, this renders such a monolithic strategy inappropriate to be implemented into an arbitrary finite element
+program. Therefore, a simple yet successful numerical solution procedure has been proposed in Reference 32: the system
+of coupled inequalities is solved by means of a Jacobi method. To be more precise, the coupling is ignored at first glance
+and each inequality is checked individually such that an update of f is performed for all elements with Φ(e) > 0. Of course,
+a modification of f (e) may have an impact on the indicator function in a different element (k) due to the Laplace operator
+which “transports” the information. Therefore, the update has to be repeated until Φ(e) ≤ 0 ∀(e). Usually, such an update
+scheme is known to be rather time consuming since the numbers of repetitions needed for convergence depends on the
+number of unknowns which equals the number of finite elements in our case. This should turn this strategy to be more
+expensive than monolithic solution schemes. However, the damage evolution is limited to only a small number of ele-
+ments as compared to their total number and thus, an update is mandatory only for a negligible fraction of inequalities.
+As will be shown by our numerical experiments, the staggered solution scheme is still very fast and simulations involv-
+ing damage evolution consume hardly more computation time. A similar behavior has already been demonstrated for the
+small deformation setting of damage modeling in Reference 32 and even for an evolutionary method for topology opti-
+mization both at small strains in Reference 34 and at finite strains in Reference 35. After the damage function has been
+updated, the next time step is investigated without checking the impact of the updated damage field on the displacements
+for the current time step. This might be interpreted as (additional) operator step and may seem questionable whether a
+reliable result is obtained by this method. However, small (but finite) time steps are mandatory for an appropriate reso-
+lution for example, of the force/displacement diagram. For this case, the method of operator splits converges. It has been
+numerically shown in Reference 32 that the artificially included pseudo-viscous behavior due to the operator step does not
+influence the final result on a relevant scale. Furthermore, it is worth mentioning that a detailed numerical study on the
+numerical behavior of the damage model for the small deformation setting in Reference 33 revealed that almost identical
+results are obtained when both fields (displacements and damage) are repeatedly updated until a common convergence
+is achieved. The update of each inequality is performed by a one-step Newton procedure as
+
+                                                                         Φ(e)
+                                                       f (e) ← f (e) −                                                   (37)
+                                                                         dΦ(e)
+
+with
+                                           dΦ(e) = Ψ0(e) − 𝛽l(e) ⋅ fΔ(e) + 𝛽f (e) l(e) ⋅ 1                               (38)
+
+where the length of the vector 1 equals the cardinality of the set  (e) (9 for our chosen method for defining the neigh-
+borhood) and all elements in 1 are set to one. The one-step Newton method has been proven beneficial due to its smooth
+convergence behavior for neighbored elements caused by the undershooting. Additionally, this ensures a monotonic
+decrease of the damage function and thus agrees to (20)1 : the indicator function Φ(e) is a convex quadratic function in
+f (e) , and since the update for f (e) is only performed for Φ(e) > 0, it holds for the derivative dΦ(e) > 0. The undershoot-
+ing ensures that the solution converges from above, that is, 0 ← Φ(e) , and thus f (e) is monotonically decreasing which
+implies 𝛼̇ ≥ 0.
+   The above mentioned numerical procedure is analogous to the one used for the small deformation setting in
+Reference 32. However, a remarkable difference is accompanied by the large deformation setting: here, severe
+deformations that occur during damage evolution are correctly described. This, of course, is the primal intention of using
+                                                                                                                                    10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                 783
+
+
+
+Algorithm 1. Element erosion strategy
+
+    for 1, … , ne do                                                                           ⊳ apply to all finite elements
+
+        if D(e) = Dcrit then                                                                      ⊳ check damage criterion
+
+               set r(e) = 0                                                                    ⊳ eliminate element residual
+                             ( (e) )
+                   dr(e)      dri
+               set dû (e) =     (e) = scrit (𝛿ij )                                                      ⊳ erode element (e)
+                               dû j
+        end if
+
+    end for
+
+
+                                                                                                                       (e)
+the large deformation setting. Unfortunately, this sensitivity might result in numerical instabilities causing det F         <0
+         (e)
+where F ∶= ∫Ω(e) F dV∕Ω is the averaged deformation gradient in element (e). To be more precise, deformation states
+                                       (e)
+
+are computed that do not correspond to a physically accurate material behavior: once the deformation state has reached
+some critical threshold, cracks will be present in a real material such that a consideration of the specimen as one
+continuous body cannot be justified and a description in a continuum mechanical sense is not justified anymore. To
+circumvent this numerical artifact and also to improve physical accuracy, a stabilization technique in terms of element
+erosion is applied. To this end, we define a critical value Dcrit when damage modeling is not suitable anymore but rather
+cracking needs to be considered. To correctly account for this physical behavior in our finite element simulations, we
+thus modify the element stiffness by setting it to a diagonal matrix with a virtual remaining stiffness value of scrit repre-
+senting an eroded element through which rank deficiency of the affected elements is avoided. Finally, we set the residual
+forces of this element to zero and no further evolution of the damage value is considered anymore at this point such that
+eroded elements make use of value fcrit = 1 − Dcrit . Consequently, the presented neighbored element method is directly
+applicable in combination with the element erosion technique: eroded elements simply possess a (constant) value f = fcrit
+which is small but finite. Thus, the finite difference scheme which is employed for the computation of f also operates in
+a smooth manner when combined with the element erosion strategy which solely modifies the finite element method as
+presented.
+    Remark: the application of the erosion technique is not mandatory for moderate deformation states when a finite
+element description of the cracking is still valid. Only when severe damage has been evolved which causes the damaged
+finite element to loose its validity as is the case, for instance, for wide crack opening the erosion approach needs to be
+activated. An important subproblem is the case of self-contact of the crack surfaces when the external load is removed
+again. In this case, the finite elements containing damage are still present in the mesh but they are only numerical artifacts
+with no relevant information or influence on the simulation. For the contact situation, the contact surfaces need to be
+identified appropriately. Here, a re-meshing once the loading is reduced seems to be a suitable treatment to remove the
+eroded finite elements completely from the mesh and to subsequently identify the contact areas. However, a detailed
+investigation of this problem is beyond the scope of the current manuscript and will be part of future research.
+    Summarizing, we follow the element erosion technique in Algorithm 1 and employ Algorithm 2 for the damage
+update. The flowchart in Figure 1 visualizes the neighbored element approach including an interplay between a finite
+element and finite difference update for the displacements and f , respectively.
+
+
+
+4       NUMERICAL TEST S
+
+In this section, the introduced approach is numerically tested in a 3D finite strain setting. To this end, correspond-
+ing 8-node hexahedral finite elements were implemented and evaluated within the finite element program FEAP,
+compare Reference 44. For the strain energy corresponding to the fictively undamaged state, the Neo-Hooke energy
+given as
+
+                                                             𝜇
+                                                      Ψ0 =     (I − 3) + g(J)                                                (39)
+                                                             2
+                                                                                                                                  10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+784                                                                                                               JUNKER et al.
+
+
+
+
+FIGURE 1             Flowchart for the proposed damage model
+
+
+      T A B L E 1 Material and boundary parameters used throughout the numerical tests
+                                                                Value
+       Description                          Symbol              Plate with hole             U-shape                Unit
+
+       E-modulus                            E                   500                         1000                   MPa
+       Poisson ratio                        𝜈                   0.3                         0.3                    -
+       Dissipation parameter                r                   5.0                         0.5                    MPa
+       Nonlocal parameter                   𝛽                   ∈ {10,100, 1000}            100                    N
+       Critical damage value                Dcrit               0.95                        0.995                  -
+                                                                   −8                            −8
+       Critical stiffness                   scrit               10                          10                     N/mm
+       Load increment                       -                   {0.025, 0.01, 0.0025}       0.2                    mm
+
+
+
+                 (      ) (        )
+with g(J) = 𝜆4 J 2 − 1 − 𝜆4 + 𝜇 ln J and I = tr[C], J = det F is employed (see also Reference 42). The Lamé constants 𝜆 =
+E𝜈∕((1 + 𝜈)(1 − 2𝜈)) and 𝜇 = E∕(2(1 + 𝜈)) are computed from the Young’s modulus E and the Poisson ratio 𝜈. Throughout
+the numerical tests, an element erosion approach is incorporated as discussed in Section 3 through which, once the
+damage value of an element exceeds a critical value D(e) > Dcrit , the element stiffness is replaced by a virtual remaining
+stiffness scrit and residual forces are eliminated, compare alg. 1. Moreover, to avoid damage evolution under compression,
+                                 (e)
+we add the condition det F > 1 to the damage update algorithm in Algorithm 2. For the solution procedure uniform
+incremental loading is applied and the solution of the linearized system corresponding to the Newton–Raphson iterations
+is performed with the PARDISO solver. The parameters for the technique for element erosion are collected in Table 1.
+
+
+4.1           Plate with hole benchmark test
+
+As first example, we consider a plate with a circular hole which is subjected to the prescribed displacement u⋆ = (0, u⋆ , 0)T
+with u⋆ = 25 mm at its upper boundary (Y = L, with L = 100 mm). The geometry of the considered domain is depicted
+in Figure 2A. Due to the symmetry of the problem, the computational domain amounts only to the upper right quarter
+of the geometry. Moreover, as a consequence of the symmetry, the displacement is fixed in X-direction with uX = 0 at
+the left edge X = 0 and in Y-direction with uY = 0 at the lower edge Y = 0. The radius of the circular hole as shown in
+Figure 2A is given with R = 50 mm and the thickness is given with H = 10 mm. An overview of the used material and
+load parameters is collected in Table 1.
+                                                                                                                                           10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                        785
+
+
+
+Algorithm 2. Damage update
+          ̄ (e) = ∫ (e) Ψ0,n+1 dV∕Ω(e)
+    input Ψ                                                                          ⊳ averaged energy for each finite element (e)
+            0,n+1  Ω
+
+           F̄ (e) = ∫Ω(e) F dV∕Ω(e)                                        ⊳ averaged deformation gradient for each element (e)
+
+    for 1, … , nloop do                                                                         ⊳ Jacobi method: repeat nloop times
+
+        compute △f (e) according to (32)                                                                          ⊳ Laplace operator
+
+        compute Φ(e) according to (35)                                                                           ⊳ indicator function
+
+        if Φ(e) >0 and det F̄ (e) >1 then
+                                      f (e)
+            update f (e) ← f (e) −    dΦ
+                                              according to (38)                               ⊳ new damage value for inelastic Φ(e)
+
+            if D(e) = 1 − f (e) >Dcrit then
+                set D(e) = Dcrit and f (e) = 1 − Dcrit                                               ⊳ activation of element erosion
+            end if
+
+        else
+           set Φ(e) = 0                                                                                  ⊳ elimination of elastic Φ(e)
+        end if
+
+       if max{Φ(e) }<10−6 then
+           exit                                                                                          ⊳ terminate Jacobi method
+       end if
+    end for
+
+
+
+
+                        (A)                                   (B)
+
+FIGURE 2          (A) Description of the geometry of the plate with hole benchmark problem. (B) Example finite element meshes (400 and
+3200 elements)
+
+
+
+4.1.1           Convergence study
+
+In Figures 3A and 4A, force/displacement curves corresponding to various mesh refinements (see e.g., Figure 2B) are
+shown. The value of the prescribed displacement u⋆ is depicted on the abscissa whereas the value of the reaction force F
+in Y-direction, which is recovered from the nodes at the upper surface Y = L, is plotted on the ordinate. Here, the non-
+local parameter has the value 𝛽 = 100 N . For the results presented in Figure 3, the prescribed displacement is applied
+in increments of 0.025 mm, which is equivalent to 1000 load steps. In order to compare results for varying stepsize, the
+same problem is analyzed for a refined stepsize in Figure 4 where the prescribed displacement is applied in increments
+of 0.01 mm which is equivalent to 2500 load steps. For the given plot resolution both in Figures 3A and 4A, it can be
+                                                                                                                                               10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+786                                                                                                                            JUNKER et al.
+
+
+
+
+              (A)                                                  (B)
+
+
+
+
+               (C)
+
+F I G U R E 3 (A) Force/displacement curves (higher resolution in (B)) and (C) corresponding contourplots depicting the damage
+evolution for the 3200 element mesh in three different load steps which are depicted as bullets in (A). The load increment is 0.025 mm
+
+
+
+
+observed that the force/displacement curves of the lower refinement stage (400 elements) almost coincide with the curves
+corresponding to the higher refinement stages. Thus, to illustrate the convergence of the curves as the number of ele-
+ments increases, an enlarged resolution of the plot is given in Figures 3B and 4B. The area of the enlargement is the
+transition regime at which material softening occurs (marked with gray dashed lines in the corresponding left-hand side
+figures). The evolution of the material softening is also illustrated through the contourplots of the damage function D
+in Figures 3C and 4C. The contourplots correspond to the computation with the 3200 element mesh and the depicted
+stages of damage evolution are marked with bullets in the corresponding force displacement curves. It can be observed
+that already at low damage propagation states, as depicted in the left contourplot, the damage value D of several elements
+reaches the critical damage value Dcrit . Furthermore, when comparing Figures 3 and 4, which depict the same convergence
+study but with varying stepsize (0.025 and 0.01 mm respectively), a similar behavior with respect to mesh indepen-
+dency and damage evolution can be observed. For all computations, convergence of the iterative solution procedure was
+obtained.
+
+
+4.1.2         Influence of the nonlocal parameter
+
+In this subsection, the influence of the value of the nonlocal parameter 𝛽 on the convergence behavior and the damage
+evolution is investigated. Therefore, in Figure 5 corresponding force/displacement curves are shown for values 𝛽 = 10,100,
+and 1000 N, respectively. A load increment of 0.025 mm is used and the computations are performed on a 400 (Figure 5A)
+and a 3200 (Figure 5B) element mesh. It can be observed that the starting point of damage initialization is shifted to higher
+load values as 𝛽 increases. This goes along with the increased nonlocality of the distribution of the damage function D
+as depicted in the contourplots of Figure 5C: while in the left contourplot (𝛽 = 10 N) the damage distribution is mostly
+concentrated to the elements adjacent to the lower edge, in the right contourplot (𝛽 = 1000 N), a more smeared damage
+distribution can be observed.
+                                                                                                                                              10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                           787
+
+
+
+
+                (A)                                                (B)
+
+
+
+
+                (C)
+
+F I G U R E 4 (A) Force/displacement curves (higher resolution in (B)) and (C) corresponding contourplots depicting the damage
+evolution for the 3200 element mesh in three different load steps which are depicted as bullets in (A). The load increment is 0.01 mm
+
+
+
+
+4.1.3           Influence of the load increment and computing efficiency
+
+To investigate the influence of the load increment on the solution, we show the convergence of the force/displacement
+curves for the specific displacement increments {0.25, 0.1, 0.025, 0.01} mm, while the mesh refinement stage (400 ele-
+ments) and nonlocal parameter (𝛽 = 1000 N) remain fixed. We expect a sudden failure due to the perfectly brittle material
+behavior. In a numerical sense, this corresponds to a complete loss of the reaction force which takes place in a minimal
+number of load steps after damage initiation. In the limit, total failure is established in only one single load step. How-
+ever, the limit case is approximated by a small number of load steps due to the operator split. For the chosen parameters,
+the corresponding curves are depicted in Figure 6A and converge to the expected vertical branch during brittle failure
+which is resolved better as the value of the load increment decreases and, consequently, the number of steps increases.
+It is worth mentioning that the proper resolution of the vertical branch caused by rapid damage evolution is more chal-
+lenging to be numerically handled than a slower damage evolution with a less steep decrease of the reaction force. For
+this reason, we do not present numerical results for a modified model including an increasing dissipation parameter r(𝛼)
+with reduced damage evolution.
+     Remark: the material model is based, as usual for displaying damage, on a non-convex mechanical energy (1 −
+D(𝛼))Ψ0 (C). Furthermore, we make use of a dissipation function of order one. The result is an evolution equation without
+a transient term which would allow for a control of the evolution velocity of the damage. A transient term, which could
+be included by adding an additional term to the dissipation function which is homogeneous of order two, converts the
+stationarity condition and thus the Hamilton functional being explicitly time-dependent. An appropriate choice of the
+viscosity then allows to control the velocity of damage evolution. This property is used by time-wise regularization as, for
+instance, in Reference 17. The slope of the force/reaction curve could be controlled by choosing r = r(𝛼) as discussed also
+above.
+     Remark: Here, we present results for prescribed displacements which monotonically increase. Therefore, the
+force/displacement curve is bijective. This, in particular, implies that no snapback can be observed. The characteristic sur-
+jectivity in snapback phenomena demands the parameterization of the curve, that is, in terms of the process time. Then,
+                                                                                                                                            10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+788                                                                                                                         JUNKER et al.
+
+
+
+
+      (A)                                                         (B)
+
+
+
+
+      (C)
+
+F I G U R E 5 Influence of the nonlocal parameter: force/displacement curves for varying nonlocal parameters corresponding to
+computations with a stepsize of 0.025 mm and a coarse mesh with 400 elements in (A) and a finer mesh with 3200 elements in (B). (C)
+Contourplots corresponding to the bullet marks in (B). Left: 𝛽 = 10 N, center: 𝛽 = 100 N, right: 𝛽 = 1000 N
+
+
+an arc length scheme can be employed. The respective behavior including arc length control and resulting snapback is
+presented in Figure 7.
+    Furthermore, Figure 6B shows the computing time for the gradient damage model (labeled with GD) and a compar-
+ative purely elastic simulation (labeled with EL). The time is measured until the crack has completely evolved which
+corresponds to a load of u⋆ = 10.85 mm. Considering also later loading steps would result in an overestimation of the
+computation time of the elastic simulation: whereas for the elastic material behavior a non-linear finite element simula-
+tion has to be performed which requires more than two iteration steps for convergence, the damage model has to solve
+the rigid body movement due to the completely evolved horizontal crack that separated the plate. Consequently, only two
+iteration steps are required for convergence yielding a total computing time that is larger for the elastic problem than
+for the damage model. The elastic problem has been solved by deactivating the update subroutine for the damage field.
+This implies that the same effort for writing the results to text files was needed and no unfair acceleration of either sim-
+ulation has been employed. For reaching the critical load of u⋆ = 10.85 mm, the elastic simulation required t = 154.9 s
+while the damage simulation finished after t = 159.8 s. This computing time increase of 3.2 % of the proposed approach
+compared to the purely elastic reference simulation unveils that the additional time corresponding to the damage update
+represents only a small portion of the overall computing time. For instance, if instead a full finite element scheme for the
+balance of linear momentum as well as for the microstructure evolution leading to four nodal unknowns is employed, the
+computation costs time can easily be a multiple of the computing time required for the purely hyperelastic problem. A
+comparable observation has also been made for the evaluation of the damage model in the context of small deformations
+in Reference 32. The results of a comparative computation are shown in Figure 6C,D. Here, a more refined mesh (3200
+elements) and stepsize (0.01 mm) and a nonlocal parameter 𝛽 = 100 N is used. Again the computing time is compared
+to a corresponding purely elastic computation. As expected, a higher overall computing time (t = 2712.42 s) for reaching
+the rupture point (u⋆ = 8.16) mm can be observed for this larger problem size. However, the relative increase in com-
+puting time of the gradient damage formulation compared to the elastic reference configuration (t = 2431.05 s) remains
+                                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                              789
+
+
+            30
+                                                       load increment
+                     β=1000 N
+                                                                0.25
+            25       400 elem
+                                                                0.1
+
+            20                                                  0.025
+                                                                                   GD
+                                                                0.01
+   F [kN]
+
+
+
+
+            15                                                  0.0025
+
+                                                                                   EL
+            10
+
+             5
+
+             0
+                 0           5   10               15    20              25              0         50            100           150
+  (A)                                 u * [mm ]
+                                                                             (B)                       computing time [s]
+
+            30
+                                                       load increment
+                      β=100 N
+                                                                0.25
+            25       3200 elem
+                                                                0.1
+
+            20                                                  0.025
+                                                                                   GD
+                                                                0.01
+   F [kN]
+
+
+
+
+            15                                                  0.0025
+
+                                                                                   EL
+            10
+
+             5
+
+             0
+                 0           5   10               15    20              25              0   500   1000      1500      2000   2500   3000
+                                                                                                       computing time [s]
+  (C)                                 u * [mm ]                              (D)
+
+F I G U R E 6 (A) Influence of the load increment on the solution: force/displacement curves for varying load increments for a 400
+element mesh and 𝛽 = 1000 N. (B) GD: computing time until reaching the marked point at u⋆ = 10.85 mm in (A) with the load increment
+0.025 mm. EL: computing time of a purely elastic 8-node hexahedral reference element until the same load of u⋆ = 10.85 mm. (C)
+Force/displacement curves for varying load increments for a 3200 element mesh and 𝛽 = 100 N. (D) Computing time until reaching the
+marked point at u⋆ = 8.575 mm in (C) with the load increment 0.01 mm
+
+
+
+relatively small (11.2% increased computation time). A collection of the computation times for the damage model (GD)
+and elastic simulations for varying mesh sizes and load steps is given in Table 2. The extent of the limited computational
+extra effort for the gradient-enhanced damage model in comparison to reference hyperelastic simulations is, to the best
+of our knowledge, a unique feature of our approach.
+    We present the behavior of the model when employing arc length control in Figure 7. For the arc length control, the
+equation
+                                                               √
+                                                               √ n
+                                                               √∑ 2       ∑
+                                                                          n
+                                                         s = l √ Δf̂ i + c Δû2i                                                       (40)
+                                                                        i           i
+
+
+is added to the discrete global system of equations which replaces the boundary condition with prescribed displacements
+u⋆Y at Y = L. Here, s is the prescribed increment of the arc length of the force/displacement curve and n is the number
+of nodes with imprecise boundary conditions. To be more precise, the boundary conditions are not explicitly stated as,
+for instance, in our other results which are displacement-controlled. In contrast, by prescribing s, the total change of the
+displacements and reaction forces at the boundary is controlled as specified in (40) where l is the updated arc length and
+c is a scaling factor (cf. Reference 44). Due to this modification of the boundary condition for the corresponding force
+displacement curves in Figure 7A (enlargement in Figure 7B), the snapback behavior can be observed. Corresponding
+contourplots are shown in Figure 7C and visualize the damage evolution for various load stages.
+                                                                                                                                                              10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+790                                                                                                                                           JUNKER et al.
+
+
+
+
+        (A)                                                               (B)
+
+
+
+
+        (C)
+
+
+F I G U R E 7 Comparative computation employing arc length control. (A): Force/displacement curves for varying load increments for a
+25,600 element mesh and 𝛽 = 100 N (higher resolution in (B)). (C): Contourplots depicting the damage evolution for a 3200 element mesh
+computation with 0.0025 load increment solution corresponding to the load stages marked with bullets in (A) and (B)
+
+
+
+T A B L E 2 Overview of computing times (GD) of the plate with hole benchmark problem relative to a purely elastic reference
+computation (EL)
+
+                                      1000 steps                                                       2500 steps
+                                      EL                    GD                    % incr.              EL                   GD                    % incr.
+
+  400 elem., 𝛽 = 1000 N               154.9s                159.8s                3.2 %                322.23s              344.52s               6.9 %
+  3200 elem., 𝛽 = 100 N               1109.78s              1177.98s              6.1 %                2431.05s             2712.05s              11.6 %
+
+Note: Evaluated is the computing time at reaching the loadstep at which the damage computations reach complete failure (cf. bullet marks in Figure 6A,C).
+
+
+
+
+4.2           U-shaped geometry
+
+As second numerical test, a u-shaped geometry is analyzed in which, caused by its geometry and boundary
+conditions, large deformations are present (cf. Figure 8A) although the strains may be comparatively moderate. Due to its
+symmetry, only the left half of the domain is considered and the displacement uX = 0 is fixed at the symmetry plane X = 0.
+The dimensions (cf. Figure 8A) are given with R = 50 mm and S = 10 mm. The prescribed displacement u⋆ = (u⋆ , 0, 0)
+with u⋆ = 100 mm is imposed on the upper right edge (X, Y ) = (−50, 50) mm. The used material and boundary param-
+eters are shown in Table 1. From the force/displacement curves shown in the upper plot in Figure 8B and with refined
+resolution in the lower figure, convergence can be concluded. Due to the relatively large displacement, the additional
+material nonlinearity becomes visible in the force/displacement curves (pile-up of the reaction force close to failure). The
+contourplots in Figure 8C illustrate the damage propagation at the load stages marked with bullets in the
+                                                                                                                                       10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                    791
+
+
+
+
+      (A)
+
+
+
+
+      (B)                                                     (C)
+
+F I G U R E 8 (A) Description of the geometry of the u-shaped boundary value problem. (B) Force/displacement curves for various mesh
+refinement stages (enlarged resolution in the bottom). (C) Contourplots of the u-shaped problem visualizing the damage evolution
+corresponding to the marked load stages depicting the damage evolution
+
+
+
+force/displacement plots. Here, to visualize the crack formation in the entirely damaged area of the domain, the
+elements in which the damage value has reached the upper bound D(e) = Dcrit = 0.995 were made invisible. A remark-
+able elastic springback effect is observed once the geometry fails, compare Figure 8C7). Despite the relatively coarse time
+discretization, convergence of the iterative solution was obtained at all refinement stages. It is worth mentioning that the
+springback phenomenon constitutes a non-trivial process in a numerical treatment. Since we also observe convergence for
+this regime, the u-shaped boundary value problem empirically shows the numerical robustness of our approach to damage
+modeling for large deformations. This example thus serves as benchmark problem which allows to attribute a high numer-
+ical robustness to our model and numerical treatment (neighbored element method combined with the element erosion
+technique).
+                                                                                                                                                 10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+792                                                                                                                             JUNKER et al.
+
+
+
+5        CO N C LUSION S
+
+We presented a novel gradient damage model for hyperelastic structures undergoing large deformation along with an effi-
+cient and stable numerical update scheme. Numerical results showed convergence for varying mesh size and increasing
+regularization parameter 𝛽. For a smooth iterative solution scheme, it was necessary to develop a stabilization technique
+that allows for erosion of finite elements with damage exceeding a critical damage state without the need of remeshing.
+Concluding, we obtained an efficient numerical approach for damage processes to be described in the large deformation
+setting. In future investigations, important physical aspects like plasticity and hardening will be included.
+
+ACKNOWLEDGMENT
+The authors Johannes Riesselmann and Daniel Balzani greatly appreciate funding by the German Science Foundation
+(Deutsche Forschungsgemeinschaft, DFG) as part of the Priority Program German 1748 “Reliable simulation techniques
+in solid mechanics. Development of non-standard discretization methods, mechanical and mathematical analysis,”
+project ID BA2823/15-1.
+
+DATA AVAILABILITY STATEMENT
+The data that support the findings of this study are available from the corresponding author, Philipp Junker, upon
+reasonable request.
+
+ORCID
+Philipp Junker https://orcid.org/0000-0002-8572-6841
+Johannes Riesselmann https://orcid.org/0000-0001-9080-1634
+Daniel Balzani https://orcid.org/0000-0002-1422-4262
+
+REFERENCES
+ 1. Bažant ZP, Jirásek M. Nonlocal integral formulations of plasticity and damage: survey of progress. J Eng Mech. 2002;128(11):1119-1149.
+ 2. Peerlings RHJ, Geers MGD, de Borst R, Brekelmans WAM. A critical comparison of nonlocal and gradient-enhanced softening continua.
+    Int J Solids Struct. 2001;38(44):7723-7746.
+ 3. Forest S, Lorentz E. Localization phenomena and regularization methods. Local Approach Fract. 2004;1:311-371.
+ 4. Yang Y, Misra A. Micromechanics based second gradient continuum theory for shear band modeling in cohesive granular materials
+    following damage elasticity. Int J Solids Struct. 2012;49(18):2500-2514.
+ 5. Ortiz M, Stainier L. The variational formulation of viscoplastic constitutive updates. Comput Methods Appl Mech Eng.
+    1999;171(3-4):419-444.
+ 6. Mielke A. Energetic formulation of multiplicative Elasto-plasticity using dissipation distances. Contin Mech Thermodyn.
+    2003;15(4):351-382.
+ 7. Hackl K, Mielke A, Mittenhuber D. Dissipation distances in multiplicative elastoplasticity. In: Wendland W, Efendiev M, eds. Analysis
+    and Simulation of Multifield problems. Lecture Notes in Applied and Computational Mechanics. Vol 12. Springer; 2003:87-100.
+ 8. Miehe C. Strain-driven homogenization of inelastic microstructures and composites based on an incremental variational formulation. Int
+    J Numer Methods Eng. 2002;55(11):1285-1322.
+ 9. Gürses E, Miehe C. On evolving deformation microstructures in non-convex partially damaged solids. J Mech Phys Solids.
+    2011;59(6):1268-1290.
+10. Balzani D, Ortiz M. Relaxed incremental variational formulation for damage at large strains with application to fiber-reinforced materials
+    and materials with truss-like microstructures. Int J Numer Methods Eng. 2012;92(6):551-570.
+11. Schmidt T, Balzani D. Relaxed incremental variational approach for the modeling of damage-induced stress hysteresis in arterial walls.
+    J Mech Behav Biomed Mater. 2016;58:149-162.
+12. Schwarz S, Junker P, Hackl K. Variational regularization of damage models based on the emulated RVE. Contin Mech Thermodyn.
+    2020;1-27.
+13. Faria R, Oliver J, Cervera M. A strain-based plastic viscous-damage model for massive concrete structures. Int J Solids Struct.
+    1998;35(14):1533-1558.
+14. Needleman A. Material rate dependence and mesh sensitivity in localization problems. Comput Methods Appl Mech Eng. 1988;67:69-85.
+15. Suffis A, Lubrecht TA, Combescure A. Damage model with delay effect: Analytical and numerical studies of the evolution of the
+    characteristic damage length. Int J Solids Struct. 2003;40(13-14):3463-3476.
+16. Junker P, Schwarz S, Makowski J, Hackl K. A relaxation-based approach to damage modeling. Contin Mech Thermodyn. 2017;29:291-310.
+17. Langenfeld K, Junker P, Mosler J. Quasi-brittle damage modeling based on incremental energy relaxation combined with a viscous-type
+    regularization. Contin Mech Thermodyn. 2018;30(5):1125-1144.
+18. de Borst R. Some recent issues in computational failure mechanics. Int J Numer Methods Eng. 2001;52(1-2):63-95.
+                                                                                                                                                   10970207, 2022, 3, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6876 by Technische Informationsbibliothek, Wiley Online Library on [13/10/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNKER et al.                                                                                                                                793
+
+
+
+19. Peerlings RHJ, de Borst R, Breckelmans AM, de Vree JHP. Gradient enhanced damage for quasi-brittle materials. Int J Numer Methods
+    Eng. 1996;39:3391-3403.
+20. Peerlings R, Massart TJ, Geers MGD. A thermodynamically motivated implicit gradient damage framework and its application to brick
+    masonry cracking. Comp Methods Appl Mech Eng. 2003;193:3403-3417.
+21. Dimitrijevic B, Hackl K. A method for gradient enhancement of continuum damage models. Tech Mech. 2008;28(1):43-52.
+22. Gross D, Seelig T. Fracture Mechanics: With an Introduction to Micromechanics. Springer; 2017.
+23. Kiefer B, Waffenschmidt T, Sprave L, Menzel A. A gradient-enhanced damage model coupled to plasticity-multi-surface formulation and
+    algorithmic concepts. Int J Damage Mech. 2018;27(2):253-295.
+24. Miehe C, Aldakheel F, Raina A. Phase field modeling of ductile fracture at finite strains: a variational gradient-extended plasticity-damage
+    theory. Int J Plast. 2016;84:1-32.
+25. Ambati M, Kruse R, De Lorenzis L. A phase-field model for ductile fracture at finite strains and its experimental verification. Comput
+    Mech. 2016;57(1):149-167.
+26. Carollo V, Reinoso J, Paggi M. A 3D finite strain model for intralayer and interlayer crack simulation coupling the phase field approach
+    and cohesive zone model. Compos Struct. 2017;182:636-651.
+27. Borden MJ, Hughes TJR, Landis CM, Anvari A, Lee IJ. A phase-field formulation for fracture in ductile materials: finite deformation
+    balance law derivation, plastic degradation, and stress triaxiality effects. Comput Methods Appl Mech Eng. 2016;312:130-166.
+28. Gültekin O, Dal H, Holzapfel GA. A phase-field approach to model fracture of arterial walls: theory and finite element analysis. Comput
+    Methods Appl Mech Eng. 2016;312:542-566.
+29. Fathi F, Ardakani SH, Dehaghani PF, Mohammadi S. A finite strain integral-type anisotropic damage model for fiber-reinforced materials:
+    application in soft biological tissues. Comput Methods Appl Mech Eng. 2017;322:262-295.
+30. Waffenschmidt T, Polindara C, Menzel A, Blanco S. A gradient-enhanced large-deformation continuum damage model for fibre-reinforced
+    materials. Comp Methods Appl Mech Eng. 2013;268:801-842.
+31. Brepols T, Wulfinghoff S, Reese S. Gradient-extended two-surface damage-plasticity: micromorphic formulation and numerical aspects.
+    Int J Plast. 2017;97:64-106.
+32. Junker P, Schwarz S, Jantos DR, Hackl K. A fast and robust numerical treatment of a gradient-enhanced model for brittle damage. Int
+    J Multisc Comput Eng. 2019;17(2):151-180.
+33. Vogel A, Junker P. Adaptive and highly accurate numerical treatment for a gradient-enhanced brittle damage model. Int J Numer Methods
+    Eng. 2020;121(14):3108-3131.
+34. Jantos DR, Hackl K, Junker P. An accurate and fast regularization approach to thermodynamic topology optimization. Int J Numer Methods
+    Eng. 2019;117(9):991-1017.
+35. Junker P, Balzani D. A new variational approach for the thermodynamic topology optimization of hyperelastic structures. Comput Mech.
+    2020;1-26.
+36. Junker P, Balzani D. An extended Hamilton principle as unifying theory for coupled problems and dissipative microstructure evolution.
+    Contin Mech Thermodyn. 2021;1-26.
+37. Lemaitre J. Coupled elasto-plasticity and damage constitutive equations. Comput Methods Appl Mech Eng. 1985;51(1-3):31-49.
+38. Lemaitre J, Desmorat R. Engineering Damage Mechanics: Ductile, Creep, Fatigue and Brittle Failures. Springer-Verlag; 2005.
+39. Hackl K, Fischer FD, Svoboda J. A study on the principle of maximum dissipation for coupled and non-coupled non-isothermal processes
+    in materials. Proc Math Phys Eng Sci. 2011;467:1186-1196.
+40. Hackl K, Fischer FD. On the relation between the principle of maximum dissipation and inelastic evolution given by dissipation potentials.
+    Proc Royal Soc A Math Phys Eng Sci. 2008;464(2089):117-132.
+41. Carstensen C, Hackl K, Mielke A. Non–convex potentials and microstructures in finite–strain plasticity. Proc Royal Soc Lond Ser A Math
+    Phys Eng Sci. 2002;458(2018):299-317.
+42. Wriggers P. Nonlinear Finite Element Methods. Springer Science & Business Media; 2008.
+43. Miehe C, Hofacker M, Welschinger F. A phase field model for rate-independent crack propagation: robust algorithmic implementation
+    based on operator splits. Comput Methods Appl Mech Eng. 2010;199(45-48):2765-2778.
+44. FEAP. A finite element analysis program. http://projects.ce.berkeley.edu/feap/
+
+
+
+
+   How to cite this article: Junker P, Riesselmann J, Balzani D. Efficient and robust numerical treatment of a
+   gradient-enhanced damage model at large deformations. Int J Numer Methods Eng. 2022;123(3):774-793. doi:
+   10.1002/nme.6876
+

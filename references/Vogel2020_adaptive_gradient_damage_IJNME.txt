@@ -1,0 +1,1169 @@
+Received: 9 May 2019      Revised: 9 January 2020      Accepted: 25 February 2020
+
+DOI: 10.1002/nme.6349
+
+
+RESEARCH ARTICLE
+
+
+
+
+Adaptive and highly accurate numerical treatment for a
+gradient-enhanced brittle damage model
+
+Andreas Vogel1                      Philipp Junker2
+
+1
+ High Performance Computing in the
+Engineering Sciences, Ruhr University                 Summary
+Bochum, Bochum, Germany                               We present an adaptive numerical treatment for a recently published model for
+2
+ Continuum Mechanics, Ruhr University                 brittle damage with gradient enhancement. We employ adaptive strategies both
+Bochum, Bochum, Germany
+                                                      in time and space, yielding detailed investigations of the convergence behav-
+Correspondence                                        ior: the damage distribution can be resolved with very high accuracy, turning
+Andreas Vogel, High Performance                       the damage behavior into cracks known from fracture mechanics. Although the
+Computing in the Engineering Sciences,
+Ruhr University Bochum, Bochum,
+                                                      localization is extreme, mesh-independent results are obtained thanks to the
+Germany.                                              spatial adaptivity and allow for a detailed investigation of the influence of the
+Email: a.vogel@rub.de                                 regularization parameter.
+
+                                                      KEYWORDS
+                                                      adaptive finite element method, brittle damage, gradient-enhanced regularization, Laplace
+                                                      operator, snapback
+
+
+
+
+1         I N T RO DU CT ION
+
+Material and structural failure can be modeled in various ways. For instance, fracture mechanics allows for a detailed
+analysis of the stress field at a crack tip.1-3 The eigenerosion method, see References 4 and 5, might be interpreted as a
+(numerical) extension of fracture mechanics. Phase-field models are also feasible for the description of failure.6-9 Finally,
+damage models might be used since they use the simplest possible assumption that, after reaching some critical threshold
+value, stiffness decreases with increasing loads. This might be formulated in terms of isotropic, cf. References 10 and 11,
+and anisotropic damage, cf. References 12 and 13. Due to the simple assumptions for damage models, they have been
+used for modeling failure events at various scales, see, eg, References 11,14-17, including structural effects such as the
+snapback phenomenon.16,18,19
+    However, damage models inherently constitute an ill-posed mathematical problem: due to their softening character,
+a loss of ellipticity of the resultant system of algebraic equations yields a strong mesh dependence when evaluated within
+a finite element routine, see, eg, References 19 and 20. Consequently, methods for regularization have to be employed, of
+which three different classes exist: (i) viscous regularization, (ii) integral formulations, and (iii) gradient enhancement.
+    Viscous regularization, such as in References 21-26, is the most direct approach for solving the issue of
+mesh-dependent finite element results. The main advantage of this strategy is the easy mathematical formulation, which
+allows for a numerical implementation that can be carried out at the material point level. To be more precise, the usage of a
+material law subroutine is sufficient. Unfortunately, there exists a remarkable drawback that prevents viscous regulariza-
+tion to become the dominant strategy chosen: the results explicitly depend on the loading velocity, which might contradict
+experimental observations, particularly when brittle material failure is investigated. Furthermore, model calibration is
+
+This is an open access article under the terms of the Creative Commons Attribution License, which permits use, distribution and reproduction in any medium, provided the
+original work is properly cited.
+© 2020 The Authors. International Journal for Numerical Methods in Engineering published by John Wiley & Sons, Ltd.
+
+3108      wileyonlinelibrary.com/journal/nme                                                                             Int J Numer Methods Eng. 2020;121:3108–3131.
+                                                                                                                                  10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                           3109
+
+
+
+cumbersome since usually viscosities must be used to obtain mesh independent results that are unphysically high, such
+that they do not constitute as a material parameter that is independent of the respective boundary value problem. In con-
+trast, loading velocity in combination with the damage viscosity has to be calibrated for each boundary value problem on
+an individual basis.
+    Integral formulations and gradient enhancement, which show some mathematical similarities to phase field
+approaches, share the characteristic that they usually demand a more sophisticated strategy for numerical implementa-
+tion: novel finite elements have to be programmed in which the damage evolution is averaged over same neighborhood
+of elements (for integral formulations), or in which additional nodal unknowns enter the problem (for gradient enhance-
+ment). While these strategies consume more computational effort than viscous regularization, the huge benefit is that
+such models yield mesh-independent finite element results for arbitrary loading velocities and can also be used for
+modeling brittle damage. Examples are given in References 3, 19, 20, 27, and 28.
+    Additional model parameters, such as the damage viscosity for viscous regularization, are also present both for integral
+formulations and gradient enhancement which play here a less significant role due to physical reasons but are a mathe-
+matical necessity. For integral formulations, the radius of the circle (sphere) over which the averaging is performed has
+to be defined. Prominent examples are the so-called filter techniques commonly used for topology optimization problems
+(which might be interpreted as “inverse damage” problems).29,30 The regularization parameter used in strategies based on
+gradient enhancement has a similar effect. Here, the parameter directly controls the width of the damage zone and also
+the transition from the undamaged to the damaged area (large values yield thick damage zones and a very smooth transi-
+tion, whereas small values yield crack-like damaged zones with very sharp interfaces between damaged and undamaged
+material). A physical interpretation of the regularization parameter is that it reflects the interface energy and that it is
+related to the “internal length” given by the crack width, for example, Reference 27.
+    Although gradient enhancement yields mesh-independent results, the impact of the chosen penalization parameter
+is huge: not only the shape of the damage zone is controlled but also the maximum load before material failure strongly
+depends on the particular value for the parameter. In order to resolve a distinct damage zone in greater detail, strategies for
+mesh adaptivity can be employed.31 However, in contrast to the accepted mesh dependence in Reference 31 due to missing
+regularization, which was assumed to be adjustable to experiments, a rigorous consideration of gradient enhancement
+should be maintained to still deal with a well-posed mathematical problem.
+    The motivation for this article is to investigate the capabilities of the gradient-enhanced material model for brittle
+damage in Reference 32, where the neighbored element method (NEM) was used. It showed the huge advantage that
+each global load step could be computed with very similar numerical effort, that is, computation time, as a load step
+for a purely elastic material behavior. In this article, we improve the NEM such that is in particular capable of handling
+adaptive finite element meshes and present a detailed and advanced study on the numerical behavior of this method for
+adaptive treatment of the meshing and load stepping at runtime.
+    The article is structured as follows: we begin with a short presentation of the model in Reference 32 for convenience.
+Afterward, we present the novel numerical treatment and its implementation, with special emphasis on both the finite
+element implementation of the model itself and the adaptive strategies applied. Then, we perform a detailed numerical
+study that investigates all important effects concerning convergence behavior and the dependence on the material and
+model parameters.
+
+
+2       GRADIENT-ENHANCED MODEL FOR BRITTLE DAMAG E
+
+The model is derived employing Hamilton's principle, which belongs to the variational methods in material modeling
+and is given by
+
+                                              𝛿 = 𝛿 − 𝛿diss = 0 ∀𝛿u, 𝛿d,                                                 (1)
+
+with the Gibbs energy , the virtual work due to nonconservative forces 𝛿diss , the displacement u, and the damage
+parameter d. The Gibbs energy is given by
+
+                                       ∶=        Ψ(𝜺, d) dV −        b ⋅ u dV −         t ⋅ u dS,                          (2)
+                                             ∫Ω                  ∫Ω                ∫Γ𝜎
+
+with the Helmholtz free energy Ψ and the virtual work due to nonconservative forces by
+                                                                                                                                   10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3110                                                                                                            VOGEL and JUNKER
+
+
+                                                                         𝜕
+                                                     𝛿diss =        −        𝛿d dV,                                         (3)
+                                                                ∫Ω       𝜕 ḋ
+
+with the dissipation function . Here, we denote the body's volume by Ω, the body forces by b, the traction vector by
+t acting on the Neumann boundary Γ𝜎 , and the rate of the damage parameter by d. ̇ Using a damage function f(d), the
+Helmholtz free energy Ψ is decomposed into a mechanical part and a regularization part, yielding
+
+                                                                         1
+                                                   Ψ(𝜺, f ) ∶= f Ψ0 (𝜺) + 𝛽|∇f |2 ,                                          (4)
+                                                                         2
+
+where 𝛽 denotes the regularization parameter, and the mechanical energy of the undamaged material is given by
+
+                                                                    1
+                                                        Ψ0 (𝜺) =      𝜺 ∶ E ∶ 𝜺,                                             (5)
+                                                                    2
+
+with the elasticity tensor of order four E and the strains 𝜺 = ∇sym u = 12 (∇u + u∇). For the damage function, several
+approaches can be chosen. The only requirements is that f decreases monotonically and f ∈ ]0, 1]. Here, we chose
+f = exp(−d), such that d ∈ [0, ∞[ and d = 0 indicates the virgin material without any damage. Other damage models with
+the same approach can be found, for example, in Reference 28.
+     The only further part that needs to be defined is the dissipation function . Here, the sole requirement is that  =
+(d)        ̇ Possible choices are thus  = r|d|
+    ̇ ≥ 0 ∀d.                                  ̇ or v = 𝜂 ḋ 2 ∕2. Whereas v results in a rate-dependent, viscous evolution
+equation for the damage parameter d with the viscosity for damage 𝜂,  describes a rate-independent evolution. Since we
+are interested in brittle damage, we chose  = r|d|̇ with a dissipation parameter r that is later identified as the energetic
+threshold for the onset of damage (evolution).
+     On the one hand, the evaluation of the stationarity conditions of Equation (1) provides the weak form of the balance
+of linear momentum, that is,
+
+                             𝝈 ∶ 𝛿𝜺 dV −        b ⋅ 𝛿u dV −         t ⋅ 𝛿u dS = 0 ∀𝛿u ,      u = û ∀x ∈ Γu ,                (6)
+                        ∫Ω                 ∫Ω                 ∫Γ𝜎
+
+where the mechanical stresses
+                                                               𝜕Ψ
+                                                         𝝈=       = f E ∶ 𝜺,                                                 (7)
+                                                               𝜕𝜺
+
+have been introduced and displacements û are prescribed on the Dirichlet boundary Γu . On the other hand, the station-
+arity condition for the damage parameter d in conjunction with Neumann condition n ⋅ ∇f = 0 at the domain boundary
+results in
+
+                                      ḋ ≥ 0,      Φ ∶= f Ψ0 − 𝛽f Δf − r ≤ 0,          ḋ Φ = 0,                             (8)
+
+with the Laplace operator Δf ∶= ∇ ⋅ ∇f. The first equation states the irreversibility of damage. The second equation shows
+that the quantity Φ serves as (local) indicator function for the onset and evolution of damage. It is thus comparable to a
+yield function well known from plasticity. More details on the model derivation are given in Reference 32, where a fast
+and stable algorithmic treatment for the equations has been presented. Unfortunately, the inequality (8) complicates the
+numerical evaluation to a large extent. Therefore, an operator split has been proposed in Reference 32, which simplifies
+the numerical treatment. The drawback is a distinct time-step dependency that can only be removed by choosing a fine
+temporal discretization. An adaptive choice of the time increments is thus unavoidable for a time-efficient procedure and
+will be employed in this work.
+
+
+3       NUMERICAL TREATMENT
+
+3.1       Discretization and operator split
+
+For a numerical solution of Equations (6) and (8), a finite element procedure has been proposed in Reference 32. To be
+more precise, Equation (6) is discretized using the finite element approach
+                                                                                                                                                                      10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                                               3111
+
+
+
+                                                                    u = S ⋅ ũ and                      ̃
+                                                                                             𝛿u = S ⋅ 𝛿 u,                                                      (9)
+
+where S denotes the shape functions, and ũ and 𝛿 ũ denote the displacements and virtual displacements at the
+                                                                                        ̃ Then, Equation (6)
+nodes, respectively. Furthermore, the B operator matrix is defined as usual by 𝜺 = B ⋅ u.
+transforms to
+
+                                                𝛿 ũ T ⋅ BT ⋅ 𝝈 dV =           𝛿 ũ T ⋅ ST ⋅ b dV +         𝛿 ũ T ⋅ ST ⋅ t dS   ∀𝛿 ũ
+                                        ∫Ω                                ∫Ω                          ∫Γ𝜎
+
+                                            ⇒            BT ⋅ 𝝈 dV =           ST ⋅ b dV +         ST ⋅ t dS .                                                 (10)
+                                                    ∫Ω                    ∫Ω                 ∫Γ𝜎
+
+For the update of the damage field, the so-called neighbored element method has been used in Refer-
+ence 32, which discretizes the Laplacian by means of selected neighbored elements. This procedure has been
+proven advantageous regarding computational costs. Unfortunately, we investigated some numerical sensitiv-
+ity for distorted finite elements: the condition number of the algebraic system of equations increases dra-
+matically, resulting in severe numerical errors. To avoid this drawback, we reviewed the neighbored element
+method and propose a different numerical treatment, taking all neighbors into account, as described in the
+following.
+    As for the original approach, we discretize the damage field with one value for each finite element, that is, we use a
+piecewise constant approximation on the finite element mesh Ωh . Then, Equation (8) transforms to
+
+                                                                          1
+                                                         fe Ψ0,e − 𝛽fe          Δf dV − r ≤ 0 for all e ∈ Ωh ,                                                 (11)
+                                                                         |e| ∫e
+
+                                                                       1
+with the element's volume |e| and the averaged elastic energy Ψ0,e ∶= |e| ∫e Ψ0 dV.
+    In order to approximate the Laplacian on an element e, we collect all nearest neighbors as shown in Figure 1. If a
+side of the element is located at the domain boundary, we take the Neumann zero conditions into account by mirroring
+the element at the boundary, and then enforcing the same value in the mirror element as for the element e itself by
+assigning the same element number to it. Finally, a set e of elements is constructed collecting all nearest neighbors,
+mirror elements and the element e itself. We now seek a stencil for the discrete Laplacian by Taylor expansion with the
+element barycenters x e as
+                 ∑                          ∑           (                                                                                                 )
+                                                                                            1
+    (Δh f )e =           aẽe f (x ẽ ) =           aẽe f (x e ) + ∇f |xe ⋅ (x e − x ẽ ) + (x e − x ẽ )T ⋅ H|xe ⋅ (x e − x ẽ ) + o(||(xe − x ẽ )||3 ) ,   (12)
+                 e∈ẽ                      e∈ẽ
+                                                                                            2
+
+
+
+
+FIGURE 1          Neighbors (orange) and their barycenters (red cross) of an
+element e used to create the Laplacian approximation on an adaptively
+refined mesh. For a Neumann zero boundary condition, a mirror element at
+boundary edges is created (green)
+                                                                                                                                                         10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3112                                                                                                                                  VOGEL and JUNKER
+
+
+
+with the Hessian matrix H of f . Rearranging the terms provides
+
+                                        ⎛∑         ⎞            ⎛∑                       ⎞
+                             (Δh f )e = ⎜     aẽe ⎟ f (x e ) + ⎜      aẽe (x e − x ẽ )⎟ ⋅ ∇f |xe
+                                        ⎜          ⎟            ⎜                        ⎟
+                                        ⎝e∈ẽ ⎠                ⎝e∈ẽ                   ⎠
+
+                                          ⎛∑                       ⎞            ⎛∑                       ⎞
+                                                     1                     |               1                     |
+                                         +⎜      aẽe (xe − xẽ )2 ⎟ 𝜕x2 f | + ⎜       aẽe (ye − yẽ )2 ⎟ 𝜕y2 f |
+                                          ⎜          2             ⎟       |x e ⎜          2             ⎟       |x e
+                                          ⎝e∈ẽ                   ⎠            ⎝e∈ẽ                   ⎠
+
+                                          ⎛∑                                ⎞
+                                         +⎜      aẽe (xe − xẽ )(ye − yẽ )⎟ 𝜕x 𝜕y f ||x
+                                          ⎜                                 ⎟             e
+                                          ⎝e∈ẽ                            ⎠
+
+                                         + o(aẽe )o(||(xe − x ẽ )||3 ).                                                                        (13)
+
+    The summation terms in brackets in front of the second derivatives must equal 1 while all other sums have to vanish.
+The term aee only appears in the first bracket and is thus determined once the other values are known. Locally num-
+bering the N neighbors and mirror elements in e = {e0 ∶= e, e1 , e2 , … , eN }, we can thus solve a system of equations
+given by
+
+                                         DT ⋅ ae = s,       with D ∈ RN×D , ae ∈ RN , s ∈ RD ,                                                   (14)
+
+where D is the number of derivative terms in Equation (13) (ie, 5 in 2d) and the matrices and vectors are
+given by
+
+                                                            1                        1
+              ⎛ (x1 − x0 ) (y1 − y0 ) (x1 − x0 )(y1 − y0 ) 2 (x1 − x0 )2               (y
+                                                                                     2 1
+                                                                                             − y 0 )2 ⎞
+              ⎜                                                                                       ⎟             ⎛ ae,1 ⎞           ⎛0⎞
+              ⎜ (x2 − x0 ) (y2 − y0 ) (x2 − x0 )(y2 − y0 ) 1 (x2 − x0 )2              1
+                                                                                        (y 2 − y 0 ) 2⎟             ⎜ ae,2 ⎟           ⎜0⎟
+         D ∶= ⎜                                             2                         2               ⎟,      ae ∶= ⎜ ae,3 ⎟ ,    s ∶= ⎜ 0 ⎟ .
+              ⎜         ⋮                                                                           ⋮⎟              ⎜ ⋮⎟               ⎜1⎟
+              ⎜                                                                                       ⎟             ⎜      ⎟           ⎜ ⎟
+              ⎜                                            1            2            1               2⎟
+                                                                                                                    ⎝ ae,N ⎠           ⎝1⎠
+              ⎝ (xN − x0 ) (yN − y0 ) (xN − x0 )(yN − y0 ) 2 (xN − x0 )                (y
+                                                                                     2 N
+                                                                                             − y 0 ⎠
+                                                                                                   )
+
+
+    Assuming that D has full column rank, we can form the right-inverse of DT given by (DT )−1 = D ⋅ (DT ⋅ D)−1 and the
+stencil entries are found by
+
+                                                            ae = D ⋅ (DT ⋅ D)−1 ⋅ s.
+
+    The system of equation in Equation (14) is underdetermined in most cases due to N > D, and thus one of many
+solutions is singled out. With the chosen stencil entries ae , the approximation of the Laplacian is finally given by
+
+                                                      |         |
+                        (A ⋅ f )e ∶= (Δh f )e = 𝜕x2 f | + 𝜕y2 f | + o(aẽe )o(||(xe − x ẽ )||3 ) = Δf |xe + o(h),                               (15)
+                                                      |x e      |x e
+
+provided that o(aẽe ) = o(h−2 ). Here, f denotes the vector of the discretized damage field, i.e., each entry of f corresponds
+to the damage value in the respective finite element. Please note that the Laplacian approximation depends solely on the
+mesh topology.
+    The method is identical to the one employed in Reference 32 for the case N = D, where the set of equations
+
+                                                                     1
+                      f (x e ) − f (x ẽ ) = ∇f |xe ⋅ (x e − x ẽ ) + (x e − x ẽ )T ⋅ H|xe ⋅ (x e − x ẽ )     for all ẽ ∈ e
+                                                                     2
+                         ∶⇔ df e = D ⋅ 𝜕f e ,                                                                                                    (16)
+                                                                                                                                   10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                            3113
+
+
+
+has been used to solve for the derivatives
+
+                                                   𝜕f e = (DT ⋅ D)−1 ⋅ DT ⋅ df e ,                                         (17)
+
+and then extracting the second order derivatives as
+                                           (                      )
+                      (Δh f )e = 𝜕f e ⋅ s = (DT ⋅ D)−1 ⋅ DT ⋅ df e ⋅ s = df e ⋅ D ⋅ (DT ⋅ D)−1 ⋅ s = ae ⋅ df e .           (18)
+
+    Please note that an extension to the three-dimensional case is straight forward.
+    The advantage for the used Laplacian approximation is its direct applicability to adaptively refined meshes with
+hanging nodes taking into account all element neighbors. The alternative in Reference 32 requires a fixed number of
+neighboring elements (5 in 2d, 9 in 3d). Therefore, not all neighbors are taken into account even for a regular rectangular
+mesh, and this becomes even more important for adaptively-refined meshes with a couple of fine neighbors. Direct infor-
+mation flow within an iterative solution process would thus not be given for all direct neighbors. Discretization methods
+like the one employed here can be found, for example, in References 33 and 34.
+    With the above notation, we now have to devise a procedure to solve the inequality
+
+                                     Φe ∶= fe Ψ0,e − 𝛽fe (A ⋅ f )e − r ≤ 0,    for all e ∈ Ωh .                            (19)
+
+     Intuitively, the solution behavior is as follows: for an undamaged domain, that is, f ≡ 1 and therefore Laplacian (A ⋅
+f )e = 0, the inequality will be automatically fulfilled for a small mechanical energy fe Ψ0,e < r. Once the energy exceeds this
+threshold for an element e, the damage function fe on the element has to be decreased to fulfill the inequality. However, due
+to a thereby-introduced difference to the element neighbors, now the Laplacian (A ⋅ f )en < 0 is non-zero on the neighbor
+en , and this may hinder the fulfillment of the inequality for the neighbor. This is more severe the larger the regularization
+parameter 𝛽 is chosen. Thus, the Laplacian value has to be mitigated by decreasing the damage function of neighbors as
+well. This way, the parameter 𝛽 leads to a spreading of the damage or, equivalently, prevents steep gradients in the damage
+function.
+
+
+3.1.1        Elasticity solver
+
+Given the current damage function f û , the displacement of the specimen for an increased loading given in terms
+of the prescribed displacements û + dû has to be computed by solving Equation (10). To this end, we employ a
+geometric multigrid solver35,36 on a mesh hierarchy produced by successive refinement from an initial coarse finite
+element mesh. For an adaptive mesh hierarchy, we will use the adaptive multigrid approach37,38 without smoothing
+of the patch rims. In all simulations, we use a Gauss-Seidel smoother, V-cycle, three presmoothing and postsmooth-
+ing steps, the canonical prolongation and restriction, the RAP product for coarse matrices, and an LU base solver
+on the coarsest mesh. The multigrid is wrapped into a BiCGStab solver as preconditioner, and we solve for a
+residuum reduction or an absolute residuum of 10−10 (whatever applies first) with a maximal admissible iteration
+count of 200.
+
+
+3.1.2        Damage solver
+
+Given the displacement of the specimen uu+d  ̂ û                                ̂ the current damage distribution f û has
+                                                  at the increased loading û + du,
+to be updated. To this end, we employ Algorithm 1 which is a Jacobi-like update scheme with an inner one-step Newton
+method: starting with the current damage values as initial guess, each element damage value is approximated by per-
+forming one Newton step for Equation (19) locally while keeping the required neighbor values of the Laplacian fixed.
+The local one-step Newton is used to solve a quadratic function in fe . Since the step is only executed for a positive indi-
+cator function Φe , the damage value will strictly decrease and one step of the Newton will end up with an iterate above
+the root of the quadratic funtion. On the one hand, this shows the irreversibility of damage on the discrete level. On
+the other hand, this is quite beneficial for the overall iterative scheme, since neighboring values are to be updated one
+                                                                                                                                      10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3114                                                                                                             VOGEL and JUNKER
+
+
+
+after the other. The undershooting in the one-step Newton therefore allows converging quite smoothly to the solution.
+Note that the derivative of the Laplace operator solely depends on the mesh, and the matrix A can, therefore, be com-
+puted beforehand. Only on mesh adaption, the discrete Laplacian has to be updated. We accept the current iterate if
+the inequality (19) is fulfilled for each element up to a tolerance 𝜖 damage and iterate up to a permitted maximal iteration
+count ndamage .
+
+
+
+Algorithm 1. Damage update
+       Given: 𝜖damage , ndamage                                                              ⊳ numerical control parameters
+               ̂ û
+       Input: uu+d  , f û                                                        ⊳ displacement at next load, current damage
+
+       On grid change: compute A                                                             ⊳ depends only on mesh topology
+
+       f ∶= f û                                                                                  ⊳ set initial guess for damage
+
+       for n = 1, 2, 3, … , do
+           Compute 𝚲 ∶= A ⋅ f                                                                     ⊳ Laplacian of current iterate
+
+           for e ∈ Ωh do
+                        ̄ 0,e − 𝛽Λe ) − r
+              Φe ∶= fe (Ψ                                                                      ⊳ value of the indicator function
+
+               if Φe ≥ 𝜖damage then                                                                      ⊳ if inequality violated
+                                    Φ
+                   fe ∶= fe − Ψ̄ −𝛽(Λ e+f (A)                                                           ⊳ one local Newton step
+                                  0,e   e   e   ee )
+              end if
+           end for
+
+          if ‖𝚽‖max ≤ 𝜖damage then break end if                                                               ⊳ accept iterate
+          if n > ndamage then abort end if                                                   ⊳ enforce maximal iteration count
+       end for
+
+
+         ̂ û
+       f u+d  ∶= f                                                                                           ⊳ accept last iterate
+
+
+
+
+3.2           Adaptivity
+
+A crack-like evolution of a damage zone is highly localized both in space and in time, and it is thus advis-
+able to address this behavior with adaptive numerical strategies for the computational mesh and for the load
+stepping.
+
+
+3.2.1              Loadstep control
+
+For the loadstep control, we apply a simple heuristic: we decrease the load increment until the resulting change in the
+damage is reduced below a prescribed tolerance 𝜖 load . As a measure for the change, we choose the maximum norm
+    ̂ û
+||f u+d                              ̂ û
+         − f û ||max ∶= maxe∈Ωh |f eu+d  − f uê |. This choice is preferable over other norms such as the Euclidian norm since it
+does not depend on the vector length, which will vary for mesh adaption and would lead to a weakened criterion. For the
+size of the loadstep increment, we impose maximal dû max and minimal dû min admissible bounds. Starting with a given
+                                                                                                                                           10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                    3115
+
+
+
+prediction dû predict (eg, dû predict = dû max at the start of the simulation), we halve the size until the desired criterion is met.
+See Algorithm 2 for the implementation details.
+
+
+
+Algorithm 2. Load step control
+    Given: dû min , dû max , 𝜖load                                                              ⊳ numerical control parameters
+    Input: dû predict , f û                                                 ⊳ predicted step, computed damage at current load
+
+    dû ∶= dû predict                                                                 ⊳ predicted stepsize as initial guess
+    loop
+                             ̂ û
+        Solve displacement uu+d   for loading û + dû given the current damage f û
+                       ̂ û                                                          ̂ û
+        Solve damage f u+d
+                            for loading û + dû given the computed displacement uu+d
+
+              ̂ û
+        if ‖f u+d  − f û ‖max < 𝜖load then break end if                                                          ⊳ accept solution
+        if dû = dû min then break end if                                                                ⊳ accept minimal stepsize
+
+                          ̂ dû min )
+         dû ∶= max(0.5 du,                                                                                         ⊳ reduce stepsize
+    end loop
+                   {
+                      ̂
+                     du,                 if stepsize reduced,
+    dû predict ∶=                                                                                            ⊳ predict next stepsize
+                            ̂ dû max ), else
+                     min(2 du,
+
+
+
+
+3.2.2         Mesh size control
+
+For the mesh size control, we employ adaptive mesh refinement before every load increment computation. Starting with
+an initial coarse mesh, we allow for the recursive refinement of mesh elements to increase the mesh resolution locally.
+The number of refinements that were applied to create a finite element is called the level of refinement of the element, and
+we allow refinements up to an a priori prescribed level Lmax ∈ N. For full refinement, all elements of the finite element
+mesh are refined. For adaptive refinement, however, only a selected subset of elements is chosen for further refinement,
+and some element patches may also be coarsened if admissible.
+     As an indicator for the required mesh resolution, we employ the elementwise value Ψe ∶= fe Ψ0,e . Given that the elastic
+energy, Ψ0,e , is large, the element is likely to damage in the future and should be refined up to a proper resolution. If,
+however, the element is already damaged (small fe ) or the elastic energy is small, the mesh resolution can be kept small
+or even reduced for this element.
+     During the damage evolution, there are only a few localized elements where the indicator value Ψe is large com-
+pared to the bulk of elements with nonsignificant values. We therefore use the heuristic shown in Algorithm 3 for
+the selection of elements, which should be refined or coarsened: All elements with values below the scaled average
+  avg                                              avg
+𝜃coarsen Ψavg are coarsened. Typical values of 𝜃coarsen are 0.1 or below, thus removing elements only if their deviation
+from the average is really small. This is in particular the case for damaged elements once the damage process has fin-
+                                                                       avg                                              avg
+ished locally. All elements with values above the scaled average 𝜃refine Ψavg are refined, using typical values for 𝜃refine
+around 1.0. This leads to a detection of all elements that should be refined since they are more likely to damage than the
+average.
+     Upon mesh adaption, the relevant history data, that is, the damage, have to be transferred to the new mesh.
+For mesh refinement, the damage value of the parent element is used for all child elements. For mesh coars-
+ening, the coarse element is assigned the averaged value of all the removed children since all children have the
+same element volume. For the displacements, we employ first-order Lagrangian shape functions. The arising hang-
+ing nodes due to mesh adaptivity are handled by interpolation constraints enforcing the continuity over element
+boundaries.
+                                                                                                                                     10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3116                                                                                                              VOGEL and JUNKER
+
+
+
+
+Algorithm 3. Mesh size control
+             avg      avg    ( avg       avg )
+   Given: 𝜃refine , 𝜃coarsen 𝜃coarsen < 𝜃refine                                                            ⊳ numerical factors
+                        ̄ 0 ≥ 0)
+              ̄ 0 (fe , Ψ
+   Input: f , Ψ                                                                                ⊳ Damage function, elastic energy
+
+        ̄ avg ∶=    1       ∑         ̄ 0,e =    1      ∑ ̄
+        Ψ          |Ωh |
+                                   fe Ψ         |Ωh |
+                                                          Ψe                              ⊳ current average of mechanical energy
+                           e∈Ωh                         e∈Ωh
+        for e ∈ Ωh do
+               ̄ e < 𝜃coarsen
+            if Ψ
+                        avg   ̄ avg then
+                              Ψ
+                coarsen(e)                                                                     ⊳ coarsen elements below average
+            end if
+               ̄ e > 𝜃 avg Ψ
+            if Ψ            ̄ and level(e) < Lmax then                                              ⊳ up to prescribed maximum
+                      refine avg
+                refine(e)                                                                        ⊳ refine elements above average
+            end if
+        end for
+
+        repeat                                                                    ⊳ additional refinements if required
+           ̄ avg ∶=         1     ̄∑
+           Ψ                   f Ψ
+                           e∈Ωh e 0,e
+                           |Ωh |
+                                                                              ⊳ update  average of mechanical energy
+                           ̄e>𝜃
+           for e ∈ Ωh : if Ψ
+                                 avg   ̄ and level(e) < Lmax then refine(e) end if
+                                       Ψ
+                                 refine avg
+        until number of mesh vertices does not change
+
+
+
+
+4              NUMERICAL EXAMPLES
+
+We illustrate the chosen method by two examples and study in detail the influence of several simulation parameters and
+the accuracy of the simulation that can be achieved. In particular, we are interested in the ability to resolve the sharp drop
+in a force-displacement plot for the tensile test by means of the adaptive strategies.
+    For the studies, we choose parameters as summarized in Table 1. While most parameters are fixed, we vary the regular-
+ization parameter 𝛽, the loading stepsize dû (uniform) or its bounds dû min , dû max (adaptive), and the maximal admissible
+level of grid refinement Lmax for adaptive and fully refined meshing. Our simulations are carried out in 2d using the plain
+stress assumption.
+
+
+                                                                                           T A B L E 1 Physical and simulation
+    Symbol           Quantity                                  Value            Unit
+                                                                                           parameters
+    E                Young's modulus                           200              GPa
+    𝜈                Poisson's ratio                           0.33             —
+    r                Dissipation parameter                     0.05             MPa
+    û end           Final displacement on top edge            200              μm
+    𝛽                Regularization parameter                  10−3 , … , 101   MPa mm2
+    dû min          Minimal load increment                    10−4 , … , 1     μm
+    dû max          Maximal load increment                    1                μm
+    𝜖 load           Loading step accuracy                     10−2             —
+    Lmax             Max. level of refinement                  0, … , 5         —
+     avg
+    𝜃refine          Refinement factor                         1.0              —
+     avg
+    𝜃coarsen         Coarsening factor                         0.1              —
+    𝜖 damage         Damage iteration accuracy                 10−8             —
+    ndamage          Max. number of damage iterations          106              —
+                                                                                                                                           10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                    3117
+
+
+FIGURE 2           Single-notched
+geometry: A, Domain specification in mm
+and boundary conditions. B, Coarse finite
+element mesh. C, Full refinement for
+level 2. D, Adaptive refinement up to level 2
+during damage propagation [Colour figure
+can be viewed at wileyonlinelibrary.com]
+
+
+
+
+                                                (A)                        (B)                   (C)                 (D)
+
+
+
+
+F I G U R E 3 Single-notched geometry: displacement (100 times exaggerated) and damage function f (damaged parts in red) at different
+loading steps for a maximal level of refinement Lmax = 3, a minimal load increment dû min = 0.1 nm, and 𝛽 = 1.0 MPa mm2 . Damage values
+below 10−3 are considered as fully damaged and excluded from the visualization
+
+
+4.1         Single-notched geometry
+
+The first example is a specimen with a single notch. The domain shape and size together with the chosen boundary
+conditions are depicted in Figure 2A. The domain is meshed by an initial coarse mesh (Figure 2B) and thereafter refined
+either using full (Figure 2C) or adaptive (Figure 2D) mesh refinement up to a prescribed level of refinement Lmax .
+     The result for a tensile test simulation up to a maximal displacement û end of 200 μm at the top surface is shown in
+Figure 3 for selected loading positions employing a regularization parameter 𝛽 = 1.0 MPa mm2 . As can be seen, the dam-
+age process starts at the notch, where largest stress values are to be expected, and then propagates through the specimen
+until it is split into two individually translating pieces. For this simulation, we used an adaptive strategy for both, load
+stepping and mesh refinement, with a minimal load increment dû min = 0.1nm and maximal mesh level Lmax = 3.
+     Measuring the force acting at the top of the specimen, we plot the computed force-displacement curve of this simula-
+tion run in Figure 4. The force drop is very sharply resolved and occurs at a displacement of roughly 73 μm with a maximal
+force of roughly 5.8 kN. The difference between adaptively and fully refined meshes can hardly be seen in the plot and a
+zoom is therefore added. Please note that the force drop difference between the two runs is only 0.1 μm, that is, a relative
+difference of 1.2‰, which suggests that most of the spatial and load stepping resolution can be saved while maintaining
+the accuracy of the simulation within reasonable bounds. In the following, we will study this question in detail.
+     In order to illustrate the numerical behavior for the whole simulation range, we present the loading stepsize and the
+solver iteration counts in Figure 5. It can be nicely observed that the loadstep control starts with the maximal loading step
+dû max , and large steps can be used until an initial damage formation is detected by the accuracy criterion. The stepsize is
+reduced down to dû min once the sharp force drop occurs. Thereafter, the stepsize can again be increased to its maximal
+                                                                                                                                         10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3118                                                                                                                  VOGEL and JUNKER
+
+
+
+
+F I G U R E 4 Single-notched geometry: force-displacement curve for a simulation with a maximal level of refinement Lmax = 3, a
+minimal load increment dû min = 0.1nm, and 𝛽 = 1.0 MPa mm2 [Colour figure can be viewed at wileyonlinelibrary.com]
+
+
+
+
+F I G U R E 5 Single-notched geometry: loading stepsizes and iteration counts for damage update and elasticity solver for a simulation
+with a maximal level of refinement Lmax = 3, loading stepsize bounds dû min = 0.1nm and dû max = 1 μm, and 𝛽 = 1.0 MPa mm2
+
+
+admissible value. Taking a look at the solver iteration counts, we observe that the employed adaptive geometric multigrid
+solver shows small and bounded iterations counts over the whole range of the simulation. Note that the mesh and thereby
+the multigrid hierarchy are adapted with each loading step, and these numbers thus demonstrate a very robust behavior.
+The iteration count for the damage update is one when no damage formation occurs. Once the damage process initializes
+due to a sufficiently high mechanical energy, the iteration count remains in the order of 1000 and can actually drop due
+to smaller loading stepsizes.
+    In order to quantify the influence of the chosen numerical simulation parameters on the load at which the damage
+propagation and thereby the sharp force drop occurs, we present the results for adaptive and full mesh refinement at
+different values of 𝜖 load and dû min in Figure 6A. Further reducing the minimal loading stepsize dû min by two orders of mag-
+nitude from 0.1 to 0.001 nm has only an influence of approximately 0.01μm, which is a 0.12‰ relative difference. Using a
+fully refined mesh instead of an adaptive refinement strategy has only an influence of approx. 0.1μm, that is, 1.4‰ relative
+difference. Increasing the required accuracy 𝜖 load by an order of magnitude from 10−2 to 10−3 has only an influence of
+                                                                                                                                             10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                      3119
+
+
+
+
+           (A)                                                           (B)
+
+F I G U R E 6 Single-notched geometry: influence study using Lmax = 3 and 𝛽 = 1.0 MPa mm2 . A, In uence of mesh adaptivity 𝜖 load ,
+dû min . B, Influence of loading stepsize (𝜖 load = 10−2 )
+
+
+approx. 0.4μm which is 4.9‰ relative difference. We thereby conclude that the chosen parameters are sufficiently strict
+in order to produce reliable results, and we now turn our focus to the convergence properties with respect to mesh size,
+loading stepsize and the regularization parameter.
+    The influence of the loading stepsize is illustrated in Figure 6B. In this study, the uniform load stepping using
+the range dû = 10μm, … , 0.01μm is compared to an adaptive load stepping with a maximal load step dû max = 1 μm
+and minimal admissible load increments of size dû min = 0.1 μm, … , 10−6 μm. For the coarse loading increments, the
+force-displacement curves differ significantly, and we thereby conclude that the stepsize has to be chosen sufficiently
+small. Comparing moderate loading stepsizes, there is not much difference between uniform and adaptive simulations
+of the same minimal stepsize. Therefore, adaptive stepping can be used in order to save execution time. Looking at the
+curves for very fine adaptive loading stepsizes, a convergence behavior is observed and there can hardly be seen a differ-
+ence for the stepsizes below dû min = 10−4 μm = 0.1nm. In conclusion, we see that very fine load increments are required
+for the damage propagation phase in order to accurately capture the sharp force drop, but adaptive stepping is admissible
+for computational savings. We thus adopt the setup dû min = 0.1nm, dû max = 1 μm and adaptive load increments as a
+sufficient choice.
+    We now turn to the influence of mesh refinement. In Figure 7, the damage function is shown for selected loading
+steps, comparing the adaptively and fully refined meshing strategies. It can be nicely observed that the mesh adaptivity
+algorithm is capable of following the crack tip. More precisely, a fine resolution is induced already before the crack actually
+arrives at a certain position, and this allows for a high accuracy at the point of interest. We also see qualitatively the same
+picture for the mesh regions with the maximal refinement in both strategies. In the adaptive case, the coarsening of the
+mesh after damage formation leads to a coarser resolution after propagation. Of course, we could produce more similar
+pictures by simply not coarsening after damaging. However, our main objective is the force-displacement curve, and it
+will turn out that the coarsening does not influence the computed results.
+    In Figure 8, we compare the influence of using an adaptively refined mesh instead of full refinement. Curves of the
+same color correspond to the same maximal spatial refinement level, that is, in the highly resolved regions, the ele-
+ment size is equal, while the element size is significantly larger in other parts of the domain for adaptive meshing. It
+can be observed that full refinement and adaptive mesh handling produce very similar curves for all refinement levels.
+Typically, the curves of full refinement are slightly more to the left due to the slightly better accuracy. For the adaptive
+refinement, a convergence behavior is observed for the curves. We therefore conclude that for this example and using
+𝛽 = 1 MPa mm2 , the choice Lmax = 3 or below is sufficient for a high accuracy of the simulation. In particular, adaptive
+meshing is admissible.
+    The employed strategy in Algorithm 2 implements an operator split. The equation for the displacements and the
+equation for the damage function are solved one after the other in every loadstep. Once the change in the damage func-
+tion is small enough, we simply proceed to the next loadstep without rechecking that both parts, displacements and
+damage, have converged simultaneously. In order to quantify the amount of additional error introduced by this operator
+splitting, we also compute the force-displacement curves with an additional outer loop that checks for a simultaneous
+                                                                                                                                         10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3120                                                                                                                  VOGEL and JUNKER
+
+
+
+
+F I G U R E 7 Single-notched geometry: adaptive (top) and fully (bottom) refined solution for the damage function f for Lmax = 3,
+dû min = 0.1nm, dû max = 1 μm, 𝛽 = 1.0 MPa mm2 for various load steps [Colour figure can be viewed at wileyonlinelibrary.com]
+
+                                                                                                                     ̂ û
+reduction of the error in both equations. To this end, we iteratively compute the solution for displacement uu+d          and dam-
+      ̂ û                                                                                           ̂ û     ̂ û            ̂ û
+age f u+d
+           while fixing the other solution until they both differ from the previous iterate as ||f k u+d
+                                                                                                          − f k-1 ||max + ||uku+d
+                                                                                                              u+d
+                                                                                                                                   −
+  ̂ û
+uk-1 ||max < 𝜖cpl (k ≥ 2). This requires at least two solutions of the system. Once the coupled system has been solved to
+  u+d
+                                                                                       ̂ û
+this accuracy, we still require the change in damage to be below the threshold ||f u+d      − f û ||max < 𝜖load for the control of
+the loadstep size. For the mesh adaptive case, we also adapt the mesh within the iteration loop for the iterative coupling.
+The results of the study are presented in Figure 9. The force-displacement curves are very close in all cases. A zoom has
+been added to Figure 9A to visualize the difference that is at most 0.5 μm or 0.6%. The plotted marks indicate one loadstep
+computation for the different runs. While the force drop is resolved by a lot of load steps in the case of the operator split,
+the drop is resolved by one loadstep in the iterative coupling strategy. To this end, the iteration count within one loadstep
+increases drastically at the force drop as can be observed in Figure 9B. The loading stepsize is decreased similarly in most
+cases as shown in Figure 9C, except for a tightened loading accuracy that leads to an earlier decrease of the stepsize. In
+general, the operator split only introduces a small error. Compared to the workload of the iterative coupling, it is either
+iterating within a loadstep or iterating over several loadsteps to resolve the force drop.
+                                                                                                                                        10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                 3121
+
+
+
+
+F I G U R E 8 Single-notched geometry: comparison of full and adaptive mesh refinements for a simulation with dû min = 0.1nm,
+dû max = 1 μm, 𝛽 = 1.0 MPa mm2
+
+
+    We are now in the position to own a reliable, highly accurate simulation tool for the force-displacement curve of the
+chosen brittle damage model. Using sufficiently fine load stepping and mesh refinement, we can accurately compute the
+position of the force drop in a tensile test. The sensitivity with respect to the numerical parameter has been confirmed to
+be below reasonable bounds. The remaining unstudied parameters are the dissipation parameter r, which we keep fixed
+in this contribution, and the regularization parameter 𝛽 of the brittle material model. In Figure 10A, we have computed
+the force-displacement curves for different choices of 𝛽 and different mesh refinement levels. For large regularization
+values, 𝛽 = 10, 1 MPa mm2 , a convergence of the curves is observed. For 𝛽 = 0.1 MPa mm2 , level 3 is still not sufficient
+and convergence is observed starting at level 4. For 𝛽 = 0.01, 0.001 MPa mm2 , a convergence of the curve is not observed.
+Taking a look at the corresponding damage functions at crack initialization depicted in Figure 10B, this is in agreement
+with the observation that the crack width has to be resolved by more than one element. With decreasing regularization
+parameter 𝛽, the gradient of the damage function is less penalized and therefore the crack width decreases. Thus, more
+refined meshes have to be used for smaller regularization parameters. For the non-converging cases, the crack is resolved
+only by a single line of elements which is obviously too coarse.
+    Figure 11 presents a study for the influence of the specimen size. The size of the notch is kept constant, but three
+different meshes (Figure 11A) with different length are computed. An equal displacement on one side is enforced for all
+three simulations. The resulting strain is therefore smaller for larger specimen size. Consequently, the damage occurs at
+a later displacement as can be observed in Figure 11B.
+    Finally, we take a look at the runtime behavior for our simulations in Figure 12. All simulations have been performed
+on a laptop with a 2.9 GHz Intel Core i7-7820HQ processor, 16GB main memory and single core execution. The implemen-
+tation has been realized within the finite element simulation framework ug4.39 Coarse grid meshing employs ProMesh,40
+visualization is by Paraview.41
+    Since the simulation allows for loading steps in different orders of magnitude, using adaptive load stepping clearly
+offers a large potential for computational savings. This is shown in Figure 12A, where the runtimes for uniform load step-
+sizes quickly grow to the order of a couple of hours already at a coarse loading resolution of 10 nm. An even smaller stepsize
+is thus prevented for uniform simulations. However, using adaptive resolution of the load increments, the simulations
+can be carried out with runtimes below 100 seconds to achieve a very high accuracy at the desired spots while taking
+larger steps where permitted.
+                                                                                                                                                10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3122                                                                                                                         VOGEL and JUNKER
+
+
+
+
+                     (A)
+
+
+
+
+             (B)                                                                         (C)
+
+FIGURE 9           Single-notched geometry: Influence study for the iterative coupling using Lmax = 3, 𝛽 = 1.0 MPa mm2 , dû max = 1 μm,
+dû min = 0.1nm, and 𝜖 load = 10−2 if not otherwise stated. A, Force-displacement curves comparing iterative coupling and operator split. B,
+Iteration counts for the iterative coupling. C, Loadstep size
+
+
+
+    One benefit of using adaptive mesh refinement is a substantial saving in memory requirement. This allows us to run
+simulations with a locally high resolution for adaptive simulations, whereas fully refined meshes with the same resolution
+are prevented due to memory constraints. A second potential benefit for adaptive simulations is runtime savings. However,
+the gain due to smaller element numbers has to be compared to the mesh adaption overhead. In Figure 12B (left), we show
+the runtime for several components of our simulation. Presented is the overall simulation time for adaptively and fully
+refined computations. For the adaptive meshing, we also list the accumulated fraction of time spent for mesh adaption
+and for the amount of the simulation time consumed for the computation of the loadsteps. Each step further subdivides
+into the time spend for the elasticity solver and the damage solver. Since the damage solver requires a reinitialization of
+the discrete Laplacian, we also list the timings for the matrix setup. All times are accumulated numbers for the individual
+parts over a whole simulation run. For the fully refined case, we report overall simulation time and the fractions spend
+for solving elasticity and damage, while the Laplacian setup cost is neglectable due to the missing mesh adaption. It can
+be observed that for small mesh resolutions with runtimes in the order of seconds, the full refinement is comparable in
+runtime due to the grid adaption overhead. Also note that the damage solver requires a new neighbor search only for
+the adaptive case. Nevertheless, the picture changes at around refinement level 3, where the adaptive run is significantly
+faster than full refinement. At refinement level 5, an adaptive simulation is still in the order of minutes while the full
+                                                                                                                                              10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                       3123
+
+
+
+
+             (A)
+
+
+
+
+              (B)
+
+F I G U R E 10      Single-notched geometry: comparison of different regularization parameter 𝛽 (in MPa mm2 ) using adaptive mesh
+refinement, dû min = 0.1nm, dû max = 1 μm. A, Force-displacement curves under mesh refinement for different values of 𝛽. B, Damage
+function f (zoom at notch) for Lmax = 3 (top) and 4 (bottom) [Colour figure can be viewed at wileyonlinelibrary.com]
+                                                                                                                               10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3124                                                                                                       VOGEL and JUNKER
+
+
+                                                                                             F I G U R E 11
+                                                                                             Single-notched geometry:
+                                                                                             comparison of specimens with
+                                                                                             different length. A, Specimens
+                                                                                             with different lengths:
+                                                                                             h = 880 μm (top), h = 110 μm
+                                                                                             (middle), h = 30 μm (bottom).
+                                                                                             B, Force-displacement for
+(A)                                                                                          regularization parameter
+                                                                                             𝛽 = 1.0 MPa mm2 , adaptive
+                                                                                             mesh refinement,
+                                                                                             dû min = 0.1nm, dû max = 1 μm
+
+
+
+
+(B)
+
+
+
+refined simulation takes several hours. The increase in runtime can be mainly attributed to a growth in iteration numbers
+for the damage update as reported in Figure 12B (right). The employed multigrid solver for the elasticity problem remains
+quasi-constant under mesh refinement. For both solvers, we show the average of the required number of iterations over
+a whole simulation run as well as the maximum.
+    The runtime behavior with respect to the regularization parameter 𝛽 is shown in Figure 12C (left). Both, adaptive
+and full mesh refinement show similar runtime behavior for the whole range of the regularization parameters except
+for the case 𝛽 = 10 MPa mm2 , where the damage is widely smeared out and runtimes explode for refinement level 5. In
+Figure 12C (right), we report the average iteration count for the damage solver under mesh refinement. In all cases, the
+iteration count increases substantially with mesh refinement due to the increased number of unknowns and the chosen
+Jacobi-like solver. However, due to the fast excution of a single iterate, the runtime for the damage update is comparable
+to elasticity solver even on mesh level 5.
+
+
+4.2       Double-notched geometry
+
+As a second example, we employ a double-notched specimen as depicted in Figure 13A and again the simulation parame-
+ters as shown in Table 1. A similar test has already been presented in Reference 32. The coarse grid meshing (Figure 13B)
+is already performed with a slightly higher resolution at the notches.
+    One particularity arises for the curved boundary at the notches, which is an ideal half-circle. With finer full
+(Figure 13C) or adaptive (Figure 13D) meshing, the circle can be better resolved, and we therefore project newly-created
+mesh nodes onto the boundary description. In order to prevent very distorted meshes by this projection, we also move
+the nodes in a neighborhood of the notch boundary during mesh refinement. Also note that, using the boundary projec-
+tion, a slightly different problem is solved numerically for every mesh refinement level since a finer and finer polygonal
+approximation is used. For this reason, we keep the mesh refinement at the highest level close to the notch boundary for
+the whole simulation run for adaptive simulations as well.
+    In Figure 14, we show the simulated results of a tensile test up to 200μm displacement. The damage evolution starts
+at the notches and propagates through the specimen until only very few finite elements join the three separated parts of
+the original body. Since the few elements show almost no stiffness against bending, this state has thus some similarities
+                                                                                                      avg
+known for plastic joints. For this example, we have chosen a slightly smaller refinement factor 𝜃refine = 0.8 such that
+                                                                                                            avg
+already some more elements even below the average are refined while we keep the coarsening factor 𝜃coarsen = 0.1 as
+before. In Figure 15, we compare the damage propagation for full and adaptive meshing strategies and see that they are
+in a good qualitative agreement.
+                                                                                                                                              10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                       3125
+
+
+
+
+              (A)
+
+
+
+
+              (B)
+
+
+
+
+              (C)
+
+F I G U R E 12     Single-notched geometry: runtimes (excluding output of solution to hard disc and statistic computations) and iteration
+counts for the damage and elasticity solver. A, Comparison of adaptive and uniform loading stepsizes for Lmax = 3 and 𝛽 = 1.0 MPa mm2 . B,
+Runtimes and iteration counts under mesh refinement for 𝛽 = 1.0 MPa mm2 and dû min = 0.1nm. C, Simulation runtimes and iteration
+counts for varying 𝛽 using Lmax = 3 and dû min = 0.1nm
+
+
+
+
+    The comparison of the force-displacement curves for full and adaptive refinement is shown in Figure 16. We can
+again observe a similar force drop between the two runs. Figure 17 shows the adaptive loading stepsizes and the solver
+iteration counts. For this example, the damage propagation is not in a single process but happens in certain steps. The
+loading increment has thus to be reduced adaptively a couple of times, but can be increased to large values in between.
+The iteration counts for the damage solver as well as the elasticity solver are bounded for the whole simulation range
+with smaller iteration numbers at small loading stepsizes.
+    Looking at the convergence for mesh refinement in Figure 18A, we find all curves to be close to each other. The
+comparison for different regularization parameters in Figure 18B again shows the large influence of 𝛽 for the crack
+                                                                                                                                          10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3126                                                                                                                   VOGEL and JUNKER
+
+
+                                                                                  F I G U R E 13      Double-notched geometry: A,
+                                                                                  Domain specification in mm and boundary conditions.
+                                                                                  B, Coarse finite element mesh. C, Full refinement for
+                                                                                  level 2. D, Adaptive refinement up to level 2 during
+                                                                                  damage propagation [Colour figure can be viewed at
+                                                                                  wileyonlinelibrary.com]
+
+
+
+
+(A)                      (B)               (C)               (D)
+
+
+
+
+F I G U R E 14      Double-notched geometry: displacement (100 times exaggerated) and damage function f (damaged parts in red) at
+different loading steps for a maximal level of refinement Lmax = 3, a minimal load increment dû min = 0.1nm, and 𝛽 = 1.0 MPa mm2 .
+Damage values below 10−3 are considered as fully damaged and excluded from the visualization
+
+
+
+
+loading. For all 𝛽 values, a convergence can be observed in this example, which is in agreement with a visual inspection in
+Figure 18C.
+    In Figure 19, we investigate the sensitivity of our numerical method with respect to symmetries. However, a symmetric
+damage propagation is observed for an entirely symmetric problem description and meshing, changing a single node of
+the boundary description or in the interior of the mesh results in a nonsymmetric damage evolution. This is in accordance
+to the observation that the symmetric solution is an instable path and the nonsymmetric solution will be triggered in a
+real-world specimen due to imperfections and local fluctuations.
+    In Figure 20, we present the behavior of the model employing arc length control. For this study, an implementation
+of the model in the finite element code FEAP42 has been used without adaptive load stepping and mesh adaptation. The
+curve length is resolved using two different step counts such that the arc length increment differs by a factor of two. The
+results show that there exist no remarkable differences in the curves and the structural toughness for the different arc
+length increments. Furthermore, they reveal that an asymmetric distribution for the damage function is obtained even
+for a symmetric finite element mesh. Although damage initialization is detected at both notches, only at the upper notch,
+a distinct crack evolves. This behavior is accompanied by a snapback in the force-displacement diagram (Figure 20). After
+reaching this maximum value of the reaction force, a rapid reduction both in force and displacement can be observed
+which is almost parallel to the ascending loading. The force-displacement diagram shows that the dissipated energy,
+which equals the area of the hysteresis, is much smaller than the apparent dissipated energy in our previous results, in
+which the dissipated energy equals approximately the area of a triangle. This is due to the displacement-controlled bound-
+ary conditions. This suggests employing arc length control with the presented adaptive meshing and loading strategies in
+future works.
+                                                                                                                                          10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                   3127
+
+
+
+
+F I G U R E 15 Double-notched
+geometry: adaptive (top) and fully
+(bottom) refined solution for the
+damage function f for Lmax = 3,
+dû min = 0.1nm, dû max = 1 μm,
+𝛽 = 1.0 MPa mm2 for various load
+steps
+
+
+
+
+F I G U R E 16 Double-notched geometry: force-displacement curve for a simulation with a maximal level of refinement Lmax = 3, a
+minimal load increment dû min = 0.1nm, and 𝛽 = 1.0 MPa mm2 [Colour figure can be viewed at wileyonlinelibrary.com]
+                                                                                                                                            10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3128                                                                                                                 VOGEL and JUNKER
+
+
+
+
+F I G U R E 17 Double-notched geometry: loading stepsizes and iteration counts for damage update and elasticity solver for a simulation
+with a maximal level of refinement Lmax = 3, loading stepsize bounds dû min = 0.1nm and dû max = 1 μm, and 𝛽 = 1.0 MPa mm2
+
+
+
+
+       (A)                                              (B)
+                                                                                                         F I G U R E 18
+                                                                                                         Double-notched geometry:
+                                                                                                         force-displacement curves for
+                                                                                                         simulations with loading
+                                                                                                         stepsize bounds
+                                                                                                         dû min = 0.1nm and
+                                                                                                         dû max = 1 μm. All 𝛽 are stated
+                                                                                                         in MPa mm2 . A, Comparison
+                                                                                                         of full and adaptive mesh
+                                                                                                         refinement using a
+                                                                                                         regularization
+                                                                                                         𝛽 = 1.0 MPa mm2 . B,
+                                                                                                         Comparison of different
+                                                                                                         regularization parameters 𝛽
+                                                                                                         under adaptive mesh
+                                                                                                         refinement. C, Damage
+                                                                                                         function f at the damage
+                                                                                                         initialization (zoom at right
+                                                                                                         notch) for full refinement for
+                                                                                                         Lmax = 3 (top), and adaptive
+        (C)                                                                                              refinement with Lmax = 3
+                                                                                                         (middle) and 4 (bottom)
+                                                                                                                                10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                         3129
+
+
+F I G U R E 19 Double-notched geometry for Lmax = 3 and
+𝛽 = 1.0 MPa mm2 : A, A symmetric damage propagation is computed
+for a symmetric meshing, B, changing the boundary description to a
+non-symmetric problem by slightly moving a single boundary node of
+the top notch results in a non-symmetric damage propagation, and C,
+using a symmetric boundary mesh but changing one interior mesh
+node produces a non-symmetric damage pattern [Colour figure can be
+viewed at wileyonlinelibrary.com]
+
+
+
+
+                                                                      (A)              (B)                 (C)
+
+
+F I G U R E 20
+Double-notched geometry:
+Results employing arc length
+control. Asymmetric evolution
+of damage is observed due to
+bifurcation of the solution with,
+A, 10 000 and, B, 20 000 load
+steps to resolve the same curve
+length. C, Force-displacement
+curves comparing both load step
+counts showing snapback effects
+[Colour figure can be viewed at
+wileyonlinelibrary.com]
+
+
+
+
+                                    (A)                 (B)                    (C)
+
+
+
+5        CO N C LUSION S AN D OU T LOOK
+
+We presented a sophisticated study for the convergence properties of a gradient-enhanced brittle material model employ-
+ing adaptive numerical strategies for load stepping and mesh handling, and analyzed the influence of the numerical
+parameters on the solution accuracy. We found that adaptive strategies for load stepping and mesh refinement are advan-
+tageous in terms of runtime and memory consumption while maintaining the desired degree of accuracy compared to
+uniformly resolved approaches. This allows us to perform highly accurate simulations, which accurately resolve the force
+drop in a tensile test, and we thus have a numerical tool at hand, which efficiently and accurately computes the crack
+load for a given geometry and chosen model parameters. Therefore, we were able to study the influence of the regular-
+ization parameter on the solution accuracy without interference with other numerical artifacts and found a very large
+dependency of the displacement at which crack initiation occurs on the regularization parameter.
+    The present contribution opens the door for a couple of subsequent works: first, we want to compare our numerical
+predictivity to experiments. To this end, the dissipation parameter r has to be calibrated for a prescribed regularization
+parameter 𝛽 and should be predictive for several geometry types. Second, an a priori fixed maximum level of refinement
+is not purposeful. Instead, the local mesh resolution should be adapted based on the chosen regularization parameter. A
+good heuristic for the fracture width may allow for a mesh refinement criterion solely based on 𝛽 and the local mechanical
+energy, and thereby render the parameter Lmax obsolete. This is part of our ongoing work. Third, the imposed loading
+step bounds dû min and dû max require an educated a priori guess. Ideally, the loading stepsize should solely depend on the
+required accuracy and therefore only be controlled by the 𝜀load parameter or similar error measures. Fourth, the iteration
+counts for the damage update increase quite drastically under mesh refinement. This is still acceptable due to the very
+short execution time for one single iterate. However, it must be carefully taken into account for very large geometries or
+                                                                                                                                                     10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3130                                                                                                                          VOGEL and JUNKER
+
+
+
+high resolutions. Avoiding a Jacobi-like update scheme in favor of more elaborate iterative methods seems reasonable
+here. Alternatively, the operator split may be avoided using a monolithic simulation approach, still allowing for adaptivity
+in loading and mesh resolution. Finally, the proposed mesh can be parallelized for a further speedup of computation and
+to allow for simulations of large and complicated geometries.
+
+ORCID
+Andreas Vogel         https://orcid.org/0000-0002-7429-0667
+Philipp Junker         https://orcid.org/0000-0002-8572-6841
+
+REFERENCES
+ 1.    Hertzberg RW. Deformation and Fracture Mechanics of Engineering Materials. New York: Wiley; 1989.
+ 2.    Anderson TL. Fracture Mechanics: Fundamentals and Applications. Boca Raton, FL: CRC Press; 2017.
+ 3.    Gross D, Seelig T. Fracture Mechanics: With an Introduction to Micromechanics. Cham, Switzerland: Springer; 2017.
+ 4.    Schmidt B, Fraternali F, Ortiz M. Eigenfracture: an eigendeformation approach to variational fracture. Multiscale Model Sim.
+       2009;7(3):1237-1266.
+ 5.    Pandolfi A, Ortiz M. An eigenerosion approach to brittle fracture. Int J Numer Methods Eng. 2012;92(8):694-714.
+ 6.    Miehe C, Welschinger F, Hofacker M. Thermodynamically consistent phase-field models of fracture: variational principles and multi-field
+       FE implementations. Int J Numer Methods Eng. 2010;83(10):1273-1311.
+ 7.    Miehe C, Hofacker M, Welschinger F. A phase field model for rate-independent crack propagation: Robust algorithmic implementation
+       based on operator splits. Comput Methods Appl Mech Eng. 2010;199(45):2765-2778.
+ 8.    Strobl M, Seelig T. A novel treatment of crack boundary conditions in phase field models of fracture. PAMM. 2015;15(1):155-156.
+ 9.    Strobl M, Seelig T. On constitutive assumptions in phase field approaches to brittle fracture. Procedia Struct Integrity. 2016;2:3705-3712.
+10.    Lemaitre J, Desmorat R. Engineering Damage Mechanics: Ductile, Creep, Fatigue and Brittle Failures. Berlin, Heidelberg, Germany:
+       Springer-Verlag; 2005.
+11.    Wriggers P, Moftah SO. Mesoscale models for concrete: Homogenisation and damage behaviour. Finite Elem Anal Des. 2006;42(7):623-636.
+12.    Matzenmiller ALJTR, Lubliner J, Taylor RL. A constitutive model for anisotropic damage in fiber-composites. Mech Mater.
+       1995;20(2):125-152.
+13.    Menzel A, Ekh M, Runesson K, Steinmann P. A framework for multiplicative elastoplasticity with kinematic hardening coupled to
+       anisotropic damage. Int J Plast. 2005;21(3):397-434.
+14.    Altenbach H, Huang C, Naumenko K. Creep-damage predictions in thin-walled structures by use of isotropic and anisotropic damage
+       models. J Strain Anal Eng Des. 2002;37(3):265-275.
+15.    Naumenko K, Altenbach H, Kutschke A. A combined model for hardening, softening, and damage processes in advanced heat resistant
+       steels at elevated temperature. Int J Damage Mech. 2011;20(4):578-597.
+16.    Brepols T, Wulfinghoff S, Reese S. Gradient-extended two-surface damage-plasticity: micromorphic formulation and numerical aspects.
+       Int J Plast. 2017;97:64-106.
+17.    Brepols T, Wulfinghoff S, Reese S. A micromorphic damage-plasticity model to counteract mesh dependence in finite element simulations
+       involving material softening. Multiscale Modeling of Heterogeneous Structures. Cham, Switzerland: Springer; 2018:235-255.
+18.    Bazant Z, Pijaudier-Cabot G, Pan J. Ductility, snapback, size effect, and redistribution in softening beams or frames. J Struct Eng-ASCE.
+       1987;113:12.
+19.    Bažant ZP, Jirásek M. Nonlocal integral formulations of plasticity and damage: survey of progress. J Eng Mech. 2002;128(11):1119-1149.
+20.    Peerlings RHJ, Geers MGD, de Borst R, Brekelmans WAM. A critical comparison of nonlocal and gradient-enhanced softening continua.
+       Int J Solids Struct. 2001;38(44):7723-7746.
+21.    Faria R, Oliver J, Cervera M. A strain-based plastic viscous-damage model for massive concrete structures. Int J Solids Struct.
+       1998;35(14):1533-1558.
+22.    Needleman A. Material rate dependence and mesh sensitivity in localization problems. Comput Methods Appl Mech Eng. 1988;67:69-85.
+23.    Suffis A, Ton A, Lubrecht A, Combescure A. Damage model with delay effect: analytical and numerical studies of the evolution of the
+       characteristic damage length. Int J Solids Struct. 2003;40(13-14):3463-3476.
+24.    Forest S, Lorentz E. Localization phenomena and regularization methods. In: Besson J, ed, Local approach to fracture, Paris: Presses des
+       Mines; vol 1. 2004:311-371.
+25.    Junker P, Schwarz S, Makowski J, Hackl K. A relaxation-based approach to damage modeling. Contin Mech Thermodyn. 2017;29:291-310.
+26.    Langenfeld K, Junker P, Mosler J. Quasi-brittle damage modeling based on incremental energy relaxation combined with a viscous-type
+       regularization. Continuum Mechanics and Thermodynamics; 2018:1-20.
+27.    de Borst R. Some recent issues in computational failure mechanics. Int J Numer Methods Eng. 2001;52(1-2):63-95.
+28.    Dimitrijevic B, Hackl K. A method for gradient enhancement of continuum damage models. Tech Mech. 2008;28(1):43-52.
+29.    Junker P, Hackl K. A variational growth approach to topology optimization. Struct Multidiscip Optim. 2015;52(2):293-304.
+30.    Sigmund O, Maute K. Topology optimization approaches. Struct Multidiscip Optim. 2013;48(6):1031-1055.
+31.    Labergere C, Rassineux A, Saanouni K. Numerical simulation of continuous damage and fracture in metal-forming processes with 2d
+       mesh adaptive methodology. Finite Elem Anal Des. 2014;82:46-61.
+                                                                                                                                               10970207, 2020, 14, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/nme.6349 by Technische Informationsbibliot, Wiley Online Library on [23/08/2023]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+VOGEL and JUNKER                                                                                                                        3131
+
+
+
+32. Junker P, Schwarz S, Dustin DR, Hackl K. A fast and robust numerical treatment of a gradient-enhanced model for brittle damage. Int
+    J Multiscale Comput Eng. 2019;17(2):151-180.
+33. Coirier WJ. An Adaptively-Refined, Cartesian, Cell-Based Scheme for the Euler and Navier-Stokes Equations [Ph.D. thesis]. The University
+    of Michigan; also published as NASA TM 106754; 1994.
+34. Sadat H, Prax C. Application of the diffuse approximation for solving fluid flow and heat transfer problems. Int J Heat Mass Transf .
+    1996;39(1):214-218.
+35. Hackbusch W. Multi-Grid Methods and Applications. Vol 4. Berlin, Heidelberg and New York: Springer; 1985.
+36. Reiter S, Vogel A, Heppner I, Rupp M, Wittum G. A massively parallel geometric multigrid solver on hierarchically distributed grids.
+    Comput Vis Sci. 2013;16(4):151-164.
+37. Bramble JH, Pasciak JE, Wang JP, Xu J. Convergence estimates for multigrid algorithms without regularity assumptions. Math Comput.
+    1991;57(195):23-45.
+38. Bastian P. Parallele Adaptive Mehrgitterverfahren. Stuttgart, Germany: Teubner; 1996.
+39. Vogel A, Reiter S, Rupp M, Nägel A, Wittum G. UG 4: a novel flexible software system for simulating PDE based models on high
+    performance computers. Comput Vis Sci. 2013;16(4):165-179.
+40. Promesh. www.promesh3d.com.
+41. Paraview. www.paraview.org.
+42. Finite element analysis program. http://projects.ce.berkeley.edu/feap/.
+
+
+
+SUPPORTING INFORMATION
+Additional supporting information may be found online in the Supporting Information section at the end of this article.
+
+
+
+   How to cite this article: Vogel A, Junker P. Adaptive and highly accurate numerical treatment for a
+   gradient-enhanced brittle damage model. Int J Numer Methods Eng. 2020;121:3108–3131.
+   https://doi.org/10.1002/nme.6349
+

@@ -1,0 +1,1148 @@
+                                               Finite Elements in Analysis and Design 255 (2026) 104489
+
+
+                                                        Contents lists available at ScienceDirect
+
+
+                                           Finite Elements in Analysis & Design
+                                                journal homepage: www.elsevier.com/locate/finel
+
+
+
+
+A fast and robust third medium contact approach using the
+neighbored element method
+                                  ∗
+Max von Zabiensky                  , Dustin R. Jantos , Philipp Junker
+Leibniz University Hannover, Institute of Continuum Mechanics, Hannover, Germany
+
+
+
+ARTICLE               INFO                            ABSTRACT
+
+Keywords:                                             In several engineering applications, self-contact is a major effect or even desired feature,
+Friction-less contact                                 e.g., energy absorption in severe structural deformations, gripper in (soft-)robotics, and the
+Finite deformations                                   optimization of those. Usual contact approaches require extensive calculation effort, but a fast
+Finite element method
+                                                      and robust simulation approach could lead to remarkable improvements in product design.
+Neighbored element method
+                                                      The third medium contact is a very promising approach, which can fulfill the requirements
+Hyperelasticity
+                                                      mentioned above. This method was also already applied in topology optimization approaches.
+                                                      However, the most concurrent regularization approaches require at least quadratic shape
+                                                      functions for hexahedron finite elements and at least cubic shape functions for tetrahedrons.
+                                                      In recent works, a new regularization technique was developed: herein, the gradients of
+                                                      deformation measures are computed by additional nodal degrees of freedom in the finite
+                                                      elements, i.e., as additional fields of unknowns. This is accompanied by a reduction of the order
+                                                      of the shape function. In this work, we derive a special discretization of the additional unknowns
+                                                      which enables self-contact based on the neighbored element method. This approach leads to a
+                                                      fast algorithm for the computation of the regularized set of partial differential equations: the
+                                                      displacements are the only nodal degrees of freedom and can be computed with linear finite
+                                                      element shape functions while the additional unknowns are discretized in the quadrature points
+                                                      of the mesh and solved in a staggered manner. The results are critically analyzed and illustrated
+                                                      for several two-dimensional problems.
+
+
+
+
+1. Introduction
+
+    The modeling of contact mechanics goes a long way in the field of finite element methods, since the very first formulation in [1].
+Until today, the applications of advanced contact formulations attain significant importance in the real world, see [2]. Based on the
+applied contact method, the complexity of the numerical treatment may vary strongly. The simulation of a contact problem goes
+along with local and global search algorithms, i.e., [3,4], as well as a specific handling of variational inequalities, due to the nature
+of the formulation of these problems, i.e., [5,6]. One possible way to reduce the computation effort for the detection of potential
+contact zones is to preassign the contact regions, like node-to-node contact, node-to-segment contact, or the mortar method. For
+more details and an overview on these methods, interested readers are referred to [7,8]. To handle the arising inequalities, many
+formulations where investigated over decades, like penalty method, barrier functions, or augmented Lagrangian techniques. For
+further details, see [7,9,10]. In [11], these approaches have also been extended to finite deformations. Even a meshfree approach,
+based on a combination of the third medium contact with the isogeometric meshfree coupling, was developed in [12]. One famous
+contact formulation for large deformations is developed in [13], whereby the contact area is discretized by nodes and segments.
+
+
+  ∗ Corresponding author.
+     E-mail address: von-zabiensky@ikm.uni-hannover.de (M. von Zabiensky).
+
+https://doi.org/10.1016/j.finel.2025.104489
+Received 31 July 2025; Received in revised form 3 November 2025; Accepted 26 November 2025
+Available online 26 January 2026
+0168-874X/© 2026 The Authors.          Published by Elsevier B.V. This is an open access article under the CC BY-NC-ND license
+(http://creativecommons.org/licenses/by-nc-nd/4.0/).
+M. von Zabiensky et al.                                                                     Finite Elements in Analysis & Design 255 (2026) 104489
+
+The connection between these nodes and segments is based on a master–slave condition and is applied by a single pass algorithm.
+This approach was further developed by [14,15], which introduced a two-pass algorithm to fulfill the 2D contact patch test. Several
+developments followed this idea and applied further discretization approaches. Many of them refer to the mortar method, which
+originated from the field of domain decomposition methods, see [16–18]. The idea of the domain decomposition was extended
+in [19], by defining patches between the contact segments, which results from a triangulation of the intermediate domain. Within the
+patches the authors embedded a displacement field of the same order as the contacting bodies. Therewith, the Lagrange multipliers
+and strain-like measurements are defined along the whole domain, rather on the contact segments only. Founding on this approach
+in [19], the authors enabled the computation of various contact problems, shown in their following work [20,21].
+    Out of these approaches there is one rather simple scheme, which was first introduced in [22], where anisotropic modeling
+was used in the contact area to avoid inequality constraints. This so called third medium contact method (TMC) is based on the
+idea, that the contact is implemented by a filling mesh between the solid bodies, i.e., discretizing void regions between potential
+contact faces. It is worth mention that the TMC method and the contact domain method in [19] seem to share significant similarities
+since both introduce a finite discretization for the intermediate domain by numerical elements, respectively patches. However, it
+must be emphasized that there is a major difference due to discretization: in case of the contact domain method, the contact area
+is pre-described on each body and than connected with a single layer of triangulated patches. In contrast, in the TMC method,
+a volumetric mesh is applied between potential contact areas which allow for more regular meshes even for very large initial
+gaps potentially improving numerical accuracy and stability due to improved mesh quality. In addition, meshing of the overall
+problem can be achieved by usual meshing algorithms by assuming the ‘‘void’’ simply to be a second material phase. Thus, it is not
+necessary to explicitly pre-describe discretized contact points and/or faces, but instead to stabilize highly deformed elements. This
+can be achieved with an additional regularization without introducing a residual stiffness for void elements except for the case of
+contact. This approach was further refined over the last years, see [23–27], whereby the regularization is applied to the gradient
+of the deformation gradient. With these higher gradients, higher deformation modes are included in the theory, and in turn also
+higher-order shape functions within the finite element formulation. An alternative stabilization was achieved in [25], whereby
+the Laplacian of the deformation field was taken into account. As a result, a snap-though problem could be simulated. Further
+regularization approaches were developed: in [28], the polar decomposition of the deformation gradient is used to regularize the
+modeling of pneumatic structures. Moreover, the TMC was used to optimize non-linear thermo-mechanical problems in [29]. Last
+but not least, a friction model was presented in [26], where the TMC follows the crystal plasticity theory.
+    These mentioned applications established the TMC in stabilizing finite element simulations with contact and yet, there is more
+potential. Especially in the field of optimization problems [30], or (soft) robotics [31], is a remarkable need for a stabilization of
+void phases and enabling the simulation of effects like (self-)contact, snapping, or buckling, while the computational costs stay
+moderate. A most recent improvement of the method is given in [32], wherein the regularization of the third medium is based
+on the gradient of the rotation part of the deformation gradient as well as the Jacobian, i.e., volumetric deformation. Therefore, a
+reduced, but very robust implementation was developed, which only takes the relevant modes of the gradient of the deformation
+gradient into account. Further, it was proven that a reduced formulation with finite elements with linear shape functions which are a
+basic concept of the finite discretizations [33], can be applied. However, additional field variables have to be introduced, which are
+treated as additional nodal degrees of freedom. Furthermore, this approach was applied to 3D problems [34] and a stabilization-free
+virtual element method for 2D problems [35].
+    In this work, we pick up on the reformulation of the regularization from [32] to provide a contact simulation in which the
+additional field values of the regularization are solved in a special numerical scheme: we apply the neighbored element method
+(NEM) which is a staggered approach solving the additional degrees of freedom via a (meshfree) finite difference scheme while
+the displacements are the only nodal degrees of freedom in the finite element approach. In this work, we discretize the partial
+differential equations regarding the regularization within the quadrature points of the finite element mesh used to compute the
+displacement field. As a consequence, a remarkable reduction of the computation time can be achieved, likewise to the work
+of [36], while achieving maximum spatial resolution for the additional field variables. All examples in this paper will be solved
+with linear, i.e., first order, shape functions which results in a fast and efficient computation of the TMC. With numerical examples
+and benchmark problems, it will be illustrated how the new solving approach effects the interaction of the solid and void phases.
+    The paper is structured as follows: in Section 2 the variational formulation for the TMC is explained. In Section 3 the novel
+numerical approach via NEM is explained and numerical results are given in Section 4.
+
+
+2. Methodology
+
+2.1. Preliminaries
+
+    For the formulation of the TMC, it is necessary to define a medium as an infill between potential contact zones of the solid
+regions, which we refer to as void phase. This void medium has to be highly compliant, but as soon as the solid phases are about
+to get into contact, it has to get stiffer to act like a barrier and to enable contact forces. Of course, the stiffness of this void phase
+has to be effective enough to prevent penetration and provide a small as possible gap in case of contact, but should also be as
+compliant as possible prior to contact to not impair contact free deformations. Beside this compromise, it should be noted that
+strongly compressed or distorted void elements should not affect the stability of the numerical treatment.
+
+                                                                    2
+M. von Zabiensky et al.                                                                       Finite Elements in Analysis & Design 255 (2026) 104489
+
+2.2. Continuum model
+
+    The kinematic relations have to be formulated first based on the initial configuration. Regarding to the mapping between the
+initial and current configuration, we define the deformation gradient 𝐅 based on the gradient of the deformation field ∇𝐮. From
+this, the Cauchy–Green deformation tensor 𝐂, as well as the Green–Lagrange deformation tensor 𝐄 can be derived:
+                                      1( T       )
+        𝐅 = 𝐈 + ∇𝐮                𝐄=     𝐅 𝐅−𝐈                  𝐂 = 2𝐄 + 𝐈 .                                                    (1)
+                                      2
+    Detailed derivations can be found in [37,38]. To simulate finite deformations of the solid phase, the strain energy is used
+analogously to [32], which is adapted here to the two-dimensional case. This formulation describes a hyperelastic material behavior
+with a split in volumetric and deviatoric terms:
+                  𝐾               𝜇
+        𝛹M (𝐂) =       [ln(𝐽 )]2 + (𝐽 −1 tr(𝐂) − 2) .                                                                                    (2)
+                   2              2
+    The engineering parameters which characterize     √ the material behavior are described by the shear modulus 𝜇 and the compression
+modulus 𝐾. The Jacobian is given by 𝐽 = det( 𝐂) and the trace of the Cauchy–Green deformation tensor is defined by tr(𝐂). In
+general, it is also possible to apply other (inelastic) material models for the solid phase, since the stabilization is integrated only into
+the void phase which will be shown later. However, it is clear that the stabilization requires the computation based on the finite
+deformation theory. For the formulation of the contact problem, the third medium approach according to [32] is used, introducing
+the distortion energy for the two-dimensional case as
+                    𝜇 −1
+        𝛹V (𝐂) = 𝛾      (𝐽 tr(𝐂) − 2) .                                                                                                  (3)
+                     2
+    The parameter 𝛾 scales the magnitude of the energy in comparison to the hyperelastic non-void material phase, i.e., the effective
+stiffness of void material. It must be chosen small enough so that the solid material does not suffer any influence from the third
+medium in non-contact regions. Since the phases of the third medium and the solid material are to be clearly separated in the
+undeformed configuration, the parameter 𝜒 is introduced, which indicates the solid material for 𝜒 = 1 and the void material phase
+for 𝜒 = 0. The total elastic strain energy for the problem body 𝛺 containing the actual structure and the void regions is thus defined
+by
+
+        𝛹 = 𝜒 𝛹M + (1 − 𝜒) 𝛹V    ∀ 𝑿 ∈ 𝛺.                                                                                                      (4)
+
+
+2.3. Formulation of the regularization
+
+    By defining the strain energy of the third medium, the elastic material behavior of the void phase is specified. However, this
+formulation alone is not yet sufficient, since the elements tend to strong distortions at large deformation states, which does not
+entail a stable calculation of finite deformations [23]. For this reason, a regularization for the void material (𝜒 = 0) is necessary,
+which in this work is based on the regularization of the gradient of the rotational and volumetric part of the deformation gradient,
+originally introduced in [32]. Here, only the gradient of the rotational part ∇𝐑 is accounted for. In [32], it has already been shown
+that the regularization due to the deformation gradient can be neglected by using linear shape functions.
+    The calculation of the rotation can be derived from the polar decomposition of the deformation gradient 𝐅 = 𝐑 ⋅ 𝐔. By converting
+this formulation according to the right stretch tensor 𝐔 = 𝐑T ⋅ 𝐅, the rotation angle 𝜑 for the two-dimensional case can be calculated
+using the components of the deformation gradient. The symmetry of the right stretch tensor 𝑈12 = 𝑈21 can be utilized yielding
+                    [           ]
+                      𝐹12 − 𝐹21
+        tan(𝜑(𝐅)) =               .                                                                                                (5)
+                      𝐹11 + 𝐹22
+    Furthermore, it can be shown that the squares of the norms of the gradient of the rotation tensor and the angle of rotation are
+equal ‖∇𝐑‖2 = ‖∇𝜑‖2 , cf. [32].
+    However, the rotational gradient, or more precisely the angle 𝜑, will not to be regularized directly in the proposed method.
+Instead, an additional field variable 𝑝 is introduced, which is subject to regularization and coupled to the rotation angle 𝜑 by means
+of a square error minimization. Such kind of regularization approach was already applied in gradient enhanced damage modeling
+in [39] and topology optimization [40]. For further details regarding the specific formulation of TMC, we refer to [32].
+    For the regularization, the following additional term for the strain energy is introduced:
+                 𝛾
+        𝛹R (𝐅) = [𝛽𝑝 (tan𝜑(𝐅) − 𝑝)2 + 𝛼𝑝 ‖∇𝑝‖2 ] .                                                                                 (6)
+                 2
+    The regularization will only be applied in the void phase. The penalty parameters 𝛽𝑝 and 𝛼𝑝 are intended to control the coupling
+of the variable 𝑝 to the rotation gradient and the potency of the regularization, respectively. To the end, this will achieve a spatial
+smoothing of tan(𝜑(𝐅)).
+    Likewise, the regularization for the Jacobian 𝐽 = det(𝐅) will be implemented as a additional term for the strain energy:
+                𝛾
+        𝛹J (𝐅) = [𝛽𝑞 (𝐽 − 𝑞)2 + 𝛼𝑞 ‖∇𝑞‖2 ] .                                                                                       (7)
+                2
+    Herein, the penalty parameters 𝛽𝑞 and 𝛼𝑞 are controlling the coupling of the field variable 𝑞 to the gradient of the Jacobian.
+Therewith, a spatial smoothing of the volumetric inflation will be achieved. Due to the spatial smoothing, severe distortions are
+
+                                                                     3
+M. von Zabiensky et al.                                                                              Finite Elements in Analysis & Design 255 (2026) 104489
+
+prevented in the void elements which can lead to numerical instabilities. Furthermore, the formulation of the strain energy in
+Eqs. (6) and (7) only adding energy to the system, even if the Jacobian 𝐽 , or the rotation tan(𝜑(𝐅)) take negative values. In addition,
+the reciprocal Jacobian in Eq. (3) ensures an incompressible martial behavior whereby a self-penetration of the void elements is
+prevented.
+    In contrast to the solution in [32], the numerical solution of the resulting differential equations for the solution of 𝑝 and 𝑞 will be
+completely different in this work and is based on its strong form. The differences of the numerical solution schemes are presented
+in detail in Section 3.
+
+2.4. Stationary conditions
+
+    Using the strain energies, see (2), (3), (6) and (7), the Gibbs energy is formulated as
+                  [                                           ]
+        =         𝜒 𝛹M + (1 − 𝜒) 𝛹V + (1 − 𝜒) 𝛹R + (1 − 𝜒) 𝛹J d𝑉 −        𝐛 ⋅ 𝐮 d𝑉 −         𝐭 ⋅ 𝐮 d𝐴 .                                              (8)
+             ∫𝛺                                                       ∫𝛺                ∫𝜕𝛺
+   Here, 𝐛 and 𝐭 denote the body forces and the traction forces on the Neumann boundary of the solid material, respectively.
+Since the strain energies are split into their respective phases by the parameter 𝜒, they can be related to the entire domain 𝛺. The
+governing equations are obtained from the principle of virtual work, i.e.,
+
+         → stat           ⇒           𝛿  = 𝛿𝐮  + 𝛿𝑝  + 𝛿𝑞  = 0            ∀ 𝛿𝐮, 𝛿𝑝, 𝛿𝑞.                                                          (9)
+
+    The stationary condition of the variation of the Gibbs energy according to the displacement 𝐮 reads
+                                          (                                                     )
+                   𝜕𝛹M                         𝜕𝛹V                𝜕𝛹R               𝜕𝛹J
+       𝛿𝐮  = 𝜒        ∶ 𝛿𝐄 d𝑉 + (1 − 𝜒)             ∶ 𝛿𝐄 d𝑉 +        ∶ 𝛿𝐅 d𝑉 +          ∶ 𝛿𝐅 d𝑉 = 0 ∀ 𝛿𝐮 .                                          (10)
+                ∫𝛺 𝜕𝐄                       ∫𝛺 𝜕𝐄              ∫𝛺 𝜕𝐅             ∫𝛺 𝜕𝐅
+   The variation of the Gibbs energy according to the field variable 𝑝 includes only the regularization part (6) of the strain energy
+and yields
+                       [                                               ]
+      𝛿𝑝  = (1 − 𝜒) 𝛾      −𝛽𝑝 (tan𝜑(𝐅) − 𝑝) 𝛿𝑝 d𝑉 +    𝛼𝑝 ∇𝑝 ⋅ ∇𝛿𝑝 d𝑉 = 0 ∀ 𝛿𝑝.                                                (11)
+                         ∫𝛺                           ∫𝛺
+    For purpose of numerical discretization via finite difference scheme within the NEM (c.f. Section 3), we reformulate Eq. (11) to
+its strong form by applying an integration by parts and Gauss’s integral theorem:
+                         [                                                                      ]
+        𝛿𝑝  = (1 − 𝜒) 𝛾      −𝛽𝑝 (tan(𝜑(𝐅) − 𝑝)) 𝛿𝑝 d𝑉 +     𝛼𝑝 𝐧 ⋅ ∇𝑝 𝛿𝑝 d𝑉 −    𝛼𝑝 ∇2 𝑝 𝛿𝑝 d𝑉 = 0 ∀ 𝛿𝑝                      (12)
+                           ∫𝛺                             ∫𝜕𝛺                   ∫𝛺
+
+with the Laplace operator ∇2 𝑝 ∶= ∇⋅∇𝑝. The gradient ∇𝑝 in Eq. (12) is now only applied on the boundary 𝜕𝛺 and yields homogeneous
+Neumann boundary condition. Since the stationary condition has to be fulfilled independently on the boundary 𝜕𝛺 and the inner
+domain 𝛺, we find the strong form as
+
+         − 𝛽𝑝 (tan𝜑(𝐅) − 𝑝) − 𝛼𝑝 ∇2 𝑝 = 0                 ∀𝑋∈𝛺                                                                                       (13)
+                               𝐧 ⋅ ∇𝑝 = 0                 ∀ 𝑋 ∈ 𝜕𝛺
+
+    The last variation of the Gibbs energy according to the field variable 𝑞 reads
+                        [                                        ]
+       𝛿𝑞  = (1 − 𝜒) 𝛾     −𝛽𝑞 (𝐽 − 𝑞) 𝛿𝑞 d𝑉 +    𝛼𝑞 ∇𝑞 ⋅ ∇𝛿𝑞 d𝑉 = 0 ∀ 𝛿𝑞 .                                                                         (14)
+                         ∫𝛺                     ∫𝛺
+   Analogously to the field variable 𝑝, we reformulate Eq. (14) to its strong form, in the same manner as shown for the other field
+variable, i.e.,
+                        [                                                             ]
+       𝛿𝑞  = (1 − 𝜒) 𝛾     −𝛽𝑞 (𝐽 − 𝑞) 𝛿𝑞 d𝑉 +     𝛼𝑞 𝐧 ⋅ ∇𝑞 𝛿𝑞 d𝑉 −    𝛼𝑞 ∇2 𝑞 𝛿𝑞 d𝑉 = 0 ∀ 𝛿𝑞                               (15)
+                         ∫𝛺                     ∫𝜕𝛺                   ∫𝛺
+and thus,
+
+         − 𝛽𝑞 (𝐽 − 𝑞) − 𝛼𝑞 ∇2 𝑞 = 0                 ∀𝑋∈𝛺                                                                                             (16)
+                          𝐧 ⋅ ∇𝑞 = 0                ∀ 𝑋 ∈ 𝜕𝛺.
+
+    The numerical treatment is presented in Section 3.
+
+3. Numerical treatment
+
+3.1. Preliminaries
+
+    Eq. (10) can be evaluated with a classical non-linear Finite Element Method (FEM) applying a Newton–Raphson iteration over
+multiple load steps [41]. The displacements are approximated in this work with linear shape functions, i.e., first-order spatial
+discretization.
+
+                                                                      4
+M. von Zabiensky et al.                                                                             Finite Elements in Analysis & Design 255 (2026) 104489
+
+    To calculate the field variables 𝑝 and 𝑞, we use the strong form in Eqs. (13) and (16). We apply a generalized Finite Difference
+Method (FDM), which requires the neighbored relations of a discretized cloud of points which we choose to be the quadrature points
+in each finite element. A detailed description of the implemented FDM will be presented in the next section.
+    Overall, the Neighbored Element Method (NEM) combines the FEM and the FDM solution, in a staggered manner, i.e., for
+each load step, the displacement field 𝐮 is computed via a converged Newton–Raphson loop with the field variables 𝑝 and 𝑞 kept
+constant. Alternating, the field variables are then solved for each load step via a separate (linear) equation system while keeping
+the displacements frozen. This approach is in contrast to the solution in [32], in which the equation for 𝑝 as well as 𝑞 in its weak
+form was approximated by finite element shape functions and discretized as additional degrees of freedom within the FEM.
+    The NEM was already applied in a similar way in [42] based on the works in [43,44]. However, in these works, a transient
+partial differential equation was solved via an explicit time discretization, which allowed for a local solution of the according field
+variables. In the presented work, the equation for the field variable 𝑝 and 𝑞 in their strong form do not contain any time derivatives
+and will be solved directly by means of a (linear) equation system. To directly incorporate the homogeneous Neumann boundary
+in said equation system, the point cloud for the FDM has to be divided in inner points in 𝛺void and points on the boundary 𝜕𝛺void
+with their according normal surface normal vectors. Thereby, only the void domain has to be identified 𝛺 = 𝛺void ∪ 𝛺solid , where
+𝛺void ||𝜒=0 . As mentioned before, we choose the quadrature points of the FEM mesh as inner points for the FDM to circumvent
+additional interpolation schemes between the two discretization. As boundary points, we choose the according quadrature point on
+the surface elements of the FEM mesh. Both, inner and outer points, are treated slightly different in their respective computation
+of the differential operators which will be explained in the two following Sections 3.2 and 3.3. The resulting equation system is
+derived in Section 3.4
+
+
+3.2. Treatment of inner quadrature points
+
+
+    To approximate spatial differential information on a field variable 𝑣 in a point of interest 𝐱0 = (𝑥0 , 𝑦0 )T ∈ 𝛺void ∖𝜕𝛺void , a Taylor
+series from that reference point 𝐱0 with spatial coordinates to neighboring points 𝐱𝑖 ∈ 𝛺void is defined by
+                                              [                                                  ]
+                      𝜕𝑣 ||       𝜕𝑣 ||      1 𝜕 2 𝑣 ||        𝜕 2 𝑣 ||           𝜕 2 𝑣 ||
+        𝑣|𝐱𝑖 = 𝑣|𝐱0 +        𝛥𝑥 +       𝛥𝑦 +            𝛥𝑥 2
+                                                             +          𝛥𝑦 2
+                                                                             + 2           𝛥𝑥 𝛥𝑦   + (|ℎ|3 )                           (17)
+                      𝜕𝑥 ||𝐱0 𝑖 𝜕𝑦 ||𝐱0 𝑖 2 𝜕𝑥2 ||𝐱0 𝑖         𝜕𝑦2 ||𝐱0 𝑖        𝜕𝑥𝜕𝑦 ||𝐱0 𝑖 𝑖
+
+with the spatial increments
+       [ ]
+        𝛥𝑥𝑖
+             = 𝐱𝑖 − 𝐱0 .                                                                                                                            (18)
+        𝛥𝑦𝑖
+
+   For the computation of the Laplacian, the second unmixed spatial derivatives at a point of interest have to be computed,
+     𝜕 2 𝑣 ||         2 |
+i.e.,𝜕𝑥2 ||
+                and 𝜕𝜕𝑦𝑣2 || . At least five neighboring points are required to solve Eq. (17), as all first and second derivatives are assumed
+             𝐱0            |𝐱0
+as unknowns. By applying a Taylor-series to a total number of 𝑛 neighbors, a equation system in the form
+
+                                                                          ⎡𝑣,𝑥𝑥 ⎤
+        ⎡ 1 𝛥𝑥2 1 𝛥𝑦2 𝛥𝑥2 𝛥𝑦2 𝛥𝑥                                 𝛥𝑦     ⎤ ⎢ 𝑣 ⎥ ⎡𝑣 − 𝑣 ⎤
+                                                         1            1
+        ⎢2 1 2 1                         1  1                           ⎥ ⎢ ,𝑦𝑦 ⎥    1    0
+        ⎢ ⋮                ⋮             ⋮            ⋮            ⋮ ⎥ ⋅ ⎢𝑣,𝑥𝑦 ⎥ = ⎢ ⋮ ⎥                                                            (19)
+        ⎢ 1 𝛥𝑥2 1 𝛥𝑦2 𝛥𝑥2 𝛥𝑦2 𝛥𝑥                                                   ⎢        ⎥
+        ⎣2 𝑛 2 𝑛                                                 𝛥𝑦𝑛 ⎥⎦ ⎢ 𝑣,𝑥 ⎥ ⎣𝑣𝑛 − 𝑣0 ⎦
+                                         𝑛  𝑛            𝑛                ⎢     ⎥ ⏟⏞⏞⏟⏞⏞⏟
+        ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟ ⎣ 𝑣,𝑦 ⎦
+                                       ̌                                  ⏟⏟⏟          ̌𝐛
+                                       𝐀
+                                                                             ̌
+                                                                             𝐦
+can be formulated. Here, the matrix 𝐀  ̌ summarizes the respective spatial increments of the neighboring points listed row-wise. The
+column vector 𝐦 lists the derivatives to be determined (⋅),𝑗 = 𝜕(⋅)
+                                                                 𝜕𝑗
+                                                                    , while ̌𝐛 contains the differences of the function values between
+the value in the reference point and its neighbors.
+    In order to calculate the derivatives using the neighborhood relations, specific conditions regarding the spatial distribution of the
+neighbors around the reference point must be satisfied which specify the stability and solvability of the equation system (19). Fore
+more details, we refer to [42]. To avoid ill-conditioned equation systems, neighbors should be equally distributed around the point
+of interest and more than the minimum of five neighboring points should be included. The simplest way to fulfill both requirements
+is to take all neighboring data points in a specified radius around the point of interest and thus defining an overdetermined system
+of Eq. (19). To this end, [42] introduced a weighted least square (WLS) approach is applied, so that an approximation of the system
+of equations is achieved:
+             ̌ T ⋅ 𝐖 ⋅ 𝐀)
+        𝐦 = (𝐀                     ̌ T ⋅ 𝐖 ⋅̌𝐛.
+                            ̌ −1 ⋅ 𝐀                                                                                                                (20)
+            ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟
+                         =∶ 𝐃 ̌∇
+
+   The matrix 𝐃̌ ∇ is the pseudo inverse of the matrices 𝐀̌ with the diagonal matrix 𝐖 containing the weights of all included
+neighboring points. The weighting matrix 𝐖 is formed from the respective weightings 𝑤(𝑑𝑖 ) of the neighboring points to the reference
+
+                                                                                                5
+M. von Zabiensky et al.                                                                                                        Finite Elements in Analysis & Design 255 (2026) 104489
+
+point, whereby these are based on the Euclidean distance 𝑑𝑖 = ‖𝐱𝑖 − 𝐱0 ‖2 .
+          ⎡𝑤(𝑑1 )                0          0          ⋯        0 ⎤
+          ⎢ 0                                                   0 ⎥                                                        (          )2
+                               𝑤(𝑑2 )       0          ⋯                                                            ⎛                      ⎞
+          ⎢                                                         ⎥                                                  1       4𝑑𝑖
+        𝐖=⎢ 0                    0        𝑤(𝑑3 )       ⋯        0 ⎥                  with              𝑤(𝑑𝑖 ) = exp ⎜−         √           ⎟                                   (21)
+          ⎢ ⋮                                                                                                       ⎜ 2          𝛽∗        ⎟
+                                 ⋮          ⋮          ⋱        ⋮ ⎥                                                 ⎝                      ⎠
+          ⎢                                                         ⎥
+          ⎣ 0                    0          0          …      𝑤(𝑑𝑛 )⎦
+    The weighting function 𝑤(𝑑𝑖 ) was introduced in [42] and fulfills the necessary properties by which neighboring points with
+large distances exert a lower weighting on the reference point. The independent parameter 𝛽 ∗ controls the decay of the exponential
+function and thus the distribution of the weights (0 ≤ 𝑤(𝑑𝑖 ) ≤ 1) on all neighboring points. We set this parameter equal to the
+square of the search radius for neighbors around the reference point, which will be chosen accordingly to the mesh of the specific
+discretized boundary value problem.
+                                                      ̌ ∇ )1,𝑖 and (𝐃
+                            ̌ ∇ , the first two rows (𝐃
+    In the resulting matrix 𝐃                                       ̌ ∇ )2,𝑖 yield the information of the parts for the computation of the
+Laplacian, i.e., the unmixed second spatial derivatives, whereby the respective neighborhood relations are contained in the columns.
+
+3.3. Treatment of boundary quadrature points
+
+    So far, only points within the area 𝛺void were treated. However, the Neumann boundary condition of the gradient in Eqs. (13)
+and (16) have to be fulfilled on the boundary 𝜕𝛺void . For this purpose, we also include the quadrature points on the boundaries
+of the domain as additional data points for the field variables. Thus, boundary points can also be applied as neighbors in the
+equation system (19). However, since the Neumann boundary condition has to be fulfilled on these boundary points, the Neumann
+                                                                                                                           ̄ which
+boundary condition will be directly included as additional equation. This is expressed by an additional row in the matrix 𝐀,
+is only assigned at the points located on the boundary 𝜕𝛺void . The outwards pointing surface normal in the (boundary) reference
+point is denoted by 𝐧0 = (𝑛𝑥 , 𝑛𝑦 )T . In turn, since the computation of the deformation gradient at the boundary points requires to
+solve Eqs. (13) and (16) which can become inconvenient, we assume the function value in the boundary points of interest 𝑣0 to be
+unknown. The enhanced equation system for boundary points thus reads
+
+                                                                                   ⎡𝑣,𝑥𝑥 ⎤
+        ⎡ 1 𝛥𝑥21 1 𝛥𝑦21 𝛥𝑥21 𝛥𝑦21 𝛥𝑥1 𝛥𝑦1 1⎤ ⎢ 𝑣,𝑦𝑦 ⎥                                        ⎡ 𝑣1 ⎤
+          2             2
+        ⎢                                                                      ⎥ ⎢       ⎥   ⎢ ⎥
+        ⎢   ⋮              ⋮               ⋮          ⋮            ⋮         ⋮ ⎥ ⋅ ⎢ ,𝑥𝑦 ⎥ = ⎢ ⋮ ⎥ ,
+                                                                                    𝑣
+          1             1                                                                                                                                                      (22)
+        ⎢ 𝛥𝑥𝑛   2         𝛥𝑦𝑛 𝛥𝑥𝑛 𝛥𝑦𝑛 𝛥𝑥𝑛 𝛥𝑦𝑛 1⎥ ⎢ 𝑣,𝑥 ⎥
+                               2           2   2                                             ⎢ 𝑣𝑛 ⎥
+        ⎢2              2                                                      ⎥ ⎢       ⎥   ⎢0⎥
+        ⎣ 0                0               0         𝑛𝑥           𝑛𝑦         0⎦ ⎢ 𝑣,𝑦 ⎥      ⎣ ⎦
+        ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟ ⎣ 𝑣0 ⎦ ⏟⏟⏟
+                                            𝐀̄                                    ⏟⏟⏟          ̄𝐛
+                                                                                     𝐦̄
+which includes 𝑣0 as additional unknown in the vector 𝐦. ̄ Building the system of equation in (22), only inner points are considered
+as neighbors for the boundary point. Since boundary points are predestined to coincide on one line in a spatial direction, this can
+                                                                                                           ̄ and the weighting matrix
+                                    ̄ or its condition number will increase at least [42]. With the matrix 𝐀
+lead to a singularity of the matrix 𝐀,
+                                               ̄
+𝐖 from Eq. (21), the pseudoinverse matrix 𝐃∇ can now be calculated analogously to Eq. (20) as
+             ̄ T ⋅ 𝐖 ⋅ 𝐀)
+        𝐦 = (𝐀                     ̄ T ⋅ 𝐖 ⋅̄𝐛.
+                            ̄ −1 ⋅ 𝐀                                                                                                                                           (23)
+            ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟
+                         =∶ 𝐃 ̄∇
+                                               ̄ ∇ )6,𝑖 yields the information for the computation of the function values on the boundary
+                           ̄ ∇ , the last row (𝐃
+   In the resulting matrix 𝐃
+points so that the homogeneous Neumann boundary conditions are fulfilled.
+
+3.4. Equation system for the field functions for regularization
+
+    The construction of a system of equations for the function values of inner points denoted by ̌⋅ and the boundary points denoted
+by ̄⋅ is explained in this section. The discretized Laplacian from Eq. (20) has to be computed for the solution of the differential
+equations (13) and (16) while the discretized computation of the unknown function values in the boundary point is given directly
+by Eq. (23). Both set of equations are assembled into one governing matrix 𝐆, which has the size (𝑁̌̄ × 𝑁)          ̌̄ corresponding to the
+                                           ̌                                     ̄        ̌
+                                                                                          ̄   ̌    ̌
+total number of inner quadrature points 𝑁 and outer quadrature points 𝑁 with 𝑁 = 𝑁 + 𝑁. As mentioned before, the neighbored
+information for an inner point is given in the rows (𝐃              ̌ ∇ )2,𝑖 . Therein, each entry refers to one neighbor 𝑖 of the reference
+                                                      ̌ ∇ )1,𝑖 and (𝐃
+point 𝑘. Now, this information will be stored in the corresponding row 𝑘 of the governing matrix, whereby the column 𝑖 refers the
+global number of the neighbor point, i.e.,
+                              ̌ ∇ )2,𝑖 .
+                  ̌ ∇ )1,𝑖 + (𝐃
+        (𝐆)𝑘,𝑖 = (𝐃                                                                                                                                                            (24)
+
+    For the entry of the reference inner point itself, we evaluate the sum of the rows.
+                         𝑛 (
+                         ∑                       )
+        (𝐆)𝑘,𝑘 ∶= −                      ̌ ∇ )2,𝑖 .
+                             ̌ ∇ )1,𝑖 + (𝐃
+                            (𝐃                                                                                                                                                 (25)
+                         𝑖=1
+
+
+                                                                                                  6
+M. von Zabiensky et al.                                                                              Finite Elements in Analysis & Design 255 (2026) 104489
+
+    The boundary points are treated in the same manner. Resulting from the neighbored information for a boundary point given in
+ ̄ ∇ )6,𝑖 , each entry 𝑖 will be stored in the corresponding column of the governing matrix, whereby the row 𝑘 refers to the current
+(𝐃
+reference point, i.e.,
+                  ̄ ∇ )6,𝑖 .
+        (𝐆)𝑘,𝑖 = (𝐃                                                                                                                                  (26)
+
+    Accordingly, the entry of the reference boundary point itself reads
+                         ∑
+                         𝑛
+        (𝐆)𝑘,𝑘 ∶= −               ̄ ∇ )6,𝑖 .
+                                 (𝐃                                                                                                                  (27)
+                          𝑖=1
+
+   By counting the global number of inner quadrature points first and subsequently the number of boundary quadrature points, the
+governing matrix 𝐆 naturally arises as partition in the form
+          [         ]
+            ̌̌ 𝐆
+            𝐆    ̄̌
+      𝐆= ̌        ̄                                                                                                        (28)
+            𝐆̄ 𝐆
+
+    Therein, the partition 𝐆̌̌ stores only the neighbored information between inner points. Likewise, the partition 𝐆      ̄ contains only
+neighbored information between boundary points. Since boundary points don not have another boundary points as neighbors, this
+partition only has entries on its main diagonal. Furthermore, the partitions 𝐆   ̄̌ and 𝐆̌̄ contain the neighbored information from outer
+on inner and inner on outer points, respectively.
+    For the computation of the Laplacian, the function values in boundary points have to be known. In [42], this was done in a
+‘‘spatially staggered’’ manner for an explicit time discretization: first, matrix 𝐆 ̌̄ was multiplied with the function values of the inner
+points from the previous time (load) step, i.e., explicit time discretization, to compute the function values in the outer points:
+                  ̌̄ ⋅ [𝑣̌ ] .
+        [𝑣̄ 𝑖 ] = 𝐆                                                                                                                                  (29)
+                          𝑖
+
+    In a second computation step, i.e., ‘‘spatially staggered’’, the Laplacian for the inner points was computed by multiplying the
+combined vectors for the function values from the previous time (load) step and the function values in the boundary points computed
+in the first step with the upper partition of 𝐆:
+                   [      ] [ ]
+       [∇2 𝑣̌ 𝑖 ] = 𝐆   ̄̌ ⋅ [𝑣̌ 𝑖 ] .
+                     ̌̌ 𝐆                                                                                                      (30)
+                             [𝑣̄ 𝑖 ]
+  Since the differential equation at hand do not contain any transient terms, we combine the two operations (29) and (30) via a
+multiplication into a condensed system matrix:
+       ([          ] [     ]) [                         ]    [     ]
+           ̌̌ 𝐆 ̄̌     𝐈 𝟎        𝐆̌̌ ⋅ 𝐈 + 𝐆      ̄̌ 𝟎
+                                              ̌̄ ⋅ 𝐆           𝐋 𝟎
+          𝐆
+                    ⋅ ̌       =            ̌̄             =∶   ̌̄ 𝟎 ,                                                      (31)
+           𝟎    𝐈     𝐆̄ 𝟎                𝐆           𝟎       𝐆
+whereby the reformulated partition reads
+          ̌̌ ⋅ 𝐈 + 𝐆
+        𝐋=𝐆             ̄̌ .
+                   ̌̄ ⋅ 𝐆                                                                                                                            (32)
+                                                              ̌ now corresponds to the total number of inner quadrature points.
+   Finally, we derive the operator matrix 𝐋, whose size (𝑁̌ × 𝑁)
+This matrix enables the computation of the Laplacian in every discretized inner point via
+
+        ∇2 𝑣̌ = 𝐋 ⋅ [𝑣̌ 𝑖 ],                                                                                                                         (33)
+
+while fulfilling the homogeneous Neumann boundary condition inherently which are given by Eqs. (12) and (15). By defining the
+mesh of the void domain, its boundary is known and can be incorporated by the described scheme above. Even complex geometries
+can be considered as long as the boundary of the void domain is defined. For implementing boundary conditions other than the
+homogeneous Neumann boundary conditions, a reformulation of Eq. (31) is necessary, i.e., for multiphysics approaches [36]. The
+reformulation has to consider the given gradient terms on the boundary such that their values are incorporated in the neighbored
+information. However, since the FDM is defined on a spatial discretization of the quadrature points, also a non-periodic boundary
+condition could be applied. According to the strong form of the field functions for the regularization given in Eqs. (13) and (16),
+the discretized Laplacian can now be implemented by the system matrix 𝐋. Since the system matrix is based on the discretization
+of the inner quadrature points, we will discretize the field variables 𝑝 and 𝑞 analogously. Therefore, we write the field variables as
+vector lists 𝐩 and 𝐪.
+
+        𝐩 = [𝑝1 , 𝑝2 , … , 𝑝𝑛 ]T               𝐪 = [𝑞1 , 𝑞2 , … , 𝑞𝑛 ]T                                                                              (34)
+                                                                                          ̌ Analogously, the rotation angles and
+   These vectors contain the value of each referenced discretized inner point 𝑖 ∈ {1, … , 𝑁}.
+Jacobians in each discretized point can be formulated as vector lists as well.
+
+        𝜱 = [tan(𝜑(𝐅1 )), tan(𝜑(𝐅2 )), … , tan(𝜑(𝐅𝑛 ))]T                  𝑱 = [𝐽1 , 𝐽2 , … , 𝐽𝑛 ]T                                                   (35)
+
+    Eq. (13) can then be formulated in its discretized form as a system of equations as
+           𝛼𝑝
+       𝐩− 𝐋⋅𝐩=𝜱               ⇔           𝐋𝑝 ⋅ 𝐩 = 𝜱 ,                                                                                               (36)
+           𝛽𝑝
+
+                                                                                    7
+M. von Zabiensky et al.                                                                      Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                             Fig. 1. Flowchart of the solving method, the staggered approach is highlighted.
+
+
+
+with the system matrix
+                𝛼𝑝
+       𝐋𝑝 ∶= 𝐈 − 𝐋 .                                                                                                                         (37)
+                𝛽𝑝
+   Likewise, Eq. (16) can be formulated equally:
+           𝛼𝑞
+       𝐪− 𝐋⋅𝐪=𝑱               ⇔         𝐋𝑞 ⋅ 𝐪 = 𝑱 ,                                                                                         (38)
+           𝛽𝑞
+with the system matrix
+                𝛼𝑞
+       𝐋𝑞 ∶= 𝐈 − 𝐋 .                                                                                                                         (39)
+                𝛽𝑞
+
+    As shown in Eqs. (37) and (39), the system matrix 𝐋□ gains an additional superscript, which indicates the applied field function
+regularization □ ∈ {𝑝, 𝑞}. Since both field variables are based on the same discretization, the system matrix 𝐋□ has to be computed
+only once, for a given spatial discretization, i.e., a given mesh. Furthermore, as long as the penalty parameters 𝛼□ and 𝛽□ , with
+□ ∈ {𝑝, 𝑞}, remain constant during computations, only the right-hand side of the linear equation system for the update of the field
+variables 𝑝 and 𝑞 changes and according, decompositions can be applied, e.g., LU-decomposition. Fig. 1 shows the solving method
+of the NEM, which combines the FEM and FDM in a staggered manner.
+    In this work, the specific implementation of the FDM is performed as followed. Firstly, the geometry of the contact bodies as well
+as the intermediate domain has to be discretized whereby both together represent the governing mesh. Since only the void domain
+has to be considered for building the system matrix 𝐋, we generate an overlaying mesh which matches the spatial coordinates of
+
+                                                                   8
+M. von Zabiensky et al.                                                                      Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                                     Fig. 2. C-Box in initial configuration and boundary conditions.
+
+
+
+the void domain in the governing mesh. It is important to note that this overlaying mesh is only used to build the system matrix 𝐋.
+The boundary of the overlaying mesh can be easily determined and discretized with one spatial dimension lower than the elements
+within the domain. From here on, the quadrature points within the elements as well as on the boundary are treated as described
+above, for the inner points and boundary points respectively. Finally, the penalty parameters must be applied to the system matrix,
+according to Eqs. (37) and (39), resulting in the system matrices 𝐋𝑝 and 𝐋𝑞 for the respective field variables. The penalty parameters
+𝛼□ and 𝛽□ with □ ∈ {𝑝, 𝑞} have to be tuned manually for the given boundary problem, which follows in the next chapter.
+
+4. Numerical examples
+
+4.1. Common parameters
+
+    In this section we discuss the results based on the new approach. We will show that the new approach is able to derive self-
+contact in structures, but within significantly less computation time compared to the monolithic approach in [32]: herein, each
+node in the void domain are attributed the field variables 𝑝 and 𝑞 as additional degrees of freedom. All simulations are based on
+two dimensional quadrilateral elements with a first order shape function. By using the first order shape functions, the regularization
+of the Jacobian could be omitted, according to [32]. Nevertheless, we retain this regularization on every simulation showed here,
+since by its implementation a smoother distribution of the volumetric deformation of the void elements was observed. The FEM
+problem will be solved with a classical Newton–Raphson approach, whereby the convergence criteria for the residual norm is given
+by 1𝑒−8 . The associated parameters for the regularization will be given for each boundary problem separately.
+                                                     5
+    Furthermore, the engineering parameters 𝜇 = 14     and 𝐾 = 56 maintain constant. The solid elements will be illustrated in red,
+while gray declare void elements. All simulations were computed using the Julia programming language [45], with the package
+Ferrite being used for the FEM and the package NearestNeighbors for the search of neighboring points within the NEM.
+
+4.2. Results for the C-Box
+
+    The C-Box, originally based on [23], is shown in Fig. 2. The void domain is enclosed from solid beams from three sides while
+the left outer boarder is fixed and a point-wise displacement load at the upper right corner on the solid domain is applied. An
+initial displacement 𝐮 = [0.0, −1𝑒−3 ] is applied at the free end of the upper beam. The displacement will be increased by 𝑢𝑦 = −1𝑒−3
+after each converged Newton–Raphson iteration. No body forces are considered. The box has a height of 𝐻 = 1.0 and a length of
+𝐿 = 2.0, whereby the thickness of the beams in all sections is 𝐵 = 0.2. The mesh is composed of 800 linear quadrilateral elements.
+The marked positions on the inner sides of the beams are used to compute the minimal gap during contact. Due to the second-order
+quadrature rule for the numerical integration, each individual element contains four quadrature points. Two quadrature points per
+element surface are defined on the boundary region of the void domain 𝜕𝛺void .
+    Based on the C-Box problem, we want to compare the presented NEM approach with the monolithic approach from [32]. For
+each simulation, a total number of 2000 load steps were preset. The chosen parameters for the regularization are given in Table 1.
+
+                                                                   9
+M. von Zabiensky et al.                                                                   Finite Elements in Analysis & Design 255 (2026) 104489
+
+                           Table 1
+                           Parameters for the C-Box problem.
+                             Approach         𝛾                𝛼𝑝            𝛽𝑝           𝛼𝑞             𝛽𝑞
+                             Monolithic       1.0𝑒−6           100.0         10 000.0     100.0          1.0
+                             NEM              1.0𝑒−6           1000.0        10 000.0     10.0           0.1
+
+
+
+
+Using the same set of penalty parameters for both approaches did not lead a stable convergence in at least one of the approaches.
+Due to the different spatial discretization of the parameters 𝑝 and 𝑞 and since the parameter 𝛼𝑝 and 𝛼𝑞 slightly change their reference
+for the NEM approach, see (37), the actual factor for the Laplacian matrix 𝐋 resulting from the division of 𝛼□ and 𝛽□ with □ ∈ {𝑝, 𝑞}
+should be accounted for. According to the parameters given in Table 1, the resulting factor for the NEM approach is equivalent to
+the monolithic approach in the case for the variable 𝑞, but significantly smaller in the case for the variable 𝑝. However, it will be
+shown that the results fulfill the entitled contact development.
+    Some characteristic deformation states of the C-Box problem are shown in Fig. 3, whereby the results of the NEM approach
+are given on the left hand side, and the results of the monolithic approach are given on the right hand side. It can be seen, that
+in both cases the contact occurs as expected. At first, the void elements will be contracted homogeneously before the lower tip of
+the upper beam touches the lower beam. Then, the lower beam starts to bend down due to the contact, while the contact point
+travels alongside the upper side of the lower beam. It is important to note that no self-penetrations of the solid elements occurs in
+the contact area during all load steps. With even larger deformations, the contact area extends, by increasing its area to a line to
+line contact. Its worth to mention, that for the NEM approach the load increment near the end of the deformation state had to be
+                             𝑢
+decreased by one tenth to 10𝑦 to remain stable.
+    Evidently, both approaches lead to the same general contact behavior and their deformations are approximately identical, except
+for slight deviations in the deformation of the outer void domain on the right hand side of the box, although they just appearing
+during the first contact development. However, the gap width gives a more detailed information about the behavior of the void
+domain. The propagation of the gap width is shown in Fig. 4, whereby the path according to the NEM approach fits the results of
+the monolithic approach. A closer look after the 500th load step reveals a discrepancy between the results. Herein, the gap width
+of the NEM approach decreases less over the load steps. This difference only appears when the first contact is made, i.e., the point
+to line contact. According to the graph in detail in Fig. 5, the maximum difference is in the order of 0.0267, which is considered
+to be negligible. When it comes to the line to line contact between the bars, closely after the 1250th load step, the path of the
+NEM approach shows no significant deviation to the monolithic approach. Both paths tends to slightingly increase towards the end
+deformation, close after the 1750th load step. This can be explained with imperfections in the line to line contact, meaning that
+other points between the bars are in a closer contact. This effect is considered as plausible since points which are closer to each
+other in a line contact could cause reaction moments which, in turn, can open the gab.
+    A further comparison is given in Fig. 6, whereby the NEM approach programmed with Ferrite in Fig. 6(a) is compared with an
+augmented Lagrangian approach computed in ANSYS in Fig. 6(b). Both calculations are set up with the same material model and
+material parameters. Furthermore, the same amount of load steps was applied in both cases and a classical Newton–Raphson solver
+was used. Since the augmented Lagrangian approach is based on a predefined contact area, all lines of the inner C-Box are referred
+to each other to ensure the same contact development, unlike the TMC approach, where the third medium enables the contact. Due
+to this reason, the third medium, e.g., void elements, are not displayed in the plot in Fig. 6(a) for a better comparison between these
+approaches. Beside this difference in the formulation of the contact problem, the discretization and boundary conditions given in
+Fig. 2 are likewise implemented in ANSYS.
+    The comparison in Fig. 6 shows a similar deformation state resulting from both approaches. In both cases, the upper bar and
+lower bar undergo a point-to-line contact as well as a line-to-line contact. It is important to note that in both approaches a stable
+convergence during all load steps was observed. Evidently, the TMC approach is able to provide a similar contact behavior as the
+augmented Lagrangian approach in ANSYS but without the need for prescribed contact areas.
+    The investigation of the C-Box, discussed above leads to the following conclusion: in consideration of a slightly different
+deformation of the void domain as well as the discrepancy in the propagation of the gap width, the introduced NEM approach
+is able to handle the same contact problem as the monolithic approach. For the cause of the differences, it has to be mentioned that
+the results depend on the choice of the regularization parameter. Furthermore, due to the staggered manner of the NEM approach,
+the update of the field variables 𝑝 and 𝑞 is carried out after each converged Newton–Raphson step, such that the solution of the
+field variables is always one step behind the momentary configuration, in contrast to the monolithic approach. According to the
+stability of the convergence, each load step converged after four Newton–Raphson iterations, except for one of the last load steps
+in the NEM approach. Hereby, the refinement of the load increment 𝑢𝑦 occurred after which the load steps converged after four
+Newton–Raphsons loops again. Still, the approach exhibit an overall robust convergence.
+
+4.3. Results for the bending bars
+
+   We investigate the contact behavior of our method on a second example. As shown in Fig. 7, the setup is defined by two vertical
+bars which are fixed at their bottoms and one horizontal bar is placed above with an initial gap of 0.1. It is indented that the lower
+bars are placed asymmetrically to the center of the upper bar, which is referenced by the green dashed line. The purpose of the
+asymmetric setup is to create two independent contact zones, which undergo different contact behavior. All bars are embedded in
+
+                                                                        10
+M. von Zabiensky et al.                                                                        Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+      Fig. 3. Comparison of the deformation states of the C-Box, resulting from the NEM approach (left) and monolithic approach (right).
+
+
+
+
+                                                                     11
+M. von Zabiensky et al.                                                                     Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                              Fig. 4. Comparison of the propagation of the gap width during the simulation.
+
+
+
+
+                           Fig. 5. Comparison of the propagation of the gap width during the end deformation.
+
+
+
+void domain, so that a contact could develop at any intersection between the bars. The parameters for the void regularization are
+listed in Table 2. The entire domain is discretized by a mesh of 3200 quadrilateral elements. As before, each element is described
+with a second-order geometric quadrature and therewith holds four quadrature points. The initial condition is given by the point-
+wise applied displacement 𝐮 = [0.0, −1𝑒−3 ] at the center of the upper bar. After each converged load step, the displacement will be
+increased by 𝑢𝑦 = −1𝑒−3 whereby no body forces are considered. The incremental loading was used likewise for each approach and
+a total number of 1000 load steps were preset.
+    The comparison of characteristic deformation states based on the NEM approach and monolithic approach is given in Fig. 9. Both
+simulations result in very similar deformations of the bars during all load steps. With the last load step the upper bar undergoes a
+displacement of 𝑢𝑦 ≈ −1.2, referencing the lower point at the center of the bar, which is more than the half of the size of the domain.
+However, a closer examination of the last deformation state shows that the results from the NEM approach in Fig. 9(g) tend to a more
+compressed bending of the upper bar in comparison to the monolithic approach in Fig. 9(h). Since both simulations used the same
+set of material parameters for the solid, it is to assume that the void domain holds a noticeable influence on the global deformation.
+
+                                                                   12
+M. von Zabiensky et al.                                                                        Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                          Fig. 6. Comparison of the C-Box problem results between Ferrite (a) and ANYSY (b).
+
+
+
+
+                                           Fig. 7. Initial setup of the bending bar problem.
+
+
+                                                                  13
+M. von Zabiensky et al.                                                                      Finite Elements in Analysis & Design 255 (2026) 104489
+
+                            Table 2
+                            Parameters for the bending bar problem.
+                             Approach          𝛾            𝛼𝑝                𝛽𝑝              𝛼𝑞            𝛽𝑞
+                             Monolithic        1.0𝑒−6       100.0             10 000.0        100.0         0.1
+                             NEM               1.0𝑒−6       1 000 000.0       10 000.0        10.0          0.1
+
+
+
+
+                          Fig. 8. Comparison of the bending bar problem results between Ferrite (a) and ANSYS (b).
+
+
+
+Nevertheless, the void domain shows significant differences between both approaches. Every characteristic deformation state in Fig.
+9 presents clearly that the rotation as well as the inflation of the void elements seems to be less regularized in the NEM approach.
+According to Fig. 9(c) the void elements on the right-hand side undergoing the opposite rotation in comparison to the monolithic
+approach in Fig. 9(d). Furthermore, an uneven distribution of the element volumes on the right-hand side as well as between the
+vertical bars is noticeable. These effects become even more significant with further load steps, namely the narrowing of the void
+elements at the lower right corner and their inflation as direct neighbors of solid elements.
+    Evidently, these effects are explainable by application of a staggered approach accompanying the different choice of the
+parameters in Table 2 to grant numerical stability. It has to be emphasized that the actual deformation state of the void elements
+has no priority in the sense of physical accuracy, i.e., only the deformation and contact in between the solid domains is of interest.
+The void regions are mere numerical auxiliaries and their explicit behavior is not of any interest. Nevertheless, the NEM approach
+shows minor differences in the solid deformations compared to the monolithic approach, while stable convergence was observed. It
+is worth mentioning that within four Newton–Raphson iterations each load step converged. Even for finer meshes, the number of
+iterations per load steps did not enlarge significantly, only by one to two additional iterations in some load steps.
+    Another comparison with a conventional method is given in Fig. 8. Herein, the end deformation state of the bending bar problem
+is plotted for the NEM approach, see Fig. 8(a). The third medium elements, e.g., the void elements are hidden in the plot for a
+clearer comparison with the results of the augmented Lagrangian approach in Fig. 8(b). Both simulations are based on the same
+discretization, given in Fig. 7, and material parameters. Furthermore, the step size of the load increment was chosen equally in each
+simulation. In contrast to the NEM approach, the contact areas in the augmented Lagrangian approach are predefined, whereby
+every line of each bar was referred to each other, if the development of a contact between them could be possible. Especially, every
+point, i.e., the upper corners from the vertical bars have to be referred to the line, i.e., the underside if the horizontal bar. This is
+necessary to ensure that these points do not penetrate the upper bar.
+    The comparison in Fig. 8 shows a very similar deformation state between the results from the NEM approach and augmented
+Lagrangian approach. Both approaches are able to develop geometrical point-to-line contact as well as line-to-line contact between
+the bars. However, the augmented Lagrangian approach shows a wider bending of the upper bar and therewith a more defined line-
+to-line contact to the left vertical bar. This difference of the deformation state is explainable by the penalty parameters of the NEM
+approach. It is important to note that the NEM approach shows in fact a sensitivity to the penalty parameters, like the monolithic
+approach. As a consequence, a tuning of these parameters has to be provided. Still, a very close approximation of the displacement
+state and the contact development is evidently. Furthermore, the results of the monolithic approach proves this comparison, cf. Figs.
+8(b) and 9(h).
+    The NEM approach and monolithic approach resulting in the same propagation of the contact. Fig. 9 shows clearly that both
+methods describe the same contact in each characteristic load step. The right bar gets first into a line contact with the horizontal
+bar while the left bar undergoes a point contact, i.e., Figs. 9(a) to 9(d). Interestingly, these geometrical contacts change with lager
+deformations: from a line contact to a point contact and vise versa, compare Figs. 9(c) with 9(e) and Figs. 9(d) with 9(f). The
+change of contact area was already shown with the C-Box problem, but the bending bars problem prove that the TMC formulation
+also works for multiple solid bodies which are embedded in one void domain. Nevertheless, with the implementation of the NEM, it
+will be shown that this approach comes with a reduction of the computation time, while it results in comparable contact behavior
+as the monolithic approach.
+
+                                                                      14
+M. von Zabiensky et al.                                                          Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                          Fig. 9. Comparison of the results for the bending bar problem.
+
+
+
+                                                       15
+M. von Zabiensky et al.                                                                      Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+Fig. 10. Comparison of the computation time to solve the displacement 𝐮 and update the field variables 𝑝 and 𝑞 with the monolithic approach
+and the NEM approach for ten different mesh refinements.
+
+
+
+4.4. Comparison of computing times
+
+    The new NEM approach is able to reproduce similar contact developments as the monolithic approach, as discussed before. In
+this section, it will be shown that the advantage of the NEM approach lays in a reduction of the computation time. Therefore we
+compare results of the bending bar problem from Section 4.3 with multiple refinements of the mesh. For a better comparison, we
+refer in Fig. 10 to the computation time which only accounts for the solution of the solver, i.e., the computation of the displacements
+and the regularization parameters, without accounting for the calculation time of pre-processing or post-processing. Furthermore, we
+will refer each computation time to the total number of elements, since the total number of degrees of freedom would be misleading
+due to the varying discretization of the regularization parameters within both approaches: it is important to note that the monolithic
+approach introduced two additional degrees of freedom in each node of a void element, namely the field variables 𝑝 and 𝑞. Since
+the NEM approach condense out these field variables as degrees of freedom in each element, they no longer depend on the assembly
+of the stiffness tangent, but are computed by solving the separated system of equations following from the NEM for each converged
+load step. Thus, the total number of degrees of freedom cannot be compared directly between the NEM approach and the monolithic
+approach.
+    The mesh of the bending bar problem from Fig. 7 was set up for ten different mesh refinements, with the smallest number of
+quadrilateral elements of 3200 up to the largest number of quadrilateral elements of 720 000. Regarding to the minimal number of
+nearest neighbors, according to the theory of the NEM, the global search radius for the neighbored area of a quadrature point was
+preset for each refined mesh, such that the condition of at least five neighbors was fulfilled. As it was mentioned in the origin work
+of [32], the simulation of the contact problem with the TMC method tends to instabilities when its applied to fine meshes. This
+effect could also be observed in the present work. However, since we want to evaluate the reduction of the computing time, we
+adjust a total number of load steps to 150 so that a contact was initiated, but also the simulation of all mesh refinements are stable.
+Clearly, the computation time will increase by solving more load steps, but by setting the total number of load steps we propose a
+more reasonable time comparison. As before, the NEM approach and monolithic approach make use of the same load increments.
+No adaptive refinement of the load increment was observed during the simulation for any given mesh.
+    An overview of the computation time to solve the displacements 𝐮 is given in Fig. 10, whereby the marker indicates the respective
+approach. Reasonable, the computation time will increase with a larger number of elements. Herein, it is to be assumed that the
+computation time increases cubically with the number of degrees of freedom for both approaches since both are using the FEM.
+Nevertheless, the resulting graph of the monolithic approach does not follow an exact exponential path, specially noticeable due to
+the jump at the last two meshes. By using the standard solver in the program language Julia, it could be the case that the program
+used another poly-algorithm for the division of the stiffness matrix is at a larger number of degrees of freedom. However, we used the
+same solver algorithm for both approaches so that the results are comparable. It is remarkable that the NEM approach significantly
+faster than the monolithic approach for every given mesh. The factor of computational time saving goes up to six and a half, in
+the presented diagram. Evidently this factor will also increase with finer meshes, i.e., larger numbers elements. This effect would
+be even more evident for three-dimensional problems. The reason for this saving of computational time results from the staggered
+method enabled due to the NEM approach. Thereby it is much faster to solve the field variables with an equation systems, defined
+
+                                                                    16
+M. von Zabiensky et al.                                                                     Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+Fig. 11. Comparison of the computation time to solve the displacement 𝐮 with the FEM and the field variables 𝑝 and 𝑞 with the FDM for ten
+different mesh refinements.
+
+
+
+by the information of neighbored quadrature points than applying each field variable as an additional degree of freedom. This is
+also shown in Fig. 11 where the computation time to solve the displacement field 𝐮 is split into the FEM part and FDM part. The
+computation of the field variables with the FDM only needs a fraction of time in comparison to the FEM, i.e., up to a factor of 28 for
+the finest shown mesh. Even for finer meshes, this factor will drastically increase, since the computation time to solve the equation
+system for the field variables increases linear.
+    However, staggered approaches tend to be less accurate or unstable for smaller time increments [36]. But in the shown case,
+even the monolithic approach required smaller load increments to provide stable convergence. The results of both approaches
+are consistent, except for minor deviations for very large deformation states. Thus, we assume that the drawback of the potential
+requirement of smaller time increments for the staggered NEM approach is not relevant and that it will be computationally more
+efficient in most cases.
+    A further detailed investigation of the computational performance is given in Fig. 12 which presents the total computation time
+for the Newton–Raphson solver in Fig. 12(a), the total computation time for assembling the residual vector and the stiffness matrix
+in Fig. 12(b), the total allocated memory per load step in Fig. 12(c), and the allocated memory for the assembling in Fig. 12(d).
+    Its important to note that a significant saving of computational costs by the NEM approach is evident in all diagrams in Fig. 12.
+The saving of the total computation time for the Newton–Raphson solver is up to a factor of four, for the finest mesh in Fig. 12(a).
+In case of the assembling of the residual vector and the stiffness matrix in Fig. 12(b), the computation time reduced by half. It is
+important to mention that this aspect of the computation part depends on the problem size, or more precisely the number of third
+medium elements, i.e., the number of void elements. Since the monolithic approach solves the field variables as additional degrees
+of freedom in the nodes, the residual vector and the stiffness matrix increase in size and so does the necessary computation time. Due
+to the NEM approach, the field variables are not additionally assembled and the size of the residual vector and the stiffness matrix is
+determined by the degrees of freedom of the displacement 𝐮 only. Consequently, if the governing mesh includes more void domains
+than solid bodies, the excluded degrees of freedom from the assembling increases. Hence the computation time drops. Furthermore,
+Figs. 12(c) and 12(d) both show a reduction of the allocated memory by half. However, the comparison of the allocated memory is
+given here for the sake of completeness. Obviously, this aspect goes along with the problem size and the code performance, whereby
+the presented approaches are coded in the similar manner. Nevertheless, in [36], a reduction factor of 77 for the allocated memory
+was achieved in ANSYS, which shows the potential of the NEM approach.
+    If now the discretization of the domain would be constant, i.e., the number of elements does not change, it is argumentatively
+reasonable that the time saving depends on the ratio of void to solid elements, knowing that for each void element more field
+variables have to be assigned. By this means, it can be postulate that the NEM approach will be even faster if the void to solid ratio
+will increase. This comes with the advantage to apply a larger void domain, i.e., to enable the development of further contact zones
+without the same increasing computation time as with the monolithic approach.
+    As mentioned before, the computation times for the pre-process and the post-process are omitted, in all presented comparisons.
+Obviously the handling of the data for the post-process is subject to the point of interest of the user and thus its associated
+computation time. However, in the case for the pre-process, it has to be noted that the building of the matrices for the NEM system
+𝐋□ with □ ∀ {𝑝, 𝑞}, claims a non-negligible amount of computation time. The necessary computation time depends on the number
+
+                                                                   17
+M. von Zabiensky et al.                                                                     Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                Fig. 12. Comparison of the computational costs component wise for the monolithic approach and NEM approach.
+
+
+
+of quadrature points. Thus, the required time is similar to the order of magnitude of the time to assemble the whole stiffness matrix
+within the FEM approach. However, the matrix 𝐋□ has to build and decomposed just once for a given spatial discretion and set
+of regularization parameters, i.e., 𝛼□ and 𝛽□ with □ ∈ {𝑝, 𝑞}. Eventually, it should be emphasizes that the necessary computation
+time to build and decompose the system matrix 𝐋□ does not have a major share in the time compared with the whole simulation
+process.
+    The time comparison proves the reduction of the computation time by applying the NEM approach. It is important to note that
+the mesh refinements were equal in both material domains, i.e., the solid and void phase. As explained before, the time reduction
+is based on the condescension of the field variables from a additional degree of freedom to a separate equation system which can
+be solved efficiently by a LU-decomposition.
+
+4.5. Results for the ring
+
+    The third example we investigate with our method is shown in Fig. 13. Therein, a half of an elastic ring with an outer radius
+𝑟 = 1.0 and a thickness of 0.1 is moved towards an elastic fundament. Both solid bodies are colored in red, while the third medium
+is shown in gray. Marked by the green point and line, the lowest point of the ring and the upper line of the fundament are utilized
+to determine the gab between them. It important to note that they are only used for the post-process. The initial gap between the
+bodies is 0.1. Furthermore, both solid bodies share the same material behavior, i.e., the formulation of the strain energy in Eq.
+(2). The initial condition is given by a point-wise applied displacement 𝐮 = [0.0, −1𝑒−3 ] at the upper part of the ring. After each
+converged load step, the displacement will be increases by 𝑢𝑦 = −1𝑒−3 whereby no body forces are consider. Since the upper part
+of the ring is only able to be displaced in the 𝑦 direction, the horizontal diameter of the ring is fixed. Consequently, if the ring gets
+into contact with the fundament it will undergo large deformations, since the structural compliance of the ring is significantly lower
+against the compliance of the fundament. Furthermore, it is assumed that the ring will snap back if its compressed further onto the
+fundament. A variation of the penalty parameters is intended to investigate their influence on the stability of the NEM approach
+and its results.
+    An detailed investigation of the penalty parameters was already provided by [32]. In case of the NEM approach, the penalty
+parameters 𝛼□ and 𝛽□ with □ ∀ {𝑝, 𝑞} have the same effect on the regularization as for the monolithic approach, namely that
+the field variable 𝑝 regularizes the rotation of the third medium elements and 𝑞 regularizes their volumetric change. However, it
+was observed that the value of the penalty parameters has to be adjusted in order to achieve a similar regularization, i.e., contact
+development as in the monolithic approach. An excerpt of this is already given in Table 1 for the C-Box and in Table 2 for the
+bending bar problem. Based on the ring problem, we want to observe the influence of the penalty parameters on the gap width and
+the deformation state to provide a guideline for a parameter selection. The investigated penalty parameter sets are given in Table 3.
+    The parameter sets in Table 3 are sampled whereby a significant change of the ratio between both penalty parameter pairs is
+taken into account. The resulting deformation state is given in Fig. 14, referred to each set of parameters in Table 3. Since all results
+show a similar minimal gap width, the main aspect of evaluation is the deflection of the ring.
+
+                                                                    18
+M. von Zabiensky et al.                                                                         Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+                                                 Fig. 13. Initial setup of the ring problem.
+
+
+                           Table 3
+                           Parameter sets for the ring problem.
+                            Reference        𝛾            𝛼𝑝                 𝛽𝑝                𝛼𝑞            𝛽𝑞
+                            Fig.   14(a)     1.0𝑒−6       10.0               100.0             10.0          0.1
+                            Fig.   14(b)     1.0𝑒−6       1000.0             10 000.0          10.0          0.1
+                            Fig.   14(c)     1.0𝑒−6       1 000 000.0        100 000.0         10.0          0.1
+                            Fig.   14(d)     1.0𝑒−6       1000.0             10 000.0          1.0𝑒−6        10.0
+                            Fig.   14(e)     1.0𝑒−6       1 000 000.0        10 000.0          1.0𝑒−5        100.0
+                            Fig.   14(f)     1.0𝑒−6       1000.0             10 000.0          1.0𝑒−5        100.0
+                            Fig.   14(g)     1.0𝑒−6       10.0               10 000.0          1.0𝑒−5        100.0
+                            Fig.   14(h)     1.0𝑒−6       10.0               100.0             1.0𝑒−5        100.0
+
+
+
+
+    Comparing the deformation states in the Figs. 14(a), 14(b), 14(c), 14(d) and 14(h) shows that the according parameter sets lead
+to very similar results. All of these five parameter sets enable a proper contact and a lifting of the ring, although the magnitude
+of deflection is in a smaller order. Comparing the referred parameter sets in Table 3, it is important to note that the ratio of 𝛼𝑞
+and 𝛽𝑞 has not a significant influence on the result, while the values of 𝛼𝑝 and 𝛽𝑝 are relatively small, cf. Figs. 14(a) and 14(h).
+Likewise, if the ratio of 𝛼𝑞 and 𝛽𝑞 is relatively large, while the values of 𝛼𝑝 and 𝛽𝑝 are of a much higher order, the results seem not
+                                                                                              𝛼
+to be effected, cf. Figs. 14(c) and 14(d). Nevertheless, applying an even larger ratio of 𝛽𝑝 < 1 does not lead to better results, as
+                                                                                               𝑝
+it shows in Fig. 14(e). Thereby, the effect of a snap back was not enabled, although a proper contact was derived. It is clearly to
+see that the heavy distortions of the void elements cause numerical instabilities. However, the NEM approach is still very sensitive
+to the chosen penalty parameters, as can be seen by comparing Figs. 14(d) and 14(f). Thereby, the deflection of the ring in Fig.
+14(f) is much larger than in Fig. 14(d), while each of their parameter ratios are equal, cf. Table 3. As a result, not only the ratio of
+the parameters is effecting the result, but especially the value of the penalty parameter 𝛽𝑞 , i.e., the regularization of the Jacobian.
+This is also evident by comparing Figs. 14(f) and 14(g), wherein both results show a large deflection but a smoother distortion of
+the void elements in Fig. 14(g). Furthermore, the set up in Fig. 14(f) failed after 646 load steps, whereas the setup in Fig. 14(g)
+converged over all preset 650 load steps. In conclusion, a small ratio of the penalty parameters leads to a larger deflection in the
+presented example, while the regularization of the Jacobian, i.e., the ratio of 𝛼𝑞 and 𝛽𝑞 , has a more significant influence on the end
+deformation state and therefore on the robustness of the NEM approach.
+    Concluded, it can be reported that the parameter 𝛾 = 1.0𝑒−6 is quite optimal for the presented examples. It was observed that
+smaller values of 𝛾 tend to a penetration of the solid bodies in the contact area and higher values results in a stiffening of the
+third medium, i.e., the void elements stiffen even before a proper contact is developed. Furthermore, the convergence of the NEM
+approach was much more sensitive to small changes of the penalty parameters 𝛼𝑞 and 𝛽𝑞 , i.e., the regularization of the Jacobian.
+In contrast, a wider variation of the penalty parameters 𝛼𝑝 and 𝛽𝑝 , according for the regularized rotation, shows less influence on
+the convergence behavior. Its important to mention that in general a small ratio of each penalty parameter pair, i.e., 𝛼□ < 𝛽□ with
+□ ∀ {𝑝, 𝑞}, was leading to a more robust convergence towards the end deformation state. Furthermore, it was found that significant
+smaller values of 𝛼𝑞 have a positive effect on the convergence robustness. Nevertheless, it should be noted that the influence of the
+selected penalty parameters may vary depending on the type of problem.
+
+                                                                        19
+M. von Zabiensky et al.                                                                       Finite Elements in Analysis & Design 255 (2026) 104489
+
+
+
+
+Fig. 14. Comparison of the influence of the penalty parameters on the ring problem, showing each end deformation state according to the given
+penalty parameters in Table 3.
+
+
+
+                                                                     20
+M. von Zabiensky et al.                                                                       Finite Elements in Analysis & Design 255 (2026) 104489
+
+5. Conclusion
+
+     In this work, we introduced a novel numerical approach to the third medium contact (TMC) which introduces additional field
+variables for regularization [32]. The primary advance of this work is the reduction of computation time for all cases examined by a
+factor of up to four depending on the spatial discretization while contact behavior remains comparable to the previous approach. To
+this end, the Neighbored Element Method (NEM) was applied to determine the unknown field variables with a spacial discretization,
+i.e., the displacement field remains to be discretized by means of a finite element discretization whereas the field functions for
+regularization are discretized within the quadrature points of the FEM mesh. The displacement field and the field functions are
+solved in a staggered scheme in which the field functions are solved via a generalized finite difference scheme. The system matrix
+for the solution of the field functions only depend on the spatial discretization and constant numerical parameters regarding the
+regularization and can be thus build and decomposed once for a given problem yielding an overall very efficient numerical solution.
+For this purpose, we had to introduced direct solution within the FDM, since previous applications only assumed explicit time
+discretization for transient partial differential equations.
+     Furthermore, it was shown that the NEM approach leads to the same results as the monolithic approach while it was likewise
+stable under the same conditions. Furthermore, a comparison with an augmented Lagrangian approach carried out in ANSYS shows
+a very close approximation of the deformation states. As for the monolithic approach in [32], results seem to be rather sensitive to
+the chosen values for the penalty parameter, accounting for the regularization of the deformation of the void domain, which had
+to be redefined for the NEM approach. Still, with the given selection of parameters for each problem, we were able to reproduce
+similar contact behavior as with the monolithic approach and a negligible differences in the resulting gap width. A sampled set of
+penalty parameters provides a guideline of the influence on the results. However, future work will tackle automated computation
+of optimal penatly paramters and/or adaptive schemes for more user-friendly application.
+     The here presented implementation of the NEM approach in the TMC enables a fast computation strategy to simulate frictionless
+contact. Nevertheless, the selection of parameters has a significant influence on the deformation of the void domain, and with that –
+although the actual deformation of void is irrelevant – they also have some influence on the contact development. Further research
+is required on the behavior and optimal determination of the regularization parameters.
+     One obvious further investigation is the enhancement to 3D elements. In [34], the regularization for 3D elements was achieved
+by extending the energy term of the regularization by a skew part of the deformation gradient. Thereby, the symmetric skew-like
+part leads to three components for the regularization which require three additional field variables, instead of just one field variable
+in case of 2D elements. Herein, the NEM approach represents a promising alternative solution, since additional field variables are
+not treated as additional degrees of freedom and consequently reduces the computational costs. The extension of a third spatial
+coordinate on the search of neighbors in the FDM is simple. However, the enhanced regularization terms must be implemented in
+the extended Hamilton principle subsequently. Since the NEM approach includes the classical FEM approach, other material models
+can be applied for the solid elements. Furthermore, the adaptation of multiphysics is easy to handle with the NEM, shown in [36].
+     Last but not least, introduction of friction in the contact area is a comprehensible aspect. Since the contact area is not predefined,
+a spatial criteria for indicating friction is unsuitable. Rather, an additional strain energy, or respectively a regularization of the shear
+stiffness of highly compressed void elements, seems to be more suitable for the TMC approach. Inspired by crystal plasticity the work
+in [26] enabled friction by adding an anisotropic strain energy term. A similar extension of the formulation of internal energy for
+the presented approach is also conceivable, but as a consequence, the additional energy term must be implemented in the extended
+Hamilton principle.
+
+CRediT authorship contribution statement
+
+   Max von Zabiensky: Writing – original draft, Visualization, Validation, Software, Resources, Methodology, Conceptualization.
+Dustin R. Jantos: Writing – review & editing, Supervision, Methodology, Conceptualization. Philipp Junker: Writing – review &
+editing, Supervision, Methodology, Conceptualization.
+
+Declaration of competing interest
+
+    The authors declare that they have no known competing financial interests or personal relationships that could have appeared
+to influence the work reported in this paper.
+
+Acknowledgments
+
+   The authors gratefully acknowledge the funding by the German Research Foundation (Deutsche Forschungsgemeinschaft, DFG)
+under Germany’s Excellence Strategy within the Cluster of Excellence PhoenixD (Project-ID 390833453). Additionally this work is
+funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) - project number 512940050.
+
+Data availability
+
+    Data will be made available on request.
+
+
+
+                                                                    21
+M. von Zabiensky et al.                                                                                    Finite Elements in Analysis & Design 255 (2026) 104489
+
+References
+
+ [1]   Heinrich Hertz, Ueber die berührung fester elastischer körper, 1882.
+ [2]   Peter Wriggers, Computational contact mechanics, Comput. Mech. 32 (1–2) (2003) 141.
+ [3]   Zhong Zhi-Hua, Larsgunnar Nilsson, A contact searching algorithm for general contact problems, Comput. Struct. 33 (1) (1989) 197–209.
+ [4]   Matthias Mayr, Alexander Popp, Scalable computational kernels for mortar finite element methods, Eng. Comput. 39 (5) (2023) 3691–3720.
+ [5]   M.H. Refaat, S.A. Meguid, Updated Lagrangian formulation of contact problems using variational inequalities, Internat. J. Numer. Methods Engrg. 40 (16)
+       (1997) 2975–2993.
+ [6]   Weimin Han, Mircea Sofonea, Numerical analysis of hemivariational inequalities in contact mechanics, Acta Numer. 28 (2019) 175–286.
+ [7]   Peter Wriggers, Udo Nackenhorst, Analysis and Simulation of Contact Problems, Springer, 2006.
+ [8]   Alexander Popp, Peter Wriggers, Contact Modeling for Solids and Particles, vol. 585, Springer, 2018.
+ [9]   Vladislav A. Yastrebov, Numerical Methods in Contact Mechanics, John Wiley & Sons, 2013.
+[10]   Tod A. Laursen, Computational Contact and Impact Mechanics: Fundamentals of Modeling Interfacial Phenomena in Nonlinear Finite Element Analysis,
+       Springer Science & Business Media, 2013.
+[11]   Temesgen M. Kindo, Tod A. Laursen, John E. Dolbow, Toward robust and accurate contact solvers for large deformation applications: a remapping/adaptivity
+       framework for mortar-based methods, Comput. Mech. 54 (2014) 53–70.
+[12]   Jiazhao Huang, Nhon Nguyen-Thanh, Kun Zhou, An isogeometric-meshfree coupling approach for contact problems by using the third medium method,
+       Int. J. Mech. Sci. 148 (2018) 327–336.
+[13]   J.O. Hallquist, G.L. Goudreau, DJ822741 Benson, Sliding interfaces with contact-impact in large-scale Lagrangian computations, Comput. Methods Appl.
+       Mech. Engrg. 51 (1–3) (1985) 107–137.
+[14]   Nagi El-Abbasi, Klaus-Jürgen Bathe, Stability and patch test performance of contact discretizations and a new solution algorithm, Comput. Struct. 79 (16)
+       (2001) 1473–1486.
+[15]   Panayiotis Papadopoulos, Robert L. Taylor, A mixed formulation for the finite element solution of contact problems, Comput. Methods Appl. Mech. Engrg.
+       94 (3) (1992) 373–389.
+[16]   Christine Bernardi, Naïma Debit, Yvon Maday, Coupling finite element and spectral methods: First results, Math. Comp. 54 (189) (1990) 21–39.
+[17]   Christine Bernardi, Yvon Maday, Anthony T. Patera, Domain decomposition by the mortar element method, in: Asymptotic and Numerical Methods for
+       Partial Differential Equations with Critical Parameters, Springer, 1993, pp. 269–286.
+[18]   C. Bernardi, A new nonconforming approach to domain decomposition: ther mortar element method, Nonlinear Partial Differ. Equ. Appl. (1994) 1351.
+[19]   Javier Oliver, S. Hartmann, J.C. Cante, R. Weyler, JA2536080 Hernandez, A contact domain method for large deformation frictional contact problems.
+       Part 1: Theoretical basis, Comput. Methods Appl. Mech. Engrg. 198 (33–36) (2009) 2591–2606.
+[20]   S. Hartmann, Javier Oliver, R. Weyler, J.C. Cante, J.A. Hernández, A contact domain method for large deformation frictional contact problems. Part 2:
+       Numerical aspects, Comput. Methods Appl. Mech. Engrg. 198 (33–36) (2009) 2607–2631.
+[21]   R. Weyler, J. Oliver, Trisha Sain, J.C. Cante, On the contact domain method: A comparison of penalty and Lagrange multiplier implementations, Comput.
+       Methods Appl. Mech. Engrg. 205 (2012) 68–82.
+[22]   P. Wriggers, J. Schröder, A. Schwarz, A finite element method for contact using a third medium, Comput. Mech. 52 (2013) 837–847.
+[23]   Gore Lukas Bluhm, Ole Sigmund, Konstantinos Poulios, Internal contact modeling for finite strain topology optimization, Comput. Mech. 67 (2021)
+       1099–1114.
+[24]   Gore Lukas Bluhm, Ole Sigmund, Konstantinos Poulios, Inverse design of mechanical springs with tailored nonlinear elastic response utilizing internal
+       contact, Int. J. Non-Linear Mech. 157 (2023) 104552.
+[25]   Andreas H. Frederiksen, Anna Dalklint, Ole Sigmund, Konstantinos Poulios, Improved third medium formulation for 3D topology optimization with contact,
+       Comput. Methods Appl. Mech. Engrg. 436 (2025) 117595.
+[26]   Andreas H. Frederiksen, Ondřej Rokoš, Konstantinos Poulios, Ole Sigmund, Marc G.D. Geers, Adding friction to Third Medium Contact: A crystal plasticity
+       inspired approach, Comput. Methods Appl. Mech. Engrg. 432 (2024) 117412.
+[27]   Andreas Henrik Frederiksen, Ole Sigmund, Konstantinos Poulios, Topology optimization of self-contacting structures, Comput. Mech. 73 (4) (2024) 967–981.
+[28]   Ondřej Faltus, Martin Horák, Martin Doškář, Ondřej Rokoš, Third medium finite element contact formulation for pneumatically actuated systems, 2024,
+       arXiv preprint arXiv:2405.01185.
+[29]   Anna Dalklint, Joe Alexandersen, Andreas Henrik Frederiksen, Konstantinos Poulios, Ole Sigmund, Topology optimization of contact-aided
+       thermo-mechanical regulators, Internat. J. Numer. Methods Engrg. 126 (2) (2025) e7661.
+[30]   Yangjun Luo, Ming Li, Zhan Kang, Topology optimization of hyperelastic structures with frictionless contact supports, Int. J. Solids Struct. 81 (2016)
+       373–382.
+[31]   Quentin Le Lidec, Wilson Jallet, Louis Montaut, Ivan Laptev, Cordelia Schmid, Justin Carpentier, Contact models in robotics: a comparative analysis, IEEE
+       Trans. Robot. (2024).
+[32]   P. Wriggers, J. Korelc, Ph. Junker, A third medium approach for contact using first and second order finite elements, Comput. Methods Appl. Mech. Engrg.
+       436 (2025) 117740.
+[33]   René De Borst, Mike A. Crisfield, Joris J.C. Remmers, Clemens V. Verhoosel, Nonlinear Finite Element Analysis of Solids and Structures, John Wiley &
+       Sons, 2012.
+[34]   Peter Wriggers, Jože Korelc, Ph. Junker, First order finite element formulations for third medium contact, Comput. Mech. (2025) 1–17.
+[35]   Bing-Bing Xu, Peter Wriggers, Stabilization-free virtual element method for 2D third medium contact, 2025, arXiv preprint arXiv:2509.03630.
+[36]   Tobias Rudolf, Felix Klempt, Hüray Ilayda Kök, Meisam Soleimani, Dustin Roman Jantos, Philipp Junker, Computational efficiency and accuracy of the
+       Neighbored Element Method, Finite Elem. Anal. Des. 249 (2025) 104353.
+[37]   Holm Altenbach, Kontinuumsmechanik, Springer, 2012.
+[38]   Gerhard A. Holzapfel, Nonlinear solid mechanics: a continuum approach for engineering science, 2002.
+[39]   Bojan J. Dimitrijevic, Klaus Hackl, A method for gradient enhancement of continuum damage models, Tech. Mech.-Eur. J. Eng. Mech. 28 (1) (2008)
+       43–52.
+[40]   Philipp Junker, Klaus Hackl, A variational growth approach to topology optimization, Struct. Multidiscip. Optim. 52 (2015) 293–304.
+[41]   Peter Wriggers, Nichtlineare Finite-Element-Methoden, Springer-Verlag, 2013.
+[42]   Mischa Blaszczyk, Dustin Roman Jantos, Philipp Junker, Application of Taylor series combined with the weighted least square method to thermodynamic
+       topology optimization, Comput. Methods Appl. Mech. Engrg. 393 (2022) 114698.
+[43]   Dustin R. Jantos, Klaus Hackl, Philipp Junker, An accurate and fast regularization approach to thermodynamic topology optimization, Internat. J. Numer.
+       Methods Engrg. 117 (9) (2019) 991–1017.
+[44]   Philipp Junker, Stephan Schwarz, Dustin R. Jantos, Klaus Hackl, A fast and robust numerical treatment of a gradient-enhanced model for brittle damage,
+       Int. J. Multiscale Comput. Eng. 17 (2) (2019).
+[45]   Jeff Bezanson, Alan Edelman, Stefan Karpinski, Viral B. Shah, Julia: A fresh approach to numerical computing, SIAM Rev. 59 (1) (2017) 65–98.
+
+
+
+                                                                              22
+
