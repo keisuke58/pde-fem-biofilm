@@ -64,6 +64,7 @@ def cases():
             th, hp, n = ms.ECOLOGY_CASE["theta"], ms.ECOLOGY_CASE["hp"], ms.ECOLOGY_ACTIVE
         else:
             ms.set_case(None)
+            ms.set_active_species(5)          # set_case(None) keeps the last n
             th = [float(x) for x in np.asarray(__import__("jax_hamilton_0d_5species_demo").THETA_DEMO)]
             hp, n = None, 5
         for k in range(4):
