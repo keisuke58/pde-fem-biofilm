@@ -124,6 +124,48 @@ Answers to the three questions:
 The g question for the 2024 runs stays open: the AceGen file (Dr.
 Soleimani) or Felix himself has to settle it.
 
+## The 2024 test cases run in his current code (6 Oct 2026, IKMHIWI03)
+
+His code was built on Windows (v222) and run outside git
+(`F:\felix_private\build_v222`). His Workbench project does not run with
+the current code: it was written for an earlier version, and about 55
+parameters the code reads are missing. With those added, the run still
+stops in the first nutrient solve (PARDISO reordering error), so the
+project was set aside. Instead, the three test cases were run in his code
+with this work's partner-style deck of the Fig. 7 set-up:
+- 2 mm cube, 8^3 elements, Table 2 converted to the cube (beta 0.02,
+  r 10, k 1, d 1, g/d 1 for "high" and 4.1, 100 for "low", k_alpha 1e-3);
+- one species (species 2 not seeded);
+- T = 1 in 200 substeps, the inner time step equal to the substep;
+- E = 10 kPa (his mail);
+- the new penalties set as stated in the run notes;
+- 4.1 with the nutrient on one corner element and a seed of 32 elements
+  around the centre.
+
+His code adds the front term only where it is positive, as described above,
+and uses zero-order consumption.
+
+| case | mean phi at T* = 0.1 / 0.5 / 1 (paper) | mean c at the same times (paper) | RMS to the digitised curves (phi, c) |
+|---|---|---|---|
+| 4.1 | 0.065 / 0.069 / 0.072 (0.21 / 0.52 / 0.74) | 0.017 / -0.037 / -0.062 (0.24 / 0.11 / 0.09) | 0.44, 0.18 |
+| 4.2 high | 0.045 / 0.185 / stopped at T* = 0.78, element distortion (0.73 / 1.0 / 1.0) | 0.98 / 0.85 (0.54 / 0.49) | 0.68, 0.37 |
+| 4.2 low | 0.021 / 0.037 / breaks down near T* = 1, c down to -47 (0.18 / 0.29 / 0.30) | 0.53 / 0.15 (0.15 / 0.08) | 0.17 up to T* = 0.5 |
+
+- **His own code does not reproduce the 2024 figures with Table 2 either.**
+  The colony barely grows, because the nutrient, consumed at zero order, is
+  used up and goes below zero.
+- **4.1 in his code agrees with Abaqus.** For 4.1 his code and the Abaqus
+  run with the same set-up (`abaqus_composition/README.md`, first author's
+  set-up) agree: mean phi 0.072 / 0.071 and mean c -0.06 / -0.07 at T* = 1,
+  with different discretisations (NEM 8^3 against Galerkin 20^3).
+- **The likely cause.** So the gap to the paper is not in this work's
+  implementation. The 2024 figures were most likely computed with a
+  different consumption (first order, g phi c, fits Fig. 7's nutrient
+  plateau) or other inputs, possibly in the AceGen user element rather than
+  this code. That question goes to Felix and Dr. Soleimani.
+- **Caveats.** The mesh is coarser than the paper's (8^3 against 20^3), and
+  Table 2 was converted to a 2 mm cube.
+
 ## What this means here
 
 - The wired build used by the ANSYS week chain still has the reading slip
