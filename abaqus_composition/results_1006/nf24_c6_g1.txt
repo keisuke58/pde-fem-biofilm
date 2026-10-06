@@ -1,0 +1,20 @@
+# nf24_c6_g1  (2026-10-06 16:31, 0 min, 4 CPUs, Fortran point model)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_week\w16_c6_g1_s015.json --case 2sp_case6 --T 1.0 --n 24 --cons 1
+# 
+# columns: Abaqus | ANSYS w16_c6_g1_s015 | ratio
+Traceback (most recent call last):
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 129, in <module>
+    main(sys.argv[1], sys.argv[2])
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 79, in main
+    t = last_tables(dat)
+        ^^^^^^^^^^^^^^^^
+  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 27, in last_tables
+    lines = Path(dat).read_text(errors="replace").splitlines()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nishioka\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nishioka\AppData\Local\Programs\Python\Python312\Lib\pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'F:\\abaqus_work\\comp_nf24_c6_g1\\nf24_c6_g1.dat'
