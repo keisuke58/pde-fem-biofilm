@@ -141,6 +141,9 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
+  Keio master's (finishing in 2027), papers and a job, not a doctorate or a
+  DFG proposal for him.
 - **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
   2026-10-06). His element is an earlier version of Felix Klempt's
   implementation (same NEM and AceGen files); Felix's is the later version
