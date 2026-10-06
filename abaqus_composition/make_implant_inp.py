@@ -24,6 +24,18 @@ Material and growth as on the cube: beta = 0.02 mm^2/T*, k_alpha = 1e-3,
 Klempt 2024 stiffness (E = 10 Pa, nu = 0.49), units mm, MPa; the composition
 of --case (Klempt et al. 2026) through the point model (prop(28) = 7).
 Writes OUT.json with each element's centroid (r, theta, z) and the seed.
+
+Options added 6 Oct 2026:
+  --front r [--blend w] [--kmono k] [--hstab h] [--eps e]: the front term of
+    Eq. 34 with the nutrient of the UEL, as make_cube_inp.py (without
+    --blend: Eq. 34 as printed; with --blend: growth on every face, my
+    modification);
+  --bulge b --nut outer: a tooth instead of the implant. The inner radius
+    grows from --ri at the base to --ri + b at the top, as the crown of a
+    tooth widens from the cervical line to the height of contour, and the
+    nutrient (saliva) enters through the outer face of the layer instead of
+    the top. The tooth's enamel is taken as rigid (E ~ 80 GPa). Values are
+    mine, not from a paper.
 """
 import argparse
 import json
@@ -59,17 +71,27 @@ def main():
     ap.add_argument("--gw", type=float, default=0.0,
                     help="prop(36) = d: species-weighted growth, alpha_dot = k_alpha phi (1 + d (2 chi_1 - 1)) "
                          "(not from a paper; 0 = Eq. 36)")
+    ap.add_argument("--front", type=float, default=None, help="r (mm/T*) of the front term of Eq. 34")
+    ap.add_argument("--kmono", type=float, default=1.0)
+    ap.add_argument("--hstab", type=float, default=0.0)
+    ap.add_argument("--eps", type=float, default=0.0)
+    ap.add_argument("--blend", type=float, default=None)
+    ap.add_argument("--bulge", type=float, default=0.0, help="inner radius ri + bulge sin(pi z / 2h): a tooth crown")
+    ap.add_argument("--nut", choices=("top", "outer"), default="top")
     a = ap.parse_args()
     nr, nt, nz = a.nr, a.nt, a.nz
     ro = a.ri + a.thick
+    rin = lambda z: a.ri + a.bulge * math.sin(0.5 * math.pi * z / a.height)  # noqa: E731
     nid = lambda i, j, k: 1 + i + (nr + 1) * j + (nr + 1) * (nt + 1) * k  # noqa: E731
-    nodes = []
+    nodes, ii = [], {}
     for k in range(nz + 1):
+        z = a.height * k / nz
         for j in range(nt + 1):
             th = 0.5 * math.pi * j / nt
             for i in range(nr + 1):
-                r = a.ri + a.thick * i / nr
-                nodes.append((nid(i, j, k), r * math.cos(th), r * math.sin(th), a.height * k / nz))
+                r = rin(z) + a.thick * i / nr
+                nodes.append((nid(i, j, k), r * math.cos(th), r * math.sin(th), z))
+                ii[nid(i, j, k)] = i
     elems, seed, cen = [], [], {}
     around = {}
     e = 0
@@ -80,8 +102,8 @@ def main():
                 con = [nid(i, j, k), nid(i + 1, j, k), nid(i + 1, j + 1, k), nid(i, j + 1, k),
                        nid(i, j, k + 1), nid(i + 1, j, k + 1), nid(i + 1, j + 1, k + 1), nid(i, j + 1, k + 1)]
                 elems.append((e, con))
-                cen[e] = (a.ri + a.thick * (i + 0.5) / nr, 0.5 * math.pi * (j + 0.5) / nt,
-                          a.height * (k + 0.5) / nz, i, j, k)
+                zc = a.height * (k + 0.5) / nz
+                cen[e] = (rin(zc) + a.thick * (i + 0.5) / nr, 0.5 * math.pi * (j + 0.5) / nt, zc, i, j, k)
                 for q in con:
                     around.setdefault(q, [0, 0])[0] += 1
                 if i == 0:
@@ -89,8 +111,11 @@ def main():
                     for q in con:
                         around[q][1] += 1
     tol = 1e-9
-    inner = [q for q, x, y, z in nodes if abs(math.hypot(x, y) - a.ri) < tol]
-    top = [q for q, x, y, z in nodes if abs(z - a.height) < tol]
+    inner = [q for q, x, y, z in nodes if ii[q] == 0]
+    if a.nut == "top":
+        top = [q for q, x, y, z in nodes if abs(z - a.height) < tol]
+    else:
+        top = [q for q, x, y, z in nodes if ii[q] == nr]
     symx = [q for q, x, y, z in nodes if abs(x) < tol]       # theta = 90 deg: u_x = 0
     symy = [q for q, x, y, z in nodes if abs(y) < tol]       # theta = 0: u_y = 0
 
@@ -111,8 +136,12 @@ def main():
     rows = lambda v: "\n".join(", ".join(f"{x:.17g}" for x in v[i:i + 8]) for i in range(0, len(v), 8))  # noqa: E731
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     ic = "\n".join(f"{q}, {around[q][1] / around[q][0]:.10g}" for q in sorted(around) if around[q][1])
+    therm = [a.beta, a.kalpha, a.pen]
+    if a.front is not None:
+        therm += [a.front, a.kmono, a.hstab, a.eps] + ([a.blend] if a.blend is not None else [])
+    what = "a tooth's crown" if a.bulge or a.nut == "outer" else "an implant collar"
     txt = f"""*HEADING
- Biofilm on an implant collar: r {a.ri}-{ro} mm, h {a.height} mm, 90 deg sector, {nr}x{nt}x{nz} C3D8T, {a.case}, nutrient g {a.cons} from the top
+ Biofilm on {what}: r {a.ri}(+{a.bulge})-{ro} mm, h {a.height} mm, 90 deg sector, {nr}x{nt}x{nz} C3D8T, {a.case}, nutrient g {a.cons} from the {a.nut} face, front {a.front} blend {a.blend}
 *NODE
 {chr(10).join(f"{i}, {x:.12g}, {y:.12g}, {z:.12g}" for i, x, y, z in nodes)}
 *ELEMENT, TYPE=C3D8T, ELSET=EALL
@@ -141,8 +170,8 @@ def main():
 1.0
 *USER MATERIAL, CONSTANTS={len(p)}, TYPE=MECHANICAL
 {rows(p)}
-*USER MATERIAL, CONSTANTS=3, TYPE=THERMAL
-{a.beta}, {a.kalpha}, {a.pen}
+*USER MATERIAL, CONSTANTS={len(therm)}, TYPE=THERMAL
+{", ".join(f"{x:.10g}" for x in therm)}
 *DEPVAR
 100
 *INITIAL CONDITIONS, TYPE=TEMPERATURE
@@ -169,7 +198,7 @@ NT, U
 """
     Path(a.out).write_text(txt)
     Path(a.out).with_suffix(".json").write_text(json.dumps(
-        {"ri": a.ri, "ro": ro, "height": a.height, "nr": nr, "nt": nt, "nz": nz, "seed": seed,
+        {"ri": a.ri, "ro": ro, "bulge": a.bulge, "nut": a.nut, "height": a.height, "nr": nr, "nt": nt, "nz": nz, "seed": seed,
          "cen": {str(e): v for e, v in cen.items()}}))
     print(f"wrote {a.out}: {len(elems)} elements, seed {len(seed)}, inner {len(inner)} nodes, top {len(top)} nodes")
 

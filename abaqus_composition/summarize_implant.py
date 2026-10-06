@@ -44,8 +44,8 @@ def main(dat, js):
     spread = {"theta spread of sigma_tt (inner, max over z) %":
               max(np.ptp(stt[(ir == 0) & (kz == k)]) / max(abs(stt[(ir == 0) & (kz == k)].mean()), 1e-30) * 100
                   for k in range(nz))}
-    for ring, name in ((0, "inner (on the titanium)"), (nr - 1, "outer")):
-        print(f"\n{name} ring, theta means; z from the base (0) to the gingival margin ({h})")
+    for ring, name in ((0, "inner (on the titanium or enamel)"), (nr - 1, "outer")):
+        print(f"\n{name} ring, theta means; z from the base (0) to the top ({h})")
         print(f"{'z mm':>6s} {'phi':>6s} {'share':>6s} {'c':>6s} {'alpha-1':>9s} "
               f"{'s_rr':>10s} {'s_rz':>10s} {'s_tt':>10s} {'s_zz':>10s} {'vM':>10s}")
         for k in range(nz):
