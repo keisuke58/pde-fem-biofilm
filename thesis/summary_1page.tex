@@ -68,10 +68,11 @@ the local nutrient.
 
 \sect{Limitations and outlook}
 All finite element results are verified, not validated: no measured stress of a
-growing oral biofilm is available. The stress in the seed is not converged in
-the mesh, because the growth field at the seed surface depends on the element
-size. In ANSYS only the local nutrient acts back on the point model, and the
-front term of the element is inactive, so the biofilm does not spread in the
-ANSYS runs. More species, the local nutrient in the element and a validation of
-the mechanics continue at Keio University.
+growing oral biofilm is available. The size of the stresses depends on the
+diffusion coefficient of the field, whose conversion to the model is an
+assumption; with the converted value the stresses converge in the mesh. In
+ANSYS only the local nutrient acts back on the point model, and the front term
+of the element is inactive, so the biofilm spreads only by diffusion. More
+species, growth towards the nutrient and a validation of the mechanics continue
+at Keio University.
 \end{document}
