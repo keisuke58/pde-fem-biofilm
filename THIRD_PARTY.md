@@ -71,6 +71,23 @@ bundled verbatim; no changes have been made to it.**
 (`pdftotext -layout`), a change of format only, under the same licence and
 credit. Added 2026-10-04. Reading notes: `ROADMAP_TWO_WAY.md`, literature section.
 
+## `references/Rudolf2025_NEM_efficiency_FEAD.pdf` — Rudolf et al. (2025), the Neighbored Element Method used in the partner element
+
+> **Computational efficiency and accuracy of the Neighbored Element Method**
+> Tobias Rudolf, Felix Klempt, Hüray Ilayda Kök, Meisam Soleimani, Dustin Roman Jantos, Philipp Junker
+> *Finite Elements in Analysis and Design* (2025) **249**:104353
+> doi:[10.1016/j.finel.2025.104353](https://doi.org/10.1016/j.finel.2025.104353)
+> © 2025 The Authors
+
+Open access under the Creative Commons Attribution 4.0 International License
+(<http://creativecommons.org/licenses/by/4.0/>), which permits use and
+redistribution in any medium or format provided the authors and source are
+credited, the licence is linked, and any changes are indicated. **The PDF is
+bundled verbatim; no changes have been made to it.**
+`references/Rudolf2025_NEM_efficiency_FEAD.txt` is a plain-text extraction
+(`pdftotext -layout`), a change of format only, under the same licence and
+credit. Added 2026-10-06. Reading notes: `KEIO_PLAN.ja.md` §4d.
+
 ---
 ## `data/heine_species_distribution_biofilm.xlsx`
 
