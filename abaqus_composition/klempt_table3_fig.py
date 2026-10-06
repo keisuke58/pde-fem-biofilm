@@ -103,9 +103,10 @@ def main(dat):
         ax[r, 4].text(0.02, 0.02, f"{p.min():.1e} ... {p.max():.1e}", transform=ax[r, 4].transAxes,
                       fontsize=8, color="k", bbox=dict(fc="w", ec="none", alpha=0.7))
     fig.suptitle("Klempt et al. 2024, test case 4.1 (Table 3): diagonal cut, nutrient corner at the top right. "
-                 "Abaqus 20$^3$: growth on every face (w = 0.5), consumption $g\\phi c$,\nnutrient in a 2 um corner "
-                 "block, E = 10 read as MPa (assumptions of this work); p colours on +3e-4 ... -6.5e-4 MPa as the "
-                 "paper's legend. Paper: Table 3 (CC BY 4.0)", fontsize=11)
+                 "Abaqus 20$^3$: growth on every face (w = 0.5), consumption $g\\phi c$, nutrient in a 2 um corner "
+                 "block,\nE = 10 read as MPa. Assumptions of this work: the form that reproduces the paper's figures, "
+                 "not Eq. 34/35 as printed (open question to the authors). p colours on +3e-4 ... -6.5e-4 MPa as "
+                 "the paper's legend. Paper: Table 3 (CC BY 4.0)", fontsize=10.5)
     fig.savefig(OUT, dpi=150)
     print("wrote", OUT)
 

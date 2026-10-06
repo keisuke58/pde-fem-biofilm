@@ -223,6 +223,22 @@ small-strain estimate. (p carries the spherical term of
 DEVIATOR_SCALING_FINDING.md, ~1.3 % at nu = 0.49.) The shapes agree in kind;
 the thin tip towards the corner is missing for every w (sec. 16).
 
+## Front term with two species; composition mesh series (6 Oct 2026, running)
+
+Runs one at a time on 4 CPUs (`F:\abaqus_work\_req_1006.ps1`), each result in
+`results_1006/<job>.txt` (`compare_ansys.py` measures; the ANSYS column is a
+reference only for 8^3). All: case 6, beta = 0.02 mm^2/T*, the seed of the
+ANSYS 8^3 run, T* = 1.0.
+
+1. Front term with two species and the nutrient: `fr8_c6_g6`, `fr16_c6_g6`
+   (`make_cube_inp.py --front 10 --blend 0.5`, dt 0.01), against `nf8_c6_g6`
+   without it.
+2. Composition mesh series: `cs16_c6_g6`, `cs24_c6_g6`, `cs32_c6_g6`.
+
+Assumptions, to be stated wherever these results are shown:
+- **Front term:** growth on every face, w = 0.5, without artificial diffusion. This is the form that reproduces Klempt 2024's figures (sections above; KLEMPT2024_REPRODUCTION.md sec. 15-16), **not Eq. 34 as printed**. The printed form does not converge in the grid. The form actually run is an open question to Felix Klempt. r = 10 mm/T* and k = 1 are Table 2 converted to the 2 mm cube (KLEMPT2024_REPRODUCTION.md sec. 8).
+- **Consumption:** 6 is an example input value (the partner's deck). It is about six times Table 2, which corresponds to consumption 1. With the paper's zero-order form, c drops below 0 where the biofilm is dense (-0.19 on 8^3 at T* = 0.1). The point model then takes c_rel = min(max(c/c_ref, 0), 1) = 0, i.e. no nutrient: `phi_mode_exec.inc`, the same fragment in ANSYS and Abaqus.
+
 ## Biofilm on an implant collar (6 Oct 2026)
 
 `make_implant_inp.py`, `summarize_implant.py`: a 0.25 mm biofilm layer on a
