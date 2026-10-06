@@ -10,6 +10,12 @@
 
         delta(t) ~ (3 k_alpha^2 t / (mu_star c))^(1/3)      (growth slows as t^(1/3)),
 
+    but only for t >> 1/k_alpha. On T* = 1 the first transient sets the result:
+    phi is removed once mu_star c delta^2 t ~ 1 with delta ~ k_alpha t, which gives
+    delta(T*) ~ 1.4 k_alpha T* Pi^(-1/3) for Pi >> 1 (result of 6 Oct: ODE 4.3e-5
+    against 1.4 x 3.0e-5 for the Table 2 value). The "law" column below is the
+    t^(1/3) form and is not the relevant one on T* = 1.
+
     with eta cancelling in the balance k_alpha_bar alpha = mu c phi delta^2: the
     stress term stops the biofilm where the elastic energy mu c delta^2 reaches
     the growth energy k_alpha_bar = eta k_alpha. The script checks the law
