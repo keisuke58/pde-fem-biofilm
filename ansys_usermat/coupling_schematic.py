@@ -2,6 +2,10 @@
 """Schematic of the one-way micro-macro coupling, for slides and the thesis.
 
     python ansys_usermat/coupling_schematic.py   -> assets/fig_coupling_schematic.png
+    python ansys_usermat/coupling_schematic.py --keio
+        -> assets/fig_coupling_schematic_keio.png: both arrows back to the
+           field drawn as the Keio continuation (composition -> field, and
+           stress -> growth), without the footnote on the two schemes.
 
 (1) Macro: the 3D growth field of Klempt et al. 2024 (the partner's element)
 decides the amount phi_3D at every Gauss point. (2) Micro: one copy of the
@@ -30,6 +34,7 @@ import figstyle  # noqa: E402
 
 OUT = HERE.parent / "assets" / "fig_coupling_schematic.png"
 INK, MUTED, LINE = "#1f2933", "#616e7c", "#9aa5b1"
+KEIO = "#a61b29"
 PANEL = {"macro": ("#e8f1fb", "#1d4e89"), "micro": ("#fdf0e6", "#b45309"),
          "mech": ("#eef1f4", "#3e4c59")}
 SP1, SP2 = "#e8833a", "#7a5195"
@@ -151,7 +156,7 @@ def stress_sketch(ax, cx, cy, h):
         arrow(ax, c + v * 2.45 * h, c + v * 1.6 * h, color=INK, lw=1.4, z=6)
 
 
-def main():
+def main(keio=False):
     figstyle.apply(12)
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
@@ -215,8 +220,21 @@ def main():
     xb = PX["micro"][0] + PX["micro"][1] * 0.22
     ax.plot([xb, xb, xa], [Y0, 0.13, 0.13], color=MUTED, lw=1.5, ls=(0, (4, 3)), zorder=5)
     arrow(ax, (xa, 0.13), (xa, Y0 - 0.004), color=MUTED, ls=(0, (4, 3)), lw=1.5)
-    ax.text((xa + xb) / 2, 0.115, "two-way coupling (outlook)", ha="center", va="top",
-            fontsize=11, color=MUTED, style="italic")
+    ax.text((xa + xb) / 2, 0.115,
+            "composition to growth (Keio)" if keio else "two-way coupling (outlook)",
+            ha="center", va="top", fontsize=11, color=MUTED, style="italic")
+
+    if keio:
+        xs = PX["mech"][0] + PX["mech"][1] * 0.5
+        xf = PX["macro"][0] + PX["macro"][1] * 0.2
+        ax.plot([xs, xs, xf], [Y0, 0.03, 0.03], color=KEIO, lw=1.8, ls=(0, (4, 3)), zorder=5)
+        arrow(ax, (xf, 0.03), (xf, Y0 - 0.004), color=KEIO, ls=(0, (4, 3)), lw=1.8)
+        ax.text((xs + xf) / 2, 0.018, "stress to growth (Keio): the mechanical term of Klempt 2024, Eq. 30",
+                ha="center", va="top", fontsize=11, color=KEIO, style="italic")
+        out = OUT.with_name("fig_coupling_schematic_keio.png")
+        fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
+        print("wrote", out)
+        return
 
     ax.text(0.5, 0.012,
             r"Point model run two ways: A) rescaled every step to $\phi_{3D}$;  "
@@ -230,4 +248,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(keio="--keio" in sys.argv)
