@@ -1,14 +1,27 @@
-# cs40_c6_g6  (2026-10-06 16:44, 1.6 min, 4 CPUs, Fortran point model)
-# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_ansys\ds_c6_nut_g6_b002.json --case 2sp_case6 --T 1.0 --n 40 --cons 6
-# NOT COMPLETE: see F:\abaqus_work\comp_cs40_c6_g6 (cs40_c6_g6.msg / cs40_c6_g6.log)
+# cs40_c6_g6  (2026-10-06 20:10, 20.1 min, 4 CPUs, Fortran point model)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_ansys\ds_c6_nut_g6_b002.json --case 2sp_case6 --T 1.0 --n 40 --cons 6 --separated
+# PASS: cs40_c6_g6 completed (native point model)
 # columns: Abaqus | ANSYS ds_c6_nut_g6_b002 | ratio
-Traceback (most recent call last):
-  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 129, in <module>
-    main(sys.argv[1], sys.argv[2])
-  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 79, in main
-    t = last_tables(dat)
-        ^^^^^^^^^^^^^^^^
-  File "C:\Users\nishioka\git\pde-fem-biofilm\abaqus_composition\compare_ansys.py", line 28, in last_tables
-    start = max(i for i, l in enumerate(lines) if re.search(r"INCREMENT\s+\d+ SUMMARY", l))
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: max() iterable argument is empty
+measure                    Abaqus        ANSYS    ratio
+seed vM                5.7610e-04   1.0002e+05   0.0000
+seed p                -2.1947e-04  -1.0629e+05   0.0000
+layer 1 p              5.2132e-05   2.4203e+04   0.0000
+layer 1 tension        1.0000e+00   1.0000e+00   1.0000
+layer 2 p              1.1713e-06   1.1121e+03   0.0000
+layer 2 tension        1.0000e+00   1.0000e+00   1.0000
+layer 3 p              2.4305e-07   7.2806e+01   0.0000
+layer 3 tension        9.8240e-01   1.0000e+00   0.9824
+alpha interior         7.3916e-04   8.6166e-04   0.8578
+alpha surface          4.5776e-04   6.1300e-04   0.7467
+alpha step %           3.8071e+01   2.8858e+01   1.3192
+phi seed               5.0726e-01 
+phi layer 1            1.1159e-01 
+ran (elements)         3.0088e+04   3.0400e+02  98.9737
+share seed mean        2.5959e-01   3.2382e-01   0.8016
+share seed min         5.3032e-02   1.1670e-01   0.4544
+share seed max         4.5659e-01   4.5850e-01   0.9958
+share layer 1          4.1072e-01   4.0628e-01   1.0109
+share layer 2          4.8816e-01   4.9951e-01   0.9773
+c seed min             2.6010e-01   2.5556e-01   1.0178
+c seed max             7.2470e-01   5.5667e-01   1.3019
+c mean                 6.2505e-01   5.9263e-01   1.0547
