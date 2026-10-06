@@ -360,6 +360,39 @@ the digitised figures (`results_1006/fx*.txt`):
   is the next one to test, stated as "as in the first author's current
   implementation".
 
+## The same set-up against the first author's own code (6 Oct 2026)
+
+The three test cases were also run in Felix Klempt's current code (ANSYS, kept
+outside git; `../ansys_usermat/FELIX_VS_PARTNER_DIFF.md`). The ANSYS runs use
+8^3 elements and the regions of the partner-style Fig. 7 deck. The Abaqus runs
+use the same mesh and regions (`partner_elem_sets.py` writes `pset_41.json` and
+`pset_42.json`; `make_klempt_inp.py --elem-sets`):
+- c = 1 on every node of the nutrient elements;
+- initial phi = the share of seed elements around each node.
+
+Common settings: his form of the front term (`--felix`), consumption g phi,
+dt = 0.005, T = 1, E = 10 kPa, penalty 100. Jobs fb41, fb42h, fb42l.
+
+| case | mean phi at T* = 0.5: Abaqus / his code / paper | mean c at T* = 0.5: Abaqus / his code / paper | RMS Abaqus - his code (phi, c) | RMS Abaqus - paper (phi) |
+|---|---|---|---|---|
+| 4.1 | 0.097 / 0.069 / 0.52 | -0.033 / -0.037 / 0.11 | 0.026, 0.048 | 0.42 |
+| 4.2 high | 0.115 / 0.185 / 1.0 | 0.93 / 0.85 / 0.49 | 0.033, 0.028 | 0.68 |
+| 4.2 low | 0.032 / 0.037 / 0.29 | 0.007 / 0.15 / 0.08 | 0.005, 0.070 | 0.17 |
+
+The 4.2 rows compare up to T* = 0.78 (high) and 0.95 (low), where the ANSYS
+runs ended.
+
+- **The two codes agree with each other far better than either agrees with
+  the paper**, although the discretisations differ: NEM at the integration
+  points with an explicit update, against nodal Galerkin with an implicit one.
+- **The largest element phi differs.** It is 0.99 in his code and 0.29-0.85
+  in Abaqus. This is the known difference of the seed: in his code the seed
+  is a jump at the integration points, in Abaqus a nodal share.
+- **What this shows.** With Table 2 and consumption g phi, the 2024 figures
+  are not reproduced by this implementation, nor by his. The gap to the
+  paper lies in the inputs or the consumption form of the 2024 runs, not in
+  the implementation.
+
 ## Biofilm on an implant collar (6 Oct 2026)
 
 `make_implant_inp.py`, `summarize_implant.py`: a 0.25 mm biofilm layer on a

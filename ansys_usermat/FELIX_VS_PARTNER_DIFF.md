@@ -154,10 +154,11 @@ and uses zero-order consumption.
 - **His own code does not reproduce the 2024 figures with Table 2 either.**
   The colony barely grows, because the nutrient, consumed at zero order, is
   used up and goes below zero.
-- **4.1 in his code agrees with Abaqus.** For 4.1 his code and the Abaqus
-  run with the same set-up (`abaqus_composition/README.md`, first author's
-  set-up) agree: mean phi 0.072 / 0.071 and mean c -0.06 / -0.07 at T* = 1,
-  with different discretisations (NEM 8^3 against Galerkin 20^3).
+- **His code agrees with Abaqus.** With the same mesh (8^3) and the same
+  regions in Abaqus (`abaqus_composition/README.md`, "The same set-up
+  against the first author's own code"), the RMS difference of mean phi /
+  mean c is 0.026 / 0.048 (4.1), 0.033 / 0.028 (4.2 high) and 0.005 / 0.070
+  (4.2 low). Against the paper it is 0.17-0.68 in phi.
 - **The likely cause.** So the gap to the paper is not in this work's
   implementation. The 2024 figures were most likely computed with a
   different consumption (first order, g phi c, fits Fig. 7's nutrient

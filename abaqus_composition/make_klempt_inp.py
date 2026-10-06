@@ -40,6 +40,9 @@ def main():
                     help="w: growth on every face, r c/(k+c) (w |grad phi| + (1-w) |n_c . grad phi|), in place of "
                          "the printed front term (KLEMPT2024_REPRODUCTION.md sec. 15; a hypothesis)")
     ap.add_argument("--first-order", action="store_true", help="consumption g phi c (not the paper's g phi)")
+    ap.add_argument("--elem-sets", default=None,
+                    help="JSON of partner_elem_sets.py: c = 1 on every node of its nutrient elements, initial phi = "
+                         "the share of seed elements around each node (the regions of a partner-style ANSYS deck)")
     ap.add_argument("--gscale", type=float, default=1.0,
                     help="consumption g times this factor (e.g. 5: g L^2/d of the first author's current project)")
     ap.add_argument("--felix", action="store_true",
@@ -82,7 +85,24 @@ def main():
         seed = [q for q, x, y, z in nodes if abs(z - h) < tol and (x - 10) ** 2 + (y - 10) ** 2 <= 6.25 + tol]
         src = [q for q, x, y, z in nodes if abs(z) < tol]
     ic = "NSEED, 1.0"
-    if a.seed_field and a.case != "advect":
+    if a.elem_sets:
+        import json
+        d = json.loads(Path(a.elem_sets).read_text())
+        assert d["n"] == n, f"--elem-sets is for {d['n']}^3, not {n}^3"
+        corners = [(p, q, r) for p in (0, 1) for q in (0, 1) for r in (0, 1)]
+        src = sorted({nid(i + p, j + q, k + r) for i, j, k in d["nut"] for p, q, r in corners})
+        seedset = {tuple(x) for x in d["seed"]}
+        around = {}
+        for k in range(n):
+            for j in range(n):
+                for i in range(n):
+                    for p, q, r in corners:
+                        c = around.setdefault(nid(i + p, j + q, k + r), [0, 0])
+                        c[0] += 1
+                        c[1] += (i, j, k) in seedset
+        seed = sorted(q for q, c in around.items() if c[1])
+        ic = "\n".join(f"{q}, {around[q][1] / around[q][0]:.10g}" for q in seed)
+    elif a.seed_field and a.case != "advect":
         import sys
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "JAXFEM"))
         import klempt2024_quantitative as kq
