@@ -42,12 +42,26 @@ def main():
                     help="phi at t = 0: 1 at every node of a seed element (nodes), or the share of "
                          "seed elements among the elements around the node (fraction; closer to the "
                          "partner element, whose phi lives at the integration points: 1 at the seed's, 0 elsewhere)")
+    ap.add_argument("--front", type=float, default=None,
+                    help="r (mm/T*): the front term of Eq. 34 with the nutrient of the UEL (needs --cons); "
+                         "Klempt 2024 Table 2 on the 2 mm cube: r = 10, k = 1 (KLEMPT2024_REPRODUCTION.md sec. 8)")
+    ap.add_argument("--kmono", type=float, default=1.0, help="k of r c/(k+c)")
+    ap.add_argument("--blend", type=float, default=None,
+                    help="w: growth on every face, r c/(k+c)(w |grad phi| + (1-w) |n_c . grad phi|), in place of the "
+                         "printed term (KLEMPT2024_REPRODUCTION.md sec. 15-16; a hypothesis)")
+    ap.add_argument("--hstab", type=float, default=0.0,
+                    help="length in the artificial diffusion of the front term (0: none, as the Klempt 2024 cases "
+                         "in Abaqus, where it slowed the front)")
     ap.add_argument("--separated", action="store_true",
                     help="*SOLUTION TECHNIQUE, TYPE=SEPARATED and, without the nutrient UEL, a symmetric solve: "
                          "less memory for fine meshes (phi does not depend on the displacement, so dropping the "
                          "coupling blocks of the Jacobian changes the iterations, not the converged solution)")
     a = ap.parse_args()
     n, h = a.n, 2.0 / a.n
+    therm = [a.beta, a.kalpha, a.pen]
+    if a.front is not None:
+        assert a.cons is not None, "--front needs the nutrient field (--cons)"
+        therm += [a.front, a.kmono, a.hstab, 0.0] + ([a.blend] if a.blend is not None else [])
     rec = json.loads(Path(a.json).read_text())
     st = rec["all_stress"]
     cen = {e: (x, y, z) for e, x, y, z in zip(st["elem"], st["cx"], st["cy"], st["cz"])}
@@ -132,8 +146,8 @@ def main():
 1.0
 *USER MATERIAL, CONSTANTS={len(p)}, TYPE=MECHANICAL
 {rows(p)}
-*USER MATERIAL, CONSTANTS=3, TYPE=THERMAL
-{a.beta}, {a.kalpha}, {a.pen}
+*USER MATERIAL, CONSTANTS={len(therm)}, TYPE=THERMAL
+{", ".join(f"{x:.10g}" for x in therm)}
 *DEPVAR
 100
 *INITIAL CONDITIONS, TYPE=TEMPERATURE

@@ -164,8 +164,11 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   0.012 / 0.030, 1e-4 0.014 / 0.030, 1e-3 0.011 / 0.020 (|grad c| at t = 0:
   median 1e-5, max 3e-3 per um). eps = 1e-4 switches the term off where c is
   uniform and changes nothing in the reproduction, so the noise direction
-  where grad c ~ 0 is not what separates the two. Both on finer grids from
-  the same continuous seed (`--seed-field`, `--fd-n`): running.
+  where grad c ~ 0 is not what separates the two. The reproduction from the
+  same continuous seed (`--seed-field`, `--fd-n`) gives 0.030 on 21^3 and
+  0.056 on 41^3 nodes: the printed term does not converge in the grid, so
+  this case cannot check the implementation (the Abaqus 40^3 run ran out of
+  memory next to other jobs and was not repeated).
 - **16^3 two species against ANSYS** (done, ratio Abaqus / ANSYS, 8^3 -> 16^3):
 
   | measure | 8^3 | 16^3 |
@@ -181,6 +184,68 @@ representation). 16^3: `F:\abaqus_work\_abq16_1005.log`.
   measures do.
 - **Four species, 8^3 cube** (done): seed phi sum 0.447, shares
   0.395 / 0.268 / 0.187 / 0.150.
+
+## Klempt 2024 test cases 4.1 and 4.2 in Abaqus (5-6 Oct 2026)
+
+The closest reproduction of the paper's figures (KLEMPT2024_REPRODUCTION.md
+sec. 15-16) in Abaqus, to check the finite-difference reproduction with an
+independent FE solver: UMATHT constant 8 = w (growth on every face,
+r c/(k+c)(w |grad phi| + (1 - w)|n_c . grad phi|), w = 0.5), UEL property
+4 = 1 (consumption g phi c), Table 2 otherwise with a time scale s per run
+(beta, k_alpha, r times s), 4.1 with the nutrient in a 2 um corner block.
+All three are departures from the printed equations, stated as a hypothesis.
+`make_klempt_inp.py --case fig4_corner|fig7_high|fig7_low --blend 0.5
+--first-order --scale s`, `compare_blend.py`. 20^3, RMS difference of the
+mean phi / c curves (averaged) to the digitised figures:
+
+| | Abaqus, artificial diffusion v h/2 | Abaqus, none (`--hstab 0`) | finite differences |
+|---|---|---|---|
+| 4.1 (s = 1) | 0.019 | 0.025 | 0.013 |
+| 4.2 high (s = 5) | 0.102 | 0.021 | 0.022 |
+| 4.2 low (s = 3) | 0.041 | 0.030 | 0.030 |
+
+The artificial diffusion (first-order upwinding's v h / 2, up to
+125 um^2/T* at s = 5 against beta s = 10) smeared the one-layer seed of 4.2 before the
+front took it: phi then levels off at the smeared maximum (0.886), since a
+growth term proportional to |grad phi| cannot raise a maximum. Without it
+the Galerkin solution is stable (beta s keeps the cell Peclet number at ~12)
+and all three cases agree with the reproduction to RMS 0.01-0.03.
+
+Table 3 (stress): with the mechanics in the same run (`--E 10 --s-every 25`,
+`table3_pressure.py`, `klempt_table3_fig.py`,
+`assets/fig_abaqus_klempt2024_table3_nostab.png`) the hydrostatic stress has
+the paper's pattern (compressed interior, ring in tension, about zero outside)
+and, with E = 10 read as MPa, its size: p = -3.2e-4 ... +1.5e-4 at T* = 0.1
+and -1.2e-3 ... +4.9e-4 at 0.25, against the legend's +3e-4 ... -6.5e-4 MPa.
+In Pa it would be 1e6 times smaller (one colour in the table), which supports
+sec. 13's reading of mu in MPa with the FE mechanics instead of a
+small-strain estimate. (p carries the spherical term of
+DEVIATOR_SCALING_FINDING.md, ~1.3 % at nu = 0.49.) The shapes agree in kind;
+the thin tip towards the corner is missing for every w (sec. 16).
+
+## Biofilm on an implant collar (6 Oct 2026)
+
+`make_implant_inp.py`, `summarize_implant.py`: a 0.25 mm biofilm layer on a
+4.1 mm implant's collar, 2 mm high (a sulcus), 90 degree sector, 6x24x20
+C3D8T + nutrient UEL, bonded to rigid titanium, nutrient from the gingival
+margin, phi = 1 in the ring on the titanium at t = 0; case 6. Geometry
+values are mine, not from a paper.
+
+- Consumption 6 (zero order, as the cube) on 2 mm depth drives c to -0.92 at
+  the base: too strong for this depth. With consumption 1 (Table 2) c stays
+  0.68 (base) to 0.98 (margin).
+- Consumption 1 with species-weighted growth prop(36) = 1/3 (as the ANSYS
+  week runs), T* = 1.1, on the titanium: share phi_1/(phi_1+phi_2) 0.227 at
+  the base to 0.199 at the margin, alpha - 1 2.63e-4 to 2.53e-4 (the
+  composition gives a 4 % depth gradient of growth), von Mises 1.5-1.6e-4 Pa,
+  sigma_tt ~ sigma_zz ~ -1.4e-4 Pa (the layer is held by the titanium), and
+  the shear on the bond sigma_rz peaks at the two ends of the layer
+  (6.7e-5 Pa at the base, 6.5e-5 at the margin, ~40 % of von Mises), where
+  detachment would start. phi spreads through the 0.25 mm layer by T* ~ 1
+  (beta = 0.02), so phi itself is almost uniform; the depth dependence comes
+  from the nutrient through the composition only.
+- 2 CPUs, about 1.5 hours (the material server call per integration point
+  dominates).
 
 ## Next: species carried in space (design, not implemented)
 
