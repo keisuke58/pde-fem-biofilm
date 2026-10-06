@@ -1,0 +1,27 @@
+# fr16_c6_g1  (2026-10-06 11:41, 4.5 min, 4 CPUs, Fortran point model)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_week\w8_c6_g1_s015.json --case 2sp_case6 --T 1.0 --n 16 --cons 1 --front 10 --blend 0.5 --dt 0.01
+# PASS: fr16_c6_g1 completed (native point model)
+# columns: Abaqus | ANSYS w8_c6_g1_s015 (8^3; a like-for-like reference only on 8^3 without the front term) | ratio
+measure                    Abaqus        ANSYS    ratio
+seed vM                7.8764e-04   4.6834e-04   1.6818
+seed p                -3.2894e-03  -2.3787e-04  13.8285
+layer 1 p             -1.2536e-03   5.7015e-05 -21.9876
+layer 1 tension        1.1719e-01   1.0000e+00   0.1172
+layer 2 p              8.2984e-04   1.1468e-06 723.6051
+layer 2 tension        8.9522e-01   1.0000e+00   0.8952
+layer 3 p              5.0432e-04   2.0685e-07 2438.0567
+layer 3 tension        9.8750e-01   9.0000e-01   1.0972
+alpha interior         1.2285e-03   8.6166e-04   1.4257
+alpha surface          1.2224e-03   6.1300e-04   1.9941
+alpha step %           4.9647e-01   2.8858e+01   0.0172
+phi seed               1.0890e+00 
+phi layer 1            1.0374e+00 
+ran (elements)         4.0960e+03   3.0400e+02  13.4737
+share seed mean        3.6102e-01   5.0850e-02   7.0996
+share seed min         2.7347e-02   3.0646e-02   0.8924
+share seed max         4.8411e-01   5.8094e-02   8.3333
+share layer 1          2.7942e-01   3.3391e-01   0.8368
+share layer 2          2.9351e-01   4.9951e-01   0.5876
+c seed min            -4.8026e-02   8.7593e-01  -0.0548
+c seed max             5.8070e-01   9.2611e-01   0.6270
+c mean                 3.2268e-01   9.3210e-01   0.3462
