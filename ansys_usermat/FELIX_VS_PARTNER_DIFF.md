@@ -51,6 +51,29 @@ Other differences (6):
 - The partner's version has nothing that Felix's lacks: all differences are
   additions or corrections on Felix's side.
 
+## His Workbench project (6 Oct 2026, read on IKMHIWI03, kept outside git)
+
+The shared folder also holds an ANSYS Workbench project (`F:\felix_private\share2`),
+three static analyses of a 1 mm cube (14^3 and 20^3 SOLID185 elements, a
+third tiny one that stopped with an error), /units,MPA, T = 1 with 100
+fixed substeps. Compared in words with what is used here:
+- **It is not one of the 2024 test cases.** Its name says what it does, density-based growth only:
+  the orientation weights are not set, so the front term is not active,
+  and the new penalty parameters (species 2, sum) are not set either. It
+  therefore does not tell which consumption and front term the 2024
+  figures were computed with.
+- Consumption enters as in the code, zero order (g phi), with g / d about
+  20 per mm^2 on the 1 mm cube, i.e. a strongly consuming setting, in the same
+  direction as the 2024 "low" case rather than Table 2's 4.1 value.
+- beta is the same 0.02 mm^2/T* as this work's conversion of Table 2 to
+  the partner's cube (CLAUDE.md, decided 5 Oct), the Monod constant k = 1
+  and the maximum growth rate 1 /T*, as in Table 2 after scaling.
+- Young's modulus 10 MPa with nu = 0.4999 (void 1000 times softer):
+  neither the paper's 10 Pa nor the 10 kPa he suggested by mail.
+- k_alpha (local growth) is 0.1 /T*, a hundred times Table 2's 1e-3.
+So the g question for the 2024 runs stays open; the AceGen file
+(Dr. Soleimani) or Felix himself has to settle it.
+
 ## What this means here
 
 - The wired build used by the ANSYS week chain still has the reading slip
