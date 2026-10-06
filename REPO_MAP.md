@@ -74,6 +74,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
 | `QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
 | `MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
+| `KEIO_PLAN.ja.md` | Plan for the Keio continuation (Japanese): what Felix Klempt's and Meisam Soleimani's mails of 5-6 Oct 2026 settled, the tools in hand (ANSYS, Abaqus, Fortran point model), the Klempt 2024 reproduction in Abaqus, and the work packages in order |
 | `references/` | Klempt et al. 2024 (BMMB), Soleimani et al. 2023 (Sci. Rep., co-aggregation) and Feng et al. 2021 (Bull. Math. Biol., Streptococcus–Veillonella), all CC BY 4.0: PDFs and searchable text extractions; licence in `THIRD_PARTY.md` |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
 | `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
