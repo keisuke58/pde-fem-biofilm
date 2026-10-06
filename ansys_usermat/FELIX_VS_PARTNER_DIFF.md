@@ -50,6 +50,15 @@ Other differences (6):
   wired build (`F:\biofilm_upf_wired`) already has the corrected sum.
 - The partner's version has nothing that Felix's lacks: all differences are
   additions or corrections on Felix's side.
+- **Growth is the average over the two species, in both versions** (checked
+  by reading the code, 6 Oct): the stress routine receives the mean of the
+  two species' local growth variables, each starting at 1. In a run with one
+  species, the other stays at 1, so the growth seen by the stress is half of
+  that species' own growth. This explains the factor 1/2 in the ratio 0.49
+  of chapter 5, where the partner's own growth variable was compared with
+  Eq. 36 for one species. It does not affect this work's ANSYS runs, which
+  compute the growth from Eq. 36 at the Gauss point instead. To be confirmed
+  with Felix before it is used in a document.
 
 ## Values in his Workbench project (6 Oct 2026, read on IKMHIWI03, kept outside git)
 
