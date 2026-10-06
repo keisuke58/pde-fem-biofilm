@@ -51,28 +51,66 @@ Other differences (6):
 - The partner's version has nothing that Felix's lacks: all differences are
   additions or corrections on Felix's side.
 
-## His Workbench project (6 Oct 2026, read on IKMHIWI03, kept outside git)
+## Values in his Workbench project (6 Oct 2026, read on IKMHIWI03, kept outside git)
 
-The shared folder also holds an ANSYS Workbench project (`F:\felix_private\share2`),
-three static analyses of a 1 mm cube (14^3 and 20^3 SOLID185 elements, a
-third tiny one that stopped with an error), /units,MPA, T = 1 with 100
-fixed substeps. Compared in words with what is used here:
-- **It is not one of the 2024 test cases.** Its name says what it does, density-based growth only:
-  the orientation weights are not set, so the front term is not active,
-  and the new penalty parameters (species 2, sum) are not set either. It
-  therefore does not tell which consumption and front term the 2024
-  figures were computed with.
-- Consumption enters as in the code, zero order (g phi), with g / d about
-  20 per mm^2 on the 1 mm cube, i.e. a strongly consuming setting, in the same
-  direction as the 2024 "low" case rather than Table 2's 4.1 value.
-- beta is the same 0.02 mm^2/T* as this work's conversion of Table 2 to
-  the partner's cube (CLAUDE.md, decided 5 Oct), the Monod constant k = 1
-  and the maximum growth rate 1 /T*, as in Table 2 after scaling.
-- Young's modulus 10 MPa with nu = 0.4999 (void 1000 times softer):
-  neither the paper's 10 Pa nor the 10 kPa he suggested by mail.
-- k_alpha (local growth) is 0.1 /T*, a hundred times Table 2's 1e-3.
-So the g question for the 2024 runs stays open; the AceGen file
-(Dr. Soleimani) or Felix himself has to settle it.
+The shared folder also holds an ANSYS Workbench project, kept in
+`F:\felix_private\share2`. Its three static analyses are:
+- a 1 mm cube with 14^3 SOLID185 elements;
+- the same cube with 20^3 elements;
+- a small model (237 nodes), which stopped with an error.
+
+The two cube analyses use the same parameters; only the mesh differs.
+
+**It is not one of the 2024 test cases**, and nothing in it corresponds to
+4.1, 4.2 "high" or 4.2 "low". The set-up, as the project name says, is
+density-based growth only:
+- the nutrient is held on one face of the cube;
+- species 1 and species 2 each start in a half ball either side of the
+  mid-plane;
+- the orientation weights are not set, so the front term is not active.
+
+So the project shows the parameters he uses now, not the ones behind the
+2024 figures. The table converts each value to the same footing as Table
+2 (the domain size L and T* = 1), because the units differ: µm in the paper
+and in the Abaqus reproduction, mm in his project.
+
+| item | his project (1 mm cube, mm, MPa) | Klempt 2024 Table 2 (20 µm cube) | Abaqus reproduction (`make_klempt_inp.py`, 20 µm) | agree? |
+|---|---|---|---|---|
+| 1 consumption form | g phi (zero order), as in his code | g phi (Eq. 35) | g phi; g phi c with `--first-order` | form yes |
+| 1 consumption, g L^2/d (the only group the quasi-static Eq. 35 sees) | 10 x 1 / 0.5 = **20** | 1e8 x 400 / 1e10 = **4** (4.1, 4.2 "high"); **400** ("low", g = 1e10) | 4 / 400 | **no: 5 times Table 2's 4.1 value** |
+| 2 beta / L^2 | 0.02 /T* | 2 / 400 = 0.005 /T* | 0.005 /T* | **no: 4 times** |
+| 2 nutrient diffusion d | 0.5 mm^2/T*; the solve is quasi-static, so only g/d matters | 1e10 µm^2/T* | 1e10 (only g/d enters) | through g L^2/d |
+| 3 k_alpha | 0.1 /T* | 1e-3 /T* | 1e-3 /T* | **no: 100 times** |
+| 3 nutrient boundary value, initial values | c = 1 on the elements next to one face; phi = 1 in the two half balls; c starts at 1 | c = 1 at the corner (4.1) or on the bottom face (4.2) | as Table 2 | set-up differs (not a 2024 case) |
+| 4 front term: r, k | r = 1 mm/T* (r/L = 1 /T*), k = 1, interaction 50 between the species; inactive (weights not set) | r = 100 µm/T* (r/L = 5 /T*), k = 1 | as Table 2 | k yes; r not used in the project |
+| 5 E, nu, units | /units,MPA; E = 10, nu = 0.4999 set under the names `MY_YOUNG_BIOFILM`, `MY_NU_BIOFILM`, **which this code does not read** (it reads `YOUNG_BIO`, `POISSON_BIO`, not defined in the deck) | 10 Pa, nu = 0.49 | 0.01 MPa (10 kPa, his mail) in the runs of 6 Oct | **no**; the value the solver used is undetermined |
+| 6 geometry, mesh | 1 mm cube, 14^3 or 20^3 elements (h = 0.071 / 0.05 mm) | 20 µm cube, 1 µm elements (20^3) | 20^3, 1 µm | 20^3 in one of his runs |
+| 7 time | T = 1, 100 fixed substeps (dt = 0.01), automatic stepping off, large deformation on; the inner time step parameters are not set, so the inner step equals the substep | T* in [0, 1]; 1e3 substeps nominal | T = 1, dt = 1e-3 | length 1, no time scale factor |
+| 8 phi penalty, normalisation floor | `PENALTY1` = 100; `PENALTY2`, `PENALTYSUM` not set (zero); the floor of the normalised direction is 1e-14 in the code | not given | penalty 100 (or 0); eps = 1e-8 in the direction | penalty yes; floor differs, without effect on these runs |
+
+`TB,USER` carries no constant block (`TB,USER,1,1,1` with no `TBDATA`). All
+material and model constants reach the code as APDL parameters, which
+USolBeg reads by name, so there is no ordered list of constants to check.
+Where the names differ from what the code reads, that is listed above:
+E and nu. The deck also sets a third species and an antibiotic. The
+current code does not read these: it has two species and two nutrients.
+The deck therefore belongs to an earlier version of the code.
+
+Answers to the three questions:
+- **g**: the form is g phi, as in the code. In the only dimensionless group
+  the quasi-static nutrient equation sees, g L^2/d is 20, against Table
+  2's 4 for 4.1. In the 4.1 run with Table 2's g, the nutrient already ran
+  out (`abaqus_composition/README.md`), and a five times larger g consumes
+  more, so g phi with this g makes 4.1 worse, not better. A run of 4.1
+  with g x 5 is queued after the current runs, to show this.
+- **time**: length 1 with 100 substeps and no factor such as s = 5/3. The
+  other rates differ from Table 2 (k_alpha x 100, beta x 4 relative to the
+  domain), so the project as a whole does not use Table 2.
+- **E**: the deck intends 10 MPa (E = 10 with /units,MPA), neither 10 Pa nor
+  10 kPa. Because of the name mismatch, the solver may not have used it.
+
+The g question for the 2024 runs stays open: the AceGen file (Dr.
+Soleimani) or Felix himself has to settle it.
 
 ## What this means here
 

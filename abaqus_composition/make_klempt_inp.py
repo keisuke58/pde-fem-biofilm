@@ -40,6 +40,8 @@ def main():
                     help="w: growth on every face, r c/(k+c) (w |grad phi| + (1-w) |n_c . grad phi|), in place of "
                          "the printed front term (KLEMPT2024_REPRODUCTION.md sec. 15; a hypothesis)")
     ap.add_argument("--first-order", action="store_true", help="consumption g phi c (not the paper's g phi)")
+    ap.add_argument("--gscale", type=float, default=1.0,
+                    help="consumption g times this factor (e.g. 5: g L^2/d of the first author's current project)")
     ap.add_argument("--felix", action="store_true",
                     help="front term as in the first author's current implementation: added only where positive, "
                          "times (1 - phi) below phi = 1 (UMATHT constant 9; ansys_usermat/FELIX_VS_PARTNER_DIFF.md)")
@@ -86,7 +88,7 @@ def main():
         import klempt2024_quantitative as kq
         val = kq.seed_field(a.case.replace("fig4_corner", "fig4_edge"),*(np.array([q[i] for q in nodes]) for i in (1, 2, 3)))
         ic = chr(10).join(f"{q[0]}, {v:.10g}" for q, v in zip(nodes, val) if v > 1e-12)
-    g = 1e10 if a.case == "fig7_low" else (0.0 if a.case == "advect" else 1e8)
+    g = (1e10 if a.case == "fig7_low" else (0.0 if a.case == "advect" else 1e8)) * a.gscale
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     p = [0.0] * 47
     s = a.scale
