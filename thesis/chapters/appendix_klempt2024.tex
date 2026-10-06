@@ -134,12 +134,42 @@ This is an inference from the plot. The calculations of
 Chapter~\ref{ch:ansys} use $E=10$~Pa as in Table~2; their stresses scale
 linearly with $E$.
 
-\section{Questions to the authors}
+\section{Questions to the authors and their answers}
 
-The following questions were sent to the first author on 3 October 2026:
-which form of the front term and of the consumption produced Figs.~4 and~7;
-the reference time of each simulation; the extent of the nutrient source in
-case 4.1; the treatment of the direction $\nabla_X c/\|\nabla_X c\|$ where the
-nutrient is uniform; and the unit of $\mu$. Whether $\alpha$ follows Eq.~36
-or the update of Table~1 (Section~\ref{sec:theory_field}) remains to be
-asked.
+I sent these questions to the first author on 3 and 5 October 2026 and
+received his answers on 5 October. They settle some points and leave others
+open:
+\begin{itemize}
+  \item \emph{Front term.} His implementation uses Eq.~\eqref{eq:theory_phi}
+        as printed: where the nutrient gradient behind the colony points
+        towards it, the colony does not grow on that side. The isotropic
+        share $w$ of the reproduction is therefore my change, needed to
+        reach the published curves with the explicit scheme used here.
+        Whether the finite element solution of the paper reaches them
+        without it is open.
+  \item \emph{Direction where the nutrient is uniform.} The implementation
+        uses $\nabla_X c/(\|\nabla_X c\|+\varepsilon)$ with a small
+        $\varepsilon$, of order $10^{-8}$ to $10^{-12}$.
+  \item \emph{Consumption.} He recalls $g\,\phi$, as printed, but was not
+        certain. The steady nutrient level of case 4.2 ``high'' (0.489 in
+        the paper) follows from $g\,\phi\,c$ and not from $g\,\phi$
+        (0.482 against 0.139, see above). This remains open until the
+        original implementation is checked.
+  \item \emph{Time.} Every simulation ran over a length of $1$. The time
+        scales $s=5$ and $3$ that the reproduction needs for case 4.2 are
+        therefore not explained by different reference times.
+  \item \emph{Nutrient in case 4.1.} Only the corner, as assumed here.
+  \item \emph{Diffusion coefficient $\beta$.} Chosen to give sensible
+        results; it depends on the mesh. The value used in
+        Chapter~\ref{ch:ansys}, Table~2 converted to the 2~mm cube, is
+        therefore an assumption.
+  \item \emph{Stiffness.} The unit in the paper may be wrong; he suggests
+        $E=10$~kPa ($\mu\approx3.3$~kPa). This differs from the inference
+        from the plot of Table~3 above ($\mu=3.3557$~MPa). The stresses of
+        Chapter~\ref{ch:ansys} scale linearly with $E$, so either value
+        rescales them without changing any comparison.
+\end{itemize}
+Whether $\alpha$ follows Eq.~36 or the update of Table~1
+(Section~\ref{sec:theory_field}) remains to be asked. The first author has
+offered his implementation; comparing it with the reproduction is part of
+the continuation of this work.

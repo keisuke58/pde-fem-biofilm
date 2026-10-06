@@ -211,9 +211,11 @@ this machine's specific workflow.
 
 ## People and how to address them (2026-10-04)
 
-- **Meisam Soleimani is a professor**: write "Prof. Soleimani" (title page:
-  Prof. Dr.-Ing. Meisam Soleimani), not "Dr.", even though the registration
-  form of 18.08.2026 lists him as "Dr.-Ing. M. Soleimani".
+- **Meisam Soleimani is not a professor** (his own clarification, mail of
+  6 Oct 2026: he teaches as a lecturer). Write "Dr. Soleimani" (title page:
+  Dr.-Ing. Meisam Soleimani); in mail he is fine with "Meisam". This
+  replaces the 2026-10-04 rule "Prof. Soleimani"; documents already handed
+  over keep their wording.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
@@ -225,10 +227,28 @@ this machine's specific workflow.
   klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
   (4 Oct) already has To: Junker, Wangenheim; Cc: Soleimani, Geisler.
 
+## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
+
+Felix offered his USERMAT implementation (two species; one species set to
+zero is the 2024 paper's model) and the theory of the two-species model,
+which is a chapter of his dissertation, still under development. He asked
+that it is not shared with anyone without asking him first.
+
+- Never commit his code, his theory notes or excerpts of them to this
+  repository (it is public), never upload them to claude.ai, artifacts,
+  Drive shares or any other service, and never paste them into mail to
+  others. Keep them outside git (IKMHIWI03: `F:\felix_private\`; a cloud
+  session: the scratchpad only).
+- Notes and results in the repository may say what was compared and what
+  agreed or differed (e.g. "the consumption term is g phi c in his
+  implementation"), but must not reproduce his code or his derivations.
+- Before anything based on his two-species theory goes into the thesis, a
+  paper or slides, ask him. If a mistake is found, tell him.
+
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
 These apply to every deck, speaker script, email draft or report written for
-the supervisors (Prof. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
+the supervisors (Dr. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
 examiners). Check each one before the document is handed over.
 
 - **Abaqus is not part of this thesis.** Abaqus work is the Keio

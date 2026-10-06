@@ -146,3 +146,6 @@ thesis/*.out
 
 # papers bundled under their licence (THIRD_PARTY.md)
 !references/*.pdf
+
+# Felix Klempt's code and dissertation chapter: confidential, never commit (CLAUDE.md)
+felix_private/
