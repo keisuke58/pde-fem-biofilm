@@ -313,7 +313,14 @@ al.~\cite{Klempt2024DiffusionDrivenGrowth}, Eq.~34 and 36:
 \end{equation}
 with diffusion, a local source, and a front term that moves the biofilm
 boundary up the nutrient gradient. The element computes $\phi$ at its
-integration points; I leave it unchanged.
+integration points; I leave it unchanged. Its Laplacian and the gradients of
+$\phi$ and $c$ are approximated from the values at the neighbouring
+integration points, by a second-order Taylor expansion fitted in the weighted
+least-squares sense, the Neighbored Element Method
+\cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
+explicitly, which limits the time step to $h^2/(2\Delta t)\ge\beta$
+\cite{Rudolf2025NEM}; with $\beta=0.02$~mm$^2/T^*$ this holds for every mesh
+and time step used in this chapter.
 
 \begin{figure}[htbp]
   \centering
