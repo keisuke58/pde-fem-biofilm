@@ -44,6 +44,7 @@ is the consolidation; these are the detail behind it.
 | [`ansys_usermat/`](ansys_usermat/) | ANSYS USERMAT port + `crosscheck/` (dual-solver equivalence, 0 ULP) |
 | [`abaqus_composition/`](abaqus_composition/) | The composition coupling of the ANSYS runs (point model through the Python bridge) in an Abaqus UMAT built from the same fragments; one-element checks in Abaqus 2024 (5 Oct 2026). Keio continuation, not thesis work |
 | [`keio_report/`](keio_report/) | Keio 課題研究報告 (Japanese, 6 pages, JSCES two-column style): the thesis content (TMCMC, ANSYS growth law and composition coupling, mesh convergence) for the Keio side. Build: `platex` x3 + `pbibtex` + `dvipdfmx`. Master copy also in the private luh_summer_2026 repo |
+| [`keio_wp2/`](keio_wp2/) | Keio WP2, stress into growth: the mechanical term of Klempt 2024 Eq. 30 kept, 2D plane-strain prototype in Python; the dimensionless number that decides whether it matters, and time integration (Japanese notes). Keio continuation, not thesis work |
 | `material_models.py` | Python material model (E(φ), E(DI), viscoelastic) |
 
 ## PDE / ecology model (JAX)
