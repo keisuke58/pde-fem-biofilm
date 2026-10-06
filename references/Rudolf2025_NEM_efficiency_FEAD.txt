@@ -1,0 +1,791 @@
+                                                          Finite Elements in Analysis and Design 249 (2025) 104353
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                     Finite Elements in Analysis & Design
+                                                           journal homepage: www.elsevier.com/locate/finel
+
+
+Review
+
+Computational efficiency and accuracy of the Neighbored Element
+Method
+Tobias Rudolf ∗, Felix Klempt, Hüray Ilayda Kök, Meisam Soleimani,
+Dustin Roman Jantos, Philipp Junker
+Leibniz University Hannover, Institute of Continuum Mechanics, Hannover, Germany
+
+
+
+ARTICLE                   INFO                                     ABSTRACT
+
+Keywords:                                                          Gradient-enhanced regularization is a frequently utilized method for addressing numerical issues
+Finite Element Method                                              in material modeling. As a consequence of the regularization scheme, Laplacian terms will
+Finite Difference Method                                           emerge in the strong form of evolution equations for additional field variables, also called
+Coupled problems
+                                                                   internal variables. In a series of previous works, the Neighbored Element Method (NEM) was
+Numerical simulation
+                                                                   presented as a combination of the Finite Element Method and a generalized finite difference
+                                                                   scheme with a weighted least-square method to approximate the Laplacian. The objective
+                                                                   is the efficient solution of the total system of equations containing Laplacian and gradient
+                                                                   terms. The systems of equations used with the NEM have a similar structure to, e.g., the heat
+                                                                   and diffusion equation. In this study, the NEM is evaluated even further, in comparison to
+                                                                   a well-established FEM routine with respect to accuracy and computational efficiency through
+                                                                   investigating a chemo-thermo-mechanical system. It is demonstrated that the accuracy improves
+                                                                   with a reduction in element size and, for an appropriate mesh, the relative average error
+                                                                   is below 1%. These highly accurate solutions can be achieved with a notable reduction in
+                                                                   computational time and memory cost of up two orders of magnitude, for approximately 620000
+                                                                   nodes with five degrees of freedom per node. This new technique can be applied to arbitrary
+                                                                   solid finite element types and/or irregular meshes.
+
+
+Contents
+
+  1.     Introduction .............................................................................................................................................................................. 2
+  2.     Methodology ............................................................................................................................................................................. 2
+          2.1.    NEM-scheme .................................................................................................................................................................. 3
+          2.2.    Numerical treatment - approximation of the Laplacian ...................................................................................................... 4
+          2.3.    Chemo-thermo-mechanically coupled materials as benchmark problem ............................................................................... 6
+  3.     Simulation model used for comparison ........................................................................................................................................ 6
+          3.1.    Model for the evaluation of the accuracy of the NEM........................................................................................................ 7
+          3.2.    Model for the evaluation of the efficiency of the NEM ...................................................................................................... 7
+  4.     Results ...................................................................................................................................................................................... 9
+          4.1.    Evaluation of the accuracy of the NEM ............................................................................................................................ 9
+          4.2.    Evaluation of the efficiency of the NEM ........................................................................................................................... 10
+          4.3.    Influence of the numerical parameter 𝛽 ⋆ .......................................................................................................................... 12
+  5.     Conclusion and outlook .............................................................................................................................................................. 14
+
+
+
+  ∗ Corresponding author.
+       E-mail address: rudolf@ikm.uni-hannover.de (T. Rudolf).
+
+https://doi.org/10.1016/j.finel.2025.104353
+Received 9 January 2025; Received in revised form 5 March 2025; Accepted 27 March 2025
+Available online 14 May 2025
+0168-874X/© 2025 The Authors.            Published                         by     Elsevier      B.V.    This     is    an    open      access      article    under       the    CC     BY     license
+(http://creativecommons.org/licenses/by/4.0/).
+T. Rudolf et al.                                                                                                                    Finite Elements in Analysis & Design 249 (2025) 104353
+
+        CRediT authorship contribution statement ................................................................................................................................... 14
+        Declaration of competing interest ................................................................................................................................................ 14
+        Data availability ........................................................................................................................................................................ 15
+        References................................................................................................................................................................................. 15
+
+
+
+
+1. Introduction
+
+     In many problems of continuum mechanics, additional degrees of freedom are introduced to describe the behavior of various
+multi-physical problems for regularized formulations. Examples can be found in topology optimization, damage mechanics [1–8],
+phase transformation and bio-mechanical problems [9–11]. Regularization of the additional degrees of freedom is often unavoidable
+due to the ill-posed mathematical fundamental problem resulting in numerical issues such as mesh dependency or checker-
+boarding [12,13]. Overviews of numerical issues can be found for checker-boarding in [14,15] and for mesh dependency in [16–18].
+Non-local regularization schemes are commonly used in all of those fields. Penalizing the highest gradient of the internal variable,
+i.e., gradient-enhanced regularization of the free energy, is well established for this purpose [19–21]. It renders the formerly ill-posed
+problem into an inherently well-posed one [12]. Due to the insertion of the Laplacian due to the regularization, the emerging partial
+differential equation is similar to the standard heat or diffusion equation. The number of unknowns increases because not only the
+displacements have to be evaluated, but also the equations for the additional internal variables. Consequently, the numerical cost
+increases [12,13]. To ensure increasing complexity of the models which describe the underlying mechanisms, it is essential to develop
+new numerical treatments, i.e., spatial discretizations that can reduce the time required for simulations while also minimizing the
+amount of memory space.
+     In previous publications, an efficient numerical treatment, the so called Neighbored Element Method (NEM), was developed and
+applied to damage models [12,13,22] and topology optimization [20,23,24]. It was adapted from meshless methods, such as the
+Diffuse Element Method (DEM), where the least-square approximation is implemented into a Galerkin framework, first introduced
+by [25–27] and more refined into the element-free Galerkin (EFG) by [28]. Both, small strain and finite strain topology optimization
+was performed using the NEM formulation. The NEM decouples the calculation of displacements and internal variables and solves
+the system of differential equations with an operator split in a fully explicitly staggered approach. The displacements are calculated
+in a standard Finite Element Method (FEM) formulation [29] or similar numerical schemes as for example the Virtual Element
+Method [30]. The displacements are then used to solve the strong form of the evolution equation for the internal variables. For the
+aforementioned regularization, the Laplacian of the internal variable needs to be computed. For structured meshes, it is obtained by
+using a Finite Difference Method (FDM). For unstructured meshes, an inverted Taylor series expansion of the order two is utilized
+where the first and second derivatives (mixed and unmixed) become the unknowns of a linear system of equations. This generalized
+Finite Difference Method for arbitrary meshes was presented in [31–33]. To avoid a singular coefficient matrix, a weighted least-
+square (WLS) is applied where more than the necessary nine neighbors in 3D (five in 2D) are taken into account. Application of the
+Taylor series expansion with the weighted least-square approach in FEM context can be found in [26,34]. For further information,
+the reader is referred to [23].
+     The NEM is an efficient and robust numerical treatment. It conserves the size of the global system of equation, or the primal
+unknowns, i.e., the displacements for the application of FEM, without internal variables. The update of the internal variable(s)
+is computed separately, i.e., in a staggered manner, and has only minimal extra computational costs. The goal of this article is
+to compare the NEM with a standard FEM formulation. For this, the commonly used ANSYS© Academic Research Mechanical,
+Release 2022R1 software has been chosen. In principle, every differential equation with a spatial gradient could have been used
+as a reference. Here, the built-in elements for thermo-mechanically and chemo-thermo-mechanically coupled materials serve as an
+example. These built-in elements are chosen, since the ANSYS© code for those differential equations is efficiently implemented.
+     The article is structured as follows. The methodology and mathematical derivation for the approximation of the Laplacian as well
+as the solution scheme is described in Section 2. Section 3 presents the models for accuracy and efficiency comparison. Numerical
+results are shown in Section 4, with the comparison of accuracy in Section 4.1 and efficiency in Section 4.2. In Section 4.3, the
+influence of the numerical parameter is investigated. Finally, in Section 5, conclusions are drawn and possible future work is
+mentioned.
+
+2. Methodology
+
+  In order to study the coupled behavior of physical problems, it is necessary to solve the governing equations. In the majority of
+mechanical problems, the balance of linear momentum Eq. (1)
+        div 𝝈 + 𝐛 = 𝟎 .                                                                                                                                                                          (1)
+must be solved. The evolution of the field variable, that is to say the internal variable or additional degrees of freedom (DOF),
+e.g., temperature or diffusion, is described in the following manner
+                  𝜕𝝊
+        𝑷 ⋅ 𝝊̇ = 𝑷 ⋅  = ∇ ⋅ (𝐙 ⋅ ⋅∇𝝊) + 𝐘 ⋅ ⋅∇𝝊 + 𝐗 ⋅ 𝝊 − 𝒄.                                                                    (2)
+                  𝜕𝑡
+Here, 𝝊 ∈ R𝑙 with the number of field variables 𝑙, is a vector collecting all matrices field variables with the coefficient tensors
+𝑷 ∈ R𝑙×𝑙 , 𝐗 ∈ R𝑙×𝑙 , 𝐘 ∈ R𝑙×𝑚×𝑙 , 𝐙 ∈ R𝑚×𝑙×𝑚×𝑙 and 𝒄 ∈ R𝑙 describe the right hand side. The number of dimensions is denoted by
+𝑚. The equation for the field variables is influenced by diffusion (Laplace term), advection (gradient term) and intrinsic behavior
+(linear term) which are in principle mutually coupled via the coefficient matrices.
+
+                                                                                                 2
+T. Rudolf et al.                                                                            Finite Elements in Analysis & Design 249 (2025) 104353
+
+2.1. NEM-scheme
+
+    The general procedure of NEM is shown in Fig. 1 where the squared rectangles describe the calculation with FEM and the rounded
+rectangles the calculation of the generalized FDM, i.e., the inverse Taylor series expansion. The inverted Taylor series expansion
+of order two is applied, wherein the first and second derivatives are treated as the unknowns of a linear system of equations. It is
+further explained in Section 2.2. Prior to solving a specific boundary value problem, the coefficient matrix 𝐃 has to be calculated
+once for a given spatial distribution of the neighbored points, i.e., once for a given mesh if no remeshing is employed. The coefficient
+matrix 𝐃 contains information about relative positioning of neighboring points. More elaboration on its derivation is provided in
+Section 2.2. A change in initial conditions does not result in a recalculation of the coefficient matrix 𝐃. Except for the first time
+step, 𝝊 is determined based on the current stress 𝝈 𝑡 . The resulting right-hand side of Eq. (9) can be used to calculate the gradient
+or Laplacian of the internal variables. In the last step, the stresses are updated through a Newton–Raphson-iteration step. After
+converging, we proceed to the subsequent time step.
+
+
+
+
+                                                          Fig. 1. Scheme of NEM.
+    For a stable simulation, the step size 𝛥𝑡 has to be sufficiently small, i.e., it has to comply to the Neumann-stability criterion
+       ℎ2
+           ≥𝛽                                                                                                                    (3)
+      2 𝛥𝑡
+where ℎ is the mesh size and 𝛽 depends of the smallest (or largest) eigenvalue of the coefficient matrix 𝒁. In the case of heat
+conduction Eq. (19), 𝛽 is called thermal diffusivity, as being explained in Section 2.3. In order to achieve a high degree of spatial
+
+                                                                    3
+T. Rudolf et al.                                                                                                                               Finite Elements in Analysis & Design 249 (2025) 104353
+
+accuracy, the time step size 𝛥𝑡 must be relatively small. In certain applications that employ explicit time integration, such as damage
+models, crash simulation or optimization, the use of small time step sizes is already a necessity. Consequently, the reduction of
+computation times is significant and outweighs any potential increase of the time steps. However, an implicit method can also
+be employed [20]. Depending on the diffusion coefficient, the implicit method may be overall less numerically efficient since the
+calculation time scales linearly for the NEM with respect to the number of data points, but quadratically with the size of the diffusion
+coefficient. In implicit methods, the effort usually scales cubic with the number of degrees of freedom, but is independent of the
+diffusion coefficient.
+
+2.2. Numerical treatment - approximation of the Laplacian
+
+    The proposed scheme builds upon the procedure of the inversion of a Taylor series expansion and combination with the weighted
+least-square method (WLS) to calculate function values and spatial derivatives for arbitrary point clouds [12,13,20,23,35] and to
+compute the Laplace operator. The methods presented in previous studies, such as those referenced in [12,35], are subject to
+limitations. This is due to the difficulty, or even impossibility, of identifying suitable neighbor points in each cardinal direction
+which is dependent on the selected element type for spatial discretization or the finite element mesh. An inappropriate selection
+of neighbor points may result in an unsuccessful calculation. This flaw can be resolved by applying more neighbors to the Taylor
+series and therefore derive an over-determined equation system. This equation system can be solved with a weighted least-square
+approach. The method is presented in [23] and recalled here for convenience. The Taylor series is defined by a reference point
+𝐱0 = (𝑥0 , 𝑦0 , 𝑧0 )𝑇 ∈ 𝛺 ⧵ 𝜕𝛺 and an arbitrary neighbored point 𝐱𝑖 = (𝑥0 + 𝛥𝑥𝑖 , 𝑦0 + 𝛥𝑦𝑖 , 𝑧0 + 𝛥𝑧𝑖 )𝑇 in a volume 𝛺. To compute the
+derivatives of the internal variable 𝝊, at least nine neighbored points are required due to the spatial coordinates involved resulting
+in three first spatial derivative, three mixed second derivatives, and three umixed derivatives. Therefore, nine derivatives need to
+be found in total. Applying the Taylor series to 𝑛 unique neighbors yield the equation system represented as matrix form
+                                                                                                                                          ⎡𝜐𝑥𝑥 ⎤
+                                                                                                                                          ⎢𝜐 ⎥
+                                                                                                                                          ⎢ 𝑦𝑦 ⎥
+                                                                                                                                          ⎢ 𝜐𝑧𝑧 ⎥
+        ⎡ 𝛥𝑥
+          1     2       1
+                          𝛥𝑦1 2 𝛥𝑧1 𝛥𝑥1 𝛥𝑦1 𝛥𝑥1 𝛥𝑧1 𝛥𝑦1 𝛥𝑧1 𝛥𝑥1 𝛥𝑦1 𝛥𝑧1 ⎤ ⎢𝜐𝑥𝑦 ⎥
+                               2       1      2
+                                                                                                                                                  ⎡𝜐1 − 𝜐0 ⎤
+        ⎢ 2     1       2                                                                                                               ⎥ ⎢ ⎥
+        ⎢ ⋮                ⋮              ⋮                 ⋮             ⋮                 ⋮               ⋮            ⋮           ⋮ ⎥ ⎢𝜐𝑥𝑧 ⎥ = ⎢ ⋮ ⎥                                         (4)
+        ⎢ 1 𝛥𝑥2 1 𝛥𝑦2 1 𝛥𝑧2 𝛥𝑥 𝛥𝑦                                                                                                                 ⎢        ⎥
+        ⎣2 𝑛 2 𝑛 2 𝑛                                                    𝛥𝑥𝑛 𝛥𝑧𝑛 𝛥𝑦𝑛 𝛥𝑧𝑛 𝛥𝑥𝑛 𝛥𝑦𝑛 𝛥𝑧𝑛 ⎥⎦ ⎢ 𝜐𝑦𝑧 ⎥                                    ⎣𝜐𝑛 − 𝜐0 ⎦
+                                                           𝑛      𝑛                                                                       ⎢ ⎥     ⏟⏞⏞⏟⏞⏞⏟
+        ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟ ⎢ 𝜐𝑥 ⎥
+                                                                                                                                                      𝐛
+                                                                        𝐀                                                                 ⎢ 𝜐𝑦 ⎥
+                                                                                                                                          ⎢ ⎥
+                                                                                                                                          ⎣ 𝑧⎦
+                                                                                                                                            𝜐
+                                                                                                                                         ⏟⏟⏟
+                                                                                                                                  𝐦
+
+with 𝐀 including the information about the distance between the reference point and the neighboring points, 𝐦 containing the
+unknowns of the problem, i.e., the numerical values of the derivatives. The vector 𝐛 contains the information about the values
+for the internal variables within the data points of the reference point and its neighbors. An amount of 𝑛 > 9 neighbors leads to
+an over-determined system with more equations than unknown variables. However, an approximate result can still be obtained.
+Previous studies, such as [22,35], have adopted a right-inverse technique for this aim. To obtain more accurate results, it is possible
+to include weighting the distances between the reference point and neighbors. An approximation of the result is to minimize the
+residual which is the total of the quadratic differences between 𝐀 ⋅ 𝐦 and 𝐛. The weighted least-square (WLS) problem defined this
+way reads [36]
+                      1
+        min ‖𝐖𝐃 2 ⋅ (𝐀 ⋅ 𝐦 − 𝐛)‖22 = min((𝐀 ⋅ 𝐦 − 𝐛)𝑇 ⋅ 𝐖𝐃 ⋅ (𝐀 ⋅ 𝐦 − 𝐛)).                                                                                                                      (5)
+          𝐦                                           𝐦
+
+The weighting matrix 𝐖 is a diagonal matrix with the entries 𝑤(𝑑)
+                (    ( )2 )
+                    1 4𝑑
+     𝑤(𝑑) = exp −                                                                                                                                                                               (6)
+                    2 𝛽⋆
+
+where 𝛽 ⋆ is defined through the user. In Fig. 2, the influence of 𝛽 ⋆ on the weighting function is shown. The smaller 𝛽 ⋆ , the narrower
+the weighting function gets. If 𝛽 ⋆ is too small, the equation system becomes singular. For a too large 𝛽 ⋆ , all neighbors are weighted
+approximately equally. An investigation of the impact of this numerical parameter on the numerical result and the error is presented
+in Section 4.3.
+    The Euclidean distance can be expressed as the following equation, where 𝑑𝑖 is the distance between neighboring point 𝑖 and
+the reference point 𝑥𝑜
+
+        𝑑𝑖 = ‖𝐱𝑖 − 𝐱0 ‖2 .                                                                                                                                                                      (7)
+
+To reach the minimum solution in Eq. (5), all initial partial derivatives with respect to the function values of all neighbored points
+must vanish. This results in a linear system
+           !                1
+        𝟎 = ∇𝐦 ‖𝐖𝐃 2 ⋅ (𝐀 ⋅ 𝐦 − 𝐛)‖22 = 2 ⋅ (𝐀𝑇 ⋅ 𝐖𝐃 ⋅ 𝐀 ⋅ 𝐦 − 𝐀𝑇 ⋅ 𝐖𝐃 ⋅ 𝐛).                                                                                                                    (8)
+
+                                                                                                         4
+T. Rudolf et al.                                                                                                                               Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+                                                               Fig. 2. Influence of 𝛽 ⋆ in the exponential weighting function.
+
+
+
+
+and
+
+        𝐦 = (𝐀𝑇 ⋅ 𝐖𝐃 ⋅ 𝐀)−1 ⋅ 𝐀𝑇 ⋅ 𝐖𝐃 ⋅𝐛.                                                                                                                                                       (9)
+            ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟
+                                 =∶𝐃
+
+can be calculated with the coefficient matrix 𝐃. The last calculation step can be formulated by multiplying a row vector by a column
+vector as
+
+                     𝜕2 𝝊 𝜕2 𝝊 𝜕2 𝝊 ∑              ∑
+                                           3        3 ∑ 𝑛
+        ∇2 𝝊 ∶=           +      +      ≈     𝑚𝑖 =         𝐷𝑖𝑗 ⋅ 𝑏𝑗 .                                                                                                                          (10)
+                     𝜕𝑥 2   𝜕𝑦 2   𝜕𝑧 2
+                                          𝑖=1      𝑖=1 𝑗=1
+
+The homogeneous Neumann boundary condition for boundary points 𝐱 ∈ 𝜕𝛺 in the form
+         𝜕𝝊     𝜕𝝊     𝜕𝝊
+            𝑛 +    𝑛 +    𝑛 =0                                                                                                                                                                 (11)
+         𝜕𝑥 𝑥 𝜕𝑦 𝑦 𝜕𝑧 𝑧
+with 𝑛𝑥 , 𝑛𝑦 and 𝑛𝑧 describing the components of the normal vector 𝐧 can be included by adding an additional last row to the matrix
+𝐀. The adjusted linear system at 𝐱 ∈ 𝜕𝛺 is denoted with □̃ and reads
+
+                                                                                                                                           ⎡𝜐𝑥𝑥 ⎤
+                                                                                                                                           ⎢𝜐 ⎥
+                                                                                                                                           ⎢ 𝑦𝑦 ⎥
+        ⎡ 1 𝛥𝑥21 1 𝛥𝑦21 1 𝛥𝑧21 𝛥𝑥1 𝛥𝑦1 𝛥𝑥1 𝛥𝑧1 𝛥𝑦1 𝛥𝑧1 𝛥𝑥1 𝛥𝑦1 𝛥𝑧1 ⎤ ⎢ 𝜐𝑧𝑧 ⎥                                                                       ⎡𝜐1 − 𝜐0 ⎤
+        ⎢2              2              2
+                                                                                                                                        ⎥ ⎢⎢𝜐𝑥𝑦 ⎥⎥ ⎢        ⎥
+        ⎢   ⋮              ⋮              ⋮                 ⋮             ⋮                 ⋮               ⋮            ⋮           ⋮  ⎥ ⎢𝜐 ⎥ = ⎢ ⋮ ⎥ .
+          1             1              1                                                                                                                                                       (12)
+        ⎢ 𝛥𝑥𝑛   2         𝛥𝑦𝑛 2 𝛥𝑧𝑛 𝛥𝑥𝑛 𝛥𝑦𝑛 𝛥𝑥𝑛 𝛥𝑧𝑛 𝛥𝑦𝑛 𝛥𝑧𝑛 𝛥𝑥𝑛 𝛥𝑦𝑛 𝛥𝑧𝑛 ⎥ ⎢ ⎥
+                               2              2                                                                                               𝑥𝑧
+                                                                                                                                                   ⎢𝜐𝑛 − 𝜐0 ⎥
+        ⎢2              2                                                                                                               ⎥ 𝜐𝑦𝑧      ⎢ 0 ⎥
+        ⎣ 0                0              0                 0             0                 0              𝑛𝑥           𝑛𝑦          𝑛𝑧 ⎦ ⎢ 𝜐 ⎥     ⎣        ⎦
+        ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟ ⎢ 𝑥 ⎥    ⏟⏞⏞⏟⏞⏞⏟
+                                                                        ̃
+                                                                                                                                           ⎢ 𝜐 𝑦 ⎥     ̃𝐛
+                                                                        𝐀                                                                  ⎢ ⎥
+                                                                                                                                           ⎣ 𝜐𝑧 ⎦
+                                                                                                                                         ⏟⏟⏟
+                                                                                                                                  ̃
+                                                                                                                                  𝐦
+
+As before, we consider more neighbored points and use the WLS algorithm to approximate the solution. Finally, we obtain the
+formulation
+
+             ̃𝑇 ⋅𝐖
+        ̃ = (𝐀
+        𝐦             ̃ ⋅ 𝐀)̃ −1 ⋅ 𝐀
+                                   ̃𝑇 ⋅𝐖    ̃ ⋅̃𝐛.                                                                                                                                             (13)
+            ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟
+                                 ̃
+                               =∶𝐃
+
+                                               ̃𝑇 ⋅𝐖
+In the three dimensional case, the inverse of (𝐀    ̃ ⋅ 𝐀)
+                                                        ̃ is a 9x9 matrix and independent of the number of neighboring points.
+               ̃
+The inverse in 𝐃 is thus not computationally expensive to be computed. Furthermore, 𝐦
+                                                                                    ̃ remains constant when no mesh adaptivity
+is employed. However, the method is still fast even when mesh adaptivity is employed, cf. [22,35]. The 𝐖-matrix for the whole
+
+                                                                                                        5
+T. Rudolf et al.                                                                              Finite Elements in Analysis & Design 249 (2025) 104353
+
+system therefore is defined as the diagonal-matrix
+
+             ⎡𝑤(𝑑1 )         0        0      ⋯   0⎤
+             ⎢ 0           𝑤(𝑑2 )     0      ⋯   0⎥
+        ̃ = ⎢⎢ 0
+        𝐖                    0      𝑤(𝑑3 )   ⋯   0⎥
+                                                    ⎥
+                                                                                                                                              (14)
+             ⎢ ⋮             ⋮        ⋮      ⋱   ⋮⎥
+             ⎢                                      ⎥
+             ⎣ 0             0        0      ⋯   𝑤̃ ⎦
+
+with the matrix 𝐃 ̃ containing the WLS information for all neighbored points. The weighting for the points at the boundary is denoted
+with 𝑤.
+      ̃ It should be noted here that to solve Eq. (9), the inverse of a matrix has to be calculated to solve the Eq. (9). The matrix
+is invertible if 𝐀 has full column rank which is the case if less than (𝑛 − 2) of the 𝑛 nearest neighbored points lie on a straight line
+together with the reference point [23].
+
+
+2.3. Chemo-thermo-mechanically coupled materials as benchmark problem
+
+    The stresses for chemo-thermo-mechanically coupled problems can be calculated by
+                         (        )     (                   )
+       𝝈 = E ∶ 𝜺el = E ∶ 𝜺tot − 𝜺𝝊 = E ∶ 𝜺tot − 𝜺th − 𝜺dif f .                                                                                (15)
+
+Eq. (15) shows the definition of the stress tensor 𝝈, the stiffness tensor E and the strain tensor 𝜺el . The strain tensor is the difference
+between the total strain 𝜺tot and field variable strain 𝜺𝝊 . In this presented work, the field variable strain is the sum of the thermal
+𝜺th and diffusion strain 𝜺dif f . The thermal strain is defined as
+
+        𝜺th = 𝛼th 𝛥𝜃 𝐈                                                                                                                        (16)
+
+with the isotropic coefficient of thermal expansion 𝛼th and the identity matrix 𝐈. The diffusion strain results from
+
+        𝜺dif f = 𝛼dif f 𝛥𝑐 𝐈                                                                                                                  (17)
+
+with the isotropic coefficient of diffusion expansion 𝛼dif f . Here, we specify the field equation in Eq. (2). To this end, we introduce
+as vector with additional field variables
+
+        𝝊 ∶= {𝜃, 𝑐}                                                                                                                           (18)
+
+whereas [𝜃 and 𝑐 ]describe the temperature and material concentration, respectively. The coefficient matrices in Eq. (2) are defined
+          𝜌𝑐𝑝 0
+as 𝑷 ∶=           , with 𝑐𝑝 as the specific heat capacity (at constant pressure) and 𝜌 indicating the density of the material. 𝑿 and 𝒀
+           0   1
+                                                                                                                                   [ ]
+                                                                                                                                    𝑄
+are zero matrices. The non-zero entries for the 𝒁 matrix are the heat conductivity 𝜆 and diffusion coefficient 𝜅. The vector 𝒄 ∶=
+                                                                                                                                    0
+contains the volumetric heat source 𝑄. These specifications of the coefficient matrices result in the well-known heat equation
+              𝜕𝜃
+        𝜌𝑐𝑝      − ∇ ⋅ (𝜆∇𝜃) = 𝑄                                                                                                              (19)
+              𝜕𝑡
+and in the diffusion equation
+         𝜕𝑐
+            = 𝜅∇2 𝑐.                                                                                                                          (20)
+         𝜕𝑡
+In the specific case of heat transfer in an isotropic and homogeneous medium in a three-dimensional space with no heat source
+(𝑄 = 0), Eq. (19) simplifes to
+         𝜕𝜃    𝜆 2
+            =     ∇ 𝜃.                                                                                                                        (21)
+         𝜕𝑡   𝜌𝑐𝑝
+
+
+3. Simulation model used for comparison
+
+    The ANSYS© software is used in this work. This renowned program provides the ability to alter and modify established
+procedures as needed. This can be accomplished using the APDL ANSYS© Parametric Design Language or user subroutines built
+on the Fortran platform. Here, APDL is employed. It can be simply integrated into the ANSYS© user interface and provides
+all necessary functionalities. Two key perspectives are examined in this analysis. First, a comparison of the results’ accuracy is
+investigated. A quarter-torus model including the thermo-mechanical coupling as an example equation is employed for this purpose.
+Then, a comparison is made between the NEM implementation and the traditional FEM. The second factor is efficiency. To be
+more specific, we focus on the resources Random-Access-Memory (RAM) and the processing time. We investigate the performance
+based on two exemplary coupled problems: the first one of these is the thermo-mechanical coupling, and the second one is the
+chemo-thermo-mechanical coupling.
+
+                                                                     6
+T. Rudolf et al.                                                                                 Finite Elements in Analysis & Design 249 (2025) 104353
+
+                    Table 1
+                    Material properties steel.
+                     Properties                                             Symbol        Unit                     Value
+                     density                                                𝜌             kg m−3                   7850
+                     Young’s Modulus                                        E             GPa                      200
+                     specific heat capacity                                 𝑐𝑝            J kg−1 K −1              434
+                     heat conductivity                                      𝜆             W m−1 K −1               60.5
+                     isotropic coefficient of thermal expansion             𝛼th           K −1                     1.2 ⋅ 10−5
+
+
+
+
+3.1. Model for the evaluation of the accuracy of the NEM
+
+    To evaluate whether the NEM is an accurate scheme for the numerical solution of the thermo-mechanical problems, which serves
+as an example equation system, a comparison with standard FEM is necessary. A quarter torus is selected as the reference geometry
+due to its inherent complexity, characterized by the coexistence of two distinct curvatures. The inner radius is 𝑟 = 0.5 mm and the
+outer radius is 𝑅 = 2 mm. The whole model with boundary conditions and mesh are shown in Fig. 3(a) and Fig. 3(b), respectively.
+The material properties chosen are the standard ANSYS© steel properties. They are listed in Table 1.
+    The calculation is a coupled field simulation comprising three DOF’s for displacements and one additional DOF for the additional
+field variable, which is employed here as an illustrative example of temperature. It is assumed that no heat flow can occur over the
+boundary surfaces, i.e., perfect isolation. Hence, the Neumann boundaries conditions Eq. (11) are implemented in NEM to ensure
+perfect isolation. Furthermore, the red arrow labeled with BC indicates the plane surface for the non-zero boundary condition. The
+temperature of the surface remains constant at 𝜃0 = 1 ◦ C throughout the duration of the simulation. All nodes on the surface BC are
+defined as fixed supports of displacements. The initial temperature of all other nodes is given by 𝜃 = 0 ◦ C. Furthermore, the time
+step size, 𝛥𝑡 = 2 × 10−5 s, is employed. The final time point, 𝑡 = 0.1 s, is reached after 5000 time steps.
+    The meshing algorithm from ANSYS© software with standard elements was applied. Both, regular and irregular meshes were
+investigated in this model. The regular mesh is created by hexahedral elements SOLID185 with linear shape functions. The nominal
+edge length of these elements is ℎ = 0.05 mm which results in 34965 elements and 37260 nodes, respectively. To generate
+the irregular mesh, tetrahedral elements SOLID185 with linear shape function are applied. Furthermore, additional information
+regarding the specific element type can be found in the ANSYS© manual [37]. This results in 68819 elements and 14728 nodes,
+respectively. In addition, the Neumann-stability criterium in Eq. (3) is satisfied by the given material properties, the time step size
+and the mesh size.
+    The same meshes are used in the FEM and NEM implementation in ANSYS© . This allows a direct comparison between the nodal
+values. The ANSYS© simulation serves as benchmark for these results. The point P1 in Fig. 3 indicates the node position at which
+the values of the results will be compared. This node is located inside of the body, surrounded by neighboring nodes. The dotted
+magenta line indicates the position of cross-section surface for further visual comparison.
+
+
+
+
+                                                                  Fig. 3. Torus meshes.
+
+
+3.2. Model for the evaluation of the efficiency of the NEM
+
+   To investigate the efficiency of the NEM, the thermo-mechanical and chemo-thermo-mechanical problem were solved. The results
+were compared to results obtained with built-in elements in ANSYS© and evaluated using two criteria. The first one is the comparison
+
+                                                                           7
+T. Rudolf et al.                                                                                       Finite Elements in Analysis & Design 249 (2025) 104353
+
+of the main CPU thread time required. It indicates, how long it takes for the main thread CPU time to solve the boundary value
+problem. The second criterion is the required RAM. Both information are reported in the ANSYS© solver output file. The comparison
+was carried out on a computer cluster system with 10 threads and 500 GB RAM. To identify the scattering of the CPU time and RAM
+on the computer system, the model was calculated 20 times with 105300 nodes. It results in an average calculation time of the main
+thread CPU of 6323.1 s with a standard deviation of 302.6 s. This corresponds to 5% and is within reasonable limits. The investigation
+of the standard derivation for the RAM shows an even clearer picture. The differences in required RAM and average calculation
+time of the main thread CPU between the repeated program executions are negligible.
+    In order to facilitate a meaningful comparison, a cube was selected as the model against which the efficiency is to be evaluated.
+The cube is a simple structure to not overextend the computers resources. The edge length of this cube is 1 mm as shown in Fig.
+4. Moreover, the material properties of the cube are identical to those of the torus, with the additional diffusivity coefficients
+𝜅 = 17.75 m2 s−1 and coefficient of diffusion expansion 𝛼dif f = 1.2 ⋅ 10−5 m3 mol−1 for the concentration.
+    A coupled 3D system of displacements and additional DOF’s is used for the efficiency comparisons. In this case, the additional
+DOF’s are temperature and diffusion. The required solving algorithm for coupled field problems in ANSYS© is restricted to the
+direct and monolithic solver [38]. However the NEM does not necessitate this type of solver as it can be calculated as a decoupled
+problem. Consequently, the iterative solver can be employed. In this work, the three displacements DOF’s are calculated with FEM,
+while the remaining DOF’s are calculated using the inverse Taylor series. Therefore, there are five different calculation models. An
+overview of these models is shown in Table 2.
+
+
+                       Table 2
+                       Overview of the model name and the degrees of freedom.
+                        Method                     DOF per node                      Solver                      Name
+                        FEM                        4                                 Direct                      ANSYS4
+                        FEM                        5                                 Direct                      ANSYS5
+                        NEM                        4                                 Direct                      NEM3+1
+                        NEM                        5                                 Direct                      NEM3+2
+                        NEM                        5                                 Iterative                   NEM3+2-Iter
+
+
+
+
+    The boundary conditions are similar to the ones of the torus. On all surfaces, Neumann boundary condition prevent the flow
+over the surfaces. In an area in the middle of the model with the dimension of 0.1 mm in each direction, the initial conditions of
+𝜃0 = 1 ◦ C are applied with the initial temperature of 𝜃0 = 0 ◦ C in the remainder of the body. The initial and boundary conditions
+for diffusion are identical to those for temperature. As illustrated in Fig. 4, the blue spots indicate the locations where mechanical
+fixed support of displacements has been employed. Time discretization is conducted over 40 time steps, with a constant time step
+size dependent on the mesh size. This approach is employed to fulfill Eq. (3).
+    Here, the standard meshing algorithm from ANSYS© with SOLID186 and SOLID226 elements is used. A regular mesh with 20
+nodes hexahedral elements is applied. The element sizes of each mesh range from 0.1 mm to 0.018 mm which corresponds to 4961
+up to 731025 nodes. An overview of the different meshes is shown in Table 3.
+
+
+
+
+                      Fig. 4. Cube with initial condition (left side) for an hexahedral mesh element size of 0.05 mm (right side).
+
+
+                                                                           8
+T. Rudolf et al.                                                                            Finite Elements in Analysis & Design 249 (2025) 104353
+
+                                  Table 3
+                                  Cube mesh overview.
+                                   Cube nr.              Element size [mm]              Node count [−]
+                                   1                     0.1                            4961
+                                   2                     0.05                           35 721
+                                   3                     0.035                          105 300
+                                   4                     0.025                          270 641
+                                   5                     0.022                          408 665
+                                   6                     0.02                           522 801
+                                   7                     0.019                          621 108
+                                   8                     0.018                          731 025
+
+
+
+
+4. Results
+
+4.1. Evaluation of the accuracy of the NEM
+
+
+   The evolution of the temperature, through the torus with hexahedral elements by using the NEM is demonstrated in Fig. 5.
+The results are in line with an expected behavior. As conduction through the torus progresses, the temperature increases gradually
+through the domain. The propagation of the contour front shows that the system tends to reach the steady-state determined by
+the uniform boundary value of unity. Here, the calculation was carried out until all values have reached a significant difference
+from the initial temperature which is in this case at about 𝑡 = 0.1 s. As illustrated in Fig. 3(a), the boundary surface labeled BC
+demonstrates zero deformation across all nodes. Conversely, the remaining nodes display a progressive expansion in conjunction
+with the diffusion of temperature throughout the body which is indicative of the thermoelasticity coupling phenomenon.
+   As local error measurement, the relative difference between the ANSYS© and the NEM solution is computed for each node of
+the mesh. It is normalized by the ANSYS© solution, i.e.
+               | 𝑡       𝑡 |
+               |𝜃𝐴,𝑘 − 𝜃𝑁,𝑘 |
+           𝑡
+        err𝑘 = |            |.                                                                                                              (22)
+                     𝑡
+                    𝜃𝐴,𝑘
+
+The indices 𝐴 and 𝑁 stands for ANSYS© and NEM, respectively. The subscript 𝑘 is the node number and the superscript 𝑡 describes
+the time step.
+     The results on the cross-section surface for the hexahedral and tetrahedral meshes are presented in Fig. 6. The maximum error
+value tends to zero over time. The comparison is subject to an error of 0.452 % at 𝑡 = 0.005 s, while at 𝑡 = 0.1 s, the maximum
+error is reduced to 0.003 %. The tetrahedral mesh also provides a clear visual representation. This suggests that the position of the
+maximum error is not as localized as it is in the hexahedral mesh. They are distributed in a scattered manner. The maximum error
+value does not reduce as rapidly as the one observed in the hexahedral mesh. At 𝑡 = 0.005 s, the maximum error is 0.585 % which is
+approximately 30 % higher than that of the hexahedral mesh. The tetrahedral mesh reaches a maximum error of 0.022 % at 𝑡 = 0.1 s
+which is seven times higher than the error reported for the hexahedral mesh. Consequently, the hexahedral posses a smaller relative
+error than the tetrahedral mesh on this cross section surface.
+     The investigation of the maximum relative error as well as the average error over the entire torus is presented in Fig. 7. Data
+is taken every 𝑡 = 0.001 s. The image provides a clear interpretation of the error evolution in time. With ongoing time, the error
+asymptotically approaches to zero while the diffusion is still in progress. The maximum error of the tetrahedral mesh is higher
+than the error of the hexahedral mesh. The accuracy of the method is reliant upon the equiangularity of the distribution of the
+neighboring points around the reference point. An almost equiangular distribution is exhibited by a structured mesh and therefore,
+the numerical error is smaller for the hexahedral mesh. This behavior was also presented in the previous example, c.f. Fig. 6.
+Initially, the maximum error exceeds 1.5 % and 5.5 %, respectively. For the hexahedral mesh, the error was reduced to below 1 %
+at 𝑡 = 0.002 s, while for the tetrahedral mesh, this was achieved at 𝑡 = 0.005 s. The initial average value is below 1 %. It falls below
+0.2 % at 𝑡 = 0.005 s for the hexahedral mesh and at 𝑡 = 0.003 s for the tetrahedral mesh.
+     The convergence of the maximum relative error is characterized by both stagnation and jumps. For instance, at 𝑡 = 0.013 s the
+tetrahedral mesh exhibits a jump. In each instance of the aforementioned jump, the location of the maximum error shifts from
+one node to another, resulting in a different denominator in Eq. (22) and, consequently, a sudden alteration in the local error
+measurement. Conversely, the investigation of the absolute error results in convergence, indicating that the calculation is accurate.
+Therefore, this jump occurs due to the high change in the basis value for the relative error. In Fig. 7, the error between NEM and
+ANSYS© decreases over time.
+     The investigation of the spatial discretization in the cross-section surface for the hexahedral mesh is presented in Fig. 8. In order
+to investigate the convergence of the solution with respect to the mesh size, four different mesh sizes were utilized at 𝑡 = 0.005 s,
+i.e., 0.02 mm, 0.035 mm, 0.05 mm and 0.065 mm. It can be observed that the solution converges with a finer mesh. The maximum error
+between the 0.05 mm mesh and the 0.02 mm mesh is approximately half of the former. Furthermore, the mean values are decreased
+by approximately 37 %.
+
+                                                                    9
+T. Rudolf et al.                                                                                              Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+            Fig. 5. NEM results for hexahedral elements as diffusion through the torus and deformation at different times, i.e. 𝑡 = 0.005 s to 𝑡 = 0.1 s.
+
+
+
+4.2. Evaluation of the efficiency of the NEM
+
+    This segment of the study presents a comparison between the two methods in terms of computational time and RAM requirements.
+Obviously, these requirements depend partly on the implementation of each method and therefore, the conclusions have to be
+considered carefully. This is particularly true since the implementation of the NEM could be implemented in an even more optimized
+way, e.g., when implemented via the FORTRAN interface and not via the APDL as done here. The graph in Fig. 9 shows the
+computation time for the main CPU thread in seconds versus the number of nodes. In all cases, the calculation of the coefficient
+matrix 𝐃 is excluded, as it is not necessary to recalculate it for changes to the initial conditions. Even for the smallest number of
+nodes 4961, the difference between ANSYS© and the NEM is already visible. This difference extends with an increase in the number
+of nodes. The NEM requires less computation time than the standard Finite Element Method with ANSYS© .
+    The difference between NEM3+1 and NEM3+2 is small. There are only few seconds between these calculation. As an example,
+the calculation time difference is approcimately 25s for 270,641 nodes. Therefore, the graphs NEM3+1            and NEM3+2        are
+overlapping in Fig. 9. The ANSYS5 model with 731025 nodes was too large for computing on the computer cluster system hardware,
+because the required computation time exceeded the walltime limit. Therefore, a value of 40th was extrapolated from models with
+the same amount of DOF but fewer time steps. In Fig. 9, it is indicate through the dotted blue line. The largest fully computed
+
+                                                                                 10
+T. Rudolf et al.                                                                              Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+                   Fig. 6. Relative errors err𝑡𝑘 on cross-section surface for different time instances and meshes.
+
+
+
+
+                                                                 11
+T. Rudolf et al.                                                                                             Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+Fig. 7. Maximum relative and average error of the whole torus for hexahedral and tetrahedral elements and the evolution of the temperature diffusion for
+chosen time (compare Fig. 5).
+
+
+
+
+                   Fig. 8. Relative maximum and average error on the cross-section surface by different hexahedral element sizes by 𝑡 = 0.005 s.
+
+
+
+
+data point, 621108 nodes, was chosen to indicate the time in hours. The NEM3+1 is 5.4 time faster than ANSYS4. NEM3+2 is 9.6
+times faster than ANSYS5. Furthermore, with one additional DOF, the NEM3+2 is 5.3 times faster than ANSYS5. As mentioned in
+Section 3.2, there is no restrictions on the choice of the solver. Therefore, the NEM3+2-Iter was calculated with an iterative solver,
+resulting in a significant speed increase compared to the method with direct solver. The required computation time for ANSYS5 and
+NEM5-Iter at 621108 nodes is 88.5 h and 0.57 h, respectively. This corresponds to a 155-fold increase in computation speed.
+   The comparison for the required RAM are shown in Fig. 10 which also present a clear distinction. The values for ANSYS5 by
+731025 nodes are not available, because this model exceed the limit of 500 GB RAM and therefore, no in-core solution is possible.
+Thus, the data point with 621108 nodes is used to compare the method with respect to RAM.
+   The difference between NEM4 and NEM5 is small, i.e., for 270641 nodes the difference is 0.15 GB. The comparison of the ANSYS4
+and ANSYS5 with NEM3+1 or NEM3+2 gives clear results. The NEM required 3.4 and 5.1 times less RAM than ANSYS4 and ANSYS5,
+respectively. Moreover, the NEM3+2-Iter only needs 5.1 GB RAM in contrast to ANSYS5 with 394.4 GB. This is a reduction of RAM
+by a factor of 77.3.
+
+4.3. Influence of the numerical parameter 𝛽 ⋆
+
+    The investigation of the weighting function as shown in Eq. (6) and the user-selected parameter 𝛽 ⋆ in the cross-section surface
+at 𝑡 = 0.005 s is illustrated in Fig. 11. The results of the maximum, average, and local errors at position P1 in percentage by two
+different counters with 30 and 100 neighbors are presented, respectively. The impact of 𝛽 ⋆ on the relative error is minimal. The
+greatest discrepancy between 𝛽 ⋆ = 0.1 and 𝛽 ⋆ = 1 with 100 neighbors is a reduction of 0.24 % in the maximum relative error in the
+
+                                                                                12
+T. Rudolf et al.                                                                            Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+                                            Fig. 9. Time comparison between NEM and FEM.
+
+
+
+
+                                          Fig. 10. Memory comparison between NEM and FEM.
+
+
+
+cross-section. The average and P1 values demonstrate a relatively constant range of variation, with a maximum difference of 0.26 %
+and a minimum difference of 0.2 %. These results indicate that the choice of 𝛽 ⋆ is not a significant factor in this method.
+   The influence of the parameter 𝑤̃ in Eq. (14) is not considered in this work. This parameter should be relatively large in
+comparison to the number of neighbors. However, no upper boundary for this value was found.
+
+                                                                13
+T. Rudolf et al.                                                                                    Finite Elements in Analysis & Design 249 (2025) 104353
+
+
+
+
+                                         Fig. 11. Influence of 𝛽 ⋆ in cross-section of hexahedral torus.
+
+
+
+
+5. Conclusion and outlook
+
+   This work presents a comparative study between the standard FEM approach and the Neighbored Element Method (NEM)
+evaluated in ANSYS© . The combination of FEM and the inverse Taylor series expansion with the weighted least-square method
+in NEM was evaluated through the comparison of two distinct models. The accuracy and resource requirements of this method were
+investigated. The results of the accuracy assessment are presented as a relative error which has been normalized in relation to the
+ANSYS© solution. The results indicate a linear convergence in spatial discretization and a convergent solution in time progression.
+There is no mesh dependency, and the method is applicable to hexahedral and tetrahedral meshes. The computational resources
+comparison demonstrates a clear saving of calculation time and RAM by orders of magnitude. The spatial discretization by using
+the NEM can be different to the FEM which creates more options for resolving coupled problems.
+   While the results demonstrate that the NEM significantly reduces computation time and memory consumption, it must be
+considered that this is partly due to the choice of a staggered approach. A comparison with a commercial staggered implementation
+would be necessary to further quantify the specific advantages of the NEM. This is left for further investigations. In future works,
+the influence of the value of the weighting function and meshless methods or hybrid meshes, i.e., meshes made from hexahedral
+as well as tetrahedral elements, can be investigated further. Moreover, the NEM can be applied to a number of additional research
+topics, including phase transformation, as well as fatigue and biological modeling.
+
+CRediT authorship contribution statement
+
+   Tobias Rudolf: Writing – original draft, Visualization, Validation, Methodology, Investigation, Formal analysis, Data curation,
+Conceptualization. Felix Klempt: Writing – original draft, Visualization, Methodology, Investigation. Hüray Ilayda Kök: Writing
+– original draft, Visualization, Methodology, Investigation. Meisam Soleimani: Writing – review & editing, Supervision. Dustin
+Roman Jantos: Writing – review & editing, Supervision, Methodology. Philipp Junker: Writing – review & editing, Supervision,
+Project administration, Methodology, Funding acquisition.
+
+Funding and acknowledgment
+
+   The authors gratefully acknowledge the funding by the German Research Foundation (Deutsche Forschungsgemeinschaft, DFG),
+Germany for the subproject 7 within the Research Unit 5250 ‘‘In-silico design of implants based on a multiscale approach’’ (Project-ID
+449916462).
+   The authors gratefully acknowledge the funding by the German Research Foundation (Deutsche Forschungsgemeinschaft, DFG),
+Germany under Germany’s Excellence Strategy within the Cluster of Excellence PhoenixD (Project-ID 390833453).
+   The authors highly acknowledge the funding by the German Research Foundation (Deutsche Forschungsgemeinschaft, DFG),
+Germany through the project grant SFB/TRR-298-SIIRI (Project-ID 426335750).
+
+Declaration of competing interest
+
+    The authors declare that they have no known competing financial interests or personal relationships that could have appeared
+to influence the work reported in this paper.
+
+                                                                       14
+T. Rudolf et al.                                                                                           Finite Elements in Analysis & Design 249 (2025) 104353
+
+Data availability
+
+    The authors do not have permission to share data.
+
+
+References
+
+ [1] B.J. Dimitrijevic, K. Hackl, A method for gradient enhancement of continuum damage models, Tech. Mech. - Eur. J. Eng. Mech. 28 (2019) 43–52.
+ [2] R.H.J. Peerlings, W.A.M. Brekelmans, R. de Borst, M.G.D. Geers, Gradient-enhanced damage modelling of high-cycle fatigue, Internat. J. Numer. Methods
+     Engrg. 49 (12) (2000) 1547–1569.
+ [3] Richard Ostwald, Ellen Kuhl, Andreas Menzel, On the implementation of finite deformation gradient-enhanced damage models, Comput. Mech. 64 (3)
+     (2019) 847–877.
+ [4] K. Langenfeld, P. Kurzeja, J. Mosler, How regularization concepts interfere with (quasi-)brittle damage: a comparison based on a unified variational
+     framework, Contin. Mech. Thermodyn. 34 (6) (2022) 1517–1544.
+ [5] Jean-Jacques Marigo, Corrado Maurini, Kim Pham, An overview of the modelling of fracture by gradient damage models, Meccanica 51 (12) (2016)
+     3107–3128.
+ [6] Kim Pham, Hanen Amor, Jean-Jacques Marigo, Corrado Maurini, Gradient damage models and their use to approximate brittle fracture, Int. J. Damage
+     Mech. 20 (4) (2011) 618–652.
+ [7] T. Gerasimov, L. De Lorenzis, On penalization in variational phase-field models of brittle fracture, Comput. Methods Appl. Mech. Engrg. 354 (2019)
+     990–1026.
+ [8] Roberto Alessi, Jean-Jacques Marigo, Stefano Vidoli, Gradient damage models coupled with plasticity: Variational formulation and main properties, Mech.
+     Mater. 80 (2015) 351–367, Materials and Interfaces.
+ [9] Felix Klempt, Meisam Soleimani, Peter Wriggers, Philipp Junker, A Hamilton principle-based model for diffusion-driven biological growth, Biomech. Model.
+     Mechanobiol. (2024).
+[10] Maryam Ghasemi, Hermann J. Eberl, Time adaptive numerical solution of a highly degenerate diffusion–reaction biofilm model based on regularisation,
+     J. Sci. Comput. 74 (2018) 1060–1090.
+[11] Tommi Brander, Daniel Lesnic, Kai Cao, Inverse problems for a model of biofilm growth, IMA J. Appl. Math. 88 (2) (2023) 258–281.
+[12] Philipp Junker, Stephan Schwarz, Dustin R. Jantos, Klaus Hackl, A fast and robust numerical treatment of a gradient-enhanced model for brittle damage,
+     Int. J. Multiscale Comput. Eng. 17 (2) (2019).
+[13] Philipp Junker, Johannes Riesselmann, Daniel Balzani, Efficient and robust numerical treatment of a gradient-enhanced damage model at large deformations,
+     Internat. J. Numer. Methods Engrg. 123 (3) (2022) 774–793.
+[14] Samuel Forest, Eric Lorentz, et al., Localization phenomena and regularization methods, Local Approach To Fract. 1 (2004) 311–371.
+[15] Yang Yang, Anil Misra, Micromechanics based second gradient continuum theory for shear band modeling in cohesive granular materials following damage
+     elasticity, Int. J. Solids Struct. 49 (18) (2012) 2500–2514.
+[16] Alejandro Diaz, Ole Sigmund, Checkerboard patterns in layout optimization, Struct. Optim. 10 (1995) 40–45.
+[17] Ole Sigmund, Joakim Petersson, Numerical instabilities in topology optimization: a survey on procedures dealing with checkerboards, mesh-dependencies
+     and local minima, Struct. Optim. 16 (1998) 68–75.
+[18] M. Zhou, Y.K. Shyy, H.L. Thomas, Checkerboard and minimum member size control in topology optimization, Struct. Multidiscip. Optim. 21 (2001)
+     152–158.
+[19] Ole Sigmund, Kurt Maute, Topology optimization approaches, Struct. Multidiscip. Optim. 48 (6) (2013) 1031–1055.
+[20] Dustin R. Jantos, Klaus Hackl, Philipp Junker, An accurate and fast regularization approach to thermodynamic topology optimization, Internat. J. Numer.
+     Methods Engrg. 117 (9) (2019) 991–1017.
+[21] Bojan J. Dimitrijevic, Klaus Hackl, A regularization framework for damage–plasticity models via gradient enhancement of the free energy, Int. J. Numer.
+     Methods Biomed. Eng. 27 (8) (2011) 1199–1210.
+[22] Andreas Vogel, Philipp Junker, Adaptive thermodynamic topology optimization, Struct. Multidiscip. Optim. 63 (1) (2020) 95–119.
+[23] Mischa Blaszczyk, Dustin Roman Jantos, Philipp Junker, Application of Taylor series combined with the weighted least square method to thermodynamic
+     topology optimization, Comput. Methods Appl. Mech. Engrg. 393 (2022) 114698.
+[24] Philipp Junker, Daniel Balzani, A new variational approach for the thermodynamic topology optimization of hyperelastic structures, Comput. Mech. 67
+     (2) (2021) 455–480.
+[25] Bernard Nayroles, Gilbert Touzot, P38504470764 Villon, Generalizing the finite element method: diffuse approximation and diffuse elements, Comput.
+     Mech. 10 (5) (1992) 307–318.
+[26] H. Sadat, C. Prax, Application of the diffuse approximation for solving fluid flow and heat transfer problems, Int. J. Heat Mass Transfer 39 (1) (1996)
+     214–218.
+[27] C. Prax, Patrick Salagnac, H. Sadat, Diffuse approximation and control-volume-based finite-element methods: a comparative study, Numer. Heat Transf.
+     Part B 34 (3) (1998) 303–321.
+[28] Ted Belytschko, Yun Yun Lu, Lei Gu, Element-free Galerkin methods, Internat. J. Numer. Methods Engrg. 37 (2) (1994) 229–256.
+[29] Olek C. Zienkiewicz, Robert L. Taylor, The Finite Element Method Set, Elsevier, 2005.
+[30] Mertcan Cihan, Robin Aichele, Dustin Roman Jantos, Philipp Junker, Application of adaptive virtual element method to thermodynamic topology
+     optimization, Internat. J. Numer. Methods Engrg. (2024) e7575.
+[31] Nicholas Perrone, Robert Kao, A general finite difference method for arbitrary meshes, Comput. Struct. 5 (1) (1975) 45–57.
+[32] Tadeusz Liszka, Janusz Orkisz, The finite difference method at arbitrary irregular grids and its application in applied mechanics, Comput. Struct. 11 (1–2)
+     (1980) 83–95.
+[33] Lina Song, Po-Wei Li, Yan Gu, Chia-Ming Fan, Generalized finite difference method for solving stationary 2D and 3D Stokes equations with a mixed
+     boundary condition, Comput. Math. Appl. 80 (6) (2020) 1726–1743.
+[34] Josip Basic, Nastia Degiuli, Dario Ban, A class of renormalised meshless Laplacians for boundary value problems, J. Comput. Phys. 354 (2018) 269–287.
+[35] Andreas Vogel, Philipp Junker, Adaptive and highly accurate numerical treatment for a gradient-enhanced brittle damage model, Internat. J. Numer.
+     Methods Engrg. 121 (14) (2020) 3108–3131.
+[36] David Ruppert, Matthew P. Wand, Multivariate locally weighted least squares regression, Ann. Statist. (1994) 1346–1370.
+[37] ANSYS, ANSYS 2022R1 element reference, 2022, pp. 825–842.
+[38] ANSYS, ANSYS 2022R1 basic analysis guide, 2022, pp. 101–106.
+
+
+
+
+                                                                              15
+
