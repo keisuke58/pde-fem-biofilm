@@ -223,6 +223,30 @@ small-strain estimate. (p carries the spherical term of
 DEVIATOR_SCALING_FINDING.md, ~1.3 % at nu = 0.49.) The shapes agree in kind;
 the thin tip towards the corner is missing for every w (sec. 16).
 
+## The point model in Fortran: no material server (6 Oct 2026)
+
+The material server (Python, one socket round trip per integration point and
+increment) was ~100x the rest of a run: one species 40^3 (no server) 16 min,
+two species on 2880 elements 1.5 h. `ansys_usermat/coupling/ecology_native.f`
+is the point model in Fortran, a drop-in for `usermat_py_hook.f` (same module
+`biofilm_py_bridge`, same hooks; the fragments are unchanged): the scheme of
+`ecology_jax.ecology_substeps` (6 Newton iterations per sub-step on the 12
+residuals, clip_state before and after each, the exact Jacobian written out,
+LU with partial pivoting). Case constants (n, c*, alpha*, eta_i, theta,
+checked against the deck as the server does) from the file in
+`BIOFILM_ECO_CASE` (`write_eco_cfg.py`, taken from `material_server.set_case`).
+
+| check | result |
+|---|---|
+| `tests/test_ecology_native.py`: 16 states x cases (2sp_case6, 2sp_case3, 4sp_case1, none) x sub-steps x c_rel, against ecology_jax | largest relative difference 8e-15 |
+| Abaqus, 8^3 two species, consumption 6 (`run_comp.ps1 -Native`) against the server run of the same deck | printed values identical; point-model trace (8213 point-steps) within 6.7e-12; 0.6 min on 1 CPU (with compiling) against 5.2 min on 4 CPUs |
+| ANSYS, partner element, week deck `w8_c6_g6_s015_b001` (exe built in `F:\biofilm_upf_native`, ecology_native.f as usermat_py_hook.f, no C shim) against the week chain's server run | all_stress and nut_field identical; trace within 1.6e-12 (absolute); 36 s against 156 s |
+
+The Newton iteration count is fixed at 6 as in the reference: where a step is
+too long for 6 iterations to converge, both versions end at the clip bounds
+in round-off-dependent places (seen with THETA_DEMO, c* = 25, one step of
+0.01 from the default state); the composition runs' steps converge.
+
 ## Front term with two species; composition mesh series (6 Oct 2026, running)
 
 Runs one at a time on 4 CPUs (`F:\abaqus_work\_req_1006.ps1`), each result in

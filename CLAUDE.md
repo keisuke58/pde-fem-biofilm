@@ -76,6 +76,14 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
   ifort reads a stale `biofilm_py_bridge.mod` and link_v222.ps1 still
   links the old object into a mixed exe.
+- **Native point model (6 Oct 2026):** `F:\biofilm_upf_native\ANSYS.exe` is
+  the partner-element build with `ansys_usermat/coupling/ecology_native.f`
+  (the point model in Fortran) in place of `usermat_py_hook.f`: no material
+  server, no port 8765; set `BIOFILM_ECO_CASE` to a file from
+  `abaqus_composition/write_eco_cfg.py <case>` before starting ANSYS (-np 1).
+  Same results as the server build (abaqus_composition/README.md), ~4x faster
+  on 8^3. Abaqus: `run_comp.ps1 -Native`. The week chain still uses
+  `F:\biofilm_upf_wired` with the server.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment

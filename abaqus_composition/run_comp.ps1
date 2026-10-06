@@ -17,7 +17,10 @@ param(
     [string]$Case = '2sp_case6',
     [int]$Port = 8766,
     [int]$Cpus = 1,
-    [string]$WorkRoot = 'F:\abaqus_work'
+    [string]$WorkRoot = 'F:\abaqus_work',
+    # the point model in Fortran (make_umat.py --native): no C shim, no material
+    # server; the case constants go to BIOFILM_ECO_CASE (write_eco_cfg.py)
+    [switch]$Native
 )
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..')
@@ -40,6 +43,23 @@ if (-not (Get-Command ifort -ErrorAction SilentlyContinue)) {
     if (-not (Get-Command ifort -ErrorAction SilentlyContinue)) {
         throw "ifort still not on PATH after vcvars64 + vars.bat ($($dump.Count) lines from cmd; first: $($dump | Select-Object -First 3))"
     }
+}
+if ($Native) {
+    & $py (Join-Path $repo 'abaqus_composition\make_umat.py') (Join-Path $wd 'umat_comp.for') --native
+    & $py (Join-Path $repo 'abaqus_composition\write_eco_cfg.py') $Case (Join-Path $wd 'eco_case.txt')
+    Push-Location $wd
+    try {
+        @("compile_fortran += ['/libs:dll', '/threads']") | Set-Content abaqus_v6.env -Encoding ascii
+        $env:BIOFILM_ECO_CASE = (Join-Path $wd 'eco_case.txt')
+        $ErrorActionPreference = 'Continue'
+        & abaqus job=$job input="$job.inp" user=umat_comp.for cpus=$Cpus interactive ask_delete=OFF 2>&1 | Tee-Object -FilePath (Join-Path $wd 'abaqus_out.txt') | Select-Object -Last 15
+        $ErrorActionPreference = 'Stop'
+        $sta = Join-Path $wd "$job.sta"
+        if ((Test-Path $sta) -and (Select-String $sta -Pattern 'COMPLETED SUCCESSFULLY' -Quiet)) { "PASS: $job completed (native point model)" }
+        else { "NOT COMPLETE: see $wd ($job.msg / $job.log)" }
+        "work dir: $wd"
+    } finally { Pop-Location }
+    return
 }
 & $py (Join-Path $repo 'abaqus_composition\make_umat.py') (Join-Path $wd 'umat_comp.for')
 Push-Location $wd
