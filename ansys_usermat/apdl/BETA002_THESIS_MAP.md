@@ -4,7 +4,7 @@
 β = 1e−4（相方の入力例）は感度としてだけ載せる（CLAUDE.md）。
 数値はすべて `results/2026-10-05_ansys/*.json` から
 `python ansys_usermat/apdl/summarize_runs_json.py` で再現できる（Pa、T* = 1.1）。
-修論本体はまだ書き換えていない。24³（β = 0.02）と prop(35) の実行が届いてからまとめて行う。
+**10/6：4章を β = 0.02 に差し替えた（下の表どおり。表 4.2 メッシュ、表 4.3 β 感度、図 4.10 要素の時間変化 fig_element_beta002.png、図 A/B = fig_composition_clock / map、Felix の回答（E = 10 kPa の注記、β は仮定、新しい点の組成））。**
 
 ## 基準にする実行
 
