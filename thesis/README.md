@@ -70,7 +70,7 @@ Open:
 |---|---|
 | 5 Oct | meeting 9:00; IKMHIWI03 run sheet `ansys_usermat/apdl/RUN_1005_IKMHIWI03.md` (last ANSYS day before 12 Oct) |
 | 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
-| **12 Oct** | **nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
+| **12 Oct** | **content frozen** (decided 6 Oct): ch4 with the week runs that have arrived by then, ch3 TMCMC as it is; afterwards only format and typos. **Nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
 | 16 Oct | his comments on the format |
 | 19 Oct | last changes, printing, binding |
 | **20 Oct** | **submission**: two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
