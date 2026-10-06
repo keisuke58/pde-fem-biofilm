@@ -141,6 +141,10 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
+  2026-10-06). His element is an earlier version of Felix Klempt's
+  implementation (same NEM and AceGen files); Felix's is the later version
+  with fixes. Documents keep their own wording.
 - Keep changes scoped to named files; don't touch the pre-existing
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
