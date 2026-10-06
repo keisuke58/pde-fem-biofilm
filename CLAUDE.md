@@ -223,6 +223,14 @@ this machine's specific workflow.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
+- **Keita Ando (Keio) is an associate professor (准教授)**, Department of
+  Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
+  department's 2021 lab brochure; not yet confirmed in use). Contact for the
+  Keio 課題研究報告 (the Keio-side thesis presentation). On 6 Oct 2026 a draft
+  mail asking for its date was prepared (Gmail draft, cc Assoc. Prof.
+  Muramatsu): return to Japan about February 2027; earlier double-degree
+  students presented online. Send it from keisuke58@keio.jp. Keio student
+  number 82519093, 開放環境科学専攻.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.
