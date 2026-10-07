@@ -40,10 +40,9 @@ Abaqus の scratch は既定で `/tmp`（`-tmpdir /tmp/nishioka_<job>_<pid>`）�
 
 `WORKROOT` は既定の `$HOME/abaqus_work` でよい（`/home` に 83T ある）。
 
-**対処（10月8日）：** `abaqus_composition/run_comp.sh` は scratch を `$WORKROOT/scratch`（`/home` の下）に
-置くようにした（Abaqus の `scratch=` と、コンパイラ用の `TMPDIR`）。別の場所にするときは `ABQ_SCRATCH` を
-設定する。**fifa で次の1本を回したとき、`/tmp/nishioka_*` が増えないことを確かめる**（`ls /tmp | grep nishioka`）。
-`abaqus` を直接呼ぶときは `scratch=$HOME/abaqus_work/scratch` を自分で付ける。
+`abaqus_composition/run_comp.sh` も、念のため scratch と `TMPDIR` を `$WORKROOT/scratch` に明示している
+（`~/abaqus_v6.env` がない別のアカウントや別のマシンでも `/tmp` を使わないため。場所は `ABQ_SCRATCH` で変えられる）。
+どちらも同じ `/home/nishioka/abaqus_work/scratch` を指すので食い違いはない。
 
 ## 3. 並列（**間違えると静かに壊れる**）
 
