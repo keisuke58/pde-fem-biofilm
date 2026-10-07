@@ -233,7 +233,12 @@ this machine's specific workflow.
   2026 from keisuke58@keio.jp** (cc Assoc. Prof. Muramatsu), asking for its
   date and whether it can be online as for earlier double-degree students;
   stated: LUH thesis submitted in November, oral exam in December, return
-  to Japan about January 2027. Waiting for his reply. Keio student number
+  to Japan about January 2027. Waiting for his reply. **Settled by the K-LMS
+  announcement (7 Oct 2026): no presentation meeting.** Submit the report
+  (A4, about 6 pages or more, Japanese or English) and a 5-minute recorded
+  PowerPoint talk by **12 Mar 2027 (Fri) 16:00 JST**; in Google Calendar with
+  reminders. A report based on a submitted or published single-author paper
+  must state the paper's details (e.g. a footnote). Keio student number
   82519093, 開放環境科学専攻. The report itself:
   `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
   (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).
