@@ -6,8 +6,9 @@ of constrained growth (the ANSYS counterpart of tests/test_homeostatic_growth.py
     python ansys_usermat/apdl/hp_clamped_check.py judge [--workdir ...] [--report file]
 
 Decks (from ds8_beta002_dt4 in F:\\biofilm_upf_wired): the 2 mm cube, 8^3, every
-element in BIOFILM1 (phi = 1 everywhere, so the field stays uniform), the field
-source K_LOCAL1 = 0, every node held in x, y and z (F = I at every Gauss point),
+element in BIOFILM1 (phi = 1 everywhere), the field source K_LOCAL1 = 0, the
+front term off and beta = 0 (so phi stays 1), each face held in its normal
+direction (F = I at every Gauss point),
 k_alpha = 1e-3, dt = 0.025, T* = 5, Klempt 2024 stiffness (E = 1e-5 MPa,
 f = 1e-3, nu = 0.49):
   hp_clamp_off    prop(49) = 0             Eq. 36: alpha = k_alpha T
@@ -35,7 +36,11 @@ E0, F_VOID, NU, PREF = 1e-5, 1e-3, 0.49, 2.5e-7
 RUNS = {"hp_clamp_off": (0.0, 0, 0.0),
         "hp_clamp_e": (PREF, 0, 0.0),
         "hp_clamp_local": (PREF, 1, F_VOID)}
-CLAMP = "NSEL,ALL\nD,ALL,UX,0\nD,ALL,UY,0\nD,ALL,UZ,0\nALLSEL\n"
+# each face held in its normal direction: uniform growth then gives F = I at
+# every Gauss point. (Holding every node, the first version, leaves no free
+# DOF and the first substep did not converge, 7 Oct.)
+CLAMP = ("D,XMIN,UX,0\nD,XMAX,UX,0\nD,YMIN,UY,0\nD,YMAX,UY,0\n"
+         "D,ZMIN,UZ,0\nD,ZMAX,UZ,0\nALLSEL\n")
 
 
 def p_closed(alpha, phi=1.0):
@@ -70,6 +75,10 @@ def decks(W: Path):
         cmd = [sys.executable, str(HERE / "make_wired_deck.py"), str(base), str(out),
                "--props", f"49={pref:g},50={form},51={f:g}",
                "--cmblock", f"BIOFILM1={allel}", "--set", "K_LOCAL1=0",
+               # front term off (r = 100 of the base deck blows up on a full
+               # biofilm, 7 Oct) and beta = 0: with beta the surface points
+               # (phi = 0) drain the field (mean phi 0.89 at T* = 0.15)
+               "--set", "MAX_GROWTH11=0", "--set", "MY_BETA1=0",
                "--time", f"{T_END:g}", "--post", "both", "--post-elem", "220"]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
@@ -132,7 +141,8 @@ def judge(W: Path, report: str | None):
             rdev = max(abs(x[2] - r) / r for x, r in zip(h, rec))
             pmax = max(-sx for _, sx, _ in h)
             good = (t_end >= T_END - 1e-9 and abs(a_end - ast) / ast < 1e-3
-                    and abs(-sx_end - ph) / ph < 1e-3 and pmax <= ph * (1 + 1e-6) and dev < 1e-4)
+                    and abs(-sx_end - ph) / ph < 1e-3 and pmax <= ph * (1 + 1e-5) and dev < 1e-4)
+            # (the result file holds single precision: no tighter than ~1e-6)
             say(f"{run}: p_h {ph:.4e} MPa; alpha at T* {t_end:.2f} {a_end:.6e}, alpha* {ast:.6e}"
                 f" ({abs(a_end - ast) / ast:.1e}); p {-sx_end:.4e} (max {pmax:.4e});"
                 f" recurrence max {rdev:.1e}; stress vs closed form max {dev:.1e}  {'pass' if good else 'FAIL'}")
