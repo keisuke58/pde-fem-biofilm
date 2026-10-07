@@ -83,6 +83,7 @@ function ExportPush($list, $tag) {
     $list = @($list)                       # one run arrives as a bare string, and @string splats per character
     if (-not $Export -or -not $list) { return }
     . (Join-Path $repo 'dev-env.ps1') | Out-Null
+    $env:BIOFILM_WORKDIR = $WorkDir                  # export_runs_json.py reads the CSVs from there
     $o = & python (Join-Path $repo 'ansys_usermat\apdl\export_runs_json.py') (Join-Path $repo $Export) @list 2>&1
     $o | ForEach-Object { L "  export: $_" }
     if (-not $Push) { return }
