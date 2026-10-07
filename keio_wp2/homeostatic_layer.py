@@ -108,11 +108,14 @@ def run(geom, P_h, nx=64, ny=32, dt=0.02, t_end=1.0):
     p_h = None if P_h is None else P_h * E0 * K_ALPHA
     phi = M.inside.astype(float)
     alpha = np.ones_like(phi)
+    # explicit diffusion: sub-steps below h^2 / (4 beta) (dt = 0.02 alone is unstable at h = 1/32 mm)
+    nsub = int(np.ceil(dt / (0.8 * M.h ** 2 / (4 * BETA))))
     hist = []
     for k in range(int(round(t_end / dt))):
         p, vm, sxx, u = mechanics(M, phi, alpha - 1)
         g = np.ones_like(p) if p_h is None else np.clip(1 - p / p_h, 0.0, 1.0)
-        phi = np.clip(phi + dt * (BETA * M.lap(phi) + K_ALPHA * alpha), 0, 1)
+        for _ in range(nsub):
+            phi = np.clip(phi + dt / nsub * (BETA * M.lap(phi) + K_ALPHA * alpha), 0, 1)
         alpha = alpha + dt * K_ALPHA * phi * g
         ins, bot = M.inside, M.inside & M.bottom
         uy = u[1::2].reshape(nx + 1, ny + 1)
