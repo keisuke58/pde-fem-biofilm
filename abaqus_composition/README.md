@@ -304,7 +304,15 @@ The composition and the nutrient change by about 1 % from 24^3 to 32^3; the
 seed stress by 4 %, 6 % below the extrapolated value at 32^3. (alpha - 1
 at the surface elements keeps falling, 5.05/4.88/4.71e-4, because the
 surface element's centroid moves closer to the free surface as the mesh is
-refined; it is a measure of the element, not of a point.) A 40^3 run follows.
+refined; it is a measure of the element, not of a point.)
+
+40^3 (`cs40_c6_g6`, `--separated`, 20 min on 4 CPUs; the first unsymmetric
+solve ran out of memory): seed vM 5.76e-4, seed p -2.19e-4, share seed mean
+0.260, share layer 1 0.411, c seed min 0.260. From 32^3 the seed vM rises by
+2.0 % and p by 1.1 %; composition and nutrient change by less than 1 %. The
+values extrapolated from 16/24/32 lie 4 % (vM) and 1.6 % (p) beyond 40^3.
+The ANSYS column in `results_1006/cs40_c6_g6.txt` is the 8^3 run with the
+example stiffness (1000 MPa), so its stress ratios mean nothing.
 
 **Felix Klempt's answers (mail of 5 Oct 2026)**, which change how the
 front-term runs are labelled:
@@ -358,7 +366,36 @@ the digitised figures (`results_1006/fx*.txt`):
   compared in words only) adds front growth only where it is positive and
   lets it fade as phi approaches 1. None of the runs above has that form; it
   is the next one to test, stated as "as in the first author's current
-  implementation".
+  implementation". (Done on the paper's mesh, next section.)
+
+## His front form on the paper's mesh: g phi against g phi c (6 Oct 2026, evening)
+
+`make_klempt_inp.py --felix` (his form of the front term as described in his
+mail, penalty 100), the paper's 1 um mesh (20^3), Table 2 with T* = 0..1 (no
+time scale per run), dt = 1e-3, eps = 1e-8, no artificial diffusion,
+E = 10 kPa. Consumption g phi (`ff41`, `ff42h`, `ff42l`) and g phi c
+(`--first-order`, `ff*_fo`; the form Dr. Soleimani confirmed for the 2024
+figures on 6 Oct). 4 CPUs, 18-27 min each. RMS difference of the mean phi / c
+curves to the digitised figures (`compare_paper.py`, `results_1006/ff*.txt`):
+
+| case | g phi: RMS phi, c | g phi c: RMS phi, c | mean phi at T* = 1: g phi / g phi c / paper | lowest element c at T* = 1: g phi / g phi c |
+|---|---|---|---|---|
+| 4.1 | 0.443, 0.188 | 0.252, 0.094 | 0.071 / 0.339 / 0.740 | -0.143 / 0.126 |
+| 4.2 high | 0.709, 0.374 | 0.709, 0.376 | 0.099 / 0.099 / 1.000 | 0.830 / 0.850 |
+| 4.2 low | 0.183, 0.306 | 0.174, 0.384 | 0.023 / 0.051 / 0.301 | -0.589 / 0.054 |
+
+- With g phi c the nutrient stays positive in all three cases, and 4.1 moves
+  towards the paper (RMS phi 0.44 to 0.25; mean phi 0.34 against 0.74 at
+  T* = 1).
+- 4.2 high does not change: c stays near 0.9, so the consumption form hardly
+  acts, and phi reaches 0.10 against the paper's 1.0.
+- 4.2 low: phi a little closer, c further away (mean c 0.21 against the
+  paper's 0.08).
+- 4.2 is not reproduced with his front form and Table 2 under either
+  consumption form.
+
+`ff41_g5` (4.1 with five times the consumption) also ran: c falls to about
+-4 at once and phi stays at 0.065. It is not part of the comparison.
 
 ## The same set-up against the first author's own code (6 Oct 2026)
 
@@ -416,6 +453,25 @@ values are mine, not from a paper.
   from the nutrient through the composition only.
 - 2 CPUs, about 1.5 hours (the material server call per integration point
   dominates).
+- Tooth with the front term (`--ri 4.0 --bulge 0.5 --nut outer --front 10`,
+  consumption 1, prop(36) = 1/3, T* = 1.1, dt = 0.002; dt = 0.01 diverged, the
+  front crossed about 1.2 elements per step), Fortran point model, 4 CPUs,
+  7-8 min each: `tooth_fr_c1` (growth on every face, w = 0.5) and
+  `tooth_pr_c1` (Eq. 34 as printed). Against `tooth_c1` (no front term),
+  inner ring (on the enamel):
+
+  | | no front term | front, w = 0.5 | front, as printed |
+  |---|---|---|---|
+  | phi | 0.17-0.20 | 1.01 | 0.73 (base) to 1.14 |
+  | share phi_1/(phi_1+phi_2) | 0.17-0.21 | 0.023 | 0.023-0.031 |
+  | alpha - 1 | 2.5e-4 | 1.0e-3 | 0.8-1.0e-3 |
+  | von Mises | 1.4-2.3e-4 | 1.9-2.5e-2 | 1.5-2.4e-2 |
+
+  The layer fills with biofilm in both front forms; above z = 0.25 mm they
+  differ by less than 2 % in von Mises, at the base the printed form gives
+  40 % less (phi 0.73 there). The stress rises about 100 times for 4 times the
+  growth; I have not checked yet what makes up that factor, so these
+  stresses are not to be used before that.
 
 ## Next: species carried in space (design, not implemented)
 
