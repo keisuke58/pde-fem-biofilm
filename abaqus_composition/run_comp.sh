@@ -25,6 +25,10 @@ wd=${WORKROOT:-$HOME/abaqus_work}/comp_$job
 scr=${ABQ_SCRATCH:-${WORKROOT:-$HOME/abaqus_work}/scratch}
 rm -rf "$wd"; mkdir -p "$wd" "$scr"
 cp "$repo/$inp" "$wd/"
+# make_cube_inp.py writes <job>.seed.txt next to the .inp while compare_ansys.py
+# reads it next to the .dat: carry it over, or the comparison cannot find the seed.
+seed="$repo/${inp%.inp}.seed.txt"
+if [ -f "$seed" ]; then cp "$seed" "$wd/"; fi
 "$py" "$repo/abaqus_composition/make_umat.py" "$wd/umat_comp.for" --native
 "$py" "$repo/abaqus_composition/write_eco_cfg.py" "$case" "$wd/eco_case.txt"
 export BIOFILM_ECO_CASE="$wd/eco_case.txt"

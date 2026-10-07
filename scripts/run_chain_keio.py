@@ -2,11 +2,16 @@
 ansys_usermat/apdl/run_chain.ps1, for the Keio server (fifa): run a list of
 jobs one after another in a process detached from the calling shell (a closed
 terminal or a restarted Claude session does not stop it), summarise each one
-against its reference, commit and push the summaries, and report to a pull
-request so the decision about what to run next is made there.
+against its reference, and commit and push the summaries together with a
+report appended to KEIO_CHAIN_LOG.md.
 
     python3 scripts/run_chain_keio.py --name 1008 --runs scripts/keio_runs/1008.json \
-        [--pr 58] [--push] [--cpus 4] [--dry-run]
+        [--push] [--cpus 4] [--dry-run]
+
+KEIO_CHAIN_LOG.md is the only report, by CLOUD_TO_FIFA.ja.md item 1: the chain
+posts no pull-request comment and needs no `gh` credentials on this shared
+machine. The cloud session reads the log and the summaries, decides what runs
+next, and is the one that merges into master.
 
 fifa is a shared lab server (about 15 users), so the chain is deliberately
 conservative and never runs two jobs at once:
@@ -253,7 +258,20 @@ def run_one(run: Dict, name: str, out_dir: Path, workroot: Path,
 
 
 def report(name: str, recs: List[Dict]) -> str:
-    """The pull-request comment: a table for people, JSON for the next session."""
+    """A KEIO_CHAIN_LOG.md section: a table for people, JSON for the next session.
+
+    Parameters
+    ----------
+    name : str
+        The chain name, as passed to --name.
+    recs : list of dict
+        One result record per run, from run_one.
+
+    Returns
+    -------
+    str
+        Markdown to append to KEIO_CHAIN_LOG.md.
+    """
     rows = "\n".join(
         "| `%s` | %s | %d min %d s | %s |"
         % (r["job"], r["status"], r["seconds"] // 60, r["seconds"] % 60,
@@ -263,13 +281,26 @@ def report(name: str, recs: List[Dict]) -> str:
         % (r["job"], r["verdict"] or r["status"], r["detail"][:3000])
         for r in recs if r["verdict"] == "differs" or "failed" in r["status"])
     payload = json.dumps({"chain": name, "runs": recs}, indent=1)
-    return ("## chain `%s` finished\n\n"
-            "Automatic report from `scripts/run_chain_keio.py` on fifa.\n\n"
+    return ("\n---\n\n## %s: chain `%s` ran on fifa\n\n"
+            "Automatic entry from `scripts/run_chain_keio.py`. No analysis: what "
+            "runs next is for the cloud session to decide.\n\n"
             "| job | status | wall clock | vs reference |\n|---|---|---|---|\n%s\n\n"
             "%s\n\nWall clock is comparable with IKMHIWI03 only if the machine was "
             "otherwise idle: the numbers are deterministic, the timing is not.\n\n"
             "<!-- keio-chain -->\n```json\n%s\n```\n"
-            % (name, rows, details, payload))
+            % (datetime.now().strftime("%Y-%m-%d %H:%M"), name, rows, details,
+               payload))
+
+
+def append_log(name: str, recs: List[Dict]) -> str:
+    """Append the chain's report to KEIO_CHAIN_LOG.md; return its repo-relative path."""
+    log = REPO / "KEIO_CHAIN_LOG.md"
+    if not log.is_file():
+        log.write_text("# Keio chain log\n\nWhat fifa ran and what the cloud "
+                       "session decided, newest at the bottom.\n")
+    with log.open("a") as fh:
+        fh.write(report(name, recs))
+    return str(log.relative_to(REPO))
 
 
 def commit_push(files: List[str], message: str, branch: str) -> str:
@@ -296,7 +327,6 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True, help="chain name, used in the log and the report")
     ap.add_argument("--runs", required=True, help="manifest JSON (see the module docstring)")
-    ap.add_argument("--pr", default="", help="pull request to comment on (number or URL)")
     ap.add_argument("--push", action="store_true", help="commit and push the summaries")
     ap.add_argument("--cpus", type=int, default=4, help="default CPUs per job")
     ap.add_argument("--max-cpus", type=int, default=max(1, cpus // 3),
@@ -355,20 +385,18 @@ def main() -> int:
         logger.info("--- %s: %s %s", rec["job"], rec["status"], rec["verdict"])
 
     files = [r["file"] for r in recs if r.get("file")]
-    if args.push and files:
+    files.append(append_log(args.name, recs))
+    logger.info("appended the report to KEIO_CHAIN_LOG.md")
+    if args.push:
         _, branch = sh(["git", "rev-parse", "--abbrev-ref", "HEAD"], REPO)
         verdicts = ", ".join("%s %s" % (r["job"], r["verdict"])
                              for r in recs if r["verdict"])
         msg = ("Keio server (fifa): chain %s summaries (%d run(s), automatic)\n\n"
                "scripts/run_chain_keio.py on fifa. %s.\n\n"
-               "No analysis yet: what to run next is asked for on the pull "
-               "request.\n" % (args.name, len(files), verdicts))
+               "No analysis yet: what runs next is for the cloud session to "
+               "decide, from KEIO_CHAIN_LOG.md and these summaries "
+               "(CLOUD_TO_FIFA.ja.md item 1).\n" % (args.name, len(files), verdicts))
         logger.info("commit/push:\n%s", commit_push(files, msg, branch.strip()))
-
-    if args.pr:
-        rc, log = sh(["gh", "pr", "comment", args.pr, "--body-file", "-"], REPO,
-                     timeout=120, stdin_text=report(args.name, recs))
-        logger.info("pr comment: rc=%d %s", rc, log.strip()[:300])
     logger.info("chain %s end", args.name)
     return 0
 
