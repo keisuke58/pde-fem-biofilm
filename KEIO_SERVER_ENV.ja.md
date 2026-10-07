@@ -30,17 +30,19 @@
 /       160G  使用 150G 空き 11G   94%   <- /tmp がここ。危ない
 ```
 
-**Abaqus の scratch は既定で `/tmp`**（`-tmpdir /tmp/nishioka_<job>_<pid>`）。`/` の空きは
-11 GB しかなく、共用のサーバーなので埋めると全員に影響する。20³ の 1 本で 132 MB だったので、
-`KEIO_PLAN` の 40³・48³ だと 1 本で 2 GB 近くになる。何本も並べる前に scratch を
-`/home` に移すこと（§5 の未決の1つ）。
+Abaqus の scratch は既定で `/tmp`（`-tmpdir /tmp/nishioka_<job>_<pid>`）だった。`/` の空きは
+11 GB しかなく、**約15人が使う共用のサーバー**なので埋めると全員が止まる。20³ の 1 本で 132 MB
+だったので、`KEIO_PLAN` の 40³・48³ だと 1 本で 2 GB 近くになる。
+
+**2026年10月8日に `~/abaqus_v6.env` を作って `/home` に移した**（`scratch =
+"/home/nishioka/abaqus_work/scratch"`）。`abaqus information=environment` で確認できる。
+これは私の Abaqus の実行すべてに効く。
 
 `WORKROOT` は既定の `$HOME/abaqus_work` でよい（`/home` に 83T ある）。
 
-**対処（10月8日）：** `abaqus_composition/run_comp.sh` は scratch を `$WORKROOT/scratch`（`/home` の下）に
-置くようにした（Abaqus の `scratch=` と、コンパイラ用の `TMPDIR`）。別の場所にするときは `ABQ_SCRATCH` を
-設定する。**fifa で次の1本を回したとき、`/tmp/nishioka_*` が増えないことを確かめる**（`ls /tmp | grep nishioka`）。
-`abaqus` を直接呼ぶときは `scratch=$HOME/abaqus_work/scratch` を自分で付ける。
+`abaqus_composition/run_comp.sh` も、念のため scratch と `TMPDIR` を `$WORKROOT/scratch` に明示している
+（`~/abaqus_v6.env` がない別のアカウントや別のマシンでも `/tmp` を使わないため。場所は `ABQ_SCRATCH` で変えられる）。
+どちらも同じ `/home/nishioka/abaqus_work/scratch` を指すので食い違いはない。
 
 ## 3. 並列（**間違えると静かに壊れる**）
 
@@ -132,3 +134,36 @@ python3 -m pytest tests/ -q
   2026年10月8日の時点で Linux で未実行。
 - 40³・48³ の大きいメッシュは未実行（§2 の scratch を先に片付けること）。
 - `keio_wp2/`（軸対称の Python 試作）は未実行。
+
+## 10. 自動で回す（`scripts/run_chain_keio.py`）
+
+`ansys_usermat/apdl/run_chain.ps1`（IKMHIWI03 の ANSYS 用）の Linux/Abaqus 版。
+1本ずつ回して要約を作り、基準と比べ、要約だけを commit して push し、PR にコメントを書く。
+**次に何を回すかの判断は PR で行う**（この文書を書いた時点では、クラウドの Claude セッションが
+定期的に PR を読んで決める構成にしている）。
+
+```
+python3 scripts/run_chain_keio.py --name 1008b \
+    --runs scripts/keio_runs/1008b_fig4_corner.json --pr 58 --push
+```
+
+呼ぶと即座に戻り、PID とログの場所（`$WORKROOT/_chain_<name>.log`）を出す。
+`setsid` で切り離すので、端末を閉じてもセッションが落ちても止まらない。
+
+**共用サーバー向けのガード**（約15人が使うので意図的に遠慮している）：
+
+| 既定 | 中身 |
+|---|---|
+| `--max-cpus 4` | 12 コアの 1/3。`--cpus` はこれで頭打ちになる |
+| `--nice 10` | Abaqus を `nice` 経由で起動 |
+| `--max-load 6.0` | 1分 load がこれ以上なら2分ごとに待つ。`--load-timeout 120` 分で諦める |
+| `--min-free-root 8` | `/` の空きが 8 GiB を切ったら**走らせない**（`/` が埋まると全員が止まる） |
+| `--min-free-work 100` | 作業ディスクの空きが 100 GiB 未満なら走らせない |
+| 逐次のみ | 並列実行はしない |
+| 後片付け | 要約を書いたら `.odb`・`.sim`・scratch・`/tmp` の残りを消す |
+
+マニフェスト（`scripts/keio_runs/*.json`）の `{inp}`・`{dat}`・`{json}` は、入力ファイル、
+終わったジョブの `.dat`、`make_*_inp.py` が書くメッシュ情報 JSON に置き換わる。
+`reference` を省くと比較せずに記録だけする。
+
+`--dry-run` で入力生成だけを試せる（マニフェストの検算に使う）。
