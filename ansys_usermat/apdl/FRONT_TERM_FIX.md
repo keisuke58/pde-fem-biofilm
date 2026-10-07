@@ -128,6 +128,28 @@ point takes the inverse-square-distance mean of its integration-point
 neighbours (about zero normal gradient). The full cube then keeps phi = 1 to
 all printed digits. The acceptance runs are repeated with this build.
 
+### Second acceptance (7 Oct, 17:46): gate failed again; cause in the front term
+
+With the surface fix, the run without the front term keeps its phi (mean
+0.0078 at T* = 0.1, 0.0093 at T* = 1, from the local source only), so the
+faces no longer drain it. With the front term:
+
+| T* | mean phi, dt 0.005 | dt 0.0025 | no front | max phi (dt 0.005) |
+|---|---|---|---|---|
+| 0.1 | 0.0115 | 0.0097 | 0.0078 | 0.986 |
+| 0.3 | 0.0717 | 0.0649 | 0.0081 | 0.323 |
+| 1.0 | 0.0649 | 0.0560 | 0.0093 | 0.066 |
+
+- bounds: min phi −5.6e−5, max 0.996 (gate pass, strict fail);
+- time step: mean phi at T* = 1 differs by 16 % between dt and dt/2 (fail);
+- direction: the extra alpha − 1 from the front term is 6.3e−5 on the
+  nutrient side and 5.2e−5 on the far side (fail).
+
+The seed is smeared out in all directions rather than carried towards the
+nutrient. This is the discretisation of the front term (upwind gradient on
+the NEM stencil, n_c with eps), not the boundary. Block B of WP3 is not
+started; the front term goes on to Keio. No thesis result uses it.
+
 This concerns every run of the partner element, the thesis runs included:
 there the seed sits in the middle of the cube and beta = 0.02 gives a
 diffusion length of about 0.15 mm by T* = 1.1, so the faces are far from
