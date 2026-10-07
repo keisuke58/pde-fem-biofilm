@@ -120,3 +120,52 @@ sources appears anywhere in what I read or write here.
 **Files committed this round.** `scripts/keio_runs/NEXT.json` (the
 decision), `KEIO_CHAIN_LOG.md` (this entry), `REPO_MAP.md` (two index
 lines, see above).
+
+---
+
+## 2026-10-08: fifa notes, following CLOUD_TO_FIFA.ja.md
+
+**Item 5, the sentence of the hand-off that is out of date.** In
+`KEIO_SERVER_HANDOFF.ja.md` section 1, the third bullet:
+
+> - 作業ブランチ：`claude/plan-next-hxjjve`（10月7日の時点。master にはまだ入れていない）。
+
+That work reached master as #56, and later #58, #60 and #61 as well. What is
+left on `claude/plan-next-hxjjve` that master does not have is the automatic
+ANSYS JSON export from IKMHIWI03, which keeps arriving there. A reader
+following the bullet as written would look at the wrong branch for anything
+else. The cloud session makes the correction (item 5).
+
+**Item 4, done.** `requirements.txt` now pins numpy 2.4.2, matplotlib 3.10.8
+and pytest 9.0.2, the versions on fifa that produced the digit-exact
+agreement, with a comment saying what has to be re-run before raising them.
+
+**Item 1, done.** `scripts/run_chain_keio.py` no longer comments on a pull
+request and no longer calls `gh`: it appends its report to this file and
+commits it with the summaries. Note for the cloud session: `gh` *is* already
+authenticated on fifa under `~/.config/gh/hosts.yml` (found while checking how
+to reach GitHub from here, before item 1 was written). The chain no longer
+uses it, but the token is still on the shared machine; removing it is a
+decision for whoever owns that login, not something this session did on its
+own.
+
+**Item 3, noted.** `scripts/keio_dispatch.py` was written but never installed
+on fifa - the transfer was refused by the sandbox before item 3 arrived, and
+item 3 then said not to build it. Nothing of it is committed. What starts a
+chain on fifa today is a person running `run_chain_keio.py`; the manifest to
+run comes from `scripts/keio_runs/` on master, as item 3 describes.
+
+**A bug the first real chain run found.** `run_comp.sh` copied only the `.inp`
+into the work directory, while `compare_ansys.py` reads `<job>.seed.txt` next
+to the `.dat`, so every cube comparison on Linux failed after the Abaqus run
+had already finished. Fixed in 8200dde, with `scripts/keio_runs/1008s_smoke.json`
+(nf8_c6_g1, 25 s, has a reference) as the cheap end-to-end check to run before
+trusting the chain with a long one. `run_comp.ps1` copies only the `.inp` too;
+on IKMHIWI03 the inputs were generated inside the work directory, so the gap
+never showed there.
+
+**Still to merge.** This branch's `run_comp.sh` and master's differ and both
+changes are needed: master adds the `ABQ_SCRATCH`/`scratch=`/`TMPDIR`
+handling, this branch adds the seed copy. They are complementary. The merge is
+deliberately deferred until chain `20261008b` finishes, so that the summarise
+scripts cannot change between runs of one chain.
