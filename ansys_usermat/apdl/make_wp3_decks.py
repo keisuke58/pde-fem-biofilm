@@ -18,6 +18,14 @@ elements whose centroid lies within L/4 of the centre (the rule of
 abaqus_composition/partner_elem_sets.py --case 41). dt 0.01 / 0.005 / 0.0025
 (front Courant number v dt / h <= 0.6 with v <= 5 mm/T*).
 
+Block C, seed growth as block A but with the surface-point fix
+(F:\\biofilm_upf_nativefix, FRONT_TERM_FIX.md "phi = 0 at the surface
+points"; block A's executable still has phi = 0 there): 8^3 / 16^3 / 24^3 x
+dt 0.1 / 0.05 / 0.025 / 0.0125 at beta = 0.02, and beta = 0.01 / 0.05 at
+dt 0.025 (h^2 / (2 dt) >= beta holds for all). The two runs already made
+with the fixed executable (ds8/ds16_beta002_dt4, results/2026-10-07_surface_fix)
+are not repeated.
+
 Run lists: <workdir>\\_wp3_<block>_runs.txt, one "deck::minutes" per line, in
 run order (coarse meshes first). --check prints them and writes nothing.
 """
@@ -34,6 +42,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 WIRED = Path(r"F:\biofilm_upf_wired")
 FRONT = Path(r"F:\biofilm_upf_front")
+FIX = Path(r"F:\biofilm_upf_nativefix")
 
 
 def num(x):
@@ -64,6 +73,26 @@ def block_b():
     return out
 
 
+# timeouts at dt 0.025, about 1.6-2 x the 7 Oct times (fixed executable: 8^3
+# 1 min, 16^3 12 min; 24^3 from block A: about 130 s per substep), scaled by
+# the number of substeps, at least 10 min
+MINUTES_C = {8: 10, 16: 25, 24: 160}
+
+
+def block_c():
+    """(name, base, dt, beta, minutes); base in WIRED, coarse meshes first."""
+    out = []
+    for n in (8, 16, 24):
+        for dt in (0.1, 0.05, 0.025, 0.0125):
+            if dt == 0.025 and n in (8, 16):
+                continue
+            out.append((f"wp3c_n{n}_dt{num(dt)}", f"ds{n}_beta002_dt4", dt, 0.02,
+                        max(10, round(MINUTES_C[n] * 0.025 / dt))))
+        for beta in (0.01, 0.05):
+            out.append((f"wp3c_n{n}_b{num(beta)}", f"ds{n}_beta002_dt4", 0.025, beta, MINUTES_C[n]))
+    return out
+
+
 def run(cmd):
     r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True)
     if r.returncode != 0:
@@ -90,7 +119,7 @@ def case41_sets(deck: Path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--block", choices=("A", "B", "both"), default="both")
+    ap.add_argument("--block", choices=("A", "B", "C", "both"), default="both")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     py = sys.executable
@@ -106,6 +135,20 @@ def main():
                      "--post", "both", "--post-elem", pe.group(1) if pe else "220"])
             (WIRED / "_wp3_A_runs.txt").write_text("\n".join(lines) + "\n")
         print("# block A (" + str(WIRED) + ")\n" + "\n".join(lines))
+
+    if a.block == "C":
+        rows = block_c()
+        lines = [f"{name}::{mins}" for name, _, _, _, mins in rows]
+        if not a.check:
+            for name, base, dt, beta, _ in rows:
+                b = (WIRED / f"{base}.dat").read_text(errors="replace")
+                pe = re.search(r"^\*USE,post_elem_stress\.mac,(\d+)", b, re.M)
+                run([py, mk, WIRED / f"{base}.dat", FIX / f"{name}.dat", "--deltim", f"{dt:g}",
+                     "--set", f"MY_BETA1={beta:g}",
+                     "--post", "both", "--post-elem", pe.group(1) if pe else "220"])
+            (FIX / "_wp3_C_runs.txt").write_text("\n".join(lines) + "\n")
+        print("# block C (" + str(FIX) + ")\n" + "\n".join(lines))
+        print(f"# block C timeouts add up to {sum(m for *_, m in rows) / 60:.0f} h", file=sys.stderr)
 
     if a.block in ("B", "both"):
         rows = block_b()
