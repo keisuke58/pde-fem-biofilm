@@ -15,7 +15,8 @@ through any face.
     alpha_dot = k_alpha phi max(0, 1 - p / p_h)                (Eq. 36 with a homeostatic pressure)
     p = -K tr(eps_e), axisymmetric small strain, E (phi^2 + f), E = 10 Pa, nu = 0.49
 
-p_h = P_h E k_alpha T*, P_h in {none, 1, 0.5, 0.25, 0.1}. The nutrient is left
+p_h = P_h E k_alpha T*, P_h in {none, 1, 0.5, 0.25, 0.1}; second set with p_h
+proportional to the local stiffness, p_h = P_h E (phi^2 + f) k_alpha T*. The nutrient is left
 out: without the front term it does not enter the growth. Reported: mean
 alpha - 1 and phi in the layer, the largest pressure and von Mises stress,
 and the hoop and shear stress on the titanium.
@@ -121,9 +122,8 @@ def mechanics(M, phi, delta):
     return -K * tr, vm, s[:, 2], srz
 
 
-def run(P_h, dt=0.02, t_end=1.0):
+def run(P_h, local=False, dt=0.02, t_end=1.0):
     M = Mesh()
-    p_h = None if P_h is None else P_h * E0 * K_ALPHA
     phi = M.seed.astype(float)
     alpha = np.ones_like(phi)
     # explicit diffusion: sub-steps below h^2 / (4 beta) (dt = 0.02 alone is unstable on this mesh)
@@ -131,23 +131,27 @@ def run(P_h, dt=0.02, t_end=1.0):
     hist = []
     for k in range(int(round(t_end / dt))):
         p, vm, stt, srz = mechanics(M, phi, alpha - 1)
-        g = np.ones_like(p) if p_h is None else np.clip(1 - p / p_h, 0.0, 1.0)
+        if P_h is None:
+            g = np.ones_like(p)
+        else:
+            p_h = P_h * E0 * K_ALPHA * ((phi ** 2 + FLOOR) if local else 1.0)
+            g = np.clip(1 - p / p_h, 0.0, 1.0)
         for _ in range(nsub):
             phi = np.clip(phi + dt / nsub * (BETA * M.lap(phi) + K_ALPHA * alpha), 0, 1)
         alpha = alpha + dt * K_ALPHA * phi * g
         hist.append(((k + 1) * dt, float((alpha - 1).mean()), float(phi.mean()), float(p.max()), float(vm.max()),
                      float(stt[M.wall].min()), float(np.abs(srz[M.wall]).max()), float(g.mean())))
-    return dict(P_h=P_h, hist=hist)
+    return dict(P_h=P_h, local=local, hist=hist)
 
 
 def main():
     t0 = time.time()
     out = {"scale_E_k_alpha": E0 * K_ALPHA, "runs": []}
-    for P_h in (None, 1.0, 0.5, 0.25, 0.1):
-        r = run(P_h)
+    for local, P_h in [(False, None)] + [(lc, x) for lc in (False, True) for x in (1.0, 0.5, 0.25, 0.1)]:
+        r = run(P_h, local)
         out["runs"].append(r)
         t, d, ph, px, vm, stt, srz, g = r["hist"][-1]
-        print(f"P_h={P_h}: alpha-1 {d:.3e}, phi {ph:.3f}, p max {px:.3e}, vM max {vm:.3e}, "
+        print(f"{'local' if local else 'E    '} P_h={P_h}: alpha-1 {d:.3e}, phi {ph:.3f}, p max {px:.3e}, vM max {vm:.3e}, "
               f"hoop on Ti {stt:.3e}, shear on Ti {srz:.3e} Pa, g {g:.2f} [{time.time() - t0:.0f} s]", flush=True)
     (HERE / "results_implant.json").write_text(json.dumps(out))
 
