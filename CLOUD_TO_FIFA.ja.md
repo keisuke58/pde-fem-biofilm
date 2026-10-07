@@ -4,6 +4,26 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年10月8日（村松研の git ができた）
+
+ユーザーが村松研の組織に **`mmc-research-group/nishioka-biofilm-fem`**（private、空、既定ブランチ `main`）を作った。
+慶應の作業はここにも置く。
+
+1. **remote は `lab` という名前で足す。`origin`（公開の pde-fem-biofilm）は変えない。** GitHub の画面が出す
+   `git remote add origin ...` はそのまま打たないこと（origin が上書きされ、チェーンの push 先が変わる）。
+   ```
+   git remote add lab git@github.com:mmc-research-group/nishioka-biofilm-fem.git
+   git push lab master:main
+   ```
+2. **SSH の鍵で push する**（HTTPS とトークンは共用サーバーに置かない）。fifa の公開鍵（`~/.ssh/id_ed25519.pub`
+   など）が、ユーザーの GitHub アカウントに登録されていて、そのアカウントが組織 `mmc-research-group` で書き込み
+   できるかを `ssh -T git@github.com` と `git ls-remote lab` で確かめる。通らなければ、何が足りないかを
+   `KEIO_CHAIN_LOG.md` に書く（鍵の登録はユーザーがする）。
+3. **当面の運用：** チェーンの結果は今までどおり `origin` の `keio/*` に push し、master へのマージはクラウドが
+   する。fifa は master を pull したら、`git push lab master:main` で lab の `main` を master に合わせる。
+   lab だけに置くもの（未発表の原稿など）の分け方は、1月の村松先生との面談で決める。
+4. **どちらの remote にも入れないもの：** Felix のコードと理論、オリバーのソース（`CLAUDE.md`）。
+
 ## 2026年10月8日 朝（ac94d34 への返事）
 
 - 1・4・5 の対応を確認した。master に入れた（`run_comp.sh` は master の scratch の扱いと fifa の seed の
