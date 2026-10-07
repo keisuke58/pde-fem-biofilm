@@ -1,0 +1,21 @@
+# fx41_fo_p0  (2026-10-08 07:04, 37 min 55 s, 4 CPUs, Fortran point model)
+# Keio server fifa (Linux, Abaqus 2024). Wall clock not comparable: pytest ran alongside.
+# make_klempt_inp.py --case fig4_corner --n 20 --dt 0.001 --T 1.0 --every 10 --eps 1e-8 --hstab 0 --E 0.01 --pen 0 --first-order --s-every 50
+# abaqus_composition/run_comp.sh abaqus_composition/fx41_fo_p0.inp 2sp_case6 4
+# PASS: fx41_fo_p0 completed (native point model)
+# vs abaqus_composition/results_1006/fx41_fo_p0.txt: identical
+4.1: Abaqus (mean phi, mean c, max / min element phi, min element c) against the paper (mean phi, mean c)
+   T*     phi       c  max phi  min phi    min c  paper phi  paper c
+ 0.05   0.124   0.363    1.180    0.000    0.318      0.132    0.328
+ 0.10   0.183   0.280    1.358    0.000    0.233      0.205    0.241
+ 0.15   0.238   0.231    1.513    0.000    0.184      0.269    0.196
+ 0.20   0.287   0.200    1.583    0.000    0.152      0.324    0.166
+ 0.30   0.369   0.163    1.591    0.000    0.116      0.404    0.138
+ 0.40   0.432   0.142    1.603    0.000    0.096      0.463    0.123
+ 0.50   0.480   0.129    1.549    0.001    0.084      0.518    0.113
+ 0.60   0.518   0.120    1.505    0.001    0.076      0.570    0.105
+ 0.70   0.549   0.114    1.492    0.002    0.070      0.618    0.099
+ 0.80   0.573   0.110    1.473    0.003    0.066      0.662    0.094
+ 0.90   0.592   0.106    1.461    0.005    0.063      0.703    0.090
+ 1.00   0.606   0.103    1.454    0.008    0.061      0.740    0.086
+RMS Abaqus - paper: phi 0.066  c 0.025  mean 0.045
