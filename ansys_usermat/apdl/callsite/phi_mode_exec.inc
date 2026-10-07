@@ -533,6 +533,30 @@ C           hold the converged state and ask ANSYS to cut the step
           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
      &                                dTime, ALPHA_NEW)
         END IF
+C       prop(49) = p_ref > 0: homeostatic-pressure growth law (Keio WP2,
+C       keio_wp2/README.ja.md; an assumption, not from a paper). The
+C       increment of alpha above is multiplied by g = max(0, 1 - p/p_h),
+C       p = -(s11 + s22 + s33)/3 of the stress the host hands in, i.e. at
+C       the start of the increment (compression positive). p_h = prop(49)
+C       (= P_h E k_alpha T*, in stress units), or with prop(50) = 1
+C       p_h = prop(49) (phi^2 + prop(51)) (local stiffness). 0 = off
+C       (default): nothing changes. Not in mode 3 (the partner's alpha).
+C       ustatev(95) = p, ustatev(96) = g.
+        IF (nProp .GE. 49) THEN
+        IF (prop(49) .GT. 0.0D0 .AND. (prop(28) .LT. 2.5D0 .OR.
+     &      prop(28) .GT. 3.5D0)) THEN
+          HP_P = -(stress(1) + stress(2) + stress(3)) / 3.0D0
+          HP_FORM = 0
+          HP_F = 0.0D0
+          IF (nProp .GE. 50) HP_FORM = NINT(prop(50))
+          IF (nProp .GE. 51) HP_F = prop(51)
+          CALL BIOFILM_HOMEOSTATIC_FACTOR(HP_P, prop(49), HP_FORM,
+     &                                    PHI_USED, HP_F, HP_G)
+          ALPHA_NEW = ALPHA_N + HP_G * (ALPHA_NEW - ALPHA_N)
+          ustatev(95) = HP_P
+          ustatev(96) = HP_G
+        END IF
+        END IF
         Sbio_GrowthConst = ALPHA_NEW
         ustatev(84)      = ALPHA_NEW
 C       trace: integration point 1 of one element in TRACE_STRIDE,

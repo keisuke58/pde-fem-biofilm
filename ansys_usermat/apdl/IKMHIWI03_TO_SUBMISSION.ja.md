@@ -100,6 +100,10 @@
   （周方向応力の最大と場所、α − 1 の平均）。ANSYS にこの形のデッキがなければ Abaqus で回す
   （これは慶應でもできるので、ANSYS の実行より後）。
 - 週の実行と 4 の WP3 を止めない。実行表は `ansys_usermat/apdl/RUN_WP2_IKMHIWI03.md` に書いて push する。
+- **10月7日：** 実装した（既定は off）。入れた場所は `usermat_biofilm.f` ではなく、共有の
+  fragment と `growth_from_phi.f`（理由は `RUN_WP2_IKMHIWI03.md`）。gfortran での拘束した1点の
+  確認は通った。ANSYS の確認（8³、全節点固定）は WP3 の判定の直後に自動で回る。Abaqus の
+  12本（インプラントと歯 × 下面3通り × 帰還なし／P_h = 0.1）は実行中。
 
 ## 守ること
 

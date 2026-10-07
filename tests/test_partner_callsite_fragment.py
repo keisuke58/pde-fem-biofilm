@@ -46,7 +46,11 @@ MOCK = """\
       DOUBLE PRECISION Sdp_bio1_n, Sdp_locbio1_n
       DOUBLE PRECISION Sdp_bio2_n, Sdp_locbio2_n
       INTEGER elemId, kDomIntPt, ldstep, isubst
+C     the host's stress at the start of the increment (read only by the
+C     homeostatic law, prop(49) > 0, which these tests leave off)
+      DOUBLE PRECISION stress(6)
       INCLUDE 'phi_mode_decl.inc'
+      stress = 0.0D0
       Sbio_GrowthConst = prop(5)
       INCLUDE 'phi_mode_exec.inc'
       END

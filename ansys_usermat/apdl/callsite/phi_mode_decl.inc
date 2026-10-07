@@ -48,6 +48,9 @@ C     --- composition from the point model (prop(28) = 7) --------------
       LOGICAL CM_TRACE_OPEN
       SAVE CM_TRACE_OPEN
       DATA CM_TRACE_OPEN /.FALSE./
+C     --- homeostatic-pressure growth law (prop(49:51)) ----------------
+      DOUBLE PRECISION HP_P, HP_F, HP_G
+      INTEGER HP_FORM
 C     --- composition from an independent point model (prop(28) = 8) ---
       LOGICAL AG_TRACE_OPEN
       SAVE AG_TRACE_OPEN

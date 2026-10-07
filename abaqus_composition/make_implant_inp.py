@@ -78,6 +78,14 @@ def main():
     ap.add_argument("--blend", type=float, default=None)
     ap.add_argument("--bulge", type=float, default=0.0, help="inner radius ri + bulge sin(pi z / 2h): a tooth crown")
     ap.add_argument("--nut", choices=("top", "outer"), default="top")
+    ap.add_argument("--first-order", action="store_true",
+                    help="consumption g phi c (UEL property 4 = 1) instead of the paper's g phi")
+    ap.add_argument("--ph", type=float, default=None,
+                    help="P_h of the homeostatic growth law (constants 49-51): p_h = P_h E k_alpha T*")
+    ap.add_argument("--ph-local", action="store_true",
+                    help="p_h = P_h E (phi^2 + f) k_alpha T* (local stiffness, f = 1e-3)")
+    ap.add_argument("--base", choices=("free", "uz", "clamped"), default="free",
+                    help="bottom face z = 0: free (default, as before), u_z = 0, or u = 0")
     a = ap.parse_args()
     nr, nt, nz = a.nr, a.nt, a.nz
     ro = a.ri + a.thick
@@ -118,6 +126,7 @@ def main():
         top = [q for q, x, y, z in nodes if ii[q] == nr]
     symx = [q for q, x, y, z in nodes if abs(x) < tol]       # theta = 90 deg: u_x = 0
     symy = [q for q, x, y, z in nodes if abs(y) < tol]       # theta = 0: u_y = 0
+    base = [q for q, x, y, z in nodes if abs(z) < tol]       # bottom face (--base)
 
     sys.path[:0] = [str(ROOT / "ansys_usermat" / "coupling"), str(ROOT / "ansys_usermat")]
     import material_server as ms
@@ -132,7 +141,13 @@ def main():
     p[42], p[43], p[44], p[45] = 1e-5, -1e-3, 0.49, 0.3
     p[46] = 1.0                                      # phi = temperature
     p += [1.0]                                       # c from the UEL
+    if a.ph is not None:
+        # constants 49-51: homeostatic-pressure growth law (phi_mode_exec.inc);
+        # p_ref = P_h E k_alpha T* with T* = 1 and E = constant 43 (keio_wp2)
+        p += [a.ph * p[42] * a.kalpha, 1.0 if a.ph_local else 0.0, -p[43]]
     OFF = 1000000
+    uprop = [a.diff, a.cons, OFF] + ([1.0] if a.first_order else [])
+    bc = {"free": "", "uz": "NBASE, 3, 3\n", "clamped": "NBASE, 1, 3\n"}[a.base]
     rows = lambda v: "\n".join(", ".join(f"{x:.17g}" for x in v[i:i + 8]) for i in range(0, len(v), 8))  # noqa: E731
     lst = lambda v: "\n".join(", ".join(str(x) for x in v[i:i + 16]) for i in range(0, len(v), 16))  # noqa: E731
     ic = "\n".join(f"{q}, {around[q][1] / around[q][0]:.10g}" for q in sorted(around) if around[q][1])
@@ -141,17 +156,17 @@ def main():
         therm += [a.front, a.kmono, a.hstab, a.eps] + ([a.blend] if a.blend is not None else [])
     what = "a tooth's crown" if a.bulge or a.nut == "outer" else "an implant collar"
     txt = f"""*HEADING
- Biofilm on {what}: r {a.ri}(+{a.bulge})-{ro} mm, h {a.height} mm, 90 deg sector, {nr}x{nt}x{nz} C3D8T, {a.case}, nutrient g {a.cons} from the {a.nut} face, front {a.front} blend {a.blend}
+ Biofilm on {what}: r {a.ri}(+{a.bulge})-{ro} mm, h {a.height} mm, 90 deg sector, {nr}x{nt}x{nz} C3D8T, {a.case}, nutrient g {a.cons}{" phi c" if a.first_order else " phi"} from the {a.nut} face, front {a.front} blend {a.blend}, base {a.base}, P_h {a.ph}{" local" if a.ph_local else ""}
 *NODE
 {chr(10).join(f"{i}, {x:.12g}, {y:.12g}, {z:.12g}" for i, x, y, z in nodes)}
 *ELEMENT, TYPE=C3D8T, ELSET=EALL
 {chr(10).join(f"{i}, " + ", ".join(map(str, c)) for i, c in elems)}
-*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=3, COORDINATES=3, VARIABLES=1, UNSYMM
+*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(uprop)}, COORDINATES=3, VARIABLES=1, UNSYMM
 11, 12
 *ELEMENT, TYPE=U1, ELSET=NUTEL
 {chr(10).join(f"{i + OFF}, " + ", ".join(map(str, c)) for i, c in elems)}
 *UEL PROPERTY, ELSET=NUTEL
-{a.diff}, {a.cons}, {OFF}
+{", ".join(str(x) for x in uprop)}
 *NSET, NSET=NALL, GENERATE
 1, {len(nodes)}, 1
 *NSET, NSET=NINNER
@@ -162,6 +177,8 @@ def main():
 {lst(symx)}
 *NSET, NSET=NSYMY
 {lst(symy)}
+*NSET, NSET=NBASE
+{lst(base)}
 *ELSET, ELSET=SEED
 {lst(seed)}
 *SOLID SECTION, ELSET=EALL, MATERIAL=BIOFILM
@@ -184,11 +201,11 @@ NALL, 0.0
 NINNER, 1, 3
 NSYMX, 1, 1
 NSYMY, 2, 2
-NTOP, 12, 12, 1.0
+{bc}NTOP, 12, 12, 1.0
 *EL PRINT, ELSET=EALL, FREQUENCY=100000, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
 S
 *EL PRINT, ELSET=EALL, FREQUENCY=100000, POSITION=CENTROIDAL, SUMMARY=NO, TOTALS=NO
-SDV84, TEMP, SDV72, SDV73, SDV51
+SDV84, TEMP, SDV72, SDV73, SDV51{", SDV95, SDV96" if a.ph is not None else ""}
 *OUTPUT, FIELD
 *ELEMENT OUTPUT
 S, SDV
