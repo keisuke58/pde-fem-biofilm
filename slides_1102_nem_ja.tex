@@ -293,6 +293,7 @@ von Zabiensky, Jantos, Junker (2026) & 接触の第 3 媒体の正則化に応�
   \item D.\,R.\ Jantos, K.\ Hackl, P.\ Junker: An accurate and fast regularization approach to thermodynamic topology optimization. Int.\ J.\ Numer.\ Methods Eng.\ 117 (2019) 991--1017.
   \item P.\ Junker, S.\ Schwarz, D.\,R.\ Jantos, K.\ Hackl: A fast and robust numerical treatment of a gradient-enhanced model for brittle damage. Int.\ J.\ Multiscale Comput.\ Eng.\ 17 (2019).
   \item A.\ Vogel, P.\ Junker: Adaptive and highly accurate numerical treatment for a gradient-enhanced brittle damage model. Int.\ J.\ Numer.\ Methods Eng.\ 121 (2020) 3108--3131.
+  \item E.\,K.\ Chu, O.\ Kilic, H.\ Cho, A.\ Groisman, A.\ Levchenko: Self-induced mechanical stress can trigger biofilm formation in uropathogenic \emph{Escherichia coli}. Nat.\ Commun.\ 9 (2018) 4087.
   \item P.\ Junker, J.\ Riesselmann, D.\ Balzani: Efficient and robust numerical treatment of a gradient-enhanced damage model at large deformations. Int.\ J.\ Numer.\ Methods Eng.\ 123 (2022) 774--793.
   \item M.\ von Zabiensky, D.\,R.\ Jantos, P.\ Junker: A fast and robust third medium contact approach using the neighbored element method. Finite Elem.\ Anal.\ Des.\ 255 (2026) 104489.
 \end{itemize}
@@ -316,8 +317,70 @@ $\mathbf A,\ \mathbf b,\ \mathbf m$ & Taylor 展開の係数行列，近傍と�
 $\mathbf W,\ \mathbf D$ & 重みの対角行列，$\mathbf m=\mathbf D\mathbf b$ となる係数行列 \\
 $L_j$ & 点 $j$ の Laplacian の重み，$\nabla^2\phi\approx\sum_j L_j(\phi_j-\phi_0)$ \\
 $T^*$ & 無次元の時間（Klempt 2024） \\
+$p$，$p_h$，$P_h$ & 圧力（圧縮が正），恒常圧，その無次元の値（$p_h=P_h E k_\alpha T^*$） \\
+$d,\ g,\ r,\ k$ & 栄養の拡散，消費（$g\phi c$），前線の速さ，半飽和定数（Eq.\ 34，35） \\
+$w$ & 前線の項のうち全面で成長する割合（この研究の仮定） \\
+$E,\ \nu,\ f$ & バイオフィルムのヤング率，ポアソン比，空所の剛性の下限 \\
 \bottomrule
 \end{tabular}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{付録（予備）：応力から成長へ，恒常圧の成長則}
+\small
+Klempt 2024 の Eq.\ 30 の力学の項 $\phi\mu(\mathbf I:\tilde{\mathbf C}_e-3)$ を $\phi$ の式に戻すと，Table 2 の値ではシードが消える（10月に確認）。
+そこで成長の式の側に帰還を入れた：
+\[
+\dot\alpha = k_\alpha\,\phi\,\max\!\left(0,\ 1-\frac{p}{p_h}\right),\qquad p=-\tfrac13\operatorname{tr}\boldsymbol\sigma\ \ (\text{圧縮が正})
+\]
+\begin{itemize}
+  \item 閉じ込められたコロニーは圧力が約 10 kPa で成長を止める（Chu et al.\ 2018）。
+  \item $p_h$ は 2 通り（仮定）：$p_h=P_h\,E\,k_\alpha T^*$，または局所の剛性に比例 $p_h=P_h\,E(\phi^2+f)\,k_\alpha T^*$。
+  \item 形：インプラントのカラー部（半径 2.05 mm）と歯冠（半径が上へ 1 mm 広がる），厚さ 0.25 mm，高さ 2 mm の層。
+        内側の面は剛体に接着。値はこの研究で決めたもので，論文の値ではない。
+  \item 軸対称の Python 試作（$8\times64$ 要素），$E=10$ Pa，$\nu=0.49$，$\beta=0.02$ mm$^2/T^*$，$k_\alpha=10^{-3}$。
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{付録（予備）：インプラントと歯，歯頸線に応力が集まる}
+\centering
+\includegraphics[width=\linewidth]{assets/fig_tooth_homeostatic.png}
+
+\small
+\begin{itemize}
+  \item 成長の量と帰還の効き方は形でほとんど変わらない（$P_h=0.1$ で 0.80 と 0.31，両方の形で同じ）。
+  \item 歯では歯頸線（$z=0$）で周方向応力がインプラントの約 4 倍（$\beta=0.02$）。下面を自由にしても 2 倍残る。
+  \item 角の値はメッシュに依存するので，大きさより場所として見る。
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{付録（予備）：栄養と前線の項を入れると}
+\centering
+\includegraphics[width=\linewidth]{assets/fig_nutrient_homeostatic.png}
+
+\small
+\begin{itemize}
+  \item 栄養はインプラントで上面（歯肉縁），歯で外側の面から。$d=1$ mm$^2/T^*$，$g=1/T^*$，$r=10$ mm$/T^*$（Table 2 を 2 mm に換算）。
+        前線の項はコロニーの全面で成長する形（$w=0.5$，私の修正）。
+  \item 層は $T^*\approx0.1$ までに埋まり，成長は栄養なしの 3 倍，応力は 20〜30 倍。
+  \item $P_h=0.1$ の帰還で成長は $T^*\approx0.3$ で止まり（0.12 倍），歯頸線の集中は消える。
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{付録（予備）：帰還があると，応力は境界条件によらない}
+\centering
+\includegraphics[width=0.98\linewidth]{assets/fig_nutrient_bc.png}
+
+\small
+\begin{itemize}
+  \item 下面の拘束（自由，$u_z=0$，固定）を変えても，帰還ありの最大の周方向応力は 3.0〜3.2$\times10^{-3}$ Pa。
+        帰還なしでは $2.9\times10^{-2}$〜$1.6\times10^{-1}$ Pa と 5 倍の幅がある。
+  \item 応力の大きさを決めるのは形や境界ではなく $p_h$。予測は境界の不確かさに強くなるが，$p_h$ を実験から決めることが一番大事になる。
+  \item 次：同じ 3 通りを ANSYS／Abaqus の 3 次元で確かめる。
+\end{itemize}
 \end{frame}
 
 \end{document}
