@@ -9,6 +9,7 @@
 
 - 古い clone は使わない。2026年8月20日に履歴を書き換えた（著者の修正）ので、pull ではなく
   clone し直す。
+- **クラウドからの指示は `CLOUD_TO_FIFA.ja.md`**（pull のたびに読む）。
 - サーバーは **fifa**。clone したら、まず `bash scripts/setup_keio_server.sh` を1回走らせる（git の名前と
   hook を入れ、Python・numpy・scipy・Abaqus のコマンドを確かめる）。中身は次と同じ：
   ```
