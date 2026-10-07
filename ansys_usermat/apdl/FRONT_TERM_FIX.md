@@ -110,6 +110,29 @@ Built 7 Oct with `link_v222.ps1` (0 errors). Acceptance runs on `ds_fig7h`
 (`MAX_GROWTH11 = 0`) for the direction check; queued behind the week chain
 (`_chain_front_accept.log`). Results follow here.
 
+### First acceptance (7 Oct, 16:28): gate failed; cause: phi = 0 at the surface points
+
+Mean phi rose from 0.008 to 0.063 (T* = 0.3) and fell to 0.0017 at T* = 1
+(max phi 0.009); dt and dt/2 differed by 13 %. The cause is in USSFin: the
+phi arrays hold the integration points and the surface nodes (nTot = nGP +
+386 on 8^3), but only the integration points are updated; the surface-point
+update is commented out ("TEST"), so phi there stays 0. The NEM stencils of
+the points next to a face include those surface points, so every face acts as
+a Dirichlet phi = 0, where Eq. 34 has no flux. Seen directly: a cube full of
+biofilm (phi = 1, no source, no front term) loses phi through the faces with
+beta = 0.02 (mean 0.89 at T* = 0.15). In ds_fig7h the seed is one element
+from the nutrient face and the front term carries phi into it.
+
+Fix in the front build (7 Oct, 17:24): before every substep each surface
+point takes the inverse-square-distance mean of its integration-point
+neighbours (about zero normal gradient). The full cube then keeps phi = 1 to
+all printed digits. The acceptance runs are repeated with this build.
+
+This concerns every run of the partner element, the thesis runs included:
+there the seed sits in the middle of the cube and beta = 0.02 gives a
+diffusion length of about 0.15 mm by T* = 1.1, so the faces are far from
+the biofilm; the effect there is to be checked, and Oliver told.
+
 **Recommendation (cloud session): (c) for the thesis.** No result of chapter 5
 depends on the front term. (a) would add an assumption of my own. How Klempt
 et al. handle `∇c/|∇c|` where `∇c → 0` is a question for Felix: Table 1 of
