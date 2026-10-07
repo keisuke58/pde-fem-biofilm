@@ -521,7 +521,7 @@ reach $r_i\leq0.10$: the data constrain them to near zero. The full $15$-paramet
 \label{sec:heine_rewiring}
 
 The structural reorganisation of Section~\ref{sec:heine_reorg} can be localised to
-individual edges by classifying each ordered pair as facilitative or competitive
+individual edges by classifying each pair as facilitative or competitive
 from the full posterior (the facilitation probability $P_{\mathrm{fac}}$ is the
 posterior mass with $A_{ij}>0$). A handful of edges flip sign with near-certainty
 between the commensal and dysbiotic states (Table~\ref{tab:heine_rewiring}). The
@@ -541,15 +541,16 @@ that consumes the shared niche rather than feeding it.
     \toprule
     Edge & Commensal $\to$ Dysbiotic & $P_{\mathrm{fac}}^{\mathrm{comm}}$ & $P_{\mathrm{fac}}^{\mathrm{dys}}$\\
     \midrule
-    \textit{Vei}$\to$\textit{So} & facilitation $\to$ competition & $1.00$ & $0.00$\\
-    \textit{So}$\to$\textit{Vei} & facilitation $\to$ competition & $1.00$ & $0.03$\\
-    \textit{An}$\to$\textit{Fn}  & competition $\to$ facilitation & $0.23$ & $0.97$\\
-    \textit{Vei}$\to$\textit{Fn} & competition $\to$ facilitation & $0.09$ & $0.77$\\
+    \textit{So}--\textit{Vei} & facilitation $\to$ competition & $1.00$ & $0.00$--$0.03$\\
+    \textit{An}--\textit{Fn}  & competition $\to$ facilitation & $0.23$ & $0.97$\\
+    \textit{Vei}--\textit{Fn} & competition $\to$ facilitation & $0.09$ & $0.77$\\
     \bottomrule
   \end{tabular}
   \caption[Posterior edge rewiring between health states]{Edges that flip sign with
   near-certainty between commensal and dysbiotic states (posterior facilitation
-  probability $P_{\mathrm{fac}}$, from the $10{,}000$-particle posterior). The
+  probability $P_{\mathrm{fac}}$, from the $10{,}000$-particle posterior). $\mathbf A$
+  is symmetric, so each edge is undirected; where two values are given they span the
+  dysbiotic estimates. The
   commensal \textit{So}--\textit{Vei} lactate mutualism reverses to competition; the
   bridging organism \textit{F.~nucleatum} gains facilitation.}
   \label{tab:heine_rewiring}
@@ -596,10 +597,10 @@ ammonia), while \textit{So} acidifies ($r=-0.68$) via lactate.
 
 \paragraph{Further checks.} The predicted DH \textit{Pg} trajectory correlates
 with the measured gingipain profile ($r=0.90$), both showing delayed Day-15--21
-onset. The MAP signs are metabolically plausible: \textit{An}--\textit{Vei}
-($A_{23}=+0.76$) matches lactate/succinate cross-feeding, while
-\textit{So}--\textit{Vei} ($A_{13}=-2.73$) indicates competitive niche overlap
-in the dysbiotic conditions (Table~\ref{tab:heine_rewiring}).
+onset. The signs of the posterior are metabolically plausible: the \textit{So}--\textit{Vei}
+lactate axis is facilitative in the commensal states and competitive in the
+dysbiotic states, and the \textit{Fn} edges gain facilitation in the dysbiotic
+states (Table~\ref{tab:heine_rewiring}).
 Section~\ref{sec:heine_signprior} uses such metabolic signs as a prior for
 in-vivo data.
 
