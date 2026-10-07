@@ -26,10 +26,14 @@ On the bonded face the traction is split into the normal part (tension
 pulls the biofilm off the surface) and the shear along the surface.
 
     python keio_wp2/homeostatic_tooth.py -> keio_wp2/results_tooth.json
+    python keio_wp2/homeostatic_tooth.py --bc -> keio_wp2/results_tooth_bc.json
+      bottom face u_z = 0 (default), free, or clamped (u = 0); beta 0.02,
+      no feedback and P_h = 0.1 (local); the default case also on 16 x 128.
 """
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -51,7 +55,7 @@ def shape(xi, eta):
 
 
 class Mesh:
-    def __init__(self, bulge, nr=8, nz=64):
+    def __init__(self, bulge, nr=8, nz=64, bottom="uz"):
         self.nr, self.nz, self.bulge = nr, nz, bulge
         nnr, nnz = nr + 1, nz + 1
         I, K = np.meshgrid(np.arange(nnr), np.arange(nnz), indexing="ij")
@@ -67,9 +71,12 @@ class Mesh:
         self.rows = np.repeat(self.dofs, 8, axis=1).ravel()
         self.cols = np.tile(self.dofs, (1, 8)).ravel()
         Ir, Kr = I.ravel(), K.ravel()
-        fixed = np.concatenate([2 * idx.ravel()[Ir == 0], 2 * idx.ravel()[Ir == 0] + 1, 2 * idx.ravel()[Kr == 0] + 1])
+        nid = idx.ravel()
+        bot = {"uz": [2 * nid[Kr == 0] + 1], "free": [],
+               "clamped": [2 * nid[Kr == 0], 2 * nid[Kr == 0] + 1]}[bottom]
+        fixed = np.concatenate([2 * nid[Ir == 0], 2 * nid[Ir == 0] + 1] + bot)
         self.free = np.setdiff1d(np.arange(self.ndof), np.unique(fixed))
-        self.seed_n = (Ir <= 2).astype(float)          # nodes within the inner quarter (0.0625 mm)
+        self.seed_n = (Ir * T_LAYER / nr <= T_LAYER / 4 + 1e-12).astype(float)   # inner quarter (0.0625 mm)
         self.wall = np.repeat(np.arange(nr) == 0, nz)  # element ring on the bonded face
         # wall direction in (r, z) at the element centres of the first ring
         zc = (np.arange(nz) + 0.5) * HZ / nz
@@ -142,8 +149,8 @@ def mechanics(M, phi, delta):
     return -K * tr, vm, s[w, 2], tn, ts
 
 
-def run(bulge, P_h, local=False, beta=0.02, dt=0.02, t_end=1.0):
-    M = Mesh(bulge)
+def run(bulge, P_h, local=False, beta=0.02, dt=0.02, t_end=1.0, bottom="uz", nr=8, nz=64):
+    M = Mesh(bulge, nr, nz, bottom)
     phin = M.seed_n.copy()
     alpha = np.ones(len(M.conn))
     nsub = int(np.ceil(dt / (1.8 / (beta * M.lam))))
@@ -166,7 +173,7 @@ def run(bulge, P_h, local=False, beta=0.02, dt=0.02, t_end=1.0):
     zc = (np.arange(M.nz) + 0.5) * HZ / M.nz
     prof = dict(z=zc.tolist(), alpha=(alpha - 1).reshape(M.nr, M.nz)[0].tolist(),
                 tn=tn.tolist(), ts=ts.tolist(), stt=stt.tolist())
-    return dict(bulge=bulge, P_h=P_h, local=local, beta=beta, hist=hist, wall=prof)
+    return dict(bulge=bulge, P_h=P_h, local=local, beta=beta, bottom=bottom, nr=nr, nz=nz, hist=hist, wall=prof)
 
 
 def main():
@@ -187,5 +194,24 @@ def main():
     (HERE / "results_tooth.json").write_text(json.dumps(out))
 
 
+def bc_sweep():
+    t0 = time.time()
+    out = {"runs": []}
+    cases = [(b, bot, 8, 64) for bot in ("uz", "free", "clamped") for b in (0.0, 1.0)] + [(1.0, "uz", 16, 128)]
+    for bulge, bottom, nr, nz in cases:
+        base = None
+        for local, P_h in ((False, None), (True, 0.1)):
+            r = run(bulge, P_h, local, bottom=bottom, nr=nr, nz=nz)
+            out["runs"].append(r)
+            t, d, ph, px, vm, stt, tn, ts, g = r["hist"][-1]
+            base = base or d
+            w = r["wall"]
+            mid = -np.array(w["stt"])[np.argmin(np.abs(np.array(w["z"]) - 1.0))]
+            print(f"{'tooth  ' if bulge else 'implant'} bottom={bottom:7s} {nr}x{nz} P_h={P_h}: alpha-1 {d:.3e} "
+                  f"({d / base:.2f}), p max {px:.2e}, hoop max {-stt:.2e} mid {mid:.2e}, normal {tn:.2e}, "
+                  f"shear {ts:.2e} Pa [{time.time() - t0:.0f} s]", flush=True)
+    (HERE / "results_tooth_bc.json").write_text(json.dumps(out))
+
+
 if __name__ == "__main__":
-    main()
+    bc_sweep() if "--bc" in sys.argv else main()
