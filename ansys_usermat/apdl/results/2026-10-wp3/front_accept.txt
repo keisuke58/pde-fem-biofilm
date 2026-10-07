@@ -5,16 +5,16 @@ fr_fig7h_dt00025: complete, last T* 1.0950, 400 substeps
 fr_fig7h_nofront: complete, last T* 1.0900, 200 substeps
 
 T*      mean phi: dt 0.005   dt 0.0025   no front    min phi (dt 0.005)  max phi (dt 0.005)
-0.10        0.01135     0.00963     0.00782           -1.358e-05             0.9862
-0.20        0.05074     0.04743     0.00792           -6.451e-03             0.5446
-0.30        0.06292     0.05676     0.00800           -1.231e-02             0.3166
-0.50        0.04528     0.03917     0.00808           -8.596e-03             0.1429
-0.70        0.01927     0.01640     0.00808           -5.708e-03             0.0695
-1.00        0.00171     0.00153     0.00799           -1.221e-03             0.0088
+0.10        0.01145     0.00966     0.00782            1.000e-05             0.9862
+0.20        0.05647     0.05284     0.00795            7.340e-05             0.5519
+0.30        0.07168     0.06492     0.00811            2.092e-04             0.3232
+0.50        0.06109     0.05336     0.00846            8.799e-03             0.1475
+0.70        0.05879     0.05094     0.00880            2.741e-02             0.0786
+1.00        0.06493     0.05598     0.00926            5.688e-02             0.0664
 
-bounds: min phi -1.235e-02, max phi 0.99622  strict fail, gate pass
-time step: mean phi at T* = 1 0.00071 / 0.00063 (12.88 %), largest difference over T* 17.80 %  strict fail, gate fail
-direction: seed at y = -0.625, nutrient at y = -0.875; extra alpha - 1 from the front term, nutrient side 1.796e-05 (64 elements), far side 2.252e-05 (384 elements)  gate fail
+bounds: min phi -5.561e-05, max phi 0.99622  strict fail, gate pass
+time step: mean phi at T* = 1 0.06562 / 0.05659 (15.95 %), largest difference over T* 18.50 %  strict fail, gate fail
+direction: seed at y = -0.625, nutrient at y = -0.875; extra alpha - 1 from the front term, nutrient side 6.271e-05 (64 elements), far side 5.172e-05 (384 elements)  gate fail
 
 STRICT: FAIL
 GATE: FAIL
