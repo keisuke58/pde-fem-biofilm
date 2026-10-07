@@ -1,0 +1,18 @@
+{
+ "chain": "20261008s",
+ "out": "abaqus_composition/results_keio_1008",
+ "runs": [
+  {
+   "job": "nf8_c6_g1",
+   "make": ["abaqus_composition/make_cube_inp.py", "{inp}",
+            "--json", "ansys_usermat/apdl/results/2026-10-05_week/w8_c6_g1_s015.json",
+            "--case", "2sp_case6", "--T", "1.0", "--n", "8", "--cons", "1"],
+   "summarise": ["abaqus_composition/compare_ansys.py", "{dat}",
+                 "ansys_usermat/apdl/results/2026-10-05_week/w8_c6_g1_s015.json"],
+   "reference": "abaqus_composition/results_1006/nf8_c6_g1.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 30
+  }
+ ]
+}
