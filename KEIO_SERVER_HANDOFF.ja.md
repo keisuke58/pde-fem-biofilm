@@ -17,7 +17,7 @@
   cp scripts/pre-commit-no-ai-identity.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
   cp scripts/commit-msg-no-ai-trailer.sh  .git/hooks/commit-msg  && chmod +x .git/hooks/commit-msg
   ```
-- 作業ブランチ：`claude/plan-next-hxjjve`（10月7日の時点。master にはまだ入れていない）。
+- 作業ブランチ：`master`（10月7日に PR #56 をマージした）。fifa では `git checkout master && git pull` で最新になる。
 - Python 3 と numpy、scipy（入力ファイルを作るスクリプトと比べるスクリプトは、これだけで動く）。
 
 ## 2. git にあるもの・ないもの
