@@ -181,7 +181,9 @@ remains, independently of the shear constants and of the viscosity.
 
 In ANSYS 2022~R2, one SOLID185 element at $\alpha=1.05$, with
 $C_{10}=2\times10^{-4}$~MPa, $C_{01}=0$ and $D_1=5\times10^{3}$~MPa$^{-1}$
-(shear and bulk modulus both $4\times10^{-4}$~MPa, $\nu=0.125$), returns a
+(shear and bulk modulus both $4\times10^{-4}$~MPa, $\nu=0.125$; this deck sets
+no unit system, so stresses come out in the unit of $C_{10}$, read here as MPa
+as in the framework's decks), returns a
 largest stress component of $1.9\times10^{-11}$~MPa under free growth, seven
 decades below the constrained answer. Under full constraint it returns
 $\sigma_{xx}=\sigma_{yy}=\sigma_{zz}=-1.0193\times10^{-4}$~MPa, with shear
@@ -594,7 +596,7 @@ no length and time scale, and its first author describes $\beta$ as chosen
 for sensible results and dependent on the mesh. The framework's example
 input, $\beta=10^{-4}$~mm$^2/T^*$, is reported as a sensitivity case. The
 remaining coefficients of the field and of the nutrient are those of the
-framework's example input, not values from the paper: $r=100$~mm$/T^*$,
+framework's example input (\texttt{/UNITS,MPA}, lengths in mm), not values from the paper: $r=100$~mm$/T^*$,
 $k=0.1$, $d=1$~mm$^2/T^*$ and $g=0.5\,T^{*-1}$; with the front term off
 (\S\ref{sec:ch5-coupling}), $r$ and $k$ do not act. The one-species
 runs end at $T^*=1.1$ and the two-species runs at $T^*=1$, both with
