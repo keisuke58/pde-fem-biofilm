@@ -4,11 +4,11 @@ name: CI
 # Fortran UMAT <-> USERMAT cross-check + adversarial hunt, and a
 # non-blocking repo audit.
 
+# Automatic runs switched off on 8 Oct 2026 (the user: they cost time on
+# every push; the tests are run locally before each push). Start by hand
+# from the Actions tab when wanted.
 on:
-  push:
-    branches: [master, "claude/**"]
-  pull_request:
-    branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
