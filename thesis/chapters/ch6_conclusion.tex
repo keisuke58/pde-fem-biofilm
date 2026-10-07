@@ -13,7 +13,7 @@ this task.
 The 15 interaction coefficients of a five-species point model were estimated
 with TMCMC from the in-vitro time courses of Heine et al.\ under four
 conditions. Compiled with JAX, the forward model runs about 200 times faster
-than on the CPU, which makes posteriors with $10{,}000$ samples routine. The
+on the GPU than on the CPU, which makes posteriors with $10{,}000$ samples routine. The
 inferred matrices separate the commensal from the dysbiotic conditions and
 predict a quantity that never entered the calibration: the pH of the flow
 reactor, with $R^2=0.78$. With a metabolic sign prior, the same type of model
@@ -26,9 +26,10 @@ closed-form solutions. It was coupled to the biofilm field of the IKM element
 through the growth equation $\dot\alpha=k_\alpha\phi$ at every Gauss point.
 Inside ANSYS, the coupled run follows the exact solution of a gradient-free
 region to $3\times10^{-11}$ in $\alpha$. With the published parameters the
-growth stays below $\alpha-1=1.1\times10^{-3}$ up to $T^*=1.1$ and the seeded
-region is compressed; a finer model of the same problem predicts tension in
-its surroundings on average, the ring of tension reported by Klempt et al.
+growth in the seeded element reaches $\alpha-1=8.9\times10^{-4}$ at $T^*=1.1$
+and the seeded region is compressed; a finer model of the same problem
+predicts, on average, tension in the surrounding material, consistent with the
+ring of tension reported by Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}.
 
 \paragraph{The composition at every Gauss point (Chapter~\ref{ch:ansys}).}
 For two species, the point model of Klempt et al.\ 2026 runs at every Gauss
@@ -45,7 +46,7 @@ stresses it carries, for one and two species.
 \label{sec:concl_limitations}
 
 \begin{itemize}
-  \item \emph{Verification, not validation.} The finite element results are
+  \item \emph{Verification only.} The finite element results are
         verified against closed forms and against the published models. No
         measured stress of a growing oral biofilm was available to validate
         them.
@@ -53,9 +54,9 @@ stresses it carries, for one and two species.
         stiffness, the spreading or the stress, following Klempt et al.\ 2024,
         who drop the mechanical term in the growth equation.
   \item \emph{Spreading in ANSYS.} The front term of the element is inactive,
-        so the biofilm does not spread in the ANSYS runs and the composition
-        there is uniform. The spatial effect of the coupling was shown in
-        Python on the reproduced field of Klempt et al.\ 2024, not in ANSYS.
+        so the biofilm spreads only by diffusion in the ANSYS runs. The
+        composition varies there through the local nutrient, but not through
+        growth towards the nutrient.
   \item \emph{Assumptions.} The link between the time of the point model and
         that of the field, and the cap on the amount handed to the point
         model, are not given by the papers. Both are reported with their
@@ -90,17 +91,16 @@ in order of how well the literature supports them.
   \item \emph{A working front term.} Once the element spreads the biofilm, the
         composition can vary in space in ANSYS as it does in the Python
         demonstration. Where the nutrient is uniform the direction of the
-        front term is undefined; how to treat this is a question for the
-        authors of the model.
+        front term is undefined; the authors' implementation regularises it
+        as $\nabla c/(\|\nabla c\|+\varepsilon)$, which the element can adopt.
   \item \emph{Local nutrient and composition-dependent spreading.} Replacing
         the constant nutrient level $c^*$ of the point model by the local
         nutrient of the field, and letting the growth and consumption of the
         field depend on the composition, would close the loop between the two
         models. First computations in Python
         (Section~\ref{sec:ch5-outlook-python}) show that both change the
-        result: with a local nutrient the composition varies across the seed,
-        which the ANSYS element now also shows,
-        and with species-dependent spreading the amount of biofilm at $T^*=1$
+        result: with a local nutrient the composition varies across the seed
+        (now also in ANSYS), and with species-dependent spreading the amount of biofilm at $T^*=1$
         changes by up to $8\,\%$.
   \item \emph{Composition into stiffness and stress into growth.} Species-specific
         stiffness and stress-dependent growth would let the composition reach

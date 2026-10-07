@@ -137,7 +137,7 @@ et al.\ (2024) and the multi-species point model of Klempt et al.\ (2026).
 First, the 15 interaction coefficients of a five-species point model are
 estimated with transitional Markov chain Monte Carlo from in-vitro time courses
 under four conditions. Compiled with JAX, the forward model runs about 200 times
-faster than on the CPU, and the inferred interactions predict the measured pH,
+faster on the GPU than on the CPU, and the inferred interactions predict the measured pH,
 which was not used in the calibration ($R^2=0.78$). A metabolic sign prior
 carries the same type of model to sparse in-vivo data.
 
@@ -145,14 +145,15 @@ Second, the growth kinematics $\bF=\bF_e\bF_g$ with $\bF_g=\alpha\bI$ is
 implemented as an ANSYS user material, verified against closed-form solutions,
 and coupled to the element's biofilm field through the growth equation at
 every Gauss point. Inside ANSYS the coupled run follows the exact solution of
-a gradient-free region to $3\times10^{-11}$.
+a gradient-free region to $3\times10^{-11}$ in $\alpha$.
 
 Third, for two species the point model runs at every Gauss point: the field
 sets the amount of biofilm, the point model its composition. Every call from
 ANSYS to the point model is reproduced in Python bit for bit, and the published
 outcomes, coexistence and the survival of one species, are kept.
 
-The coupling is one-way and verified, not validated. More species and a
+The coupling is one-way; it has been verified, but not yet validated against
+measurements. More species and a
 coupling in which the composition acts on growth and stiffness are left to the
 continuation of this work.
 
@@ -197,7 +198,7 @@ throughout the work and for many discussions on the Hamilton biofilm models.
 
 I am grateful to Felix Klempt, whose growth model and finite element
 implementation this work follows, and who answered my questions about it, and
-to Oliver Höchel, who provided the current version of that implementation and
+to Oliver Höchel, who provided the version of that implementation used here and
 showed me how to compile, link and run user routines in ANSYS.
 
 Part of this work was carried out during a research internship at the Lower
