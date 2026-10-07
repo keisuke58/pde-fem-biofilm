@@ -8,8 +8,8 @@
 \section{Clinical Background: Oral Biofilm and Peri-implantitis}
 \label{sec:intro_clinical}
 
-Dental implants have become the standard of care for restoring missing teeth, with an estimated 15 million implants placed annually worldwide~\cite{Kolenbrander2010OralMultispecies}.
-Peri-implantitis, a progressive inflammatory condition of the tissue around an implant driven by biofilm, affects 20--35\% of implant patients and is the leading cause of implant failure~\cite{Marsh2003Dental, Berglundh2018Peri, Schwarz2022PeriImplantitis, Sedghi2021PeriImplant}.
+Dental implants have become a standard treatment for missing teeth; in the United States the share of adults with an implant rose from 0.7\% in 1999--2000 to 5.7\% in 2015--2016~\cite{Elani2018ImplantTrends}.
+Peri-implantitis, a progressive inflammatory condition of the tissue around an implant driven by biofilm, affects about one in five implant patients (patient-level prevalence 22\% and 19.5\% in two meta-analyses~\cite{Derks2015PeriImplantEpi, Diaz2022PeriImplantPrevalence}) and is a major cause of late implant loss~\cite{Berglundh2018Peri, Schwarz2022PeriImplantitis, Sedghi2021PeriImplant}.
 It is linked to the multi-species communities that colonise the implant surface: dysbiotic shifts in the oral microbiome, driven by pathobionts such as \textit{Porphyromonas gingivalis} (\textit{Pg})~\cite{Mysak2014Pg}, trigger host immune responses that lead to bone resorption~\cite{Hajishengallis2012Dysbiosis, Lamont2018Periodontal}.
 
 The oral microbiome comprises more than 700 taxa that interact through mutualism, competition and metabolic cross-feeding~\cite{Kolenbrander2010OralMultispecies, Dewhirst2010HOMD}.
@@ -26,7 +26,7 @@ This thesis is about bringing these two descriptions together in a finite elemen
 
 \subsection{Composition at a material point}
 
-The generalised Lotka--Volterra (gLV) system, with roots in classical population ecology~\cite{Lotka1925Elements, May1972Stability}, is the common model of microbial community dynamics~\cite{Gonze2018gLV, Stein2013gLV, Venturelli2018Deciphering, Marsland2019MicrobialCRM}:
+The generalised Lotka--Volterra (gLV) system, with roots in classical population ecology~\cite{Lotka1925Elements, May1972Stability}, is the standard model of microbial community dynamics~\cite{Gonze2018gLV, Stein2013gLV, Venturelli2018Deciphering, Marsland2019MicrobialCRM}:
 \begin{equation}
   \dot{\phi}_i = \phi_i \Bigl( r_i + \sum_j A_{ij} \phi_j \Bigr), \quad i = 1,\dots,n,
   \label{eq:glv}
@@ -36,7 +36,7 @@ Its $n^2$ interaction coefficients are poorly determined by typical time-course 
 
 The extended Hamilton principle~\cite{JunkerBalzani2021ExtendedHamilton} derives the evolution of a biofilm from an energy and a dissipation functional.
 Applied to a material point with several species, it gives the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}: volume fractions $\phi_i$ and viabilities $\psi_i$, the living fraction $\bar\phi_i=\phi_i\psi_i$, a symmetric interaction matrix $A_{ij}$ and a nutrient level $c^*$.
-Symmetry follows from the quadratic form of the energy and reduces the number of interaction coefficients to $n(n+1)/2$, 15 for five species.
+Only the symmetric part of $A_{ij}$ enters the quadratic energy, so the matrix is taken symmetric, which reduces the number of interaction coefficients to $n(n+1)/2$, 15 for five species.
 The model describes how the composition at one point evolves in time; it has no space.
 
 \subsection{Identifying the interactions}

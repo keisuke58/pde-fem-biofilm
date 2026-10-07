@@ -97,16 +97,18 @@ a Monod function and an orientation function (Eqs.~21--23),
 with the unit vectors $\mathbf n_{\nabla\phi}=\nabla_X\phi/\|\nabla_X\phi\|$
 and $\mathbf n_{\nabla c}=\nabla_X c/\|\nabla_X c\|$. The factor
 $\|\nabla_X\phi\|$ restricts this growth to the interface between biofilm and
-void. Consumption is linear in the biofilm (Eq.~24), $g^*_c=\bar g\,\phi$.
+void. Consumption is linear in the biofilm as printed (Eq.~24),
+$g^*_c=\bar g\,\phi$; the authors confirmed that their implementation uses
+$\bar g\,\phi\,c$ (see below).
 
 \subsection{Evolution equations}
 
 Stationarity of~\eqref{eq:hamilton_principle} with respect to $\phi$, $c$ and
 $\alpha$ gives three evolution equations. The paper neglects the mechanical
 term $\phi\mu(\bI:\mathbf C_e-3)$ in the equation for $\phi$, so that growth
-is driven by the nutrient only and the coupling to the mechanics is one way.
+is driven by the nutrient only and the coupling to the mechanics is one-way.
 After division by the viscosities, and with the parameters written without the
-bar, the equations are (Eqs.~34--36)
+bar, the equations are, as printed (Eqs.~34--36),
 \begin{align}
   &\dot\phi-\beta\nabla_X^2\phi-k_\alpha\,\alpha
    +\|\nabla_X\phi\|\,\frac{r\,c}{k+c}\,\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}=0,
@@ -116,8 +118,9 @@ bar, the equations are (Eqs.~34--36)
   &\dot\alpha-k_\alpha\,\phi=0,
    \label{eq:theory_alpha}
 \end{align}
-with zero-flux conditions for $\phi$ and $c$ on the boundary. Time is
-normalised, $T^*$. The parameters of Table~2 of the paper are listed in
+with zero-flux conditions for $\phi$ and $c$ on the boundary. In the confirmed
+form the consumption term in~\eqref{eq:theory_c} is $g\,\phi\,c$. Time is
+normalised and written in units of $T^*$. The parameters of Table~2 of the paper are listed in
 Table~\ref{tab:theory_klempt2024}.
 
 \begin{table}[htbp]
@@ -141,12 +144,12 @@ Table~\ref{tab:theory_klempt2024}.
   \end{tabular}
 \end{table}
 
-Three points of the paper matter for this thesis and are stated here once.
+Three points of the paper are relevant here.
 \begin{itemize}
   \item \emph{The law for $\alpha$.} Equation~\eqref{eq:theory_alpha} lets the
         biofilm expand wherever it is present. The algorithm in Table~1 of the
-        paper instead updates $\alpha$ from the change of $\phi$, which makes a
-        biofilm that is full from the start not grow. The text says that
+        paper instead updates $\alpha$ from the change of $\phi$, so that a
+        biofilm that is full from the start does not grow. The text says that
         $\alpha$ is governed by Eq.~36; I follow
         Eq.~\eqref{eq:theory_alpha}, as does the element used in
         Chapter~\ref{ch:ansys}.
@@ -223,7 +226,7 @@ Stationarity with respect to $\phi_i$, $\psi_i$, $\phi_0$ and $\gamma$ gives
 \end{align}
 The equation for $\psi_i$ has no $\gamma$, because $\psi_i$ does not appear in
 the constraint. The paper prints Eq.~17 with a $+\gamma$; with it, even the
-two-species examples of the paper are not reproduced, without it all fourteen
+two-species examples of the paper are not reproduced; without it, all fourteen
 examples are (Section~\ref{sec:theory_point_check}).
 
 The system~\eqref{eq:gov_phi}--\eqref{eq:gov_void} has $2n+2$ unknowns. It is
@@ -234,8 +237,8 @@ inside $(0,1)$ and is omitted above.
 \subsection{Symmetry and scale}
 
 The antisymmetric part of $\bA$ does not contribute to the quadratic
-form~\eqref{eq:free_energy}, so $\bA$ is taken symmetric; this halves the
-number of interaction coefficients to $n(n+1)/2$ and keeps the gradient-flow
+form~\eqref{eq:free_energy}, so $\bA$ is taken symmetric; this reduces the
+number of interaction coefficients from $n^2$ to $n(n+1)/2$ and keeps the gradient-flow
 structure that the variational derivation provides~\cite{JunkerBalzani2021ExtendedHamilton}.
 Biologically, symmetry is a reasonable approximation for interactions mediated
 by metabolites in a shared pool~\cite{Kolenbrander2010OralMultispecies}; directional
@@ -256,8 +259,8 @@ of the paper (six two-species cases of its Table~1, four variants of its
 Appendix~A and the four four-species cases), within the accuracy with which
 values can be read off its figures. Two printed details disagree with the
 paper's own figures: the $+\gamma$ in Eq.~17 discussed above, and a factor
-$\tfrac12$ in front of the four-species matrix of Eq.~19, without which the
-four-species figures are reproduced. For two species, case~3 ends at
+$\tfrac12$ in front of the four-species matrix of Eq.~19 of Klempt et al.\ 2026;
+the four-species figures are reproduced only when it is dropped. For two species, case~3 ends at
 $\bar\phi_1=0.5945$, $\bar\phi_2=0.3926$, against $0.60$ and $0.40$ read
 from the paper.
 
@@ -285,8 +288,10 @@ Compared with the generalised Lotka--Volterra model~\eqref{eq:glv}, the
 replicator form has a symmetric $\bA$ with $n(n+1)/2$ coefficients and keeps
 $\sum_i\phi_i=1$ without a separate normalisation. Its interior fixed points
 satisfy $(\bA\bphi^*)_i=\bphi^{*\rm T}\bA\bphi^*$ for every $i$ with
-$\phi^*_i>0$; for a positive definite $\bA$ there is a unique one, and it is
-globally stable on the simplex.
+$\phi^*_i>0$. If $\bA$ is negative definite on the tangent space
+$\{\mathbf x:\sum_i x_i=0\}$ of the simplex, $W$ is strictly concave there,
+so there is at most one interior fixed point; when it exists, it is the
+maximum of $W$ and attracts every interior trajectory.
 
 %=======================================================================
 \section{Combining the Two Models}
@@ -335,21 +340,21 @@ where $\hat\phi_i(t;\btheta)$ is the solution of the point model at time $t$.
 
 TMCMC~\cite{ChingChen2007TMCMC, Betz2016TMCMC} constructs a sequence of
 intermediate distributions between the prior and the posterior through a
-tempering schedule $0 = \beta_0 < \beta_1 < \cdots < \beta_J = 1$,
+tempering schedule $0 = \tau_0 < \tau_1 < \cdots < \tau_J = 1$,
 \begin{equation}
-  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{\beta_j}\,p(\btheta).
+  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{\tau_j}\,p(\btheta).
   \label{eq:tmcmc_intermediate}
 \end{equation}
 At each stage $j$ the samples are weighted by
-$w_j^{(k)} \propto \mathcal{L}^{\beta_j - \beta_{j-1}}$, resampled, and moved
-by short Metropolis--Hastings chains. The next exponent $\beta_j$ is chosen so
+$w_j^{(k)} \propto \mathcal{L}^{\tau_j - \tau_{j-1}}$, resampled, and moved
+by short Metropolis--Hastings chains. The next exponent $\tau_j$ is chosen so
 that the coefficient of variation of the weights stays at a target value,
 typically $c_v=1$.
 
 \paragraph{Computation on the GPU.}
 The cost lies in the forward model, evaluated for every sample at every stage.
 I compile the point model with JAX~\cite{jax2018github} and evaluate the whole
-ensemble, typically $N = 2{,}000$ samples, in one batched call
+ensemble, $N_p = 10{,}000$ samples in the production runs, in one batched call
 (\texttt{jax.vmap}). This is about 200 times faster than the CPU baseline
 (Section~\ref{sec:heine_gpu}).
 
@@ -377,10 +382,10 @@ signs can be fixed beforehand from metabolic models. Flux balance analysis
 (FBA) predicts the metabolic fluxes $\mathbf v$ of an organism at steady
 state~\cite{OrthThiele2010WhatIsFBA, Heinken2023AGORA2},
 \begin{equation}
-  \max_{\mathbf{v}}\; \mathbf{c}^{\rm T}\mathbf{v}
-  \quad \text{s.t.} \quad S\mathbf{v} = \mathbf{0},\; \mathbf{lb} \le \mathbf{v} \le \mathbf{ub},
+  \max_{\mathbf{v}}\; \mathbf{w}^{\rm T}\mathbf{v}
+  \quad \text{s.t.} \quad \mathbf{N}\mathbf{v} = \mathbf{0},\; \mathbf{lb} \le \mathbf{v} \le \mathbf{ub},
 \end{equation}
-with the stoichiometric matrix $S$, an objective $\mathbf c$ (usually biomass
+with the stoichiometric matrix $\mathbf N$, an objective $\mathbf w$ (usually biomass
 production) and bounds on the fluxes. Parsimonious FBA~\cite{Lewis2012pFBA}
 additionally minimises the total flux, and MICOM~\cite{Diener2020MICOM}
 couples the models of several species through shared metabolites. From the

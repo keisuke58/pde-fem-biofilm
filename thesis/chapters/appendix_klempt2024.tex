@@ -61,7 +61,7 @@ curves without changing a value of Table~2:
         and an isotropic share $w=0.5$ (the text of the paper says that growth
         perpendicular to the nutrient gradient is smaller, not zero);
   \item consumption $g\,\phi\,c$;
-  \item a time scale $s$ per simulation, applied to $r$, $\beta$ and
+  \item a time scale $s_T$ per simulation, applied to $r$, $\beta$ and
         $k_\alpha$: the paper normalises time by a reference time ``chosen
         based on the conditions for growth at hand'', which is not given.
 \end{enumerate}
@@ -77,11 +77,11 @@ $0.032$, so the curves do not determine $w$ precisely.
   \label{tab:app_klempt_rms}
   \begin{tabular}{lccc}
     \hline
-    test case & time scale $s$ & RMS, $w=0.5$ & RMS, $w=0$\\
+    test case & time scale $s_T$ & RMS, $w=0.5$ & RMS, $w=0$\\
     \hline
     4.1 (Fig.~4) & $1$ & $0.013$ & $0.022$\\
     4.2 high (Fig.~7) & $5$ & $0.021$ & $0.038$\\
-    4.2 low (Fig.~7) & $3$ & $0.030$ & $0.07$\\
+    4.2 low (Fig.~7) & $3$ & $0.030$ & $0.070$\\
     \hline
   \end{tabular}
 \end{table}
@@ -101,7 +101,7 @@ differences lie in the equations or the set-up rather than in the numerics.
   \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_fig3_blend.png}
   \caption[Test case 4.1, reproduction and paper]{Test case 4.1: isosurface
     $\phi=0.8$ at $5$, $25$, $45$ and $100\,\%$ of the simulated time. Top:
-    reproduction with the changes listed in the text ($w=0.5$, $s=1$).
+    reproduction with the changes listed in the text ($w=0.5$, $s_T=1$).
     Bottom: Fig.~3 of Klempt et al.\ 2024 (CC BY 4.0).}
   \label{fig:app_klempt_fig3}
 \end{figure}
@@ -123,7 +123,7 @@ current volume is $\alpha^3$ times the reference volume; with
 $\alpha-1\le0.01$ at $T^*=1$ the volume-weighted means of $\phi$ and $c$
 differ from the plain ones by at most $0.001$. The mechanical term of the
 $\phi$ equation, which the paper drops, would be of order $10^4$ to $10^6$
-per $T^*$ after division by the viscosity $\eta_\phi=10^{-10}$, against a
+per $T^*$ after division by the viscosity $\eta_\phi=10^{-10}$ (the paper gives no unit), against a
 growth term of about $500$ per $T^*$; kept, it would stop the growth that
 every figure shows.
 
@@ -149,7 +149,8 @@ open:
         without it is open.
   \item \emph{Direction where the nutrient is uniform.} The implementation
         uses $\nabla_X c/(\|\nabla_X c\|+\varepsilon)$ with a small
-        $\varepsilon$, of order $10^{-8}$ to $10^{-12}$.
+        $\varepsilon$, of order $10^{-8}$ to $10^{-12}$ (F. Klempt, personal
+        communication, October 2026).
   \item \emph{Consumption.} He recalled $g\,\phi$, as printed, but was not
         certain. The steady nutrient level of case 4.2 ``high'' (0.489 in
         the paper) follows from $g\,\phi\,c$ and not from $g\,\phi$
@@ -157,8 +158,8 @@ open:
         published examples, confirmed on 6 October 2026 that $g\,\phi\,c$
         is correct. The consumption term of Eq.~35 is therefore
         $g\,\phi\,c$, as in the reproduction.
-  \item \emph{Time.} Every simulation ran over a length of $1$. The time
-        scales $s=5$ and $3$ that the reproduction needs for case 4.2 are
+  \item \emph{Time.} Every simulation ran over a time of $1$ ($T^*=1$). The time
+        scales $s_T=5$ and $3$ that the reproduction needs for case 4.2 are
         therefore not explained by different reference times.
   \item \emph{Nutrient in case 4.1.} Only the corner, as assumed here.
   \item \emph{Diffusion coefficient $\beta$.} Chosen to give sensible
