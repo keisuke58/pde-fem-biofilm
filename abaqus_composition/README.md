@@ -11,6 +11,7 @@ re-implemented.
 | `make_umat.py` | writes one user-subroutine file: the Python bridge module, the per-point cache, Eq. 36, the stress routine shared with ANSYS (`biofilm_material_v01.f` + `BIOFILM_STRESS_CORE`), and a UMAT that includes the two fragments |
 | `make_inp.py` | one-element check deck (C3D8, phi and c as field variables 1 and 2, clamped or free) |
 | `run_comp.ps1` | IKMHIWI03: compiles the C shim, links it through a job-local `abaqus_v6.env`, starts the material server on port 8766 (ANSYS uses 8765), runs the job in `F:\abaqus_work\comp_<job>` |
+| `run_comp.sh` | Linux (Keio server) counterpart of `run_comp.ps1 -Native`, with `mp_mode=threads`; not yet run on Linux (`KEIO_SERVER_HANDOFF.ja.md`) |
 
 Inputs: field variable 1 = phi (amount of biofilm), field variable 2 = nutrient c;
 constants 1-42 = the ANSYS prop layout, 43-46 = E, E_void, nu, nu_void;
