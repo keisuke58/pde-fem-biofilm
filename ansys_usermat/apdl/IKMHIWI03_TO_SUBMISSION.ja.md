@@ -66,6 +66,34 @@
 - 週の実行が終わったら `run_chain.ps1` でセッションから切り離して始める。20日までに
   走り出していれば旅行中も回り続ける。終わったら JSON を push する設定にする。
 
+## 5. WP2：恒常圧の成長則を 3 次元で確かめる（P3 の準備、1〜4 の後）
+
+10月7日にクラウドで、軸対称の Python 試作で調べた（`keio_wp2/README.ja.md` 第5〜7段、
+図 `assets/fig_implant_homeostatic.png`、`fig_tooth_homeostatic.png`、`fig_tooth_bc.png`、
+`fig_nutrient_homeostatic.png`、`fig_nutrient_bc.png`）。成長則は
+
+    α̇ = k_α φ max(0, 1 − p/p_h)，p = −tr σ / 3（圧縮が正），
+    p_h = P_h E k_α T*（E 基準）または P_h E(φ² + f) k_α T*（局所剛性）
+
+分かったこと（3 次元で確かめたい順）：
+- 歯の形（`make_implant_inp.py --bulge 1`）では歯頸線に周方向応力が集中する（帰還なし）。
+  大きさは下面の拘束（自由／u_z = 0／固定）で 6 倍変わる。
+- 栄養と前線の項（w = 0.5、Table 2 換算）を入れると層は T* ≈ 0.1 で埋まり、応力は 20〜30 倍。
+- **帰還（P_h = 0.1）があると、最大の応力は形にも拘束にもよらず 3.0〜3.2e−3 Pa にそろう**
+  （帰還なしでは 2.9e−2〜1.6e−1 Pa）。
+
+頼みたいこと：
+- `usermat_biofilm.f` に、α の更新を max(0, 1 − p/p_h) で止めるオプションを足す（既定は off、
+  今の結果は変えない）。p は前のステップの応力から。p_h の 2 つの形を選べるようにする。
+  Abaqus の UMAT にも同じ形で入れる。
+- 1 要素の確認：拘束した立方体で、p が p_h に届いたところで α が止まることを閉じた形の値と比べる
+  （`t_growth_constrained.dat` と同じ要領）。
+- 実行（時間があれば）：インプラントのカラー部と歯（`--bulge 1 --nut outer`）、下面 3 通り、
+  帰還なし／P_h = 0.1（局所剛性）、前線の項あり。比べる相手は `keio_wp2/results_nutrient_bc.json`
+  （周方向応力の最大と場所、α − 1 の平均）。ANSYS にこの形のデッキがなければ Abaqus で回す
+  （これは慶應でもできるので、ANSYS の実行より後）。
+- 週の実行と 4 の WP3 を止めない。実行表は `ansys_usermat/apdl/RUN_WP2_IKMHIWI03.md` に書いて push する。
+
 ## 守ること
 
 - Felix のコード、理論の章、入力ファイルは `F:\felix_private\` から出さない（CLAUDE.md）。
