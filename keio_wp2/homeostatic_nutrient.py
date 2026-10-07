@@ -22,6 +22,8 @@ element gradients (not upwinded) and spread to the nodes like the alpha
 source; explicit sub-steps keep r dt / h below 0.4.
 
     python keio_wp2/homeostatic_nutrient.py -> keio_wp2/results_nutrient.json
+    python keio_wp2/homeostatic_nutrient.py --bc -> keio_wp2/results_nutrient_bc.json
+      bottom face free, u_z = 0 or clamped, without feedback and with P_h = 0.1
 """
 from __future__ import annotations
 
@@ -42,8 +44,8 @@ D_C, R_FRONT, K_MONOD, BETA = 1.0, 10.0, 1.0, 0.02
 
 
 class NMesh(T.Mesh):
-    def __init__(self, bulge, nut):
-        super().__init__(bulge)
+    def __init__(self, bulge, nut, bottom="uz"):
+        super().__init__(bulge, bottom=bottom)
         nnz = self.nz + 1
         n = np.arange(self.nn)
         I, K = n // nnz, n % nnz
@@ -69,8 +71,8 @@ class NMesh(T.Mesh):
         return c
 
 
-def run(bulge, nut, P_h, local=True, w=0.5, g=1.0, dt=0.01, t_end=1.0):
-    M = NMesh(bulge, nut)
+def run(bulge, nut, P_h, local=True, w=0.5, g=1.0, dt=0.01, t_end=1.0, bottom="uz"):
+    M = NMesh(bulge, nut, bottom)
     phin = M.seed_n.copy()
     alpha = np.ones(len(M.conn))
     nsub = int(np.ceil(dt / min(1.8 / (BETA * M.lam), 0.4 * M.h_min / R_FRONT)))
@@ -108,7 +110,7 @@ def run(bulge, nut, P_h, local=True, w=0.5, g=1.0, dt=0.01, t_end=1.0):
     prof = dict(z=zc.tolist(), alpha=(alpha - 1).reshape(M.nr, M.nz)[0].tolist(), stt=stt.tolist(),
                 tn=tn.tolist(), ts=ts.tolist(), phi=M.phi_e(phin).reshape(M.nr, M.nz).tolist(),
                 c=ce.reshape(M.nr, M.nz).tolist())
-    return dict(bulge=bulge, nut=nut, P_h=P_h, local=local, w=w, g=g, t_fill=t_fill, hist=hist, field=prof)
+    return dict(bulge=bulge, nut=nut, P_h=P_h, local=local, w=w, g=g, bottom=bottom, t_fill=t_fill, hist=hist, field=prof)
 
 
 def main():
@@ -132,5 +134,23 @@ def main():
     (HERE / "results_nutrient.json").write_text(json.dumps(out))
 
 
+def bc_sweep():
+    t0 = time.time()
+    out = {"runs": []}
+    for bottom in ("free", "uz", "clamped"):
+        for bulge, nut in ((0.0, "top"), (1.0, "outer")):
+            for P_h in (None, 0.1):
+                r = run(bulge, nut, P_h, bottom=bottom)
+                out["runs"].append(r)
+                t, d, ph, px, vm, stt, tn, ts, gt, cmin, cm = r["hist"][-1]
+                f = r["field"]
+                a = -np.array(f["stt"])
+                print(f"bottom={bottom:7s} {'tooth  ' if bulge else 'implant'} P_h={P_h}: alpha-1 {d:.3e}, "
+                      f"p max {px:.2e}, hoop max {a.max():.2e} at z={f['z'][int(a.argmax())]:.2f} "
+                      f"mid {a[len(a) // 2]:.2e}, normal {tn:.2e}, shear {ts:.2e} Pa [{time.time() - t0:.0f} s]",
+                      flush=True)
+    (HERE / "results_nutrient_bc.json").write_text(json.dumps(out))
+
+
 if __name__ == "__main__":
-    main()
+    bc_sweep() if "--bc" in sys.argv else main()
