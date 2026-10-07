@@ -22,10 +22,13 @@ alpha - 1 and phi in the layer, the largest pressure and von Mises stress,
 and the hoop and shear stress on the titanium.
 
     python keio_wp2/homeostatic_implant.py -> keio_wp2/results_implant.json
+    python keio_wp2/homeostatic_implant.py --beta -> keio_wp2/results_implant_beta.json
+      (beta in {0.02, 0.005, 1e-3, 1e-4} mm^2/T*, P_h in {none, 0.1}, both forms of p_h)
 """
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -122,12 +125,12 @@ def mechanics(M, phi, delta):
     return -K * tr, vm, s[:, 2], srz
 
 
-def run(P_h, local=False, dt=0.02, t_end=1.0):
+def run(P_h, local=False, beta=BETA, dt=0.02, t_end=1.0):
     M = Mesh()
     phi = M.seed.astype(float)
     alpha = np.ones_like(phi)
     # explicit diffusion: sub-steps below h^2 / (4 beta) (dt = 0.02 alone is unstable on this mesh)
-    nsub = int(np.ceil(dt / (0.8 * min(M.hr, M.hz) ** 2 / (4 * BETA))))
+    nsub = int(np.ceil(dt / (0.8 * min(M.hr, M.hz) ** 2 / (4 * beta))))
     hist = []
     for k in range(int(round(t_end / dt))):
         p, vm, stt, srz = mechanics(M, phi, alpha - 1)
@@ -137,11 +140,11 @@ def run(P_h, local=False, dt=0.02, t_end=1.0):
             p_h = P_h * E0 * K_ALPHA * ((phi ** 2 + FLOOR) if local else 1.0)
             g = np.clip(1 - p / p_h, 0.0, 1.0)
         for _ in range(nsub):
-            phi = np.clip(phi + dt / nsub * (BETA * M.lap(phi) + K_ALPHA * alpha), 0, 1)
+            phi = np.clip(phi + dt / nsub * (beta * M.lap(phi) + K_ALPHA * alpha), 0, 1)
         alpha = alpha + dt * K_ALPHA * phi * g
         hist.append(((k + 1) * dt, float((alpha - 1).mean()), float(phi.mean()), float(p.max()), float(vm.max()),
                      float(stt[M.wall].min()), float(np.abs(srz[M.wall]).max()), float(g.mean())))
-    return dict(P_h=P_h, local=local, hist=hist)
+    return dict(P_h=P_h, local=local, beta=beta, hist=hist)
 
 
 def main():
@@ -156,5 +159,21 @@ def main():
     (HERE / "results_implant.json").write_text(json.dumps(out))
 
 
+def beta_sweep():
+    t0 = time.time()
+    out = {"scale_E_k_alpha": E0 * K_ALPHA, "runs": []}
+    for beta in (0.02, 0.005, 1e-3, 1e-4):
+        base = None
+        for local, P_h in ((False, None), (False, 0.1), (True, 0.1)):
+            r = run(P_h, local, beta)
+            out["runs"].append(r)
+            t, d, ph, px, vm, stt, srz, g = r["hist"][-1]
+            base = base or d
+            print(f"beta={beta:g} {'local' if local else 'E    '} P_h={P_h}: alpha-1 {d:.3e} ({d / base:.2f}), "
+                  f"phi {ph:.3f}, p max {px:.3e}, hoop on Ti {stt:.3e}, shear on Ti {srz:.3e} Pa, g {g:.2f} "
+                  f"[{time.time() - t0:.0f} s]", flush=True)
+    (HERE / "results_implant_beta.json").write_text(json.dumps(out))
+
+
 if __name__ == "__main__":
-    main()
+    beta_sweep() if "--beta" in sys.argv else main()
