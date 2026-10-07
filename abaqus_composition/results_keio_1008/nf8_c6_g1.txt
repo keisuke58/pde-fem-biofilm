@@ -1,0 +1,29 @@
+# nf8_c6_g1  (2026-10-08 07:47, 0 min 25 s, 4 CPUs, Fortran point model)
+# Keio server fifa (Linux, Abaqus 2024), automatic chain 20261008s2.
+# abaqus_composition/make_cube_inp.py /home/nishioka/IKM_Hiwi/pde-fem-biofilm/abaqus_composition/nf8_c6_g1.inp --json ansys_usermat/apdl/results/2026-10-05_week/w8_c6_g1_s015.json --case 2sp_case6 --T 1.0 --n 8 --cons 1
+# abaqus_composition/run_comp.sh abaqus_composition/nf8_c6_g1.inp 2sp_case6 4
+# PASS: nf8_c6_g1 completed (native point model)
+# vs abaqus_composition/results_1006/nf8_c6_g1.txt: identical
+measure                    Abaqus        ANSYS    ratio
+seed vM                2.3860e-04   4.6834e-04   0.5095
+seed p                -1.5106e-04  -2.3787e-04   0.6350
+layer 1 p              3.2352e-05   5.7015e-05   0.5674
+layer 1 tension        1.0000e+00   1.0000e+00   1.0000
+layer 2 p              2.1959e-06   1.1468e-06   1.9148
+layer 2 tension        1.0000e+00   1.0000e+00   1.0000
+layer 3 p              4.3493e-07   2.0685e-07   2.1026
+layer 3 tension        1.0000e+00   9.0000e-01   1.1111
+alpha interior         7.1461e-04   8.6166e-04   0.8293
+alpha surface          4.4864e-04   6.1300e-04   0.7319
+alpha step %           3.7219e+01   2.8858e+01   1.2897
+phi seed               4.4683e-01 
+phi layer 1            1.1405e-01 
+ran (elements)         4.0800e+02   3.0400e+02   1.3421
+share seed mean        6.3263e-02   5.0850e-02   1.2441
+share seed min         3.8224e-02   3.0646e-02   1.2473
+share seed max         7.2253e-02   5.8094e-02   1.2437
+share layer 1          2.6781e-01   3.3391e-01   0.8020
+share layer 2          4.9937e-01   4.9951e-01   0.9997
+c seed min             8.8850e-01   8.7593e-01   1.0144
+c seed max             9.3840e-01   9.2611e-01   1.0133
+c mean                 9.3832e-01   9.3210e-01   1.0067

@@ -2,8 +2,14 @@
 # (No JAX needed for these.)  JAX — required by the PDE / ecology model
 # scripts — is intentionally not pinned here; install separately with:
 #   pip install "jax[cpu]"
-numpy==2.4.6
+# Pinned to what the Keio server (fifa) actually has, 2026-10-08: the
+# digit-exact agreement with IKMHIWI03 recorded in
+# abaqus_composition/results_keio_1008/ was produced with these versions,
+# and the summarise/compare scripts run through numpy. Raise them only
+# after re-running the fig4_corner family and checking the agreement holds
+# (CLOUD_TO_FIFA.ja.md item 4).
+numpy==2.4.2
 scipy==1.17.1
-matplotlib==3.11.0
+matplotlib==3.10.8
 openpyxl==3.1.5
-pytest==9.1.1
+pytest==9.0.2

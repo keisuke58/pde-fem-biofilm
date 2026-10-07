@@ -149,3 +149,9 @@ thesis/*.out
 
 # Felix Klempt's code and dissertation chapter: confidential, never commit (CLAUDE.md)
 felix_private/
+
+# make_*_inp.py sidecars next to the generated .inp: an input, not a result
+# (the committed summaries in results_* are what the repository keeps).
+abaqus_composition/*.seed.txt
+abaqus_composition/*.json
+!abaqus_composition/pset_*.json
