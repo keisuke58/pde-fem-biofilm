@@ -1,0 +1,106 @@
+% Former appendix chapters C and D (spatial PDE, in-vivo supplementary figures),
+% taken out of the thesis on 3 Oct 2026 (out of scope; see thesis/README.md). Not input.
+
+\chapter{Spatial Reaction--Diffusion: Supplementary}
+\label{app:pde}
+
+\section*{PDE transport verification}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\linewidth]{pde_verify_convergence.pdf}
+  \caption[Diffusion-stencil convergence and boundary order]{Grid refinement of the diffusion
+  stencil (reaction off, closed box). \textbf{Left:} error of the operator eigenvalue closest
+  to the analytic $-D(\pi/L)^2$ Neumann mode; least-squares slope $2.00$ confirms
+  $\mathcal{O}(\Delta z^2)$ interior accuracy. \textbf{Right:} node-$0$ truncation
+  error at the ghost-node wall --- $\mathcal{O}(\Delta z)$ for a generic Neumann function.}
+  \label{fig:pde_convergence}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\linewidth]{pde_verify_conservation.pdf}
+  \caption[Mass conservation: diagonal vs.\ volume-filling cross-diffusion]{Closed-box
+  conservation, diagonal (red) vs.\ volume-filling cross-diffusion (blue).
+  \textbf{Top} (sub-critical, $\rho_{\max}\!\approx\!0.80$): diagonal drifts $+2.18\times10^{-3}$;
+  cross-diffusion conserves to machine precision.
+  \textbf{Bottom} (crowded, $\rho_{\max}\!=\!1.56$): diagonal clips exceed unity; cross-diffusion
+  degeneracy caps $\rho$ near one.}
+  \label{fig:pde_conservation}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption[PDE transport verification results]{Measured verification outcomes
+  (\texttt{verify\_pde\_numerics.py}, reaction off, closed box).}
+  \label{tab:pde_verify}
+  \small
+  \begin{tabular}{llccc}
+    \toprule
+    Test & Scheme & Mass drift & $\rho_{\max}$ & Clip \\
+    \midrule
+    Convergence ($N_z\!=\!20$--$320$) & diagonal interior & \multicolumn{3}{l}{slope $2.00$ ($\mathcal{O}(\Delta z^2)$)}\\
+    Boundary order (generic mode)     & ghost-node wall   & \multicolumn{3}{l}{slope $1.00$ ($\mathcal{O}(\Delta z)$)}\\
+    \addlinespace
+    Conservation, sub-critical & diagonal        & $+2.18\times10^{-3}$ & $0.79$ & $0$ \\
+    Conservation, sub-critical & cross-diffusion & $0.0$ (mach.\ prec.) & $0.79$ & $0$ \\
+    Conservation, crowded      & diagonal        & $+6.8\times10^{-4}$ & $1.56$ & $0$ \\
+    Conservation, crowded      & cross-diffusion & $+1.9\times10^{-2}$ & $1.56$ & $2518$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section*{FISH channel decode}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig_fish_species_decode.png}
+  \caption[HOBIC FISH: 5-species channel decode]{%
+  Representative HOBIC FISH acquisition (commensal-HOBIC, Day~1, titanium substrate).
+  Each column shows the confocal channel for one species
+  (\textit{S.~oralis}, \textit{A.~naeslundii}, \textit{Vd/Vp},
+  \textit{F.~nucleatum}, \textit{P.~gingivalis}) and the five-species composite
+  (right); rows are independent fields of view.
+  \textit{F.~nucleatum} is decoded from the blue $\cap$ red double-label channel.
+  Scale bar: $50\,\mu\mathrm{m}$.}
+  \label{fig:fish_species_decode}
+\end{figure}
+
+The species diffusivities $D_i$ are being calibrated against the CLSM $z$-profiles by a
+grid/regularisation sweep on the cluster; the commensal-HOBIC fit has converged
+(loss $\approx0.015$) while the dysbiotic-HOBIC fit is still in progress.
+
+\chapter{In-Vivo Analysis: Supplementary Figures}
+\label{app:dieckow_supp}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.74\textwidth]{fig_loo_rmse_comparison.pdf}
+  \caption[LOO-RMSE comparison across model variants]{LOO-RMSE ($\text{mean}\pm\text{std}$
+  across 10 folds) for gLV and Hamilton variants. The Hamilton model with the full
+  three-layer prior ($W{=}1.0$, $\bigstar$) matches the gLV free baseline ($0.0503$
+  vs.\ $0.0501$) despite imposing $35$ metabolic sign constraints --- sign
+  regularisation recovers predictive accuracy at no cost.}
+  \label{fig:loo_rmse_comparison}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.70\textwidth]{dieckow_stability.pdf}
+  \caption[LOO stability of the interaction matrix]{LOO stability (gLV
+  $\alpha{=}0.25$, $10$ folds). \textbf{(A)} sign-consistency heatmap (boxed cells
+  carry a sign constraint): $31/45$ at SC$=1.00$, $40/45$ at SC$\geq0.90$.
+  \textbf{(B)} $|\bar A_{ij}|$ vs.\ fold-to-fold std by regime. \textbf{(C)}
+  distributions of the strongest pairs.}
+  \label{fig:dieckow_stability}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.62\textwidth]{dieckow_b_pca.pdf}
+  \caption[Growth-vector clustering by community type]{PCA of patient growth
+  vectors $\hat\bb^{(p)}$. PC1 separates CT1 (triangles) from CT2 (circles) with no
+  label supervision --- patient-level ecology lives in $\bb$, not in the shared
+  $\bA$.}
+  \label{fig:dieckow_bpca}
+\end{figure}

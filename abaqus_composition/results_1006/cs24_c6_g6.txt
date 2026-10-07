@@ -1,0 +1,27 @@
+# cs24_c6_g6  (2026-10-06 11:24, 3.5 min, 4 CPUs, Fortran point model)
+# make_cube_inp.py --json ansys_usermat\apdl\results\2026-10-05_ansys\ds_c6_nut_g6_b002.json --case 2sp_case6 --T 1.0 --n 24 --cons 6
+# PASS: cs24_c6_g6 completed (native point model)
+# columns: Abaqus | ANSYS ds_c6_nut_g6_b002 (8^3; a like-for-like reference only on 8^3 without the front term) | ratio
+measure                    Abaqus        ANSYS    ratio
+seed vM                5.4094e-04   1.0002e+05   0.0000
+seed p                -2.1273e-04  -1.0629e+05   0.0000
+layer 1 p              5.0104e-05   2.4203e+04   0.0000
+layer 1 tension        1.0000e+00   1.0000e+00   1.0000
+layer 2 p              1.2447e-06   1.1121e+03   0.0000
+layer 2 tension        1.0000e+00   1.0000e+00   1.0000
+layer 3 p              2.5387e-07   7.2806e+01   0.0000
+layer 3 tension        9.8519e-01   1.0000e+00   0.9852
+alpha interior         7.7872e-04   8.6166e-04   0.9037
+alpha surface          4.8845e-04   6.1300e-04   0.7968
+alpha step %           3.7275e+01   2.8858e+01   1.2917
+phi seed               5.0370e-01 
+phi layer 1            1.1138e-01 
+ran (elements)         7.1120e+03   3.0400e+02  23.3947
+share seed mean        2.5602e-01   3.2382e-01   0.7906
+share seed min         5.4438e-02   1.1670e-01   0.4665
+share seed max         4.5093e-01   4.5850e-01   0.9835
+share layer 1          4.0826e-01   4.0628e-01   1.0049
+share layer 2          4.9322e-01   4.9951e-01   0.9874
+c seed min             2.6610e-01   2.5556e-01   1.0413
+c seed max             7.0500e-01   5.5667e-01   1.2665
+c mean                 6.2541e-01   5.9263e-01   1.0553

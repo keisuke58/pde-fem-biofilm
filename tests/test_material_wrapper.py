@@ -330,3 +330,40 @@ def test_neo_hookean_and_mooney_rivlin_paths_both_run(exes, c01r, mtype):
     assert r["keycut"] == 0
     assert np.all(np.isfinite(r["stress"]))
     assert np.all(np.isfinite(r["tang"]))
+
+
+# --------------------------------------------------------------------------- #
+# Klempt et al. 2024 stiffness (sYoungL < 0): E(phi) = (phi**2 + f) E_bio,
+# nu = nu_bio. Checked against the linear path fed that E directly, so the
+# new branch is only a different (E, nu), never a different law.
+@pytest.mark.parametrize("phi", [0.0, 0.3, 0.7, 1.0])
+def test_klempt_stiffness_is_phi_squared(exes, phi):
+    wrap, _ = exes
+    f, E, nu = 1.0e-3, 10.0, 0.49
+    k = _run_wrapper(wrap, biofilm=phi, E=E, EL=-f, nu=nu, nuL=0.3, eta=0.0)
+    e_eff = (phi * phi + f) * E
+    ref = _run_wrapper(wrap, biofilm=1.0, E=e_eff, EL=e_eff, nu=nu, nuL=nu,
+                       eta=0.0)
+    assert k["keycut"] == 0
+    np.testing.assert_allclose(k["stress"], ref["stress"], rtol=1e-12,
+                               atol=1e-300)
+    np.testing.assert_allclose(k["tang"], ref["tang"], rtol=1e-9, atol=1e-14)
+
+
+def test_klempt_stiffness_scales_stress_by_phi_squared(exes):
+    wrap, _ = exes
+    s1 = _run_wrapper(wrap, biofilm=1.0, E=10.0, EL=-1e-12, nu=0.49,
+                      nuL=0.3, eta=0.0)["stress"]
+    s5 = _run_wrapper(wrap, biofilm=0.5, E=10.0, EL=-1e-12, nu=0.49,
+                      nuL=0.3, eta=0.0)["stress"]
+    np.testing.assert_allclose(s5, 0.25 * s1, rtol=1e-9)
+
+
+def test_default_blend_unchanged_by_the_klempt_branch(exes):
+    """sYoungL >= 0 must take the old path: E linear in the fraction."""
+    wrap, _ = exes
+    a = _run_wrapper(wrap, biofilm=0.5, eta=0.0)["stress"]
+    b = _run_wrapper(wrap, biofilm=1.0, E=0.5 * E_BIO + 0.5 * E_VOID,
+                     EL=0.5 * E_BIO + 0.5 * E_VOID, eta=0.0)["stress"]
+    np.testing.assert_allclose(a, b, rtol=1e-12)
+

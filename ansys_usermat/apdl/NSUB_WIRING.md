@@ -83,6 +83,94 @@ reaches the end of the load step; and `SVAR(10)` and `SVAR(84)` on a few
 elements, since a completed run with alpha stuck at its seed means the hook was
 never reached.
 
+### The patch, ready to apply on IKMHIWI03 (written 2026-10-01)
+
+The partner-side call site is our own wiring inside their routine (§8 of
+`V222_PORT_INSTRUCTIONS.md`), so changing it is ours to do; only the
+surrounding file is theirs, which is why the patch lives here as a recipe and
+the file itself stays on `F:\biofilm_upf_wired`.
+
+**It will not even compile unchanged.** `biofilm_ecology_hook` gained two
+arguments in `bdddf8a` — `n_sub` (in) and `phi_int` (out) — and
+`biofilm_py_bridge` is a module, so the old five-argument call is rejected at
+compile time rather than mis-linked. That is the good failure mode; expect it
+if the old call is still there.
+
+Local names below follow `usermat_biofilm.f`; where the wired routine uses
+different ones (`G_OLD`, `G_NEW`, `THETA`, `ECOOK`), keep its names and change
+only the structure. `DTMAX_ECO`, `ustatev(72:83)`, `ustatev(84)`, `prop(7)` and
+`prop(8:27)` are as §8 records them.
+
+**Declarations** — declare both explicitly; do not rely on implicit typing:
+
+```fortran
+      integer          NSUB
+      double precision PHI_INT
+```
+
+**Before** (the 09-07 guard, part 1 — refuses before the hook is reached):
+
+```fortran
+      if (dTime .gt. DTMAX_ECO) then
+C       refuse: hold alpha at ustatev(84), request a cut-back
+        keycut = 1
+      else
+        call biofilm_ecology_hook(G_OLD, THETA, dTime, G_NEW, ECOOK)
+C       ... sanity check of G_NEW (part 2) ...
+C       alpha = ustatev(84) + k_alpha * dTime * phi_tot(G_NEW)
+      end if
+```
+
+**After**:
+
+```fortran
+      NSUB = 1
+      if (dTime .gt. DTMAX_ECO) NSUB = ceiling(dTime/DTMAX_ECO)
+      call biofilm_ecology_hook(G_OLD, THETA, dTime, NSUB, G_NEW,
+     &                          PHI_INT, ECOOK)
+C     part 2 of the guard UNCHANGED: phi_tot <= 1.5, |gamma| bounded,
+C     every component finite. On failure: hold alpha at ustatev(84),
+C     keycut = 1, do not commit G_NEW.
+      if (ECOOK .and. <part-2 checks pass>) then
+        do I = 1, 12
+          ustatev(71+I) = G_NEW(I)
+        end do
+        ustatev(84) = ustatev(84) + prop(7)*PHI_INT
+      else
+        keycut = 1
+      end if
+```
+
+Three things that matter:
+
+1. **Alpha from `PHI_INT`, never from `dTime*phi_tot(G_NEW)`.** At
+   `NSUB = 1000` the end state does not stand for the increment; `PHI_INT` is
+   the sum over sub-steps. At `dTime <= DTMAX_ECO` the two are identical, so
+   nothing that already passed changes.
+2. **Keep part 2 of the guard.** It catches a bad state at a `dt`/`theta`
+   combination the sweep never probed; sub-stepping does not make it
+   redundant.
+3. **No growth cap here.** Following the decision of 2026-10-01 to stay with
+   Klempt's formulation for the main results, the `ALPHA_MAX` gate in
+   `usermat_biofilm.f` is not carried over.
+
+**Build order**: compile `usermat_py_hook.f` *before* the wired routine, or
+ifort reads a stale `biofilm_py_bridge.mod` (the same trap `CLAUDE.md` records
+for `usermat_biofilm.f`). `link_v222.ps1` deletes the stale `ANSYS.exe`.
+Run with the current `material_server.py`, which accepts `n_sub`.
+
+**Expect the run to get further and then distort — that is not the patch
+failing.** With `k_alpha = 50` and `TIME INC = 0.1`, one increment takes alpha
+to about 4.7, which distorted the 54-element cylinder in exactly this way.
+`k_alpha = 50` was set for decks spanning about a millisecond, and the deck's
+physical time unit is still the open question. To test the *wiring* alone,
+scale `prop(7)` down (e.g. `0.05`) so alpha stays small; the meaningful value
+waits on the time unit.
+
+**Record**: `NUMBER OF ERROR MESSAGES`; whether the load step reaches its end;
+`SVAR(84)` on a few elements (alpha stuck at its seed means the hook was never
+reached); and the `NSUB` actually used, printed once.
+
 Speed is no longer the thing to watch. The server runs the chain as one
 compiled scan, bit-identical to chaining `ecology_step`, which took 1000
 sub-steps from ~10 s to ~0.07 s per call: the single-element deck at

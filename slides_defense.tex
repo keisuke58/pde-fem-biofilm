@@ -1,0 +1,255 @@
+% Thesis defence, December 2026 -- SKELETON (2026-10-02).
+% Build: .\build_slides.ps1   (pdflatex, twice)
+% Speaker script: not written yet (template: speaker_notes_1005.tex)
+% CONSTRAINT: keep total page count <= 20. Check the built PDF's page count
+% before adding a frame; trim an existing frame rather than tacking more on.
+% Wording: no internal labels (run names, switch numbers) -- say what a run
+% does, not what it was called while building it.
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{warn}{RGB}{200,30,30}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\setbeamertemplate{navigation symbols}{}
+
+\title{Coupling biofilm growth into an FEM element}
+\subtitle{Master's thesis defence (skeleton)}
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{%
+\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
+\small Keio University}
+\date{December 2026}
+
+% Skeleton only: each frame has its title and, in grey, what goes on it and
+% where the material comes from. Rules: CLAUDE.md, "Slides, notes and other
+% documents" (I not we; no Abaqus as thesis work; units; appendix; <= 20 pages
+% in the main part).
+\newcommand{\todo}[1]{{\color{gray}\small #1}}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Motivation}
+\todo{Oral biofilms on teeth and implants; why stress matters (detachment,
+implant failure). One picture, two sentences.}
+\end{frame}
+
+\begin{frame}{Background: continuum models of biofilm growth}
+\todo{Klempt et al.\ 2023 (PAMM), 2024 (growth field, Eq.\ 34/36), 2026
+(multi-species point model). Volume growth $\mathbf F=\mathbf F_e\mathbf F_g$
+vs.\ density $\phi$. Source: slides\_1005 appendix B/C, thesis ch.\ 5.2.}
+\end{frame}
+
+\begin{frame}{Earlier work: the calibrated point model}
+\todo{Measured compositions and the calibrated five-species model from the
+earlier part of the project; what it can and cannot say about space. Source:
+earlier meeting decks.}
+\end{frame}
+
+\begin{frame}{Goal and scope of this thesis}
+\todo{Bring the point model into an existing FEM element; one and two
+species following Klempt et al.\ 2024/2026; more species at Keio. Three
+contributions (ch.\ 5.1).}
+\end{frame}
+
+\begin{frame}{The growth law in ANSYS}
+\todo{$\mathbf F_g=\alpha\mathbf I$, neo-Hookean, stiffness
+$E(\phi)=(\phi^2+f)E$ with $E=10$~Pa, $\nu=0.49$ (Klempt 2024 Table 2).
+Ch.\ 5.2--5.3.}
+\end{frame}
+
+\begin{frame}{Verification of the growth law}
+\todo{Free and constrained growth vs.\ closed form (figure v222\_closed\_form);
+tangent vs.\ automatic differentiation; the pressure term and why it does not
+change von Mises. Ch.\ 5.4.}
+\end{frame}
+
+\begin{frame}{Earlier result: growth layer on a curved substrate}
+\todo{Bonding bug and fix, second-order convergence (figure
+growth\_cylinder\_alpha\_sweep). The four-condition study is not part of the thesis.}
+\end{frame}
+
+\begin{frame}{Model and boundary conditions}
+\todo{2~mm cube, $8^3=512$ SOLID185 elements (B-bar), seed of 32 elements,
+nutrient held on the face $y=-1$~mm, only rigid-body motion constrained, units
+mm/MPa. Figure fig\_model\_setup (slides\_1005).}
+\end{frame}
+
+\begin{frame}{Coupling into the IKM element}
+\todo{The element's field (Eq.\ 34) unchanged; Eq.\ 36 at every Gauss point;
+growth counted once per increment. Diagram from slides\_1005, and the
+algorithm of one coupled substep (slides\_1005 Appendix C, thesis
+Algorithm~1 in ch.\ 4), shown in the main part, not only the appendix.}
+\end{frame}
+
+\begin{frame}{Checks of the coupling in ANSYS}
+\todo{Left: exact solution, $\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$
+(fig1005\_exact). Right: whole model, cosine similarity 1.0000, factor
+$0.455=\tfrac12\times\tfrac{10}{11}$ (fig1005\_whole\_model). Ch.\ 5.7.
+Footnote: Eq.\ 36, not Table~1 of the paper (fig\_klempt2024\_alpha\_law,
+ch.\ 5.5).}
+\end{frame}
+
+\begin{frame}{Stresses with the published stiffness}
+\todo{Seed compressed, first layer around it in tension on average (ring of
+Klempt 2024). Fill after the stiffness typo fix and the $16^3$ run; quote
+seed averages from $16^3$, no peaks.}
+\end{frame}
+
+\begin{frame}{How far the stresses can be trusted}
+\todo{Mesh: $8^3$ seed averages about $1.7\times$ the $16^3$/$32^3$ values,
+corner peaks do not converge (Python and ANSYS $16^3$). Incompressibility:
+B-bar, mean stress within 10\,\% from $\nu=0.49$ to $0.499$; full
+integration would lock. Ch.\ 5.7, MESH\_STUDY.md.}
+\end{frame}
+
+\begin{frame}{Two species: amount from the field, composition from the point model}
+\todo{Split, rescaling, one-way coupling and why (PAMM 2023: species enter
+through $R_s$ and $g$). Ch.\ 5.6.}
+\end{frame}
+
+\begin{frame}{Two species: results and assumptions}
+\todo{Case 3 / case 6 in ANSYS; time link $s$ and $\phi_{\rm cap}$ with
+their sensitivity (table from ch.\ 5.6).}
+\end{frame}
+
+\begin{frame}{Two species on a spreading biofilm (Python)}
+\todo{The same scheme on the reproduced Klempt 2024 test case 4.1 field
+(fig\_composition\_spreading); not carrying the composition with the front
+changes the mean by at most 0.001. Shows what ANSYS cannot show until the
+element's front term works.}
+\end{frame}
+
+\begin{frame}{Limitations}
+\todo{Verification only, no validation; one-way composition; $s$ and
+$\phi_{\rm cap}$ are assumptions; no spreading in ANSYS (front term); mesh;
+two $\alpha$ laws in the paper; small stresses with the published
+parameters. Ch.\ 5.8.}
+\end{frame}
+
+\begin{frame}{Conclusion and outlook}
+\todo{What is done; continuation at Keio: four and five species, two-way
+coupling, Abaqus implementation.}
+\end{frame}
+
+\begin{frame}{References}
+\small
+\begin{itemize}
+  \item Klempt, Soleimani, Junker (2023), PAMM: precursor spatial model
+  \item Klempt, Soleimani, Wriggers, Junker (2024), Biomech.\ Model.\ Mechanobiol.:
+        growth field, Eq.\ 34/36, Table 2
+  \item Klempt, Geisler, Soleimani, Junker (2026), Arch.\ Appl.\ Mech.:
+        multi-species point model, Table 1 cases
+  \item Fritsch et al.\ (2025), arXiv:2512.15145: Bayesian updating, same model
+\end{itemize}
+\end{frame}
+
+\appendix
+\begin{frame}{Appendix A: notation}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Growth field and mechanics (Klempt et al.\ 2024)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi$ & biofilm volume fraction (0 = void, 1 = dense)\\
+$c$ & nutrient concentration\\
+$\alpha$ & expansion variable, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; growth is $\alpha-1$\\
+$\mathbf F=\mathbf F_e\mathbf F_g$ & elastic / growth split\\
+$k_\alpha$ & growth factor ($10^{-3}$ per $T^*$)\\
+$\beta$ & phase-field regularisation\\
+$r,\ K$ & front growth rate, Monod constant\\
+$T^*$ & normalised time, $T^*\in[0,1]$\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Point model (Klempt et al.\ 2026)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi_i$ & volume fraction of species $i$\\
+$\phi_0$ & void, $\phi_0=1-\sum_i\phi_i$\\
+$\psi_i$ & living fraction (viability) of species $i$\\
+$\gamma$ & Lagrange multiplier for $\sum\phi_i+\phi_0=1$\\
+$A_{ij}$ & interaction matrix (self, cooperation, competition)\\
+$b_i$ & sensitivity to the antibiotic\\
+$c^*,\ \alpha^*$ & nutrient, antibiotic concentration\\
+$\eta_i$ & viscosity (time scale) of species $i$\\
+\bottomrule
+\end{tabular}\\[6pt]
+\textbf{Coupling (this work)}\\[2pt]
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi_{3D}$ & amount from the element field\\
+$\phi_i/\sum_j\phi_j$ & composition (share of species $i$)\\
+$s$ & time link: point model advances $s\,\Delta t$\\
+$\phi_{\rm cap}$ & largest amount the point model sees\\
+\bottomrule
+\end{tabular}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix B: background, growth field and mechanics}
+\small
+\textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
+isotropic $\mathbf F_g=\alpha\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
+A body that can grow freely stays stress free; stress appears where growth is constrained.\\
+\textbf{Material} (the example input, solver units MPa): $E_{\rm bio}=1000$, $E_{\rm void}=1$,
+$\nu=0.3$, blended linearly with the local biofilm fraction; no viscosity.
+Stresses scale linearly with $E$.
+\vspace{4pt}
+
+\textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
+\[
+\dot\phi=\underbrace{\beta\,\Delta\phi}_{\text{diffusion}}
++\underbrace{k_\alpha\,\alpha}_{\text{local source}}
+-\underbrace{r\,\frac{c}{k+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|}}_{\text{front growth towards nutrient}},
+\qquad
+\dot\alpha=k_\alpha\,\phi
+\]
+\begin{itemize}
+  \item $\phi$ and $c$ are nodal fields of the element; $\alpha$ is an internal
+        variable at the Gauss points
+  \item The front term moves the biofilm boundary up the nutrient gradient; it vanishes
+        where $\phi$ or $c$ is uniform
+  \item The nutrient diffuses much faster than the biofilm grows (quasi-static $c$)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix C: background, point model and one coupling step}
+\small
+\textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence:
+\[
+\begin{aligned}
+(\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\
+\eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier})
+\end{aligned}
+\]
+with $\sum_i\phi_i+\phi_0=1$; the barrier terms keep $\phi_i,\psi_i$ in $(0,1)$.
+Implicit time stepping, $\Delta t=10^{-4}$.
+\vspace{4pt}
+
+\textbf{One time step of the coupled ANSYS run}
+\begin{enumerate}
+  \item The element updates its field $\phi$ (Eq.\ 34)
+  \item At each Gauss point: $\phi_{3D}\to\alpha$ (Eq.\ 36) $\to\mathbf F_g\to$ stress
+  \item Two species: the point model is scaled to $\min(\phi_{3D},\phi_{\rm cap})$,
+        advanced by $s\,\Delta t$, scaled again; $\phi_i,\psi_i$ are stored as state variables
+\end{enumerate}
+\end{frame}
+
+\end{document}

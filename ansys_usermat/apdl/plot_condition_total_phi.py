@@ -12,6 +12,10 @@ The totals part only during the early transient, mostly through the
 vitalities psi_i: the alpha spread (converged; 200 and 800 steps per segment
 agree) is 0.56 % at t = 1e-4, peaks at 2.4 % near t = 1e-2, and falls to
 0.12 % at t = 1 and 0.003 % at t = 50. Printed by this script.
+These figures predate the Hill-gate fix of 2026-10-01 (with the gate off,
+species 5's interaction used to be multiplied by 0; see
+coupling/ODE_TMCMC_CROSSCHECK.md); the peak is now about 1.2 % -- rerun
+this script for the current values.
 
 Left: the measured initial compositions (very different). Right: phi_tot(t)
 for each condition, from the same seeds and ecology parameters as the

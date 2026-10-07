@@ -16,6 +16,17 @@ and were wrong. What genuinely is NOT on this machine is any *prior Abaqus
 run output* (no `.odb`/`.sta`/`.msg`/`.dat` anywhere on `C:`), so a fresh
 Abaqus run is possible here but nothing has been run here yet.
 
+## Which machine is this?
+
+- **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
+  scripts and Portable Git applies. Available until mid-December 2026.
+- **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
+  half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
+  identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
+  `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
+- **A Claude Code cloud session**: see the git-identity note under "Working
+  style"; no ANSYS or Abaqus.
+
 ## Key directories
 
 - `ansys_usermat/` — ANSYS USERMAT (Fortran) port of the Klempt growth model,
@@ -30,6 +41,11 @@ Abaqus run is possible here but nothing has been run here yet.
 - `tier2b_real/`, `configs/`, `runs/` — Abaqus coupon/implant job generation,
   configs, and run logs.
 - `tests/` — pytest unit tests (`pytest tests/`).
+- `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, and
+  Soleimani et al. 2023 (Sci. Rep., two-species co-aggregation in an ANSYS user
+  element) and Feng et al. 2021 (Bull. Math. Biol., two-species oral biofilm,
+  spreading driven by the summed species growth), each with
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
@@ -71,6 +87,14 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
   ifort reads a stale `biofilm_py_bridge.mod` and link_v222.ps1 still
   links the old object into a mixed exe.
+- **Native point model (6 Oct 2026):** `F:\biofilm_upf_native\ANSYS.exe` is
+  the partner-element build with `ansys_usermat/coupling/ecology_native.f`
+  (the point model in Fortran) in place of `usermat_py_hook.f`: no material
+  server, no port 8765; set `BIOFILM_ECO_CASE` to a file from
+  `abaqus_composition/write_eco_cfg.py <case>` before starting ANSYS (-np 1).
+  Same results as the server build (abaqus_composition/README.md), ~4x faster
+  on 8^3. Abaqus: `run_comp.ps1 -Native`. The week chain still uses
+  `F:\biofilm_upf_wired` with the server.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -93,6 +117,7 @@ this machine's specific workflow.
 | `build_slides.ps1` | Builds decks twice (pdflatex, or lualatex for the Japanese deck) and reads the log for `!` errors, frames that run off the page (`Overfull \vbox`), undefined references and the page count; cleans up. `-All` = the three meeting decks, `-Chapter` = `thesis_ch5/_build_check.tex`. Exit 1 on any problem. |
 | `commit.ps1` | `-Files a,b -Message $m [-Push]`: stages exactly the named files, refuses if anything else is staged or the message has an AI co-author trailer, writes the message as UTF-8 without BOM. |
 | `push.ps1` | Pushes HEAD to `origin/master` with the PAT from `.env` (token redacted from all output), then checks the GitHub API that the remote `master` equals local HEAD — the local tracking ref is not trusted (rename-lock). Rewritten 2026-09-29: the old version used the msys64 path, which has no `git.exe`. |
+| `ansys_usermat/apdl/run_chain.ps1` | `-Name n -Runs deck[:case[:minutes]], ... [-WaitFor other.log] [-Export results\<dir>] [-Push] [-DryRun]`: runs partner-element decks one after another through `run_wired.ps1` in a process **detached from the session** (WMI `Win32_Process.Create`), so a Claude session restart does not stop them (5 Oct: a background-shell chain died with the session). Log `F:\biofilm_upf_wired\_chain_<n>.log`; at the end optionally `export_runs_json.py` + commit + push of the JSON. Use it for any ANSYS work longer than a few minutes. |
 | `ansys_usermat/apdl/run_apdl.ps1` | `-Deck x.dat [-Ecology] [-Np 4] [-WorkDir ...]`: runs a deck through the custom exe (default `F:\biofilm_upf_kusepy`, `-smp -np 4`; refuses `-Np>1` with the thread-unsafe `F:\biofilm_upf`), starts/stops the material server for ecology decks, clears solver scratch before and after, prints the error/warning counts. |
 
 ## Git on this machine — important quirks
@@ -124,6 +149,17 @@ this machine's specific workflow.
 
 ## Working style for this repo
 
+- **Always reply to the user in Japanese, and keep replies short**
+  (decided 2026-10-02). Documents keep their own language (thesis and decks
+  in English unless asked otherwise).
+- **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
+  Keio master's (final presentation December 2027, graduation March 2028;
+  papers should be published before the presentation), papers and a job, not a doctorate or a
+  DFG proposal for him.
+- **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
+  2026-10-06). His element is an earlier version of Felix Klempt's
+  implementation (same NEM and AceGen files); Felix's is the later version
+  with fixes. Documents keep their own wording.
 - Keep changes scoped to named files; don't touch the pre-existing
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
@@ -191,6 +227,126 @@ this machine's specific workflow.
   **GitHub counts co-authors as contributors**, so such a trailer puts
   Claude on the Contributors page just as surely. `pre-commit` does not
   receive the commit message; only `commit-msg` does.
+
+## People and how to address them (2026-10-04)
+
+- **Meisam Soleimani is not a professor** (his own clarification, mail of
+  6 Oct 2026: he teaches as a lecturer). Write "Dr. Soleimani" (title page:
+  Dr.-Ing. Meisam Soleimani); in mail he is fine with "Meisam". This
+  replaces the 2026-10-04 rule "Prof. Soleimani"; documents already handed
+  over keep their wording.
+- **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
+  Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
+  contact page). Not part of the December colloquium.
+- **Keita Ando (Keio) is an associate professor (准教授)**, Department of
+  Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
+  department's 2021 lab brochure; not yet confirmed in use). Contact for the
+  Keio 課題研究報告 (the Keio-side thesis presentation). **Mail sent 6 Oct
+  2026 from keisuke58@keio.jp** (cc Assoc. Prof. Muramatsu), asking for its
+  date and whether it can be online as for earlier double-degree students;
+  stated: LUH thesis submitted in November, oral exam in December, return
+  to Japan about January 2027. Waiting for his reply. **Settled by the K-LMS
+  announcement (7 Oct 2026): no presentation meeting.** Submit the report
+  (A4, about 6 pages or more, Japanese or English) and a 5-minute recorded
+  PowerPoint talk by **12 Mar 2027 (Fri) 16:00 JST**; in Google Calendar with
+  reminders. A report based on a submitted or published single-author paper
+  must state the paper's details (e.g. a footnote). Keio student number
+  82519093, 開放環境科学専攻. The report itself:
+  `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
+  (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).
+- Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
+  Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
+  Soleimani and Dr.-Ing. Hendrik Geisler.
+- Addresses (from earlier mail): junker@ikm.uni-hannover.de,
+  soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
+  klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
+  (4 Oct) already has To: Junker, Wangenheim; Cc: Soleimani, Geisler.
+
+## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
+
+Felix offered his USERMAT implementation (two species; one species set to
+zero is the 2024 paper's model) and the theory of the two-species model,
+which is a chapter of his dissertation, still under development. He asked
+that it is not shared with anyone without asking him first.
+
+- Never commit his code, his theory notes or excerpts of them to this
+  repository (it is public), never upload them to claude.ai, artifacts,
+  Drive shares or any other service, and never paste them into mail to
+  others. Keep them outside git (IKMHIWI03: `F:\felix_private\`; a cloud
+  session: the scratchpad only).
+- Notes and results in the repository may say what was compared and what
+  agreed or differed (e.g. "the consumption term is g phi c in his
+  implementation"), but must not reproduce his code or his derivations.
+- Before anything based on his two-species theory goes into the thesis, a
+  paper or slides, ask him. If a mistake is found, tell him.
+
+## Slides, notes and other documents for supervisors (decided 2026-10-02)
+
+These apply to every deck, speaker script, email draft or report written for
+the supervisors (Dr. Soleimani, Oliver, Assoc. Prof. Muramatsu, the
+examiners). Check each one before the document is handed over.
+
+- **Abaqus is not part of this thesis.** Abaqus work is the Keio
+  continuation. Do not list Abaqus runs or ANSYS-vs-Abaqus comparisons as
+  done work in thesis material. Mentioning Abaqus as *future work at Keio*
+  is fine.
+- **First person singular.** Write "I", not "we" or "our". Use neutral
+  wording such as "this work" or "added in this work" where "I" reads
+  badly. In Japanese, write 私, not 私たち.
+- **Avoid wording that reads as AI-generated.**
+  - Avoid emphatic slogans: "strictly", "exactly as published", "nothing
+    else is tuned", "a property of X, not of Y", "The reason is simple",
+    "This matters:".
+  - Do not use dashes (---) as the main punctuation; use commas, colons or
+    a new sentence.
+  - Keep bold to a few key numbers.
+  - State the result plainly and let the numbers carry it.
+- **Klempt et al. 2024 is the reference this work follows.** The paper is in
+  the repository: `references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf`
+  (CC BY 4.0; searchable text in the `.txt` next to it). Check the model,
+  parameters and notation against it, not against memory or older notes.
+- **Notation as in the papers** (decided 2026-10-02), in every document and
+  figure:
+  - $\phi$ (`\phi`, not `\varphi`) for volume fractions, as printed in
+    Klempt 2024, Klempt et al. 2026 and PAMM 2023;
+  - $\alpha$ with $\mathbf F_g=\alpha\mathbf I$ and $\alpha(0)=1$ (Klempt 2024);
+    the growth is written $\alpha-1$. Do not use $\alpha_K$ or
+    $\mathbf F_g=(1+\alpha)\mathbf I$ in documents (the UMAT's internal
+    variable is $\alpha-1$; say so where code values are quoted);
+  - $k_\alpha$ for the growth rate (Klempt 2024 Eq. 34/36, Table 2);
+  - point model (Klempt et al. 2026): $\phi_i$, $\psi_i$,
+    $\bar\phi_i=\phi_i\psi_i$, $\phi_0$, $\gamma$, $\eta_i$, $c^*$, $\alpha^*$.
+    The papers have no symbol for the share of a species: write
+    $\phi_1/(\phi_1+\phi_2)$, not a new symbol such as $\chi_i$.
+- **Follow Klempt et al. 2024 (Felix) for the model and its parameters.**
+  - Any value not taken from a paper must be marked as such on the slide,
+    e.g. the bring-up growth rates or the partner's example-input
+    stiffness.
+  - Modelling assumptions (e.g. the time link s, φ_cap) are stated as
+    assumptions, each with its sensitivity study.
+  - **β (diffusion of φ, Eq. 34) = 0.02 mm²/T*** in the ANSYS runs
+    (decided 2026-10-05): Klempt 2024 Table 2 (β = 2) converted to the
+    partner's 2 mm cube (KLEMPT2024_REPRODUCTION.md §8). The partner's
+    example value 1e−4 is shown only as a sensitivity case: its diffusion
+    length (~0.01 mm) is below every mesh, so the seed stress does not
+    converge. The conversion is an assumption and is stated as such.
+- **Units.** The partner's decks are `/units,MPA`, so `YOUNG_BIO = 1000`
+  means 1000 MPa. Give units for every material constant. The Klempt 2024
+  values are μ = 3.3557 Pa (E = 10 Pa, ν = 0.49).
+- **Background appendix.** Every deck gets an appendix with the notation
+  (basic variables of the growth field, the point model and the coupling)
+  and the background equations, so questions can be answered from the
+  slides. The 5 Oct deck (`slides_1005.tex`, appendix A–C) is the template.
+- **No internal labels** (stage numbers, `prop(28)` modes, run names) in
+  anything the partner or the supervisors see. Describe what a run does.
+- **Figures in Times New Roman** (decided 2026-10-02). Every figure script
+  calls `figstyle.apply()` from `ansys_usermat/figstyle.py` (Times New Roman,
+  Liberation Serif where it is not installed, STIX mathematics). New figure
+  scripts use it too; do not set fonts per script.
+- **Build and check before handing over.** Keep the deck at 20 pages or
+  fewer, with no LaTeX errors and no overfull frames, and look at the
+  rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
+  pdflatex/lualatex in a cloud session.
 
 ## This PC vs. claude.ai (web) — don't mix them up
 

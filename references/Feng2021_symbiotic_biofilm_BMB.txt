@@ -1,0 +1,1846 @@
+Bulletin of Mathematical Biology (2021) 83:48
+https://doi.org/10.1007/s11538-021-00888-2
+
+ORIGINAL ARTICLE
+
+
+
+Modeling of Symbiotic Bacterial Biofilm Growth with an
+Example of the Streptococcus–Veillonella sp. System
+
+Dianlei Feng1         · Insa Neuweiler1 · Regina Nogueira2 · Udo Nackenhorst3
+
+Received: 15 November 2019 / Accepted: 11 March 2021 / Published online: 24 March 2021
+© The Author(s) 2021
+
+
+Abstract
+We present a multi-dimensional continuum mathematical model for modeling
+the growth of a symbiotic biofilm system. We take a dual-species namely, the
+Streptococcus–Veillonella sp. biofilm system as an example for numerical investiga-
+tions. The presented model describes both the cooperation and competition between
+these species of bacteria. The coupled partial differential equations are solved by using
+an integrative finite element numerical strategy. Numerical examples are carried out
+for studying the evolution and distribution of the bio-components. The results demon-
+strate that the presented model is capable of describing the symbiotic behavior of the
+biofilm system. However, homogenized numerical solutions are observed locally. To
+study the homogenization behavior of the model, numerical investigations regarding
+on how random initial biomass distribution influences the homogenization process are
+carried out. We found that a smaller correlation length of the initial biomass distribution
+leads to faster homogenization of the solution globally, however, shows more fluctu-
+ated biomass profiles along the biofilm thickness direction. More realistic scenarios
+with bacteria in patches are also investigated numerically in this study.
+
+Keywords Biofilm model · Symbiotic system · Streptococcus–Veillonella ·
+Numerical simulation · Heterogeneous distribution
+
+
+
+
+B Dianlei Feng
+    feng@hydromech.uni-hannover.de
+
+1   Institute of Fluid Mechanics and Environmental Physics in Civil Engineering, Leibniz
+    Universität Hannover, Appelstraße 9a, 30167 Hannover, Germany
+2   Institute for Sanitary Engineering and Waste Management, Gottfried Wilhelm Leibniz
+    Universität Hannover, Welfengarten 1, 30163 Hannover, Germany
+3   Institute of Mechanics and Computational Mechanics, Leibniz Universität Hannover, Appelstraße 9a,
+    30167 Hannover, Germany
+
+
+                                                                                           123
+48   Page 2 of 36                                                             D. Feng et al.
+
+
+1 Introduction
+
+More than 90% of microbes live in biofilms which can be defined as “assemblages of
+bacterial cells attached to a surface and enclosed in an adhesive matrix secreted by the
+cells” (Madigan 2012). A biofilm in natura is usually found as a multi-component,
+multi-species, heterotopic matter with multi-phase properties. Competition and coop-
+eration among species of bacteria are normally involved in multi-species biofilm
+systems (Yang et al. 2011). A biological system is symbiotic when cooperation hap-
+pens between two different organisms.
+    Mathematical and numerical modeling is a powerful tool for understanding both
+the physical and bio-chemical processes during the formation and development of the
+biofilms. Many modeling strategies and models have been developed for describing
+biofilm processes. However, mathematical modeling of symbiotic biofilm systems
+has not been well studied. Modeling a symbiotic biofilm system naturally requires
+the consideration of a multi-species biofilm problem which is usually challenging,
+especially for multi-dimensional scenarios.
+    Several studies on modeling multi-dimensional multi-species biofilm system have
+been carried out in the literature. Noguera et al. (1999) presented a Cellular Automa-
+ton (CA) model for modeling a dual-species (D. vulgaris–M. formicicum) biofilm
+system. Recently, Tang and Liu (2017) developed a multi-species multi-dimensional
+CA model to study syntrophic and dissimilatory metal reducing bacterial bioiflm sys-
+tem. In their study, a syntrophic ecological system is considered. Martin et al. (2017)
+studied a dual-species (S. gordonii–P. gingivalis) oral biofilm system with a further
+developed CA model. Three models on the relationship between these two species of
+bacteria, namely independence for substrates, competition for substrate, and inhibition
+of one to another, are compared in their study. Individual-based Modeling (IbM) have
+also been used for studying various multi-species biofilm problems, such as model-
+ing ammonium oxidizer bacteria (AOB) and nitrite oxidizer bacteria (NOB) system
+(Picioreanu et al. 2004), modeling dormant cell formation (Chihara et al. 2015) pro-
+cess, investigation of denitrifying bacteria—sulfate reducing bacteria—methanogens
+biofilm systems (Martin et al. 2015) and so forth. These models are not continuum
+and are usually categorized as the so-called discrete element based models (Noguera
+et al. 1999; Fujikawa 1994; Kreft et al. 2001; Picioreanu et al. 1998; Wimpenny and
+Colasanti 1997).
+    Although the reaction model presented in this paper can also be applied with discrete
+element based models, we present our model within the framework of continuum
+biofilm models which are fully described by partial differential equations (Alpkvist and
+Klapper 2007; Cogan 2004; Duddu et al. 2009; Eberl et al. 2001; Klapper and Dockery
+2002; Lindley et al. 2012; Wanner and Gujer 1986; Zhang et al. 2008b). Alpkvist
+and Klapper (2007) presented a multi-dimensional multi-species biofilm model and
+applied it for studying an autotrophs-heterotrophs-inert bifilm system. The growth of
+biofilm is modeled as an advective movement of a potential flow due to the production
+or reduction of biomass. Instead of modeling the biofilms grow advectively, Rahman
+et al. (2015) presented a multi-species multi-dimensional continuum diffusion-reaction
+model. A cross-diffusion process is additionally introduced into the model to overcome
+the internal over-mixing problem. The over-mixing of different species of biomass
+
+123
+Modeling of symbiotic bacterial biofilm growth                               Page 3 of 36   48
+
+
+is a common flaw in many diffusion-reaction continuum models as well as some
+discrete element based models for multi-species multi-dimensional biofilm modeling
+(Tang and Valocchi 2013). Since the advection-reaction biofilm model presented by
+Alpkvist and Klapper (2007) does not involve physical diffusion, it is expected to be
+less diffusive, although the numerical dissipation is not avoidable. However, when the
+reactions become complex, whether locally homogenized biomass distribution will be
+obtained or not is still an open question. We look into such a problem by studying the
+presented symbiotic biofilm system with an advection-reaction type model, and one
+goal of this study is to investigate the solution behaviors of the model.
+    We take an oral dual-species, namely the Streptococcus–Veillonella sp. biofilm
+system (Chalmers et al. 2008), as an example of modeling symbiotic biofilm systems.
+Both Streptococcus sp. and Veillonella sp. play vital roles in the formation of dental
+biofilms. Dental bacterial biofilms are often of special interested due to their roles in
+the treatments of dental implants and diseases (Paquette et al. 2006; Kommerein et al.
+2017). Different from many other types of biofilms, the bacteria that form the dental
+biofilms need salivary glycoproteins to attach to the teeth surface. Meanwhile, saliva
+is also the main nutrient source for the microbes in oral cavities (Chalmers et al. 2008;
+Chalmers 2008). Among the Streptococcus group bacteria, Streptococcus gordonii is
+a well-known Gram-Positive commensal bacterium in oral cavities which can cause
+caries and demineralization of teeth (Nascimento et al. 2009). Streptococcus gordonii
+is also the first batch of bacteria that attach to the teeth surface and is known as a
+species of early colonizers (Kolenbrander et al. 2010). The early colonizers can build
+up a foundation for the later colonizers to attach to the biofilm structure. This makes
+them important for studying oral biofilms.
+    Similar to the S. gordonii, Veillonella sp. is also a group of early colonizers which
+congregate with S. gordonii (Periasamy and Kolenbrander 2010). It has been dis-
+covered that the Veillonella sp. cannot grow alone in saliva. However, it colonizes
+when there is Strptococcus sp. (e.g. S. gordonii) coexisting in the system (Chalmers
+et al. 2008). Similar behavior has also been observed in Kara et al. (2007), Mashima
+and Nakazawa (2015). A biological interpretation of such phenomenon is that the
+Veillonella sp. cannot utilize the carbon source in saliva directly but can ferment the
+metabolic production of S. gordonii, namely lactic acid, instead (Periasamy and Kolen-
+brander 2010). It is worth noting that the lactic acid not only provides a carbon source
+for the growth of the Veillonella sp. but also causes a decrease of the pH in the system.
+It has been experimentally observed that the Veillonella sp. can tolerate more acid than
+the S. gordonii (Bradshaw and Marsh 1998). The presence of the Veillonella which
+utilizes the lactic acid may thus be beneficial to the growth of the S. gordonii indirectly.
+    In this study, we develop a mathematical model for the symbiotic S. gordonii–
+Veillonella biofilm system under the hypothesis that the lactic acid has a negative
+influence on the growth of S. gordonii and thus the symbiotic biofilm system studied
+in this paper is essentially a mutualistic ecological system. The flow velocity in oral
+cavities is known to be very small and does not have much impact on the growth of
+the S. gordonii biofilm within a typical characteristic period (12h–24h) (Rath et al.
+2017). The mathematical model developed by Alpkvist and Klapper (2007) has been
+validated for the S. gordonii biofilm (Rath et al. 2017; Feng et al. 2018). Many studies
+have reported that the Streptococcus sp. dominates in a multi-species biofilm, which
+
+                                                                                 123
+48   Page 4 of 36                                                               D. Feng et al.
+
+
+consists of the Streptococcus sp. and Veillonella sp. (Chalmers et al. 2008; Periasamy
+and Kolenbrander 2010; Kommerein et al. 2017). For this reason, we develop the
+symbiotic biofilm model based on the advection-reaction biofilm growth model.
+   The model presented in this paper can be used for quantitatively understanding of the
+Streptococcus–Veillonella symbiotic biofillm system and in general can be modified
+to model a variety of biofilm systems with similar bio-chemical properties. To the best
+of our knowledge, a continuum model for such kind of symbiotic biofilm systems has
+not been well developed. This study may shed light on understanding the numerical
+behaviors of multi-dimensional multi-species continuum (advection-reaction) biofilm
+models which involve complex reactions.
+   This paper is structured as follows. Details of the model will be presented in Sect.
+2. Numerical results are presented and investigated in Sect. 3. The symbiotic biofilm
+model is highly non-linear. We observed a homogenized numerical solution of biomass
+at a later time. To better understand the solution behaviors, we investigated how the
+initial condition (see Sect. 3.2) and the symbiotic reaction relationship (see Sect. 3.4)
+influence the homogenization of the solutions. In Sect. 4, the results are summarized
+and discussed. Further detailed information regarding the dimensionless form of the
+governing equations, as well as the corresponding numerical method, are presented in
+Appendices A and B.
+
+
+2 Mathematical Model
+
+2.1 Model Assumptions
+
+The Streptococcus–Veillonella biofilm system is illustrated in Fig. 2. Two biomass
+components, namely the S. gordonii and V. PK1910 interact with each other in a
+mutualistic relationship. Especially, S. gordonii produces lactic acid, which plays a
+vital role in the chain of the symbiotic bio-chemical process is modeled explicitly.
+Despite the saliva cannot function as a carbon source for the Veillonella sp., saliva still
+may provide other nutrients for the growth of both species due to its complex mixture
+substance property. Therefore, a competition of the saliva between S. gordonii and
+Veillonella sp. is considered in the model. On the other hand, Veillonella sp. helps
+to prevent the environment from being too acid, and thus benefits the growth of S.
+gordonii. We develop the mathematical model based on the following assumptions:
+ • A layer of biomass with a finite thickness has been presented as an initial condition.
+   The model does not capture the process in which individual bacteria grow into a
+   biofilm. On the other hand, the growth process after forming an initial layer of
+   biofilm is modeled.
+ • Two species of bacteria, namely the Streptococcus sp., and Veillonella sp. are
+   considered in the model. The volume fractions of the bacteria sum to one inside of
+   the biofilm, which implies that the pore space and EPS are not explicitly modeled
+   (Alpkvist and Klapper 2007).
+
+
+
+
+123
+Modeling of symbiotic bacterial biofilm growth                             Page 5 of 36   48
+
+
+ • Saliva is considered as a common nutrient source consumed by both species of
+   bacteria. However, the growth of Veillonella is limited by both the nutrient and the
+   lactic acid, which is produced by Streptoccus sp. (Chalmers et al. 2008).
+ • The concentration of hydrogen is not modeled explicitly, but the concentration of
+   the lactic acid is considered instead as an indicator for it (Gordeeva et al. 2017).
+ • The fluid-structure interaction process is not considered. This assumption is based
+   on our previous experimental observations of the formation process of S. gordonii
+   (Rath et al. 2017).
+ • No new void spaces of bacteria can develop during the growth of the biofilm. In
+   other words, the biofilm domain is simply connected (see Fig. 1).
+ • The nutrients in saliva are fully mixed with a distance above the biofilm. A Dirichlet
+   boundary condition of the nutrients thus exists (Picioreanu et al. 2006).
+ • The growth velocity is irrotational (Klapper and Dockery 2002), and different
+   species of bacteria have the same advection velocity (Alpkvist and Klapper 2007).
+ • Diffusion coefficients are constant both inside and outside of the biofilm (Alpkvist
+   and Klapper 2007).
+   To make the model simple, we introduced assumptions more than necessary. One
+can include the EPS as an additional biomass component in the model, as in Xavier
+et al. (2005). It is also convenient to assign heterogeneous modeling parameters, such
+as diffusion coefficient, density, or even growth rate in the model (Fig. 2). The pH can
+also be modeled by slightly extending the model, as presented in Khassehkhan and
+Eberl (2008).
+   The main limitation of the presented model is the requirement of being simply
+connected (biofilm domain) during biofilm growth. This is mostly due to the difficulty
+of enforcing proper potential (or pressure) boundary conditions for the newly generated
+biofilm-fluid surface. Such a problem may come up when trying to model the merge
+of different colonies. As illustrated in Fig. 1b, when there is a new biofilm-fluid
+interface (Γ2 ) generated during the merge of colonies, it is not straightforward to
+enforce boundary conditions of the potential on Γ1 and Γ2 . On the other hand, the
+model can be used to model the merge of different colonies if only the scenario, as
+shown in Fig. 1a, occurs. Modeling the merge of colonies is beyond the aim of this
+paper. For the readers interested in this topic, we refer to the three-dimension numerical
+study in Alpkvist and Klapper (2007).
+
+2.2 Model Domain
+
+To build up the model based on the above assumptions, the mass balance of each
+substrate and component of biomass in the biofilm is considered. Eventually, the
+mathematical model, which is essentially a free boundary problem, consists of five
+partial differential equations (PDEs) including four coupled nonlinear time depen-
+dent advection–diffusion-reaction (or advection-reaction) equations and a Poisson’s
+equation.
+   Taking a 2D model as an example, the biofilm is modeled within a computational
+domain of Ω = {x = (x, z) : 0 ≤ x ≤ W , 0 ≤ z ≤ H } with the corresponding
+boundary ∂Ω. The top border is denoted as Γht and the other sides are denoted by
+
+                                                                               123
+48   Page 6 of 36                                                                                D. Feng et al.
+
+
+
+
+Fig. 1 Typical biofilm patterns generated during the merge of two colonies
+
+
+
+
+Fig. 2 Illustration of the symbiotic biofilm system. The Veillonella sp. PK1910 and Streptococcus gordonii
+are taken as example species of the bacteria in the illustration. Both species of bacteria compete for the
+nutrients in saliva. The Streptococcus gordonii produces lactic acid, which is a carbon source for Veillonella
+sp. The lactic acid also prevents the growth of gordonii
+
+
+
+Γs1 = ∂Ω  Γht . The outward-pointing normal vectors of Γs1 and ∂Ω are denoted
+as ns1 and ns2 respectively. A sub-domain Bt ∈ Ω refers to the biofilm domain above
+which a bulk fluid domain Ft is assumed. The biofilm-fluid interface Γint = Bt ∩ Ft ,
+which is a free boundary, moves over time induced by the growth of the biofilm.
+
+2.3 Mass Balance of Biomass
+
+The growth of both S. gordonii and Veillonella are modeled as advective movements
+driven by the production and reduction of biomass inside of the biofilm. Writing the
+mass balance equations of S. gordonii and Veillonella sp. in terms of their volume
+
+123
+Modeling of symbiotic bacterial biofilm growth                             Page 7 of 36     48
+
+Fig. 3 Two dimensional
+illustration of the computational
+domains of the symbiotic
+biofilm model
+
+
+
+
+fraction ϑ reads
+
+                                ∂ϑ1                g1
+                                    + ∇ · (uϑ1 ) = , x ∈ Ω,                               (1a)
+                                 ∂t                ρs
+                                ∂ϑ2                g2
+                                    + ∇ · (uϑ2 ) =    , x ∈ Ω,                            (1b)
+                                 ∂t                ρv
+
+where u [L T −1 ] denotes the growth velocity of the biofilm, indexes “1” and “2” are
+used to refer physical quantities of the S. gordonii and Veillonella bacteria respectively
+and, ρs and ρv denote the density of the corresponding biomass. In Eq. (1), g refers
+to the mass production/reduction rate of the biomass. A no-flow boundary is applied
+for both Eqs. (1a) and (1b)
+
+                            ns2 · (uϑi ) = 0, (i = 1, 2), x ∈ ∂Ω.                          (2)
+
+   It has been experimentally found that the S. gordonii can tolerate less acid than the
+Veillonella sp. and the Veillonella sp. may become dominant even in the environment
+with pH < 5.0 (Bradshaw and Marsh 1998). The growth of S. gordonii is sensitive
+to the acid and, on the other hand, Veillonella can grow in a small pH environment.
+Therefore, we only model the negative influence of lactic acid on the growth of S.
+gordonii. The mass production process of S. gordonii is limited by the concentration
+of saliva (s1 ) and suppressed by the lactic acid (s2 )
+
+                                                       s1       kl
+                                    g1 = ϑ1 ρs μ1                    .                     (3)
+                                                    k11 + s1 kl + s2
+
+In Eq. (3), μ1 [T −1 ] and k11 [M L −3 ] refer to the maximum growth rate and the
+half-rate constant of the S. gordonii in the Monod kinetic respectively. We introduce
+a parameter kl [M L −3 ] for modeling the suppression process induced by the lactic
+acid. A benefit of choosing g1 in the form as Eq. (3) is, when s2 → +∞, g1 → 0.
+This means the growth of the S. gordonii stops when the concentration of the lactic
+acid is infinitely large.
+
+                                                                               123
+48   Page 8 of 36                                                             D. Feng et al.
+
+
+   The growth of Veillonella is limited by both the concentration of the nutrients in
+saliva s1 and the concentration of the lactic acid s2
+
+                                              s1       s2
+                           g2 = ϑ2 ρv μ2                     .                         (4)
+                                           k21 + s1 k22 + s2
+
+In Eq. (4), μ2 [T −1 ] denotes the maximum growth rate of Veillonella and k21 [M L −3 ]
+and k22 [M L −3 ] are the half-rate constant in the Monod kinetic.
+
+2.4 Mass Balance of Saliva and Lactic Acid
+
+The chemical reactions of components in the saliva environment are very complex,
+and the corresponding reaction parameters are mostly unknown. Instead of describing
+detailed chemical reactions of all involved chemical components in saliva, we consider
+the saliva itself as one substance demanded by both species of bacteria. Since the time
+scale of the transport process of the substrate (solutions) is much smaller than the time
+scale of the biofilm growth (Picioreanu et al. 2000), the mass balance of the saliva is
+modeled as a stationary diffusion-reaction process as
+
+                           − D1 ∇ 2 s1 = r11 + r12 , x ∈ Ω,                            (5)
+
+where r11 and r12 [ML−3 T −1 ] denote the saliva (nutrients in saliva) consumption rates
+by S. gordonii and Veillonella sp. respectively, and D1 [L 2 T −1 ] denotes the diffusion
+coefficient of the saliva. As a remark, one can also write (5) as a time-dependent
+equation (Wanner and Reichert 1996).
+   The nutrient in saliva comes from the outside of the modeling domain Ω. We are
+interested in the symbiotic behavior of bacteria in a batch system with sufficient sup-
+plying nutrients in this study. For this reason, we consider a specific batch system with
+a controlled concentration of nutrients. Accordingly, we apply a boundary condition
+where a constant value s̄1 is set at the top of the computational domain Γht (as shown
+in Fig. 3)
+                                    s1 = s̄1 , x ∈ Γht .                              (6)
+As a remark, if the nutrient concentration s1 is not controlled in the application, one
+needs to modify Eq. (5) by involving the time-dependent term and also apply a no-flow
+boundary at the top of the computational domain. A no-flow boundary is applied on
+the other borders of the computational domain as
+
+                               ns1 · ∇s1 = 0, x ∈ Γs1 ,                                (7)
+
+where ns1 denotes the normal vector of Γs1 .
+   The reaction term corresponding to the consumption of saliva by S. gordonii is
+described by using the Monod kinetics and reads
+
+                                               1
+                                    r11 = −       g1 ,                                 (8)
+                                              Ys1
+
+123
+Modeling of symbiotic bacterial biofilm growth                             Page 9 of 36     48
+
+
+where Ys1 [−] denotes the corresponding yield of the S. gordonii by consuming rate
+of the saliva. Similarly, the consumption rate of the saliva due to the Veillonella reads
+
+                                                                1
+                                    r12 (s1 , s2 , ϑ2 ) = −        g2 ,                    (9)
+                                                               Yv1
+
+where Yv1 [−] is the yield of the Veillonella.
+   The lactic acid which is secreted by the S. gordonii accumulates over time in the
+system. If a batch system is considered, the lactic acid is produced inside of the biofilm
+domain Bt and stays in the system. In this case, the mass balance of the lactic acid
+cannot be modeled as a quasi-steady state since the absence of the Dirichlet boundary
+condition. For these reasons, the mass balance of the acid has to be modeled as a
+time dependent process. The mass transport of acid is diffusion-reaction dominated.
+Therefore, one can simplify the model by neglecting the advection process and achieve
+comparable, accurate results. Moreover, the production and consumption of the lactic
+acid by S. gordonii and Veillonella sp. are also considered respectively. The mass
+balance of the lactic acid reads
+                      ∂s2
+                          + ∇ · (us2 ) − D2 ∇ 2 s2 = r21 + r22 , x ∈ Ω,                   (10)
+                      ∂t
+
+where D2 [L 2 T −1 ] is the diffusion coefficient of the lactic acid. r21 [M L −3 T −1 ]
+and r22 [M L −3 T −1 ] describe the production of the lactic acid by S. gordonii and
+the consumption rate of the acid by the Veillonella respectively. As a remark, the
+advection term in (10) is negligible. The Péclet number for the corresponding process
+has an order of magnitude 10−4 (estimated by using parameters in Table 1). We solve
+all time-dependent equations simultaneously using the stabilized space-time finite
+element method (see Appendix B). Keeping the advection term in (10) makes it more
+convenient for the numerical implementation.
+   S. gordonii grows by consuming saliva and producing lactic acid at the same time.
+Thus the reaction term r21 can be written as
+
+                                                 r21 = λg1 ,                              (11)
+
+where λ [−] is a parameter which describes the mass production rate of acid by unit
+mass of S. gordonii. Only the Veillonella sp. in the system consumes lactic acid,
+therefore, the reaction kinetic can be written as
+
+                                                                1
+                                    r22 (s1 , s2 , ϑ2 ) = −        g2 ,                   (12)
+                                                               Yv2
+
+where Yv2 refers to the yield of Veillonella by consuming the lactic acid. A no-flow
+boundary is applied on ∂Ω for Eq. (10) as
+
+                             ns2 · (u∇s2 − D2 ∇s2 ) = 0, x ∈ ∂Ω,                          (13)
+
+where ns2 denotes the normal vector on ∂Ω.
+
+                                                                               123
+48   Page 10 of 36                                                            D. Feng et al.
+
+
+   We applied a no-flow boundary condition in the saliva’s mass balance equation.
+Such a boundary condition implies that a batch system is modeled. For flow chamber
+systems, one may also invoke a Dirichlet boundary for the acid (see later discussions
+in Sect. 3.1.2). Alternatively, one can apply a diffusive boundary layer (Feng et al.
+2017) which essentially is a Robin boundary condition (Ghasemi et al. 2018; Wanner
+and Gujer 1986) for allowing the acid to leave the domain.
+
+2.5 Potential Equation for the Movement of the Biofilm
+
+We model the movement of the biofilm as a potential flow driven by the production
+of the biomass inside of the biofilm following (Klapper and Dockery 2002; Alpkvist
+and Klapper 2007). It is assumed that the two species of bacteria compose the whole
+biofilm. Therefore, the volume fractions of the S. gordonii and Veillonella sum up to
+one in the biofilm domain Bt as
+
+                                 
+                                 2
+                                       ϑi = 1, x ∈ ∂ Bt .                             (14)
+                                 i=1
+
+Following the previous potential flow assumption, the biofilm growth velocity is
+described as the gradient of the potential Φ. Substituting Eqs. (1a) and (1b) into
+(14) yields the potential equation
+
+                                          g1     g2
+                           ∇ · u = ∇2Φ =     + , x ∈ Bt ,                           (15a)
+                                          ρs     ρv
+                               Φ = 0, x ∈ Γint ,                                    (15b)
+                        nΦ · ∇Φ = 0, x ∈ ΓΦ .                                       (15c)
+
+In Eq. (15), nΦ denotes the norm vector of ΓΦ . Additionally, u = 0 in the domain
+outside of the biofilm Bt .
+
+2.6 Dimensionless Form of the Governing Equations
+
+Equations (1), (5), (10) and (15a) together with their corresponding boundary con-
+ditions compose the full mathematical model which describes the symbiotic biofilm
+system illustrated in Fig. 2.
+   To obtain the dimensionless form of the governing equations, we introduce the
+following dimensionless variables
+
+             x             t           td Φ             s1
+         X=     ,    T =     , χ = 2 , S1 = ,
+            H             td            H               s¯1
+            s2               D  t               H 2ρ μ              H 2 ρv μ2
+                    D2∗ =
+                               2 d                   s 1
+        S2 = ,                     , Θ  2
+                                        11 =               , Θ 2
+                                                              12 =             ,
+            s¯1              H2                Ys1 D1 s¯1           Yv1 D1 s¯1
+                     λρs μ1 td              ρv μ2 td
+               Θ21
+                2
+                   =            , Θ222
+                                         =            , Ψ1 = μ1 td , Ψ2 = μ2 td ,
+                        s¯1                  s¯1 Yv2
+
+123
+Modeling of symbiotic bacterial biofilm growth                                      Page 11 of 36     48
+
+                          k11               k21              k22            kl
+                K 11 =        ,    K 21 =       ,   K 22 =       ,   KL =       .                   (16)
+                          s¯1               s¯1              s¯1            s¯1
+
+In Eq. (16), H and td are characteristic length and time which are taken as the height
+of the computational domain and the time of a day respectively in this study.
+   Substituting Eq. (16) into Eqs. (1), (5), (10) and (15a) yields the dimensionless
+form of the governing equations. The detailed dimensionless governing equations
+are listed in Appendix A, and the corresponding numerical strategy for solving these
+dimensionless equations is presented in Appendices B and C.
+
+
+3 Results
+
+We investigate the solution behaviors of the mathematical model in this section. An
+initially evenly mixed scenario has been investigated in Sect. 3.1. It turns out that the
+solution is spatially homogenized at a later time. To better understand the solution’s
+homogenization property, we studied how different random initial conditions influence
+the solutions in Sect. 3.2. We also look into more realistic scenarios with an initial
+condition of one species embedded in another and investigate the role of symbiotic
+reactions in the generation of homogenized solutions (in Sects. 3.3 and 3.4).
+   Two-dimensional simulations are carried out with the modeling parameters listed
+in Table 1. For all numerical simulations, a 200 × 200 spatial mesh with four-node
+bilinear elements is applied and the time step size is taken as Δt = 200  1
+                                                                              [day]. The
+TDG-FIC scheme (see Appendix B) with a 3rd order time accuracy is applied for
+solving the governing equations. In this study, we aim at investigating the reactive
+dynamics of the symbiotic biofilm system instead of a specific experimental scenario.
+We apply an initial condition for S2 by assuming no lactic acid in the system as
+
+                                  S2 (X, t = 0) = 0,     X ∈ Ω ∗.                                   (17)
+
+
+3.1 Evenly Mixed Case
+
+A wave shape initial biofilm-fluid interface in the dimensionless domain is applied
+                                                    π
+                   Γint
+                     0
+                        :→ Z = 0.1 + 0.05 sin 4π X +    ,              X ∈ Ω ∗.                     (18)
+                                                     2
+We also consider that these two species of bacteria are initially evenly mixed as
+
+                      ϑ1 (X, t = 0) = ϑ2 (X, t = 0) = 0.5,           X ∈ Ω ∗.                       (19)
+
+3.1.1 Biomass Evolution and Distribution
+
+Simulation results of biomass distribution of both S. gordonii and Veillonella at early
+and late times are shown in Fig. 4. Since the numerical solutions are symmetric regard-
+ing the middle line X = 0.5, only the half plane of a solution of each species of biomass
+
+                                                                                         123
+                                                                                                                                          48
+
+
+
+
+123
+      Table 1 Parameters used for two-dimensional symbiotic biofilm simulation
+                                                                                                                                          Page 12 of 36
+
+
+
+
+      Quantity name                                                   Symbol     Value       Unit    Source
+
+      Length of the computational domain                              W          300         μm      Alpkvist and Klapper (2007)
+      Height of the computational domain                              H          300         μm      Alpkvist and Klapper (2007)
+      Saliva concentration at the top boundary                        s̄1        10          kg/m3   Estimated
+      Diffusion coefficient of saliva                                 D1         5 × 10−10   m2 /s   Corbin et al. (2011)
+      Diffusion coefficient of lactic acid                            D2         1 × 10−9    m2 /s   Ribeiro et al. (2005)
+      Density of S. gordonii                                          ρs         1100        kg/m3   Estimated from Duddu et al. (2009)
+      Density of Veillonella                                          ρv         1100        kg/m3   Estimated from Duddu et al. (2009)
+      Biofilm yield of S. gordonii by consuming saliva                Ys1        10−1        [−]     Estimated
+      Biofilm yield of Veillonella by consuming saliva                Yv1        10−1        [−]     Estimated
+      Biofilm yield of Veillonella by consuming lactic acid           Yv2        10−1        [−]     Estimated
+      Production coefficient of lactic acid                           λ          5 × 10−1    [−]     Estimated
+      Maximum growth rate of S. gordonii                              μ1         3 × 10−5    s−1     Rath et al. (2017)
+      Maximum growth rate of Veillonella                              μ2         8 × 10−5    s−1     Estimated
+      Monod half-rate constant                                        k11        0.878       kg/m3   Rath et al. (2017)
+      Monod half-rate constant                                        k21        0.878       kg/m3   Estimated
+      Monod half-rate constant                                        k22        0.0878      kg/m3   Estimated
+      Monod half-rate constant                                        kl         1           kg/m3   Estimated
+                                                                                                                                          D. Feng et al.
+Modeling of symbiotic bacterial biofilm growth                                             Page 13 of 36       48
+
+
+
+
+                                                           0.8                                 S. gordonii
+                                                                                               Veillonella
+                                                                                              totla biomass
+                                                           0.6
+
+
+
+
+                                                   Z [-]
+                                                           0.4
+
+
+                                                           0.2
+
+
+                                                            0
+                                                                 0   0.2     0.4     0.6       0.8         1
+                                                                           Volume Fraction [-]
+                         (a)                                                  (b)
+
+
+                                                           0.8                                 S. gordonii
+                                                                                               Veillonella
+                                                                                              totla biomass
+                                                           0.6
+                                                   Z [-]
+
+
+
+
+                                                           0.4
+
+
+                                                           0.2
+
+
+                                                            0
+                                                                 0   0.2     0.4     0.6       0.8         1
+                                                                           Volume Fraction [-]
+                         (c)                                                  (d)
+Fig. 4 Simulation results of the symbiotic biofilm system at different times (from top to bottom are at
+t = 9.6h(T = 0.4) and t = 48h(T = 2.0)). Left column: Volume fraction distributions of S. gordonii
+and Veillonella; Right column: Volume fraction profiles of S. gordonii and Veillonella and total biomass in
+depth at X = 0.5
+
+
+
+is shown in the figure. The white curve in Fig. 4 represents the biofilm-fluid interface.
+The simulation results demonstrate that a flat biofilm pattern is generated after the
+growth of the biofilm for a certain time. This is due to the nutrients are not scarce in
+the system. However, we still can observe that the waved biofilm-fluid interface has
+quite an impact on the local distribution of the lactic acid (see later discussions).
+    Biomass volume fraction profiles of S. gordonii, Veillonella and total biomass at
+different times along X = 0.5 are shown in the right column in Fig. 4. It is observed
+that S. gordonii moves up as a result of winning the competition for nutrients in saliva in
+the vicinity of the biofilm-fluid interface. Such a phenomenon has also been observed
+in experimental studies (Chalmers 2008) as shown in Fig. 5. In the figure, S. gordonii
+and Veillonella PK1910 are colored in green and blue respectively. We observe that the
+S. gordonii locates above the Veillonella in the areas within the red squares in Fig. 5.
+As a remark, we are not trying to reproduce the biofilm pattern shown in Fig. 5 in this
+
+                                                                                                 123
+48   Page 14 of 36                                                              D. Feng et al.
+
+Fig. 5 Spatial distribution of S.
+gordonii (in green) and
+Veillonella PK1910 (in blue)
+observed with confocal laser
+scanning microscopy in 2h
+flowcell biofilms (Chalmers
+2008)
+
+
+
+
+paper. The pattern of biofilms highly depends on nutrients conditions. A diluted saliva
+(Chalmers 2008) is used as a nutrient in the experiments corresponding to Fig. 5. We
+applied the calibrated model parameters corresponding to the growth of S. gordonii
+from our previous experimental study (Rath et al. 2017). The S. gordonii is cultured in
+the Tryptic Soy Broth medium instead of the diluted saliva. Under such a condition, we
+find the S. gordonii build up a biofilm of layering pattern (Rath et al. 2017; Kommerein
+et al. 2017). It has been observed that the Streptococcus sp. dominates when they are
+coaggregated with the Veillonella sp. Therefore, all numerical examples in this paper
+are set up with layered initial conditions.
+   The inhibition parameter kl has a significant influence on the growth of both species
+of bacteria. According to Eq. (3), the lactic acid does not prevent the growth of S.
+gordonii when kl is an infinitely large number. In this case, one would expect the S.
+gordonii grows at a large rate. As shown in Fig. 6, we observe a faster growth of both
+species of bacteria by using a larger value of kl . As a remark, it is not surprised to see
+that the Veillonella sp. also grows faster associatively with the S. gordonii. This is due
+to the mutualistic relationship between these two species.
+   It should be noted that the simulation results correspond to an evenly mixed initial
+biomass volume condition. In nature, it is observed that S.gordonii usually attaches
+to a surface first and Veillonella attaches to Streptococcus afterwards. They form the
+so-called “corn cob” pattern (Kolenbrander et al. 2010) in vitro. Such a pattern demon-
+strates that the initial condition of either the geometry of the biofilm-fluid interface or
+the biomass distribution in such a symbiotic biofilm system is heterogeneous. To study
+such complex heterogeneity properties that are influenced by the initial conditions,
+an attachment process with considerations of bacteria receptors has to be considered.
+The attachment process normally happens at an individual bacterium scale and can
+hardly be considered only with a continuum model. To capture the attachment pro-
+cess, modeling the whole biofilm system with a multi-scale model will be promising.
+However, this is beyond the scope of this paper.
+
+123
+Modeling of symbiotic bacterial biofilm growth                                                                            Page 15 of 36   48
+
+                        0.35                                                                0.3
+                                   k l=1E0                                                            k l=1E0
+                         0.3       k l=1E-1                                                           k l=1E-1
+                                   k l=1E-2                                                0.25
+                                                                                                      k l=1E-2
+  Volume Fraction [-]
+
+
+
+
+                                                                     Volume Fraction [-]
+                        0.25       k l=1E-3                                                           k l=1E-3
+                                                                                            0.2
+                         0.2
+                                                                                           0.15
+                        0.15
+
+
+                         0.1                                                                0.1
+
+
+                        0.05                                                               0.05
+                               0        0.5       1        1.5   2                                0        0.5       1         1.5        2
+                                              Time [Day]                                                         Time [Day]
+
+(a) Volume fraction evolution proﬁles of Strep- (b) Volume fraction evolution proﬁles of Veil-
+ tococcus sp. with diﬀerent inhibition parameter lonella sp. with diﬀerent inhibition parameter
+ kl .                                            kl .
+
+Fig. 6 Sensitivity analysis of the inhibition parameter kl on the growth of bacteria
+
+
+
+
+3.1.2 Lactic Acid
+
+Distribution of the lactic acid in terms of its dimensionless concentration S2 at different
+times is presented in Fig. 7. The lactic acid is produced by the S. gordonii and consumed
+by the Veillonella. The acid is transported diffusively and accumulates in the fluid
+domain. It is observed that a higher concentration of acid accumulates above the
+biofilm-fluid interface, especially, after the S. gordonii becomes dominant at the top
+layer of the biofilm. Since there is more S. gordonii at the valley of the biofilm surface
+at T = 1.0 and T = 1.6, two punctiform sources of the acid at the biofilm valley
+are observed. This is why we observe the maximum acid concentration appears in the
+middle of the computational domain, and the acid diffuses to the top boundary. The
+Veillonella wins the competition at the lower part of the biofilm (see biomass profiles
+in Fig. 4) where the lactic acid is largely consumed by the Veillonella. What should be
+noted is that the distribution of the lactic acid is also influenced by the biofilm patterns
+and the generation of biofilm patterns might be influenced by the distribution of the
+lactic acid as well.
+    Figure 8 shows profiles of the lactic acid at X = 0.5 at different times. For each plot,
+the concentration of the lactic acid increases from the bottom of the biofilm to the top
+of it and decreases slightly afterwards in the bulk fluid. The profiles demonstrate that
+the location of the maximum concentration moves together with the biofilm interface.
+The profiles also show that the lactic acid accumulates in the bulk fluid domain over
+time. Comparing the two profiles of t = 1.6 day(T = 1.6) and t = 2.0 day(T = 2.0),
+the difference of the acid concentrations at the bottom of the biofilm is rather small.
+It seems the solution reaches a steady state locally there.
+    Since we apply a no-flow boundary to model the acid transport in a batch system.
+The acid accumulates in the fluid domain over time. One can also apply a Dirichlet
+boundary for s2 . By assuming the acid is removed immediately at the top of the
+
+                                                                                                                               123
+48   Page 16 of 36                                                                               D. Feng et al.
+
+
+
+
+                  (a) T = 0.4                                              (b) T = 1.0
+
+
+
+
+                  (c) T = 1.6                                              (d) T = 2.0
+Fig. 7 Distribution of lactic acid of the symbiotic biofilm system at different times (T = 0.4, 1.0, 1.6, 2.0).
+The white curve in the figures denotes the biofilm-fluid interface
+
+
+
+computation domain, Eq. (13) can be replaced by
+
+                                           s2 = 0, x ∈ Γht .                                             (20)
+
+   As shown in Fig. 9, the lactic acid profiles are different than the profiles shown
+in Fig. 8 in the fluid domain. We further compare the solutions of the lactic acid by
+using different boundary conditions in Fig. 10. It turns out that different boundary
+conditions do not affect the acid profiles much in the biofilm.
+   The lactic acid plays a twofold role in biofilm growth. On the one hand, it is
+the carbon source for Veillonella. On the other hand, the acid inhibits the growth of
+Streptococcus. In this study, we apply a relatively large value of kl (see Table 1), which
+
+123
+Modeling of symbiotic bacterial biofilm growth                                                  Page 17 of 36      48
+
+Fig. 8 Dimensionless                                        1
+concentration profiles of lactic                                     T = 0.4
+acid at X = 0.5 at different times                                   T = 1.0
+                                                         0.8
+(T = 0.4, 1.0, 1.6, 2.0) with a                                      T = 1.6
+no-flow boundary condition                                           T = 2.0
+                                                         0.6
+
+
+
+
+                                                 Z [-]
+                                                         0.4
+
+
+                                                         0.2
+
+
+                                                            0
+                                                                1          2         3               4                 5
+                                                                                   S2 [-]                       10-4
+
+
+
+Fig. 9 Dimensionless                                        1
+concentration profiles of lactic                                                                             T = 0.4
+                                                                                                             T = 1.0
+acid at X = 0.5 at different times                                                                           T = 1.6
+                                                           0.8
+(T = 0.4, 1.0, 1.6, 2.0) with a                                                                              T = 2.0
+Dirichlet boundary condition
+                                                           0.6
+                                                   Z [-]
+
+
+
+
+                                                           0.4
+
+
+                                                           0.2
+
+
+                                                            0
+                                                                 0     1       2            3            4             5
+                                                                                   S2 [-]                        10-4
+
+
+
+
+reduces the second effect. Since the acid does not accumulate in the bulk fluid when
+the Dirichlet boundary is applied, its concentration is relatively smaller, especially
+at a later time (e.g., the peak value of S2 at T =2.0). Therefore, the biofilm grows
+slower. The dimensionless thickness of the biofilm reduces 3% at T = 1.6 by using
+the Dirichlet boundary. At T =2.0, the reduction is increased to 6%. This study aims
+to investigate the solution behaviors, the boundary condition of the acid will not affect
+our investigation results.
+    The simulation results of this 2D example shed a light on the properties of the
+multi-dimensional numerical solutions of the presented biofilm model. First, hetero-
+geneous biomass distribution is obtained with this model even though a fully mixed
+initial condition is applied. On the other hand, the biomass is homogenized locally in
+the biofilm. Second, the biofilm-fluid interface is flatted in time. However, the non-flat
+interface has an influence on the lactic acid distribution. Based on those observations,
+we ask ourselves: (1) Will the local homogenization process always happen in this
+model regardless of the initial biomass distribution? If so, will the initial distribution
+influence the homogenization process? (2) How will a heterogeneous initial biomass
+distribution influence the morphology of the biofilm interface as well as the compo-
+nents (including the biomass and the lactic acid) distributions during the growth?
+
+                                                                                                     123
+48   Page 18 of 36                                                                   D. Feng et al.
+
+Fig. 10 Comparison of lactic                           1
+acid profiles at X = 0.5 with
+different boundary conditions at
+                                                      0.8
+T = 0.4, 1.6 and 2.0
+
+                                                      0.6
+
+
+
+
+                                              Z [-]
+                                                      0.4
+                                                                                     no-flow (T = 0.4)
+                                                                                     Dirichlet (T = 0.4)
+                                                      0.2                            no-flow (T = 1.6)
+                                                                                     Dirichlet (T = 1.6)
+                                                                                     no-flow (T = 2.0)
+                                                                                     Dirichlet (T = 2.0)
+                                                       0
+                                                            0   1   2            3      4                  5
+                                                                        S2 [-]                     10-4
+
+
+
+
+3.2 Sensitivity to Initial Biomass Distribution
+
+In order to answer these questions raised in the previous section, we study the sen-
+sitivity of the presented mathematical model to different types of initial biomass
+distributions. As a matter of fact, the initial distribution of different species of bacteria
+in a biofilm can be never evenly mixed in nature. As shown in Fig. 11, we consider
+three cases of the random initial distribution of biomass. Random fields are gener-
+ated by using given different correlation lengths. The correlation length measures the
+distance of two correlated points (e.g., the points with correlated material properties
+or physical quantities). Thus, the correlation length is often seen as a measure of the
+roughness of surfaces. In this study, different correlation lengths of 2Δx, 4Δx, and
+8Δx are applied in each case, in which Δx = 200         1
+                                                           denotes the length of a spatial
+element in the horizontal direction. As a remark, the total initial mass (or volume) of
+each species of bacteria is the same. To simplify the problem, the initial biofilm-fluid
+interface is modeled as a flat line, and a constant initial biofilm thickness of 60 μm
+(Z = 0.2) is assumed. Following our previous numerical setup, we assume that there
+is no lactic acid in the system initially.
+    As shown in Fig. 12, the Veillonella patches are stretched and thus generating
+plume-like structures during the biofilm formation in all three cases. This indicates
+that processes happen mainly in the vertical direction, and the horizontal movement
+is not obvious. By increasing the correlation length of the initial biomass distribution,
+the size of the plumes increases. This results in that the biomass volume fraction
+profiles along a vertical line, for instance at x = 150 μm (X = 0.5) as shown in
+Fig. 13, get less fluctuated with a larger correlation length. However, this does not
+mean that with a larger correlation length, the biomass homogenizes faster. In order to
+study how different biomass initial distributions influence the homogenization time,
+we compare the numerical solutions corresponding to the random initial distributions
+to the solution with an evenly mixed initial biomass distribution. Since the simulation
+involves moving domains, measuring the homogenization process is nontrivial. We
+calculate the difference of the volume fractions of the Veillonella between the evenly
+
+123
+Modeling of symbiotic bacterial biofilm growth                                           Page 19 of 36     48
+
+
+
+
+Fig. 11 Initial random volume fraction distribution of Veillonella with different correlation lengths
+
+
+
+mixed and randomly distributed cases to measure the homogenization process
+
+                                              1                      
+                                                 ϑ 2 |mixed − ϑ 2 |i  ,
+                                 Mdiff,i =                                                               (21)
+                                              N
+
+where ϑ 2 is the solution vector of the volume fraction of Veillonella, N is the num-
+ber of the unknowns in the vector and indexes “mixed” refers to the evenly mixed
+initial condition. The index i = 1, 2, 3 refers to scenarios with different correlation
+lengths of 2Δx, 4Δx and 8Δx. Since the evenly mixed case always presents a locally
+homogenized solution which produces a comparable biofilm thickness evolution as
+the other cases at an early time, a smaller Mdiff corresponds to a solution which is
+more homogenized.
+
+                                                                                               123
+48   Page 20 of 36                                                                               D. Feng et al.
+
+
+
+
+Fig. 12 Volume fractions of Veillonella at different times corresponding to different initial distribution with
+various corrlation lengths. Figure from left to right refer to simulation results corresponding to different
+initial correlation lengths of 2Δx, 4Δx and 8Δx. Figure from top to bottom refer to simulation results at
+different times of t = 0.1 day (T = 0.1), t = 0.5 day (T = 0.5) and t = 1.5 day (T = 1.5)
+
+
+
+
+   The evolution of Mdiff corresponding to these three scenarios is illustrated in Fig.
+14. The results demonstrate that the numerical solutions are homogenized in all these
+three cases as soon as the simulation starts. The case corresponding to a smaller
+correlation length requires less time to reach the state of a given value of Mdiff at the
+early time. In other words, the system homogenizes faster when the correlation length
+is smaller. However, as mentioned earlier, more fluctuated vertical biomass profiles
+are observed corresponding to the scenarios with larger correlation length. Moreover,
+Mdiff increases at a later time (as shown in Fig. 14). This is due to even though the
+initial biomass in the homogeneous case is the same as these three heterogeneous
+cases, the distribution of the lactic acid is different from case to case which results
+
+123
+Modeling of symbiotic bacterial biofilm growth                                             Page 21 of 36           48
+
+Fig. 13 Volume fraction profiles                         0.4
+of Veillonella at X = 0.5 at                                                                                 2 x
+t = 0.1 day (T = 0.1; early                                                                                  4 x
+time), t = 0.5 day (T = 0.5;                             0.3                                                 8 x
+middle time) and t = 1.5 day
+(T = 1.5; late time)
+
+
+
+
+                                                 Z [-]
+                                                         0.2
+
+
+
+                                                         0.1
+
+
+
+                                                          0
+                                                               0         0.2         0.4         0.6               0.8
+                                                                           Volume Fraction [-]
+                                                                         (a) t = 0.1 day
+                                                         0.4
+                                                                                                             2 x
+                                                                                                             4 x
+                                                         0.3                                                 8 x
+                                                 Z [-]
+
+
+
+
+                                                         0.2
+
+
+
+                                                         0.1
+
+
+
+                                                          0
+                                                               0   0.1         0.2   0.3   0.4         0.5         0.6
+                                                                           Volume Fraction [-]
+                                                                         (b) t = 0.5 day
+                                                          1
+                                                                                                             2 x
+                                                                                                             4 x
+                                                         0.8                                                 8 x
+
+
+                                                         0.6
+                                                 Z [-]
+
+
+
+
+                                                         0.4
+
+
+                                                         0.2
+
+
+                                                          0
+                                                               0   0.1         0.2   0.3   0.4         0.5         0.6
+                                                                           Volume Fraction [-]
+                                                                         (c) t = 1.5 day
+
+
+
+in different biomass production in the heterogeneous cases than in the homogeneous
+case. Such a difference may accumulate over time and leads to an increase in the
+measured mass difference Mdiff at late time. In a word, the presented heterogeneous
+system will not converge to the homogeneous system where the biomass is initially
+evenly mixed.
+
+                                                                                                   123
+48   Page 22 of 36                                                                                     D. Feng et al.
+
+Fig. 14 Homogenization times                                             10-4
+of three scenarios corresponding                               2.5
+to initial biomass distribution                                                                            2 x
+with different correlation lengths                                                                         4 x
+2Δx, 4Δx and 8Δx                                                2                                          8 x
+
+
+
+
+                                                       Mdiff
+                                                               1.5
+
+
+
+
+                                                                1
+
+
+
+
+                                                               0.5
+                                                                     0          0.5                1             1.5
+                                                                                      Time [Day]
+
+
+
+
+Fig. 15 Two scenarios of initial biomass distribution (blue:bulk fluid; purple: S. gordonii; green: Veillonella)
+
+
+
+3.3 Initial Biomass Distribution with Patch-shape Veillonella
+
+One could also argue that a random initial distribution of biomass is not realistic. It
+is more often found in mature biofilm systems that the Veillonella group bacteria are
+embedded in Streptococcus group bacteria (Chalmers et al. 2008; Kommerein et al.
+2017). Therefore, we carry out studies with two different initial biomass distribution
+scenarios as shown in Fig. 15. The irregular geometry of the Veillonella clusters, num-
+bered from 1 to 4 (from left to right), are generated by using an implicit superquadric
+function which is defined by an implicit equation with random parameters (Well-
+mann and Wriggers 2012) and is rotated by a random angle. In case (a), the initial
+biofilm-fluid interface is flat, while a non-flat initial interface is assigned in case (b).
+   Simulation results of these two cases with different initial biomass distributions
+are shown in Figs. 16 and 17. The simulation results demonstrate that the locally
+homogenization occurs at a late time (at 1.0 day). Some Veillonella patches are still
+observable even at T = 1.0. One may expect that the patches will be homogenized if
+we run the simulation long enough. Also, a non-flat biofilm-fluid interface is generated
+
+123
+Modeling of symbiotic bacterial biofilm growth                                        Page 23 of 36   48
+
+
+
+
+Fig. 16 Simulation results of the symbiotic biofilm system at different times (corresponding to the case
+in Fig. 15a). The white curve denotes the biofilm-fluid interface. From top to bottom are at t = 0.05 day
+(T = 0.05), t = 0.5 day (T = 0.5) and t = 1.0 day (T = 1.0). Left column: Volume fraction distributions
+of S. gordonii; Middle colume: Volume fraction distributions of Veillonella; Right column: Dimensionless
+concentration of lactic acid (black curves denote isolines of S2 )
+
+
+
+
+during the growth even if the interface is flat initially (as shown in Fig. 16). This is
+due to the heterogeneous reactions, which result in a heterogeneous biofilm growth
+velocity field. With the homogenization of the solution, the biofilm interface gets
+flatted again
+   Contours of the volume fraction of Veillonella ϑ2 = 0.6 of each case at t = 0
+and at t = 1.0 day are plotted in Fig. 18. In Fig. 18a, the second Veillonella cluster
+(numbered in Fig. 15) seems to be rotated anticlockwise. However, the third cluster
+moves up together with the growth of the biofilm. The forth one is simply stretched and
+shrunken. In case (b), as shown in Fig. 18b, we observe an interesting feature of the
+
+                                                                                            123
+48   Page 24 of 36                                                                          D. Feng et al.
+
+
+
+
+Fig. 17 Simulation results of the symbiotic biofilm system at different times (corresponding to the case
+in Fig. 15b). The white curve denotes the biofilm-fluid interface. From top to bottom are at t = 0.05 day
+(T = 0.05), t = 0.5 day (T = 0.5) and t = 1.0 day (T = 1.0). Left column: Volume fraction distributions
+of S. gordonii; Middle colume: Volume fraction distributions of Veillonella; Right column: Dimensionless
+concentration of lactic acid (black curves denote isolines of S2 )
+
+
+numerical solution that the third and the forth Veillonella clusters cannot be captured
+by the contour line ϑ2 = 0.6 at 1.0 day. This demonstrates that those two clusters are
+homogenized faster than the other two clusters. The simulation results suggest that the
+homogenization time varies spatially which might be induced by the heterogeneous
+reactions.
+
+
+
+
+123
+Modeling of symbiotic bacterial biofilm growth                                       Page 25 of 36     48
+
+
+
+
+Fig. 18 Movement of Veillonella clusters over time. The purper curve and the black curve denote contour
+lines of volume fraction of Veillonella ϑ2 = 0.6 at t = 0 day (T = 0) and t = 1.0 day (T = 1.0)
+respectively
+
+
+
+3.4 The Role of the Symbiotic Reactions
+
+Following the discussions in the previous section, the presented reaction model may be
+one of the main reasons that cause local biomass homogenization. To understand the
+role of the reaction terms in the mathematical model, we compare the simulation results
+presented in Fig. 18b to the results by using a model without symbiotic reactions. The
+same model setup, as the case shown in Fig. 18b, has been applied in this study. We
+simplify the symbiotic model (SM) presented in Sect. 2 by applying:
+
+                                                       s1
+                                      g1 = ϑ1 ρs μ1          ,                                       (22)
+                                                    k11 + s1
+                                                       s1
+                                      g2 = ϑ2 ρv μ2          ,                                       (23)
+                                                    k21 + s1
+
+and
+                                                 r22 = 0.                                            (24)
+
+   The model reduces to a competitive model (CM) in which the growth of both species
+of bacteria is limited only by the nutrient (saliva). In this case, the lactic acid does
+not play a role in biofilm growth, and it accumulates in space. One would expect that
+by applying CM, the biofilm grows faster than using SM due to the absent limitation
+of the lactic acid. Meanwhile, the species which has a larger maximum growth rate
+becomes dominant during the growth. As shown in Fig. 19, the simulation results of the
+Veillonella sp. by using CM meet the above expectations. The Veillonella sp. becomes
+dominating during the growth and wins the competition. The simulation results of
+the CM (as shown in Fig. 19) do not homogenized as in the SM (see Fig. 18b). This
+
+                                                                                          123
+48   Page 26 of 36                                                                              D. Feng et al.
+
+
+
+
+Fig. 19 Simulation results of volume fractions of Veillonella sp. at different times by using the competitive
+model. The white curve denotes the biofilm-fluid interface. The black and grey curves denote contour lines
+of volume fraction of Veillonella ϑ2 = 0.6 and ϑ2 = 0.8 respectively
+
+
+
+
+demonstrates that the symbiotic interaction is one of the main reasons that lead to the
+homogenized solutions.
+
+
+4 Summary and Discussion
+
+4.1 Summary
+
+We have presented a new mathematical model for modeling the growth of symbi-
+otic biofilms in this paper. An intermediate product, namely the lactic acid produced
+by the Streptococcus sp., has been explicitly modeled. We found that the volume
+fractions of different species of bacteria homogenize at a later time. To understand
+the solution behaviors, we studied how the initial biomass distribution influences the
+homogenization process. Random distributions of the biomass volume fractions with
+different correlation lengths were taken as initial conditions. We compared the sim-
+ulation results of the case where the bacteria were initially evenly mixed. As would
+be expected, the biomass homogenized faster associating with an initial state with a
+smaller correlation length. However, the random distribution cases do not converge to
+the same concentration distribution as the evenly mixed one, although the same initial
+mass and morphology of the biofilm surface (flat surface) have been assigned.
+    For a better understanding of the role of the initial distributions, we investigated
+scenarios with patch-shape biomass. The simulation results demonstrate that the local
+growth field can lead to changes in the morphology of the biofilm surface and differ-
+ent bacteria patches’ movements. Moreover, we also observe various homogenization
+speeds that are induced by the heterogeneity of the symbiotic reactions. To understand
+the role of the reactions in the homogenization process, we simplified the model by
+switching off the symbiotic reactions, resulting in a competitive model. The compet-
+itive model’s numerical solution does not get homogenized, which demonstrates that
+the symbiotic reaction is one of the main reasons for spatial homogenizations.
+
+123
+Modeling of symbiotic bacterial biofilm growth                            Page 27 of 36   48
+
+
+4.2 Discussion
+
+It is well-known in microbiology that bacterial biofilms’ biological behaviors are a
+lot more complicated than a mere competition of “food” in nature. Many efforts have
+been put in the past decades to understand how different bacteria species interact in a
+biofilm. The symbiotic relationship between two species of bacteria is one of the most
+interesting phenomena in microbiology systems.
+    Mathematical modeling has been proved to be a powerful tool for understanding
+biofilm’s biological behaviors in the past years (Mattei et al. 2017). Tens or even hun-
+dreds of mathematical models have been developed for modeling the bacterial biofilm
+systems since the 1980s (Rittmann and McCarty 1980). Nowadays, biofilm models
+are getting more comprehensive than earlier ones due to a deeper understanding of
+the biological mechanisms. Based on the previous pioneer continuum biofilm models
+(Alpkvist and Klapper 2007; Klapper and Dockery 2002), we studied a dual-species
+biofilm system’s symbiotic behavior by using mathematical modeling.
+    To the best of the authors’ knowledge, this study provides the first comprehensive
+investigation of the dynamics of a biofilm’s symbiotic reactions using a continuum
+mathematical model. We modeled the biofilm growth as an advective movement of
+a reactive potential flow in this study. The model has the advantage of capturing a
+sharp biofilm interface without introducing additional parameters; however, it suffers
+limitations on modeling merge of different colonies (see Discussion in Sect. 2). To
+overcome this drawback, one can improve the model by considering the fluid phase
+explicitly and thus lead to the mixture models (Zhang et al. 2008a). Alternatively, one
+can model the biofilm growth as a diffusion process (Ghasemi et al. 2018; Rahman
+et al. 2015), and apply the reaction models presented in this paper directly.
+    Instead of modeling the colonies’ merge, we are more interested in the reaction
+model developed for the symbiotic biofilm systems. Even though the simulation results
+demonstrate that the model can represent the species of bacteria’s symbiotic behaviors,
+we found that the reactive model can lead to homogenized solutions. The presented
+model may fail to predict the biological behavior of the symbiotic biofilms after a
+certain time when the numerical solution becomes over-homogenized. Therefore, it is
+necessary to investigate what factors influence the homogenization speed in the model.
+It turned out that the speed of the homogenization depends on the initial biomass
+distribution.
+    Individual bacteria are never resolved in a continuum biofilm model. This might
+be another potential reason which leads to the over-mixing of the biomass. However,
+the discretized element based biofilm models can also result in considerable internal
+mixing, especially for multi-species problems (Tang and Valocchi 2013). It would
+be interesting to compare the mixing behavior occurred in different continuum and
+discretized element based biofilm models in future studies. As a matter of fact, there are
+still many open questions on modeling multi-species biofilm problems. A third possible
+reason that results in the unwanted homogenized solution is missing important bio-
+processes in the model. There could be specific quorum sensing (QS) mechanisms that
+prevent the mixing process in nature. Egland et al. presented experimental evidence
+of signaling between S. gordonii and V. atypica (Egland et al. 2004). The diffusive
+
+
+                                                                               123
+48   Page 28 of 36                                                                             D. Feng et al.
+
+
+short distance signaling induced by the quorum sensing (QS) might be one of the
+key reasons that lead to the “corn cob” pattern of the biofilm system. Mathematical
+modeling the QS in biofilm systems has already attracted much attention in recent
+years (Emerenini et al. 2015; Zhao and Wang 2017; Ghasemi et al. 2018). However,
+many more detailed QS mechanisms are still unclear (Egland et al. 2004) and may
+result in many uncertainties in the model.
+
+Acknowledgements The authors would like to thank the reviewer for his/her constructive comments and
+efforts towards improving our manuscript. Thanks also go to Dr. Henryke Rath, Dr. Nadine Kommerein and
+Mrs. Natascha Brandhorst for many helpful discussions. Dianlei Feng would also like to thank the German
+Research Council (DFG) under grant No. FE 1962/1-1 (426819984).
+
+Funding Open Access funding enabled and organized by Projekt DEAL. DFG Funding Instrument “Tem-
+porary Positions for Principal Investigators”.
+
+
+Declarations
+
+Conflict of interest The authors declare that they have no conflict of interest.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which
+permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give
+appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence,
+and indicate if changes were made. The images or other third party material in this article are included
+in the article’s Creative Commons licence, unless indicated otherwise in a credit line to the material. If
+material is not included in the article’s Creative Commons licence and your intended use is not permitted
+by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the
+copyright holder. To view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.
+
+
+
+A Dimensioless Form of Governing Equations
+
+Mass balance for saliva
+
+
+
+
+                           S1 K L                           S1 S2
+−∇ 2 S1 = −Θ11
+            2
+               ϑ1                          −Θ12
+                                             2
+                                                ϑ2                           , X ∈ Ω ∗.
+                  (K 11 + S1 ) (K L + S2 )         (K 21 + S1 ) (K 22 + S2 )
+                                                                                 (25)
+Mass balance for lactic acid
+
+
+
+
+      ∂ S2
+           + ∇χ · ∇ S2 − D2∗ ∇ 2 S2
+      ∂T
+                             S1 K L                           S1 S2
+         = Θ212
+                ϑ1                          − Θ22
+                                               2
+                                                  ϑ2                           −                       (26)
+                   (K 11 + S1 ) (K L + S2 )          (K 21 + S1 ) (K 22 + S2 )
+                                                                  
+                       ϑ1 Ψ1 K L                  ϑ2 Ψ2 S2
+        S1 S2                           +                             , X ∈ Ω ∗.
+                (K 11 + S1 ) (K L + S2 ) (K 21 + S1 ) (K 22 + S2 )
+
+123
+Modeling of symbiotic bacterial biofilm growth                              Page 29 of 36     48
+
+
+Mass balance for S. gordonii
+
+   ∂ϑ1
+       + ∇χ · ∇ϑ1
+   ∂T                                                                     (27)
+                   (1 − ϑ1 ) Ψ1 K L            ϑ2 Ψ2 S2                  ∗
+     = ϑ1 S1                           −                            , X∈Ω .
+               (K 11 + S1 ) (K L + S2 ) (K 21 + S1 ) (K 22 + S2 )
+
+Mass balance for Veillonella
+   ∂ϑ2
+       + ∇χ · ∇ϑ2
+   ∂T                                                                        (28)
+                    (1 − ϑ2 ) Ψ2 S2             ϑ1 Ψ1 K L
+     = ϑ2 S1                            −                           , X ∈ Ω ∗.
+               (K 21 + S1 ) (K 22 + S2 ) (K 11 + S1 ) (K L + S2 )
+
+Potential equation
+                                                                       
+                            ϑ1 Ψ1 K L                ϑ2 Ψ2 S2
+   ∇ 2 χ = S1                                +                            , X ∈ B∗t .       (29)
+                     (K 11 + S1 ) (K L + S2 ) (K 21 + S1 ) (K 22 + S2 )
+
+
+B Numerical Methods
+
+Two types of PDEs, namely the elliptic Eqs. (25) and (29) and the time dependent
+advection-diffusion-reaction (ADR) Eqs. (27) and (28) (or advection-reaction equa-
+tions) are involved in the current biofilm model. The mass balance equations of the
+lactic acid and the biomass (S. gordonii and Veillonella) are solved simultaneously
+in this study. The Time-discontinuous Galerkin (TDG) method (Hughes and Hulbert
+1988; Hulbert 1992) is applied for solving the time dependent PDEs. The finite incre-
+ment calculus (FIC) method (Oñate 1998; Oñate et al. 2007) is used to stabilize the
+numerical solutions. We would like to refer to (Sapotnick and Nackenhorst 2012; Feng
+et al. 2017) for more detailed interpretation of the TDG-FIC method on solving the
+time dependent ADR equations. In this study, 4-node bi-linear iso-parametric elements
+are applied for spatial discretization of the mass balance equations of the saliva, lactic
+acid and biomass. 8-node second order iso-parametric elements are used for solving
+the potential equation. The free boundary (moving biofilm-fluid interface) at each time
+step is captured by using an iso-line of 80% of total biomass volume fraction. Detailed
+information on the numerical schemes involved in the numerical strategy will be pre-
+sented in the following part. As a remark, only one and two- dimensional problems
+are studied in this paper even through the mathematical model also can be applied for
+three-dimensional problems.
+
+B.1 Finite Element Approximation of Nonlinear Poisson Equation with C0
+    Elements
+
+Equations (25) and (29) are Poisson equations. In this study, they are solved by using
+conventional Galerkin finite element method with C 0 type of elements. Both of these
+
+                                                                                 123
+48   Page 30 of 36                                                                       D. Feng et al.
+
+
+two equations can be written generally as
+
+
+                                     −∇ 2 q = f , q ∈ B,                                       (30a)
+                                          q =c, q ∈ Γ D ,                                      (30b)
+                                     n · ∇q =0, q ∈ Γ N ,                                      (30c)
+
+
+where q represents the primary variables as S1 or χ in the governing equations. f
+                                               S1 K L                            S1 S2
+denotes a function as f = −Θ11    2 ϑ
+                                      1 (K 11 +S1 )(K L +S2 ) − Θ12 ϑ2 (K 21 +S1 )(K 22 +S2 ) for Eq.
+                                                                     2
+                    
+                         ϑ1 Ψ1 K L                  ϑ2 Ψ2 S2
+(25) and f = −S1 (K 11 +S   1 )(K L +S2 )
+                                          + (K 21 +S  1 )(K 22 +S2 )
+                                                                       for Eq. (29). B refers to the
+computational domain with the corresponding Dirichlet and Neuman boundaries Γ D
+and Γ N . n is the norm vector on the Neuman boundary and c is a constant value
+corresponding to the Dirichlet boundary. The weak form of Eq. (30) can be written as
+
+
+                                 a(q, w) = F(w), ∀w ∈ V,                                         (31)
+
+
+where,
+
+
+                                   a(q, w) =         ∇q∇wdV ,                                  (32a)
+                                                 B
+
+                                      F(w) =         f wdV .                                   (32b)
+                                                 B
+
+
+w is an arbitrary test function in space V which is a subspace of the Hilbert space H1 .
+As a remark, the Newton-Raphson method (Wriggers 2008) is used when the equation
+is nonlinear.
+
+B.2 TDG-FIC Approximation of Time Dependent Advection–Diffusion-reaction
+    Equation
+
+Equations (26)–(28) are time-dependent PDEs. Therefore, they are solved simultane-
+ously by using the TDG-FIC method. Those three equations can be written as a set of
+time dependent advection-diffusion-reaction partial differential equations as
+
+                           ∂q           ˜ TQ
+                                     ˜ −∇    ˜ − f (q) = 0,
+                              + ũ T ∇q    D∇q                                                   (33)
+                           ∂t
+
+where q = (S2 , ϑ1 , ϑ2 )T denotes the unknown vector. Detailed information on the
+matrix form of each term in Eq. (33) can be found in C.
+  Applying discontinuous Galerkin method for time discretization and standard
+Galerkin discretization in space yields a time-space weak form of Eq. (33) over a
+
+123
+Modeling of symbiotic bacterial biofilm growth                                                        Page 31 of 36     48
+
+
+time-space domain Ω × Tn (see Figure 2 in Feng et al. (2019))
+
+
+                                       ∂q h                           
+                         w         ν        + ũ T ∇q   ˜ T D̃∇q
+                                                   ˜ h −∇     ˜ h − f q h dtdΩ
+                     Ω        Tn        ∂t
+                                                                                                                      (34)
+                                    +
+                     +            wνn−1 q n−1
+                                           h
+                                               dΩ = 0,
+                              Ω
+
+
+where Ω and Tn denote the spatial and temporal computational domains, respectively.
+q h denotes the time-space approximation of the variable vector. Since the nodal value
+                                                     h
+at a time point is discontinuous, a jump value of q n−1  at tn−1 , which is notated as
+q n−1 , is introduced as
+   h
+                                           h+      h−
+                              q n−1
+                                 h
+                                      = q n−1 − q n−1 .                          (35)
+                                                       
+   Due to the non-linearity of the reaction terms f q h , the Newton–Raphson method
+(Wriggers 2008) is applied and Eq. (34) is linearized by introducing an incremental
+process with q h,0 = 0 as
+
+
+                                  q h,β+1 = q h,β + Δq h ,                                                       (36a)
+                                                           ∂ f 
+                                     f q h,β+1
+                                                 ≈ f q   h,β
+                                                              +          Δq h .                                 (36b)
+                                                                ∂q q h,β
+
+
+Substituting (36) into (34) yields the linearized time-space weak form
+
+                                                                       
+                         ∂Δq h                             ∂ f 
+        w        ν                 T ˜
+                               + ũ ∇(Δq ) − ∇
+                                        h      T
+                                             ˜ D̃∇(Δq
+                                                 ˜    h
+                                                        )−          Δq dtdΩ
+                                                                       h
+    Ω       Tn            ∂t                               ∂q q h,β
+                  +      h+                            +         h−,β                         +    h+,β
+     +          wνn−1 Δq n−1 dΩ =                    wνn+1 q n−1 dΩ −                       wνn−1 q n−1 dΩ            (37)
+            Ω                                    Ω                                      Ω
+                                  ∂q h,β                ˜ T D̃∇q
+                                                ˜ h,β − ∇     ˜ h,β − f (q h,β ) dtdΩ.
+     −          w         ν              + ũ T ∇q
+            Ω        Tn            ∂t
+
+
+The unknown field of q h is interpolated over the time-space space by
+
+
+                                                     
+                                                     nt          
+                                                                 nn
+                                            q =
+                                             h
+                                                           N̂k          Ñ j q̃ˆ jk ,                                 (38)
+                                                     k=1         j=1
+
+
+where n t and n n refer to temporal and spatial total degrees of freedoms respectively.
+N̂ and Ñ are the temporal and spatial shape functions and q̃ˆ denotes the time-space
+nodal variable vector.
+
+                                                                                                             123
+48    Page 32 of 36                                                            D. Feng et al.
+
+
+   Discretization of Eq. (37) in space and time by adopting Eq. (38) within single
+time-space element Ω e × Tn yields
+       T
+              e
+       Ñ , Ñ ⊗ Tan
+                                                                  e       
+                         e  T          e        T ∂ f
+                                                                         ⊗ Tb Δq̃ˆ
+                    T
+        +     − B̃ u, Ñ + B̃ D̃, B̃ − Ñ
+                      Q                                         , Ñ         n
+                                                      ∂q q h,β
+          −                      T     e                                        (39)
+           ˆ         T e                         n ˆβ
+       = q̃ n−1 , Ñ     ⊗ Tc − Ñ , Ñ ⊗ Ta q̃
+                                n
+
+                                  T      e β                         e
+                               β                           β
+                    u, Ñ)e q̃ˆ + B̃ D̃, B̃ q̃ˆ − f q̃ˆ , Ñ
+                  T                                                  T
+        − (− B̃ Q                                                          ⊗ Tnb ,
+
+where
+                                 (m, n)e =                mmdΩ,                        (40)
+                                                     Ωe
+
+q̃ˆ refers to the time-space approximation of the nodal variables. Ta , Tb , Tc are time
+matrixes with only temporal shape function N̂ involved
+
+                                          T d N̂
+                                                        + T +
+                        Ta =         N̂            dt + N̂ n−1 N̂ n−1 ,              (41a)
+                                Tn            dt
+                                          T
+                        Tb =         N̂ N̂dt,                                        (41b)
+                                Tn
+                             + T −
+                        Tc = N̂ n−1 N̂ n−1 .                                         (41c)
+
+Ñ is extended spatial shape function depending on the spatial element type (see C for
+detailed matrix form of Ñ).
+   The diffusion term in (33) only affects the mass balance equation of the lactic
+acid and does not appear in the mass balance equations of biomass. Therefore, the
+system of the mass balance equations in this model is still hyperbolic dominated. It
+is well known that solving hyperbolic PDEs with the conventional Galerkin method
+suffers from convective instability (Donea and Huerta 2003). One way to relieve such
+a problem is by adding an additional artificial diffusion (balancing diffusion) term into
+the system. This yields the so-called “stabilization methods” (Codina 1998; Franca
+et al. 1992; Lian et al. 2016) which have been developed for Galerkin methods over
+the past decades. In this paper, one of the widely used stabilization methods, namely
+the finite increment calculus (FIC) method, which introduces a nonlinear balancing
+artificial diffusion term in (39) is adopted. Thus, the diffusion coefficient matrix D̃ is
+replaced by
+                                      ST B
+                                   D̃      = D̃ + D̃ F I C ,                         (42)
+where                            ⎛                                     ⎞
+                                   D∗I (S2 )      0            0
+                       D̃ F I C = ⎝ 0        D∗I I (ϑ1 )       0       ⎠               (43)
+                                       0          0       ∗
+                                                         D I I I (ϑ2 )
+
+123
+Modeling of symbiotic bacterial biofilm growth                                          Page 33 of 36     48
+
+
+D∗I , D∗I I and D∗I I I are 2 × 2 diagonal matrices depending on the variables S2 , ϑ1 and
+ϑ2 respectively as in (43). Detailed calculation procedures of these D∗ matrices for
+multi-dimensional problems can be found in (Feng et al. 2017). As a remark, D̃ F I C
+depends on the solution of each spatial element at the current time step. Moreover,
+the artificial balancing diffusion is introduced along the directions of the principle
+curvatures of the solution and thus it must be calculated in a local coordinate system
+and then transferred to the global Cartesian coordinate system afterwards. Therefore,
+the FIC stabilized algorithm becomes nonlinear and iterations at each time step are
+required even if a linear problem is considered.
+
+
+C Matrices in the Advection–Reaction Equation
+
+For two-dimensional problems, the advection and diffusion coefficients matrices read
+
+                                                           ⎞       ⎛
+                                                    ux 0 0
+                                   ⎛     ⎞        ⎜u y 0 0 ⎟
+                                     100          ⎜        ⎟
+                                            u     ⎜ 0 ux 0 ⎟
+                                   ⎝
+                   ũ =I3×3 ⊗ u = 0 1 0 ⊗⎠    x   ⎜
+                                                 =⎜        ⎟,                                      (44a)
+                                            uy    ⎜ 0 uy 0 ⎟
+                                                           ⎟
+                                    001           ⎝ 0 0 ux ⎠
+                                                    0 0 uy
+                                                  ⎛∂         ⎞
+                                                     ∂x 0 0
+                                         ⎞   ⎜             ⎟
+                                                     ∂
+                                   ⎛              ⎜∂y 0 0 ⎟
+                                     100      ∂   ⎜0 ∂ 0⎟
+                   ∇˜ =I3×3 ⊗ ∇ = ⎝0 1 0⎠ ⊗ ∂∂x = ⎜
+                                                  ⎜ ∂∂x
+                                                             ⎟
+                                                             ⎟,                                    (44b)
+                                             ∂    ⎜ 0 ∂y 0 ⎟
+                                     001       y  ⎜          ⎟
+                                                  ⎝ 0 0 ∂∂x ⎠
+                                                     0 0 ∂∂y
+                        ⎛ ∗      ⎞
+                          D2 0 0
+                   D̃ = ⎝ 0 0 0⎠ ,                                                                 (44c)
+                          0 00
+
+where u x and u y are the advection velocity components along x and y coordinates
+respectively. I denotes an identity matrix and ⊗ is the Kronecker product. I denotes an
+identical matrix and ⊗ is the Kronecker product. D2∗ denotes a 2 × 2 diagonal matrix
+with D2∗ placed at the main diagonal and 0 denotes a 2 × 2 null matrix. Furthermore,
+ f (q) reads
+
+               f (q) = ( f 1 (S2 , ϑ1 , ϑ2 ) , f 2 (S2 , ϑ1 , ϑ2 ) , f 3 (S2 , ϑ1 , ϑ2 ))T ,            (45)
+
+where f 1 , f 2 and f 3 denote the reaction terms of Eqs. (26)–(28) respectively.
+  For four-node 2D bi-linear element, the shape function is extended to
+
+                                           Ñ = N ⊗ I3×3 ,                                              (46)
+
+                                                                                               123
+48   Page 34 of 36                                                                           D. Feng et al.
+
+
+where N = [N1 , N2 , N3 , N4 ] is the shape function of the four-node 2D bi-linear
+element. Similarly,
+                                  B̃ = B ⊗ I3×3 .                             (47)
+
+
+References
+Alpkvist E, Klapper I (2007) A multidimensional multispecies continuum model for heterogeneous biofilm
+     development. Bull Math Biol 69(2):765–789
+Bradshaw DJ, Marsh PD (1998) Analysis of pH-driven disruption of oral microbial communities in vitro.
+     Caries Res 32(6):456–462
+Chalmers NI (2008) Multispecies oral biofilms studied at the single community level as a model system
+     for spatiotemporal development of biofilms and interspecies interactions. Ph.d. thesis, University of
+     Maryland, Baltimore, Maryland, United States
+Chalmers NI, Palmer RJ, Cisar JO, Kolenbrander PE (2008) Characterization of a Streptococcus
+     sp.–Veillonella sp. community micromanipulated from dental plaque. Journal of Bacteriology
+     190(24):8145–8154
+Chihara K, Matsumoto S, Kagawa Y, Tsuneda S (2015) Mathematical modeling of dormant cell formation
+     in growing biofilm. Front Microbiol 6:534
+Codina R (1998) Comparison of some finite element methods for solving the diffusion-convection-reaction
+     equation. Comput Methods Appl Mech Eng 156(1):185–210
+Cogan NG (2004) The role of the biofilm matrix in structural development. Math Med Biol 21(2):147–166
+Corbin A, Pitts B, Parker A, Stewart PS (2011) Antimicrobial penetration and efficacy in an in vitro oral
+     biofilm model. Antimicrob Agents Chemoth 55(7):3338–3344
+Donea J, Huerta A (2003) Finite element methods for flow problems. Wiley, New York
+Duddu R, Chopp DL, Moran B (2009) A two-dimensional continuum model of biofilm growth incorporating
+     fluid flow and shear stress based detachment. Biotechnol Bioeng 103(1):92–104
+Eberl HJ, Parker DF, van Loosdrecht Mark C M (2001) A new deterministic spatio-temporal continuum
+     model for biofilm development. J Theor Med 3(3):161–175
+Egland PG, Palmer RJ, Kolenbrander PE (2004) Interspecies communication in Streptococcus gordonii–
+     Veillonella atypica biofilms: signaling in flow conditions requires juxtaposition. Proc Natl Acad Sci
+     101(48):16917–16922
+Emerenini BO, Hense BA, Kuttler C, Eberl HJ (2015) A mathematical model of quorum sensing induced
+     biofilm detachment. PLOS One 10(7):1–25
+Feng D, Neuweiler I, Nackenhorst U (2017) A spatially stabilized TDG based finite element framework for
+     modeling biofilm growth with a multi-dimensional multi-species continuum biofilm model. Comput
+     Mech 59(6):1049–1070
+Feng D, Rath H, Neuweiler I, Stumpp N, Nackenhorst U, Stiesch M (2018) A deeper insight of a
+     multi-dimensional continuum biofilm growth model: experimental observation and parameter stud-
+     ies, experiments and simulation. In: Wriggers P, Lenarz T (eds) Biomedical technology: modeling.
+     Springer International Publishing, Cambridge, pp 257–272
+Feng D, Neuweiler I, Nackenhorst U, Wick T (2019) A time-space flux-corrected transport finite element
+     formulation for solving multi-dimensional advection-diffusion-reaction equations. J Comput Phys
+     396:31–53
+Franca LP, Frey SL, Hughes TJ (1992) Stabilized finite element methods: I. Application to the advective-
+     diffusive model. Comput Methods Appl Mech Eng 95(2):253–276
+Fujikawa H (1994) Diversity of the growth patterns of Bacillus subtilis colonies on agar plates. FEMS
+     Microbiol Ecol 13(3):159–168
+Ghasemi M, Hense BA, Eberl HJ, Kuttler C (2018) Simulation-based exploration of quorum sensing trig-
+     gered resistance of biofilms to antibiotics. Bull Math Biol 80(7):1736–1775
+Gordeeva YL, Rudakovskaya E, Gordeeva E, Borodkin A (2017) Mathematical modeling of biotechno-
+     logical process of lactic acid production by batch fermentation: a review. Theor Found Chem Eng
+     51(3):282–298
+Hughes TJ, Hulbert GM (1988) Space-time finite element methods for elastodynamics: formulations and
+     error estimates. Comput Methods Appl Mech Eng 66(3):339–363
+
+
+
+
+123
+Modeling of symbiotic bacterial biofilm growth                                        Page 35 of 36   48
+
+
+Hulbert GM (1992) Time finite element methods for structural dynamics. Int J Numer Methods Eng
+     33(2):307–331
+Kara D, Luppens SBI, van Marle J, Ozok R, ten Cate JM (2007) Microstructural differences between single-
+     species and dual-species biofilms of Streptococcus mutans and Veillonella parvula, before and after
+     exposure to chlorhexidine. FEMS Microbiol Lett 271(1):90–97
+Khassehkhan H, Eberl HJ (2008) Modeling and simulation of a bacterial biofilm that is controlled by ph
+     and protonated lactic acids. Comput Math Methods Med 9(1):47–67
+Klapper I, Dockery J (2002) Finger formation in biofilm layers. SIAM J Appl Math 62(3):853–869
+Kolenbrander PE, Palmer RJJR, Periasamy S, Jakubovics NS (2010) Oral multispecies biofilm development
+     and the key role of cell–cell distance. Nat Rev Microbiol 8(7):471–480
+Kommerein N, Stumpp SN, Müsken M, Ehlert N, Winkel A, Häussler S, Behrens P, Buettner FFR, Stiesch
+     M (2017) An oral multispecies biofilm model for high content screening applications. PloS One
+     12(3):e0173973
+Kreft JU, Picioreanu C, Wimpenny JW, van Loosdrecht MC (2001) Individual-based modelling of biofilms.
+     Microbiology (Reading, England) 147(Pt 11):2897–2912
+Lian Y, Ying Y, Tang S, Lin S, Wagner GJ, Liu WK (2016) A Petrov-Galerkin finite element method for
+     the fractional advection-diffusion equation. Comput Methods Appl Mech Eng 309:388–410
+Lindley B, Wang Q, Zhang T (2012) Multicomponent hydrodynamic model for heterogeneous biofilms:
+     two-dimensional numerical simulations of growth and interaction with flows. Physical Review E,
+     Statistical, Nonlinear, and Soft Matter Physics 85(3 Pt 1):031908
+Madigan MT (2012) Brock biology of microorganisms, 13th edn. Benjamin Cummings, San Francisco
+Martin B, Tamanai-Shacoori Z, Bronsard J, Ginguené F, Meuric V, Mahé F, Bonnaure-Mallet M
+     (2017) A new mathematical model of bacterial interactions in two-species oral biofilms. PloS One
+     12(3):e0173153
+Martin KJ, Picioreanu C, Nerenberg R (2015) Assessing microbial competition in a hydrogen-based mem-
+     brane biofilm reactor (MBfR) using multidimensional modeling. Biotechnol Bioeng 112(9):1843–
+     1853
+Mashima I, Nakazawa F (2015) The interaction between Streptococcus spp. and Veillonella tobetsuensis in
+     the early stages of oral biofilm formation. J Bacteriol 197:2104
+Mattei MR, Frunzo L, DAcunto B, Pechaud Y, Pirozzi F, Esposito G (2017) Continuum and discrete approach
+     in modeling biofilm development and structure: a review. J Math Biol 76:945
+Nascimento MM, Gordan VV, Garvan CW, Browngardt CM, Burne RA (2009) Correlations of oral bacterial
+     arginine and urea catabolism with caries experience. Oral Microbiol Immunol 24(2):89–95
+Noguera D, Pizarro G, Stahl D, Rittmann B (1999) Simulation of multispecies biofilm development in three
+     dimensions. Water Sci Technol 39(7):123–130
+Oñate E (1998) Derivation of stabilized equations for numerical solution of advective-diffusive transport
+     and fluid flow problems. Comput Methods Appl Mech Eng 151(1–2):233–265
+Oñate E, Miquel J, Zárate F (2007) Stabilized solution of the multidimensional advection–diffusion–
+     absorption equation using linear finite elements. Comput Fluids 36(1):92–112
+Paquette DW, Brodala N, Williams RC (2006) Risk factors for endosseous dental implant failure. Dent Clin
+     N Am 50(3):361–74
+Periasamy S, Kolenbrander PE (2010) Central role of the early colonizer Veillonella sp in establishing
+     multispecies biofilm communities with initial, middle, and late colonizers of enamel. J Bacteriol
+     192(12):2965–2972
+Picioreanu C, van Loosdrecht MC, Heijnen JJ (1998) A new combined differential-discrete cellular
+     automaton approach for biofilm modeling: application for growth in gel beads. Biotechnol Bioeng
+     57(6):718–731
+Picioreanu C, van Loosdrecht MC, Heijnen JJ (2000) Effect of diffusive and convective substrate transport
+     on biofilm structure formation: a two-dimensional modeling study. Biotechnol Bioeng 69(5):504–515
+Picioreanu C, Kreft JU, van Loosdrecht MCM (2004) Particle-based multidimensional multispecies biofilm
+     model. Appl Environ Microbiol 70(5):3024–3040
+Picioreanu C, Rittmann B, Van Loosdrecht M (2006) Mathematical modelling of biofilms. IWA Publishing,
+     London, UK
+Rahman KA, Sudarsan R, Eberl HJ (2015) A mixed-culture biofilm model with cross-diffusion. Bull Math
+     Biol 77(11):2086–2124
+
+
+
+
+                                                                                            123
+48   Page 36 of 36                                                                          D. Feng et al.
+
+
+Rath H, Feng D, Neuweiler I, Stumpp NS, Nackenhorst U, Stiesch M (2017) Biofilm formation by the oral
+     pioneer colonizer Streptococcus gordonii: an experimental and numerical study. FEMS Microbiol
+     Ecol 93:3
+Ribeiro ACF, Lobo VMM, Leaist DG, Natividade JJS, Veríssimo LP, Barros MCF, Cabral AMTDPV (2005)
+     Binary diffusion coefficients for aqueous solutions of lactic acid. J Solut Chem 34(9):1009–1016
+Rittmann BE, McCarty PL (1980) Model of steady-state-biofilm kinetics. Biotechnol Bioeng 22(11):2343–
+     2357
+Sapotnick A, Nackenhorst U (2012) A combined FIC-TDG finite element approach for the numerical
+     solution of coupled advection-diffusion-reaction equations with application to a bioregulatory model
+     for bone fracture healing. Int J Numer Methods Eng 92(3):301–317
+Tang Y, Liu H (2017) Modeling multidimensional and multispecies biofilms in porous media. Biotechnol
+     Bioeng 114(8):1679–1687
+Tang Y, Valocchi AJ (2013) An improved cellular automaton method to model multispecies biofilms. Water
+     Res 47(15):5729–5742
+Wanner O, Gujer W (1986) A multispecies biofilm model. Biotechnol Bioeng 28(3):314–328
+Wanner O, Reichert P (1996) Mathematical modeling of mixed-culture biofilms. Biotechnol Bioeng
+     49(2):172–184
+Wellmann C, Wriggers P (2012) A two-scale model of granular materials. Comput Methods Appl Mech
+     Eng 205–208:46–58
+Wimpenny JW, Colasanti R (1997) A unifying hypothesis for the structure of microbial biofilms based on
+     cellular automaton models. FEMS Microbiol Ecol 22(1):1–16
+Wriggers P (2008) Nonlinear finite element methods. Springer, Berlin
+Xavier JB, Picioreanu C, Van Loosdrecht MC (2005) A framework for multidimensional modelling of
+     activity and structure of multispecies biofilms. Environ Microbiol 7(8):1085–1103
+Yang L, Liu Y, Wu H, Hóiby N, Molin S, Song Z (2011) Current understanding of multi-species biofilms.
+     Int J Oral Sci 3(2):74–81
+Zhang T, Cogan N, Wang Q (2008a) Phase field models for biofilms. II. 2-D numerical simulations of
+     biofilm-flow interaction. Commun Comput Phys 4(1):72–101
+Zhang T, Cogan NG, Wang Q (2008b) Phase field models for biofilms. I. Theory and one-dimensional
+     simulations. SIAM J Appl Math 69(3):641–669
+Zhao J, Wang Q (2017) Three-dimensional numerical simulations of biofilm dynamics with Quorum Sensing
+     in a flow cell. Bull Math Biol 79(4):884–919
+
+
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+
+
+
+123
+

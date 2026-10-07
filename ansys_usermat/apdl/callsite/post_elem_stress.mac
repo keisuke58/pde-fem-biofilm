@@ -1,0 +1,54 @@
+! post_elem_stress.mac -- stress and growth of one element, every result set
+! (pde-fem-biofilm, 2026-10-01). For stage 5: the point-model element.
+!
+!   /INPUT,post_elem_stress,mac     after FINISH of the solution, or
+!   post_elem_stress,220            if the file is on the macro path
+!
+! ARG1 = element number. Needs OUTRES,ALL,ALL and OUTRES,SVAR,ALL before
+! SOLVE (SVAR 84 is the converged alpha the call-site fragment stores).
+! Writes elem_stress.csv, one row per result set:
+!   lstep, sbstep, time, SX, SY, SZ, SXY, SYZ, SXZ, SEQV, alpha,
+!   max SEQV over the elements sharing a node with ARG1 (ARG1 excluded)
+! Element values are centroid averages (ETABLE).
+/POST1
+ELEM_ = ARG1
+*GET,NSET_,ACTIVE,0,SET,NSET
+*CFOPEN,elem_stress,csv
+*VWRITE
+('lstep,sbstep,time,sx,sy,sz,sxy,syz,sxz,seqv,alpha,seqv_nbr_max')
+*DO,I_,1,NSET_
+  SET,,,,,,,I_
+  *GET,LS_,ACTIVE,0,SET,LSTP
+  *GET,SB_,ACTIVE,0,SET,SBST
+  *GET,T_,ACTIVE,0,SET,TIME
+  ESEL,S,ELEM,,ELEM_
+  ETABLE,ESX,S,X
+  ETABLE,ESY,S,Y
+  ETABLE,ESZ,S,Z
+  ETABLE,ESXY,S,XY
+  ETABLE,ESYZ,S,YZ
+  ETABLE,ESXZ,S,XZ
+  ETABLE,ESEQ,S,EQV
+  ETABLE,EA84,SVAR,84
+  *GET,SX_,ELEM,ELEM_,ETAB,ESX
+  *GET,SY_,ELEM,ELEM_,ETAB,ESY
+  *GET,SZ_,ELEM,ELEM_,ETAB,ESZ
+  *GET,SXY_,ELEM,ELEM_,ETAB,ESXY
+  *GET,SYZ_,ELEM,ELEM_,ETAB,ESYZ
+  *GET,SXZ_,ELEM,ELEM_,ETAB,ESXZ
+  *GET,SEQ_,ELEM,ELEM_,ETAB,ESEQ
+  *GET,A_,ELEM,ELEM_,ETAB,EA84
+! neighbours: every element sharing a node with ELEM_
+  NSLE,S
+  ESLN,S,0
+  ESEL,U,ELEM,,ELEM_
+  ETABLE,NSEQ,S,EQV
+  ESORT,ETAB,NSEQ,0,1
+  *GET,NBR_,SORT,,MAX
+  EUSORT
+  ALLSEL
+  *VWRITE,LS_,SB_,T_,SX_,SY_,SZ_,SXY_,SYZ_,SXZ_,SEQ_,A_,NBR_
+(F6.0,',',F8.0,',',E24.16,9(',',E24.16))
+*ENDDO
+*CFCLOS
+ALLSEL

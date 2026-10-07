@@ -1,0 +1,128 @@
+\documentclass[11pt,a4paper]{article}
+% The point model in Fortran (6 Oct 2026): a note for the partner group and Keio.
+\usepackage[margin=22mm,top=20mm,bottom=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\definecolor{c3}{RGB}{30,80,160}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=1.2em}
+\newcommand{\sect}[1]{\par\vspace{6pt}{\color{c3}\large\bfseries #1}\par\vspace{2pt}}
+\newcommand{\file}[1]{\texttt{\small #1}}
+
+\begin{document}
+\sloppy
+{\Large\bfseries The point model in Fortran: coupling without the material server}\par
+\vspace{3pt}
+Keisuke Nishioka, IKM, Leibniz Universit\"at Hannover, 6 October 2026\par
+\vspace{2pt}\hrule
+
+\sect{Why}
+In the coupled runs the field of Klempt et al.\ (2024) sets the amount of
+biofilm $\phi$ and the point model of Klempt et al.\ (2026) sets its
+composition at every integration point. Until now the point model ran in
+Python: the material routine sent the state of each integration point to a
+material server through a socket and waited for the answer. This call took
+about 100 times as long as the rest of a run. Two species on 2880 elements
+needed 1.5\,h in Abaqus, one species on $40^3$ elements without the server
+16\,min.
+
+I therefore wrote the point model in Fortran (\file{ecology\_native.f}). It
+replaces the Python bridge in the build and keeps its interface, so the material
+routines of ANSYS and Abaqus use it without any change. No server, no socket
+and no C layer are needed.
+
+\sect{What it computes}
+The state of one point is
+$\mathbf g=(\phi_1,\dots,\phi_5,\ \phi_0,\ \psi_1,\dots,\psi_5,\ \gamma)$, with
+$n\le5$ active species (unused species stay exactly zero). One coupling step of
+length $s\,\Delta t$ is divided into sub-steps of at most $10^{-4}$. In each
+sub-step the twelve residuals $\mathbf R(\mathbf g_{k+1};\mathbf g_k)=\mathbf 0$
+of the point model (Klempt et al.\ 2026, Eq.~16--18, divided by $\eta_i$) are
+solved by six Newton iterations,
+\[
+  \mathbf g \leftarrow \mathbf g-\Big(\frac{\partial\mathbf R}{\partial\mathbf g}\Big)^{-1}\mathbf R ,
+\]
+with the state clipped to its admissible range before and after each iteration.
+The Jacobian is the exact derivative, written out by hand; the linear system is
+solved by LU decomposition with partial pivoting. This is the same scheme as the
+Python reference, which computes the Jacobian by automatic differentiation.
+
+The constants of a case ($n$, $c^*$, $\alpha^*$, $\eta_i$ and the interaction
+matrix) are read once from a small text file, written by
+\file{write\_eco\_cfg.py <case>} from the same case table as the Python server.
+As in the server, the interaction matrix in the input deck is checked against
+the case. The local nutrient enters as $c^*=c^*_0\,\min(\max(c/c_{\rm ref},0),1)$.
+
+\sect{Checks}
+\begin{center}
+\begin{tabular}{p{0.52\linewidth}p{0.38\linewidth}}
+\toprule
+Check & Result \\
+\midrule
+Single points against the Python reference: 16 states, two-species cases 3 and 6,
+four-species case 1 and the five-species model, several sub-step counts and
+nutrient levels (\file{tests/test\_ecology\_native.py}) & largest relative difference $8\times10^{-15}$ \\
+ANSYS, the partner's element, $8^3$ elements, two species, same deck as a run
+with the Python server & stresses and composition identical in every printed
+digit; trace within $1.6\times10^{-12}$ \\
+Abaqus, $8^3$ elements, two species with the nutrient, same deck as a run with
+the Python server & printed values identical; trace of 8213 point steps within
+$6.7\times10^{-12}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The remaining differences are round-off: the Fortran Jacobian and the
+automatically differentiated one sum their terms in a different order.
+
+\sect{Speed}
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Run & Python server & Fortran \\
+\midrule
+ANSYS, partner element, $8^3$, two species & 156\,s & 36\,s \\
+Abaqus, $8^3$, two species with the nutrient & 5.2\,min (4 CPUs) & 0.6\,min (1 CPU) \\
+Abaqus, $16^3$, two species & 10\,min for 30\,\% of the run & 1\,min (whole run) \\
+\bottomrule
+\end{tabular}
+\end{center}
+The point model now costs about as much as the mechanics. Runs that were out of
+reach with the server, such as two species on $32^3$ elements, take hours
+instead of days.
+
+\sect{How to use it}
+\begin{itemize}
+\item ANSYS: build the custom executable with \file{ecology\_native.f} in place of
+  the Python bridge (\file{usermat\_py\_hook.f}); the material routine and the
+  call-site code stay as they are. Before starting ANSYS, set the environment
+  variable \file{BIOFILM\_ECO\_CASE} to the case file. One process per run.
+\item Abaqus: \file{run\_comp.ps1 -Native} builds and links the same file into the
+  user subroutine; the case file is read once at the start of the analysis.
+\item The number of species in the material input must match the case file, as
+  it must match the server's case.
+\end{itemize}
+
+\sect{Limits}
+\begin{itemize}
+\item Cases with a nutrient level or antibiotic level that changes in time
+  (four-species cases 3 and 4 of Klempt et al.\ 2026) are not supported; the
+  Python server does not support them either.
+\item The Hill gate of this repository's five-species model is off, as in all
+  current runs.
+\item The number of Newton iterations is fixed at six, as in the reference. Where a
+  sub-step is too long for six iterations to converge, both versions end at the
+  clip bounds and can differ there; the sub-steps of the composition runs
+  converge.
+\end{itemize}
+
+\vspace{4pt}
+{\small\raggedright Source: \file{ansys\_usermat/coupling/ecology\_native.f}; checks and
+timings: \file{abaqus\_composition/README.md}; repository
+\href{https://github.com/keisuke58/pde-fem-biofilm}{keisuke58/pde-fem-biofilm}.}
+\end{document}

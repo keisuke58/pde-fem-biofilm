@@ -258,7 +258,8 @@ int biofilm_py_eval(const double *F9, const double *Fv9, const double *params7,
  * Returns 0 on success; same failure/fallback contract as biofilm_py_eval.
  */
 static int biofilm_ecology_eval_locked(const double *g12, const double *theta20, double dt_h,
-                                       int n_sub, double *g_new12, double *phi_int)
+                                       int n_sub, double c_rel, double *g_new12,
+                                       double *phi_int)
 {
     char req[4096], resp[RECV_CAP];
     int n, i, attempt, off;
@@ -269,8 +270,11 @@ static int biofilm_ecology_eval_locked(const double *g12, const double *theta20,
     off += snprintf(req + off, sizeof req - off, "],\"theta\":[");
     for (i = 0; i < 20; i++)
         off += snprintf(req + off, sizeof req - off, "%s%.17g", i ? "," : "", theta20[i]);
-    off += snprintf(req + off, sizeof req - off, "],\"dt_h\":%.17g,\"n_sub\":%d}\n",
+    off += snprintf(req + off, sizeof req - off, "],\"dt_h\":%.17g,\"n_sub\":%d",
                     dt_h, n_sub);
+    if (c_rel >= 0.0)              /* local nutrient; negative = not sent */
+        off += snprintf(req + off, sizeof req - off, ",\"c_rel\":%.17g", c_rel);
+    off += snprintf(req + off, sizeof req - off, "}\n");
     n = off;
     if (n <= 0 || (size_t)n >= sizeof req) return 1;
 
@@ -302,7 +306,22 @@ int biofilm_ecology_eval(const double *g12, const double *theta20, double dt_h,
 {
     int rc;
     mutex_lock(&g_mutex);
-    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, n_sub, g_new12, phi_int);
+    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, n_sub, -1.0, g_new12, phi_int);
+    mutex_unlock(&g_mutex);
+    return rc;
+}
+
+/* biofilm_ecology_eval_c -- the same with the local nutrient (2026-10-04,
+ * ROADMAP_TWO_WAY.md step 1): c_rel is the field's nutrient at the Gauss
+ * point, normalised to the held value 1; the server uses c* = c*_0 * c_rel
+ * for this call. A negative c_rel sends nothing and equals
+ * biofilm_ecology_eval. */
+int biofilm_ecology_eval_c(const double *g12, const double *theta20, double dt_h,
+                           int n_sub, double c_rel, double *g_new12, double *phi_int)
+{
+    int rc;
+    mutex_lock(&g_mutex);
+    rc = biofilm_ecology_eval_locked(g12, theta20, dt_h, n_sub, c_rel, g_new12, phi_int);
     mutex_unlock(&g_mutex);
     return rc;
 }

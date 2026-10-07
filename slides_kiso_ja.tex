@@ -78,18 +78,18 @@
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{$\alpha$ と $\bm{F}_g=(1+\alpha)\bm{I}$}
+\begin{frame}{$\alpha$ と $\bm{F}_g=\alpha\bm{I}$}
 \small 覚える式は1つ。
 \vspace{6pt}
 \begin{center}
 \colorbox{c3!10}{\parbox{0.8\linewidth}{\centering
-\large $\bm{F}_g=(1+\alpha)\,\bm{I}$\\[4pt]
-\small 全方向に $(1+\alpha)$ 倍に\textbf{膨らみたい}}}
+\large $\bm{F}_g=\alpha\,\bm{I}$\\[4pt]
+\small 全方向に $\alpha$ 倍に\textbf{膨らみたい}}}
 \end{center}
 \vspace{8pt}
 \begin{itemize}\small
-  \item $\alpha$ ：膨らみたい量。$\alpha=0.05$ で「5\% 大きくなりたい」
-  \item $\alpha$ が大きいほど押し合いが強く、応力も大きい
+  \item $\alpha$ ：膨らみたい倍率（初期値 1、Klempt 2024 と同じ定義）。$\alpha=1.05$ で「5\% 大きくなりたい」
+  \item $\alpha$ が 1 より大きいほど押し合いが強く、応力も大きい
   \item $\bm{I}$ は単位行列 $\rightarrow$ どの方向にも同じだけ
   \item $\alpha$ は細菌の組成から決まる $\rightarrow$ \textbf{菌が変われば応力が変わる}
 \end{itemize}
@@ -117,15 +117,15 @@
 \vspace{5pt}
 \begin{center}
 \colorbox{c3!10}{\parbox{0.86\linewidth}{\centering\small
-$\varphi_{\text{tot}} = \sum_i \varphi_i\,\psi_i$
+$\phi_{\text{tot}} = \sum_i \phi_i\,\psi_i$
 \qquad\qquad
-$\alpha = k_\alpha \displaystyle\int \varphi_{\text{tot}}\,dt$}}
+$\alpha = k_\alpha \displaystyle\int \phi_{\text{tot}}\,dt$}}
 \end{center}
 \vspace{6pt}
 \begin{itemize}\small
-  \item $\varphi_i$：菌種 $i$ の体積分率、$\psi_i$：その生存率
-  \item $\varphi_{\text{tot}}$ は\textbf{生きている菌の総量}。これが成長を駆動する
-  \item $\varphi_i$ の時間発展は5種の相互作用モデル。
+  \item $\phi_i$：菌種 $i$ の体積分率、$\psi_i$：その生存率
+  \item $\phi_{\text{tot}}$ は\textbf{生きている菌の総量}。これが成長を駆動する
+  \item $\phi_i$ の時間発展は5種の相互作用モデル。
         パラメータ $\bm{\theta}$（20 成分、中心は相互作用行列 $\bm{A}$）を
         \textbf{TMCMC で較正}
   \item 積分するので、\textbf{同じ組成でも時間が長ければ $\alpha$ は大きい}

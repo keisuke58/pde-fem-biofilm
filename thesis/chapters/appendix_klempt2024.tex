@@ -1,0 +1,178 @@
+\chapter{Reproduction of the Test Cases of Klempt et al.\ 2024}
+\label{app:klempt2024}
+
+% Written 3 Oct 2026 from KLEMPT2024_REPRODUCTION.md (sec. 9-15) and the
+% scripts named there (JAXFEM/klempt2024_*.py). Numbers as in those files.
+
+Before coupling the field model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
+into the finite element framework, I solved its two test cases independently
+in Python, to see whether the equations and parameters as printed give the
+published results. They do not in every respect, and this appendix records
+what is needed to reproduce them. None of the results of
+Chapter~\ref{ch:ansys} depends on this reproduction; it informs the
+background of Section~\ref{sec:theory_field} and the questions to the authors.
+
+\section{Set-up}
+
+The domain is the paper's cube of $20~\mu$m edge length on a regular grid of
+$21^3$ nodes. Equations~\eqref{eq:theory_phi}--\eqref{eq:theory_alpha} are
+integrated with explicit time steps and upwinded gradients in the front term;
+$\phi$ is limited to $[0,1]$. All parameters are those of
+Table~\ref{tab:theory_klempt2024}. The two test cases are:
+\begin{itemize}
+  \item \emph{4.1}: a spherical seed of $5~\mu$m radius in the centre, the nutrient held at
+        $c=1$ in one corner of the cube. Read from the paper's Fig.~3 and
+        Table~3, the source is a block of about $2~\mu$m at the corner; the
+        strip of the schematic Fig.~2 fits worse.
+  \item \emph{4.2}: a disk of $5~\mu$m diameter just above a bottom face
+        held at $c=1$, with the consumption $g=10^8$ (``high'' nutrient level)
+        and $g=10^{10}$ (``low'').
+\end{itemize}
+The published curves of the mean $\phi$ and mean $c$ (Figs.~4 and~7) were
+read off the PDF by colour and compared with the reproduction by their RMS
+difference over $T^*\in[0,1]$.
+
+\section{The printed equations}
+
+Solved as printed, the front term of Eq.~\eqref{eq:theory_phi} moves the seed
+towards the nutrient rather than enlarging it: the factor
+$\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}$ is positive on the face of
+the colony that looks towards the nutrient and negative on the other, so one
+face grows while the other recedes. The mean $\phi$ of Fig.~4 is not reached
+with any numerical variant tried (seed held fixed, no limiter, a second-order
+upwind scheme), nor with any time scale. Two further observations point the
+same way: in case 4.2 ``high'' the front advances at about $150~\mu$m per
+$T^*$, three times the largest speed $r\,c/(k+c)$ that Table~2 allows, and in
+Table~4 of the paper the biofilm grows away from the nutrient face, while the
+printed term drives it towards it.
+
+The consumption term gives a clean check. With the consumption
+$g\,\phi\,c$, proportional to the nutrient, the steady nutrient level of
+case 4.2 ``high'' is $\tanh(2)/2=0.482$, against $0.489$ in the paper. The
+printed form $g\,\phi$ gives $0.139$.
+
+\section{What reproduces the curves}
+
+The following changes, each stated as an assumption, reproduce all three
+curves without changing a value of Table~2:
+\begin{enumerate}
+  \item growth on every face of the colony, with the front term
+        $\|\nabla_X\phi\|\,\dfrac{r\,c}{k+c}\bigl[w+(1-w)\,|\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}|\bigr]$
+        and an isotropic share $w=0.5$ (the text of the paper says that growth
+        perpendicular to the nutrient gradient is smaller, not zero);
+  \item consumption $g\,\phi\,c$;
+  \item a time scale $s_T$ per simulation, applied to $r$, $\beta$ and
+        $k_\alpha$: the paper normalises time by a reference time ``chosen
+        based on the conditions for growth at hand'', which is not given.
+\end{enumerate}
+Table~\ref{tab:app_klempt_rms} lists the resulting differences. For $w$
+between $0.35$ and $0.7$ the worst of the three stays between $0.029$ and
+$0.032$, so the curves do not determine $w$ precisely.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Reproduction of Klempt et al.\ 2024, mean curves]{RMS difference
+    between the reproduction and the curves of Klempt et al.\ 2024 (mean
+    $\phi$ and mean $c$, averaged), with the changes listed in the text.}
+  \label{tab:app_klempt_rms}
+  \begin{tabular}{lccc}
+    \hline
+    test case & time scale $s_T$ & RMS, $w=0.5$ & RMS, $w=0$\\
+    \hline
+    4.1 (Fig.~4) & $1$ & $0.013$ & $0.022$\\
+    4.2 high (Fig.~7) & $5$ & $0.021$ & $0.038$\\
+    4.2 low (Fig.~7) & $3$ & $0.030$ & $0.070$\\
+    \hline
+  \end{tabular}
+\end{table}
+
+The shapes agree in kind (Figures~\ref{fig:app_klempt_fig3}
+and~\ref{fig:app_klempt_table4}). In case 4.1 the colony becomes an egg drawn
+out towards the nutrient corner and reaches it, as in the paper. In case 4.2
+the early dome and the final layer of the ``low'' case look like the paper's;
+in the ``high'' case the reproduction spreads to the side walls earlier, where
+the paper's colony rises with straight sides. In the variant without the
+isotropic share ($w=0$), varying the regularisation $\beta$ and the upwind
+scheme did not change the shapes, so the remaining
+differences lie in the equations or the set-up rather than in the numerics.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_fig3_blend.png}
+  \caption[Test case 4.1, reproduction and paper]{Test case 4.1: isosurface
+    $\phi=0.8$ at $5$, $25$, $45$ and $100\,\%$ of the simulated time. Top:
+    reproduction with the changes listed in the text ($w=0.5$, $s_T=1$).
+    Bottom: Fig.~3 of Klempt et al.\ 2024 (CC BY 4.0).}
+  \label{fig:app_klempt_fig3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{\ansysfigdir fig_klempt2024_table4_blend.png}
+  \caption[Test case 4.2, reproduction and paper]{Test case 4.2: vertical
+    mid-plane, nutrient face at the bottom, reproduction next to Table~4 of
+    Klempt et al.\ 2024 (CC BY 4.0), in the paper's colour bands.}
+  \label{fig:app_klempt_table4}
+\end{figure}
+
+\section{Mechanics and units}
+
+The reproduction has no mechanics. Two bounds show that the published curves
+can nevertheless be compared with it. The material is incompressible, so the
+current volume is $\alpha^3$ times the reference volume; with
+$\alpha-1\le0.01$ at $T^*=1$ the volume-weighted means of $\phi$ and $c$
+differ from the plain ones by at most $0.001$. The mechanical term of the
+$\phi$ equation, which the paper drops, would be of order $10^4$ to $10^6$
+per $T^*$ after division by the viscosity $\eta_\phi=10^{-10}$ (the paper gives no unit), against a
+growth term of about $500$ per $T^*$; kept, it would stop the growth that
+every figure shows.
+
+The pressure plotted in Table~3 of the paper (of order $10^{-4}$~MPa) is
+consistent with $\mu=3.3557$~MPa, as stated in the text, and not with the
+$3.3557$~Pa of Table~2, which would give pressures a million times smaller.
+This is an inference from the plot. The calculations of
+Chapter~\ref{ch:ansys} use $E=10$~Pa as in Table~2; their stresses scale
+linearly with $E$.
+
+\section{Questions to the authors and their answers}
+
+I sent these questions to the first author on 3 and 5 October 2026 and
+received his answers on 5 October. They settle some points and leave others
+open:
+\begin{itemize}
+  \item \emph{Front term.} His implementation uses Eq.~\eqref{eq:theory_phi}
+        as printed: where the nutrient gradient behind the colony points
+        towards it, the colony does not grow on that side. The isotropic
+        share $w$ of the reproduction is therefore my change, needed to
+        reach the published curves with the explicit scheme used here.
+        Whether the finite element solution of the paper reaches them
+        without it is open.
+  \item \emph{Direction where the nutrient is uniform.} The implementation
+        uses $\nabla_X c/(\|\nabla_X c\|+\varepsilon)$ with a small
+        $\varepsilon$, of order $10^{-8}$ to $10^{-12}$ (F. Klempt, personal
+        communication, October 2026).
+  \item \emph{Consumption.} He recalled $g\,\phi$, as printed, but was not
+        certain. The steady nutrient level of case 4.2 ``high'' (0.489 in
+        the paper) follows from $g\,\phi\,c$ and not from $g\,\phi$
+        (0.482 against 0.139, see above). Dr.\ Soleimani, who computed the
+        published examples, confirmed on 6 October 2026 that $g\,\phi\,c$
+        is correct. The consumption term of Eq.~35 is therefore
+        $g\,\phi\,c$, as in the reproduction.
+  \item \emph{Time.} Every simulation ran over a time of $1$ ($T^*=1$). The time
+        scales $s_T=5$ and $3$ that the reproduction needs for case 4.2 are
+        therefore not explained by different reference times.
+  \item \emph{Nutrient in case 4.1.} Only the corner, as assumed here.
+  \item \emph{Diffusion coefficient $\beta$.} Chosen to give sensible
+        results; it depends on the mesh. The value used in
+        Chapter~\ref{ch:ansys}, Table~2 converted to the 2~mm cube, is
+        therefore an assumption.
+  \item \emph{Stiffness.} The unit in the paper may be wrong; he suggests
+        $E=10$~kPa ($\mu\approx3.3$~kPa). This differs from the inference
+        from the plot of Table~3 above ($\mu=3.3557$~MPa). The stresses of
+        Chapter~\ref{ch:ansys} scale linearly with $E$, so either value
+        rescales them without changing any comparison.
+\end{itemize}
+Whether $\alpha$ follows Eq.~36 or the update of Table~1
+(Section~\ref{sec:theory_field}) remains to be asked. The first author has
+offered his implementation; comparing it with the reproduction is part of
+the continuation of this work.

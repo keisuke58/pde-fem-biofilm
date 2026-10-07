@@ -1,6 +1,9 @@
 # Chapter 5 — skeleton and evidence map
 
-`ch5_ansys_contribution.tex` is a frame for the chapter with the facts already
+Moved 3 Oct 2026: the chapter is now `../thesis/chapters/ch4_ansys.tex`, chapter 4
+of the thesis (`../thesis/`). `_build_check.tex` builds it on its own.
+
+`ch5_ansys_contribution.tex` (now `ch4_ansys.tex`) is a frame for the chapter with the facts already
 pinned in place. It is not draft prose; the point is that writing becomes
 filling in sentences rather than hunting for numbers and file paths.
 
@@ -24,21 +27,27 @@ Everything except §5.6 (Results) is Tier A. That is the whole point of the
 methods-and-verification chapter is complete without a single new run, and
 nothing in it waits on the partner framework's schedule.
 
-## Evidence map
+## Evidence map (rewritten 2026-10-02)
+
+Scope: one and two species, coupled into the partner element following Klempt
+et al. 2024; composition from the Klempt et al. 2026 point model. Abaqus work
+and more species are the Keio continuation and are not results here
+(CLAUDE.md, document rules). **B** blocks hold numbers to re-run before
+submission.
 
 | Section | Claim | Where it is established |
 |---|---|---|
-| 5.1 | The task and the division of labour | [`THESIS_ASSIGNMENT.md`](../THESIS_ASSIGNMENT.md) §1, [`INTEGRATION_PLAN.md`](../ansys_usermat/INTEGRATION_PLAN.md) |
-| 5.2 | Growth kinematics, elastic and viscous branches | `Klempt2024DiffusionDrivenGrowth`; [`RESEARCH_MODEL.md`](../RESEARCH_MODEL.md) |
-| 5.3 | USERMAT implementation, Voigt order, tangent | [`usermat_biofilm.f`](../ansys_usermat/usermat_biofilm.f), [`ansys_usermat/README.md`](../ansys_usermat/README.md) |
-| 5.4.1 | 0 ULP over 8017 states | [`crosscheck/README.md`](../ansys_usermat/crosscheck/README.md), `crosscheck.py`, `adversarial.py` |
-| 5.4.2 | Closed-form growth | [`apdl/`](../ansys_usermat/apdl/) decks + `RUNBOOK.md` |
-| 5.4.3 | **What the checks cannot establish** | [`DEVIATOR_SCALING_FINDING.md`](../DEVIATOR_SCALING_FINDING.md) + `check_deviator_scaling.py` |
-| 5.5.1 | The partner framework's loop | [`OLIVER_MODEL_NOTES.md`](../ansys_usermat/OLIVER_MODEL_NOTES.md); figure `ch5_flow/flow_oliver_solution_loop.tex` |
-| 5.5.2 | The delivered routine is only an adapter | [`biofilm_material_v01.f`](../ansys_usermat/biofilm_material_v01.f), `tests/test_material_wrapper.py::test_wrapper_is_only_an_adapter` |
-| 5.5.3 | `Fv` needs 9 slots; `dt` must resolve `η/(2·C10)` | same file's header notes 2–3; `test_the_viscous_step_must_resolve_the_relaxation_time` |
-| 5.6 | Results | **Tier B** — awaiting runs |
-| 5.7 | Limitations | [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](../VERIFICATION_SENSITIVITY_LIMITATIONS.md), `DEVIATOR_SCALING_FINDING.md` §7 |
+| 5.1 | Scope, three contributions | scope decision 2026-10-01; `THESIS_ASSIGNMENT.md` §1 |
+| 5.2 | Kinematics, `α = α_K − 1`; Klempt stiffness `E(φ) = (φ²+f)E` | `Klempt2024DiffusionDrivenGrowth` Eq. 20, Table 2; `biofilm_material_v01.f`, `tests/test_material_wrapper.py::test_klempt_*` |
+| 5.3 | Adapter = core; tangent vs AD (648 cases) | `tests/test_material_wrapper.py`, `tests/test_tangent_quality.py` |
+| 5.4 | Closed forms in ANSYS; curved shell; pressure term | `apdl/` decks, `closed_form_reference.py`, `DEVIATOR_SCALING_FINDING.md` |
+| 5.5 | Eq. 36 at the Gauss points, once per increment; three framework properties | `apdl/ONE_SPECIES_COUPLING.md`, `apdl/callsite/`, `one_species_reference.py` |
+| 5.6 | Point model, amount/composition split, s, φ_cap, φ_min | `JAXFEM/klempt2026_reproduction.py`, `JAXFEM/fritsch2025_cases.py`, `apdl/SPLIT_COUPLING.md`, `composition_reference.py`, `composition_s_sweep.py` |
+| 5.7 | Exact solution, whole model, seeded-element stress (Klempt 2024 stiffness), two species; the earlier four-condition study is not in the thesis (decided 2026-10-02) | `apdl/figs_1005.py` and `assets/fig1005_*.png`; `apdl/SPLIT_COUPLING.md` |
+| 5.8 | Limitations | this chapter |
+
+The V&V figure is `ch5_flow/flow_vv_thesis.tex` (ANSYS evidence only), not
+`flow_vv_hierarchy.tex`, which still lists the Abaqus comparison.
 
 ## Two things to get right
 

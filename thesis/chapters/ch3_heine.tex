@@ -1,0 +1,773 @@
+\chapter{GPU-Accelerated Bayesian Inference for a Five-Species Biofilm}
+\label{ch:heine}
+
+This chapter develops the \emph{in-vitro} pillar of the thesis: the Bayesian
+identification of the species interaction matrix of a defined five-species oral
+biofilm from the controlled time-course experiments of Heine et al.\
+\cite{Heine2025PeriImplant}. It is the methodological origin of the work: the
+Hamilton $\bphi$--$\bpsi$ model and the TMCMC machinery introduced in
+Chapter~\ref{ch:theory} are here fitted to real data and validated against
+measurements that never entered the calibration. The last section carries the
+same model to sparse in-vivo data with a metabolic sign prior
+(Section~\ref{sec:heine_signprior}), and Chapter~\ref{ch:ansys} brings the
+point model into a finite element framework.
+
+\medskip\noindent\textit{This chapter is based on the manuscript:} Nishioka K.,
+Klempt F., Geisler H., Soleimani M., Heine N., Doll-Nikutta K., Mukherjee R.,
+Szafra\'{n}ski S.P., Stiesch M., Junker P., ``GPU-accelerated Bayesian inference
+of multi-species biofilm interaction parameters via TMCMC'' (in preparation).
+
+%==============================================================================
+\section{Experimental System}
+\label{sec:heine_data}
+%==============================================================================
+
+Heine et al.~\cite{Heine2025PeriImplant} cultivated a defined consortium of five
+representative oral taxa, \textit{Streptococcus oralis} (\textit{So}),
+\textit{Actinomyces naeslundii} (\textit{An}), \textit{Veillonella} spp.\
+(\textit{Vei}), \textit{Fusobacterium nucleatum} (\textit{Fn}) and
+\textit{Porphyromonas gingivalis} (\textit{Pg}), spanning the ecological
+succession from early aerobic colonisers to the late anaerobic pathogen. The
+experiment is organised as a $2\times2$ design crossing \emph{community state}
+(commensal vs.\ dysbiotic) with \emph{cultivation mode} (static vs.\ HOBIC flow
+reactor), giving the four conditions used throughout this thesis: Commensal
+Static (CS), Commensal HOBIC (CH), Dysbiotic Static (DS) and Dysbiotic HOBIC
+(DH).
+
+The two community states employ different \textit{Pg} strains:
+the avirulent \textit{Pg}~DSM\,20709 in the commensal consortium and the
+virulent \textit{Pg}~W83, which carries a full complement of gingipain and fimbrial
+virulence determinants, in the dysbiotic consortium. The dysbiotic/HOBIC
+combination therefore reproduces, in a reductionist setting, the shear-driven
+pathogen succession implicated in peri-implantitis.
+
+Relative species abundances were quantified at six time points (Days 1, 3, 6, 10,
+15, 21) with $N=8$ biological replicates per condition, normalised to unit sum at
+each time point; Day~1 is consumed as the initial condition, leaving $N_t=5$
+usable time points. Membrane-intact (viability) ratios $\psi_i^{\mathrm{exp}}$ and
+HOBIC pH time series were measured independently and provide the held-out
+validation targets of Section~\ref{sec:heine_validation}. With at most $25$
+abundance observations against $15$ interaction unknowns, the inference operates
+in the sparse-data regime that motivates the Bayesian, prior-regularised
+treatment.
+
+%==============================================================================
+\section{Five-Species Inference Setup}
+\label{sec:heine_setup}
+%==============================================================================
+
+The forward model is the coupled $\bphi$--$\bpsi$ Hamilton system of
+Section~\ref{sec:theory_hamilton} integrated by implicit Euler with Newton's
+method ($\Delta t=10^{-4}$, $2{,}500$ steps over the normalised window
+$t_{\max}=0.25$ representing the 21-day experiment). The gauge $c^*=25$ fixes the
+otherwise non-identifiable nutrient scale (Section~\ref{sec:theory_replicator});
+since the assays use no antibiotic, $\alpha^*=0$ deactivates the decay term and
+the sensitivity matrix $\mathbf{B}$. What remains to be inferred is the symmetric
+interaction matrix $\mathbf{A}$.
+
+\subsection{The 15-parameter interaction matrix}
+\label{sec:heine_matrix}
+
+The variational derivation forces $A_{ij}=A_{ji}$, reducing the $5\times5$ matrix
+to $15$ free entries: $5$ diagonal self-interactions and $10$ symmetric
+off-diagonals. I collect them into the parameter vector
+\begin{equation}
+  \btheta =
+  \underbrace{(a_{11},a_{12},a_{22})}_{\text{\textit{So}--\textit{An}}}
+  \oplus \underbrace{(a_{33},a_{34},a_{44})}_{\text{\textit{Vei}--\textit{Fn}}}
+  \oplus \underbrace{(a_{13},a_{14},a_{23},a_{24})}_{\text{cross}}
+  \oplus \underbrace{(a_{15},a_{25},a_{35},a_{45})}_{\text{\textit{Pg} cross}}
+  \oplus \underbrace{(a_{55})}_{\text{\textit{Pg}}}
+  \;\in\;\Real^{15},
+  \label{eq:heine_blocks}
+\end{equation}
+whose five biologically motivated blocks structure the posterior analysis below.
+Heine et al.\ report five experimentally confirmed interaction pathways
+(Table~\ref{tab:heine_network}); for the remaining five pairs no direct
+mechanism is documented. Rather than imposing those absences as hard constraints
+($\theta_k\equiv0$), \emph{all} $15$ parameters are estimated and the posterior is
+left to decide which interactions the data support, a full-discovery strategy
+whose recovery of the expected commensal sparsity (Section~\ref{sec:heine_results})
+is an emergent result rather than an assumption.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Pair} & \textbf{Mechanism} & \textbf{Type}\\
+    \midrule
+    \textit{So}--\textit{An}  & Co-aggregation     & Bidirectional\\
+    \textit{So}--\textit{Vei} & Lactate exchange   & Bidirectional\\
+    \textit{So}--\textit{Fn}  & Formate symbiosis  & Bidirectional\\
+    \textit{Vei}$\to$\textit{Pg} & pH elevation    & Unidirectional\\
+    \textit{Fn}--\textit{Pg}  & Peptide supply     & Bidirectional\\
+    \bottomrule
+  \end{tabular}
+  \caption[Experimentally confirmed species interactions]{Experimentally
+  confirmed species interactions~\cite{Heine2025PeriImplant}. All $15$ parameters
+  are estimated without a priori locking; the posterior concentrates near zero for
+  the five biologically inactive pairs.}
+  \label{tab:heine_network}
+\end{table}
+
+\subsection{Likelihood and observation noise}
+\label{sec:heine_likelihood}
+
+Assuming independent Gaussian errors across species and time, the likelihood is
+\begin{equation}
+  p(\yobs\mid\btheta)
+  = \prod_{k=1}^{N_t}\prod_{i=1}^{5}
+    \frac{1}{\sqrt{2\pi}\,\sigma_i}
+    \exp\!\Bigl(-\tfrac{(y_{\mathrm{obs},i}(t_k)-\hat{y}_i(t_k;\btheta))^2}{2\sigma_i^2}\Bigr),
+  \label{eq:heine_like}
+\end{equation}
+where $\sigma_i$ is a species-specific noise fixed from the replicate standard
+deviation of the normalised fractions ($N=8$). It ranges from
+$\sigma_i\!\approx\!0.05$ (\textit{Fn}, \textit{Pg} in commensal states, where
+fractions are near zero) to $\sigma_i\!\approx\!0.20$ (\textit{So}, the most
+variable species), with a condition-averaged mean of
+$\bar{\sigma}\!\approx\!0.11$--$0.12$. The prior is a product of independent
+uniforms (Section~\ref{sec:theory_tmcmc}) whose bounds are initialised broadly and
+iteratively narrowed.
+
+\subsection{Two-phase fix-$\psi$ strategy}
+\label{sec:heine_twophase}
+
+Direct joint estimation of $(\mathbf{A},\bpsi)$ is defeated by the multimodality
+of the coupled $\bphi$--$\bpsi$ dynamics. I break the coupling in two phases.
+In Phase~1 the viability $\psi_i(t_k)$ is fixed to the measured
+membrane-intact ratios (fix-$\psi$), reducing the Jacobian dimension from $2n+2$ to
+$n+2$ and removing the $\psi$-related modes; an initial wide-prior run furnishes
+posterior quantiles and the production run uses the narrowed bounds
+$[q_{0.01}-1.5\sigma,\,q_{0.99}+1.5\sigma]$. In Phase~2 the $\psi_i$ are
+released as free variables, the viability data enter the likelihood as a soft
+constraint, and the Phase-1 posterior serves as an informative prior on
+$\mathbf{A}$, yielding a self-consistent joint posterior. Comparing the Phase-1
+and Phase-2 MAP estimates (Section~\ref{sec:heine_discussion}) is itself a
+diagnostic: agreement validates the fix-$\psi$ approximation, divergence localises
+the $\psi$--$\mathbf{A}$ coupling.
+
+\subsection{GPU-accelerated forward model}
+\label{sec:heine_gpu}
+
+Each production run requires $\mathcal{O}(10^5)$--$\mathcal{O}(10^6)$ forward ODE
+solves ($N_p$ up to $10{,}000$ particles $\times$ $K=20$ mutations $\times$
+$M\!\approx\!5$ TMCMC stages). The implicit-Euler Newton solver, including the Jacobian
+assembly and the linear solve, is compiled with \texttt{jax.jit} into a
+single fused XLA kernel and the entire particle ensemble is evaluated in parallel
+via \texttt{jax.vmap} on an NVIDIA RTX\,4090. On a matched benchmark (DH,
+$N_p=500$, $9$ stages) this delivers a $147\times$ end-to-end
+speedup ($170\times$ per stage) over the 12-core CPU baseline (Table~\ref{tab:heine_timing}); at the
+production scale of $N_p=10{,}000$ the per-condition wall-clock is
+$1.7$--$2.6$\,h. The gradient-based samplers behind general probabilistic-programming
+frameworks~\cite{Carpenter2017Stan, Phan2019NumPyro, Lao2020TFP} (HMC/NUTS) are ill-suited here:
+variable-length leapfrog trajectories cause warp divergence that erases the
+\texttt{vmap} advantage.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \textbf{Metric} & \textbf{CPU (12 cores)} & \textbf{GPU (RTX\,4090)} & \textbf{Speedup}\\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Matched benchmark (DH, $N_p=500$, $9$ stages):}}\\
+    \quad Per stage & $2{,}400$\,s & $14$\,s & $170\times$\\
+    \quad Total     & $21{,}600$\,s & $147$\,s & $147\times$\\
+    \midrule
+    \multicolumn{4}{@{}l}{\textit{Production ($4$ cond., $N_p=10{,}000$, Phase~2 free $\psi$):}}\\
+    \quad Per condition & $\sim$$120$\,h$^\dagger$ & $1.7$--$2.6$\,h & $\sim$$50\times$\\
+    \quad All $4$ cond. & $\sim$$480$\,h$^\dagger$ & $8$\,h & $\sim$$60\times$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Computational cost comparison]{Computational cost. The matched
+  $500$-particle benchmark isolates the GPU speedup at $147\times$; the
+  production speedup is lower ($\sim$$50$--$60\times$) because $20\times$ more
+  particles saturate GPU occupancy. $^\dagger$Extrapolated from the CPU benchmark
+  assuming linear scaling in $N_p$.}
+  \label{tab:heine_timing}
+\end{table}
+
+%==============================================================================
+\section{Results}
+\label{sec:heine_results}
+%==============================================================================
+
+The two-phase procedure is run for all four conditions with a CoV target
+$\delta_{\mathrm{target}}=1.0$ for the adaptive tempering schedule $\tau_m$, proposal scale
+$s^2=2.38^2/d$ (the optimal-scaling heuristic for random-walk
+Metropolis~\cite{Roberts2001Optimal}), and $K=20$ mutation steps; $s$ is adapted online toward
+the optimal acceptance rate of about $23\%$. The Phase-2
+($N_p=10{,}000$) posteriors are the canonical product used throughout the thesis.
+
+\subsection{Quantitative fit}
+\label{sec:heine_fit}
+
+Table~\ref{tab:heine_rmse} reports both phases. Phase~1 (fix-$\psi$, perfect
+viability) is the upper bound on fit quality; Phase~2 is the physically consistent
+model. The RMSE increase from Phase~1 to Phase~2 is at most $0.033$ (CH), confirming the
+interaction structure is robust to releasing $\psi$. DS attains the best fit
+(RMSE $0.033$) and DH retains strong pathogen identification
+($R^2_{\textit{Pg}}=0.90$) despite the added viability degrees of freedom
+(per-species $R^2$ in Table~\ref{tab:heine_r2}). In commensal states the
+\textit{Fn}/\textit{Pg} fractions are near zero throughout, so their $R^2$ is
+ill-defined ($\mathrm{SS}_{\mathrm{tot}}\!\approx\!0$, marked ``$-$''); the MAP
+prediction there is $<\!0.01$, within the noise. \textit{So} shows negative $R^2$
+in both phases except CH, which reflects its high replicate variability
+($\sigma_i\!\approx\!0.20$).
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}l ccccc ccccc@{}}
+    \toprule
+    & \multicolumn{5}{c}{\textbf{Phase 1: fix-$\psi$ ($N_p\!=\!1{,}000$)}}
+    & \multicolumn{5}{c}{\textbf{Phase 2: free $\psi$ ($N_p\!=\!10{,}000$)}}\\
+    \cmidrule(lr){2-6}\cmidrule(lr){7-11}
+    \textbf{Cond.} & RMSE & MAE & $a_{\mathrm{acc}}$ & $\max\ln\mathcal{L}$ & $\ln\hat Z$
+                   & RMSE & MAE & $a_{\mathrm{acc}}$ & $\max\ln\mathcal{L}$ & $\ln\hat Z$\\
+    \midrule
+    CS & $0.119$ & $0.077$ & $0.14$ & $-6.3$ & $-2.6$ & $0.119$ & $0.075$ & $0.12$ & $-21.6$ & $-3.3$\\
+    CH & $0.071$ & $0.053$ & $\mathbf{0.17}$ & $-3.6$ & $\mathbf{-1.3}$ & $0.104$ & $0.088$ & $0.07$ & $-112.3$ & $-8.5$\\
+    DS & $\mathbf{0.020}$ & $\mathbf{0.025}$ & $0.11$ & $\mathbf{-1.2}$ & $-3.8$ & $\mathbf{0.033}$ & $\mathbf{0.024}$ & $\mathbf{0.13}$ & $-93.4$ & $\mathbf{-2.8}$\\
+    DH & $0.067$ & $0.045$ & $0.10$ & $-6.6$ & $-9.6$ & $0.087$ & $0.060$ & $0.07$ & $-170.4$ & $-11.9$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Two-phase estimation results]{Two-phase estimation. $a_{\mathrm{acc}}$: mean
+  MH acceptance rate. $\max\ln\mathcal{L}$ is not comparable across phases (Phase~2 adds
+  a viability likelihood channel); use RMSE for cross-phase comparison.}
+  \label{tab:heine_rmse}
+\end{table}
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}l ccccc ccccc@{}}
+    \toprule
+    & \multicolumn{5}{c}{\textbf{Phase 1 (fix-$\psi$)}} & \multicolumn{5}{c}{\textbf{Phase 2 (free $\psi$)}}\\
+    \cmidrule(lr){2-6}\cmidrule(lr){7-11}
+    \textbf{Cond.} & \textit{So} & \textit{An} & \textit{Vei} & \textit{Fn} & \textit{Pg}
+                   & \textit{So} & \textit{An} & \textit{Vei} & \textit{Fn} & \textit{Pg}\\
+    \midrule
+    CS & $-0.39$ & $0.80$ & $-3.2$ & $-$ & $-$ & $-0.36$ & $\mathbf{0.91}$ & $-3.7$ & $-$ & $-$\\
+    CH & $0.55$ & $0.70$ & $0.59$ & $-$ & $-$ & $0.40$ & $-0.22$ & $-0.14$ & $-$ & $-$\\
+    DS & $-0.87$ & $0.76$ & $\mathbf{0.93}$ & $0.54$ & $\mathbf{0.85}$ & $-0.86$ & $0.73$ & $\mathbf{0.91}$ & $0.66$ & $\mathbf{0.85}$\\
+    DH & $-0.47$ & $\mathbf{0.83}$ & $\mathbf{0.83}$ & $0.60$ & $\mathbf{0.92}$ & $-0.21$ & $\mathbf{0.86}$ & $0.63$ & $0.06$ & $\mathbf{0.90}$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Per-species $R^2$]{Per-species $R^2$. ``$-$'': fraction $<0.02$ at all
+  time points ($R^2$ ill-defined). Bold: $R^2>0.8$. DS/DH retain strong
+  \textit{Pg} identification in both phases.}
+  \label{tab:heine_r2}
+\end{table}
+
+\paragraph{Convergence.} Phase~2 converges in $M=4$--$7$ stages (ESS $=N_p=10{,}000$);
+two-seed Phase-1 runs satisfy $\hat R<1.1$ for all parameters. Acceptance rates
+of $7$--$13\%$ reflect bounded, non-Gaussian support; the high ESS confirms adequate mixing.
+
+\subsection{Posterior predictive fits}
+\label{sec:heine_fits}
+% 4 Oct 2026: "NUTS" here changed to "TMCMC": the RMSE values (0.119/0.104/
+% 0.033/0.087) and N_p = 10,000 are those of the TMCMC Phase-2 posterior, and
+% Sec. heine_gpu states that NUTS is not used. Confirm against the figure source.
+
+To assess fit quality independently of the symmetry constraint, I also fit an
+asymmetric gLV model (free $A_{ij} \neq A_{ji}$) by L-BFGS-B point estimation.
+Table~\ref{tab:glv_hamilton_comparison} summarises the two models across four
+axes; Figure~\ref{fig:heine_glv_fit} shows the gLV MAP fits.
+The gLV achieves markedly lower RMSE (CS: 0.032, CH: 0.026, DS: 0.012,
+DH: 0.022) compared to the Hamilton TMCMC posterior (CS: 0.119, CH: 0.104,
+DS: 0.033, DH: 0.087), confirming that the symmetry constraint
+$A_{ij}=A_{ji}$ limits trajectory accuracy.
+However, gLV's apparent advantage partly reflects over-fitting:
+with $N_t=5$ usable time points ($25$ observations) and $30$ free parameters, the
+model has more free parameters than observations. Its out-of-sample error was not
+assessed; for the Hamilton model, the cross-condition transfer RMSE
+(CS$\to$CH $=0.098$ vs.\ CH self-prediction $=0.104$; Table~\ref{tab:heine_transfer})
+stays close to the in-sample value.
+The Hamilton posterior provides three capabilities that gLV cannot: uncertainty
+quantification (credible bands, Figure~\ref{fig:heine_fits}), exact simplex
+conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_validation}.
+
+\begin{table}[htbp]
+  \centering\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    & \textbf{gLV (L-BFGS-B)} & \textbf{Hamilton TMCMC} \\
+    \midrule
+    Interaction matrix $\bA$ & Asymmetric ($25$ entries) & Symmetric ($15$ entries) \\
+    Parameters total         & 30 ($A$ + $b$)              & 20 ($A$ + $\psi$) \\
+    RMSE range (all cond.)   & $0.012$--$0.032$            & $0.033$--$0.119$ \\
+    Uncertainty              & Point estimate only         & Full posterior ($N_p=10{,}000$) \\
+    Simplex $\sum_i\phi_i=1$ & Enforced post-hoc           & Exact (variational) \\
+    Thermodynamic consistency & No                          & Yes (Lyapunov function) \\
+    pH prediction (in vitro) & Not possible                & $R^2=0.778$ (held-out) \\
+    \bottomrule
+  \end{tabular}
+  \caption[gLV vs.\ Hamilton model comparison]{Comparison of the asymmetric gLV
+  (L-BFGS-B point estimate) and the Hamilton replicator (TMCMC posterior).
+  Lower RMSE for gLV reflects higher model flexibility \emph{and} over-fitting
+  ($25$ observations, 30 free parameters); the gLV out-of-sample error was not
+  assessed (Table~\ref{tab:heine_transfer} covers the Hamilton model only).
+  Hamilton's advantages are uncertainty quantification, exact compositional
+  consistency, and probabilistic predictions of held-out chemistry.}
+  \label{tab:glv_hamilton_comparison}
+\end{table}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.80\textwidth]{heine_glv_fit_thesis.pdf}
+  \caption[gLV MAP fits across four conditions]{gLV MAP fits of volume fraction
+  $\phi_i$. Layout identical to Figure~\ref{fig:heine_fits}: columns CS, CH,
+  DS, DH; rows: five species. Solid line: MAP trajectory; circles: experimental
+  median; boxes: inter-replicate IQR. \textit{V.~dispar} (commensal) vs.\
+  \textit{V.~parvula} (dysbiotic) and \textit{Pg} strain (DSM\,20709 vs.\
+  W83) are labelled within each panel. RMSE values are shown in the column
+  titles.}
+  \label{fig:heine_glv_fit}
+\end{figure}
+
+Figure~\ref{fig:heine_fits} shows the Hamilton TMCMC posterior predictive
+trajectories. The model reproduces commensal homeostasis (CS:
+\textit{So}/\textit{An} growth with \textit{Pg} near zero although it is not
+fixed; CH: the \textit{So}-dominated bloom under flow), the
+clean pathogen succession of DS, and the
+non-linear \textit{Vei}/\textit{Pg} amplification of DH, the late-onset surge
+driven by bridge-mediated cross-feeding. Credible bands widen from CS to DH
+with the increasing effective dimensionality.
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.82\textwidth]{heine_fits_4cond.pdf}
+  \caption[Hamilton TMCMC posterior predictive fits across four conditions]{Hamilton
+  TMCMC posterior predictive fits of volume fraction $\phi_i$
+  ($N_p=10{,}000$). Columns: CS, CH, DS, DH; rows: five species. Solid: MAP
+  $\phi_i$; dashed: living fraction $\bar\phi_i=\phi_i\psi_i$. Bands:
+  $50\%$ (dark) / $80\%$ (light) credible intervals from $100$ posterior
+  samples. Circles: experimental median ($N=8$); boxes: inter-replicate IQR.
+  \textit{Pg} uses different strains by state: avirulent DSM\,20709
+  (commensal) vs.\ virulent W83 (dysbiotic).}
+  \label{fig:heine_fits}
+\end{figure}
+
+\subsection{Inferred interaction matrices and posteriors}
+\label{sec:heine_matrices}
+
+The MAP matrices (Figure~\ref{fig:heine_heatmap}) reveal a progressive
+reorganisation. In CS/CH the dominant entries are the \textit{So}--\textit{An} and
+\textit{So}--\textit{Vei} blocks (the mutualistic early-coloniser core), with the
+\textit{Fn} and \textit{Pg} rows near zero. The dysbiotic transition activates
+strong positive \textit{Fn}--\textit{Pg} and self-interaction entries:
+$\hat a_{55}^{\mathrm{DH}}(\textit{Pg}\,\text{self})=3.43$,
+$\hat a_{45}^{\mathrm{DH}}(\textit{Fn}\!\to\!\textit{Pg})=5.63$,
+$\hat a_{44}^{\mathrm{DH}}(\textit{Fn}\,\text{self})=4.45$, versus much weaker DS
+values ($0.30$, $2.20$, $1.01$) and near-zero CS/CH. The posterior violins
+(Figure~\ref{fig:heine_violin}) make the sparsity explicit: the
+\textit{Pg}-related entries ($a_{15},a_{25},a_{35},a_{45},a_{55}$) concentrate
+sharply at zero in CS/CH without being fixed there, and shift to broad positive
+distributions in DS/DH. DS exhibits the narrowest posteriors overall, consistent
+with its lowest RMSE.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{heine_heatmap_A_4cond.pdf}
+  \caption[MAP interaction matrices]{MAP interaction matrices $\mathbf{A}$
+  (Phase~2). Red: cooperative ($A_{ij}>0$); blue: competitive ($A_{ij}<0$). In
+  CS/CH the \textit{Fn}/\textit{Pg} rows and columns are near zero; these entries
+  are estimated, not fixed. The dysbiotic transition activates cooperative
+  cross-feeding in the \textit{Fn}--\textit{Pg} block.}
+  \label{fig:heine_heatmap}
+\end{figure}
+
+The gLV model (no symmetry constraint) yields the same qualitative pattern
+with substantially lower RMSE (Table~\ref{tab:glv_hamilton_comparison}).
+Figure~\ref{fig:heine_glv_heatmap} shows the corresponding MAP interaction
+matrices with annotated entry values. The condition-specific reorganisation is
+preserved, while the asymmetry of $\bA$ reveals directed interactions
+suppressed by the Hamilton symmetry constraint.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{heine_glv_Amatrix_thesis.pdf}
+  \caption[gLV MAP interaction matrices across four conditions]{gLV MAP
+  interaction matrices $\mathbf{A}$ (asymmetric). Red: cooperative
+  ($A_{ij}>0$); blue: competitive ($A_{ij}<0$). Annotated values indicate
+  entries with $|A_{ij}|>0.04$. The CS/CH commensal core
+  (\textit{So}--\textit{An}/\textit{Vei}; \textit{Vd} in the figure) and the DS/DH dysbiotic
+  \textit{Fn}--\textit{Pg} block are consistent with the Hamilton result
+  (Figure~\ref{fig:heine_heatmap}), but the asymmetric entries expose
+  directionality absent from the symmetric prior.}
+  \label{fig:heine_glv_heatmap}
+\end{figure}
+
+Two features emerge from the annotated entries.
+% 4 Oct 2026: values re-read from figures/heine_glv_Amatrix_thesis.pdf; the
+% earlier text paired a CS and a CH entry and called both CS/CH.
+\emph{Magnitude contraction in dysbiosis}: the largest CS/CH entries reach
+$|A_{ij}|\!\approx\!1.8$ (CS: $A_{\text{So,Vei}}\!=\!+1.83$, $A_{\text{Vei,An}}\!=\!+1.67$;
+CH: $A_{\text{An,Vei}}\!=\!+1.76$), whereas no DS/DH entry exceeds $0.58$, consistent with a tightly coordinated
+commensal network versus a weaker but more distributed dysbiotic attractor.
+\emph{Directed asymmetry and late-coloniser activation}: in CS, $A_{\text{Vei,An}}\!=\!+1.67$
+but $A_{\text{An,Vei}}\!=\!-0.02$, a one-directional benefit invisible to the symmetric model;
+in DS/DH the \textit{Pg}-related entries activate (DS: $A_{\text{An,Pg}}\!=\!+0.49$; DH:
+$A_{\text{Fn,Pg}}\!=\!+0.07$), consistent with the sign-enrichment analysis of
+Section~\ref{sec:heine_signprior}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{heine_posterior_violin.pdf}
+  \caption[Posterior distributions of the 15 interaction entries]{Posterior
+  distributions of the $15$ interaction entries (Phase~2). Stars: MAP. The
+  concentration of \textit{Pg}-related entries at zero in CS/CH confirms that
+  biological sparsity emerges from the data without a priori locking.}
+  \label{fig:heine_violin}
+\end{figure}
+
+\subsection{Structural reorganisation across conditions}
+\label{sec:heine_reorg}
+
+To quantify the inter-condition differences I compute, for each pair, the
+correlation $\rho$ of the vectorised matrices and the relative Frobenius distance
+$\Delta_F$ (Table~\ref{tab:heine_pairwise}). Matrices within the same health state
+share a backbone ($\rho_{\text{CH--CS}}=+0.26$, $\rho_{\text{DH--DS}}=+0.40$),
+whereas three of the four cross-state pairs anticorrelate ($\rho_{\text{DH--CS}}=-0.49$),
+and all cross-state pairs have large distances ($\Delta_F\geq1.01$). A UMAP
+embedding~\cite{McInnes2018UMAP} (cf.\ t-SNE~\cite{VanDerMaaten2008tSNE}) of the full posterior
+(Figure~\ref{fig:heine_umap}) confirms four well-separated clusters with no
+overlap. The transition from health to disease thus changes the sign pattern of
+the interaction network (Table~\ref{tab:heine_rewiring}).
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}cc|ccc@{}}
+    \toprule
+    \textbf{C1} & \textbf{C2} & $\rho$ & $\Delta_F$ & $d_{15\mathrm{D}}$\\
+    \midrule
+    CH & CS & $+0.26$ & $1.06$ & $\mathbf{3.38}$\\
+    DH & DS & $\mathbf{+0.40}$ & $\mathbf{0.88}$ & $5.86$\\
+    CH & DH & $+0.24$ & $1.01$ & $6.33$\\
+    CH & DS & $-0.27$ & $1.27$ & $4.88$\\
+    DH & CS & $\mathbf{-0.49}$ & $1.28$ & $\mathbf{7.77}$\\
+    CS & DS & $-0.27$ & $\mathbf{1.36}$ & $5.88$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Pairwise comparison of MAP matrices]{Pairwise comparison of MAP
+  matrices. $\rho$: correlation of $\mathrm{vec}(\mathbf{A})$; $\Delta_F$: relative
+  Frobenius distance; $d_{15\mathrm{D}}$: posterior-centroid distance in 15D.}
+  \label{tab:heine_pairwise}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.56\textwidth]{heine_umap_A_3d.pdf}
+  \caption[UMAP embedding of posterior A-matrix samples]{UMAP 3D embedding of the
+  posterior A-matrix samples ($N_p=10{,}000$). The four conditions form
+  well-separated clusters; centroid distances mirror the $d_{15\mathrm{D}}$ ordering
+  (CS--CH closest, CS--DH most distant).}
+  \label{fig:heine_umap}
+\end{figure}
+
+Figure~\ref{fig:heine_umap_comparison} overlays the gLV MAP solutions on the same
+UMAP embedding (fitted on the Hamilton posterior; gLV projected via
+$\tilde{A}_{ij}=(A_{ij}+A_{ji})/2$). Hamilton MAP stars ($\bigstar$) fall within their
+posterior clouds in all four conditions; gLV MAP crosses ($\times$) deviate substantially
+for CS and DH, migrating toward the CH region and the embedding centre respectively.
+The lower gLV RMSE shows that the displacement reflects asymmetry unlocking regions of interaction space geometrically
+inaccessible under the $A_{ij}=A_{ji}$ constraint.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.64\textwidth]{heine_umap_comparison.pdf}
+  \caption[UMAP comparison: Hamilton posterior and gLV MAP]{UMAP of the
+  Hamilton posterior A-matrix samples (a subsample of $1{,}200$ per condition from
+  the $N_p=10{,}000$ posterior; coloured clouds). Stars ($\bigstar$): Hamilton MAP; crosses ($\mathbf{\times}$):
+  gLV MAP, projected via $\tilde{A}_{ij}=(A_{ij}+A_{ji})/2$. Dashed lines
+  connect Hamilton MAP to gLV MAP of the same condition. Legend at right.
+  CS and DH gLV MAP solutions are displaced well outside their Hamilton
+  posterior clouds, indicating that asymmetry unlocks qualitatively different
+  regions of interaction space.}
+  \label{fig:heine_umap_comparison}
+\end{figure}
+
+Cross-condition \emph{transfer} sharpens the point (Table~\ref{tab:heine_transfer}):
+evaluating each MAP on every other condition's data, the within-state commensal
+transfer CS$\to$CH (RMSE $0.098$) is better than the CH self-prediction ($0.104$),
+which points to a shared commensal backbone across cultivation modes, whereas
+cross-state transfers (DS$\to$CS $0.384$, CS$\to$DH $0.198$) degrade sharply.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    Source $\backslash$ Target & CS & CH & DS & DH \\
+    \midrule
+    CS & \textbf{0.119} & 0.098 & 0.261 & 0.198 \\
+    CH & 0.257 & \textbf{0.104} & 0.100 & 0.159 \\
+    DS & 0.384 & 0.259 & \textbf{0.033} & 0.255 \\
+    DH & 0.342 & 0.212 & 0.289 & \textbf{0.087} \\
+    \bottomrule
+  \end{tabular}
+  \caption[Cross-condition prediction RMSE]{Cross-condition prediction RMSE.
+  Diagonal (bold): self-prediction. CS$\to$CH ($0.098$) outperforms CH
+  self-prediction ($0.104$), confirming a shared commensal backbone.}
+  \label{tab:heine_transfer}
+\end{table}
+
+\paragraph{Effective dimensionality.} With $r_i=\sigma_{\mathrm{post},i}/\Delta_{\mathrm{prior}}$
+($\Delta_{\mathrm{prior}}=6$), all $15$ parameters satisfy $r_i<0.43$ in every
+condition (DS tightest, mean $r=0.07$), and even the commensal \textit{Pg} entries
+reach $r_i\leq0.10$: the data constrain them to near zero. The full $15$-parameter model is therefore not over-parametrised
+(the identifiability diagnostic of Section~\ref{sec:theory_tmcmc}).
+
+\subsection{Edge rewiring between health states}
+\label{sec:heine_rewiring}
+
+The structural reorganisation of Section~\ref{sec:heine_reorg} can be localised to
+individual edges by classifying each pair as facilitative or competitive
+from the full posterior (the facilitation probability $P_{\mathrm{fac}}$ is the
+posterior mass with $A_{ij}>0$). A handful of edges flip sign with near-certainty
+between the commensal and dysbiotic states (Table~\ref{tab:heine_rewiring}). The
+\textit{So}--\textit{Vei} lactate axis, the metabolic core
+of commensal health, reverses from strong mutual facilitation
+($P_{\mathrm{fac}}\!\approx\!1.0$) to competition ($P_{\mathrm{fac}}\!<\!0.05$),
+while \textit{F.~nucleatum} acquires facilitation from \textit{An} and
+\textit{Vei} ($P_{\mathrm{fac}}$ rising from $0.09$--$0.23$ to $0.77$--$0.97$).
+Consistently, the net outgoing effect of \textit{P.~gingivalis} is most negative in
+dysbiotic-HOBIC ($\overline{\Delta}_{\textit{Pg}}^{\,\mathrm{DH}}=-0.14$,
+$P_{\mathrm{fac}}=0.27$): in the surge regime \textit{Pg} is a net competitor
+that consumes the shared niche rather than feeding it.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    Edge & Commensal $\to$ Dysbiotic & $P_{\mathrm{fac}}^{\mathrm{comm}}$ & $P_{\mathrm{fac}}^{\mathrm{dys}}$\\
+    \midrule
+    \textit{So}--\textit{Vei} & facilitation $\to$ competition & $1.00$ & $0.00$--$0.03$\\
+    \textit{An}--\textit{Fn}  & competition $\to$ facilitation & $0.23$ & $0.97$\\
+    \textit{Vei}--\textit{Fn} & competition $\to$ facilitation & $0.09$ & $0.77$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Posterior edge rewiring between health states]{Edges that flip sign with
+  near-certainty between commensal and dysbiotic states (posterior facilitation
+  probability $P_{\mathrm{fac}}$, from the $10{,}000$-particle posterior). $\mathbf A$
+  is symmetric, so each edge is undirected; where two values are given they span the
+  dysbiotic estimates. The
+  commensal \textit{So}--\textit{Vei} lactate mutualism reverses to competition; the
+  bridging organism \textit{F.~nucleatum} gains facilitation.}
+  \label{tab:heine_rewiring}
+\end{table}
+
+%==============================================================================
+\section{Independent Validation}
+\label{sec:heine_validation}
+%==============================================================================
+
+The Phase-2 MAP parameters are validated against measurements that never entered
+the calibration.
+
+\paragraph{pH prediction (LOO-$R^2=0.92$; independent $R^2=0.78$).}
+A five-predictor linear pH model, selected by leave-one-out CV on $N=90$ HOBIC
+time points,
+\begin{equation}
+  \mathrm{pH}(t) = 6.10 + 0.16\,\phi_{\textit{So}} + 0.55\,\phi_{\textit{An}}
+    + 0.30\,\phi_{\textit{Vei}} + 1.22\,\phi_{\textit{Fn}} + 1.88\,\phi_{\textit{Pg}},
+  \label{eq:heine_ph}
+\end{equation}
+has its coefficients fixed from \emph{experimental} fractions alone
+(LOO-$R^2=0.920$). To test the \emph{inferred} $\mathbf{A}$, $500$ Phase-2
+posterior samples are integrated forward from Day-1 fractions and the fixed
+coefficients applied to the ODE-predicted fractions; no pH data enter
+the TMCMC. This gives an independent $R^2=0.778$ (RMSE $0.126$\,pH units)
+against the held-out HOBIC pH series (Figure~\ref{fig:heine_ph}), confirming that
+$\mathbf{A}$ captures the community drivers of pH. The species--pH correlations are
+mechanistically coherent: \textit{Fn} ($r=+0.93$) and \textit{Pg} ($r=+0.93$)
+dominate alkalinisation (gingipain-mediated arginine/lysine catabolism releasing
+ammonia), while \textit{So} acidifies ($r=-0.68$) via lactate.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{heine_ph_validation.pdf}
+  \caption[Independent pH validation]{Independent pH validation. \textbf{(a)}
+  Measured HOBIC pH (solid) vs.\ TMCMC posterior predictions (dashed, markers) with
+  $90\%$ credible bands, commensal (blue) and dysbiotic (red). \textbf{(b)}
+  Predicted vs.\ measured pH at six time points. Regression coefficients were
+  fitted from species fractions only (LOO-CV, $N=90$); pH was not used in
+  calibration. $R^2=0.778$, RMSE $0.126$\,pH units.}
+  \label{fig:heine_ph}
+\end{figure}
+
+\paragraph{Further checks.} The predicted DH \textit{Pg} trajectory correlates
+with the measured gingipain profile ($r=0.90$), both showing delayed Day-15--21
+onset. The signs of the posterior are metabolically plausible: the \textit{So}--\textit{Vei}
+lactate axis is facilitative in the commensal states and competitive in the
+dysbiotic states, and the \textit{Fn} edges gain facilitation in the dysbiotic
+states (Table~\ref{tab:heine_rewiring}).
+Section~\ref{sec:heine_signprior} uses such metabolic signs as a prior for
+in-vivo data.
+
+%==============================================================================
+\section{Discussion}
+\label{sec:heine_discussion}
+%==============================================================================
+
+\paragraph{Biological interpretation.} The inferred matrices give a quantitative
+account of the commensal-to-dysbiotic transition. The healthy state rests on a
+\textit{So}--\textit{An} co-aggregation and \textit{So}--\textit{Vei} lactate core;
+dysbiosis activates cooperative \textit{Vei}$\to$\textit{Pg} and
+\textit{Fn}$\to$\textit{Pg} pathways. That structural similarity is preserved
+within health states ($\rho_{\text{within}}>0$) but lost across them
+($\rho_{\text{cross}}<0$ for three of the four cross-state pairs) shows the transition to be a network reorganisation
+rather than a magnitude shift, and the full-discovery posterior recovers commensal
+sparsity as an emergent property.
+
+\paragraph{A falsifiable prediction.} Because the terminal \textit{Pg} surge is
+gated by the cooperative \textit{Fn}$\to$\textit{Pg} coefficient, which is
+indistinguishable from zero in both commensal states but rises to
+$\hat a_{45}^{\mathrm{DH}}=5.63$ (posterior mean $+4.86$, $95\%$ CI
+$[+3.03,+5.95]$) under dysbiotic flow, the model predicts that
+\emph{attenuating this single interaction}, e.g.\ by omitting
+\textit{F.~nucleatum} from the consortium, should suppress the terminal \textit{Pg}
+bloom and drive the DH trajectory toward a commensal-like, \textit{Pg}-low steady
+state. This is a direct leave-one-species-out co-culture test that would
+discriminate the network hypothesis from a \textit{Pg}-intrinsic growth
+explanation, and it recapitulates the established bridging role of
+\textit{F.~nucleatum}~\cite{Kolenbrander2006FnBridge, Signat2011Fn}.
+
+\paragraph{Fix-$\psi$ approximation and Phase~2.} Figure~\ref{fig:heine_phase}
+compares the Phase-1 and Phase-2 MAPs parameter by parameter. In commensal
+conditions they agree closely ($r=0.83$--$0.90$): the $\psi$--$\mathbf{A}$ coupling
+is weak and fix-$\psi$ is a good approximation. In dysbiotic conditions they
+diverge ($r=0.23$ for DS, $0.62$ for DH), with the largest shifts in
+\textit{Pg}-related entries, where viability dynamics are most active.
+This condition-dependent consistency validates the two-phase design: Phase~1 is a
+reliable starting point, and Phase~2 corrections matter where $\psi$ couples
+non-negligibly to $\mathbf{A}$. The viability predictions themselves remain poor
+(RMSE $0.11$--$0.39$); the $\psi$ channel functions as a soft constraint that
+breaks the $\psi$--$\mathbf{A}$ degeneracy rather than as a predictive model of
+membrane integrity.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.80\textwidth]{heine_phase1_vs_phase2.pdf}
+  \caption[Phase~1 vs.\ Phase~2 MAP estimates]{Phase~1 (fix-$\psi$) vs.\ Phase~2
+  (free $\psi$) MAP estimates; each point is one of the $15$ parameters, dashed
+  line is identity. Commensal conditions agree strongly ($r\geq0.83$); dysbiotic
+  conditions shift systematically in \textit{Pg}-related parameters, confirming the
+  necessity of Phase~2.}
+  \label{fig:heine_phase}
+\end{figure}
+
+\paragraph{Model evidence and computation.} The log-evidence $\ln\hat Z$~\cite{Kass1995Bayes}
+(Table~\ref{tab:heine_rmse}) is higher for the commensal conditions in Phase~1 under the same
+$15$-parameter prior, because the posterior concentrates pathogen entries near
+zero and so reduces the Occam factor, a model-based signature of ecological
+complexity. Methodologically, the $147\times$ GPU speedup makes
+$10{,}000$-particle posteriors routine and is what renders the full-discovery,
+no-locking strategy tractable in $15$ dimensions. These in-vitro interaction
+matrices, and the validation that they predict held-out chemistry, calibrate the
+point model that Chapter~\ref{ch:ansys} brings into space.
+
+\paragraph{Limitations and the symmetry approximation.}
+Three limitations bound interpretation of the in-vitro matrices. First, the
+Hamilton symmetry constraint $A_{ij}=A_{ji}$ excludes directed
+contact-dependent adhesion and toxin delivery by construction. Second, the
+five-species consortium is a curated subset; unmeasured community members
+could absorb metabolites that shift apparent cross-feeding signs. Third,
+the Phase-1 posteriors are conditioned on the measured viability, and Phase~2
+treats $\psi$ only as a soft constraint; a fully
+joint $(\mathbf{A},\psi)$ inference would propagate additional uncertainty
+into the interaction estimates, particularly in dysbiotic conditions where
+the Phase-2 correction is largest. These approximations are consistent with
+the in-vitro setting and motivate the in-vivo cross-validation of
+Section~\ref{sec:heine_signprior}, where the symmetry constraint is
+re-examined against a ten-patient longitudinal dataset.
+
+%==============================================================================
+\section{From In-Vitro to In-Vivo Data: a Metabolic Sign Prior}
+\label{sec:heine_signprior}
+%==============================================================================
+% Condensed 3 Oct 2026 from the former chapter 4 (chapters/ch4_dieckow.tex,
+% kept in the tree for its full text and figures). Internship work.
+
+The calibration above rests on rich in-vitro data: five species, six time points,
+four controlled conditions. Clinical data are much sparser. This section shows,
+in condensed form, how the same type of model can still be identified there when
+the signs of the interactions are fixed beforehand from metabolic models. The
+work was done during an internship at NIFE together with S.\,P.\ Szafra\'{n}ski
+and is summarised here because it completes the calibration side of the
+thesis; the full analysis is available as an internal report.
+
+\paragraph{Data.} Dieckow et al.~\cite{dieckow2024structure} characterised
+early biofilm formation on implant abutments in $12$ patients. The analysis
+uses $10$ of them, each sampled at three weekly time points. The
+16S~rRNA amplicon reads were aggregated into $10$ class-level guilds and
+normalised to the simplex, $\sum_i\phi_i=1$. With $10$ guilds and three time
+points, the first of which is the initial condition, there are $20$ observations per patient against up to $55$ entries of a
+symmetric interaction matrix, so the inverse problem cannot be solved without
+additional information.
+
+\paragraph{Sign prior.} The prior of Section~\ref{sec:theory_fba} is assembled
+in three layers: experimentally documented production and use of metabolites
+from eHOMD~\cite{Escapa2018eHOMD} and Szafra\'{n}ski et
+al.~\cite{Szafranski2025} ($34$ constrained guild pairs); parsimonious FBA of
+one AGORA2 model per guild~\cite{Heinken2023AGORA2} ($35$ pairs); and
+community FBA with MICOM~\cite{Diener2020MICOM} ($72$ pairs). The directed
+signals are symmetrised for the symmetric model, and the penalty acts only on
+coefficients of the wrong sign.
+
+\paragraph{Model and test.} The replicator form of
+Section~\ref{sec:theory_replicator} is fitted with one interaction matrix
+$\bA$ shared by all patients and a growth vector $\bb^{(p)}$ per patient. It is
+tested by leave-one-patient-out cross-validation: $\bA$ is fitted on nine
+patients and frozen, the held-out patient's $\bb^{(p)}$ is fitted from the
+first week only, and the second and third weeks are predicted.
+Table~\ref{tab:heine_signprior} lists the prediction errors.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    model & prior & sign agreement & LOO-RMSE\\
+    \midrule
+    replicator, symmetric $\bA$ & none            & --        & $0.0595$\\
+    replicator, symmetric $\bA$ & eHOMD + pFBA    & $94\%$    & $0.0516$\\
+    replicator, symmetric $\bA$ & + MICOM         & $100\%$   & $0.0502$\\
+    gLV, asymmetric             & none            & --        & $0.0588$\\
+    gLV, asymmetric             & eHOMD + pFBA    & $97\%$    & $0.0490$\\
+    Bayesian gLV (MDSINE2~\cite{Gibson2021MDSINE2}) & sparsity & -- & $0.0552$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Leave-one-patient-out prediction with a sign prior]{Leave-one-patient-out
+    prediction of the in-vivo guild compositions ($10$ patients of Dieckow et al.).
+    Sign agreement: share of the constrained pairs whose fitted sign matches the
+    prior. The persistence null model has a Bray--Curtis dissimilarity of
+    $0.281$; the best model reaches $0.147$.}
+  \label{tab:heine_signprior}
+\end{table}
+
+\paragraph{Results.}
+\begin{itemize}
+  \item The sign prior improves the symmetric model step by step, from
+        $0.0595$ without prior to $0.0502$ with all three layers. The
+        asymmetric gLV with the first two layers is slightly better
+        ($0.0490$); its directed coefficients add freedom that the symmetric
+        model does not have. The Bayesian gLV collapses to $\bA\approx0$ with
+        three time points.
+  \item Only the sign carries over from the metabolic models. A prior that
+        ties $A_{ij}$ to the magnitude of the predicted fluxes recovers the
+        correct sign for only $4$ to $11$ of $70$ pairs. Fitted without any
+        prior, the symmetric model still recovers $11$ of the $14$
+        cross-feeding signs predicted by AGORA2 ($78.6\,\%$, against $37.7\,\%$
+        under a permutation null, $p=4\times10^{-4}$); the asymmetric gLV
+        shows no such agreement ($p=0.96$).
+  \item On $127$ independent peri-implant samples of Joshi et
+        al.~\cite{joshi2025}, a dysbiosis ratio of the guilds ordered by the
+        model separates peri-implantitis from health and mucositis
+        (Kruskal--Wallis $p<10^{-4}$; Spearman $\rho=0.46$ with severity).
+\end{itemize}
+
+\paragraph{Limits.} With $10$ patients the gain of the community-FBA layer over
+the first two is only marginally significant ($p\approx0.07$). The symmetric
+matrix cannot represent directed effects, which is where the asymmetric gLV
+gains its edge. For the rest of this thesis the result that matters is a
+narrower one: the signs of the interaction matrix are the part of the model
+that is supported by independent evidence, in vitro and in vivo.

@@ -1,3 +1,7 @@
+% FIELD CONVENTION (2026-10-02): working notes about each entry live in
+% `annote`, which the standard styles do not print. They used to be `note`,
+% which plain/unsrt print into the reference list, so internal remarks
+% ("Read 2026-09-30", ...) would have appeared in the thesis.
 %% biofilm_3tooth_refs.bib
 %% References for biofilm_3tooth_report.tex
 %% Covers: OpenJaw geometry, biofilm ODE model, E_eff material model,
@@ -18,7 +22,7 @@
   year      = {2022},
   doi       = {10.1016/j.cmpb.2022.107009},
   publisher = {Elsevier},
-  note      = {Source of Patient-1 tooth STL files (T23, T30, T31) used in this work}
+  annote    = {Source of Patient-1 tooth STL files (T23, T30, T31) used in this work}
 }
 
 % ── Biofilm ODE / Continuum model ─────────────────────────────────────────────
@@ -46,10 +50,10 @@
   number  = {164},
   year    = {2026},
   doi     = {10.1007/s00419-026-03160-y},
-  note    = {Published version of arXiv:2509.01274; 0-D material-point model
+  annote  = {Published version of arXiv:2509.01274; 0-D material-point model
              for the 5-species phi/psi interaction dynamics (Hamilton
              principle, Eqs. 16-18). NOT the growth-kinematics source -- see
-             Klempt2024DiffusionDrivenGrowth for F=Fe*Fg, Fg=(1+alpha)I}
+             Klempt2024DiffusionDrivenGrowth for F=Fe*Fg, Fg=alpha I, alpha(0)=1}
 }
 
 % The actual growth-kinematics source (F=Fe*Fg) that this repo's UMAT
@@ -75,10 +79,26 @@
   year    = {2024},
   pages   = {2091--2113},
   doi     = {10.1007/s10237-024-01883-x},
-  note    = {Growth kinematics constitutive basis of this work: $F=F_e F_g$
+  annote  = {Growth kinematics constitutive basis of this work: $F=F_e F_g$
              (Sec. 2.1). NOTE: this paper's own $F_g=\alpha I$, not
              $F_g=(1+\alpha)I$ as used elsewhere in this repo -- see the
              comment above; unresolved as of 2026-08-20}
+}
+
+@article{Klempt2023NumericalComparison,
+  author  = {Klempt, F. and Soleimani, M. and Junker, P.},
+  title   = {Numerical comparison of biofilm growth models using prominent
+             modeling approaches},
+  journal = {Proceedings in Applied Mathematics and Mechanics (PAMM)},
+  volume  = {22},
+  number  = {1},
+  pages   = {e202200054},
+  year    = {2023},
+  doi     = {10.1002/pamm.202200054},
+  annote  = {Read from the PDF (2026-10-01). Precursor spatial model: source
+             term scaled by a species-dependent factor $R_s$, consumption $g$
+             species-dependent; hydrostatic pressure inside the biofilm and
+             tension at its edge.}
 }
 
 % Superseded by the entry above — kept because older text refers to the
@@ -88,7 +108,7 @@
   title   = {A continuum multi-species biofilm model with a novel interaction scheme},
   journal = {arXiv preprint arXiv:2509.01274},
   year    = {2025},
-  note    = {5-species ODE model; provides the E\_eff material model
+  annote  = {5-species ODE model; provides the E\_eff material model
              ($E_{\max}=10$\,MPa, $E_{\min}=0.5$\,MPa, $\alpha=2.0$,
              $s_{\mathrm{DI}}=0.025778$) adopted in this work}
 }
@@ -100,7 +120,7 @@
   title   = {{GPU}-accelerated {B}ayesian inference of multi-species biofilm
              interaction parameters via {TMCMC}},
   year    = {2025},
-  note    = {Manuscript; companion paper. Supplies the posterior over the
+  annote  = {Manuscript; companion paper. Supplies the posterior over the
              symmetric 15-parameter interaction matrix $A$ and (Phase 2) the
              viability $\psi_i$ that this work consumes as input. Phase 1 fixes
              $\psi_i$ to measured membrane-intact ratios; Phase 2 releases it
@@ -113,7 +133,7 @@
   title   = {Bayesian updating of bacterial microfilms under hybrid uncertainties
              with a novel surrogate model},
   year    = {2025},
-  note    = {Manuscript; basis for the TMCMC inference pipeline applied here}
+  annote  = {Manuscript; basis for the TMCMC inference pipeline applied here}
 }
 
 @article{JunkerBalzani2021ExtendedHamilton,
@@ -139,7 +159,7 @@
   pages   = {379--423},
   year    = {1948},
   doi     = {10.1002/j.1538-7305.1948.tb01338.x},
-  note    = {Entropy $H = -\sum p_i \ln p_i$ used as the basis for DI
+  annote  = {Entropy $H = -\sum p_i \ln p_i$ used as the basis for DI
              $= 1 - H/H_{\max}$, $H_{\max}=\ln 5$}
 }
 
@@ -159,7 +179,7 @@
   pages   = {1649419},
   year    = {2025},
   doi     = {10.3389/froh.2025.1649419},
-  note    = {In vitro 5-species peri-implant biofilm including \textit{P.~gingivalis};
+  annote  = {In vitro 5-species peri-implant biofilm including \textit{P.~gingivalis};
              supports use of $a_{35}$ (Veillonella$\to$Pg) as a key dysbiosis parameter}
 }
 
@@ -185,7 +205,7 @@
   pages   = {471--480},
   year    = {2010},
   doi     = {10.1038/nrmicro2381},
-  note    = {Ecological basis for the 5-species succession model
+  annote  = {Ecological basis for the 5-species succession model
              (S.\,oralis $\to$ A.\,naeslundii $\to$ V.\,dispar $\to$
               F.\,nucleatum $\to$ P.\,gingivalis)}
 }
@@ -201,7 +221,7 @@
   pages   = {100130},
   year    = {2023},
   doi     = {10.1016/j.bpr.2023.100130},
-  note    = {Bayesian characterisation of biofilm viscoelastic moduli;
+  annote  = {Bayesian characterisation of biofilm viscoelastic moduli;
              supports the linear-elastic approximation adopted here
              for small-deformation loading}
 }
@@ -263,7 +283,7 @@
   number  = {4},
   pages   = {455--467},
   year    = {1994},
-  note    = {Origin of the multiplicative growth split $F=F_e F_g$ that both
+  annote  = {Origin of the multiplicative growth split $F=F_e F_g$ that both
              Klempt papers (and this work's UMAT) build on; added 2026-08-20,
              was previously only cited secondhand via Klempt et al.}
 }
@@ -279,7 +299,7 @@
   journal = {Frontiers in Dental Medicine},
   volume  = {7},
   year    = {2026},
-  note    = {article 1902992},
+  annote  = {article 1902992},
   doi     = {10.3389/fdmed.2026.1902992}
 }
 
@@ -292,7 +312,7 @@
   journal = {Materials Today Communications},
   year    = {2026},
   doi     = {10.1016/j.mtcomm.2025.114314},
-  note    = {278 FE studies on dental implants surveyed}
+  annote  = {278 FE studies on dental implants surveyed}
 }
 
 % ── Jaw / PDL FEM ─────────────────────────────────────────────────────────────
@@ -303,7 +323,7 @@
              kinetic loading of the jaw system},
   journal = {Journal of the Mechanical Behavior of Biomedical Materials},
   year    = {2020},
-  note    = {Dynamic FEA of PDL under chewing-like loading;
+  annote  = {Dynamic FEA of PDL under chewing-like loading;
              contextualises the 1\,MPa inward pressure loading used here}
 }
 
@@ -327,7 +347,7 @@
   title   = {Editorial: {A}pplications of digital twin technology in dentistry},
   journal = {Frontiers in Bioengineering and Biotechnology},
   year    = {2025},
-  note    = {Contextualises the TMCMC--FEM pipeline as a dental digital-twin workflow}
+  annote  = {Contextualises the TMCMC--FEM pipeline as a dental digital-twin workflow}
 }
 
 % ── Abaqus ────────────────────────────────────────────────────────────────────
@@ -338,4 +358,230 @@
   organization = {Dassault Syst\`{e}mes Simulia Corp.},
   address      = {Providence, RI},
   year         = {2024}
+}
+
+% ---------------------------------------------------------------------------
+% Added 2026-09-30 from READING_GAPS.md, which was compiled from Klempt et al.
+% (2024)'s own reference list and checked against what this repository cited.
+%
+% PROVENANCE, because it matters for a thesis: the four entries carrying a doi
+% field were read from the PDF itself (notes in SOLEIMANI2019_NOTES.md,
+% SOLEIMANI2021_NOTES.md, SOLEIMANI2023_NOTES.md, CHU2018_NOTES.md), so their
+% details are first-hand. The other ten were transcribed from Klempt et al.
+% (2024)'s reference list and were checked against Crossref on 2026-10-02
+% (title, authors, journal, volume, issue, pages, year): eight matched, two
+% were corrected (Soleimani 2020's full title; author order in Mattei 2018),
+% and all ten now carry the DOI Crossref returns.
+% ---------------------------------------------------------------------------
+
+@article{Soleimani2023CoAggregation,
+  author  = {Soleimani, M. and Szafranski, S. P. and Qu, T. and
+             Mukherjee, R. and Stiesch, M. and Wriggers, P. and Junker, P.},
+  title   = {Numerical and experimental investigation of multi-species
+             bacterial co-aggregation},
+  journal = {Scientific Reports},
+  volume  = {13},
+  pages   = {11839},
+  year    = {2023},
+  doi     = {10.1038/s41598-023-38806-2},
+  annote  = {The closest existing work to this thesis: multi-species,
+             numerical and experimental, by the supervisor with the dental
+             clinic side and both Klempt co-authors. Read 2026-09-30; see
+             SOLEIMANI2023_NOTES.md}
+}
+
+@article{Soleimani2019ViscoelasticGrowth,
+  author  = {Soleimani, M.},
+  title   = {Finite strain visco-elastic growth driven by nutrient diffusion:
+             theory, {FEM} implementation and an application to the biofilm
+             growth},
+  journal = {Computational Mechanics},
+  volume  = {64},
+  number  = {5},
+  pages   = {1289--1301},
+  year    = {2019},
+  doi     = {10.1007/s00466-019-01708-0},
+  annote  = {Precedent for the viscoelastic UMAT, and the source of the
+             unconditionally stable exponential update (its Eq. 32) that
+             VISCOUS_UPDATE_SCHEME.md specifies and verifies against closed
+             form. Read 2026-09-30}
+}
+
+@article{Soleimani2021Atherosclerosis,
+  author  = {Soleimani, M. and Haverich, A. and Wriggers, P.},
+  title   = {Mathematical modeling and numerical simulation of
+             atherosclerosis based on a novel surgeon's view},
+  journal = {Archives of Computational Methods in Engineering},
+  volume  = {28},
+  pages   = {4263--4282},
+  year    = {2021},
+  doi     = {10.1007/s11831-021-09623-5},
+  annote  = {Cite at the point $F_g=(1+\alpha)I$ is introduced: its Eq. 15 is
+             this work's convention verbatim, with $\alpha(0)=0$, which
+             resolves CITATION_AUDIT item F1c. Its Eq. 17 is the growth cap
+             now implemented in usermat_biofilm.f. Read 2026-09-30}
+}
+
+@article{Chu2018SelfInducedStress,
+  author  = {Chu, E. K. and Kilic, O. and Cho, H. and Groisman, A. and
+             Levchenko, A.},
+  title   = {Self-induced mechanical stress can trigger biofilm formation in
+             uropathogenic {E}scherichia coli},
+  journal = {Nature Communications},
+  volume  = {9},
+  pages   = {4087},
+  year    = {2018},
+  doi     = {10.1038/s41467-018-06552-z},
+  annote  = {Why growth-induced stress is worth computing at all. Quote its
+             threshold only with the E_SPEC caveat attached -- see
+             CHU2018_NOTES.md, which corrects an earlier over-claim.
+             Read 2026-09-30}
+}
+
+@article{Soleimani2020AnisotropicGrowth,
+  author  = {Soleimani, M. and Muthyala, N. and Marino, M. and Wriggers, P.},
+  title   = {A novel stress-induced anisotropic growth model driven by
+             nutrient diffusion: theory, {FEM} implementation and
+             applications in bio-mechanical problems},
+  journal = {Journal of the Mechanics and Physics of Solids},
+  volume  = {144},
+  pages   = {104097},
+  year    = {2020},
+  doi     = {10.1016/j.jmps.2020.104097},
+  annote  = {Models the stress-to-growth feedback that this work's one-way
+             coupling gives up; the clearest way to state what is deferred.
+             Verified against Crossref 2026-10-02}
+}
+
+@book{Goriely2017BiologicalGrowth,
+  author    = {Goriely, A.},
+  title     = {The Mathematics and Mechanics of Biological Growth},
+  publisher = {Springer},
+  address   = {New York},
+  series    = {Interdisciplinary Applied Mathematics},
+  year      = {2017},
+  doi       = {10.1007/978-0-387-87710-5},
+  annote    = {Standard monograph for the growth kinematics chapter.
+               Verified against Crossref 2026-10-02}
+}
+
+@article{LubardaHoger2002GrowingMass,
+  author  = {Lubarda, V. A. and Hoger, A.},
+  title   = {On the mechanics of solids with a growing mass},
+  journal = {International Journal of Solids and Structures},
+  volume  = {39},
+  number  = {18},
+  pages   = {4627--4664},
+  year    = {2002},
+  doi     = {10.1016/S0020-7683(02)00352-9},
+  annote  = {Foundation for the multiplicative split, alongside Rodriguez
+             et al. (1994). Verified against Crossref 2026-10-02}
+}
+
+@article{EpsteinMaugin2000VolumetricGrowth,
+  author  = {Epstein, M. and Maugin, G. A.},
+  title   = {Thermomechanics of volumetric growth in uniform bodies},
+  journal = {International Journal of Plasticity},
+  volume  = {16},
+  number  = {7--8},
+  pages   = {951--978},
+  year    = {2000},
+  doi     = {10.1016/S0749-6419(99)00081-9},
+  annote  = {Thermodynamic setting for growth; relevant to the extra entropy
+             source Soleimani (2019) needs for an open system. Details from
+             Verified against Crossref 2026-10-02}
+}
+
+@article{Rath2017StreptococcusGordonii,
+  author  = {Rath, H. and Feng, D. and Neuweiler, I. and Stumpp, N. S. and
+             Nackenhorst, U. and Stiesch, M.},
+  title   = {Biofilm formation by the oral pioneer colonizer
+             {S}treptococcus gordonii: an experimental and numerical study},
+  journal = {FEMS Microbiology Ecology},
+  volume  = {93},
+  number  = {3},
+  pages   = {fix010},
+  year    = {2017},
+  doi     = {10.1093/femsec/fix010},
+  annote  = {Oral, experimental, same institute, and directly comparable to
+             S. oralis leading the succession panel. Note that this
+             bibliography previously had NO Rath entry at all: the 44 "Rath"
+             matches READING_GAPS.md counted in the repository were something
+             else. Verified against Crossref 2026-10-02}
+}
+
+@article{Bol2013BiofilmMechanicalCharacterisation,
+  author  = {B{\"o}l, M. and Ehret, A. E. and Bolea Albero, A. and
+             Hellriegel, J. and Krull, R.},
+  title   = {Recent advances in mechanical characterisation of biofilm and
+             their significance for material modelling},
+  journal = {Critical Reviews in Biotechnology},
+  volume  = {33},
+  number  = {2},
+  pages   = {145--171},
+  year    = {2013},
+  doi     = {10.3109/07388551.2012.679250},
+  annote  = {Cite where E\_SPEC is disclosed as an assumption: this is why no
+             better number exists. Verified against Crossref 2026-10-02}
+}
+
+@article{Mattei2018ContinuumDiscreteReview,
+  author  = {Mattei, M. R. and Frunzo, L. and D'Acunto, B. and Pechaud, Y. and
+             Pirozzi, F. and Esposito, G.},
+  title   = {Continuum and discrete approach in modeling biofilm development
+             and structure: a review},
+  journal = {Journal of Mathematical Biology},
+  volume  = {76},
+  number  = {4},
+  pages   = {945--1003},
+  year    = {2018},
+  doi     = {10.1007/s00285-017-1165-y},
+  annote  = {The review that frames the continuum-versus-individual-based
+             choice this work makes implicitly. Verified against Crossref 2026-10-02}
+}
+
+@article{Lardon2011iDynoMiCS,
+  author  = {Lardon, L. A. and Merkey, B. V. and Martins, S. and
+             D{\"o}tsch, A. and Picioreanu, C. and Kreft, J.-U. and
+             Smets, B. F.},
+  title   = {i{D}yno{M}i{CS}: next-generation individual-based modelling of
+             biofilms},
+  journal = {Environmental Microbiology},
+  volume  = {13},
+  number  = {9},
+  pages   = {2416--2434},
+  year    = {2011},
+  doi     = {10.1111/j.1462-2920.2011.02414.x},
+  annote  = {One of the individual-based alternatives this work is choosing
+             against. Verified against Crossref 2026-10-02}
+}
+
+@article{Li2019NUFEB,
+  author  = {Li, B. and Taniguchi, D. and Gedara, J. P. and Gogulancea, V. and
+             Gonzalez-Cabaleiro, R. and Chen, J. and McGough, A. S. and
+             Ofiteru, I. D. and Curtis, T. P. and Zuliani, P.},
+  title   = {{NUFEB}: a massively parallel simulator for individual-based
+             modelling of microbial communities},
+  journal = {PLoS Computational Biology},
+  volume  = {15},
+  number  = {12},
+  pages   = {e1007125},
+  year    = {2019},
+  doi     = {10.1371/journal.pcbi.1007125},
+  annote  = {Individual-based alternative. Verified against Crossref 2026-10-02}
+}
+
+@article{Naylor2017Simbiotics,
+  author  = {Naylor, J. and Fellermann, H. and Ding, Y. and Mohammed, W. K. and
+             Jakubovics, N. S. and Mukherjee, J. and Biggs, C. A. and
+             Wright, P. C. and Krasnogor, N.},
+  title   = {Simbiotics: a multiscale integrative platform for {3D} modeling
+             of bacterial populations},
+  journal = {ACS Synthetic Biology},
+  volume  = {6},
+  number  = {7},
+  pages   = {1194--1210},
+  year    = {2017},
+  doi     = {10.1021/acssynbio.6b00315},
+  annote  = {Individual-based alternative. Verified against Crossref 2026-10-02}
 }

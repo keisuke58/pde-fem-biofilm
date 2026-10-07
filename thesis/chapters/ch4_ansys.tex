@@ -1,0 +1,1075 @@
+%=======================================================================
+% Chapter 5 -- draft (rewritten 2026-10-02).
+%
+% Scope (decided 2026-10-01/02): growth for ONE and TWO species, coupled into
+% the existing IKM element following Klempt et al. 2024; species composition
+% from the point model of Klempt et al. 2026. More species and all Abaqus
+% work are the Keio continuation and do NOT appear here as results.
+% Writing rules: CLAUDE.md, "Slides, notes and other documents" (first person
+% singular, no Abaqus as thesis work, units on every constant, no internal
+% run labels).
+%
+% PORTING (see PORTING.md). Material to merge into the thesis tree:
+%     - packages: amsmath, amssymb, bm, xcolor, graphicx. Nothing else.
+%     - every label is namespaced ch5-*.
+%     - one path to set: \ansysfigdir below.
+%
+% CITATIONS
+%   growth field Eq. 34-36, kinematics, Table 2   -> Klempt2024DiffusionDrivenGrowth
+%   multi-species point model, Table 1 cases       -> Klempt2026ContinuumBacterialGrowth
+%   same point model, Bayesian updating            -> Fritsch2025BayesianMicrofilms
+%   The 2024 and 2026 papers are different papers; do not swap them.
+%=======================================================================
+% ---- the one thing to set when porting -------------------------------
+\providecommand{\ansysfigdir}{../assets/}
+% ----------------------------------------------------------------------
+
+\chapter{Coupling biofilm growth into an existing FEM element}
+\label{ch:ansys}
+
+%-----------------------------------------------------------------------
+\section{Scope and contribution}
+\label{sec:ch5-scope}
+
+% Source: THESIS_ASSIGNMENT.md §1; scope decision 2026-10-01. Shortened 3 Oct
+% 2026: the objectives are in chapter 1, the model equations in chapter 2.
+This chapter brings the point model of Chapter~\ref{ch:heine} into the
+biofilm element developed at IKM for the partner project, which solves the
+field model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
+(Section~\ref{sec:theory_field}) in ANSYS. It covers one and two species, for
+which the papers give numbers to check against, and contains the second and
+third contributions of the thesis (Section~\ref{sec:intro_structure}):
+\begin{itemize}
+\item a growth law, $\mathbf F=\mathbf F_e\mathbf F_g$ with
+      $\mathbf F_g=\alpha\mathbf I$, implemented as an ANSYS user material
+      and verified against closed forms (\S\ref{sec:ch5-model}--\ref{sec:ch5-verification}),
+      and coupled to the element's biofilm field through the growth equation
+      at every Gauss point (\S\ref{sec:ch5-coupling});
+\item for two species, the composition from the point model of Klempt et
+      al.~\cite{Klempt2026ContinuumBacterialGrowth}
+      (Section~\ref{sec:theory_point}), run at every Gauss point alongside the
+      field (\S\ref{sec:ch5-composition}).
+\end{itemize}
+
+%-----------------------------------------------------------------------
+\section{The constitutive model}
+\label{sec:ch5-model}
+
+% Source: Kinematics: Klempt2024DiffusionDrivenGrowth.
+Growth enters multiplicatively,
+$\mathbf F = \mathbf F_e \mathbf F_v \mathbf F_g$ with
+$\mathbf F_g = \alpha\mathbf I$ and $\alpha(0)=1$, as in Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth}; $\alpha-1$ is the growth, and
+$\alpha=1$ means no growth. The elastic response is compressible
+Mooney--Rivlin, reducing to neo-Hookean at $C_{01}=0$. A viscous branch, a
+deviatoric Newtonian dashpot carrying $\mathbf F_v$, is implemented but
+switched off ($\eta=0$) in every result of this chapter, as in the paper.
+
+Written out in the order the implementation evaluates it, a step takes the
+total deformation gradient $\mathbf F$ and the viscous state
+$\mathbf F_v^{\,n}$ and returns the Cauchy stress and $\mathbf F_v^{\,n+1}$:
+\begin{enumerate}
+\item the mechanical part removes the growth,
+      $\mathbf F_{\mathrm{mech}} = \mathbf F\,\mathbf F_g^{-1}$, and a trial
+      elastic gradient follows from the viscous state at the start of the step,
+      $\mathbf F_e^{\mathrm{tr}} = \mathbf F_{\mathrm{mech}}(\mathbf F_v^{\,n})^{-1}$;
+\item with $\mathbf b_e = \mathbf F_e \mathbf F_e^{\mathsf T}$ and
+      $J_e = \det \mathbf F_e$, the deviatoric Kirchhoff stress follows from
+      $W = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$;
+\item the viscous state advances by one step of the deviatoric flow rule,
+      \begin{equation}
+        \mathbf F_v^{\,n+1} =
+        \Bigl( \mathbf I + \frac{\Delta t}{2\,\eta\,J_e}\,
+        \bm\tau_{\mathrm{dev}} \Bigr)\mathbf F_v^{\,n},
+        \label{eq:ch5-flow}
+      \end{equation}
+      with $\bm\tau_{\mathrm{dev}}$ taken at the trial state;
+\item the stress is recomputed at $\mathbf F_v^{\,n+1}$, the volumetric term
+      $\tfrac{2}{D_1}(J_e-1)$ is added, and the result is returned in the
+      solver's Voigt ordering.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\ansysfigdir flow_growth_kinematics.png}
+  \caption[Multiplicative growth kinematics]{%
+    The configurations the decomposition introduces. Growth carries the
+    reference state to an intermediate one that is stress free but generally
+    incompatible; the elastic part restores compatibility, and this is where
+    the residual stress comes from.}
+  \label{fig:ch5-kinematics}
+\end{figure}
+
+A body that can grow freely therefore stays stress free; stress appears only
+where growth is constrained, by boundary conditions or by neighbouring
+material that grows less.
+
+% Source: Klempt 2024 Eq. 20 and Table 2; biofilm_material_v01.f, sYoungL < 0.
+\paragraph{Stiffness.} Klempt et al.\ weight the elastic energy with
+$\phi^2$, so that the void, $\phi=0$, has no stiffness, and give
+$\mu=3.3557$~Pa ($E=10$~Pa, $\nu=0.49$) in their Table~2. The routine
+supports this form,
+\begin{equation}
+  E(\phi) = (\phi^2+f)\,E_{\mathrm{bio}},\qquad \nu=\nu_{\mathrm{bio}},
+  \label{eq:ch5-stiffness}
+\end{equation}
+where $f$ is a small floor that keeps the void solvable; it is not in the
+paper, whose void has no stiffness. It is tested to
+reproduce the plain law fed the same $E$ at every $\phi$ and to scale the
+stress by $\phi^2$. The paper's material is incompressible, with $\det\mathbf F_e=1$ enforced by
+a Lagrange multiplier, and $\nu=0.49$ enters there only through $\mu$; here
+the constraint is approximated by $\nu=0.49$. The element, SOLID185 in its default
+$\bar{\mathbf B}$ formulation, uses one dilatation per element, the same idea as
+the H1P0 element of the paper. A Python solution of the same problem shows
+that with this formulation the mean stress changes by less than $10\,\%$
+between $\nu=0.49$ and $0.499$, while full integration would overestimate it
+several times (\S\ref{sec:ch5-results}).
+
+%-----------------------------------------------------------------------
+\section{Implementation}
+\label{sec:ch5-impl}
+
+% Source: ansys_usermat/usermat_biofilm.f, biofilm_material_v01.f.
+The law is implemented as an ANSYS \texttt{USERMAT}.%
+\footnote{\texttt{ansys\_usermat/usermat\_biofilm.f} in the accompanying
+repository.}
+It is delivered to the partner framework as a routine with the same argument
+shape as the framework's own elastic law: per-phase $(E,\nu)$ blended by the
+local biofilm fraction, returning Cauchy stress and consistent tangent. The
+delivered routine is an adapter around the verified core. This was tested:
+fed $(E,\nu)$, it reproduces the core fed the
+$(C_{10},C_{01},D_1)$ those map to, at zero tolerance. It uses no solver
+includes and no common blocks, so it does not depend on the ANSYS release.
+
+% Source: tests/test_tangent_quality.py -- 648 combinations vs exact AD.
+The consistent tangent is obtained by perturbing $\mathbf F$ rather than in
+closed form. A tangent that is slightly wrong does not give a wrong answer but
+a Newton iteration that converges slowly or not at all, which is hard to
+diagnose inside someone else's framework. I therefore compared it with
+forward-mode automatic differentiation over the range the routine is expected
+to see: stiffness over three decades, Poisson ratios up to $0.49$, growth up to
+$\alpha-1=0.35$, both material paths, elastic and viscous. Over 648 combinations
+the relative difference has median $1.2\times10^{-7}$ and worst case
+$1.1\times10^{-6}$, with no part of the range degrading.
+
+%-----------------------------------------------------------------------
+\section{Verification of the growth law}
+\label{sec:ch5-verification}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\linewidth]{\ansysfigdir flow_vv_thesis.png}
+  \caption[Where this chapter's checks sit]{%
+    The verification and validation hierarchy with the evidence of this
+    chapter placed on it. All of it is verification, that is, whether the
+    implementation solves the equations it states. Validation against a
+    measured stress is not attempted.}
+  \label{fig:ch5-vv}
+\end{figure}
+
+\subsection{Growth kinematics against closed forms}
+% Source: ansys_usermat/apdl/ free and constrained decks; closed_form_reference.py.
+Two growth cases have closed forms. Traction-free isotropic growth expands the
+body to $\mathbf F=\alpha\mathbf I$ with zero stress. Fully constrained
+growth gives an isotropic elastic deformation, so the deviatoric stress
+vanishes and only
+\begin{equation}
+  \bm\sigma = \frac{2}{D_1}\,(J_e-1)\,\mathbf I,\qquad J_e=\alpha^{-3}
+  \label{eq:ch5-constrained}
+\end{equation}
+remains, independently of the shear constants and of the viscosity.
+
+In ANSYS 2022~R2, one SOLID185 element at $\alpha=1.05$, with
+$C_{10}=2\times10^{-4}$~MPa, $C_{01}=0$ and $D_1=5\times10^{3}$~MPa$^{-1}$
+(shear and bulk modulus both $4\times10^{-4}$~MPa, $\nu=0.125$; this deck sets
+no unit system, so stresses come out in the unit of $C_{10}$, read here as MPa
+as in the framework's decks), returns a
+largest stress component of $1.9\times10^{-11}$~MPa under free growth, seven
+decades below the constrained answer. Under full constraint it returns
+$\sigma_{xx}=\sigma_{yy}=\sigma_{zz}=-1.0193\times10^{-4}$~MPa, with shear
+components at machine noise. The free case is needed as well: full constraint
+can hide a sign error in $\mathbf F_e=\mathbf F\mathbf F_g^{-1}$, because the
+element cannot move, and only the free case exposes it.
+
+The constrained value is not equation~\eqref{eq:ch5-constrained} alone. It
+equals that term plus a spherical term that I predicted in closed form from
+the implementation (\S\ref{sec:ch5-verification-limits}), to every digit
+ANSYS prints, with the extra term making up $47\,\%$ of the reported stress
+for this material ($\nu=0.125$) (Figure~\ref{fig:ch5-closedform}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.png}
+  \caption[The two growth cases, solved in ANSYS]{%
+    One SOLID185 element, $\alpha=1.05$, the same material, differing only
+    in the boundary conditions. Left: every stress component of both solves.
+    Right: the constrained value decomposed into the continuum term and the
+    spherical term of \S\ref{sec:ch5-verification-limits}. Only their sum
+    reproduces the solver. The spherical term does not enter the von Mises
+    stress.}
+  \label{fig:ch5-closedform}
+\end{figure}
+
+\subsection{The delivered routine on a larger mesh}
+% Source: Curved two-layer shell, 12 240 elements, adapter vs core in ANSYS.
+A two-layer curved shell of $12\,240$ elements, a non-growing substrate under
+a growth layer, was solved twice in ANSYS: once with the verified core and once
+with the delivered routine. The von Mises fields agree to every digit reported
+(minimum $4.3523\times10^{-9}$, maximum $1.1862\times10^{-5}$, mean
+$9.1443\times10^{-6}$, all in MPa), with no solver errors. This is a consistency
+check between two builds, not a comparison with a closed form.
+
+The same model showed a meshing error that I corrected. The two layers had been
+meshed separately and joined by merging coincident nodes, and on the curved
+sweeps only $63$ of $5\,673$ interface nodes coincided, three axial lines. The
+growth layer was held along those lines and free between them; the ``two-lobe''
+bulge first read as a buckling mode was the layer lifting
+between them. With one shared interface mesh the bulge is near uniform and
+converges at close to second order: the $\theta$-profile error against the
+finest mesh falls from $2.7\,\%$ to $0.58\,\%$ over $2.4$k, $19$k and
+$150$k elements, each step halving the element size, an observed order of
+$1.9$, and every growth value up
+to $\alpha-1=0.2$ converges (Figure~\ref{fig:ch5-alpha-sweep}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir growth_cylinder_alpha_sweep.png}
+  \caption[The bonded curved shell under increasing growth]{%
+    The bonded two-layer shell ($2.4$k elements) under prescribed growth
+    $\alpha-1 = 0.01$ to $0.2$. Left: maximum radial displacement against
+    $\alpha-1$, with the straight line through the $\alpha-1=0.01$ run. Right: the
+    radial displacement across the arc divided by $\alpha-1$; the curves
+    coincide up to $\alpha-1\approx0.05$.}
+  \label{fig:ch5-alpha-sweep}
+\end{figure}
+
+The finite-difference tangent holds up inside the solver as well
+(Figure~\ref{fig:ch5-convergence}): every substep converges in one to four
+equilibrium iterations, and the automatic time stepping enlarges the increment
+at every opportunity, from $0.5$ to $1.6875$ of a pseudo-time that runs to
+$5$ (the material has no viscosity here, so time has no physical unit), without a single cut-back.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.png}
+  \caption[Newton convergence with the finite-difference tangent]{%
+    Convergence of the $12\,240$-element solve, read from the solver's
+    listing. Left: force residual against equilibrium iteration, one curve per
+    substep, with the ANSYS criterion dashed. Right: the time increment chosen
+    for each substep and the iterations it needed.}
+  \label{fig:ch5-convergence}
+\end{figure}
+
+\subsection{What these checks establish, and what they do not}
+\label{sec:ch5-verification-limits}
+% Source: DEVIATOR_SCALING_FINDING.md.
+The isochoric split in the implementation applies $J^{-2/3}$ to the subtracted
+trace but not to the tensor beside it. The coded and the correct forms agree
+only at $J=1$, and growth moves $J_e$ away from $1$ by
+construction. The difference is purely spherical for any deformation, so it is
+a pressure error: the deviatoric stress, and with it the von Mises stress
+reported in this work, is unaffected at a given deformation. It is the
+spherical term of Figure~\ref{fig:ch5-closedform}.
+
+Two of the usual checks cannot see such an error. The free-growth case lands
+exactly on $J_e=1$, where both forms agree, and reference values generated by
+calling the implementation record its behaviour rather than test it. Only the
+comparison with an independently derived closed form finds it, which is why
+equation~\eqref{eq:ch5-constrained} is derived from the continuum statement
+and not from the code. A wrong pressure can still reach the von Mises stress
+indirectly, through the displacement field of an equilibrium solve; this route
+is not measured here. It shrinks as $\nu\to0.5$: at the paper's $\nu=0.49$
+the extra term is $1.3\,\%$ of the constrained pressure, against $31\,\%$ at
+$\nu=0.3$.
+
+%-----------------------------------------------------------------------
+\section{Coupling to the element's biofilm field}
+\label{sec:ch5-coupling}
+
+\subsection{The framework and the growth equation}
+% Source: OLIVER_MODEL_NOTES.md; Klempt 2024 Eq. 34-36.
+The partner framework solves the mechanics in ANSYS and its transport fields in
+its own routines, alternating substep by substep
+(Figure~\ref{fig:partner-loop}). The biofilm field follows Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth}, Eq.~34 and 36:
+\begin{equation}
+  \dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha
+   - r\,\frac{c}{k+c}\,\nabla\phi\cdot\frac{\nabla c}{\|\nabla c\|},
+  \qquad \dot\alpha = k_\alpha\,\phi ,
+  \label{eq:ch5-field}
+\end{equation}
+with diffusion, a local source, and a front term that moves the biofilm
+boundary up the nutrient gradient. The element computes $\phi$ at its
+integration points; I leave it unchanged. Its Laplacian and the gradients of
+$\phi$ and $c$ are approximated from the values at the neighbouring
+integration points, by a second-order Taylor expansion fitted in the weighted
+least-squares sense, the Neighbored Element Method
+\cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
+explicitly, which limits the time step to $\Delta t\le h^2/(2\beta)$
+\cite{Rudolf2025NEM}; with the assumed $\beta=0.02$~mm$^2/T^*$ (Table~2 of the
+paper converted to the model, \S\ref{sec:ch5-results}) this holds for every mesh
+and time step used in this chapter.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir flow_oliver_solution_loop.png}
+  \caption[Partner framework solution loop]{%
+    Solution loop of the partner framework, traced from its source, and the
+    point at which the growth law of this chapter attaches.}
+  \label{fig:partner-loop}
+\end{figure}
+
+What I add sits in the material routine, at every Gauss point: take $\phi$
+from the field, integrate the second equation of~\eqref{eq:ch5-field},
+\begin{equation}
+  \alpha_{n+1}=\alpha_n+k_\alpha\,\phi\,\Delta t ,
+  \label{eq:ch5-eq36}
+\end{equation}
+and pass $\alpha$ to the growth law. I use the paper's $k_\alpha=10^{-3}$ per unit
+of normalised time $T^*$, in the field and in~\eqref{eq:ch5-eq36} alike, and
+the deck time is $T^*$.
+
+The paper prints a second form of this law (Section~\ref{sec:theory_field}). Table~1, step~3a, of Klempt et
+al.\ 2024 integrates $\alpha$ from the change of $\phi$,
+$(\alpha_{n+1}-\alpha_n)/((1+\alpha_{n+1})\Delta t)=k_\alpha(\phi_{n+1}-\phi_n)/\Delta t$
+(as printed, with $k_\alpha/\eta_\alpha$ read as $k_\alpha$), while its text states that
+$\alpha$ follows Eq.~36. The two differ in where growth happens. On the
+reproduced field of test case~4.1, at $T^*=1$, biofilm present from the start
+reaches $\alpha-1=9.9\times10^{-4}$ with Eq.~36 and stays at zero with
+Table~1, and newly colonised biofilm reaches $5.4\times10^{-4}$ and
+$8.5\times10^{-4}$ (Figure~\ref{fig:ch5-alpha-law}). A seed that is full
+from the start, as in the runs of this chapter, grows only under Eq.~36. I
+follow the text, Eq.~36, as does the partner's element.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_alpha_law.png}
+  \caption[Eq.~36 against Table~1 of Klempt et al.\ 2024]{%
+    The two growth laws of Klempt et al.\ 2024 on the reproduced field of
+    test case~4.1 (Python). Left and middle: $\alpha-1$ at $T^*=1$ on the
+    mid-plane. Right: mean over biofilm present from the start and over
+    newly colonised biofilm.}
+  \label{fig:ch5-alpha-law}
+\end{figure}
+
+\subsection{Growth counted once per increment}
+% Source: phi_trace checks on IKMHIWI03; 46 calls / 11 substeps.
+ANSYS calls the material routine several times per substep, once per
+equilibrium iteration and once more for output, and hands back the converged
+state each time. Equation~\eqref{eq:ch5-eq36} must therefore start from the
+stored state variable and must not accumulate over iterations. A trace of every
+call (46 calls over 11 substeps in the first run) confirms that growth is
+counted once per increment, that each increment starts from the previous one's
+end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.
+
+\subsection{Four properties of the framework found along the way}
+% Source: ONE_SPECIES_COUPLING.md, stage 3/4 and result-set-1 sections.
+\begin{enumerate}
+\item \emph{The element's own growth variable is a mean.} The element already
+      integrates $\dot\alpha=k_\alpha\phi$ for each of its two species fields
+      and uses their mean as the growth of the material. With one species the
+      unused field stays at $\alpha=1$, so the growth is halved. Whether the
+      mean is intended is a question for the framework's author.
+\item \emph{Start values.} The void fraction is $1-\sum\phi_i$, so start
+      values must satisfy $\phi_1+\phi_2\le1$. The framework's example
+      input starts both species at $1$ in the seed; for one species I start the
+      second at $0$.
+\item \emph{The first result set is not in equilibrium.} While the element
+      sets up its operators it returns zero stress and tangent on its first
+      calls, so the solver converges the first substep on a zero residual. The
+      output written for that substep is not an equilibrium state and is
+      excluded from every result below.
+\item \emph{The front term is switched off, and differs from the paper.}
+      An input-reading slip sets the orientation weight of species~1 to zero
+      (the weights of both species are read into the same variable, and the
+      last one read is zero), so the front-growth term
+      of~\eqref{eq:ch5-field} never acts and the biofilm only diffuses. The
+      term is also multiplied by $|\Delta\phi|$ where the paper has
+      $\|\nabla\phi\|$. On a test copy with the slip fixed, $|\Delta\phi|$
+      makes the explicit update unstable at $\Delta t=0.005\,T^*$, while
+      $\|\nabla\phi\|$ spreads the seed at the paper's pace but lets
+      $\phi$ exceed $1$, and the run breaks down near $T^*=0.22$. The
+      overshoot follows from a cell P\'eclet number of about $30$ for this
+      advection term on the element's mesh. With the slip fixed and the term
+      discretised upwind, $\phi$ stays below $1$, but the biofilm grows
+      both towards the nutrient and away from it, far more slowly than in the
+      paper. Beyond the seed the nutrient is almost uniform, so
+      $\nabla c\approx\mathbf 0$, while the paper's direction
+      $\nabla c/\|\nabla c\|$ remains a unit vector whose orientation is then
+      set by round-off. In equation~\eqref{eq:ch5-field} as stated the
+      direction is undefined wherever $c$ is uniform, so a finer mesh or
+      another scheme does not remove it. I do not regularise it here, because
+      that would add a threshold of my own; the authors' implementation
+      regularises the direction with a small $\varepsilon$ (F. Klempt,
+      personal communication, October 2026;
+      \S\ref{sec:ch5-limitations}). The checks of \S\ref{sec:ch5-results} do
+      not depend on this term (the gradient-free region has no front, and
+      both ways of computing $\alpha$ see the same field); how far the
+      biofilm spreads does, which is why the example model shows no
+      spreading.
+\end{enumerate}
+
+%-----------------------------------------------------------------------
+\section{Two species: composition from the point model}
+\label{sec:ch5-composition}
+
+% Source: Klempt 2026; klempt2026_reproduction.py; fritsch2025_cases.py.
+\paragraph{The point model.} Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}
+describe each species $i$ by its volume fraction $\phi_i$ and its living
+fraction $\psi_i$, with the void $\phi_0=1-\sum_i\phi_i$:
+\begin{equation}
+\begin{aligned}
+(\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier}),\\
+\eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier}),
+\end{aligned}
+\label{eq:ch5-point}
+\end{equation}
+where $A_{ij}$ are the interactions, $b_i$ the sensitivity to an antibiotic of
+concentration $\alpha^*$, $c^*$ the nutrient, $\gamma$ the multiplier for
+$\sum_i\phi_i+\phi_0=1$, and the barrier terms keep $\phi_i,\psi_i$
+in $(0,1)$. My implementation reproduces all fourteen numerical examples of the
+paper. Two printed details had to be read differently to do so: Eq.~17 as
+printed carries a $+\gamma$ that the figures do not show, and the four-species
+interaction matrix of Eq.~19 reproduces the figures without its prefactor
+$\tfrac12$. The same model reproduces the figures of Fritsch et
+al.~\cite{Fritsch2025BayesianMicrofilms} within $0.013$.
+
+% Source: SPLIT_COUPLING.md option (i); composition_reference.py.
+\paragraph{Amount from the field, composition from the point model.} The
+element already solves two species fields, so the point model is not needed to
+say how much biofilm there is; Klempt et al.\ 2024 define $\phi$ as the
+total biofilm fraction, which is $1-\phi_0$ of the point model. I therefore
+let the field decide the amount, $\phi_{3D}=\phi_1+\phi_2$, which
+drives growth through~\eqref{eq:ch5-eq36}, and let the point model decide only
+the composition (the shares $\phi_i/\sum_j\phi_j$) and $\psi_i$. At each
+Gauss point and substep its state is scaled to $\sum_i\phi_i=\phi_{3D}$,
+advanced, and scaled again; $\phi_i$, $\psi_i$ and $\gamma$ are stored as state
+variables. The parameters are those of the paper's Table~1 cases ($c^*=100$,
+$\alpha^*=10$, $\eta_i$ per case).
+
+\paragraph{Consistency with the point model.} The scaling changes nothing
+when the field's amount is the one the point model would produce on its own.
+Driven by that amount, the coupled scheme gives back the composition
+of the point model alone: to $1.2\times10^{-5}$ in case~3 and to
+$6\times10^{-17}$ in case~6 of the paper, at coupling steps from $0.01$ down to
+$0.0025$.
+The coupled composition can therefore differ from the paper only where the
+field's amount differs from the point model's. No published work states how the
+two models are to be combined, since each prescribes its own evolution of the
+amount; a coupling that needs no such choice would require a spatial
+multi-species model derived from a single variational principle.
+
+\paragraph{A second scheme.} Klempt et al.\ describe their model as a
+material point model and state that $\phi_0$ ``rather serves as a numerical
+auxiliary quantity'' and is not to be read as physical voids
+\cite{Klempt2026ContinuumBacterialGrowth}. The scaled scheme above uses
+$\phi_0=1-\phi_{3D}$ and so gives $\phi_0$ a physical meaning. I
+therefore also implemented a second scheme that keeps $\phi_0$ auxiliary:
+at each Gauss point the point model runs on its own, unscaled, from the step
+in which the field first reaches $\phi_{\min}$, and supplies only the
+composition, while the amount remains the field's. Its composition is then
+always the paper's trajectory, shifted by the local arrival time of the
+biofilm, and needs no cap. In the packed seed at $T^*=1$ it gives
+$\phi_1/(\phi_1+\phi_2)=0.614$ in case~3 and $0.014$ in case~6, the values of the point model
+alone at its own time $s\,T^*=0.15$, against $0.667$ and $0.021$ for the scaled scheme. The two schemes
+differ in what they let the composition depend on: the local amount in the
+first, the local age of the biofilm in the second.
+
+The composition does not act back on the stress. In Klempt et al.\ 2024 no
+material parameter depends on the species; in the earlier spatial model of
+Klempt et al.~\cite{Klempt2023NumericalComparison} species identity enters only
+through the front growth factor and the nutrient consumption, and I take both
+equal for all species. A composition-dependent front factor would be the
+natural two-way extension.
+
+% Source: SPLIT_COUPLING.md: s sweep, phi_cap, phi_min.
+\paragraph{Assumptions.} Three numbers are not given by either paper, and I
+state each as an assumption.
+\begin{itemize}
+\item \emph{Time link $s$.} Klempt et al.\ 2024 normalise time to
+      $T^*\in[0,1]$; the 2026 paper runs $500$ to $1500$ steps of $10^{-4}$ in
+      its own unit. No paper links the two. The point model advances
+      $s\,\Delta t$ per substep, with $s=0.15$, which maps the 2026 horizon onto
+      $T^*=1$.
+\item \emph{Cap $\phi_{\rm cap}=0.9$.} Where the field is fully packed,
+      $\phi_{3D}\to1$, the point model would be held at a void fraction below
+      its own packing limit, and the composition then depends on the coupling
+      time step. The point model therefore sees $\min(\phi_{3D},\phi_{\rm cap})$.
+\item \emph{Threshold $\phi_{\min}=0.01$.} Started from $\phi=0$ the
+      point model creates biomass, because its barrier terms make $\phi=0$ a
+      non-equilibrium. It is therefore not run where
+      $\phi_{3D}<\phi_{\min}$, and the composition is held there. The local source of~\eqref{eq:ch5-field} raises $\phi$ in the void by about
+      $k_\alpha T^*\le10^{-3}$, well below the threshold.
+\end{itemize}
+
+% Added 4 Oct 2026: the whole coupled step in one place
+% (callsite/phi_mode_exec.inc, composition branch; usermat_py_hook.f;
+% coupling/material_server.py).
+\paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one
+substep of the coupled run. ANSYS solves only the equilibrium
+$\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method; the
+material routine turns the deformation at a Gauss point into a stress after
+removing the growth, and, for two species, asks the point model for the new
+composition. The composition is stored and does not enter the stress, so it
+does not affect the Newton iteration.
+
+\begin{algorithm}[htbp]
+\caption{One substep $t_n\to t_{n+1}$ of the coupled run}
+\label{alg:ch5-coupled}
+\begin{algorithmic}[1]
+\REQUIRE at every Gauss point the converged state of $t_n$: $\alpha_n$ and
+  the point-model state $(\phi_i,\psi_i,\gamma)_n$; the element's fields
+  $\phi_1,\phi_2,c$ of $t_n$
+\ENSURE displacements, stresses and state of $t_{n+1}$
+\REPEAT[Newton iteration of ANSYS]
+  \STATE compute the deformation gradient $\mathbf F$ at every Gauss point from the current displacements
+  \FORALL{Gauss points}
+    \STATE $\phi_{3D}\leftarrow\phi_1+\phi_2$ from the element; restore the state of $t_n$
+    \STATE $\alpha_{n+1}\leftarrow\alpha_n+k_\alpha\,\phi_{3D}\,\Delta t$ \COMMENT{Eq.~\eqref{eq:ch5-eq36}}
+    \STATE $\mathbf F_e\leftarrow\mathbf F\,\mathbf F_g^{-1}$ with $\mathbf F_g=\alpha_{n+1}\mathbf I$
+    \STATE stress $\boldsymbol\sigma$ and tangent from $W(\mathbf F_e)$ and $E(\phi)$, Eq.~\eqref{eq:ch5-stiffness}
+    \IF{two species and $\phi_{3D}\ge\phi_{\min}$}
+      \STATE scale the point-model state to $\sum_i\phi_i=\min(\phi_{3D},\phi_{\rm cap})$
+      \IF{this state was already advanced in this substep}
+        \STATE take the stored result
+      \ELSE
+        \STATE send state, parameters, $s\,\Delta t$ and $n_{\rm sub}$ through the bridge (Fortran, C, local socket)
+        \STATE the point model, Eq.~\eqref{eq:ch5-point}, takes $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ and returns $(\phi_i,\psi_i,\gamma)_{n+1}$
+      \ENDIF
+      \STATE scale back to $\phi_{3D}$; store $\phi_i$, $\psi_i$, $\gamma$ as state variables
+    \ENDIF
+    \STATE return $\boldsymbol\sigma$ and the tangent to ANSYS
+  \ENDFOR
+  \STATE assemble the residual and update the displacements
+\UNTIL{the residual meets the convergence criterion}
+\STATE the element advances its fields $\phi_1,\phi_2,c$ to $t_{n+1}$ (Eq.~\eqref{eq:ch5-field}, its own solver)
+\end{algorithmic}
+\end{algorithm}
+
+\begin{table}[htbp]
+  \centering
+  \caption[Sensitivity to the two coupling assumptions]{%
+    Share of species~1, $\phi_1/(\phi_1+\phi_2)$, at $T^*=1$ (case~3 of Klempt et al.\ 2026, coexistence;
+    case~6, one species wins). Computed with the same scheme the ANSYS runs
+    use. ``Front'' is a point the field fills from $0.05$ to $1$.}
+  \label{tab:ch5-sensitivity}
+  \begin{tabular}{lcccc}
+    \hline
+    & $s=0.05$ & $s=0.15$ & $s=0.5$ & $s=1$\\
+    \hline
+    case 3, front & 0.638 & 0.672 & 0.701 & 0.744\\
+    case 6, front & 0.230 & 0.014 & 0.014 & 0.014\\
+    \hline
+    & $\phi_{\rm cap}=0.85$ & $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.95$ &\\
+    \hline
+    case 3, packed seed & 0.668 & 0.667 & 0.664 &\\
+    case 6, packed seed & 0.023 & 0.021 & 0.014 &\\
+    \hline
+  \end{tabular}
+\end{table}
+
+Table~\ref{tab:ch5-sensitivity} shows what the assumptions do. The time link
+matters: in case~6 the winner only emerges for $s\gtrsim0.15$ and the result
+does not change for larger $s$; in case~3 the share keeps rising slowly with $s$,
+from $0.672$ at $s=0.15$ to $0.744$ at $s=1$, while the outcome, coexistence,
+stays the same. The cap does not: between $0.85$ and $0.9$
+the packed seed and the interior agree, so the composition is continuous across
+the edge of the packed region. With $\phi_{\rm cap}=0.9$ the result is
+converged at a coupling time step of $0.025$ (to $0.0016$ against $0.0125$);
+$\phi_{\rm cap}=0.95$ needs $0.0125$.
+
+%-----------------------------------------------------------------------
+\section{Results}
+\label{sec:ch5-results}
+
+% Source: figs_1005.py; ONE_SPECIES_COUPLING.md, re-run with Table 2 values.
+All runs use ANSYS 2022~R2 on the framework's example model ($8^3=512$ elements)
+or refinements of it, one process, and the growth parameters of Klempt et al.\ 2024,
+Table~2: $k_\alpha=10^{-3}\,T^{*-1}$, one species, the second field started at zero.
+The model is a 2~mm cube instead of the paper's 20~$\mu$m one. For the
+diffusion coefficient of~\eqref{eq:ch5-field} I use
+$\beta=0.02$~mm$^2/T^*$, the value $\beta=2$ of Klempt et al.\ 2024, Table~2,
+converted to the 2~mm cube. The conversion is an assumption: the paper gives
+no length and time scale, and its first author describes $\beta$ as chosen
+for sensible results and dependent on the mesh. The framework's example
+input, $\beta=10^{-4}$~mm$^2/T^*$, is reported as a sensitivity case. The
+remaining coefficients of the field and of the nutrient are those of the
+framework's example input (\texttt{/UNITS,MPA}, lengths in mm), not values from the paper: $r=100$~mm$/T^*$,
+$k=0.1$, $d=1$~mm$^2/T^*$ and $g=0.5\,T^{*-1}$; with the front term off
+(\S\ref{sec:ch5-coupling}), $r$ and $k$ do not act. The one-species
+runs end at $T^*=1.1$ and the two-species runs at $T^*=1$, both with
+$\Delta t=0.025$; halving the step changes the mean stress in the seed by
+about $1\,\%$. The
+two checks against exact solutions below use the example input and
+$\Delta t=0.1$, because they need a region without gradients.
+
+\paragraph{Exact solution inside ANSYS.} Where the field has no gradients,
+\eqref{eq:ch5-field} reduces to $\dot\phi=k_\alpha\alpha$,
+$\dot\alpha=k_\alpha\phi$, with the solution $\phi=\sinh(k_\alpha t)$,
+$\alpha=\cosh(k_\alpha t)$. ANSYS follows the exact solution of its own time
+stepping to $3\times10^{-11}$ in $\alpha$ (round-off) and $1.1\times10^{-7}$
+in $\phi$, about $10^{-4}$ relative, because the element still sees a small
+gradient from its neighbours (Figure~\ref{fig:ch5-exact}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_exact.png}
+  \caption[Coupled run against the exact solution]{%
+    A gradient-free region of the coupled ANSYS run against
+    $\phi=\sinh(k_\alpha t)$, $\alpha=\cosh(k_\alpha t)$. Right: the difference to
+    the exact solution of the time-stepping scheme.}
+  \label{fig:ch5-exact}
+\end{figure}
+
+\paragraph{The whole model.} The element's own growth variable and
+equation~\eqref{eq:ch5-eq36} give two ways of computing the stress. Over all
+512 elements the two von Mises fields have the same pattern, cosine similarity
+$1.0000$. The element's variable gives $0.455$ times the stress
+of~\eqref{eq:ch5-eq36}, which is $\tfrac12\times\tfrac{10}{11}$: the mean over
+both species fields, one of them unused, and a lag of one substep
+(Figure~\ref{fig:ch5-whole}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_whole_model.png}
+  \caption[Two ways of computing the growth, whole model]{%
+    Element von Mises stress from equation~\eqref{eq:ch5-eq36} against the
+    element's own growth variable, one point per element.}
+  \label{fig:ch5-whole}
+\end{figure}
+
+% Source: Re-run on IKMHIWI03 with the Klempt 2024 stiffness (commit c0ac081).
+\paragraph{Stresses with the published stiffness.} With the stiffness of
+Klempt et al.\ 2024, equation~\eqref{eq:ch5-stiffness} with $E=10$~Pa,
+$\nu=0.49$ and a void floor $f=10^{-3}$, $\alpha-1$ in a monitored element inside the
+seed reaches $8.9\times10^{-4}$ at $T^*=1.1$ on $16^3$ elements
+(Figure~\ref{fig:ch5-element}). This is less than $k_\alpha\phi t=1.1\times10^{-3}$,
+because $\phi$ diffuses out of the seed. Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth,Klempt2023NumericalComparison}
+report pressure inside the biofilm and a ring of tension at its edge. Grouped
+by distance from the seed, the mean stress is $-2.5\times10^{-4}$~Pa in the
+seed, $+6.0\times10^{-5}$~Pa in the first layer of elements around it and
+$+1.3\times10^{-6}$~Pa in the second; every element of these two layers is in
+tension. The von Mises stress of this element is $4.7\times10^{-4}$~Pa, the seed
+average $5.9\times10^{-4}$~Pa (Table~\ref{tab:ch5-mesh}) and the largest in
+the model, also inside the seed, $7.2\times10^{-4}$~Pa. The element's own growth
+variable gives $0.49$ times the growth and the stress of
+equation~\eqref{eq:ch5-eq36}, which is $\tfrac12\times1.1/1.125$ for this time
+step (see the whole-model check above). With the framework's example
+stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly) the stresses are about
+$4\times10^{8}$ times larger. Changing $\nu$ from $0.49$ to $0.45$ or $0.499$
+changes the mean stress in the seed by less than $2\,\%$.
+
+The first author of the paper has since suggested that its stiffness unit may
+be wrong and that $E=10$~kPa is more realistic. Growth is the only load, so
+all stresses in this chapter then scale by $10^3$; the comparisons and ratios
+do not change.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_element_beta002.png}
+  \caption[A seed element and its neighbours]{%
+    Von Mises stress of a monitored element inside the seed and of its most
+    loaded neighbour (left) and growth $\alpha-1$ of that element (right) over
+    time;
+    $16^3$ elements, $\beta=0.02$~mm$^2/T^*$, stiffness of Klempt et al.\ 2024.
+    Solid: equation~\eqref{eq:ch5-eq36} in the material routine; dashed: the
+    element's own growth variable.}
+  \label{fig:ch5-element}
+\end{figure}
+
+% Source for the Python study (mesh_study_seed.py, locking_check.py);
+% ANSYS 16^3 run: RUN_1005_IKMHIWI03.md (5 Oct).
+\paragraph{Mesh and incompressibility.} The example model has $8^3$
+elements, and its seed is 32 of them. I solved the same mechanical problem
+(seed growth $1.1\times10^{-3}$, the stiffness above) with a linear
+hexahedral solver in Python on $8^3$, $16^3$ and $32^3$ elements. The seed
+averages of von Mises and mean stress on $8^3$ are about $1.6$ to $1.75$
+times those on $16^3$ and $32^3$, which agree with each other; the peaks at
+the corners of the seed do not converge, because those corners are
+singular. I therefore quote seed averages and not peaks. With the element's
+mean-dilatation (B-bar) integration the mean stress hardly changes between
+$\nu=0.49$ and $0.499$ ($-3.8$ and $-4.1\times10^{-5}$~Pa on $8^3$), so
+there is no volumetric locking; full $2\times2\times2$ integration would
+overestimate it by a factor of $3.7$ on $8^3$ and $2.3$ on $16^3$ at
+$\nu=0.49$.
+
+The ANSYS model uses the same integration (SOLID185, KEYOPT(2) $=0$, B-bar).
+In ANSYS I refined the example model to $16^3$ and $24^3$ elements, with every
+boundary condition mapped by position ($32^3$ exceeds the memory of the
+workstation in the nutrient solve). Table~\ref{tab:ch5-mesh} gives the seed
+averages and the first layer around the seed. The mean stress and the ring of
+tension agree within about $3\,\%$ on the three meshes, and the von Mises stress
+changes by $3\,\%$ from $16^3$ to $24^3$.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Mesh refinement in ANSYS]{Seed averages and the first layer of
+    elements around the seed at $T^*=1.1$, $\beta=0.02$~mm$^2/T^*$,
+    $\Delta t=0.025$ [Pa].}
+  \label{tab:ch5-mesh}
+  \begin{tabular}{lccc}
+    \toprule
+    & $8^3$ & $16^3$ & $24^3$ \\
+    \midrule
+    mean stress, seed & $-2.52\times10^{-4}$ & $-2.53\times10^{-4}$ & $-2.45\times10^{-4}$ \\
+    mean stress, first layer & $+6.01\times10^{-5}$ & $+6.04\times10^{-5}$ & $+5.85\times10^{-5}$ \\
+    von Mises, seed & $4.83\times10^{-4}$ & $5.87\times10^{-4}$ & $6.06\times10^{-4}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The diffusion coefficient sets the size of the stresses
+(Table~\ref{tab:ch5-beta}): $\phi$ that diffuses out of the seed lowers its
+growth near the surface, and the step in $\alpha$ between the inside and the
+surface of the seed loads it. From $\beta=0.005$ to $0.1$~mm$^2/T^*$ the mean
+stress in the seed falls by a factor of about four on $8^3$ and ten on $16^3$. For $\beta\ge0.02$ the diffusion
+length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the meshes and $8^3$ and
+$16^3$ agree within $15\,\%$. For smaller $\beta$ the layer is thinner than an
+element and the results depend on the mesh. With the example input,
+$\beta=10^{-4}$~mm$^2/T^*$, the layer is $0.01$~mm thick: the step in $\alpha$
+grows from $0.4$ to $1.8\,\%$ from $8^3$ to $24^3$, and the seed von Mises
+stress ($7.5\times10^{-5}$ to $1.5\times10^{-4}$~Pa) does not converge.
+With $\beta=0$ the step vanishes and the ratios $16^3/8^3$ are those of the
+Python study above.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Sensitivity to the diffusion coefficient]{Mean stress in the seed
+    at $T^*=1.1$ for different $\beta$ [Pa]; $\beta=0.02$ is the value used in
+    this chapter. $8^3$ at $\beta=0.05$ and $0.1$: runs with $\phi$ at the
+    surface points updated (\S\ref{sec:ch5-limitations}); $^{\dagger}$ before
+    that correction.}
+  \label{tab:ch5-beta}
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    $\beta$ [mm$^2/T^*$] & $0.005$ & $0.01$ & $0.02$ & $0.05$ & $0.1$ \\
+    \midrule
+    $8^3$ & $-2.1\times10^{-4}$ & $-2.7\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.3\times10^{-4}$ & $-5.6\times10^{-5}$ \\
+    $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4\,\dagger}$ & $-3.8\times10^{-5\,\dagger}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% Source: SPLIT_COUPLING.md, phi_cap runs on IKMHIWI03 (judge PASS, diff 0.0).
+\paragraph{Two species.} With the point model coupled, every traced point of
+the ANSYS run equals the same scheme run on its own, with a difference of
+$0$, and every call to the point model is reproduced bit for bit. In
+the packed seed, at $T^*=1$ (example input, $\Delta t=0.025$):
+\begin{itemize}
+\item case~3 (coexistence): the paper gives $\phi_1=0.60$, $\phi_2=0.40$ for the point model
+      alone at its end time, and my implementation gives $\phi_1=0.5945$,
+      $\phi_2=0.3926$ there (share $0.602$) and a share of $0.614$ at
+      $s\,T^*=0.15$; the coupled run gives $\phi_1/(\phi_1+\phi_2)=0.6665$;
+\item case~6 (one species wins): the paper gives $\bar\phi_1\approx0$ with
+      $\psi_1=0.05$; the coupled run gives $\phi_1/(\phi_1+\phi_2)=0.0209$ with $\psi_1=0.048$.
+\end{itemize}
+The type of outcome is kept. The ratio in case~3 shifts because the amount is
+now set by the field instead of by the point model's own filling. The second
+scheme, run in the same way, gives $\phi_1/(\phi_1+\phi_2)=0.6137$ ($\psi_1=0.9849$, $\psi_2=0.9777$) in
+case~3 and $0.0138$ ($\psi_1=0.0545$, $\psi_2=0.9836$) in case~6, the point model's own values
+at $s\,T^*=0.15$,
+again with every point equal to the scheme run on its own.
+
+With $\beta=0.02$~mm$^2/T^*$ the field spreads beyond the seed, and the point
+model runs wherever $\phi$ exceeds $\phi_{\min}$: in $304$ of $512$ elements
+on $8^3$ and $1970$ of $4096$ on $16^3$. The seed keeps the type of outcome:
+$\phi_1/(\phi_1+\phi_2)=0.667$ in case~3, as without spreading, and $0.03$ to
+$0.06$ in case~6, against $0.021$ without spreading. Around the seed the composition now varies in space even
+without a nutrient gradient, because a point starts its point model only when
+the biofilm reaches it: in case~6 the first layer around the seed has a mean
+share of $0.33$, the second $0.50$, the start value. This part depends on an
+assumption. The papers do not say which composition a point starts from when
+the biofilm reaches it; the first author of the 2026 paper suggests the
+composition of the neighbouring points. With start values $0.2$, $0.5$ and
+$0.8$ for these points the first layer has $0.34$, $0.41$ and $0.61$ (case~6,
+nutrient consumption $g=6\,T^{*-1}$, a value chosen in this work,
+\S\ref{sec:ch5-outlook-python}), while the seed does not change. Case~6 has two stable
+outcomes: a start share below about $0.51$ ends with species~2, above it with
+species~1, at every nutrient level (Figure~\ref{fig:ch5-map}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_map.png}
+  \caption[Which species wins in case 6]{%
+    Case~6 of Klempt et al.\ 2026 in the coupling scheme of this chapter, one
+    packed point (Python): $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ against the
+    local nutrient and the start share, for $s=0.15$ and $0.25$. Black line:
+    $0.5$.}
+  \label{fig:ch5-map}
+\end{figure}
+
+To see what the coupling does on a spreading biofilm, I ran the same scheme
+in Python on the reproduced field of Klempt et al.\ 2024, test case~4.1,
+with the point model at every grid node (Figure~\ref{fig:ch5-spreading}).
+There each point starts its point model when the field first reaches
+$\phi_{\min}$, from the seed composition, because the composition is not
+transported with the biofilm. Starting it instead from the composition of the
+nearest colonised point leaves the biomass-weighted mean of
+$\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ at $0.656$ in case~3 and changes it
+from $0.026$ to $0.027$ in case~6; the largest pointwise change is $0.093$,
+at the points colonised last. The diffusive edge of the field reaches
+$\phi_{\min}$ long before the dense front, so every point runs its point
+model for most of the time.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_spreading.png}
+  \caption[Composition along a spreading front]{%
+    Composition along a spreading front, computed in Python with the coupling
+    scheme of this chapter on the reproduced field of Klempt et al.\ 2024,
+    test case~4.1; Klempt et al.\ 2026, cases~3 and~6.}
+  \label{fig:ch5-spreading}
+\end{figure}
+
+%-----------------------------------------------------------------------
+\section{Limitations}
+\label{sec:ch5-limitations}
+
+\begin{itemize}
+\item \emph{Validation.} Everything in this chapter is verification. No
+      measured stress is available to validate against.
+\item \emph{Faces of the cube.} In the element used here, $\phi$ at the surface
+      points was not updated and stayed $0$, so every face acted as $\phi=0$
+      where Eq.~\eqref{eq:ch5-field} has no flux. With these points set to the
+      mean of their neighbouring integration points, the runs with
+      $\beta=0.02$~mm$^2/T^*$ change by less than $0.13\,\%$ in the seed stress
+      and in $\alpha$ and by less than $0.5\,\%$ in the composition, so their
+      values are kept. Where $\phi$ reaches the faces (larger $\beta$, longer
+      times) the seed pressure changes by up to $30\,\%$; the $8^3$ values of
+      Table~\ref{tab:ch5-beta} for $\beta=0.05$ and $0.1$ are those of the
+      corrected runs.
+\item \emph{One-way composition.} The species composition does not act back on
+      the mechanics, because in the formulation followed here no material
+      parameter depends on the species.
+\item \emph{Assumptions.} The time link $s$, the cap $\phi_{\rm cap}$, the
+      converted $\beta$ and the start composition of points the biofilm
+      reaches later are not given by the papers. All are reported with their
+      sensitivity; the stresses depend on $\beta$, the composition on $s$ and,
+      outside the seed, on the start composition.
+\item \emph{Pressure term.} The spherical term of
+      \S\ref{sec:ch5-verification-limits} is documented, not corrected. It does
+      not change the von Mises stress at a given deformation, and at
+      $\nu=0.49$ it is $1.3\,\%$ of the constrained pressure.
+\item \emph{Incompressibility.} The paper's exact constraint is approximated by
+      $\nu=0.49$ with the element's mean-dilatation formulation; the mean
+      stress in the seed changes by less than $2\,\%$ between $\nu=0.45$,
+      $0.49$ and $0.499$.
+\item \emph{Mesh.} With $\beta=0.02$~mm$^2/T^*$ the mean stress in the seed
+      and in the first layer around it agrees within about $3\,\%$ on $8^3$,
+      $16^3$ and $24^3$ elements, and the seed von Mises stress within
+      $3\,\%$ between $16^3$ and $24^3$; with the example input
+      $\beta=10^{-4}$~mm$^2/T^*$ they do not converge. Peak stresses at the seed corners
+      are mesh dependent and not reported.
+\item \emph{Growth law.} The paper gives two forms of the $\alpha$ law
+      (Eq.~36 and Table~1). I use Eq.~36; under Table~1 a full seed would not
+      grow.
+\item \emph{Consumption.} The element consumes the nutrient as $g\,\phi$
+      (Eq.~35 as printed); the authors confirmed $g\,\phi\,c$
+      (Appendix~\ref{app:klempt2024}). In the Python study the share follows
+      the local nutrient under both forms (\S\ref{sec:ch5-outlook-python}).
+\item \emph{No growth towards the nutrient.} The element's front term is
+      switched off, so the biofilm spreads only by diffusion. The composition
+      varies in space through the local nutrient and the time at which the
+      biofilm reaches a point, but not through growth towards the nutrient.
+\item \emph{Front growth where the nutrient is uniform.} The direction
+      $\nabla c/\|\nabla c\|$ of the front term in Klempt et al.\ 2024 is
+      undefined where $\nabla c=\mathbf 0$; the authors' implementation uses
+      $\nabla c/(\|\nabla c\|+\varepsilon)$ with a small $\varepsilon$ (F. Klempt,
+      personal communication, October 2026). Running
+      the front term in the element is left to the continuation at Keio.
+\item \emph{Magnitude.} With the published growth rate, $\alpha-1$ stays below
+      about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
+      largest von Mises stress is about $7\times10^{-4}$~Pa ($0.7$~Pa with
+      $E=10$~kPa, the value suggested by the paper's first author).
+\end{itemize}
+
+%-----------------------------------------------------------------------
+\section{Outlook: towards a two-way coupling}
+\label{sec:ch5-outlook}
+
+% Source: ROADMAP_TWO_WAY.md.
+The coupling of this chapter is one-way: the field drives growth and stress,
+and the point model returns a composition that nothing reads back. Four steps
+would close the loop, ordered by how well the literature supports them.
+\begin{enumerate}
+\item \emph{Local nutrient into the point model.} Klempt et
+      al.~\cite{Klempt2026ContinuumBacterialGrowth} treat $c^*$ as a given,
+      possibly time-dependent, variable; replacing it by the local $c$ of the
+      field needs no new physics.
+\item \emph{Composition into the spreading.} In the earlier spatial model the
+      front factor and the consumption depend on the species
+      \cite{Klempt2023NumericalComparison}; $R_s=\sum_i\phi_iR_{s,i}/\sum_j\phi_j$ and
+      $g=\sum_i\phi_i g_i/\sum_j\phi_j$ would let the composition shape where the biofilm
+      grows. This needs a working front term
+      (\S\ref{sec:ch5-coupling}, property~4).
+\item \emph{Composition into the stiffness.} $E=\sum_i\phi_iE_i/\sum_j\phi_j$ would let the
+      composition reach the stress directly, but species-specific moduli are
+      not available \cite{Bol2013BiofilmMechanicalCharacterisation}.
+\item \emph{Stress into growth.} The mechanical term of Klempt et al.\ 2024,
+      Eq.~30, dropped in their Eq.~34, and stress-dependent growth as in
+      \cite{Soleimani2020AnisotropicGrowth} would close the loop from the
+      mechanics back to the field.
+\end{enumerate}
+Step~1, which already runs in the element
+(\S\ref{sec:ch5-outlook-python}), and step~2 are the natural first goal of
+the continuation at Keio; each
+must reduce to the one-way scheme when the species are made equal.
+
+% Added 4 Oct 2026: ansys_usermat/composition_local_nutrient.py,
+% two_way_step2.py, two_way_step3.py; ROADMAP_TWO_WAY.md.
+\subsection{First steps, computed in Python}
+\label{sec:ch5-outlook-python}
+
+I computed the first three steps in Python, outside ANSYS, to see which of them
+change the results. The papers give no growth rates or moduli per species.
+The rates are estimated from the dissipation parameters $\eta_i$ under a stated
+assumption; the moduli are sensitivity parameters.
+
+\paragraph{Step 1: local nutrient.} On the example model of this chapter
+(Figure~\ref{fig:ch5-local-nutrient}), the nutrient is held at the face
+$y=-1$~mm and consumed in the seed; its strength is the Thiele number
+$\Lambda^2=gL^2/d$ with $L=1$~mm, scanned because $d$ and $g$ of the example
+input are not taken from the paper. Each point of the seed runs the point
+model with $c^*=c^*_0\,c$. Case~3 hardly depends on the nutrient level, the
+share $\phi_1/(\phi_1+\phi_2)$ staying at $0.63$ to $0.66$. In case~6 the
+takeover is slower where the nutrient is low: for $\Lambda=4$ the share ranges
+from $0.03$ near the nutrient face to $0.44$ in the interior of the seed. The
+composition thus varies in space without any spreading, which the element
+cannot show with a constant $c^*$. The values are converged in the grid
+($16^3$, $32^3$) and in the coupling step ($0.025$).
+
+The same step then ran in ANSYS. The nutrient that the element solves at each
+Gauss point is passed to the point model as $c^*=c^*_0\,\min(c/c_\mathrm{ref},1)$
+with $c_\mathrm{ref}=1$, the held value; without this input the new build gives
+the earlier results to the last digit. On the $8^3$ example model with the
+example input $\beta=10^{-4}$, case~6, with
+the point model in all 512 elements and the consumption raised from the
+example value $g=0.5\,T^{*-1}$ to $4\,T^{*-1}$ (chosen in this work, not a
+paper value), the
+nutrient in the seed falls to $0.44$--$0.66$ and the share
+$\phi_1/(\phi_1+\phi_2)$ ranges from $0.025$ at the side facing the nutrient
+to $0.14$ at the far side (correlation with $c$: $-0.83$); with the example
+consumption it is $0.021$ everywhere. Halving the time step changes the mean
+share by $2\,\%$. With $g=6\,T^{*-1}$, the strongest that keeps $c$ positive,
+the nutrient falls to $0.15$--$0.48$ and the share ranges from $0.11$ to
+$0.48$ (correlation $-0.99$). Case~3 hardly depends on the nutrient
+($0.656$--$0.664$ at consumption $4$), as predicted. This is the first composition in the
+element that varies in space through the nutrient. Python gives the same: with the consumption set
+so that the lowest nutrient in the seed is $0.435$, as in ANSYS, the share
+ranges from $0.026$ to $0.139$. This holds whether the consumption is
+independent of $c$ (zero order, as printed in Eq.~35 of Klempt et al.\ 2024 and in the
+element) or proportional to $c$ (first order, as in the Python study above;
+the authors confirmed this form for the paper, Appendix~\ref{app:klempt2024}). For $g=6\,T^{*-1}$ the zero-order
+Python model gives $0.105$ to $0.481$, again as ANSYS. The share follows the
+local nutrient; the order of the consumption changes how $c$ is distributed,
+and with it the range once the consumption is strong. With zero-order consumption a stronger consumption ($g=8\,T^{*-1}$)
+drives $c$ below zero, which is outside the valid range of the model.
+
+With $\beta=0.02$~mm$^2/T^*$ the result is the same in the seed: $g=6\,T^{*-1}$
+gives a share of $0.12$ to $0.46$ on $8^3$ and $0.07$ to $0.47$ on $16^3$,
+where the face towards the nutrient is resolved. The consumption of Klempt et
+al.\ 2024, Table~2, converted to the cube like $\beta$ (an assumption), is weaker: the nutrient
+in the seed stays at $0.88$ to $0.94$ and the share at $0.03$ to $0.06$
+($8^3$), close to the run without nutrient. Over all runs the share at the
+end depends on the time link $s$, the end time and the local nutrient only
+through the product $s\,T^*c$ (Figure~\ref{fig:ch5-clock}): the nutrient acts
+as the clock of the point model. In case~6 the takeover by species~2 happens
+between $s\,T^*c\approx0.03$ and $0.08$; a spatial pattern appears where the
+local values of $s\,T^*c$ straddle this window. The assumed $s$ therefore
+decides whether a composition pattern is seen at $T^*=1$, and I report it
+with this dependence.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_clock.png}
+  \caption[The nutrient as the clock of the point model]{%
+    $\phi_1/(\phi_1+\phi_2)$ at the end of every seed element of the $8^3$
+    ANSYS runs ($\beta=0.02$~mm$^2/T^*$; consumption $0$ to $6\,T^{*-1}$,
+    $s=0.05$ to $1$, $T^*=1$ and $2$) against $s\,T^*c$, with $c$ the local
+    nutrient. Lines: one packed point in Python at $T^*=1$. Left case~6, right
+    case~3 of Klempt et al.\ 2026.}
+  \label{fig:ch5-clock}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_local_nutrient_thesis.png}
+  \caption[Local nutrient in the point model]{%
+    Local nutrient in the point model, computed in Python on the example model
+    (section through the seed, $32^3$ grid). Top: nutrient $c$, held at $y=-1$~mm
+    and consumed in the seed (white outline), for three Thiele numbers $\Lambda$.
+    Bottom: share $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ for case~6 of Klempt et
+    al.\ 2026 with $c^*=c^*_0\,c$; grey: no biofilm. Case~3 stays at
+    $0.63$--$0.66$ and is not shown.}
+  \label{fig:ch5-local-nutrient}
+\end{figure}
+
+\paragraph{Step 2: composition into the spreading.} On the reproduced field of
+Klempt et al.\ 2024, test case~4.1, the front growth rate becomes
+the mean of the species rates weighted by their shares,
+$\bar r=\bigl(\phi_1r_1+\phi_2r_2\bigr)/(\phi_1+\phi_2)$, with
+$r_{1,2}=(1\pm\delta)\,r$ and $r$ from Table~\ref{tab:theory_klempt2024}; for $\delta=0$ the scheme is the one-way one. The
+weighting has two published precedents. In the two-species oral biofilm model
+of Feng et al.~\cite{Feng2021SymbioticBiofilm}, the biofilm spreads with a
+velocity $\mathbf u$ whose divergence is the sum of the species' growth,
+$\nabla\cdot\mathbf u=\sum_i\phi_i\mu_i\,(\ldots)$ with growth rates $\mu_i$,
+Monod factors $(\ldots)$ and $\sum_i\phi_i=1$ in the biofilm (their Eq.~15, in
+the notation used here), which is the same share-weighted rate; there it
+drives a potential flow of the whole biofilm, here it scales the front term of
+the field. Summing the growth sources $R_{s,i}\,\phi_i\,c$ of Soleimani et
+al.~\cite{Soleimani2023CoAggregation} gives the same weighting for a local
+reaction. The rate contrast has two estimates. In cases~3 and~6 of Klempt et
+al.\ 2026 the second species has twice the dissipation of the first,
+$\eta_1=1$, $\eta_2=2$; assuming that the front rate of a species scales with
+$1/\eta_i$ gives $r_1/r_2=2$ and $\delta=1/3$. Feng et al.\ use maximum growth rates
+of $3\times10^{-5}$ and $8\times10^{-5}$~s$^{-1}$ for their two species, the
+first measured and the second estimated, a ratio of $2.7$ and $\delta\approx0.45$. With $\delta=1/3$
+the mean $\phi$ at $T^*=1$ rises from $0.704$ to $0.735$ in case~3, where the
+faster species is the majority, and falls to $0.648$ in case~6, where the slower
+species takes over; locally $\phi$ changes by up to $0.47$
+(Figure~\ref{fig:ch5-two-way}). With $\delta\approx0.45$ from the rates of Feng et al.\ the
+two values are $0.746$ and $0.626$, with $\delta=0.5$ they are $0.750$ and $0.618$. The composition itself hardly changes. Which
+species wins then decides how fast the biofilm spreads. The values are
+converged in the coupling step. On a grid of half the spacing ($41^3$ nodes,
+$0.5~\mu$m) the one-way mean $\phi$ falls from $0.704$ to $0.674$, and the
+changes for $\delta=0.5$, at a coupling step of $0.05$, shrink from $+6\,\%$ and $-13\,\%$ to $+5\,\%$ and
+$-8\,\%$: the sign and the order of the effect hold, its size depends on the
+grid of the reproduced field, for which I keep the paper's $1~\mu$m. In ANSYS
+this step needs a working front term.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_two_way_step2_thesis.png}
+  \caption[Composition acting on the spreading]{%
+    Composition acting on the spreading, computed in Python on the reproduced
+    field of Klempt et al.\ 2024, test case~4.1 (mid-plane $z=10~\mu$m),
+    with species growth rates $r_{1,2}=(1\pm\delta)\,r$, $\delta=1/3$ from $\eta_1=1$, $\eta_2=2$
+    of Klempt et al.\ 2026 (assumption: front rate $\propto1/\eta_i$).
+    Left and middle: $\phi$ at $T^*=1$ for case~6 without and with the feedback
+    (nutrient on the edge at the top right).
+    Right: mean $\phi$ over time.}
+  \label{fig:ch5-two-way}
+\end{figure}
+
+\paragraph{Step 3: composition into the stiffness.} With the seed composition
+of step~1 and a ratio of the species moduli up to $5$ at the same mean modulus,
+the average stresses in the seed change by at most $0.2\,\%$. The seed is about
+a thousand times stiffer than the void around it, so the soft surroundings set
+its stress. This step matters only where the biofilm itself carries the load,
+such as a contiguous biofilm on a substrate.
+
+\paragraph{Step 4: stress into growth.} In the example model the mean stress
+in the seed, about $2.5\times10^{-4}$~Pa, is below $10^{-4}$ times the shear
+modulus, so a stress-dependent
+growth law would change little with the published parameters, while the
+mechanical term of Klempt et al.\ 2024, Eq.~30, kept as written would stop all
+growth (Appendix~\ref{app:klempt2024}). This step needs a different growth law
+and realistic stress levels.
+
+Of the four steps, step~2 changes the results most, and step~1 already runs in
+the element.
+

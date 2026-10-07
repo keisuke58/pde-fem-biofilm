@@ -22,68 +22,54 @@
 ]
 
 % ── entry ───────────────────────────────────────────────────────────
+% Reworded 6 Oct 2026 for the thesis: what each stage does, without the
+% framework's internal routine and variable names and without the inherited
+% lines that play no part in this work.
 \node[Nonce] (top) {%
-  \textbf{ANSYS solve} — \texttt{SOLID185}, \texttt{NLGEOM,ON}\\
-  custom \texttt{ANSYS.exe}, UPF routines linked in};
+  \textbf{ANSYS solve} \hfill 8-node solid elements, large deformation\\
+  custom ANSYS executable with the framework's user routines};
 
-% ── USolBeg ─────────────────────────────────────────────────────────
+% ── start of the solution ──────────────────────────────────────────
 \node[Nonce, below=0.55cm of top] (beg) {%
-  \textbf{\texttt{USolBeg}} \hfill \textit{once, at solution start}\\[4pt]
-  $\sim$150 \texttt{parevl} calls: every APDL parameter $\rightarrow$
-  \texttt{/usercm/} common block\\[2pt]
-  \texttt{InitVals} — allocate the shared (MPI) data arena\\[2pt]
-  \texttt{NEM\_CreateData\_Init} — build the meshless neighbour operator\\[2pt]
-  \texttt{Mapping\_Node\_ID}, \texttt{Initial\_Values}};
+  \textbf{Start of the solution} \hfill \textit{once}\\[4pt]
+  read the model parameters\\[2pt]
+  set up the data shared between the routines\\[2pt]
+  build the neighbour operator of the Neighbored Element Method\\[2pt]
+  initial values of the fields};
 \draw[ar] (top) -- (beg);
 
 % ── the staggered loop ──────────────────────────────────────────────
 \node[Ngp, below=0.95cm of beg] (gp) {%
-  \textbf{\texttt{usermat}} \hfill \textit{per Gauss point, per equilibrium iteration}\\[4pt]
-  \texttt{GetVals} / \texttt{GetTMP} — read this point's state from the pool\\[2pt]
-  \textbf{\texttt{CALL AceGenNeoHookV04}} $\rightarrow$ $\bm\sigma$, \texttt{dsdePl}\\[2pt]
-  \texttt{SetVals} — write state back};
+  \textbf{Material routine} \hfill \textit{every Gauss point, every iteration}\\[4pt]
+  read the state of the point ($\phi$, $c$)\\[2pt]
+  hyperelastic law $\rightarrow$ stress $\bm\sigma$ and tangent\\[2pt]
+  store the updated state};
 \draw[ar] (beg) -- node[lbl,right,xshift=2pt] {mechanics} (gp);
 
 \node[Nfld, below=0.95cm of gp] (fld) {%
-  \textbf{\texttt{USSFin}} \hfill \textit{after each substep}\\[4pt]
-  assemble $+$ PARDISO solve $\rightarrow$ temperature field\\[2pt]
-  assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut1} field\\[2pt]
-  assemble $+$ PARDISO solve $\rightarrow$ \texttt{Nut2} field\\[2pt]
-  \textcolor{gray!55!black}{\texttt{AGPhaseViskoP21V07} — commented out}\\[2pt]
-  \textcolor{gray!55!black}{\texttt{CalcLaserIntegralOMP} / \texttt{CALCPYRO}
-    — laser \& pyrometer (inherited glass process)}};
-\draw[ar] (gp) -- node[lbl,right,xshift=2pt] {transport} (fld);
+  \textbf{Field update} \hfill \textit{after every substep}\\[4pt]
+  nutrient $c$: quasi-static diffusion, solved as a linear system\\[2pt]
+  biofilm $\phi$: explicit update of Eq.~34\\[2pt]
+  Laplacian and gradients from the neighbour operator};
+\draw[ar] (gp) -- node[lbl,right,xshift=2pt] {fields} (fld);
 
 % staggered feedback
 \draw[arb] (fld.west) -- ++(-0.85,0) |- node[lbl,pos=0.25,left,xshift=-2pt]
   {next substep} (gp.west);
 
-% ── our attachment point ────────────────────────────────────────────
+% ── attachment point of this work ───────────────────────────────────
 \node[Nours, right=1.15cm of gp] (ours) {%
-  \textbf{our contribution attaches here}\\[4pt]
-  \texttt{BIOFILM\_GROWTH\_VISCO\_V01}\\
-  \scriptsize(\texttt{ansys\_usermat/biofilm\_material\_v01.f})\\[4pt]
-  \scriptsize same signature shape as \texttt{AceGenNeoHookV04}, plus the
-  growth variable $\alpha$ and the viscous state $\mathbf F_v$\\[2pt]
-  \scriptsize adds $\mathbf F=\mathbf F_e\mathbf F_v\mathbf F_g$,
-  $\mathbf F_g=(1{+}\alpha)\mathbf I$ over their purely elastic law};
+  \textbf{added in this work}\\[4pt]
+  \small growth $\dot\alpha=k_\alpha\phi$ (Klempt 2024, Eq.~36) and
+  $\mathbf F_g=\alpha\mathbf I$ over the elastic law\\[3pt]
+  \small for two species, the point model (Klempt 2026) at every Gauss point};
 \draw[ar, draw=red!65!black, very thick] (ours) -- (gp);
 
-% ── annotations ─────────────────────────────────────────────────────
+% ── annotation ──────────────────────────────────────────────────────
 \node[note, right=1.15cm of fld, yshift=0.1cm] (n1) {%
-  Staggered / operator-split: ANSYS solves the mechanics, \texttt{USSFin}
-  solves the transport fields on the NEM operator with MKL PARDISO, and the
-  two alternate substep by substep.\\[3pt]
-  The transport fields are \textbf{not} ANSYS degrees of freedom --- they live
-  entirely in the UPF's own data pool.\\[3pt]
-  \textcolor{red!55!black}{Interpretation, not stated by the code:} the two
-  \texttt{Nut} systems are most likely the biofilm and nutrient fields rather
-  than two nutrients.};
-
-\node[note, right=1.15cm of beg, yshift=0.05cm] {%
-  Because every parameter arrives through \texttt{parevl} into
-  \texttt{/usercm/}, the ANSYS \texttt{prop()} array is unused --- material
-  constants do \emph{not} come in through \texttt{TB,USER} here, unlike our
-  own deck.};
+  Staggered: ANSYS solves the mechanics, the framework updates the fields,
+  and the two alternate substep by substep.\\[3pt]
+  $\phi$ and $c$ are not ANSYS degrees of freedom: they are stored at the
+  integration points by the framework.};
 
 \end{tikzpicture}

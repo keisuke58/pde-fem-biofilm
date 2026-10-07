@@ -1,0 +1,822 @@
+                                                                                                       www.nature.com/scientificreports
+
+
+
+
+                OPEN              Numerical and experimental
+                                  investigation of multi‑species
+                                  bacterial co‑aggregation
+                                  Meisam Soleimani 1*, Szymon P. Szafranski 2, Taoran Qu 2, Rumjhum Mukherjee 2,
+                                  Meike Stiesch 2, Peter Wriggers 1 & Philipp Junker 1
+
+                                  This paper deals with the mathematical modeling of bacterial co-aggregation and its numerical
+                                  implementation in a FEM framework. Since the concept of co-aggregation refers to the physical
+                                  binding between cells of different microbial species, a system composed of two species is considered
+                                  in the modeling framework. The extension of the model to an arbitrary number of species is
+                                  straightforward. In addition to two-species (multi-species growth) dynamics, the transport of a
+                                  nutritional substance and the extent of co-aggregation are introduced into the model as the third and
+                                  fourth primary variables. A phase-field modeling approach is employed to describe the co-aggregation
+                                  between the two species. The mathematical model is three-dimensional and fully based on the
+                                  continuum description of the problem without any need for discrete agents which are the key
+                                  elements of the individual-based modeling approach. It is shown that the use of a phase-field-based
+                                  model is equivalent to a particular form of classical diffusion-reaction systems. Unlike the so-called
+                                  mixture models, the evolution of each component of the multi-species system is captured thanks
+                                  to the inherent capability of phase-field modeling in treating systems consisting of distinct multi-
+                                  phases. The details of numerical implementation in a FEM framework are also presented. Indeed, a
+                                  new multi-field user element is developed and implemented in ANSYS for this multiphysics problem.
+                                  Predictions of the model are compared with the experimental observations. By that, the versatility
+                                  and applicability of the model and the numerical tool are well established.
+
+
+                                   Most bacteria inhabiting the human mouth exhibit physical cell-to-cell recognition and binding of organisms
+                                   coming from different representative taxa, ­see1,2,3 ­and4. This phenomenon is called co-aggregation if it occurs
+                                   in suspension and it is called co-adhesion if it involves immobilized microorganisms. These microorganisms
+                                   co-adhere to each other using high number of attachment points and special physical interactions, thus stay-
+                                   ing in close proximity to each other. Physical interactions are evolutionarily conserved in oral microorganisms
+                                   because they protect microbial cells from being washed away from the oral surface by the constant flow of saliva
+                                   and consequently being swallowed by the h    ­ ost5. Primary colonizers can bind to oral surfaces, while secondary
+                                   colonizers must rely on other organisms to be recruited into the sessile community.
+                                       Interspecies cell-cell binding occurs rapidly and usually in a very specific manner as proved by co-aggregation
+                                   assays performed for multiple strains representing a broad range of oral ­species2. Testing inhibitory substances/
+                                  conditions and/or genetic studies revealed that most often co-aggregation is mediated by a carbohydrate-binding
+                                  protein called lectin on one cell type that interacts with a complementary carbohydrate receptor on the other
+                                  cell type. Other surface components, like outer membrane proteins, hemagglutinins and sialic acid-containing
+                                  receptors, can also be involved in a co-aggregation p  ­ rocess6. Microorganisms take advantage of proximal location
+                                   facilitated by physical contact, to co-evolve and develop bidirectional beneficial relationships. Close distance
+                                   between interacting cells supports cross-feeding, cross-protection, gene transfer, and cell-cell signaling, ­see3,7,8
+                                  ­and9. Hence, co-aggregation plays a pivotal role in oral biofilm development by governing the sequential recruit-
+                                   ment of different species, their spatial distribution and ecology. Recently, a cell-by-cell succession model was
+                                   extended to encompass direct adhesion of co-aggregates, ­see10. Interestingly, in vitro biofilm initiated by aggre-
+                                  gates expanded more rapidly compared to biofilms developing from single cells. Dental plaque is the most exten-
+                                  sively investigated biofilm in this regard. It is known that more than 500 species contribute to the formation of
+                                  human dental plaque. Streptococci and actinomyces are the major and primary colonizers of the tooth s­ urface11.
+
+
+
+                                  1
+                                  Institute of Continuum Mechanics (IKM), Leibniz Universität Hannover, Hannover, Germany. 2Medical School
+                                  Hannover (MHH), Hannover, Germany. *email: soleimani@ikm.uni-hannover.de
+
+
+Scientific Reports |   (2023) 13:11839                | https://doi.org/10.1038/s41598-023-38806-2                                                    1
+
+                                                                                                                                                 Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+                                                 From a clinical perspective, the development and uncontrolled expansion of oral biofilms can lead to diverse
+                                             pathologies, primarily local but potentially with subsequent systemic complications. Oral biofilms are responsible
+                                             for the most prevalent infectious disease worldwide, dental caries and periodontal disease, and the most com-
+                                             mon implant-associated complications, peri-implant diseases. Odontogenic complications include pathologies
+                                             at diverse anatomic locations including the cardiovascular system, gut, respiratory tract, reproductive tract, or
+                                             even brain. Physical contact between biofilm members contributes to biofilm structure that facilitates higher
+                                             resistance to immune response and antimicrobial treatment. On the one hand, co-aggregation can directly con-
+                                             tribute to virulence in a process of synergistic ­invasion12 or invader ­recruitment13. On the second hand, receptors
+                                            involved in co-aggregation can be used to target pathogens, with the use of antimicrobials and p       ­ robiotics14. Given
+                                             the critical role of cell-cell contact in biofilm development and maturation, it can be speculated that a better
+                                             understanding of this process could result in improved prophylaxis and anti-biofilm therapy. Yet, the holistic
+                                             approach to oral microbial ecology is challenged by the high diversity and complexity of microbial communities.
+                                             High-resolution numerical simulations can help to overcome current methodological limitations and improve
+                                             a system-level understanding of oral biofilms.
+                                                 The mathematical modeling and numerical simulation of bacterial colonies (biofilms) have drawn a great
+                                             deal of attention among researchers over the last two decades. In particular, the spatiotemporal evolution of
+                                             bacterial aggregates is of great interest in the computational biomechanics community. A common and favorable
+                                             modeling scheme is Individual-based modeling (IBM) which is very flexible in terms of accommodating complex
+                                             interactions between the discrete agents as well as sophisticated biological, chemical, and physical processes
+                                             associated with a single cell such as microbial cell division, decay, motility, etc. Moreover, this approach is read-
+                                             ily scalable in the sense that an extremely large number of microbial populations can be handled using parallel
+                                             solvers and domain decomposition due to the explicit nature of their time integration scheme. As the outcome
+                                             of such endeavors, one can name several open-source computer codes such as ­iDynoMiCS15 and ­Simbiotics16,
+                                            ­NUFEB17 and also M     ­ IRODIM18,19 which are capable of simulating the development of microorganism in a multi-
+                                            dimensional and multi-species fashion. IBMs are normally of hybrid type meaning that besides the bacterial
+                                            species, which are treated as discrete agents, the nutrient availability is described using a continuum approach.
+                                            Along with IBMs, fully continuum-based modeling of biofilms is also mathematical modeling and the numerical
+                                            simulation of the multi-species biofilms have not yet been sufficiently considered in the literature. Although most
+                                            species that constitute dental plaque are known individually, their collective behavior and group interactions
+                                            are still under investigation. In order to understand the spatiotemporal structure of such a bacterial community
+                                            one has to identify and understand the interaction, partnership and communication among the members of
+                                            this community. In particular, the mathematical modeling of such phenomena is really sparse in the literature.
+                                                 When it comes to mathematical modeling, the growth of biofilms can be viewed from two different per-
+                                            spectives. In the first approach, the growth is described as volume expansion and consequently, a “mechanical
+                                            movement” of the boundary of the growing matter. This “explicit” movement of the biofilm can be captured,
+                                            in the simplest fashion, using a potential flow which is isotropic, see for e­ xample20 ­and21. Alternatively, in a
+                                            more complex framework, one can use anisotropic kinematics that governs the deformation of the biofilm as
+                                            a deformable viscoelastic solid instead of a fluid, s­ ee22 ­and23. This notion of growth has also been employed to
+                                             model various growth phenomena in soft tissues other than bacterial aggregates. Examples are tumor g­ rowth24,
+                                             and aneurysm as a result of abnormal arterial ­growth25. In the second approach, the growth of biofilm can be
+                                            characterized using the “propagation” of a phase-field variable. A classical example is the classical diffusion-
+                                            reaction equation in which the propagation of the wavefront can be interpreted as the growth of the colony of
+                                            species, ­see26,27,28–30. Another example is Fisher’s ­equation31 which is, indeed, a transient diffusion-reaction model
+                                             for predicting population dynamics and pattern formation. One can generalize this framework by using a set
+                                             of diffusion-reaction equations in order to account for different reciprocal interactions, such as symbiosis or
+                                             competition, between multiple species. For instance, the diffusional Lotka-Volterra ­system32 is associated with
+                                             a set of PDEs capable of describing the interaction between two species which are, in fact, prey and predator.
+                                                 In this work, we use the second approach in order to mathematically describe a system composed of two
+                                             different bacterial species which not only grow but also co-aggregate in the presence of each other. Moreover, it
+                                             is shown that this approach is exactly equivalent to employing a so-called “phase-field” model for capturing the
+                                             behavior of such biological systems. The mathematical model is implemented using a fully implicit and mono-
+                                             lithic scheme within a FEM framework. A multi-physics user element is developed from scratch to be invoked by
+                                             the ANSYS solver. Several numerical examples are presented to show the robustness of the proposed numerical
+                                             tool in handling multi-species biological systems.
+
+                                            Mathematical modeling of the co‑aggregation of two bacterial species
+                                            From a biological point of view, co-aggregation is a crucial process in the formation of multi-component bio-
+                                            films. Genetically distinct bacteria adhere to each other, ’co-aggregate’, and can replicate faster, s­ ee33. Due to
+                                            co-aggregation, the metabolism of the species is altered compared to the monocultures, s­ ee3. In order to math-
+                                            ematically describe the development of biofilm under the influence of co-aggregation, the basic assumptions are:
+
+                                            • Two species of bacteria are taken into consideration. One can readily extend the model to multiple species
+                                              without any restriction.
+                                            • For the sake of simplicity, only a single nutrient is assumed to nourish both species. The nutrient is, indeed,
+                                              dissolved in the fluid surrounding the biofilm. One can extend the model to multiple nutrients.
+                                            • Since the fluid flow is not modeled explicitly, the transport of the nutrient is governed by the diffusion mecha-
+                                              nism. This is in line with a very small flow velocitythat is either induced by the biofilm growth (in the order
+                                              of a few microns per day) or governed by quasi-hydrostatic conditions. As a result, the advection mechanism
+
+
+          Scientific Reports |   (2023) 13:11839 |                https://doi.org/10.1038/s41598-023-38806-2                                                         2
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+                                      for the transport is neglected. Such a situation can occur in specific anatomic locations, e.g., deep pockets
+                                      around implants or teeth, where salivary flow is strongly reduced.a very small Peclet number (Pe) allows
+                                      such simplification regarding the transport mechanism. One can estimate that Pe = Advection          rate  Lu
+                                                                                                                                Diffusion rate = D → 0
+                                      in which L, u and D refer to the characteristic length, characteristic fluid velocity, and nutrient diffusivity,
+                                      respectively.
+                                  •   The generation of so-called byproducts, as a result of the metabolic activities of the bacteria, is not modeled
+                                      explicitly. It is known that metabolic products, such as lactic acid, can have either a negative or positive influ-
+                                      ence on the growth of different components in multi-species s­ ystems34.
+                                  •   The model of the co-aggregation is mathematically based on the “proximity” of species. Irrespective of the
+                                      underlying biological mechanism, the model assumes that bacterial growth is boosted if particular species
+                                      are “sufficiently close” to each other. In this sense, co-aggregation can be perceived as cooperation.
+                                  •   It is postulated that the growth of a biofilm colony is in the direction of the maximum nutrient gradient. It
+                                      will be clarified more in the mathematical description of the proposed phase-field model.
+                                  •   The initial seeds of species are randomly generated in the geometrical model. The model does not capture the
+                                      very early colonization of the surface by the planktonic bacteria. Such a process needs to be modeled using
+                                      agent-based methods with regard to the length scale of bacteria and the surface roughness, s­ ee35.
+
+                                  The mathematical model is based on these assumptions. For the sake of simplicity, the schematic view of the
+                                  computational domain is considered to be two-dimensional. The variables φ1 and φ2 are taken to represent
+                                  species 1 and 2 respectively. These two variables can be perceived as the density of bacteria. If they are equal to
+                                  zero at a certain location, it implies the absence of that species. Finally, the sharp interface between zero-valued
+                                  and one-valued regions characterizes the boundary of the species. Figure 1 depicts the regions where φ1 and φ2
+                                  change spatially.
+                                       One can see that both species may coexist (both φ1 and φ2 amount to 1) in certain regions. Such regions are
+                                  exactly the aggregation zones. The aggregation is captured using a new variable called α. This variable can be
+                                  evaluated by applying a Boolean operation of “AND” type on φ1 and φ2. This variable is treated like a phase-field
+                                  variable. It means that α = 1 corresponds to the regions in which both φ1 and φ2 are present and consequently
+                                  the co-aggregation can take place.
+                                       Finally, the concentration of the nutrient is denoted by the variable c that obeys a diffusion-reaction equation.
+                                  It is obvious that the regions occupied by one of the species, namely φ1 and/or φ2 equal to 1, play the role of sink
+                                  term (reaction) in the diffusion-reaction equation. Furthermore, the values of nutrients on the boundaries can
+                                  be prescribed/controlled in the context of boundary conditions.
+
+                                  Phase‑field type equations for species and co‑aggregation. As mentioned before, the variable α is
+                                  captured using a phase-field equation. The well-known Allen–Cahn36 type of phase-field equation can be writ-
+                                  ten as
+                                                                                                 2 2
+                                                          ˙
+                                                          
+                                                                  =      −f ′ ()     +    ε ∇
+                                                                                                        +      S(, c)    ,
+                                                                                                                 
+                                                   Phase evolution      Bulk contribution   Sharp interface   Driver (source)                        (1)
+                                                in dimensionless time                        contribution      of phase-field
+                                  in which the generic variable  can be replaced by either φ1, φ2 or α. The dot over  in the first term signifies
+                                  the time derivative. The parameter ε regularizes the sharp change of φ between the two phases. f ′ () is a short
+                                               ∂f ()
+                                  notation for ∂ . The function f () is a so-called double-well potential and characterizes the barrier that has
+                                  to be overcome in order to have a phase transformation (here, phase transformation means a region that used
+                                  to be free of species, namely  = 0, is colonized by that species, namely  = 1). The description of each term in
+                                  the equation is self-explanatory and standard in any application of phase-field modeling.
+                                      A common choice for the double well potential is
+
+
+
+
+                                  Figure 1.  Phase-field approach for a multi-species system, φ1 and φ2 represent species 1 and species 2 while α
+                                  refers to the congregation state.
+
+
+
+Scientific Reports |   (2023) 13:11839 |                https://doi.org/10.1038/s41598-023-38806-2                                                     3
+
+                                                                                                                                                  Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+                                                                                             f () = 2M2 (1 − )2 ,                                                   (2)
+                                            in which M is proportional to the local maximum of the function at φ = 12 between the two wells (minima) at
+                                             = 1 and  = 0, see Fig. 2. By degenerating the problem to 1D one can better understand the idea behind the
+                                            phase-field approach. Neglecting the time-dependent as well as the source
+                                                                                                                     term, in 1D, one can realize that the so-
+                                                                                                                                  2
+                                            called wavefront function φ = 21 (1 − Tanh( xl ) satisfies Eq. (1). Here l = M       ε
+                                                                                                                                     characterizes clearly the “interface
+                                            width”. It captures a smooth but sharp transition
+                                                                                           √         between  the two phases.  In  a similar fashion, one can show that
+                                            the “interface energy” is proportional to ε2 M . In other words, it represents the resistance against phase change.
+                                            If the driving force (the last term in Eq. 1) overcomes this threshold, the phase change takes place. Actually, ε
+                                            and M are characteristic parameters that govern the underlying physical process pertaining to the phase-field
+                                            equation. The readers are referred t­ o37 for more elaboration on the structure of the phase-field equation.
+                                                As stated before, the co-aggregation ( α) can be captured using the phase-field equation. It is noteworthy to
+                                            mention that this type of phase-field modeling is, in fact, a transient diffusion-reaction equation. To restore the
+                                            classical diffusion-reaction equation one can eliminate the term concerning double well potential (by setting
+                                            M = 0). In fact, the evolution of the two species’ density is governed by the classical diffusion-reaction equation.
+                                            To do so, one can substitute  for φ1 or φ2 and set M = 0.
+                                                The crucial part of the phase-field equation is the definition of the source terms for each field. The source
+                                            terms corresponding to the four variables φ1 , φ2 , α, c are denoted by S1 (φ1 , α, c), S2 (φ2 , α, c), Sα (φ1 , φ2 , α, c) and
+                                            Sc (φ1 , φ2 , c), respectively. That gives rise to the evolution of the system. Its mathematical representation needs to
+                                            be physically meaningful. As stated in the assumptions, the “physically meaningful rationale” is that the expan-
+                                            sion of bacterial colonies is preferred in the direction of maximum nutrient change, namely nutrient gradient.
+                                            Nutrient metabolism provides energy and building blocks for all cell replications. Consequently, in locations
+                                            where access to nutrients is hindered, replication is slower or stops completely. In the following, appropriate
+                                            source terms are considered.
+                                                The function S1 (φ1 , α, c) can be proposed as
+                                                                                  S1 (φ1 , α, c) = Rs1 H(φ1 − φcri )(1 + τ α)φ1 c,                                     (3)
+                                            where Rs1 is a parameter that controls the magnitude of the source term and τ characterizes the degree of growth
+                                            promotion due to coaggregation. It is hypothesized that the growth (bacterial replication) is boosted if α is
+                                            evolved (co-aggregation takes place). As long as different species have positive effects on each others’ fitness/
+                                            growth, closer proximity introduced by co-aggregation can facilitate stronger synergy. The function H(φ1 − φcri )
+                                            is the Heaviside step function with a jump at critical value φcri . A general definition of H(· − ·cri ) with a jump
+                                            at ·cri is
+                                                                                                      
+                                                                                                        1 If · ≤ ·cri
+                                                                                       H(· − ·cri ) =
+                                                                                                        0 If · > ·cri
+                                                                                                                      .                                       (4)
+
+                                            One can interpret the parameter φcri as the minimum level of bacterial density that prevents the bacterial colonies
+                                            from vanishing, in the long run. The source term, which can be interpreted as bacterial replication, is proportional
+                                            to bacterial density and nutrient availability. The source term for species 2 is similar to species 1
+                                                                                  S2 (φ2 , α, c) = Rs2 H(φ2 − φcri )(1 + τ α)φ2 c.                                     (5)
+                                            The source term for the co-aggregation variable α can be written as
+
+
+
+
+                                            Figure 2.  Double well potential f (φ).
+
+
+
+
+          Scientific Reports |   (2023) 13:11839 |                 https://doi.org/10.1038/s41598-023-38806-2                                                            4
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+                                                                                                                       ∇α · ∇c
+                                                                 Sα (φ1 , φ2 , α, c) = Rα H(φ1 − φcri )H(φ2 − φcri )           ,                      (6)
+                                                                                                                        |∇c|
+                                  in which the term |∇c|
+                                                      ∇c
+                                                         is a unit vector pointing to the direction of maximum change in the nutrient. This is, indeed,
+                                  the preferred direction for the expansion of colonies. Taking a closer look at the structure of Sα (φ1 , φ2 , α, c), one
+                                  can notice that it serves as an advection term in the form of v · ∇α1 and v = Rα ∇c being the advection velocity.
+                                                                                                                          |∇c|
+                                  It means that the boundary of the bacterial colonies at the co-aggregation zone is advected in the direction of v.
+                                      For the nutrient c, the source term should be negative, because the nutrient is consumed.
+                                                                               Sc (φ1 , φ2 , c) = −Rc (φ1 + φ2 )c,                                    (7)
+                                  in which the parameter Rc is the consumption parameter. Obviously, the transport of the nutrient is governed by
+                                  the standard and classical time-independent diffusion-reaction equation ( M = 0). For the nutrient, the parameter
+                                  ε2 in Eq. (1) is, in fact, the nutrient diffusivity. To make a distinction, we replace ε2 with Dn and Db in the case of
+                                  nutrient and bacterial species, respectively.
+
+                                  Method
+                                  All methods were performed in accordance with the relevant guidelines and regulations.
+
+                                  Numerical implementation using FEM.             Since the adopted numerical method is based on the standard
+                                  Galerkin FEM, one needs to convert the differential equations into their respective weak forms. One can express
+                                  the weak form of four governing equations for the existing four unknowns (φ1, φ2, α and c) as follows:
+                                                           
+                                                                                                              
+                                                                (Db ∇ · ∇φ1 )δφ1 − S1 (φ1 , α, c)δφ1 + φ̇1 δφ1 dv = 0,                        (8)
+                                                                 B
+
+                                                                
+                                                                                                                   
+                                                                      (Db ∇ · ∇φ2 )δφ2 − S2 (φ2 , α, c)δφ2 + φ̇2 δφ2 dv = 0,                          (9)
+                                                                 B
+
+                                                          
+                                                                 2                                                      
+                                                                 (ε ∇ · ∇α)δα + f ′ (α)δα − Sα (φ1 , φ2 , α, c)δα + α̇ δα dv = 0,                    (10)
+                                                            B
+
+                                                                     
+                                                                         [Dn ∇ · (∇c)δc + Sc (φ1 , φ2 , c)δc + ċ δc] dv = 0.                        (11)
+                                                                     B
+
+                                  One should note that variation of the variables ( δφ1 , δφ2 , δα, δc ) serve as the test function in the context of
+                                  variational approach. Furthermore, (·) acting between the variable gradients is indeed the inner product. In
+                                  line with standard FEM, the objective is to find the field variables with so-called C0 continuity . Upon applying
+                                  integration by parts to the integrals in Eqs. (8)–(11), the boundary terms defined on the boundary ∂B emerge.
+                                  Furthermore, a backward (implicit) Euler scheme is used for the time discretization which replaces the time
+                                  derivatives. This yields
+                                                                                                               
+                                                                       φ1 − φ1n−1
+                                                    Db ∇φ1 · ∇δφ1 +                δφ1 − S1 (φ1 , α, c)δφ1 dv =        Db ∇φ1 · N δφ1 ds,       (12)
+                                                B                          �t                                      ∂B
+
+
+                                                                                                               
+                                                                          φ2 − φ2n−1
+                                                    Db ∇φ2 · ∇δφ2 +                  δφ2 − S2 (φ2 , α, c)δφ2 dv =     Db ∇φ2 · N δφ2 ds,             (13)
+                                               B                             �t                                    ∂B
+
+                                                                                                             
+                                                2                     α − α n−1
+                                                             ′
+                                               ε ∇α · ∇δα + f (α)δα +           δα − Sα (φ1 , φ2 , α, c)δα dv =     ε2 ∇α · N δα ds,                 (14)
+                                            B                            �t                                      ∂B
+
+                                                                                                            
+                                                                                             c − c n−1
+                                                          Dn ∇c · δ∇c + Sc (φ1 , φ2 , c)δc +           δc dv =     Dn ∇c · N δc ds,                  (15)
+                                                       B                                        �t              ∂B
+
+                                   where N is the normal vector of the boundary surface. It is an acceptable assumption that the boundary flux term
+                                  for the phase-field is assumed to be zero. Moreover, D∇c · N refers to the nutrient flux at the boundary. The super-
+                                  script (n − 1), which appears due to time discretization, refers to the values of variables at the previous time step.
+                                      The implementation of the multi-field (species 1, species 2, co-aggregation, and nutrient concentration) three-
+                                  dimensional problem at hand was carried out using AceGen, s­ ee38, which is based on automatic differentiation
+                                  (hybrid symbolic/numeric differentiation). Once the weak forms are linearized, the stiffness matrix is extracted
+                                  and tailored to a user element in the FORTRAN language that can be implemented in any FEM code using stand-
+                                  ard discretization schemes. The numerical test cases are performed on two-dimensional models for the sake of
+                                  computational efficiency. Due to the nature of phase-field equations, one needs to use sufficiently fine mesh. Even
+                                  in two-dimensional examples, a mesh size of 0.5 µm leads to approximately 2 × 104 nodes which means around
+
+
+Scientific Reports |   (2023) 13:11839 |                 https://doi.org/10.1038/s41598-023-38806-2                                                     5
+
+                                                                                                                                                   Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+                                            8 × 104 degrees of freedom (DoF) in the final model. One can easily understand that for a three-dimensional
+                                            model with the same mesh size, the total number of DoFs exceeds 107 and is computationally prohibitive.
+                                                Each node of the FEM mesh has four degrees of freedom all of which are scalar-valued. The first and second
+                                            ones are dedicated to φ1 and φ2 representing the density of species 1 and species 2, respectively. The third is α
+                                            which captures the co-aggregation degree of the two species. The fourth one is allocated to the concentration
+                                            field c. The solution of the global system yields the updated value of the field variables, with the assumption that
+                                            the previous values (φ1n−1,φ2n−1,α n−1 and c n−1) are known.
+                                                In the next section, several numerical examples are presented to see the applicability of the numerical tool.
+                                            The post-processing and visualization of the results were conducted in Paraview.
+
+                                            Numerical and experimental test cases. For the numerical simulations, all geometrical data as well as
+                                            material parameters are summarized in Table 1. the temporal unit (denoted by “Time” in the table) is nondimen-
+                                            sionalized using growth characteristic time scale which is in the order of a few hours, see Fig. 3. It means that,
+                                            from a numerical point of view, “Time” varies between 0 and 1.
+
+                                            Approval for human/animal experiments. This article does not contain any studies with animals per-
+                                            formed by any of the authors. The humans were involved in terms of collecting dental peri-implant bacterial
+                                            samples. The collection of clinical samples was authorized by the ethics committee of Hannover Medical School
+                                            (No. 9477) in accordance with the principle of anonymity. Furthermore, informed consent was obtained from
+                                            all the participants.
+
+                                            Test case 1: single colony, single species. In the first example, different patterns of growth are studied.
+                                            A single tiny colony is assumed to be located at the center of the domain. The initial nutrient distribution is
+                                            uniform and constant. The numerical investigation shows that the ratio between the nutrient and biofilm dif-
+                                            fusivity (r= D
+                                                         Db ) plays an important role in the morphology of the grown biofilm. Hereafter, two distinct cases are
+                                                          n
+
+                                            investigated. It is assumed that the entire domain is enriched by a uniform initial nutrient. There is no external
+                                            provision of the nutrient. Hence, the nutrient can only be consumed. To validate the reliability of the mathemati-
+                                            cal model, experimental observations are also conducted.
+
+                                            Experimental setting: bacterial cells and culture conditions. The experimental results are depicted in Fig. 3. The
+                                            bacterial strains used were Eikenella corrodens strain SPS_010, Streptococcus Gordonii strains SPS_017 and
+                                            SPS_886 (both isolated from the same case of severe peri-implantitis), as Candida albicans strains SPS_888 (=
+                                            ATCC 10231, DSM 1386, NIH 3147) and SPS_889 (= ATCC 90028, DSM 11225, NCCLS 11), as well as oral
+                                            fungal isolate strain SPS_887 from human peri-implantitis. Bacteria were cultured on Fastidious Anaerobe Agar
+                                            (LabM) supplemented with 5% sheep blood. Fungal strains were cultured on Czapek Dox Agar (Sigma-Aldrich).
+                                            Bacterial colonies were used to inoculate Todd-Hewitt Broth supplemented with 0.3% Yeast extract, THBY for
+                                            short, (Oxoid CM0189) and liquid culture was incubated for 24 h at 37 ◦ C in the atmosphere with 5% CO2.
+
+                                            Simulation: diffusion‑limited growth (dendritic patterns). If rD is relatively small, the biofilm tends to branch
+                                            and form a dendritic shape. This is referred to as diffusion-limited growth in the literature. The formation of a
+                                            finger-like structure, from a mathematical point of view, is rooted in the fluctuation-induced interface instabil-
+                                            ity, ­see39. Such patterns are also observed in other phenomena such as multiphase fl   ­ ows40 and solidification
+                                                      41
+                                            ­process . The formation of all irregular morphology with lobate margins can be explained in the context of
+                                            nutrient absorption. It means that as a result of the scarcity of nutrient flux due to low diffusion through the
+                                            biofilm, the bacteria increase the absorption surface via forming lobes. One can see that the nutrient is predomi-
+                                            nantly consumed at the locations where the biofilm exists and the far-field is not influenced by the growth. This
+                                            is due to relatively low nutrient diffusivity that can not compensate for the consumed material. Looking at the
+
+                                             Description                                 Parameter   Value       unit
+                                             Nutrient diffusivity                        Dn          10−6        µm2 Time−1
+                                             Bacterial density threshold                 φcri        0.1         µg µm−3
+                                             Consumption rate                            Rc          50          µm3 µg−1 Time−1
+                                             Co-aggregation coef.                        Rα          15          µm Time−1
+                                             Co-aggregation coef.                        τ           1           –
+                                             First species growth coef.                  Rs1         500         µm3 µg−1 Time−1
+                                             Second species growth coef.                 Rs2         500         µm3 µg−1 Time−1
+                                             Phase-field coefficient for α               M           10−4        Time−1
+                                             Phase-field coefficient for φ1 , φ2 and c   M           0           Time−1
+                                             Phase-field coefficient (diffusivity)       ε2 (Db )    10−8        µm2 Time−1
+                                             2D Computational domain size                            100 × 100   µm
+                                             Mesh size                                               0.5         µm
+
+                                            Table 1.  Model parameters.
+
+
+
+          Scientific Reports |   (2023) 13:11839 |                      https://doi.org/10.1038/s41598-023-38806-2                                            6
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+
+
+                                  Figure 3.  Two different patterns for development of biofilms. (a) Phase-contrast micrographs of colony
+                                  morphology for Streptococcus Gordonii strain SPS_885. The colony is generally circular and compact. A slightly
+                                  undulate colony margin was observed at later time points. (b) Colony morphologies of Candida albicans strains
+                                  SPS_888 and SPS_889. Colonies are rhizoid (branched and dendritic pattern) with irregular cores. Merging of
+                                  colonies was observed for strain SPS_889 at later time points. Scale bars, 100 µm.
+
+
+                                  pattern of nutrient consumption, one can realize that the nutrient is only depleted at the regions where biofilm
+                                  exists. Figure 4 shows the numerical simulation of this scenario that is in qualitatively good agreement with the
+                                  experimental observations reflected in Fig. 3 part b.
+
+                                  Simulation: diffusion‑unlimited growth (compact pattern). If the diffusion of the nutrient is fast, the biofilm
+                                  grows in a compact and spherical fashion, see Fig. 5. Unlike the previous example, the fast diffusion of nutrients
+                                  ensures optimal supplies for the bacteria. Hence, the overall shape of the bacterial colony remains circular with
+                                  entire margins. Here, due to the high diffusivity, the nutrient is transported from the whole domain to the bio-
+                                  film-colonized regions. This leads to the gradual depletion of the nutrient in the whole domain, unlike the previ-
+                                  ous case. Experimental investigations also comply qualitatively with the mathematical model, see Fig. 3 part a.
+
+                                  Test case 2: multiple colonies, two species, with interaction (co‑aggregation).                   Experiments:
+                                  sample preparation for co‑aggregation and biofilm formation. The bacteria were transferred to a co-aggregation
+                                  buffer (1 mM Tris, 150 mM NaCl, 0.1 mM CaCl2, 0.1 mM MgCl2) and the optical density at 600 nm was set to
+
+
+Scientific Reports |   (2023) 13:11839 |               https://doi.org/10.1038/s41598-023-38806-2                                                 7
+
+                                                                                                                                             Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+
+
+                                            Figure 4.  Diffusion-limited growth for rD = 102 (dendritic pattern) in the course of the time, from top to
+                                            bottom.
+
+
+
+                                            1.0. That is equal to a cell density of about 109 cells per ml. The co-culture inoculum was generated by mixing
+                                            the same volumes of two species and resulted in the formation of co-aggregates. Monoculture and co-culture
+                                            inocula were vortexed for 10 seconds, diluted ten times in co-aggregation buffer followed by mixing again. Then
+                                            3 ml of suspension was placed in 6-well plates (Thermo Fischer Greiner Bio-one Polystyrene 6-well Multiplates)
+                                            and allowed to coat for 1 hour. Following this, the non-attached bacteria were removed from the wells and 3 ml
+                                            of THBY medium was added. The bacteria were allowed to grow for 8 hours from this time point. After 8 hours
+                                            of growth biofilms were stained with the LIVE/DEAD BacLight Bacterial Viability Kit (Invitrogen); rinsed, fixed
+                                            in 2.5% glutaraldehyde solution in phosphate-buffered saline, and examined using CLSM (Leica TCS SP2, Leica
+                                            Microsystems, Mannheim, Germany). For the imaging purpose, 488 nm laser was used with an emission range
+                                            of 500 - 545 nm for SYTO9 and 590 - 680 nm for propidium iodide (PI). For the biofilm in each well, five repre-
+                                            sentative images were acquired with optical sections of 3 µm. The Imaris Cell Imaging Software package (Imaris
+                                            x64, 6.2.1, Bitplane AG, Zürich, Switzerland) was used to analyze images. A three-dimensional reconstruction
+                                            smart view was generated, with green (SYTO9), red (PI) and yellow (co-localized SYTO9 and PI) fractions.
+                                            Non-permeable cells were stained in green. Yellow and red signals were considered to represent permeable cells
+
+
+          Scientific Reports |   (2023) 13:11839 |              https://doi.org/10.1038/s41598-023-38806-2                                                8
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+
+
+                                  Figure 5.  Diffusion-unlimited growth for rD = 106 (compact pattern) in the course of the time, from top to
+                                  bottom.
+
+
+
+                                  since PI penetrated the membrane of these cells. The experiment was performed twice. Each time for each group
+                                  a total of two wells and ten images were generated. The experimental observations are illustrated in Fig. 6.
+
+                                  Simulation. In this test case, unlike test case 1, multiple colonies of two species are considered. The co-aggre-
+                                  gation mechanism also exists and contributes to growth boosting. In order to replicate numerically the experi-
+                                  mental observations shown in Fig. 6, the entire computational domain is randomly filled with initial colonies of
+                                  both species in a uniform way. Then, we let the system evolve in time. The formation of the bacterial cluster in
+                                  the regions with high proximity of the two species is observed as a result of co-aggregation.
+                                      Figures 7 and 8 show snapshots of both species being represented by tiny colonies with different colors (gray
+                                  and cyan represent species 1 and species 2, respectively). Additionally, the regions where co-aggregation has taken
+                                  place are pictured using the red rods. These two figures show the development of the colonies over the course of
+                                  time for two different conditions discussed in the previous example, namely diffusion-limited and -unlimited
+
+
+Scientific Reports |   (2023) 13:11839 |               https://doi.org/10.1038/s41598-023-38806-2                                                  9
+
+                                                                                                                                              Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+
+
+                                            Figure 6.  Co-aggregates and biofilms. a–c Low magnification phase-contrast micrographs of cell suspensions
+                                            with a magnified subsection showing bacterial cells. From left: Streptococcus gordonii strain SPS_017, S.
+                                            gordonii strain SPS_017 mixed with Eikenella corrodens strain SPS_010, and E. corrodens strain SPS_010. Both
+                                            strains originate from the same severe case of peri-implant disease. After 24 h of incubation large co-aggregates
+                                            were observed in the mixture but not in monospecies suspensions. Image fragments at high magnification
+                                            are included in the top left corners. d–e Confocal micrographs of 8-h biofilms representing monoculture or
+                                            co-culture biofilms are shown in the same order as in a–c. Bigger aggregates were observed in mixed-biofilms
+                                            compared to monospecies biofilms. Scale bars, 4 µm (a–c, small bar), 10 µm (a-c, large bar), and 15 µm (d–e).
+
+
+
+                                            growth. Similar to the previous test case, the appearance of the dendritic structure is the result of a diffusion-
+                                            limited scenario (small rD), while round and compact islands of colonies are a sign of diffusion-unlimited growth.
+                                            These figures also demonstrate the nutrient distribution in the course of time. One can see that the nutrient
+                                            consumption map is significantly different in the two cases. All in all, the numerical predictions show plausible
+                                            qualitative compliance with the experimental observations.
+                                                The average nutrient consumption is reflected in Fig. 9. While the nutrient concentration drops gradually in
+                                            the diffusion-limited case, it is rapidly depleted in the diffusion-unlimited condition. In both cases, the profile
+                                            of the average nutrient is monotonically decreasing because the uniform initial concentration is only consumed
+                                            by the biofilm. It is also reflected in the average density of the biofilm that monotonically increases in both cases,
+                                            however with different rates.
+
+                                            Test case 3: growth under the directional provision of nutrient with/without reciprocal interac‑
+                                            tion (co‑aggregation). This example is identical to the previous one with the difference that the nutrient is
+                                            supplied constantly from a particular location (the top side, here). It leads to a prescribed gradient profile of the
+                                            nutrient and consequently a preferred direction of colony expansion. To quantify the growth process, one can
+                                            look at the average density of the biomass produced in time. It reflects how the available empty space is occupied
+                                            by the two-species biofilm.
+                                               The experimental setup for such a test case is interesting and quite elaborate because the continuous and
+                                            purely diffusion-driven feed of an aqueous environment from a specific location (one side) needs special care and
+                                            measures. Any perturbation in the solution fluid can result in convective movement and mixing phenomenon
+                                            which destroys the intended gradient in the nutrient availability. Unlike the experimental setting, the numerical
+                                            modeling of the problem is free of such practical complications. One needs to apply the desired boundary condi-
+                                            tion on the intended regions. Hence, the experimental investigation is ruled out for this test case.
+                                               The numerical simulation shows how the nutrient gradient affects the growth pattern of the biofilm. In fact,
+                                            the final morphology is a result of both co-aggregation and nutrient availability. The biological activity of the
+                                            bacteria is intensified according to the availability of co-aggregation partners as well as nutrient. Figs. 11 and 12
+                                            demonstrate snapshots of bacterial development in a dual-species system. The regions in which both species are
+                                            coexistent are the dominant sites of bacterial growth which contribute to transforming tiny colonies into larger
+
+
+          Scientific Reports |   (2023) 13:11839 |               https://doi.org/10.1038/s41598-023-38806-2                                                    10
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+
+
+                                  Figure 7.  Diffusion-limited growth for rD = 102 in the course of the time, from top to bottom (see
+                                  Supplementary Video 1).
+
+
+
+                                  structured clusters of bacteria (biofilm). The clusters tend to form in the regions with high amounts of nutrients,
+                                  namely the regions in the proximity of feeding sites at the top. Apart from nutrient feed, comparing Figs. 11 and
+                                  12 reveals how substantially the co-aggregation contributes to the rapid biofilm development.
+                                      In Fig. 10, the profile of the average nutrient and biofilm density is plotted with respect to the time. Due to
+                                  the continuous provision of the nutrient and tiny initial colonies, the average value of the nutrient concentra-
+                                  tion increases first (primary ascending phase) and then decreases to a steady state constant value (secondary
+                                  descending phase). The steady-state condition is reached when the rate of nutrient feeding is balanced with
+                                  the rate of nutrient consumption when sufficient biofilm is developed. In the absence of co-aggregation, the
+                                  development of biofilm, which determines the consumption capacity, is significantly slower. Consequently, the
+
+
+
+Scientific Reports |   (2023) 13:11839 |               https://doi.org/10.1038/s41598-023-38806-2                                                 11
+
+                                                                                                                                              Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+
+
+                                            Figure 8.  Diffusion-unlimited growth for rD = 106 in the course of the time, from top to bottom (see
+                                            Supplementary Video 2).
+
+
+
+                                            nutrient feed outweighs the nutrient consumption leading to an increase in the average nutrient and a delayed
+                                            succeeding decrease.
+
+                                            Conclusion
+                                            A novel mathematical model based on the phase-field method is proposed for the simulation of multi-species
+                                            biofilms. The co-aggregation of the species is taken into account in a system of multi-species colonies. The com-
+                                            plex morphology of multi-species colonies observed in the experiments can be reproduced using the presented
+                                            mathematical model. The formation of such complex structures is driven, on one hand, by “nutrient availability”
+                                            and, on the other hand, by “species proximity”. Since the proposed model is based on the phase-field approach,
+                                            one does not need to track the moving interfaces of the multi-species and multi-colony biofilms. Handling mul-
+                                            tiple and moving boundaries is the main superiority of phase-field modeling in this application. Additionally,
+
+
+
+          Scientific Reports |   (2023) 13:11839 |              https://doi.org/10.1038/s41598-023-38806-2                                                12
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+
+
+                                  Figure 9.  Multispecies biofilm growth under different nutrient diffusivity.
+
+
+
+
+                                  Figure 10.  Multispecies biofilm growth under the directional nutrient provision for rD = 106.
+
+                                  the merging of multiple colonies is treated naturally. It turns out that phase-field modeling is a successful and
+                                  applicable approach for this biological problem at hand.
+                                      The nature of biofilm and the underlying processes are so complex that probably four continuous isotropic
+                                  scalar variables ( φ1 , φ2 , c and α) are not sufficient to capture the real bacterial morphology to a good extent.
+                                  This is why quantitative validation of the numerical results against the experimental observations in this work
+                                  is a challenging task. Nevertheless, mathematical modeling, despite simplifications, can help us to understand
+                                  the “fundamental underlying mechanisms” that are involved.
+                                      This work can be extended and improved in several directions. A system composed of more than two spe-
+                                  cies is of great interest and can be modeled just by adding phase-field equations. Furthermore, the interaction
+                                  between the species can be generalized to not only reciprocal dual interaction but also to multilateral metabolic
+                                  communications. Incorporating anisotropic growth function can also enhance the model. Finally, an efficient
+                                  parallelized numerical architecture (such as MPI) can be employed to solve the model in 3D. These extensions
+                                  are left for future work.
+
+
+
+
+Scientific Reports |   (2023) 13:11839 |               https://doi.org/10.1038/s41598-023-38806-2                                                 13
+
+                                                                                                                                              Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+
+
+                                            Figure 11.  Directional nutrient feeding from the top side in the presence of co-aggregation for rD = 106 in the
+                                            course of the time, from top to bottom (see Supplementary Video 3).
+
+
+
+
+          Scientific Reports |   (2023) 13:11839 |              https://doi.org/10.1038/s41598-023-38806-2                                                14
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+
+
+                                  Figure 12.  Directional nutrient feeding in the absence of co-aggregation for rD = 106 in the course of the time,
+                                  from top to bottom.
+
+
+
+
+Scientific Reports |   (2023) 13:11839 |              https://doi.org/10.1038/s41598-023-38806-2                                                 15
+
+                                                                                                                                             Vol.:(0123456789)
+          www.nature.com/scientificreports/
+
+
+                                            Data availability
+                                            Raw data (both numerical and experimental results) are available from the corresponding author on request.
+                                            Furthermore, it is deposited into the Leibniz University public repository.
+
+                                            Code availability
+                                            The developed FORTRAN file of the utilized ANSYS user element is available from the corresponding author
+                                            on request. Furthermore, it is deposited into the Leibniz University public repository.
+
+                                            Received: 20 February 2023; Accepted: 14 July 2023
+
+
+                                            References
+                                             1. Kolenbrander, P. E., Palmer, R. J., Periasamy, S. & Jakubovics, N. S. Oral multispecies biofilm development and the key role of
+                                                cell–cell distance. Nat. Rev. Microbiol. 8(7), 471–480 (2010).
+                                             2. Kolenbrander, P. E. et al. Bacterial interactions and successions during plaque development. Periodontology 2000 42(1), 47–79
+                                                (2006).
+                                             3. Mutha, N. V. R. et al. Transcriptional profiling of coaggregation interactions between Streptococcus gordonii and Veillonella parvula
+                                                by dual RNA-seq. Sci. Rep. 9(1), 7664 (2019).
+                                             4. Palmer, R. J. et al. Interbacterial adhesion networks within early oral biofilms of single human hosts. Appl. Environ. Microbiol.
+                                                83(11), e00407-17 (2017).
+                                             5. Ding, A. M., Palmer, R. J., Cisar, J. O. & Kolenbrander, P. E. Shear-enhanced oral microbial adhesion. Appl. Environ. Microbiol.
+                                                76(4), 1294–1297 (2010).
+                                             6. Zhou, P., Liu, J., Merritt, J. & Qi, F. A YadA-like autotransporter, hag1 in Veillonella atypica is a multivalent hemagglutinin involved
+                                                in adherence to oral streptococci, Porphyromonas gingivalis, and human oral buccal cells. Mol. Oral Microbiol. 30(4), 269–279
+                                                (2015).
+                                             7. Egland, P. G., Palmer, R. J. & Kolenbrander, P. E. Interspecies communication in Streptococcus gordonii–Veillonella atypica biofilms:
+                                                Signaling in flow conditions requires juxtaposition. Proc. Natl. Acad. Sci. 101(48), 16917–16922 (2004).
+                                             8. Kolenbrander, P. E. Multispecies communities: Interspecies interactions influence growth on saliva as sole nutritional source. Int.
+                                                J. Oral Sci. 3(2), 49–54 (2011).
+                                             9. Wu, C. et al. Genetic and molecular determinants of polymicrobial interactions in Fusobacterium nucleatum. Proc. Natl. Acad. Sci.
+                                                118(23), e2006482118 (2021).
+                                            10. Simon-Soro, A. et al. Polymicrobial aggregates in human saliva build the oral biofilm. mBio 13(1), e00131-22 (2022).
+                                            11. Kolenbrander, P. E. Oral microbial communities: Biofilms, interactions, and genetic systems. Annu. Rev. Microbiol. 54(1), 413–437
+                                                (2000).
+                                            12. Li, Q. et al. Oral pathogen Fusobacterium nucleatum coaggregates with Pseudomonas aeruginosa to modulate the inflammatory
+                                                cytotoxicity of pulmonary epithelial cells. Front. Cell. Infect. Microbiol. 11, 643913 (2021).
+                                            13. Lima, B. P., Hu, L. I., Vreeman, G. W., Weibel, D. B. & Lux, R. The oral bacterium Fusobacterium nucleatum binds Staphylococcus
+                                                aureus and alters expression of the staphylococcal accessory regulator sarA. Microb. Ecol. 78(2), 336–347 (2018).
+                                            14. Lang, C. et al. Specific lactobacillus/mutans streptococcus co-aggregation. J. Dent. Res. 89(2), 175–179 (2009).
+                                            15. Lardon, L. A. et al. iDynoMiCS: Next-generation individual-based modelling of biofilms. Environ. Microbiol. 13(9), 2416–2434
+                                                (2011).
+                                            16. Naylor, J. et al. Simbiotics: A multiscale integrative platform for 3D modeling of bacterial populations. ACS Synth. Biol. 6(7),
+                                                1194–1210 (2017).
+                                            17. Li, B. et al. NUFEB: A massively parallel simulator for individual-based modelling of microbial communities. PLoS Comput. Biol.
+                                                15(12), e1007125 (2019).
+                                            18. Tack, I. L. M. M., Nimmegeers, P., Akkermans, S., Hashem, I. & Impe, J. F. M. V. Simulation of Escherichia coli dynamics in biofilms
+                                                and submerged colonies with an individual-based model including metabolic network information. Front. Microbiol. 8, 2509 (2017).
+                                            19. Verhulst, A., Cappuyns, A., Derlinden, E. V., Bernaerts, K. & Impe, J. V. Analysis of the lag phase to exponential growth transition
+                                                by incorporating inoculum characteristics. Food Microbiol. 28(4), 656–666 (2011).
+                                            20. Alpkvista, E. & Klapper, I. A multidimensional multispecies continuum model for heterogeneous biofilm development. Bull. Math.
+                                                Biol. 69(2), 765–789 (2007).
+                                            21. Albero, A. B., Ehret, A. E. & Böl, M. A new approach to the simulation of microbial biofilms by a theory of fluid-like pressure-
+                                                restricted finite growth. Comput. Methods Appl. Mech. Eng. 272, 271–289 (2014).
+                                            22. Soleimani, M. Finite strain visco-elastic growth driven by nutrient diffusion: Theory, FEM implementation and an application to
+                                                the biofilm growth. Comput. Mech. 64(5), 1289–1301 (2019).
+                                            23. Jana, S. et al. Nonlinear rheological characteristics of single species bacterial biofilms. npj Biofilms Microbiomes 6(1), 19 (2020).
+                                            24. Helmlinger, G., Netti, P. A., Lichtenbeld, H. C., Melder, R. J. & Jain, R. K. Solid stress inhibits the growth of multicellular tumor
+                                                spheroids. Nat. Biotechnol. 15(8), 778–783 (1997).
+                                            25. Cyron, C. J., Wilson, J. S. & Humphrey, J. D. Mechanobiological stability: A new paradigm to understand the enlargement of
+                                                aneurysms?. J. R. Soc. Interface 11(100), 20140680 (2014).
+                                            26. Golding, I., Kozlovsky, Y., Cohen, I. & Ben-Jacob, E. Studies of bacterial branching growth using reaction–diffusion models for
+                                                colonial development. Physica A 260(3–4), 510–554 (1998).
+                                            27. Shen, Y. et al. Experimental and theoretical investigation of multispecies oral biofilm resistance to chlorhexidine treatment. Sci.
+                                                Rep. 6(1), 27537 (2016).
+                                            28. Stewart, P. S. et al. Reaction-diffusion theory explains hypoxia and heterogeneous growth within microbial biofilms associated
+                                                with chronic infections. npj Biofilms Microbiomes 2(1), 1–8 (2016).
+                                            29. Wood, B. D. & Whitaker, S. Diffusion and reaction in biofilms. Chem. Eng. Sci. 53(3), 397–425 (1998).
+                                            30. Wood, B. D. & Whitaker, S. Multi-species diffusion and reaction in biofilms and cellular media. Chem. Eng. Sci. 55(17), 3397–3418
+                                                (2000).
+                                            31. Fisher, R. A. The wave of advance of advantageous genes. Annals Eugenics 7(4), 355–369 (1937).
+                                            32. Kot, M. Elements of Mathematical Ecology (Cambridge University Press, 2001).
+                                            33. Rickard, A. H., Gilbert, P., High, N. J., Kolenbrander, P. E. & Handley, P. S. Bacterial coaggregation: An integral process in the
+                                                development of multi-species biofilms. Trends Microbiol. 11(2), 94–100 (2003).
+                                            34. Cuny, L. et al. Evaluation of productive biofilms for continuous lactic acid production. Biotechnol. Bioeng. 116(10), 2687–2697
+                                                (2019).
+                                            35. Feng, G. et al. Bacterial attachment and biofilm formation on surfaces are reduced by small-diameter nanoscale pores: How small
+                                                is small enough?. npj Biofilms Microbiomes 1(1), 1–9 (2015).
+
+
+
+
+          Scientific Reports |   (2023) 13:11839 |                   https://doi.org/10.1038/s41598-023-38806-2                                                                      16
+
+Vol:.(1234567890)
+www.nature.com/scientificreports/
+
+
+                                  36. Allen, S. M. & Cahn, J. W. A microscopic theory for antiphase boundary motion and its application to antiphase domain coarsen-
+                                      ing. Acta Metall. 27(6), 1085–1095 (1979).
+                                  37. Steinbach, I. & Salama, H. Lectures on Phase Field. Springer Nature Switzerland, (2023).
+                                  38. Korelc, J. & Wriggers, P. Automation of Finite Element Methods (Springer International Publishing, 2016).
+                                  39. Kessler, D. A. & Levine, H. Fluctuation-induced diffusive instabilities. Nature 394(6693), 556–558 (1998).
+                                  40. Saffman, P. G. Viscous fingering in Hele–Shaw cells. J. Fluid Mech. 173, 73–94 (1986).
+                                  41. Kupferman, R., Shochet, O. & Ben-Jacob, E. Numerical study of a morphology diagram in the large undercooling limit using a
+                                      phase-field model. Phys. Rev. E 50(2), 1005–1008 (1994).
+
+                                  Acknowledgements
+                                  This project was funded by the German Foundation of Research (DFG) within the framework of the SIIRI project
+                                  under TRR298 (Project no. 426335750) in subproject B07. The authors acknowledge this support.
+
+                                  Author contributions
+                                  M.S.: Conceptualization, mathematical theory development, implementation of user-element in the FEM soft-
+                                  ware, original draft preparation. S.P.S.: Conceptualization of the experiments, designing the experimental assays,
+                                  draft preparation for experimental parts. T.Q.: Performing the series of coaggregation experiments. R.M.: Per-
+                                  forming the series of single and multi colonies experiments. M.S.: Scientific supervision of experimental part,
+                                  revising the manuscript. P.W.: Scientific supervision of mathematical as well as numerical model, reviewing the
+                                  manuscript. P.J.: Scientific supervision of the whole SIIRI B07 project, reviewing.
+
+                                  Funding
+                                  Open Access funding enabled and organized by Projekt DEAL.
+
+                                  Competing interests
+                                  The authors declare no competing interests.
+
+                                  Additional information
+                                  Supplementary Information The online version contains supplementary material available at https://​doi.​org/​
+                                  10.​1038/​s41598-​023-​38806-2.
+                                  Correspondence and requests for materials should be addressed to M.S.
+                                  Reprints and permissions information is available at www.nature.com/reprints.
+                                  Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and
+                                  institutional affiliations.
+                                                Open Access This article is licensed under a Creative Commons Attribution 4.0 International
+                                                License, which permits use, sharing, adaptation, distribution and reproduction in any medium or
+                                  format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the
+                                  Creative Commons licence, and indicate if changes were made. The images or other third party material in this
+                                  article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line to the
+                                  material. If material is not included in the article’s Creative Commons licence and your intended use is not
+                                  permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from
+                                  the copyright holder. To view a copy of this licence, visit http://​creat​iveco​mmons.​org/​licen​ses/​by/4.​0/.
+
+                                  © The Author(s) 2023
+
+
+
+
+Scientific Reports |   (2023) 13:11839 |                 https://doi.org/10.1038/s41598-023-38806-2                                                              17
+
+                                                                                                                                                            Vol.:(0123456789)
+

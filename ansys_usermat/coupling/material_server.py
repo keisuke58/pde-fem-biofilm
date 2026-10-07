@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from pathlib import Path
 import socketserver
 import numpy as np
 
@@ -128,6 +130,66 @@ def evaluate(req: dict) -> bytes:
     return encode_response(sv, Fv_new.reshape(9), detFe, D.reshape(36))
 
 
+# Number of live species in the ecology model, for the reduced one- and
+# two-species runs (2026-10-01). Set once per server with --active-species:
+# a deck is either one-, two- or five-species, so this is a run setting, and
+# keeping it here leaves the Fortran/C interface (g(12), theta(20)) untouched.
+# A request may still override it with an "n_active" field.
+ECOLOGY_ACTIVE = 5
+
+
+def set_active_species(n: int) -> None:
+    global ECOLOGY_ACTIVE
+    if not 1 <= int(n) <= 5:
+        raise ValueError(f"active species must be 1..5, got {n}")
+    ECOLOGY_ACTIVE = int(n)
+
+
+# Per-case constants for the composition runs (2026-10-01): a deck runs one
+# case of Klempt et al. 2026 Table 1, so c*, alpha* and eta_i are a server
+# setting (--case), like the species count; the Fortran interface stays
+# g(12), theta(20). The deck's A and b (prop(8:27)) must equal the case's --
+# checked on every call, so a deck and a server set up for different cases
+# cannot run together.
+ECOLOGY_CASE: dict | None = None
+
+
+# theta slots of the five-species encoding (theta_to_matrices) for A_ij, i <= j,
+# and b_i; species 1-4 fill every pair (5 Oct: four-species cases).
+_THETA_A = {(0, 0): 0, (0, 1): 1, (1, 1): 2, (2, 2): 5, (2, 3): 6, (3, 3): 7,
+            (0, 2): 10, (0, 3): 11, (1, 2): 12, (1, 3): 13}
+_THETA_B = {0: 3, 1: 4, 2: 8, 3: 9}
+
+
+def set_case(name: str | None) -> None:
+    """Load a case from JAXFEM/klempt2026_cases.py (None: off): the
+    constant two-species cases and, since 5 Oct, the constant four-species
+    cases (4sp_case1, 4sp_case2; A with the figures' scale, see
+    klempt2026_cases.py)."""
+    global ECOLOGY_CASE
+    if name is None:
+        ECOLOGY_CASE = None
+        return
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "JAXFEM"))
+    from klempt2026_cases import CASES
+    case = CASES[name]
+    n = case["n"]
+    if n not in (2, 4) or callable(case["c_star"]) or \
+            callable(case["alpha_star"]):
+        raise ValueError(f"{name}: only constant two- or four-species cases")
+    scale = case.get("A_figure_scale", 1.0)
+    theta = [0.0] * 20
+    for i in range(n):
+        for j in range(i, n):
+            theta[_THETA_A[(i, j)]] = float(case["A"][i][j]) * scale
+        theta[_THETA_B[i]] = float(case["b"][i])
+    ECOLOGY_CASE = {"name": name, "theta": theta,
+                    "hp": {"c": float(case["c_star"]),
+                           "alpha": float(case["alpha_star"]),
+                           "eta": list(case["eta"]) + [1.0] * (5 - n)}}
+    set_active_species(n)
+
+
 def evaluate_ecology(req: dict) -> bytes:
     """0D Hamilton ecology ODE step -- see ecology_jax.py. Imported lazily so
     a plain material-bridge deployment (kUsePy=1, ecology unused) does not
@@ -146,8 +208,29 @@ def evaluate_ecology(req: dict) -> bytes:
     n_sub = int(req.get("n_sub", 1))
     if n_sub < 1:
         raise ValueError(f"n_sub must be at least 1, got {n_sub}")
+    n_active = int(req.get("n_active", ECOLOGY_ACTIVE))
+    hp = None
+    if ECOLOGY_CASE is not None:
+        if [float(x) for x in req["theta"]] != ECOLOGY_CASE["theta"]:
+            raise ValueError("theta from the deck does not match case "
+                             f"{ECOLOGY_CASE['name']}: "
+                             f"{ECOLOGY_CASE['theta'][:5]} expected")
+        hp = ECOLOGY_CASE["hp"]
+    # Local nutrient (ROADMAP_TWO_WAY.md step 1, 2026-10-04): an optional
+    # "c_rel" scales the nutrient level c* of this call, c* = c*_0 * c_rel,
+    # with c_rel the field's nutrient at the Gauss point (normalised to the
+    # held value 1). Absent, the path is unchanged.
+    if req.get("c_rel") is not None:
+        c_rel = float(req["c_rel"])
+        if not c_rel >= 0.0:
+            raise ValueError(f"c_rel must be >= 0, got {c_rel}")
+        base = hp if hp is not None else {
+            "c": ecology_jax.C_STAR, "alpha": ecology_jax.ALPHA_STAR,
+            "eta": [1.0] * 5}
+        hp = dict(base, c=float(base["c"]) * c_rel)
     g, phi_int = ecology_jax.ecology_substeps(req["g"], req["theta"],
-                                              float(req["dt_h"]), n_sub)
+                                              float(req["dt_h"]), n_sub,
+                                              n_active, hp)
     return encode_ecology_response(g, phi_int)
 
 
@@ -214,6 +297,19 @@ if __name__ == "__main__":
                          "USERMAT's PERT=1e-7 (default, keeps kUsePy=1 vs "
                          "kUsePy=0 an exact equivalence check); jax = exact "
                          "forward-mode AD (requires jax)")
+    ap.add_argument("--active-species", type=int, default=5,
+                    choices=(1, 2, 3, 4, 5),
+                    help="live species in the ecology model: 1 or 2 for the "
+                         "reduced runs (species above are masked off, which "
+                         "reproduces the n-species model exactly); 5 is the "
+                         "calibrated model and the default")
+    ap.add_argument("--case", default=None,
+                    help="two-species case of Klempt et al. 2026 "
+                         "(JAXFEM/klempt2026_cases.py, e.g. 2sp_case3): "
+                         "its c*, alpha*, eta_i replace ecology_constants, "
+                         "and the deck's theta must equal its A, b")
     a = ap.parse_args()
     set_tangent_backend(a.tangent)
+    set_active_species(a.active_species)
+    set_case(a.case)
     serve(a.host, a.port)
