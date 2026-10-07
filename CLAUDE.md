@@ -16,6 +16,17 @@ and were wrong. What genuinely is NOT on this machine is any *prior Abaqus
 run output* (no `.odb`/`.sta`/`.msg`/`.dat` anywhere on `C:`), so a fresh
 Abaqus run is possible here but nothing has been run here yet.
 
+## Which machine is this?
+
+- **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
+  scripts and Portable Git applies. Available until mid-December 2026.
+- **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
+  half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
+  identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
+  `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
+- **A Claude Code cloud session**: see the git-identity note under "Working
+  style"; no ANSYS or Abaqus.
+
 ## Key directories
 
 - `ansys_usermat/` — ANSYS USERMAT (Fortran) port of the Klempt growth model,

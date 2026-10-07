@@ -9,7 +9,8 @@
 
 - 古い clone は使わない。2026年8月20日に履歴を書き換えた（著者の修正）ので、pull ではなく
   clone し直す。
-- clone したら、git の名前と hook を入れる（`CLAUDE.md`「Git」の節）：
+- サーバーは **fifa**。clone したら、まず `bash scripts/setup_keio_server.sh` を1回走らせる（git の名前と
+  hook を入れ、Python・numpy・scipy・Abaqus のコマンドを確かめる）。中身は次と同じ：
   ```
   git config --local user.name  "keisuke nishioka"
   git config --local user.email "128669518+keisuke58@users.noreply.github.com"
