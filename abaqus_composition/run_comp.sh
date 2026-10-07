@@ -9,6 +9,8 @@
 # - case constants from write_eco_cfg.py <case> into BIOFILM_ECO_CASE (default 2sp_case6);
 # - mp_mode=threads: the UMAT/UMATHT/UEL share the nutrient field through a Fortran
 #   module, which only works when all CPUs are threads of one process (not MPI ranks);
+# - scratch=$ABQ_SCRATCH (default $WORKROOT/scratch, on /home): on fifa the default
+#   scratch is /tmp on the root disk, which has about 11 GB free and is shared;
 # - prints PASS / NOT COMPLETE from the .sta file, as run_comp.ps1 does.
 # The server mode of run_comp.ps1 (C shim + material_server.py) is not ported.
 set -euo pipefail
@@ -20,14 +22,16 @@ py=${PYTHON:-python3}
 abq=${ABAQUS:-abaqus}
 job=$(basename "$inp" .inp)
 wd=${WORKROOT:-$HOME/abaqus_work}/comp_$job
-rm -rf "$wd"; mkdir -p "$wd"
+scr=${ABQ_SCRATCH:-${WORKROOT:-$HOME/abaqus_work}/scratch}
+rm -rf "$wd"; mkdir -p "$wd" "$scr"
 cp "$repo/$inp" "$wd/"
 "$py" "$repo/abaqus_composition/make_umat.py" "$wd/umat_comp.for" --native
 "$py" "$repo/abaqus_composition/write_eco_cfg.py" "$case" "$wd/eco_case.txt"
 export BIOFILM_ECO_CASE="$wd/eco_case.txt"
+export TMPDIR="$scr"   # the compiler and helpers also write temporary files
 cd "$wd"
 set +e
-"$abq" job="$job" input="$job.inp" user=umat_comp.for cpus="$cpus" mp_mode=threads \
+"$abq" job="$job" input="$job.inp" user=umat_comp.for cpus="$cpus" mp_mode=threads scratch="$scr" \
     interactive ask_delete=OFF 2>&1 | tee abaqus_out.txt | tail -n 15
 set -e
 if [ -f "$job.sta" ] && grep -q 'COMPLETED SUCCESSFULLY' "$job.sta"; then

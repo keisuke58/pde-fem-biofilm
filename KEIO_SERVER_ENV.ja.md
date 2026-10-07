@@ -37,6 +37,11 @@
 
 `WORKROOT` は既定の `$HOME/abaqus_work` でよい（`/home` に 83T ある）。
 
+**対処（10月8日）：** `abaqus_composition/run_comp.sh` は scratch を `$WORKROOT/scratch`（`/home` の下）に
+置くようにした（Abaqus の `scratch=` と、コンパイラ用の `TMPDIR`）。別の場所にするときは `ABQ_SCRATCH` を
+設定する。**fifa で次の1本を回したとき、`/tmp/nishioka_*` が増えないことを確かめる**（`ls /tmp | grep nishioka`）。
+`abaqus` を直接呼ぶときは `scratch=$HOME/abaqus_work/scratch` を自分で付ける。
+
 ## 3. 並列（**間違えると静かに壊れる**）
 
 `abaqus information=environment` の既定は **`mp_mode=MPI`**。UMAT・UMATHT・UEL は栄養の場を
