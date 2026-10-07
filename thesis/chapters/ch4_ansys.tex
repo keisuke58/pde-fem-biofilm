@@ -725,7 +725,7 @@ The diffusion coefficient sets the size of the stresses
 (Table~\ref{tab:ch5-beta}): $\phi$ that diffuses out of the seed lowers its
 growth near the surface, and the step in $\alpha$ between the inside and the
 surface of the seed loads it. From $\beta=0.005$ to $0.1$~mm$^2/T^*$ the mean
-stress in the seed falls by a factor of ten on $16^3$ and of five on $8^3$. For $\beta\ge0.02$ the diffusion
+stress in the seed falls by a factor of about four on $8^3$ and ten on $16^3$. For $\beta\ge0.02$ the diffusion
 length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the meshes and $8^3$ and
 $16^3$ agree within $15\,\%$. For smaller $\beta$ the layer is thinner than an
 element and the results depend on the mesh. With the example input,
@@ -739,15 +739,17 @@ Python study above.
   \centering
   \caption[Sensitivity to the diffusion coefficient]{Mean stress in the seed
     at $T^*=1.1$ for different $\beta$ [Pa]; $\beta=0.02$ is the value used in
-    this chapter.}
+    this chapter. $8^3$ at $\beta=0.05$ and $0.1$: runs with $\phi$ at the
+    surface points updated (\S\ref{sec:ch5-limitations}); $^{\dagger}$ before
+    that correction.}
   \label{tab:ch5-beta}
   \small
   \begin{tabular}{lccccc}
     \toprule
     $\beta$ [mm$^2/T^*$] & $0.005$ & $0.01$ & $0.02$ & $0.05$ & $0.1$ \\
     \midrule
-    $8^3$ & $-2.1\times10^{-4}$ & $-2.7\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.3\times10^{-4}$ & $-4.3\times10^{-5}$ \\
-    $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4}$ & $-3.8\times10^{-5}$ \\
+    $8^3$ & $-2.1\times10^{-4}$ & $-2.7\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.3\times10^{-4}$ & $-5.6\times10^{-5}$ \\
+    $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4\,\dagger}$ & $-3.8\times10^{-5\,\dagger}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -830,6 +832,16 @@ model for most of the time.
 \begin{itemize}
 \item \emph{Validation.} Everything in this chapter is verification. No
       measured stress is available to validate against.
+\item \emph{Faces of the cube.} In the element used here, $\phi$ at the surface
+      points was not updated and stayed $0$, so every face acted as $\phi=0$
+      where Eq.~\eqref{eq:ch5-field} has no flux. With these points set to the
+      mean of their neighbouring integration points, the runs with
+      $\beta=0.02$~mm$^2/T^*$ change by less than $0.13\,\%$ in the seed stress
+      and in $\alpha$ and by less than $0.5\,\%$ in the composition, so their
+      values are kept. Where $\phi$ reaches the faces (larger $\beta$, longer
+      times) the seed pressure changes by up to $30\,\%$; the $8^3$ values of
+      Table~\ref{tab:ch5-beta} for $\beta=0.05$ and $0.1$ are those of the
+      corrected runs.
 \item \emph{One-way composition.} The species composition does not act back on
       the mechanics, because in the formulation followed here no material
       parameter depends on the species.
