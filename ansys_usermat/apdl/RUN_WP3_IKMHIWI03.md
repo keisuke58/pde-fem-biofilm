@@ -91,3 +91,25 @@ upwind の分だけ遅くなるかもしれないので、1.2 倍の余裕をみ
 4. B の exe が20日までに間に合わない場合は、旅行中は A だけを回し、B は帰ってから回す。
 
 結果は `ansys_usermat/apdl/results/2026-10-wp3/`（`export_runs_json.py`）に置く。
+
+## 自動化（10月7日に設定）
+
+人がいなくても、次の順で進む。すべてセッションから切り離して動く。
+
+1. 週の実行（`_chain_week_1005.log`）が終わる。
+2. 判定の3本（`F:\biofilm_upf_front\_chain_front_accept.log`）が回る。約 20 分。
+3. A（`F:\biofilm_upf_wired\_chain_wp3_A.log`）が判定の直後に始まる。2本ごとに JSON を push する。
+4. `wp3_auto.ps1`（`F:\biofilm_upf_front\_wp3_auto.log`）が判定のチェーンの終わりを待って、
+   `judge_front_accept.py` を回す。報告は `results/2026-10-wp3/front_accept.txt` に書いて push する。
+   - 通れば：B（`_chain_wp3_B.log`、18本）を A の後ろに登録する。3本ごとに JSON を push する。
+     JSON には φ の平均・最小・最大の時間履歴（`front_phi`）も入る。
+   - 落ちれば：B は始めない。理由は報告に書かれる。
+
+判定は2段階に分けた。B を始めるかどうかは「ゲート」で決める。条件は、3本とも T* = 1 まで
+完走、−0.05 ≤ φ ≤ 1.05、Δt と Δt/2 の平均 φ の差が 5 % 以内、前線の項による α − 1 の増分が
+栄養の側で正で、反対側の2倍以上あること。`FRONT_TERM_FIX.md` の厳しい条件（範囲 1e−6、
+差 1 %）は報告には書くが、これで実行は止めない。
+
+デッキ：`make_wp3_decks.py`（A は `F:\biofilm_upf_wired`、B は `F:\biofilm_upf_front`、
+16³ と 24³ は `refine_deck.py` で作る）。4.1 の栄養は角の1要素、シードは 8³ / 16³ / 24³ で
+32 / 280 / 912 要素。B のタイムアウトの合計は 116 時間（見込みの約 1.6 倍）。

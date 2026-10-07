@@ -27,10 +27,28 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
-W = Path(r"F:\biofilm_upf_wired")
+# the work dir of the runs; run_chain.ps1 sets BIOFILM_WORKDIR to its -WorkDir
+# (e.g. F:\biofilm_upf_front for the front-term build)
+W = Path(os.environ.get("BIOFILM_WORKDIR") or r"F:\biofilm_upf_wired")
+
+
+def front_phi(out: Path):
+    """FRONTPHI lines of the front-term build (one per substep): time, mean,
+    min, max of phi; the last line per time is kept."""
+    rows = {}
+    with open(out, errors="replace") as f:
+        for line in f:
+            if line.startswith("FRONTPHI"):
+                v = [float(x) for x in line.split()[1:5]]
+                rows[v[0]] = v
+    if not rows:
+        return None
+    t = sorted(rows)
+    return {k: [float(f"{rows[x][i]:.7g}") for x in t] for i, k in enumerate(("t", "mean", "min", "max"))}
 
 
 def table(path: Path):
@@ -119,8 +137,13 @@ def main(argv):
         tr = W / f"comp_trace_{run}.csv"
         if tr.exists() and "cx" in rec.get("all_stress", {}) and rec.get("seed_BIOFILM1"):
             rec["share_history"] = share_history(tr, rec["all_stress"], rec["seed_BIOFILM1"])
+        out = W / f"out_{run}.txt"
+        if out.exists():
+            fp = front_phi(out)
+            if fp:
+                rec["front_phi"] = fp
         (outdir / f"{run}.json").write_text(json.dumps(rec, separators=(",", ":")))
-        print(f"{run}: {', '.join(k for k in ('all_stress', 'elem_stress', 'nut_field', 'share_history') if k in rec)}"
+        print(f"{run}: {', '.join(k for k in ('all_stress', 'elem_stress', 'nut_field', 'share_history', 'front_phi') if k in rec)}"
               + (f"  (missing {rec['missing']})" if rec["missing"] else ""))
 
 
