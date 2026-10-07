@@ -102,7 +102,8 @@ try {
     L "chain start: $($Runs -join ', ')"
     if ($WaitFor) {
         L "waiting for $WaitFor"
-        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -match '(?m)^\S+ \w+ end\s*$|EXCEPTION'))) { Start-Sleep 30 }
+        # "HH:mm:ss after18 end" (scripts) and "yyyy-MM-dd HH:mm:ss chain end" (chain logs)
+        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -match '(?m)^(\S+ )?\S+ \w+ end\s*$|EXCEPTION'))) { Start-Sleep 30 }
         while (Get-Process ANSYS -ErrorAction SilentlyContinue) { Start-Sleep 30 }
         Start-Sleep 10
     }

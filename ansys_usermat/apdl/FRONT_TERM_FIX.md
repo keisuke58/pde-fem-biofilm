@@ -86,6 +86,30 @@ Fig. 7 setup (`ds_fig7h`, scaled Table 2), T* = 0.3, 0 errors.
 - (b) unnormalised ∇c: a different model, so not recommended;
 - (c) stop and record it as a limitation.
 
+## Front build for WP3, 7 Oct (`F:\biofilm_upf_front`)
+
+Felix Klempt's answer of 5 Oct (n_c = grad c/(|grad c| + eps), eps about
+1e-8 to 1e-12) settles the 0/0 above, so the fix is carried into a build for
+the Keio WP3 runs (`RUN_WP3_IKMHIWI03.md`, block B):
+
+- base: the sources of the native build (`F:\biofilm_upf_native`: the 5 Oct
+  wired sources with the point model in Fortran, no material server needed);
+- USolBeg: the reading slip fixed as on 2 Oct (`ORI_WEIGHT12` and
+  `ORI_WEIGHT22` into their own variables). In the old builds the last
+  assignment set the species-1 weight to `ORI_WEIGHT22` (0 in `ds_fig7h`),
+  which is why the front term did not act there;
+- USSFin: the front term of species 1 is the 2 Oct upwind version, with
+  n_c = grad c/(|grad c| + 1e-8) in place of the cut-off at |grad c| > 1e-14,
+  so the term goes to 0 where c is uniform. Eq. 34 as printed otherwise (no
+  w-blend, no factor in phi);
+- one output line per substep, `FRONTPHI time mean min max` of phi, for the
+  bounds and mass checks; the 2 Oct per-point and slab prints are not kept.
+
+Built 7 Oct with `link_v222.ps1` (0 errors). Acceptance runs on `ds_fig7h`
+(8^3, T* = 1): dt 0.005, dt 0.0025, and dt 0.005 without the front term
+(`MAX_GROWTH11 = 0`) for the direction check; queued behind the week chain
+(`_chain_front_accept.log`). Results follow here.
+
 **Recommendation (cloud session): (c) for the thesis.** No result of chapter 5
 depends on the front term. (a) would add an assumption of my own. How Klempt
 et al. handle `∇c/|∇c|` where `∇c → 0` is a question for Felix: Table 1 of

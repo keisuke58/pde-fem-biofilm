@@ -52,6 +52,11 @@ Abaqus 側の同じ問題（`--ic fraction`、Δt 0.025）は 8³–48³ まで�
    `--blend` も付けない）。オリバーの要素と同じ領域にするため、`partner_elem_sets.py` で
    16³ と 24³ の要素の集合も作る。
 
+**状況（10月7日）：** 1 と 2 は済み。exe は `F:\biofilm_upf_front\ANSYS.exe` で、中身は
+`FRONT_TERM_FIX.md` の「Front build for WP3」に書いた。3 の判定（`ds_fig7h`：dt 0.005、
+dt 0.0025、前線の項なし）は、週の実行の直後に自動で始まる（`_chain_front_accept.log`）。
+4 は判定が通ってからやる。
+
 問題の設定：Table 2 の換算（`ds_fig7h` と同じ値：r = 10 mm/T*、K = 1、消費 1、gφ、
 β = 0.02）、T* = 1、E = 10 Pa。
 - 4.2 high：`ds_fig7h`（栄養は NUTRIENT1 の面、シードは要素 92 93 100 101）。
