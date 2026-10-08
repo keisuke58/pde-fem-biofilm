@@ -444,7 +444,9 @@ fraction $\psi_i$, with the void $\phi_0=1-\sum_i\phi_i$:
 where $A_{ij}$ are the interactions, $b_i$ the sensitivity to an antibiotic of
 concentration $\alpha^*$, $c^*$ the nutrient, $\gamma$ the multiplier for
 $\sum_i\phi_i+\phi_0=1$, and the barrier terms keep $\phi_i,\psi_i$
-in $(0,1)$. My implementation reproduces all fourteen numerical examples of the
+in $(0,1)$; $\eta_i$ and $\eta_{\phi,i}$ are the dissipation parameters of the two
+terms of~\eqref{eq:dissipation}, equal to each other in Chapter~\ref{ch:heine}.
+My implementation reproduces all fourteen numerical examples of the
 paper. Two printed details had to be read differently to do so: Eq.~17 as
 printed carries a $+\gamma$ that the figures do not show, and the four-species
 interaction matrix of Eq.~19 reproduces the figures without its prefactor

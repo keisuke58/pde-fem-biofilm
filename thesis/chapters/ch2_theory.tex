@@ -407,10 +407,10 @@ $A_{ij}<0$.
 The sign prior $\mathbf S\in\{-1,0,+1\}^{n\times n}$ enters the inference as a
 penalty on coefficients of the wrong sign,
 \begin{equation}
-  \mathcal{R}(\btheta; \mathbf{S}) = \lambda \sum_{i,j:\, S_{ij}\neq 0}
+  \mathcal{R}(\btheta; \mathbf{S}) = \lambda_S \sum_{i,j:\, S_{ij}\neq 0}
   \max\!\bigl(0,\; -S_{ij}\,A_{ij}\bigr)^2,
 \end{equation}
-and leaves coefficients of the right sign free. Only the sign is used, not the
+with the weight $\lambda_S$, and leaves coefficients of the right sign free. Only the sign is used, not the
 magnitude: predicted interaction strengths of genome-scale models agree poorly
 with measured ones, while their signs carry useful
 information~\cite{Rath2024GEMReliability}, and no derivation links metabolic
