@@ -461,3 +461,61 @@ Wall clock is comparable with IKMHIWI03 only if the machine was otherwise idle: 
  ]
 }
 ```
+
+## 2026-10-08: third decision, chain `20261008d`
+
+**What I checked.** All thirteen files currently in
+`abaqus_composition/results_keio_1008/` (the eight from before plus the five
+`fig7_high` jobs chain `20261008c` just ran: `fx42h_p0`, `fx42h_p100`,
+`fx42h_fo_p0`, `ff42h`, `ff42h_fo`), independently re-diffed against the
+reference named in each file's own header, stripping `#` lines and blank
+lines from both sides rather than trusting the `# vs ...: identical` line
+printed in the file. All thirteen agree with their `results_1006`/`results_1007`
+reference in every printed digit; `wp2_imp_free_ph01.txt` again has no
+`# vs` header but matches `results_1007/wp2_imp_free_ph01.txt` body for body.
+Nothing disagreed, so there is nothing to chase before starting something new.
+
+**The two open questions from PR #58.** Both were already answered and acted
+on in the previous decision (2026-10-08, chain `20261008c`): `requirements.txt`
+still pins `numpy==2.4.2`, `matplotlib==3.10.8`, `pytest==9.0.2` (fifa's actual
+versions, not the original newer pins), and `KEIO_SERVER_HANDOFF.ja.md`
+section 1 still names `master` as the working branch with no mention of
+`claude/plan-next-hxjjve`. Re-checked on disk, nothing has regressed; no
+further edit needed.
+
+**What I chose and why.** `scripts/keio_runs/20261008d_fig7_low.json` was
+already sitting prepared (commit `76e8ed1`, from this session's own earlier
+turn): the five `fig7_low` variants (`fx42l_p0`, `fx42l_p100`, `fx42l_fo_p0`,
+`ff42l`, `ff42l_fo`) that close out `KEIO_PLAN.ja.md` section 4's WP1 task
+("消費 0次/1次 × φ の上限あり/なし × 4.1/4.2"). `fig4_corner` (4.1) finished in
+chain `20261008b`, `fig7_high` (4.2 high) just finished in chain `20261008c`;
+`fig7_low` (4.2 low) is the only remaining piece of that family, and
+`results_1006/` already holds IKMHIWI03 references for all five variants, so
+this is a direct continuation of the same already-justified check, not new
+work. I re-ran `scripts/check_manifest.py`'s comparison by hand (the script's
+own `ROOT` is hardcoded to fifa's path, so I reproduced its logic against
+this checkout instead of invoking it directly): all five `make_klempt_inp.py`
+command lines in the manifest match the flags recorded in their
+`results_1006` reference headers word for word, and each `summarise --case`
+matches too. `python3 -c "import json;json.load(...)"` parses the manifest
+cleanly. I also ran the klempt/compare_paper/keio-related slice of
+`tests/` (`pytest tests/ -k "klempt or compare_paper or keio" -q`, bounded to
+90 s rather than the full ~14 min suite): 26 passed, 0 failed.
+
+By the IKMHIWI03 times (23 + 25.7 + 34.1 + 22.5 + 23.9 = 129.2 min) this chain
+is shorter than the `fig7_high` chain that just ran on fifa (175.2 min on
+IKMHIWI03, 222.6 min actual on fifa); even at the same roughly 1.3x slowdown
+fifa showed for `fig7_high`, `fig7_low` should land under 3 hours, well inside
+the four-hour/six-job guidance, and it is the last chain needed to close WP1's
+reproduction family — after this, no planned-but-unqueued WP1 work remains and
+the next decision has to look at WP2/WP3 instead.
+
+I considered, and did not queue, the same three alternatives as last time,
+for the same reasons: bigger meshes (`KEIO_SERVER_ENV.ja.md` section 9 still
+marks 40^3/48^3 as unconfirmed on Linux and they are the slower, riskier next
+step); the implant/tooth stress jobs (WP2, not decided as the main paper
+target until December per `KEIO_PLAN.ja.md` section 0); and new WP2/WP4/5/6
+compute, which needs a growth-law or scope decision that is not mine to make.
+Promoted `scripts/keio_runs/20261008d_fig7_low.json` to `NEXT.json` unchanged
+(same chain name, already new: `git log --all` shows no commit with
+"chain 20261008d" or any chain-log entry for it).
