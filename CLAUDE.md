@@ -26,6 +26,15 @@ Abaqus run is possible here but nothing has been run here yet.
   `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
 - **A Claude Code cloud session**: see the git-identity note under "Working
   style"; no ANSYS or Abaqus.
+- **Where things are pushed (8 Oct 2026):** `origin` = this public repository;
+  `master` is the reference and only the cloud session merges into it (results
+  from IKMHIWI03 arrive on `claude/plan-next-hxjjve`, from fifa on `keio/*`).
+  The Muramatsu lab has a private mirror, `mmc-research-group/nishioka-biofilm-fem`
+  (branch `main`), remote `lab` on fifa. fifa's Claude is not allowed to touch
+  that organisation, so **the user syncs it by hand on fifa:**
+  `git fetch origin master && git push lab origin/master:main` (never the
+  stale local `master`). CI runs by hand only; run `pytest tests/` before
+  every push.
 
 ## Key directories
 
