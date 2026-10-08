@@ -4,6 +4,16 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年10月8日 夜（lab の設定が済んだ）
+
+- ユーザーが fifa で `git remote add lab ...`、`git ls-remote lab`、`git push lab master:main` を実行し、通った
+  （lab の `main` ができた）。SSH の鍵と組織の書き込み権限は足りている。
+- fifa の Claude は `mmc-research-group` への操作が権限で止められているので、**lab への push はユーザーが手で行う**。
+  fifa の Claude は、master を pull したあとで lab が遅れていれば `KEIO_CHAIN_LOG.md` に「`git push lab master:main` が必要」と
+  書くだけでよい（自分では実行しない）。
+
+---
+
 ## 2026年10月8日（村松研の git ができた）
 
 ユーザーが村松研の組織に **`mmc-research-group/nishioka-biofilm-fem`**（private、空、既定ブランチ `main`）を作った。
