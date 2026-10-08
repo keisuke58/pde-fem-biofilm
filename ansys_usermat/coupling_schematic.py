@@ -2,6 +2,10 @@
 """Schematic of the one-way micro-macro coupling, for slides and the thesis.
 
     python ansys_usermat/coupling_schematic.py   -> assets/fig_coupling_schematic.png
+    python ansys_usermat/coupling_schematic.py --thesis
+        -> assets/fig_coupling_schematic_thesis.png: overview for the thesis
+           introduction (chapters in the panel subtitles, IKM element, front
+           term left out because it is inactive in the ANSYS runs).
     python ansys_usermat/coupling_schematic.py --keio
         -> assets/fig_coupling_schematic_keio.png: both arrows back to the
            field drawn as the Keio continuation (composition -> field, and
@@ -156,7 +160,7 @@ def stress_sketch(ax, cx, cy, h):
         arrow(ax, c + v * 2.45 * h, c + v * 1.6 * h, color=INK, lw=1.4, z=6)
 
 
-def main(keio=False):
+def main(keio=False, thesis=False):
     figstyle.apply(12)
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
@@ -165,10 +169,12 @@ def main(keio=False):
     ax.set_aspect("auto")
 
     # (1) macro --------------------------------------------------------------
-    panel(ax, "macro", "1", "Macro: 3D growth field", "Klempt et al. 2024, partner's element")
+    panel(ax, "macro", "1", "Macro: 3D growth field",
+          "Klempt et al. 2024, IKM element (Ch. 2, 4)" if thesis else "Klempt et al. 2024, partner's element")
     x, _ = PX["macro"]
     eqs(ax, x + 0.025, 0.695, [
-        r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha + $ front term",
+        r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha$" if thesis
+        else r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha + $ front term",
         r"$\dot\alpha = k_\alpha\,\phi$,   $\alpha(0) = 1$",
     ])
     ax.text(x + 0.025, 0.575, r"gives the amount $\phi_{3D}(\mathbf{x},t)$",
@@ -178,7 +184,8 @@ def main(keio=False):
             color=MUTED, va="center", linespacing=1.3, zorder=4)
 
     # (2) micro --------------------------------------------------------------
-    panel(ax, "micro", "2", "Micro: point model", "Klempt et al. 2026, Table 1 cases")
+    panel(ax, "micro", "2", "Micro: point model",
+          "Klempt et al. 2026 (Ch. 2), calibrated in Ch. 3" if thesis else "Klempt et al. 2026, Table 1 cases")
     x, w = PX["micro"]
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
     ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5, color=INK,
@@ -190,7 +197,9 @@ def main(keio=False):
     chi_inset(fig, [x + 0.075, 0.255, 0.20, 0.175])
 
     # (3) growth and stress --------------------------------------------------
-    panel(ax, "mech", "3", "Growth and stress", "partner's element, Klempt 2024 stiffness")
+    panel(ax, "mech", "3", "Growth and stress",
+          "ANSYS user material (Ch. 4), Klempt 2024 stiffness" if thesis
+          else "partner's element, Klempt 2024 stiffness")
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
         r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
@@ -236,6 +245,14 @@ def main(keio=False):
         print("wrote", out)
         return
 
+    if thesis:
+        ax.text(0.5, 0.012, r"Assumed, not from a paper: $s$ = 0.15, $\phi_{cap}$ = 0.9, $\phi_{min}$ = 0.01.",
+                ha="center", va="bottom", fontsize=10.5, color=MUTED)
+        out = OUT.with_name("fig_coupling_schematic_thesis.png")
+        fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
+        print("wrote", out)
+        return
+
     ax.text(0.5, 0.012,
             r"Point model run two ways: A) rescaled every step to $\phi_{3D}$;  "
             r"B) started when $\phi_{3D}$ first reaches $\phi_{min}$, then independent.   "
@@ -248,4 +265,4 @@ def main(keio=False):
 
 
 if __name__ == "__main__":
-    main(keio="--keio" in sys.argv)
+    main(keio="--keio" in sys.argv, thesis="--thesis" in sys.argv)

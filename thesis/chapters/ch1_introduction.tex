@@ -61,6 +61,24 @@ The point model gives the composition but no space; the field model gives space 
 The task of this thesis is to bring the point model into an existing, working finite element framework, so that the composition, the growth and the resulting stresses can be computed in space.
 The framework is the biofilm element developed at the Institut für Kontinuumsmechanik, which solves the field model of Klempt et al.\ 2024 in ANSYS.
 
+Figure~\ref{fig:intro_overview} shows how the parts fit together.
+
+\begin{sidewaysfigure}
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_coupling_schematic_thesis.png}
+  \caption[Overview of the coupling]{Overview of this work. (1) The growth
+    field of Klempt et al.\ 2024 in the IKM element gives the amount of
+    biofilm $\phi_{3D}$ at every Gauss point. (2) One copy of the point model of
+    Klempt et al.\ 2026 at every Gauss point gives only the composition; its
+    interactions are calibrated for five species in Chapter~\ref{ch:heine},
+    and the coupled runs of Chapter~\ref{ch:ansys} use two species with the
+    published cases. (3) The growth $\alpha$ and the stresses use the amount
+    only; the composition is an output and does not act back (one-way
+    coupling). The inset in (2) is computed for the coexistence case; the
+    stress pattern in (3) is a sketch.}
+  \label{fig:intro_overview}
+\end{sidewaysfigure}
+
 I make three contributions:
 \begin{enumerate}
   \item \emph{A calibrated point model} (Chapter~\ref{ch:heine}).
