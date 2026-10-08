@@ -394,6 +394,12 @@ def main() -> int:
         logger.info("--- %s: %s %s", rec["job"], rec["status"], rec["verdict"])
 
     files = [r["file"] for r in recs if r.get("file")]
+    if args.dry_run:
+        # a dry run generated inputs and nothing else: KEIO_CHAIN_LOG.md is the
+        # record of real runs, so leave it alone and commit nothing.
+        logger.info("dry run: KEIO_CHAIN_LOG.md not touched, nothing committed")
+        logger.info("chain %s end", args.name)
+        return 0
     files.append(append_log(args.name, recs))
     logger.info("appended the report to KEIO_CHAIN_LOG.md")
     if args.push:
