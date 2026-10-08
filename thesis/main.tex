@@ -226,6 +226,65 @@ Finally, I thank my family and friends for their support throughout this work.
 \listoffigures
 \listoftables
 
+\chapter*{List of Symbols}
+\addcontentsline{toc}{chapter}{List of Symbols}
+Units are those of the models; $T^*$ is the normalised time of Klempt et
+al.\ 2024, and lengths in Chapter~\ref{ch:ansys} are in mm.
+
+\medskip\noindent\textbf{Growth field and mechanics (Klempt et al.\ 2024, Chapter~\ref{ch:ansys})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\mathbf F$, $\mathbf F_e$, $\mathbf F_g$ & deformation gradient, its elastic and growth parts, $\mathbf F=\mathbf F_e\mathbf F_g$\\
+$\alpha$ & isotropic growth, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; the growth is $\alpha-1$\\
+$\phi$, $\phi_{3D}$ & biofilm state variable of the field (amount of biofilm), $\phi\in[0,1]$\\
+$c$ & nutrient concentration of the field\\
+$\beta$ & diffusion coefficient of $\phi$ [mm$^2/T^*$]\\
+$k_\alpha$ & growth rate [$1/T^*$]\\
+$d$, $g$ & nutrient diffusivity [mm$^2/T^*$] and consumption rate [$1/T^*$]\\
+$r$, $k$ & front growth parameter and half-velocity constant\\
+$E$, $\nu$, $\mu$ & Young's modulus, Poisson's ratio, shear modulus\\
+$E(\phi)$, $f$ & stiffness weighted by $\phi^2$, small floor for the void\\
+$C_{10}$, $C_{01}$, $D_1$ & Mooney--Rivlin constants\\
+$J_e$, $\mathbf b_e$, $\bar I_1$, $\bar I_2$ & $\det\mathbf F_e$, left Cauchy--Green tensor of $\mathbf F_e$, its isochoric invariants\\
+$\Lambda$ & Thiele number, $\Lambda^2=gL^2/d$\\
+\end{tabular}
+
+\medskip\noindent\textbf{Point model (Klempt et al.\ 2026, Chapters~\ref{ch:theory} and~\ref{ch:heine})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\phi_i$, $\phi_0$ & volume fraction of species $i$, void fraction\\
+$\psi_i$, $\bar\phi_i$ & viability of species $i$, living fraction $\bar\phi_i=\phi_i\psi_i$\\
+$\mathbf A$, $A_{ij}$ & symmetric interaction matrix\\
+$\mathbf B$, $b_i$ & antibiotic sensitivity\\
+$c^*$, $\alpha^*$ & nutrient and antibiotic level\\
+$\eta_i$, $\eta_{\phi,i}$ & dissipation parameters\\
+$\gamma$ & Lagrange multiplier of $\sum_{l=0}^{n}\phi_l=1$\\
+$\Psi$, $\Delta$, $C$ & free energy, dissipation function, constraint function\\
+$K_p$ & coefficient of the logarithmic barrier\\
+\end{tabular}
+
+\medskip\noindent\textbf{Coupling (Chapter~\ref{ch:ansys})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$s$ & time link: the point model advances $s\,\Delta t$ per substep\\
+$\phi_{\rm cap}$, $\phi_{\min}$ & cap on the amount handed to the point model, threshold for starting it\\
+$n_{\rm sub}$ & point-model steps per substep\\
+$c^*_0$, $c_{\rm ref}$ & nutrient level of the point model at the reference concentration $c_{\rm ref}$\\
+\end{tabular}
+
+\medskip\noindent\textbf{Calibration (Chapter~\ref{ch:heine})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\btheta$, $n_\theta$ & parameter vector, number of parameters ($15$)\\
+$\tau_j$ & tempering exponent of stage $j$\\
+$c_v$ & target coefficient of variation of the weights\\
+$N_p$, $K$ & number of samples, mutation steps per stage\\
+$s_p$ & proposal scale\\
+$\mathbf S$, $\lambda_S$ & sign prior from metabolic models, weight of its penalty\\
+\end{tabular}
+
+\medskip\noindent\textbf{Numerics}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$h$, $\Delta t$ & element size, time step\\
+$\lambda$ & $\beta\Delta t/h^2$, the stability measure of the explicit field update\\
+\end{tabular}
+
 \newpage
 \pagenumbering{arabic}
 
