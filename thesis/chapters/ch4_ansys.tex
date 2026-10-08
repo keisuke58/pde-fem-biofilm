@@ -309,8 +309,21 @@ least-squares sense, the Neighbored Element Method
 explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
 give $\Delta t\le h^2/(2\beta)$ for the element size $h$; in three dimensions the runs of this element
 stayed smooth up to $\beta\Delta t/h^2=0.144$ and oscillated at $0.160$, below the
-value $1/6$ of the seven-point stencil. Every run in this chapter has
+value $1/6$ of the seven-point stencil (Figure~\ref{fig:ch5-stability}). Every run in this chapter has
 $\beta\Delta t/h^2\le0.128$ (the $16^3$ run at $\beta=0.1$ uses $\Delta t=0.0125$).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\ansysfigdir fig_wp3_stability.png}
+  \caption[Stability of the explicit field update]{Runs of the element against
+    $\lambda=\beta\Delta t/h^2$. Smooth: the run reaches the end time with
+    $\alpha-1\ge0$ and no oscillation between neighbouring elements;
+    oscillating: it reaches the end time, but $\alpha-1$ alternates in sign;
+    stopped: elements collapse before the end time. Dashed: $1/6$, the limit of
+    the seven-point stencil in three dimensions; dotted: $1/2$, the condition
+    given by Rudolf et al.~\cite{Rudolf2025NEM}.}
+  \label{fig:ch5-stability}
+\end{figure}
 
 \begin{figure}[htbp]
   \centering
@@ -722,6 +735,35 @@ changes by $3\,\%$ from $16^3$ to $24^3$.
     \bottomrule
   \end{tabular}
 \end{table}
+
+% Source: RUN_WP3_IKMHIWI03.md, block C (results/2026-10-wp3_fix/), wp3_alpha_profile.py, wp3_figs.py.
+\paragraph{Order of convergence.} With the surface points corrected
+(\S\ref{sec:ch5-limitations}), I repeated the seed growth on the three meshes
+with $\Delta t=0.1$, $0.05$, $0.025$ and $0.0125$ (Figure~\ref{fig:ch5-wp3-conv});
+the seed values agree with Table~\ref{tab:ch5-mesh} within $0.03\,\%$.
+Halving the time step halves the change, so the update is first order in time,
+and the error at $\Delta t=0.025$ is about $1\,\%$ in the seed von Mises stress.
+Over the three meshes the seed von Mises stress converges with an observed
+order of about $2.1$ towards $6.20\times10^{-4}$~Pa, which puts the error on
+$24^3$ at about $2\,\%$. With three meshes this order is an estimate that cannot
+be checked further. The growth $\alpha-1$ has to be compared at fixed
+positions, because the elements that make up the surface layer of the seed
+change with $h$. Averaged over the same region, $\alpha-1$ changes by
+$-0.6\,\%$ from $16^3$ to $24^3$, by $+1.5\,\%$ at the centre and by
+$+3.9\,\%$ at $0.4$~mm from the centre, near the edge of the seed, where the
+gradient of $\phi$ is steepest. These differences are the same after
+extrapolation to $\Delta t\to0$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_wp3_convergence.png}
+  \caption[Convergence in time and mesh]{Seed growth at $T^*=1.1$,
+    $\beta=0.02$~mm$^2/T^*$, surface points corrected. Left: seed mean of the
+    von Mises stress against the element size $h$ for two time steps and the
+    first-order extrapolation $\Delta t\to0$. Right: $\alpha-1$ at fixed
+    positions, relative to $24^3$ ($\Delta t\to0$).}
+  \label{fig:ch5-wp3-conv}
+\end{figure}
 
 The diffusion coefficient sets the size of the stresses
 (Table~\ref{tab:ch5-beta}): $\phi$ that diffuses out of the seed lowers its

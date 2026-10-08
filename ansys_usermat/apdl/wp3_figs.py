@@ -79,9 +79,10 @@ def fig_stability():
             x, y = zip(*pts)
             ax.scatter(x, y, marker=mk, color=col, s=46, label=state, zorder=3)
     ax.axvline(1 / 6, color="k", lw=0.9, ls="--")
-    ax.text(0.155, 2.45, r"$1/6$", ha="right", va="bottom")
+    ax.text(1 / 6 * 0.95, 1.5, r"$1/6$", ha="right", va="center", rotation=90)
     ax.axvline(0.5, color="0.5", lw=0.9, ls=":")
-    ax.text(0.47, 2.45, r"$1/2$ (Rudolf et al. 2025)", ha="right", va="bottom", color="0.4")
+    ax.text(0.5 * 0.95, 1.5, r"$1/2$ (Rudolf et al. 2025)", ha="right", va="center", rotation=90,
+            color="0.4", fontsize=8)
     ax.set_xscale("log")
     ax.set_xlim(2e-3, 0.8)
     ax.set_ylim(-0.5, 2.9)
