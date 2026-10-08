@@ -1,0 +1,267 @@
+% Backup slides for the colloquium (16 Dec 2026): shown only when a question needs them.
+% Kept apart from slides_defense.tex so that the talk itself stays at 20 pages.
+% Build: pdflatex slides_defense_backup.tex (twice). Same style as the main deck.
+% Numbers are those of the thesis (thesis/chapters/ch3_heine.tex, ch4_ansys.tex).
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usefonttheme{serif}
+\usepackage{mathptmx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\graphicspath{{assets/}{thesis/figures/}}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{warn}{RGB}{190,40,40}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\setbeamertemplate{navigation symbols}{}
+\newcommand{\takeaway}[1]{\par\vfill\noindent\colorbox{c3!10}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small\textbf{\color{c3}$\rightarrow$}\ #1}}}
+
+\title{Backup slides}
+\subtitle{Master's thesis colloquium}
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover}
+\date{16 December 2026}
+
+\begin{document}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 1: stationarity conditions of the point model}
+\small
+$\dot\Psi+\Delta+C\to\operatorname{stat}$ with respect to $\dot\phi_i$, $\dot\psi_i$, $\dot\phi_0$ and $\gamma$, where
+\[
+\Psi=-\tfrac12c^*\bar{\bm\phi}^{\mathrm T}\mathbf A\,\bar{\bm\phi}
++\tfrac12\alpha^*\bm\psi^{\mathrm T}\mathbf B\,\bm\psi,\qquad
+\Delta=\tfrac12\dot{\bar{\bm\phi}}^{\mathrm T}\bm\eta\,\dot{\bar{\bm\phi}}
++\tfrac12\dot{\bm\phi}^{\mathrm T}\bm\eta\,\dot{\bm\phi},\qquad
+C=\gamma\Bigl(\sum_{l=0}^n\phi_l-1\Bigr)
+\]
+gives, with $\bar\phi_i=\phi_i\psi_i$ and $\dot{\bar\phi}_i=\dot\phi_i\psi_i+\phi_i\dot\psi_i$,
+\[
+\begin{aligned}
+0&=-c^*\psi_i(\mathbf A\bar{\bm\phi})_i+\eta_i\bigl(\dot\phi_i\psi_i^2+\bar\phi_i\dot\psi_i+\dot\phi_i\bigr)+\gamma,\\
+0&=-c^*\phi_i(\mathbf A\bar{\bm\phi})_i+\alpha^*b_i\psi_i+\eta_i\bigl(\dot\psi_i\phi_i^2+\bar\phi_i\dot\phi_i\bigr),\\
+0&=\gamma+\dot\phi_0,\qquad 0=\textstyle\sum_{l=0}^n\phi_l-1 .
+\end{aligned}
+\]
+\begin{itemize}
+  \item $2n+2$ equations; implicit Euler and Newton, $\Delta t=10^{-4}$; a logarithmic
+        barrier keeps $\phi_i,\psi_i,\phi_0$ in $(0,1)$
+  \item The second term of $\Delta$ is needed: the first alone gives a singular system
+  \item Only the symmetric part of $\mathbf A$ enters $\Psi$ $\Rightarrow$ $\mathbf A=\mathbf A^{\mathrm T}$
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 2: symmetric interactions compared with an asymmetric model}
+\small
+\begin{columns}[T]
+\begin{column}{0.58\textwidth}
+\footnotesize
+\begin{tabular}{@{}l@{\hspace{4pt}}c@{\hspace{4pt}}c@{}}
+\toprule
+& gLV (L-BFGS-B) & Hamilton TMCMC\\
+\midrule
+interaction matrix & asymmetric, 25 & symmetric, 15\\
+parameters & 30 & 20\\
+RMSE (four conditions) & $0.012$--$0.032$ & $0.033$--$0.119$\\
+uncertainty & point estimate & posterior, $10{,}000$\\
+$\sum_i\phi_i=1$ & enforced afterwards & exact\\
+pH prediction & not possible & $R^2=0.78$\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.4\textwidth}
+\begin{itemize}
+  \item The asymmetric model fits better, but has more parameters (30) than
+        observations (25); its out-of-sample error was not assessed
+  \item Hamilton model: transfer CS$\to$CH RMSE $0.098$, close to the
+        in-sample $0.104$
+  \item Directed effects (one species feeding another) cannot be represented;
+        stated as a limitation
+\end{itemize}
+\end{column}
+\end{columns}
+\takeaway{Symmetry costs accuracy of the fit, but gives a posterior, exact conservation and a prediction of an independent quantity.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 3: fixed against free viability (Phase 1 and Phase 2)}
+\centering
+\includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{heine_phase1_vs_phase2.pdf}\\[4pt]
+\small\raggedright
+Phase~1: viability $\psi_i$ fixed to the measured values; Phase~2: $\psi_i$ free.
+Each point is one of the 15 coefficients; dashed: identity.
+\takeaway{The two phases agree in Commensal Static ($r=0.87$); in the dysbiotic conditions the \textit{P.~gingivalis} entries shift, where the viability dynamics are active.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 4: posterior distributions of the interactions}
+\begin{columns}[c]
+\begin{column}{0.6\textwidth}
+\centering
+\includegraphics[height=0.8\textheight,width=\linewidth,keepaspectratio]{heine_posterior_violin.pdf}
+\end{column}
+\begin{column}{0.38\textwidth}
+\small
+\begin{itemize}
+  \item Posterior of the 15 entries of $\mathbf A$ per condition; stars: MAP
+  \item Identifiability judged by agreement of independent runs, prior dependence
+        on a wide box and posterior mass at the bounds
+  \item The posterior-to-prior width ratio alone cannot detect non-identifiability
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 5: sensitivity to the two coupling assumptions}
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+\small Share of species 1, $\phi_1/(\phi_1+\phi_2)$, at $T^*=1$\\[4pt]
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& $s=0.05$ & $s=0.15$ & $s=0.5$ & $s=1$\\
+\midrule
+case 3, front & 0.638 & 0.672 & 0.701 & 0.744\\
+case 6, front & 0.230 & 0.014 & 0.014 & 0.014\\
+\midrule
+& $\phi_{\rm cap}=0.85$ & $0.9$ & $0.95$ &\\
+\midrule
+case 3, seed & 0.668 & 0.667 & 0.664 &\\
+case 6, seed & 0.023 & 0.021 & 0.014 &\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.42\textwidth}
+\small
+\begin{itemize}
+  \item $s$: the point model advances $s\,\Delta t$ per substep; no paper links the
+        time of Klempt et al.\ 2026 to $T^*$; $s=0.15$ maps its horizon onto $T^*=1$
+  \item In case~6 the winner emerges for $s\gtrsim0.15$ and does not change for larger $s$
+  \item $\phi_{\rm cap}$ hardly matters
+\end{itemize}
+\end{column}
+\end{columns}
+\takeaway{The outcome type is robust to both assumptions; the share in case~3 depends on $s$ by a few hundredths.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 6: sensitivity to the diffusion coefficient $\beta$}
+\small
+Mean stress in the seed at $T^*=1.1$ [Pa]\\[4pt]
+\centering
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+$\beta$ [mm$^2/T^*$] & $0.005$ & $0.01$ & $0.02$ & $0.05$ & $0.1$\\
+\midrule
+$8^3$ & $-2.1\times10^{-4}$ & $-2.7\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.3\times10^{-4}$ & $-5.6\times10^{-5}$\\
+$16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4\,\dagger}$ & $-3.8\times10^{-5\,\dagger}$\\
+\bottomrule
+\end{tabular}\\[6pt]
+\raggedright
+\begin{itemize}
+  \item $\beta=0.02$: Table~2 of Klempt et al.\ 2024 ($\beta=2$) converted to the 2~mm cube (assumption)
+  \item $\phi$ diffusing out of the seed lowers its growth near the surface; the step in
+        $\alpha$ between inside and surface loads the seed
+  \item For $\beta\ge0.02$ the diffusion length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the mesh
+  \item $^\dagger$ before the correction of the surface points
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 7: the two growth laws of Klempt et al.\ 2024}
+\centering
+\includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{fig_klempt2024_alpha_law.png}\\[2pt]
+\small\raggedright
+The paper gives $\dot\alpha=k_\alpha\phi$ (Eq.~36) in the text and a different update in
+Table~1, step~3a. On the reproduced field of test case~4.1 they differ: a seed full
+from the start grows only under Eq.~36.
+\takeaway{I follow Eq.~36, as the text of the paper and the element do.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 8: Eq.~36 against the element's own growth variable}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\centering
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig1005_whole_model.png}
+\end{column}
+\begin{column}{0.48\textwidth}
+\small
+\begin{itemize}
+  \item Whole model, 512 elements: the two von Mises fields have the same pattern,
+        cosine similarity $1.0000$
+  \item The element's variable gives $0.455$ times the stress of Eq.~36,
+        which is $\tfrac12\times\tfrac{10}{11}$: the mean over both species fields,
+        one of them unused, and a lag of one substep
+  \item With Eq.~36 at the Gauss points, the growth is counted once per increment
+\end{itemize}
+\end{column}
+\end{columns}
+\takeaway{Same spatial pattern; the difference in magnitude is fully explained by how the element's variable is formed, not by the mechanics.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 9: mesh and incompressibility}
+\small
+\begin{itemize}
+  \item Python, same mechanical problem on $8^3$, $16^3$, $32^3$ linear hexahedra:
+        seed averages on $8^3$ are $1.6$--$1.75$ times those on $16^3$ and $32^3$,
+        which agree with each other; corner peaks do not converge (singular corners)
+        $\Rightarrow$ seed averages are quoted, not peaks
+  \item Mean-dilatation (B-bar) integration, as SOLID185 with KEYOPT(2)$=0$:
+        mean stress $-3.8$ and $-4.1\times10^{-5}$~Pa for $\nu=0.49$ and $0.499$ on $8^3$
+        $\Rightarrow$ no volumetric locking
+  \item Full $2\times2\times2$ integration would overestimate the mean stress by a factor
+        of $3.7$ on $8^3$ and $2.3$ on $16^3$ at $\nu=0.49$
+  \item ANSYS: $16^3$ and $24^3$ with every boundary condition mapped by position;
+        $32^3$ exceeds the memory of the workstation
+\end{itemize}
+\takeaway{The quoted seed averages are mesh-converged on $16^3$ and $24^3$; B-bar avoids locking at $\nu=0.49$.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 10: correction of the surface points of the element}
+\small
+\begin{itemize}
+  \item In the element, $\phi$ at the surface points was not updated and stayed $0$:
+        every face acted as $\phi=0$, where the model has zero flux
+  \item Corrected: each surface point takes the distance-weighted mean of its
+        neighbouring integration points; all thesis runs repeated
+\end{itemize}
+\vspace{4pt}
+\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+runs & seed von Mises & seed pressure & $\alpha-1$\\
+\midrule
+$\beta=0.02$ ($8^3$, $16^3$, one and two species) & $\le0.01\,\%$ & $\le0.13\,\%$ & unchanged\\
+$\beta=0.05$, $8^3$ & $+0.3\,\%$ & $-3.5\,\%$ & $0.02\,\%$\\
+$\beta=0.1$, $8^3$ & $+6.7\,\%$ & $-30\,\%$ & $0.5\,\%$\\
+\bottomrule
+\end{tabular}
+\takeaway{The main results change by less than $0.5\,\%$; only runs in which $\phi$ reaches the faces change noticeably, and their corrected values are used.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 11: reproduction of Klempt et al.\ 2024, test case 4.1}
+\centering
+\includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{fig_klempt2024_fig3_blend.png}\\[2pt]
+\small\raggedright
+Python reproduction with the parameters of Table~2; consumption $g\phi c$ as in the
+authors' implementation (printed: $g\phi$), front term with an isotropic share.
+\takeaway{Case~4.1 is reproduced with stated departures from the printed equations (thesis, Appendix~C).}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 12: solution loop of the element framework}
+\centering
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{flow_oliver_solution_loop.png}
+\takeaway{The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced after each substep.}
+\end{frame}
+
+\end{document}
