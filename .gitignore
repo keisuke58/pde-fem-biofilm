@@ -155,3 +155,6 @@ felix_private/
 abaqus_composition/*.seed.txt
 abaqus_composition/*.json
 !abaqus_composition/pset_*.json
+
+# The thesis figures are part of the thesis source (thesis/README.md)
+!thesis/figures/
