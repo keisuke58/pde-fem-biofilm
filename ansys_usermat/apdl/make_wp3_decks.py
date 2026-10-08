@@ -26,6 +26,13 @@ dt 0.025 (h^2 / (2 dt) >= beta holds for all). The two runs already made
 with the fixed executable (ds8/ds16_beta002_dt4, results/2026-10-07_surface_fix)
 are not repeated.
 
+Block D (8 Oct), same executable as C: the two runs of C that stopped (24^3 at
+dt 0.1, and beta 0.05 at dt 0.025) exceeded beta dt / h^2 = 1/6, every run
+that passed stayed below 0.144. D brackets that limit, 24^3 beta 0.02 at
+dt 0.055 / 0.065 (0.158 / 0.187) and 16^3 beta 0.05 at dt 0.05 / 0.06
+(0.160 / 0.192), and completes the beta set with 24^3 beta 0.05 at dt 0.0125
+(0.090).
+
 Run lists: <workdir>\\_wp3_<block>_runs.txt, one "deck::minutes" per line, in
 run order (coarse meshes first). --check prints them and writes nothing.
 """
@@ -93,6 +100,15 @@ def block_c():
     return out
 
 
+def block_d():
+    """(name, base, dt, beta, minutes); C took about 14 s (16^3) and 150 s (24^3) per substep."""
+    return [("wp3d_n16_b005_dt005", "ds16_beta002_dt4", 0.05, 0.05, 15),
+            ("wp3d_n16_b005_dt006", "ds16_beta002_dt4", 0.06, 0.05, 15),
+            ("wp3d_n24_dt0055", "ds24_beta002_dt4", 0.055, 0.02, 90),
+            ("wp3d_n24_dt0065", "ds24_beta002_dt4", 0.065, 0.02, 80),
+            ("wp3d_n24_b005_dt00125", "ds24_beta002_dt4", 0.0125, 0.05, 330)]
+
+
 def run(cmd):
     r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True)
     if r.returncode != 0:
@@ -119,7 +135,7 @@ def case41_sets(deck: Path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--block", choices=("A", "B", "C", "both"), default="both")
+    ap.add_argument("--block", choices=("A", "B", "C", "D", "both"), default="both")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     py = sys.executable
@@ -136,8 +152,8 @@ def main():
             (WIRED / "_wp3_A_runs.txt").write_text("\n".join(lines) + "\n")
         print("# block A (" + str(WIRED) + ")\n" + "\n".join(lines))
 
-    if a.block == "C":
-        rows = block_c()
+    if a.block in ("C", "D"):
+        rows = block_c() if a.block == "C" else block_d()
         lines = [f"{name}::{mins}" for name, _, _, _, mins in rows]
         if not a.check:
             for name, base, dt, beta, _ in rows:
@@ -146,9 +162,9 @@ def main():
                 run([py, mk, WIRED / f"{base}.dat", FIX / f"{name}.dat", "--deltim", f"{dt:g}",
                      "--set", f"MY_BETA1={beta:g}",
                      "--post", "both", "--post-elem", pe.group(1) if pe else "220"])
-            (FIX / "_wp3_C_runs.txt").write_text("\n".join(lines) + "\n")
-        print("# block C (" + str(FIX) + ")\n" + "\n".join(lines))
-        print(f"# block C timeouts add up to {sum(m for *_, m in rows) / 60:.0f} h", file=sys.stderr)
+            (FIX / f"_wp3_{a.block}_runs.txt").write_text("\n".join(lines) + "\n")
+        print(f"# block {a.block} (" + str(FIX) + ")\n" + "\n".join(lines))
+        print(f"# block {a.block} timeouts add up to {sum(m for *_, m in rows) / 60:.0f} h", file=sys.stderr)
 
     if a.block in ("B", "both"):
         rows = block_b()
