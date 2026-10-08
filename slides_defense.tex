@@ -44,7 +44,7 @@
 \maketitle
 
 % --------------------------------------------------------
-\begin{frame}{Motivation}
+\begin{frame}{Motivation and research question}
 \begin{columns}[T]
 \begin{column}{0.55\textwidth}
 \begin{itemize}
@@ -56,24 +56,24 @@
         against a stiff substrate, it carries stresses
 \end{itemize}
 \vspace{6pt}
-\textbf{Question:} can the composition of a biofilm, its growth and its
-stresses be computed together, in an existing finite element framework?
+\textbf{Research question:} can the species composition of a biofilm, its growth and the
+resulting stresses be computed consistently within an existing finite element framework?
 \end{column}
 \begin{column}{0.42\textwidth}
 \small
-\cbox{p1}{1.6cm}{\textbf{\color{p1}Point model}\\ composition of several species\\ \textcolor{gray}{no space, no stress}}\\[4pt]
-\cbox{p2}{1.6cm}{\textbf{\color{p2}Growth field}\\ where the biofilm grows, its stresses\\ \textcolor{gray}{one biofilm variable, no species}}\\[4pt]
-\cbox{c3}{1.6cm}{\textbf{\color{c3}This work}\\ both, at every Gauss point of an existing ANSYS element}
+\cbox{p1}{1.6cm}{\textbf{\color{p1}Point model}\\ species composition at a material point\\ \textcolor{gray}{no spatial resolution, no stress}}\\[4pt]
+\cbox{p2}{1.6cm}{\textbf{\color{p2}Growth field}\\ spatial growth and growth-induced stress\\ \textcolor{gray}{single biofilm phase, no species}}\\[4pt]
+\cbox{c3}{1.6cm}{\textbf{\color{c3}This work}\\ both, evaluated at every Gauss point of an existing ANSYS element}
 \end{column}
 \end{columns}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Overview}
+\begin{frame}{Approach}
 \centering
 \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{fig_coupling_schematic_thesis.png}
-\takeaway{The field gives the amount $\phi_{3D}$, the point model the composition;
-growth and stress use the amount only (one-way).}
+\takeaway{The field determines the amount $\phi_{3D}$, the point model the composition;
+growth and stress depend on the amount only (one-way coupling).}
 \end{frame}
 
 % --------------------------------------------------------
@@ -105,17 +105,17 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \vspace{8pt}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
-\cbox{p2}{1.2cm}{\small\textbf{\color{p2}In this work:} solved by the IKM element in ANSYS; $\alpha$ and the stress added at the Gauss points (Part~2)}
+\cbox{p2}{1.2cm}{\small\textbf{\color{p2}Role in this work:} solved by the IKM element in ANSYS; growth law and stress added at the Gauss points (Part~2)}
 \end{column}
 \begin{column}{0.48\textwidth}
-\cbox{p1}{1.2cm}{\small\textbf{\color{p1}In this work:} calibrated for five species (Part~1); one copy per Gauss point (Part~3)}
+\cbox{p1}{1.2cm}{\small\textbf{\color{p1}Role in this work:} calibrated for five species (Part~1); evaluated at every Gauss point (Part~3)}
 \end{column}
 \end{columns}
-\takeaway{One variational principle for both models: the field for space and stress, its local form for the composition.}
+\takeaway{Both models follow from one variational principle: the field describes space and stress, its local form the composition.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 1: calibrating the point model}
+\begin{frame}{Part 1: Bayesian calibration of the point model}
 \begin{columns}[T]
 \begin{column}{0.62\textwidth}
 \centering
@@ -130,13 +130,13 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
   \item Forward model in JAX on the GPU: about 150 times faster than the CPU
 \end{itemize}
 \vspace{6pt}
-\cbox{c3}{1.5cm}{\small\textbf{\color{c3}Result:} the time courses of all four conditions are reproduced, one symmetric $\mathbf A$ each}
+\cbox{c3}{1.5cm}{\small\textbf{\color{c3}Posterior predictive fit:} the time courses of all four conditions are reproduced with one symmetric $\mathbf A$ each}
 \end{column}
 \end{columns}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 1: what the calibration gives}
+\begin{frame}{Part 1: inferred interactions and out-of-sample prediction}
 \begin{columns}[T]
 \begin{column}{0.55\textwidth}
 \centering
@@ -150,12 +150,12 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \small The pH, not used in the calibration, is predicted with $R^2=0.78$
 \end{column}
 \end{columns}
-\takeaway{\textbf{Prediction} to test: without \textit{F.~nucleatum}, the late growth of
-\textit{P.~gingivalis} under dysbiotic flow should be suppressed.}
+\takeaway{\textbf{Testable hypothesis:} in the absence of \textit{F.~nucleatum}, the late growth of
+\textit{P.~gingivalis} under dysbiotic flow is expected to be suppressed.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: the growth law in ANSYS}
+\begin{frame}{Part 2: implementation of the growth law in ANSYS}
 \begin{columns}[T]
 \begin{column}{0.38\textwidth}
 \small
@@ -173,11 +173,11 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{v222_closed_form.png}
 \end{column}
 \end{columns}
-\takeaway{The growth law in ANSYS matches the closed forms: free growth stays stress free, constrained growth gives the predicted pressure.}
+\takeaway{The implementation reproduces the closed-form solutions for free (stress-free) and constrained growth.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: coupling into the IKM element}
+\begin{frame}{Part 2: coupling to the IKM element}
 \begin{columns}[T]
 \begin{column}{0.56\textwidth}
 \centering
@@ -196,19 +196,19 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Only the growth law is added; the element's field is used as it is.}
+\takeaway{The field formulation of the element is retained; only the growth law at the integration points is added.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: the coupled run against exact solutions}
+\begin{frame}{Part 2: verification against an exact solution}
 \centering
 \includegraphics[width=0.95\linewidth,height=0.64\textheight,keepaspectratio]{fig1005_exact.png}
 \takeaway{Where $\phi$ has no gradient, $\phi=\sinh(k_\alpha t)$ and $\alpha-1=\cosh(k_\alpha t)-1$:
-ANSYS follows the exact solution of the time stepping to $3\times10^{-11}$ in $\alpha$.}
+the coupled ANSYS solution agrees with the exact solution of the time integration to $3\times10^{-11}$ in $\alpha$.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: stresses with the published stiffness}
+\begin{frame}{Part 2: growth-induced stresses with the published stiffness}
 \begin{columns}[c]
 \begin{column}{0.56\textwidth}
 \centering
@@ -228,11 +228,11 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 Stresses scale with $E=10$~Pa.
 \end{column}
 \end{columns}
-\takeaway{The seed is compressed and the material around it is in tension: the ring of tension of Klempt et al.\ 2024.}
+\takeaway{The seed is under compression and the surrounding material under tension, consistent with the ring of tension reported by Klempt et al.\ 2024.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: how far the numbers can be trusted}
+\begin{frame}{Part 2: convergence and stability}
 \begin{columns}[T]
 \begin{column}{0.58\textwidth}
 \centering
@@ -251,11 +251,11 @@ Stresses scale with $E=10$~Pa.
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Seed stresses on $24^3$ elements are good to about $2\,\%$; every run of the thesis is inside the stability limit.}
+\takeaway{Estimated discretisation error of the seed stress on $24^3$ elements: about $2\,\%$; all simulations lie within the stability limit.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: composition at every Gauss point}
+\begin{frame}{Part 3: species composition at the Gauss points}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
 \small
@@ -265,7 +265,7 @@ Stresses scale with $E=10$~Pa.
         bit for bit
   \item Packed seed, $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$:
         case~3 (coexistence) $0.667$, case~6 (one species wins) $0.021$;
-        the type of outcome is kept
+        the qualitative outcome is retained
   \item \textcolor{warn}{Assumptions} (not in the papers), each with its
         sensitivity: time link $s=0.15$, cap $\phi_{\rm cap}=0.9$,
         threshold $\phi_{\min}=0.01$
@@ -276,11 +276,11 @@ Stresses scale with $E=10$~Pa.
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{fig_composition_map.png}
 \end{column}
 \end{columns}
-\takeaway{The coupled run keeps the published outcomes: coexistence in case~3, one surviving species in case~6.}
+\takeaway{The coupled simulation retains the qualitative outcomes of the reference cases: coexistence (case~3) and competitive exclusion (case~6).}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: composition varies in space with the local nutrient}
+\begin{frame}{Part 3: spatial heterogeneity under nutrient limitation}
 \begin{columns}[c]
 \begin{column}{0.64\textwidth}
 \centering
@@ -295,7 +295,7 @@ Stresses scale with $E=10$~Pa.
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{With a local nutrient the composition varies in space, which a constant $c^*$ cannot show.}
+\takeaway{Nutrient limitation alone produces a spatially heterogeneous composition, which is absent for a constant $c^*$.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -303,33 +303,33 @@ Stresses scale with $E=10$~Pa.
 \begin{itemize}\setlength{\itemsep}{7pt}
   \item \textbf{Verification, not validation}: no measured stress of a growing
         oral biofilm was available
-  \item \textbf{One-way}: the composition does not act on stiffness, spreading
+  \item \textbf{One-way coupling}: the composition does not act on stiffness, spreading
         or stress (as in Klempt et al.\ 2024)
-  \item \textbf{No spreading towards the nutrient in ANSYS}: the front term of
+  \item \textbf{Inactive front term}: no growth towards the nutrient in ANSYS; the front term of
         the element is inactive
   \item \textbf{Assumptions}: the time link $s$, $\phi_{\rm cap}$, the
         conversion of $\beta$; each reported with its sensitivity
-  \item \textbf{Calibration and element not yet joined}: five calibrated species
+  \item \textbf{Calibrated parameters not yet in the FE model}: five calibrated species
         in Part~1, two published cases in Part~3
   \item \textbf{Symmetric $\mathbf A$}: no directed effects; different
         \textit{P.~gingivalis} strains in the commensal and dysbiotic data
 \end{itemize}
-\takeaway{Each limitation is stated in the thesis with what it affects; the numbers are verified, not yet validated.}
+\takeaway{Each limitation is quantified in the thesis where possible; the results are verified, not yet validated.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Conclusion and outlook}
+\begin{frame}{Conclusions and outlook}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
-\textbf{Done}\\[5pt]
+\textbf{Contributions}\\[5pt]
 \cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; pH predicted out of sample ($R^2=0.78$)}\\[6pt]
 \cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
-\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, published outcomes kept}
+\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, qualitative outcomes of the reference cases retained}
 \end{column}
 \begin{column}{0.48\textwidth}
-\textbf{Next (Keio University)}\\[6pt]
+\textbf{Outlook (continuation at Keio University)}\\[6pt]
 \begin{itemize}\setlength{\itemsep}{8pt}
-  \item Five calibrated species in the element
+  \item Five calibrated species in the finite element model
   \item Composition into stiffness, stress into growth (two-way)
   \item A working front term; explicit against implicit field update
   \item Posterior uncertainty carried to the stress
@@ -337,7 +337,7 @@ Stresses scale with $E=10$~Pa.
 \end{column}
 \end{columns}
 \vspace{10pt}
-\centering\large Thank you.
+\centering\large Thank you for your attention.
 \end{frame}
 
 % --------------------------------------------------------
