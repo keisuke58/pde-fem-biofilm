@@ -45,16 +45,33 @@ stresses it carries, for one and two species.
 \section{Discussion}
 \label{sec:concl_discussion}
 
-\paragraph{Where the species live.} Continuum models of multi-species biofilms
-usually give every species its own field. Feng et
-al.~\cite{Feng2021SymbioticBiofilm} transport two species with a common
-velocity together with their substrates, and Soleimani et al.~\cite{Soleimani2023CoAggregation}
-solve two species, a nutrient and a co-aggregation variable in an ANSYS user
-element; neither computes the stresses that the growth causes. Klempt et
-al.~\cite{Klempt2024DiffusionDrivenGrowth} compute these stresses, with a
-single biofilm variable. This work keeps the single field for the amount of
-biofilm and its stresses, and adds the composition as a local state at each
-Gauss point. The number of fields therefore does not grow with the number of
+\paragraph{Where the species live.} Table~\ref{tab:concl_models} places this
+work among the continuum models it builds on. Feng et
+al.~\cite{Feng2021SymbioticBiofilm} and Soleimani et
+al.~\cite{Soleimani2023CoAggregation} give every species its own field and
+compute no growth stresses; Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
+compute these stresses with a single biofilm variable. This work keeps the
+single field for the amount of biofilm and its stresses, and adds the
+composition as a local state at each Gauss point.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Continuum models of biofilm growth compared]{Continuum models of
+    biofilm growth that this work builds on or compares with.}
+  \label{tab:concl_models}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.1\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}@{}}
+    \toprule
+    model & species & space & growth stress & composition\\
+    \midrule
+    Feng et al.\ 2021~\cite{Feng2021SymbioticBiofilm} & two fields & FEM, common velocity & no & from the species fields\\
+    Soleimani et al.\ 2023~\cite{Soleimani2023CoAggregation} & two fields, co-aggregation & ANSYS user element & no & from the species fields\\
+    Klempt et al.\ 2024~\cite{Klempt2024DiffusionDrivenGrowth} & one field & ANSYS user element & yes & none\\
+    Klempt et al.\ 2026~\cite{Klempt2026ContinuumBacterialGrowth} & $n$ fractions at a point & none & no & point model\\
+    this work & one field and a point model per Gauss point & ANSYS, IKM element & yes (one-way) & point model, local nutrient\\
+    \bottomrule
+  \end{tabular}
+\end{table} The number of fields therefore does not grow with the number of
 species, and the point model, calibrated on its own, enters unchanged. The
 price is that the species cannot move relative to each other: the
 composition varies in space only through the local nutrient and, in the Python
