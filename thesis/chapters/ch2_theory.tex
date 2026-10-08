@@ -366,7 +366,7 @@ typically $c_v=1$.
 The cost lies in the forward model, evaluated for every sample at every stage.
 I compile the point model with JAX~\cite{jax2018github} and evaluate the whole
 ensemble, $N_p = 10{,}000$ samples in the production runs, in one batched call
-(\texttt{jax.vmap}). This is about 200 times faster than the CPU baseline
+(\texttt{jax.vmap}). This is about 150 times faster than the CPU baseline
 (Section~\ref{sec:heine_gpu}).
 
 \paragraph{Narrowed priors.}

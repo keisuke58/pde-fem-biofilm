@@ -75,7 +75,8 @@ $\mathbf F_v^{\,n}$ and returns the Cauchy stress and $\mathbf F_v^{\,n+1}$:
       $\mathbf F_e^{\mathrm{tr}} = \mathbf F_{\mathrm{mech}}(\mathbf F_v^{\,n})^{-1}$;
 \item with $\mathbf b_e = \mathbf F_e \mathbf F_e^{\mathsf T}$ and
       $J_e = \det \mathbf F_e$, the deviatoric Kirchhoff stress follows from
-      $W = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$;
+      $W = C_{10}(\bar I_1 - 3) + C_{01}(\bar I_2 - 3) + \tfrac{1}{D_1}(J_e-1)^2$,
+      with the isochoric invariants $\bar I_1$, $\bar I_2$ of $\mathbf b_e$;
 \item the viscous state advances by one step of the deviatoric flow rule,
       \begin{equation}
         \mathbf F_v^{\,n+1} =
@@ -306,7 +307,7 @@ integration points, by a second-order Taylor expansion fitted in the weighted
 least-squares sense, the Neighbored Element Method
 \cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
 explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
-give $\Delta t\le h^2/(2\beta)$; in three dimensions the runs of this element
+give $\Delta t\le h^2/(2\beta)$ for the element size $h$; in three dimensions the runs of this element
 stayed smooth up to $\beta\Delta t/h^2=0.144$ and oscillated at $0.160$, below the
 value $1/6$ of the seven-point stencil. Every run in this chapter has
 $\beta\Delta t/h^2\le0.128$ (the $16^3$ run at $\beta=0.1$ uses $\Delta t=0.0125$).
@@ -537,7 +538,7 @@ does not affect the Newton iteration.
         \STATE take the stored result
       \ELSE
         \STATE send state, parameters, $s\,\Delta t$ and $n_{\rm sub}$ through the bridge (Fortran, C, local socket)
-        \STATE the point model, Eq.~\eqref{eq:ch5-point}, takes $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ and returns $(\phi_i,\psi_i,\gamma)_{n+1}$
+        \STATE the point model, Eq.~\eqref{eq:ch5-point}, takes $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ ($n_{\rm sub}$: number of point-model steps per substep) and returns $(\phi_i,\psi_i,\gamma)_{n+1}$
       \ENDIF
       \STATE scale back to $\phi_{3D}$; store $\phi_i$, $\psi_i$, $\gamma$ as state variables
     \ENDIF

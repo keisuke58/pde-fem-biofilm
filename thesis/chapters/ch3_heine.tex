@@ -193,10 +193,11 @@ variable-length leapfrog trajectories cause warp divergence that erases the
 \label{sec:heine_results}
 %==============================================================================
 
-The two-phase procedure is run for all four conditions with a CoV target
-$\delta_{\mathrm{target}}=1.0$ for the adaptive tempering schedule $\tau_m$, proposal scale
-$s^2=2.38^2/d$ (the optimal-scaling heuristic for random-walk
-Metropolis~\cite{Roberts2001Optimal}), and $K=20$ mutation steps; $s$ is adapted online toward
+The two-phase procedure is run for all four conditions with the target
+$c_v=1$ for the coefficient of variation of the weights, which sets the
+tempering exponents $\tau_j$ (Chapter~\ref{ch:theory}), the proposal scale
+$s_p^2=2.38^2/n_\theta$ with $n_\theta=15$ parameters (the optimal-scaling heuristic for random-walk
+Metropolis~\cite{Roberts2001Optimal}), and $K=20$ mutation steps; $s_p$ is adapted online toward
 the optimal acceptance rate of about $23\%$. The Phase-2
 ($N_p=10{,}000$) posteriors are the canonical product used throughout the thesis.
 
