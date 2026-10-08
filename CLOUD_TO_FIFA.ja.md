@@ -11,6 +11,7 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 - fifa の Claude は `mmc-research-group` への操作が権限で止められているので、**lab への push はユーザーが手で行う**。
   fifa の Claude は、master を pull したあとで lab が遅れていれば `KEIO_CHAIN_LOG.md` に「`git push lab master:main` が必要」と
   書くだけでよい（自分では実行しない）。
+- 10月8日、ユーザーが `git push lab origin/master:main` で #64 まで lab に送った（同期済み）。
 - **lab に送るときは、ローカルの master を通さない**（fifa のローカル master は clone 以来古いまま）：
   `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。
 
