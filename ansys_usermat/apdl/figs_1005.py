@@ -83,11 +83,11 @@ def fig_exact():
         a.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     eb, el = np.abs(bio - dx), np.abs(loc - dy)
     ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", label=r"$\phi$")
-    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha$")
+    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha - 1$")
     ax[2].set(xlabel=r"time $T^*$", ylabel="|ANSYS - discrete exact|",
               title="error vs. the update's exact solution")
     ax[2].legend(fontsize=10)
-    fig.suptitle(rf"Element 1 (outside the seed), Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
+    fig.suptitle(rf"An element outside the seed, Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
                  rf"$\Delta t$ = {DT:g}", y=1.03)
     fig.savefig(OUT / "fig1005_exact.png")
     plt.close(fig)

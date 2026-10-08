@@ -85,3 +85,4 @@ T* が長いと φ が面まで届くので、シードの p が大きく動く�
   Δt = 0.0125）で、0.144 を超えるものはない。
 - 次にやることは `IKMHIWI03_TO_SUBMISSION.ja.md` の冒頭「今やること」の表にまとめた（16³ の2本、
   ch4 の図3枚、どちらも11日夜まで）。
+- **ch4 の図3枚（10月8日夜、IKMHIWI03）：** Fig 4.4（`growth_cylinder_alpha_sweep.png`）、4.8（`fig1005_exact.png`）、4.9（`fig1005_whole_model.png`）を `figstyle`（Times）で作り直して push した。円筒の図は上の題（内部の名前）を外し、`α` を `α − 1` に。Fig 4.8 の題の "Element 1" を "An element outside the seed" に。図の数値は前と同じ（max u_r 1.74e−3〜3.56e−2、余弦類似度 1.0000、中央値の比 0.455）。本文のキャプションに `α` のままの所があれば合わせてほしい。
