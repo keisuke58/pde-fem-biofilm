@@ -389,3 +389,75 @@ was committed); that is a cloud-session timing limit, not a test failure, and
 does not block this decision since the dry run above is the actual
 validation `run_chain_keio.py`'s own docstring asks for before trusting a
 manifest.
+
+---
+
+## 2026-10-08 23:32: chain `20261008c` ran on fifa
+
+Automatic entry from `scripts/run_chain_keio.py`. No analysis: what runs next is for the cloud session to decide.
+
+| job | status | wall clock | vs reference |
+|---|---|---|---|
+| `fx42h_p0` | PASS | 52 min 19 s | identical |
+| `fx42h_p100` | PASS | 50 min 18 s | identical |
+| `fx42h_fo_p0` | PASS | 52 min 38 s | identical |
+| `ff42h` | PASS | 33 min 36 s | identical |
+| `ff42h_fo` | PASS | 33 min 48 s | identical |
+
+
+
+Wall clock is comparable with IKMHIWI03 only if the machine was otherwise idle: the numbers are deterministic, the timing is not.
+
+<!-- keio-chain -->
+```json
+{
+ "chain": "20261008c",
+ "runs": [
+  {
+   "job": "fx42h_p0",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 3139,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42h_p0.txt"
+  },
+  {
+   "job": "fx42h_p100",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 3018,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42h_p100.txt"
+  },
+  {
+   "job": "fx42h_fo_p0",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 3158,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42h_fo_p0.txt"
+  },
+  {
+   "job": "ff42h",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 2016,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff42h.txt"
+  },
+  {
+   "job": "ff42h_fo",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 2028,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff42h_fo.txt"
+  }
+ ]
+}
+```
