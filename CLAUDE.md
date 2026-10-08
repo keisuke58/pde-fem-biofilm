@@ -270,6 +270,11 @@ this machine's specific workflow.
   soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
   klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
   (4 Oct) already has To: Junker, Wangenheim; Cc: Soleimani, Geisler.
+- **Colloquium (8 Oct 2026):** Laura Neumeyer (IKM office, Prof. Junker's
+  side, neumeyer@ikm.uni-hannover.de) proposed **Wed 16 Dec 2026, 13:00**; the
+  user accepted the same day (cc Junker, Wangenheim, Soleimani, Geisler) and
+  asked whether it suits Dr. Wangenheim and where it takes place. Tentative
+  in Google Calendar until confirmed.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 
