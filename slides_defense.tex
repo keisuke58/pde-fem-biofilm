@@ -144,17 +144,20 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 
 % --------------------------------------------------------
 \begin{frame}{Part 1: inferred interactions and out-of-sample prediction}
-\begin{columns}[T]
-\begin{column}{0.55\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{heine_heatmap_A_4cond.pdf}\\
-\small Interaction matrices: the dysbiotic flow condition activates
-\textit{F.~nucleatum} $\to$ \textit{P.~gingivalis}
+\includegraphics[width=0.9\linewidth,height=0.36\textheight,keepaspectratio]{heine_heatmap_A_4cond.pdf}\\[2pt]
+\begin{columns}[c]
+\begin{column}{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth,height=0.33\textheight,keepaspectratio]{heine_ph_validation.pdf}
 \end{column}
-\begin{column}{0.43\textwidth}
-\centering
-\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{heine_ph_validation.pdf}\\
-\small The pH, not used in the calibration, is predicted with $R^2=0.78$
+\begin{column}{0.48\textwidth}
+\small
+\begin{itemize}
+  \item Top: MAP interaction matrices; red cooperative, blue competitive. The
+        dysbiotic flow condition activates \textit{F.~nucleatum} $\to$ \textit{P.~gingivalis}
+  \item Left: the pH, not used in the calibration, is predicted with $R^2=0.78$
+\end{itemize}
 \end{column}
 \end{columns}
 \takeaway{\textbf{Testable hypothesis:} in the absence of \textit{F.~nucleatum}, the late growth of
@@ -163,22 +166,25 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: implementation of the growth law in ANSYS}
+\centering
+\includegraphics[width=0.92\linewidth,height=0.42\textheight,keepaspectratio]{v222_closed_form.png}\\[2pt]
 \begin{columns}[T]
-\begin{column}{0.38\textwidth}
+\begin{column}{0.48\textwidth}
 \small
 \begin{itemize}
   \item ANSYS user material: $\mathbf F_g=\alpha\mathbf I$, compressible
         Mooney--Rivlin (neo-Hookean here)
   \item Stiffness of Klempt et al.\ 2024: $E(\phi)=(\phi^2+f)\,E$,
-        Young's modulus $E=10$~Pa, Poisson's ratio $\nu=0.49$, floor for the void $f=10^{-3}$ (added in this work)
-  \item One element against closed forms: constrained growth gives the
-        hydrostatic stress $\sigma=-1.0193\times10^{-4}$~MPa as predicted
-        (input in mm and MPa)
+        Young's modulus $E=10$~Pa, Poisson's ratio $\nu=0.49$
 \end{itemize}
 \end{column}
-\begin{column}{0.6\textwidth}
-\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{v222_closed_form.png}
+\begin{column}{0.48\textwidth}
+\small
+\begin{itemize}
+  \item Floor for the void $f=10^{-3}$ (added in this work)
+  \item One element: constrained growth gives the hydrostatic stress
+        $\sigma=-1.0193\times10^{-4}$~MPa as predicted (input in mm and MPa)
+\end{itemize}
 \end{column}
 \end{columns}
 \takeaway{The implementation reproduces the closed-form solutions for free (stress-free) and constrained growth.}
@@ -186,17 +192,20 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: coupling to the IKM element}
-\begin{columns}[T]
-\begin{column}{0.56\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_model_setup.png}
-\end{column}
-\begin{column}{0.42\textwidth}
+\includegraphics[width=0.92\linewidth,height=0.42\textheight,keepaspectratio]{fig_model_setup.png}\\[2pt]
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
 \small
 \begin{itemize}
   \item 2~mm cube, $8^3$ SOLID185 elements (B-bar), seed of 32 elements;
         refined to $16^3$ and $24^3$
   \item The element's field $\phi$ (Neighbored Element Method) is unchanged
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\small
+\begin{itemize}
   \item New: at every Gauss point $\dot\alpha=k_\alpha\phi$
         (Klempt 2024, Eq.~36, $k_\alpha=10^{-3}\,T^{*-1}$) $\to\mathbf F_g\to$ stress
   \item $\beta=0.02$~mm$^2/T^*$: Table~2 of the paper converted to the cube
@@ -217,22 +226,25 @@ the coupled ANSYS solution agrees with the exact solution of the time integratio
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: growth-induced stresses with the published stiffness}
-\begin{columns}[c]
-\begin{column}{0.56\textwidth}
+\begin{columns}[T]
+\begin{column}{0.6\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_element_beta002.png}
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{fig_element_beta002.png}\\[2pt]
+\raggedright\small Left: von Mises stress of the seeded element and its largest
+neighbour; right: $\alpha-1$; solid: Eq.~36 at the Gauss points, dashed: the
+element's own growth variable.
 \end{column}
-\begin{column}{0.42\textwidth}
+\begin{column}{0.38\textwidth}
 \small At $T^*=1.1$ on $16^3$ elements:\\[5pt]
 \begin{tabular}{@{}l@{\hspace{6pt}}r@{}}
 \toprule
 mean stress, seed & $-2.5\times10^{-4}$~Pa\\
 mean stress, first layer & $+6.0\times10^{-5}$~Pa\\
+mean stress, second layer & $+1.3\times10^{-6}$~Pa\\
 von Mises, seed mean & $5.9\times10^{-4}$~Pa\\
 $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \bottomrule
-\end{tabular}\\[10pt]
-\small Left: von Mises stress (seeded element, largest neighbour) and $\alpha-1$ over time.
+\end{tabular}\\[8pt]
 Stresses scale with $E=10$~Pa.
 \end{column}
 \end{columns}
@@ -241,17 +253,20 @@ Stresses scale with $E=10$~Pa.
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: convergence and stability}
-\begin{columns}[T]
-\begin{column}{0.58\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_wp3_convergence.png}
-\end{column}
-\begin{column}{0.4\textwidth}
+\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[2pt]
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
 \small
 \begin{itemize}
   \item Time step $\Delta t$ [$T^*$]: first order; $\Delta t=0.025$ gives about $1\,\%$
   \item Element size $h$ [mm]: seed stress converges at an observed order of about $2$;
         error on $24^3$ about $2\,\%$ (three meshes only)
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\small
+\begin{itemize}
   \item $\alpha-1$ at fixed positions: $16^3\to24^3$ within $4\,\%$
   \item Explicit field update: smooth up to $\beta\Delta t/h^2=0.144$,
         oscillating at $0.160$; stricter than $h^2/(2\Delta t)\ge\beta$
@@ -264,25 +279,26 @@ Stresses scale with $E=10$~Pa.
 
 % --------------------------------------------------------
 \begin{frame}{Part 3: species composition at the Gauss points}
+\centering
+\includegraphics[width=0.85\linewidth,height=0.36\textheight,keepaspectratio]{fig_composition_map.png}\\[2pt]
 \begin{columns}[T]
-\begin{column}{0.5\textwidth}
+\begin{column}{0.48\textwidth}
 \small
 \begin{itemize}
-  \item Two species, cases of Klempt et al.\ 2026
-  \item Every call from ANSYS to the point model is reproduced in Python
-        bit for bit
+  \item Two species, cases of Klempt et al.\ 2026; every call from ANSYS to the
+        point model is reproduced in Python bit for bit
   \item Share of species~1, $\phi_1/(\phi_1+\phi_2)$, in the seed at $T^*=1$:
-        case~3 (coexistence) $0.667$, case~6 (one species wins) $0.021$;
-        the qualitative outcome is retained
-  \item \textcolor{warn}{Assumptions} (not in the papers), each with its
-        sensitivity: time link $s=0.15$ (the point model advances $s\,\Delta t$ per substep),
-        cap $\phi_{\rm cap}=0.9$ (largest amount passed to it),
-        threshold $\phi_{\min}=0.01$ (amount at which a point starts)
+        case~3 $0.667$, case~6 $0.021$
 \end{itemize}
 \end{column}
 \begin{column}{0.48\textwidth}
-\centering
-\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{fig_composition_map.png}
+\small
+\begin{itemize}
+  \item \textcolor{warn}{Assumptions} (not in the papers), with sensitivity:
+        time link $s=0.15$ (point model advances $s\,\Delta t$ per substep),
+        cap $\phi_{\rm cap}=0.9$, threshold $\phi_{\min}=0.01$
+  \item Map: final share against start share and local nutrient (case~6)
+\end{itemize}
 \end{column}
 \end{columns}
 \takeaway{The coupled simulation retains the qualitative outcomes of the reference cases: coexistence (case~3) and competitive exclusion (case~6).}
