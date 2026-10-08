@@ -42,6 +42,13 @@ non-conservative forces. Stationarity with respect to $\mathbf u$ gives the
 balance of linear momentum in weak form; stationarity with respect to each
 internal variable gives its evolution equation. A model is then fixed by
 choosing the energy, the source and the dissipation function.
+For the point model of Chapter~\ref{ch:heine}, which has no displacement field,
+the principle reduces to its local form, the principle of the minimum of the
+dissipation potential~\cite{junker2014principle, hackl1997generalized}:
+$\dot\Psi+\Delta+C\to\operatorname{stat}$ with respect to the rates of the
+internal variables and the Lagrange multiplier. A recent account of this
+variational framework for dissipative materials is given by Junker, Bode and
+Hackl~\cite{JunkerBodeHackl2025Holistic}.
 
 %=======================================================================
 \section{The Growth Field of Klempt et al.\ 2024}
@@ -232,7 +239,9 @@ examples are (Section~\ref{sec:theory_point_check}).
 The system~\eqref{eq:gov_phi}--\eqref{eq:gov_void} has $2n+2$ unknowns. It is
 integrated with the implicit Euler method and Newton iterations; a logarithmic
 barrier with $K_p=\eta_i\times10^{-4}$ keeps $\phi_i$, $\psi_i$ and $\phi_0$
-inside $(0,1)$ and is omitted above.
+inside $(0,1)$ and is omitted above. Numerical treatments that keep such
+constraints satisfied in constitutive models are compared by Bode et
+al.~\cite{Bode2025ConstraintConforming}.
 
 \subsection{Symmetry and scale}
 

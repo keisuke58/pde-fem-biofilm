@@ -83,11 +83,11 @@ def fig_exact():
         a.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     eb, el = np.abs(bio - dx), np.abs(loc - dy)
     ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", label=r"$\phi$")
-    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha$")
+    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha - 1$")
     ax[2].set(xlabel=r"time $T^*$", ylabel="|ANSYS - discrete exact|",
               title="error vs. the update's exact solution")
     ax[2].legend(fontsize=10)
-    fig.suptitle(rf"Element 1 (outside the seed), Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
+    fig.suptitle(rf"An element outside the seed, Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
                  rf"$\Delta t$ = {DT:g}", y=1.03)
     fig.savefig(OUT / "fig1005_exact.png")
     plt.close(fig)
@@ -114,7 +114,7 @@ def fig_whole():
     ax[0].plot([lo, hi], [lo, hi], "k--", lw=1, label="1 : 1")
     ax[0].plot([lo, hi], [ratio * lo, ratio * hi], "r-", lw=1, label=f"{ratio:.2f} : 1 (median)")
     ax[0].set(xlabel="von Mises [Pa], Eq. 36 in the material routine",
-              ylabel="von Mises [Pa], partner's growth variable",
+              ylabel="von Mises [Pa], the element's own growth variable",
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
     fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)

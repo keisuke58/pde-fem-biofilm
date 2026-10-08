@@ -305,10 +305,11 @@ $\phi$ and $c$ are approximated from the values at the neighbouring
 integration points, by a second-order Taylor expansion fitted in the weighted
 least-squares sense, the Neighbored Element Method
 \cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
-explicitly, which limits the time step to $\Delta t\le h^2/(2\beta)$
-\cite{Rudolf2025NEM}; with the assumed $\beta=0.02$~mm$^2/T^*$ (Table~2 of the
-paper converted to the model, \S\ref{sec:ch5-results}) this holds for every mesh
-and time step used in this chapter.
+explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
+give $\Delta t\le h^2/(2\beta)$; in three dimensions the runs of this element
+stayed smooth up to $\beta\Delta t/h^2=0.144$ and oscillated at $0.160$, below the
+value $1/6$ of the seven-point stencil. Every run in this chapter has
+$\beta\Delta t/h^2\le0.128$ (the $16^3$ run at $\beta=0.1$ uses $\Delta t=0.0125$).
 
 \begin{figure}[htbp]
   \centering

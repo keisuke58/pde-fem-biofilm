@@ -61,7 +61,7 @@ def main(argv=None):
     axL.plot(xs, umax[0] / alphas[0] * xs, ls=(0, (4, 3)), lw=1.2, color=INK2,
              zorder=1)
     xl = alphas.max() * 0.72
-    axL.text(xl + 0.004, umax[0] / alphas[0] * xl, "linear from $\\alpha$=0.01",
+    axL.text(xl + 0.004, umax[0] / alphas[0] * xl, "linear from $\\alpha-1$ = 0.01",
              ha="left", va="top", fontsize=8, color=INK2)
     axL.axvspan(0.01, 0.015, color=GRID, zorder=0)
     axL.text(0.0135, umax.max() * 0.55, "old limit\n(floating\nlayer)",
@@ -73,19 +73,19 @@ def main(argv=None):
             axL.annotate(f"{u:.2e}", (al, u), xytext=(-6, 6),
                          textcoords="offset points", ha="right", fontsize=7.5,
                          color=INK2)
-    axL.set_xlabel("prescribed growth $\\alpha$")
+    axL.set_xlabel("prescribed growth $\\alpha-1$")
     axL.set_ylabel("max radial displacement $u_r$")
     axL.set_xlim(0, alphas.max() * 1.08)
     axL.set_ylim(0, umax.max() * 1.15)
-    axL.set_title("All converge (0 errors) up to $\\alpha$ = 0.2",
+    axL.set_title("all runs reach the end time, $\\alpha-1\\leq0.2$",
                   fontsize=10, color=INK)
 
     # ---- right: u_r / alpha across the arc ----
     for (al, u), col in zip(runs, SEQ):
-        axR.plot(THETA, u / al, lw=2, color=col, label=f"$\\alpha$ = {al:g}")
+        axR.plot(THETA, u / al, lw=2, color=col, label=f"$\\alpha-1$ = {al:g}")
     axR.set_xlabel("$\\theta$ across the arc  [deg]")
-    axR.set_ylabel("$u_r / \\alpha$")
-    axR.set_title("Shape of the bulge: uniform, until $\\alpha \\gtrsim 0.1$",
+    axR.set_ylabel("$u_r / (\\alpha-1)$")
+    axR.set_title("radial displacement across the arc",
                   fontsize=10, color=INK)
     axR.legend(frameon=False, fontsize=8, loc="lower center", ncol=5,
                handlelength=1.6, columnspacing=1.0)
@@ -97,9 +97,7 @@ def main(argv=None):
         ax.set_axisbelow(True)
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
-    fig.suptitle("Bonded two-layer cylinder (2.4k elements), ANSYS 2022 R2, "
-                 "prescribed $\\alpha$", fontsize=10.5, color=INK)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.tight_layout()
     a.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(a.out, dpi=200, facecolor="#fcfcfb")
     print(f"wrote {a.out}")

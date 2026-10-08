@@ -4,11 +4,16 @@
 % 必要パッケージ: luatexja（Debian なら texlive-lang-japanese、
 %   加えて texlive-luatex / texlive-latex-extra）
 %
+% 2026-10-08 に修論（thesis/）の内容に合わせて作り直した。以前の版（4条件の
+% 歯の解析、Abaqus と ANSYS の比較）は修論に入らないので外した。git の履歴に残っている。
+% コロキウム：2026-12-16 13:00。主査 Junker 先生、副査 Wangenheim 先生（IDS）、
+% 指導 Soleimani 先生・Geisler 先生。
+%
 % 方針: 答えの骨子を1行で先に置く。根拠はその下。
 %   「分からない」で終わる問いは、そう書いて練習する。
-%   数字は言い切れるものだけ載せる（曖昧な記憶で答えるより「確認します」）。
+%   数字は修論の本文にあるものだけ載せる（曖昧な記憶で答えるより「確認します」）。
 %
-% CONSTRAINT: 8ページ以内。問いを足すなら弱いものを削る。
+% CONSTRAINT: 12ページ以内。問いを足すなら弱いものを削る。
 \documentclass[aspectratio=169,11pt]{beamer}
 \usepackage{luatexja}
 \usetheme{Madrid}
@@ -29,7 +34,7 @@
   \small\textbf{→ }#1}}\vspace{3pt}}
 
 \title{想定問答}
-\subtitle{口頭試問に向けて（自分用）}
+\subtitle{修論の口頭試問（2026年12月16日）に向けて（自分用）}
 \author[西岡佳祐]{西岡佳祐}
 \date{}
 
@@ -37,167 +42,184 @@
 \maketitle
 
 % --------------------------------------------------------
-\begin{frame}{結果について}
-\small\Q{4条件で応力が違うのは、条件のせいだと言えるのか}
-\A{\textbf{言えない。その結論は取り下げた。}界面の接着バグを直して再計算したら、
-条件間の差は \textbf{0.4\%} しかなかった。}
+\begin{frame}{最初の30秒：この修論で何をしたか}
+\small\Q{この修論の新しいところは何か}
+\A{点モデルの組成を、FEM の成長場の各 Gauss 点に入れたこと。
+場が量を、点モデルが組成を決める。}
+\begin{enumerate}\footnotesize
+  \item \textbf{点モデルの較正}（ch3）：5菌種・4条件の in-vitro データから、相互作用 15 個を
+        TMCMC で推定。較正に使っていない pH を $R^2=0.78$ で予測
+  \item \textbf{成長則を ANSYS に}（ch4）：$\mathbf F=\mathbf F_e\mathbf F_g$、
+        $\mathbf F_g=\alpha\mathbf I$（Klempt 2024）をユーザー材料に。閉じた形の解と比べて検証。
+        IKM の要素の場に $\dot\alpha=k_\alpha\phi$ でつないだ
+  \item \textbf{各 Gauss 点に組成}（ch4）：2菌種の点モデル（Klempt 2026）を場と並べて解く。
+        ANSYS からの呼び出しは Python とビット単位で一致
+\end{enumerate}
+\vspace{4pt}
+\small\Q{一言でいうと、何ができるようになったのか}
+\A{「何でできているか」の較正された記述と、「どう育ち、どんな応力を持つか」の
+FEM の記述が、1菌種と2菌種でつながった。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}[shrink=5]{Junker 先生（1）：変分原理}
+\small\Q{点モデルの式を、原理から導いてください}
+\A{$\dot\Psi+\Delta+C\to\operatorname{stat}$（$\dot{\bm\phi},\dot{\bm\psi},\gamma$ について）。
+ホワイトボードで書けるようにしておく。}
 \begin{itemize}\footnotesize
-  \item 2層を \texttt{NUMMRG,NODE}（座標が一致する節点だけ結合）でつないでいた。
-        2つの掃引の分割が揃っておらず、4条件デッキでは\textbf{角の4節点しか接着されていなかった}
-  \item 以前「座屈モード」と呼んでいた2つの膨らみは、\textbf{結合線の間で層が浮いていただけ}。
-        細かいメッシュほど最初のサブステップで落ちていたのも同じ原因
-  \item \texttt{VGLUE} で界面 651 節点すべてを共有させて修正
+  \item $\Psi=-\tfrac12c^*\bar{\bm\phi}^{\!T}\mathbf A\bar{\bm\phi}$、
+        $\bar\phi_i=\phi_i\psi_i$；$\Delta$ は速度の二次形式（$\eta_i$）；
+        $C=\gamma(\sum_{l=0}^n\phi_l-1)$
+  \item $\dot\phi_i$ で微分 → 体積分率の式、$\dot\psi_i$ → 生存率の式、$\gamma$ → 体積の拘束
+  \item 未知数 $2n+2$ 個、陰的 Euler と Newton 法
+\end{itemize}
+\vspace{3pt}
+\small\Q{最小散逸ポテンシャルの原理と、拡張 Hamilton 原理の関係は}
+\A{点モデル（変位がない、慣性もない）では、前者が後者の\textbf{局所形}。}
+\begin{itemize}\footnotesize
+  \item Junker, Makowski \& Hackl 2014、Hackl 1997。修論 ch2 に書いた
+  \item 場のモデル（ch4）は変位があるので Hamilton 原理の形（Klempt 2024 Eq.~19）
+\end{itemize}
+\vspace{3pt}
+\small\Q{$\mathbf A$ が対称なのは、仮定なのか結果なのか}
+\A{結果。エネルギーが $\bar{\bm\phi}$ の二次形式なので、反対称部分は式に現れない。}
+\begin{itemize}\footnotesize
+  \item その代わり、\textbf{向きのある相互作用}（付着、毒素）は表せない。限界として ch3 に書いた
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Junker 先生（2）：成長則とつなぎ方}
+\small\Q{$\mathbf F_g=\alpha\mathbf I$ で、等方でよいのか}
+\A{Klempt 2024 に従った。異方性を決めるデータがない。}
+\vspace{2pt}
+\small\Q{Klempt 2024 には $\alpha$ の則が2つある。どちらを使ったか}
+\A{\textbf{Eq.~36}（$\dot\alpha=k_\alpha\phi$）。Table~1 の形とは違う結果になることも示した（付録）。}
+\vspace{2pt}
+\small\Q{点モデルと場の時間はどうつないだのか}
+\A{\textbf{仮定}。点モデルは1サブステップに $s\,\Delta t$ 進む（$s=0.15$）。
+論文には書かれていないので、感度を表にした（$s=0.05$〜$1$）。}
+\begin{itemize}\footnotesize
+  \item もう一つの仮定は上限 $\phi_{\rm cap}=0.9$：点モデルには $\min(\phi_{3D},\phi_{\rm cap})$ を渡す。
+        これも感度つき（0.85〜0.95）
 \end{itemize}
 \vspace{2pt}
-\begin{center}\footnotesize
-\begin{tabular}{@{}lcc@{}}
-\toprule
- & 以前の報告 & \textbf{接着修正後} \\
-\midrule
-条件間の応力の広がり & $9.1\%$ & $\mathbf{0.4\%}$ \\
-条件間の成長 $\alpha-1$ の幅 & $1.106$ 倍 & $1.006$ 倍 \\
-成長層 / 基材の von Mises & $15.2$ 倍 & $\mathbf{6.3}$ \textbf{倍} \\
-\bottomrule
-\end{tabular}
-\end{center}
+\small\Q{組成は応力に効くのか}
+\A{\textbf{効かない}（一方向のつなぎ）。Klempt 2024 が成長の式の力学の項を落としているのに従った。}
+\begin{itemize}\footnotesize
+  \item 組成から剛性へ、応力から成長へ、は今後の課題（Keio WP2：恒常圧の成長則の試作はある）
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}[shrink=3]{Junker 先生（3）：NEM と時間刻み}
+\small\Q{場の更新は陽解法。時間刻みの条件は}
+\A{Rudolf et al.\ 2025 は $\Delta t\le h^2/(2\beta)$。3次元ではそれより厳しく、
+\textbf{$\beta\Delta t/h^2$ が 0.144 で滑らか、0.160 で振動}。修論の実行 185 本はすべて $\le0.128$。}
+\begin{itemize}\footnotesize
+  \item 7点差分の安定限界 $1/6\approx0.167$ より少し下
+  \item 「最後まで走った」は安定の判定にならない（0.160 は止まらずに振動した）
+\end{itemize}
+\vspace{3pt}
+\small\Q{要素の中で見つけた問題は}
+\A{表面の点の $\phi$ が更新されず、どの面も $\phi=0$ の境界になっていた。}
+\begin{itemize}\footnotesize
+  \item 直して回し直すと、主な結果（シードの応力、$\alpha$、組成）の変化は $0.5\,\%$ 以内
+  \item $\beta$ が大きいときだけシードの圧力が大きく動く（$\beta=0.1$ で約 $30\,\%$）。表は直した値
+  \item 修論では、誰の誤りかではなく、何が起きていたかと直し方だけを書いた
+\end{itemize}
+\vspace{3pt}
+\small\Q{$\beta=0.02$\,mm$^2/T^*$ はどこから}
+\A{Klempt 2024 Table~2 の $\beta=2$ を 2\,mm の立方体に換算した。\textbf{仮定}として書き、
+$\beta=0.005$〜$0.1$ の感度を表にした。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Wangenheim 先生（1）：工学的な意味}
+\small\Q{応力が $10^{-4}$\,Pa のオーダー。意味があるのか}
+\A{剛性が小さい（$E=10$\,Pa、Klempt 2024 Table~2）ので、応力も小さい。
+見るべきは\textbf{大きさより分布}：シードは圧縮、周りは引張。}
+\begin{itemize}\footnotesize
+  \item 周りの引張の輪は、Klempt et al.\ が報告したものと合う
+  \item 剛性が $E\phi^2$ に比例するので、応力は剛性に比例して変わる
+\end{itemize}
+\vspace{3pt}
+\small\Q{実験で確かめたのか}
+\A{\textcolor{copen}{\textbf{していない。}}検証（verification）はしたが、
+妥当性確認（validation）はしていない。}
+\begin{itemize}\footnotesize
+  \item 成長する口腔バイオフィルムの応力の測定値が手に入らなかった
+  \item 確かめたのは：閉じた形の解、勾配のない領域の厳密解（$\alpha$ で $3\times10^{-11}$）、
+        論文のモデルとの比較
+  \item 組成の側は in-vitro データで較正し、較正に使っていない pH で確かめた
+\end{itemize}
+\vspace{3pt}
+\small\Q{なぜ ANSYS なのか}
+\A{IKM の要素（Neighbored Element Method）が ANSYS 用だから。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Wangenheim 先生（2）：数値の信頼性}
+\small\Q{メッシュに対して収束しているか}
+\A{例題のメッシュは、シードの平均応力を\textbf{約 1.7 倍}大きく見積もる。限界として書いた。}
+\begin{itemize}\footnotesize
+  \item 角のピークはメッシュによる。平均の値で議論している
+  \item 16$^3$ から 24$^3$ では、シードの応力が $3$〜$8\,\%$、$\alpha$ が平均 $0.6\,\%$ で変わる
+        （修論後の WP3 の結果）。32$^3$ はメモリ不足で回らない
+\end{itemize}
+\vspace{3pt}
+\small\Q{Newton 法は収束しているか}
+\A{各サブステップ 1〜4 回の反復で収束。自動時間刻みは一度も刻みを縮めなかった。}
+\vspace{3pt}
+\small\Q{時間刻みを半分にするとどうなるか}
+\A{シードの平均応力が約 $1\,\%$ 変わる（$\Delta t=0.025$ と $0.0125$）。}
+\vspace{3pt}
+\small\Q{成長則の実装は正しいか}
+\A{1要素で、自由と拘束の両方を閉じた形の値と比べた。拘束した場合
+$\sigma=-1.0193\times10^{-4}$ が一致。}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}[shrink=6]{Soleimani 先生・Geisler 先生：較正（ch3）}
+\small\Q{なぜ TMCMC なのか}
+\A{事後分布が多峰で、サンプルごとに並列にできるから。}
+\begin{itemize}\footnotesize
+  \item JAX で GPU に載せて、CPU の約 150 倍（500 粒子の比較で $147\times$）
+\end{itemize}
 \vspace{2pt}
-{\footnotesize 置き場所・隣接領域の影響は最大 $0.28\%$ で条件間の差と同程度
-$\rightarrow$ そもそも分離できない。}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{結果について（続き）}
-\small\Q{条件で差が出ないのは、計算が悪いからではないのか}
-\A{\textbf{モデルの定義からそうなる。}偶然でも計算ミスでもない。}
-\begin{itemize}\footnotesize
-  \item 条件が応力に届く経路は $\alpha$ だけ（物性は全領域で同一）。
-        $\dot\alpha = k_\alpha\phi_{\mathrm{tot}}$、
-        $\phi_{\mathrm{tot}}=\sum_i\phi_i\psi_i$ は\textbf{合計しか見ない}
-  \item CLSM 組成は\textbf{割合}なので、全条件が $\sum_i\phi_i=1$ から出発して
-        同じ値（0.9635）に収束 $\Rightarrow$ \textbf{組成の違いは足し算で消える}
-  \item 差が出るのは $\psi$ の初期過渡だけ（$\alpha-1$ の差は最大 $2.4\%$、$t\approx10^{-2}$）。
-        $t=50$ で $0.003\%$ まで閉じる
-  \item 計算時刻の $\sim\!0.5\%$ の差も、生態の時間刻みを細かくすると\textbf{条件の順位が入れ替わる}
-        $\rightarrow$ 順位に意味はない
-\end{itemize}
-\vspace{1pt}
-\small\Q{一度出した結論を、自分で取り下げたのか}
-\A{はい。\textbf{同じ主張を2回直している}。1回目は「位置」$\rightarrow$「条件」、
-2回目は「条件」$\rightarrow$「どちらでもない」。}
-\begin{itemize}\footnotesize
-  \item 1回目の訂正は\textbf{理由としては正しかった}が、その下のメッシュが間違っていたので結論ごと無効になった
-  \item 交絡の処理より先に、\textbf{モデルが意図した形になっているか}を確認すべきだった
-  \item 見つけ方：\textbf{接着されている界面節点を数えた}（メッシュのみの実行）
-\end{itemize}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{手法について}
-\small\Q{接線剛性が数値微分なのは手抜きでは}
-\A{精度は測ってある。\textbf{自動微分と比べて最悪 $1.1\times10^{-6}$}（648 通り）。}
-\begin{itemize}\footnotesize
-  \item さらに重要なのは、接線が甘くても\textbf{答えは狂わない}こと。残差は本物なので
-  \item 狂うのは\textbf{反復回数} $\rightarrow$ 「収束したか」が本当の試験
-  \item 実機 12240 要素、各サブステップ \textbf{1--4 反復}で収束。自動時間刻みは一度も縮まず
-\end{itemize}
-\vspace{5pt}
-\small\Q{なぜ Abaqus と ANSYS の両方を書いたのか}
-\A{Abaqus 版が先にあり、ANSYS へ移植した。\textbf{独立な2実装が検証手段になる}。}
-\begin{itemize}\footnotesize
-  \item Voigt 順序が違う（せん断の並び）ので、写像を共有できない $\rightarrow$ 実質的に独立
-  \item 8017 状態で \textbf{0 ULP} 一致
-\end{itemize}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{検証の限界（ここは正直に）}
-\small\Q{2実装が一致すれば、式は正しいのか}
-\A{\textbf{言えない}。実際に不整合を見つけた。}
+\small\Q{$c^*=25$ に固定したのはなぜ}
+\A{$c^*$ は $c^*A_{ij}$ の積でしか式に入らないので、それだけでは決まらない。
+$A_{ij}$ が $\mathcal O(1)$ になるように固定した。}
 \vspace{2pt}
-\begin{itemize}\footnotesize
-  \item 等容分解で $J^{-2/3}$ を引く側のトレースにだけ掛けていた
-  \item 2つの実装は\textbf{同じ間違いを同じように}計算するので、一致しても検出できない
-  \item 影響は\textbf{純粋に静水圧成分のみ}。報告している von Mises には効かないことを確認済み
-  \item 直さずに\textbf{限界として章に明記}した（直すと参照値の連鎖が全部無効になるため）
-\end{itemize}
-\vspace{5pt}
-\small\Q{メッシュ収束性は確認したか}
-\A{\textbf{した}（接着修正と同時に）。接着した界面の上で\textbf{2次収束}。}
-\begin{itemize}\footnotesize
-  \item 要素数 2.4k / 19k / 150k で最大 $u_r = 1.7405 / 1.7399 / 1.7398 \times 10^{-3}$、
-        プロファイル誤差 $2.7\% \rightarrow 0.58\%$
-  \item \textbf{接着前は逆に、細かいメッシュほど最初のサブステップで落ちていた}
-        $\rightarrow$ 収束を見ようとすると必ず露出するバグだった
-\end{itemize}
+\small\Q{Phase 1 と Phase 2 の違いは}
+\A{Phase 1 は $\psi$ を固定、Phase 2 は $\psi$ も動かす。常在の静置では MAP がよく合い（$r=0.87$）、
+dysbiotic では \textit{Pg} に関わる係数がずれる（Fig.~3.9）。}
+\vspace{2pt}
+\small\Q{条件の差は本当に生態の差か}
+\A{一部は\textbf{菌株の差}。常在と dysbiotic で \textit{P.~gingivalis} の株が違う（DSM 20709 と W83）。}
+\vspace{2pt}
+\small\Q{予測は何か}
+\A{\textit{F.~nucleatum} を除くと、dysbiotic の終盤の \textit{Pg} の増加が抑えられる
+（$\hat a_{45}$ が dysbiotic の流れ条件でだけ大きい）。共培養で確かめられる。}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{答えが「分からない」もの}
+\begin{frame}{答えが「分からない」「していない」もの}
 \small ここは\textbf{言い切る練習}をしておく。取り繕うと必ず深掘りされる。
-
+\vspace{4pt}
+\begin{itemize}\footnotesize
+  \item \textbf{応力の validation}：\textcolor{copen}{していない}。測定値がない
+  \item \textbf{前線の項}：ANSYS の要素では\textcolor{copen}{働いていない}。
+        バイオフィルムは拡散だけで広がる。組成は局所の栄養で変わるが、栄養へ向かう成長では変わらない
+  \item \textbf{Klempt 2024 の再現}：test case 4.1 は、書いた\textbf{ずれ}つきで再現（消費 $g\phi c$）。
+        印刷された式そのままでは再現できない（付録）
+  \item \textbf{向きのある相互作用}：対称な $\mathbf A$ では\textcolor{copen}{表せない}
+  \item \textbf{3菌種以上、組成から剛性へ、応力から成長へ}：今後（慶應）
+\end{itemize}
 \vspace{6pt}
-\small\Q{Klempt の 2024 年の PDE は再現できたのか}
-\A{\textcolor{copen}{\textbf{できていません。}}Fig.~7 が \textbf{5--10 倍遅く}成長します。}
-\vspace{3pt}
-\begin{itemize}\footnotesize
-  \item $|\nabla\phi\cdot n_c|$ 成長 + 1次消費で解いた。
-        論文自身の $c(\phi)$ 関係は\textbf{1次消費を支持している}
-  \item Fig.~4 は $0.17 / 0.10$ まで合う $\rightarrow$ \textbf{実装全体が壊れているわけではない}
-  \item \textbf{「2024 の PDE は独立に再現できていない」と記録した}
-  \item 一方、\textbf{2026 年版の数値例 14 件はすべて再現できている}
-  \item \textbf{ここまでは言える}。その先は推測になるので言わない
-\end{itemize}
-\vspace{3pt}
-{\footnotesize 以前ここに書いていた「常在菌・静置だけ約 5\% 外れる」は、
-接着修正後の再計算で\textbf{消えた} $\rightarrow$ 現象ではなく接着不足の産物だった。}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{データについて}
-\small\Q{$\psi$（生存率）がプレースホルダなのは問題では}
-\A{問題ではあるが、\textbf{代入するより留保が正しい}と判断した。}
-\begin{itemize}\footnotesize
-  \item 実験側の「生細胞のみ」比は\textbf{1 を超える値が出る} $\rightarrow$ モデルの $\psi\in[0,1]$ と別物
-  \item 別物と分かっていて代入するのは、データの誤用
-  \item 現状 0.999 固定であることを明記している
-\end{itemize}
-\vspace{5pt}
-\small\Q{データの扱いで見つけた問題はあるか}
-\A{あります。\textbf{読み込みのバグを1つ}。}
-\begin{itemize}\footnotesize
-  \item シート先頭の列幅を全条件で使い回していた $\rightarrow$ 列幅の違う条件で\textbf{5菌種全部がずれていた}
-  \item 「測定なし」に見えていたのは、実データの後ろの空白を読んでいたため
-  \item 修正し、図を再生成、その条件のシードを追加
-\end{itemize}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{時間刻みについて}
-\small\Q{時間刻みは妥当だったのか}
-\A{2つの制限があり、\textbf{効いているのは生態側}。}
-\vspace{2pt}
-\begin{center}\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-制限 & 由来 & 今回 \\
-\midrule
-粘性 $\eta/(2C_{10})$ & 陽解法の流れ増分 & \textcolor{cok}{効かない}（$\eta=0$） \\
-生態 ODE & $10^{-4}$ 超はサブステップに分割 & $\Delta t=10^{-5}$、\textcolor{cok}{10倍の余裕} \\
-\bottomrule
-\end{tabular}
-\end{center}
-\vspace{5pt}
-\begin{itemize}\footnotesize
-  \item 粘性側は $\Delta t/\tau \approx 0.5$ で\textbf{応力の符号が反転する}（測定済み）
-        $\rightarrow$ 納品版は刻みを検査して拒否する
-  \item 生態側は共同研究先のデッキ（$\Delta t = 0.1$）と 1000 倍ずれていた
-        $\rightarrow$ 材料呼び出しの内部で $\lceil \Delta t/10^{-4}\rceil$ 回に\textbf{細分化して解決}
-        （実機で確認、1回の通信あたり $0.07$ 秒）
-  \item \textbf{残っているのは刻みではなく $k_\alpha$ の時間単位}。$k_\alpha=50$ は
-        生態時間が合計 $0.1$--$1$ ms のデッキ用の値で、$\Delta t=0.1$ のデッキでは
-        $\alpha \approx 5.7$（各方向 $5.7$ 倍）になり要素が潰れる $\rightarrow$
-        \textbf{数値破綻ではなく成長そのもの}。そのデッキの時間軸に合わせて決め直す必要がある
-\end{itemize}
+\small\Q{どこまで信じてよいのか}
+\A{数値としては、検証した範囲で信じてよい。生物の予測としては、pH という独立な量で
+一度確かめただけ。応力の絶対値は、剛性の値に比例してそのまま動く。}
 \end{frame}
 
 % --------------------------------------------------------
@@ -208,8 +230,10 @@ $\rightarrow$ そもそも分離できない。}
   \item \textbf{「確かめた」と「動いた」を混ぜない}。章もその方針で書いてある
   \item \textbf{分からないものは分からないと言う}。
         取り繕った瞬間に、そこだけ深掘りされる
-  \item 限界（静水圧の不整合、$\psi$ のプレースホルダ、Klempt 2024 の未再現、
-        $k_\alpha$ の時間単位）は\textbf{こちらから先に出す}。後から指摘されるより強い
+  \item 限界（validation なし、前線の項、時間のつなぎ $s$ と $\phi_{\rm cap}$ の仮定、
+        表面の点の修正、菌株の違い）は\textbf{こちらから先に出す}。後から指摘されるより強い
+  \item 質問が英語で来たら英語で。主語は I（this work）
+  \item Abaqus は\textbf{修論の成果としては言わない}。聞かれたら「慶應での続き」
 \end{itemize}
 \vspace{8pt}
 \begin{center}

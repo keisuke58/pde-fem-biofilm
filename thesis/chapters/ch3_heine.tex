@@ -12,10 +12,11 @@ same model to sparse in-vivo data with a metabolic sign prior
 (Section~\ref{sec:heine_signprior}), and Chapter~\ref{ch:ansys} brings the
 point model into a finite element framework.
 
-\medskip\noindent\textit{This chapter is based on the manuscript:} Nishioka K.,
-Klempt F., Geisler H., Soleimani M., Heine N., Doll-Nikutta K., Mukherjee R.,
-Szafra\'{n}ski S.P., Stiesch M., Junker P., ``GPU-accelerated Bayesian inference
-of multi-species biofilm interaction parameters via TMCMC'' (in preparation).
+\medskip\noindent\textit{This chapter is based on the manuscript}~\cite{NishiokaBMB2026}: Nishioka K.,
+Klempt F., Geisler H., Mukherjee R., Heine N., Doll-Nikutta K., Stiesch M.,
+Szafra\'{n}ski S.P., Soleimani M., Junker P., ``Inferring effective interactions
+in a multispecies oral biofilm model: Bayesian calibration and a testable
+prediction'' (in preparation for \textit{Bulletin of Mathematical Biology}).
 
 %==============================================================================
 \section{Experimental System}
@@ -633,26 +634,25 @@ explanation, and it recapitulates the established bridging role of
 \textit{F.~nucleatum}~\cite{Kolenbrander2006FnBridge, Signat2011Fn}.
 
 \paragraph{Fix-$\psi$ approximation and Phase~2.} Figure~\ref{fig:heine_phase}
-compares the Phase-1 and Phase-2 MAPs parameter by parameter. In commensal
-conditions they agree closely ($r=0.83$--$0.90$): the $\psi$--$\mathbf{A}$ coupling
-is weak and fix-$\psi$ is a good approximation. In dysbiotic conditions they
-diverge ($r=0.23$ for DS, $0.62$ for DH), with the largest shifts in
-\textit{Pg}-related entries, where viability dynamics are most active.
-This condition-dependent consistency validates the two-phase design: Phase~1 is a
-reliable starting point, and Phase~2 corrections matter where $\psi$ couples
-non-negligibly to $\mathbf{A}$. The viability predictions themselves remain poor
+compares the Phase-1 and Phase-2 MAPs parameter by parameter. In Commensal
+Static they agree closely ($r=0.87$), in Commensal HOBIC less so ($r=0.68$), and
+in the dysbiotic conditions they diverge ($r=0.42$ for DS, $0.62$ for DH). The
+largest shifts are in the \textit{Pg}-related entries ($a_{15}$, $a_{45}$,
+$a_{55}$) and, in DH, in $a_{44}$, where the viability dynamics are most active.
+Phase~1 is therefore a usable starting point, and the Phase~2 corrections matter
+where $\psi$ couples to $\mathbf{A}$. The viability predictions themselves remain poor
 (RMSE $0.11$--$0.39$); the $\psi$ channel functions as a soft constraint that
 breaks the $\psi$--$\mathbf{A}$ degeneracy rather than as a predictive model of
 membrane integrity.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.80\textwidth]{heine_phase1_vs_phase2.pdf}
+  \includegraphics[width=\textwidth]{heine_phase1_vs_phase2.pdf}
   \caption[Phase~1 vs.\ Phase~2 MAP estimates]{Phase~1 (fix-$\psi$) vs.\ Phase~2
   (free $\psi$) MAP estimates; each point is one of the $15$ parameters, dashed
-  line is identity. Commensal conditions agree strongly ($r\geq0.83$); dysbiotic
-  conditions shift systematically in \textit{Pg}-related parameters, confirming the
-  necessity of Phase~2.}
+  line is identity; $r$, the correlation between the two MAPs, is given above each
+  panel. The dysbiotic conditions shift mainly in \textit{Pg}-related
+  parameters.}
   \label{fig:heine_phase}
 \end{figure}
 
