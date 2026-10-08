@@ -115,6 +115,20 @@
   帰還なし／P_h = 0.1）は実行中で、終わると `compare_wp2.md` が自動で push される。帰還ありの
   周方向応力の最大は約 2e−3 Pa で、試作（3e−3 Pa）と同じく下面の拘束によらない。
 
+## 6. 修論 ch4 の図を3枚作り直す（10月8日、11日夜まで）
+
+次の3枚は、PNG が古い版（サンセリフの書体）のまま。作図スクリプトはもう `figstyle.apply()` を
+使っているので、IKMHIWI03 にあるデータで回し直して `assets/` の PNG を push するだけでよい。
+
+| 修論の図 | PNG | スクリプト | データ |
+|---|---|---|---|
+| 4.4 | `assets/growth_cylinder_alpha_sweep.png` | `ansys_usermat/apdl/plot_cylinder_alpha_sweep.py` | `F:\biofilm_upf_kusepy\` の円筒の結果（スクリプトの使い方の通り） |
+| 4.8 | `assets/fig1005_exact.png` | `ansys_usermat/apdl/figs_1005.py` | `results/2026-10-01_paper_values/`（git の外） |
+| 4.9 | `assets/fig1005_whole_model.png` | 同上 | 同上 |
+
+確かめること：書体が Times New Roman であること、`α_K` ではなく `α − 1` と書かれていること、
+図の上に内部の名前（"Element 1"、"Bonded two-layer cylinder (2.4k elements)" など）が残っていないこと。
+
 ## 守ること
 
 - Felix のコード、理論の章、入力ファイルは `F:\felix_private\` から出さない（CLAUDE.md）。
