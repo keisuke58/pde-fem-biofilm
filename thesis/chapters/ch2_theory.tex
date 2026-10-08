@@ -206,10 +206,11 @@ and the effect of an antibiotic on the viabilities,
 \end{equation}
 with the nutrient level $c^*$, the antibiotic level $\alpha^*$, the symmetric
 interaction matrix $\bA$ and $\mathbf B=\mathrm{diag}(b_1,\dots,b_n)$. The
-constraint~\eqref{eq:constraint} enters with a Lagrange multiplier $\gamma$,
-and the dissipation is
+constraint~\eqref{eq:constraint} enters through the constraint function
+$C=\gamma\bigl(\sum_{l=0}^{n}\phi_l-1\bigr)$ with a Lagrange multiplier $\gamma$,
+and the dissipation function is
 \begin{equation}
-  \mathcal{D} = \tfrac{1}{2}\,\dot{\bar{\bphi}}^{\rm T} \boldsymbol{\eta}\,\dot{\bar{\bphi}}
+  \Delta = \tfrac{1}{2}\,\dot{\bar{\bphi}}^{\rm T} \boldsymbol{\eta}\,\dot{\bar{\bphi}}
               + \tfrac{1}{2}\,\dot{\bphi}^{\rm T} \boldsymbol{\eta}\,\dot{\bphi},
   \qquad \boldsymbol{\eta} = \mathrm{diag}(\eta_1,\dots,\eta_n).
   \label{eq:dissipation}
@@ -217,7 +218,8 @@ and the dissipation is
 The second term is needed because the first alone gives a singular system:
 $\bar\phi_i=\phi_i\psi_i$ couples the two rates.
 
-Stationarity with respect to $\phi_i$, $\psi_i$, $\phi_0$ and $\gamma$ gives
+The stationarity conditions of $\dot\Psi+\Delta+C$ with respect to the rates
+$\dot\phi_i$, $\dot\psi_i$, $\dot\phi_0$ and to $\gamma$ give
 \begin{align}
   0 &= -c^*\,\psi_i\,\bigl(\bA\bar{\bphi}\bigr)_i
       + \eta_i\bigl(\dot\phi_i\,\psi_i^2 + \bar\phi_i\,\dot\psi_i + \dot\phi_i\bigr)
