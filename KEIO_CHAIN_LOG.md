@@ -169,3 +169,100 @@ changes are needed: master adds the `ABQ_SCRATCH`/`scratch=`/`TMPDIR`
 handling, this branch adds the seed copy. They are complementary. The merge is
 deliberately deferred until chain `20261008b` finishes, so that the summarise
 scripts cannot change between runs of one chain.
+
+---
+
+## 2026-10-08: chain `20261008b` ran on fifa
+
+The five remaining `fig4_corner` variants, as decided in the entry above. All
+five completed and all five match their IKMHIWI03 reference in
+`results_1006/` in every printed digit. Comparison re-verified here from the
+committed summaries, not copied from their headers.
+
+| job | status | wall clock | vs reference |
+|---|---|---|---|
+| `fx41_p100` | PASS | 25 min 42 s | identical |
+| `fx41_p0` | PASS | 25 min 44 s | identical |
+| `ff41` | PASS | 25 min 13 s | identical |
+| `ff41_fo` | PASS | 30 min 24 s | identical |
+| `ff41_g5` | PASS | 24 min 45 s | identical |
+
+Total 2 h 11 min, sequential, 4 CPUs each, nice 10. Wall clock is
+comparable with IKMHIWI03 only if the machine was otherwise idle: the numbers
+are deterministic, the timing is not.
+
+**What this settles.** Hand-off section 4 is finished: the user subroutines
+compile on Linux (step 1), `wp2_imp_free_ph01` matches (step 2), and the whole
+`fig4_corner` family matches (step 3). The agreement holds across every axis
+the family varies - consumption g phi (0th order) and g phi c (1st order), the
+phi cap on (`--pen 100`) and off (`--pen 0`), the front term as printed and in
+Felix's current form (`--felix`), and `--gscale 5`. Together with the
+`compile_fortran` flags recorded in `KEIO_SERVER_ENV.ja.md` section 4, a future
+disagreement between fifa and IKMHIWI03 should be read as an implementation
+difference, not as rounding.
+
+**Note on this entry.** The chain's worker process was started before
+`scripts/run_chain_keio.py` was changed to append its own report (ac94d34);
+it still had the pull-request path in memory, so it posted one last comment on
+PR #58 and did not write here. Chains started after that commit append their
+own entry. Nothing else about the run is affected: the summaries, the commit
+and the push all came from the chain itself (d10cc81).
+
+<!-- keio-chain -->
+```json
+{
+ "chain": "20261008b",
+ "runs": [
+  {
+   "job": "fx41_p100",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1542,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx41_p100.txt",
+   "reference": "abaqus_composition/results_1006/fx41_p100.txt"
+  },
+  {
+   "job": "fx41_p0",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1544,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx41_p0.txt",
+   "reference": "abaqus_composition/results_1006/fx41_p0.txt"
+  },
+  {
+   "job": "ff41",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1513,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff41.txt",
+   "reference": "abaqus_composition/results_1006/ff41.txt"
+  },
+  {
+   "job": "ff41_fo",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1824,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff41_fo.txt",
+   "reference": "abaqus_composition/results_1006/ff41_fo.txt"
+  },
+  {
+   "job": "ff41_g5",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1485,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff41_g5.txt",
+   "reference": "abaqus_composition/results_1006/ff41_g5.txt"
+  }
+ ]
+}
+```
