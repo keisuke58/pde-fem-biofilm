@@ -35,9 +35,9 @@
 \subtitle{Master's thesis colloquium}
 \author[Keisuke Nishioka]{Keisuke Nishioka}
 \institute[IKM, LUH]{%
-\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\[2pt]
-\small Examiners: Prof.\ Dr.-Ing.\ Philipp Junker, Dr.-Ing.\ Matthias Wangenheim\\
-\small Supervisors: Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler}
+\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\[12pt]
+\small Examiners: Prof.\ Dr.-Ing.\ Philipp Junker, Dr.-Ing.\ Matthias Wangenheim\\[5pt]
+\small Supervisors: Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler\\[4pt]}
 \date{16 December 2026}
 
 \begin{document}
@@ -78,7 +78,6 @@ growth and stress use the amount only (one-way).}
 
 % --------------------------------------------------------
 \begin{frame}{Both models from the extended Hamilton principle}
-\small
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
 \textbf{Growth field} (Klempt et al.\ 2024)
@@ -101,6 +100,15 @@ $\bar\phi_i=\phi_i\psi_i$, $C=\gamma(\sum_l\phi_l-1)$\\[3pt]
 the local form of the principle: the principle of the minimum of the
 dissipation potential (Junker et al.\ 2014, Hackl 1997)\\[3pt]
 $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
+\end{column}
+\end{columns}
+\vspace{8pt}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\cbox{p2}{1.2cm}{\small\textbf{\color{p2}In this work:} solved by the IKM element in ANSYS; $\alpha$ and the stress added at the Gauss points (Part~2)}
+\end{column}
+\begin{column}{0.48\textwidth}
+\cbox{p1}{1.2cm}{\small\textbf{\color{p1}In this work:} calibrated for five species (Part~1); one copy per Gauss point (Part~3)}
 \end{column}
 \end{columns}
 \takeaway{One variational principle for both models: the field for space and stress, its local form for the composition.}
@@ -201,22 +209,22 @@ ANSYS follows the exact solution of the time stepping to $3\times10^{-11}$ in $\
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: stresses with the published stiffness}
-\begin{columns}[T]
+\begin{columns}[c]
 \begin{column}{0.56\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{fig_element_beta002.png}
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_element_beta002.png}
 \end{column}
 \begin{column}{0.42\textwidth}
-\small
-At $T^*=1.1$ on $16^3$ elements:\\[3pt]
-\begin{tabular}{@{}lr@{}}
+\small At $T^*=1.1$ on $16^3$ elements:\\[5pt]
+\begin{tabular}{@{}l@{\hspace{6pt}}r@{}}
 \toprule
 mean stress, seed & $-2.5\times10^{-4}$~Pa\\
 mean stress, first layer & $+6.0\times10^{-5}$~Pa\\
 von Mises, seed mean & $5.9\times10^{-4}$~Pa\\
 $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \bottomrule
-\end{tabular}\\[6pt]
+\end{tabular}\\[10pt]
+\small Left: von Mises stress (seeded element, largest neighbour) and $\alpha-1$ over time.
 Stresses scale with $E=10$~Pa.
 \end{column}
 \end{columns}
@@ -273,17 +281,26 @@ Stresses scale with $E=10$~Pa.
 
 % --------------------------------------------------------
 \begin{frame}{Part 3: composition varies in space with the local nutrient}
+\begin{columns}[c]
+\begin{column}{0.64\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.6\textheight,keepaspectratio]{fig_composition_local_nutrient_thesis.png}\\
-\small Nutrient held at one face, consumed in the seed; Thiele number
-$\Lambda^2=gL^2/d$. Case~6 at $\Lambda=4$: share $0.03$ near the nutrient,
-$0.44$ inside; case~3 hardly changes ($0.63$--$0.66$).
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_composition_local_nutrient_thesis.png}
+\end{column}
+\begin{column}{0.34\textwidth}
+\begin{itemize}
+  \item Nutrient held at one face, consumed in the seed
+  \item Strength: Thiele number $\Lambda^2=gL^2/d$
+  \item Case~6, $\Lambda=4$: share $0.03$ near the nutrient, $0.44$ inside
+  \item Case~3 hardly changes ($0.63$--$0.66$)
+\end{itemize}
+\end{column}
+\end{columns}
 \takeaway{With a local nutrient the composition varies in space, which a constant $c^*$ cannot show.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Limitations}
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{7pt}
   \item \textbf{Verification, not validation}: no measured stress of a growing
         oral biofilm was available
   \item \textbf{One-way}: the composition does not act on stiffness, spreading
@@ -297,21 +314,21 @@ $0.44$ inside; case~3 hardly changes ($0.63$--$0.66$).
   \item \textbf{Symmetric $\mathbf A$}: no directed effects; different
         \textit{P.~gingivalis} strains in the commensal and dysbiotic data
 \end{itemize}
+\takeaway{Each limitation is stated in the thesis with what it affects; the numbers are verified, not yet validated.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Conclusion and outlook}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
-\textbf{Done}\\[3pt]
-\small
-\cbox{p1}{1.15cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; pH predicted out of sample ($R^2=0.78$)}\\[3pt]
-\cbox{p2}{1.15cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[3pt]
-\cbox{p3}{1.15cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, published outcomes kept}
+\textbf{Done}\\[5pt]
+\cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; pH predicted out of sample ($R^2=0.78$)}\\[6pt]
+\cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
+\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, published outcomes kept}
 \end{column}
 \begin{column}{0.48\textwidth}
-\textbf{Next (Keio University)}
-\begin{itemize}\small
+\textbf{Next (Keio University)}\\[6pt]
+\begin{itemize}\setlength{\itemsep}{8pt}
   \item Five calibrated species in the element
   \item Composition into stiffness, stress into growth (two-way)
   \item A working front term; explicit against implicit field update
