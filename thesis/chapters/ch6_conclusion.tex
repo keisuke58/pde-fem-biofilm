@@ -42,6 +42,58 @@ Together these steps connect a calibrated description of what a biofilm
 consists of with a finite element description of how it grows and what
 stresses it carries, for one and two species.
 
+\section{Discussion}
+\label{sec:concl_discussion}
+
+\paragraph{Where the species live.} Continuum models of multi-species biofilms
+usually give every species its own field. Feng et
+al.~\cite{Feng2021SymbioticBiofilm} transport two species with a common
+velocity together with their substrates, and Soleimani et al.~\cite{Soleimani2023CoAggregation}
+solve two species, a nutrient and a co-aggregation variable in an ANSYS user
+element; neither computes the stresses that the growth causes. Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth} compute these stresses, with a
+single biofilm variable. This work keeps the single field for the amount of
+biofilm and its stresses, and adds the composition as a local state at each
+Gauss point. The number of fields therefore does not grow with the number of
+species, and the point model, calibrated on its own, enters unchanged. The
+price is that the species cannot move relative to each other: the
+composition varies in space only through the local nutrient and, in the Python
+study, through the share-weighted front rate. Segregation of species by
+different spreading is outside what this scheme can show.
+
+\paragraph{Calibrated and chosen parameters.} The interaction coefficients of
+Chapter~\ref{ch:heine} come from measured time courses, and the inferred
+matrices predict a quantity that did not enter the calibration, the pH
+($R^2=0.78$). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
+cases of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, chosen there
+to show coexistence and the survival of one species. Calibrated point-model
+parameters and the finite element field have not yet met in one computation;
+this needs the five-species state in the element (Outlook).
+
+\paragraph{What the stresses mean.} With the stiffness of Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth} the stresses are of order
+$10^{-4}$~Pa and scale with the stiffness. What carries over is their pattern:
+the seeded region is compressed and the surrounding material is under tension,
+as in the comparison of growth models by Klempt et
+al.~\cite{Klempt2023NumericalComparison} and in the ring of tension of the 2024
+paper. Statements about the magnitude in an oral biofilm need a measured
+stiffness and a measured stress, which were not available.
+
+\paragraph{The numerical scheme.} The field of the element is advanced
+explicitly. In three dimensions its runs stay smooth only up to
+$\beta\Delta t/h^2\approx0.15$, below the condition stated by Rudolf et
+al.~\cite{Rudolf2025NEM}, and the update is first order in time. For the seed
+problem the stress converges with the mesh at an observed order of about two.
+An implicit treatment of the field would remove the step limit; whether it is
+also more accurate for the same cost is the comparison planned at Keio.
+
+\paragraph{Symmetric interactions.} The variational derivation makes the
+interaction matrix symmetric. A symmetric matrix cannot describe one species
+feeding another without the reverse, which the metabolic literature reports for
+several of the pairs. In this work the symmetric model reproduces the
+in-vitro time courses and predicts the pH; whether a directed term is needed
+for in-vivo data is open.
+
 \section{Limitations}
 \label{sec:concl_limitations}
 
