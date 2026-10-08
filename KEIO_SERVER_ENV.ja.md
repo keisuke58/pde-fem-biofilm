@@ -138,13 +138,13 @@ python3 -m pytest tests/ -q
 ## 10. 自動で回す（`scripts/run_chain_keio.py`）
 
 `ansys_usermat/apdl/run_chain.ps1`（IKMHIWI03 の ANSYS 用）の Linux/Abaqus 版。
-1本ずつ回して要約を作り、基準と比べ、要約だけを commit して push し、PR にコメントを書く。
-**次に何を回すかの判断は PR で行う**（この文書を書いた時点では、クラウドの Claude セッションが
-定期的に PR を読んで決める構成にしている）。
+1本ずつ回して要約を作り、基準と比べ、要約と `KEIO_CHAIN_LOG.md` への報告を commit して push する。
+PR にはコメントしない（`CLOUD_TO_FIFA.ja.md` の 10月8日の項目1）。**次に何を回すかはクラウドの
+Claude セッションが決め**、`scripts/keio_runs/NEXT.json` に置く。master へのマージもクラウドが行う。
 
 ```
 python3 scripts/run_chain_keio.py --name 1008b \
-    --runs scripts/keio_runs/1008b_fig4_corner.json --pr 58 --push
+    --runs scripts/keio_runs/NEXT.json --push
 ```
 
 呼ぶと即座に戻り、PID とログの場所（`$WORKROOT/_chain_<name>.log`）を出す。

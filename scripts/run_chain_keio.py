@@ -180,10 +180,19 @@ def write_summary(path: Path, job: str, make: List[str], case: str, cpus: int,
 
 
 def cleanup(workroot: Path, job: str) -> None:
-    """Delete what the repository does not keep: .odb, .sim and the scratch."""
+    """Delete what the repository does not keep.
+
+    The .odb, the .sim, the per-increment trace CSVs and the scratch. The
+    traces are the bulk of a finished run - 785 MB of phi_trace.csv after one
+    20^3 Klempt run, 2.5 GB of comp_trace.csv after one implant run - and they
+    are solver diagnostics, not results. The summary is already written when
+    this runs, and the .dat is kept so it can be re-summarised.
+    """
     wd = workroot / ("comp_%s" % job)
     for f in (wd / ("%s.odb" % job), wd / ("%s.sim" % job)):
         f.unlink(missing_ok=True)
+    for trace in wd.glob("*_trace.csv"):
+        trace.unlink(missing_ok=True)
     shutil.rmtree(wd / job, ignore_errors=True)
     for d in Path("/tmp").glob("nishioka_%s_*" % job):
         shutil.rmtree(d, ignore_errors=True)
