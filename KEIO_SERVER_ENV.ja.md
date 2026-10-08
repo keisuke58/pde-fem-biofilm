@@ -160,10 +160,72 @@ python3 scripts/run_chain_keio.py --name 1008b \
 | `--min-free-root 8` | `/` の空きが 8 GiB を切ったら**走らせない**（`/` が埋まると全員が止まる） |
 | `--min-free-work 100` | 作業ディスクの空きが 100 GiB 未満なら走らせない |
 | 逐次のみ | 並列実行はしない |
-| 後片付け | 要約を書いたら `.odb`・`.sim`・scratch・`/tmp` の残りを消す |
+| 後片付け | 要約を書いたら `.odb`・`.sim`・`*_trace.csv`・scratch・`/tmp` の残りを消す |
 
 マニフェスト（`scripts/keio_runs/*.json`）の `{inp}`・`{dat}`・`{json}` は、入力ファイル、
 終わったジョブの `.dat`、`make_*_inp.py` が書くメッシュ情報 JSON に置き換わる。
 `reference` を省くと比較せずに記録だけする。
 
 `--dry-run` で入力生成だけを試せる（マニフェストの検算に使う）。
+
+
+---
+
+## 11. 踏んだ罠（2026年10月8日）
+
+Linux で初めて一式を動かして分かったこと。どれも一度やられているので、次は避ける。
+
+### 11.1 `seed.txt` が work dir に来ない（cube の比較が必ず落ちる）
+
+`make_cube_inp.py` は `<job>.seed.txt` を **`.inp` の隣**（リポジトリ内）に書くが、
+`compare_ansys.py` は **`.dat` の隣**（work dir）から読む。`run_comp.sh` は `.inp` だけを
+コピーしていたので、Abaqus の計算が終わったあとに `FileNotFoundError` で死ぬ。
+`run_comp.sh` に sidecar のコピーを足して直した（commit 8200dde）。
+
+`run_comp.ps1` も `.inp` だけをコピーしている。IKMHIWI03 では入力を work dir の中に
+生成していたため sidecar が偶然正しい場所にあり、この穴は見えていなかった。
+
+**教訓：** 長いチェーンを共用サーバーに任せる前に、必ず安いジョブで端から端まで通す。
+`scripts/keio_runs/1008s_smoke.json`（`nf8_c6_g1`、25 秒、基準あり）がそのためにある。
+`--dry-run` は入力生成しか見ないので、この種の不具合は見つからない。
+
+### 11.2 トレース CSV が実行ごとに数百 MB 残る
+
+`*_trace.csv` は増分ごとの診断出力で、結果ではない。放っておくと溜まる。
+
+| 実行 | ファイル | 大きさ |
+|---|---|---|
+| `ff41_fo`（20³、1000 増分） | `phi_trace.csv` | 785 MB |
+| `wp2_imp_free_ph01`（2880 要素） | `comp_trace.csv` | 2.5 GB |
+
+要約を書いたあとなら捨ててよいので、`cleanup()` が `.odb`・`.sim` と一緒に消すようにした。
+`.dat` は再要約できるように残す。2026年10月8日に手で 12 GB 回収した
+（`comp_*` 8 ディレクトリ。`~/abaqus_work` の `Job-CZM-*` は別の作業のものなので触らない）。
+
+### 11.3 ローカルの `master` が clone 当時のまま
+
+作業ブランチにいると `origin/master` しか fetch されず、ローカルの `master` は clone した
+日のコミットで止まる。`git push lab master:main` がその古いコミットを送ってしまい、
+村松研の lab に 20 コミット前のツリーが入った。
+
+**lab へ送るときはローカルの `master` を通さない：**
+
+```
+git fetch origin master && git push lab origin/master:main
+```
+
+fast-forward なので force は要らない。ローカルの `master` を進めたいなら、ブランチを
+離れずに `git fetch origin master:master`。
+
+### 11.4 ssh ごしの heredoc とアポストロフィ
+
+`ssh fifa '... <<"EOF" ... EOF'` の中にアポストロフィ（`chain's` など）があると、外側の
+シングルクォートが閉じて heredoc が壊れ、**コミットメッセージが途中で切れる**。
+一度やられた（未 push だったので amend で直した）。
+長い文を渡すときはファイルに書いて `ssh fifa 'cat > /tmp/msg'` で送り、`git commit -F /tmp/msg`。
+
+### 11.5 長時間の単一 ssh は切れる
+
+3 時間のチェーンを `ssh fifa 'while ...; done'` で見張ると `Connection reset by peer` で
+落ちる（2 回やられた）。チェーン本体は `setsid` で切り離してあるので実行は続くが、
+監視は死ぬ。見張るなら**手元でループを回し、毎回短命な ssh で確認する**。

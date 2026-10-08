@@ -1,0 +1,135 @@
+{
+ "chain": "20261008d",
+ "out": "abaqus_composition/results_keio_1008",
+ "runs": [
+  {
+   "job": "fx42l_p0",
+   "make": [
+    "abaqus_composition/make_klempt_inp.py",
+    "{inp}",
+    "--case", "fig7_low",
+    "--n", "20",
+    "--dt", "0.001",
+    "--T", "1.0",
+    "--every", "10",
+    "--eps", "1e-8",
+    "--hstab", "0",
+    "--E", "0.01",
+    "--pen", "0"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_paper.py",
+    "{dat}",
+    "--case", "fig7_low"
+   ],
+   "reference": "abaqus_composition/results_1006/fx42l_p0.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 120
+  },
+  {
+   "job": "fx42l_p100",
+   "make": [
+    "abaqus_composition/make_klempt_inp.py",
+    "{inp}",
+    "--case", "fig7_low",
+    "--n", "20",
+    "--dt", "0.001",
+    "--T", "1.0",
+    "--every", "10",
+    "--eps", "1e-8",
+    "--hstab", "0",
+    "--E", "0.01",
+    "--pen", "100"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_paper.py",
+    "{dat}",
+    "--case", "fig7_low"
+   ],
+   "reference": "abaqus_composition/results_1006/fx42l_p100.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 120
+  },
+  {
+   "job": "fx42l_fo_p0",
+   "make": [
+    "abaqus_composition/make_klempt_inp.py",
+    "{inp}",
+    "--case", "fig7_low",
+    "--n", "20",
+    "--dt", "0.001",
+    "--T", "1.0",
+    "--every", "10",
+    "--eps", "1e-8",
+    "--hstab", "0",
+    "--E", "0.01",
+    "--pen", "0",
+    "--first-order"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_paper.py",
+    "{dat}",
+    "--case", "fig7_low"
+   ],
+   "reference": "abaqus_composition/results_1006/fx42l_fo_p0.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 150
+  },
+  {
+   "job": "ff42l",
+   "make": [
+    "abaqus_composition/make_klempt_inp.py",
+    "{inp}",
+    "--case", "fig7_low",
+    "--n", "20",
+    "--dt", "0.001",
+    "--T", "1.0",
+    "--every", "10",
+    "--eps", "1e-8",
+    "--hstab", "0",
+    "--E", "0.01",
+    "--pen", "100",
+    "--felix"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_paper.py",
+    "{dat}",
+    "--case", "fig7_low"
+   ],
+   "reference": "abaqus_composition/results_1006/ff42l.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 120
+  },
+  {
+   "job": "ff42l_fo",
+   "make": [
+    "abaqus_composition/make_klempt_inp.py",
+    "{inp}",
+    "--case", "fig7_low",
+    "--n", "20",
+    "--dt", "0.001",
+    "--T", "1.0",
+    "--every", "10",
+    "--eps", "1e-8",
+    "--hstab", "0",
+    "--E", "0.01",
+    "--pen", "100",
+    "--felix",
+    "--first-order"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_paper.py",
+    "{dat}",
+    "--case", "fig7_low"
+   ],
+   "reference": "abaqus_composition/results_1006/ff42l_fo.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 120
+  }
+ ]
+}
