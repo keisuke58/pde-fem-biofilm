@@ -1,0 +1,224 @@
+% Speaker script for slides_defense.tex (colloquium, Wed 16 Dec 2026, 13:00), English + Japanese.
+% Build: lualatex speaker_notes_defense.tex (twice), or
+%        .\build_slides.ps1 -Tex speaker_notes_defense.tex -MaxPages 30 on IKMHIWI03.
+% EN is what I say; JA is the same in Japanese, for practice, plus hints in grey.
+% Numbers are those of the thesis; check them again if the thesis changes.
+\documentclass[11pt,a4paper]{article}
+\usepackage{luatexja}
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\definecolor{c3}{RGB}{30,80,160}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\newcounter{sl}
+\newcommand{\slide}[2]{\stepcounter{sl}\vspace{8pt}%
+  {\color{c3}\large\bfseries Slide \thesl\ --- #1}\hfill{\small #2}\par\vspace{2pt}}
+\newcommand{\EN}{\textbf{EN}\quad}
+\newcommand{\JA}{\par\textbf{JA}\quad}
+\newcommand{\hint}[1]{\par{\color{gray}\small ヒント：#1}}
+
+\begin{document}
+{\Large\bfseries Speaker script --- master's thesis colloquium, 16 December 2026}\\[2pt]
+Prof.\ Junker, Dr.\ Wangenheim, Dr.\ Soleimani, Dr.\ Geisler.
+16 slides plus a 3-slide appendix, about 20 minutes. The times are the
+running total at the end of each slide.
+
+% ------------------------------------------------------------------
+\slide{Title}{0:30}
+\EN Good afternoon. Thank you for being here. My thesis is about coupling
+biofilm growth into an existing finite element framework: bringing a
+multi-species point model into the biofilm element of the institute, so that
+the composition, the growth and the stresses of a biofilm can be computed
+together.
+\JA こんにちは。お越しいただきありがとうございます。私の修論は、多菌種の点モデルを
+研究所のバイオフィルム要素に組み込み、組成・成長・応力を一緒に計算できるようにする、
+というものです。
+
+\slide{Motivation}{1:30}
+\EN Peri-implantitis affects about one in five implant patients. It is driven
+by multi-species biofilms, and a shift towards pathobionts such as
+\textit{Porphyromonas gingivalis} goes with disease. A biofilm is also a
+mechanical body: where it grows unevenly, or against a stiff substrate, it
+carries stresses. Two kinds of model exist. A point model describes the
+composition, but has no space. A growth field describes space and stress, but
+does not distinguish species. My question was whether both can be computed
+together, inside a framework that already works.
+\JA インプラント周囲炎は、インプラント患者の約5人に1人に起きます。原因は多菌種の
+バイオフィルムで、\textit{P.~gingivalis} のような病原性の菌が増えると悪化します。
+バイオフィルムは力学的な物体でもあり、成長が不均一だったり硬い面に押し付けられたり
+すると応力を持ちます。モデルは2種類あります。点モデルは組成を表すが空間がない。
+成長場は空間と応力を表すが菌種を区別しない。この2つを、すでに動いている枠組みの中で
+一緒に計算できるか、が問いです。
+
+\slide{Overview}{2:30}
+\EN This is the whole work on one slide. On the left, the growth field of
+Klempt et al.\ 2024 in the IKM element gives the amount of biofilm at every
+Gauss point. In the middle, one copy of the point model of Klempt et al.\
+2026 sits at every Gauss point and decides only the composition. On the
+right, growth and stress use the amount only. The coupling is one-way: the
+composition is an output, it does not act back. The talk follows the three
+parts: calibrating the point model, the growth law in ANSYS, and the
+composition at every Gauss point.
+\JA 全体を1枚にした図です。左：Klempt 2024 の成長場が、各 Gauss 点のバイオフィルムの
+量を決めます。中央：Klempt 2026 の点モデルを各 Gauss 点に1つずつ置き、組成だけを決めます。
+右：成長と応力は量だけを使います。一方向の結合で、組成は出力であって戻りません。
+発表はこの順に3部です。
+\hint{最初の「何をしたか」を30秒で言えるようにしておく。}
+
+\slide{Both models from the extended Hamilton principle}{4:00}
+\EN Both models come from the extended Hamilton principle. The growth field
+has the biofilm variable $\phi$, the nutrient $c$ and the growth $\alpha$,
+with $\mathbf F=\mathbf F_e\mathbf F_g$ and $\mathbf F_g=\alpha\mathbf I$;
+stress comes only from the elastic part. For the point model there is no
+displacement, so the principle reduces to its local form, the principle of
+the minimum of the dissipation potential: free energy rate plus dissipation
+plus constraint, stationary with respect to the rates and the multiplier. One
+consequence is that the interaction matrix $\mathbf A$ is symmetric.
+\JA どちらのモデルも拡張 Hamilton 原理から出ます。成長場は $\phi$、$c$、$\alpha$ を持ち、
+$\mathbf F_g=\alpha\mathbf I$、応力は弾性部分からだけ出ます。点モデルには変位がないので、
+原理はその局所形、最小散逸ポテンシャルの原理になります。結果として相互作用行列
+$\mathbf A$ は対称です。
+\hint{Junker 先生はここを聞く。$\Psi$, $\Delta$, $C$ を板書できるように。}
+
+\slide{Part 1: calibrating the point model}{5:30}
+\EN The first part calibrates the point model. Heine et al.\ cultured five
+species under four conditions, commensal or dysbiotic, static or in a flow
+reactor, and measured the composition from day 1 to day 21. I estimated the
+15 interaction coefficients for each condition with transitional Markov chain
+Monte Carlo, with ten thousand samples. The forward model runs in JAX on the
+GPU, about 150 times faster than on the CPU, which makes this practical. The
+lines here are the fits against the measured points.
+\JA 第1部は点モデルの較正です。Heine らの5菌種・4条件のデータを使い、各条件で15個の
+相互作用係数を TMCMC で推定しました。サンプルは1万個です。順モデルを JAX で GPU に
+載せたので、CPU より約150倍速くなり、現実的な時間で回せます。
+
+\slide{Part 1: what the calibration gives}{7:00}
+\EN The calibration gives one interaction matrix per condition. Under
+dysbiotic flow, the link from \textit{F.~nucleatum} to \textit{P.~gingivalis}
+becomes strongly cooperative. On the right, the pH, which I did not use in
+the calibration, is predicted with $R^2=0.78$. This leads to a prediction
+that can be tested: without \textit{F.~nucleatum}, the late growth of
+\textit{P.~gingivalis} under dysbiotic flow should be suppressed.
+\JA 条件ごとに相互作用行列が得られます。dysbiotic の流れ条件では、\textit{F.~nucleatum}
+から \textit{P.~gingivalis} への協力が強く出ます。右は pH で、較正には使っていませんが、
+$R^2=0.78$ で予測できました。ここから検証できる予測が出ます：\textit{F.~nucleatum} を
+除けば、終盤の \textit{P.~gingivalis} の増加は抑えられるはずです。
+
+\slide{Part 2: the growth law in ANSYS}{8:30}
+\EN The second part brings the growth law into ANSYS. I implemented
+$\mathbf F_g=\alpha\mathbf I$ as a user material, with the stiffness of
+Klempt et al.\ 2024: ten pascal, Poisson's ratio 0.49, weighted by $\phi^2$.
+The small floor $f$ for the void is my addition. On one element I compared
+free and constrained growth with closed forms: free growth gives zero
+stress, and constrained growth gives the predicted pressure.
+\JA 第2部は成長則を ANSYS に入れた部分です。$\mathbf F_g=\alpha\mathbf I$ をユーザー
+材料として実装し、剛性は Klempt 2024 の値（10 Pa、0.49、$\phi^2$ で重み付け）にしました。
+空隙の下限 $f$ は私が足したものです。1要素で、自由な成長と拘束した成長を閉じた形の解と
+比べ、自由なら応力ゼロ、拘束なら予測どおりの圧力になりました。
+\hint{$f$ は論文にないと自分から言う。}
+
+\slide{Part 2: coupling into the IKM element}{9:30}
+\EN This is the example model: a two-millimetre cube with a seed of biofilm
+in the middle, refined up to $24^3$ elements. The element's own field for
+$\phi$ is unchanged. What I added is the growth law at every Gauss point:
+$\phi$ gives $\alpha$, $\alpha$ gives $\mathbf F_g$, and that gives the stress.
+The diffusion coefficient $\beta$ is Table~2 of the paper converted to this
+cube; this conversion is an assumption, and I report its sensitivity.
+\JA 例題は 2 mm の立方体で、中央にシードがあります。$24^3$ まで細かくしました。
+要素の $\phi$ の場はそのままで、私が足したのは各 Gauss 点の成長則です。
+$\beta$ は論文の Table~2 をこの立方体に換算した値で、仮定なので感度も示しています。
+
+\slide{Part 2: the coupled run against exact solutions}{10:30}
+\EN Where $\phi$ has no gradient, the equations have an exact solution:
+$\phi$ grows as a hyperbolic sine and $\alpha-1$ as a hyperbolic cosine minus
+one. The explicit update has its own exact solution, and ANSYS follows it to
+$3\times10^{-11}$ in $\alpha$. So the coupling inside ANSYS does what the
+equations say.
+\JA 勾配のないところでは厳密解があり、$\phi$ は sinh、$\alpha-1$ は cosh $-1$ になります。
+陽解法の更新にはそれ自身の厳密解があり、ANSYS は $\alpha$ で $3\times10^{-11}$ まで一致します。
+
+\slide{Part 2: stresses with the published stiffness}{12:00}
+\EN With the published stiffness, the seed is compressed, about
+$-2.5\times10^{-4}$ pascal mean stress, and the first layer of elements around
+it is in tension. This is the ring of tension that Klempt et al.\ report.
+The stresses are small because the stiffness is ten pascal, and they scale
+with it. What carries over is the pattern, not the magnitude.
+\JA 論文の剛性では、シードは圧縮（平均 $-2.5\times10^{-4}$ Pa）、周りの1層目は引張です。
+Klempt らが報告している引張の輪と同じです。応力が小さいのは剛性が 10 Pa だからで、
+剛性に比例します。意味があるのは大きさではなく分布です。
+\hint{Wangenheim 先生は「この大きさに意味はあるか」を聞きそう。}
+
+\slide{Part 2: how far the numbers can be trusted}{13:30}
+\EN How far can these numbers be trusted? In time, the update is first
+order; at my time step the error is about one percent. In space, the seed
+stress converges at an observed order of about two, with an error of about
+two percent on $24^3$ elements, estimated from three meshes. The growth,
+compared at fixed positions, changes by less than four percent from $16^3$ to
+$24^3$. And the explicit field update is stable only up to $\beta\Delta
+t/h^2$ of about 0.15 in three dimensions, which is stricter than the
+condition given in the literature. All runs in the thesis are below it.
+\JA 時間は1次で、今の刻みの誤差は約 1 \%。メッシュは約2次で収束し、$24^3$ の誤差は約
+2 \%（3つのメッシュからの推定）。$\alpha$ は位置を固定して比べると $16^3\to24^3$ で 4 \% 以内。
+陽解法の安定の境目は 3 次元で約 0.15 で、文献の条件より厳しい。修論の実行はすべてその下。
+
+\slide{Part 3: composition at every Gauss point}{15:00}
+\EN The third part puts the composition at every Gauss point, for two species
+and the cases of Klempt et al.\ 2026. Every call from ANSYS to the point model
+is reproduced in Python bit for bit. In the seed, case three keeps
+coexistence, with a share of 0.67, and in case six one species wins, with a
+share of 0.02. The time link $s$ and the cap $\phi_{\rm cap}$ are not in the
+papers; they are my assumptions, each with its sensitivity.
+\JA 第3部では、2菌種で各 Gauss 点に組成を持たせました。ANSYS から点モデルへの呼び出しは
+Python とビット単位で一致します。シードでは case 3 は共存（0.67）、case 6 は一方が勝つ
+（0.02）で、結果の型は保たれます。$s$ と $\phi_{\rm cap}$ は論文にない仮定です。
+
+\slide{Part 3: composition varies in space with the local nutrient}{16:30}
+\EN If the nutrient is held at one face and consumed in the seed, the
+composition varies in space even without spreading. The strength is the
+Thiele number. In case six, at $\Lambda=4$, the share is 0.03 near the
+nutrient and 0.44 inside the seed; case three hardly changes. This is
+something the element cannot show with a constant nutrient level.
+\JA 栄養を一つの面に与えてシードで消費させると、広がらなくても組成が空間で変わります。
+強さは Thiele 数です。case 6、$\Lambda=4$ では、栄養側で 0.03、シードの奥で 0.44。
+case 3 はほとんど変わりません。
+
+\slide{Limitations}{18:00}
+\EN The main limitations. This is verification, not validation: no measured
+stress of a growing oral biofilm was available. The coupling is one-way. The
+front term of the element is inactive, so there is no spreading towards the
+nutrient in ANSYS. Three values are assumptions. The calibrated five species
+and the element have not yet met in one computation. And a symmetric matrix
+cannot describe directed interactions.
+\JA 主な限界です。検証はしたが妥当性確認はしていない（応力の測定値がない）。結合は一方向。
+ANSYS では前線の項が働かず、栄養へ向かう広がりはない。3つの値は仮定。較正した5菌種と
+要素はまだ一緒になっていない。対称な行列は向きのある相互作用を表せない。
+\hint{限界はこちらから先に言う。聞かれる前に言えば強い。}
+
+\slide{Conclusion and outlook}{19:30}
+\EN To conclude: I calibrated a point model on in-vitro data, and it predicts
+the pH out of sample; I brought the growth law of Klempt et al.\ 2024 into
+the IKM element and verified it; and I put the composition at every Gauss
+point for two species, keeping the published outcomes. At Keio I will
+continue with the five calibrated species in the element, the two-way
+coupling, a working front term, and the uncertainty carried to the stress.
+Thank you.
+\JA まとめ：点モデルを較正し pH を予測できた。Klempt 2024 の成長則を IKM 要素に入れて
+検証した。2菌種で各 Gauss 点に組成を持たせ、論文の結果を保った。慶應では、5菌種を要素に、
+双方向の結合、前線の項、不確かさを応力まで、を続けます。ありがとうございました。
+
+\slide{References}{---}
+\EN (Only if asked. Leave this slide up during the questions.)
+\JA （聞かれたときだけ。質疑の間はこのページを出しておく。）
+
+% ------------------------------------------------------------------
+\vspace{10pt}
+{\large\bfseries Appendix slides (for questions)}\par
+\begin{itemize}[leftmargin=*]
+  \item \textbf{A, notation}: 記号を聞かれたとき。
+  \item \textbf{B, growth field}: 場の式・材料・消費項 $g\phi c$ を聞かれたとき。
+  \item \textbf{C, point model and one substep}: 点モデルの式と、1サブステップの流れ。
+\end{itemize}
+
+\end{document}
