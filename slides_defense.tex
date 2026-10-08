@@ -21,6 +21,13 @@
 \definecolor{warn}{RGB}{190,40,40}
 \setbeamercolor{frametitle}{bg=c3, fg=white}
 \setbeamertemplate{navigation symbols}{}
+\definecolor{p1}{RGB}{180,83,9}
+\definecolor{p2}{RGB}{29,78,137}
+\definecolor{p3}{RGB}{62,76,89}
+% one message per slide, at the bottom
+\newcommand{\takeaway}[1]{\par\vfill\noindent\colorbox{c3!10}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small\textbf{\color{c3}$\rightarrow$}\ #1}}}
+% box with a coloured title
+\newcommand{\cbox}[3]{\colorbox{#1!8}{\parbox[t][#2][t]{\dimexpr\linewidth-2\fboxsep}{\raggedright #3}}}
 
 \title{Coupling biofilm growth into an existing FEM element}
 \subtitle{Master's thesis colloquium}
@@ -52,14 +59,9 @@ stresses be computed together, in an existing finite element framework?
 \end{column}
 \begin{column}{0.42\textwidth}
 \small
-\begin{tabular}{@{}p{0.42\linewidth}p{0.5\linewidth}@{}}
-\toprule
-point model & composition, no space\\
-growth field & space and stress, no species\\
-\midrule
-this work & both, at every Gauss point\\
-\bottomrule
-\end{tabular}
+\cbox{p1}{1.6cm}{\textbf{\color{p1}Point model}\\ composition of several species\\ \textcolor{gray}{no space, no stress}}\\[4pt]
+\cbox{p2}{1.6cm}{\textbf{\color{p2}Growth field}\\ where the biofilm grows, its stresses\\ \textcolor{gray}{one biofilm variable, no species}}\\[4pt]
+\cbox{c3}{1.6cm}{\textbf{\color{c3}This work}\\ both, at every Gauss point of an existing ANSYS element}
 \end{column}
 \end{columns}
 \end{frame}
@@ -67,9 +69,9 @@ this work & both, at every Gauss point\\
 % --------------------------------------------------------
 \begin{frame}{Overview}
 \centering
-\includegraphics[width=\linewidth,height=0.74\textheight,keepaspectratio]{fig_coupling_schematic_thesis.png}\\
-\small The field gives the amount $\phi_{3D}$, the point model the composition;
-growth and stress use the amount only (one-way).
+\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{fig_coupling_schematic_thesis.png}
+\takeaway{The field gives the amount $\phi_{3D}$, the point model the composition;
+growth and stress use the amount only (one-way).}
 \end{frame}
 
 % --------------------------------------------------------
@@ -99,24 +101,26 @@ dissipation potential (Junker et al.\ 2014, Hackl 1997)\\[3pt]
 $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \end{column}
 \end{columns}
+\takeaway{One variational principle for both models: the field for space and stress, its local form for the composition.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 1: calibrating the point model}
 \begin{columns}[T]
-\begin{column}{0.58\textwidth}
+\begin{column}{0.62\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{heine_fits_4cond.pdf}
+\includegraphics[width=\linewidth,height=0.8\textheight,keepaspectratio]{heine_fits_4cond.pdf}
 \end{column}
-\begin{column}{0.4\textwidth}
+\begin{column}{0.36\textwidth}
 \small
 \begin{itemize}
-  \item In-vitro data of Heine et al.\ (2025): five species, four conditions
+  \item Heine et al.\ (2025): five species, four conditions
         (commensal / dysbiotic, static / flow), days 1--21
-  \item 15 interaction coefficients $A_{ij}$ per condition, TMCMC,
-        $10{,}000$ samples
+  \item 15 coefficients $A_{ij}$ per condition, TMCMC, $10{,}000$ samples
   \item Forward model in JAX on the GPU: about 150 times faster than the CPU
 \end{itemize}
+\vspace{6pt}
+\cbox{c3}{1.5cm}{\small\textbf{\color{c3}Result:} the time courses of all four conditions are reproduced, one symmetric $\mathbf A$ each}
 \end{column}
 \end{columns}
 \end{frame}
@@ -136,41 +140,40 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \small The pH, not used in the calibration, is predicted with $R^2=0.78$
 \end{column}
 \end{columns}
-\vspace{4pt}
-\small\textbf{Prediction:} without \textit{F.~nucleatum}, the late growth of
-\textit{P.~gingivalis} under dysbiotic flow should be suppressed.
+\takeaway{\textbf{Prediction} to test: without \textit{F.~nucleatum}, the late growth of
+\textit{P.~gingivalis} under dysbiotic flow should be suppressed.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: the growth law in ANSYS}
 \begin{columns}[T]
-\begin{column}{0.42\textwidth}
+\begin{column}{0.38\textwidth}
 \small
 \begin{itemize}
   \item ANSYS user material: $\mathbf F_g=\alpha\mathbf I$, compressible
         Mooney--Rivlin (neo-Hookean here)
   \item Stiffness of Klempt et al.\ 2024: $E(\phi)=(\phi^2+f)\,E$,
         $E=10$~Pa, $\nu=0.49$, $f=10^{-3}$ (floor, added in this work)
-  \item One element, free and constrained growth against closed forms:
-        free growth gives zero stress; constrained growth
+  \item One element against closed forms: constrained growth gives
         $\sigma=-1.0193\times10^{-4}$~MPa as predicted
 \end{itemize}
 \end{column}
-\begin{column}{0.56\textwidth}
+\begin{column}{0.6\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{v222_closed_form.png}
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{v222_closed_form.png}
 \end{column}
 \end{columns}
+\takeaway{The growth law in ANSYS matches the closed forms: free growth stays stress free, constrained growth gives the predicted pressure.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: coupling into the IKM element}
 \begin{columns}[T]
-\begin{column}{0.5\textwidth}
+\begin{column}{0.56\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{fig_model_setup.png}
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_model_setup.png}
 \end{column}
-\begin{column}{0.48\textwidth}
+\begin{column}{0.42\textwidth}
 \small
 \begin{itemize}
   \item 2~mm cube, $8^3$ SOLID185 elements (B-bar), seed of 32 elements;
@@ -183,24 +186,25 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \end{itemize}
 \end{column}
 \end{columns}
+\takeaway{Only the growth law is added; the element's field is used as it is.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: the coupled run against exact solutions}
 \centering
-\includegraphics[width=0.95\linewidth,height=0.62\textheight,keepaspectratio]{fig1005_exact.png}\\
-\small Where $\phi$ has no gradient: $\phi=\sinh(k_\alpha t)$, $\alpha-1=\cosh(k_\alpha t)-1$.\\
-ANSYS follows the exact solution of the time stepping to $3\times10^{-11}$ in $\alpha$.
+\includegraphics[width=0.95\linewidth,height=0.64\textheight,keepaspectratio]{fig1005_exact.png}
+\takeaway{Where $\phi$ has no gradient, $\phi=\sinh(k_\alpha t)$ and $\alpha-1=\cosh(k_\alpha t)-1$:
+ANSYS follows the exact solution of the time stepping to $3\times10^{-11}$ in $\alpha$.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 2: stresses with the published stiffness}
 \begin{columns}[T]
-\begin{column}{0.52\textwidth}
+\begin{column}{0.56\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_element_beta002.png}
+\includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{fig_element_beta002.png}
 \end{column}
-\begin{column}{0.46\textwidth}
+\begin{column}{0.42\textwidth}
 \small
 At $T^*=1.1$ on $16^3$ elements:\\[3pt]
 \begin{tabular}{@{}lr@{}}
@@ -211,10 +215,10 @@ von Mises, seed mean & $5.9\times10^{-4}$~Pa\\
 $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \bottomrule
 \end{tabular}\\[6pt]
-The seed is compressed, the material around it is in tension: the ring of
-tension of Klempt et al.\ 2024. Stresses scale with $E$.
+Stresses scale with $E=10$~Pa.
 \end{column}
 \end{columns}
+\takeaway{The seed is compressed and the material around it is in tension: the ring of tension of Klempt et al.\ 2024.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -237,6 +241,7 @@ tension of Klempt et al.\ 2024. Stresses scale with $E$.
 \end{itemize}
 \end{column}
 \end{columns}
+\takeaway{Seed stresses on $24^3$ elements are good to about $2\,\%$; every run of the thesis is inside the stability limit.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -258,18 +263,20 @@ tension of Klempt et al.\ 2024. Stresses scale with $E$.
 \end{column}
 \begin{column}{0.48\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_composition_map.png}
+\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{fig_composition_map.png}
 \end{column}
 \end{columns}
+\takeaway{The coupled run keeps the published outcomes: coexistence in case~3, one surviving species in case~6.}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Part 3: composition varies in space with the local nutrient}
 \centering
-\includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{fig_composition_local_nutrient_thesis.png}\\
+\includegraphics[width=\linewidth,height=0.6\textheight,keepaspectratio]{fig_composition_local_nutrient_thesis.png}\\
 \small Nutrient held at one face, consumed in the seed; Thiele number
 $\Lambda^2=gL^2/d$. Case~6 at $\Lambda=4$: share $0.03$ near the nutrient,
-$0.44$ inside. Case~3 hardly changes ($0.63$--$0.66$).
+$0.44$ inside; case~3 hardly changes ($0.63$--$0.66$).
+\takeaway{With a local nutrient the composition varies in space, which a constant $c^*$ cannot show.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -294,14 +301,11 @@ $0.44$ inside. Case~3 hardly changes ($0.63$--$0.66$).
 \begin{frame}{Conclusion and outlook}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
-\textbf{Done}
-\begin{enumerate}\small
-  \item A point model calibrated on in-vitro data; pH predicted out of sample
-  \item The growth law of Klempt et al.\ 2024 in the IKM element, verified
-        against closed forms and exact solutions
-  \item The composition at every Gauss point for two species, the published
-        outcomes kept
-\end{enumerate}
+\textbf{Done}\\[3pt]
+\small
+\cbox{p1}{1.15cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; pH predicted out of sample ($R^2=0.78$)}\\[3pt]
+\cbox{p2}{1.15cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[3pt]
+\cbox{p3}{1.15cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, published outcomes kept}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{Next (Keio University)}
@@ -435,6 +439,15 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
         $\min(\phi_{3D},\phi_{\rm cap})$, advance it by $s\,\Delta t$, store
         $\phi_i,\psi_i$ as state variables
 \end{enumerate}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix D: stability of the explicit field update}
+\centering
+\includegraphics[width=0.95\linewidth,height=0.55\textheight,keepaspectratio]{fig_wp3_stability.png}\\
+\small $\lambda=\beta\Delta t/h^2$. Smooth up to $0.144$, oscillating at $0.160$, elements
+collapse above. Dashed: $1/6$ of the seven-point stencil; dotted: $1/2$ from
+$h^2/(2\Delta t)\ge\beta$ (Rudolf et al.\ 2025). All runs of the thesis: $\lambda\le0.128$.
 \end{frame}
 
 \end{document}
