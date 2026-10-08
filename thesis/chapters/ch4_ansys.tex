@@ -771,9 +771,11 @@ The diffusion coefficient sets the size of the stresses
 (Table~\ref{tab:ch5-beta}): $\phi$ that diffuses out of the seed lowers its
 growth near the surface, and the step in $\alpha$ between the inside and the
 surface of the seed loads it. From $\beta=0.005$ to $0.1$~mm$^2/T^*$ the mean
-stress in the seed falls by a factor of about four on $8^3$ and ten on $16^3$. For $\beta\ge0.02$ the diffusion
-length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the meshes and $8^3$ and
-$16^3$ agree within $15\,\%$. For smaller $\beta$ the layer is thinner than an
+stress in the seed falls by a factor of about four on $8^3$ and ten on $16^3$
+(the $16^3$ values at $\beta\ge0.05$ from before the correction). For $\beta\ge0.02$ the diffusion
+length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the meshes, and $8^3$ and
+$16^3$ agree within $10\,\%$ at $\beta=0.02$ and $0.05$; at $\beta=0.1$ the
+uncorrected $16^3$ value lies a third below. For smaller $\beta$ the layer is thinner than an
 element and the results depend on the mesh. With the example input,
 $\beta=10^{-4}$~mm$^2/T^*$, the layer is $0.01$~mm thick: the step in $\alpha$
 grows from $0.4$ to $1.8\,\%$ from $8^3$ to $24^3$, and the seed von Mises
