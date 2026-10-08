@@ -96,22 +96,28 @@ Stress only from $\mathbf F_e$; growth is $\alpha-1$.
 \dot\Psi+\Delta+C\;\to\;\operatorname*{stat}_{\dot{\bm\phi},\,\dot{\bm\psi},\,\gamma}
 \]
 $\Psi=-\tfrac12c^*\bar{\bm\phi}^{\mathrm T}\mathbf A\,\bar{\bm\phi}$,
-$\bar\phi_i=\phi_i\psi_i$, $C=\gamma(\sum_l\phi_l-1)$\\[3pt]
-the local form of the principle: the principle of the minimum of the
-dissipation potential (Junker et al.\ 2014, Hackl 1997)\\[3pt]
+$\bar\phi_i=\phi_i\psi_i$, $C=\gamma(\sum_l\phi_l-1)$\\[2pt]
+local form: principle of the minimum of the
+dissipation potential (Junker et al.\ 2014, Hackl 1997)\\[2pt]
 $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
 \end{column}
 \end{columns}
-\vspace{8pt}
+\vfill
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
-\cbox{p2}{1.2cm}{\small\textbf{\color{p2}Role in this work:} solved by the IKM element in ANSYS; growth law and stress added at the Gauss points (Part~2)}
+\cbox{p2}{1.6cm}{\scriptsize $\phi\in[0,1]$: amount of biofilm; $c$: nutrient concentration;
+$\alpha$: growth variable, growth $=\alpha-1$; $\beta$: diffusion coefficient of $\phi$ [mm$^2/T^*$];
+$k_\alpha$: growth rate [$1/T^*$]; $d$, $g$: nutrient diffusivity [mm$^2/T^*$], consumption rate [$1/T^*$];
+$T^*$: normalised time of Klempt et al.\ 2024}
 \end{column}
 \begin{column}{0.48\textwidth}
-\cbox{p1}{1.2cm}{\small\textbf{\color{p1}Role in this work:} calibrated for five species (Part~1); evaluated at every Gauss point (Part~3)}
+\cbox{p1}{1.6cm}{\scriptsize $\phi_i$, $\psi_i$: volume fraction and viability of species $i$;
+$\bar\phi_i$: living fraction; $\Psi$: free energy, $\Delta$: dissipation function,
+$C$: constraint function; $c^*$: nutrient level; $\mathbf A$: interaction matrix;
+$\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \end{column}
 \end{columns}
-\takeaway{Both models follow from one variational principle: the field describes space and stress, its local form the composition.}
+
 \end{frame}
 
 % --------------------------------------------------------
@@ -163,9 +169,10 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
   \item ANSYS user material: $\mathbf F_g=\alpha\mathbf I$, compressible
         Mooney--Rivlin (neo-Hookean here)
   \item Stiffness of Klempt et al.\ 2024: $E(\phi)=(\phi^2+f)\,E$,
-        $E=10$~Pa, $\nu=0.49$, $f=10^{-3}$ (floor, added in this work)
-  \item One element against closed forms: constrained growth gives
-        $\sigma=-1.0193\times10^{-4}$~MPa as predicted
+        Young's modulus $E=10$~Pa, Poisson's ratio $\nu=0.49$, floor for the void $f=10^{-3}$ (added in this work)
+  \item One element against closed forms: constrained growth gives the
+        hydrostatic stress $\sigma=-1.0193\times10^{-4}$~MPa as predicted
+        (input in mm and MPa)
 \end{itemize}
 \end{column}
 \begin{column}{0.6\textwidth}
@@ -190,7 +197,7 @@ $\Rightarrow$ $\mathbf A$ symmetric, $2n+2$ equations per point
         refined to $16^3$ and $24^3$
   \item The element's field $\phi$ (Neighbored Element Method) is unchanged
   \item New: at every Gauss point $\dot\alpha=k_\alpha\phi$
-        (Klempt 2024, Eq.~36) $\to\mathbf F_g\to$ stress
+        (Klempt 2024, Eq.~36, $k_\alpha=10^{-3}\,T^{*-1}$) $\to\mathbf F_g\to$ stress
   \item $\beta=0.02$~mm$^2/T^*$: Table~2 of the paper converted to the cube
         (\textcolor{warn}{assumption}, with sensitivity)
 \end{itemize}
@@ -241,8 +248,8 @@ Stresses scale with $E=10$~Pa.
 \begin{column}{0.4\textwidth}
 \small
 \begin{itemize}
-  \item Time: first order; $\Delta t=0.025$ gives about $1\,\%$
-  \item Mesh: seed stress converges at an observed order of about $2$;
+  \item Time step $\Delta t$ [$T^*$]: first order; $\Delta t=0.025$ gives about $1\,\%$
+  \item Element size $h$ [mm]: seed stress converges at an observed order of about $2$;
         error on $24^3$ about $2\,\%$ (three meshes only)
   \item $\alpha-1$ at fixed positions: $16^3\to24^3$ within $4\,\%$
   \item Explicit field update: smooth up to $\beta\Delta t/h^2=0.144$,
@@ -263,12 +270,13 @@ Stresses scale with $E=10$~Pa.
   \item Two species, cases of Klempt et al.\ 2026
   \item Every call from ANSYS to the point model is reproduced in Python
         bit for bit
-  \item Packed seed, $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$:
+  \item Share of species~1, $\phi_1/(\phi_1+\phi_2)$, in the seed at $T^*=1$:
         case~3 (coexistence) $0.667$, case~6 (one species wins) $0.021$;
         the qualitative outcome is retained
   \item \textcolor{warn}{Assumptions} (not in the papers), each with its
-        sensitivity: time link $s=0.15$, cap $\phi_{\rm cap}=0.9$,
-        threshold $\phi_{\min}=0.01$
+        sensitivity: time link $s=0.15$ (the point model advances $s\,\Delta t$ per substep),
+        cap $\phi_{\rm cap}=0.9$ (largest amount passed to it),
+        threshold $\phi_{\min}=0.01$ (amount at which a point starts)
 \end{itemize}
 \end{column}
 \begin{column}{0.48\textwidth}
@@ -289,7 +297,7 @@ Stresses scale with $E=10$~Pa.
 \begin{column}{0.34\textwidth}
 \begin{itemize}
   \item Nutrient held at one face, consumed in the seed
-  \item Strength: Thiele number $\Lambda^2=gL^2/d$
+  \item Strength: Thiele number $\Lambda^2=gL^2/d$, with $L=1$~mm the distance to the nutrient face
   \item Case~6, $\Lambda=4$: share $0.03$ near the nutrient, $0.44$ inside
   \item Case~3 hardly changes ($0.63$--$0.66$)
 \end{itemize}
