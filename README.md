@@ -110,7 +110,7 @@ and [`FEM_README.md`](FEM_README.md); the method figures are in
 - F. Klempt, H. Geisler, M. Soleimani, P. Junker: A continuum multi-species bacterial growth model with a novel interaction scheme. *Arch. Appl. Mech.* 96 (2026) 164.
 - T. Rudolf, F. Klempt, H. I. Kök, M. Soleimani, D. R. Jantos, P. Junker: Computational efficiency and accuracy of the Neighbored Element Method. *Finite Elem. Anal. Des.* 249 (2025) 104353. In [`references/`](references/).
 - N. Heine et al.: Influence of species composition and cultivation condition on peri-implant biofilm dysbiosis in vitro. *Front. Oral Health* (2025). The CLSM and viability data.
-- M. Soleimani et al. (2023, *Sci. Rep.*) and Z. Feng et al. (2021, *Bull. Math. Biol.*): two-species biofilm models, in [`references/`](references/).
+- M. Soleimani et al. (2023, *Sci. Rep.*) and D. Feng et al. (2021, *Bull. Math. Biol.*): two-species biofilm models, in [`references/`](references/).
 
 Full bibliography: `thesis/references.bib`. Cite this repository via
 [`CITATION.cff`](CITATION.cff); third-party content and its licences are listed
