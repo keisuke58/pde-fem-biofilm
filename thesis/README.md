@@ -77,7 +77,7 @@ Open:
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
 | 2 Nov | meeting with Assoc. Prof. Muramatsu (`slides_1102_nem_ja.tex`) |
 | 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| Dec | colloquium, any date offered to the examiners; the December trip is booked after it is fixed |
+| 16 Dec, 13:00 | colloquium (proposed by the IKM office on 8 Oct and accepted; waiting for Dr. Wangenheim and the room) |
 
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
