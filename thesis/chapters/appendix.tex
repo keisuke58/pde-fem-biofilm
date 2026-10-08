@@ -63,11 +63,11 @@ fit metrics are in Table~\ref{tab:heine_rmse}.
 \STATE $\triangleright$ \textbf{Phase 1a: fix-$\psi$, wide prior}
 \STATE Fix $\psi_i(t_k)\leftarrow\psi_i^{\mathrm{exp}}(t_k)$; draw $\{\btheta_j\}$ from the wide prior; $\tau_0\leftarrow0$
 \WHILE{$\tau_m<1$}
-  \STATE find $\tau_{m+1}$ s.t.\ $\mathrm{CoV}[\{w_j\}]=\delta_{\mathrm{target}}$ by bisection
+  \STATE find $\tau_{m+1}$ s.t.\ the coefficient of variation of $\{w_j\}$ equals $c_v$, by bisection
   \STATE weights $w_j\leftarrow p(\yobs\mid\btheta_j)^{\tau_{m+1}-\tau_m}$; resample $\propto w_j$
   \STATE estimate weighted covariance $\hat{\boldsymbol\Sigma}^{(m)}$
   \FOR{$k=1$ \TO $K$}
-    \STATE propose $\btheta_j'\sim\mathcal{N}(\btheta_j,s^2\hat{\boldsymbol\Sigma}^{(m)})$ for all $j$
+    \STATE propose $\btheta_j'\sim\mathcal{N}(\btheta_j,s_p^2\hat{\boldsymbol\Sigma}^{(m)})$ for all $j$
     \STATE evaluate all $N_p$ likelihoods in parallel via \texttt{jax.vmap} on GPU
     \STATE accept/reject (Metropolis--Hastings); clip to prior bounds
   \ENDFOR
@@ -81,9 +81,10 @@ fit metrics are in Table~\ref{tab:heine_rmse}.
 \end{algorithm}
 
 \paragraph{Hyperparameters.}
-Adaptive tempering with CoV target $\delta_{\mathrm{target}}=1.0$; proposal scale
-$s^2=2.38^2/d$ adapted online toward an acceptance rate of about $23\%$;
+Adaptive tempering (stage $m$, exponent $\tau_m$) with the target $c_v=1$ for the
+coefficient of variation of the weights; proposal scale
+$s_p^2=2.38^2/n_\theta$ ($n_\theta=15$) adapted online toward an acceptance rate of about $23\%$;
 $K=20$ mutation steps per stage; forward model by implicit-Euler Newton
 ($\Delta t=10^{-4}$, $2{,}500$ steps), gauge $c^*=25$, barrier $K_p=\eta_i\times10^{-4}$.
-Convergence checked by $\mathrm{ESS}=N_p$ at the final stage and a two-seed
+Convergence checked by the effective sample size $\mathrm{ESS}=N_p$ at the final stage and a two-seed
 Gelman--Rubin criterion $\hat R<1.1$ on all active parameters.
