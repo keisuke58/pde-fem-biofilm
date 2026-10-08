@@ -1,0 +1,21 @@
+# fx41_p0  (2026-10-08 08:41, 25 min 41 s, 4 CPUs, Fortran point model)
+# Keio server fifa (Linux, Abaqus 2024), automatic chain 20261008b.
+# abaqus_composition/make_klempt_inp.py /home/nishioka/IKM_Hiwi/pde-fem-biofilm/abaqus_composition/fx41_p0.inp --case fig4_corner --n 20 --dt 0.001 --T 1.0 --every 10 --eps 1e-8 --hstab 0 --E 0.01 --pen 0 --s-every 50
+# abaqus_composition/run_comp.sh abaqus_composition/fx41_p0.inp 2sp_case6 4
+# PASS: fx41_p0 completed (native point model)
+# vs abaqus_composition/results_1006/fx41_p0.txt: identical
+4.1: Abaqus (mean phi, mean c, max / min element phi, min element c) against the paper (mean phi, mean c)
+   T*     phi       c  max phi  min phi    min c  paper phi  paper c
+ 0.05   0.065   0.004    1.000    0.000   -0.084      0.132    0.328
+ 0.10   0.065  -0.002    1.000    0.000   -0.089      0.205    0.241
+ 0.15   0.066  -0.008    0.999    0.000   -0.094      0.269    0.196
+ 0.20   0.066  -0.013    0.998    0.000   -0.099      0.324    0.166
+ 0.30   0.067  -0.024    0.992    0.000   -0.107      0.404    0.138
+ 0.40   0.068  -0.033    0.983    0.000   -0.116      0.463    0.123
+ 0.50   0.068  -0.042    0.970    0.001   -0.123      0.518    0.113
+ 0.60   0.069  -0.050    0.953    0.001   -0.130      0.570    0.105
+ 0.70   0.069  -0.057    0.933    0.001   -0.135      0.618    0.099
+ 0.80   0.070  -0.063    0.911    0.001   -0.140      0.662    0.094
+ 0.90   0.070  -0.068    0.887    0.001   -0.144      0.703    0.090
+ 1.00   0.071  -0.073    0.862    0.001   -0.147      0.740    0.086
+RMS Abaqus - paper: phi 0.443  c 0.191  mean 0.317
