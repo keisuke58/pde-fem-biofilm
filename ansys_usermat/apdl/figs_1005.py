@@ -114,7 +114,7 @@ def fig_whole():
     ax[0].plot([lo, hi], [lo, hi], "k--", lw=1, label="1 : 1")
     ax[0].plot([lo, hi], [ratio * lo, ratio * hi], "r-", lw=1, label=f"{ratio:.2f} : 1 (median)")
     ax[0].set(xlabel="von Mises [Pa], Eq. 36 in the material routine",
-              ylabel="von Mises [Pa], partner's growth variable",
+              ylabel="von Mises [Pa], the element's own growth variable",
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
     fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
