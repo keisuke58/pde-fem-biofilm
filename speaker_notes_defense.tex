@@ -214,11 +214,74 @@ Thank you.
 
 % ------------------------------------------------------------------
 \vspace{10pt}
-{\large\bfseries Appendix slides (for questions)}\par
-\begin{itemize}[leftmargin=*]
-  \item \textbf{A, notation}: 記号を聞かれたとき。
-  \item \textbf{B, growth field}: 場の式・材料・消費項 $g\phi c$ を聞かれたとき。
-  \item \textbf{C, point model and one substep}: 点モデルの式と、1サブステップの流れ。
-\end{itemize}
+{\large\bfseries Appendix and backup slides (only when asked)}\par
+Short answers; open the slide, say the first sentence, then point to the number.
+
+\slide{Appendix A: notation}{Q}
+\EN These are all symbols of the talk. $\phi$ is the amount of biofilm, $\alpha$ the growth variable with growth $\alpha-1$, and $\phi_i$, $\psi_i$ the fraction and viability of each species.
+\JA 発表の記号の一覧です。$\phi$ はバイオフィルムの量、$\alpha$ は成長の変数で成長は $\alpha-1$、$\phi_i$ と $\psi_i$ は各菌種の体積分率と生存率です。
+
+\slide{Appendix B: growth field and mechanics}{Q}
+\EN Stress comes only from the elastic part. The stiffness is that of Klempt et al.\ 2024, ten pascal; the consumption term is $g\phi c$, as in the authors' implementation, not $g\phi$ as printed.
+\JA 応力は弾性部分からだけ出ます。剛性は論文の 10 Pa。消費項は印刷の $g\phi$ ではなく、著者の実装どおり $g\phi c$ です。
+
+\slide{Appendix C: point model and one coupled substep}{Q}
+\EN In one substep the element updates $\phi$, each Gauss point updates $\alpha$ and the stress, and for two species the point model is scaled to the local amount and advanced by $s\,\Delta t$.
+\JA 1サブステップでは、要素が $\phi$ を更新し、各 Gauss 点で $\alpha$ と応力を更新し、2菌種なら点モデルを局所の量に合わせて $s\,\Delta t$ だけ進めます。
+
+\slide{Appendix D: stability of the explicit field update}{Q}
+\EN Runs stay smooth up to $\beta\Delta t/h^2=0.144$ and oscillate at $0.160$, below the $1/6$ of the seven-point stencil. All thesis runs are at $0.128$ or below.
+\JA $\beta\Delta t/h^2$ が 0.144 までは滑らか、0.160 で振動します。7点差分の 1/6 より下です。修論の実行はすべて 0.128 以下です。
+
+\slide{Backup 1: stationarity conditions}{Q}
+\EN Taking the variation of $\dot\Psi+\Delta+C$ with respect to the rates and $\gamma$ gives $2n+2$ equations. Only the symmetric part of $\mathbf A$ enters the energy, so $\mathbf A$ is symmetric.
+\JA $\dot\Psi+\Delta+C$ を速度と $\gamma$ で変分すると $2n+2$ 本の式になります。エネルギーには $\mathbf A$ の対称部分しか入らないので、$\mathbf A$ は対称です。
+\hint{Junker 先生向け。ここは板書できるように。}
+
+\slide{Backup 2: symmetric against asymmetric interactions}{Q}
+\EN The asymmetric model fits better, but it has 30 parameters for 25 observations. The symmetric model gives a posterior, exact conservation and the pH prediction.
+\JA 非対称モデルの方が当てはまりは良いが、観測 25 個に対してパラメータが 30 個あります。対称モデルは事後分布、厳密な保存、pH の予測を与えます。
+
+\slide{Backup 3: Phase 1 and Phase 2}{Q}
+\EN Phase 1 fixes the viability to the measured values, Phase 2 leaves it free. They agree in Commensal Static; in the dysbiotic conditions the \textit{P.~gingivalis} entries shift.
+\JA Phase 1 は生存率を測定値に固定、Phase 2 は自由にします。常在・静置では一致し、dysbiotic では \textit{P.~gingivalis} の係数がずれます。
+
+\slide{Backup 4: posterior distributions}{Q}
+\EN I judge identifiability by agreement of independent runs and by posterior mass at the bounds, not by the width of the posterior alone.
+\JA 識別できるかは、独立な実行の一致と、境界に事後分布がたまっていないかで判断しています。幅だけでは判断しません。
+
+\slide{Backup 5: sensitivity to the coupling assumptions}{Q}
+\EN The type of outcome does not change with $s$ or $\phi_{\rm cap}$. In case 6 the winner appears from $s\approx0.15$ on; in case 3 the share moves by a few hundredths.
+\JA $s$ と $\phi_{\rm cap}$ を変えても結果の型は変わりません。case 6 は $s\approx0.15$ 以上で勝者が決まり、case 3 の割合は数百分の一しか動きません。
+
+\slide{Backup 6: sensitivity to $\beta$}{Q}
+\EN $\beta$ is Table~2 of the paper converted to the cube, an assumption. A larger $\beta$ lets $\phi$ leave the seed and lowers the stress; above 0.02 the diffusion length is resolved by the mesh.
+\JA $\beta$ は論文の値を立方体に換算した仮定です。大きいと $\phi$ がシードから抜けて応力が下がります。0.02 以上では拡散長をメッシュで解像できています。
+
+\slide{Backup 7: the two growth laws of Klempt et al.\ 2024}{Q}
+\EN The text gives Eq.~36, Table~1 a different update. A seed that is full from the start grows only under Eq.~36, so I follow Eq.~36, as the element does.
+\JA 本文は Eq.~36、Table~1 は別の更新式です。最初から満たされたシードは Eq.~36 でしか成長しないので、要素と同じく Eq.~36 に従いました。
+
+\slide{Backup 8: Eq.~36 against the element's variable}{Q}
+\EN Same pattern, cosine similarity one. The factor 0.455 is one half times ten elevenths: the mean over both species fields, one unused, and a lag of one substep.
+\JA 分布は同じで、余弦類似度は 1 です。0.455 倍は ½×10/11 で、2つの菌種の場の平均（片方は未使用）と、1サブステップの遅れによるものです。
+
+\slide{Backup 9: mesh and incompressibility}{Q}
+\EN I quote seed averages, not peaks, because the corners are singular. B-bar integration avoids locking at $\nu=0.49$; full integration would overestimate the mean stress by a factor of 3.7 on $8^3$.
+\JA 角は特異なので、ピークではなくシードの平均を使っています。B-bar 積分で $\nu=0.49$ のロッキングを避けています。完全積分だと $8^3$ で平均応力を 3.7 倍大きく見積もります。
+\hint{Wangenheim 先生向け。}
+
+\slide{Backup 10: correction of the surface points}{Q}
+\EN In the element, $\phi$ at the surface points was never updated. With the correction the main results change by less than half a percent; only runs where $\phi$ reaches the faces change more, and their corrected values are used.
+\JA 要素では表面の点の $\phi$ が更新されていませんでした。直すと主な結果の変化は 0.5 \% 未満。$\phi$ が面に届く実行だけ大きく変わり、その値は修正後のものを使っています。
+\hint{誰の誤りかは言わない。何が起きていて、どう直したかだけ。}
+
+\slide{Backup 11: reproduction of Klempt et al.\ 2024}{Q}
+\EN Test case 4.1 is reproduced with the parameters of Table~2, with stated departures from the printed equations: the consumption $g\phi c$ and the front term.
+\JA test case 4.1 は Table~2 の値で再現できました。ただし印刷された式とは違う点があり、消費項 $g\phi c$ と前線の項について修論に明記しています。
+
+\slide{Backup 12: solution loop of the element framework}{Q}
+\EN The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced by the element after each substep.
+\JA 材料ルーチンは各 Gauss 点・各反復で呼ばれ、$\phi$ と $c$ の場は各サブステップの後に要素が進めます。
 
 \end{document}
