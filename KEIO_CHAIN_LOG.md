@@ -266,3 +266,28 @@ and the push all came from the chain itself (d10cc81).
  ]
 }
 ```
+
+---
+
+## 2026-10-08: lab is behind master
+
+`mmc-research-group/nishioka-biofilm-fem` needs a push. fifa cannot reach that
+organisation (every attempt is refused by the sandbox), so this is only a note,
+per CLOUD_TO_FIFA.ja.md of 8 October, evening.
+
+```
+origin/master  ac91c8a
+lab/main       0186a2c   (5 commit(s) behind)
+```
+
+The push the user has to run, which goes around the stale local master on fifa
+and is a fast-forward, so no force:
+
+```
+git fetch origin master && git push lab origin/master:main
+```
+
+What lab is missing is today's Keio work: the Linux verification of hand-off
+section 4 (#58, #60, #66), the chain and its guards, `CLOUD_TO_FIFA.ja.md`
+itself (#61, #63), the scratch move (#59), the pins (#62) and the README
+update (#64).
