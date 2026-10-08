@@ -30,6 +30,8 @@
 % one message per slide, at the bottom
 \newcommand{\takeaway}[1]{\par\vfill\noindent\colorbox{c3!10}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small\textbf{\color{c3}$\rightarrow$}\ #1}}}
 % box with a coloured title
+% short fact under a wide figure: colour, heading, text
+\newcommand{\factbox}[3]{\colorbox{#1!8}{\parbox[t][1.25cm][t]{\dimexpr\linewidth-2\fboxsep}{\raggedright\footnotesize\textbf{\color{#1}#2}\\[2pt]#3}}}
 \newcommand{\cbox}[3]{\colorbox{#1!8}{\parbox[t][#2][t]{\dimexpr\linewidth-2\fboxsep}{\raggedright #3}}}
 
 \title{Coupling biofilm growth into an existing FEM element}
@@ -149,7 +151,7 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \begin{columns}[c]
 \begin{column}{0.48\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.33\textheight,keepaspectratio]{heine_ph_validation.pdf}
+\includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{heine_ph_validation.pdf}
 \end{column}
 \begin{column}{0.48\textwidth}
 \small
@@ -167,24 +169,16 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 % --------------------------------------------------------
 \begin{frame}{Part 2: implementation of the growth law in ANSYS}
 \centering
-\includegraphics[width=0.92\linewidth,height=0.42\textheight,keepaspectratio]{v222_closed_form.png}\\[2pt]
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{v222_closed_form.png}\\[3pt]
 \begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item ANSYS user material: $\mathbf F_g=\alpha\mathbf I$, compressible
-        Mooney--Rivlin (neo-Hookean here)
-  \item Stiffness of Klempt et al.\ 2024: $E(\phi)=(\phi^2+f)\,E$,
-        Young's modulus $E=10$~Pa, Poisson's ratio $\nu=0.49$
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Material}{ANSYS user material, $\mathbf F_g=\alpha\mathbf I$, neo-Hookean}
 \end{column}
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item Floor for the void $f=10^{-3}$ (added in this work)
-  \item One element: constrained growth gives the hydrostatic stress
-        $\sigma=-1.0193\times10^{-4}$~MPa as predicted (input in mm and MPa)
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Stiffness (Klempt et al.\ 2024)}{$E(\phi)=(\phi^2+f)E$, $E=10$~Pa, $\nu=0.49$; $f=10^{-3}$ (this work)}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Check (one element)}{free: zero stress; constrained: $-1.0193\times10^{-4}$~MPa, as predicted}
 \end{column}
 \end{columns}
 \takeaway{The implementation reproduces the closed-form solutions for free (stress-free) and constrained growth.}
@@ -193,24 +187,16 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 % --------------------------------------------------------
 \begin{frame}{Part 2: coupling to the IKM element}
 \centering
-\includegraphics[width=0.92\linewidth,height=0.42\textheight,keepaspectratio]{fig_model_setup.png}\\[2pt]
+\includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{fig_model_setup.png}\\[3pt]
 \begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item 2~mm cube, $8^3$ SOLID185 elements (B-bar), seed of 32 elements;
-        refined to $16^3$ and $24^3$
-  \item The element's field $\phi$ (Neighbored Element Method) is unchanged
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Model}{2~mm cube, $8^3$ SOLID185 (B-bar), seed of 32 elements; also $16^3$, $24^3$}
 \end{column}
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item New: at every Gauss point $\dot\alpha=k_\alpha\phi$
-        (Klempt 2024, Eq.~36, $k_\alpha=10^{-3}\,T^{*-1}$) $\to\mathbf F_g\to$ stress
-  \item $\beta=0.02$~mm$^2/T^*$: Table~2 of the paper converted to the cube
-        (\textcolor{warn}{assumption}, with sensitivity)
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p3}{Unchanged}{the element's field $\phi$ (NEM); $\beta=0.02$~mm$^2/T^*$, converted (\textcolor{warn}{assumption})}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p1}{Added in this work}{$\dot\alpha=k_\alpha\phi$ at every Gauss point (Eq.~36) $\to\mathbf F_g\to$ stress}
 \end{column}
 \end{columns}
 \takeaway{The field formulation of the element is retained; only the growth law at the integration points is added.}
@@ -254,24 +240,16 @@ Stresses scale with $E=10$~Pa.
 % --------------------------------------------------------
 \begin{frame}{Part 2: convergence and stability}
 \centering
-\includegraphics[width=0.85\linewidth,height=0.42\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[2pt]
+\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
 \begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item Time step $\Delta t$ [$T^*$]: first order; $\Delta t=0.025$ gives about $1\,\%$
-  \item Element size $h$ [mm]: seed stress converges at an observed order of about $2$;
-        error on $24^3$ about $2\,\%$ (three meshes only)
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Time step $\Delta t$ [$T^*$]}{first order; $\Delta t=0.025$ gives an error of about $1\,\%$}
 \end{column}
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item $\alpha-1$ at fixed positions: $16^3\to24^3$ within $4\,\%$
-  \item Explicit field update: smooth up to $\beta\Delta t/h^2=0.144$,
-        oscillating at $0.160$; stricter than $h^2/(2\Delta t)\ge\beta$
-        (Rudolf et al.\ 2025)
-\end{itemize}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Element size $h$ [mm]}{seed stress: order about $2$, error on $24^3$ about $2\,\%$; $\alpha-1$ within $4\,\%$}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Stability}{$\beta\Delta t/h^2$: smooth up to $0.144$, oscillating at $0.160$ (Rudolf et al.\ 2025: $0.5$)}
 \end{column}
 \end{columns}
 \takeaway{Estimated discretisation error of the seed stress on $24^3$ elements: about $2\,\%$; all simulations lie within the stability limit.}
@@ -279,25 +257,22 @@ Stresses scale with $E=10$~Pa.
 
 % --------------------------------------------------------
 \begin{frame}{Part 3: species composition at the Gauss points}
+\begin{columns}[c]
+\begin{column}{0.56\textwidth}
 \centering
-\includegraphics[width=0.85\linewidth,height=0.36\textheight,keepaspectratio]{fig_composition_map.png}\\[2pt]
-\begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\small
-\begin{itemize}
-  \item Two species, cases of Klempt et al.\ 2026; every call from ANSYS to the
-        point model is reproduced in Python bit for bit
-  \item Share of species~1, $\phi_1/(\phi_1+\phi_2)$, in the seed at $T^*=1$:
-        case~3 $0.667$, case~6 $0.021$
-\end{itemize}
+\includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{fig_composition_map.png}\\[2pt]
+\raggedright\footnotesize Case~6: final share of species~1 against its start share and the local nutrient level
 \end{column}
-\begin{column}{0.48\textwidth}
+\begin{column}{0.42\textwidth}
 \small
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{4pt}
+  \item Two species, cases of Klempt et al.\ 2026; every call from ANSYS to the
+        point model reproduced in Python bit for bit
+  \item Share $\phi_1/(\phi_1+\phi_2)$ in the seed at $T^*=1$:
+        case~3 $0.667$, case~6 $0.021$
   \item \textcolor{warn}{Assumptions} (not in the papers), with sensitivity:
         time link $s=0.15$ (point model advances $s\,\Delta t$ per substep),
         cap $\phi_{\rm cap}=0.9$, threshold $\phi_{\min}=0.01$
-  \item Map: final share against start share and local nutrient (case~6)
 \end{itemize}
 \end{column}
 \end{columns}
