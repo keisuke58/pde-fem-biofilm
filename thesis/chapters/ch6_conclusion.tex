@@ -71,21 +71,25 @@ composition as a local state at each Gauss point.
     this work & one field and a point model per Gauss point & ANSYS, IKM element & yes (one-way) & point model, local nutrient\\
     \bottomrule
   \end{tabular}
-\end{table} The number of fields therefore does not grow with the number of
-species, and the point model, calibrated on its own, enters unchanged. The
+\end{table} The number of transported fields therefore does not grow with the
+number of species; the species enter as a local state at each Gauss point, and
+the point model, calibrated on its own, enters unchanged. The
 price is that the species cannot move relative to each other: the
 composition varies in space only through the local nutrient and, in the Python
 study, through the share-weighted front rate. Segregation of species by
 different spreading is outside what this scheme can show.
 
 \paragraph{Calibrated and chosen parameters.} The interaction coefficients of
-Chapter~\ref{ch:heine} come from measured time courses, and the inferred
-matrices predict a quantity that did not enter the calibration, the pH
-($R^2=0.78$). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
+Chapter~\ref{ch:heine} come from measured time courses, and the fractions
+integrated with the inferred matrices reproduce a quantity that did not enter
+the calibration, the pH, through the linear rule of
+Section~\ref{sec:heine_validation} fitted on $90$ time points ($R^2=0.78$). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
 cases of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, chosen there
 to show coexistence and the survival of one species. Calibrated point-model
 parameters and the finite element field have not yet met in one computation;
-this needs the five-species state in the element (Outlook).
+this needs the five-species state in the element (Outlook). The two-species
+runs exercise the same code path, so what is missing is the state vector of
+five species in the element, not a new coupling.
 
 \paragraph{What the stresses mean.} With the stiffness of Klempt et
 al.~\cite{Klempt2024DiffusionDrivenGrowth} the stresses are of order
@@ -93,8 +97,12 @@ $10^{-4}$~Pa and scale with the stiffness. What carries over is their pattern:
 the seeded region is compressed and the surrounding material is under tension,
 as in the comparison of growth models by Klempt et
 al.~\cite{Klempt2023NumericalComparison} and in the ring of tension of the 2024
-paper. Statements about the magnitude in an oral biofilm need a measured
-stiffness and a measured stress, which were not available.
+paper. Measured stiffnesses of oral biofilms lie in the kPa range, for example $0.6$
+to $14$~kPa by nanoindentation depending on the sucrose
+supply~\cite{Pattem2018}; as the stresses scale linearly with $E$, a stiffness
+of $10$~kPa gives stresses of order $0.1$~Pa. A statement about the magnitude
+in an oral biofilm needs that stiffness together with a measured stress, which
+this work does not have.
 
 \paragraph{The numerical scheme.} The field of the element is advanced
 explicitly. The condition stated by Rudolf et al.~\cite{Rudolf2025NEM} is the
@@ -103,7 +111,10 @@ limit of the NEM stencil follows from a Bloch analysis
 (Appendix~\ref{app:stability}) and depends on the mesh through the fixed width
 of the weight, from about $0.06$ on $8^3$ to $0.18$ on fine meshes, which the
 runs confirm. The update is first order in time. For the seed
-problem the stress converges with the mesh at an observed order of about two.
+problem the growth field converges at about second order against a
+finite-volume reference solution, and the stress, with its jump in stiffness
+at the surface of the seed, at about first order; on $24^3$ the seed stress
+lies $2\,\%$ from its converged value.
 An implicit treatment of the field would remove the step limit; whether it is
 also more accurate for the same cost is the comparison planned at Keio.
 
