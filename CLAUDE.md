@@ -244,6 +244,10 @@ this machine's specific workflow.
   Dr.-Ing. Meisam Soleimani); in mail he is fine with "Meisam". This
   replaces the 2026-10-04 rule "Prof. Soleimani"; documents already handed
   over keep their wording.
+- **Thesis draft sent to Meisam on 9 Oct 2026** (first hand-over, 85 pages,
+  "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
+  Section 5.1 named). Content freeze 12 Oct, submission 20 Oct. Do not send
+  him a second draft; reply to his comments only.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
