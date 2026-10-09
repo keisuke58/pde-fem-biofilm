@@ -215,14 +215,14 @@ the coupled ANSYS solution agrees with the exact solution of the time integratio
 \begin{columns}[T]
 \begin{column}{0.6\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{fig_element_beta002.png}\\[2pt]
+\includegraphics[width=0.98\linewidth,height=0.5\textheight,keepaspectratio]{fig_element_beta002.png}\\[2pt]
 \raggedright\small Left: von Mises stress of the seeded element and its largest
 neighbour; right: $\alpha-1$; solid: Eq.~36 at the Gauss points, dashed: the
 element's own growth variable.
 \end{column}
 \begin{column}{0.38\textwidth}
 \small At $T^*=1.1$ on $16^3$ elements:\\[5pt]
-\begin{tabular}{@{}l@{\hspace{6pt}}r@{}}
+\begin{tabular}{@{}l@{\hspace{3pt}}r@{}}
 \toprule
 mean stress, seed & $-2.5\times10^{-4}$~Pa\\
 mean stress, first layer & $+6.0\times10^{-5}$~Pa\\
@@ -246,13 +246,13 @@ Stresses scale with $E=10$~Pa.
 \factbox{p2}{Time step $\Delta t$ [$T^*$]}{first order; $\Delta t=0.025$ gives an error of about $1\,\%$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Element size $h$ [mm]}{seed stress: order about $2$, error on $24^3$ about $2\,\%$; $\alpha-1$ within $4\,\%$}
+\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ against a reference solution: $4.1$ / $1.3$ / $0.7\,\%$ on $8^3$ / $16^3$ / $24^3$; seed stress on $24^3$: $2\,\%$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Stability}{limit of the NEM stencil derived (Bloch): $0.14$--$0.17$ on $16^3$--$24^3$, as observed; Rudolf et al.\ 2025 give the 1-D value $0.5$}
+\factbox{p2}{Stability}{NEM limit derived (Bloch): $0.06$ / $0.14$ / $0.16$ on $8^3$ / $16^3$ / $24^3$, confirmed by runs; Rudolf et al.\ 2025: 1-D value $0.5$}
 \end{column}
 \end{columns}
-\takeaway{Estimated discretisation error of the seed stress on $24^3$ elements: about $2\,\%$; the stability limit is derived and all simulations lie within it.}
+\takeaway{The error of the growth field is measured against a reference solution, the seed stress is $2\,\%$ from its converged value, and every run lies within the derived stability limit.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -466,7 +466,9 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
 stencil on the integration-point lattice (thesis, Appendix~D). $h^2/(2\Delta t)\ge\beta$ of
 Rudolf et al.\ 2025 is the one-dimensional limit ($1/2$); the seven-point stencil gives $1/6$;
 the NEM fit with its weight width $\beta^*=0.2$~mm fixed in millimetres gives $0.06$ on $8^3$,
-$0.14$--$0.15$ on $16^3$ and $0.16$--$0.17$ on $24^3$, which the runs bracket.
+$0.14$--$0.15$ on $16^3$ and $0.16$--$0.17$ on $24^3$, which the runs bracket. On $8^3$ a run to
+$T^*=1.1$ is too short for the unstable mode to show; runs to $T^*=5$ (black edge) give $0.048$
+smooth and $0.080$ failing.
 \end{frame}
 
 % ========================================================
