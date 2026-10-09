@@ -310,8 +310,9 @@ explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
 give $\Delta t\le h^2/(2\beta)$ for the element size $h$, which is the limit of
 the three-point stencil in one dimension; the seven-point stencil in three
 dimensions has $\lambda=\beta\Delta t/h^2\le1/6$. The runs of this element
-stayed smooth up to $\lambda=0.128$ on $16^3$ and $0.158$ on $24^3$ elements
-and oscillated at $0.160$ and $0.187$ (Figure~\ref{fig:ch5-stability}). A
+stayed smooth up to $\lambda=0.136$ on $16^3$ and $0.158$ on $24^3$ elements
+and failed at $0.144$ and $0.187$ (Figure~\ref{fig:ch5-stability}; the $16^3$
+pair are runs to $T^*=5$). A
 Bloch analysis of the NEM stencil on the lattice of the integration points
 (Appendix~\ref{app:stability}) gives the limit: it is $0.18$ for the
 unweighted fit, because the lattice is not uniform, and the Gaussian weight
