@@ -152,16 +152,20 @@ Klempt らが報告している引張の輪と同じです。応力が小さい�
 
 \slide{Part 2: convergence and stability}{13:30}
 \EN How far can these numbers be trusted? In time, the update is first
-order; at my time step the error is about one percent. In space, the seed
-stress converges at an observed order of about two, with an error of about
-two percent on $24^3$ elements, estimated from three meshes. The growth,
-compared at fixed positions, changes by less than four percent from $16^3$ to
-$24^3$. And the explicit field update is stable only up to $\beta\Delta
-t/h^2$ of about 0.15 in three dimensions, which is stricter than the
-condition given in the literature. All runs in the thesis are below it.
-\JA 時間は1次で、今の刻みの誤差は約 1 \%。メッシュは約2次で収束し、$24^3$ の誤差は約
-2 \%（3つのメッシュからの推定）。$\alpha$ は位置を固定して比べると $16^3\to24^3$ で 4 \% 以内。
-陽解法の安定の境目は 3 次元で約 0.15 で、文献の条件より厳しい。修論の実行はすべてその下。
+order; at my time step the error is about one percent. In space I solved the
+same seed problem with a finite-volume code on grids up to $192^3$ as a
+reference: the growth of the element is too large by four percent on $8^3$,
+one point three on $16^3$ and zero point seven on $24^3$, so the error is
+measured, not estimated. The seed stress on $24^3$ is two percent below its
+converged value, from a separate hexahedral code on meshes up to $48^3$. And
+the explicit field update is stable only up to $\beta\Delta t/h^2$ of about
+0.06 on the coarse mesh and 0.16 on the fine one, which I derived and
+confirmed by runs; this is stricter than the condition in the literature.
+All runs in the thesis are below it.
+\JA 時間は1次で、今の刻みの誤差は約 1 \%。空間は、同じ問題を有限体積で $192^3$ まで解いた参照解と
+比べ、要素の $\alpha$ の誤差は $8^3$ で 4 \%、$16^3$ で 1.3 \%、$24^3$ で 0.7 \%（推定ではなく実測）。
+シードの応力は $24^3$ で収束値より約 2 \% 低い（別の hex8 コードで $48^3$ まで）。陽解法の安定の境目は
+粗いメッシュで 0.06、細かいメッシュで 0.16 と導き、実行で確かめた。文献の条件より厳しい。修論の実行はすべてその下。
 
 \slide{Part 3: species composition at the Gauss points}{15:00}
 \EN The third part puts the composition at every Gauss point, for two species
@@ -230,8 +234,8 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \JA 1サブステップでは、要素が $\phi$ を更新し、各 Gauss 点で $\alpha$ と応力を更新し、2菌種なら点モデルを局所の量に合わせて $s\,\Delta t$ だけ進めます。
 
 \slide{Appendix D: stability of the explicit field update}{Q}
-\EN The condition of Rudolf et al.\ is the one-dimensional one, one half. I derived the limit of the NEM stencil on the lattice of the integration points by a Bloch analysis: the weight of the fit has a fixed width in millimetres, so the limit depends on the mesh, about 0.06 on eight cubed, 0.14 to 0.15 on sixteen cubed and 0.16 to 0.17 on twenty-four cubed. The runs bracket exactly these values.
-\JA Rudolf らの条件は1次元のもので 1/2 です。積分点の格子の上で NEM の stencil の限界を Bloch 解析で導きました。重みの幅が mm で固定なので限界はメッシュに依存し、8³ で約 0.06、16³ で 0.14〜0.15、24³ で 0.16〜0.17。実行の結果はちょうどこの値をはさんでいます。
+\EN The condition of Rudolf et al.\ is the one-dimensional one, one half. I derived the limit of the NEM stencil on the lattice of the integration points by a Bloch analysis: the weight of the fit has a fixed width in millimetres, so the limit depends on the mesh, about 0.06 on eight cubed, 0.14 to 0.15 on sixteen cubed and 0.16 to 0.17 on twenty-four cubed. Runs on every mesh bracket these values; on eight cubed the run had to be five times longer, because the unstable mode starts very small.
+\JA Rudolf らの条件は1次元のもので 1/2 です。積分点の格子の上で NEM の stencil の限界を Bloch 解析で導きました。重みの幅が mm で固定なので限界はメッシュに依存し、8³ で約 0.06、16³ で 0.14〜0.15、24³ で 0.16〜0.17。どのメッシュでも実行がこの値をはさんでいます。8³ では不安定なモードの初期値が小さいので、5 倍長く回して確かめました。
 \hint{Junker 先生向け。修論の付録 D。「観測」ではなく「導出して一致した」と言う。}
 
 \slide{Backup 1: stationarity conditions}{Q}
