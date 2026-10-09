@@ -138,7 +138,10 @@ try {
             $fm = if (Test-Path $outf) { @(Select-String $outf -Pattern '\*\*\* FATAL \*\*\*' -Context 0, 3) } else { @() }
             # the banner of every output says "LICENSORS": look at the FATAL message itself only
             $fatal = $fm.Count -gt 0 -and -not ($fm | Where-Object { ($_.Line + ' ' + ($_.Context.PostContext -join ' ')) -match 'licen[cs]' })
-            if ($rc -eq 0 -or $wrote -or -not $quick -or $fatal -or $try -eq 4) { break }
+            # ANSYS ran and stopped itself (e.g. a distorted element at a large time step):
+            # the message count is printed, so this is a result, not a licence problem
+            $ended = (Test-Path $outf) -and (Select-String $outf -Pattern 'ERROR\s+MESSAGES ENCOUNTERED=\s*[1-9]' -Quiet)
+            if ($rc -eq 0 -or $wrote -or -not $quick -or $fatal -or $ended -or $try -eq 4) { break }
             L "  failed within 3 min without results: waiting 30 min before retrying (licence/network?)"
             Start-Sleep 1800
         }
