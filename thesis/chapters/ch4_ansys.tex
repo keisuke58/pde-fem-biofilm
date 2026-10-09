@@ -317,7 +317,9 @@ Bloch analysis of the NEM stencil on the lattice of the integration points
 unweighted fit, because the lattice is not uniform, and the Gaussian weight
 of the fit, whose width $\beta^*=0.2$~mm is fixed in millimetres, lowers it on
 coarse meshes to $0.14$ to $0.15$ on $16^3$ and $0.16$ to $0.17$ on $24^3$,
-within the brackets of the runs, and to about $0.06$ on $8^3$. Every run in
+within the brackets of the runs, and to about $0.06$ on $8^3$. On $8^3$ the
+runs stay smooth up to $\lambda=0.088$ within $T^*=1.1$, because the
+unstable mode grows from a very small start; the appendix explains this. Every run in
 this chapter has $\lambda\le0.128$ on $16^3$ and finer meshes and
 $\lambda\le0.04$ on $8^3$ (the $16^3$ run at $\beta=0.1$ uses
 $\Delta t=0.0125$).
@@ -814,11 +816,11 @@ The diffusion coefficient sets the size of the stresses
 (Table~\ref{tab:ch5-beta}): $\phi$ that diffuses out of the seed lowers its
 growth near the surface, and the step in $\alpha$ between the inside and the
 surface of the seed loads it. From $\beta=0.005$ to $0.1$~mm$^2/T^*$ the mean
-stress in the seed falls by a factor of about four on $8^3$ and ten on $16^3$
-(the $16^3$ values at $\beta\ge0.05$ from before the correction). For $\beta\ge0.02$ the diffusion
+stress in the seed falls by a factor of about four on $8^3$ and eight on $16^3$.
+For $\beta\ge0.02$ the diffusion
 length $\sqrt{\beta T^*}\ge0.14$~mm is resolved by the meshes, and $8^3$ and
-$16^3$ agree within $10\,\%$ at $\beta=0.02$ and $0.05$; at $\beta=0.1$ the
-uncorrected $16^3$ value lies a third below. For smaller $\beta$ the layer is thinner than an
+$16^3$ agree within $11\,\%$ at $\beta=0.02$ and $0.05$ and within $16\,\%$ at
+$\beta=0.1$. For smaller $\beta$ the layer is thinner than an
 element and the results depend on the mesh. With the example input,
 $\beta=10^{-4}$~mm$^2/T^*$, the layer is $0.01$~mm thick: the step in $\alpha$
 grows from $0.4$ to $1.8\,\%$ from $8^3$ to $24^3$, and the seed von Mises
@@ -830,9 +832,9 @@ Python study above.
   \centering
   \caption[Sensitivity to the diffusion coefficient]{Mean stress in the seed
     at $T^*=1.1$ for different $\beta$ [Pa]; $\beta=0.02$ is the value used in
-    this chapter. $8^3$ at $\beta=0.05$ and $0.1$: runs with $\phi$ at the
-    surface points updated (\S\ref{sec:ch5-limitations}); $^{\dagger}$ before
-    that correction.}
+    this chapter. All runs with $\phi$ at the surface points updated
+    (\S\ref{sec:ch5-limitations}); $16^3$ at $\beta=0.1$ with
+    $\Delta t=0.0125$.}
   \label{tab:ch5-beta}
   \small
   \begin{tabular}{lccccc}
@@ -840,7 +842,7 @@ Python study above.
     $\beta$ [mm$^2/T^*$] & $0.005$ & $0.01$ & $0.02$ & $0.05$ & $0.1$ \\
     \midrule
     $8^3$ & $-2.1\times10^{-4}$ & $-2.7\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.3\times10^{-4}$ & $-5.6\times10^{-5}$ \\
-    $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4\,\dagger}$ & $-3.8\times10^{-5\,\dagger}$ \\
+    $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2\times10^{-4}$ & $-4.7\times10^{-5}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
