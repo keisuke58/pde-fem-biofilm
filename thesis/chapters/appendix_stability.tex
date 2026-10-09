@@ -1,0 +1,94 @@
+\chapter{Stability of the Explicit Field Update}
+\label{app:stability}
+
+% Source: ansys_usermat/apdl/nem_stability.py, results/2026-10-wp3_fix/nem_stability.json
+% (9 Oct 2026). Deck values of the element: NEIGHBOR_CNT = 30, BETA_STAR = 0.2 mm,
+% WMAT_THRESHOLD = 1e-8 (OLIVER_MODEL_NOTES.md).
+
+The element advances its field explicitly,
+$\phi_{n+1}=\phi_n+\Delta t\,(\beta L\phi_n+\ldots)$, where $L$ is the
+Neighbored Element Method approximation of the Laplacian
+\cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}: at every integration point a
+second-order Taylor polynomial is fitted by weighted least squares through
+the values at the $N$ nearest integration points, with the weight
+$w=\exp[-\tfrac12(4d/\beta^*)^2]$ of the distance $d$, and the Laplacian is
+the sum of the three unmixed second derivatives of the fit. In the runs of
+Chapter~\ref{ch:ansys} the element uses $N=30$ and $\beta^*=0.2$~mm. For
+explicit Euler the update is stable if $\beta\Delta t\,\rho\le2$, with $\rho$
+the spectral radius of $-L$; written with $\lambda=\beta\Delta t/h^2$ this is
+$\lambda\le\lambda_{\max}=2/(\rho h^2)$. For the three-point stencil in one
+dimension $\rho=4/h^2$ and $\lambda_{\max}=1/2$, which is the condition
+$h^2/(2\Delta t)\ge\beta$ of Rudolf et al.~\cite{Rudolf2025NEM}; for the
+five-point stencil in two dimensions $\lambda_{\max}=1/4$ and for the
+seven-point stencil in three dimensions $1/6$.
+
+\paragraph{Lattice of the integration points.} On a uniform hexahedral mesh
+of size $h$ the $2\times2\times2$ integration points of SOLID185 lie, per
+axis, at $h(\tfrac12\pm\tfrac{1}{2\sqrt3})$ inside each element, so their
+spacing alternates between $h/\sqrt3\approx0.58h$ inside an element and
+$h(1-1/\sqrt3)\approx0.42h$ across the element boundary. The eight points of
+an element are equivalent under the reflections of the cube, so the stencil
+of one of them gives the other seven by mirroring, and the operator $L$ is
+periodic with the period $h$ of the mesh with eight points per cell.
+
+\paragraph{Spectral radius.} I computed the stencil of the WLS fit on this
+lattice with the deck values and formed the $8\times8$ Bloch symbol
+$\hat L(\mathbf k)$ of $L$ over the Brillouin zone of the cell lattice; $\rho$
+is the largest modulus of its eigenvalues over $\mathbf k$. Two points
+follow from the result (Table~\ref{tab:app-stability}).
+
+First, the limit of the NEM stencil differs from $1/6$ even without the
+weighting: with $\beta^*\to\infty$ it is $0.18$ to $0.19$, because the
+lattice is not uniform and the stencil reaches beyond the nearest neighbours.
+
+Second, the weighting makes the limit depend on the mesh. Because
+$\beta^*$ is a length in millimetres, the weight of a neighbour at distance
+$d$ depends on $d/\beta^*$, and on a coarse mesh the fit is dominated by the
+few nearest points, which gives a stencil with large coefficients and a small
+$\lambda_{\max}$: about $0.06$ on $8^3$ elements, $0.14$ to $0.15$ on $16^3$
+and $0.16$ to $0.17$ on $24^3$ (the two values are for $N=30$ and for the
+symmetric set of $32$ neighbours, between which the distance ordering of the
+element does not decide). The limit approaches the unweighted value as the
+mesh is refined. A direct time stepping of the stencil on a periodic block of
+elements grows by the factor $|1-2\lambda/\lambda_{\max}|$ per step, as the
+analysis predicts.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\linewidth]{\ansysfigdir fig_nem_stability.png}
+  \caption[Stability limit of the NEM stencil against the mesh]{Stability
+    limit of the explicit field update from the Bloch analysis, against the
+    number of elements per edge, for $30$, $32$ and $56$ neighbours with
+    $\beta^*=0.2$~mm; bars: the runs of the element, from the largest smooth
+    to the smallest oscillating $\lambda$ (Figure~\ref{fig:ch5-stability}).}
+  \label{fig:app-stability}
+\end{figure}
+
+\paragraph{Comparison with the runs.} The runs of the element bracket the
+limit at $0.128<\lambda_{\max}<0.160$ on $16^3$ and at
+$0.158<\lambda_{\max}<0.187$ on $24^3$ (Figure~\ref{fig:ch5-stability}), in
+agreement with the computed values. On $8^3$ no run of this work exceeds
+$\lambda=0.04$, so the predicted limit of about $0.06$ there is not yet
+tested. The unstable mode on the finer meshes is the alternation of sign
+between neighbouring points, which is what the oscillating runs show in
+$\alpha-1$.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Stability limit of the NEM stencil]{Stability limit
+    $\lambda_{\max}=\beta\Delta t/h^2$ of the explicit update with the NEM
+    stencil on the integration-point lattice, from the Bloch analysis;
+    $\beta^*=0.2$~mm as in the element, and the unweighted limit. Last row:
+    the largest smooth and the smallest oscillating $\lambda$ of the runs.}
+  \label{tab:app-stability}
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    & $8^3$ & $16^3$ & $24^3$ & $\beta^*\to\infty$ \\
+    \midrule
+    $N=30$ neighbours & $0.062$ & $0.139$ & $0.162$ & $0.185$ \\
+    $N=32$ neighbours & $0.062$ & $0.149$ & $0.173$ & $0.180$ \\
+    runs: smooth / oscillating & $\le0.04$ / -- & $0.128$ / $0.160$ & $0.158$ / $0.187$ & \\
+    \bottomrule
+  \end{tabular}
+\end{table}

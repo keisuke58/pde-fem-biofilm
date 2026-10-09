@@ -78,6 +78,20 @@ def fig_stability():
         if pts:
             x, y = zip(*pts)
             ax.scatter(x, y, marker=mk, color=col, s=46, label=state, zorder=3)
+    # predicted limit of the NEM stencil on the integration-point lattice
+    # (nem_stability.py: 30 or 32 neighbours, beta* = 0.2 mm)
+    pred = FIX / "nem_stability.json"
+    if pred.exists():
+        cases = json.loads(pred.read_text())["cases"]
+        first = True
+        for nmesh, y in ypos.items():
+            lams = [c["lam_max"] for c in cases
+                    if c["mesh"] == nmesh and c["beta_star"] == 0.2 and c["nneigh"] in (30, 32)]
+            if lams:
+                lo, hi = min(lams) * 0.985, max(lams) * 1.015
+                ax.fill_betweenx([y - 0.32, y + 0.32], lo, hi, color="k", alpha=0.18, lw=0,
+                                 zorder=1, label="predicted limit (NEM stencil)" if first else None)
+                first = False
     ax.axvline(1 / 6, color="k", lw=0.9, ls="--")
     ax.text(1 / 6 * 0.95, 1.5, r"$1/6$", ha="right", va="center", rotation=90)
     ax.axvline(0.5, color="0.5", lw=0.9, ls=":")

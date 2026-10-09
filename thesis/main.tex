@@ -284,6 +284,8 @@ $\mathbf S$, $\lambda_S$ & sign prior from metabolic models, weight of its penal
 \begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
 $h$, $\Delta t$ & element size, time step\\
 $\lambda$ & $\beta\Delta t/h^2$, the stability measure of the explicit field update\\
+$\lambda_{\max}$, $\rho$ & stability limit of $\lambda$; spectral radius of the discrete Laplacian\\
+$N$, $\beta^*$ & number of neighbours and width [mm] of the weight of the NEM fit\\
 \end{tabular}
 
 \newpage
@@ -311,6 +313,7 @@ $\lambda$ & $\beta\Delta t/h^2$, the stability measure of the explicit field upd
 \appendix
 \input{chapters/appendix}
 \input{chapters/appendix_klempt2024}
+\input{chapters/appendix_stability}
 
 % ── Declaration ──────────────────────────────────────────────────────────────
 \newpage

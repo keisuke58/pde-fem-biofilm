@@ -307,10 +307,20 @@ integration points, by a second-order Taylor expansion fitted in the weighted
 least-squares sense, the Neighbored Element Method
 \cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
 explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
-give $\Delta t\le h^2/(2\beta)$ for the element size $h$; in three dimensions the runs of this element
-stayed smooth up to $\beta\Delta t/h^2=0.144$ and oscillated at $0.160$, below the
-value $1/6$ of the seven-point stencil (Figure~\ref{fig:ch5-stability}). Every run in this chapter has
-$\beta\Delta t/h^2\le0.128$ (the $16^3$ run at $\beta=0.1$ uses $\Delta t=0.0125$).
+give $\Delta t\le h^2/(2\beta)$ for the element size $h$, which is the limit of
+the three-point stencil in one dimension; the seven-point stencil in three
+dimensions has $\lambda=\beta\Delta t/h^2\le1/6$. The runs of this element
+stayed smooth up to $\lambda=0.128$ on $16^3$ and $0.158$ on $24^3$ elements
+and oscillated at $0.160$ and $0.187$ (Figure~\ref{fig:ch5-stability}). A
+Bloch analysis of the NEM stencil on the lattice of the integration points
+(Appendix~\ref{app:stability}) gives the limit: it is $0.18$ for the
+unweighted fit, because the lattice is not uniform, and the Gaussian weight
+of the fit, whose width $\beta^*=0.2$~mm is fixed in millimetres, lowers it on
+coarse meshes to $0.14$ to $0.15$ on $16^3$ and $0.16$ to $0.17$ on $24^3$,
+within the brackets of the runs, and to about $0.06$ on $8^3$. Every run in
+this chapter has $\lambda\le0.128$ on $16^3$ and finer meshes and
+$\lambda\le0.04$ on $8^3$ (the $16^3$ run at $\beta=0.1$ uses
+$\Delta t=0.0125$).
 
 \begin{figure}[htbp]
   \centering
@@ -319,9 +329,11 @@ $\beta\Delta t/h^2\le0.128$ (the $16^3$ run at $\beta=0.1$ uses $\Delta t=0.0125
     $\lambda=\beta\Delta t/h^2$. Smooth: the run reaches the end time with
     $\alpha-1\ge0$ and no oscillation between neighbouring elements;
     oscillating: it reaches the end time, but $\alpha-1$ alternates in sign;
-    stopped: elements collapse before the end time. Dashed: $1/6$, the limit of
-    the seven-point stencil in three dimensions; dotted: $1/2$, the condition
-    given by Rudolf et al.~\cite{Rudolf2025NEM}.}
+    stopped: elements collapse before the end time. Grey: the limit of the NEM
+    stencil from the Bloch analysis of Appendix~\ref{app:stability} (30 to 32
+    neighbours). Dashed: $1/6$, the limit of the seven-point stencil in three
+    dimensions; dotted: $1/2$, the condition given by Rudolf et
+    al.~\cite{Rudolf2025NEM}.}
   \label{fig:ch5-stability}
 \end{figure}
 

@@ -249,10 +249,10 @@ Stresses scale with $E=10$~Pa.
 \factbox{p2}{Element size $h$ [mm]}{seed stress: order about $2$, error on $24^3$ about $2\,\%$; $\alpha-1$ within $4\,\%$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Stability}{$\beta\Delta t/h^2$: smooth up to $0.144$, oscillating at $0.160$ (Rudolf et al.\ 2025: $0.5$)}
+\factbox{p2}{Stability}{limit of the NEM stencil derived (Bloch): $0.14$--$0.17$ on $16^3$--$24^3$, as observed; Rudolf et al.\ 2025 give the 1-D value $0.5$}
 \end{column}
 \end{columns}
-\takeaway{Estimated discretisation error of the seed stress on $24^3$ elements: about $2\,\%$; all simulations lie within the stability limit.}
+\takeaway{Estimated discretisation error of the seed stress on $24^3$ elements: about $2\,\%$; the stability limit is derived and all simulations lie within it.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -462,9 +462,11 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
 \begin{frame}{Appendix D: stability of the explicit field update}
 \centering
 \includegraphics[width=0.95\linewidth,height=0.55\textheight,keepaspectratio]{fig_wp3_stability.png}\\
-\small $\lambda=\beta\Delta t/h^2$. Smooth up to $0.144$, oscillating at $0.160$, elements
-collapse above. Dashed: $1/6$ of the seven-point stencil; dotted: $1/2$ from
-$h^2/(2\Delta t)\ge\beta$ (Rudolf et al.\ 2025). All runs of the thesis: $\lambda\le0.128$.
+\small $\lambda=\beta\Delta t/h^2$; grey: the limit from a Bloch analysis of the NEM
+stencil on the integration-point lattice (thesis, Appendix~D). $h^2/(2\Delta t)\ge\beta$ of
+Rudolf et al.\ 2025 is the one-dimensional limit ($1/2$); the seven-point stencil gives $1/6$;
+the NEM fit with its weight width $\beta^*=0.2$~mm fixed in millimetres gives $0.06$ on $8^3$,
+$0.14$--$0.15$ on $16^3$ and $0.16$--$0.17$ on $24^3$, which the runs bracket.
 \end{frame}
 
 % ========================================================
