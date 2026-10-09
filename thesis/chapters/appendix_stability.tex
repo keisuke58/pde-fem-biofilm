@@ -60,8 +60,8 @@ analysis predicts.
     limit of the explicit field update from the Bloch analysis, against the
     number of elements per edge, for $30$, $32$ and $56$ neighbours with
     $\beta^*=0.2$~mm; bars: the runs of the element, from the largest smooth
-    to the smallest oscillating $\lambda$ (Figure~\ref{fig:ch5-stability});
-    on $8^3$ runs to $T^*=1.1$, which lie above the limit (see the text).}
+    to the smallest oscillating or stopped $\lambda$
+    (Figure~\ref{fig:ch5-stability}); on $8^3$ the runs to $T^*=5$.}
   \label{fig:app-stability}
 \end{figure}
 
@@ -72,23 +72,23 @@ agreement with the computed values. The unstable mode on these meshes is
 the alternation of sign between neighbouring points, which is what the
 oscillating runs show in $\alpha-1$.
 
-On $8^3$ the runs at $\beta=0.1$~mm$^2/T^*$ stay smooth up to $\lambda=0.088$
-and stop at $0.096$, above the computed limit of $0.062$. The spectral radius
-of the operator on the finite $8^3$ cube, where each point fits its stencil
-over the $30$ nearest points that exist, gives the same limit, $0.063$, so
-the boundary does not explain the difference. The initial field does: $\phi$
-is constant in each element, and its component along the unstable mode is
-$8\times10^{-7}$ of its norm. A run to $T^*=1.1$ takes only $18$ to $22$
-steps on $8^3$, and the growth factor per step, $|1-2\lambda/\lambda_{\max}|$,
-is $1.5$ to $2.1$ between $\lambda=0.08$ and $0.096$, so the mode reaches the
-size of $\phi$ only near the end of the run. Marching the same seed problem
-with the finite-cube operator reproduces this: $\alpha-1$ stays positive up
-to $\lambda=0.048$, turns slightly negative at $0.080$ ($-1\times10^{-5}$)
-and fails from $0.088$ on. The time at which an unstable run shows itself
-therefore depends on the number of steps and on the initial field, and the
-bracket of a short run lies above the limit. On the finer meshes, where the
-growth factor near the limit is smaller, the brackets and the computed
-limits agree.
+On $8^3$ the runs at $\beta=0.1$~mm$^2/T^*$ to $T^*=1.1$ stay smooth up to
+$\lambda=0.088$ and stop at $0.096$, above the computed limit of $0.062$. The
+spectral radius of the operator on the finite $8^3$ cube, where each point
+fits its stencil over the $30$ nearest points that exist, gives the same
+limit, $0.063$, so the boundary does not explain the difference. The initial
+field does: $\phi$ is constant in each element, and its component along the
+unstable mode is $8\times10^{-7}$ of its norm. A run to $T^*=1.1$ takes only
+$18$ to $22$ steps on $8^3$, and the growth factor per step,
+$|1-2\lambda/\lambda_{\max}|$, is $1.5$ to $2.1$ between $\lambda=0.08$ and
+$0.096$, so the mode reaches the size of $\phi$ only near the end of the run.
+Marching the same seed problem with the finite-cube operator reproduces this.
+I therefore predicted that longer runs show the limit, and two runs to
+$T^*=5$ confirm it: at $\lambda=0.080$ the elements collapse at $T^*=1.65$,
+at $\lambda=0.048$ the run stays smooth to the end. The limit on $8^3$ lies
+between $0.048$ and $0.080$, in agreement with $0.062$. A run judged stable
+must therefore be long enough for the unstable mode to grow; on the finer
+meshes the brackets of the runs to $T^*=1.1$ agree with the computed limits.
 
 \begin{table}[htbp]
   \centering
@@ -96,8 +96,8 @@ limits agree.
     $\lambda_{\max}=\beta\Delta t/h^2$ of the explicit update with the NEM
     stencil on the integration-point lattice, from the Bloch analysis;
     $\beta^*=0.2$~mm as in the element, and the unweighted limit. Last row:
-    the largest smooth and the smallest oscillating $\lambda$ of the runs
-    to $T^*=1.1$; $^{a}$the run stopped (see the text).}
+    the largest smooth and the smallest oscillating or stopped $\lambda$ of the
+    runs; $^{a}$runs to $T^*=5$, the others to $T^*=1.1$ (see the text).}
   \label{tab:app-stability}
   \small
   \begin{tabular}{lcccc}
@@ -106,7 +106,7 @@ limits agree.
     \midrule
     $N=30$ neighbours & $0.062$ & $0.139$ & $0.162$ & $0.185$ \\
     $N=32$ neighbours & $0.062$ & $0.149$ & $0.173$ & $0.180$ \\
-    runs: smooth / oscillating & $0.088$ / $0.096^{a}$ & $0.128$ / $0.160$ & $0.158$ / $0.187$ & \\
+    runs: smooth / failing & $0.048$ / $0.080^{a}$ & $0.128$ / $0.160$ & $0.158$ / $0.187$ & \\
     \bottomrule
   \end{tabular}
 \end{table}

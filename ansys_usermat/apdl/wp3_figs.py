@@ -59,9 +59,16 @@ def deck_values(rec, name):
     return n, float(dt.group(1)) if dt else 0.025, b
 
 
+# runs that ended for a reason other than stability: the 24^3 beta 0.05 run hung for 17 h after
+# ANSYS switched from PCG to the sparse solver at T* = 0.025 and was stopped by hand (lambda 0.09)
+NOT_STABILITY = {"wp3d_n24_b005_dt00125"}
+
+
 def classify():
     rows = []
     for j in sorted(FIX.glob("wp3[cde]_*.json")) + [SURF / "ds8_beta002_dt4.json", SURF / "ds16_beta002_dt4.json"]:
+        if j.stem in NOT_STABILITY:
+            continue
         rec = json.loads(j.read_text())
         n, dt, beta = deck_values(rec, j.stem)
         lam = beta * dt / (L / n) ** 2
@@ -80,11 +87,19 @@ def fig_stability():
     fig, ax = plt.subplots(figsize=(6.4, 2.8))
     style = {"smooth": ("o", "C0"), "oscillating": ("X", "C1"), "stopped": ("^", "C3")}
     ypos = {8: 0, 16: 1, 24: 2}
+    # runs to T* = 5 (name ends in _T5) sit slightly above their mesh row with a black edge:
+    # at T* = 1.1 an unstable mode can stay invisible above the limit (8^3, Appendix D)
     for state, (mk, col) in style.items():
-        pts = [(lam, ypos[n]) for lam, n, s, _ in rows if s == state]
-        if pts:
-            x, y = zip(*pts)
-            ax.scatter(x, y, marker=mk, color=col, s=46, label=state, zorder=3)
+        for long_run in (False, True):
+            pts = [(lam, ypos[n] + (0.22 if long_run else 0.0)) for lam, n, s, name in rows
+                   if s == state and name.endswith("_T5") == long_run]
+            if pts:
+                x, y = zip(*pts)
+                ax.scatter(x, y, marker=mk, color=col, s=46, zorder=3,
+                           edgecolors="k" if long_run else "none", linewidths=1.0,
+                           label=None if long_run else state)
+    if any(name.endswith("_T5") for *_, name in rows):
+        ax.scatter([], [], marker="o", facecolors="none", edgecolors="k", s=46, label=r"run to $T^*=5$")
     # predicted limit of the NEM stencil on the integration-point lattice
     # (nem_stability.py: 30 or 32 neighbours, beta* = 0.2 mm)
     pred = FIX / "nem_stability.json"
@@ -97,7 +112,7 @@ def fig_stability():
             if lams:
                 lo, hi = min(lams) * 0.985, max(lams) * 1.015
                 ax.fill_betweenx([y - 0.32, y + 0.32], lo, hi, color="k", alpha=0.18, lw=0,
-                                 zorder=1, label="predicted limit (NEM stencil)" if first else None)
+                                 zorder=1, label="predicted limit" if first else None)
                 first = False
     ax.axvline(1 / 6, color="k", lw=0.9, ls="--")
     ax.text(1 / 6 * 0.95, 1.5, r"$1/6$", ha="right", va="center", rotation=90)
@@ -106,10 +121,10 @@ def fig_stability():
             color="0.4", fontsize=8)
     ax.set_xscale("log")
     ax.set_xlim(2e-3, 0.8)
-    ax.set_ylim(-0.5, 2.9)
+    ax.set_ylim(-0.5, 3.55)
     ax.set_yticks([0, 1, 2], [r"$8^3$", r"$16^3$", r"$24^3$"])
     ax.set_xlabel(r"$\lambda=\beta\,\Delta t/h^2$")
-    ax.legend(loc="lower left", frameon=False, fontsize=9)
+    ax.legend(loc="upper left", frameon=False, fontsize=8, ncol=5, columnspacing=1.0, handletextpad=0.3)
     fig.tight_layout()
     out = ASSETS / "fig_wp3_stability.png"
     fig.savefig(out, dpi=200)
