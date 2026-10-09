@@ -49,12 +49,19 @@ def deck_values(rec, name):
     hd = hd if isinstance(hd, str) else " ".join(hd)
     dt = re.search(r"deltim ([\d.eE+-]+)", hd)
     beta = re.search(r"MY_BETA1=([\d.eE+-]+)", hd)
-    return n, float(dt.group(1)) if dt else 0.025, float(beta.group(1)) if beta else 0.02
+    if beta:
+        b = float(beta.group(1))
+    else:
+        # a deck derived from a beta deck (wp3e_n8_b01_dt*: only deltim in its header):
+        # the run name carries beta as _b01 = 0.1, _b005 = 0.05, _b001 = 0.01
+        m = re.search(r"_b(\d+)_", name + "_")
+        b = float("0." + m.group(1)[1:]) if m else 0.02
+    return n, float(dt.group(1)) if dt else 0.025, b
 
 
 def classify():
     rows = []
-    for j in sorted(FIX.glob("wp3[cd]_*.json")) + [SURF / "ds8_beta002_dt4.json", SURF / "ds16_beta002_dt4.json"]:
+    for j in sorted(FIX.glob("wp3[cde]_*.json")) + [SURF / "ds8_beta002_dt4.json", SURF / "ds16_beta002_dt4.json"]:
         rec = json.loads(j.read_text())
         n, dt, beta = deck_values(rec, j.stem)
         lam = beta * dt / (L / n) ** 2
