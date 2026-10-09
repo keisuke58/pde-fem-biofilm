@@ -317,9 +317,9 @@ Bloch analysis of the NEM stencil on the lattice of the integration points
 unweighted fit, because the lattice is not uniform, and the Gaussian weight
 of the fit, whose width $\beta^*=0.2$~mm is fixed in millimetres, lowers it on
 coarse meshes to $0.14$ to $0.15$ on $16^3$ and $0.16$ to $0.17$ on $24^3$,
-within the brackets of the runs, and to about $0.06$ on $8^3$. On $8^3$ the
-runs stay smooth up to $\lambda=0.088$ within $T^*=1.1$, because the
-unstable mode grows from a very small start; the appendix explains this. Every run in
+within the brackets of the runs, and to about $0.06$ on $8^3$, where runs
+to $T^*=5$ stay smooth at $\lambda=0.048$ and stop at $0.080$. Runs to
+$T^*=1.1$ are too short to show the limit on $8^3$ (Appendix~\ref{app:stability}). Every run in
 this chapter has $\lambda\le0.128$ on $16^3$ and finer meshes and
 $\lambda\le0.04$ on $8^3$ (the $16^3$ run at $\beta=0.1$ uses
 $\Delta t=0.0125$).
@@ -331,7 +331,8 @@ $\Delta t=0.0125$).
     $\lambda=\beta\Delta t/h^2$. Smooth: the run reaches the end time with
     $\alpha-1\ge0$ and no oscillation between neighbouring elements;
     oscillating: it reaches the end time, but $\alpha-1$ alternates in sign;
-    stopped: elements collapse before the end time. Grey: the limit of the NEM
+    stopped: elements collapse before the end time. End time $T^*=1.1$; black
+    edge: the two $8^3$ runs to $T^*=5$. Grey: the limit of the NEM
     stencil from the Bloch analysis of Appendix~\ref{app:stability} (30 to 32
     neighbours). Dashed: $1/6$, the limit of the seven-point stencil in three
     dimensions; dotted: $1/2$, the condition given by Rudolf et
