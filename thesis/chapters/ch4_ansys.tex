@@ -759,7 +759,14 @@ Halving the time step halves the change, so the update is first order in time,
 and the error at $\Delta t=0.025$ is about $1\,\%$ in the seed von Mises stress.
 Over the three meshes the seed von Mises stress converges with an observed
 order of about $2.1$ towards $6.20\times10^{-4}$~Pa, which puts the error on
-$24^3$ at about $2\,\%$; with three meshes this is an estimate.
+$24^3$ at about $2\,\%$. An independent check gives the same: solving the
+mechanics with a separate hexahedral code (mean-dilatation integration, the
+stiffness of Eq.~\eqref{eq:ch5-stiffness}) for the reference growth field
+described next, on meshes up to $48^3$, the seed von Mises stress tends to
+$6.08$ to $6.10\times10^{-4}$~Pa (first to second order from $24^3$ and
+$48^3$), $2\,\%$ above the element's value on $24^3$ after extrapolation
+to $\Delta t\to0$. The stress converges only to about first order, because
+the stiffness jumps at the surface of the seed.
 
 For the growth field itself the error can be measured. Without the front
 term the seed problem is the linear system of Eqs.~\eqref{eq:theory_phi}

@@ -275,6 +275,11 @@ this machine's specific workflow.
   user accepted the same day (cc Junker, Wangenheim, Soleimani, Geisler) and
   asked whether it suits Dr. Wangenheim and where it takes place. Tentative
   in Google Calendar until confirmed.
+  **9 Oct:** Vanessa Wunnenberg (IKM, Assistentin der Institutsleitung,
+  wunnenberg@ikm.uni-hannover.de) takes over the coordination while Ms.
+  Neumeyer is away for a week; keep her in copy. Reply drafted in Gmail
+  (summary of the date and the three open points: Dr. Wangenheim, room or
+  online, length of the talk), not yet sent.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 

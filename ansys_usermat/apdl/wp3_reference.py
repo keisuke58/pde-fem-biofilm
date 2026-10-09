@@ -231,7 +231,7 @@ def compare(ref_coarse, runs, cells8):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--grids", type=int, nargs="+", default=[48, 96, 192])
-    ap.add_argument("--meshes", type=int, nargs="+", default=[8, 16, 24], help="NEM meshes to average onto")
+    ap.add_argument("--meshes", type=int, nargs="+", default=[8, 16, 24, 48], help="meshes to average onto (NEM meshes and 48^3 for the stress reference)")
     ap.add_argument("--lam", type=float, default=0.15)
     ap.add_argument("--seed-json", type=Path,
                     default=HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
@@ -241,7 +241,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     cells8 = seed_cells_8(a.seed_json)
-    res, coarse = [], []
+    res, coarse, coarse_phi = [], [], []
     for n in a.grids:
         t0 = time.time()
         axes, am1, phi = solve(n, cells8, a.lam, penalty=not a.no_penalty)
@@ -250,6 +250,7 @@ def main(argv=None):
         m["seconds"] = time.time() - t0
         res.append(m)
         coarse.append({mm: block_mean(am1, mm) for mm in a.meshes if n % mm == 0})
+        coarse_phi.append({mm: block_mean(phi, mm) for mm in a.meshes if n % mm == 0})
         print(f"{n}^3: seed mean {m['seed mean']:.6e} integral {m['integral']:.6e} "
               f"line {' / '.join(f'{v:.4e}' for v in m['line'])}  ({m['seconds']:.0f} s)", flush=True)
     out = {"beta": BETA, "k_alpha": K_ALPHA, "penalty": 0.0 if a.no_penalty else PENALTY,
@@ -268,6 +269,9 @@ def main(argv=None):
         ref_coarse = {mm: coarse[-1][mm] + (coarse[-1][mm] - coarse[-2][mm]) / 3.0
                       for mm in coarse[-1] if mm in coarse[-2]}
         out["reference_on_mesh"] = {str(mm): f.tolist() for mm, f in ref_coarse.items()}
+        # phi at T* on the same meshes, for the stress reference (wp3_stress_reference.py)
+        out["reference_phi_on_mesh"] = {str(mm): (coarse_phi[-1][mm] + (coarse_phi[-1][mm] - coarse_phi[-2][mm]) / 3.0).tolist()
+                                        for mm in coarse_phi[-1] if mm in coarse_phi[-2]}
         if a.nem and a.nem.exists():
             runs = nem_fields(a.nem)
             cmp_ = compare(ref_coarse, runs, cells8)
