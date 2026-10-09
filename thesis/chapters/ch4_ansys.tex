@@ -759,14 +759,28 @@ Halving the time step halves the change, so the update is first order in time,
 and the error at $\Delta t=0.025$ is about $1\,\%$ in the seed von Mises stress.
 Over the three meshes the seed von Mises stress converges with an observed
 order of about $2.1$ towards $6.20\times10^{-4}$~Pa, which puts the error on
-$24^3$ at about $2\,\%$. With three meshes this order is an estimate that cannot
-be checked further. The growth $\alpha-1$ has to be compared at fixed
-positions, because the elements that make up the surface layer of the seed
-change with $h$. Averaged over the same region, $\alpha-1$ changes by
-$-0.6\,\%$ from $16^3$ to $24^3$, by $+1.5\,\%$ at the centre and by
-$+3.9\,\%$ at $0.4$~mm from the centre, near the edge of the seed, where the
-gradient of $\phi$ is steepest. These differences are the same after
-extrapolation to $\Delta t\to0$.
+$24^3$ at about $2\,\%$; with three meshes this is an estimate.
+
+For the growth field itself the error can be measured. Without the front
+term the seed problem is the linear system of Eqs.~\eqref{eq:theory_phi}
+and \eqref{eq:theory_alpha} with the penalty of the element, and I solved it
+with second-order finite volumes and a fourth-order Runge--Kutta scheme on
+$48^3$, $96^3$ and $192^3$ cells (the seed is a union of cells on each grid).
+The seed mean of $\alpha-1$ converges with an observed order of $1.97$, and the
+Richardson extrapolation of the two finest grids is the reference, with a
+remaining error below $0.05\,\%$. Averaged over the elements of each NEM mesh
+and compared element by element (Figure~\ref{fig:ch5-wp3-conv}, right), the
+element's $\alpha-1$ after extrapolation to $\Delta t\to0$ is too large by
+$4.1\,\%$ in the seed mean on $8^3$, $1.3\,\%$ on $16^3$ and $0.7\,\%$ on
+$24^3$, an order of about $1.7$ in $h$; the $L_2$ norm of the element-wise
+error over the cube is $5.1$, $1.9$ and $1.1\,\%$. The error is largest near
+the edge of the seed, where the gradient of $\phi$ is steepest ($5.5\,\%$ at
+$0.4$~mm from the centre on $8^3$, $0.2\,\%$ on $24^3$), and smallest at the
+centre ($0.5$ to $0.2\,\%$). The domain integral of $\alpha-1$ is within
+$0.2\,\%$ on every mesh: the explicit update conserves the mass of $\phi$ up to
+the source, and the mesh error redistributes the growth between the seed and
+its surroundings. At $\Delta t=0.0125$ the errors are about $0.2\,\%$ larger
+than after extrapolation.
 
 \begin{figure}[htbp]
   \centering
@@ -774,8 +788,11 @@ extrapolation to $\Delta t\to0$.
   \caption[Convergence in time and mesh]{Seed growth at $T^*=1.1$,
     $\beta=0.02$~mm$^2/T^*$, surface points corrected. Left: seed mean of the
     von Mises stress against the element size $h$ for two time steps and the
-    first-order extrapolation $\Delta t\to0$. Right: $\alpha-1$ at fixed
-    positions, relative to $24^3$ ($\Delta t\to0$).}
+    first-order extrapolation $\Delta t\to0$. Right: error of $\alpha-1$
+    of the element against the finite-volume reference solution, averaged
+    over the same elements, after extrapolation to $\Delta t\to0$: seed
+    mean, $L_2$ norm over the cube, and the values at the centre of the seed
+    and $0.4$~mm from it; the dashed line is second order.}
   \label{fig:ch5-wp3-conv}
 \end{figure}
 

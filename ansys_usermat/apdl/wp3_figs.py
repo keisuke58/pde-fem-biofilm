@@ -134,13 +134,29 @@ def fig_convergence():
     a1.set_xlabel(r"$h$ (mm)")
     a1.set_ylabel(r"seed mean $\sigma_{vM}$ ($10^{-4}$ Pa)")
     a1.legend(frameon=False, fontsize=8)
-    for key, lab, mk in (("seed mean", "seed mean", "o"), ("centre", "centre", "s"), ("edge", "0.4 mm from centre", "^")):
-        e = np.array(q[key])[:, 2]
-        a2.plot(h, e / e[-1], marker=mk, label=lab)
-    a2.axhline(1, color="0.6", lw=0.8)
+    # right: error of alpha - 1 against the reference solution (wp3_reference.py),
+    # averaged over the same elements, after extrapolation to dt -> 0
+    ref = json.loads((FIX / "wp3_reference.json").read_text())["nem_error"]
+    hh = np.array([L / int(n) for n in sorted(ref, key=int)])
+    for key, lab, mk in (("err seed mean", "seed mean", "o"), ("err L2", r"$L_2$ norm, cube", "D"),
+                         ("err line", "centre", "s"), ("err line4", "0.4 mm from centre", "^")):
+        e = []
+        for n in sorted(ref, key=int):
+            row = ref[n]["dt->0"]
+            e.append(row["err line"][0] if key == "err line" else row["err line"][4] if key == "err line4" else row[key])
+        a2.loglog(hh, np.abs(e) * 100, marker=mk, label=lab)
+    e0 = abs(ref[min(ref, key=int)]["dt->0"]["err seed mean"]) * 100
+    a2.loglog(hh, e0 * (hh / hh[0]) ** 2, color="0.6", lw=0.8, ls="--")
+    a2.text(hh[-1] * 1.03, e0 * (hh[-1] / hh[0]) ** 2, r"$h^2$", fontsize=8, color="0.4", va="center")
     a2.set_xlabel(r"$h$ (mm)")
-    a2.set_ylabel(r"$\alpha-1$ / value on $24^3$ ($\Delta t\to 0$)")
-    a2.legend(frameon=False, fontsize=8)
+    a2.set_ylabel(r"error of $\alpha-1$ (%), $\Delta t\to 0$")
+    a2.set_xticks(hh)
+    a2.set_xticklabels([f"{v:.3g}" for v in hh])
+    a2.set_ylim(0.1, 20)
+    a2.set_yticks([0.1, 0.2, 0.5, 1, 2, 5, 10])
+    a2.set_yticklabels(["0.1", "0.2", "0.5", "1", "2", "5", "10"])
+    a2.minorticks_off()
+    a2.legend(frameon=False, fontsize=8, loc="upper right")
     for a in (a1, a2):
         a.invert_xaxis()
     fig.tight_layout()
