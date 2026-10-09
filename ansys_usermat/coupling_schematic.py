@@ -60,17 +60,17 @@ def panel(ax, key, num, title, subtitle):
                                 fc=accent, ec=accent, lw=1.2, zorder=2))
     ax.add_patch(Rectangle((x, Y0 + H - HEAD), w, HEAD / 2, fc=accent, ec="none", zorder=2))
     ax.plot(x + 0.028, Y0 + H - HEAD / 2, "o", ms=24, mfc="white", mec="none", zorder=3)
-    ax.text(x + 0.028, Y0 + H - HEAD / 2, num, ha="center", va="center", fontsize=13,
+    ax.text(x + 0.028, Y0 + H - HEAD / 2, num, ha="center", va="center", fontsize=13 * FS,
             weight="bold", color=accent, zorder=4)
-    ax.text(x + 0.056, Y0 + H - HEAD / 2, title, ha="left", va="center", fontsize=14.5,
+    ax.text(x + 0.056, Y0 + H - HEAD / 2, title, ha="left", va="center", fontsize=14.5 * FS,
             weight="bold", color="white", zorder=4)
     ax.text(x + w / 2, Y0 + H - HEAD - 0.03, subtitle, ha="center", va="center",
-            fontsize=11, style="italic", color=MUTED, zorder=4)
+            fontsize=11 * FS, style="italic", color=MUTED, zorder=4)
 
 
 def eqs(ax, x, y, lines, size=12.5, gap=0.058):
     for k, s in enumerate(lines):
-        ax.text(x, y - k * gap, s, ha="left", va="center", fontsize=size, color=INK, zorder=4)
+        ax.text(x, y - k * gap, s, ha="left", va="center", fontsize=size * FS, color=INK, zorder=4)
 
 
 def arrow(ax, p, q, color=INK, ls="-", lw=1.8, conn="arc3", z=5):
@@ -134,11 +134,11 @@ def chi_inset(fig, rect):
     ax.grid(False)
     for s in ("top", "right"):
         ax.spines[s].set_visible(True)
-    ax.set_xlabel(r"time $T^*$", fontsize=10, labelpad=1)
-    ax.set_ylabel("share", fontsize=10, labelpad=1)
-    ax.tick_params(labelsize=8.5, length=2, pad=1.5)
-    ax.text(0.5, 0.27, "species 1", ha="center", va="center", fontsize=10, color="white")
-    ax.text(0.5, 0.80, "species 2", ha="center", va="center", fontsize=10, color="white")
+    ax.set_xlabel(r"time $T^*$", fontsize=10 * FS, labelpad=1)
+    ax.set_ylabel("share", fontsize=10 * FS, labelpad=1)
+    ax.tick_params(labelsize=8.5 * FS, length=2, pad=1.5)
+    ax.text(0.5, 0.27, "species 1", ha="center", va="center", fontsize=10 * FS, color="white")
+    ax.text(0.5, 0.80, "species 2", ha="center", va="center", fontsize=10 * FS, color="white")
     return ax
 
 
@@ -160,7 +160,12 @@ def stress_sketch(ax, cx, cy, h):
         arrow(ax, c + v * 2.45 * h, c + v * 1.6 * h, color=INK, lw=1.4, z=6)
 
 
+FS = 1.0   # font scale; the thesis prints the figure at text width, so its text is enlarged
+
+
 def main(keio=False, thesis=False):
+    global FS
+    FS = 1.4 if thesis else 1.0
     figstyle.apply(12)
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
@@ -178,9 +183,9 @@ def main(keio=False, thesis=False):
         r"$\dot\alpha = k_\alpha\,\phi$,   $\alpha(0) = 1$",
     ])
     ax.text(x + 0.025, 0.575, r"gives the amount $\phi_{3D}(\mathbf{x},t)$",
-            fontsize=12.5, color=PANEL["macro"][1], weight="bold", va="center", zorder=4)
+            fontsize=12.5 * FS, color=PANEL["macro"][1], weight="bold", va="center", zorder=4)
     cube_inset(fig, [x + 0.005, 0.205, 0.20, 0.35])
-    ax.text(x + 0.215, 0.315, "2 mm cube\n512 elements\nseed (dark)", fontsize=10.5,
+    ax.text(x + 0.215, 0.315, "2 mm cube\n512 elements\nseed (dark)", fontsize=10.5 * FS,
             color=MUTED, va="center", linespacing=1.3, zorder=4)
 
     # (2) micro --------------------------------------------------------------
@@ -188,17 +193,17 @@ def main(keio=False, thesis=False):
           "Klempt et al. 2026 (Ch. 2), calibrated in Ch. 3" if thesis else "Klempt et al. 2026, Table 1 cases")
     x, w = PX["micro"]
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
-    ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5, color=INK,
+    ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK,
             va="center", linespacing=1.25, zorder=4)
     ax.text(x + 0.16, 0.585, r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$",
-            fontsize=11, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
+            fontsize=11 * FS, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
     arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1],
           lw=1.3, conn="arc3,rad=0.25")
     chi_inset(fig, [x + 0.075, 0.255, 0.20, 0.175])
 
     # (3) growth and stress --------------------------------------------------
     panel(ax, "mech", "3", "Growth and stress",
-          "ANSYS user material (Ch. 4), Klempt 2024 stiffness" if thesis
+          "ANSYS user material (Ch. 4)" if thesis
           else "partner's element, Klempt 2024 stiffness")
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
@@ -208,30 +213,30 @@ def main(keio=False, thesis=False):
     ])
     stress_sketch(ax, x + 0.085, 0.375, 0.026)
     ax.text(x + 0.17, 0.375, "the seed grows,\nits neighbours\nhold it back:\nseed in compression,\n"
-            "neighbours sheared\n(sketch)", fontsize=10.5, color=MUTED, va="center", linespacing=1.3,
+            "neighbours sheared\n(sketch)", fontsize=10.5 * FS, color=MUTED, va="center", linespacing=1.3,
             zorder=4)
 
     # connections ------------------------------------------------------------
     y_mid = 0.555
     arrow(ax, (PX["macro"][0] + PX["macro"][1], y_mid), (PX["micro"][0], y_mid))
-    ax.text(0.3325, y_mid + 0.03, r"$\phi_{3D}$", ha="center", fontsize=13, color=INK)
+    ax.text(0.3325, y_mid + 0.03, r"$\phi_{3D}$", ha="center", fontsize=13 * FS, color=INK)
     xa = PX["macro"][0] + PX["macro"][1] / 2
     xc = PX["mech"][0] + PX["mech"][1] / 2
     ax.plot([xa, xa, xc], [Y0 + H, 0.945, 0.945], color=INK, lw=1.8, zorder=5,
             solid_capstyle="round")
     arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004))
     ax.text(0.5, 0.958, r"$\phi_{3D}$: growth uses the amount only", ha="center",
-            va="bottom", fontsize=12.5, color=INK)
+            va="bottom", fontsize=12.5 * FS, color=INK)
     xm = PX["micro"][0] + PX["micro"][1] * 0.72
     arrow(ax, (xm, Y0), (xm, 0.105))
     ax.text(xm, 0.085, r"output: species $\phi_i(\mathbf{x},t)$, $\psi_i(\mathbf{x},t)$", ha="center",
-            va="top", fontsize=12.5, color=INK)
+            va="top", fontsize=12.5 * FS, color=INK)
     xb = PX["micro"][0] + PX["micro"][1] * 0.22
     ax.plot([xb, xb, xa], [Y0, 0.13, 0.13], color=MUTED, lw=1.5, ls=(0, (4, 3)), zorder=5)
     arrow(ax, (xa, 0.13), (xa, Y0 - 0.004), color=MUTED, ls=(0, (4, 3)), lw=1.5)
     ax.text((xa + xb) / 2, 0.115,
             "composition to growth (Keio)" if keio else "two-way coupling (outlook)",
-            ha="center", va="top", fontsize=11, color=MUTED, style="italic")
+            ha="center", va="top", fontsize=11 * FS, color=MUTED, style="italic")
 
     if keio:
         xs = PX["mech"][0] + PX["mech"][1] * 0.5
@@ -239,7 +244,7 @@ def main(keio=False, thesis=False):
         ax.plot([xs, xs, xf], [Y0, 0.03, 0.03], color=KEIO, lw=1.8, ls=(0, (4, 3)), zorder=5)
         arrow(ax, (xf, 0.03), (xf, Y0 - 0.004), color=KEIO, ls=(0, (4, 3)), lw=1.8)
         ax.text((xs + xf) / 2, 0.018, "stress to growth (Keio): the mechanical term of Klempt 2024, Eq. 30",
-                ha="center", va="top", fontsize=11, color=KEIO, style="italic")
+                ha="center", va="top", fontsize=11 * FS, color=KEIO, style="italic")
         out = OUT.with_name("fig_coupling_schematic_keio.png")
         fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
         print("wrote", out)
@@ -247,7 +252,7 @@ def main(keio=False, thesis=False):
 
     if thesis:
         ax.text(0.5, 0.012, r"Assumed, not from a paper: $s$ = 0.15, $\phi_{cap}$ = 0.9, $\phi_{min}$ = 0.01.",
-                ha="center", va="bottom", fontsize=10.5, color=MUTED)
+                ha="center", va="bottom", fontsize=10.5 * FS, color=MUTED)
         out = OUT.with_name("fig_coupling_schematic_thesis.png")
         fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
         print("wrote", out)
@@ -257,7 +262,7 @@ def main(keio=False, thesis=False):
             r"Point model run two ways: A) rescaled every step to $\phi_{3D}$;  "
             r"B) started when $\phi_{3D}$ first reaches $\phi_{min}$, then independent.   "
             r"Assumed, not from a paper: $s$ = 0.15, $\phi_{cap}$ = 0.9, $\phi_{min}$ = 0.01.",
-            ha="center", va="bottom", fontsize=10.5, color=MUTED)
+            ha="center", va="bottom", fontsize=10.5 * FS, color=MUTED)
 
     OUT.parent.mkdir(exist_ok=True)
     fig.savefig(OUT, dpi=220, bbox_inches="tight", facecolor="white")
