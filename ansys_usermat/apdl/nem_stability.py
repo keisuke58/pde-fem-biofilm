@@ -153,7 +153,12 @@ def main(argv=None):
     ap.add_argument("--json", type=Path)
     ap.add_argument("--fig", type=Path)
     ap.add_argument("--nk", type=int, default=24)
+    ap.add_argument("--fig-only", action="store_true", help="draw --fig from an existing --json")
     a = ap.parse_args(argv)
+    if a.fig_only:
+        out = json.loads(a.json.read_text())
+        draw(out["cases"], a.fig)
+        return
 
     cases = []
     meshes = [(8, 0.25), (16, 0.125), (24, 2.0 / 24)]
@@ -195,28 +200,43 @@ def main(argv=None):
         a.json.write_text(json.dumps(out, indent=1))
         print("wrote", a.json)
     if a.fig:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-        import figstyle
-        figstyle.apply(11)
-        fig, ax = plt.subplots(figsize=(5.2, 3.0))
-        for nn, mk in [(26, "o"), (30, "s"), (32, "^"), (56, "D")]:
-            xs = [cs["mesh"] for cs in cases if cs["nneigh"] == nn and cs["beta_star"] == 0.2]
-            ys = [cs["lam_max"] for cs in cases if cs["nneigh"] == nn and cs["beta_star"] == 0.2]
-            if xs:
-                ax.plot(xs, ys, marker=mk, label=f"{nn} neighbours")
-        ax.axhline(1 / 6, color="k", ls="--", lw=0.9)
-        ax.text(24.5, 1 / 6, "1/6", va="bottom", ha="right")
-        ax.axhspan(0.144, 0.160, color="0.85", lw=0)
-        ax.text(8.2, 0.152, "observed: smooth 0.144, oscillating 0.160", fontsize=8, va="center")
-        ax.set(xlabel="elements per edge", ylabel=r"$\lambda_{\max}=\beta\Delta t/h^2$",
-               xticks=[8, 16, 24])
-        ax.legend(frameon=False, fontsize=8)
-        fig.tight_layout()
-        fig.savefig(a.fig, dpi=200)
-        print("wrote", a.fig)
+        draw(cases, a.fig)
+
+
+def draw(cases, fig_path):
+    """lambda_max against the mesh for the deck weighting, with the brackets of the runs."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import figstyle
+    figstyle.apply(11)
+    fig, ax = plt.subplots(figsize=(5.2, 3.1))
+    for nn, mk, lab in [(30, "s", "30 neighbours (deck value)"), (32, "^", "32 neighbours (symmetric shell)"),
+                        (56, "D", "56 neighbours")]:
+        xs = [cs["mesh"] for cs in cases if cs["nneigh"] == nn and cs["beta_star"] == 0.2]
+        ys = [cs["lam_max"] for cs in cases if cs["nneigh"] == nn and cs["beta_star"] == 0.2]
+        if xs:
+            ax.plot(xs, ys, marker=mk, label=lab, lw=1.2)
+    ax.axhline(1 / 6, color="k", ls="--", lw=0.9)
+    ax.text(8.2, 1 / 6 + 0.003, r"$1/6$, seven-point stencil", fontsize=8, va="bottom")
+    # brackets of the element's runs: largest smooth and smallest oscillating lambda
+    runs = {8: (0.04, None), 16: (0.128, 0.160), 24: (0.158, 0.187)}
+    first = True
+    for m, (lo, hi) in runs.items():
+        if hi is None:
+            ax.plot([m], [lo], marker="_", color="k", ms=14, mew=1.5)
+            ax.annotate("smooth", (m, lo), xytext=(6, -2), textcoords="offset points", fontsize=7.5, va="top")
+        else:
+            ax.errorbar([m], [(lo + hi) / 2], yerr=[[(hi - lo) / 2]], fmt="none", ecolor="k",
+                        elinewidth=1.5, capsize=5, label="runs of the element: smooth to oscillating" if first else None)
+            first = False
+    ax.set(xlabel="elements per edge", ylabel=r"$\lambda_{\max}=\beta\Delta t/h^2$",
+           xticks=[8, 16, 24], ylim=(0.03, 0.24))
+    ax.legend(frameon=False, fontsize=8, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=200)
+    print("wrote", fig_path)
 
 
 if __name__ == "__main__":

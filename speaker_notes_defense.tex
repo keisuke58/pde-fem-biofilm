@@ -230,8 +230,9 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \JA 1サブステップでは、要素が $\phi$ を更新し、各 Gauss 点で $\alpha$ と応力を更新し、2菌種なら点モデルを局所の量に合わせて $s\,\Delta t$ だけ進めます。
 
 \slide{Appendix D: stability of the explicit field update}{Q}
-\EN Runs stay smooth up to $\beta\Delta t/h^2=0.144$ and oscillate at $0.160$, below the $1/6$ of the seven-point stencil. All thesis runs are at $0.128$ or below.
-\JA $\beta\Delta t/h^2$ が 0.144 までは滑らか、0.160 で振動します。7点差分の 1/6 より下です。修論の実行はすべて 0.128 以下です。
+\EN The condition of Rudolf et al.\ is the one-dimensional one, one half. I derived the limit of the NEM stencil on the lattice of the integration points by a Bloch analysis: the weight of the fit has a fixed width in millimetres, so the limit depends on the mesh, about 0.06 on eight cubed, 0.14 to 0.15 on sixteen cubed and 0.16 to 0.17 on twenty-four cubed. The runs bracket exactly these values.
+\JA Rudolf らの条件は1次元のもので 1/2 です。積分点の格子の上で NEM の stencil の限界を Bloch 解析で導きました。重みの幅が mm で固定なので限界はメッシュに依存し、8³ で約 0.06、16³ で 0.14〜0.15、24³ で 0.16〜0.17。実行の結果はちょうどこの値をはさんでいます。
+\hint{Junker 先生向け。修論の付録 D。「観測」ではなく「導出して一致した」と言う。}
 
 \slide{Backup 1: stationarity conditions}{Q}
 \EN Taking the variation of $\dot\Psi+\Delta+C$ with respect to the rates and $\gamma$ gives $2n+2$ equations. Only the symmetric part of $\mathbf A$ enters the energy, so $\mathbf A$ is symmetric.

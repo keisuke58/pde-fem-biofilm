@@ -88,9 +88,9 @@ def fig_stability():
             lams = [c["lam_max"] for c in cases
                     if c["mesh"] == nmesh and c["beta_star"] == 0.2 and c["nneigh"] in (30, 32)]
             if lams:
-                ax.plot([min(lams), max(lams)], [y, y], color="k", lw=7, alpha=0.25,
-                        solid_capstyle="butt", zorder=2,
-                        label="predicted limit (NEM stencil)" if first else None)
+                lo, hi = min(lams) * 0.985, max(lams) * 1.015
+                ax.fill_betweenx([y - 0.32, y + 0.32], lo, hi, color="k", alpha=0.18, lw=0,
+                                 zorder=1, label="predicted limit (NEM stencil)" if first else None)
                 first = False
     ax.axvline(1 / 6, color="k", lw=0.9, ls="--")
     ax.text(1 / 6 * 0.95, 1.5, r"$1/6$", ha="right", va="center", rotation=90)

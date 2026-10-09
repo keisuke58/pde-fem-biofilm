@@ -97,9 +97,12 @@ paper. Statements about the magnitude in an oral biofilm need a measured
 stiffness and a measured stress, which were not available.
 
 \paragraph{The numerical scheme.} The field of the element is advanced
-explicitly. In three dimensions its runs stay smooth only up to
-$\beta\Delta t/h^2\approx0.15$, below the condition stated by Rudolf et
-al.~\cite{Rudolf2025NEM}, and the update is first order in time. For the seed
+explicitly. The condition stated by Rudolf et al.~\cite{Rudolf2025NEM} is the
+one-dimensional one; on the lattice of the integration points the stability
+limit of the NEM stencil follows from a Bloch analysis
+(Appendix~\ref{app:stability}) and depends on the mesh through the fixed width
+of the weight, from about $0.06$ on $8^3$ to $0.18$ on fine meshes, which the
+runs confirm. The update is first order in time. For the seed
 problem the stress converges with the mesh at an observed order of about two.
 An implicit treatment of the field would remove the step limit; whether it is
 also more accurate for the same cost is the comparison planned at Keio.
