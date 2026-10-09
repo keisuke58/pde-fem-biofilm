@@ -39,7 +39,7 @@ import mesh_study_seed as S  # noqa: E402
 E_BIO, NU, FLOOR = 10.0, 0.49, 1e-3
 
 
-def solve_fields(n, phi, am1, nu=NU):
+def solve_fields(n, phi, am1, nu=NU, force_cg=False):
     """Hex8 solve on the n^3 mesh with element-wise phi and alpha - 1 (arrays n x n x n).
     Returns von Mises and mean stress per element (Pa) in the array layout of phi."""
     h = 2.0 / n
@@ -62,7 +62,21 @@ def solve_fields(n, phi, am1, nu=NU):
     free = np.setdiff1d(np.arange(ndof), fix)
     u = np.zeros(ndof)
     Kff = K[free][:, free].tocsc()
-    u[free] = spla.spsolve(Kff, F[free])
+    if n < 32 and not force_cg:
+        u[free] = spla.spsolve(Kff, F[free])
+    else:
+        # the direct factorisation of 48^3 (353k degrees of freedom) exceeds the
+        # memory; conjugate gradients with the Jacobi preconditioner instead
+        dinv = 1.0 / Kff.diagonal()
+        Mop = spla.LinearOperator(Kff.shape, matvec=lambda x: dinv * x)
+        it = [0]
+
+        def cb(_):
+            it[0] += 1
+        x, info = spla.cg(Kff, F[free], M=Mop, rtol=1e-12, maxiter=100000, callback=cb)
+        res = np.linalg.norm(Kff @ x - F[free]) / np.linalg.norm(F[free])
+        print(f"    cg: {it[0]} iterations, info {info}, relative residual {res:.1e}", flush=True)
+        u[free] = x
     eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
     sig = Ee[:, None] * (eps @ D.T)
     p = sig[:, :3].mean(1)
