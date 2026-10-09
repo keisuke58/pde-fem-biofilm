@@ -17,7 +17,8 @@ F:\biofilm_upf_wired, with the material server around it.
   each one written to <name>_<job>.csv;
 - starts material_server.py (--case or --active-species), stops it afterwards
   even on failure;
-- kills ANSYS (and its child processes) after -TimeoutMin minutes;
+- kills ANSYS (and its child processes) after -TimeoutMin minutes, or when
+  out_<job>.txt has not changed for -StallMin minutes (checked every -PollSec s);
 - exit code non-zero when ANSYS fails, reports errors, or -Judge fails.
 #>
 param(
@@ -27,6 +28,8 @@ param(
     [string]$Job = '',
     [string]$WorkDir = 'F:\biofilm_upf_wired',
     [double]$TimeoutMin = 60,
+    [double]$StallMin = 60,   # kill when out_<job>.txt has not changed for this long
+    [int]$PollSec = 60,
     [switch]$Judge
 )
 $ErrorActionPreference = 'Stop'
@@ -80,9 +83,21 @@ try {
         -ArgumentList '-b', '-np', '1', '-j', $Job, '-custom', '.\ANSYS.exe', '-i', $Deck, '-o', $out `
         -PassThru -NoNewWindow
     $null = $ans.Handle                                  # keeps ExitCode readable after exit (PS 5.1)
-    if (-not $ans.WaitForExit([int]($TimeoutMin * 60000))) {
+    # Polled wait. On 8-9 Oct a 24^3 run sat 17 h past -TimeoutMin 330 in one
+    # WaitForExit(ms) call (PCG had switched to the sparse solver and the solve
+    # stalled); the output file stops changing in that state, so the stall is
+    # caught by -StallMin and the time limit is checked in the same loop.
+    $outPath = Join-Path $WorkDir $out
+    $why = ''
+    while (-not $ans.WaitForExit($PollSec * 1000)) {
+        $now = Get-Date
+        if (($now - $t0).TotalMinutes -gt $TimeoutMin) { $why = "did not finish within $TimeoutMin min"; break }
+        $last = if (Test-Path $outPath) { (Get-Item $outPath).LastWriteTime } else { $t0 }
+        if (($now - $last).TotalMinutes -gt $StallMin) { $why = "stalled: $out unchanged for $StallMin min"; break }
+    }
+    if ($why) {
         Stop-Tree $ans.Id
-        throw "ANSYS did not finish within $TimeoutMin min: killed (see $out)"
+        throw "ANSYS ${why}: killed (see $out)"
     }
     $rc = $ans.ExitCode
     "ANSYS exit $rc, $([int]((Get-Date) - $t0).TotalSeconds) s, output $out"
