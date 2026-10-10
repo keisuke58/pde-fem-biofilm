@@ -245,7 +245,7 @@ JSON を `results/2026-10-wp3_fix/` に push。
    | `wp3f_n24_b002_dt0625_N32_T5` | 24³ | 0.02 | 0.0625 | 0.180 | 停止 |
 3. 精度：`wp3f_n16_dt00125_N32`、`wp3f_n24_dt00125_N32`（β 0.02、T* = 1.1）。クラウドが参照解と比べる。
 
-**2. 較正済みの 5 種を要素に（`F:\biofilm_upf_native`、-np 1）**
+**2. 較正済みの 5 種を要素に（`F:\biofilm_upf_native`、-np 1）：保留（ユーザー、10月10日）。** どの `theta_MAP.json` を使うかが決まるまで、探すことも回すこともしない。以下は決まったときの手順。
 1. 第 3 章の MAP（Hill ゲートなし、c* = 25）の `theta_MAP.json` を 4 条件分探し、場所を
    `RUN_WP3_IKMHIWI03.md` に書く（tmcmc202601 の `_runs` のどれか。Hill ゲートありの K0.05_n4 は使わない）。
 2. `python abaqus_composition/write_eco_cfg.py --theta-json <theta_MAP.json> F:\...\eco_<cond>.txt` で

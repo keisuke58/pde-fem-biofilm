@@ -2,7 +2,7 @@
 
 修論（10月20日提出）のあとの慶應の論文（`KEIO_PLAN.ja.md` §0：P1 数値面、P3 応用、保険の PAMM）に向けた案。
 10月9〜10日の結果（参照解、安定限界、近傍の選び方）を起点にした。**1 と 7 は ANSYS が要るので
-IKMHIWI03 が使える12月中旬までにやる**（指示は `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` の 10月10日の節）。
+IKMHIWI03 が使える12月中旬までにやる**（7 は使う MAP が決まるまで保留）（指示は `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` の 10月10日の節）。
 
 | # | 案 | 論文 | どこで | 状態 |
 |---|---|---|---|---|
@@ -12,7 +12,7 @@ IKMHIWI03 が使える12月中旬までにやる**（指示は `ansys_usermat/ap
 | 4 | 重みの幅を h に比例させる | P1 | クラウド | 未着手 |
 | 5 | 実際の剛性（kPa）と形状、剥離 | P3 | fifa、IKMHIWI03 | 未着手 |
 | 6 | 応力から成長への帰還（恒常圧） | P3 | `keio_wp2/` | 計画どおり（WP2） |
-| 7 | 較正済みの 5 種を要素に入れる | P0 と P3 をつなぐ | IKMHIWI03 | 指示済み、`write_eco_cfg.py --theta-json` 済み |
+| 7 | 較正済みの 5 種を要素に入れる | P0 と P3 をつなぐ | IKMHIWI03 | **保留（10月10日）**：使う `theta_MAP.json` が未定。`write_eco_cfg.py --theta-json` は済み |
 | 8 | 事後分布を応力まで伝える | P3 | fifa、IKMHIWI03 | 7 のあと |
 | 9 | MHH の実験（CLSM）と組成の空間分布を比べる | P3 | クラウド | データ待ち |
 
@@ -72,6 +72,8 @@ fifa の UMATHT）と同じ物差しで比べられる。まず Python で NEM �
 扱え、状態は SVAR 72〜83 に入る。足りなかったのは較正値を渡す口だけで、10月10日に
 `write_eco_cfg.py --theta-json theta_MAP.json OUT.txt` を足した（c* = 25、α* = 0 は `ecology_constants.py`、
 η = 1、テスト `tests/test_write_eco_cfg_theta.py`）。
+
+**保留（10月10日、ユーザー）：** どの `theta_MAP.json` を使うかが決まってから。
 
 **確かめ方（IKMHIWI03、`F:\biofilm_upf_native`、-np 1）：**
 1. 第 3 章の MAP（Hill ゲートなし、c* = 25）の `theta_MAP.json` を 4 条件分探す（tmcmc202601 の
