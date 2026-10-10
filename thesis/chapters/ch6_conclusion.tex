@@ -174,7 +174,14 @@ in order of how well the literature supports them.
         Chapter~\ref{ch:heine} and the bridge from ANSYS to Python already
         exist; with the scheme of Chapter~\ref{ch:ansys} the field stays a
         single variable, so only the state of the point model and its
-        parameters need to be widened.
+        parameters need to be widened. In a first run with the point model
+        calibrated for CH in the element, the stress does not depend on the
+        composition as long as the field sets the amount of biofilm. When
+        $\alpha$ grows instead with the living biomass
+        $\sum_i\phi_i\psi_i$ of the point model, at a rate chosen (not taken
+        from a paper) so that the mean growth of the seed at $T^*=1$ equals
+        that of Eq.~36 of Klempt et al.\ 2024, the mean von Mises stress of the
+        seed is $8\,\%$ lower.
   \item \emph{A working front term.} Once the element spreads the biofilm, the
         composition can vary in space in ANSYS as it does in the Python
         demonstration. Where the nutrient is uniform the direction of the
