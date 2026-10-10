@@ -3,15 +3,35 @@ version (ecology_native.f, eco_native_init), taken from material_server.set_case
 so the native run uses exactly what the server would.
 
     python abaqus_composition/write_eco_cfg.py CASE OUT.txt
+    python abaqus_composition/write_eco_cfg.py --theta-json theta_MAP.json OUT.txt
 
 OUT: n_active / c* alpha* / eta(5) / theta(20).
+
+--theta-json: a calibrated five-species parameter set from TMCMC (the file
+theta_MAP.json of a run, key "theta_full", 20 values in the order of the
+point model: the 15 entries of A and the 5 entries of b), with c* and
+alpha* from ecology_constants.py (the calibration values) and eta = 1, as
+the server uses without a case. This is the step from the calibrated point
+model of Chapter 3 to the element (research idea 7, RESEARCH_IDEAS.ja.md).
 """
+import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "ansys_usermat" / "coupling"), str(ROOT / "ansys_usermat")]
+sys.path[:0] = [str(ROOT / "ansys_usermat" / "coupling"), str(ROOT / "ansys_usermat"), str(ROOT)]
 import material_server as ms  # noqa: E402
+
+
+def theta_json_cfg(path):
+    """(n_active, c*, alpha*, eta(5), theta(20)) for a calibrated MAP file."""
+    import ecology_constants as ec
+    d = json.loads(Path(path).read_text())
+    theta = d["theta_full"] if isinstance(d, dict) and "theta_full" in d else d
+    theta = [float(v) for v in theta]
+    if len(theta) != 20:
+        raise ValueError(f"{path}: expected 20 values (5 species), got {len(theta)}")
+    return 5, float(ec.C_STAR), float(ec.ALPHA_STAR), [1.0] * 5, theta
 
 
 def main(case, out):
@@ -23,5 +43,15 @@ def main(case, out):
     print(f"wrote {out}: {case}, {ms.ECOLOGY_ACTIVE} species, c* {hp['c']}, alpha* {hp['alpha']}")
 
 
+def main_theta(path, out):
+    n, cs, als, eta, theta = theta_json_cfg(path)
+    f = lambda v: " ".join(repr(float(x)) for x in v)  # noqa: E731
+    Path(out).write_text(f"{n}\n{f([cs, als])}\n{f(eta)}\n{f(theta)}\n")
+    print(f"wrote {out}: {path}, {n} species, c* {cs}, alpha* {als}")
+
+
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    if sys.argv[1] == "--theta-json":
+        main_theta(sys.argv[2], sys.argv[3])
+    else:
+        main(sys.argv[1], sys.argv[2])
