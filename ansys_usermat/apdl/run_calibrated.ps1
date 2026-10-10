@@ -3,7 +3,7 @@ run_calibrated.ps1 -- research idea 7: the calibrated five-species point model
 (TMCMC final MAP, gate off, c* = 25) in the partner element, 8^3, one run per
 condition. Start it by hand when a condition's MAP file is on GitHub (no polling).
 
-  .\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS [-Push]
+  .\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS [-Weights 1,1,1,1.5,2 -Tag fnpg] [-Push]
 
 Runs detached (WMI Win32_Process.Create, like run_chain.ps1) and returns at once.
 Log: <WorkDir>\_cal5.log. For each condition given, once, it looks for
@@ -14,6 +14,9 @@ and, when the file is there (pinned to the last commit that touched it):
   2. make_wired_deck.py from base_w8_c6_g1_s015.dat (the two-species composition
      deck: Klempt 2024 stiffness, consumption 1, beta 0.02, s 0.15, phi_cap 0.9,
      T* = 1.0) with prop(8:27) = theta and prop(37) = 5 -> w8_<C>_g1_s015.dat;
+     -Weights f1..f5 (So, An, Vd, Fn, Pg; an assumption, not from a paper) adds the
+     species-weighted growth law prop(36) = 1, prop(38:42) = f: alpha_dot =
+     k_alpha phi sum_i f_i phi_i/sum(phi) -> w8_<C>_g1_s015_<Tag>.dat;
   3. ANSYS with the native exe (surface fix) in WorkDir, -np 1, WITHOUT
      BIOFILM_ECO_CASE: the native build compares the deck's theta with the
      file's bit for bit, and APDL's reading of a 16-digit decimal differs from
@@ -31,6 +34,8 @@ param(
     [string[]]$Conditions = @('CH', 'CS', 'DS', 'DH'),
     [string]$WorkDir = 'F:\biofilm_upf_ch5',
     [string]$Out = 'ansys_usermat\apdl\results\2026-10-cal5',
+    [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
+    [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
     [string]$Branch = ''
@@ -43,7 +48,7 @@ if (-not $Worker) {
     }
     $br = (& git -C $repo rev-parse --abbrev-ref HEAD).Trim()
     $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$PSCommandPath`"", '-Worker',
-           '-Conditions', ($Conditions -join ','), '-WorkDir', "`"$WorkDir`"", '-Out', "`"$Out`"",
+           '-Conditions', ($Conditions -join ','), '-WorkDir', "`"$WorkDir`"", '-Out', "`"$Out`"", '-Weights', "`"$Weights`"", '-Tag', "`"$Tag`"",
            '-Branch', $br)
     if ($Push) { $a += '-Push' }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
@@ -89,6 +94,7 @@ function Push-Files($files, $msg) {
 
 function Run-Condition($c, $sha) {
     $job = "w8_${c}_g1_s015"
+    if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
     $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj (Join-Path $WorkDir "eco_$c.txt") 2>&1
@@ -96,6 +102,11 @@ function Run-Condition($c, $sha) {
     $th = (Get-Content (Join-Path $WorkDir "eco_$c.txt"))[3].Trim().Split(' ')
     if ($th.Count -ne 20) { throw "eco_$c.txt: $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
+    if ($Weights) {
+        $w = @($Weights -split '[ ,]+' | Where-Object { $_ })
+        if ($w.Count -ne 5) { throw "-Weights needs 5 values, got $($w.Count)" }
+        $props += ',36=1,' + ((0..4 | ForEach-Object { "$($_ + 38)=$($w[$_])" }) -join ',')
+    }
     $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir 'base_w8_c6_g1_s015.dat') (Join-Path $WorkDir "$job.dat") `
         --props $props --post both --post-elem 220 2>&1
     if ($LASTEXITCODE -ne 0) { throw "make_wired_deck: $o" }
@@ -103,7 +114,7 @@ function Run-Condition($c, $sha) {
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
     Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)))"
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights')"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
@@ -132,7 +143,7 @@ function Run-Condition($c, $sha) {
     return $true
 }
 
-L "cal5 start: $($Conditions -join ','), branch $Branch"
+L "cal5 start: $($Conditions -join ','), weights '$Weights' tag '$Tag', branch $Branch"
 try {
     foreach ($c in $Conditions) {
         $sha = Find-Map $c
