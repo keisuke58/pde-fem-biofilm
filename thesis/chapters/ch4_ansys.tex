@@ -309,21 +309,22 @@ least-squares sense, the Neighbored Element Method
 explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
 give $\Delta t\le h^2/(2\beta)$ for the element size $h$, which is the limit of
 the three-point stencil in one dimension; the seven-point stencil in three
-dimensions has $\lambda=\beta\Delta t/h^2\le1/6$. The runs of this element
-stayed smooth up to $\lambda=0.136$ on $16^3$ and $0.158$ on $24^3$ elements
-and failed at $0.144$ and $0.187$ (Figure~\ref{fig:ch5-stability}; the $16^3$
-pair are runs to $T^*=5$). A
-Bloch analysis of the NEM stencil on the lattice of the integration points
-(Appendix~\ref{app:stability}) gives the limit: it is $0.18$ for the
-unweighted fit, because the lattice is not uniform, and the Gaussian weight
-of the fit, whose width $\beta^*=0.2$~mm is fixed in millimetres, lowers it on
-coarse meshes to $0.14$ to $0.15$ on $16^3$ and $0.16$ to $0.17$ on $24^3$,
-within the brackets of the runs, and to about $0.06$ on $8^3$, where runs
-to $T^*=5$ stay smooth at $\lambda=0.048$ and stop at $0.080$. Runs to
-$T^*=1.1$ are too short to show the limit on $8^3$ (Appendix~\ref{app:stability}). Every run in
-this chapter has $\lambda\le0.128$ on $16^3$ and finer meshes and
-$\lambda\le0.04$ on $8^3$ (the $16^3$ run at $\beta=0.1$ uses
-$\Delta t=0.0125$).
+dimensions has $\lambda=\beta\Delta t/h^2\le1/6$. A Bloch analysis of the
+NEM stencil on the lattice of the integration points
+(Appendix~\ref{app:stability}) gives the limit of this element: $0.18$ for the
+unweighted fit, because the lattice is not uniform, and lower on coarse
+meshes, because the width $\beta^*=0.2$~mm of the Gaussian weight is fixed in
+millimetres. On $16^3$ and $24^3$ the limit also depends on which points of
+the last, equidistant shell enter the fit of $30$ neighbours, and lies
+between $0.122$ and $0.140$ on $16^3$ and between $0.122$ and $0.162$ on
+$24^3$; on $8^3$ it is $0.062$. Runs to $T^*=5$ confirm this: on $8^3$ they
+stay smooth at $\lambda=0.048$ and stop at $0.080$, on $16^3$ at $0.136$ and
+$0.144$, and on $24^3$ the run at $0.158$ stops (Figure~\ref{fig:ch5-stability}).
+Runs to $T^*=1.1$ are too short to show an instability near the limit. The
+results of this chapter use $\lambda\le0.128$ on $16^3$, $\lambda\le0.072$
+on $24^3$ and $\lambda\le0.04$ on $8^3$, below the band; the only exception
+is the $24^3$ run at $\Delta t=0.05$ ($\lambda=0.144$) in the time-step series
+below, whose seed growth follows the first-order trend of the other steps.
 
 \begin{figure}[htbp]
   \centering

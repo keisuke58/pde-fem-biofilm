@@ -78,6 +78,37 @@ def wls_stencil(x0, pts, nneigh, beta_star, threshold, tie="symmetric"):
     return D, c, w
 
 
+def shell_samples(h, nneigh=30, beta_star=0.2, threshold=1e-8, ntrial=40, nk=10, seed=0):
+    """The nneigh-th neighbour lies in a shell of equidistant points (7 at distance h
+    for N = 30), of which the element takes some by its own sort order. Returns the
+    stability limits for ntrial random choices of that subset, with the shell data."""
+    pts = lattice_points(h, 3)
+    x0 = np.array([OFF[0] * h] * 3)
+    d = pts - x0
+    r = np.linalg.norm(d, axis=1)
+    order = np.argsort(r, kind="stable")
+    order = order[r[order] > 1e-12 * max(1.0, r.max())]
+    rk = r[order[nneigh - 1]]
+    shell = order[np.abs(r[order] - rk) < 1e-9 * max(1.0, rk)]
+    inside = order[r[order] < rk * (1 - 1e-9)]
+    k = nneigh - len(inside)
+    rng = np.random.default_rng(seed)
+    lams = []
+    for _ in range(ntrial):
+        sel = np.concatenate([inside, rng.choice(shell, k, replace=False)])
+        D = d[sel]
+        w = np.exp(-0.5 * (4.0 * np.linalg.norm(D, axis=1) / beta_star) ** 2)
+        w[w <= threshold] = 0.0
+        dx, dy, dz = D.T
+        A = np.column_stack([0.5 * dx**2, 0.5 * dy**2, 0.5 * dz**2, dx * dy, dx * dz, dy * dz, dx, dy, dz])
+        Dm = np.linalg.solve(A.T @ (w[:, None] * A), A.T * w)
+        c = Dm[0] + Dm[1] + Dm[2]
+        rho, _ = bloch_radius(h, D, c, nk)
+        lams.append(2.0 / (rho * h * h))
+    return dict(shell_radius=float(rk), shell_size=int(len(shell)), taken=int(k),
+                inside=int(len(inside)), lam=sorted(float(v) for v in lams))
+
+
 def bloch_radius(h, D, c, nk=24):
     """Spectral radius of the NEM Laplacian on the infinite lattice.
     The eight points of a cell are mirror images; the stencil of the reference
@@ -157,7 +188,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     if a.fig_only:
         out = json.loads(a.json.read_text())
-        draw(out["cases"], a.fig)
+        draw(out["cases"], a.fig, out.get("shells"))
         return
 
     cases = []
@@ -175,6 +206,13 @@ def main(argv=None):
                                   k_worst=(np.array(kw) * h / np.pi).round(3).tolist()))
                 print(f"{n:3d}^3 h={h:.4f} n={len(c):2d} {tie:9s} beta*={beta_star:<6g} "
                       f"lambda_max = {lam:.4f}  (k h/pi = {np.round(np.array(kw)*h/np.pi,2)})")
+    # the choice among the equidistant points of the last shell (N = 30 takes 5 of 7)
+    shells = {}
+    for n, h in meshes:
+        sh = shell_samples(h, 30, 0.2, 1e-8, 40, max(8, a.nk // 2))
+        shells[n] = sh
+        print(f"{n:3d}^3 shell at {sh['shell_radius']:.4f} mm: {sh['taken']} of {sh['shell_size']} taken; "
+              f"lambda_max over {len(sh['lam'])} choices: {sh['lam'][0]:.3f} .. {sh['lam'][-1]:.3f}")
     # reference: 7-point stencil on a simple cubic lattice
     print("7-point finite differences: lambda_max = 1/6 =", 1 / 6)
 
@@ -194,17 +232,18 @@ def main(argv=None):
             print(f"  {n:3d}^3  lambda = {f:.2f} lambda_max = {f*lam:.4f}: growth {g:.4f}")
         checks.append(row)
 
-    out = dict(cases=cases, march=checks,
+    out = dict(cases=cases, march=checks, shells={str(k): v for k, v in shells.items()},
                note="lambda = beta dt / h^2; explicit Euler stable iff lambda <= lambda_max")
     if a.json:
         a.json.write_text(json.dumps(out, indent=1))
         print("wrote", a.json)
     if a.fig:
-        draw(cases, a.fig)
+        draw(cases, a.fig, {str(k): v for k, v in shells.items()})
 
 
-def draw(cases, fig_path):
-    """lambda_max against the mesh for the deck weighting, with the brackets of the runs."""
+def draw(cases, fig_path, shells=None):
+    """lambda_max against the mesh for the deck weighting, with the brackets of the runs;
+    shaded: the range over the choice of the equidistant points of the last shell."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -218,10 +257,15 @@ def draw(cases, fig_path):
         ys = [cs["lam_max"] for cs in cases if cs["nneigh"] == nn and cs["beta_star"] == 0.2]
         if xs:
             ax.plot(xs, ys, marker=mk, label=lab, lw=1.2)
+    if shells:
+        ms = sorted(int(k) for k in shells)
+        lo = [shells[str(m)]["lam"][0] for m in ms]
+        hi = [shells[str(m)]["lam"][-1] for m in ms]
+        ax.fill_between(ms, lo, hi, color="C0", alpha=0.18, lw=0, label="30 neighbours, choice of the last shell")
     ax.axhline(1 / 6, color="k", ls="--", lw=0.9)
     ax.text(8.2, 1 / 6 + 0.003, r"$1/6$, seven-point stencil", fontsize=8, va="bottom")
     # brackets of the element's runs: largest smooth and smallest oscillating lambda
-    runs = {8: (0.048, 0.080), 16: (0.136, 0.144), 24: (0.158, 0.187)}   # 8^3 and 16^3: runs to T* = 5 (Appendix D)
+    runs = {8: (0.048, 0.080), 16: (0.136, 0.144), 24: (0.144, 0.158)}   # runs to T* = 5; 24^3 lower end: smooth to T* = 1.1 (Appendix D)
     first = True
     for m, (lo, hi) in runs.items():
         if hi is None:
