@@ -274,6 +274,8 @@ this machine's specific workflow.
   82519093, 開放環境科学専攻. The report itself:
   `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
   (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).
+- **Grading (MPO 2024, `thesis/admin/`):** only the thesis is graded (mean of
+  the two examiners); the colloquium is a Studienleistung, pass or fail.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.

@@ -265,7 +265,7 @@ def draw(cases, fig_path, shells=None):
     ax.axhline(1 / 6, color="k", ls="--", lw=0.9)
     ax.text(8.2, 1 / 6 + 0.003, r"$1/6$, seven-point stencil", fontsize=8, va="bottom")
     # brackets of the element's runs: largest smooth and smallest oscillating lambda
-    runs = {8: (0.048, 0.080), 16: (0.136, 0.144), 24: (0.144, 0.158)}   # runs to T* = 5; 24^3 lower end: smooth to T* = 1.1 (Appendix D)
+    runs = {8: (0.048, 0.080), 16: (0.136, 0.144), 24: (0.130, 0.158)}   # runs to T* = 5
     first = True
     for m, (lo, hi) in runs.items():
         if hi is None:
