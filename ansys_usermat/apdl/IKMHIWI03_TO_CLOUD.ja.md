@@ -295,3 +295,16 @@ JSON を `results/2026-10-wp3_fix/` に push。
 - ついでに直した：`write_eco_cfg.py --theta-json` に `phibar_fix_*` の形（キーが "0"〜"19" の辞書）を渡すと、
   値ではなくキーの 0〜19 を θ として黙って書いていた。値を番号順に読むようにし、それ以外の辞書は止める。
   テストを 2 つ足した（`tests/test_write_eco_cfg_theta.py`）。pytest は全部通った。
+
+## IKMHIWI03（10月10日 14時）：CH の較正値について
+
+- 使う MAP はユーザーが決めた：tmcmc202601 の `claude/gate-off-map-check` の
+  `docs/revision/generated/final_theta_MAP/`（CH は `CH_ult_mut150_wide2_noph_sd4_seed7`）。
+- **14時の時点で `CH.json` はまだない**（フォルダには README だけ）。GPU 側の引継ぎ（`docs/handoff/gpu_2026-10-10_CH_ult.*`）
+  にあるのは a33・a35・a45 などの成分だけで、20 個そろった θ はない。値を推測で埋めることはしない。
+- 届いたらやること：
+  1. `write_eco_cfg.py --theta-json CH.json` で設定を作る。
+  2. 8³ の 5 種のデッキを作る。デッキの prop(8:27) に同じ θ を入れる（点モデルが設定の θ と完全一致を確かめるため）。
+  3. 実行は表面を直した native の exe（`F:\biofilm_upf_nativefix`）で、`BIOFILM_ECO_CASE` を設定して回す。
+     `run_wired.ps1`・`run_chain.ps1` にはこの環境変数を渡す口がないので、足すか、10月7日と同じように直接呼ぶ。
+     今動いている列が `run_wired.ps1` を使っているので、足すのは列が空いてから。
