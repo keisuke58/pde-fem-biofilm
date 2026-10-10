@@ -34,7 +34,7 @@ periodic with the period $h$ of the mesh with eight points per cell.
 \paragraph{Spectral radius.} I computed the stencil of the WLS fit on this
 lattice with the deck values and formed the $8\times8$ Bloch symbol
 $\hat L(\mathbf k)$ of $L$ over the Brillouin zone of the cell lattice; $\rho$
-is the largest modulus of its eigenvalues over $\mathbf k$. Two points
+is the largest modulus of its eigenvalues over $\mathbf k$. Three points
 follow from the result (Table~\ref{tab:app-stability}).
 
 First, the limit of the NEM stencil differs from $1/6$ even without the
@@ -45,10 +45,19 @@ Second, the weighting makes the limit depend on the mesh. Because
 $\beta^*$ is a length in millimetres, the weight of a neighbour at distance
 $d$ depends on $d/\beta^*$, and on a coarse mesh the fit is dominated by the
 few nearest points, which gives a stencil with large coefficients and a small
-$\lambda_{\max}$: about $0.06$ on $8^3$ elements, $0.14$ to $0.15$ on $16^3$
-and $0.16$ to $0.17$ on $24^3$ (the two values are for $N=30$ and for the
-symmetric set of $32$ neighbours, between which the distance ordering of the
-element does not decide). The limit approaches the unweighted value as the
+$\lambda_{\max}$: $0.062$ on $8^3$ elements, $0.139$ on $16^3$ and $0.162$ on
+$24^3$ for one choice of $30$ neighbours, $0.149$ and $0.173$ for the symmetric
+set of $32$.
+
+Third, the choice of the neighbours matters. The $30$th neighbour lies in a
+shell of seven points at the distance $h$, of which the fit takes five; which
+five follows from the sort order inside the element and cannot be read off
+the deck. Over $40$ random choices of the five, the limit stays at $0.062$ on
+$8^3$, where the weight of that shell is negligible, but lies between $0.122$
+and $0.140$ on $16^3$ and between $0.122$ and $0.162$ on $24^3$ (shaded in
+Figure~\ref{fig:app-stability}). On the finite cube, with the neighbours taken
+in the order of a $k$-d tree, the limit is $0.143$ on both meshes.
+The limit approaches the unweighted value as the
 mesh is refined. A direct time stepping of the stencil on a periodic block of
 elements grows by the factor $|1-2\lambda/\lambda_{\max}|$ per step, as the
 analysis predicts.
@@ -59,19 +68,19 @@ analysis predicts.
   \caption[Stability limit of the NEM stencil against the mesh]{Stability
     limit of the explicit field update from the Bloch analysis, against the
     number of elements per edge, for $30$, $32$ and $56$ neighbours with
-    $\beta^*=0.2$~mm; bars: the runs of the element, from the largest smooth
-    to the smallest oscillating or stopped $\lambda$
-    (Figure~\ref{fig:ch5-stability}); on $8^3$ and $16^3$ the runs to $T^*=5$.}
+    $\beta^*=0.2$~mm; shaded: the range over the choice of five of the seven
+    equidistant points of the last shell for $30$ neighbours; bars: the runs
+    of the element to $T^*=5$, from the largest smooth to the smallest
+    stopped $\lambda$ (on $24^3$ the lower end is a run to $T^*=1.1$).}
   \label{fig:app-stability}
 \end{figure}
 
-\paragraph{Comparison with the runs.} The runs of the element bracket the
-limit at $0.136<\lambda_{\max}<0.144$ on $16^3$ (runs to $T^*=5$; the runs
-to $T^*=1.1$ give $0.128<\lambda_{\max}<0.160$) and at
-$0.158<\lambda_{\max}<0.187$ on $24^3$ (Figure~\ref{fig:ch5-stability}), in
-agreement with the computed values $0.139$ to $0.149$ and $0.162$ to $0.173$. The unstable mode on these meshes is
-the alternation of sign between neighbouring points, which is what the
-oscillating runs show in $\alpha-1$.
+\paragraph{Comparison with the runs.} Runs to $T^*=5$ bracket the limit at
+$0.048<\lambda_{\max}<0.080$ on $8^3$ and $0.136<\lambda_{\max}<0.144$ on
+$16^3$, and on $24^3$ the run at $0.158$ stops; all three agree with the
+computed values, on $16^3$ and $24^3$ within the band of the neighbour choice.
+The unstable mode is the alternation of sign between neighbouring points,
+which is what the failing runs show in $\alpha-1$.
 
 On $8^3$ the runs at $\beta=0.1$~mm$^2/T^*$ to $T^*=1.1$ stay smooth up to
 $\lambda=0.088$ and stop at $0.096$, above the computed limit of $0.062$. The
@@ -88,27 +97,31 @@ I therefore predicted that longer runs show the limit, and two runs to
 $T^*=5$ confirm it: at $\lambda=0.080$ the elements collapse at $T^*=1.65$,
 at $\lambda=0.048$ the run stays smooth to the end. The limit on $8^3$ lies
 between $0.048$ and $0.080$, in agreement with $0.062$. A run judged stable
-must therefore be long enough for the unstable mode to grow. On $16^3$ two
-runs to $T^*=5$ narrow the bracket to $0.136$ to $0.144$ around the computed
-$0.139$; on $24^3$ the runs to $T^*=1.1$ already agree with the computed limit.
+must therefore be long enough for the unstable mode to grow. The same holds
+on $24^3$, where the run at $\lambda=0.158$ is smooth to $T^*=1.1$ and stops
+before $T^*=5$; marching the seed problem with the finite-cube operator gives
+the same picture, with $\alpha-1$ turning negative at $T^*=1.04$ for
+$\lambda=0.158$ and at $T^*=1.56$ for $0.150$.
 
 \begin{table}[htbp]
   \centering
   \caption[Stability limit of the NEM stencil]{Stability limit
     $\lambda_{\max}=\beta\Delta t/h^2$ of the explicit update with the NEM
     stencil on the integration-point lattice, from the Bloch analysis;
-    $\beta^*=0.2$~mm as in the element, and the unweighted limit. Last row:
-    the largest smooth and the smallest oscillating or stopped $\lambda$ of the
-    runs; $^{a}$runs to $T^*=5$, the others to $T^*=1.1$ (see the text).}
+    $\beta^*=0.2$~mm as in the element, and the unweighted limit; second
+    row: the range over the choice of the neighbours in the last shell. Last
+    row: the largest smooth and the smallest stopped $\lambda$ of the runs to
+    $T^*=5$.}
   \label{tab:app-stability}
   \small
   \begin{tabular}{lcccc}
     \toprule
     & $8^3$ & $16^3$ & $24^3$ & $\beta^*\to\infty$ \\
     \midrule
-    $N=30$ neighbours & $0.062$ & $0.139$ & $0.162$ & $0.185$ \\
+    $N=30$, one choice & $0.062$ & $0.139$ & $0.162$ & $0.185$ \\
+    $N=30$, range over the choice & $0.062$ & $0.122$--$0.140$ & $0.122$--$0.162$ & \\
     $N=32$ neighbours & $0.062$ & $0.149$ & $0.173$ & $0.180$ \\
-    runs: smooth / failing & $0.048$ / $0.080^{a}$ & $0.136$ / $0.144^{a}$ & $0.158$ / $0.187$ & \\
+    runs to $T^*=5$: smooth / stopped & $0.048$ / $0.080$ & $0.136$ / $0.144$ & -- / $0.158$ & \\
     \bottomrule
   \end{tabular}
 \end{table}
