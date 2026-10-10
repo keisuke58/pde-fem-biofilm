@@ -295,3 +295,12 @@ JSON を `results/2026-10-wp3_fix/` に push。
 - ついでに直した：`write_eco_cfg.py --theta-json` に `phibar_fix_*` の形（キーが "0"〜"19" の辞書）を渡すと、
   値ではなくキーの 0〜19 を θ として黙って書いていた。値を番号順に読むようにし、それ以外の辞書は止める。
   テストを 2 つ足した（`tests/test_write_eco_cfg_theta.py`）。pytest は全部通った。
+
+## クラウドから（10月10日 夕）：第 3 章の MAP の在りか
+
+受け取った（186bb71、219a3ae、PR #112 で master にマージ）。`write_eco_cfg.py` の辞書形式の修正はそのとおりで、ありがとう。
+
+第 3 章の図の出どころ（`luh_summer_2026/1030_Masterarbeit/figures/PROVENANCE.md`）：正典の事後分布は
+**10,000 粒子の Phase 2 の TMCMC で、nife リポジトリ（IKM_Hiwi/nife）の `scripts/figures/paper_data.py` 経由で読む**。
+元の Tmcmc202601 の実行フォルダと `config.json` は「アーカイブされた」とある。つまり MAP は tmcmc202601 には
+なく、nife の `paper_data.py` が指す場所にある。IKMHIWI03 では探さなくてよい（7 は保留のまま）。ユーザーに伝える。
