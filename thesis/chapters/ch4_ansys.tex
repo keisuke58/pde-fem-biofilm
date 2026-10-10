@@ -120,8 +120,9 @@ reproduce the plain law fed the same $E$ at every $\phi$ and to scale the
 stress by $\phi^2$. The paper's material is incompressible, with $\det\mathbf F_e=1$ enforced by
 a Lagrange multiplier, and $\nu=0.49$ enters there only through $\mu$; here
 the constraint is approximated by $\nu=0.49$. The element, SOLID185 in its default
-$\bar{\mathbf B}$ formulation, uses one dilatation per element, the same idea as
-the H1P0 element of the paper. A Python solution of the same problem shows
+$\bar{\mathbf B}$ formulation, integrates over the $2\times2\times2$ Gauss points
+of each element, where it also stores its fields, and uses one dilatation per
+element, the same idea as the H1P0 element of the paper. A Python solution of the same problem shows
 that with this formulation the mean stress changes by less than $10\,\%$
 between $\nu=0.49$ and $0.499$, while full integration would overestimate it
 several times (\S\ref{sec:ch5-results}).
@@ -301,16 +302,16 @@ al.~\cite{Klempt2024DiffusionDrivenGrowth}, Eq.~34 and 36:
 \end{equation}
 with diffusion, a local source, and a front term that moves the biofilm
 boundary up the nutrient gradient. The element computes $\phi$ at its
-integration points; I leave it unchanged. Its Laplacian and the gradients of
+Gauss points; I leave it unchanged. Its Laplacian and the gradients of
 $\phi$ and $c$ are approximated from the values at the neighbouring
-integration points, by a second-order Taylor expansion fitted in the weighted
+Gauss points, by a second-order Taylor expansion fitted in the weighted
 least-squares sense, the Neighbored Element Method
 \cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}. The field is updated
 explicitly, which limits the time step. Rudolf et al.~\cite{Rudolf2025NEM}
 give $\Delta t\le h^2/(2\beta)$ for the element size $h$, which is the limit of
 the three-point stencil in one dimension; the seven-point stencil in three
 dimensions has $\lambda=\beta\Delta t/h^2\le1/6$. A Bloch analysis of the
-NEM stencil on the lattice of the integration points
+NEM stencil on the lattice of the Gauss points
 (Appendix~\ref{app:stability}) gives the limit of this element: $0.18$ for the
 unweighted fit, because the lattice is not uniform, and lower on coarse
 meshes, because the width $\beta^*=0.2$~mm of the Gaussian weight is fixed in
@@ -773,9 +774,9 @@ points, as the element carries them. The first series approaches the seed
 von Mises stress from above, the second from below; on $48^3$ they give
 $6.11$ and $6.07\times10^{-4}$~Pa, so the converged value lies between the
 two, $2\,\%$ above the element's value on $24^3$ after extrapolation to
-$\Delta t\to0$. With the integration-point values the code reproduces the
+$\Delta t\to0$. With the Gauss-point values the code reproduces the
 element's seed stress within $3\,\%$ on $8^3$ and within $1\,\%$ on $16^3$
-and $24^3$; on the coarse mesh the integration points smooth the step in
+and $24^3$; on the coarse mesh the Gauss points smooth the step in
 $\alpha$ at the surface of the seed inside an element, which lowers the
 stress. The stress converges only to about first order, because the
 stiffness jumps at the surface of the seed.
@@ -931,7 +932,7 @@ model for most of the time.
 \item \emph{Faces of the cube.} In the element used here, $\phi$ at the surface
       points was not updated and stayed $0$, so every face acted as $\phi=0$
       where Eq.~\eqref{eq:ch5-field} has no flux. With these points set to the
-      mean of their neighbouring integration points, the runs with
+      mean of their neighbouring Gauss points, the runs with
       $\beta=0.02$~mm$^2/T^*$ change by less than $0.13\,\%$ in the seed stress
       and in $\alpha$ and by less than $0.5\,\%$ in the composition, so their
       values are kept. Where $\phi$ reaches the faces (larger $\beta$, longer

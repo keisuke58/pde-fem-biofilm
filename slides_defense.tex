@@ -199,7 +199,7 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \factbox{p1}{Added in this work}{$\dot\alpha=k_\alpha\phi$ at every Gauss point (Eq.~36) $\to\mathbf F_g\to$ stress}
 \end{column}
 \end{columns}
-\takeaway{The field formulation of the element is retained; only the growth law at the integration points is added.}
+\takeaway{The field formulation of the element is retained; only the growth law at the Gauss points is added.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -464,7 +464,7 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
 \centering
 \includegraphics[width=0.95\linewidth,height=0.55\textheight,keepaspectratio]{fig_wp3_stability.png}\\
 \small $\lambda=\beta\Delta t/h^2$; grey: the limit from a Bloch analysis of the NEM
-stencil on the integration-point lattice (thesis, Appendix~D). $h^2/(2\Delta t)\ge\beta$ of
+stencil on the lattice of the Gauss points (thesis, Appendix~D). $h^2/(2\Delta t)\ge\beta$ of
 Rudolf et al.\ 2025 is the one-dimensional limit ($1/2$); the seven-point stencil gives $1/6$;
 the NEM fit with its weight width $\beta^*=0.2$~mm fixed in millimetres gives $0.06$ on $8^3$
 and, depending on which equidistant points enter the 30 neighbours, $0.12$--$0.14$ on $16^3$ and
@@ -677,7 +677,7 @@ from the start grows only under Eq.~36.
   \item In the element, $\phi$ at the surface points was not updated and stayed $0$:
         every face acted as $\phi=0$, where the model has zero flux
   \item Corrected: each surface point takes the distance-weighted mean of its
-        neighbouring integration points; all thesis runs repeated
+        neighbouring Gauss points; all thesis runs repeated
 \end{itemize}
 \vspace{4pt}
 \centering
