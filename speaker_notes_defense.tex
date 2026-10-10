@@ -234,8 +234,8 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \JA 1サブステップでは、要素が $\phi$ を更新し、各 Gauss 点で $\alpha$ と応力を更新し、2菌種なら点モデルを局所の量に合わせて $s\,\Delta t$ だけ進めます。
 
 \slide{Appendix D: stability of the explicit field update}{Q}
-\EN The condition of Rudolf et al.\ is the one-dimensional one, one half. I derived the limit of the NEM stencil on the lattice of the integration points by a Bloch analysis: the weight of the fit has a fixed width in millimetres, so the limit depends on the mesh, about 0.06 on eight cubed and 0.12 to 0.16 on the finer meshes; the range comes from which equidistant points enter the thirty neighbours, which the element's sort order decides. Runs to five times the usual end time confirm it; shorter runs do not show the instability, because the unstable mode starts very small.
-\JA Rudolf らの条件は1次元のもので 1/2 です。積分点の格子の上で NEM の stencil の限界を Bloch 解析で導きました。重みの幅が mm で固定なので限界はメッシュに依存し、8³ で約 0.06、細かいメッシュで 0.12〜0.16。幅があるのは、30 近傍に等距離の点のどれが入るかを要素の並べ替えの順が決めるためです。5 倍長く回した実行で確かめました。短い実行では不安定なモードの初期値が小さく、壊れません。
+\EN The condition of Rudolf et al.\ is the one-dimensional one, one half. I derived the limit of the NEM stencil on the lattice of the Gauss points by a Bloch analysis: the weight of the fit has a fixed width in millimetres, so the limit depends on the mesh, about 0.06 on eight cubed and 0.12 to 0.16 on the finer meshes; the range comes from which equidistant points enter the thirty neighbours, which the element's sort order decides. Runs to five times the usual end time confirm it; shorter runs do not show the instability, because the unstable mode starts very small.
+\JA Rudolf らの条件は1次元のもので 1/2 です。Gauss 点の格子の上で NEM の stencil の限界を Bloch 解析で導きました。重みの幅が mm で固定なので限界はメッシュに依存し、8³ で約 0.06、細かいメッシュで 0.12〜0.16。幅があるのは、30 近傍に等距離の点のどれが入るかを要素の並べ替えの順が決めるためです。5 倍長く回した実行で確かめました。短い実行では不安定なモードの初期値が小さく、壊れません。
 \hint{Junker 先生向け。修論の付録 D。「観測」ではなく「導出して一致した」と言う。}
 
 \slide{Backup 1: stationarity conditions}{Q}

@@ -8,9 +8,9 @@
 The element advances its field explicitly,
 $\phi_{n+1}=\phi_n+\Delta t\,(\beta L\phi_n+\ldots)$, where $L$ is the
 Neighbored Element Method approximation of the Laplacian
-\cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}: at every integration point a
+\cite{Blaszczyk2022TaylorWLS,Rudolf2025NEM}: at every Gauss point a
 second-order Taylor polynomial is fitted by weighted least squares through
-the values at the $N$ nearest integration points, with the weight
+the values at the $N$ nearest Gauss points, with the weight
 $w=\exp[-\tfrac12(4d/\beta^*)^2]$ of the distance $d$, and the Laplacian is
 the sum of the three unmixed second derivatives of the fit. In the runs of
 Chapter~\ref{ch:ansys} the element uses $N=30$ and $\beta^*=0.2$~mm. For
@@ -22,8 +22,8 @@ $h^2/(2\Delta t)\ge\beta$ of Rudolf et al.~\cite{Rudolf2025NEM}; for the
 five-point stencil in two dimensions $\lambda_{\max}=1/4$ and for the
 seven-point stencil in three dimensions $1/6$.
 
-\paragraph{Lattice of the integration points.} On a uniform hexahedral mesh
-of size $h$ the $2\times2\times2$ integration points of SOLID185 lie, per
+\paragraph{Lattice of the Gauss points.} On a uniform hexahedral mesh
+of size $h$ the $2\times2\times2$ Gauss points of SOLID185 lie, per
 axis, at $h(\tfrac12\pm\tfrac{1}{2\sqrt3})$ inside each element, so their
 spacing alternates between $h/\sqrt3\approx0.58h$ inside an element and
 $h(1-1/\sqrt3)\approx0.42h$ across the element boundary. The eight points of
@@ -107,7 +107,7 @@ $\lambda=0.158$ and at $T^*=1.56$ for $0.150$.
   \centering
   \caption[Stability limit of the NEM stencil]{Stability limit
     $\lambda_{\max}=\beta\Delta t/h^2$ of the explicit update with the NEM
-    stencil on the integration-point lattice, from the Bloch analysis;
+    stencil on the lattice of the Gauss points, from the Bloch analysis;
     $\beta^*=0.2$~mm as in the element, and the unweighted limit; second
     row: the range over the choice of the neighbours in the last shell. Last
     row: the largest smooth and the smallest stopped $\lambda$ of the runs to
