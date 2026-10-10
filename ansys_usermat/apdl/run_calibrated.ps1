@@ -196,5 +196,14 @@ try {
         if (-not $sha) { L "  $c.json not on GitHub yet: skipped"; continue }
         try { $null = Run-Condition $c $sha } catch { L "  $c EXCEPTION: $_" }
     }
+    if ($Growth) {
+        # the four-condition table and figure from whatever runs with this tag are there
+        $o = & $py ansys_usermat\apdl\compare_cal5.py "--tag=$Tag" --results $Out 2>&1; $o | ForEach-Object { L "  compare: $_" }
+        $sfx = if ($Tag) { "_$Tag" } else { '' }
+        if ($Push -and $LASTEXITCODE -eq 0) {
+            $files = @('csv', 'md', 'png') | ForEach-Object { "$Out\cal5_compare$sfx.$_" -replace '\\', '/' }
+            Push-Files $files "Calibrated five-species runs: condition comparison, tag '$Tag' (automatic)"
+        }
+    }
     L 'cal5 end'
 } catch { L "EXCEPTION: $_" }
