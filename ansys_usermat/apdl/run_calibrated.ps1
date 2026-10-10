@@ -100,6 +100,8 @@ function Run-Condition($c, $sha) {
         --props $props --post both --post-elem 220 2>&1
     if ($LASTEXITCODE -ne 0) { throw "make_wired_deck: $o" }
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
+    # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
+    Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
     Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue
     L "START $job (theta $c.json @ $($sha.Substring(0,7)))"
     $t0 = Get-Date
