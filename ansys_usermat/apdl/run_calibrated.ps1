@@ -201,7 +201,8 @@ try {
         $o = & $py ansys_usermat\apdl\compare_cal5.py "--tag=$Tag" --results $Out 2>&1; $o | ForEach-Object { L "  compare: $_" }
         $sfx = if ($Tag) { "_$Tag" } else { '' }
         if ($Push -and $LASTEXITCODE -eq 0) {
-            $files = @('csv', 'md', 'png') | ForEach-Object { "$Out\cal5_compare$sfx.$_" -replace '\\', '/' }
+            # *.csv and *.png are ignored in results/: the table goes in as Markdown only
+            $files = @("$Out\cal5_compare$sfx.md" -replace '\\', '/')
             Push-Files $files "Calibrated five-species runs: condition comparison, tag '$Tag' (automatic)"
         }
     }
