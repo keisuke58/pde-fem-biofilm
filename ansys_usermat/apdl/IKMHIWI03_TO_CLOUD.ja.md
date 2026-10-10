@@ -317,3 +317,21 @@ JSON を `results/2026-10-wp3_fix/` に push。
   3. 実行は表面を直した native の exe（`F:\biofilm_upf_nativefix`）で、`BIOFILM_ECO_CASE` を設定して回す。
      `run_wired.ps1`・`run_chain.ps1` にはこの環境変数を渡す口がないので、足すか、10月7日と同じように直接呼ぶ。
      今動いている列が `run_wired.ps1` を使っているので、足すのは列が空いてから。
+
+## IKMHIWI03（10月10日 14:15）：CH の 5 種、要素で 1 本目が通った
+
+- MAP：tmcmc202601 `claude/gate-off-map-check` @ 2d8d99e、`final_theta_MAP/CH.json`（seed 7）。
+- 実行 `w8_CH_g1_s015`：2 種の組成デッキ（`w8_c6_g1_s015`：Klempt 2024 の剛性、消費 1、β 0.02、s 0.15、φ_cap 0.9、T* = 1.0、8³）の
+  prop(8:27) に CH の θ、prop(37) = 5。表面を直した native の exe、-np 1。1 分、エラー 0、keycut 0。
+- 結果：`results/2026-10-cal5/w8_CH_g1_s015.json`（応力・栄養・share_history、7 桁）と `w8_CH_g1_s015_pm.json`
+  （**点モデルのトレース、全桁**：シード要素 220 の積分点 1 の全 240 行、各行 g_old(12)・g_new(12)・dt・φ・α、
+  それと全 254 要素の最後の行。列名は `columns`）。全桁比較はこの `_pm.json` でできる。
+- **native の exe は `BIOFILM_ECO_CASE` なしで回している。** 設定ファイルを渡すと、Fortran が設定の θ とデッキの θ を
+  ビット一致で比べ、APDL が 16 桁の小数を読んだ値が Fortran の読みと最後のビットで違うので、全点で不一致になり
+  keycut で止まった（1 本目、13:55）。ファイルなしの既定（n = 5、c* = 25、α* = 0、η = 1）は設定ファイルの値と同じ
+  （`ecology_constants.py`）なので、結果は同じ。デッキの θ を信じる形になるので、比較のときは `_pm.json` の
+  `deck_theta`（デッキの文字列）と `theta`（MAP の repr）が同じ数かも見てほしい。
+- 残りの条件：`.\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS,DS,DH -Push` を、json が置かれたら手で起動する
+  （GitHub の監視はしない。ユーザー、10 日）。ないものは飛ばす。1 条件 1 分。
+- 次に決めてほしいこと：T* = 1.0 と s = 0.15 は 2 種のときの仮定のまま。CH の点モデルは t = 0.2375 で 21 日なので、
+  s をどう置くかは別の話（`RESEARCH_IDEAS.ja.md` 7）。
