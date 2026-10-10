@@ -762,9 +762,9 @@ with $\Delta t=0.1$, $0.05$, $0.025$ and $0.0125$ (Figure~\ref{fig:ch5-wp3-conv}
 the seed values agree with Table~\ref{tab:ch5-mesh} within $0.03\,\%$.
 Halving the time step halves the change, so the update is first order in time,
 and the error at $\Delta t=0.025$ is about $1\,\%$ in the seed von Mises stress.
-Over the three meshes the seed von Mises stress converges with an observed
-order of about $2.1$ towards $6.20\times10^{-4}$~Pa, which puts the error on
-$24^3$ at about $2\,\%$. An independent check gives the same. I solved the mechanics with a
+A fit through the three meshes alone would give an observed order of about
+$2.1$ for the seed von Mises stress; three meshes cannot check this, and a
+finer reference shows otherwise. I solved the mechanics with a
 separate hexahedral code (mean-dilatation integration, the stiffness of
 Eq.~\eqref{eq:ch5-stiffness}) for the reference growth field described
 next, on meshes up to $48^3$, once with one value of $\phi$ and $\alpha$ per
