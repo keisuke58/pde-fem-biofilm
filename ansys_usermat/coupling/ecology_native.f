@@ -35,6 +35,25 @@ C     them directly.
         double precision, save :: eco_theta(20) = 0.0d0
         double precision, parameter :: eco_kp1 = 1.0d-4
         logical, save :: eco_inited = .false.
+C       optional keyword lines of the configuration file (10 Oct 2026,
+C       the calibrated five-species runs, research idea 7):
+C         phi_init v1 .. v5   the point model's state at its first call
+C                             (the calibration's Day-1 state as
+C                             write_eco_cfg.py --phi-init-config writes
+C                             it); phi_0 = 1 - sum, psi = 0.999, gamma 0
+C         newton N TOL        up to N Newton iterations per sub-step,
+C                             stopping when |Q|^2 < TOL (the paper
+C                             pipeline's newton_step: 12, 1e-20); the
+C                             default 6 without a check is the server's
+C         theta_tol X         the deck's theta may differ from the
+C                             file's by X relative (APDL reads a 16-digit
+C                             decimal differently from Fortran in the
+C                             last bit); 0 (default): bit for bit
+        double precision, save :: eco_phi_init(5) = 0.0d0
+        logical, save :: eco_haveinit = .false.
+        integer, save :: eco_nwmax = 6
+        double precision, save :: eco_nwtol = 0.0d0
+        double precision, save :: eco_thtol = 0.0d0
       contains
 
         subroutine eco_native_set(nact, cstar, alstar, eta, theta,
@@ -54,9 +73,10 @@ C     them directly.
 
         subroutine eco_native_init()
 C         file: n_active / c* alpha* / eta(5) / theta(20), free format
-          character(len=512) :: path
-          integer :: st, u, nact
-          double precision :: cs, als, eta(5), th(20)
+          character(len=512) :: path, line
+          character(len=32) :: key
+          integer :: st, u, nact, nw
+          double precision :: cs, als, eta(5), th(20), v(5), x
           eco_inited = .true.
           call get_environment_variable('BIOFILM_ECO_CASE', path,
      &                                  status=st)
@@ -67,10 +87,60 @@ C         file: n_active / c* alpha* / eta(5) / theta(20), free format
           if (st .eq. 0) read(u, *, iostat=st) cs, als
           if (st .eq. 0) read(u, *, iostat=st) eta
           if (st .eq. 0) read(u, *, iostat=st) th
-          close(u)
           if (st .eq. 0) call eco_native_set(nact, cs, als, eta, th,
      &                                       .true.)
+C         keyword lines, in any order; an unknown keyword is ignored
+          do while (st .eq. 0)
+            read(u, '(A)', iostat=st) line
+            if (st .ne. 0) exit
+            if (len_trim(line) .eq. 0) cycle
+            read(line, *, iostat=st) key
+            if (st .ne. 0) exit
+            if (key .eq. 'phi_init') then
+              read(line, *, iostat=st) key, v
+              if (st .eq. 0) then
+                eco_phi_init = v
+                eco_haveinit = .true.
+              end if
+            else if (key .eq. 'newton') then
+              read(line, *, iostat=st) key, nw, x
+              if (st .eq. 0) then
+                eco_nwmax = max(nw, 1)
+                eco_nwtol = x
+              end if
+            else if (key .eq. 'theta_tol') then
+              read(line, *, iostat=st) key, x
+              if (st .eq. 0) eco_thtol = x
+            end if
+          end do
+          close(u)
         end subroutine eco_native_init
+
+        subroutine biofilm_ecology_init_state(nact, g, have)
+C         the point model's state at its first call at a point, from the
+C         file's phi_init line: have = .false. when the file has none
+C         (the caller then uses its own start), the state as the paper
+C         pipeline's make_initial_state builds it (phi_0 = 1 - sum phi,
+C         psi = 0.999 for the active species, gamma = 0)
+          integer, intent(in) :: nact
+          double precision, intent(out) :: g(12)
+          logical, intent(out) :: have
+          integer :: i
+          double precision :: s
+          if (.not. eco_inited) call eco_native_init()
+          g = 0.0d0
+          have = eco_haveinit
+          if (.not. have) return
+          s = 0.0d0
+          do i = 1, 5
+            if (i .le. nact) then
+              g(i) = eco_phi_init(i)
+              g(6+i) = 0.999d0
+              s = s + g(i)
+            end if
+          end do
+          g(6) = 1.0d0 - s
+        end subroutine biofilm_ecology_init_state
 
         subroutine eco_clip(g, mask)
           double precision, intent(inout) :: g(12)
@@ -244,7 +314,12 @@ C         (single-threaded with -np 1, as the wired decks run)
           if (n_sub .lt. 1) return
           if (eco_hascase) then
             do i = 1, 20
-              if (theta(i) .ne. eco_theta(i)) return
+              if (eco_thtol .gt. 0.0d0) then
+                if (abs(theta(i) - eco_theta(i)) .gt. eco_thtol
+     &              * max(1.0d0, abs(eco_theta(i)))) return
+              else
+                if (theta(i) .ne. eco_theta(i)) return
+              end if
             end do
           end if
           a = 0.0d0
@@ -309,10 +384,14 @@ C         seed_inactive: zero the switched-off species once
           do ks = 1, n_sub
             gg = gp
             call eco_clip(gg, mask)
-            do it = 1, 6
+            do it = 1, eco_nwmax
               call eco_clip(gg, mask)
               call eco_resjac(gg, gp, dts, a, b, c, eco_alstar, eco_eta,
      &                        mask, q, jac)
+C             the paper pipeline's newton_step keeps g once |Q|^2 < tol
+              if (eco_nwtol .gt. 0.0d0) then
+                if (sum(q * q) .lt. eco_nwtol) exit
+              end if
               q = -q
               call eco_solve(jac, q, dl, ok)
               if (.not. ok) return
