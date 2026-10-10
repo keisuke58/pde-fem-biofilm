@@ -22,6 +22,11 @@ C                     block is left alone: keep prop(6) = 0.
 C       prop(28) = 8: COMPOSITION from an independent point model that
 C                     starts when biofilm arrives (no scaling to the
 C                     field); see the branch below.
+C       prop(28) = 9: GROWTH from the calibrated point model (10 Oct,
+C                     research idea 7, P3 design memo): the point model
+C                     runs free as in 8, with the local nutrient and the
+C                     species count of 7, and alpha follows its live
+C                     biomass; see the branch below.
 C       prop(28) = 7: COMPOSITION from the point model, amount from the
 C                     3D field (unchanged): see the branch below.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
@@ -53,7 +58,137 @@ C     locbio in the two PHI_USED lines -- nothing else.
           PHI_USED = Sdp_bio1_n
         END IF
         ALPHA_N = ustatev(84)
-        IF (prop(28) .GT. 7.5D0) THEN
+C       the field's nutrient at this Gauss point (modes 7 and 9): as
+C       shipped "not available" (-1D30; the field's c itself can be
+C       < 0), paste_fragments.py --nut-var NAME makes it CM_NUT = NAME
+        CM_NUT = -1.0D30
+        IF (prop(28) .GT. 8.5D0) THEN
+C         --- growth from the calibrated point model (10 Oct 2026) ----
+C         P3 design (tmcmc202601, docs/fem_coupling/P3_point_model_
+C         alpha_design.md), live-biomass form. The point model runs on
+C         its own at each Gauss point (not scaled to the field) from
+C         the substep in which the field reaches phi_min (prop(29)),
+C         starting from the configuration file's phi_init line
+C         (BIOFILM_ECO_CASE: the calibration's Day-1 state) or, without
+C         one, from equal shares; prop(37) = n species (1..5);
+C         prop(31) = s, its clock per unit T*; prop(33) = c_ref > 0 the
+C         local nutrient as in mode 7. The growth variable follows the
+C         point model's live biomass, in the form of Klempt 2024
+C         Table 1 (the increment of ln(1 + alpha)):
+C           ln(1 + alpha_{n+1}) = ln(1 + alpha_n)
+C                                + kappa chi int sum_i phi_i psi_i dt_pm
+C         kappa = prop(7) (one value for all conditions), chi = the
+C         field's phi in [0, 1] (where the biofilm is), the integral
+C         over this step in the point model's time (phi_int of the
+C         hook). Not from a paper: the driver is Klempt et al. 2026's
+C         live biomass, the form Klempt 2024's local equation.
+C         ustatev(72:83) = the point model's state; comp_trace.csv as
+C         in mode 7.
+          CM_NSP = 2
+          IF (nProp .GE. 37) THEN
+            IF (prop(37) .GT. 0.0D0) CM_NSP = MIN(MAX(NINT(prop(37)),
+     &                                          1), 5)
+          END IF
+          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
+          DO PM_I = 1, 12
+            PM_GOLD(PM_I) = ustatev(71 + PM_I)
+          END DO
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
+          DO PM_I = 1, 20
+            PM_TH(PM_I) = prop(7 + PM_I)
+          END DO
+          CM_TS = 1.0D0
+          IF (nProp .GE. 31) THEN
+            IF (prop(31) .GT. 0.0D0) CM_TS = prop(31)
+          END IF
+          CM_DT = CM_TS * dTime
+          PM_NSUB = 1
+          IF (CM_DT .GT. PM_DTMAX) PM_NSUB = CEILING(CM_DT / PM_DTMAX)
+          SP_ID = SPLIT_ID(elemId, kDomIntPt)
+          PM_OK = .TRUE.
+          PM_PHIINT = 0.0D0
+          IF (PM_GOLD(7) .EQ. 0.0D0 .AND. SP_SUM .LT. SP_MIN) THEN
+C           no biofilm here yet: the point model has not started
+            SP_HITI = 2
+            DO PM_I = 1, 12
+              PM_GNEW(PM_I) = PM_GOLD(PM_I)
+            END DO
+          ELSE
+            IF (PM_GOLD(7) .EQ. 0.0D0) THEN
+C             biofilm has arrived: the file's Day-1 state, else equal
+C             shares of 0.999999 (make_initial_state's packing)
+              CALL biofilm_ecology_init_state(CM_NSP, PM_GOLD, CA_HAVE)
+              IF (.NOT. CA_HAVE) THEN
+                DO PM_I = 1, 12
+                  PM_GOLD(PM_I) = 0.0D0
+                END DO
+                DO PM_I = 1, CM_NSP
+                  PM_GOLD(PM_I) = 0.999999D0 / DBLE(CM_NSP)
+                  PM_GOLD(6 + PM_I) = 0.999D0
+                END DO
+                PM_GOLD(6) = 1.0D0 - 0.999999D0
+              END IF
+            END IF
+            CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
+     &                           PM_GNEW, PM_PHIINT, SP_HIT)
+            IF (SP_HIT) THEN
+              SP_HITI = 1
+            ELSE
+              SP_HITI = 0
+              CM_CREF = 0.0D0
+              IF (nProp .GE. 33) CM_CREF = prop(33)
+              IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GT. -1.0D29) THEN
+                CM_CREL = MIN(MAX(CM_NUT / CM_CREF, 0.0D0), 1.0D0)
+                CALL biofilm_ecology_hook_c(PM_GOLD, PM_TH, CM_DT,
+     &               PM_NSUB, CM_CREL, PM_GNEW, PM_PHIINT, PM_OK)
+              ELSE
+                CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
+     &               PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
+              END IF
+              IF (PM_OK) THEN
+                DO PM_I = 1, 12
+                  IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
+                END DO
+                IF (PM_PHIINT .NE. PM_PHIINT) PM_OK = .FALSE.
+                CM_S = PM_GNEW(1)
+                DO PM_I = 2, CM_NSP
+                  CM_S = CM_S + PM_GNEW(PM_I)
+                END DO
+                IF (CM_S .LE. 0.0D0) PM_OK = .FALSE.
+              END IF
+              IF (PM_OK) CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst,
+     &                        PM_GOLD, PM_GNEW, PM_PHIINT)
+            END IF
+          END IF
+          CA_CHI = MIN(MAX(PHI_USED, 0.0D0), 1.0D0)
+          IF (PM_OK) THEN
+            DO PM_I = 1, 12
+              ustatev(71 + PM_I) = PM_GNEW(PM_I)
+            END DO
+            ALPHA_NEW = (1.0D0 + ALPHA_N)
+     &                * EXP(prop(7) * CA_CHI * PM_PHIINT) - 1.0D0
+          ELSE
+            ALPHA_NEW = ALPHA_N
+            keycut = 1
+          END IF
+          IF (kDomIntPt .EQ. 1 .AND.
+     &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+     &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
+            IF (.NOT. CM_TRACE_OPEN) THEN
+              OPEN(96, FILE='comp_trace.csv', STATUS='UNKNOWN',
+     &             POSITION='APPEND')
+              CM_TRACE_OPEN = .TRUE.
+            END IF
+            WRITE(96,'(I0,5(",",I0),6(",",ES24.16E3),'//
+     &            '24(",",ES24.16E3))')
+     &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
+     &        dTime, CM_DT, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
+     &        (PM_GOLD(PM_I), PM_I = 1, 12),
+     &        (PM_GNEW(PM_I), PM_I = 1, 12)
+            FLUSH(96)
+          END IF
+        ELSE IF (prop(28) .GT. 7.5D0) THEN
 C         --- composition from an independent point model -----------
 C         Klempt et al. 2026 formulate a material point model and call
 C         phi0 a numerical auxiliary, not a physical void. Here the
@@ -172,13 +307,13 @@ C         coupling interval; at phi_cap = 0.9 it converges.
 C         prop(33) = c_ref > 0: local nutrient in the point model
 C         (two-way step 1, ROADMAP_TWO_WAY.md). The server uses
 C         c* = c*_0 * c_rel with c_rel = min(max(CM_NUT/c_ref, 0), 1).
-C         CM_NUT is the field's nutrient at this Gauss point; the next
-C         executable line is its source, and paste_fragments.py
-C         --nut-var NAME replaces it with CM_NUT = NAME. As shipped,
-C         CM_NUT = -1D30 (not available) and prop(33) has no effect.
-C         The field's c itself can be < 0 (zero-order consumption), so
-C         "not available" is -1D30, not -1: a negative c gives c_rel = 0
-C         (5 Oct: with -1 as the mark, c < 0 fell back to c_rel = 1).
+C         CM_NUT is the field's nutrient at this Gauss point, set above
+C         the mode branches (paste_fragments.py --nut-var NAME). As
+C         shipped, CM_NUT = -1D30 (not available) and prop(33) has no
+C         effect. The field's c itself can be < 0 (zero-order
+C         consumption), so "not available" is -1D30, not -1: a negative
+C         c gives c_rel = 0 (5 Oct: with -1 as the mark, c < 0 fell
+C         back to c_rel = 1).
 C         prop(37) = n, the number of species (2..5, default 2; 5 Oct):
 C         the point model's state holds phi_1..phi_n, psi_1..psi_n. Two
 C         species start from chi_1 = prop(30) / prop(35); more species
@@ -189,7 +324,6 @@ C         reaches later (phi_3D below phi_min at their first call); the
 C         points that hold biofilm from the start keep prop(30). Without
 C         it prop(30) sets both, so the composition behind the front and
 C         the seed's start cannot be varied apart (5 Oct runs).
-          CM_NUT = -1.0D30
           CM_NSP = 2
           IF (nProp .GE. 37) THEN
             IF (prop(37) .GT. 0.0D0) CM_NSP = MIN(MAX(NINT(prop(37)),

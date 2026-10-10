@@ -148,4 +148,17 @@ C         step 1).
      &                                    g_new, phi_int)
           ok    = (ierr .eq. 0)
         end subroutine biofilm_ecology_hook_c
+
+        subroutine biofilm_ecology_init_state(nact, g, have)
+C         The point model's start state from a configuration file is a
+C         feature of the native build (ecology_native.f, mode 9 of the
+C         call-site fragment). The server build has no such file: have =
+C         .false., and the caller uses its own start.
+          integer, intent(in) :: nact
+          double precision, intent(out) :: g(12)
+          logical, intent(out) :: have
+          g = 0.0d0
+          have = .false.
+          if (nact .lt. 0) have = .false.
+        end subroutine biofilm_ecology_init_state
       end module biofilm_py_bridge

@@ -55,3 +55,6 @@ C     --- composition from an independent point model (prop(28) = 8) ---
       LOGICAL AG_TRACE_OPEN
       SAVE AG_TRACE_OPEN
       DATA AG_TRACE_OPEN /.FALSE./
+C     --- growth from the calibrated point model (prop(28) = 9) --------
+      DOUBLE PRECISION CA_CHI
+      LOGICAL CA_HAVE

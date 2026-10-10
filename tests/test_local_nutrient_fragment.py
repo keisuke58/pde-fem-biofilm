@@ -150,7 +150,7 @@ def test_set_nut_source_refuses_bad_names():
     lines = pf.read_lines(tp._CS / "phi_mode_exec.inc")
     assert sum(l == pf.NUT_LINE for l in lines) == 1
     out = pf.set_nut_source(lines, "vGdp_Nut1_n(ID)")
-    assert "          CM_NUT = vGdp_Nut1_n(ID)" in out
+    assert "        CM_NUT = vGdp_Nut1_n(ID)" in out
     for bad in ("1abc", "x; y", "a" * 70):
         with pytest.raises(SystemExit):
             pf.set_nut_source(lines, bad)

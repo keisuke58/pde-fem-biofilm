@@ -83,7 +83,7 @@ def find_block(lines, kind):
     return i, j
 
 
-NUT_LINE = "          CM_NUT = -1.0D30"     # "no nutrient": the field's c itself can be < 0
+NUT_LINE = "        CM_NUT = -1.0D30"     # "no nutrient": the field's c itself can be < 0
 NUT_VAR = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\([A-Za-z0-9_, ]+\))?$")
 
 
@@ -91,7 +91,7 @@ def set_nut_source(exec_lines: list[str], name: str) -> list[str]:
     """Replace the fragment's nutrient source line by CM_NUT = name."""
     if not NUT_VAR.match(name):
         fail(f"--nut-var {name!r} is not a Fortran variable or array element")
-    new = f"          CM_NUT = {name}"
+    new = f"        CM_NUT = {name}"
     if len(new) > 72:
         fail(f"--nut-var {name!r} makes the line longer than 72 columns")
     hits = [i for i, l in enumerate(exec_lines) if l == NUT_LINE]
@@ -124,12 +124,19 @@ def main(target: Path, nut_var: str | None = None) -> None:
         u = one(out, USE_BRIDGE.match, "use biofilm_py_bridge")
         out.insert(u + 1, "      use biofilm_split")
 
-    # the exec fragment calls biofilm_ecology_hook_c; an "only:" list without
-    # it leaves the call an unresolved external at link time (5 Oct)
+    # the exec fragment calls biofilm_ecology_hook_c (5 Oct) and
+    # biofilm_ecology_init_state (10 Oct, mode 9); an "only:" list without
+    # them leaves the calls unresolved externals at link time
     u = one(out, USE_BRIDGE.match, "use biofilm_py_bridge")
-    if "only" in out[u].lower() and "biofilm_ecology_hook_c" not in "\n".join(out[u:u + 3]).lower():
-        out[u:u + 1] = ["      use biofilm_py_bridge, only: biofilm_ecology_hook,",
-                        "     &                             biofilm_ecology_hook_c"]
+    if "only" in out[u].lower():
+        k = u + 1
+        while k < len(out) and out[k].lstrip().startswith("&"):
+            k += 1
+        have = "\n".join(out[u:k]).lower()
+        if "biofilm_ecology_hook_c" not in have or "biofilm_ecology_init_state" not in have:
+            out[u:k] = ["      use biofilm_py_bridge, only: biofilm_ecology_hook,",
+                        "     &                             biofilm_ecology_hook_c,",
+                        "     &                             biofilm_ecology_init_state"]
 
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = target.with_name(target.name + f".prepaste-{stamp}")
