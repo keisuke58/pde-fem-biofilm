@@ -27,7 +27,18 @@ def theta_json_cfg(path):
     """(n_active, c*, alpha*, eta(5), theta(20)) for a calibrated MAP file."""
     import ecology_constants as ec
     d = json.loads(Path(path).read_text())
-    theta = d["theta_full"] if isinstance(d, dict) and "theta_full" in d else d
+    if isinstance(d, dict) and "theta_full" in d:
+        theta = d["theta_full"]
+    elif isinstance(d, dict) and d and all(str(k).isdigit() for k in d):
+        # {"0": v0, ..., "19": v19}, as in tmcmc202601 main/_runs/phibar_fix_*;
+        # iterating the dict itself would take the keys 0..19 as theta
+        theta = [d[k] for k in sorted(d, key=int)]
+        if [int(k) for k in sorted(d, key=int)] != list(range(len(d))):
+            raise ValueError(f"{path}: index keys are not 0..{len(d) - 1}")
+    elif isinstance(d, list):
+        theta = d
+    else:
+        raise ValueError(f"{path}: no 'theta_full' and not a list or an index dict")
     theta = [float(v) for v in theta]
     if len(theta) != 20:
         raise ValueError(f"{path}: expected 20 values (5 species), got {len(theta)}")

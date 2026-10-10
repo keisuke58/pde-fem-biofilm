@@ -25,6 +25,25 @@ def test_theta_json(tmp_path):
     assert [float(v) for v in lines[3].split()] == theta
 
 
+def test_theta_json_index_dict(tmp_path):
+    """{"0": v0, ..., "19": v19}: the values, in index order, not the keys."""
+    theta = [0.5 - 0.05 * k for k in range(20)]
+    src = tmp_path / "theta_MAP.json"
+    src.write_text(json.dumps({str(k): theta[k] for k in reversed(range(20))}))
+    out = tmp_path / "eco.txt"
+    subprocess.run([sys.executable, str(ROOT / "abaqus_composition" / "write_eco_cfg.py"),
+                    "--theta-json", str(src), str(out)], check=True, capture_output=True)
+    assert [float(v) for v in out.read_text().split("\n")[3].split()] == theta
+
+
+def test_theta_json_other_dict(tmp_path):
+    src = tmp_path / "bad.json"
+    src.write_text(json.dumps({"theta_sub": [0.0] * 20}))
+    r = subprocess.run([sys.executable, str(ROOT / "abaqus_composition" / "write_eco_cfg.py"),
+                        "--theta-json", str(src), str(tmp_path / "x.txt")], capture_output=True)
+    assert r.returncode != 0
+
+
 def test_theta_json_wrong_length(tmp_path):
     src = tmp_path / "bad.json"
     src.write_text(json.dumps({"theta_full": [0.0] * 14}))
