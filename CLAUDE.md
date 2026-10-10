@@ -248,6 +248,13 @@ this machine's specific workflow.
   "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
   Section 5.1 named). Content freeze 12 Oct, submission 20 Oct. Do not send
   him a second draft; reply to his comments only.
+- **Open thesis item (10 Oct 2026): the pH in Chapter 3.** The thesis
+  (Ch. 3, abstract, Section 5.1) calls the pH an independent, held-out
+  prediction (R² = 0.78). The BMB revision note of 7 Oct found that the newer
+  paper_gateoff runs put pH into the Phase 2 likelihood for HOBIC (weight 0.3).
+  Whether the thesis's 10,000-particle Phase 2 runs (read via nife
+  `scripts/figures/paper_data.py`) did the same is not yet known. The user will
+  fix it when the result is in; until then do not change the pH wording.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.

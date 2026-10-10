@@ -295,3 +295,43 @@ JSON を `results/2026-10-wp3_fix/` に push。
 - ついでに直した：`write_eco_cfg.py --theta-json` に `phibar_fix_*` の形（キーが "0"〜"19" の辞書）を渡すと、
   値ではなくキーの 0〜19 を θ として黙って書いていた。値を番号順に読むようにし、それ以外の辞書は止める。
   テストを 2 つ足した（`tests/test_write_eco_cfg_theta.py`）。pytest は全部通った。
+
+## クラウドから（10月10日 夕）：第 3 章の MAP の在りか
+
+受け取った（186bb71、219a3ae、PR #112 で master にマージ）。`write_eco_cfg.py` の辞書形式の修正はそのとおりで、ありがとう。
+
+第 3 章の図の出どころ（`luh_summer_2026/1030_Masterarbeit/figures/PROVENANCE.md`）：正典の事後分布は
+**10,000 粒子の Phase 2 の TMCMC で、nife リポジトリ（IKM_Hiwi/nife）の `scripts/figures/paper_data.py` 経由で読む**。
+元の Tmcmc202601 の実行フォルダと `config.json` は「アーカイブされた」とある。つまり MAP は tmcmc202601 には
+なく、nife の `paper_data.py` が指す場所にある。IKMHIWI03 では探さなくてよい（7 は保留のまま）。ユーザーに伝える。
+
+## IKMHIWI03（10月10日 14時）：CH の較正値について
+
+- 使う MAP はユーザーが決めた：tmcmc202601 の `claude/gate-off-map-check` の
+  `docs/revision/generated/final_theta_MAP/`（CH は `CH_ult_mut150_wide2_noph_sd4_seed7`）。
+- **14時の時点で `CH.json` はまだない**（フォルダには README だけ）。GPU 側の引継ぎ（`docs/handoff/gpu_2026-10-10_CH_ult.*`）
+  にあるのは a33・a35・a45 などの成分だけで、20 個そろった θ はない。値を推測で埋めることはしない。
+- 届いたらやること：
+  1. `write_eco_cfg.py --theta-json CH.json` で設定を作る。
+  2. 8³ の 5 種のデッキを作る。デッキの prop(8:27) に同じ θ を入れる（点モデルが設定の θ と完全一致を確かめるため）。
+  3. 実行は表面を直した native の exe（`F:\biofilm_upf_nativefix`）で、`BIOFILM_ECO_CASE` を設定して回す。
+     `run_wired.ps1`・`run_chain.ps1` にはこの環境変数を渡す口がないので、足すか、10月7日と同じように直接呼ぶ。
+     今動いている列が `run_wired.ps1` を使っているので、足すのは列が空いてから。
+
+## IKMHIWI03（10月10日 14:15）：CH の 5 種、要素で 1 本目が通った
+
+- MAP：tmcmc202601 `claude/gate-off-map-check` @ 2d8d99e、`final_theta_MAP/CH.json`（seed 7）。
+- 実行 `w8_CH_g1_s015`：2 種の組成デッキ（`w8_c6_g1_s015`：Klempt 2024 の剛性、消費 1、β 0.02、s 0.15、φ_cap 0.9、T* = 1.0、8³）の
+  prop(8:27) に CH の θ、prop(37) = 5。表面を直した native の exe、-np 1。1 分、エラー 0、keycut 0。
+- 結果：`results/2026-10-cal5/w8_CH_g1_s015.json`（応力・栄養・share_history、7 桁）と `w8_CH_g1_s015_pm.json`
+  （**点モデルのトレース、全桁**：シード要素 220 の積分点 1 の全 240 行、各行 g_old(12)・g_new(12)・dt・φ・α、
+  それと全 254 要素の最後の行。列名は `columns`）。全桁比較はこの `_pm.json` でできる。
+- **native の exe は `BIOFILM_ECO_CASE` なしで回している。** 設定ファイルを渡すと、Fortran が設定の θ とデッキの θ を
+  ビット一致で比べ、APDL が 16 桁の小数を読んだ値が Fortran の読みと最後のビットで違うので、全点で不一致になり
+  keycut で止まった（1 本目、13:55）。ファイルなしの既定（n = 5、c* = 25、α* = 0、η = 1）は設定ファイルの値と同じ
+  （`ecology_constants.py`）なので、結果は同じ。デッキの θ を信じる形になるので、比較のときは `_pm.json` の
+  `deck_theta`（デッキの文字列）と `theta`（MAP の repr）が同じ数かも見てほしい。
+- 残りの条件：`.\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS,DS,DH -Push` を、json が置かれたら手で起動する
+  （GitHub の監視はしない。ユーザー、10 日）。ないものは飛ばす。1 条件 1 分。
+- 次に決めてほしいこと：T* = 1.0 と s = 0.15 は 2 種のときの仮定のまま。CH の点モデルは t = 0.2375 で 21 日なので、
+  s をどう置くかは別の話（`RESEARCH_IDEAS.ja.md` 7）。
