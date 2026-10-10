@@ -4,6 +4,17 @@ run_calibrated.ps1 -- research idea 7: the calibrated five-species point model
 condition. Start it by hand when a condition's MAP file is on GitHub (no polling).
 
   .\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS [-Weights 1,1,1,1.5,2 -Tag fnpg] [-Push]
+  .\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS -Growth [-Kappa 8.822731e-3] -Tag k0882 -Push
+
+-Growth (10 Oct, P3 stage 2): mode 9 of the call-site fragment, alpha from the
+point model's live biomass, the point model free at each Gauss point from the
+condition's Day-1 composition (the calibration's config.json, taken from the
+earlier _posterior run of the same condition on master), s = 0.2375 (T* = 1 is
+Day 21), deltim 1/95, local nutrient on, BIOFILM_ECO_CASE set (newton 12 1e-20,
+theta_tol 1e-12). Job w8_<C>_cal[_Tag]. Without -Growth: mode 7 as before
+(composition only, Eq. 36 growth, optional -Weights), job w8_<C>_g1_s015[_Tag].
+The work dir F:\biofilm_upf_cal5 holds the executable with mode 9 (built
+10 Oct from F:\biofilm_upf_nativefix + the repo's fragments and ecology_native.f).
 
 Runs detached (WMI Win32_Process.Create, like run_chain.ps1) and returns at once.
 Log: <WorkDir>\_cal5.log. For each condition given, once, it looks for
@@ -32,9 +43,11 @@ The work dir must hold the native exe with its DLLs and base_w8_c6_g1_s015.dat
 #>
 param(
     [string[]]$Conditions = @('CH', 'CS', 'DS', 'DH'),
-    [string]$WorkDir = 'F:\biofilm_upf_ch5',
+    [string]$WorkDir = 'F:\biofilm_upf_cal5',
     [string]$Out = 'ansys_usermat\apdl\results\2026-10-cal5',
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
+    [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
+    [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
     [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
@@ -51,6 +64,7 @@ if (-not $Worker) {
            '-Conditions', ($Conditions -join ','), '-WorkDir', "`"$WorkDir`"", '-Out', "`"$Out`"", '-Weights', "`"$Weights`"", '-Tag', "`"$Tag`"",
            '-Branch', $br)
     if ($Push) { $a += '-Push' }
+    if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -92,29 +106,55 @@ function Push-Files($files, $msg) {
     }
 }
 
+# the calibration's config.json (metadata.phi_init_exp, the Day-1 composition;
+# the same loader as the ult runs, whose config.json is only on the GPU host)
+$cfgPath = @{
+    CS = 'data_5species/_runs/commensal_static_posterior/config.json'
+    CH = 'data_5species/_runs/commensal_hobic_posterior/config.json'
+    DS = 'data_5species/_runs/dysbiotic_static_posterior/config.json'
+    DH = 'data_5species/_runs/Dysbiotic_HOBIC_20260226_041232/config.json'
+}
+
 function Run-Condition($c, $sha) {
-    $job = "w8_${c}_g1_s015"
+    $job = if ($Growth) { "w8_${c}_cal" } else { "w8_${c}_g1_s015" }
     if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
-    $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj (Join-Path $WorkDir "eco_$c.txt") 2>&1
+    $eco = Join-Path $WorkDir "eco_$c.txt"
+    $mk = @('--post', 'both', '--post-elem', '220')
+    if ($Growth) {
+        # P3 stage 2 (10 Oct): the point model free at each point from the
+        # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
+        # coupling step is 25 x 1e-4 of point-model time, the paper's Newton
+        # control, the deck-vs-file theta check with a tolerance
+        $cfg = Join-Path $WorkDir "${c}_config.json"
+        Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
+        $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
+        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
+            --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
+        $mk += @('--deltim', (1.0 / 95.0).ToString('R'), '--time', '1.0')
+    } else {
+        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj $eco 2>&1
+    }
     L "  $o"
-    $th = (Get-Content (Join-Path $WorkDir "eco_$c.txt"))[3].Trim().Split(' ')
-    if ($th.Count -ne 20) { throw "eco_$c.txt: $($th.Count) theta values" }
+    $th = (Get-Content $eco)[3].Trim().Split(' ')
+    if ($th.Count -ne 20) { throw "$($eco): $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
+    if ($Growth) { $props += ",7=$($Kappa.ToString('R')),28=9,31=0.2375,33=1.0" }
     if ($Weights) {
+        if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
         $w = @($Weights -split '[ ,]+' | Where-Object { $_ })
         if ($w.Count -ne 5) { throw "-Weights needs 5 values, got $($w.Count)" }
         $props += ',36=1,' + ((0..4 | ForEach-Object { "$($_ + 38)=$($w[$_])" }) -join ',')
     }
     $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir 'base_w8_c6_g1_s015.dat') (Join-Path $WorkDir "$job.dat") `
-        --props $props --post both --post-elem 220 2>&1
+        --props $props @mk 2>&1
     if ($LASTEXITCODE -ne 0) { throw "make_wired_deck: $o" }
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights')"
+    if ($Growth) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
@@ -138,12 +178,13 @@ function Run-Condition($c, $sha) {
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
-        Push-Files $files "Calibrated five-species $c in the element, 8^3 (automatic)"
+        $what = if ($Growth) { "growth from the calibrated point model, $c, 8^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, 8^3" }
+        Push-Files $files "$what (automatic)"
     }
     return $true
 }
 
-L "cal5 start: $($Conditions -join ','), weights '$Weights' tag '$Tag', branch $Branch"
+L "cal5 start: $($Conditions -join ','), weights '$Weights' growth $Growth kappa $Kappa tag '$Tag', branch $Branch"
 try {
     foreach ($c in $Conditions) {
         $sha = Find-Map $c
