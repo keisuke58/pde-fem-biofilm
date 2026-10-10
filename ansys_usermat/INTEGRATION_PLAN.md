@@ -67,7 +67,7 @@ pool is acceptable to them, which is in the draft to him.
 
 1. **Port the pool to v222 locally** so there is a test bed. **Done, 2026-09-02:**
    all 11 pool source files compile clean under v222 (see
-   `apdl/V222_PORT_INSTRUCTIONS.md` §1.6) — `apdl/patch_usermat_to_v222.py`
+   `apdl/V222_PORT_INSTRUCTIONS.md` §1.6) — `apdl/patch_usermat_to_v222_restored.py`
    does the signature retarget; the rest is in
    `apdl/V222_PORT_INSTRUCTIONS.md`, including the pre-flight findings
    (`/fpp` on `userdata_*.f`, the integer-width question). Linking (a full

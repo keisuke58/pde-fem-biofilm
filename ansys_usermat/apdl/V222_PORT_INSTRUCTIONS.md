@@ -46,10 +46,12 @@ and `hrmflg`, and `var8` was dropped.
 **You do not have to make this edit by hand.** Run:
 
 ```bat
-python patch_usermat_to_v222.py Usermat_P21-V21_Conection_Test.F -o Usermat_P21-V21_v222.F
+python patch_usermat_to_v222_restored.py Usermat_P21-V21_Conection_Test.F -o Usermat_P21-V21_v222.F
 ```
 
-([`patch_usermat_to_v222.py`](patch_usermat_to_v222.py) lives in this folder.)
+([`patch_usermat_to_v222_restored.py`](patch_usermat_to_v222_restored.py) lives in this folder;
+the original name `patch_usermat_to_v222.py` was removed on 10 Oct 2026 because
+it cannot be created on IKMHIWI03.)
 It applies six changes and prints each one. The output has been syntax-checked
 here and compiles clean.
 

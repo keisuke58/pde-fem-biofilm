@@ -8,8 +8,8 @@ machine -- `git checkout -- patch_usermat_to_v222.py` and even a raw
 PowerShell `Copy-Item` to that exact path both fail with Access Denied,
 while every other filename in the same directory writes fine. Looks like a
 Windows Defender (or similar) lock on that specific filename, not a repo or
-tool problem; needs an admin-level Defender check to resolve. Delete this
-file and restore the original name once that's cleared.
+tool problem; needs an admin-level Defender check to resolve. The original
+name was removed from the repository on 10 Oct 2026; this is now the script.
 
 Oliver's UPF pool is written against the **2024 R2** `usermat` interface, which
 takes 41 arguments. IKMHIWI03 has **v222**, whose interface takes 42: the two
