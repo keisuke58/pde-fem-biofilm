@@ -46,7 +46,7 @@ C  BIOFILM_HOMEOSTATIC_FACTOR -- the homeostatic-pressure growth law of
 C  the Keio WP2 study (keio_wp2/README.ja.md sec. 4-7; an assumption of
 C  this work, not from a paper):
 C
-C      alpha_dot = k_alpha * phi * max(0, 1 - p / p_h)
+C      alpha_dot = k_alpha * phi * min(1, max(0, 1 - p / p_h))
 C
 C  p = -tr(sigma)/3 (compression positive) at the start of the increment.
 C  This routine returns the factor G = max(0, 1 - p/p_h) that the caller
@@ -70,5 +70,8 @@ C=======================================================================
         PH = PREF * (PC * PC + F)
       end if
       if (PH .le. 0.0d0) return
-      G = max(0.0d0, 1.0d0 - P / PH)
+C     clipped to [0, 1] as in keio_wp2/homeostatic*.py: without the upper
+C     bound, tension (P < 0) sped growth up and at P_h <= 0.1 the 8^3
+C     seed runs distorted within a few steps (12 Oct)
+      G = min(1.0d0, max(0.0d0, 1.0d0 - P / PH))
       end subroutine BIOFILM_HOMEOSTATIC_FACTOR
