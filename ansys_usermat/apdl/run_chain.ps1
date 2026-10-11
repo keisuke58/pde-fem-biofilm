@@ -104,10 +104,18 @@ try {
     L "chain start: $($Runs -join ', ')"
     if ($WaitFor) {
         L "waiting for $WaitFor"
-        # "HH:mm:ss after18 end" (scripts) and "yyyy-MM-dd HH:mm:ss chain end" (chain logs)
-        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -match '(?m)^(\S+ )?\S+ \w+ end\s*$|EXCEPTION'))) { Start-Sleep 30 }
+        # "HH:mm:ss after18 end" (scripts) and "yyyy-MM-dd HH:mm:ss chain end" (chain logs).
+        # Case-sensitive: on 10 Oct a PowerShell error record ("...ItemNotFoundException")
+        # relayed into the other chain's log matched -match 'EXCEPTION' and started this
+        # chain while the other was still running (both on port 8765)
+        while (-not ((Test-Path $WaitFor) -and ((Get-Content $WaitFor -Raw) -cmatch '(?m)^(\S+ )?\S+ \w+ end\s*$|^\S+ \S+ (CHAIN )?EXCEPTION:'))) { Start-Sleep 30 }
         while (Get-Process ANSYS -ErrorAction SilentlyContinue) { Start-Sleep 30 }
         Start-Sleep 10
+    }
+    # a custom ANSYS.exe needs ANSYS's runtime DLLs next to it (RUNBOOK.md, Step 1);
+    # without them every run exits at once with c0000135 (10 Oct: F:\biofilm_upf_hpfix)
+    if (-not (Test-Path (Join-Path $WorkDir 'usermatLib.dll'))) {
+        throw "no runtime DLLs in ${WorkDir}: copy %AWP_ROOT222%\ansys\Bin\winx64\*.dll and commonfiles\AAS\bin\winx64\*.dll"
     }
     $done = @(); $batch = @(); $k = 0
     foreach ($r in $Runs) {
