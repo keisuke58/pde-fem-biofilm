@@ -154,6 +154,31 @@ WP2 の則は Basan 型を片側にしたもので、**形は先例から引け�
 見た範囲では先例がない。P3 の新しさはここに置ける。ただし検索は要旨レベルで、Scopus か Google Scholar で
 "biofilm" AND ("finite element" OR "continuum") AND ("tooth" OR "implant" OR "dental") をもう一度引いて確かめる。
 
+## 9. Meisam に聞くこと（10月11日のメモ、未送信）
+
+修論の提出（10月20日）が終わってから聞く。修論のコメントへの返信には混ぜない。
+
+1. **論文の形：** 応力の値を予測する論文ではなく、「どの仮定が応力の分布を決めるか」を調べる感度の論文にしてよいか。
+   検証できる実測（歯の上のバイオフィルムの応力）はない。
+2. **恒常圧 p_h の値：** 口腔バイオフィルムの実測はない。腫瘍（Helmlinger 1997、6〜16 kPa）や酵母（Delarue 2016）の値を借りるか、
+   無次元にして 2〜3 通り振るか。
+3. **種ごとの硬さ：** 種ごとの実測はない（Pattem 2018 は条件ごとの 0.6〜41 kPa だけ）。全種同じ E にして、
+   組成は成長だけを通して効く、とするので足りるか。
+4. **E の値：** Klempt 2024 の 10 Pa と、Felix が勧める 10 kPa のどちらを基準にするか。立方体では応力は E に比例するが、
+   歯の形状で基材との接触や帰還があると比例しなくなるので、2 通り回す予定。
+5. **成長の駆動：** 点モデルの生きている量 Σφ_iψ_i で成長させる形（κ は Eq. 36 の成長量に合わせた、論文の値ではない）でよいか。
+   先例は Alpkvist and Klapper 2007。
+6. **投稿先と共著：** BMMB か J. Mech. Behav. Biomed. Mater. でよいか。Meisam（と Felix）に共著に入ってもらえるか。
+
+英語の短い版（メール用の下書き）：
+
+> For a paper after the thesis, I would like to study which modelling assumptions set the stress
+> distribution in an oral biofilm on a tooth or implant, rather than predict stress values, since no
+> measured stresses exist for comparison. Open points: (1) is a sensitivity study of this kind a
+> suitable form; (2) the homeostatic pressure p_h, borrowed from tumour or yeast data or varied in
+> dimensionless form; (3) one Young's modulus for all species; (4) E = 10 Pa or 10 kPa as the base
+> case; (5) growth driven by the living biomass of the point model; (6) the journal and co-authors.
+
 ## 出典
 
 - Feng et al. 2021：`references/Feng2021_symbiotic_biofilm_BMB.txt`（2.1、2.3、2.5 節、Eq. 1、14、15）
