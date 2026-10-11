@@ -322,6 +322,8 @@ that it is not shared with anyone without asking him first.
   detail only after the 20 Oct submission. Check first where it departs from
   Klempt 2024: the front term of Eq. 34, consumption (g phi or g phi c), time
   scaling.
+  Follow-up sent the same day: asked him to include the cases of Sections
+  4.1 and 4.2 of the 2024 paper and a short list of what he changed.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
