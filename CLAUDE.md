@@ -314,6 +314,14 @@ that it is not shared with anyone without asking him first.
   implementation"), but must not reproduce his code or his derivations.
 - Before anything based on his two-species theory goes into the thesis, a
   paper or slides, ask him. If a mistake is found, tell him.
+- **11 Oct 2026:** Felix reimplemented the model (shorter, partly written
+  with AI, "not 100 % the Klempt 2024 model") and will send the code, test
+  cases and results (report and comments in German) after the Klempt 2024
+  first, high and low cases. He asked me to read the code and check it (no
+  rerun needed). I replied that I will, keep it private, and may look in
+  detail only after the 20 Oct submission. Check first where it departs from
+  Klempt 2024: the front term of Eq. 34, consumption (g phi or g phi c), time
+  scaling.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
