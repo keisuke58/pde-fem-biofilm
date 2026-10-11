@@ -5,7 +5,7 @@ does not stop it), with a log, and optionally export the results as JSON and
 push them when the chain ends.
 
   .\ansys_usermat\apdl\run_chain.ps1 -Name 1012 -Runs ds_a:2sp_case6, ds16_b:2sp_case3, ds24_c::300 `
-      [-WaitFor F:\biofilm_upf_wired\_chain_other.log] [-Export results\2026-10-12_ansys] [-Push]
+      [-WaitFor F:\biofilm_upf_wired\_chain_other.log] [-Export ansys_usermat\apdl\results\2026-10-12_ansys] [-Push]
 
 -Runs      deck names without .dat (in -WorkDir), each optionally ":case" (material
            server case for run_wired.ps1 -Case) and ":minutes" (timeout, default 150)
@@ -13,7 +13,8 @@ push them when the chain ends.
            "<word> end" (chain end, after18 end, ...) or "EXCEPTION", and no ANSYS
            process is left (one ANSYS run at a time: one material-server port)
 -Export    after the last run, export_runs_json.py writes <run>.json into this
-           repo-relative folder; with -Push the JSON files are committed
+           repo-relative folder (ANSYS results: ansys_usermat\apdl\results\<dir>, next to
+           the other WP3 results, not the top-level results\); with -Push the JSON files are committed
            (commit.ps1, only those files) and the current branch is pushed (push.ps1)
 -PushEvery n   with -Export -Push: export, commit and push after every n finished runs
            as well, so results show up on GitHub while a long chain is still running
