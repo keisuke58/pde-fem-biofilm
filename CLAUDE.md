@@ -324,6 +324,9 @@ that it is not shared with anyone without asking him first.
   scaling.
   Follow-up sent the same day: asked him to include the cases of Sections
   4.1 and 4.2 of the 2024 paper and a short list of what he changed.
+  Second follow-up: asked for the numbers behind Tables 3 and 4 (mean phi
+  and c over time, maximum hydrostatic stress, mesh and time step), only if
+  easy to find.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
