@@ -161,6 +161,9 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
+  questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
+  answers only when asked, short one-line answers; log them there.
 - **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
   Keio master's (final presentation December 2027, graduation March 2028;
   papers should be published before the presentation), papers and a job, not a doctorate or a
