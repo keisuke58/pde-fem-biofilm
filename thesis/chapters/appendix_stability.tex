@@ -82,6 +82,17 @@ computed values, on $16^3$ and $24^3$ within the band of the neighbour choice.
 The unstable mode is the alternation of sign between neighbouring points,
 which is what the failing runs show in $\alpha-1$.
 
+With $32$ neighbours set in the deck, the run on $16^3$ stays smooth to
+$T^*=5$ at $\lambda=0.144$ and stops at $0.155$, around the computed $0.149$.
+On $24^3$ the runs at $0.164$ and $0.180$ both stay smooth to $T^*=5$, so the
+limit there lies at or above $0.180$, at most $4\,\%$ above the computed
+$0.173$ and clearly above the $0.158$ at which the run with $30$ neighbours
+stops. The accuracy does not change with the number of neighbours: at
+$\Delta t=0.0125$ the error of the seed mean against the finite-volume
+reference (Figure~\ref{fig:ch5-wp3-conv}) is $+1.58\,\%$ with $32$ and $+1.47\,\%$
+with $30$ neighbours on $16^3$, and $+0.98\,\%$ and $+0.83\,\%$ on $24^3$.
+The results of this work use the deck value $30$.
+
 On $8^3$ the runs at $\beta=0.1$~mm$^2/T^*$ to $T^*=1.1$ stay smooth up to
 $\lambda=0.088$ and stop at $0.096$, above the computed limit of $0.062$. The
 spectral radius of the operator on the finite $8^3$ cube, where each point
@@ -122,6 +133,7 @@ $\lambda=0.158$ and at $T^*=1.56$ for $0.150$.
     $N=30$, range over the choice & $0.062$ & $0.122$--$0.140$ & $0.122$--$0.162$ & \\
     $N=32$ neighbours & $0.062$ & $0.149$ & $0.173$ & $0.180$ \\
     runs to $T^*=5$: smooth / stopped & $0.048$ / $0.080$ & $0.136$ / $0.144$ & $0.130$ / $0.158$ & \\
+    runs to $T^*=5$, $N=32$ & & $0.144$ / $0.155$ & $0.180$ / -- & \\
     \bottomrule
   \end{tabular}
 \end{table}
