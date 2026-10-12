@@ -2,8 +2,8 @@
 \label{ch:heine}
 
 This chapter develops the \emph{in-vitro} pillar of the thesis: the Bayesian
-identification of the species interaction matrix of a defined five-species oral
-biofilm from the controlled time-course experiments of Heine et al.\
+calibration of the effective species interaction parameters of a defined
+five-species oral biofilm from the controlled time-course experiments of Heine et al.\
 \cite{Heine2025PeriImplant}. It is the methodological origin of the work: the
 Hamilton $\bphi$--$\bpsi$ model and the TMCMC machinery introduced in
 Chapter~\ref{ch:theory} are here fitted to real data and validated against
@@ -86,10 +86,11 @@ whose five biologically motivated blocks structure the posterior analysis below.
 Heine et al.\ report five experimentally confirmed interaction pathways
 (Table~\ref{tab:heine_network}); for the remaining five pairs no direct
 mechanism is documented. Rather than imposing those absences as hard constraints
-($\theta_k\equiv0$), \emph{all} $15$ parameters are estimated and the posterior is
-left to decide which interactions the data support, a full-discovery strategy
-whose recovery of the expected commensal sparsity (Section~\ref{sec:heine_results})
-is an emergent result rather than an assumption.
+($\theta_k\equiv0$), \emph{all} $15$ parameters are estimated, and for each entry I
+report whether the data constrain it. The interaction coefficients are effective
+parameters of the model: they lump metabolite exchange, pH and other effects, and
+agreement with the documented pathways is consistency with the literature, not a
+proof of a mechanism.
 
 \begin{table}[htbp]
   \centering\small
@@ -100,14 +101,15 @@ is an emergent result rather than an assumption.
     \textit{So}--\textit{An}  & Co-aggregation     & Bidirectional\\
     \textit{So}--\textit{Vei} & Lactate exchange   & Bidirectional\\
     \textit{So}--\textit{Fn}  & Formate symbiosis  & Bidirectional\\
-    \textit{Vei}$\to$\textit{Pg} & pH elevation    & Unidirectional\\
+    \textit{Vei}--\textit{Pg} & pH elevation    & Unidirectional$^{*}$\\
     \textit{Fn}--\textit{Pg}  & Peptide supply     & Bidirectional\\
     \bottomrule
   \end{tabular}
   \caption[Experimentally confirmed species interactions]{Experimentally
   confirmed species interactions~\cite{Heine2025PeriImplant}. All $15$ parameters
-  are estimated without a priori locking; the posterior concentrates near zero for
-  the five biologically inactive pairs.}
+  are estimated without a priori locking. $^{*}$The model coefficients are
+  symmetric ($a_{ij}=a_{ji}$) and carry no direction; the direction is the
+  biological reading of Heine et al.\ and serves only for interpretation.}
   \label{tab:heine_network}
 \end{table}
 
@@ -160,10 +162,9 @@ via \texttt{jax.vmap} on an NVIDIA RTX\,4090. On a matched benchmark (DH,
 $N_p=500$, $9$ stages) this delivers a $147\times$ end-to-end
 speedup ($170\times$ per stage) over the 12-core CPU baseline (Table~\ref{tab:heine_timing}); at the
 production scale of $N_p=10{,}000$ the per-condition wall-clock is
-$1.7$--$2.6$\,h. The gradient-based samplers behind general probabilistic-programming
-frameworks~\cite{Carpenter2017Stan, Phan2019NumPyro, Lao2020TFP} (HMC/NUTS) are ill-suited here:
-variable-length leapfrog trajectories cause warp divergence that erases the
-\texttt{vmap} advantage.
+$1.7$--$2.6$\,h. Gradient-based samplers of general probabilistic-programming
+frameworks~\cite{Carpenter2017Stan, Phan2019NumPyro, Lao2020TFP} (HMC/NUTS) were not
+used; the speedups above are measured for my own TMCMC implementation only.
 
 \begin{table}[htbp]
   \centering\small
@@ -283,7 +284,7 @@ with $N_t=5$ usable time points ($25$ observations) and $30$ free parameters, th
 model has more free parameters than observations. Its out-of-sample error was not
 assessed; for the Hamilton model, the cross-condition transfer RMSE
 (CS$\to$CH $=0.098$ vs.\ CH self-prediction $=0.104$; Table~\ref{tab:heine_transfer})
-stays close to the in-sample value.
+stays close to the in-sample value, which I report as a supplementary indication only.
 The Hamilton posterior provides three capabilities that gLV cannot: uncertainty
 quantification (credible bands, Figure~\ref{fig:heine_fits}), exact simplex
 conservation, and the falsifiable pH prediction of Section~\ref{sec:heine_validation}.
@@ -359,7 +360,7 @@ reorganisation. In CS/CH the dominant entries are the \textit{So}--\textit{An} a
 \textit{Fn} and \textit{Pg} rows near zero. The dysbiotic transition activates
 strong positive \textit{Fn}--\textit{Pg} and self-interaction entries:
 $\hat a_{55}^{\mathrm{DH}}(\textit{Pg}\,\text{self})=3.43$,
-$\hat a_{45}^{\mathrm{DH}}(\textit{Fn}\!\to\!\textit{Pg})=5.63$,
+$\hat a_{45}^{\mathrm{DH}}(\textit{Fn}\text{--}\textit{Pg})=5.63$,
 $\hat a_{44}^{\mathrm{DH}}(\textit{Fn}\,\text{self})=4.45$, versus much weaker DS
 values ($0.30$, $2.20$, $1.01$) and near-zero CS/CH. The posterior violins
 (Figure~\ref{fig:heine_violin}) make the sparsity explicit: the
@@ -433,8 +434,8 @@ share a backbone ($\rho_{\text{CH--CS}}=+0.26$, $\rho_{\text{DH--DS}}=+0.40$),
 whereas three of the four cross-state pairs anticorrelate ($\rho_{\text{DH--CS}}=-0.49$),
 and all cross-state pairs have large distances ($\Delta_F\geq1.01$). A UMAP
 embedding~\cite{McInnes2018UMAP} (cf.\ t-SNE~\cite{VanDerMaaten2008tSNE}) of the full posterior
-(Figure~\ref{fig:heine_umap}) confirms four well-separated clusters with no
-overlap. The transition from health to disease thus changes the sign pattern of
+(Figure~\ref{fig:heine_umap}) illustrates this as four separated clusters; it is a
+visual aid, not a test. The transition from health to disease thus changes the sign pattern of
 the interaction network (Table~\ref{tab:heine_rewiring}).
 
 \begin{table}[htbp]
@@ -489,7 +490,7 @@ inaccessible under the $A_{ij}=A_{ji}$ constraint.
   \label{fig:heine_umap_comparison}
 \end{figure}
 
-Cross-condition \emph{transfer} sharpens the point (Table~\ref{tab:heine_transfer}):
+A supplementary check is cross-condition \emph{transfer} (Table~\ref{tab:heine_transfer}):
 evaluating each MAP on every other condition's data, the within-state commensal
 transfer CS$\to$CH (RMSE $0.098$) is better than the CH self-prediction ($0.104$),
 which points to a shared commensal backbone across cultivation modes, whereas
@@ -614,15 +615,15 @@ in-vivo data.
 \paragraph{Biological interpretation.} The inferred matrices give a quantitative
 account of the commensal-to-dysbiotic transition. The healthy state rests on a
 \textit{So}--\textit{An} co-aggregation and \textit{So}--\textit{Vei} lactate core;
-dysbiosis activates cooperative \textit{Vei}$\to$\textit{Pg} and
-\textit{Fn}$\to$\textit{Pg} pathways. That structural similarity is preserved
+in dysbiosis the cooperative \textit{Vei}--\textit{Pg} and
+\textit{Fn}--\textit{Pg} coefficients become positive. That structural similarity is preserved
 within health states ($\rho_{\text{within}}>0$) but lost across them
 ($\rho_{\text{cross}}<0$ for three of the four cross-state pairs) shows the transition to be a network reorganisation
-rather than a magnitude shift, and the full-discovery posterior recovers commensal
-sparsity as an emergent property.
+rather than a magnitude shift. These readings are consistent with the documented
+pathways; they do not prove a mechanism.
 
 \paragraph{A falsifiable prediction.} Because the terminal \textit{Pg} surge is
-gated by the cooperative \textit{Fn}$\to$\textit{Pg} coefficient, which is
+gated by the cooperative \textit{Fn}--\textit{Pg} coefficient, which is
 indistinguishable from zero in both commensal states but rises to
 $\hat a_{45}^{\mathrm{DH}}=5.63$ (posterior mean $+4.86$, $95\%$ CI
 $[+3.03,+5.95]$) under dysbiotic flow, the model predicts that
@@ -662,8 +663,8 @@ membrane integrity.
 $15$-parameter prior, because the posterior concentrates pathogen entries near
 zero and so reduces the Occam factor, a model-based signature of ecological
 complexity. Methodologically, the $147\times$ GPU speedup makes
-$10{,}000$-particle posteriors routine and is what renders the full-discovery,
-no-locking strategy tractable in $15$ dimensions. These in-vitro interaction
+$10{,}000$-particle posteriors routine and makes it practical to estimate all
+$15$ entries without locking any. These in-vitro interaction
 matrices, and the validation that they predict held-out chemistry, calibrate the
 point model that Chapter~\ref{ch:ansys} brings into space.
 
@@ -681,6 +682,16 @@ the Phase-2 correction is largest. These approximations are consistent with
 the in-vitro setting and motivate the in-vivo cross-validation of
 Section~\ref{sec:heine_signprior}, where the symmetry constraint is
 re-examined against a ten-patient longitudinal dataset.
+Further limits follow from the likelihood. The observation errors are taken as
+independent and Gaussian; for compositional data the credible bands may therefore
+be somewhat narrow. The interaction coefficients are effective quantities of the
+model. The commensal and dysbiotic consortia differ in strains (the
+\textit{Veillonella} species and the \textit{Pg} strain) and in cultivation, so the
+commensal--dysbiotic comparison mixes these differences with the change of the
+community; the static--HOBIC comparison within one consortium does not. Finally,
+the likelihood uses fractions only, so the absolute biomass is a model prediction,
+and its posterior spread has to be carried into the coupling with the finite
+element model of Chapter~\ref{ch:ansys}.
 
 %==============================================================================
 \section{From In-Vitro to In-Vivo Data: a Metabolic Sign Prior}
