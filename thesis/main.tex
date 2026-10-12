@@ -138,8 +138,8 @@ et al.\ (2024) and the multi-species point model of Klempt et al.\ (2026).
 First, the 15 interaction coefficients of a five-species point model are
 estimated with transitional Markov chain Monte Carlo from in-vitro time courses
 under four conditions. Compiled with JAX, the forward model runs about 150 times
-faster on the GPU than on the CPU, and the inferred interactions predict the measured pH,
-which was not used in the calibration ($R^2=0.78$). A metabolic sign prior
+faster on the GPU than on the CPU; every stage is repeated with three seeds, and
+the result states which of the 15 coefficients the data determine. A metabolic sign prior
 carries the same type of model to sparse in-vivo data.
 
 Second, the growth kinematics $\bF=\bF_e\bF_g$ with $\bF_g=\alpha\bI$ is
@@ -175,8 +175,8 @@ sodass Zusammensetzung, Wachstum und Spannung gemeinsam berechnet werden.
 
 Erstens werden die 15 Interaktionskoeffizienten eines Fünf-Spezies-Punktmodells
 mit Transitional Markov Chain Monte Carlo aus In-vitro-Zeitreihen unter vier
-Bedingungen geschätzt; die geschätzten Interaktionen sagen den gemessenen
-pH-Wert vorher ($R^2=0.78$). Zweitens wird die Wachstumskinematik
+Bedingungen geschätzt; das Ergebnis gibt an, welche der 15 Koeffizienten die
+Daten bestimmen. Zweitens wird die Wachstumskinematik
 $\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, als ANSYS-Materialroutine implementiert,
 gegen geschlossene Lösungen verifiziert und an jedem Gaußpunkt an das
 Biofilmfeld des Elements gekoppelt. Drittens läuft für zwei Spezies das
