@@ -8,8 +8,9 @@ condition. Start it by hand when a condition's MAP file is on GitHub (no polling
 
 -Growth (10 Oct, P3 stage 2): mode 9 of the call-site fragment, alpha from the
 point model's live biomass, the point model free at each Gauss point from the
-condition's Day-1 composition (the calibration's config.json, taken from the
-earlier _posterior run of the same condition on master), s = 0.2375 (T* = 1 is
+condition's Day-1 composition (12 Oct: final_theta_MAP/phi_init.json at the
+same commit as <C>.json, the state the calibration itself started from; the
+earlier _posterior config.json on master only as fallback), s = 0.2375 (T* = 1 is
 Day 21), deltim 1/95, local nutrient on, BIOFILM_ECO_CASE set (newton 12 1e-20,
 theta_tol 1e-12). Job w8_<C>_cal[_Tag]. Without -Growth: mode 7 as before
 (composition only, Eq. 36 growth, optional -Weights), job w8_<C>_g1_s015[_Tag].
@@ -132,11 +133,28 @@ function Run-Condition($c, $sha) {
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
         # coupling step is 25 x 1e-4 of point-model time, the paper's Newton
         # control, the deck-vs-file theta check with a tolerance
-        $cfg = Join-Path $WorkDir "${c}_config.json"
-        Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
+        # initial state (12 Oct): the one the calibration itself started from,
+        # final_theta_MAP/phi_init.json at the same commit as <C>.json
+        # (phi_init_state = make_initial_state of the MAP's own run, sum 0.999999).
+        # The earlier _posterior config.json on master differs by up to 0.013 and
+        # is used only when phi_init.json has no entry for the condition.
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
-        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
-            --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
+        $pinit = $null
+        try {
+            $pj = Invoke-RestMethod "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/phi_init.json" -TimeoutSec 60
+            if ($pj.$c) { $pinit = (@($pj.$c.phi_init_state) | ForEach-Object { ([double]$_).ToString('R') }) -join ',' }
+        } catch { L "  $c phi_init.json not readable: $($_.Exception.Message)" }
+        if ($pinit) {
+            L "  $c phi_init from phi_init.json @ $($sha.Substring(0,7)) (run $($pj.$c.run)): $pinit"
+            $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init $pinit `
+                --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
+        } else {
+            L "  WARNING $c phi_init from the earlier config.json $($cfgPath[$c]) (no entry in phi_init.json)"
+            $cfg = Join-Path $WorkDir "${c}_config.json"
+            Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
+            $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
+                --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
+        }
         $mk += @('--deltim', (1.0 / 95.0).ToString('R'), '--time', '1.0')
     } else {
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj $eco 2>&1

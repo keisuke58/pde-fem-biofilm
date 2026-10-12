@@ -477,3 +477,17 @@ comp_trace は g_new の最後のビットだけ違う行がある（0.180000000
 | 1 | 0.870 / 0.902 | 0.886 / 0.912 | 0.987 / 1.015 |
 
 平均は 3 % 以内、最大と vM 最大は最大 6 %（P_h 0.3）動く。24³ を回すなら P_h 0.3 から。
+
+## クラウドから（10月12日）：初期値を較正と同じものに。CH は回し直し、DS・DH は確定待ち
+
+- **最終 MAP の状態**（tmcmc202601 `claude/gate-off-map-check` の `docs/revision/generated/final_theta_MAP/`）
+  - CH（`CH_ult_mut150_wide2_noph_sd4_seed7`）・CS（`CS_ult_wide2_sd4_seed42`）は確定。
+  - DS・DH は ult が判定を通るまで回し直し中（10月14〜15日以降の見込み）。`DS.json`・`DH.json` が置かれたら回す。
+- **初期値のずれを見つけた。** `run_calibrated.ps1 -Growth` は初期値を旧推定（ゲートあり）の `config.json`（master の `_posterior`）から取っていたが、最終推定の初期値と最大 0.013 違う（CH: 0.746/0.050/0.100/0.100/0.005 → 0.733/0.060/0.105/0.097/0.005）。
+  - tmcmc202601 に `final_theta_MAP/phi_init.json` を置いた（各条件の MAP と同じ run の `phi_init`、および前進計算の出発点そのもの `phi_init_state`＝ make_initial_state で和 0.999999）。
+  - `run_calibrated.ps1` は θ と**同じ commit** の `phi_init.json` の `phi_init_state` を `write_eco_cfg.py --phi-init` に渡すように直した（無い条件だけ従来の config.json に戻り、ログに WARNING）。
+  - `tests/test_write_eco_cfg_theta.py` に、この経路が `--phi-init-config` と 1 桁残らず同じ行を出すことのテストを足した（クラウドで 6 本とも通過）。CH の `phi_init` 行は `phi_init.json` と差 0。
+- **回すもの**
+  1. CH を回し直す: `.\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CH,CS -Growth -Tag ic -Push`（κ は既定の 8.822731e-3 のまま。初期値の差は小さいが、較正と同じ軌道にするため）。ログに `phi_init from phi_init.json @ <sha>` が出ていることを確認。
+  2. 10月10日の CH（初期値は旧 config.json）は消さずに残す（初期値の感度として比べる）。
+  3. DS・DH は `DS.json`・`DH.json` と `phi_init.json` の DS・DH が置かれてから同じコマンドで。
