@@ -48,6 +48,7 @@ param(
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
+    [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
     [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
@@ -65,6 +66,7 @@ if (-not $Worker) {
            '-Branch', $br)
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
+    if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -122,6 +124,9 @@ function Run-Condition($c, $sha) {
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
     $eco = Join-Path $WorkDir "eco_$c.txt"
     $mk = @('--post', 'both', '--post-elem', '220')
+    # stiffness sensitivity (P3_LITERATURE.ja.md: Pattem 2018, 0.5-46 kPa by AFM):
+    # E(phi) = (phi^2 + f) E_bio, only E_bio changes
+    if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
     if ($Growth) {
         # P3 stage 2 (10 Oct): the point model free at each point from the
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
@@ -190,6 +195,16 @@ try {
         $sha = Find-Map $c
         if (-not $sha) { L "  $c.json not on GitHub yet: skipped"; continue }
         try { $null = Run-Condition $c $sha } catch { L "  $c EXCEPTION: $_" }
+    }
+    if ($Growth) {
+        # the four-condition table and figure from whatever runs with this tag are there
+        $o = & $py ansys_usermat\apdl\compare_cal5.py "--tag=$Tag" --results $Out 2>&1; $o | ForEach-Object { L "  compare: $_" }
+        $sfx = if ($Tag) { "_$Tag" } else { '' }
+        if ($Push -and $LASTEXITCODE -eq 0) {
+            # *.csv and *.png are ignored in results/: the table goes in as Markdown only
+            $files = @("$Out\cal5_compare$sfx.md" -replace '\\', '/')
+            Push-Files $files "Calibrated five-species runs: condition comparison, tag '$Tag' (automatic)"
+        }
     }
     L 'cal5 end'
 } catch { L "EXCEPTION: $_" }

@@ -161,6 +161,9 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
+  questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
+  answers only when asked, short one-line answers; log them there.
 - **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
   Keio master's (final presentation December 2027, graduation March 2028;
   papers should be published before the presentation), papers and a job, not a doctorate or a
@@ -274,6 +277,8 @@ this machine's specific workflow.
   82519093, 開放環境科学専攻. The report itself:
   `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
   (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).
+- **Grading (MPO 2024, `thesis/admin/`):** only the thesis is graded (mean of
+  the two examiners); the colloquium is a Studienleistung, pass or fail.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.
@@ -309,6 +314,19 @@ that it is not shared with anyone without asking him first.
   implementation"), but must not reproduce his code or his derivations.
 - Before anything based on his two-species theory goes into the thesis, a
   paper or slides, ask him. If a mistake is found, tell him.
+- **11 Oct 2026:** Felix reimplemented the model (shorter, partly written
+  with AI, "not 100 % the Klempt 2024 model") and will send the code, test
+  cases and results (report and comments in German) after the Klempt 2024
+  first, high and low cases. He asked me to read the code and check it (no
+  rerun needed). I replied that I will, keep it private, and may look in
+  detail only after the 20 Oct submission. Check first where it departs from
+  Klempt 2024: the front term of Eq. 34, consumption (Meisam confirmed g phi c
+  on 6 Oct), time scaling, and whether phi is kept in [0, 1].
+  Follow-up sent the same day: asked him to include the cases of Sections
+  4.1 and 4.2 of the 2024 paper and a short list of what he changed.
+  Second follow-up: asked for the numbers behind Tables 3 and 4 (mean phi
+  and c over time, maximum hydrostatic stress, mesh and time step), only if
+  easy to find.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
