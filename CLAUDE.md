@@ -251,13 +251,15 @@ this machine's specific workflow.
   "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
   Section 5.1 named). Content freeze 12 Oct, submission 20 Oct. Do not send
   him a second draft; reply to his comments only.
-- **Open thesis item (10 Oct 2026): the pH in Chapter 3.** The thesis
-  (Ch. 3, abstract, Section 5.1) calls the pH an independent, held-out
-  prediction (R² = 0.78). The BMB revision note of 7 Oct found that the newer
-  paper_gateoff runs put pH into the Phase 2 likelihood for HOBIC (weight 0.3).
-  Whether the thesis's 10,000-particle Phase 2 runs (read via nife
-  `scripts/figures/paper_data.py`) did the same is not yet known. The user will
-  fix it when the result is in; until then do not change the pH wording.
+- **Chapter 3 replaced (12 Oct 2026, user's decision).** The old Ch. 3 used
+  runs from March/April whose configurations were not kept (pH possibly in the
+  likelihood). Ch. 3 now uses the archived EML runs (Tmcmc202601,
+  `claude/gate-off-map-check`): four stages, three seeds, criteria (a)-(e),
+  identifiability, pH only as a check (not in the likelihood). The R^2 = 0.78
+  claim is gone from abstract and conclusion. DS and DH are from stage (iii) and
+  provisional; when their final stage passes, update numbers and figures
+  (`thesis/figures/eml_*.pdf`) from the EML repo. Chapters 4 and 5 already use
+  the final CH MAP. Build with pdflatex + bibtex (no latexmk in the cloud).
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
