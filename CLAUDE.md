@@ -320,8 +320,8 @@ that it is not shared with anyone without asking him first.
   first, high and low cases. He asked me to read the code and check it (no
   rerun needed). I replied that I will, keep it private, and may look in
   detail only after the 20 Oct submission. Check first where it departs from
-  Klempt 2024: the front term of Eq. 34, consumption (g phi or g phi c), time
-  scaling.
+  Klempt 2024: the front term of Eq. 34, consumption (Meisam confirmed g phi c
+  on 6 Oct), time scaling, and whether phi is kept in [0, 1].
   Follow-up sent the same day: asked him to include the cases of Sections
   4.1 and 4.2 of the 2024 paper and a short list of what he changed.
   Second follow-up: asked for the numbers behind Tables 3 and 4 (mean phi
