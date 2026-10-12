@@ -142,3 +142,18 @@ EML 原稿を生物学・数値・記述の一貫性の 3 方向から点検し�
 ### 10.8 申告・データ
 - EML には **AI の使用の申告**を入れた（文章の推敲と、解析・作図スクリプトの作成の補助に Claude を使用）。**修論の Eigenständigkeitserklärung（独立して書いたという宣誓）で AI の使用をどう書くか、LUH・学科の規定を確認する。**
 - コードと run の記録は Zenodo（doi:10.5281/zenodo.23320423、公開は投稿後）。Heine の実験データは再配布しない。
+
+### 10.9 質問への答え: 修論の Phase 2（10,000 粒子）で pH は尤度に入っていたか
+
+**答え: HOBIC（CH・DH）では入っていた可能性が高い。CS・DS は入っていない。ただし完全には確かめられない。**
+- 修論の Phase 2 の 10,000 粒子は `ultimate_10000p`（2026-04-19 実行）。そのスクリプト `data_5species/main/run_ultimate_10000p.sh`（Tmcmc202601、ba1c285）は、HOBIC のとき `--lambda-ch5 0.3` を付ける（「DH HOBIC gets pH channel (ch5) with low weight」）。
+- そのときの pH の式は `pH = 7.5 − 0.74·φ̄_So − 0.48·φ̄_Vd`。この係数は、もともと同じ pH データへの回帰から作ったもの（`evaluator.py` のコメント、R² = 0.71）。
+- その run の config・ログは残っていない。4/19 時点の git のコードには `--multichannel` が無いので、push されていない手元のコードで回った可能性もある（`docs/gate_off_map_reference.md`、`docs/handoff/2026-10-02a.md`）。
+- **修論の R² = 0.778 の図（`data_5species/docs/fig_ph_independent_validation.py`）は、ultimate_10000p ではなく 3/20 の別の run**（`jax_ode_nuts_{Commensal,Dysbiotic}_HOBIC_20260320_*`）の粒子を使っている。その run で pH が尤度に入っていたかも記録がない。
+- EML の run では pH は入っていない（全 run の `run_record.json` で λ5 = 0 を確認。pH を外したのは 2026-10-08、`docs/handoff/2026-10-08r.md`）。
+
+**→ 修論では「held-out」「independent validation」と書けない。** §5 のとおり、EML の数値と書き方に差し替える：
+- 回帰は実測だけで 1 回決めて固定（R² = 0.93）。
+- DH: R² = 0.63、RMSE 0.12（暫定）。CH は約 +0.13 ずれる。
+- 「validation」ではなく「check」と書く。
+- l.304 の表の「R² = 0.778 (held-out)」、l.569–597 の段落と図、ch6 の「R² = 0.78」も同様に直す。
