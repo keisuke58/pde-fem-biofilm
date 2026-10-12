@@ -168,7 +168,7 @@ EML 原稿を生物学・数値・記述の一貫性の 3 方向から点検し�
 
 | 修論（ch3_heine.tex） | 差し替え先（Tmcmc202601 `docs/revision/EML_submission/`） |
 |---|---|
-| `heine_fits_4cond`（fig:heine_fits） | 図 2 `figures/provisional_2026-10-11/paper_fig2_v2.pdf` |
+| `heine_fits_4cond`（fig:heine_fits） | 図 2 `figures/provisional_2026-10-11/paper_fig2_v2.pdf`（**種ごとの生きた割合 φψ の破線は出さない**：データで決まらず、生きた菌の割合のデータとも合わない。2026-10-13） |
 | `heine_heatmap_A_4cond`（fig:heine_heatmap） | 図 3 `fig3_ident_matrix.pdf`（行列＋ネットワーク、同定性つき） |
 | `heine_posterior_violin`（fig:heine_violin） | 補足の周辺事後 `fig4_posteriors_v2.pdf` |
 | `heine_ph_validation`（fig:heine_ph） | 図 4 `fig6_checks_v2.pdf`（ノックアウト＋pH の check） |
