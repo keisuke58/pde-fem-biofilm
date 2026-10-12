@@ -157,3 +157,37 @@ EML 原稿を生物学・数値・記述の一貫性の 3 方向から点検し�
 - DH: R² = 0.63、RMSE 0.12（暫定）。CH は約 +0.13 ずれる。
 - 「validation」ではなく「check」と書く。
 - l.304 の表の「R² = 0.778 (held-out)」、l.569–597 の段落と図、ch6 の「R² = 0.78」も同様に直す。
+
+---
+
+## 11. 方針（2026-10-12 ユーザー判断）: 第 3 章は昔の結果を使わず、EML の結果に図も含めて差し替える
+
+今の第 3 章は 3〜4 月の run（`ultimate_10000p`、3/20 の別 run）の結果。設定が残っておらず、pH が尤度に入っていた可能性もある（§10.9）。**EML の run（設定・判定の記録がすべて残っている）に置き換える。**
+
+### 11.1 図・表の対応
+
+| 修論（ch3_heine.tex） | 差し替え先（Tmcmc202601 `docs/revision/EML_submission/`） |
+|---|---|
+| `heine_fits_4cond`（fig:heine_fits） | 図 2 `figures/provisional_2026-10-11/paper_fig2_v2.pdf` |
+| `heine_heatmap_A_4cond`（fig:heine_heatmap） | 図 3 `fig3_ident_matrix.pdf`（行列＋ネットワーク、同定性つき） |
+| `heine_posterior_violin`（fig:heine_violin） | 補足の周辺事後 `fig4_posteriors_v2.pdf` |
+| `heine_ph_validation`（fig:heine_ph） | 図 4 `fig6_checks_v2.pdf`（ノックアウト＋pH の check） |
+| `heine_phase1_vs_phase2`（fig:heine_phase） | **削除**（2 段の書き方をやめた）。代わりに段ごとの判定の表（補足の runs の表）と seed ごとの MAP の図（`seed_maps_4cond.pdf`） |
+| tab:heine_network | 補足 Table S1（Vei–Pg は仮説、An–Vei を追加、§10.5） |
+| tab:heine_timing | 補足の段ごとのコストの表（`supp/supp_S3_cost`） |
+| tab:heine_rmse・tab:heine_r2 | EML の RMSE（最終段の MAP）。R² の表は削除か付録 |
+| tab:heine_signprior | 補足の事前分布の箱の表（`supp/supp_S1_boxes`） |
+| UMAP 2 枚・tab:heine_pairwise・tab:heine_transfer・tab:heine_rewiring | 削除、または付録に「補助的」として（§7） |
+| gLV との比較（fig:heine_glv_fit・tab:glv_hamilton_comparison） | 残してよい。ただし pH の行は §5 のとおり直す。Hamilton 側の数値は EML の値に |
+
+- 図のスタイルは `tools/eml_style.py`、生成は `tools/make_paper_figures.py`・`tools/make_eml_figs56.py`・`tools/eml_figs_v2.py`。修論の幅（0.8\textwidth など）に合わせるなら、同じスクリプトで幅だけ変えて描き直す。
+- 第 1 章 §1.x・第 6 章の数値（R² = 0.78 など）も同時に直す。
+
+### 11.2 第 4・5 章（FEM）への波及
+- FEM に入れる相互作用行列・初期値も EML の最終 MAP に揃える: `docs/revision/generated/final_theta_MAP/`（phi_init.json は CS・CH 済み、DS・DH 待ち。PR #118 の `run_calibrated.ps1`）。
+- IKMHIWI03 での FEM の再計算は DS・DH の確定後。
+
+### 11.3 いつやるか
+- **今すぐ**: 章の構成・書き方（§1〜8、§10）と、CS・CH の図・数値。
+- **DS・DH の最終段が通ってから**: DS・DH の数値と図（同じスクリプトを回し直すだけ）、FEM の再計算。
+- 修論の提出は 2027 年 3 月ごろなので、EML 投稿を優先してよい。
