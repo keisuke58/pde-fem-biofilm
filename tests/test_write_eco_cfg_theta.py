@@ -82,3 +82,30 @@ def test_theta_json_wrong_length(tmp_path):
     r = subprocess.run([sys.executable, str(ROOT / "abaqus_composition" / "write_eco_cfg.py"),
                         "--theta-json", str(src), str(tmp_path / "x.txt")], capture_output=True)
     assert r.returncode != 0
+
+
+def test_phi_init_state_matches_config_path(tmp_path):
+    """run_calibrated.ps1 (12 Oct) passes phi_init_state of Tmcmc202601
+    final_theta_MAP/phi_init.json through --phi-init. That entry is the
+    estimator's phi_init (Day-1 composition, sum 1, clipped) scaled as
+    make_initial_state does; written that way it must give the same
+    phi_init line, digit for digit, as --phi-init-config on the same
+    Day-1 composition."""
+    import numpy as np
+    theta = [0.1 * (k + 1) for k in range(20)]
+    src = tmp_path / "theta_MAP.json"
+    src.write_text(json.dumps({"theta_full": theta}))
+    exp = [0.375, 0.025, 0.05, 0.05, 0.0025]
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({"metadata": {"phi_init_exp": exp}}))
+    p = np.asarray(exp)
+    p = np.clip(p / p.sum(), 0.001, 0.99)          # run_record.json "phi_init"
+    state = p * (0.999999 / min(p.sum(), 0.999999))  # phi_init.json "phi_init_state"
+    script = str(ROOT / "abaqus_composition" / "write_eco_cfg.py")
+    a, b = tmp_path / "a.txt", tmp_path / "b.txt"
+    subprocess.run([sys.executable, script, "--theta-json", str(src), "--phi-init-config", str(cfg), str(a)],
+                   check=True, capture_output=True)
+    subprocess.run([sys.executable, script, "--theta-json", str(src),
+                    "--phi-init", ",".join(repr(float(x)) for x in state), str(b)],
+                   check=True, capture_output=True)
+    assert a.read_text() == b.read_text()
