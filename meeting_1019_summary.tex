@@ -86,6 +86,29 @@ neighbouring Gauss points, exact only for constant fields, so the Laplacian next
 to a face has an error that does not decrease with the mesh; in my seed runs this
 layer carries $0.1$ to $0.2\,\%$ of the error.
 
+\paragraph{Ideas for experiments (to plan together).}
+\begin{enumerate}
+\item \emph{Antibiotic during growth.} Add an antibiotic (e.g.\ chlorhexidine) at a
+  constant concentration to the five-species biofilm of Heine et al.\ partway
+  through; measure the live fraction (LIVE/DEAD) and the biofilm volume (CLSM).
+  Scheme (c) predicts that the volume growth slows with the live fraction, scheme
+  (a) that it does not. This decides between them.
+\item \emph{Co-culture without Fn.} Grow the dysbiotic community under flow without
+  \textit{F.~nucleatum}. The calibrated model predicts that the late increase of
+  \textit{P.~gingivalis} disappears.
+\item \emph{Spatial composition.} Depth profiles of the species by FISH and CLSM
+  (partly available at NIFE). Composition set by the local amount (a) or by the
+  local age (b) gives different profiles; this bears on the meaning of $\phi_0$.
+\item \emph{Stiffness.} Young's modulus by AFM per condition or per community
+  (as in Pattem et al.\ 2018), replacing the assumed $E=10$~Pa; a dependence on
+  the composition would support a two-way coupling.
+\item \emph{Growth-induced deformation.} Biofilm grown on a soft substrate (gel or
+  thin membrane); the measured deformation gives the growth-induced stress, the
+  closest available check of the stresses.
+\end{enumerate}
+Items 1 and 2 extend the existing culture system and could be done first; 1 and 4
+would also serve your deterministic model.
+
 \paragraph{Questions for the meeting.}
 \begin{enumerate}
 \item Which interpretation of $\phi_0$ do you prefer: physical void of the field
