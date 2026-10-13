@@ -6,6 +6,7 @@
 \usepackage{mathptmx}
 \usepackage{enumitem}
 \usepackage{graphicx}
+\usepackage{tabularx,booktabs}
 \graphicspath{{assets/}}
 \setlist{nosep,leftmargin=*}
 \pagestyle{empty}
@@ -53,6 +54,28 @@ from a paper.
 
 \noindent\includegraphics[width=\linewidth]{fig_meeting1019_cal5.pdf}\\
 {\small Calibrated five-species model in the element (commensal flow condition, $8^3$, $T^*=1$): composition and living fractions at a seed Gauss point; growth and stress of the seed elements for Eq.~36 and for growth from the living biomass.}
+
+\par\noindent\begin{minipage}{\linewidth}
+\paragraph{Comparison and proposal.}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+& (a) scaled & (b) unscaled & (c) growth from living biomass\\
+\midrule
+What it does & amount from the field, composition from the point model, scaled to $\sum_i\phi_i=\phi_{3D}$ & point model runs on its own, supplies the composition only & as (a), but $\dot\alpha=\kappa\sum_i\phi_i\psi_i$\\
+Meaning of $\phi_0$ & physical void, $1-\phi_{3D}$ & auxiliary, as in the paper & as (a)\\
+Composition depends on & local amount & local age of the biofilm & local amount\\
+Lysis acts on growth & no & no & yes, lower $\psi_i$ lowers growth\\
+Check & recovers the point model alone to $10^{-5}$ & point-model trajectory, shifted in time & one run on $8^3$, seed stress $-8\,\%$\\
+In the thesis & Chapter 4 & Chapter 4, for comparison & Outlook, one paragraph\\
+Strength & well tested, simple to explain & closest to the paper's reading of $\phi_0$ & answers the lysis question; growth from the producing biomass has precedent in the literature\\
+Weakness & gives $\phi_0$ a physical meaning (stated as an assumption) & nearly decoupled from the field; cannot feed lysis back & $\kappa$ is my choice; one run so far\\
+\bottomrule
+\end{tabularx}
+\end{center}
+\noindent\emph{Proposal:} (a) as the basis, (c) as its extension to let lysis act on
+growth, and (b) kept as a comparison for the interpretation of $\phi_0$.
+\end{minipage}
 
 \paragraph{4. Limits stated in the thesis.} The coupling is one-way for the
 mechanics (the composition does not change the stiffness). The scaled scheme
