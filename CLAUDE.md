@@ -90,7 +90,11 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
 - **Which `ANSYS.exe` (2026-09-29):** `F:\biofilm_upf\ANSYS.exe` is the
   8/19 build (inline core only). It gives **non-deterministic, broken
   solves under `-smp -np` > 1** — use it only with `-np 1` or the default
-  DMP launch. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
+  DMP launch. Cause confirmed 13 Oct 2026: its obj was compiled without
+  `/auto`, so the USERMAT work arrays sit in static storage shared by the
+  threads (three `-np 4` runs gave three answers, one did not converge);
+  `link_v222.ps1` builds use `/auto` and agree to 1e−15
+  (`IKMHIWI03_TO_CLOUD.ja.md`). Do not use it for new runs. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
   (usermat_biofilm.f + Python/ecology bridge with n_sub, via
   `link_v222.ps1`), safe with `-smp -np 4/8`. When relinking,
   `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
