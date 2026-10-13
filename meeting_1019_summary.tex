@@ -1,0 +1,71 @@
+% One-page summary for the meeting with Oliver (and Meisam), 19 Oct 2026.
+% Build: pdflatex meeting_1019_summary.tex (twice).
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{mathptmx}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
+\pagestyle{empty}
+\begin{document}
+\begin{center}
+{\large\bfseries Coupling the field and the point model at the Gauss points}\\[2pt]
+Keisuke Nishioka, meeting on 19 October 2026
+\end{center}
+
+\paragraph{Where I am.} The thesis is written; I plan to submit on 13 November
+(colloquium 16 December). I am away from 21 to 30 October. The point model is
+the Hamilton point model of Klempt et al., with the interaction parameters
+calibrated by Bayesian inference (TMCMC) on the in-vitro data of Heine et al.;
+it is not machine-learning based.
+
+\paragraph{1. $\phi_{3D}$ at the quadrature points.} The element solves the field
+by the NEM directly at the Gauss points and the surface points, so $\phi_{3D}$ is
+available at each Gauss point without interpolation. The point model is solved
+at every Gauss point next to the field.
+
+\paragraph{2. The two voids: two schemes implemented.}
+\begin{itemize}
+\item \emph{Scaled.} The field sets the amount, the point model only the
+  composition $\phi_i/\sum_j\phi_j$ and $\psi_i$. At each Gauss point and substep
+  the point-model state is scaled to $\sum_i\phi_i=\phi_{3D}$, advanced and scaled
+  again. This sets $\phi_0=1-\phi_{3D}$, i.e.\ it gives $\phi_0$ a physical meaning.
+  When the field's amount equals the point model's own, the composition of the
+  point model alone is recovered (to $10^{-5}$ or better).
+\item \emph{Unscaled.} $\phi_0$ stays auxiliary: the point model runs on its own from
+  the moment the field reaches a threshold and supplies only the composition.
+\end{itemize}
+The composition then depends on the local amount (scaled) or on the local age of
+the biofilm (unscaled).
+
+\paragraph{3. Lysis acting on growth.} In a first run with the calibrated
+five-species model, $\alpha$ grows with the living biomass $\sum_i\phi_i\psi_i$ of
+the point model instead of with $\phi_{3D}$. A drop of $\psi_i$ (lysis, or an
+antibiotic in the point model) then lowers the growth from inside the point
+model. With the rate chosen so that the mean growth equals that of Eq.~36, the
+mean von Mises stress of the seed changes by $8\,\%$. The rate is my choice, not
+from a paper.
+
+\paragraph{4. Limits stated in the thesis.} The coupling is one-way for the
+mechanics (the composition does not change the stiffness). The scaled scheme
+gives $\phi_0$ a meaning the point model does not intend. A coupling without
+these choices would need a spatial multispecies model from one variational
+principle. A recent check: the value of $\phi$ at the surface points is a mean of
+neighbouring Gauss points, exact only for constant fields, so the Laplacian next
+to a face has an error that does not decrease with the mesh; in my seed runs this
+layer carries $0.1$ to $0.2\,\%$ of the error.
+
+\paragraph{Questions for the meeting.}
+\begin{enumerate}
+\item Which interpretation of $\phi_0$ do you prefer: physical void of the field
+  (scaled) or auxiliary (unscaled)?
+\item Is growth from the living biomass an acceptable way to let lysis act on the
+  field, as a stated assumption?
+\item How far should the thesis go before 13 November, and what should be stated
+  as a limitation or future work?
+\item Experimental data for validation: which measurements would help both of us,
+  and whom should I ask?
+\item Felix's new code: should the thesis results stay with the current element,
+  and the new version be used for the continuation?
+\end{enumerate}
+\end{document}
