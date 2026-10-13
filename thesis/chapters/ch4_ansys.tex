@@ -939,6 +939,16 @@ model for most of the time.
       times) the seed pressure changes by up to $30\,\%$; the $8^3$ values of
       Table~\ref{tab:ch5-beta} for $\beta=0.05$ and $0.1$ are those of the
       corrected runs.
+      The corrected value is a weighted mean of the neighbouring Gauss points,
+      which is exact only for a constant field. In a Python model of the
+      operator the Laplacian at the Gauss points next to a face then has an
+      error of order one that does not decrease with the mesh. In the seed
+      runs this does not show: $\alpha-1$ in the layer of elements at the faces
+      is below $10^{-5}$, about $1\,\%$ of its maximum, and this layer carries
+      $0.1$--$0.2\,\%$ of the squared error against the reference on $8^3$ to
+      $24^3$, while the interior error falls from $5.2$ to $1.2\,\%$. A fit of the
+      surface value that is exact for linear fields, as used for the
+      temperature, would remove it.
 \item \emph{One-way composition.} The species composition does not act back on
       the mechanics, because in the formulation followed here no material
       parameter depends on the species.
