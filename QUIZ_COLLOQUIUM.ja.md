@@ -98,6 +98,26 @@
 | F26 | Is the coupling one-way or two-way? | One-way: the composition drives the growth, but the stress does not act back on growth or composition yet. ／ 一方向。組成が成長を決めるが、応力はまだ成長や組成に戻らない |
 | F27 | What was the hardest part? | Getting the convergence of the inference and of the element right; several runs that looked fine failed the checks. ／ 推定と要素の収束をきちんと確かめること。よく見えた計算がいくつも判定に落ちた |
 
+## G. 覚えておく基本の数値（10月13日）
+
+| # | 何の値 | 値（EN ／ JA） |
+|---|---|---|
+| G1 | Species and conditions | Five species, four conditions (CS, CH, DS, DH), days 1 to 21 ／ 5 菌種、4 条件、1〜21 日 |
+| G2 | Interaction unknowns | Fifteen entries of a symmetric five-by-five matrix ／ 対称 5×5 行列の 15 成分 |
+| G3 | Identified entries | 4, 6, 8, 9 of 15 (CS, CH, DS, DH; DS and DH provisional) ／ 15 個中 4、6、8、9 個（DS・DH は暫定） |
+| G4 | Nutrient scale | c* = 25, fixed because only c* times A enters ／ c* = 25。c*×A の積でしか入らないので固定 |
+| G5 | GPU speedup | 170 times per step, 147 times end to end ／ 1 段あたり 170 倍、全体で 147 倍 |
+| G6 | Stiffness (Klempt 2024) | E = 10 Pa, Poisson ratio 0.49, shear modulus 3.3557 Pa ／ E = 10 Pa、ν = 0.49、μ = 3.3557 Pa |
+| G7 | Diffusion of phi | beta = 0.02 mm² per unit time (converted, an assumption) ／ β = 0.02 mm²/T*（換算した仮定） |
+| G8 | Test geometry | Two-millimetre cube, seed of 32 elements on the 8³ mesh ／ 2 mm の立方体、8³ でシード 32 要素 |
+| G9 | Meshes | 8³, 16³, 24³ elements ／ 8³、16³、24³ |
+| G10 | Growth error of the element | Seed mean +4.1, +1.3, +0.7 % on 8³, 16³, 24³ ／ シード平均 +4.1、+1.3、+0.7 % |
+| G11 | Closed-form check | Constrained cube, alpha − 1 = 0.05: stress −1.0193e−4 MPa in all three directions ／ 拘束した立方体、α − 1 = 0.05 で応力 −1.0193e−4 MPa |
+| G12 | Stability limit (lambda) | 0.062 on 8³; 0.12 to 0.14 on 16³; 0.12 to 0.16 on 24³ (30 neighbours) ／ 8³ で 0.062、16³ で 0.12〜0.14、24³ で 0.12〜0.16 |
+| G13 | Runs to T* = 5 | 24³: smooth at 0.130, stops at 0.158 ／ 24³：0.130 で滑らか、0.158 で停止 |
+| G14 | Five-species growth in the element | Same mean growth as Eq. 36 by choice of the rate; seed von Mises stress 8 % lower ／ 成長の平均は Eq. 36 にそろえた。シードの von Mises 応力は 8 % 低い |
+| G15 | Colloquium | 16 Dec 2026, 13:00, IKM Room 320; 20 min talk, 10 to 20 min questions ／ 12 月 16 日 13:00、320 号室、発表 20 分、質疑 10〜20 分 |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
@@ -107,3 +127,4 @@
 | 10月13日 | F1, F3, F5, F6, F8（英語で） | （答え待ち） |
 | 10月13日 | Q&A：F10〜F18 を表示 | （読む用） |
 | 10月13日 | Q&A：F19〜F27 を表示 | （読む用） |
+| 10月13日 | 基本の数値 G1〜G15 を表示 | （読む用） |
