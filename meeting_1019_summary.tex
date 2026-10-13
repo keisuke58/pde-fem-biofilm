@@ -5,6 +5,8 @@
 \usepackage{amsmath,amssymb}
 \usepackage{mathptmx}
 \usepackage{enumitem}
+\usepackage{graphicx}
+\graphicspath{{assets/}}
 \setlist{nosep,leftmargin=*}
 \pagestyle{empty}
 \begin{document}
@@ -38,6 +40,9 @@ at every Gauss point next to the field.
 The composition then depends on the local amount (scaled) or on the local age of
 the biofilm (unscaled).
 
+\noindent\includegraphics[width=\linewidth]{fig_meeting1019_schemes.pdf}\\
+{\small Coupling at a Gauss point: (a) scaled and (b) unscaled scheme, (c) growth from the living biomass of the point model.}
+
 \paragraph{3. Lysis acting on growth.} In a first run with the calibrated
 five-species model, $\alpha$ grows with the living biomass $\sum_i\phi_i\psi_i$ of
 the point model instead of with $\phi_{3D}$. A drop of $\psi_i$ (lysis, or an
@@ -45,6 +50,9 @@ antibiotic in the point model) then lowers the growth from inside the point
 model. With the rate chosen so that the mean growth equals that of Eq.~36, the
 mean von Mises stress of the seed changes by $8\,\%$. The rate is my choice, not
 from a paper.
+
+\noindent\includegraphics[width=\linewidth]{fig_meeting1019_cal5.pdf}\\
+{\small Calibrated five-species model in the element (commensal flow condition, $8^3$, $T^*=1$): composition and living fractions at a seed Gauss point; growth and stress of the seed elements for Eq.~36 and for growth from the living biomass.}
 
 \paragraph{4. Limits stated in the thesis.} The coupling is one-way for the
 mechanics (the composition does not change the stiffness). The scaled scheme
