@@ -164,6 +164,10 @@ this machine's specific workflow.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
+- **Q&A routine (13 Oct 2026):** when the user says Q&A or QA, show colloquium
+  questions with their answers right away, in English and Japanese (EN: a
+  sentence that can be said aloud; JA: the same meaning), starting from the
+  basics. Use and extend section F of `QUIZ_COLLOQUIUM.ja.md`; new ones go there.
 - **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
   Keio master's (final presentation December 2027, graduation March 2028;
   papers should be published before the presentation), papers and a job, not a doctorate or a
