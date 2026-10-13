@@ -47,7 +47,7 @@ def main():
                     help="consumption g times this factor (e.g. 5: g L^2/d of the first author's current project)")
     ap.add_argument("--felix", action="store_true",
                     help="front term as in the first author's current implementation: added only where positive, "
-                         "times (1 - phi) below phi = 1 (UMATHT constant 9; ansys_usermat/FELIX_VS_PARTNER_DIFF.md)")
+                         "times (1 - phi) below phi = 1 (UMATHT constant 9; private note)")
     ap.add_argument("--scale", type=float, default=1.0, help="time scale s: beta, k_alpha and r times s (sec. 12)")
     ap.add_argument("--E", type=float, default=1e-5, help="YOUNG_BIO (default 1e-5: E = 10 Pa in MPa)")
     ap.add_argument("--s-every", type=int, default=0, help="also print S and SDV84 every this many increments")

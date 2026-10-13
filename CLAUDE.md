@@ -346,6 +346,14 @@ that it is not shared with anyone without asking him first.
   **13 Oct:** Felix finished the model and reproduced the Klempt 2024 cases
   ("not exactly the same, but very close"); he is preparing files and
   documentation and asked again to check the math of the script.
+  He asked (13 Oct) not to share or publish his files until his dissertation
+  is done (he had seen this public repository); the thesis may describe what I
+  did, with a sentence that his implementation is ongoing work (wording to
+  discuss with Meisam). `ansys_usermat/FELIX_VS_PARTNER_DIFF.md` was removed
+  from the tree that day (still in git history; the user chose not to rewrite
+  it). Cases A1j, A1k, A2.1a-c, A2.2a-c, A2.3a-c were not saved in his
+  Workbench files; results are on the cluster, or recreate them from the
+  existing cases.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 

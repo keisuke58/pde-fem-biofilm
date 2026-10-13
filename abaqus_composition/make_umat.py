@@ -365,7 +365,7 @@ C  reproduction of Klempt 2024's figures, KLEMPT2024_REPRODUCTION.md sec. 15;
 C  a hypothesis, not the printed Eq. 34), with artificial diffusion
 C  w v h/2 (isotropic) + (1 - w) v h/2 along n_c, as first-order upwinding.
 C  Optional constant 9 > 0.5 (with w < 0): the front term as in the first
-C  author's current implementation (FELIX_VS_PARTNER_DIFF.md, compared in
+C  author's current implementation (private note, compared in
 C  words only): with H = - v . grad(phi) and phi_n the value at the start
 C  of the increment, H is added only where it is positive and fades out as
 C  phi approaches 1, H (1 - phi), while phi_n < 1; where phi_n >= 1 the

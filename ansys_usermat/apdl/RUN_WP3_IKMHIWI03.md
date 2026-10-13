@@ -39,7 +39,7 @@ Abaqus 側の同じ問題（`--ic fraction`、Δt 0.025）は 8³–48³ まで�
 ## B. Klempt 2024 の 4.1 と 4.2 high（前線の項あり）：exe を作ってから
 
 **今の exe では回せない。** `F:\biofilm_upf_wired` のオリバーの要素では、向きの重みが
-読まれず、前線の項が働いていない（`FELIX_VS_PARTNER_DIFF.md`）。10月2日の試験版
+読まれず、前線の項が働いていない（`private note`）。10月2日の試験版
 `F:\biofilm_upf_diag`（重みの読み込みを直し、|∇φ| を upwind で評価）は判定に通っていない。
 ∇c ≈ 0 の所で n_c = ∇c/|∇c| の向きが丸め誤差で決まるのが原因（`FRONT_TERM_FIX.md`）。
 
