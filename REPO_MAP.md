@@ -87,6 +87,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
 | `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
 | `thesis/` | **The thesis itself** (from 3 Oct 2026; copied from LUH_summer_2026). `main.tex`, `chapters/`, structure in `thesis/README.md`; the ANSYS chapter is `chapters/ch4_ansys.tex` |
+| `data/HEINE_DATA_NOT_IN_GIT.md` | Why the measured data of Heine et al. are not in git (on request only) and where scripts expect a local copy |
 | `thesis/admin/` | LUH examination rules for the thesis (MPO 2024, grading: the colloquium is pass/fail, only the thesis is graded), copied from luh_summer_2026; index in `thesis/admin/README.md` |
 | `thesis_ch5/` | Evidence map and a stand-alone build check (`_build_check.tex`) of the ANSYS chapter, which now lives in `thesis/chapters/ch4_ansys.tex` |
 | `handover/` | The self-contained package for the partner group — generated from the sources under test by `make_handover.py`, so it cannot drift |
