@@ -79,6 +79,15 @@
 | F7 | Is the pH a validation? | It was not used in the inference, so it is a check of the predicted composition, not a full validation. ／ 推定に使っていないので、組成の予測の確認。完全な検証ではない |
 | F8 | What is the biggest limitation? | No measured stress of a growing oral biofilm; the stresses are verified, not validated. ／ 応力の実測がないので、検証はできても妥当性確認はできていない |
 | F9 | What comes next? | At Keio: stress feeding back into growth, on tooth and implant geometries. ／ 慶應で、応力から成長への帰還を入れ、歯とインプラントで計算 |
+| F10 | Why does the stress in a biofilm matter? | Stress decides where the biofilm deforms or detaches, and around implants it acts on the tissue. ／ 応力は、バイオフィルムがどこで変形したり剥がれたりするかを決め、インプラントの周りでは組織に作用するから |
+| F11 | What is the extended Hamilton principle here? | A variational principle: the growth and the composition follow from making the sum of energy rate, dissipation and constraints stationary. ／ 変分原理。エネルギーの変化率、散逸、拘束の和を停留させると、成長と組成の式が出る |
+| F12 | What is TMCMC? | A sampler that moves particles from the prior to the posterior through a series of tempered distributions. ／ 粒子を、事前分布から段階的に温度を下げた分布を通して事後分布へ移すサンプラー |
+| F13 | What does alpha mean? | The growth stretch: the growth part of the deformation is alpha times the identity, and alpha starts at one. ／ 成長による伸び。成長の変形が alpha 倍の単位テンソルで、alpha は 1 から始まる |
+| F14 | What is the IKM element? | An ANSYS element of the institute that solves the biofilm field with a nodal integration method; I coupled the growth law to it. ／ 研究所の ANSYS の要素で、バイオフィルムの場を節点積分法で解く。そこに成長則をつないだ |
+| F15 | Where does the point model enter the element? | At every Gauss point, next to the field, so the composition is known at each integration point. ／ 各 Gauss 点で場と並べて解くので、各点で組成が分かる |
+| F16 | Why beta = 0.02 square millimetres per unit time? | It is the value of Klempt et al. 2024 converted to the two-millimetre cube; the conversion is my assumption, so I show the sensitivity. ／ Klempt 2024 の値を 2 mm の立方体に換算したもの。換算は仮定なので感度も示した |
+| F17 | Why is the stiffness so low, ten pascals? | It is the value of Klempt et al. 2024; in this setting the stress is proportional to E, so ratios between conditions do not depend on it. ／ Klempt 2024 の値。この設定では応力は E に比例するので、条件間の比は E によらない |
+| F18 | Why ANSYS and not your own code? | The element of the institute runs in ANSYS, and the user material lets me add the growth law without changing the solver. ／ 研究所の要素が ANSYS で動いていて、ユーザー材料ならソルバーを変えずに成長則を足せるから |
 
 ## 記録
 
@@ -87,3 +96,4 @@
 | 10月11日 | B1, C1, C4, C5, D3（言い換え）／ A1〜A5 | 第 1 回（数字の多い版）は難しすぎた。一言の答えに切り替え |
 | 10月13日 | A6, B5, C2, D2, E1 | （答えなし、次に再出題） |
 | 10月13日 | F1, F3, F5, F6, F8（英語で） | （答え待ち） |
+| 10月13日 | Q&A：F10〜F18 を表示 | （読む用） |
