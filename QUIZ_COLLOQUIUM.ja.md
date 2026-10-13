@@ -118,6 +118,26 @@
 | G14 | Five-species growth in the element | Same mean growth as Eq. 36 by choice of the rate; seed von Mises stress 8 % lower ／ 成長の平均は Eq. 36 にそろえた。シードの von Mises 応力は 8 % 低い |
 | G15 | Colloquium | 16 Dec 2026, 13:00, IKM Room 320; 20 min talk, 10 to 20 min questions ／ 12 月 16 日 13:00、320 号室、発表 20 分、質疑 10〜20 分 |
 
+## H. 数値ごとに聞かれそうな追加の質問（10月13日）
+
+| # | 数値 | 予想される質問 | 答え（EN ／ JA） |
+|---|---|---|---|
+| H1 | 5 species | Why these five? | They are the defined consortium of Heine et al., from early colonisers to the pathogen Pg. ／ Heine らが決めた菌群で、初期定着菌から病原菌 Pg まで並ぶ |
+| H2 | 15 unknowns | With 25 data points, is that not too many? | Yes, which is why I report which entries the data determine instead of a single best fit. ／ 多い。だから最適値一つではなく、どの成分が決まるかを報告した |
+| H3 | 4, 6, 8, 9 | What about the entries that are not identified? | I do not interpret them; they stay at the prior. ／ 解釈しない。事前分布のまま |
+| H4 | c* = 25 | Does the choice of c* change the results? | No, only c* times A enters, so another c* rescales A. ／ 変わらない。c*×A でしか入らないので、A の大きさが変わるだけ |
+| H5 | 147 times | Why not use a gradient-based sampler? | I did not compare them; I used TMCMC because it runs all particles in parallel on the GPU. ／ 比較していない。粒子を GPU で並列に回せる TMCMC を使った |
+| H6 | E = 10 Pa | Real biofilms are stiffer, up to kPa. | Yes; in this setting the stress scales with E, so the pattern holds and only the magnitude changes. ／ その通り。この設定では応力は E に比例するので、分布は同じで大きさだけ変わる |
+| H7 | beta = 0.02 | What happens with a much smaller beta? | The diffusion length falls below the mesh size and the seed stress does not converge. ／ 拡散の長さがメッシュより小さくなり、応力が収束しない |
+| H8 | 2 mm cube | Is a cube realistic? | No, it is a test geometry for verification; teeth and implants come at Keio. ／ 現実的ではない。検証用の形で、歯とインプラントは慶應で |
+| H9 | 8³ to 24³ | Why not finer meshes? | The NEM element is expensive; for the reference I used a separate code up to 192³. ／ 要素の計算が重い。基準解は別のコードで 192³ まで解いた |
+| H10 | +0.7 % | Is that converged? | It falls with refinement, about first order for the stress; 24³ is within a few percent of the limit. ／ 細かくすると減る（応力はほぼ 1 次）。24³ で極限から数 % 以内 |
+| H11 | −1.0193e−4 MPa | Why is the stress negative? | The cube is constrained, so the growth is pushed back and the stress is compressive. ／ 拘束されているので、成長が押し戻されて圧縮になる |
+| H12 | lambda limits | Which time step did you use? | Below the limit with a margin, lambda at most 0.128 on 16³ and 0.072 on 24³. ／ 余裕を持って限界より下（16³ で 0.128 以下、24³ で 0.072 以下） |
+| H13 | 0.130 / 0.158 | Why not an implicit update? | It is the element's existing explicit scheme; an implicit version is future work. ／ 要素にもともとある陽的な方法だから。陰的な版は今後の課題 |
+| H14 | −8 % | Is that difference significant? | It is one mesh and one rate chosen by me, so it shows the effect, not a precise value. ／ メッシュ 1 つ、速さは私が決めた値なので、効果の有無を示すもので、精密な値ではない |
+| H15 | 20 min | (準備) | Main slides 16, appendix for questions. ／ 本編 16 枚、質問には付録で答える |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
@@ -128,3 +148,4 @@
 | 10月13日 | Q&A：F10〜F18 を表示 | （読む用） |
 | 10月13日 | Q&A：F19〜F27 を表示 | （読む用） |
 | 10月13日 | 基本の数値 G1〜G15 を表示 | （読む用） |
+| 10月13日 | 数値ごとの予想質問 H1〜H15 を表示 | （読む用） |
