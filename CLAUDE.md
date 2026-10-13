@@ -343,6 +343,9 @@ that it is not shared with anyone without asking him first.
   Second follow-up: asked for the numbers behind Tables 3 and 4 (mean phi
   and c over time, maximum hydrostatic stress, mesh and time step), only if
   easy to find.
+  **13 Oct:** Felix finished the model and reproduced the Klempt 2024 cases
+  ("not exactly the same, but very close"); he is preparing files and
+  documentation and asked again to check the math of the script.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
