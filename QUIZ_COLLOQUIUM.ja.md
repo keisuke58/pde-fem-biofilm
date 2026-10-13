@@ -62,6 +62,22 @@
 | E3 | 審査員は | Junker 先生（主）、Wangenheim 先生（副） |
 | E4 | コロキウムの日時と形式 | 2026年12月16日（水）13:00、IKM 320 号室、発表 20 分＋質疑 10〜20 分 |
 
+## F. 英語で答える基本（10月13日、日本語と英語）
+
+答えは英語で言えるように練習する。日本語は意味の確認用。
+
+| # | 問題 | 答え（EN ／ JA） |
+|---|---|---|
+| F1 | What is the main contribution? | I brought a calibrated multispecies point model into a finite element growth model, and verified each step. ／ 較正した多菌種の点モデルを有限要素の成長モデルに組み込み、各段階を検証した |
+| F2 | Why a Bayesian method? | The data are sparse, so I need to know which interactions the data determine and which they leave open. ／ データが少ないので、何が決まり何が決まらないかを事後分布で示す |
+| F3 | How many interactions are determined? | Four, six, eight and nine of the fifteen; in the commensal conditions only the early colonisers. ／ 15 個のうち 4、6、8、9 個。常在では初期定着菌の間だけ |
+| F4 | Why is A symmetric? | Only the symmetric part enters the free energy, so directed effects cannot be represented; a limitation. ／ 自由エネルギーには対称部分しか入らない。一方向の作用は表せない（限界） |
+| F5 | How do you know the ANSYS implementation is correct? | It reproduces the closed-form solution, and the growth field agrees with a finite-volume reference within about one percent. ／ 閉じた形の解を再現し、有限体積法の基準解と 1 % 程度で一致 |
+| F6 | Why did you run to T* = 5? | Near the limit the unstable mode starts very small; short runs look smooth even when the step is too large. ／ 限界近くでは不安定モードが小さく、短い計算では見えない |
+| F7 | Is the pH a validation? | It was not used in the inference, so it is a check of the predicted composition, not a full validation. ／ 推定に使っていないので、組成の予測の確認。完全な検証ではない |
+| F8 | What is the biggest limitation? | No measured stress of a growing oral biofilm; the stresses are verified, not validated. ／ 応力の実測がないので、検証はできても妥当性確認はできていない |
+| F9 | What comes next? | At Keio: stress feeding back into growth, on tooth and implant geometries. ／ 慶應で、応力から成長への帰還を入れ、歯とインプラントで計算 |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
