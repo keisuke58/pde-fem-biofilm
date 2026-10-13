@@ -48,7 +48,7 @@
 場が量を、点モデルが組成を決める。}
 \begin{enumerate}\footnotesize
   \item \textbf{点モデルの較正}（ch3）：5菌種・4条件の in-vitro データから、相互作用 15 個を
-        TMCMC で推定。較正に使っていない pH を $R^2=0.78$ で予測
+        TMCMC で推定。データで決まる係数（4 条件で 4、6、8、9 個）を明らかにした
   \item \textbf{成長則を ANSYS に}（ch4）：$\mathbf F=\mathbf F_e\mathbf F_g$、
         $\mathbf F_g=\alpha\mathbf I$（Klempt 2024）をユーザー材料に。閉じた形の解と比べて検証。
         IKM の要素の場に $\dot\alpha=k_\alpha\phi$ でつないだ
@@ -193,9 +193,9 @@ $\sigma=-1.0193\times10^{-4}$ が一致。}
 \A{$c^*$ は $c^*A_{ij}$ の積でしか式に入らないので、それだけでは決まらない。
 $A_{ij}$ が $\mathcal O(1)$ になるように固定した。}
 \vspace{2pt}
-\small\Q{Phase 1 と Phase 2 の違いは}
-\A{Phase 1 は $\psi$ を固定、Phase 2 は $\psi$ も動かす。常在の静置では MAP がよく合い（$r=0.87$）、
-dysbiotic では \textit{Pg} に関わる係数がずれる（Fig.~3.9）。}
+\small\Q{4 段の推定と判定は何のため}
+\A{組成だけ、箱を狭める、生存率を足して箱を戻す、再び狭める、の 4 段。各段 3 seed で、
+尤度の再計算、$\beta=1$ への到達、粒子の移動回数、seed 間の一致を判定し、通ったものだけ使う。}
 \vspace{2pt}
 \small\Q{条件の差は本当に生態の差か}
 \A{一部は\textbf{菌株の差}。常在と dysbiotic で \textit{P.~gingivalis} の株が違う（DSM 20709 と W83）。}

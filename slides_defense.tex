@@ -128,42 +128,43 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \begin{columns}[T]
 \begin{column}{0.62\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.8\textheight,keepaspectratio]{heine_fits_4cond.pdf}
+\includegraphics[width=\linewidth,height=0.74\textheight,keepaspectratio]{eml_fit.pdf}
 \end{column}
 \begin{column}{0.36\textwidth}
 \small
 \begin{itemize}
   \item Heine et al.\ (2025): five species, four conditions
         (commensal / dysbiotic, static / flow), days 1--21
-  \item 15 coefficients $A_{ij}$ per condition, TMCMC, $10{,}000$ samples
-  \item Forward model in JAX on the GPU: about 150 times faster than the CPU
+  \item 15 coefficients $a_{ij}$ per condition, effective and undirected
+  \item TMCMC in four stages, three seeds each, with convergence checks
+  \item JAX on the GPU: about 150 times faster than the CPU
 \end{itemize}
-\vspace{6pt}
-\cbox{c3}{1.5cm}{\small\textbf{\color{c3}Posterior predictive fit:} the time courses of all four conditions are reproduced with one symmetric $\mathbf A$ each}
+\vspace{2pt}
+\cbox{c3}{1.2cm}{\small\textbf{\color{c3}Fit:} RMSE $0.03$ to $0.18$; in CS composition and live fraction cannot both be matched}
 \end{column}
 \end{columns}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 1: inferred interactions and out-of-sample prediction}
+\begin{frame}{Part 1: what the data determine}
 \centering
-\includegraphics[width=0.9\linewidth,height=0.36\textheight,keepaspectratio]{heine_heatmap_A_4cond.pdf}\\[2pt]
+\includegraphics[width=0.9\linewidth,height=0.36\textheight,keepaspectratio]{eml_ident.pdf}\\[2pt]
 \begin{columns}[c]
 \begin{column}{0.48\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{heine_ph_validation.pdf}
+\includegraphics[width=\linewidth,height=0.33\textheight,keepaspectratio]{eml_checks.pdf}
 \end{column}
 \begin{column}{0.48\textwidth}
 \small
 \begin{itemize}
-  \item Top: MAP interaction matrices; red cooperative, blue competitive. The
-        dysbiotic flow condition activates \textit{F.~nucleatum} $\to$ \textit{P.~gingivalis}
-  \item Left: the pH, not used in the calibration, is predicted with $R^2=0.78$
+  \item Identified entries: 4, 6, 8, 9 of 15 (CS, CH, DS, DH)
+  \item Commensal: only the early colonisers; \textit{So}--\textit{Vei} positive in both
+  \item pH not used in the inference: a check, followed in DH
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{\textbf{Testable hypothesis:} in the absence of \textit{F.~nucleatum}, the late growth of
-\textit{P.~gingivalis} under dysbiotic flow is expected to be suppressed.}
+\takeaway{\textbf{Testable hypothesis:} without \textit{F.~nucleatum}, the late growth of
+\textit{P.~gingivalis} under dysbiotic flow disappears in the model.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -310,10 +311,10 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
         the element is inactive
   \item \textbf{Assumptions}: the time link $s$, $\phi_{\rm cap}$, the
         conversion of $\beta$; each reported with its sensitivity
-  \item \textbf{Calibrated parameters not yet in the FE model}: five calibrated species
-        in Part~1, two published cases in Part~3
-  \item \textbf{Symmetric $\mathbf A$}: no directed effects; different
-        \textit{P.~gingivalis} strains in the commensal and dysbiotic data
+  \item \textbf{Calibrated parameters in the FE model}: one first run (CH) only; Part~3
+        uses two published cases
+  \item \textbf{Symmetric $\mathbf A$}: no directed effects; only part of $\mathbf A$
+        is determined; different strains in the commensal and dysbiotic data
 \end{itemize}
 \takeaway{Each limitation is quantified in the thesis where possible; the results are verified, not yet validated.}
 \end{frame}
@@ -323,7 +324,7 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
 \textbf{Contributions}\\[5pt]
-\cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; pH predicted out of sample ($R^2=0.78$)}\\[6pt]
+\cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; which interactions the data determine}\\[6pt]
 \cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
 \cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, qualitative outcomes of the reference cases retained}
 \end{column}
@@ -513,10 +514,9 @@ gives, with $\bar\phi_i=\phi_i\psi_i$ and $\dot{\bar\phi}_i=\dot\phi_i\psi_i+\ph
 \midrule
 interaction matrix & asymmetric, 25 & symmetric, 15\\
 parameters & 30 & 20\\
-RMSE (four conditions) & $0.012$--$0.032$ & $0.033$--$0.119$\\
-uncertainty & point estimate & posterior, $10{,}000$\\
+RMSE (four conditions) & $0.012$--$0.032$ & $0.027$--$0.179$\\
+uncertainty & point estimate & posterior, three seeds\\
 $\sum_i\phi_i=1$ & enforced afterwards & exact\\
-pH prediction & not possible & $R^2=0.78$\\
 \bottomrule
 \end{tabular}
 \end{column}
@@ -524,24 +524,23 @@ pH prediction & not possible & $R^2=0.78$\\
 \begin{itemize}
   \item The asymmetric model fits better, but has more parameters (30) than
         observations (25); its out-of-sample error was not assessed
-  \item Hamilton model: transfer CS$\to$CH RMSE $0.098$, close to the
-        in-sample $0.104$
   \item Directed effects (one species feeding another) cannot be represented;
         stated as a limitation
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Symmetry costs accuracy of the fit, but gives a posterior, exact conservation and a prediction of an independent quantity.}
+\takeaway{Symmetry costs accuracy of the fit, but gives a posterior and exact conservation.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 3: fixed against free viability (Phase 1 and Phase 2)}
+\begin{frame}{Backup 3: four stages and three seeds}
 \centering
-\includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{heine_phase1_vs_phase2.pdf}\\[4pt]
+\includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{eml_seed_maps.pdf}\\[4pt]
 \small\raggedright
-Phase~1: viability $\psi_i$ fixed to the measured values; Phase~2: $\psi_i$ free.
-Each point is one of the 15 coefficients; dashed: identity.
-\takeaway{The two phases agree in Commensal Static ($r=0.87$); in the dysbiotic conditions the \textit{P.~gingivalis} entries shift, where the viability dynamics are active.}
+Stages: (i) composition; (ii) narrowed box; (iii) with the live fraction, full box; (iv) narrowed box.
+Accepted only if recomputed likelihoods agree, tempering reaches $\beta=1$, every particle moves enough,
+and the seeds agree in $\max\ln\mathcal L$ and in the medians.
+\takeaway{Several runs that looked converged failed these checks and were repeated; DS and DH are from stage (iii).}
 \end{frame}
 
 % --------------------------------------------------------
@@ -549,15 +548,14 @@ Each point is one of the 15 coefficients; dashed: identity.
 \begin{columns}[c]
 \begin{column}{0.6\textwidth}
 \centering
-\includegraphics[height=0.8\textheight,width=\linewidth,keepaspectratio]{heine_posterior_violin.pdf}
+\includegraphics[height=0.8\textheight,width=\linewidth,keepaspectratio]{eml_posteriors.pdf}
 \end{column}
 \begin{column}{0.38\textwidth}
 \small
 \begin{itemize}
-  \item Posterior of the 15 entries of $\mathbf A$ per condition; stars: MAP
-  \item Identifiability judged by agreement of independent runs, prior dependence
-        on a wide box and posterior mass at the bounds
-  \item The posterior-to-prior width ratio alone cannot detect non-identifiability
+  \item Marginal posteriors of the 15 entries, drawn by their position in the prior box
+  \item Identified: posterior SD below $0.8$ of a uniform distribution on the box
+  \item Sign only: $90\,\%$ interval excludes zero
 \end{itemize}
 \end{column}
 \end{columns}
