@@ -297,7 +297,10 @@ this machine's specific workflow.
   wunnenberg@ikm.uni-hannover.de) takes over the coordination while Ms.
   Neumeyer is away for a week; keep her in copy. Reply drafted in Gmail
   (summary of the date and the three open points: Dr. Wangenheim, room or
-  online, length of the talk), not yet sent.
+  online, length of the talk), sent 12 Oct.
+  **Confirmed 13 Oct (Wunnenberg):** in person, IKM Room 320, 16 Dec 13:00;
+  talk 20 min, then 10-20 min questions (30-40 min total). The office handles
+  the assessments.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 
