@@ -261,6 +261,12 @@ this machine's specific workflow.
   provisional; when their final stage passes, update numbers and figures
   (`thesis/figures/eml_*.pdf`) from the EML repo. Chapters 4 and 5 already use
   the final CH MAP. Build with pdflatex + bibtex (no latexmk in the cloud).
+  **13 Oct:** the EML analysis moved to the measured (raw) data of N. Heine
+  with a two-channel likelihood (viable and total composition, live fraction).
+  The Ch. 3 methods now describe that; the results still show the earlier
+  digitised runs, flagged in the text, until the raw runs pass. No raw data
+  tables in the thesis (available on request only). If the raw CH MAP differs,
+  rerun the 8^3 five-species run of Ch. 4.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.

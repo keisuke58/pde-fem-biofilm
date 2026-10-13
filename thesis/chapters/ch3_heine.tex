@@ -41,23 +41,28 @@ state but also in the \textit{Veillonella} species (\textit{V.~dispar} and
 
 The composition data are the species fractions of viable cells at days $3$, $6$,
 $10$, $15$ and $21$, measured by quantitative real-time PCR after propidium
-monoazide treatment; I use the medians of the eight replicate values per time
-point provided by the authors. The day-$1$ composition, the earliest
-measurement, is the initial state of the model at $t=0$. Model time is the
-time since inoculation, $t=s\,d$ with $s=0.2375/21$; in the flow reactor the
-inoculated medium is replaced after $24$\,h, so the growth phase there can also
-be taken to start at day~$1$, and starting the model at day~$1$ changes the
-composition error of the MAP by at most $0.008$. The viable and the total-count
-compositions differ little (RMSE between their medians $0.057$, $0.042$, $0.033$
-and $0.072$ in CS, CH, DS and DH), so I assume species-independent viability in
-the composition channel and compare the data with the model fractions
-normalised over the five species, $\hat y_i=\phi_i/\sum_j\phi_j$.
+monoazide (PMA) treatment, and the total-count fractions without PMA measured on
+the same samples. I use the measured replicate values provided by the authors
+(three to five biological replicates per time point, each in technical
+triplicate) and the medians over them. Values read off the published box plots
+deviate from these by up to $0.42$ in a species fraction in the dysbiotic
+conditions, so they are not used. The measured data are available from the
+authors on request and are not reproduced in this thesis; only summary numbers
+and figures are shown.
 
-Two further data sets are measured. The fraction of membrane-intact cells from
-SYTO9/propidium iodide staining is image based and \emph{not} resolved by
-species; it enters the later stages of the inference as a community live
-fraction. The pH, measured in the flow reactor, is not used in the inference
-and serves as a check (Section~\ref{sec:heine_validation}).
+The day-$1$ composition, the earliest measurement, is the initial state of the
+model at $t=0$. Model time is the time since inoculation, $t=s\,d$ with
+$s=0.2375/21$; in the flow reactor the inoculated medium is replaced after
+$24$\,h, so the growth phase there can also be taken to start at day~$1$. The
+viable and the total-count compositions differ (RMSE between their medians
+$0.101$, $0.087$, $0.119$ and $0.087$ in CS, CH, DS and DH) because the species
+differ in viability, so each is compared with its own model counterpart.
+
+The fraction of membrane-intact cells from SYTO9/propidium iodide staining is
+image based and \emph{not} resolved by species; per time point it is the mean
+over $15$--$45$ confocal images, five per biofilm. It enters the inference as the
+community live fraction. The pH, measured in the flow reactor, is not used in
+the inference and serves as a check (Section~\ref{sec:heine_validation}).
 
 %==============================================================================
 \section{Inference Setup}
@@ -106,23 +111,41 @@ not as the measurement of a mechanism.
 \subsection{Likelihood}
 \label{sec:heine_likelihood}
 
-The composition channel is a weighted Gaussian log-likelihood
+The viable fractions $y^{\mathrm{v}}_{ik}$ at time $t_k$ are compared with the
+living volume fractions $\hat y^{\mathrm{v}}_{ik}=\phi_i\psi_i/\sum_j\phi_j\psi_j$,
+the total-count fractions $y^{\mathrm{t}}_{ik}$ with
+$\hat y^{\mathrm{t}}_{ik}=\phi_i/\sum_j\phi_j$, and the community live fraction
+$\ell_k$ with $\hat\ell_k=\sum_i\phi_i\psi_i/\sum_i\phi_i$, through the weighted
+Gaussian log-likelihood
 \begin{equation}
   \ln p(\mathbf{y}_{\mathrm{obs}}\mid\btheta)
-  =-\frac12\sum_{k}\sum_{i=1}^{5}w_{ik}\,
-  \frac{\bigl(y_{\mathrm{obs},i}(t_k)-\hat y_i(t_k;\btheta)\bigr)^2}{\sigma_i^2}
-  +\mathrm{const},
+  =-\frac12\sum_{k}\sum_{i=1}^{5}w_{ik}\left[
+  \frac{\bigl(y^{\mathrm{v}}_{ik}-\hat y^{\mathrm{v}}_{ik}\bigr)^2}{(\sigma^{\mathrm{v}}_{ik})^2}
+  +\frac{\bigl(y^{\mathrm{t}}_{ik}-\hat y^{\mathrm{t}}_{ik}\bigr)^2}{(\sigma^{\mathrm{t}}_{ik})^2}\right]
+  -\frac{\lambda_\psi}{2}\sum_k\frac{(\ell_k-\hat\ell_k)^2}{\sigma_\ell^2}
+  +\mathrm{const}.
   \label{eq:heine_lik}
 \end{equation}
-with $\sigma_i$ the replicate standard deviation of species $i$. The weights
-up-weight \textit{Pg} ($\lambda_{\mathrm{Pg}}=5$), whose late increase is the main
-dynamic feature of the dysbiotic data, and the last two time points
-($\lambda_{\mathrm{late}}=3$), and down-weight species with a mean fraction below
-$5\,\%$ ($\lambda_{\mathrm{rare}}=0.1$). In the later stages a second Gaussian
-channel compares the predicted community live fraction
-$\sum_i\bar\phi_i/\sum_i\phi_i$ with the measured fraction of membrane-intact
-cells, weighted by $\lambda_\psi=1.5$ in the commensal conditions, $2.0$ in DS
-and $3.0$ in DH. The pH does not enter.
+The standard deviations $\sigma^{\mathrm{v}}_{ik}$ and $\sigma^{\mathrm{t}}_{ik}$ are
+estimated from the spread of the measured replicates (interquartile range divided
+by $1.35$, at least $0.05$), and $\sigma_\ell$ is the standard deviation of the
+live fraction between biofilms, averaged over the time points. The weights
+$w_{ik}$ act on both compositions alike: they up-weight \textit{Pg}
+($\lambda_{\mathrm{Pg}}=5$), whose late increase is the main dynamic feature of the
+dysbiotic data, and the last two time points ($\lambda_{\mathrm{late}}=3$), and
+down-weight species with a mean fraction below $5\,\%$ ($\lambda_{\mathrm{rare}}=0.1$).
+The live fraction is weighted by $\lambda_\psi=1.5$ in the commensal conditions,
+$2.0$ in DS and $3.0$ in DH. The pH does not enter.
+
+In stages (i) and (ii) below, the viabilities are not evolved but fixed to the
+values implied by the two compositions and the live fraction,
+$\psi_i(t_k)=(y^{\mathrm{v}}_{ik}/y^{\mathrm{t}}_{ik})\,\ell_k$, clipped to
+$[0.01,0.99]$ (the community value $\ell_k$ for species below $2\,\%$ of the total
+count), and the live-fraction term is omitted. These fixed values are uncertain
+(the median width of their $90\,\%$ intervals is $0.57$), so they serve only to
+start the inference and as a check, not as data in the likelihood. In stages
+(iii) and (iv), $\psi_i$ follows Eq.~\eqref{eq:gov_psi} and all three terms are
+used.
 
 \subsection{Prior and four stages}
 \label{sec:heine_twophase}
@@ -133,11 +156,11 @@ data, and some of them exclude negative values or allow only small ones, so the
 signs of these entries are partly set by the prior in the first two stages;
 all of these bounds are widened in stage~(iii). Inference proceeds in four
 stages on the same data (Figure~\ref{fig:heine_pipeline}):
-(i)~composition likelihood on the box;
+(i)~the two composition terms with $\psi_i$ fixed to the data, on the box;
 (ii)~as (i), on the box narrowed to the stage-(i) posterior mean $\pm4$ standard
 deviations;
-(iii)~composition and live fraction, back on the full box, starting from the
-stage-(ii) particles;
+(iii)~the full likelihood with $\psi_i$ evolved, back on the full box, half of the
+initial particles drawn around the stage-(ii) MAP and half from the prior;
 (iv)~as (iii), on the box narrowed to the stage-(iii) posterior mean $\pm4$
 standard deviations.
 A $\pm4$ standard deviation box removes less than $10^{-4}$ of a Gaussian
@@ -152,8 +175,8 @@ repeated.
   \caption[Model and four-stage inference]{Model and inference. A material
   point carries the volume fractions $\phi_i$ and viabilities $\psi_i$ of five
   taxa, coupled through the symmetric matrix $\mathbf{A}$ ($15$ unknowns). TMCMC
-  with a GPU-compiled forward model infers $\mathbf{A}$ in four stages, from the
-  composition to the community live fraction; every stage is accepted only
+  with a GPU-compiled forward model infers $\mathbf{A}$ in four stages, first with
+  the viabilities fixed to the data, then with them evolved; every stage is accepted only
   after the checks (a)--(e) of Section~\ref{sec:heine_gpu}.}
   \label{fig:heine_pipeline}
 \end{figure}
@@ -220,6 +243,11 @@ gives the evidence estimates, which are read only as indications.
 
 \subsection{Fit and convergence}
 \label{sec:heine_fit}
+
+\textit{The numbers and figures of this section are from the runs on values
+read off the published figures, with the viable composition and the live
+fraction only. The runs with the measured data and the likelihood of
+Eq.~\eqref{eq:heine_lik} are in progress and will replace them.}
 
 Stages (ii)--(iv) of CS and CH and stages (ii)--(iii) of DS meet the criteria
 (a)--(e) with three seeds each. The DH stage-(iii) group meets (a)--(d), but its
