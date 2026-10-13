@@ -88,6 +88,15 @@
 | F16 | Why beta = 0.02 square millimetres per unit time? | It is the value of Klempt et al. 2024 converted to the two-millimetre cube; the conversion is my assumption, so I show the sensitivity. ／ Klempt 2024 の値を 2 mm の立方体に換算したもの。換算は仮定なので感度も示した |
 | F17 | Why is the stiffness so low, ten pascals? | It is the value of Klempt et al. 2024; in this setting the stress is proportional to E, so ratios between conditions do not depend on it. ／ Klempt 2024 の値。この設定では応力は E に比例するので、条件間の比は E によらない |
 | F18 | Why ANSYS and not your own code? | The element of the institute runs in ANSYS, and the user material lets me add the growth law without changing the solver. ／ 研究所の要素が ANSYS で動いていて、ユーザー材料ならソルバーを変えずに成長則を足せるから |
+| F19 | What does "identified" mean? | The posterior standard deviation is below 0.8 times that of a uniform distribution on the prior box, so the data narrow it. ／ 事後の標準偏差が、事前の箱の一様分布の 0.8 倍より小さい。データで狭まっている |
+| F20 | Why are so few entries identified in the commensal conditions? | Fn and Pg stay below one percent there, so the data carry little information on their interactions. ／ 常在では Fn と Pg が 1 % 未満なので、その相互作用の情報がデータにほとんどない |
+| F21 | Why four stages and three seeds? | Stages make the tempering cheaper and more stable; three seeds show whether a run has really converged. ／ 段に分けると計算が安く安定する。3 seed で本当に収束したかが分かる |
+| F22 | What does the Fn knockout show? | In the model, removing Fn removes the late growth of Pg in the dysbiotic flow condition; a co-culture without Fn could test it. ／ モデルで Fn を除くと、dysbiotic の流れ条件で Pg の終盤の増加が消える。Fn 抜きの共培養で確かめられる |
+| F23 | Can you compare commensal and dysbiotic directly? | Not fully: the two communities also differ in the Veillonella species and the Pg strain. ／ 完全にはできない。Veillonella の種と Pg の株も違うから |
+| F24 | What is lambda in the stability analysis? | beta times the time step over the mesh size squared; above a limit the explicit update becomes unstable. ／ β × 時間刻み ÷ メッシュ幅の 2 乗。限界を超えると陽的な更新が不安定になる |
+| F25 | Why does the limit depend on the neighbours? | The thirtieth neighbour lies in a shell of seven equal points, and which five are taken makes the stencil slightly asymmetric. ／ 30 番目の近傍は同じ距離の 7 点の殻にあり、どの 5 点を取るかで少し非対称になる |
+| F26 | Is the coupling one-way or two-way? | One-way: the composition drives the growth, but the stress does not act back on growth or composition yet. ／ 一方向。組成が成長を決めるが、応力はまだ成長や組成に戻らない |
+| F27 | What was the hardest part? | Getting the convergence of the inference and of the element right; several runs that looked fine failed the checks. ／ 推定と要素の収束をきちんと確かめること。よく見えた計算がいくつも判定に落ちた |
 
 ## 記録
 
@@ -97,3 +106,4 @@
 | 10月13日 | A6, B5, C2, D2, E1 | （答えなし、次に再出題） |
 | 10月13日 | F1, F3, F5, F6, F8（英語で） | （答え待ち） |
 | 10月13日 | Q&A：F10〜F18 を表示 | （読む用） |
+| 10月13日 | Q&A：F19〜F27 を表示 | （読む用） |
