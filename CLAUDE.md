@@ -249,7 +249,8 @@ this machine's specific workflow.
   over keep their wording.
 - **Thesis draft sent to Meisam on 9 Oct 2026** (first hand-over, 85 pages,
   "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
-  Section 5.1 named). Content freeze 12 Oct, submission 20 Oct. Do not send
+  Section 5.1 named). Content freeze 12 Oct. Submission moved to 13 Nov 2026
+  (decided 13 Oct, quality first; official deadline mid-Feb 2027). Do not send
   him a second draft; reply to his comments only.
 - **Chapter 3 replaced (12 Oct 2026, user's decision).** The old Ch. 3 used
   runs from March/April whose configurations were not kept (pH possibly in the

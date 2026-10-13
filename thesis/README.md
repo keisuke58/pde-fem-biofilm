@@ -73,7 +73,7 @@ Open:
 | **12 Oct** | **content frozen** (decided 6 Oct): ch4 with the week runs that have arrived by then, ch3 TMCMC as it is; afterwards only format and typos. **Nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
 | 16 Oct | his comments on the format |
 | 19 Oct | last changes, printing, binding |
-| **20 Oct** | **submission**: two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
+| **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
 | 2 Nov | meeting with Assoc. Prof. Muramatsu (`slides_1102_nem_ja.tex`) |
 | 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
