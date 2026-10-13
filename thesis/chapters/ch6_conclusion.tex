@@ -13,10 +13,10 @@ this task.
 The 15 interaction coefficients of a five-species point model were estimated
 with TMCMC from the in-vitro time courses of Heine et al.\ under four
 conditions. Compiled with JAX, the forward model runs about 150 times faster
-on the GPU than on the CPU, which makes posteriors with $10{,}000$ samples routine. The
-inferred matrices separate the commensal from the dysbiotic conditions and
-predict a quantity that never entered the calibration: the pH of the flow
-reactor, with $R^2=0.78$. With a metabolic sign prior, the same type of model
+on the GPU than on the CPU, which makes posteriors with $10{,}000$ samples routine. Every stage was
+repeated with three seeds and accepted only after convergence checks. The data
+determine $4$, $6$, $8$ and $9$ of the $15$ entries in the four conditions, and the
+pH, which was not used in the inference, serves as a check. With a metabolic sign prior, the same type of model
 also predicts sparse in-vivo data of ten patients out of sample.
 
 \paragraph{A growth law in the finite element framework (Chapter~\ref{ch:ansys}).}
@@ -80,16 +80,12 @@ study, through the share-weighted front rate. Segregation of species by
 different spreading is outside what this scheme can show.
 
 \paragraph{Calibrated and chosen parameters.} The interaction coefficients of
-Chapter~\ref{ch:heine} come from measured time courses, and the fractions integrated with the inferred
-matrices predict a quantity that did not enter the calibration, the pH,
-through a linear rule fitted to the measured fractions at $90$ time points
-(Section~\ref{sec:heine_validation}, $R^2=0.78$). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
+Chapter~\ref{ch:heine} come from measured time courses; the pH, which did not enter the inference, is
+reproduced in DH through a regression on the predicted fractions
+(Section~\ref{sec:heine_validation}). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
 cases of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, chosen there
-to show coexistence and the survival of one species. Calibrated point-model
-parameters and the finite element field have not yet met in one computation;
-this needs the five-species state in the element (Outlook). The two-species
-runs exercise the same code path, so what is missing is the state vector of
-five species in the element, not a new coupling.
+to show coexistence and the survival of one species. A first run with the
+calibrated five-species point model in the element is reported in the Outlook.
 
 \paragraph{What the stresses mean.} With the stiffness of Klempt et
 al.~\cite{Klempt2024DiffusionDrivenGrowth} the stresses are of order

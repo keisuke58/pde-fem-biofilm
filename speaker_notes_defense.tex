@@ -87,24 +87,25 @@ $\mathbf A$ は対称です。
 species under four conditions, commensal or dysbiotic, static or in a flow
 reactor, and measured the composition from day 1 to day 21. I estimated the
 15 interaction coefficients for each condition with transitional Markov chain
-Monte Carlo, with ten thousand samples. The forward model runs in JAX on the
+Monte Carlo, in four stages, each repeated with three seeds and accepted only
+after convergence checks. The forward model runs in JAX on the
 GPU, about 150 times faster than on the CPU, which makes this practical. The
 lines here are the fits against the measured points.
 \JA 第1部は点モデルの較正です。Heine らの5菌種・4条件のデータを使い、各条件で15個の
-相互作用係数を TMCMC で推定しました。サンプルは1万個です。順モデルを JAX で GPU に
+相互作用係数を TMCMC で推定しました。4 段に分け、各段を 3 つの seed で回し、収束の判定を通ったものだけ使っています。順モデルを JAX で GPU に
 載せたので、CPU より約150倍速くなり、現実的な時間で回せます。
 
-\slide{Part 1: inferred interactions and out-of-sample prediction}{7:00}
-\EN The calibration gives one interaction matrix per condition. Under
-dysbiotic flow, the link from \textit{F.~nucleatum} to \textit{P.~gingivalis}
-becomes strongly cooperative. On the right, the pH, which I did not use in
-the calibration, is predicted with $R^2=0.78$. This leads to a testable
-hypothesis: without \textit{F.~nucleatum}, the late growth of
-\textit{P.~gingivalis} under dysbiotic flow should be suppressed.
-\JA 条件ごとに相互作用行列が得られます。dysbiotic の流れ条件では、\textit{F.~nucleatum}
-から \textit{P.~gingivalis} への協力が強く出ます。右は pH で、較正には使っていませんが、
-$R^2=0.78$ で予測できました。ここから検証できる予測が出ます：\textit{F.~nucleatum} を
-除けば、終盤の \textit{P.~gingivalis} の増加は抑えられるはずです。
+\slide{Part 1: what the data determine}{7:00}
+\EN The main result of the calibration is which coefficients the data
+determine: 4, 6, 8 and 9 of the 15 in the four conditions. In the commensal
+conditions only the early colonisers are determined. The pH was not used in
+the inference; it serves as a check and is followed in the dysbiotic flow
+condition. In the model, removing \textit{F.~nucleatum} removes the late growth
+of \textit{P.~gingivalis}, which a co-culture could test.
+\JA 較正の主な結果は、15 個の係数のうちデータで決まるものがどれかです。4 条件で 4、6、8、9 個
+でした。常在の条件では、初期に定着する菌の間だけが決まります。pH は推定に使っておらず、
+確認に使いました。dysbiotic の流れ条件では実測に沿います。モデルで \textit{F.~nucleatum} を
+除くと、終盤の \textit{P.~gingivalis} の増加が消えます。これは共培養で確かめられます。
 
 \slide{Part 2: implementation of the growth law in ANSYS}{8:30}
 \EN The second part brings the growth law into ANSYS. I implemented
@@ -247,9 +248,9 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \EN The asymmetric model fits better, but it has 30 parameters for 25 observations. The symmetric model gives a posterior, exact conservation and the pH prediction.
 \JA 非対称モデルの方が当てはまりは良いが、観測 25 個に対してパラメータが 30 個あります。対称モデルは事後分布、厳密な保存、pH の予測を与えます。
 
-\slide{Backup 3: Phase 1 and Phase 2}{Q}
-\EN Phase 1 fixes the viability to the measured values, Phase 2 leaves it free. They agree in Commensal Static; in the dysbiotic conditions the \textit{P.~gingivalis} entries shift.
-\JA Phase 1 は生存率を測定値に固定、Phase 2 は自由にします。常在・静置では一致し、dysbiotic では \textit{P.~gingivalis} の係数がずれます。
+\slide{Backup 3: four stages and three seeds}{Q}
+\EN Four stages: composition, narrowed box, with the live fraction on the full box, narrowed again. Every stage runs with three seeds and is accepted only after the checks; several runs that looked converged failed them.
+\JA 4 段：組成だけ、箱を狭める、生存率を入れて箱を戻す、もう一度狭める。各段を 3 seed で回し、判定を通ったものだけ使います。収束したように見えて判定に落ちた run がいくつもありました。
 
 \slide{Backup 4: posterior distributions}{Q}
 \EN I judge identifiability by agreement of independent runs and by posterior mass at the bounds, not by the width of the posterior alone.

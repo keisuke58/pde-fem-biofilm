@@ -14,7 +14,7 @@ regulation PDFs, personal data and Felix Klempt's material are not copied.
   is a Prüfungsleistung; the presentation is a Studienleistung (pass or fail).
   The module grade is the thesis grade, the mean of the two examiners
   (`MPO_summary.md`, section J, corrected 13 Aug 2026).
-- Dates: submission 20 Oct 2026, colloquium Wed 16 Dec 2026, 13:00 (tentative).
+- Colloquium: Wed 16 Dec 2026, 13:00, in person, IKM Room 320; talk 20 min plus 10-20 min questions (confirmed 13 Oct).
 
 ## Files
 

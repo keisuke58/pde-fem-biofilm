@@ -158,3 +158,9 @@ abaqus_composition/*.json
 
 # The thesis figures are part of the thesis source (thesis/README.md)
 !thesis/figures/
+
+# Measured data of Heine et al. (MHH): available from the authors on request,
+# not redistributed. Keep local copies only (removed from the tree 13 Oct 2026).
+data/heine_species_distribution_biofilm.xlsx
+data/raw_heine/
+*.xlsx

@@ -2,7 +2,7 @@
 
 Felix Klempt sent the papers on the Neighbored Element Method (NEM) that he
 knows of (mail of 6 Oct 2026). NEM is the discretisation behind the partner
-element and behind his own code (`ansys_usermat/FELIX_VS_PARTNER_DIFF.md`).
+element and behind his own code (a private note, not in this repository).
 Four of the seven papers are open access and are bundled here as PDF with a
 searchable text extraction; licences are listed in `THIRD_PARTY.md`. The
 other three are not open access: only their citation and a summary in my own

@@ -363,7 +363,7 @@ the digitised figures (`results_1006/fx*.txt`):
   r c/(k+c) then vanishes and phi hardly grows (0.065 to 0.071).
 - With g phi c, 4.1 comes within 0.045 (mean phi 0.61 against 0.74 at
   T* = 1); 4.2 is not reproduced by either form.
-- The first author's current implementation (`../ansys_usermat/FELIX_VS_PARTNER_DIFF.md`,
+- The first author's current implementation (a private note, not in this repository,
   compared in words only) adds front growth only where it is positive and
   lets it fade as phi approaches 1. None of the runs above has that form; it
   is the next one to test, stated as "as in the first author's current
@@ -401,7 +401,7 @@ curves to the digitised figures (`compare_paper.py`, `results_1006/ff*.txt`):
 ## The same set-up against the first author's own code (6 Oct 2026)
 
 The three test cases were also run in Felix Klempt's current code (ANSYS, kept
-outside git; `../ansys_usermat/FELIX_VS_PARTNER_DIFF.md`). The ANSYS runs use
+outside git; a private note, not in this repository). The ANSYS runs use
 8^3 elements and the regions of the partner-style Fig. 7 deck. The Abaqus runs
 use the same mesh and regions (`partner_elem_sets.py` writes `pset_41.json` and
 `pset_42.json`; `make_klempt_inp.py --elem-sets`):

@@ -90,7 +90,11 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
 - **Which `ANSYS.exe` (2026-09-29):** `F:\biofilm_upf\ANSYS.exe` is the
   8/19 build (inline core only). It gives **non-deterministic, broken
   solves under `-smp -np` > 1** — use it only with `-np 1` or the default
-  DMP launch. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
+  DMP launch. Cause confirmed 13 Oct 2026: its obj was compiled without
+  `/auto`, so the USERMAT work arrays sit in static storage shared by the
+  threads (three `-np 4` runs gave three answers, one did not converge);
+  `link_v222.ps1` builds use `/auto` and agree to 1e−15
+  (`IKMHIWI03_TO_CLOUD.ja.md`). Do not use it for new runs. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
   (usermat_biofilm.f + Python/ecology bridge with n_sub, via
   `link_v222.ps1`), safe with `-smp -np 4/8`. When relinking,
   `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
@@ -164,6 +168,10 @@ this machine's specific workflow.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
+- **Q&A routine (13 Oct 2026):** when the user says Q&A or QA, show colloquium
+  questions with their answers right away, in English and Japanese (EN: a
+  sentence that can be said aloud; JA: the same meaning), starting from the
+  basics. Use and extend section F of `QUIZ_COLLOQUIUM.ja.md`; new ones go there.
 - **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
   Keio master's (final presentation December 2027, graduation March 2028;
   papers should be published before the presentation), papers and a job, not a doctorate or a
@@ -249,15 +257,24 @@ this machine's specific workflow.
   over keep their wording.
 - **Thesis draft sent to Meisam on 9 Oct 2026** (first hand-over, 85 pages,
   "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
-  Section 5.1 named). Content freeze 12 Oct, submission 20 Oct. Do not send
+  Section 5.1 named). Content freeze 12 Oct. Submission moved to 13 Nov 2026
+  (decided 13 Oct, quality first; official deadline mid-Feb 2027). Do not send
   him a second draft; reply to his comments only.
-- **Open thesis item (10 Oct 2026): the pH in Chapter 3.** The thesis
-  (Ch. 3, abstract, Section 5.1) calls the pH an independent, held-out
-  prediction (R² = 0.78). The BMB revision note of 7 Oct found that the newer
-  paper_gateoff runs put pH into the Phase 2 likelihood for HOBIC (weight 0.3).
-  Whether the thesis's 10,000-particle Phase 2 runs (read via nife
-  `scripts/figures/paper_data.py`) did the same is not yet known. The user will
-  fix it when the result is in; until then do not change the pH wording.
+- **Chapter 3 replaced (12 Oct 2026, user's decision).** The old Ch. 3 used
+  runs from March/April whose configurations were not kept (pH possibly in the
+  likelihood). Ch. 3 now uses the archived EML runs (Tmcmc202601,
+  `claude/gate-off-map-check`): four stages, three seeds, criteria (a)-(e),
+  identifiability, pH only as a check (not in the likelihood). The R^2 = 0.78
+  claim is gone from abstract and conclusion. DS and DH are from stage (iii) and
+  provisional; when their final stage passes, update numbers and figures
+  (`thesis/figures/eml_*.pdf`) from the EML repo. Chapters 4 and 5 already use
+  the final CH MAP. Build with pdflatex + bibtex (no latexmk in the cloud).
+  **13 Oct:** the EML analysis moved to the measured (raw) data of N. Heine
+  with a two-channel likelihood (viable and total composition, live fraction).
+  The Ch. 3 methods now describe that; the results still show the earlier
+  digitised runs, flagged in the text, until the raw runs pass. No raw data
+  tables in the thesis (available on request only). If the raw CH MAP differs,
+  rerun the 8^3 five-species run of Ch. 4.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
@@ -295,7 +312,10 @@ this machine's specific workflow.
   wunnenberg@ikm.uni-hannover.de) takes over the coordination while Ms.
   Neumeyer is away for a week; keep her in copy. Reply drafted in Gmail
   (summary of the date and the three open points: Dr. Wangenheim, room or
-  online, length of the talk), not yet sent.
+  online, length of the talk), sent 12 Oct.
+  **Confirmed 13 Oct (Wunnenberg):** in person, IKM Room 320, 16 Dec 13:00;
+  talk 20 min, then 10-20 min questions (30-40 min total). The office handles
+  the assessments.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 
@@ -327,6 +347,17 @@ that it is not shared with anyone without asking him first.
   Second follow-up: asked for the numbers behind Tables 3 and 4 (mean phi
   and c over time, maximum hydrostatic stress, mesh and time step), only if
   easy to find.
+  **13 Oct:** Felix finished the model and reproduced the Klempt 2024 cases
+  ("not exactly the same, but very close"); he is preparing files and
+  documentation and asked again to check the math of the script.
+  He asked (13 Oct) not to share or publish his files until his dissertation
+  is done (he had seen this public repository); the thesis may describe what I
+  did, with a sentence that his implementation is ongoing work (wording to
+  discuss with Meisam). `ansys_usermat/FELIX_VS_PARTNER_DIFF.md` was removed
+  from the tree that day (still in git history; the user chose not to rewrite
+  it). Cases A1j, A1k, A2.1a-c, A2.2a-c, A2.3a-c were not saved in his
+  Workbench files; results are on the cluster, or recreate them from the
+  existing cases.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
