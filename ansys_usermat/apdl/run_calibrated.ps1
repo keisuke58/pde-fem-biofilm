@@ -61,6 +61,7 @@ param(
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
     [ValidateSet(8, 16, 24)][int]$Mesh = 8,
+    [int]$Steps = 95,         # -Growth: deltim = 1/Steps (95 as before; 190 halves the step when a large kappa distorts elements)
     [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
@@ -82,6 +83,7 @@ if (-not $Worker) {
     if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
     if ($B) { $a += @('-B', $B) }
     if ($Mesh -ne 8) { $a += @('-Mesh', "$Mesh") }
+    if ($Steps -ne 95) { $a += @('-Steps', "$Steps") }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -159,7 +161,7 @@ function Run-Condition($c, $sha) {
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
             --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
-        $mk += @('--deltim', (1.0 / 95.0).ToString('R'), '--time', '1.0')
+        $mk += @('--deltim', (1.0 / $Steps).ToString('R'), '--time', '1.0')
     } elseif ($ab.Count -gt 0) {
         # the antibiotic needs the case file; theta_tol for APDL's last bit
         $eco = Join-Path $WorkDir "eco_${c}_ab.txt"
