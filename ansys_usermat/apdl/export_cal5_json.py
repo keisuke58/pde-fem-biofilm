@@ -67,12 +67,19 @@ def main():
     ap.add_argument("run")
     ap.add_argument("--theta-json", required=True)
     ap.add_argument("--source", default="")
+    ap.add_argument("--alpha-star", type=float, help="the run's alpha* (write_eco_cfg.py --alpha-star)")
+    ap.add_argument("--b", help="the run's b1,..,b5 (write_eco_cfg.py --b)")
     a = ap.parse_args()
     w = Path(os.environ.get("BIOFILM_WORKDIR") or r"F:\biofilm_upf_ch5")
     dat = w / f"{a.run}.dat"
     import ecology_constants as ec
-    from write_eco_cfg import theta_json_cfg
+    from write_eco_cfg import theta_json_cfg, B_INDEX
     n, cs, als, eta, theta = theta_json_cfg(a.theta_json)
+    if a.alpha_star is not None:
+        als = a.alpha_star
+    if a.b:
+        for k, v in zip(B_INDEX, a.b.split(",")):
+            theta[k] = float(v)
     props = deck_props(dat)
     deck_theta = [props.get(i, "0.0") for i in range(8, 28)]
     if [float(x) for x in deck_theta] != theta:

@@ -38,6 +38,11 @@ and, when the file is there (pinned to the last commit that touched it):
      trace, all digits) into -Out; with -Push commit and push to the current
      branch.
 A condition whose file is not there yet is skipped and logged.
+-AlphaStar X [-B b1,..,b5] (14 Oct, scheme (c) A-1): the antibiotic term of the
+point model, alpha* and the sensitivities b_i (the MAP files have b = 0), via
+write_eco_cfg.py into the case file and theta; both are assumptions, not paper
+or calibrated values. Without -Growth the case file is then set as well, with
+theta_tol 1e-12. Not given: the runs are unchanged.
 The work dir must hold the native exe with its DLLs and base_w8_c6_g1_s015.dat
 (F:\biofilm_upf_ch5, set up 10 Oct from F:\biofilm_upf_nativefix).
 #>
@@ -48,6 +53,8 @@ param(
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
+    [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
+    [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
     [string]$Tag = '',
     [switch]$Push,
@@ -67,6 +74,8 @@ if (-not $Worker) {
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
+    if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
+    if ($B) { $a += @('-B', $B) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -124,6 +133,9 @@ function Run-Condition($c, $sha) {
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
     $eco = Join-Path $WorkDir "eco_$c.txt"
     $mk = @('--post', 'both', '--post-elem', '220')
+    $ab = @()
+    if ($AlphaStar) { $ab += @('--alpha-star', $AlphaStar) }
+    if ($B) { $ab += @('--b', $B) }
     # stiffness sensitivity (P3_LITERATURE.ja.md: Pattem 2018, 0.5-46 kPa by AFM):
     # E(phi) = (phi^2 + f) E_bio, only E_bio changes
     if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
@@ -136,8 +148,12 @@ function Run-Condition($c, $sha) {
         Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
-            --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
+            --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
         $mk += @('--deltim', (1.0 / 95.0).ToString('R'), '--time', '1.0')
+    } elseif ($ab.Count -gt 0) {
+        # the antibiotic needs the case file; theta_tol for APDL's last bit
+        $eco = Join-Path $WorkDir "eco_${c}_ab.txt"
+        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --theta-tol 1e-12 @ab $eco 2>&1
     } else {
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj $eco 2>&1
     }
@@ -158,8 +174,8 @@ function Run-Condition($c, $sha) {
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    if ($Growth) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa)"
+    if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B')"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
@@ -179,7 +195,7 @@ function Run-Condition($c, $sha) {
     if ($err -ne '0' -or $cut -gt 0 -or -not (Test-Path (Join-Path $WorkDir "comp_trace_$job.csv"))) { L "  $job FAILED, not exported"; return $false }
     $env:BIOFILM_WORKDIR = $WorkDir
     $o = & $py ansys_usermat\apdl\export_runs_json.py $Out $job 2>&1; $o | ForEach-Object { L "  export: $_" }
-    $o = & $py ansys_usermat\apdl\export_cal5_json.py $Out $job --theta-json $tj --source "Tmcmc202601@${sha}:$mapDir/$c.json" 2>&1
+    $o = & $py ansys_usermat\apdl\export_cal5_json.py $Out $job --theta-json $tj --source "Tmcmc202601@${sha}:$mapDir/$c.json" @ab 2>&1
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
@@ -189,7 +205,7 @@ function Run-Condition($c, $sha) {
     return $true
 }
 
-L "cal5 start: $($Conditions -join ','), weights '$Weights' growth $Growth kappa $Kappa tag '$Tag', branch $Branch"
+L "cal5 start: $($Conditions -join ','), weights '$Weights' growth $Growth kappa $Kappa alpha* '$AlphaStar' b '$B' tag '$Tag', branch $Branch"
 try {
     foreach ($c in $Conditions) {
         $sha = Find-Map $c

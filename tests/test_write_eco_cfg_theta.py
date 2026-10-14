@@ -68,6 +68,29 @@ def test_keyword_lines(tmp_path):
     assert lines[6].split() == ["theta_tol", repr(1e-12)]
 
 
+def test_alpha_star_and_b(tmp_path):
+    """--alpha-star replaces alpha* on line 2; --b writes b_1..b_5 into theta at
+    the places ecology_native.f reads them (theta 4, 5, 9, 10, 16, one-based);
+    without them the file is the one of test_theta_json."""
+    theta = [0.1 * (k + 1) for k in range(20)]
+    src = tmp_path / "theta_MAP.json"
+    src.write_text(json.dumps({"theta_full": theta}))
+    out = tmp_path / "eco.txt"
+    subprocess.run([sys.executable, str(ROOT / "abaqus_composition" / "write_eco_cfg.py"),
+                    "--theta-json", str(src), "--alpha-star", "0.32", "--b", "1,2,3,4,5", str(out)],
+                   check=True, capture_output=True)
+    lines = out.read_text().split("\n")
+    assert [float(v) for v in lines[1].split()] == [ec.C_STAR, 0.32]
+    got = [float(v) for v in lines[3].split()]
+    want = list(theta)
+    for k, v in zip((3, 4, 8, 9, 15), (1.0, 2.0, 3.0, 4.0, 5.0)):
+        want[k] = v
+    assert got == want
+    r = subprocess.run([sys.executable, str(ROOT / "abaqus_composition" / "write_eco_cfg.py"),
+                        "CH", str(tmp_path / "y.txt"), "--alpha-star", "1"], capture_output=True)
+    assert r.returncode != 0
+
+
 def test_theta_json_other_dict(tmp_path):
     src = tmp_path / "bad.json"
     src.write_text(json.dumps({"theta_sub": [0.0] * 20}))
