@@ -60,6 +60,7 @@ param(
     [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
+    [string]$YoungVoid = '',  # deck YOUNG_VOID; < 0 is the floor f in E(phi) = (phi^2 + f) E_bio, base deck -1e-3; empty = unchanged
     [ValidateSet(8, 16, 24)][int]$Mesh = 8,
     [string]$ExtraProps = '',  # more i=v for make_wired_deck --props (e.g. the stress feedback test, 52=..,53=..)
     [int]$Steps = 95,         # -Growth: deltim = 1/Steps (95 as before; 190 halves the step when a large kappa distorts elements)
@@ -86,6 +87,7 @@ if (-not $Worker) {
     if ($Mesh -ne 8) { $a += @('-Mesh', "$Mesh") }
     if ($Steps -ne 95) { $a += @('-Steps', "$Steps") }
     if ($ExtraProps) { $a += @('-ExtraProps', $ExtraProps) }
+    if ($YoungVoid) { $a += @('-YoungVoid', $YoungVoid) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -161,6 +163,8 @@ function Run-Condition($c, $sha) {
     # stiffness sensitivity (P3_LITERATURE.ja.md: Pattem 2018, 0.5-46 kPa by AFM):
     # E(phi) = (phi^2 + f) E_bio, only E_bio changes
     if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
+    # void floor (A-8, 15 Oct): a stiffer void so a large growth does not crush it
+    if ($YoungVoid) { $mk += @('--set', "YOUNG_VOID=$YoungVoid") }
     if ($Growth) {
         # P3 stage 2 (10 Oct): the point model free at each point from the
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
@@ -198,7 +202,7 @@ function Run-Condition($c, $sha) {
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
     if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', steps $Steps, $WorkDir)"
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', void '$YoungVoid', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
