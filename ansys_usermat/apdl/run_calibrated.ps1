@@ -43,6 +43,10 @@ point model, alpha* and the sensitivities b_i (the MAP files have b = 0), via
 write_eco_cfg.py into the case file and theta; both are assumptions, not paper
 or calibrated values. Without -Growth the case file is then set as well, with
 theta_tol 1e-12. Not given: the runs are unchanged.
+-Mesh 16 (or 24): base_w<n>_c6_g1_s015.dat (refine_deck.py --n <n> of the 8^3
+base deck, components mapped by place), jobs w<n>_..., the point-model trace at
+the first element covering the 8^3 seed element 220, a longer time limit.
+Default 8: the 8^3 runs as before.
 The work dir must hold the native exe with its DLLs and base_w8_c6_g1_s015.dat
 (F:\biofilm_upf_ch5, set up 10 Oct from F:\biofilm_upf_nativefix).
 #>
@@ -56,6 +60,7 @@ param(
     [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
+    [ValidateSet(8, 16, 24)][int]$Mesh = 8,
     [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
@@ -64,7 +69,7 @@ param(
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;" + $env:Path
 if (-not $Worker) {
-    foreach ($f in 'ANSYS.exe', 'base_w8_c6_g1_s015.dat', 'post_all_stress.mac') {
+    foreach ($f in 'ANSYS.exe', "base_w${Mesh}_c6_g1_s015.dat", 'post_all_stress.mac') {
         if (-not (Test-Path (Join-Path $WorkDir $f))) { throw "missing in ${WorkDir}: $f" }
     }
     $br = (& git -C $repo rev-parse --abbrev-ref HEAD).Trim()
@@ -76,6 +81,7 @@ if (-not $Worker) {
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
     if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
     if ($B) { $a += @('-B', $B) }
+    if ($Mesh -ne 8) { $a += @('-Mesh', "$Mesh") }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -127,12 +133,16 @@ $cfgPath = @{
 }
 
 function Run-Condition($c, $sha) {
-    $job = if ($Growth) { "w8_${c}_cal" } else { "w8_${c}_g1_s015" }
+    $job = if ($Growth) { "w${Mesh}_${c}_cal" } else { "w${Mesh}_${c}_g1_s015" }
     if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
     $eco = Join-Path $WorkDir "eco_$c.txt"
-    $mk = @('--post', 'both', '--post-elem', '220')
+    # the traced element: 220 on 8^3, the first element covering it on the finer
+    # meshes (refine_deck.py --track 220)
+    $postElem = @{ 8 = '220'; 16 = '2151' }[$Mesh]
+    if (-not $postElem) { throw "no traced element for mesh $Mesh yet (refine_deck.py --track 220)" }
+    $mk = @('--post', 'both', '--post-elem', $postElem)
     $ab = @()
     if ($AlphaStar) { $ab += @('--alpha-star', $AlphaStar) }
     if ($B) { $ab += @('--b', $B) }
@@ -168,7 +178,7 @@ function Run-Condition($c, $sha) {
         if ($w.Count -ne 5) { throw "-Weights needs 5 values, got $($w.Count)" }
         $props += ',36=1,' + ((0..4 | ForEach-Object { "$($_ + 38)=$($w[$_])" }) -join ',')
     }
-    $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir 'base_w8_c6_g1_s015.dat') (Join-Path $WorkDir "$job.dat") `
+    $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir "base_w${Mesh}_c6_g1_s015.dat") (Join-Path $WorkDir "$job.dat") `
         --props $props @mk 2>&1
     if ($LASTEXITCODE -ne 0) { throw "make_wired_deck: $o" }
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
@@ -180,11 +190,12 @@ function Run-Condition($c, $sha) {
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
     $null = $p.Handle
+    $limit = @{ 8 = 60; 16 = 480; 24 = 2400 }[$Mesh]
     while (-not $p.HasExited) {
         Start-Sleep 20
-        if (((Get-Date) - $t0).TotalMinutes -gt 60) {
+        if (((Get-Date) - $t0).TotalMinutes -gt $limit) {
             Get-CimInstance Win32_Process -Filter "ParentProcessId=$($p.Id)" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; L '  killed after 60 min'; break
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; L "  killed after $limit min"; break
         }
     }
     $outTxt = Join-Path $WorkDir "out_$job.txt"
@@ -199,7 +210,7 @@ function Run-Condition($c, $sha) {
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
-        $what = if ($Growth) { "growth from the calibrated point model, $c, 8^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, 8^3" }
+        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
         Push-Files $files "$what (automatic)"
     }
     return $true
@@ -212,7 +223,7 @@ try {
         if (-not $sha) { L "  $c.json not on GitHub yet: skipped"; continue }
         try { $null = Run-Condition $c $sha } catch { L "  $c EXCEPTION: $_" }
     }
-    if ($Growth) {
+    if ($Growth -and $Mesh -eq 8) {
         # the four-condition table and figure from whatever runs with this tag are there
         $o = & $py ansys_usermat\apdl\compare_cal5.py "--tag=$Tag" --results $Out 2>&1; $o | ForEach-Object { L "  compare: $_" }
         $sfx = if ($Tag) { "_$Tag" } else { '' }
