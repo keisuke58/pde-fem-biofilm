@@ -13,5 +13,9 @@
    pde-fem-biofilm の `RESEARCH_IDEAS.ja.md` §13）。
 4. 今の段階（生データでの DS・DH の MAP）が終わってから。修論（11月13日提出）には入れない。P3 と慶應での続きの材料。
 
+**読み方の案（10月15日）：** 体積の伸びを、点モデルを場の量 φ₃D に置いて進めたときの生産 R = Σφ_i(後)/Σφ_i(前) の積と読む
+（`JAXFEM/growth_from_point_model.py`、`RESEARCH_IDEAS.ja.md` §14）。今の CH の MAP でも、パラメータなしで Day 3 → 21 に
+1.27 倍（実測 1.80）。尤度では V(d)/V(d₀) = Π R、未知の φ₃D は 1 つのパラメータとして推定するか、場の値を使う。
+
 **参考：** 体積の集計は pde-fem-biofilm の `data/heine_volume/volume_summary.csv`（条件 × 日の平均と SD のみ）。
 バイオフィルムごとの値は生データ（公開しない）から。

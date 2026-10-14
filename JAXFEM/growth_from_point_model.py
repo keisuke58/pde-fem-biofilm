@@ -56,6 +56,19 @@ def run(cond="CH", phi3d=None, steps=95, s=0.2375, n_sub=25):
     return t, np.array(lnJ), np.array(rigid), phi3d
 
 
+def run_with_phi(phi_steps, g, theta, s=0.2375, n_sub=25, phi_cap=0.9):
+    """Same reading with a given phi_3D per step (e.g. phi_used of an element trace), capped
+    at phi_cap as the element's scaled scheme does.  Returns ln J after every step."""
+    lnJ = [0.0]; g = np.array(g, float)
+    for p in phi_steps:
+        p = min(p, phi_cap); tot = g[0:5].sum()
+        g[0:5] *= p / tot; g[5] = 1 - p
+        g, _ = ej.ecology_substeps(g, theta, s / len(phi_steps), n_sub)
+        g = np.asarray(g, float).copy()
+        lnJ.append(lnJ[-1] + np.log(g[0:5].sum() / p))
+    return np.array(lnJ)
+
+
 if __name__ == "__main__":
     for cond in ("CH", "CS"):
         t, lnJ, rigid, chi = run(cond)
