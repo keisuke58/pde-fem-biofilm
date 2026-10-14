@@ -61,6 +61,7 @@ param(
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
     [ValidateSet(8, 16, 24)][int]$Mesh = 8,
+    [string]$ExtraProps = '',  # more i=v for make_wired_deck --props (e.g. the stress feedback test, 52=..,53=..)
     [int]$Steps = 95,         # -Growth: deltim = 1/Steps (95 as before; 190 halves the step when a large kappa distorts elements)
     [string]$Tag = '',
     [switch]$Push,
@@ -84,6 +85,7 @@ if (-not $Worker) {
     if ($B) { $a += @('-B', $B) }
     if ($Mesh -ne 8) { $a += @('-Mesh', "$Mesh") }
     if ($Steps -ne 95) { $a += @('-Steps', "$Steps") }
+    if ($ExtraProps) { $a += @('-ExtraProps', $ExtraProps) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -174,6 +176,7 @@ function Run-Condition($c, $sha) {
     if ($th.Count -ne 20) { throw "$($eco): $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
     if ($Growth) { $props += ",7=$($Kappa.ToString('R')),28=9,31=0.2375,33=1.0" }
+    if ($ExtraProps) { $props += ",$ExtraProps" }
     if ($Weights) {
         if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
         $w = @($Weights -split '[ ,]+' | Where-Object { $_ })
@@ -187,7 +190,7 @@ function Run-Condition($c, $sha) {
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
     if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B')"
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden

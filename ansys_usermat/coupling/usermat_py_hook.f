@@ -161,4 +161,17 @@ C         .false., and the caller uses its own start.
           have = .false.
           if (nact .lt. 0) have = .false.
         end subroutine biofilm_ecology_init_state
+
+        subroutine eco_alstar_get(x)
+C         alpha* per point (prop(52:54) of the call-site fragment) is a
+C         feature of the native build; the server keeps its own alpha*
+C         and this build cannot change it: x = 0, put does nothing
+          double precision, intent(out) :: x
+          x = 0.0d0
+        end subroutine eco_alstar_get
+
+        subroutine eco_alstar_put(x)
+          double precision, intent(in) :: x
+          if (x .ne. x) return
+        end subroutine eco_alstar_put
       end module biofilm_py_bridge

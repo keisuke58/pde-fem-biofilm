@@ -71,6 +71,22 @@ C                             last bit); 0 (default): bit for bit
           eco_hascase = hascase
         end subroutine eco_native_set
 
+        subroutine eco_alstar_get(x)
+C         the run's alpha* (from the file, else 0), read before a call
+C         that changes it for one point (stress feedback test, 14 Oct)
+          double precision, intent(out) :: x
+          if (.not. eco_inited) call eco_native_init()
+          x = eco_alstar
+        end subroutine eco_alstar_get
+
+        subroutine eco_alstar_put(x)
+C         alpha* for the next calls; serial runs only (-np 1): the
+C         value is shared by all threads
+          double precision, intent(in) :: x
+          if (.not. eco_inited) call eco_native_init()
+          eco_alstar = x
+        end subroutine eco_alstar_put
+
         subroutine eco_native_init()
 C         file: n_active / c* alpha* / eta(5) / theta(20), free format
           character(len=512) :: path, line

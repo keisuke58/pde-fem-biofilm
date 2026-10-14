@@ -50,6 +50,9 @@ C     --- composition from the point model (prop(28) = 7) --------------
       DATA CM_TRACE_OPEN /.FALSE./
 C     --- homeostatic-pressure growth law (prop(49:51)) ----------------
       DOUBLE PRECISION HP_P, HP_F, HP_G
+C     --- alpha* per point (14 Oct): pressure feedback test, start time
+      DOUBLE PRECISION SC_P, SC_A, SC_A0
+      LOGICAL SC_ON
       INTEGER HP_FORM
 C     --- composition from an independent point model (prop(28) = 8) ---
       LOGICAL AG_TRACE_OPEN
