@@ -80,6 +80,13 @@ def grad_nodes(f, dx):
     return jnp.diff(f, axis=0) / dx
 
 
+def weight(phi, P):
+    """Weight of the composition level: h(phi) + eps.  "phi": h = phi (first version); "phi2":
+    h = phi^2, as the mechanical term of Klempt et al. 2024 (phi^2 mu), so that dh/dphi = 0 in the
+    outer liquid and the composition energy cannot create biofilm where there is none."""
+    return (phi ** 2 if P.get("weight", "phi2") == "phi2" else phi) + P["eps"]
+
+
 def functional(U, Un, P, F):
     """Discrete functional of one implicit Euler step: E_h(U) + dt * D_h + constraint, nodal
     quadrature hw.  The weights and coefficients of the dissipation and of the constraint are
@@ -94,7 +101,7 @@ def functional(U, Un, P, F):
     phin, sn, s0n, psin, _, aln = unpack(Un, N)
     hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
     lam, ka, beta, bs = P["lam"], P["ka"], P["beta"], P["beta_s"]
-    w = phi + eps
+    w = weight(phi, P)
     # the point model's barrier terms are a regularised indicator of the box constraints
     # 0 < s, s_0, psi < 1: their value is not stored energy (it is 517 at the calibration's start,
     # psi = 0.999, against 8 for psi = 0.5), so they act on the composition only and do no work
@@ -119,7 +126,7 @@ def residual(U, Un, P):
     equations are therefore the discrete Euler-Lagrange equations by construction."""
     N, dx, eps = P["N"], P["dx"], P["eps"]
     X = U.reshape(N, NV)
-    w = X[:, 0] + eps
+    w = weight(X[:, 0], P)
     G = jax.grad(functional)(U, Un, P, (w, X[:, 1:6], X[:, 7:12])).reshape(N, NV)
     hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
     G = G.at[:, 1:13].divide((P["lam"] * w * hw)[:, None])
@@ -203,12 +210,12 @@ def advance(newton, U, dt, depth=0, max_depth=12):
     return V, max(i1, i2), max(r1, r2), n1 + n2
 
 
-def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, ast=0.0, ab_on=None,
+def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, ast=0.0, ab_on=None, weight="phi2",
         T=0.2375, steps=2375, L=1.0, n_out=10):
     N = len(phi0_x)
     A, _ = theta_to_matrices(jnp.asarray(theta))
     P0 = {"N": N, "dt": T / steps, "dx": L / (N - 1), "c": C_STAR, "A": A, "b": jnp.ones(5), "ast": 0.0,
-          "lam": lam, "ka": ka, "beta": beta, "beta_s": beta_s, "eta_phi": eta_phi, "eps": eps}
+          "lam": lam, "ka": ka, "beta": beta, "beta_s": beta_s, "eta_phi": eta_phi, "eps": eps, "weight": weight}
     P1 = dict(P0, ast=ast)
     n0, n1 = make_newton(P0), make_newton(P1)
     X = np.zeros((N, NV)); X[:, 0] = phi0_x

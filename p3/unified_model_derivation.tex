@@ -46,8 +46,9 @@ $\phi s_i$, $\phi\sum_i s_i\psi_i$ & absolute amount of species $i$, living biom
 \end{tabular}
 
 \medskip
-With $w=\phi+\varepsilon$ ($\varepsilon>0$ small, it keeps the composition equations
-regular in the outer liquid where they carry no weight), the energy density is
+With the weight $w=h(\phi)+\varepsilon$, $h(\phi)=\phi^2$ ($\varepsilon>0$ small keeps the
+composition equations regular in the outer liquid, where they carry no weight), the energy
+density is
 \begin{equation}
 E=\frac{\beta}{2}|\nabla\phi|^2+\lambda w\,\Psi_{\rm pm}(s,s_0,\psi)
 +w\frac{\beta_s}{2}\sum_i|\nabla s_i|^2-k_\alpha(\alpha-1)\,\phi\sum_i s_i\psi_i
@@ -83,6 +84,12 @@ treated as a constraint: they carry the weight $w$ held fixed, like the multipli
 act on the composition only and do no work on $\phi$. In \eqref{eq:E}, $\Psi_{\rm pm}$
 then stands for its physical part (interactions and antibiotic) wherever it acts on $\phi$.
 
+\paragraph{The weight.} With $h(\phi)=\phi$ the force of the composition on the phase,
+$\lambda h'(\phi)\Psi_{\rm pm}=\lambda\Psi_{\rm pm}$, does not vanish where there is no
+biofilm, and the outer liquid fills again (the same defect as the source $k_\alpha\alpha$ of
+Klempt et al.\ 2024 in the void). With $h=\phi^2$, the weight of the mechanical term of
+Klempt et al.\ 2024, $h'(0)=0$ and the composition acts only where biofilm is.
+
 \section{Stationarity conditions}
 
 The extended Hamilton principle
@@ -106,7 +113,7 @@ structure as the interactions.
 
 \paragraph{Phase:}
 \begin{equation}
-\eta_\phi\dot\phi-\beta\nabla^2\phi+\lambda\Psi_{\rm pm}+\frac{\beta_s}{2}\sum_i|\nabla s_i|^2
+\eta_\phi\dot\phi-\beta\nabla^2\phi+\lambda h'(\phi)\Psi_{\rm pm}+h'(\phi)\frac{\beta_s}{2}\sum_i|\nabla s_i|^2
 -k_\alpha(\alpha-1)\sum_is_i\psi_i=0 .
 \end{equation}
 Here $\Psi_{\rm pm}$ is the physical part (interactions and antibiotic; the barrier terms
@@ -173,10 +180,33 @@ dissipation used here. For the one-level model the same scheme
 reproduces the converged point model to $1.6\times10^{-13}$ and the discrete energy
 decreases at every step (\texttt{unified\_1d\_monolithic.py}).
 
+\section{First results (1D, seed at the substrate, CH calibration)}
+
+Seed $\phi=0.9$ on $x\le0.25$, outer liquid $\phi=10^{-4}$; $\lambda=1$, $k_\alpha=2$,
+$\beta=\beta_s=0.02$, $T^*=1$, 60 steps (120 steps change $\alpha$ by $0.7\,\%$ of the growth).
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+& $\alpha$ at the substrate & $\phi$ at $x=0,\ 0.3,\ 1$ & living share at $x=0$ \\
+\midrule
+no antibiotic & 1.195 & 0.92, 0.32, $10^{-4}$ & 0.58\\
+antibiotic from $T^*=0.5$ ($\alpha^*=0.65$, $b_i=1$) & 1.171 & 0.78, 0.27, $10^{-4}$ & 0.48\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The outer liquid stays empty. The antibiotic lowers the growth by about $12\,\%$ and the
+biofilm phase itself (the composition acts on the phase), which the element's scheme (c)
+cannot do. The energy inequality of the proposition holds for the model with the barrier
+terms as stored energy; with the barrier terms as a constraint it holds in the limit $K\to0$,
+and a discrete check is still to be done.
+
 \section{What remains assumed}
 
 The form of the growth energy (living biomass, and $\alpha-1$ so that it vanishes before
-growth); $\lambda$ and $\beta_s$; the clock of the composition relative to the phase,
+growth); the weight $h(\phi)=\phi^2$; the treatment of the barrier terms as a constraint;
+$\lambda$ and $\beta_s$; the clock of the composition relative to the phase,
 which is now the ratio of the dissipation coefficients $\eta/\eta_\phi$ and can be fixed
 by the measured volume; the stiffness; detachment.
 \end{document}
