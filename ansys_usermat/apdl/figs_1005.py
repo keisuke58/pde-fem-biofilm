@@ -2,8 +2,8 @@
 1-2 Oct with Klempt et al. 2024 Table 2 values (k_alpha = 1e-3 /T*, in both the
 partner's field and the growth law), ONE species (second species field
 started at 0 with rate 0), stored in results/2026-10-01_paper_values/
-(git-ignored like every *.csv: local on IKMHIWI03; the same files are in
-F:\biofilm_upf_wired as phi_trace_ds_pv_exact_1sp.csv and <name>_ds_kl_*.csv).
+(force-added on 14 Oct 2026, though *.csv is git-ignored; the originals are
+in F:\biofilm_upf_wired as phi_trace_ds_pv_exact_1sp.csv and <name>_ds_kl_*.csv).
 Stiffness also as in Table 2 / Eq. 20 (2 Oct): E = 10 Pa, nu = 0.49, weighted
 with phi^2 (void floor 1e-3): --set YOUNG_BIO=1e-5 --set POISSON_BIO=0.49
 --set YOUNG_VOID=-1e-3 (deck units MPa). Stresses are plotted in Pa.

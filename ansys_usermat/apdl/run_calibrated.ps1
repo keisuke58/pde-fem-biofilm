@@ -38,6 +38,15 @@ and, when the file is there (pinned to the last commit that touched it):
      trace, all digits) into -Out; with -Push commit and push to the current
      branch.
 A condition whose file is not there yet is skipped and logged.
+-AlphaStar X [-B b1,..,b5] (14 Oct, scheme (c) A-1): the antibiotic term of the
+point model, alpha* and the sensitivities b_i (the MAP files have b = 0), via
+write_eco_cfg.py into the case file and theta; both are assumptions, not paper
+or calibrated values. Without -Growth the case file is then set as well, with
+theta_tol 1e-12. Not given: the runs are unchanged.
+-Mesh 16 (or 24): base_w<n>_c6_g1_s015.dat (refine_deck.py --n <n> of the 8^3
+base deck, components mapped by place), jobs w<n>_..., the point-model trace at
+the first element covering the 8^3 seed element 220, a longer time limit.
+Default 8: the 8^3 runs as before.
 The work dir must hold the native exe with its DLLs and base_w8_c6_g1_s015.dat
 (F:\biofilm_upf_ch5, set up 10 Oct from F:\biofilm_upf_nativefix).
 #>
@@ -48,7 +57,13 @@ param(
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
+    [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
+    [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
     [double]$YoungBio = 0,    # E_bio in MPa (deck YOUNG_BIO); 0 = the base deck's 1e-5 (10 Pa, Klempt 2024)
+    [string]$YoungVoid = '',  # deck YOUNG_VOID; < 0 is the floor f in E(phi) = (phi^2 + f) E_bio, base deck -1e-3; empty = unchanged
+    [ValidateSet(8, 16, 24)][int]$Mesh = 8,
+    [string]$ExtraProps = '',  # more i=v for make_wired_deck --props (e.g. the stress feedback test, 52=..,53=..)
+    [int]$Steps = 95,         # -Growth: deltim = 1/Steps (95 as before; 190 halves the step when a large kappa distorts elements)
     [string]$Tag = '',
     [switch]$Push,
     [switch]$Worker,
@@ -57,7 +72,7 @@ param(
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;" + $env:Path
 if (-not $Worker) {
-    foreach ($f in 'ANSYS.exe', 'base_w8_c6_g1_s015.dat', 'post_all_stress.mac') {
+    foreach ($f in 'ANSYS.exe', "base_w${Mesh}_c6_g1_s015.dat", 'post_all_stress.mac') {
         if (-not (Test-Path (Join-Path $WorkDir $f))) { throw "missing in ${WorkDir}: $f" }
     }
     $br = (& git -C $repo rev-parse --abbrev-ref HEAD).Trim()
@@ -67,6 +82,12 @@ if (-not $Worker) {
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
+    if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
+    if ($B) { $a += @('-B', $B) }
+    if ($Mesh -ne 8) { $a += @('-Mesh', "$Mesh") }
+    if ($Steps -ne 95) { $a += @('-Steps', "$Steps") }
+    if ($ExtraProps) { $a += @('-ExtraProps', $ExtraProps) }
+    if ($YoungVoid) { $a += @('-YoungVoid', $YoungVoid) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -88,8 +109,16 @@ $Conditions = @($Conditions -split ',' | Where-Object { $_ })
 
 function Find-Map($c) {
     # the last commit on the branch that touched <C>.json, or $null
+    # with the token from .env when there is one: the unauthenticated API
+    # limit (60 an hour) is per IP and shared by the university network
+    $h = @{}
+    $envFile = Join-Path $repo '.env'
+    if (Test-Path $envFile) {
+        $line = Get-Content $envFile | Where-Object { $_ -match '^\s*GITHUB_PAT\s*=' } | Select-Object -First 1
+        if ($line) { $h['Authorization'] = 'Bearer ' + ($line -replace '^\s*GITHUB_PAT\s*=\s*', '').Trim().Trim('"').Trim("'") }
+    }
     try {
-        $cm = Invoke-RestMethod "$api/commits?sha=$mapBranch&path=$mapDir/$c.json&per_page=1" -TimeoutSec 60
+        $cm = Invoke-RestMethod "$api/commits?sha=$mapBranch&path=$mapDir/$c.json&per_page=1" -Headers $h -TimeoutSec 60
         if (-not $cm -or @($cm).Count -eq 0) { return $null }
         return @($cm)[0].sha
     } catch { L "  $c lookup failed: $($_.Exception.Message)"; return $null }
@@ -118,15 +147,24 @@ $cfgPath = @{
 }
 
 function Run-Condition($c, $sha) {
-    $job = if ($Growth) { "w8_${c}_cal" } else { "w8_${c}_g1_s015" }
+    $job = if ($Growth) { "w${Mesh}_${c}_cal" } else { "w${Mesh}_${c}_g1_s015" }
     if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
     $eco = Join-Path $WorkDir "eco_$c.txt"
-    $mk = @('--post', 'both', '--post-elem', '220')
+    # the traced element: 220 on 8^3, the first element covering it on the finer
+    # meshes (refine_deck.py --track 220)
+    $postElem = @{ 8 = '220'; 16 = '2151'; 24 = '7138' }[$Mesh]
+    if (-not $postElem) { throw "no traced element for mesh $Mesh yet (refine_deck.py --track 220)" }
+    $mk = @('--post', 'both', '--post-elem', $postElem)
+    $ab = @()
+    if ($AlphaStar) { $ab += @('--alpha-star', $AlphaStar) }
+    if ($B) { $ab += @('--b', $B) }
     # stiffness sensitivity (P3_LITERATURE.ja.md: Pattem 2018, 0.5-46 kPa by AFM):
     # E(phi) = (phi^2 + f) E_bio, only E_bio changes
     if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
+    # void floor (A-8, 15 Oct): a stiffer void so a large growth does not crush it
+    if ($YoungVoid) { $mk += @('--set', "YOUNG_VOID=$YoungVoid") }
     if ($Growth) {
         # P3 stage 2 (10 Oct): the point model free at each point from the
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
@@ -136,8 +174,12 @@ function Run-Condition($c, $sha) {
         Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
-            --newton 12,1e-20 --theta-tol 1e-12 $eco 2>&1
-        $mk += @('--deltim', (1.0 / 95.0).ToString('R'), '--time', '1.0')
+            --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
+        $mk += @('--deltim', (1.0 / $Steps).ToString('R'), '--time', '1.0')
+    } elseif ($ab.Count -gt 0) {
+        # the antibiotic needs the case file; theta_tol for APDL's last bit
+        $eco = Join-Path $WorkDir "eco_${c}_ab.txt"
+        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --theta-tol 1e-12 @ab $eco 2>&1
     } else {
         $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj $eco 2>&1
     }
@@ -146,29 +188,31 @@ function Run-Condition($c, $sha) {
     if ($th.Count -ne 20) { throw "$($eco): $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
     if ($Growth) { $props += ",7=$($Kappa.ToString('R')),28=9,31=0.2375,33=1.0" }
+    if ($ExtraProps) { $props += ",$ExtraProps" }
     if ($Weights) {
         if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
         $w = @($Weights -split '[ ,]+' | Where-Object { $_ })
         if ($w.Count -ne 5) { throw "-Weights needs 5 values, got $($w.Count)" }
         $props += ',36=1,' + ((0..4 | ForEach-Object { "$($_ + 38)=$($w[$_])" }) -join ',')
     }
-    $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir 'base_w8_c6_g1_s015.dat') (Join-Path $WorkDir "$job.dat") `
+    $o = & $py ansys_usermat\apdl\make_wired_deck.py (Join-Path $WorkDir "base_w${Mesh}_c6_g1_s015.dat") (Join-Path $WorkDir "$job.dat") `
         --props $props @mk 2>&1
     if ($LASTEXITCODE -ne 0) { throw "make_wired_deck: $o" }
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    if ($Growth) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
-    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa)"
+    if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', void '$YoungVoid', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
         -ArgumentList '-b', '-np', '1', '-j', $job, '-custom', '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
     $null = $p.Handle
+    $limit = @{ 8 = 60; 16 = 480; 24 = 2400 }[$Mesh]
     while (-not $p.HasExited) {
         Start-Sleep 20
-        if (((Get-Date) - $t0).TotalMinutes -gt 60) {
+        if (((Get-Date) - $t0).TotalMinutes -gt $limit) {
             Get-CimInstance Win32_Process -Filter "ParentProcessId=$($p.Id)" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; L '  killed after 60 min'; break
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; L "  killed after $limit min"; break
         }
     }
     $outTxt = Join-Path $WorkDir "out_$job.txt"
@@ -179,24 +223,24 @@ function Run-Condition($c, $sha) {
     if ($err -ne '0' -or $cut -gt 0 -or -not (Test-Path (Join-Path $WorkDir "comp_trace_$job.csv"))) { L "  $job FAILED, not exported"; return $false }
     $env:BIOFILM_WORKDIR = $WorkDir
     $o = & $py ansys_usermat\apdl\export_runs_json.py $Out $job 2>&1; $o | ForEach-Object { L "  export: $_" }
-    $o = & $py ansys_usermat\apdl\export_cal5_json.py $Out $job --theta-json $tj --source "Tmcmc202601@${sha}:$mapDir/$c.json" 2>&1
+    $o = & $py ansys_usermat\apdl\export_cal5_json.py $Out $job --theta-json $tj --source "Tmcmc202601@${sha}:$mapDir/$c.json" @ab 2>&1
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
-        $what = if ($Growth) { "growth from the calibrated point model, $c, 8^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, 8^3" }
+        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
         Push-Files $files "$what (automatic)"
     }
     return $true
 }
 
-L "cal5 start: $($Conditions -join ','), weights '$Weights' growth $Growth kappa $Kappa tag '$Tag', branch $Branch"
+L "cal5 start: $($Conditions -join ','), weights '$Weights' growth $Growth kappa $Kappa alpha* '$AlphaStar' b '$B' tag '$Tag', branch $Branch"
 try {
     foreach ($c in $Conditions) {
         $sha = Find-Map $c
         if (-not $sha) { L "  $c.json not on GitHub yet: skipped"; continue }
         try { $null = Run-Condition $c $sha } catch { L "  $c EXCEPTION: $_" }
     }
-    if ($Growth) {
+    if ($Growth -and $Mesh -eq 8) {
         # the four-condition table and figure from whatever runs with this tag are there
         $o = & $py ansys_usermat\apdl\compare_cal5.py "--tag=$Tag" --results $Out 2>&1; $o | ForEach-Object { L "  compare: $_" }
         $sfx = if ($Tag) { "_$Tag" } else { '' }

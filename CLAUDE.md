@@ -108,6 +108,13 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   Same results as the server build (abaqus_composition/README.md), ~4x faster
   on 8^3. Abaqus: `run_comp.ps1 -Native`. The week chain still uses
   `F:\biofilm_upf_wired` with the server.
+- **Calibrated five-species runs (14 Oct 2026):** `F:\biofilm_upf_cal5sc` =
+  the cal5 build plus alpha* per point (prop(52:54), off by default; same
+  results as `F:\biofilm_upf_cal5` to the last digit); `F:\biofilm_upf_cal5gp`
+  = cal5sc plus g = 1/(1 + p/p_ref) on the growth (prop(49), prop(50) = 2).
+  Run lists: `ansys_usermat/apdl/run_scheme_c_chain.ps1 -Set A6|B|A8|A7`
+  (detached, one ANSYS at a time via `-After`), single runs
+  `run_calibrated.ps1`.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -316,6 +323,12 @@ this machine's specific workflow.
   **Confirmed 13 Oct (Wunnenberg):** in person, IKM Room 320, 16 Dec 13:00;
   talk 20 min, then 10-20 min questions (30-40 min total). The office handles
   the assessments.
+
+- **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never
+  in the thesis body, whatever the meeting with Oliver decides. The thesis keeps only
+  the existing Outlook paragraph (Ch. 6, with Wanner and Gujer 1986); the antibiotic
+  runs, the volume test and the predictions stay in the meeting summary, the notes and
+  the Keio continuation.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 

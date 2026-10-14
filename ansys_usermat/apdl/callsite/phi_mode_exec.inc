@@ -136,6 +136,29 @@ C             shares of 0.999999 (make_initial_state's packing)
               SP_HITI = 1
             ELSE
               SP_HITI = 0
+C             alpha* of the point model per point (14 Oct, tests, not
+C             from a paper). prop(52), prop(53) > 0: raised by the
+C             compression at the start of the increment, alpha* +
+C             prop(52) min(max(p / prop(53), 0), 1), p = -tr(sigma)/3
+C             [MPa]. prop(54) > 0: alpha* only from T* = prop(54) on
+C             (the step whose midpoint Time + dTime/2 reaches it).
+              SC_ON = .FALSE.
+              IF (nProp .GE. 54) THEN
+                IF ((prop(52) .GT. 0.0D0 .AND. prop(53) .GT. 0.0D0)
+     &              .OR. prop(54) .GT. 0.0D0) SC_ON = .TRUE.
+              END IF
+              IF (SC_ON) THEN
+                CALL eco_alstar_get(SC_A0)
+                SC_A = SC_A0
+                IF (prop(52) .GT. 0.0D0 .AND. prop(53) .GT. 0.0D0) THEN
+                  SC_P = -(stress(1) + stress(2) + stress(3)) / 3.0D0
+                  SC_A = SC_A + prop(52)
+     &                 * MIN(MAX(SC_P / prop(53), 0.0D0), 1.0D0)
+                END IF
+                IF (prop(54) .GT. 0.0D0 .AND.
+     &              Time + 0.5D0 * dTime .LT. prop(54)) SC_A = 0.0D0
+                CALL eco_alstar_put(SC_A)
+              END IF
               CM_CREF = 0.0D0
               IF (nProp .GE. 33) CM_CREF = prop(33)
               IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GT. -1.0D29) THEN
@@ -146,6 +169,7 @@ C             shares of 0.999999 (make_initial_state's packing)
                 CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
      &               PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
               END IF
+              IF (SC_ON) CALL eco_alstar_put(SC_A0)
               IF (PM_OK) THEN
                 DO PM_I = 1, 12
                   IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
@@ -395,6 +419,29 @@ C         the seed's start cannot be varied apart (5 Oct runs).
               SP_HITI = 1
             ELSE
               SP_HITI = 0
+C             alpha* of the point model per point (14 Oct, tests, not
+C             from a paper). prop(52), prop(53) > 0: raised by the
+C             compression at the start of the increment, alpha* +
+C             prop(52) min(max(p / prop(53), 0), 1), p = -tr(sigma)/3
+C             [MPa]. prop(54) > 0: alpha* only from T* = prop(54) on
+C             (the step whose midpoint Time + dTime/2 reaches it).
+              SC_ON = .FALSE.
+              IF (nProp .GE. 54) THEN
+                IF ((prop(52) .GT. 0.0D0 .AND. prop(53) .GT. 0.0D0)
+     &              .OR. prop(54) .GT. 0.0D0) SC_ON = .TRUE.
+              END IF
+              IF (SC_ON) THEN
+                CALL eco_alstar_get(SC_A0)
+                SC_A = SC_A0
+                IF (prop(52) .GT. 0.0D0 .AND. prop(53) .GT. 0.0D0) THEN
+                  SC_P = -(stress(1) + stress(2) + stress(3)) / 3.0D0
+                  SC_A = SC_A + prop(52)
+     &                 * MIN(MAX(SC_P / prop(53), 0.0D0), 1.0D0)
+                END IF
+                IF (prop(54) .GT. 0.0D0 .AND.
+     &              Time + 0.5D0 * dTime .LT. prop(54)) SC_A = 0.0D0
+                CALL eco_alstar_put(SC_A)
+              END IF
               CM_CREF = 0.0D0
               IF (nProp .GE. 33) CM_CREF = prop(33)
               IF (CM_CREF .GT. 0.0D0 .AND. CM_NUT .GT. -1.0D29) THEN
@@ -405,6 +452,7 @@ C         the seed's start cannot be varied apart (5 Oct runs).
                 CALL biofilm_ecology_hook(PM_GOLD, PM_TH, CM_DT,
      &               PM_NSUB, PM_GNEW, PM_PHIINT, PM_OK)
               END IF
+              IF (SC_ON) CALL eco_alstar_put(SC_A0)
               IF (PM_OK) THEN
                 DO PM_I = 1, 12
                   IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
@@ -673,7 +721,8 @@ C       increment of alpha above is multiplied by g = max(0, 1 - p/p_h),
 C       p = -(s11 + s22 + s33)/3 of the stress the host hands in, i.e. at
 C       the start of the increment (compression positive). p_h = prop(49)
 C       (= P_h E k_alpha T*, in stress units), or with prop(50) = 1
-C       p_h = prop(49) (phi^2 + prop(51)) (local stiffness). 0 = off
+C       p_h = prop(49) (phi^2 + prop(51)) (local stiffness), or with
+C       prop(50) = 2 g = 1/(1 + max(p,0)/prop(49)) (15 Oct). 0 = off
 C       (default): nothing changes. Not in mode 3 (the partner's alpha).
 C       ustatev(95) = p, ustatev(96) = g.
         IF (nProp .GE. 49) THEN

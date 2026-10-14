@@ -325,7 +325,7 @@ C     constant 48 = 1: c from the nutrient UEL overlaid on this element
         IF (PROPS(48) .GT. 0.5D0) CN = NUT_GET(NOEL, NPT)
       END IF
       CALL BIOFILM_COMP_UMAT(STRESS, STATEV, DDSDDE, SSE, DTIME,
-     1  PHI, CN, NSTATV, PROPS, NPROPS, PNEWDT, DFGRD1,
+     1  TIME(2), PHI, CN, NSTATV, PROPS, NPROPS, PNEWDT, DFGRD1,
      2  NOEL, NPT, JSTEP(1), KINC)
 C     no thermal coupling terms in the stress (growth enters through
 C     alpha, a state variable) and no heat from mechanical work
@@ -485,7 +485,7 @@ C=======================================================================
 C  BIOFILM_COMP_UMAT: the ANSYS call-site fragments in an Abaqus UMAT
 C=======================================================================
       SUBROUTINE BIOFILM_COMP_UMAT(STRESS, ustatev, DDSDDE, SSE,
-     1  dTime, AB_PHI, AB_CN, NSTATV, prop, nProp, PNEWDT, DFGRD1,
+     1  dTime, Time, AB_PHI, AB_CN, NSTATV, prop, nProp, PNEWDT, DFGRD1,
      2  elemId, kDomIntPt, ldstep, isubst)
       USE biofilm_py_bridge
       USE biofilm_split
@@ -493,6 +493,9 @@ C=======================================================================
       INTEGER NSTATV, nProp, elemId, kDomIntPt, ldstep, isubst
       DOUBLE PRECISION STRESS(6), ustatev(NSTATV), DDSDDE(6,6), SSE
       DOUBLE PRECISION dTime, AB_PHI, AB_CN, prop(nProp)
+C     Time: the total time at the start of the increment (TIME(2)), as
+C     ANSYS's Time (prop(54), alpha* from a start time, 14 Oct)
+      DOUBLE PRECISION Time
       DOUBLE PRECISION PNEWDT, DFGRD1(3,3)
 C     names the fragments expect from the partner's usermat
       DOUBLE PRECISION Sdp_bio1_n, Sdp_locbio1_n, Sdp_bio2_n

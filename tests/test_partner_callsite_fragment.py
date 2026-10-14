@@ -49,8 +49,12 @@ MOCK = """\
 C     the host's stress at the start of the increment (read only by the
 C     homeostatic law, prop(49) > 0, which these tests leave off)
       DOUBLE PRECISION stress(6)
+C     the host's time at the start of the increment (read only by
+C     prop(54) > 0, alpha* from a start time, which these tests leave off)
+      DOUBLE PRECISION Time
       INCLUDE 'phi_mode_decl.inc'
       stress = 0.0D0
+      Time = 0.0D0
       Sbio_GrowthConst = prop(5)
       INCLUDE 'phi_mode_exec.inc'
       END

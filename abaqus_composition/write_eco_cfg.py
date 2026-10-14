@@ -6,6 +6,7 @@ so the native run uses exactly what the server would.
     python abaqus_composition/write_eco_cfg.py --theta-json theta_MAP.json OUT.txt
         [--phi-init-config config.json | --phi-init v1,v2,v3,v4,v5]
         [--newton 12,1e-20] [--theta-tol 1e-12]
+        [--alpha-star 0.32] [--b 1,1,1,1,1]
 
 OUT: n_active / c* alpha* / eta(5) / theta(20), then optional keyword lines
 (ecology_native.f reads them in any order):
@@ -25,6 +26,13 @@ point model: the 15 entries of A and the 5 entries of b), with c* and
 alpha* from ecology_constants.py (the calibration values) and eta = 1, as
 the server uses without a case. This is the step from the calibrated point
 model of Chapter 3 to the element (research idea 7, RESEARCH_IDEAS.ja.md).
+
+--alpha-star X (with --theta-json): the antibiotic alpha* of Klempt et al. 2026
+in place of ecology_constants.ALPHA_STAR (0). --b v1,..,v5: the sensitivities
+b_i, written into theta at the places the point model reads them (theta 4, 5,
+9, 10, 16, one-based); the calibrated MAP files have b = 0. The deck takes theta
+from this file, so deck and file stay equal. Both are assumptions of the run,
+not calibrated values (scheme (c), CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md A-1).
 """
 import argparse
 import json
@@ -34,6 +42,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "ansys_usermat" / "coupling"), str(ROOT / "ansys_usermat"), str(ROOT)]
 import material_server as ms  # noqa: E402
+
+B_INDEX = (3, 4, 8, 9, 15)   # b_1..b_5 in theta (zero-based), as ecology_native.f reads them
 
 
 def theta_json_cfg(path):
@@ -104,8 +114,15 @@ def main(case, out, **kw):
     print(f"wrote {out}: {case}, {ms.ECOLOGY_ACTIVE} species, c* {hp['c']}, alpha* {hp['alpha']}")
 
 
-def main_theta(path, out, **kw):
+def main_theta(path, out, alpha_star=None, b=None, **kw):
     n, cs, als, eta, theta = theta_json_cfg(path)
+    if alpha_star is not None:
+        als = float(alpha_star)
+    if b is not None:
+        if len(b) != 5:
+            raise ValueError(f"--b needs 5 values, got {len(b)}")
+        for k, v in zip(B_INDEX, b):
+            theta[k] = float(v)
     lines = [str(n), fmt([cs, als]), fmt(eta), fmt(theta)] + keyword_lines(**kw)
     Path(out).write_text("\n".join(lines) + "\n")
     extra = ", ".join(k for k, v in kw.items() if v is not None)
@@ -120,7 +137,11 @@ if __name__ == "__main__":
     ap.add_argument("--phi-init", help="v1,v2,v3,v4,v5 as given")
     ap.add_argument("--newton", help="N,TOL (the paper pipeline: 12,1e-20)")
     ap.add_argument("--theta-tol", type=float)
+    ap.add_argument("--alpha-star", type=float, help="antibiotic alpha* (with --theta-json)")
+    ap.add_argument("--b", help="b1,..,b5 sensitivities into theta (with --theta-json)")
     a = ap.parse_args()
+    if (a.alpha_star is not None or a.b) and not a.theta_json:
+        ap.error("--alpha-star and --b go with --theta-json")
     if a.phi_init_config and a.phi_init:
         ap.error("--phi-init-config and --phi-init exclude each other")
     phi_init = None
@@ -136,7 +157,8 @@ if __name__ == "__main__":
     if a.theta_json:
         if len(a.args) != 1:
             ap.error("with --theta-json: one positional, OUT")
-        main_theta(a.theta_json, a.args[0], **kw)
+        b = [float(x) for x in a.b.split(",")] if a.b else None
+        main_theta(a.theta_json, a.args[0], alpha_star=a.alpha_star, b=b, **kw)
     else:
         if len(a.args) != 2:
             ap.error("CASE OUT")

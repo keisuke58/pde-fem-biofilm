@@ -126,17 +126,20 @@ def main(target: Path, nut_var: str | None = None) -> None:
 
     # the exec fragment calls biofilm_ecology_hook_c (5 Oct) and
     # biofilm_ecology_init_state (10 Oct, mode 9); an "only:" list without
-    # them leaves the calls unresolved externals at link time
+    # them leaves the calls unresolved externals at link time; likewise
+    # eco_alstar_get/put (14 Oct, alpha* per point, prop(52:54))
     u = one(out, USE_BRIDGE.match, "use biofilm_py_bridge")
     if "only" in out[u].lower():
         k = u + 1
         while k < len(out) and out[k].lstrip().startswith("&"):
             k += 1
         have = "\n".join(out[u:k]).lower()
-        if "biofilm_ecology_hook_c" not in have or "biofilm_ecology_init_state" not in have:
+        need = ("biofilm_ecology_hook_c", "biofilm_ecology_init_state", "eco_alstar_get", "eco_alstar_put")
+        if any(n not in have for n in need):
             out[u:k] = ["      use biofilm_py_bridge, only: biofilm_ecology_hook,",
                         "     &                             biofilm_ecology_hook_c,",
-                        "     &                             biofilm_ecology_init_state"]
+                        "     &                             biofilm_ecology_init_state,",
+                        "     &                             eco_alstar_get, eco_alstar_put"]
 
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = target.with_name(target.name + f".prepaste-{stamp}")

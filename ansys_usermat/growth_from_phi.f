@@ -55,6 +55,9 @@ C      IFORM = 0:  p_h = PREF                    (P_h E k_alpha T*)
 C      IFORM = 1:  p_h = PREF * (phi^2 + F)      (local stiffness E(phi^2+f))
 C  with phi clipped to [0, 1]. PREF <= 0 (or p_h <= 0) gives G = 1, i.e.
 C  Eq. 36 unchanged.
+C      IFORM = 2:  G = 1 / (1 + max(p, 0) / PREF)  (15 Oct, test of the
+C                  two-way coupling: compression slows growth and never
+C                  stops it; tension leaves it alone. Not from a paper.)
 C=======================================================================
       subroutine BIOFILM_HOMEOSTATIC_FACTOR(P, PREF, IFORM, PHI, F, G)
       implicit none
@@ -64,6 +67,10 @@ C=======================================================================
       double precision PH, PC
       G = 1.0d0
       if (PREF .le. 0.0d0) return
+      if (IFORM .eq. 2) then
+        G = 1.0d0 / (1.0d0 + max(P, 0.0d0) / PREF)
+        return
+      end if
       PH = PREF
       if (IFORM .eq. 1) then
         PC = min(max(PHI, 0.0d0), 1.0d0)
