@@ -18,7 +18,13 @@ Sets (the order is the instruction's):
   A8  a stiffer void (YOUNG_VOID -1e-2, -1e-1; base -1e-3) for kappa 2.8: first
       its effect on (a) and kappa 8.82e-3, then kappa 2.8 with E 10 Pa and
       600 Pa; a kappa 2.8 run that stops is run once more with -Steps 475.
-  -After B starts a set when B has ended (one ANSYS at a time in WorkDir).
+  A7  compression slows the (c) growth, g = 1/(1 + max(p,0)/p_ref) (prop(49),
+      prop(50) = 2): off (must match w8_CH_cal_k0882 to the last digit),
+      p_ref 2.4e-10 and 2.4e-9 MPa. Exe F:\biofilm_upf_cal5gp (cal5sc plus
+      that form in growth_from_phi.f), so:
+      -Set A7 -WorkDir F:\biofilm_upf_cal5gp -After A8 -AfterLog F:\biofilm_upf_cal5sc\_cal5.log
+  -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
+  -AfterLog when the other set logs in another work dir).
 Minutes per run (IKMHIWI03, -np 1): 8^3 1-2, 16^3 (a) 10 / (c) 23, 24^3 about
 40 / 90 (estimates, written to the log before each run).
 Exe: F:\biofilm_upf_cal5sc (the cal5 build plus alpha* per point, prop(52:54),
@@ -26,8 +32,9 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
+    [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
     [string]$WorkDir = 'F:\biofilm_upf_cal5sc',
     [switch]$DryRun,
     [switch]$Worker
@@ -81,6 +88,12 @@ $sets = @{
         @{ n = '(c) kappa 2.8 void x100 E 600 Pa'; m = 3; j = 'w8_CH_cal_k2800_v100_E600'; r = @('-Steps', '475');
            a = @('-Conditions', 'CH', '-Growth', '-Kappa', '2.8', '-YoungVoid', '-1e-1', '-YoungBio', '6e-4', '-Tag', 'k2800_v100_E600') }
     )
+    # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
+    A7 = @(
+        @{ n = '(c) g(p) off (= w8_CH_cal_k0882)'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-Tag', 'k0882_gp0') },
+        @{ n = '(c) g(p) p_ref 2.4e-10 MPa'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-ExtraProps', '49=2.4e-10,50=2', '-Tag', 'k0882_gp1') },
+        @{ n = '(c) g(p) p_ref 2.4e-9 MPa'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-ExtraProps', '49=2.4e-9,50=2', '-Tag', 'k0882_gp10') }
+    )
 }
 $runs = $sets[$Set]
 
@@ -91,6 +104,7 @@ if (-not $Worker) {
     if ($DryRun) { return }
     $cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$PSCommandPath`" -Worker -Set $Set -WorkDir `"$WorkDir`""
     if ($After) { $cmd += " -After $After" }
+    if ($AfterLog) { $cmd += " -AfterLog `"$AfterLog`"" }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
     Write-Output "started, PID $($r.ProcessId); log $log"
@@ -102,9 +116,11 @@ $br = (& git -C $repo rev-parse --abbrev-ref HEAD).Trim()
 if ($After) {
     # one ANSYS at a time in the work dir: wait for the other set's end line
     $t0 = Get-Date
-    L "chain $Set waiting for chain $After to end"
+    $alog = $log
+    if ($AfterLog) { $alog = $AfterLog }
+    L "chain $Set waiting for chain $After to end ($alog)"
     while ($true) {
-        $done = Get-Content $log | Where-Object { $_ -match "chain $After end$" } |
+        $done = Get-Content $alog | Where-Object { $_ -match "chain $After end$" } |
             Where-Object { [datetime]::ParseExact($_.Substring(0, 19), 'yyyy-MM-dd HH:mm:ss', $null) -ge $t0.AddSeconds(-1) }
         if ($done) { break }
         Start-Sleep 60

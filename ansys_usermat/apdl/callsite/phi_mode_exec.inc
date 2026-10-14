@@ -721,7 +721,8 @@ C       increment of alpha above is multiplied by g = max(0, 1 - p/p_h),
 C       p = -(s11 + s22 + s33)/3 of the stress the host hands in, i.e. at
 C       the start of the increment (compression positive). p_h = prop(49)
 C       (= P_h E k_alpha T*, in stress units), or with prop(50) = 1
-C       p_h = prop(49) (phi^2 + prop(51)) (local stiffness). 0 = off
+C       p_h = prop(49) (phi^2 + prop(51)) (local stiffness), or with
+C       prop(50) = 2 g = 1/(1 + max(p,0)/prop(49)) (15 Oct). 0 = off
 C       (default): nothing changes. Not in mode 3 (the partner's alpha).
 C       ustatev(95) = p, ustatev(96) = g.
         IF (nProp .GE. 49) THEN
