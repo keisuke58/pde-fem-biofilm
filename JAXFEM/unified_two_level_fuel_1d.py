@@ -132,6 +132,17 @@ def run(phi0_x, g_comp, theta, *, lam=1.0, beta=0.02, beta_s=0.02, L0=0.7, Y=1.0
     return np.array(outs), np.array(E)
 
 
+def current_front(X, x, thr=0.45):
+    """Position of the biofilm edge in the current configuration.  The model is Lagrangian: the
+    growth alpha expands the material (F_g = alpha I).  In a layer on a substrate that can only
+    expand normal to it, the stretch is J = alpha^3, so x_current(X) = int_0^X alpha^3 dX'.  The
+    edge in the reference configuration is where phi > thr."""
+    J = X[:, 13] ** 3
+    xc = np.concatenate([[0.0], np.cumsum(0.5 * (J[1:] + J[:-1]) * np.diff(x))])
+    idx = np.where(X[:, 0] > thr)[0]
+    return x[idx.max()], xc[idx.max()]
+
+
 if __name__ == "__main__":
     import unified_1d as u1
     g0, th = u1.ch_case(); g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1
@@ -144,3 +155,10 @@ if __name__ == "__main__":
         X = outs[-1].reshape(41, NV)
         print(f"{name:26s}: alpha-1 at x = 0, 0.2: {X[0, 13] - 1:.4f} {X[8, 13] - 1:.4f}, c at x = 0, 0.25, 1: "
               f"{X[0, 14]:.3f} {X[10, 14]:.3f} {X[-1, 14]:.3f}, phi(0) {X[0, 0]:.3f}, living(0) {(X[0, 1:6] * X[0, 7:12]).sum():.3f}")
+    # the front from the growth kinematics: edge in the current configuration over time, and how it
+    # depends on the nutrient supply (stop concentration c_stop) and on the antibiotic
+    for name, kw in (("supply rich (c_stop 0.1)", dict()), ("supply poor (c_stop 0.5)", dict(c_stop=0.5)),
+                     ("antibiotic from T* = 0.5", dict(ast=0.65, ab_on=0.5))):
+        outs, E = run(phi_x, g, th, L0=3.0, **kw)
+        fr = [current_front(o.reshape(41, NV), x)[1] for o in outs]
+        print(f"{name:26s}: edge in the current configuration at T* = 0, 0.5, 1: {fr[0]:.3f} {fr[5]:.3f} {fr[-1]:.3f}")
