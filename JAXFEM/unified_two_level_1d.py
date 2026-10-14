@@ -70,7 +70,44 @@ def grad_nodes(f, dx):
     return jnp.diff(f, axis=0) / dx
 
 
+def functional(U, Un, P):
+    """Discrete functional of one implicit Euler step: E_h(U) + dt * D_h + constraint, nodal
+    quadrature hw.  The weights and coefficients of the dissipation and of the constraint are
+    held fixed (stop_gradient): the extended Hamilton principle varies D with respect to the
+    rates only.  Its gradient with respect to U is the residual (see residual())."""
+    N, dt, dx, eps = P["N"], P["dt"], P["dx"], P["eps"]
+    sg = jax.lax.stop_gradient
+    phi, s, s0, psi, gam, al = unpack(U, N)
+    phin, sn, s0n, psin, _, aln = unpack(Un, N)
+    hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
+    lam, ka, beta, bs = P["lam"], P["ka"], P["beta"], P["beta_s"]
+    w = phi + eps
+    E = jnp.sum(hw * (lam * w * psi_pm(s, s0, psi, P) - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
+    E += 0.5 * beta * jnp.sum(jnp.diff(phi) ** 2) / dx
+    wm = 0.5 * (w[1:] + w[:-1])
+    E += 0.5 * bs * jnp.sum(wm[:, None] * jnp.diff(s, axis=0) ** 2) / dx
+    sd, pd, s0d = (s - sn) / dt, (psi - psin) / dt, (s0 - s0n) / dt
+    S, Ps, W = sg(s), sg(psi), sg(w)
+    Dpm = 0.5 * jnp.sum(sd ** 2 + (Ps * sd + S * pd) ** 2, 1) + 0.5 * s0d ** 2
+    D = jnp.sum(hw * (0.5 * P["eta_phi"] * ((phi - phin) / dt) ** 2 + lam * W * Dpm + 0.5 * ((al - aln) / dt) ** 2))
+    C = jnp.sum(hw * lam * W * gam * (jnp.sum(s, 1) + s0 - 1.0))
+    return E + dt * D + C
+
+
 def residual(U, Un, P):
+    """Gradient of the discrete functional (JAX), rows scaled to the form of the point model:
+    composition and constraint rows divided by lam * w * hw, phi and alpha rows by hw.  The
+    equations are therefore the discrete Euler-Lagrange equations by construction."""
+    N, dx, eps = P["N"], P["dx"], P["eps"]
+    G = jax.grad(functional)(U, Un, P).reshape(N, NV)
+    hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
+    w = jax.lax.stop_gradient(U.reshape(N, NV)[:, 0]) + eps
+    G = G.at[:, 1:13].divide((P["lam"] * w * hw)[:, None])
+    G = G.at[:, 0].divide(hw).at[:, 13].divide(hw)
+    return G.ravel()
+
+
+def residual_hand(U, Un, P):
     N, dt, dx, eps = P["N"], P["dt"], P["dx"], P["eps"]
     phi, s, s0, psi, gam, al = unpack(U, N)
     phin, sn, s0n, psin, _, aln = unpack(Un, N)
@@ -106,18 +143,21 @@ def residual(U, Un, P):
 
 
 def make_newton(P):
-    R = lambda U, Un: residual(U, Un, P)
+    """Damped Newton for one implicit Euler step; dt is an argument so that the step can be
+    subdivided without recompiling."""
+    def R(U, Un, dt):
+        return residual(U, Un, dict(P, dt=dt))
     J = jax.jacfwd(R, argnums=0)
     box = jnp.r_[1:12]
 
     @jax.jit
-    def newton(Un):
+    def newton(Un, dt):
         def cond(st):
             return (st[2] > 1e-10) & (st[1] < 40)
 
         def body(st):
             U, k, _ = st
-            d = jnp.linalg.solve(J(U, Un), -R(U, Un))
+            d = jnp.linalg.solve(J(U, Un, dt), -R(U, Un, dt))
             X, D = U.reshape(-1, NV), d.reshape(-1, NV)
             x, dd = X[:, box], D[:, box]
             lim = jnp.where(dd < 0, -0.9 * x / jnp.minimum(dd, -1e-300), jnp.where(dd > 0, 0.9 * (1 - x) / jnp.maximum(dd, 1e-300), jnp.inf))
@@ -125,10 +165,22 @@ def make_newton(P):
             limp = jnp.where(dph < 0, -0.9 * ph / jnp.minimum(dph, -1e-300), jnp.inf)
             t = jnp.minimum(1.0, jnp.minimum(jnp.min(lim), jnp.min(limp)))
             U = U + t * d
-            return U, k + 1, jnp.max(jnp.abs(R(U, Un)))
+            return U, k + 1, jnp.max(jnp.abs(R(U, Un, dt)))
 
         return jax.lax.while_loop(cond, body, (Un, 0, jnp.inf))
     return newton
+
+
+def advance(newton, U, dt, depth=0, max_depth=12):
+    """One step of length dt; if Newton does not converge, two half steps (recursively)."""
+    V, it, r = newton(U, dt)
+    if float(r) <= 1e-10:
+        return V, int(it), float(r), 1
+    if depth >= max_depth:
+        raise RuntimeError(f"Newton failed at dt = {dt:.3e} (residual {float(r):.2e})")
+    V, i1, r1, n1 = advance(newton, U, dt / 2, depth + 1, max_depth)
+    V, i2, r2, n2 = advance(newton, V, dt / 2, depth + 1, max_depth)
+    return V, max(i1, i2), max(r1, r2), n1 + n2
 
 
 def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, ast=0.0, ab_on=None,
@@ -143,15 +195,15 @@ def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, 
     s = np.clip(np.asarray(g_comp[0:5]), 1e-10, None); X[:, 1:6] = s; X[:, 6] = max(1 - s.sum(), 1e-10)
     X[:, 1:6] *= ((1 - X[:, 6]) / X[:, 1:6].sum(1))[:, None]
     X[:, 7:12] = np.clip(g_comp[6:11], 1e-10, 1 - 1e-10); X[:, 13] = 1.0
-    U = jnp.asarray(X.ravel()); outs = [np.asarray(U)]; worst = 0.0; maxit = 0
+    U = jnp.asarray(X.ravel()); outs = [np.asarray(U)]; worst = 0.0; maxit = 0; nsteps_total = 0
     save = set(int(round(steps * j / n_out)) for j in range(1, n_out + 1))
     for k in range(steps):
         on = ast > 0 and ab_on is not None and (k + 0.5) / steps >= ab_on
-        U, it, r = (n1 if on else n0)(U)
-        maxit = max(maxit, int(it)); worst = max(worst, float(r))
+        U, it, r, nsub = advance(n1 if on else n0, U, T / steps)
+        maxit = max(maxit, it); worst = max(worst, r); nsteps_total += nsub
         if k + 1 in save:
             outs.append(np.asarray(U))
-    return np.array(outs), maxit, worst
+    return np.array(outs), maxit, worst, nsteps_total
 
 
 if __name__ == "__main__":
@@ -160,7 +212,7 @@ if __name__ == "__main__":
     g0, theta = u1.ch_case()
     g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1
     # check: lam -> small, beta_s = 0, uniform phi: the composition is the point model at every node
-    outs, it, r = run(np.full(3, 0.8), g, theta, lam=1e-6, ka=0.0, beta=0.0, beta_s=0.0, steps=200, T=0.02, n_out=1)
+    outs, it, r, _ = run(np.full(3, 0.8), g, theta, lam=1e-6, ka=0.0, beta=0.0, beta_s=0.0, steps=200, T=0.02, n_out=1)
     ref = m1.point_model_converged(g, theta, 1e-4, 200)
     X = outs[-1].reshape(3, NV)
     print(f"check (uniform, lam = 1e-6, ka = 0): max |composition - point model| = {np.abs(X[0, 1:12] - ref[0:11]).max():.2e}, "
@@ -168,7 +220,7 @@ if __name__ == "__main__":
     # seed column: phi = 0.9 at the substrate, outer liquid elsewhere
     x = np.linspace(0, 1, 41); phi_x = np.where(x <= 0.25, 0.9, 1e-4)
     for name, ast, on in (("no antibiotic", 0.0, None), ("antibiotic from T* = 0.5", 0.65, 0.5)):
-        outs, it, r = run(phi_x, g, theta, lam=1e-3, ka=2.0, beta=0.02, beta_s=0.02, ast=ast, ab_on=on)
+        outs, it, r, ns = run(phi_x, g, theta, lam=1e-3, ka=2.0, beta=0.02, beta_s=0.02, ast=ast, ab_on=on, steps=119)
         X = outs[-1].reshape(41, NV)
         front = x[np.where(X[:, 0] > 0.45)[0].max()]
         print(f"{name:26s}: alpha(0) = {X[0, 13]:.4f}, phi at x = 0, 0.5, 1: {X[0, 0]:.3f} {X[20, 0]:.4f} {X[-1, 0]:.4f}, "
