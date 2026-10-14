@@ -49,9 +49,11 @@ try {
         ForEach-Object { Write-Output "  $($_.Trim())" }
     if ($code -ne 0) { throw "git push exited $code" }
 
-    # The API answers from a cache for a few seconds after a push.
+    # The API answers from a cache for a few seconds after a push. With the
+    # token: the unauthenticated limit (60 an hour) is per IP and shared by
+    # the whole university network (14 Oct: exceeded, every check failed).
     for ($i = 0; $i -lt 6; $i++) {
-        $remote = (Invoke-RestMethod -Headers @{ "Cache-Control" = "no-cache" } `
+        $remote = (Invoke-RestMethod -Headers @{ "Cache-Control" = "no-cache"; "Authorization" = "Bearer $tok" } `
             "https://api.github.com/repos/keisuke58/pde-fem-biofilm/commits/$Branch").sha
         if ($remote -eq $head) { break }
         Start-Sleep -Seconds 2

@@ -107,8 +107,16 @@ $Conditions = @($Conditions -split ',' | Where-Object { $_ })
 
 function Find-Map($c) {
     # the last commit on the branch that touched <C>.json, or $null
+    # with the token from .env when there is one: the unauthenticated API
+    # limit (60 an hour) is per IP and shared by the university network
+    $h = @{}
+    $envFile = Join-Path $repo '.env'
+    if (Test-Path $envFile) {
+        $line = Get-Content $envFile | Where-Object { $_ -match '^\s*GITHUB_PAT\s*=' } | Select-Object -First 1
+        if ($line) { $h['Authorization'] = 'Bearer ' + ($line -replace '^\s*GITHUB_PAT\s*=\s*', '').Trim().Trim('"').Trim("'") }
+    }
     try {
-        $cm = Invoke-RestMethod "$api/commits?sha=$mapBranch&path=$mapDir/$c.json&per_page=1" -TimeoutSec 60
+        $cm = Invoke-RestMethod "$api/commits?sha=$mapBranch&path=$mapDir/$c.json&per_page=1" -Headers $h -TimeoutSec 60
         if (-not $cm -or @($cm).Count -eq 0) { return $null }
         return @($cm)[0].sha
     } catch { L "  $c lookup failed: $($_.Exception.Message)"; return $null }
@@ -144,7 +152,7 @@ function Run-Condition($c, $sha) {
     $eco = Join-Path $WorkDir "eco_$c.txt"
     # the traced element: 220 on 8^3, the first element covering it on the finer
     # meshes (refine_deck.py --track 220)
-    $postElem = @{ 8 = '220'; 16 = '2151' }[$Mesh]
+    $postElem = @{ 8 = '220'; 16 = '2151'; 24 = '7138' }[$Mesh]
     if (-not $postElem) { throw "no traced element for mesh $Mesh yet (refine_deck.py --track 220)" }
     $mk = @('--post', 'both', '--post-elem', $postElem)
     $ab = @()
