@@ -45,6 +45,7 @@ from ecology_constants import C_STAR  # noqa: E402
 
 KP1 = 1e-4
 NV = 14   # phi, s1..5, s0, psi1..5, gamma, alpha
+TOL = 1e-8  # residual tolerance; the composition rows in the outer liquid are divided by lam*w ~ 1e-7, so round-off there is ~1e-9
 B = lambda x: 1.0 / (x ** 2 * (1.0 - x) ** 2)
 dB = lambda x: KP1 * (2.0 - 4.0 * x) / ((x - 1.0) ** 3 * x ** 3)          # KP1 B'(x)
 
@@ -153,7 +154,7 @@ def make_newton(P):
     @jax.jit
     def newton(Un, dt):
         def cond(st):
-            return (st[2] > 1e-10) & (st[1] < 40)
+            return (st[2] > TOL) & (st[1] < 40)
 
         def body(st):
             U, k, _ = st
@@ -174,7 +175,7 @@ def make_newton(P):
 def advance(newton, U, dt, depth=0, max_depth=12):
     """One step of length dt; if Newton does not converge, two half steps (recursively)."""
     V, it, r = newton(U, dt)
-    if float(r) <= 1e-10:
+    if float(r) <= TOL:
         return V, int(it), float(r), 1
     if depth >= max_depth:
         raise RuntimeError(f"Newton failed at dt = {dt:.3e} (residual {float(r):.2e})")
