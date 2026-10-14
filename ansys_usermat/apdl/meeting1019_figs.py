@@ -129,7 +129,38 @@ def lysis():
     fig.savefig(OUT / "fig_meeting1019_lysis.pdf")
 
 
+def lysis_trace():
+    """Point model at the first seed Gauss point, scheme (c), without and with the antibiotic."""
+    R = ROOT / "ansys_usermat/apdl/results/2026-10-cal5"
+    names = ["So", "An", "Vei", "Fn", "Pg"]
+
+    def tr(fn):
+        pm = json.load(open(R / fn)); C = {c: i for i, c in enumerate(pm["columns"])}
+        rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]]]
+        phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
+        psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
+        return np.arange(1, len(rows) + 1) / len(rows), phi, psi
+
+    t0, f0, p0 = tr("w8_CH_cal_k0882_pm.json"); t1, f1, p1 = tr("w8_CH_cal_k0882_ab_pm.json")
+    fig, ax = plt.subplots(1, 3, figsize=(10, 2.7))
+    for i in range(5):
+        l, = ax[0].plot(t0, f0[:, i] / f0.sum(1), label=names[i])
+        ax[0].plot(t1, f1[:, i] / f1.sum(1), "--", color=l.get_color())
+        ax[1].plot(t0, p0[:, i], color=l.get_color())
+        ax[1].plot(t1, p1[:, i], "--", color=l.get_color())
+    ax[2].plot(t0, (f0 * p0).sum(1), "k-", label="without antibiotic")
+    ax[2].plot(t1, (f1 * p1).sum(1), "k--", label="with antibiotic")
+    ax[0].set(xlabel="$T^*$", ylabel="$\\phi_i/\\sum_j\\phi_j$", title="composition")
+    ax[0].legend(fontsize=7.5, frameon=False, ncol=2)
+    ax[1].set(xlabel="$T^*$", ylabel="$\\psi_i$", title="living fraction of each species")
+    ax[2].set(xlabel="$T^*$", ylabel="$\\sum_i\\phi_i\\psi_i$", title="living biomass (drives growth)")
+    ax[2].legend(fontsize=7.5, frameon=False)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig_meeting1019_lysis_trace.pdf")
+
+
 if __name__ == "__main__":
+    lysis_trace()
     lysis()
     schemes()
     cal5()
