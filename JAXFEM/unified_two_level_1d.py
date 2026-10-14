@@ -80,13 +80,16 @@ def grad_nodes(f, dx):
     return jnp.diff(f, axis=0) / dx
 
 
-def functional(U, Un, P):
+def functional(U, Un, P, F):
     """Discrete functional of one implicit Euler step: E_h(U) + dt * D_h + constraint, nodal
     quadrature hw.  The weights and coefficients of the dissipation and of the constraint are
-    held fixed (stop_gradient): the extended Hamilton principle varies D with respect to the
-    rates only.  Its gradient with respect to U is the residual (see residual())."""
+    held fixed: the extended Hamilton principle varies D with respect to the rates only.  They
+    are passed in F = (w, s, psi) at the new state, so that the gradient with respect to U treats
+    them as constants, while the residual, as a function of U, still depends on them (its
+    Jacobian, taken by jacfwd of residual(), includes that dependence).  The gradient of this
+    functional with respect to U is the residual (see residual())."""
     N, dt, dx, eps = P["N"], P["dt"], P["dx"], P["eps"]
-    sg = jax.lax.stop_gradient
+    Wf, Sf, Pf = F
     phi, s, s0, psi, gam, al = unpack(U, N)
     phin, sn, s0n, psin, _, aln = unpack(Un, N)
     hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
@@ -97,13 +100,13 @@ def functional(U, Un, P):
     # psi = 0.999, against 8 for psi = 0.5), so they act on the composition only and do no work
     # on the phase (weight held at w, like the constraint).  The physical energy Psi_int
     # (interactions, antibiotic) carries the weight w.
-    E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * sg(w) * psi_barrier(s, s0, psi)
+    E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * Wf * psi_barrier(s, s0, psi)
                       - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
     E += 0.5 * beta * jnp.sum(jnp.diff(phi) ** 2) / dx
     wm = 0.5 * (w[1:] + w[:-1])
     E += 0.5 * bs * jnp.sum(wm[:, None] * jnp.diff(s, axis=0) ** 2) / dx
     sd, pd, s0d = (s - sn) / dt, (psi - psin) / dt, (s0 - s0n) / dt
-    S, Ps, W = sg(s), sg(psi), sg(w)
+    S, Ps, W = Sf, Pf, Wf
     Dpm = 0.5 * jnp.sum(sd ** 2 + (Ps * sd + S * pd) ** 2, 1) + 0.5 * s0d ** 2
     D = jnp.sum(hw * (0.5 * P["eta_phi"] * ((phi - phin) / dt) ** 2 + lam * W * Dpm + 0.5 * ((al - aln) / dt) ** 2))
     C = jnp.sum(hw * lam * W * gam * (jnp.sum(s, 1) + s0 - 1.0))
@@ -115,9 +118,10 @@ def residual(U, Un, P):
     composition and constraint rows divided by lam * w * hw, phi and alpha rows by hw.  The
     equations are therefore the discrete Euler-Lagrange equations by construction."""
     N, dx, eps = P["N"], P["dx"], P["eps"]
-    G = jax.grad(functional)(U, Un, P).reshape(N, NV)
+    X = U.reshape(N, NV)
+    w = X[:, 0] + eps
+    G = jax.grad(functional)(U, Un, P, (w, X[:, 1:6], X[:, 7:12])).reshape(N, NV)
     hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
-    w = jax.lax.stop_gradient(U.reshape(N, NV)[:, 0]) + eps
     G = G.at[:, 1:13].divide((P["lam"] * w * hw)[:, None])
     G = G.at[:, 0].divide(hw).at[:, 13].divide(hw)
     return G.ravel()
