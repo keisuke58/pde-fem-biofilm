@@ -73,6 +73,16 @@ $\lambda w\gamma(\sum_is_i+s_0-1)$. The only new parameters are $\lambda$ (the e
 scale of the composition relative to the phase), $\beta_s$ (spreading of the composition
 inside the biofilm) and the form of the growth energy.
 
+\paragraph{The barrier terms.} In the point model the barrier terms $KB(\cdot)$ only keep
+$s_i,s_0,\psi_i$ inside $(0,1)$; they are a regularised indicator of these box constraints.
+In the one-level point model their value never matters, only their derivatives. Weighted
+with the biofilm amount, the value would act on the phase: at the calibration's start
+($\psi_i=0.999$) the barrier part of $\Psi_{\rm pm}$ is about 517, against about 8 for
+$\psi_i=0.5$, so dying cells would make the biofilm grow. The barrier terms are therefore
+treated as a constraint: they carry the weight $w$ held fixed, like the multiplier term,
+act on the composition only and do no work on $\phi$. In \eqref{eq:E}, $\Psi_{\rm pm}$
+then stands for its physical part (interactions and antibiotic) wherever it acts on $\phi$.
+
 \section{Stationarity conditions}
 
 The extended Hamilton principle
@@ -99,7 +109,8 @@ structure as the interactions.
 \eta_\phi\dot\phi-\beta\nabla^2\phi+\lambda\Psi_{\rm pm}+\frac{\beta_s}{2}\sum_i|\nabla s_i|^2
 -k_\alpha(\alpha-1)\sum_is_i\psi_i=0 .
 \end{equation}
-The composition acts on the phase through $\lambda\Psi_{\rm pm}$: where the composition
+Here $\Psi_{\rm pm}$ is the physical part (interactions and antibiotic; the barrier terms
+act as a constraint, see above). The composition acts on the phase through it: where the composition
 energy is low (strong favourable interactions), the biofilm tends to grow, and the growth
 source is weighted by the living share. The dependence of the dissipation weight $w$ on
 $\phi$ is not a force: the principle varies $D$ with respect to the rates only.
@@ -153,7 +164,12 @@ includes it is no longer a gradient flow.
 
 1D, nodes with mirrored ends, all unknowns of all nodes in one residual, implicit Euler,
 full Newton to $|R|<10^{-10}$ with damping that keeps $s,\psi\in(0,1)$ and $\phi>0$
-(\texttt{JAXFEM/unified\_two\_level\_1d.py}). For the one-level model the same scheme
+(\texttt{JAXFEM/unified\_two\_level\_1d.py}). The residual is not written by hand: it is
+the automatic derivative (JAX) of the discrete functional $E_h+\Delta t\,D_h+C_h$ of one
+step, so the discrete equations are its Euler--Lagrange equations by construction. With one
+node and no coupling the composition rows equal the point model as coded in this
+repository to round-off, so the point model is the stationarity condition of the energy and
+dissipation used here. For the one-level model the same scheme
 reproduces the converged point model to $1.6\times10^{-13}$ and the discrete energy
 decreases at every step (\texttt{unified\_1d\_monolithic.py}).
 

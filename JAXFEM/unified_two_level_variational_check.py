@@ -3,8 +3,10 @@
 1. The residual used by the solver is the JAX gradient of the discrete functional
    E_h + dt D_h + constraint (functional()), so it is the discrete Euler-Lagrange equation by
    construction.  Here it is compared with the earlier hand-written residual (residual_hand):
-   every row agrees to round-off except the phase row, where the hand version approximated the
-   derivative of the composition-gradient energy (relative 9e-5); the solver uses the gradient.
+   every composition row agrees to round-off.  The phase row differs on purpose: the hand
+   version approximated the derivative of the composition-gradient energy (relative 9e-5), and
+   it let the point model's barrier terms act on the phase, which the model no longer does
+   (they are a regularised constraint, not stored energy; see functional()).
 2. With one node, no growth, no gradients and lam = 1, the composition rows equal the point
    model as coded in this repository (core_hamilton_1d.residual) to round-off: the point model
    of Klempt et al. 2026 is itself the stationarity condition of the energy Psi_pm with the

@@ -55,6 +55,15 @@ def unpack(U, N):
     return X[:, 0], X[:, 1:6], X[:, 6], X[:, 7:12], X[:, 12], X[:, 13]
 
 
+def psi_barrier(s, s0, psi):
+    return KP1 * (jnp.sum(B(s), 1) + B(s0) + jnp.sum(B(psi), 1))
+
+
+def psi_int(s, psi, P):
+    sb = s * psi
+    return 0.5 * P["ast"] * jnp.sum(P["b"] * psi ** 2, 1) - 0.5 * P["c"] * jnp.einsum("ki,ij,kj->k", sb, P["A"], sb)
+
+
 def psi_pm(s, s0, psi, P):
     sb = s * psi
     return (KP1 * (jnp.sum(B(s), 1) + B(s0) + jnp.sum(B(psi), 1)) + 0.5 * P["ast"] * jnp.sum(P["b"] * psi ** 2, 1)
@@ -83,7 +92,13 @@ def functional(U, Un, P):
     hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
     lam, ka, beta, bs = P["lam"], P["ka"], P["beta"], P["beta_s"]
     w = phi + eps
-    E = jnp.sum(hw * (lam * w * psi_pm(s, s0, psi, P) - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
+    # the point model's barrier terms are a regularised indicator of the box constraints
+    # 0 < s, s_0, psi < 1: their value is not stored energy (it is 517 at the calibration's start,
+    # psi = 0.999, against 8 for psi = 0.5), so they act on the composition only and do no work
+    # on the phase (weight held at w, like the constraint).  The physical energy Psi_int
+    # (interactions, antibiotic) carries the weight w.
+    E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * sg(w) * psi_barrier(s, s0, psi)
+                      - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
     E += 0.5 * beta * jnp.sum(jnp.diff(phi) ** 2) / dx
     wm = 0.5 * (w[1:] + w[:-1])
     E += 0.5 * bs * jnp.sum(wm[:, None] * jnp.diff(s, axis=0) ** 2) / dx
