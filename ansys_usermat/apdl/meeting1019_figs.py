@@ -72,12 +72,21 @@ def schemes():
     fig.savefig(OUT / "fig_meeting1019_schemes.pdf")
 
 
+def last_per_step(rows, C):
+    """One row per substep (the last, i.e. the converged one) and its time T* = substep/n."""
+    d = {}
+    for r in rows:
+        d[int(r[C["isubst"]])] = r
+    k = sorted(d)
+    return [d[i] for i in k], np.array(k) / max(k)
+
+
 def cal5():
     R = ROOT / "ansys_usermat/apdl/results/2026-10-cal5"
     pm = json.load(open(R / "w8_CH_cal_k0882_pm.json"))
     cols = pm["columns"]; C = {c: i for i, c in enumerate(cols)}
-    rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]]]
-    t = np.arange(1, len(rows) + 1) / len(rows)
+    rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]] and r[C["elem"]] == rows[0][C["elem"]]]
+    rows, t = last_per_step(rows, C)
     phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
     psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
     names = ["So", "An", "Vei", "Fn", "Pg"]
@@ -136,10 +145,11 @@ def lysis_trace():
 
     def tr(fn):
         pm = json.load(open(R / fn)); C = {c: i for i, c in enumerate(pm["columns"])}
-        rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]]]
+        rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]] and r[C["elem"]] == rows[0][C["elem"]]]
+        rows, t = last_per_step(rows, C)
         phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
         psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
-        return np.arange(1, len(rows) + 1) / len(rows), phi, psi
+        return t, phi, psi
 
     t0, f0, p0 = tr("w8_CH_cal_k0882_pm.json"); t1, f1, p1 = tr("w8_CH_cal_k0882_ab_pm.json")
     fig, ax = plt.subplots(1, 3, figsize=(10, 2.7))
@@ -172,7 +182,7 @@ def switch_on():
     for fn, lab, c, ls in runs:
         pm = json.load(open(R / fn)); C = {k: i for i, k in enumerate(pm["columns"])}
         rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]] and r[C["elem"]] == rows[0][C["elem"]]]
-        t = np.arange(1, len(rows) + 1) / len(rows)
+        rows, t = last_per_step(rows, C)
         phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
         psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
         ax[0].plot(t, (phi * psi).sum(1), color=c, ls=ls, label=lab)
