@@ -15,7 +15,7 @@ import unified_two_level_1d as t2  # noqa: E402
 import unified_1d as u1  # noqa: E402
 
 BASE = dict(lam=1.0, ka=2.0, beta=0.02, beta_s=0.02)
-SWEEP = {"lam": [0.3, 1.0, 3.0], "ka": [0.5, 2.0, 8.0], "beta": [0.005, 0.02, 0.08], "beta_s": [0.005, 0.02, 0.08]}
+SWEEP = {"ka": [2.0, 8.0], "lam": [1.0]} if "--quick" in sys.argv else {"lam": [0.3, 1.0, 3.0], "ka": [0.5, 2.0, 8.0], "beta": [0.005, 0.02, 0.08], "beta_s": [0.005, 0.02, 0.08]}
 
 if __name__ == "__main__":
     g0, th = u1.ch_case(); g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1

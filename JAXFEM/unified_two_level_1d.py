@@ -110,6 +110,9 @@ def functional(U, Un, P, F):
     E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * Wf * psi_barrier(s, s0, psi)
                       - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
     E += 0.5 * beta * jnp.sum(jnp.diff(phi) ** 2) / dx
+    # phi <= 1 (a volume fraction): one-sided barrier, a regularised indicator like the point
+    # model's barrier terms; KPHI small, so it acts only next to phi = 1
+    E += jnp.sum(hw * P.get("kphi", 1e-5) / (1.0 - phi) ** 2)
     wm = 0.5 * (w[1:] + w[:-1])
     E += 0.5 * bs * jnp.sum(wm[:, None] * jnp.diff(s, axis=0) ** 2) / dx
     sd, pd, s0d = (s - sn) / dt, (psi - psin) / dt, (s0 - s0n) / dt
@@ -189,7 +192,7 @@ def make_newton(P):
             x, dd = X[:, box], D[:, box]
             lim = jnp.where(dd < 0, -0.9 * x / jnp.minimum(dd, -1e-300), jnp.where(dd > 0, 0.9 * (1 - x) / jnp.maximum(dd, 1e-300), jnp.inf))
             ph, dph = X[:, 0], D[:, 0]
-            limp = jnp.where(dph < 0, -0.9 * ph / jnp.minimum(dph, -1e-300), jnp.inf)
+            limp = jnp.where(dph < 0, -0.9 * ph / jnp.minimum(dph, -1e-300), 0.9 * (1 - ph) / jnp.maximum(dph, 1e-300))
             t = jnp.minimum(1.0, jnp.minimum(jnp.min(lim), jnp.min(limp)))
             U = U + t * d
             return U, k + 1, jnp.max(jnp.abs(R(U, Un, dt)))
