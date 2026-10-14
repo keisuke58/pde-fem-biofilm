@@ -104,7 +104,33 @@ def cal5():
     fig.savefig(OUT / "fig_meeting1019_cal5.pdf")
 
 
+def lysis():
+    """Antibiotic in the point model, CH 8^3, T* = 1: seed means from the IKMHIWI03 report
+    (IKMHIWI03_TO_CLOUD.ja.md, 14 Oct, table A-1/A-2; scheme_c_table.py)."""
+    lab = ["(a)", "(a)\n+ antibiotic", "(c)", "(c)\n+ antibiotic"]
+    a1 = np.array([6.7517e-4, 6.7517e-4, 6.7518e-4, 5.0066e-4])
+    vm = np.array([4.6838e-4, 4.6838e-4, 4.3192e-4, 2.9397e-4])
+    sp = np.array([2.616, 1.743, 2.132, 0.784])
+    col = ["#7a8fa6", "#7a8fa6", "#c0603a", "#c0603a"]
+    fig, ax = plt.subplots(1, 3, figsize=(7.2, 2.2))
+    for k, (y, yl, t) in enumerate([(a1 * 1e4, "$\\alpha-1$ ($10^{-4}$)", "seed growth"),
+                                     (vm * 1e4, "von Mises ($10^{-4}$ Pa)", "seed stress"),
+                                     (sp, "$\\sum_i\\psi_i$", "living fractions")]):
+        b = ax[k].bar(range(4), y, color=col, width=0.65)
+        for i in (1, 3):
+            b[i].set_hatch("//"); b[i].set_edgecolor("white")
+        ax[k].set_xticks(range(4), lab, fontsize=7.5)
+        ax[k].set(ylabel=yl, title=t)
+    for i, d in ((3, "$-26\\,\\%$"), ):
+        ax[0].annotate(d, (i, a1[i] * 1e4), ha="center", va="bottom", fontsize=8)
+    ax[1].annotate("$-32\\,\\%$", (3, vm[3] * 1e4), ha="center", va="bottom", fontsize=8)
+    ax[1].annotate("same", (1, vm[1] * 1e4), ha="center", va="bottom", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig_meeting1019_lysis.pdf")
+
+
 if __name__ == "__main__":
+    lysis()
     schemes()
     cal5()
     print("wrote", OUT / "fig_meeting1019_schemes.pdf", OUT / "fig_meeting1019_cal5.pdf")
