@@ -159,7 +159,45 @@ def lysis_trace():
     fig.savefig(OUT / "fig_meeting1019_lysis_trace.pdf")
 
 
+def switch_on():
+    """Antibiotic switched on at T* = 0.5 (as Fritsch et al. 2025, Fig. 18), scheme (c), CH 8^3,
+    first seed Gauss point; seed stress from the IKMHIWI03 report of 14 Oct (A-6 table)."""
+    R = ROOT / "ansys_usermat/apdl/results/2026-10-cal5"
+    runs = [("w8_CH_cal_k0882_pm.json", "none", "k", "-"),
+            ("w8_CH_cal_k0882_ab05_pm.json", "all $b_i=1$", "#4c72b0", "--"),
+            ("w8_CH_cal_k0882_ab05_a065_pm.json", "all $b_i=1$, stronger", "#4c72b0", ":"),
+            ("w8_CH_cal_k0882_ab05_So_pm.json", "So sensitive", "#dd8452", "--"),
+            ("w8_CH_cal_k0882_ab05_ana_pm.json", "anaerobes sensitive", "#c44e52", "--")]
+    fig, ax = plt.subplots(1, 3, figsize=(10, 2.7), gridspec_kw={"width_ratios": [1, 1, 1.15]})
+    for fn, lab, c, ls in runs:
+        pm = json.load(open(R / fn)); C = {k: i for i, k in enumerate(pm["columns"])}
+        rows = pm["seed_trace"]; rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]] and r[C["elem"]] == rows[0][C["elem"]]]
+        t = np.arange(1, len(rows) + 1) / len(rows)
+        phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
+        psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
+        ax[0].plot(t, (phi * psi).sum(1), color=c, ls=ls, label=lab)
+        ax[1].plot(t, np.array([float(r[C["alpha_new"]]) for r in rows]) * 1e4, color=c, ls=ls)
+    for a in ax[:2]:
+        a.axvspan(0, 0.5, color="#4c72b0", alpha=0.06, lw=0); a.axvspan(0.5, 1, color="#c44e52", alpha=0.06, lw=0)
+        a.axvline(0.5, color="0.4", lw=0.8)
+    ax[0].set(xlabel="$T^*$", ylabel="$\\sum_i\\phi_i\\psi_i$", title="living biomass, seed Gauss point")
+    ax[0].legend(fontsize=7, frameon=False, title="antibiotic from $T^*=0.5$", title_fontsize=7)
+    ax[1].set(xlabel="$T^*$", ylabel="$\\alpha-1$ ($10^{-4}$)", title="growth, seed Gauss point")
+    lab = ["(c), no\nantibiotic", "all\n$b_i=1$", "all,\nstronger", "So", "anaerobes"]
+    d = np.array([-7.8, -16.1, -27.6, -18.7, -33.2])
+    col = ["0.55", "#4c72b0", "#4c72b0", "#dd8452", "#c44e52"]
+    ax[2].bar(range(5), d, color=col, width=0.65)
+    for i, v in enumerate(d):
+        ax[2].annotate(f"{v:.0f} %", (i, v), ha="center", va="top", fontsize=7, xytext=(0, -2), textcoords="offset points")
+    ax[2].set_xticks(range(5), lab, fontsize=7)
+    ax[2].set(ylabel="seed von Mises vs. (a) [%]", title="seed stress, $T^*=1$", ylim=(-40, 0))
+    ax[2].axhline(0, color="0.3", lw=0.8)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig_meeting1019_switch.pdf")
+
+
 if __name__ == "__main__":
+    switch_on()
     lysis_trace()
     lysis()
     schemes()
