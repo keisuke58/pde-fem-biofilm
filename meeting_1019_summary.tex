@@ -49,8 +49,12 @@ five-species model, $\alpha$ grows with the living biomass $\sum_i\phi_i\psi_i$ 
 the point model instead of with $\phi_{3D}$. A drop of $\psi_i$ (lysis, or an
 antibiotic in the point model) then lowers the growth from inside the point
 model. With the rate chosen so that the mean growth equals that of Eq.~36, the
-mean von Mises stress of the seed changes by $8\,\%$. The rate is my choice, not
-from a paper.
+mean von Mises stress of the seed changes by $8\,\%$. With an antibiotic in the
+point model (same sensitivity for all five species, strength chosen so that the
+living fraction halves by $T^*=1$; both assumed), scheme (c) gives $26\,\%$ less
+growth and $32\,\%$ less seed stress, while scheme (a) gives the same stress as
+without the antibiotic, only the composition changes. The growth and the stress
+are proportional to $\kappa$. The rates are my choice, not from a paper.
 
 \noindent\includegraphics[width=\linewidth]{fig_meeting1019_cal5.pdf}\\
 {\small Calibrated five-species model in the element (commensal flow condition, $8^3$, $T^*=1$): composition and living fractions at a seed Gauss point; growth and stress of the seed elements for Eq.~36 and for growth from the living biomass.}
@@ -66,10 +70,10 @@ What it does & amount from the field, composition from the point model, scaled t
 Meaning of $\phi_0$ & physical void, $1-\phi_{3D}$ & auxiliary, as in the paper & as (a)\\
 Composition depends on & local amount & local age of the biofilm & local amount\\
 Lysis acts on growth & no & no & yes, lower $\psi_i$ lowers growth\\
-Check & recovers the point model alone to $10^{-5}$ & point-model trajectory, shifted in time & one run on $8^3$, seed stress $-8\,\%$\\
+Check & recovers the point model alone to $10^{-5}$ & point-model trajectory, shifted in time & $8^3$: seed stress $-8\,\%$; with antibiotic $-32\,\%$, (a) unchanged\\
 In the thesis & Chapter 4 & Chapter 4, for comparison & Outlook, one paragraph\\
 Strength & well tested, simple to explain & closest to the paper's reading of $\phi_0$ & answers the lysis question; growth from the producing biomass has precedent in the literature\\
-Weakness & gives $\phi_0$ a physical meaning (stated as an assumption) & nearly decoupled from the field; cannot feed lysis back & $\kappa$ is my choice; one run so far\\
+Weakness & gives $\phi_0$ a physical meaning (stated as an assumption) & nearly decoupled from the field; cannot feed lysis back & $\kappa$ is my choice; $8^3$ only so far\\
 \bottomrule
 \end{tabularx}
 \end{center}
