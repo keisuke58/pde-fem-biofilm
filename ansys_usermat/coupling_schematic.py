@@ -232,7 +232,7 @@ def main(keio=False, thesis=False, live=False):
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
     ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK,
             va="center", linespacing=1.25, zorder=4)
-    ax.text(x + 0.16, 0.585, (r"decides the composition $\phi_i$" "\n" r"and the living fractions $\psi_i$") if live
+    ax.text(x + 0.16, 0.585, (r"runs on its own, as in (b):" "\n" r"gives $\phi_i$ and $\psi_i$") if live
             else (r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$"),
             fontsize=11 * FS, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
     arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1],
@@ -245,7 +245,7 @@ def main(keio=False, thesis=False, live=False):
           else "partner's element, Klempt 2024 stiffness")
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
-        (r"$\dot\alpha = \kappa\,\sum_i\bar\phi_i$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$" if live
+        (r"$\dot\alpha/\alpha = \kappa\,\phi_{3D}\sum_i\bar\phi_i$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$" if live
          else r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$"),
         r"$E(\phi) = (\phi^2 + f)\,E_{bio}$",
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",

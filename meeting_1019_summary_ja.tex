@@ -46,7 +46,7 @@ in vitro のデータからベイズ推定（TMCMC）で決めた。機械学習
 {\small 方式 (c)：点モデルは生きた割合 $\psi_i$ も決め、成長は生きている量 $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$ を使う（小さい図：常在・流れの較正済みの計算、シードの Gauss 点）。}
 
 \paragraph{3. 溶菌が成長に効く（方式 (c)）。} 較正した 5 菌種のモデルで、$\alpha$ を $\phi_{3D}$ ではなく
-点モデルの生きている量 $\sum_i\phi_i\psi_i$ で成長させた（$\dot\alpha=\kappa\sum_i\phi_i\psi_i$）。
+点モデルの生きている量 $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$ とその場所の量の積で成長させた（$\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\bar\phi_i$）。点モデルは (b) と同じく、縮めずに自分だけで進む。
 すると $\psi_i$ が下がる（溶菌、点モデルの中の抗菌薬）と、点モデルの内側から成長が下がる。
 $\kappa$ を平均の成長が Eq.~36 と同じになるよう選ぶと、シードの von Mises 応力の平均は $8\,\%$ 変わる
 （成長の総量は同じで、シードの中の成長の分布が違うため。16$^3$ でも $8\,\%$）。
@@ -82,9 +82,9 @@ $\kappa$ を平均の成長が Eq.~36 と同じになるよう選ぶと、シー
 \toprule
 & (a) 量で成長 & (b) 独立した点モデル & (c) 生きている量で成長\\
 \midrule
-何をするか & 量は場、組成は点モデル、$\sum_i\phi_i=\phi_{3D}$ に縮める & 点モデルは自分だけで進み、組成だけ渡す & (a) と同じ、ただし $\dot\alpha=\kappa\sum_i\phi_i\psi_i$\\
-$\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どおり） & (a) と同じ\\
-組成を決めるもの & その場所の量 & その場所の年齢 & その場所の量\\
+何をするか & 量は場、組成は点モデル、$\sum_i\phi_i=\phi_{3D}$ に縮める & 点モデルは自分だけで進み、組成だけ渡す & 点モデルは (b) と同じ。成長は $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\phi_i\psi_i$\\
+$\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どおり） & (b) と同じ\\
+組成を決めるもの & その場所の量 & その場所の年齢 & その場所の年齢\\
 溶菌が成長に効くか & 効かない & 効かない & 効く（$\psi_i$ が下がると成長が下がる）\\
 確かめたこと & 点モデル単独を $10^{-5}$ で再現 & 点モデルの軌跡が時間でずれるだけ & $8^3$・16$^3$ でシード応力 $-8\,\%$、抗菌薬で $-16$〜$-37\,\%$、(a) は不変\\
 修論では & 第 4 章 & 第 4 章、比較として & Outlook に一段落\\
@@ -93,7 +93,7 @@ $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どお
 \bottomrule
 \end{tabularx}
 \end{center}
-\noindent\emph{提案：} (a) を基本、(c) を溶菌を成長に効かせる発展、(b) は $\phi_0$ の解釈の比較として残す。
+\noindent\emph{提案：} 修論は (a) を基本、(b) は $\phi_0$ の解釈の比較。(c) は (b) の点モデルのまま生きている量で成長させる形で、溶菌を成長に効かせる発展にする。
 \end{minipage}
 
 \paragraph{(a) と (c) のどちらが正しいか。} まだ決まっていない。Klempt et al. 2024 の Eq.~36 は、死んだ菌のない
@@ -137,8 +137,8 @@ $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どお
 \paragraph{一緒に決めたいこと。}
 \begin{enumerate}
 \item[] \emph{$\phi_0$ の意味。} 方式 (a) を基本にして、$\phi_0=1-\phi_{3D}$（場の空隙）を仮定として書き、
-  (b) を比較にしたい。説明が簡単で、方式 (c) を通して溶菌を成長に効かせられる読み方だから。
-  賛成か、それとも論文どおり $\phi_0$ を補助の変数のままにしたいか。
+  (b) を比較にしたい。説明が簡単だから。方式 (c) は点モデルを (b) と同じく動かすので、$\phi_0$ は論文どおり補助の変数のまま。
+  つまり今後は論文の読み方を使う。この分け方でよいか、それとも修論でも $\phi_0$ を補助の変数のままにしたいか。
 \end{enumerate}
 
 \newpage
@@ -151,8 +151,8 @@ $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どお
 2--5 & 1 と 2：二つの空隙 & ``The field and the point model each have their own void. I implemented two ways to match them.'' & 場と点モデルはそれぞれ空隙を持つ。そろえ方を 2 通り作った。\\
 5--10 & 3：方式 (c) と抗菌薬 & ``If growth follows the living biomass, an antibiotic lowers the growth and the stress; with my thesis coupling, the stress stays exactly the same.'' & 生きている量で成長させると、抗菌薬で成長と応力が下がる。修論の方式では応力はまったく同じ。\\
 10--12 & $T^*=0.5$ から & ``As in Fritsch et al., Fig.~18, the antibiotic is switched on at half time; an antibiotic on the anaerobes lowers the stress most.'' & Fritsch の Fig.~18 と同じく途中から。嫌気性菌に効く薬が一番効く。\\
-12--14 & 比較の表と提案 & ``I propose (a) as the basis, (c) as its extension, and (b) as a comparison.'' & (a) を基本、(c) を発展、(b) は比較。\\
-14--17 & 決めたいこと & ``Do you agree to state $\phi_0 = 1-\phi_{3D}$ as an assumption, or would you keep it auxiliary?'' & $\phi_0$ を場の空隙とする仮定でよいか。\\
+12--14 & 比較の表と提案 & ``I propose (a) for the thesis, (b) as a comparison, and (c), which keeps the point model of (b), as the extension.'' & 修論は (a)、(b) は比較、(c) は (b) の点モデルを使う発展。\\
+14--17 & 決めたいこと & ``Do you agree to state $\phi_0 = 1-\phi_{3D}$ as an assumption in the thesis, while (c) keeps it auxiliary?'' & 修論では $\phi_0$ を場の空隙とする仮定、(c) は補助の変数、でよいか。\\
 17--20 & 実験（紹介だけ）と質問 & ``These experiments are only ideas; experiment 1 would decide between (a) and (c).'' & 実験はアイデアだけ。1 で (a) と (c) を決められる。\\
 \bottomrule
 \end{tabularx}

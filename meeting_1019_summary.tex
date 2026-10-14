@@ -52,7 +52,7 @@ the biofilm (b).
 
 \paragraph{3. Lysis acting on growth.} In a first run with the calibrated
 five-species model, $\alpha$ grows with the living biomass $\sum_i\phi_i\psi_i$ of
-the point model instead of with $\phi_{3D}$. A drop of $\psi_i$ (lysis, or an
+the point model times the local amount: $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\bar\phi_i$, with $\bar\phi_i=\phi_i\psi_i$ and the point model running on its own as in (b). A drop of $\psi_i$ (lysis, or an
 antibiotic in the point model) then lowers the growth from inside the point
 model. With the rate chosen so that the mean growth equals that of Eq.~36, the
 mean von Mises stress of the seed changes by $8\,\%$. With an antibiotic in the
@@ -90,9 +90,9 @@ Scheme (a) gives the base stress in all four cases.
 \toprule
 & (a) growth from the amount & (b) free point model & (c) growth from the living biomass\\
 \midrule
-What it does & amount from the field, composition from the point model, scaled to $\sum_i\phi_i=\phi_{3D}$ & point model runs on its own, supplies the composition only & as (a), but $\dot\alpha=\kappa\sum_i\phi_i\psi_i$\\
-Meaning of $\phi_0$ & physical void, $1-\phi_{3D}$ & auxiliary, as in the paper & as (a)\\
-Composition depends on & local amount & local age of the biofilm & local amount\\
+What it does & amount from the field, composition from the point model, scaled to $\sum_i\phi_i=\phi_{3D}$ & point model runs on its own, supplies the composition only & point model as (b); growth $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\phi_i\psi_i$\\
+Meaning of $\phi_0$ & physical void, $1-\phi_{3D}$ & auxiliary, as in the paper & as (b)\\
+Composition depends on & local amount & local age of the biofilm & local age of the biofilm\\
 Lysis acts on growth & no & no & yes, lower $\psi_i$ lowers growth\\
 Check & recovers the point model alone to $10^{-5}$ & point-model trajectory, shifted in time & $8^3$: seed stress $-8\,\%$; with antibiotic $-32\,\%$, (a) unchanged\\
 In the thesis & Chapter 4 & Chapter 4, for comparison & Outlook, one paragraph\\
@@ -101,8 +101,9 @@ Weakness & gives $\phi_0$ a physical meaning (stated as an assumption) & nearly 
 \bottomrule
 \end{tabularx}
 \end{center}
-\noindent\emph{Proposal:} (a) as the basis, (c) as its extension to let lysis act on
-growth, and (b) kept as a comparison for the interpretation of $\phi_0$.
+\noindent\emph{Proposal:} (a) as the basis of the thesis, (b) as the comparison for the
+interpretation of $\phi_0$, and (c), which keeps the point model of (b) and lets its
+living biomass drive the growth, as the extension that lets lysis act on growth.
 \end{minipage}
 
 \paragraph{Which of (a) and (c) is right?} This is open. Eq.~36 of Klempt et al.\
@@ -164,8 +165,9 @@ colloquium and would not run them myself. Item 1 would decide between (a) and (c
 \begin{enumerate}
 \item[] \emph{Meaning of $\phi_0$.} I would keep scheme (a) as the basis and state
   $\phi_0=1-\phi_{3D}$, the void of the field, as an assumption, with scheme (b)
-  as a comparison. It is the simpler reading to explain and the one under which
-  lysis can act on growth through scheme (c). Do you agree, or would you rather
-  keep $\phi_0$ auxiliary as in the paper?
+  as a comparison. It is the simpler reading to explain. Scheme (c) keeps
+  $\phi_0$ auxiliary as in the paper (its point model runs as in (b)), so the
+  continuation would use the paper's reading. Do you agree with this split, or
+  would you rather keep $\phi_0$ auxiliary in the thesis too?
 \end{enumerate}
 \end{document}
