@@ -34,8 +34,8 @@ def arrow(ax, a, b, text="", dy=0.0):
 
 def schemes():
     fig, axs = plt.subplots(1, 3, figsize=(10, 2.9))
-    titles = ["(a) scaled: amount from the field",
-              "(b) unscaled: $\\phi_0$ stays auxiliary",
+    titles = ["(a) growth from the amount",
+              "(b) free point model",
               "(c) growth from the living biomass"]
     for ax, t in zip(axs, titles):
         ax.set_xlim(0, 1); ax.set_ylim(-0.05, 1.08); ax.axis("off"); ax.set_title(t, fontsize=9)

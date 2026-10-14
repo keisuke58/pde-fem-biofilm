@@ -27,22 +27,28 @@ by the NEM directly at the Gauss points and the surface points, so $\phi_{3D}$ i
 available at each Gauss point without interpolation. The point model is solved
 at every Gauss point next to the field.
 
-\paragraph{2. The two voids: two schemes implemented.}
+\paragraph{2. The two voids: two schemes implemented.} (The thesis calls (a) and (b) the scaled and the unscaled scheme.)
 \begin{itemize}
-\item \emph{Scaled.} The field sets the amount, the point model only the
+\item \emph{(a) Growth from the amount.} The field sets the amount, the point model only the
   composition $\phi_i/\sum_j\phi_j$ and $\psi_i$. At each Gauss point and substep
   the point-model state is scaled to $\sum_i\phi_i=\phi_{3D}$, advanced and scaled
   again. This sets $\phi_0=1-\phi_{3D}$, i.e.\ it gives $\phi_0$ a physical meaning.
   When the field's amount equals the point model's own, the composition of the
   point model alone is recovered (to $10^{-5}$ or better).
-\item \emph{Unscaled.} $\phi_0$ stays auxiliary: the point model runs on its own from
+\item \emph{(b) Free point model.} $\phi_0$ stays auxiliary: the point model runs on its own from
   the moment the field reaches a threshold and supplies only the composition.
 \end{itemize}
-The composition then depends on the local amount (scaled) or on the local age of
-the biofilm (unscaled).
+The composition then depends on the local amount (a) or on the local age of
+the biofilm (b).
 
 \noindent\includegraphics[width=\linewidth]{fig_meeting1019_schemes.pdf}\\
-{\small Coupling at a Gauss point: (a) scaled and (b) unscaled scheme, (c) growth from the living biomass of the point model.}
+{\small Coupling at a Gauss point: (a) growth from the amount, (b) free point model, (c) growth from the living biomass of the point model.}
+
+\noindent\includegraphics[width=\linewidth]{fig_coupling_schematic.png}\\
+{\small Scheme (a), as in the thesis (two species shown): the field gives the amount $\phi_{3D}$, the point model at every Gauss point only the composition, and growth and stress use $\phi_{3D}$.}
+
+\noindent\includegraphics[width=\linewidth]{fig_coupling_schematic_live.png}\\
+{\small Scheme (c): the point model also gives the living fractions $\psi_i$, and growth uses the living biomass $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$ (inset: calibrated commensal flow run, seed Gauss point).}
 
 \paragraph{3. Lysis acting on growth.} In a first run with the calibrated
 five-species model, $\alpha$ grows with the living biomass $\sum_i\phi_i\psi_i$ of
@@ -82,7 +88,7 @@ Scheme (a) gives the base stress in all four cases.
 \begin{center}\small
 \begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
-& (a) scaled & (b) unscaled & (c) growth from living biomass\\
+& (a) growth from the amount & (b) free point model & (c) growth from the living biomass\\
 \midrule
 What it does & amount from the field, composition from the point model, scaled to $\sum_i\phi_i=\phi_{3D}$ & point model runs on its own, supplies the composition only & as (a), but $\dot\alpha=\kappa\sum_i\phi_i\psi_i$\\
 Meaning of $\phi_0$ & physical void, $1-\phi_{3D}$ & auxiliary, as in the paper & as (a)\\
@@ -118,7 +124,7 @@ from half time leaves (a) at $1.80$ and lowers (c) to $1.55$.
 {\small Predicted volume of the commensal flow biofilm, from the point model at a seed Gauss point, growth rate fitted to the measured volume; mechanics not computed. Antibiotic parameters assumed.}
 
 \paragraph{4. Limits stated in the thesis.} The coupling is one-way for the
-mechanics (the composition does not change the stiffness). The scaled scheme
+mechanics (the composition does not change the stiffness). Scheme (a)
 gives $\phi_0$ a meaning the point model does not intend. A coupling without
 these choices would need a spatial multispecies model from one variational
 principle. A recent check: the value of $\phi$ at the surface points is a mean of

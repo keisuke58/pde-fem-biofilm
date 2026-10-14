@@ -10,6 +10,9 @@
         -> assets/fig_coupling_schematic_keio.png: both arrows back to the
            field drawn as the Keio continuation (composition -> field, and
            stress -> growth), without the footnote on the two schemes.
+    python ansys_usermat/coupling_schematic.py --live
+        -> assets/fig_coupling_schematic_live.png: growth from the living biomass
+           (scheme c), five calibrated species, inset from the CH run.
 
 (1) Macro: the 3D growth field of Klempt et al. 2024 (the partner's element)
 decides the amount phi_3D at every Gauss point. (2) Micro: one copy of the
@@ -142,6 +145,39 @@ def chi_inset(fig, rect):
     return ax
 
 
+SP5 = ("#e8833a", "#7a5195", "#2a9d8f", "#c44e52", "#8c6d31")
+
+
+def live_inset(fig, rect):
+    """Five-species composition at a seed Gauss point of the calibrated CH run, scheme (c),
+    with the living biomass sum phi_i psi_i (results/2026-10-cal5/w8_CH_cal_k0882_pm.json)."""
+    import json
+    pm = json.load(open(HERE / "apdl/results/2026-10-cal5/w8_CH_cal_k0882_pm.json"))
+    C = {k: i for i, k in enumerate(pm["columns"])}
+    rows = pm["seed_trace"]
+    rows = [r for r in rows if r[C["ip"]] == rows[0][C["ip"]] and r[C["elem"]] == rows[0][C["elem"]]]
+    d = {int(r[C["isubst"]]): r for r in rows}; k = sorted(d); rows = [d[i] for i in k]
+    t = np.array(k) / max(k)
+    phi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(1, 6)] for r in rows])
+    psi = np.array([[float(r[C[f"gnew_{i}"]]) for i in range(7, 12)] for r in rows])
+    ax = fig.add_axes(rect)
+    ax.stackplot(t, phi.T, colors=SP5, alpha=0.85, lw=0)
+    ax.plot(t, (phi * psi).sum(1), color=INK, lw=2.2)
+    ax.text(0.40, (phi * psi).sum(1)[len(t) // 2] - 0.13, r"living $\sum_i\bar\phi_i$",
+            fontsize=10 * FS, color=INK, ha="left")
+    ax.set(xlim=(0, 1), ylim=(0, 1), xticks=[0, 0.5, 1], yticks=[0, 0.5, 1])
+    ax.grid(False)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(True)
+    ax.set_xlabel(r"time $T^*$", fontsize=10 * FS, labelpad=1)
+    ax.set_ylabel(r"$\phi_i$", fontsize=10 * FS, labelpad=1)
+    ax.tick_params(labelsize=8.5 * FS, length=2, pad=1.5)
+    j = int(0.9 * (len(t) - 1)); cum = np.concatenate([[0], np.cumsum(phi[j])])
+    for i, lab in ((0, "So"), (1, "An"), (2, "Vei")):
+        ax.text(0.86, (cum[i] + cum[i + 1]) / 2, lab, fontsize=9 * FS, color="white", va="center")
+    return ax
+
+
 def stress_sketch(ax, cx, cy, h):
     """Sketch: the seed grows, is held by its neighbours, ends in compression."""
     n = 5
@@ -163,7 +199,7 @@ def stress_sketch(ax, cx, cy, h):
 FS = 1.0   # font scale; the thesis prints the figure at text width, so its text is enlarged
 
 
-def main(keio=False, thesis=False):
+def main(keio=False, thesis=False, live=False):
     global FS
     FS = 1.4 if thesis else 1.0
     figstyle.apply(12)
@@ -190,16 +226,18 @@ def main(keio=False, thesis=False):
 
     # (2) micro --------------------------------------------------------------
     panel(ax, "micro", "2", "Micro: point model",
-          "Klempt et al. 2026 (Ch. 2), calibrated in Ch. 3" if thesis else "Klempt et al. 2026, Table 1 cases")
+          "Klempt et al. 2026 (Ch. 2), calibrated in Ch. 3" if thesis
+          else ("Klempt et al. 2026, five species calibrated (CH)" if live else "Klempt et al. 2026, Table 1 cases"))
     x, w = PX["micro"]
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
     ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK,
             va="center", linespacing=1.25, zorder=4)
-    ax.text(x + 0.16, 0.585, r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$",
+    ax.text(x + 0.16, 0.585, (r"decides the composition $\phi_i$" "\n" r"and the living fractions $\psi_i$") if live
+            else (r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$"),
             fontsize=11 * FS, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
     arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1],
           lw=1.3, conn="arc3,rad=0.25")
-    chi_inset(fig, [x + 0.075, 0.255, 0.20, 0.175])
+    (live_inset if live else chi_inset)(fig, [x + 0.075, 0.255, 0.20, 0.175])
 
     # (3) growth and stress --------------------------------------------------
     panel(ax, "mech", "3", "Growth and stress",
@@ -207,7 +245,8 @@ def main(keio=False, thesis=False):
           else "partner's element, Klempt 2024 stiffness")
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
-        r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
+        (r"$\dot\alpha = \kappa\,\sum_i\bar\phi_i$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$" if live
+         else r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$"),
         r"$E(\phi) = (\phi^2 + f)\,E_{bio}$",
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
     ])
@@ -222,11 +261,19 @@ def main(keio=False, thesis=False):
     ax.text(0.3325, y_mid + 0.03, r"$\phi_{3D}$", ha="center", fontsize=13 * FS, color=INK)
     xa = PX["macro"][0] + PX["macro"][1] / 2
     xc = PX["mech"][0] + PX["mech"][1] / 2
-    ax.plot([xa, xa, xc], [Y0 + H, 0.945, 0.945], color=INK, lw=1.8, zorder=5,
-            solid_capstyle="round")
-    arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004))
-    ax.text(0.5, 0.958, r"$\phi_{3D}$: growth uses the amount only", ha="center",
-            va="bottom", fontsize=12.5 * FS, color=INK)
+    if live:
+        xl = PX["micro"][0] + PX["micro"][1] / 2
+        ax.plot([xl, xl, xc], [Y0 + H, 0.945, 0.945], color=PANEL["micro"][1], lw=2.2, zorder=5,
+                solid_capstyle="round")
+        arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004), color=PANEL["micro"][1], lw=2.2)
+        ax.text((xl + xc) / 2, 0.958, r"$\sum_i\bar\phi_i = \sum_i\phi_i\psi_i$: growth uses the living biomass",
+                ha="center", va="bottom", fontsize=12.5 * FS, color=PANEL["micro"][1])
+    else:
+        ax.plot([xa, xa, xc], [Y0 + H, 0.945, 0.945], color=INK, lw=1.8, zorder=5,
+                solid_capstyle="round")
+        arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004))
+        ax.text(0.5, 0.958, r"$\phi_{3D}$: growth uses the amount only", ha="center",
+                va="bottom", fontsize=12.5 * FS, color=INK)
     xm = PX["micro"][0] + PX["micro"][1] * 0.72
     arrow(ax, (xm, Y0), (xm, 0.105))
     ax.text(xm, 0.085, r"output: species $\phi_i(\mathbf{x},t)$, $\psi_i(\mathbf{x},t)$", ha="center",
@@ -237,6 +284,16 @@ def main(keio=False, thesis=False):
     ax.text((xa + xb) / 2, 0.115,
             "composition to growth (Keio)" if keio else "two-way coupling (outlook)",
             ha="center", va="top", fontsize=11 * FS, color=MUTED, style="italic")
+
+    if live:
+        ax.text(0.5, 0.012,
+                r"Lysis or an antibiotic in the point model lowers $\psi_i$ and so the growth.   "
+                r"Assumed, not from a paper: $\kappa$ (mean growth of the seed at $T^*=1$ as Eq. 36), $s$ = 0.2375 ($T^*=1$ = Day 21).",
+                ha="center", va="bottom", fontsize=10.5 * FS, color=MUTED)
+        out = OUT.with_name("fig_coupling_schematic_live.png")
+        fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
+        print("wrote", out)
+        return
 
     if keio:
         xs = PX["mech"][0] + PX["mech"][1] * 0.5
@@ -270,4 +327,4 @@ def main(keio=False, thesis=False):
 
 
 if __name__ == "__main__":
-    main(keio="--keio" in sys.argv, thesis="--thesis" in sys.argv)
+    main(keio="--keio" in sys.argv, thesis="--thesis" in sys.argv, live="--live" in sys.argv)

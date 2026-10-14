@@ -24,20 +24,26 @@ in vitro のデータからベイズ推定（TMCMC）で決めた。機械学習
 \paragraph{1. Gauss 点での $\phi_{3D}$。} 要素は場を NEM で Gauss 点と表面の点で直接解くので、
 各 Gauss 点で $\phi_{3D}$ が補間なしに分かる。点モデルは各 Gauss 点で、場の横で解いている。
 
-\paragraph{2. 二つの空隙：二つの方式を実装した。}
+\paragraph{2. 二つの空隙：二つの方式を実装した。}（修論では (a) を scaled、(b) を unscaled と呼んでいる。）
 場の空隙（$1-\phi_{3D}$）と点モデルの空隙（$\phi_0$）は別のもの。これをどうそろえるかで方式が分かれる。
 \begin{itemize}
-\item \emph{(a) 縮める方式。} 量は場、点モデルは組成 $\phi_i/\sum_j\phi_j$ と生きた割合 $\psi_i$ だけを決める。
+\item \emph{(a) 量で成長（growth from the amount）。} 量は場、点モデルは組成 $\phi_i/\sum_j\phi_j$ と生きた割合 $\psi_i$ だけを決める。
   各 Gauss 点・各刻みで、点モデルの状態を $\sum_i\phi_i=\phi_{3D}$ に縮めてから進め、また戻す。
   すると $\phi_0=1-\phi_{3D}$ となり、$\phi_0$ に「場の空隙」という物理的な意味を持たせることになる。
   場の量が点モデル自身の量と同じときは、点モデル単独の組成を $10^{-5}$ 以内で再現する。
-\item \emph{(b) 縮めない方式。} $\phi_0$ は論文どおり補助の変数のまま。場がしきい値に届いた時点から
+\item \emph{(b) 独立した点モデル（free point model）。} $\phi_0$ は論文どおり補助の変数のまま。場がしきい値に届いた時点から
   点モデルが自分だけで進み、組成だけを渡す。
 \end{itemize}
 組成は、(a) では「その場所の量」で、(b) では「その場所のバイオフィルムの年齢（できてからの時間）」で決まる。
 
 \noindent\includegraphics[width=\linewidth]{fig_meeting1019_schemes.pdf}\\
-{\small Gauss 点でのつなぎ方：(a) 縮める方式、(b) 縮めない方式、(c) 点モデルの生きている量で成長する方式。}
+{\small Gauss 点でのつなぎ方：(a) 量で成長、(b) 独立した点モデル、(c) 点モデルの生きている量で成長。}
+
+\noindent\includegraphics[width=\linewidth]{fig_coupling_schematic.png}\\
+{\small 方式 (a)（修論と同じ。図は 2 菌種）：場が量 $\phi_{3D}$ を、各 Gauss 点の点モデルが組成だけを決め、成長と応力は $\phi_{3D}$ を使う。}
+
+\noindent\includegraphics[width=\linewidth]{fig_coupling_schematic_live.png}\\
+{\small 方式 (c)：点モデルは生きた割合 $\psi_i$ も決め、成長は生きている量 $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$ を使う（小さい図：常在・流れの較正済みの計算、シードの Gauss 点）。}
 
 \paragraph{3. 溶菌が成長に効く（方式 (c)）。} 較正した 5 菌種のモデルで、$\alpha$ を $\phi_{3D}$ ではなく
 点モデルの生きている量 $\sum_i\phi_i\psi_i$ で成長させた（$\dot\alpha=\kappa\sum_i\phi_i\psi_i$）。
@@ -74,7 +80,7 @@ $\kappa$ を平均の成長が Eq.~36 と同じになるよう選ぶと、シー
 \begin{center}\small
 \begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
-& (a) 縮める & (b) 縮めない & (c) 生きている量で成長\\
+& (a) 量で成長 & (b) 独立した点モデル & (c) 生きている量で成長\\
 \midrule
 何をするか & 量は場、組成は点モデル、$\sum_i\phi_i=\phi_{3D}$ に縮める & 点モデルは自分だけで進み、組成だけ渡す & (a) と同じ、ただし $\dot\alpha=\kappa\sum_i\phi_i\psi_i$\\
 $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どおり） & (a) と同じ\\
@@ -103,7 +109,7 @@ $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どお
 \noindent\includegraphics[width=0.8\linewidth]{fig_volume_prediction_antibiotic.pdf}\\
 {\small 常在・流れのバイオフィルムの体積の予測（シードの Gauss 点の点モデルから、成長の速さは実測の体積に合わせた。力学は計算していない）。抗菌薬のパラメータは仮定。}
 
-\paragraph{4. 修論に書いた限界。} 力学は一方向の結合（組成は剛性を変えない）。縮める方式は、点モデルが
+\paragraph{4. 修論に書いた限界。} 力学は一方向の結合（組成は剛性を変えない）。方式 (a) は、点モデルが
 意図していない意味を $\phi_0$ に持たせる。こうした選択なしにつなぐには、一つの変分原理から作った、
 空間の多菌種モデルが要る。最近の確認：表面の点の $\phi$ は近くの Gauss 点の平均で、一定の場でしか正確でない。
 そのため面の近くのラプラシアンには、メッシュを細かくしても減らない誤差がある。私のシードの計算では、
@@ -142,7 +148,7 @@ $\phi_0$ の意味 & 場の空隙 $1-\phi_{3D}$ & 補助の変数（論文どお
 分 & 内容 & 言うこと（英語） & 意味\\
 \midrule
 0--2 & 今の状況 & ``The thesis is written; I plan to submit in mid-November. The point model is the Hamilton point model, calibrated by TMCMC, not machine learning.'' & 修論は書き終わった。点モデルは機械学習ではない。\\
-2--5 & 1 と 2：二つの空隙 & ``The field and the point model each have their own void. I implemented two ways to match them: scaled and unscaled.'' & 場と点モデルはそれぞれ空隙を持つ。そろえ方を 2 通り作った。\\
+2--5 & 1 と 2：二つの空隙 & ``The field and the point model each have their own void. I implemented two ways to match them.'' & 場と点モデルはそれぞれ空隙を持つ。そろえ方を 2 通り作った。\\
 5--10 & 3：方式 (c) と抗菌薬 & ``If growth follows the living biomass, an antibiotic lowers the growth and the stress; with my thesis coupling, the stress stays exactly the same.'' & 生きている量で成長させると、抗菌薬で成長と応力が下がる。修論の方式では応力はまったく同じ。\\
 10--12 & $T^*=0.5$ から & ``As in Fritsch et al., Fig.~18, the antibiotic is switched on at half time; an antibiotic on the anaerobes lowers the stress most.'' & Fritsch の Fig.~18 と同じく途中から。嫌気性菌に効く薬が一番効く。\\
 12--14 & 比較の表と提案 & ``I propose (a) as the basis, (c) as its extension, and (b) as a comparison.'' & (a) を基本、(c) を発展、(b) は比較。\\
