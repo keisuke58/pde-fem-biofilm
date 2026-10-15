@@ -89,9 +89,29 @@ compression and the tangent is indefinite (geometric stiffness), so the test rai
 run does. F-bar (de Souza Neto et al. 1996) was tried first and dropped: same residual check, but erratic
 Newton convergence in this test.
 
+Stress output: with VARIABLES = 128 the element writes von Mises stress and pressure (Cauchy, pressure positive
+in compression) per Gauss point to SVARS(113:128). Check: fully constrained uniform growth gives vM = 0 and
+p = 3 K xi phi^2 (small strain exactly, finite strain 2 % lower at xi = 0.01). The mean-dilatation tangent is now
+in closed form (against central differences 5.8e-10, 9.5e-11 at displacement gradients about 0.3).
+
+3D seed with the stresses (`emulate_abaqus.py --seed n [--nu 0.49] [--md]`, finite strain, E = 1; biofilm =
+elements with phi > 0.5):
+
+| case | edge 30 deg, 8^3 | vM mean, 8^3 | edge 30 deg, 16^3 | vM mean, 16^3 |
+|---|---|---|---|---|
+| nu = 0.3 | 0.0141 | 0.0130 | 0.0132 | 0.0144 |
+| nu = 0.49, fully integrated | 0.0154 | **0.0232** | 0.0150 | 0.0201 |
+| nu = 0.49, mean dilatation | 0.0184 | 0.0134 | 0.0156 | 0.0163 |
+
+With nu = 0.49 the fully integrated element puts spurious pressure into the stress: the von Mises mean is
+73 % (8^3) and 23 % (16^3) above the mean dilatation. The mean-dilatation vM rises with refinement as the edge
+is resolved, as the thesis's 8^3 to 24^3 study of the element does. For the Keio Abaqus runs with a UMAT at
+nu = 0.49 this means hybrid elements (C3D8H), not C3D8.
+
 Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, the fixed-form point model and the
 free-form element in one file, joined by `!DEC$ FREEFORM` (Intel Fortran). Instructions for IKMHIWI03:
 `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
 
-Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column); a closed-form
-tangent for the mean dilatation; 3D runs with nu = 0.49.
+Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column); Abaqus cannot
+print a user element's state variables, so the stresses there need a dummy overlay mesh or a file written by
+the element.

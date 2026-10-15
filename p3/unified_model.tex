@@ -493,6 +493,7 @@ free growth $\mathbf u=(\alpha-1)\mathbf X$ & mechanics residual $2\times10^{-21
 3D seed, $16^3$, small strain, against the finite-difference 3D model ($\lambda=0$) & $\phi$ at the
 centre $0.778$ / $0.779$; edge $0.0135$ / $0.0126$; antibiotic $-23\,\%$ / $-24\,\%$\\
 finite against small strain, $8^3$ & edge $0.0141$ against $0.0143$ ($\alpha-1\approx0.07$)\\
+$\nu=0.49$, 3D seed, von Mises mean ($8^3$ / $16^3$) & fully integrated $0.0232$ / $0.0201$, mean dilatation $0.0134$ / $0.0163$ ($\nu=0.3$: $0.0130$ / $0.0144$)\\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -551,9 +552,10 @@ point model's energy & one choice\\
 \end{tabularx}
 \end{center}
 
-\noindent Open: $\beta_s$ in 3D; 3D runs of the element with $\nu=0.49$ (volumetric locking is
-removed by the mean dilatation: in a bilayer strip the tip deflection is $1.07$ times beam theory
-on a coarse mesh, against $0.67$ fully integrated; its tangent is still by differences); nutrient diffusion in the current configuration; the run inside
+\noindent Open: $\beta_s$ in 3D (volumetric locking at $\nu=0.49$ is removed by the mean
+dilatation: in a bilayer strip the tip deflection is $1.07$ times beam theory on a coarse mesh,
+against $0.67$ fully integrated, and in the 3D seed the fully integrated element overstates the
+von Mises stress by $23\,\%$ even at $16^3$); nutrient diffusion in the current configuration; the run inside
 Abaqus; the limit $\phi\to0$ of the composition equations (regularised by
 $\varepsilon$); existence and uniqueness (not attempted); a reader other than me; the overlap
 with F.\ Klempt's unpublished two-species work (only published sources were used; to be
