@@ -23,6 +23,8 @@ Sets (the order is the instruction's):
       p_ref 2.4e-10 and 2.4e-9 MPa. Exe F:\biofilm_upf_cal5gp (cal5sc plus
       that form in growth_from_phi.f), so:
       -Set A7 -WorkDir F:\biofilm_upf_cal5gp -After A8 -AfterLog F:\biofilm_upf_cal5sc\_cal5.log
+  -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
+  restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
   -AfterLog when the other set logs in another work dir).
 Minutes per run (IKMHIWI03, -np 1): 8^3 1-2, 16^3 (a) 10 / (c) 23, 24^3 about
@@ -35,6 +37,7 @@ param(
     [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
+    [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
     [string]$WorkDir = 'F:\biofilm_upf_cal5sc',
     [switch]$DryRun,
     [switch]$Worker
@@ -95,7 +98,8 @@ $sets = @{
         @{ n = '(c) g(p) p_ref 2.4e-9 MPa'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-ExtraProps', '49=2.4e-9,50=2', '-Tag', 'k0882_gp10') }
     )
 }
-$runs = $sets[$Set]
+$runs = @($sets[$Set])
+if ($From -gt 1) { $runs = @($runs[($From - 1)..($runs.Count - 1)]) }
 
 if (-not $Worker) {
     $tot = ($runs | ForEach-Object { $_.m } | Measure-Object -Sum).Sum
@@ -105,6 +109,7 @@ if (-not $Worker) {
     $cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$PSCommandPath`" -Worker -Set $Set -WorkDir `"$WorkDir`""
     if ($After) { $cmd += " -After $After" }
     if ($AfterLog) { $cmd += " -AfterLog `"$AfterLog`"" }
+    if ($From -gt 1) { $cmd += " -From $From" }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
     Write-Output "started, PID $($r.ProcessId); log $log"
