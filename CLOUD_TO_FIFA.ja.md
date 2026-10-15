@@ -5,6 +5,21 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月15日 夜（UEL の 24³ と、Abaqus での確認。急がない）
+
+ANSYS（IKMHIWI03）と UEL の独立な比較（`p3/uel/README.md` の「Cross-code check with ANSYS」）で、シード内部の vM の差が
+8³ −2.7 %、16³ −1.2 % と縮んでいる。ANSYS は 24³・32³ で 6.5e−3 に収束した。UEL の 24³ がほしい（UEL は Linux 用なので
+IKMHIWI03 では回せない）。
+
+1. `git pull origin master`。UEL の共有ライブラリを作る（`p3/uel/driver.py` の docstring の 3 行。gfortran）。
+2. `python3 p3/uel/make_seed_inp.py 8 /tmp/sf`、
+   `BIOFILM_ECO_CASE=/tmp/sf/uel_eco.txt python3 p3/uel/seed_frozen_reference.py 24`（数時間かかるかもしれない。
+   nohup で。メモリが足りなければ止めて報告）。
+3. 出力 `p3/uel/results/seed_frozen_24.json` を `keio/uel-check` ブランチで push。報告に、シードの α − 1 平均と vM 平均、
+   半径 0.2 以内の要素の vM 平均（`elements` の重心から、中心 (0.5, 0.5, 0) からの距離 ≤ 0.2）を書く。
+   期待：半径 0.2 以内の vM は ANSYS の 24³ の 6.536e−3 と 1 % 程度で合う。
+4. 時間があれば、下の 10 月 15 日の項（Abaqus で柱とシード）も。
+
 ## 2026年10月15日（P3 の計算を Abaqus で：次に fifa を使うときに）
 
 `KEIO_SERVER_HANDOFF.ja.md` §7 を読む。急がない（11月以降でよい）。やること：
