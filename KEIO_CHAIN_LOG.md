@@ -571,3 +571,10 @@ Request: `CLOUD_TO_FIFA.ja.md`, entry of 15 Oct late night, item 1 (no computati
 - Frozen seed 24^3 (`p3/uel/results/seed_frozen_24.json`): vM mean over elements within 0.2 (3D) of (0.5, 0.5, 0) is 6.549e-3, ANSYS 24^3 6.536e-3 (+0.2 %). Seed (phi > 0.5, 420 elements): alpha - 1 8.70e-4, vM 5.093e-3, largest vM 1.345e-2 at (0.479, 0.646, 0.021).
 - Implant sector (`p3/uel/make_implant_uel_inp.py`, 2x6x8 elements, 90 degrees): Abaqus and the Python emulation agree to 4e-7 (alpha - 1) and 5e-7 (vM/E), also with `--bulge 1` (3.9e-7, 5.2e-7). Inner layer: alpha - 1 0.04634, vM/E 0.04775, largest vM/E 0.2728 at (r, theta, z) = (2.09, 67.5, 1.875). With `--bulge 1`: 0.04427, 0.04620, 0.2927 at (3.08, 67.5, 1.875).
 - Bug found and fixed in `unified_uel.f90`: the Gauss-point record (`uel_gp.txt`) was taken before `store_growth`, so its alpha - 1 was one increment behind (vM and pressure were not). Now taken after. The 8^3 seed in Abaqus still gives vM mean 0.01342, max 0.01577 (emulation 0.013419 / 0.015773).
+
+## 16 Oct 2026, fifa: Abaqus column and seed 8^3 (entry of 15 Oct, `KEIO_SERVER_HANDOFF.ja.md` section 7)
+
+Built with the corrected `unified_uel.f90` (Gauss-point record after the growth update). `abaqus job=... user=p3/uel/unified_uel_abaqus.for cpus=1 interactive`; linked and ran without error, no `/libs:dll` needed on Linux.
+- `uel_column` (20 elements): x = 0, NT11 0.77532, NT12 0.93565 (IKMHIWI03 0.7753, 0.9357).
+- `uel_seed8` (8^3, default options): elements with phi > 0.5: vM mean 0.01300, max 0.01637 (expected 0.01300 / 0.01637). alpha - 1 mean 0.03571.
+Output: `p3/uel/results/abaqus_fifa/` (`.sta` and the Gauss-point files, gzip).
