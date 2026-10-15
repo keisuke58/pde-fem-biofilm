@@ -1,6 +1,6 @@
 1
 
-   Abaqus 2024                                  Date 15-Oct-2026   Time 15:52:52
+   Abaqus 2024                                  Date 15-Oct-2026   Time 16:18:51
    For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
 
 
@@ -102,17 +102,21 @@
   *BOUNDARY
   *UEL PROPERTY, ELSET=ALLE
   *STEP, NAME=INIT, AMPLITUDE=STEP
-  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP
   *STEP, NAME=INIT, AMPLITUDE=STEP
-  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP
   *STEP, NAME=INIT, AMPLITUDE=STEP
   *COUPLED TEMPERATURE-DISPLACEMENT
+  *CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL
+  *CONTROLS, PARAMETERS=TIME INCREMENTATION
   *BOUNDARY
   *END STEP
 
  ***WARNING: THE *ELEMENT OUTPUT OPTION IS NOT SUPPORTED FOR USER ELEMENTS
-  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP
   *COUPLED TEMPERATURE-DISPLACEMENT
+  *CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL
+  *CONTROLS, PARAMETERS=TIME INCREMENTATION
   *BOUNDARY, OP=NEW
   *NODE PRINT, NSET=PROBE, FREQUENCY=1000
   *END STEP
@@ -122,7 +126,7 @@
   *COUPLED TEMPERATURE-DISPLACEMENT
   *BOUNDARY
   *END STEP
-  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP
   *COUPLED TEMPERATURE-DISPLACEMENT
   *BOUNDARY, OP=NEW
   *END STEP
@@ -147,12 +151,12 @@
 
      JOB TIME SUMMARY
        USER TIME (SEC)      =     0.30    
-       SYSTEM TIME (SEC)    =     0.10    
-       TOTAL CPU TIME (SEC) =     0.40    
+       SYSTEM TIME (SEC)    =      0.0    
+       TOTAL CPU TIME (SEC) =     0.30    
        WALLCLOCK TIME (SEC) =            1
 1
 
-   Abaqus 2024                                  Date 15-Oct-2026   Time 15:52:58
+   Abaqus 2024                                  Date 15-Oct-2026   Time 16:18:55
    For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
 
      unified two-level model, user element, 3D seed, 16^3 elements                             STEP    1  INCREMENT    1
@@ -214,7 +218,7 @@
       (6) USING "*RESTART, WRITE" CAN GENERATE A LARGE AMOUNT OF DATA WRITTEN IN THE WORK DIRECTORY.
 1
 
-   Abaqus 2024                                  Date 15-Oct-2026   Time 15:53:00
+   Abaqus 2024                                  Date 15-Oct-2026   Time 16:18:57
    For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
 
      unified two-level model, user element, 3D seed, 16^3 elements                             STEP    2  INCREMENT    1
@@ -400,6 +404,6 @@
 
      JOB TIME SUMMARY
        USER TIME (SEC)      =      37.    
-       SYSTEM TIME (SEC)    =      3.1    
-       TOTAL CPU TIME (SEC) =      40.    
-       WALLCLOCK TIME (SEC) =           47
+       SYSTEM TIME (SEC)    =      3.7    
+       TOTAL CPU TIME (SEC) =      41.    
+       WALLCLOCK TIME (SEC) =           48
