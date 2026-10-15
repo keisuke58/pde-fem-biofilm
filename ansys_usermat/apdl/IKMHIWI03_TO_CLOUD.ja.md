@@ -789,4 +789,38 @@ unified_uel_abaqus.for(487): error #5082: Syntax error, found '&' when expecting
 Abaqus 2024 の `compile_fortran` は `ifort /c /fpp /extend-source ...`。`/fpp` の前処理が、ファイルを固定形式として読み、
 `!DEC$ FREEFORM` から後の自由形式の行（行末の `&` の継続）を前の行につないでしまっているように見える
 （`biofilm_py_bridge` に `ied_uel&` がついている）。そのあとのエラーは、1096 行目などで `NN`、`NSV`、`NGP` が
-宣言式に使えない（モジュールが壊れたため）。直しはクラウドに任せる（指示 5 のとおり）。案：全体を固定形式にする（`/fpp` も `/extend-source` もそのまま通る）。他の 4 本も同じソースなので回していない。
+宣言式に使えない（モジュールが壊れたため）。直しはクラウドに任せる（指示 5 のとおり）。案：全体を固定形式にする（`/fpp` も `/extend-source` もそのまま通る）。
+参考：Oliver の `Ussfin` の頭の注記にも、固定形式の `.F` の中で `!DEC$ FREEFORM` / `NOFREEFORM` で自由形式の部分を挟むと、
+コンパイルは通るのに実行時に壊れた（PARDISO の接続）、とある。そこでは自由形式の部分を別にコンパイルして `.mod` を `USE` した。
+
+### A-9：場の広がりに (c) の成長を渡せるか（読むだけ、変更も計算もしていない）
+
+読んだもの：`F:\biofilm_upf_cal5sc` の Oliver の要素のソース（`Ussfin_P21-V21_Conection_Test.F`、`USolBeg_P21-V21_Conection_Test.F`、
+`Usermat_P21-V21_v222.F`、`userdata_P21-V21_Conection_Test.f`、`usercm.inc`）。中身はここに写さず、場所と仕組みだけ書く。
+
+1. **場の α（locbio）の置き場所と積分。**
+   - 場の値はすべて、ANSYS のメモリに取った 1 本の共有配列（`userdata` の `InitVals`、`fAnsMemAlloc`）に置かれ、
+     `GetVals` / `SetVals`（位置 = オフセット + 番号）で読み書きされる。オフセットは `USolBeg` で順に決まり、
+     共通ブロック `/usercm/`（`usercm.inc`）で全ルーチンに見える。
+   - locbio は `ofs_dp_bioloc1_n`（と `_n1`、種 2〜5 も同じ）、長さ nTot = nGP + 表面の節点数。番号 1〜nGP が積分点
+     （ID = (要素 − 1)·要素あたりの積分点数 + kDomIntPt、`Usermat` と同じ式）、その後ろが表面の点。
+   - `USSFin` の点ごとのループの中で、φ の更新（Eq. 34）の源の項が `KLocal1 × bioloc1_n` を使い、そのあと
+     bioloc1 自体を `bioloc1_n = bioloc1_n1 + dt · KLocal1 · bio1_n1`（Eq. 36、陽解法）で進める。最後に `SetVals` で書き戻す。
+     USolBeg で bioloc の初期値は 1 の側（Klempt の α、1 から始まる）。
+2. **USSFin から USERMAT の状態変数は読めるか。**
+   - `USSFin` は要素や積分点の引数を持たず、ustatev には直接触れない（`get_ElmData` の宣言はあるが、状態変数を読む使い方はない）。
+   - ただし **逆向きの受け渡しはもうある：** `Usermat` が積分点ごとに変形勾配 F と座標を `SetVals(ofs_dp_F_n + 9(ID−1))`
+     などで共有配列に書き、`USSFin` が `GetVals(ofs_dp_F_n, 9·nGP)` で読んでいる。
+   - **一番小さい変更：** 同じ仕組みで α 用の場所を 1 つ足す。
+     (i) `usercm.inc`（2 つあるコピーの両方）に `ofs_dp_alphaC_n` を足す、
+     (ii) `USolBeg` でオフセットを nGP 分取る（`InitVals` の前）、
+     (iii) 私たちの fragment で `ustatev(84) = ALPHA_NEW` の直後に `SetVals(ofs_dp_alphaC_n + ID − 1)` で書く、
+     (iv) `USSFin` でそれを読み、積分点（ID ≤ nGP）の源の項の bioloc1_n のかわりに 1 + α を使う（表面の点はそのまま）。
+     ファイルや ANSYS の関数（`*GET` など）は要らない。単位に注意：USERMAT の α は α − 1、bioloc は 1 から始まる α。
+3. **呼ばれる順番。**
+   - 1 つの部分刻み（substep）の中で、まず平衡の反復ごとに `Usermat` が呼ばれ、そのとき場の値（bio、bioloc、栄養）は
+     前の部分刻みの `USSFin` が書いた値を読む。収束したあとに `USSFin`（「部分刻みの後に呼ばれる」）が 1 回呼ばれ、
+     自分の細かい時間刻み（`DO WHILE` の内側のループ）で場を進め、`_n1 ← _n` を入れ替え、`SetVals` で書き戻す。
+   - したがって (iii) で書いた α は、同じ部分刻みの `USSFin` が読む（最後の平衡反復の値 = 収束した値）。場が受け取る α は
+     「この部分刻みの終わり」の値で、USERMAT が次の部分刻みで見る φ はその場の更新の後の値になる（1 刻みずれた陽解法の結合で、
+     今の F の受け渡しと同じ）。他の 4 本も同じソースなので回していない。
