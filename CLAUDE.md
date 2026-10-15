@@ -112,9 +112,24 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   the cal5 build plus alpha* per point (prop(52:54), off by default; same
   results as `F:\biofilm_upf_cal5` to the last digit); `F:\biofilm_upf_cal5gp`
   = cal5sc plus g = 1/(1 + p/p_ref) on the growth (prop(49), prop(50) = 2).
-  Run lists: `ansys_usermat/apdl/run_scheme_c_chain.ps1 -Set A6|B|A8|A7`
-  (detached, one ANSYS at a time via `-After`), single runs
-  `run_calibrated.ps1`.
+  `F:\biofilm_upf_cal5pm` = cal5gp plus mode 10 (prop(28) = 10, growth
+  from the point model's own increase, A-10).
+  Run lists: `ansys_usermat/apdl/run_scheme_c_chain.ps1 -Set A6|B|A8|A7|A10|B2|B3`
+  (detached, one ANSYS at a time via `-After`/`-AfterLog`, `-From n` to
+  resume a set), single runs `run_calibrated.ps1`.
+  **MAP choice (15 Oct):** `run_calibrated.ps1` takes the latest
+  `final_theta_MAP/<C>.json` of Tmcmc202601 unless `<WorkDir>\map_pin.txt`
+  (lines `CH=<40-hex sha>`) or `-MapSha C=<sha>` pins it; `-MapSha latest`
+  ignores the pin. cal5sc/cal5gp/cal5pm are pinned to the old CH MAP
+  (2d8d99e) so A-6..A-10 stay comparable; the raw-data CH MAP (6e18e0b)
+  runs carry the tag `_raw`. The Day-1 state comes from `phi_init.json` at
+  the MAP's own commit (older commits without it: the calibration
+  `config.json`).
+  **After a PC restart** (14 Oct 21:59, Windows update): the detached
+  chains are gone. A solve that reached the end can be post-processed from
+  its `.rst` (a `/POST1` + `FILE,<job>,rst` deck with the three
+  `post_*.mac`); resume a set with `-From n`; delete a killed run's
+  leftover `<job>.lock` or ANSYS exits at once without a `.err`.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -130,7 +145,7 @@ this machine's specific workflow.
 | Script | What it does |
 |---|---|
 | `dev-env.ps1` | Dot-source (`. .\dev-env.ps1`) to put MSYS64 git, per-user Python, and portable gfortran on `PATH` for the current PowerShell call — shell state doesn't persist between tool calls in this harness, so this must be re-sourced every time a fresh call needs those tools. |
-| `run_abaqus.ps1` | Runs Abaqus jobs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. |
+| `run_abaqus.ps1` | Runs Abaqus jobs from `F:\abaqus_work\<jobname>`, auto-initializes the Intel Fortran env if needed, reports PASS/FAIL from the `.sta` file. `-LibsDll` writes a job-local `abaqus_v6.env` (`/libs:dll /threads`), needed when the user source does Fortran OPEN/WRITE (else LNK2005 libifcoremt vs libifcoremd). Run it from a shell without `dev-env.ps1` dot-sourced (its msys64 PATH breaks the ifort setup). |
 | `ansys_usermat/apdl/link_v222.ps1` | Non-interactive compile+link of a custom v222 UPF `ANSYS.exe`, bypassing `ANSCUST.BAT`'s interactive prompts entirely (confirmed 2026-09-02 on Oliver's 11-file pool). Bakes in three environment gotchas found the hard way: `vcvars64.bat` needs `vswhere.exe` on `PATH` first or it silently leaves `LIB` unset; chained `cmd /c "call ... && set LIB=...%LIB%"` expands `%LIB%` before the `call` runs, so it must be a real multi-line `.bat` file; and a stale `ANSYS.exe`/`.lib`/`.exp`/`.map` must be deleted before every relink or `ansys.lrf`'s `*.lib` wildcard collides with the new output. `.\ansys_usermat\apdl\link_v222.ps1 -WorkDir F:\biofilm_upf_link`. |
 | `run_tests.ps1` | `pytest tests/`, excluding the two confirmed environment-limited cases (missing `scipy`, missing POSIX headers). `-All` also runs the ANSYS/Abaqus crosscheck harness. |
 | `run_notebooks.ps1` | Re-executes every `*.ipynb` in the repo (`nbconvert --execute --inplace`) and reports pass/fail — catches a verification notebook silently going stale when code/data under it changes. |
