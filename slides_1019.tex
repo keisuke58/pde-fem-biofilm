@@ -265,10 +265,10 @@ Eq.\ 36 uses the amount: $\dot\alpha=k_\alpha\phi$.\\
 Here: $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\phi_i\psi_i$,
 so lysis in the point model lowers the growth.\\[2pt]
 $\kappa$ chosen so that the mean growth of the seed equals Eq.\ 36
-(an assumption, not from a paper).
+(an assumption, not from a paper; Appendix E).
 \end{column}
 \begin{column}{0.58\textwidth}
-\scriptsize\setlength\tabcolsep{3pt}
+\scriptsize\setlength\tabcolsep{2pt}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 seed means, $T^*=1$ & Eq.\ 36 & living & diff.\\
@@ -520,6 +520,51 @@ departures from Eq.\ 34/35 as printed); nutrient in a 2\,$\mu$m corner block;
 one time scale per run ($T^*=t/t_{\rm ref}$, Sec.\ 4). Curves agree; the
 shape agrees in kind (egg towards the corner) but is more slender, also with
 other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix E: growth from the living biomass, implementation and runs}
+\begin{columns}[T]
+\begin{column}{0.46\textwidth}
+\scriptsize
+\textbf{Change in the material routine} (Appendix C, line 5 only):
+\[
+\ln\alpha_{n+1}=\ln\alpha_n+\kappa\,\phi_{3D}\!\int_{t_n}^{t_{n+1}}\!\sum_i\phi_i\psi_i\,dt
+\]
+\begin{itemize}
+  \item same form as Klempt 2024 Table 1 (increment of $\ln\alpha$); $\phi_{3D}\in[0,1]$
+        marks where the biofilm is
+  \item point model at each Gauss point runs on its own (not scaled to $\phi_{3D}$),
+        started when $\phi_{3D}\ge\phi_{\min}$ from the calibrated Day-1 state
+  \item integral over the point model's own substeps, clock $s$ per unit $T^*$
+  \item point-model state kept as state variables; the element itself unchanged
+  \item $\kappa=8.14\cdot10^{-3}$: the mean $\alpha-1$ of the seed at $T^*=1$ equals Eq.\ 36
+        (difference $-0.003\,\%$); assumed, not from a paper
+\end{itemize}
+\end{column}
+\begin{column}{0.52\textwidth}
+\scriptsize\setlength\tabcolsep{2pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+seed means, $T^*=1$ & Eq.\ 36 & living & diff.\\
+\midrule
+$\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
+von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
+von Mises, $16^3$; $24^3$ & & & $-8.0$; $-7.8\,\%$\\
+antibiotic vs.\ none, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
+\bottomrule
+\end{tabular}\\[3pt]
+five species calibrated (CH), $E=10$ Pa, $\nu=0.49$; $16^3$, $24^3$ and the antibiotic
+case with the previous calibration.\\[4pt]
+\begin{itemize}
+  \item the difference is not in the amount but in how the growth is spread inside the seed
+        (von Mises$/(\alpha-1)$ 0.69 $\to$ 0.64 Pa)
+  \item $\alpha-1$ and the stress scale with $\kappa$
+  \item antibiotic: in Eq.\ 36 only the composition changes; here the growth drops
+        (same sensitivity for all species, strength assumed)
+\end{itemize}
 \end{column}
 \end{columns}
 \end{frame}
