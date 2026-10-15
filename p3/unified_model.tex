@@ -331,7 +331,22 @@ Day~21). Antibiotic parameters are assumed: either the same susceptibility for a
 \paragraph{1D, two-level model with the growth reaction.} Seed $\phi=0.9$ on $x\le0.25$,
 outer liquid $10^{-4}$, nutrient supplied at $x=1$; $\lambda=1$, $\beta=\beta_s=0.02$,
 $L_0=0.7$, $Y=1$, $c_{\rm stop}=0.1$, $D=1$.
-%FUEL1D%
+\begin{center}\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& $\alpha-1$ at $x=0$, $0.2$ & $c$ at $x=0$, $0.25$ & $\phi(0)$ & living share at $x=0$\\
+\midrule
+no antibiotic & $0.137$, $0.118$ & $0.938$, $0.949$ & $0.77$ & $0.53$\\
+antibiotic from $T^*=0.5$ (all species) & $0.116$, $0.102$ & $0.951$, $0.959$ & $0.67$ & $0.31$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The antibiotic lowers the growth by $15\,\%$, the living share from $0.53$ to $0.31$ and the
+phase itself, and leaves more nutrient. With a closed boundary the discrete total energy
+decreases at every step (largest change $-8.6\times10^{-3}$). The edge in the current
+configuration (Proposition~\ref{prop:front}, $L_0=3$) moves from $0.25$ to $0.80$ by $T^*=1$
+with a rich supply ($c_{\rm stop}=0.1$), to $0.35$ with a poor one ($c_{\rm stop}=0.5$), and to
+$0.62$ with the antibiotic from $T^*=0.5$.
 
 \paragraph{1D, sensitivity.} With the growth energy of Remark~\ref{rem:catalyst} in place of
 the reaction ($k_\alpha=2$ as base), one parameter at a time, $T^*=1$.
