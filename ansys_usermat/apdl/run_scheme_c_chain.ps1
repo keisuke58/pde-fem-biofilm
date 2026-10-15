@@ -26,6 +26,9 @@ Sets (the order is the instruction's):
   A10 growth from the point model's own increase, no kappa (mode 10): a check
       run without the local nutrient, then CH and CS. Exe F:\biofilm_upf_cal5pm:
       -Set A10 -WorkDir F:\biofilm_upf_cal5pm -After A7 -AfterLog F:\biofilm_upf_cal5gp\_cal5.log
+  B2  15 Oct, the CH MAP changed during B: the two B runs that took the new MAP
+      again with the old one (map_pin.txt), then 8^3 (a), (c) with the new MAP:
+      -Set B2 -After A10 -AfterLog F:\biofilm_upf_cal5pm\_cal5.log
   -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
   restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
@@ -37,7 +40,7 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
     [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
@@ -102,6 +105,15 @@ $sets = @{
         @{ n = 'CH mode 10 check (no local nutrient)'; m = 2; a = @('-Conditions', 'CH', '-Pm10', '-ExtraProps', '33=0', '-Tag', 'chk') },
         @{ n = 'CH mode 10'; m = 2; j = 'w8_CH_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CH', '-Pm10') },
         @{ n = 'CS mode 10'; m = 2; j = 'w8_CS_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CS', '-Pm10') }
+    )
+    # 15 Oct: the CH MAP was replaced by the raw-data one (Tmcmc202601 6e18e0b)
+    # during B; two B runs took it. Redo them with the old MAP (map_pin.txt in the
+    # work dir), then the 8^3 baselines (a) and (c) with the new MAP (-MapSha latest)
+    B2 = @(
+        @{ n = 'CH 16^3 (a) antibiotic, old MAP (redo)'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-AlphaStar', '0.32') + $b1 + @('-Tag', 'ab') },
+        @{ n = 'CH 16^3 (c) kappa 2.8, old MAP (redo)'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-Kappa', '2.8', '-Tag', 'k2800') },
+        @{ n = 'CH 8^3 (a), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 8^3 (c), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
     )
     # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
     A7 = @(
