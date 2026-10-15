@@ -1,0 +1,347 @@
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:53:53
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+
+
+                         The Abaqus Software is a product of:
+
+                           Dassault Systemes SIMULIA Corp.
+                           1301 Atwood Avenue, Suite 101W
+                              Johnston, RI 02919, USA
+ 
+
+
+                   The Abaqus Software is available only under license
+                   from Dassault Systemes or its subsidiary and may be
+                   used or reproduced only in accordance with the terms
+                   of such license.
+ 
+                          On machine ikmhiwi03 
+                          you are authorized to run
+                          Abaqus/Standard until 28-Feb-2027
+
+                          Your site id is: 200000000013832 
+
+
+ 
+                    For assistance or any other information you may
+                    obtain contact information for your local office
+                    from the world wide web at:
+
+                      https://www.3ds.com/products-services/simulia/services-support/
+
+ 
+                * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+                *                                                         * 
+                *                   *****************                     * 
+                *                   *  N O T I C E  *                     * 
+                *                   *****************                     * 
+                *                                                         * 
+                *                                                         * 
+                *                       Abaqus 2024                       * 
+                *                                                         * 
+                *       BUILD ID: 2023_09_21-14.55.25 RELr426 190762      * 
+                *                                                         * 
+                *                                                         * 
+                *  Please make sure you are using                         * 
+                *  release Abaqus 2024 manuals                            * 
+                *  plus the notes accompanying this release.              * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *   This program may not be used for commercial purposes  * 
+                *           without payment of a commercial fee.          * 
+                *                                                         * 
+                * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+
+ 
+
+
+
+     PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   *******************************************************
+
+
+     END PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   ***********************************************************
+
+
+
+
+     OPTIONS BEING PROCESSED
+   ***************************
+
+
+  *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128
+  *HEADING
+          unified two-level model, user element, 3D seed, 8^3 elements                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+  *ELEMENT, TYPE=U1, ELSET=ALLE
+  *ELEMENT, TYPE=C3D8T, ELSET=DUMMY
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *MATERIAL, NAME=DUMMY
+  *ELASTIC
+  *CONDUCTIVITY
+  *SPECIFIC HEAT
+
+ ***WARNING: THE ABSOLUTE ZERO TEMPERATURE HAS NOT BEEN SPECIFIED FOR COMPUTING 
+             INTERNAL THERMAL ENERGY USING THE ABSOLUTE ZERO PARAMETER ON THE 
+             *PHYSICAL CONSTANTS OPTION. A DEFAULT VALUE OF 0.0000 WILL BE 
+             ASSUMED.
+  *DENSITY
+  *SOLID SECTION, ELSET=DUMMY, MATERIAL=DUMMY
+  *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128
+  *SOLID SECTION, ELSET=DUMMY, MATERIAL=DUMMY
+  *BOUNDARY
+  *BOUNDARY, OP=NEW
+  *BOUNDARY
+  *UEL PROPERTY, ELSET=ALLE
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY
+  *END STEP
+
+ ***WARNING: THE *ELEMENT OUTPUT OPTION IS NOT SUPPORTED FOR USER ELEMENTS
+  *STEP, NAME=GROW, INC=1000
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY, OP=NEW
+  *NODE PRINT, NSET=PROBE, FREQUENCY=1000
+  *END STEP
+
+ ***WARNING: THE *ELEMENT OUTPUT OPTION IS NOT SUPPORTED FOR USER ELEMENTS
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY
+  *END STEP
+  *STEP, NAME=GROW, INC=1000
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY, OP=NEW
+  *END STEP
+
+
+
+                            P R O B L E M   S I Z E
+
+
+          NUMBER OF ELEMENTS IS                                  1024
+          NUMBER OF NODES IS                                      729
+          NUMBER OF NODES DEFINED BY THE USER                     729
+          TOTAL NUMBER OF VARIABLES IN THE MODEL                 3645
+          (DEGREES OF FREEDOM PLUS MAX NO. OF ANY LAGRANGE MULTIPLIER
+           VARIABLES. INCLUDE *PRINT,SOLVE=YES TO GET THE ACTUAL NUMBER.)
+
+
+
+                              END OF USER INPUT PROCESSING
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =     0.10    
+       SYSTEM TIME (SEC)    =      0.0    
+       TOTAL CPU TIME (SEC) =     0.10    
+       WALLCLOCK TIME (SEC) =            1
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:53:56
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+     unified two-level model, user element, 3D seed, 8^3 elements                              STEP    1  INCREMENT    1
+                                                                                          TIME COMPLETED IN THIS STEP   0.00    
+
+
+                        S T E P       1     C O U P L E D - T E M P E R A T U R E - D I S P L A C E M E N T   A N A L Y S I S
+
+
+                                                                                          
+
+          FIXED TIME INCREMENTS
+          TIME INCREMENT IS                                    1.000E-08
+          TIME PERIOD IS                                       1.000E-08
+
+          CREEP AND SWELLING EFFECTS ARE OMITTED IN THIS STEP
+          THE RATE DEPENDENCY WILL BE CONSIDERED IN THIS STEP
+
+          CREEP AND SWELLING EFFECTS WILL BE IGNORED.
+
+          UNSYMMETRIC MATRIX STORAGE AND SOLUTION WILL BE USED
+  
+                   M E M O R Y   E S T I M A T E
+  
+ PROCESS      FLOATING PT       MINIMUM MEMORY        MEMORY TO
+              OPERATIONS           REQUIRED          MINIMIZE I/O
+             PER ITERATION           (MB)               (MB)
+  
+     1          7.97E+08               20                 62
+  
+ NOTE:
+      (1) SINCE ABAQUS DOES NOT PRE-ALLOCATE MEMORY AND ONLY ALLOCATES MEMORY AS NEEDED DURING THE ANALYSIS,
+          THE MEMORY REQUIREMENT PRINTED HERE CAN ONLY BE VIEWED AS A GENERAL GUIDELINE BASED ON THE BEST
+          KNOWLEDGE AVAILABLE AT THE BEGINNING OF A STEP BEFORE THE SOLUTION PROCESS HAS BEGUN.
+      (2) THE ESTIMATE IS NORMALLY UPDATED AT THE BEGINNING OF EVERY STEP. IT IS THE MAXIMUM VALUE OF THE
+          ESTIMATE FROM THE CURRENT STEP TO THE LAST STEP OF THE ANALYSIS, WITH UNSYMMETRIC SOLUTION TAKEN
+          INTO ACCOUNT IF APPLICABLE. 
+      (3) SINCE THE ESTIMATE IS BASED ON THE ACTIVE DEGREES OF FREEDOM IN THE FIRST ITERATION OF THE 
+          CURRENT STEP, THE MEMORY ESTIMATE MIGHT BE SIGNIFICANTLY DIFFERENT THAN ACTUAL USAGE FOR 
+          PROBLEMS WITH SUBSTANTIAL CHANGES IN ACTIVE DEGREES OF FREEDOM BETWEEN STEPS (OR EVEN WITHIN
+          THE SAME STEP). EXAMPLES ARE: PROBLEMS WITH SIGNIFICANT CONTACT CHANGES, PROBLEMS WITH MODEL
+          CHANGE, PROBLEMS WITH BOTH STATIC STEP AND STEADY STATE DYNAMIC PROCEDURES WHERE ACOUSTIC 
+          ELEMENTS WILL ONLY BE ACTIVATED IN THE STEADY STATE DYNAMIC STEPS.
+      (4) FOR MULTI-PROCESS EXECUTION, THE ESTIMATED VALUE OF FLOATING POINT OPERATIONS FOR EACH PROCESS
+          IS BASED ON AN INITIAL SCHEDULING OF OPERATIONS AND MIGHT NOT REFLECT THE ACTUAL FLOATING 
+          POINT OPERATIONS COMPLETED ON EACH PROCESS. OPERATIONS ARE DYNAMICALLY BALANCED DURING EXECUTION, 
+          SO THE ACTUAL BALANCE OF OPERATIONS BETWEEN PROCESSES IS EXPECTED TO BE BETTER THAN THE ESTIMATE
+          PRINTED HERE.
+      (5) THE UPPER LIMIT OF MEMORY THAT CAN BE ALLOCATED BY ABAQUS WILL IN GENERAL DEPEND ON THE VALUE OF
+          THE "MEMORY" PARAMETER AND THE AMOUNT OF PHYSICAL MEMORY AVAILABLE ON THE MACHINE. PLEASE SEE
+          THE "ABAQUS ANALYSIS USER'S MANUAL" FOR MORE DETAILS. THE ACTUAL USAGE OF MEMORY AND OF DISK
+          SPACE FOR SCRATCH DATA WILL DEPEND ON THIS UPPER LIMIT AS WELL AS THE MEMORY REQUIRED TO MINIMIZE
+          I/O. IF THE MEMORY UPPER LIMIT IS GREATER THAN THE MEMORY REQUIRED TO MINIMIZE I/O, THEN THE ACTUAL
+          MEMORY USAGE WILL BE CLOSE TO THE ESTIMATED "MEMORY TO MINIMIZE I/O" VALUE, AND THE SCRATCH DISK
+          USAGE WILL BE CLOSE-TO-ZERO; OTHERWISE, THE ACTUAL MEMORY USED WILL BE CLOSE TO THE PREVIOUSLY
+          MENTIONED MEMORY LIMIT, AND THE SCRATCH DISK USAGE WILL BE ROUGHLY PROPORTIONAL TO THE DIFFERENCE
+          BETWEEN THE ESTIMATED "MEMORY TO MINIMIZE I/O" AND THE MEMORY UPPER LIMIT. HOWEVER ACCURATE
+          ESTIMATE OF THE SCRATCH DISK SPACE IS NOT POSSIBLE.
+      (6) USING "*RESTART, WRITE" CAN GENERATE A LARGE AMOUNT OF DATA WRITTEN IN THE WORK DIRECTORY.
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:53:57
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+     unified two-level model, user element, 3D seed, 8^3 elements                              STEP    2  INCREMENT    1
+                                                                                          TIME COMPLETED IN THIS STEP   0.00    
+
+
+                        S T E P       2     C O U P L E D - T E M P E R A T U R E - D I S P L A C E M E N T   A N A L Y S I S
+
+
+                                                                                          
+
+          FIXED TIME INCREMENTS
+          TIME INCREMENT IS                                    3.958E-03
+          TIME PERIOD IS                                       0.237    
+
+          CREEP AND SWELLING EFFECTS ARE OMITTED IN THIS STEP
+          THE RATE DEPENDENCY WILL BE CONSIDERED IN THIS STEP
+
+          CREEP AND SWELLING EFFECTS WILL BE IGNORED.
+
+          UNSYMMETRIC MATRIX STORAGE AND SOLUTION WILL BE USED
+  
+                   M E M O R Y   E S T I M A T E
+  
+ PROCESS      FLOATING PT       MINIMUM MEMORY        MEMORY TO
+              OPERATIONS           REQUIRED          MINIMIZE I/O
+             PER ITERATION           (MB)               (MB)
+  
+     1          7.97E+08               20                 62
+  
+ NOTE:
+      (1) SINCE ABAQUS DOES NOT PRE-ALLOCATE MEMORY AND ONLY ALLOCATES MEMORY AS NEEDED DURING THE ANALYSIS,
+          THE MEMORY REQUIREMENT PRINTED HERE CAN ONLY BE VIEWED AS A GENERAL GUIDELINE BASED ON THE BEST
+          KNOWLEDGE AVAILABLE AT THE BEGINNING OF A STEP BEFORE THE SOLUTION PROCESS HAS BEGUN.
+      (2) THE ESTIMATE IS NORMALLY UPDATED AT THE BEGINNING OF EVERY STEP. IT IS THE MAXIMUM VALUE OF THE
+          ESTIMATE FROM THE CURRENT STEP TO THE LAST STEP OF THE ANALYSIS, WITH UNSYMMETRIC SOLUTION TAKEN
+          INTO ACCOUNT IF APPLICABLE. 
+      (3) SINCE THE ESTIMATE IS BASED ON THE ACTIVE DEGREES OF FREEDOM IN THE FIRST ITERATION OF THE 
+          CURRENT STEP, THE MEMORY ESTIMATE MIGHT BE SIGNIFICANTLY DIFFERENT THAN ACTUAL USAGE FOR 
+          PROBLEMS WITH SUBSTANTIAL CHANGES IN ACTIVE DEGREES OF FREEDOM BETWEEN STEPS (OR EVEN WITHIN
+          THE SAME STEP). EXAMPLES ARE: PROBLEMS WITH SIGNIFICANT CONTACT CHANGES, PROBLEMS WITH MODEL
+          CHANGE, PROBLEMS WITH BOTH STATIC STEP AND STEADY STATE DYNAMIC PROCEDURES WHERE ACOUSTIC 
+          ELEMENTS WILL ONLY BE ACTIVATED IN THE STEADY STATE DYNAMIC STEPS.
+      (4) FOR MULTI-PROCESS EXECUTION, THE ESTIMATED VALUE OF FLOATING POINT OPERATIONS FOR EACH PROCESS
+          IS BASED ON AN INITIAL SCHEDULING OF OPERATIONS AND MIGHT NOT REFLECT THE ACTUAL FLOATING 
+          POINT OPERATIONS COMPLETED ON EACH PROCESS. OPERATIONS ARE DYNAMICALLY BALANCED DURING EXECUTION, 
+          SO THE ACTUAL BALANCE OF OPERATIONS BETWEEN PROCESSES IS EXPECTED TO BE BETTER THAN THE ESTIMATE
+          PRINTED HERE.
+      (5) THE UPPER LIMIT OF MEMORY THAT CAN BE ALLOCATED BY ABAQUS WILL IN GENERAL DEPEND ON THE VALUE OF
+          THE "MEMORY" PARAMETER AND THE AMOUNT OF PHYSICAL MEMORY AVAILABLE ON THE MACHINE. PLEASE SEE
+          THE "ABAQUS ANALYSIS USER'S MANUAL" FOR MORE DETAILS. THE ACTUAL USAGE OF MEMORY AND OF DISK
+          SPACE FOR SCRATCH DATA WILL DEPEND ON THIS UPPER LIMIT AS WELL AS THE MEMORY REQUIRED TO MINIMIZE
+          I/O. IF THE MEMORY UPPER LIMIT IS GREATER THAN THE MEMORY REQUIRED TO MINIMIZE I/O, THEN THE ACTUAL
+          MEMORY USAGE WILL BE CLOSE TO THE ESTIMATED "MEMORY TO MINIMIZE I/O" VALUE, AND THE SCRATCH DISK
+          USAGE WILL BE CLOSE-TO-ZERO; OTHERWISE, THE ACTUAL MEMORY USED WILL BE CLOSE TO THE PREVIOUSLY
+          MENTIONED MEMORY LIMIT, AND THE SCRATCH DISK USAGE WILL BE ROUGHLY PROPORTIONAL TO THE DIFFERENCE
+          BETWEEN THE ESTIMATED "MEMORY TO MINIMIZE I/O" AND THE MEMORY UPPER LIMIT. HOWEVER ACCURATE
+          ESTIMATE OF THE SCRATCH DISK SPACE IS NOT POSSIBLE.
+      (6) USING "*RESTART, WRITE" CAN GENERATE A LARGE AMOUNT OF DATA WRITTEN IN THE WORK DIRECTORY.
+
+
+                                INCREMENT    60 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED   1.00    
+ STEP TIME COMPLETED       0.237    ,  TOTAL TIME COMPLETED        0.238    
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET PROBE
+  
+       NODE FOOT-  U1             U2             U3             NT11           NT12         
+            NOTE
+  
+        37      0.0000000E+00  0.0000000E+00  0.0000000E+00 -2.5883557E-03  1.0068532E-01 
+        38     -4.9457755E-03  0.0000000E+00 -7.9341883E-04 -3.0464954E-03  1.0070594E-01 
+        39     -5.4136361E-03  0.0000000E+00 -1.8156412E-03 -1.8838600E-03  1.0075418E-01 
+       118      0.0000000E+00  0.0000000E+00  0.0000000E+00  5.3266957E-02  1.0197481E-01 
+       119     -4.3557587E-03  0.0000000E+00 -9.6756728E-04  3.5803664E-02  1.0206404E-01 
+       120     -5.7376523E-03  0.0000000E+00 -1.5260854E-03  1.0082569E-02  1.0227142E-01 
+       199      0.0000000E+00  0.0000000E+00  0.0000000E+00  2.8911719E-01  1.0758601E-01 
+       200     -3.8585054E-03  0.0000000E+00 -3.4077097E-04  2.1558664E-01  1.0803869E-01 
+       201     -6.5537409E-03  0.0000000E+00 -5.9122341E-04  8.0604233E-02  1.0911524E-01 
+       280      0.0000000E+00  0.0000000E+00  0.0000000E+00  6.4304486E-01  1.2410942E-01 
+       281     -4.2945758E-03  0.0000000E+00  2.2852590E-03  5.0514261E-01  1.2565205E-01 
+       282     -7.3367313E-03  0.0000000E+00  3.3886727E-03  2.1546643E-01  1.2924315E-01 
+       361      0.0000000E+00  0.0000000E+00  0.0000000E+00  8.0325090E-01  1.6819774E-01 
+       362     -4.4099597E-03  0.0000000E+00  7.9710790E-03  6.4306754E-01  1.7162551E-01 
+       363     -5.8656713E-03  0.0000000E+00  8.5094118E-03  2.8895738E-01  1.7952109E-01 
+       442      0.0000000E+00  0.0000000E+00  0.0000000E+00  6.4304486E-01  2.6919867E-01 
+       443      3.3777192E-03  0.0000000E+00  1.3480496E-02  5.0514261E-01  2.7412917E-01 
+       444     -2.2968046E-03  0.0000000E+00  1.3280879E-02  2.1546643E-01  2.8495490E-01 
+       523      0.0000000E+00  0.0000000E+00  0.0000000E+00  2.8911719E-01  4.5139977E-01 
+       524      1.3545143E-02  0.0000000E+00  1.4594139E-02  2.1558664E-01  4.5557663E-01 
+       525      3.2149363E-04  0.0000000E+00  1.5270142E-02  8.0604233E-02  4.6479896E-01 
+       604      0.0000000E+00  0.0000000E+00  0.0000000E+00  5.3266957E-02  7.0711247E-01 
+       605      1.0520249E-02  0.0000000E+00  5.9554087E-03  3.5803664E-02  7.0893023E-01 
+       606      9.2811174E-04  0.0000000E+00  9.0340730E-03  1.0082569E-02  7.1264617E-01 
+       685      0.0000000E+00  0.0000000E+00  0.0000000E+00 -2.5883557E-03  1.0000000E+00 
+       686      2.0951340E-04  0.0000000E+00  2.0216588E-03 -3.0464954E-03  1.0000000E+00 
+       687     -4.6367493E-04  0.0000000E+00  7.7869394E-03 -1.8838600E-03  1.0000000E+00 
+
+ MAXIMUM         1.3545E-02   0.000      1.5270E-02  0.8033       1.000    
+ AT NODE               524          37         525         361         685
+
+ MINIMUM        -7.3367E-03   0.000     -1.8156E-03 -3.0465E-03  0.1007    
+ AT NODE               282          37          39          38          37
+
+
+          THE ANALYSIS HAS BEEN COMPLETED
+
+
+
+                              ANALYSIS COMPLETE
+                              WITH      3 WARNING MESSAGES ON THE DAT FILE
+                              AND      34 WARNING MESSAGES ON THE MSG FILE
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =      12.    
+       SYSTEM TIME (SEC)    =      1.0    
+       TOTAL CPU TIME (SEC) =      12.    
+       WALLCLOCK TIME (SEC) =           16

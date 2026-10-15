@@ -1,0 +1,577 @@
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:51:36
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+
+
+                         The Abaqus Software is a product of:
+
+                           Dassault Systemes SIMULIA Corp.
+                           1301 Atwood Avenue, Suite 101W
+                              Johnston, RI 02919, USA
+ 
+
+
+                   The Abaqus Software is available only under license
+                   from Dassault Systemes or its subsidiary and may be
+                   used or reproduced only in accordance with the terms
+                   of such license.
+ 
+                          On machine ikmhiwi03 
+                          you are authorized to run
+                          Abaqus/Standard until 28-Feb-2027
+
+                          Your site id is: 200000000013832 
+
+
+ 
+                    For assistance or any other information you may
+                    obtain contact information for your local office
+                    from the world wide web at:
+
+                      https://www.3ds.com/products-services/simulia/services-support/
+
+ 
+                * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+                *                                                         * 
+                *                   *****************                     * 
+                *                   *  N O T I C E  *                     * 
+                *                   *****************                     * 
+                *                                                         * 
+                *                                                         * 
+                *                       Abaqus 2024                       * 
+                *                                                         * 
+                *       BUILD ID: 2023_09_21-14.55.25 RELr426 190762      * 
+                *                                                         * 
+                *                                                         * 
+                *  Please make sure you are using                         * 
+                *  release Abaqus 2024 manuals                            * 
+                *  plus the notes accompanying this release.              * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *                                                         * 
+                *   This program may not be used for commercial purposes  * 
+                *           without payment of a commercial fee.          * 
+                *                                                         * 
+                * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+
+ 
+
+
+
+     PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   *******************************************************
+
+
+     END PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   ***********************************************************
+
+
+
+
+     OPTIONS BEING PROCESSED
+   ***************************
+
+
+  *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128
+  *HEADING
+          unified two-level model, user element, column of 20 elements (p3/uel/driver.py check 2)                                                                                                                                                                                                                                                                                                                                                                                                                                         
+  *ELEMENT, TYPE=U1, ELSET=COL
+  *ELEMENT, TYPE=C3D8T, ELSET=DUMMY
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *MATERIAL, NAME=DUMMY
+  *ELASTIC
+  *CONDUCTIVITY
+  *SPECIFIC HEAT
+
+ ***WARNING: THE ABSOLUTE ZERO TEMPERATURE HAS NOT BEEN SPECIFIED FOR COMPUTING 
+             INTERNAL THERMAL ENERGY USING THE ABSOLUTE ZERO PARAMETER ON THE 
+             *PHYSICAL CONSTANTS OPTION. A DEFAULT VALUE OF 0.0000 WILL BE 
+             ASSUMED.
+  *DENSITY
+  *SOLID SECTION, ELSET=DUMMY, MATERIAL=DUMMY
+  *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128
+  *SOLID SECTION, ELSET=DUMMY, MATERIAL=DUMMY
+  *BOUNDARY
+  *BOUNDARY, OP=NEW
+  *BOUNDARY
+  *UEL PROPERTY, ELSET=COL
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *STEP, NAME=GROW, INC=1000
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY
+  *END STEP
+
+ ***WARNING: THE *ELEMENT OUTPUT OPTION IS NOT SUPPORTED FOR USER ELEMENTS
+  *STEP, NAME=GROW, INC=1000
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY, OP=NEW
+  *NODE PRINT, NSET=X0, FREQUENCY=10
+  *NODE PRINT, NSET=ALL, FREQUENCY=60
+  *END STEP
+
+ ***WARNING: THE *ELEMENT OUTPUT OPTION IS NOT SUPPORTED FOR USER ELEMENTS
+  *STEP, NAME=INIT, AMPLITUDE=STEP
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY
+  *END STEP
+  *STEP, NAME=GROW, INC=1000
+  *COUPLED TEMPERATURE-DISPLACEMENT
+  *BOUNDARY, OP=NEW
+  *END STEP
+
+
+
+                            P R O B L E M   S I Z E
+
+
+          NUMBER OF ELEMENTS IS                                    40
+          NUMBER OF NODES IS                                       84
+          NUMBER OF NODES DEFINED BY THE USER                      84
+          TOTAL NUMBER OF VARIABLES IN THE MODEL                  420
+          (DEGREES OF FREEDOM PLUS MAX NO. OF ANY LAGRANGE MULTIPLIER
+           VARIABLES. INCLUDE *PRINT,SOLVE=YES TO GET THE ACTUAL NUMBER.)
+
+
+
+                              END OF USER INPUT PROCESSING
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =     0.20    
+       SYSTEM TIME (SEC)    =      0.0    
+       TOTAL CPU TIME (SEC) =     0.20    
+       WALLCLOCK TIME (SEC) =            1
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:51:40
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+     unified two-level model, user element, column of 20 elements (p3/uel/driver.py c          STEP    1  INCREMENT    1
+                                                                                          TIME COMPLETED IN THIS STEP   0.00    
+
+
+                        S T E P       1     C O U P L E D - T E M P E R A T U R E - D I S P L A C E M E N T   A N A L Y S I S
+
+
+                                                                                          
+
+          FIXED TIME INCREMENTS
+          TIME INCREMENT IS                                    1.000E-08
+          TIME PERIOD IS                                       1.000E-08
+
+          CREEP AND SWELLING EFFECTS ARE OMITTED IN THIS STEP
+          THE RATE DEPENDENCY WILL BE CONSIDERED IN THIS STEP
+
+          CREEP AND SWELLING EFFECTS WILL BE IGNORED.
+
+          UNSYMMETRIC MATRIX STORAGE AND SOLUTION WILL BE USED
+  
+                   M E M O R Y   E S T I M A T E
+  
+ PROCESS      FLOATING PT       MINIMUM MEMORY        MEMORY TO
+              OPERATIONS           REQUIRED          MINIMIZE I/O
+             PER ITERATION           (MB)               (MB)
+  
+     1          4.78E+06               17                 24
+  
+ NOTE:
+      (1) SINCE ABAQUS DOES NOT PRE-ALLOCATE MEMORY AND ONLY ALLOCATES MEMORY AS NEEDED DURING THE ANALYSIS,
+          THE MEMORY REQUIREMENT PRINTED HERE CAN ONLY BE VIEWED AS A GENERAL GUIDELINE BASED ON THE BEST
+          KNOWLEDGE AVAILABLE AT THE BEGINNING OF A STEP BEFORE THE SOLUTION PROCESS HAS BEGUN.
+      (2) THE ESTIMATE IS NORMALLY UPDATED AT THE BEGINNING OF EVERY STEP. IT IS THE MAXIMUM VALUE OF THE
+          ESTIMATE FROM THE CURRENT STEP TO THE LAST STEP OF THE ANALYSIS, WITH UNSYMMETRIC SOLUTION TAKEN
+          INTO ACCOUNT IF APPLICABLE. 
+      (3) SINCE THE ESTIMATE IS BASED ON THE ACTIVE DEGREES OF FREEDOM IN THE FIRST ITERATION OF THE 
+          CURRENT STEP, THE MEMORY ESTIMATE MIGHT BE SIGNIFICANTLY DIFFERENT THAN ACTUAL USAGE FOR 
+          PROBLEMS WITH SUBSTANTIAL CHANGES IN ACTIVE DEGREES OF FREEDOM BETWEEN STEPS (OR EVEN WITHIN
+          THE SAME STEP). EXAMPLES ARE: PROBLEMS WITH SIGNIFICANT CONTACT CHANGES, PROBLEMS WITH MODEL
+          CHANGE, PROBLEMS WITH BOTH STATIC STEP AND STEADY STATE DYNAMIC PROCEDURES WHERE ACOUSTIC 
+          ELEMENTS WILL ONLY BE ACTIVATED IN THE STEADY STATE DYNAMIC STEPS.
+      (4) FOR MULTI-PROCESS EXECUTION, THE ESTIMATED VALUE OF FLOATING POINT OPERATIONS FOR EACH PROCESS
+          IS BASED ON AN INITIAL SCHEDULING OF OPERATIONS AND MIGHT NOT REFLECT THE ACTUAL FLOATING 
+          POINT OPERATIONS COMPLETED ON EACH PROCESS. OPERATIONS ARE DYNAMICALLY BALANCED DURING EXECUTION, 
+          SO THE ACTUAL BALANCE OF OPERATIONS BETWEEN PROCESSES IS EXPECTED TO BE BETTER THAN THE ESTIMATE
+          PRINTED HERE.
+      (5) THE UPPER LIMIT OF MEMORY THAT CAN BE ALLOCATED BY ABAQUS WILL IN GENERAL DEPEND ON THE VALUE OF
+          THE "MEMORY" PARAMETER AND THE AMOUNT OF PHYSICAL MEMORY AVAILABLE ON THE MACHINE. PLEASE SEE
+          THE "ABAQUS ANALYSIS USER'S MANUAL" FOR MORE DETAILS. THE ACTUAL USAGE OF MEMORY AND OF DISK
+          SPACE FOR SCRATCH DATA WILL DEPEND ON THIS UPPER LIMIT AS WELL AS THE MEMORY REQUIRED TO MINIMIZE
+          I/O. IF THE MEMORY UPPER LIMIT IS GREATER THAN THE MEMORY REQUIRED TO MINIMIZE I/O, THEN THE ACTUAL
+          MEMORY USAGE WILL BE CLOSE TO THE ESTIMATED "MEMORY TO MINIMIZE I/O" VALUE, AND THE SCRATCH DISK
+          USAGE WILL BE CLOSE-TO-ZERO; OTHERWISE, THE ACTUAL MEMORY USED WILL BE CLOSE TO THE PREVIOUSLY
+          MENTIONED MEMORY LIMIT, AND THE SCRATCH DISK USAGE WILL BE ROUGHLY PROPORTIONAL TO THE DIFFERENCE
+          BETWEEN THE ESTIMATED "MEMORY TO MINIMIZE I/O" AND THE MEMORY UPPER LIMIT. HOWEVER ACCURATE
+          ESTIMATE OF THE SCRATCH DISK SPACE IS NOT POSSIBLE.
+      (6) USING "*RESTART, WRITE" CAN GENERATE A LARGE AMOUNT OF DATA WRITTEN IN THE WORK DIRECTORY.
+1
+
+   Abaqus 2024                                  Date 15-Oct-2026   Time 15:51:40
+   For use by GOTTFRIED WILHELM LEIBNIZ UNIVERSITAET HANNOVER under license from Dassault Systemes or its subsidiary.
+
+     unified two-level model, user element, column of 20 elements (p3/uel/driver.py c          STEP    2  INCREMENT    1
+                                                                                          TIME COMPLETED IN THIS STEP   0.00    
+
+
+                        S T E P       2     C O U P L E D - T E M P E R A T U R E - D I S P L A C E M E N T   A N A L Y S I S
+
+
+                                                                                          
+
+          FIXED TIME INCREMENTS
+          TIME INCREMENT IS                                    3.958E-03
+          TIME PERIOD IS                                       0.237    
+
+          CREEP AND SWELLING EFFECTS ARE OMITTED IN THIS STEP
+          THE RATE DEPENDENCY WILL BE CONSIDERED IN THIS STEP
+
+          CREEP AND SWELLING EFFECTS WILL BE IGNORED.
+
+          UNSYMMETRIC MATRIX STORAGE AND SOLUTION WILL BE USED
+  
+                   M E M O R Y   E S T I M A T E
+  
+ PROCESS      FLOATING PT       MINIMUM MEMORY        MEMORY TO
+              OPERATIONS           REQUIRED          MINIMIZE I/O
+             PER ITERATION           (MB)               (MB)
+  
+     1          4.78E+06               17                 24
+  
+ NOTE:
+      (1) SINCE ABAQUS DOES NOT PRE-ALLOCATE MEMORY AND ONLY ALLOCATES MEMORY AS NEEDED DURING THE ANALYSIS,
+          THE MEMORY REQUIREMENT PRINTED HERE CAN ONLY BE VIEWED AS A GENERAL GUIDELINE BASED ON THE BEST
+          KNOWLEDGE AVAILABLE AT THE BEGINNING OF A STEP BEFORE THE SOLUTION PROCESS HAS BEGUN.
+      (2) THE ESTIMATE IS NORMALLY UPDATED AT THE BEGINNING OF EVERY STEP. IT IS THE MAXIMUM VALUE OF THE
+          ESTIMATE FROM THE CURRENT STEP TO THE LAST STEP OF THE ANALYSIS, WITH UNSYMMETRIC SOLUTION TAKEN
+          INTO ACCOUNT IF APPLICABLE. 
+      (3) SINCE THE ESTIMATE IS BASED ON THE ACTIVE DEGREES OF FREEDOM IN THE FIRST ITERATION OF THE 
+          CURRENT STEP, THE MEMORY ESTIMATE MIGHT BE SIGNIFICANTLY DIFFERENT THAN ACTUAL USAGE FOR 
+          PROBLEMS WITH SUBSTANTIAL CHANGES IN ACTIVE DEGREES OF FREEDOM BETWEEN STEPS (OR EVEN WITHIN
+          THE SAME STEP). EXAMPLES ARE: PROBLEMS WITH SIGNIFICANT CONTACT CHANGES, PROBLEMS WITH MODEL
+          CHANGE, PROBLEMS WITH BOTH STATIC STEP AND STEADY STATE DYNAMIC PROCEDURES WHERE ACOUSTIC 
+          ELEMENTS WILL ONLY BE ACTIVATED IN THE STEADY STATE DYNAMIC STEPS.
+      (4) FOR MULTI-PROCESS EXECUTION, THE ESTIMATED VALUE OF FLOATING POINT OPERATIONS FOR EACH PROCESS
+          IS BASED ON AN INITIAL SCHEDULING OF OPERATIONS AND MIGHT NOT REFLECT THE ACTUAL FLOATING 
+          POINT OPERATIONS COMPLETED ON EACH PROCESS. OPERATIONS ARE DYNAMICALLY BALANCED DURING EXECUTION, 
+          SO THE ACTUAL BALANCE OF OPERATIONS BETWEEN PROCESSES IS EXPECTED TO BE BETTER THAN THE ESTIMATE
+          PRINTED HERE.
+      (5) THE UPPER LIMIT OF MEMORY THAT CAN BE ALLOCATED BY ABAQUS WILL IN GENERAL DEPEND ON THE VALUE OF
+          THE "MEMORY" PARAMETER AND THE AMOUNT OF PHYSICAL MEMORY AVAILABLE ON THE MACHINE. PLEASE SEE
+          THE "ABAQUS ANALYSIS USER'S MANUAL" FOR MORE DETAILS. THE ACTUAL USAGE OF MEMORY AND OF DISK
+          SPACE FOR SCRATCH DATA WILL DEPEND ON THIS UPPER LIMIT AS WELL AS THE MEMORY REQUIRED TO MINIMIZE
+          I/O. IF THE MEMORY UPPER LIMIT IS GREATER THAN THE MEMORY REQUIRED TO MINIMIZE I/O, THEN THE ACTUAL
+          MEMORY USAGE WILL BE CLOSE TO THE ESTIMATED "MEMORY TO MINIMIZE I/O" VALUE, AND THE SCRATCH DISK
+          USAGE WILL BE CLOSE-TO-ZERO; OTHERWISE, THE ACTUAL MEMORY USED WILL BE CLOSE TO THE PREVIOUSLY
+          MENTIONED MEMORY LIMIT, AND THE SCRATCH DISK USAGE WILL BE ROUGHLY PROPORTIONAL TO THE DIFFERENCE
+          BETWEEN THE ESTIMATED "MEMORY TO MINIMIZE I/O" AND THE MEMORY UPPER LIMIT. HOWEVER ACCURATE
+          ESTIMATE OF THE SCRATCH DISK SPACE IS NOT POSSIBLE.
+      (6) USING "*RESTART, WRITE" CAN GENERATE A LARGE AMOUNT OF DATA WRITTEN IN THE WORK DIRECTORY.
+
+
+                                INCREMENT    10 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED  0.167    
+ STEP TIME COMPLETED       3.958E-02,  TOTAL TIME COMPLETED        3.958E-02
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.6617433E-01  9.7357092E-01 
+         2      7.6617433E-01  9.7357092E-01 
+         3      7.6617433E-01  9.7357092E-01 
+         4      7.6617433E-01  9.7357092E-01 
+
+ MAXIMUM         0.7662      0.9736    
+ AT NODE                 3           1
+
+ MINIMUM         0.7662      0.9736    
+ AT NODE                 1           2
+
+
+                                INCREMENT    20 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED  0.333    
+ STEP TIME COMPLETED       7.917E-02,  TOTAL TIME COMPLETED        7.917E-02
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.2624302E-01  9.6263020E-01 
+         2      7.2624302E-01  9.6263020E-01 
+         3      7.2624302E-01  9.6263020E-01 
+         4      7.2624302E-01  9.6263020E-01 
+
+ MAXIMUM         0.7262      0.9626    
+ AT NODE                 3           1
+
+ MINIMUM         0.7262      0.9626    
+ AT NODE                 1           1
+
+
+                                INCREMENT    30 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED  0.500    
+ STEP TIME COMPLETED       0.119    ,  TOTAL TIME COMPLETED        0.119    
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.1503957E-01  9.5591430E-01 
+         2      7.1503957E-01  9.5591430E-01 
+         3      7.1503957E-01  9.5591430E-01 
+         4      7.1503957E-01  9.5591430E-01 
+
+ MAXIMUM         0.7150      0.9559    
+ AT NODE                 1           2
+
+ MINIMUM         0.7150      0.9559    
+ AT NODE                 3           1
+
+
+                                INCREMENT    40 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED  0.667    
+ STEP TIME COMPLETED       0.158    ,  TOTAL TIME COMPLETED        0.158    
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.1990888E-01  9.5014272E-01 
+         2      7.1990888E-01  9.5014272E-01 
+         3      7.1990888E-01  9.5014272E-01 
+         4      7.1990888E-01  9.5014272E-01 
+
+ MAXIMUM         0.7199      0.9501    
+ AT NODE                 2           1
+
+ MINIMUM         0.7199      0.9501    
+ AT NODE                 1           2
+
+
+                                INCREMENT    50 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED  0.833    
+ STEP TIME COMPLETED       0.198    ,  TOTAL TIME COMPLETED        0.198    
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.3893730E-01  9.4378772E-01 
+         2      7.3893730E-01  9.4378772E-01 
+         3      7.3893730E-01  9.4378772E-01 
+         4      7.3893730E-01  9.4378772E-01 
+
+ MAXIMUM         0.7389      0.9438    
+ AT NODE                 1           3
+
+ MINIMUM         0.7389      0.9438    
+ AT NODE                 1           1
+
+
+                                INCREMENT    60 SUMMARY
+
+
+ TIME INCREMENT COMPLETED  3.958E-03,  FRACTION OF STEP COMPLETED   1.00    
+ STEP TIME COMPLETED       0.237    ,  TOTAL TIME COMPLETED        0.238    
+  
+  
+  
+  
+                                       N O D E   O U T P U T
+  
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET X0
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.7531554E-01  9.3565319E-01 
+         2      7.7531554E-01  9.3565319E-01 
+         3      7.7531554E-01  9.3565319E-01 
+         4      7.7531554E-01  9.3565319E-01 
+
+ MAXIMUM         0.7753      0.9357    
+ AT NODE                 4           2
+
+ MINIMUM         0.7753      0.9357    
+ AT NODE                 1           1
+  
+  
+  
+   THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET ALL
+  
+       NODE FOOT-  NT11           NT12         
+            NOTE
+  
+         1      7.7531554E-01  9.3565319E-01 
+         2      7.7531554E-01  9.3565319E-01 
+         3      7.7531554E-01  9.3565319E-01 
+         4      7.7531554E-01  9.3565319E-01 
+         5      7.7059152E-01  9.3615784E-01 
+         6      7.7059152E-01  9.3615784E-01 
+         7      7.7059152E-01  9.3615784E-01 
+         8      7.7059152E-01  9.3615784E-01 
+         9      7.5032698E-01  9.3766497E-01 
+        10      7.5032698E-01  9.3766497E-01 
+        11      7.5032698E-01  9.3766497E-01 
+        12      7.5032698E-01  9.3766497E-01 
+        13      6.9929044E-01  9.4014227E-01 
+        14      6.9929044E-01  9.4014227E-01 
+        15      6.9929044E-01  9.4014227E-01 
+        16      6.9929044E-01  9.4014227E-01 
+        17      6.0335869E-01  9.4350303E-01 
+        18      6.0335869E-01  9.4350303E-01 
+        19      6.0335869E-01  9.4350303E-01 
+        20      6.0335869E-01  9.4350303E-01 
+        21      4.6399276E-01  9.4758028E-01 
+        22      4.6399276E-01  9.4758028E-01 
+        23      4.6399276E-01  9.4758028E-01 
+        24      4.6399276E-01  9.4758028E-01 
+        25      3.0433256E-01  9.5212971E-01 
+        26      3.0433256E-01  9.5212971E-01 
+        27      3.0433256E-01  9.5212971E-01 
+        28      3.0433256E-01  9.5212971E-01 
+        29      1.6033233E-01  9.5686055E-01 
+        30      1.6033233E-01  9.5686055E-01 
+        31      1.6033233E-01  9.5686055E-01 
+        32      1.6033233E-01  9.5686055E-01 
+        33      6.3581065E-02  9.6149212E-01 
+        34      6.3581065E-02  9.6149212E-01 
+        35      6.3581065E-02  9.6149212E-01 
+        36      6.3581065E-02  9.6149212E-01 
+        37      2.1492577E-02  9.6589934E-01 
+        38      2.1492577E-02  9.6589934E-01 
+        39      2.1492577E-02  9.6589934E-01 
+        40      2.1492577E-02  9.6589934E-01 
+        41      5.4989799E-03  9.6999521E-01 
+        42      5.4989799E-03  9.6999521E-01 
+        43      5.4989799E-03  9.6999521E-01 
+        44      5.4989799E-03  9.6999521E-01 
+        45      8.5088768E-04  9.7379966E-01 
+        46      8.5088768E-04  9.7379966E-01 
+        47      8.5088768E-04  9.7379966E-01 
+        48      8.5088768E-04  9.7379966E-01 
+        49      8.0226913E-05  9.7734580E-01 
+        50      8.0226913E-05  9.7734580E-01 
+        51      8.0226913E-05  9.7734580E-01 
+        52      8.0226913E-05  9.7734580E-01 
+        53      7.0234586E-05  9.8066518E-01 
+        54      7.0234586E-05  9.8066518E-01 
+        55      7.0234586E-05  9.8066518E-01 
+        56      7.0234586E-05  9.8066518E-01 
+        57      9.4037516E-05  9.8378808E-01 
+        58      9.4037516E-05  9.8378808E-01 
+        59      9.4037516E-05  9.8378808E-01 
+        60      9.4037516E-05  9.8378808E-01 
+        61      9.6068208E-05  9.8674377E-01 
+        62      9.6068208E-05  9.8674377E-01 
+        63      9.6068208E-05  9.8674377E-01 
+        64      9.6068208E-05  9.8674377E-01 
+        65      9.5279642E-05  9.8956077E-01 
+        66      9.5279642E-05  9.8956077E-01 
+        67      9.5279642E-05  9.8956077E-01 
+        68      9.5279642E-05  9.8956077E-01 
+        69      9.5218736E-05  9.9226717E-01 
+        70      9.5218736E-05  9.9226717E-01 
+        71      9.5218736E-05  9.9226717E-01 
+        72      9.5218736E-05  9.9226717E-01 
+        73      9.5249233E-05  9.9489074E-01 
+        74      9.5249233E-05  9.9489074E-01 
+        75      9.5249233E-05  9.9489074E-01 
+        76      9.5249233E-05  9.9489074E-01 
+        77      9.5249689E-05  9.9745916E-01 
+        78      9.5249689E-05  9.9745916E-01 
+        79      9.5249689E-05  9.9745916E-01 
+        80      9.5249689E-05  9.9745916E-01 
+        81      9.5248326E-05  1.0000000E+00 
+        82      9.5248326E-05  1.0000000E+00 
+        83      9.5248326E-05  1.0000000E+00 
+        84      9.5248326E-05  1.0000000E+00 
+
+ MAXIMUM         0.7753       1.000    
+ AT NODE                 4          81
+
+ MINIMUM         7.0235E-05  0.9357    
+ AT NODE                54           1
+
+
+          THE ANALYSIS HAS BEEN COMPLETED
+
+
+
+                              ANALYSIS COMPLETE
+                              WITH      3 WARNING MESSAGES ON THE DAT FILE
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =     0.70    
+       SYSTEM TIME (SEC)    =     0.30    
+       TOTAL CPU TIME (SEC) =      1.0    
+       WALLCLOCK TIME (SEC) =            1
