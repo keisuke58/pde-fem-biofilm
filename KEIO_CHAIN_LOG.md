@@ -519,3 +519,30 @@ compute, which needs a growth-law or scope decision that is not mine to make.
 Promoted `scripts/keio_runs/20261008d_fig7_low.json` to `NEXT.json` unchanged
 (same chain name, already new: `git log --all` shows no commit with
 "chain 20261008d" or any chain-log entry for it).
+
+## 16 Oct 2026: tooth data provenance and licence (CLOUD_TO_FIFA, 15 Oct late night, item 1), UEL on the implant sector (item 2)
+
+**Tooth data on fifa** (not in the repository; nothing was copied into it):
+- `/home/nishioka/IKM_Hiwi/FEM/external_tooth_models/OpenJaw_Dataset/` (92 MB): Patient_1 to 3, per-tooth STL files
+  (`Patient_1/Teeth/P1_Tooth_18.stl` and so on), `Dataset_Structure.pdf`. It has no LICENSE or README of its own.
+- `/home/nishioka/IKM_Hiwi/Open-Full-Jaw` (clone of github.com/diku-dk/Open-Full-Jaw, 95 MB) and a copy of its code in
+  `FEM/external_tooth_models/Open-Full-Jaw-main`. Its LICENSE is **CC BY-NC-SA 4.0**.
+- Tooth models and inp files for the 3-tooth assembly: `/home/nishioka/IKM_Hiwi/FEM/*.inp` (38 files, e.g.
+  `biofilm_3tooth.inp` 26 MB, `p23_*`, `p30_*`, `p31_*`), outside the repository.
+- Source: Gholamalizadeh et al., Open-Full-Jaw, Comput. Methods Programs Biomed. 224 (2022) 107009. Web search found
+  the OpenJaw archive at Univ. Copenhagen (erda.ku.dk) described as "research purposes only, cite the work".
+- `tier2b_real/_crown_real_watertight.stl` (already in the public repository) is derived from `P1_Tooth_30.stl`
+  (`tier2b_real/mesh_crown_real.py`: clinical crown cut out, cervical loop closed).
+
+**Licence reading (not legal advice, the licence text of the dataset itself was not found):** the repository code is
+CC BY-NC-SA 4.0 (attribution, non-commercial, share-alike); the dataset archive says research use and citation.
+Neither text was found to allow redistribution of the STL files. Suggestion for the cloud session: keep the tooth data
+out of the repository; for `_crown_real_watertight.stl` either remove it from the public repository or state the
+source, the cut and CC BY-NC-SA 4.0 in `THIRD_PARTY.md` after the owner has decided; ask the dataset authors
+if redistribution is wanted.
+
+**UEL on the implant sector** (`p3/uel/make_implant_uel_inp.py`, branch `keio/uel-implant`): Abaqus and the Python
+emulation agree at 2x6x8 to 4.1e-7 (alpha - 1) and 4.7e-7 (vM) after a fix of the Gauss-point record in
+`unified_uel.f90` (alpha - 1 had been one increment behind; commit 55062c1). With `--bulge 1`: 3.9e-7 and 5.2e-7.
+Seed means (inner layer, 48 elements): alpha - 1 0.04634 (bulge 0), 0.04427 (bulge 1); vM/E 0.04775 and 0.04620;
+largest vM/E 0.2728 and 0.2927, both in the top row of elements at theta 67.5 deg (r 2.09 and 3.08).
