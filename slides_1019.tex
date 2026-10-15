@@ -2,7 +2,7 @@
 % Copy of slides_1005.tex with one added frame: growth from the living biomass, first results
 % Build: .\build_slides.ps1   (pdflatex, twice)
 % Speaker script (EN + JA, one section per slide): speaker_notes_1005.tex
-% CONSTRAINT: keep total page count <= 25 (raised from 20 on 3 Oct). Check the built PDF's page count
+% CONSTRAINT: keep total page count <= 30 (19 Oct deck, the user, 15 Oct). Check the built PDF's page count
 % before adding a frame; trim an existing frame rather than tacking more on.
 % Wording: no internal labels (run names, switch numbers) -- say what a run
 % does, not what it was called while building it.
@@ -344,23 +344,21 @@ test case 4.1 field (Python, 20\,$\mu$m cube), Klempt 2026 cases 3 and 6.
 \vspace{4pt}
 \small
 \begin{itemize}
-  \item admission granted 18 Aug 2026; examiners Prof.\ Junker (IKM), Dr.\ Wangenheim (IDS);
-        supervisors Prof.\ Soleimani, Dr.\ Geisler; thesis in English
-  \item NIFE internship completed (04.05--24.07), report submitted
-  \item \textbf{submission in November} (aiming for early November); presentation in
-        December, date to be fixed with both examiners
+  \item examiners Prof.\ Junker (IKM), Dr.\ Wangenheim (IDS); supervisors Dr.\ Soleimani, Dr.\ Geisler
+  \item draft sent on 9 October; \textbf{submission 13 November}
+  \item colloquium 16 December, 13:00, IKM room 320
+  \item growth from the living biomass: not in the thesis, continued at Keio
 \end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Questions for this meeting}
 \begin{enumerate}
-  \item \textbf{Scope:} one and two species in the thesis, more at Keio?
-  \item \textbf{Assumptions:} $s$ and $\phi_{\rm cap}$ with sensitivity studies acceptable?
-  \item \textbf{Keio:} anything needed for the double degree this term?
-  \item \textbf{Klempt et al.\ 2024:} form of Eq.\ 34/35, $t_{\rm ref}$, unit of $\mu$, Eq.\ 36 or Table 1?
-  \item \textbf{Structure:} TMCMC calibration, a short internship section, then the ANSYS coupling?
-  \item \textbf{Submission:} printed copies, electronic version, Keio side?
+  \item \textbf{Your coupling ideas:} which direction would you take first?
+  \item \textbf{Growth law:} amount of the field (Eq.\ 36) or living biomass of the point model?
+  \item \textbf{Two-way coupling:} should the stress act back on the growth or the composition?
+  \item \textbf{Rate $\kappa$:} fixed by the mean growth of Eq.\ 36, or by the measured volume?
+  \item \textbf{Next steps:} what should be done here, and what at Keio?
 \end{enumerate}
 \end{frame}
 
@@ -533,7 +531,7 @@ other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
 \]
 \vspace{-4pt}
 \begin{columns}[T]
-\begin{column}{0.44\textwidth}
+\begin{column}{0.42\textwidth}
 \scriptsize\renewcommand{\arraystretch}{1.15}
 \begin{tabular}{@{}>{\raggedright}p{0.3\linewidth}>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
 \toprule
@@ -549,7 +547,7 @@ $\kappa$ & $8.14\cdot10^{-3}$: mean $\alpha-1$ as Eq.\ 36 ($-0.003\,\%$); assume
 \bottomrule
 \end{tabular}
 \end{column}
-\begin{column}{0.53\textwidth}
+\begin{column}{0.54\textwidth}
 \scriptsize\setlength\tabcolsep{2pt}\renewcommand{\arraystretch}{1.15}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
