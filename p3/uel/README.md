@@ -195,3 +195,23 @@ Seed von Mises mean (max) for measured stiffness values:
 
 All far below the pressures reported to stop growth (0.1-1 MPa). The stiffness spans three decades and is the
 largest uncertainty. Not yet: the tooth and implant geometry, detachment, a stiffness for the measured composition.
+
+## Limit of Klempt et al. 2024 (15 Oct 2026, `klempt2024_limit_test.py`)
+
+With one species, the living fraction frozen near 1, the nutrient fixed at c = 1, the phase fixed at
+phi = 1 and lambda = 0, the growth reaction is Eq. 36 of Klempt et al. 2024, alpha_dot = k_alpha phi with
+k_alpha = L0 liv ln 10. One element (one Gauss-point state, finite strain, E = 10 Pa, nu = 0.49, f = 1e-3),
+compared with references written without the element's source:
+
+| case | quantity | k_alpha = 1e-3, T = 1.1 (Table 2) | k_alpha = 0.5, T = 1 (alpha = 1.5) |
+|---|---|---|---|
+| free (3-2-1) | alpha - 1 vs Eq. 36 | 1.097802e-3 vs 1.097801e-3 | 0.4990009 vs 0.4990005 |
+| free | edge stretch vs alpha, stress | equal to 8 digits, sigma 1e-12 | equal to 8 digits, sigma 4e-14 |
+| all u = 0 | sigma vs (phi^2+f) K (alpha^-3 - 1) | rel. 3e-14 | rel. 2e-16 |
+| u_x = 0 at both ends | lateral stretch, sigma_xx vs numpy minimisation of W | rel. 8e-9 | rel. 2e-10 |
+
+The small difference in alpha - 1 (1e-6 relative) is the drift of the frozen point model over the run.
+This checks the growth law and the finite-strain mechanics of Klempt et al. 2024 (Eq. 20, 36). The phase
+equation of Klempt et al. 2024 (the k_alpha alpha term and the front term of Eq. 34) is not a limit of
+this model, so their Section 4 test cases cannot be reproduced with the element; the Python reproduction
+(`JAXFEM/`, Appendix D of the 19 Oct deck) covers them.
