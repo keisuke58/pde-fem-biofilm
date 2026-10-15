@@ -2,9 +2,10 @@
 user element: unit cube, n^3 elements, a hemispherical seed (radius 0.25, centre (0.5, 0.5, 0)) on the
 substrate z = 0, nutrient supplied at the face x = 1.
 
-    python make_seed_inp.py [n] [outdir] [--lam 1 --psiref 1.75] [--antibiotic]
+    python make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic] [--small]
 
-Writes uel_seed.inp and uel_eco.txt (make_column_inp.eco_file, b_i = 1). With --antibiotic the element
+Writes uel_seed<n>[_small][_ab].inp (the Abaqus job name) and uel_eco.txt (make_column_inp.eco_file, b_i = 1). JPROPS(1) = 1 finite strain
+(default), 0 small strain (--small, as the Python 3D model). With --antibiotic the element
 gets PROPS(17) = the total time at which the antibiotic starts (T* = 0.5) and PROPS(18) = alpha* = 0.65. Build and run as in make_column_inp.py (job=uel_seed).
 Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1, u = 0;
 GROW: T = 0.2375 in 60 fixed increments, c = 1 at x = 1, u = 0 at
@@ -38,7 +39,7 @@ def seed_phi(nodes):
     return 0.5 * (1 - np.tanh((r - 0.25) / 0.03)) * 0.9 + 1e-4
 
 
-def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False):
+def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True):
     nodes, elems = cube(n)
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=lam, psiref=psiref)
     T, nin, t0 = 0.2375, 60, 1e-8
@@ -46,10 +47,11 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False):
         P = np.r_[P, t0 + 0.5 * T, 0.65]
     out = ["*HEADING", f"unified two-level model, user element, 3D seed, {n}^3 elements", "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(P)}, COORDINATES=3, VARIABLES=112", "1, 2, 3, 11, 12",
+    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(P)}, I PROPERTIES=1, COORDINATES=3, VARIABLES=112", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=ALLE"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
+    vals.append(str(1 if finite else 0))                # JPROPS(1): 1 finite strain, 0 small strain
     out += ["*UEL PROPERTY, ELSET=ALLE"] + [", ".join(vals[k:k + 8]) for k in range(0, len(vals), 8)]
 
     def nset(name, mask):
@@ -79,6 +81,8 @@ if __name__ == "__main__":
     od = Path(pos[1]) if len(pos) > 1 else Path(".")
     od.mkdir(parents=True, exist_ok=True)
     ab = "--antibiotic" in args
-    deck(n, od / "uel_seed.inp", lam=get("--lam", 0.0), psiref=get("--psiref", 0.0), antibiotic=ab)
+    name = f"uel_seed{n}" + ("_small" if "--small" in args else "") + ("_ab" if ab else "") + ".inp"
+    deck(n, od / name, lam=get("--lam", 0.0), psiref=get("--psiref", 0.0), antibiotic=ab,
+         finite="--small" not in args)
     eco_file(od / "uel_eco.txt")
-    print(f"wrote {od / 'uel_seed.inp'} and {od / 'uel_eco.txt'}")
+    print(f"wrote {od / name} and {od / 'uel_eco.txt'}")

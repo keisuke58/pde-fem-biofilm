@@ -3,7 +3,7 @@
 the file named by BIOFILM_ECO_CASE), as a check of everything an Abaqus run uses except Abaqus.
 
     python make_column_inp.py 20 /tmp/x && BIOFILM_ECO_CASE=/tmp/x/uel_eco.txt python emulate_abaqus.py 20
-    python make_seed_inp.py 8 /tmp/y && BIOFILM_ECO_CASE=/tmp/y/uel_eco.txt python emulate_abaqus.py --seed 8 [--antibiotic]
+    python make_seed_inp.py 8 /tmp/y && BIOFILM_ECO_CASE=/tmp/y/uel_eco.txt python emulate_abaqus.py --seed 8 [--antibiotic] [--small]
 
 Expected for the column: the numbers of driver.py check 2 (20 elements: phi(0) 0.776, c(0) 0.936,
 alpha-1 0.1371). The seed (uel_seed.inp) is compared with JAXFEM/fuel_front_3d_coupled.py, lam = 0.
@@ -28,28 +28,28 @@ I = lambda v: ct.byref(ct.c_int(v))
 D = lambda v: ct.byref(ct.c_double(v))
 
 
-def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0):
+def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True):
     rhs = F(np.zeros((NDOF, 1))); amat = F(np.zeros((NDOF, NDOF))); sv = F(svars.copy())
     z = F(np.zeros(NDOF)); energy = F(np.zeros(8)); time = F(np.zeros(2)); params = F(np.zeros(3))
     time[:] = ttot
     zz = F(np.zeros((1, 1))); predef = F(np.zeros((2, 1, 8))); lflags = np.asfortranarray([1, 1, 1, 0, 0], np.int32)
-    jd = np.zeros((1, 1), np.int32, order="F"); jp = np.zeros(1, np.int32)
+    jd = np.zeros((1, 1), np.int32, order="F"); jp = np.array([1 if finite else 0], np.int32)
     pnewdt = ct.c_double(1.0)
     p = lambda a: a.ctypes.data_as(ct.c_void_p)
     lib.uel_(p(rhs), p(amat), p(sv), p(energy), I(NDOF), I(1), I(NSV * NGP), p(props), I(len(props)), p(coords), I(3), I(8),
              p(U), p(DU), p(z), p(z), I(1), p(time), D(dt), I(1), I(kinc), I(1), p(params), I(0), p(jd), p(zz), p(predef),
-             I(1), p(lflags), I(NDOF), p(zz), I(1), ct.byref(pnewdt), p(jp), I(0), D(0.0))
+             I(1), p(lflags), I(NDOF), p(zz), I(1), ct.byref(pnewdt), p(jp), I(1), D(0.0))
     return -rhs[:, 0], amat, sv, pnewdt.value
 
 
-def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10):
+def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10, finite=True):
     """one Abaqus increment: Newton on the free dofs, every element called with the start-of-increment SVARS"""
     EDS = [np.array([NDN * n + d for n in el for d in range(NDN)]) for el in elems]
     for it in range(30):
         R = np.zeros(len(U)); rows, cols, vals = [], [], []; SVn = []
         for e, el in enumerate(elems):
             ed = EDS[e]
-            Re, Ke, sv, pn = uel(F(U[ed]), F((U[ed] - U0[ed])[:, None]), F(nodes[el].T), SV[e], props, dt, kinc, ttot)
+            Re, Ke, sv, pn = uel(F(U[ed]), F((U[ed] - U0[ed])[:, None]), F(nodes[el].T), SV[e], props, dt, kinc, ttot, finite)
             assert pn == 1.0, "UEL asked for a smaller increment"
             R[ed] += Re; rows.append(np.repeat(ed, NDOF)); cols.append(np.tile(ed, NDOF)); vals.append(Ke.ravel())
             SVn.append(sv)
@@ -62,7 +62,7 @@ def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-
     raise RuntimeError("no convergence")
 
 
-def seed(n, antibiotic=False):
+def seed(n, antibiotic=False, finite=True):
     import time as _t
     from make_seed_inp import cube, seed_phi
     sys.path.insert(0, str(HERE.parents[1] / "JAXFEM")); sys.path.insert(0, str(HERE.parents[1]))
@@ -75,7 +75,7 @@ def seed(n, antibiotic=False):
     props = F(P)
     SV = [F(np.zeros(NSV * NGP)) for _ in elems]
     U0 = np.zeros(NDN * len(nodes)); U = U0.copy(); U[3::NDN] = seed_phi(nodes); U[4::NDN] = 0.1
-    U, SV, _ = increment(U0, U, np.ones(len(U), bool), nodes, elems, SV, props, t0, 1)
+    U, SV, _ = increment(U0, U, np.ones(len(U), bool), nodes, elems, SV, props, t0, 1, finite=finite)
     fixed = np.zeros(len(U), bool)
     base = np.isclose(nodes[:, 2], 0.0)
     for d in range(3):
@@ -84,7 +84,7 @@ def seed(n, antibiotic=False):
     U[NDN * np.where(np.isclose(nodes[:, 0], 1.0))[0] + 4] = 1.0
     tt = time_start = _t.time()
     for k in range(nin):
-        U, SV, it = increment(U.copy(), U, fixed, nodes, elems, SV, props, T / nin, k + 1, ttot=t0 + k * T / nin)
+        U, SV, it = increment(U.copy(), U, fixed, nodes, elems, SV, props, T / nin, k + 1, ttot=t0 + k * T / nin, finite=finite)
         if k % 10 == 9:
             print(f"  increment {k + 1}: {it} Newton iterations, {_t.time() - tt:.0f} s", flush=True)
     h = 1.0 / n; nn = n + 1
@@ -93,7 +93,7 @@ def seed(n, antibiotic=False):
     # growth per element: mean over Gauss points, element index (i, j, k) as in cube()
     xi = np.array([sv.reshape(NGP, NSV)[:, 12].mean() for sv in SV]).reshape(n, n, n)
     j = n // 2
-    print(f"seed {n}^3{', antibiotic' if antibiotic else ''}: biofilm volume (reference) {(phi[:-1, :-1, :-1].sum() * h ** 3):.4f} "
+    print(f"seed {n}^3{', antibiotic' if antibiotic else ''}, {'finite' if finite else 'small'} strain: biofilm volume (reference) {(phi[:-1, :-1, :-1].sum() * h ** 3):.4f} "
           f"(node sum), phi at centre {phi[j, j, 1]:.3f}, alpha-1 nutrient side (element at x = 0.7, z near 0) "
           f"{xi[int(0.7 * n), j - 1:j + 1, 0].mean():.3f}, far side (x = 0.3) {xi[int(0.3 * n), j - 1:j + 1, 0].mean():.3f}; "
           f"edge 30 deg nutrient side / far side {edge_disp(np.linspace(0, 1, nn), u, 30, 0.0):.4f} / "
@@ -103,7 +103,7 @@ def seed(n, antibiotic=False):
 
 if __name__ == "__main__":
     if "--seed" in sys.argv:
-        seed(int(sys.argv[sys.argv.index("--seed") + 1]), "--antibiotic" in sys.argv)
+        seed(int(sys.argv[sys.argv.index("--seed") + 1]), "--antibiotic" in sys.argv, "--small" not in sys.argv)
         sys.exit()
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 20
     nodes, elems, xs = column(n)

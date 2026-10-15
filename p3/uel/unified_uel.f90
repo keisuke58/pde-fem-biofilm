@@ -16,8 +16,10 @@
 !              + beta grad N . grad phi  dV = 0,   h = phi^2
 !   nutrient : int N [(c - c_n)/dt + Y xidot] + D grad N . grad c  dV = 0
 !   growth   : xidot = L0 phi sum_i s_i psi_i (Y ln c - mu_b)   (implicit in phi and c)
-!   mechanics: small strain, sigma = (phi^2 + f) C : (eps - xi I), int B^T sigma dV = 0
-!              (a check of the coupling; the finite-strain law of Klempt et al. 2024 is next)
+!   mechanics: finite strain (default), F = F_e F_g, F_g = (1 + xi) I, int P : Grad N dV = 0 with
+!              P from W = (1+xi)^3 (phi^2 + f) [mu/2 (J_e^(-2/3) tr C_e - 3) + K/2 (J_e - 1)^2]
+!              (nh_stress; Klempt et al. 2024 Eq. 20, volumetric penalty in place of the constraint);
+!              or small strain, sigma = (phi^2 + f) C : (eps - xi I) (JPROPS(1) = 0; kin_finite)
 !   composition: the point model of Klempt et al. 2026 at every Gauss point, advanced once per
 !              increment over s*dt with the nutrient of the start of the increment (staggered),
 !              by ecology_native.f (biofilm_py_bridge).
@@ -34,7 +36,46 @@ module unified_uel_mod
   use biofilm_py_bridge
   implicit none
   integer, parameter :: NN = 8, NDN = 5, NDOF = NN * NDN, NGP = 8, NSV = 14
+  ! kinematics: .true. finite strain (default), .false. small strain; Abaqus: JPROPS(1) = 1 / 0
+  logical, save :: kin_finite = .true.
 contains
+
+  subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
+    ! growth F_g = ag I (ag = alpha = 1 + xi), F_e = F / ag; energy per reference volume
+    ! W = ag^3 sf [mu/2 (J_e^(-2/3) tr C_e - 3) + Kb/2 (J_e - 1)^2], sf = phi^2 + f (Klempt et al. 2024
+    ! Eq. 20 with a volumetric penalty in place of the incompressibility constraint, as the UMAT core).
+    ! P = dW/dF, AF = dP/dF (AF(i,J,k,L)), dPda = dP/d ag.
+    double precision, intent(in) :: F(3,3), sf, ag, mu, Kb
+    double precision, intent(out) :: P(3,3), AF(3,3,3,3), dPda(3,3)
+    double precision :: Fe(3,3), G(3,3), Gt(3,3), J, I1, Jm23, Pe(3,3), Ae(3,3,3,3), d
+    integer :: i, jj, k, l
+    Fe = F / ag
+    call inv3(Fe, Gt, J)                 ! Gt = Fe^-1, J = det Fe
+    G = transpose(Gt)                    ! Fe^-T
+    I1 = sum(Fe * Fe)
+    Jm23 = J**(-2d0/3d0)
+    Pe = mu * Jm23 * (Fe - I1 / 3d0 * G) + Kb * (J - 1d0) * J * G
+    do l = 1, 3
+      do k = 1, 3
+        do jj = 1, 3
+          do i = 1, 3
+            d = 0d0
+            if (i == k .and. jj == l) d = 1d0
+            Ae(i,jj,k,l) = mu * ( -2d0/3d0 * Jm23 * G(k,l) * (Fe(i,jj) - I1/3d0 * G(i,jj)) &
+                                 + Jm23 * (d - 2d0/3d0 * Fe(k,l) * G(i,jj) + I1/3d0 * G(i,l) * G(k,jj)) ) &
+                         + Kb * ((2d0*J - 1d0) * J * G(k,l) * G(i,jj) - (J*J - J) * G(i,l) * G(k,jj))
+          end do
+        end do
+      end do
+    end do
+    P = sf * ag**2 * Pe
+    AF = sf * ag * Ae
+    do jj = 1, 3
+      do i = 1, 3
+        dPda(i,jj) = sf * (2d0 * ag * Pe(i,jj) - sum(Ae(i,jj,:,:) * F))
+      end do
+    end do
+  end subroutine nh_stress
 
   subroutine shape(xi, eta, zeta, N, dN)
     double precision, intent(in) :: xi, eta, zeta
@@ -114,7 +155,8 @@ contains
     double precision :: N(8), dNr(3,8), dN(3,8), Jm(3,3), Ji(3,3), det, w, gpc(2)
     double precision :: ph, phn, c, cn, gph(3), gc(3), eps(6), sig(6), Cm(6,6), lamL, mu, Ef
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
-    integer :: a, i, j, k, q
+    double precision :: Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
+    integer :: a, i, j, k, q, jd
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
     lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
@@ -160,11 +202,28 @@ contains
           end do
           eps(1:3) = eps(1:3) - xin
           Ef = max(ph, 0d0)**2 + f
-          sig = Ef * matmul(Cm, eps)
+          if (kin_finite) then
+            Fd = 0d0
+            do a = 1, NN
+              do jd = 1, 3
+                Fd(:, jd) = Fd(:, jd) + U(NDN*(a-1)+1:NDN*(a-1)+3) * dN(jd,a)
+              end do
+            end do
+            do jd = 1, 3
+              Fd(jd,jd) = Fd(jd,jd) + 1d0
+            end do
+            call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+          else
+            sig = Ef * matmul(Cm, eps)
+          end if
           do a = 1, NN
+            if (kin_finite) then
+              R(NDN*(a-1)+1:NDN*(a-1)+3) = R(NDN*(a-1)+1:NDN*(a-1)+3) + w * matmul(Pk, dN(:,a))
+            else
             R(NDN*(a-1)+1) = R(NDN*(a-1)+1) + w * (dN(1,a)*sig(1) + dN(2,a)*sig(4) + dN(3,a)*sig(6))
             R(NDN*(a-1)+2) = R(NDN*(a-1)+2) + w * (dN(2,a)*sig(2) + dN(1,a)*sig(4) + dN(3,a)*sig(5))
             R(NDN*(a-1)+3) = R(NDN*(a-1)+3) + w * (dN(3,a)*sig(3) + dN(2,a)*sig(5) + dN(1,a)*sig(6))
+            end if
             R(NDN*(a-1)+4) = R(NDN*(a-1)+4) + w * ( N(a) * (etaph*(ph-phn)/dt + 2d0*kphi/(1d0-ph)**3 &
                                                     + lam * 2d0*ph * (psi - psiref)) + beta * dot_product(dN(:,a), gph) )
             R(NDN*(a-1)+5) = R(NDN*(a-1)+5) + w * ( N(a) * ((c-cn)/dt + Y*xid) + D * dot_product(dN(:,a), gc) )
@@ -245,8 +304,8 @@ contains
     double precision :: N(8), dNr(3,8), dN(3,8), Jm(3,3), Ji(3,3), det, w, gpc(2), Bm(6,3,8)
     double precision :: ph, c, eps(6), Cm(6,6), lamL, mu, Ef, dEf, CB(6,3), Cmv(6), sig0(6)
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
-    double precision :: aff, dxp, dxc, kpp, kcc, kcp, m(6)
-    integer :: a, b, i, j, l, q, ia, ib
+    double precision :: aff, dxp, dxc, kpp, kcc, kcp, m(6), Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
+    integer :: a, b, i, j, l, q, ia, ib, jd, kd
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
     lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
@@ -303,15 +362,38 @@ contains
           kpp = etaph/dt + 6d0*kphi/(1d0-ph)**4 + lam * 2d0 * (psi - psiref)
           kcc = 1d0/dt + Y * dxc
           kcp = Y * dxp
+          if (kin_finite) then
+            Fd = 0d0
+            do a = 1, NN
+              do jd = 1, 3
+                Fd(:, jd) = Fd(:, jd) + U(NDN*(a-1)+1:NDN*(a-1)+3) * dN(jd,a)
+              end do
+            end do
+            do jd = 1, 3
+              Fd(jd,jd) = Fd(jd,jd) + 1d0
+            end do
+            call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+          end if
           do b = 1, NN
             CB = matmul(Cm, Bm(:,:,b))
             do a = 1, NN
               ia = NDN*(a-1); ib = NDN*(b-1)
-              ! mechanics: d(B_a^T sigma)/du_b, /dphi_b, /dc_b
+              ! mechanics: d(R_u,a)/du_b, /dphi_b, /dc_b
+              if (kin_finite) then
+                do kd = 1, 3
+                  do jd = 1, 3
+                    K(ia+jd, ib+kd) = K(ia+jd, ib+kd) + w * sum(spread(dN(:,a), 2, 3) * AFk(jd,:,kd,:) &
+                                                                * spread(dN(:,b), 1, 3))
+                  end do
+                end do
+                K(ia+1:ia+3, ib+4) = K(ia+1:ia+3, ib+4) + w * N(b) * matmul(dEf / Ef * Pk + dt * dxp * dPk, dN(:,a))
+                K(ia+1:ia+3, ib+5) = K(ia+1:ia+3, ib+5) + w * N(b) * dt * dxc * matmul(dPk, dN(:,a))
+              else
               K(ia+1:ia+3, ib+1:ib+3) = K(ia+1:ia+3, ib+1:ib+3) + w * Ef * matmul(transpose(Bm(:,:,a)), CB)
               K(ia+1:ia+3, ib+4) = K(ia+1:ia+3, ib+4) + w * N(b) * matmul(transpose(Bm(:,:,a)), &
                                      dEf * sig0 - Ef * dt * dxp * Cmv)
               K(ia+1:ia+3, ib+5) = K(ia+1:ia+3, ib+5) - w * N(b) * Ef * dt * dxc * matmul(transpose(Bm(:,:,a)), Cmv)
+              end if
               ! phase
               K(ia+4, ib+4) = K(ia+4, ib+4) + w * (N(a)*N(b)*kpp + beta * dot_product(dN(:,a), dN(:,b)))
               ! nutrient
@@ -363,6 +445,13 @@ subroutine uel_set_phi_init(v) bind(C, name="uel_set_phi_init")
   eco_phi_init = v
   eco_haveinit = .true.
 end subroutine uel_set_phi_init
+
+subroutine uel_set_finite(k) bind(C, name="uel_set_finite")
+  use unified_uel_mod
+  use iso_c_binding
+  integer(c_int), value :: k
+  kin_finite = (k /= 0)
+end subroutine uel_set_finite
 
 subroutine uel_set_alstar(x) bind(C, name="uel_set_alstar")
   use biofilm_py_bridge
@@ -430,6 +519,9 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   logical :: ok
   if (.not. eco_inited) call eco_native_init()
   eco_damp = .true.
+  ! kinematics: JPROPS(1) = 0 small strain, otherwise (or no integer property) finite strain
+  kin_finite = .true.
+  if (NJPROP >= 1) kin_finite = (JPROPS(1) /= 0)
   ! optional antibiotic: PROPS(17) = total time at which it is switched on, PROPS(18) = alpha*
   if (NPROPS >= 18) then
     if (TIME(2) >= PROPS(17) - 1d-12) then

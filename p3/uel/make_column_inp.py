@@ -9,11 +9,9 @@ Writes:
                    unified_1d.ch_case with b_i = 1, the Day-1 shares scaled to 0.9 as in driver.py.
 Run (Linux):
   export BIOFILM_ECO_CASE=$PWD/uel_eco.txt
-  ifort -c -fPIC -O2 -auto ../../ansys_usermat/coupling/ecology_native.f unified_uel.f90
-  ld -r ecology_native.o unified_uel.o -o unified_uel_all.o
-  abaqus job=uel_column user=unified_uel_all.o cpus=1 interactive
-  (one object, because the two sources are fixed and free form; cpus=1, the point-model constants are
-  module variables set once)
+  python make_abaqus_source.py            (one file: the fixed-form point model + the free-form element)
+  abaqus job=uel_column user=unified_uel_abaqus.for cpus=1 interactive
+  (cpus=1: the point-model constants are module variables set once)
 
 Steps:
   1. 1e-8 long: phi (dof 11) and c (dof 12) are prescribed at every node (seed 0.9 at x <= 0.25, 1e-4
@@ -54,11 +52,11 @@ def deck(n, path):
     out = ["*HEADING", f"unified two-level model, user element, column of {n} elements (p3/uel/driver.py check 2)",
            "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += ["*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, COORDINATES=3, VARIABLES=112", "1, 2, 3, 11, 12",
+    out += ["*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, I PROPERTIES=1, COORDINATES=3, VARIABLES=112", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=COL"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
-    out += ["*UEL PROPERTY, ELSET=COL", ", ".join(vals[0:8]), ", ".join(vals[8:16])]
+    out += ["*UEL PROPERTY, ELSET=COL", ", ".join(vals[0:8]), ", ".join(vals[8:16]), "1"]   # JPROPS(1) = 1: finite strain
 
     def nset(name, mask):
         ids = [str(i + 1) for i in np.where(mask)[0]]

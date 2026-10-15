@@ -168,3 +168,5 @@ data/raw_heine/
 # p3/uel build outputs
 p3/uel/*.so
 p3/uel/test_uel_wrapper
+p3/uel/unified_uel_abaqus.for
+p3/uel/abaqus_in/

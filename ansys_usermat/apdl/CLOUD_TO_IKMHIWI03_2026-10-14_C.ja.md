@@ -187,6 +187,39 @@ min(φ₃D, φ_cap) に縮めて進め、また縮め直す。そのとき**点�
 - α − 1 が 0.1 程度になるので、A-8 と同じく空の要素がつぶれるかもしれない。A-8 で決めた空の硬さを使う。
 - これは仮定（増えた菌が空隙を埋めずに材料を押し広げる）で、論文の式ではない、とログと報告に書く。
 
+## A-11. 一つの原理のモデルを Abaqus の UEL で（15日追加、B の列の合間に、1 本数分）
+
+`p3/uel/`（README.md）。統一モデル（`p3/unified_model.tex`）の Abaqus ユーザー要素を、本物の Abaqus で初めて動かす。
+クラウドでは Abaqus の引数どおりに `UEL` を呼ぶ模擬実行で確かめてあり、その値と比べる。慶應の続きの準備で、修論には入れない。
+ANSYS の計算とは別のプロセスなので、B の列を止めずに回してよい（cpus=1）。
+
+0. 準備（リポジトリ直下で。`p3\uel\abaqus_in\` は git に入らない）：
+   ```
+   python p3\uel\make_abaqus_source.py
+   python p3\uel\make_column_inp.py 20 p3\uel\abaqus_in
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --small
+   python p3\uel\make_seed_inp.py 16 p3\uel\abaqus_in --small --antibiotic
+   $env:BIOFILM_ECO_CASE = (Resolve-Path p3\uel\abaqus_in\uel_eco.txt).Path
+   ```
+   `unified_uel_abaqus.for` は固定形式の `ecology_native.f` と自由形式の `unified_uel.f90` を `!DEC$ FREEFORM` でつないだ
+   1 ファイル（ifort 用）。点モデルは環境変数 `BIOFILM_ECO_CASE` のファイルから読む（どのジョブも同じファイル）。
+   ジョブは `.\run_abaqus.ps1 -InpFile p3\uel\abaqus_in\<名前>.inp -UserFile p3\uel\unified_uel_abaqus.for`
+   （同じ PowerShell で、環境変数を設定した後に）。
+1. 1D の柱 `uel_column`（20 要素、力学は固定）。
+   **合格：** x = 0 の節点で NT11（φ）= 0.776、NT12（c）= 0.936（模擬実行とドライバーの値）。
+2. 3D のシード 8³：有限ひずみ（`uel_seed8`）と微小ひずみ（`uel_seed8_small`）。模擬実行では境界の変位（仰角 30°、栄養側 / 反対側）が
+   0.0141 / 0.0035（有限）、0.0143 / 0.0035（微小）、中心の φ 0.643。1 本数分の見込み。
+3. 3D のシード 16³、微小ひずみ、T* = 0.5 から抗菌薬（`uel_seed16_small_ab`、PROPS(17:18) で要素が自分で切り替える）。
+   模擬実行では境界の変位 0.0104 / 0.0027、中心の φ 0.778。
+4. 報告：各ジョブの PASS / FAIL、増分数と Newton の反復数（.sta）、計算時間。`.dat`（PROBE の節点の U と NT だけ）を
+   `ansys_usermat/apdl/results/2026-10-uel/` に置いて push（クラウドが模擬実行と節点ごとに比べる）。.odb は push しない。
+5. 止まったら：
+   - `*STATIC` が自由度 11、12 を受け付けない → `*COUPLED TEMPERATURE-DISPLACEMENT, STEADY STATE` に替えて 1 回だけ試す。
+   - 収束しない（残差の判定が自由度 11、12 の大きさに合わない）→ .msg の最後の 50 行を報告して止める（直しはクラウドで）。
+   - NT12 が出力されない → 出力の指定を報告して止める。
+   - コンパイルのエラー → ログの最初のエラーを報告して止める。
+
 ## B. 長い列（会議のあと、21〜30 日も回す）
 
 `run_chain.ps1 -Export ansys_usermat\apdl\results\2026-10-cal5 -Push` で、1 本ごとに push。順番：

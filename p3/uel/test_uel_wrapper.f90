@@ -20,9 +20,10 @@ program test_uel_wrapper
   double precision :: RHS(NDOFEL,1), AM(NDOFEL,NDOFEL), SV0(NSVARS), SV1(NSVARS), SV2(NSVARS), ENERGY(8), &
        PROPS(NPROPS), COORDS(3,8), U(NDOFEL), DU(NDOFEL,1), V(NDOFEL), A(NDOFEL), TIME(2), DTIME, PARAMS(3), &
        ADLMAG(1,1), PREDEF(2,1,8), DDLMAG(1,1), PNEWDT, PERIOD, RHS1(NDOFEL,1), AM1(NDOFEL,NDOFEL), &
-       th(20), R(NDOF), sv(NSV,NGP), Un(NDOF), g(5), Kx(NDOF,NDOF), Kf(NDOF,NDOF), U2(NDOF)
+       th(20), R(NDOF), sv(NSV,NGP), Un(NDOF), g(5), Kx(NDOF,NDOF), Kf(NDOF,NDOF), U2(NDOF), svg(NSV,NGP)
   integer :: JDLTYP(1,1), LFLAGS(5), JPROPS(1), ia, q
   logical :: okc
+  integer :: mrows(24)
   double precision, parameter :: cs = 25d0, al = 0d0, tol = 1d-26
   th = [ -0.6929614183633133d0, -0.3903645866494718d0, -0.4610407137003207d0, 0d0, 0d0, -0.7769305773355909d0, &
          -0.9298104492087518d0, -0.8590640026947014d0, 0d0, 0d0, 0.5189105952206899d0, -4.449056646982786d0, &
@@ -57,14 +58,36 @@ program test_uel_wrapper
   call residual(U, Un, COORDS, sv, PROPS, DTIME, R)
   print '(a,es10.2)', 'RHS + R (module residual) ', maxval(abs(RHS(:,1) + R))
   ! closed-form tangent against central differences, with a displacement field and growth active
+  mrows = [((5*(ia-1)+q, q = 1, 3), ia = 1, 8)]
   U2 = U
   do ia = 1, 8
     U2(5*(ia-1)+1) = 1d-3 * ia; U2(5*(ia-1)+2) = -5d-4 * ia; U2(5*(ia-1)+3) = 2d-4 * (9 - ia)
   end do
+  do ia = 0, 1
+    kin_finite = (ia == 1)
+    call tangent(U2, Un, COORDS, sv, PROPS, DTIME, Kx)
+    call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
+    print '(a,l2,a,es10.2,a,es10.2)', 'finite strain', kin_finite, ': closed-form tangent vs central differences: max |diff| ', &
+          maxval(abs(Kx-Kf)), ', relative ', maxval(abs(Kx-Kf)) / maxval(abs(Kf))
+    print '(a,es10.2,a,es10.2)', '   mechanics rows only: max |diff| ', maxval(abs(Kx(mrows,:)-Kf(mrows,:))), &
+          ', relative ', maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
+  end do
+  ! large deformation (displacement gradients about 0.3)
+  kin_finite = .true.
+  U2(mrows) = 30d0 * U2(mrows)
   call tangent(U2, Un, COORDS, sv, PROPS, DTIME, Kx)
   call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
-  print '(a,es10.2,a,es10.2)', 'closed-form tangent vs central differences: max |diff| ', maxval(abs(Kx-Kf)), &
-        ', relative to max |K| ', maxval(abs(Kx-Kf)) / maxval(abs(Kf))
+  print '(a,es10.2)', 'finite strain, large deformation, mechanics rows: relative diff ', &
+        maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
+  ! free growth: uniform xi, u = xi X, phi and c uniform -> no stress in the mechanics rows
+  svg = sv; svg(13,:) = 0.05d0; svg(1:5,:) = 0d0           ! no living biomass: xi stays 0.05
+  U2 = 0d0
+  do ia = 1, 8
+    U2(5*(ia-1)+1:5*(ia-1)+3) = 0.05d0 * COORDS(:,ia); U2(5*(ia-1)+4) = 0.6d0; U2(5*(ia-1)+5) = 0.9d0
+  end do
+  call residual(U2, U2, COORDS, svg, PROPS, DTIME, R)
+  print '(a,es10.2)', 'free growth, finite strain: max |mechanics residual| ', &
+        maxval(abs([(R(5*(ia-1)+1:5*(ia-1)+3), ia = 1, 8)]))
   q = 0
   do ia = 1, NGP
     if (SV1(14*(ia-1)+14) > 0.5d0) q = q + 1
