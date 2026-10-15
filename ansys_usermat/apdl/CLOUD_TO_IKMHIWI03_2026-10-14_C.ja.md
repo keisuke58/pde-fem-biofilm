@@ -340,6 +340,27 @@ Felix のポスター（SIIRI B07）と同じ「時間 × 変数」の断面図�
   （各 10 分、23 分）。どちらだったかを報告に書く。
 - 場の φ が要素の値として取れない場合は、取り方（節点の自由度か、状態変数か）と、取れなかった理由を書く。
 
+## A-16. UEL と ANSYS の独立な比較：φ を止めたシード（15日夜、P3 の検証。1 本数分）
+
+統一モデルの UEL は、1 要素の極限では閉じた形と機械精度で一致した（`p3/uel/klempt2024_limit_test.py`、
+README の「Limit of Klempt et al. 2024」）。次は不均一な問題で、ソースを共有しない ANSYS と比べたい。
+
+- **問題**（`p3/uel/seed_frozen_reference.py` の docstring と同じ）：単位立方体 8³（SOLID185）、節点の φ は
+  `make_seed_inp.seed_phi`（中心 (0.5, 0.5, 0)、半径 0.25、0.9、縁 tanh 幅 0.03、外 1e−4）で**時間的に固定**。
+  成長 α̇ = k_α φ（Gauss 点の φ は節点値の補間）、α(0) = 1、k_α = 1e−3、T = 1.1 を 11 ステップ。
+  剛性 (φ² + f)E、E = 10、ν = 0.49、f = 1e−3、Neo-Hooke の偏差 + K/2 (J_e − 1)²（C10 = μ/2、D1 = 2/K）、
+  F_e = F/α。z = 0 で u = 0、他の面は自由。大変形（nlgeom on）、B-bar（SOLID185 の既定）。
+- **ANSYS 側**：オリバーの要素は使わない（φ を止めるため）。論文の USERMAT（`usermat_biofilm.f`）で、
+  φ の渡し方は任せる（例：節点温度 BF,TEMP = φ にして USERMAT で温度を φ として読む試験用の版）。
+  Gauss 点で φ が節点の補間になっていること、剛性に (φ² + f) が掛かることを確認して報告に書く。
+- **比べる量**：φ の要素平均 > 0.5 の要素（8³ で 16 個）の α − 1 と von Mises の平均、全要素の最大 von Mises と
+  その要素の重心。UEL の値（`p3/uel/results/seed_frozen_8.json`）：
+  - シードの α − 1 平均 **6.7606e−4**、von Mises 平均 **3.8496e−3**（E = 10 なので vM/E = 3.85e−4）
+  - 最大 von Mises 7.2210e−3、重心 (0.5625, 0.4375, 0.0625)
+- **期待**：α − 1 は 1e−6 以内（式 36 は同じ）。von Mises は数 % 以内なら合格。違うなら、平均膨張と B-bar の差、
+  体積項の形、φ の補間の差のどれかなので、要素ごとの JSON（重心、α − 1、vM、p）も push してほしい
+  （`results/2026-10-uel/seed_frozen_ansys_8.json`、形は UEL の JSON と同じ `elements`）。
+
 ## B. 長い列（会議のあと、21〜30 日も回す）
 
 `run_chain.ps1 -Export ansys_usermat\apdl\results\2026-10-cal5 -Push` で、1 本ごとに push。順番：
