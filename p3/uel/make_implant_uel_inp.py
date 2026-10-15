@@ -106,7 +106,7 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, name="")
     return phi
 
 
-def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True):
+def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, nstop=NINC):
     from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment  # needs BIOFILM_ECO_CASE
     props = F(props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu))
     S = sets(nodes, ijk)
@@ -121,7 +121,7 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True):
     fixed[NDN * np.where(S["SYMY"])[0] + 1] = True
     fixed[NDN * np.where(S["TOP"])[0] + 4] = True
     U[NDN * np.where(S["TOP"])[0] + 4] = 1.0
-    for k in range(NINC):
+    for k in range(nstop):
         U, SV, _ = increment(U.copy(), U, fixed, nodes, elems, SV, props, T / NINC, k + 1, ttot=T0 + k * T / NINC,
                              finite=finite, md=md)
     xi = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv in SV])
