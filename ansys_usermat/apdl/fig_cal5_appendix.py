@@ -66,14 +66,14 @@ if __name__ == "__main__":
         vals[n] = (seed_means(f"w{n}_CH_g1_s015_raw.json"), seed_means(f"w{n}_CH_cal_k0814_raw.json"))
     x = np.arange(2); w = 0.36
     for k, (lab, col) in enumerate((("Eq. 36", "#4c72b0"), ("living biomass", "#dd8452"))):
-        v = [vals[n][k][1] * 1e4 for n in (8, 16)]
+        v = [vals[n][k][1] / 10.0 * 1e5 for n in (8, 16)]      # / E = 10 Pa
         b = ax[2].bar(x + (k - 0.5) * w, v, w * 0.92, color=col, label=lab)
         for xi, vi, n in zip(x, v, (8, 16)):
             if k == 1:
                 d = vals[n][1][1] / vals[n][0][1] - 1
                 ax[2].text(xi + 0.5 * w, vi + 0.08, f"{100 * d:+.1f} %", ha="center", fontsize=8)
     ax[2].set_xticks(x, ["$8^3$", "$16^3$"])
-    ax[2].set(ylabel="seed von Mises ($10^{-4}$ Pa)", title="(c) seed stress, $T^*=1$", ylim=(0, 7.2))
+    ax[2].set(ylabel="seed von Mises$/E$ ($10^{-5}$)", title="(c) seed stress, $T^*=1$", ylim=(0, 7.2))
     ax[2].legend(fontsize=7.5, frameon=False, loc="upper left")
     fig.tight_layout()
     out = ROOT / "assets" / "fig_cal5_appendix"

@@ -39,7 +39,7 @@ def plane(fn):
     ix = lambda v: np.searchsorted(xs, np.round(v, 6))
     for i in np.where(np.isclose(ca[:, 2], z0))[0]:
         out["alpha"][ix(ca[i, 1]), ix(ca[i, 0])] = a["alpha"][i] * 1e3
-        out["vm"][ix(ca[i, 1]), ix(ca[i, 0])] = a["seqv"][i] * 1e6 * 1e4          # MPa -> 1e-4 Pa
+        out["vm"][ix(ca[i, 1]), ix(ca[i, 0])] = a["seqv"][i] * 1e6 / 10.0 * 1e5   # MPa -> Pa, / E = 10 Pa, in 1e-5
     for i in np.where(np.isclose(cn[:, 2], z0))[0]:
         out["phi"][ix(cn[i, 1]), ix(cn[i, 0])] = n["phi1"][i] + n["phi2"][i]
         out["c"][ix(cn[i, 1]), ix(cn[i, 0])] = n["nut1"][i]
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     data = [plane(fn)[0] for fn, _ in RUNS]
     _, lo, hi = plane(RUNS[0][0])
     cols = (("c", "nutrient $c$", "viridis"),
-            ("alpha", "$\\alpha-1$ ($10^{-3}$)", "viridis"), ("vm", "von Mises ($10^{-4}$ Pa)", "viridis"))
+            ("alpha", "$\\alpha-1$ ($10^{-3}$)", "viridis"), ("vm", "von Mises$/E$ ($10^{-5}$)", "viridis"))
     fig = plt.figure(figsize=(10.5, 4.8))
     cube(fig.add_axes([0.0, 0.18, 0.24, 0.7], projection="3d"))
     W, H, x0, y0, dx = 0.2, 0.37, 0.33, 0.5, 0.225

@@ -198,7 +198,7 @@ same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
 \begin{itemize}
   \item $\alpha-1=1.1\times10^{-3}=k_\alpha\phi t$, as Eq.\ 36 says
   \item seed compressed; neighbours carry about 25$\times$ its von Mises stress
-  \item stresses $\le10^{-4}$ Pa: slow growth, soft biofilm ($E=10$ Pa)
+  \item von Mises$/E\le10^{-5}$: slow growth (stresses scale with $E$)
 \end{itemize}
 \end{frame}
 
@@ -274,8 +274,8 @@ $\kappa$ chosen so that the mean growth of the seed equals Eq.\ 36
 seed, $T^*=1$ & Eq.\ 36 & living & diff.\\
 \midrule
 $\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
-von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
-von Mises, $16^3$; $24^3$ & & & $-7.1$; $-7.8\,\%$\\
+von Mises$/E$, $8^3$ & $4.684\cdot10^{-5}$ & $4.357\cdot10^{-5}$ & $-7.0\,\%$\\
+von Mises$/E$, $16^3$; $24^3$ & & & $-7.1$; $-7.8\,\%$\\
 antibiotic vs.\ none, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
 \bottomrule
 \end{tabular}\\[2pt]
@@ -556,9 +556,9 @@ $\kappa$ & $8.14\cdot10^{-3}$: mean $\alpha-1$ as Eq.\ 36 ($-0.003\,\%$); assume
 seed, $T^*=1$ & Eq.\ 36 & living & diff.\\
 \midrule
 $\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
-von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
+von Mises$/E$, $8^3$ & $4.684\cdot10^{-5}$ & $4.357\cdot10^{-5}$ & $-7.0\,\%$\\
 vM, $16^3$; $24^3$ & & & $-7.1$; $-7.8\,\%$\\
-vM$/(\alpha-1)$ [Pa] & $0.69$ & $0.64$ & \\
+vM$/(E(\alpha-1))$ & $0.069$ & $0.064$ & \\
 antibiotic, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
 \bottomrule
 \end{tabular}\\[3pt]
@@ -591,7 +591,7 @@ compared with Eq.\ 36.
 \toprule
  & start & $T^*=1$ & growth $\alpha-1$ & seed von Mises\\
 \midrule
-shares (Eq.\ 36) & 0.2 each & An 0.38, Vei 0.23, So 0.23, Fn 0.09, Pg 0.08 & $6.752\cdot10^{-4}$, same as two species & $4.68\cdot10^{-4}$ Pa\\
+shares (Eq.\ 36) & 0.2 each & An 0.38, Vei 0.23, So 0.23, Fn 0.09, Pg 0.08 & $6.752\cdot10^{-4}$, same as two species & vM$/E=4.68\cdot10^{-5}$\\
 living biomass $\sum_i\phi_i\psi_i$ & 0.90 & 0.44 (mostly So lost) & same mean & $-7.0\,\%$ ($8^3$),\newline $-7.1\,\%$ ($16^3$)\\
 \bottomrule
 \end{tabular}\\[3pt]
