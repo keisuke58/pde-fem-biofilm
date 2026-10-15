@@ -61,7 +61,8 @@ def run_with_phi(phi_steps, g, theta, s=0.2375, n_sub=25, phi_cap=0.9, weighted=
     at phi_cap as the element's scaled scheme does.  Returns ln J after every step.
     weighted (15 Oct, A-10 option 3, the element's mode 10): ln J += ln(1 + phi_3D (R - 1)) with
     the uncapped phi_3D in [0, 1], so that a point with little biomass grows little (at the front,
-    phi_3D just above phi_min, R was about 10 in one step); False: ln J += ln R."""
+    phi_3D just above phi_min, R was about 10 in one step), and only where phi_3D >= 0.5 (option 1,
+    both decided 15 Oct: with the weight alone the run still stopped at step 5); False: ln J += ln R."""
     lnJ = [0.0]; g = np.array(g, float)
     for p3 in phi_steps:
         p = min(p3, phi_cap); tot = g[0:5].sum()
@@ -70,6 +71,8 @@ def run_with_phi(phi_steps, g, theta, s=0.2375, n_sub=25, phi_cap=0.9, weighted=
         g = np.asarray(g, float).copy()
         R = g[0:5].sum() / p
         w = min(max(p3, 0.0), 1.0) if weighted else 1.0
+        if weighted and p3 < 0.5:              # option 1 as well: only phi_3D >= 0.5 grows
+            w = 0.0
         lnJ.append(lnJ[-1] + np.log(1.0 + w * (R - 1.0)))
     return np.array(lnJ)
 

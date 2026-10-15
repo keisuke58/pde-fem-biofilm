@@ -32,7 +32,8 @@ C                     3D field (unchanged): see the branch below.
 C       prop(28) = 10: as 7, but the growth is the point model's own
 C                     increase R = sum phi_i after / before one step
 C                     (15 Oct, A-10): ln(1 + alpha) += ln(1 + phi_3D
-C                     (R - 1)) / 3 (option 3: weighted by phi_3D), no rate
+C                     (R - 1)) / 3 (option 3: weighted by phi_3D) where
+C                     phi_3D >= 0.5 (option 1), 0 elsewhere, no rate
 C                     parameter (prop(7) unused). An assumption (the new
 C                     biomass pushes the material apart), not a paper's.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
@@ -514,7 +515,9 @@ C         about 10 in one step), alpha = J^(1/3) (alpha - 1 here); 0
 C         where the point model did not run (PM_PHIINT = 0)
           IF (prop(28) .GT. 9.5D0) THEN
             ALPHA_NEW = ALPHA_N
-            IF (PM_OK) THEN
+C           option 1 as well (15 Oct): only points with phi_3D >= 0.5
+C           grow; below, the point model runs but the volume stays
+            IF (PM_OK .AND. PHI_USED .GE. 0.5D0) THEN
               CM_F = MIN(MAX(PHI_USED, 0.0D0), 1.0D0)
               ALPHA_NEW = (1.0D0 + ALPHA_N) * (1.0D0 + CM_F
      &                  * (EXP(PM_PHIINT) - 1.0D0))**(1.0D0/3.0D0)
