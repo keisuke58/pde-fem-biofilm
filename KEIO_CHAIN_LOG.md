@@ -578,3 +578,21 @@ Built with the corrected `unified_uel.f90` (Gauss-point record after the growth 
 - `uel_column` (20 elements): x = 0, NT11 0.77532, NT12 0.93565 (IKMHIWI03 0.7753, 0.9357).
 - `uel_seed8` (8^3, default options): elements with phi > 0.5: vM mean 0.01300, max 0.01637 (expected 0.01300 / 0.01637). alpha - 1 mean 0.03571.
 Output: `p3/uel/results/abaqus_fifa/` (`.sta` and the Gauss-point files, gzip).
+
+## 16 Oct 2026, fifa (overnight): implant sector mesh convergence, Abaqus checks, UEL seed 32^3
+```
+bulge 0
+mesh      elems  seed a-1   seed vM/E  int a-1    int vM/E   max vM/E  (r, theta, z)            layer row_from_top  max w/o edge rows
+2x6x8        96  0.04634   0.04775   0.01795   0.03544   0.2728   (2.094, 67.5, 1.875)    0     0   0.1285
+4x12x16     768  0.03523   0.02358   0.02176   0.01825   0.2375   (2.077, 71.2, 1.938)    0     0   0.1608
+6x18x24    2592  0.02962   0.01482   0.02137   0.01199   0.2004   (2.069, 77.5, 1.958)    0     0   0.1586
+bulge 1
+mesh      elems  seed a-1   seed vM/E  int a-1    int vM/E   max vM/E  (r, theta, z)            layer row_from_top  max w/o edge rows
+2x6x8        96  0.04427   0.04620   0.01490   0.03253   0.2927   (3.076, 67.5, 1.875)    0     0   0.1262
+4x12x16     768  0.03302   0.02383   0.01901   0.01782   0.2912   (3.072, 71.2, 1.938)    0     0   0.1809
+6x18x24    2592  0.02774   0.01599   0.01908   0.01262   0.2641   (3.067, 72.5, 1.958)    0     0   0.1956
+```
+Abaqus against the emulation (largest relative difference per element, alpha - 1 / vM), last increment:
+- 4x12x16 (768 elements): 1.8e-07 / 2.9e-07
+- 4x12x16_b1 (768 elements): 1.5e-07 / 2.7e-07
+UEL frozen seed 32^3: seed alpha - 1 8.8340e-04, seed vM 5.0865e-03, largest vM 1.4426e-02; vM mean within 0.2 of (0.5, 0.5, 0): 6.5117e-03 (544 elements); ANSYS 32^3: 6.5e-3
