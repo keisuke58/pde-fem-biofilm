@@ -163,3 +163,13 @@ x = 1 from 0.1 to 1 inside the first growth increment (start-of-increment value 
 the start. With the same switch in the emulation, Abaqus and the emulation agree Gauss point by Gauss point to
 c 1.8e-6, alpha - 1 5e-6, von Mises 2e-6: the element works in Abaqus. The jump enters the consistent mass term and
 lowered the growth by 12 % on 8^3; the seed deck now prescribes the supply already in the INIT step.
+Sixth try (supply from the INIT step): all four seeds pass, and Abaqus gives the emulation's numbers (von Mises mean / max
+over the elements with phi > 0.5):
+
+| job | Abaqus | emulation |
+|---|---|---|
+| 8^3, finite strain | 0.012998 / 0.016366 | 0.012997 / 0.016365 |
+| 8^3, small strain | 0.013120 / 0.016585 | 0.013119 / 0.016584 |
+| 8^3, nu = 0.49, mean dilatation | 0.013419 / 0.015773 | 0.013419 / 0.015773 |
+
+The unified model runs in Abaqus 2024 as a user element (results in `ansys_usermat/apdl/results/2026-10-uel/`).
