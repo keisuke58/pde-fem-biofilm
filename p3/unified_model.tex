@@ -32,7 +32,7 @@
 \noindent In the thesis the growth field of Klempt et al.\ 2024 and the multispecies point
 model of Klempt et al.\ 2026 are solved separately and joined at the Gauss points, which needs
 choices that no paper fixes: how the two voids relate, whether the point model is scaled to the
-field, what drives the growth, and how the two clocks are linked. Here the biofilm is described
+field, what drives the growth, and how the time of the point model is linked to the time of the field. Here the biofilm is described
 on two levels, a phase field $\phi$ (biofilm against the outer liquid) and, inside the biofilm,
 the composition of the point model, and all equations follow from one energy, one dissipation
 potential and one constraint through the extended Hamilton principle in Onsager's form. Growth
@@ -45,6 +45,37 @@ point model to round-off. In 3D with the calibrated five-species point model, an
 lowers the living biomass, the growth and the advance of the edge, differently for a broad and
 an anaerobe-specific antibiotic, and the composition varies with the local nutrient.
 \end{abstract}
+
+\section*{In plain words}
+
+\paragraph{The problem.} In the thesis two models are computed separately and joined
+afterwards: the field says where the biofilm is and how much of it there is, and the point
+model says which species are inside and what fraction of each is alive. Joining them needs
+choices that no paper makes: whether to scale the point model to the field (schemes (a) and
+(b)), and what makes the biofilm grow (schemes (a) and (c)).
+
+\paragraph{What is done here.} Both are written as one model from the start, and every
+equation follows from one principle: the system moves so that its energy goes down, at a rate
+set by friction (dissipation). Nothing is joined afterwards, so the choices above disappear.
+
+\paragraph{What comes out.}
+\begin{enumerate}
+\item \emph{There are two kinds of empty space.} The liquid outside the biofilm and the liquid
+  inside it are different things. A model that mixes them lets bacteria grow by themselves in
+  the outer liquid.
+\item \emph{Growth is a reaction that eats nutrient.} Living cells run it, so when an antibiotic
+  kills cells, the growth slows down. Writing the living cells as the driver of the rate, not as
+  an energy, is what makes the antibiotic work in the model.
+\item \emph{The biofilm spreads towards the nutrient by itself.} Where there is more nutrient
+  the biofilm grows more and pushes its edge out further. Klempt et al.\ 2024 added a separate
+  term for this; here it follows from the growth, in 1D, 2D and 3D.
+\end{enumerate}
+
+\paragraph{In one sentence.} The thesis's scheme (c), growth from the living biomass, is the
+simplest limit of this model, so it now has a derivation behind it.
+
+\paragraph{How to read the rest.} Sections 1--5 give the model and its derivation, Section 6
+the numerics, Section 7 the checks, Section 8 the results, Section 9 what is assumed and open.
 
 \section{Why two levels}
 \label{sec:two}
@@ -161,8 +192,8 @@ KB'(s_0)+\gamma+\dot s_0&=0,\\
 KB'(\psi_i)+\alpha^*b_i\psi_i+\eta s_i\psi_i\dot s_i+\eta s_i^2\dot\psi_i-c^*s_i\sum_jA_{ij}s_j\psi_j&=0,\label{eq:psi}\\
 \textstyle\sum_is_i+s_0-1&=0 .
 \end{align}
-Without the gradient term these are the point model of Klempt et al.\ 2026 at every point, on
-its own clock.
+Without the gradient term these are the point model of Klempt et al.\ 2026 at every point, in
+its own time.
 
 \paragraph{Phase:}
 \begin{equation}
@@ -239,7 +270,7 @@ only increases of the discrete energy.
 \paragraph{Limits.}
 \begin{enumerate}
 \item Uniform field, $\beta_s=0$: at every point the composition is the point model of Klempt
-  et al.\ 2026 on its own clock. The calibrated $A$, $c^*$ and the time link of the calibration
+  et al.\ 2026 in its own time. The calibrated $A$, $c^*$ and the time link of the calibration
   carry over unchanged.
 \item $\lambda\to0$, $\beta_s=0$: the composition decouples from the phase and runs where the
   biofilm is, as the element's free point model (scheme (b)); the growth
@@ -323,7 +354,7 @@ point model inside the 3D runs & residual $\le4.5\times10^{-13}$ every step & sa
 
 All runs use the point model calibrated for the commensal flow condition (CH) of Heine et
 al., started from the calibration's Day-1 state put to the inner liquid $s_0=0.1$, with the
-calibration's time link ($0.2375$ units of the point model's clock per $T^*$, $T^*=1$ being
+calibration's time link ($0.2375$ units of the point model's time per $T^*$, $T^*=1$ being
 Day~21). Antibiotic parameters are assumed: either the same susceptibility for all species
 ($b_i=1$, $\alpha^*=0.65$) or the anaerobes (\textit{V.~dispar}, \textit{F.~nucleatum},
 \textit{P.~gingivalis}) ten times more susceptible ($\alpha^*=0.32$); switched on at $T^*=0.5$.
