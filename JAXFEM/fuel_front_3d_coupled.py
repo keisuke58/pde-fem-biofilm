@@ -1,4 +1,8 @@
-"""fuel_front_3d_coupled.py -- step 2: the composition acts on the phase in 3D (lam > 0).
+"""
+Time (corrected 15 Oct 2026): the field and the point model share one time, T = 0.2375 = the
+calibration's Day 1 to Day 21, as in the 1D models (s = 1).  The first runs used s = 0.2375, which
+advanced the point model only to about Day 5.
+fuel_front_3d_coupled.py -- step 2: the composition acts on the phase in 3D (lam > 0).
 
 Two-level model of p3/unified_model.tex in 3D on a regular grid, beta_s = 0:
   composition  : the calibrated five-species point model at every node of the biofilm (with
@@ -41,7 +45,7 @@ def psi_pm(G, A, ast, b, c=C_STAR):
 
 
 def run(n=16, lam=1.0, beta=0.02, eta_phi=1.0, kphi=1e-5, D=0.2, L0=2.0, Y=1.0, c_stop=0.1,
-        T=0.2375, s=0.2375, ast=0.0, ab_on=0.5, b=None, phi_min=0.05, psi_ref=0.0):
+        T=0.2375, s=1.0, ast=0.0, ab_on=0.5, b=None, phi_min=0.05, psi_ref=0.0):
     g0, th = u1.ch_case()
     g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1; g[6:11] = np.clip(g[6:11], 1e-10, 1 - 1e-10)
     A = np.asarray(ch.theta_to_matrices(jnp.asarray(th))[0])
@@ -86,7 +90,7 @@ def run(n=16, lam=1.0, beta=0.02, eta_phi=1.0, kphi=1e-5, D=0.2, L0=2.0, Y=1.0, 
     return x, X, Z, phi, alpha, c, U, living, worst
 
 
-def reference_energy(steps=80, T=0.2375, s=0.2375):
+def reference_energy(steps=80, T=0.2375, s=1.0):
     """Time average of the point model's stored energy over T* = 0..1 without antibiotic, from the
     calibration's start: the formation energy that keeps an untreated biofilm phase steady on
     average.  The absolute level of Psi_pm is not fixed by the calibration (only its derivatives

@@ -1,4 +1,8 @@
-"""fuel_front_3d_species.py -- fuel_front_3d.py with the calibrated five-species point model in place
+"""
+Time (corrected 15 Oct 2026): the field and the point model share one time, T = 0.2375 = the
+calibration's Day 1 to Day 21, as in the 1D models (s = 1).  The first runs used s = 0.2375, which
+advanced the point model only to about Day 5.
+fuel_front_3d_species.py -- fuel_front_3d.py with the calibrated five-species point model in place
 of the lumped living share.
 
 The composition is the two-level model in its decoupled limit (lam -> 0, beta_s = 0): at every node
@@ -58,7 +62,7 @@ def make_pm_step(theta, dt_pm, ast, b, c_ref=None):
     return jax.jit(jax.vmap(one, in_axes=(0, 0)))
 
 
-def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=0.2375, ast=0.0, ab_on=0.5, b=None, c_ref=None):
+def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=1.0, ast=0.0, ab_on=0.5, b=None, c_ref=None):
     g0, th = u1.ch_case()
     g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1; g[6:11] = np.clip(g[6:11], 1e-10, 1 - 1e-10)
     h = 1.0 / n
