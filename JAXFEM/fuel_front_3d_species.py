@@ -10,7 +10,9 @@ mechanics as fuel_front_3d.py.  Each point-model step is solved with damped Newt
 (the residual of core_hamilton_1d, gate off; 60 damped Newton iterations per step).  Cases: no antibiotic; antibiotic from T* = 0.5 with
 the same susceptibility for all species; antibiotic from T* = 0.5 acting on the anaerobes
 (Vei, Fn, Pg ten times more susceptible).  The antibiotic parameters are assumed.
-Output: assets/fig_fuel_front_3d_species.pdf.
+Output: assets/fig_fuel_front_3d_species.pdf.  With --local the point model at every node sees the
+local nutrient (c* c(x)/c_ref, c_ref = 1 the supply), so the composition itself depends on where
+the node is: output assets/fig_fuel_front_3d_species_local.pdf.
 """
 import sys
 from pathlib import Path
@@ -29,14 +31,21 @@ import fuel_front_3d as f3  # noqa: E402
 import unified_1d as u1  # noqa: E402
 
 
-def make_pm_step(theta, dt_pm, ast, b):
+def make_pm_step(theta, dt_pm, ast, b, c_ref=None):
+    """One point-model step at every active node.  c_ref = None: the constant c* of the
+    calibration.  c_ref > 0: the local nutrient, the interaction sees c* c(x)/c_ref (the element's
+    local-nutrient option, ecology_constants.py), so a starved region has weaker interactions."""
     A, _ = ch.theta_to_matrices(jnp.asarray(theta))
     p = jax.tree_util.tree_map(jnp.asarray, ej.default_hparams(dt_pm))
     p["A"] = A; p["b_diag"] = jnp.asarray(b, float); p["alpha"] = jnp.float64(ast)
     mask = jnp.ones(5, dtype=jnp.int64)
+    cstar = float(p["c"])
 
-    def one(gp):
-        F = lambda g: ch.residual(g, gp, p)
+    def one(gp, cn):
+        pl = dict(p)
+        if c_ref is not None:
+            pl["c"] = cstar * cn / c_ref
+        F = lambda g: ch.residual(g, gp, pl)
 
         def body(g, _):
             d = jnp.linalg.solve(jax.jacfwd(F)(g), -F(g))
@@ -46,10 +55,10 @@ def make_pm_step(theta, dt_pm, ast, b):
 
         g, _ = jax.lax.scan(body, ch.clip_state(gp, mask), jnp.arange(60))
         return g, jnp.max(jnp.abs(F(g)))
-    return jax.jit(jax.vmap(one))
+    return jax.jit(jax.vmap(one, in_axes=(0, 0)))
 
 
-def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=0.2375, ast=0.0, ab_on=0.5, b=None):
+def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=0.2375, ast=0.0, ab_on=0.5, b=None, c_ref=None):
     g0, th = u1.ch_case()
     g = g0.copy(); g[0:5] *= 0.9 / g[0:5].sum(); g[5] = 0.1; g[6:11] = np.clip(g[6:11], 1e-10, 1 - 1e-10)
     h = 1.0 / n
@@ -61,12 +70,12 @@ def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=0.2375, ast=0.0, ab_
     G = np.tile(g, (act.sum(), 1))
     dt = 0.15 * h * h / D; steps = int(np.ceil(T / dt)); dt = T / steps
     b = np.ones(5) if b is None else np.asarray(b, float)
-    step0, step1 = make_pm_step(th, s * dt, 0.0, b), make_pm_step(th, s * dt, ast, b)
+    step0, step1 = make_pm_step(th, s * dt, 0.0, b, c_ref), make_pm_step(th, s * dt, ast, b, c_ref)
     c = np.full_like(phi, c_stop); c[-1] = 1.0; xi = np.zeros_like(phi); mu_b = Y * np.log(c_stop)
     worst = 0.0
     for k in range(steps):
         on = ast > 0 and (k + 0.5) / steps >= ab_on
-        Gj, res = (step1 if on else step0)(jnp.asarray(G))
+        Gj, res = (step1 if on else step0)(jnp.asarray(G), jnp.asarray(c[act]))
         G = np.asarray(Gj); worst = max(worst, float(jnp.max(res)))
         if k < 3:
             print(f'  step {k}: point-model residual {float(jnp.max(res)):.1e}', flush=True)
@@ -79,7 +88,8 @@ def run(n=24, D=0.2, L0=2.0, Y=1.0, c_stop=0.1, T=0.2375, s=0.2375, ast=0.0, ab_
         xi += dt * rate
     alpha = 1.0 + xi
     U = f3.elasticity(phi, alpha, n)
-    return x, X, Z, phi, alpha, c, U, living, worst
+    comp = np.zeros(phi.shape + (5,)); comp[act] = G[:, 0:5]
+    return x, X, Z, phi, alpha, c, U, living, worst, comp
 
 
 def edge_disp(x, U, el, az):
@@ -93,13 +103,20 @@ def edge_disp(x, U, el, az):
 
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 24
-    cases = (("no antibiotic", dict()),
-             ("antibiotic, all species", dict(ast=0.65)),
-             ("antibiotic, anaerobes", dict(ast=0.32, b=[1, 1, 10, 10, 10])))
+    local = "--local" in sys.argv
+    D = float(sys.argv[sys.argv.index("--D") + 1]) if "--D" in sys.argv else 0.2
+    cr = 1.0 if local else None          # c_ref = 1: the supply concentration
+    cases = (("no antibiotic", dict(c_ref=cr)),
+             ("antibiotic, all species", dict(ast=0.65, c_ref=cr)),
+             ("antibiotic, anaerobes", dict(ast=0.32, b=[1, 1, 10, 10, 10], c_ref=cr)))
     out = {}
     for name, kw in cases:
-        x, X, Z, phi, alpha, c, U, living, worst = run(n=n, **kw)
+        x, X, Z, phi, alpha, c, U, living, worst, comp = run(n=n, D=D, **kw)
         j = n // 2
+        names = ["So", "An", "Vei", "Fn", "Pg"]
+        for lab, ii in (("nutrient side", int(0.7 * n)), ("far side", int(0.3 * n))):
+            sh = comp[ii, j, 1] / comp[ii, j, 1].sum()
+            print(f"  composition {lab}: " + ", ".join(f"{nm} {v:.2f}" for nm, v in zip(names, sh)) + f"; c = {c[ii, j, 1]:.2f}, living {living[ii, j, 1]:.3f}", flush=True)
         d30 = [edge_disp(x, U, 30, az) for az in (0.0, np.pi)]
         print(f"{name:24s}: living share at the colony centre {living[j, j, 1]:.3f}, alpha - 1 nutrient side "
               f"{alpha[int(0.7 * n), j, 1] - 1:.3f}, far side {alpha[int(0.3 * n), j, 1] - 1:.3f}; edge 30 deg: "
@@ -121,5 +138,6 @@ if __name__ == "__main__":
         a.plot(P[:, 0], P[:, 1], "k--", lw=1); a.plot(Q[:, 0], Q[:, 1], "k-", lw=1.5)
         a.set(title=name, xlabel="$x$", aspect="equal", xlim=(0.15, 0.85), ylim=(0, 0.4))
     ax[0].set_ylabel("$z$ (section $y=0.5$)")
-    fig.tight_layout(); fig.savefig(ROOT / "assets/fig_fuel_front_3d_species.pdf")
-    print("wrote assets/fig_fuel_front_3d_species.pdf")
+    out_pdf = ("assets/fig_fuel_front_3d_species_local.pdf" if local else "assets/fig_fuel_front_3d_species.pdf") if D == 0.2 else f"/tmp/fig_D{D}.pdf"
+    fig.tight_layout(); fig.savefig(ROOT / out_pdf)
+    print("wrote", out_pdf)
