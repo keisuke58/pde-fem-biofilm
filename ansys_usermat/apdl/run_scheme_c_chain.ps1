@@ -23,6 +23,9 @@ Sets (the order is the instruction's):
       p_ref 2.4e-10 and 2.4e-9 MPa. Exe F:\biofilm_upf_cal5gp (cal5sc plus
       that form in growth_from_phi.f), so:
       -Set A7 -WorkDir F:\biofilm_upf_cal5gp -After A8 -AfterLog F:\biofilm_upf_cal5sc\_cal5.log
+  A10 growth from the point model's own increase, no kappa (mode 10): a check
+      run without the local nutrient, then CH and CS. Exe F:\biofilm_upf_cal5pm:
+      -Set A10 -WorkDir F:\biofilm_upf_cal5pm -After A7 -AfterLog F:\biofilm_upf_cal5gp\_cal5.log
   -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
   restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
@@ -34,7 +37,7 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
     [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
@@ -90,6 +93,15 @@ $sets = @{
            a = @('-Conditions', 'CH', '-Growth', '-Kappa', '2.8', '-YoungVoid', '-1e-2', '-YoungBio', '6e-4', '-Tag', 'k2800_v10_E600') },
         @{ n = '(c) kappa 2.8 void x100 E 600 Pa'; m = 3; j = 'w8_CH_cal_k2800_v100_E600'; r = @('-Steps', '475');
            a = @('-Conditions', 'CH', '-Growth', '-Kappa', '2.8', '-YoungVoid', '-1e-1', '-YoungBio', '6e-4', '-Tag', 'k2800_v100_E600') }
+    )
+    # A-10 (15 Oct): growth from the point model's own increase, no kappa (mode 10,
+    # exe F:\biofilm_upf_cal5pm). The check run has no local nutrient (prop(33) = 0)
+    # so that a10_check.py can compare with the Python model to 1e-10. A run that
+    # stops is run once more with the void ten times stiffer (A-8's first step).
+    A10 = @(
+        @{ n = 'CH mode 10 check (no local nutrient)'; m = 2; a = @('-Conditions', 'CH', '-Pm10', '-ExtraProps', '33=0', '-Tag', 'chk') },
+        @{ n = 'CH mode 10'; m = 2; j = 'w8_CH_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CH', '-Pm10') },
+        @{ n = 'CS mode 10'; m = 2; j = 'w8_CS_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CS', '-Pm10') }
     )
     # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
     A7 = @(

@@ -29,6 +29,11 @@ C                     species count of 7, and alpha follows its live
 C                     biomass; see the branch below.
 C       prop(28) = 7: COMPOSITION from the point model, amount from the
 C                     3D field (unchanged): see the branch below.
+C       prop(28) = 10: as 7, but the growth is the point model's own
+C                     increase R = sum phi_i after / before one step
+C                     (15 Oct, A-10): ln(1 + alpha) += ln(R) / 3, no rate
+C                     parameter (prop(7) unused). An assumption (the new
+C                     biomass pushes the material apart), not a paper's.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
 C                     for one (5) or two (6) species: phi_i from the
 C                     3D field, the point model gives the reaction
@@ -62,7 +67,7 @@ C       the field's nutrient at this Gauss point (modes 7 and 9): as
 C       shipped "not available" (-1D30; the field's c itself can be
 C       < 0), paste_fragments.py --nut-var NAME makes it CM_NUT = NAME
         CM_NUT = -1.0D30
-        IF (prop(28) .GT. 8.5D0) THEN
+        IF (prop(28) .GT. 8.5D0 .AND. prop(28) .LT. 9.5D0) THEN
 C         --- growth from the calibrated point model (10 Oct 2026) ----
 C         P3 design (tmcmc202601, docs/fem_coupling/P3_point_model_
 C         alpha_design.md), live-biomass form. The point model runs on
@@ -212,7 +217,7 @@ C             (the step whose midpoint Time + dTime/2 reaches it).
      &        (PM_GNEW(PM_I), PM_I = 1, 12)
             FLUSH(96)
           END IF
-        ELSE IF (prop(28) .GT. 7.5D0) THEN
+        ELSE IF (prop(28) .GT. 7.5D0 .AND. prop(28) .LT. 8.5D0) THEN
 C         --- composition from an independent point model -----------
 C         Klempt et al. 2026 formulate a material point model and call
 C         phi0 a numerical auxiliary, not a physical void. Here the
@@ -384,6 +389,17 @@ C         the seed's start cannot be varied apart (5 Oct runs).
             DO PM_I = 1, CM_NSP
               PM_GOLD(6 + PM_I) = 0.999D0
             END DO
+C           mode 10: the composition and psi of the case file's Day-1
+C           state when it has one (as mode 9); the amount is put to
+C           phi_3D below in any case
+            IF (prop(28) .GT. 9.5D0) THEN
+              CALL biofilm_ecology_init_state(CM_NSP, PM_GNEW, CA_HAVE)
+              IF (CA_HAVE) THEN
+                DO PM_I = 1, 12
+                  PM_GOLD(PM_I) = PM_GNEW(PM_I)
+                END DO
+              END IF
+            END IF
           END IF
           DO PM_I = 1, 20
             PM_TH(PM_I) = prop(7 + PM_I)
@@ -469,6 +485,9 @@ C             (the step whose midpoint Time + dTime/2 reaches it).
                   CM_S = CM_S + PM_GNEW(PM_I)
                 END DO
                 CM_F = SP_SUM / CM_S
+C               mode 10: ln R of this step in place of the phi integral
+C               (unused by mode 7), so that the cache hands it back too
+                IF (prop(28) .GT. 9.5D0) PM_PHIINT = LOG(CM_S / SP_SUM)
                 DO PM_I = 1, CM_NSP
                   PM_GNEW(PM_I) = PM_GNEW(PM_I) * CM_F
                 END DO
@@ -487,6 +506,13 @@ C             (the step whose midpoint Time + dTime/2 reaches it).
           END IF
           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
      &                                dTime, ALPHA_NEW)
+C         mode 10: volume J = product of R, alpha = J^(1/3) (alpha - 1
+C         here); 0 where the point model did not run (PM_PHIINT = 0)
+          IF (prop(28) .GT. 9.5D0) THEN
+            ALPHA_NEW = ALPHA_N
+            IF (PM_OK) ALPHA_NEW = (1.0D0 + ALPHA_N)
+     &                           * EXP(PM_PHIINT / 3.0D0) - 1.0D0
+          END IF
 C         prop(36) = d (not 0): species-weighted growth law, the
 C         composition into the growth (5 Oct, two_way_growth_rate.py):
 C         alpha_dot = k_alpha phi sum_i f_i chi_i, chi from the point
