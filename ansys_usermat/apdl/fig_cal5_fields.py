@@ -64,7 +64,7 @@ def cube(ax):
     z = Poly3DCollection([[(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0)]], alpha=0.15)
     z.set_facecolor("#1e50a0"); z.set_edgecolor("#1e50a0"); ax.add_collection3d(z)
     ax.set_xlim(-1, 1); ax.set_ylim(-1, 1); ax.set_zlim(-1, 1)
-    ax.text2D(0.5, -0.02, "seed (red), nutrient supply $y=-1$ mm (green),\nplane $z=0$ shown (blue)",
+    ax.text2D(0.5, -0.02, "seed (red, sketch), nutrient supply $y=-1$ mm (green),\nplane $z=0$ shown (blue)",
               transform=ax.transAxes, ha="center", va="top", fontsize=7.6)
     ax.set_title("2 mm cube, $16^3$", fontsize=9)
 

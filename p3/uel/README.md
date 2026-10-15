@@ -215,3 +215,19 @@ This checks the growth law and the finite-strain mechanics of Klempt et al. 2024
 equation of Klempt et al. 2024 (the k_alpha alpha term and the front term of Eq. 34) is not a limit of
 this model, so their Section 4 test cases cannot be reproduced with the element; the Python reproduction
 (`JAXFEM/`, Appendix D of the 19 Oct deck) covers them.
+
+## Cross-code check with ANSYS: seed with the phase frozen (A-16, 15 Oct 2026)
+
+Same problem in the UEL (`seed_frozen_reference.py`, mean dilatation) and in ANSYS (SOLID185 B-bar with the
+unchanged core of the thesis USERMAT, phi as nodal temperature; `ansys_usermat/apdl/frozen_seed/`). The two
+codes share no source. Seed = elements with mean nodal phi > 0.5.
+
+| | 8^3 UEL | 8^3 ANSYS | diff. | 16^3 UEL | 16^3 ANSYS | diff. |
+|---|---|---|---|---|---|---|
+| seed alpha - 1 | 6.76058e-4 | 6.76057e-4 | 1.2e-6 | 8.81599e-4 | 8.81598e-4 | 8e-7 |
+| seed von Mises | 3.8496e-3 | 3.6559e-3 | -5.0 % | 5.4222e-3 | 5.2881e-3 | -2.5 % |
+| largest von Mises | 7.2210e-3 | 7.0229e-3 | -2.7 % | 1.18150e-2 | 1.17799e-2 | -0.3 % |
+
+The growth agrees to 1e-6; the stress difference halves with the mesh, as expected from the element
+formulation (mean dilatation against B-bar; in ANSYS alone, enhanced strain against B-bar differs by 12.7 % at
+8^3 and 2.5 % at 16^3). The largest value sits at mirror-image elements in the two codes (equal values).
