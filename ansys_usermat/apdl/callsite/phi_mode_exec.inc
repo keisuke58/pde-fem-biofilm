@@ -393,8 +393,13 @@ C         the seed's start cannot be varied apart (5 Oct runs).
             END DO
 C           mode 10: the composition and psi of the case file's Day-1
 C           state when it has one (as mode 9); the amount is put to
-C           phi_3D below in any case
-            IF (prop(28) .GT. 9.5D0) THEN
+C           phi_3D below in any case. prop(55) = 1 does the same in
+C           mode 7 (A-17, 15 Oct: Eq. 36 from the calibrated Day 1)
+            CA_HAVE = (prop(28) .GT. 9.5D0)
+            IF (nProp .GE. 55) THEN
+              IF (prop(55) .GT. 0.5D0) CA_HAVE = .TRUE.
+            END IF
+            IF (CA_HAVE) THEN
               CALL biofilm_ecology_init_state(CM_NSP, PM_GNEW, CA_HAVE)
               IF (CA_HAVE) THEN
                 DO PM_I = 1, 12
