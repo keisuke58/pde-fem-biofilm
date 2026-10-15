@@ -56,6 +56,7 @@ param(
     [string]$Out = 'ansys_usermat\apdl\results\2026-10-cal5',
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
+    [switch]$Pm10,            # mode 10 (A-10): mode 7's point model, growth = its own increase R, no kappa; exe with mode 10 (F:\biofilm_upf_cal5pm)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
     [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
@@ -81,6 +82,7 @@ if (-not $Worker) {
            '-Branch', $br)
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
+    if ($Pm10) { if ($Growth) { throw "-Pm10 and -Growth exclude each other" }; $a += '-Pm10' }
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
     if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
     if ($B) { $a += @('-B', $B) }
@@ -147,7 +149,7 @@ $cfgPath = @{
 }
 
 function Run-Condition($c, $sha) {
-    $job = if ($Growth) { "w${Mesh}_${c}_cal" } else { "w${Mesh}_${c}_g1_s015" }
+    $job = if ($Growth) { "w${Mesh}_${c}_cal" } elseif ($Pm10) { "w${Mesh}_${c}_pm10" } else { "w${Mesh}_${c}_g1_s015" }
     if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
@@ -165,7 +167,7 @@ function Run-Condition($c, $sha) {
     if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
     # void floor (A-8, 15 Oct): a stiffer void so a large growth does not crush it
     if ($YoungVoid) { $mk += @('--set', "YOUNG_VOID=$YoungVoid") }
-    if ($Growth) {
+    if ($Growth -or $Pm10) {
         # P3 stage 2 (10 Oct): the point model free at each point from the
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
         # coupling step is 25 x 1e-4 of point-model time, the paper's Newton
@@ -188,6 +190,9 @@ function Run-Condition($c, $sha) {
     if ($th.Count -ne 20) { throw "$($eco): $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
     if ($Growth) { $props += ",7=$($Kappa.ToString('R')),28=9,31=0.2375,33=1.0" }
+    # mode 10: mode 7 as in the base deck (phi_min 0.01, phi_cap 0.9, local
+    # nutrient c_ref 1), on the Day 1-21 time of -Growth; no kappa
+    if ($Pm10) { $props += ",28=10,31=0.2375" }
     if ($ExtraProps) { $props += ",$ExtraProps" }
     if ($Weights) {
         if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
@@ -201,7 +206,7 @@ function Run-Condition($c, $sha) {
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    if ($Growth -or $Pm10 -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
     L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', void '$YoungVoid', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
@@ -227,7 +232,7 @@ function Run-Condition($c, $sha) {
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
-        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
+        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } elseif ($Pm10) { "growth from the point model's own increase, no kappa, $c, ${Mesh}^3" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
         Push-Files $files "$what (automatic)"
     }
     return $true
