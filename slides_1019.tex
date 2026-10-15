@@ -630,4 +630,25 @@ growth from the living biomass & -- & yes; point model runs on its own, $s=0.237
 $\alpha-1$; the stress ring around the seed is lower with growth from the living biomass.
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Appendix J: analysis conditions}
+\scriptsize\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\raggedright}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.76\linewidth}@{}}
+\toprule
+geometry, mesh & 2 mm cube; $8^3$ (512), $16^3$, $24^3$ hexahedral elements; seed of 32 elements at the centre ($8^3$, refined with the mesh)\\
+mechanical BC & only rigid-body motion fixed (corner nodes); otherwise traction free\\
+nutrient BC & $c=1$ on the face $y=-1$ mm; no flux elsewhere\\
+initial state & $\phi=1$ in the seed, $\approx0$ outside; $\alpha=1$; $c=1$ everywhere\\
+time & $T^*=1$ is Day 21; 95 steps ($\Delta T^*=1/95$); ANSYS 2022 R2, static, nonlinear geometry\\
+material & neo-Hooke, $E=10$ Pa, $\nu=0.49$, $E\propto\phi^2$ (Klempt 2024 Table 2); $\mathbf F_g=\alpha\mathbf I$\\
+growth field & $k_\alpha=10^{-3}$, $\beta=0.02$ mm$^2/T^*$ (Table 2 scaled to the 2 mm cube, assumed)\\
+point model & two species: Klempt 2026 cases 3 and 6; five species: calibrated MAP (CH), $c^*=25$\\
+coupling & $\phi_{\rm cap}=0.9$, $\phi_{\min}=0.01$, time link $s=0.15$ (assumed);
+            living-biomass growth: $s=0.2375$, $\kappa=8.14\cdot10^{-3}$ (assumed)\\
+output & seed means of $\alpha-1$ and von Mises$/E$ at $T^*=1$\\
+\bottomrule
+\end{tabular}\\[4pt]
+Values not from a paper are marked as assumed.
+\end{frame}
+
 \end{document}
