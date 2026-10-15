@@ -1,0 +1,151 @@
+% Rigour check of the unified-model work of 15 October 2026 (route 2 of P3_OUTLINE.ja.md).
+% Build: pdflatex rigor_check.tex (twice).  Companion of unified_model_derivation.tex.
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{mathptmx}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage[hyphens]{url}
+\urlstyle{tt}
+\setlist{nosep,leftmargin=*}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\begin{document}
+\begin{center}
+{\large\bfseries Rigour check: the two-level biofilm model from one variational principle}\\[3pt]
+Keisuke Nishioka, working note, 15 October 2026 (not part of the thesis)
+\end{center}
+
+\noindent This note lists, for the model of \path{unified_model_derivation.tex}, what is
+derived, what is checked by machine, what is checked by computation, what is assumed, and
+what is still open. Every entry names the file that produces it. All files are in
+\texttt{JAXFEM/} of the repository unless stated otherwise.
+
+\section{Derivation}
+
+\small\begin{tabularx}{\linewidth}{@{}Yp{2.9cm}Y@{}}
+\toprule
+Statement & Status & How it is established\\
+\midrule
+The discrete equations solved are the Euler--Lagrange equations of the discrete functional
+$E_h+\Delta t\,D_h+C_h$ & established & The residual is the automatic derivative (JAX) of the
+functional; no equation is written by hand (\path{unified_two_level_1d.py},
+\texttt{functional}, \texttt{residual}).\\
+The point model of Klempt et al.\ 2026 is the stationarity condition of the energy
+$\Psi_{\rm pm}$ and dissipation $D_{\rm pm}$ used here & established & One node, no coupling:
+the composition rows equal the repository's point-model residual
+(\path{core_hamilton_1d.residual}) to round-off, every row
+(\path{unified_two_level_variational_check.py}).\\
+The hand-written residual of the first version agrees with the automatic one & established,
+with one known difference & Composition rows to round-off; the phase row differs on purpose
+(the hand version approximated one term and let the barrier terms act on the phase).\\
+Scheme (c) of the element is the limit $\lambda\to0$, $\beta_s=0$ of the model & established
+by inspection & The composition equations lose the coupling terms and the expansion equation
+becomes $\dot\alpha=k_\alpha\phi\sum_i s_i\psi_i$ (derivation note, Section~4).\\
+$\dfrac{\mathrm d}{\mathrm dt}\int E=-2\int D\le0$ without external power & proved for the
+model with the barrier terms as stored energy & Derivation note, Section~5. For the version
+with the barrier terms as a constraint the inequality holds in the limit $K\to0$; a discrete
+check is open.\\
+The front motion follows from the growth kinematics & established in 1D, 2D and 3D by
+computation & Below.\\
+\bottomrule
+\end{tabularx}\normalsize
+
+\section{Checks by computation}
+
+\small\begin{tabularx}{\linewidth}{@{}YYp{4.2cm}@{}}
+\toprule
+Check & Result & File\\
+\midrule
+Uniform field, no coupling: every node equals the point model solved to convergence &
+$8.9\times10^{-11}$ (two-level), $1.6\times10^{-13}$ (one-level) & \path{unified_two_level_1d.py},
+\path{unified_1d_monolithic.py}\\
+Energy decrease of the one-level model, every step & largest change $-5.6\times10^{-3}$,
+no increase except at the antibiotic switch (external input) & \path{unified_1d_monolithic.py}\\
+Energy decrease of the fuel model with closed boundary & largest change
+$-9.8\times10^{-3}$, no increase & \path{unified_two_level_fuel_1d.py}\\
+Newton convergence & residual $<10^{-8}$ every step, at most 31 iterations, adaptive
+halving of the step when needed & \path{unified_two_level_1d.py}\\
+Time step, two-level 1D & 60 against 120 steps: $\alpha-1$ changes by $0.7\,\%$ &
+\path{unified_two_level_1d.py}\\
+Mesh, 3D lumped & $16^3$, $24^3$, $32^3$: edge displacement within $3\,\%$ &
+\path{fuel_front_3d.py}\\
+Mesh, 3D five species & $16^3$ against $24^3$: within $8\,\%$ (constant $c^*$),
+$9\,\%$ (local nutrient) & \path{fuel_front_3d_species.py}\\
+Point model inside the 3D runs solved to convergence & residual $\le4.5\times10^{-13}$
+every step & \path{fuel_front_3d_species.py}\\
+\bottomrule
+\end{tabularx}\normalsize
+
+\section{Assumptions, each with its reason}
+
+\small\begin{tabularx}{\linewidth}{@{}YYp{2.4cm}@{}}
+\toprule
+Assumption & Reason & Tested\\
+\midrule
+Two levels (phase $\phi$ and composition $s_i,s_0,\psi_i$) & One level fills the outer liquid
+from the barrier floor (\path{unified_1d_monolithic.py}); the two voids are different
+objects & yes\\
+Weight $h(\phi)=\phi^2$ of the composition energy & With $h=\phi$ the composition force does
+not vanish in the outer liquid and it fills again; $\phi^2$ is the weight of the mechanical
+term of Klempt et al.\ 2024 & yes\\
+The barrier terms act as a constraint, not as stored energy & Their value (517 at the
+calibration's start against 8 at $\psi=0.5$) would make dying cells grow the biofilm & yes\\
+$\phi\le1$ by a one-sided barrier $K_\phi/(1-\phi)^2$ & The phase equation has no upper
+bound (Klempt et al.\ 2024 neither); $\phi$ reached 2.7 at large $k_\alpha$ & yes\\
+Growth as a nutrient reaction (Onsager), the living biomass as catalyst & A growth energy on
+the living biomass keeps $\psi$ up at large growth and defeats the antibiotic; the catalyst form
+has no force on $\psi$ and makes the total energy decrease & yes\\
+\bottomrule
+\end{tabularx}
+
+\medskip\noindent\small\begin{tabularx}{\linewidth}{@{}YYp{2.4cm}@{}}
+\toprule
+Assumption & Reason & Tested\\
+\midrule
+Ideal-solute free energy $c(\ln c-1)$ of the nutrient, linear kinetics
+$\dot\xi=L(Y\ln c-\mu_b)$ & Simplest forms consistent with the principle; $\mu_b=Y\ln c_{\rm stop}$
+gives a stop concentration & sensitivity only\\
+$\lambda$ (energy scale of the composition), $\beta_s$, $L_0$, $Y$, $c_{\rm stop}$, $D$ &
+Not from a paper; $\lambda$ is the one that matters for the antibiotic's effect on the phase,
+$\beta_s$ does not matter for a seed & $\lambda$, $\beta_s$: yes; others: no\\
+Time link of the composition ($s=0.2375$ per $T^*$) & The calibration's link; in the model it
+is the ratio of dissipation coefficients and can be fixed by the measured volume & no\\
+Local nutrient in the point model: interaction $c^*c(\mathbf x)/c_{\rm ref}$, $c_{\rm ref}=1$ &
+The element's local-nutrient option; the relation of $c^*$ to the field's $c$ should come from
+the nutrient level of the calibration & no\\
+Front term of Klempt et al.\ 2024 left out & Not derivable from a potential (their Remark~1);
+the edge moves towards the nutrient by the growth kinematics alone & yes (1D, 2D, 3D)\\
+Mechanics in the 2D/3D checks: small strain, $\nu=0.3$, linear elasticity, nutrient in the
+reference configuration & Checks of the kinematics only; the full model uses Klempt et al.\
+2024's mechanics ($\nu=0.49$) & no\\
+Lumped composition in \path{fuel_front_2d.py}, \path{fuel_front_3d.py} & Kinematics check;
+replaced by the five-species point model in \path{fuel_front_3d_species.py} & yes\\
+\bottomrule
+\end{tabularx}\normalsize
+
+\section{Open}
+
+\begin{enumerate}
+\item A discrete energy check of the two-level model with the barrier terms as a constraint.
+\item The limit $\phi\to0$ of the composition equations (regularised by $\varepsilon$).
+\item The composition acting on the phase ($\lambda>0$) and the composition diffusion
+  ($\beta_s$) in 3D; the 3D runs so far use the decoupled limit.
+\item Finite strain and $\nu=0.49$ in the 2D/3D checks; nutrient diffusion in the current
+  configuration.
+\item Existence and uniqueness of solutions (not attempted).
+\item A reader other than me: the derivation has not been checked by Dr.\ Soleimani or
+  anyone else.
+\item Overlap with F.\ Klempt's unpublished two-species work: only published sources were
+  used; to be discussed before any publication.
+\end{enumerate}
+
+\section{What the checks do not cover}
+
+The checks establish that the equations are the ones the energy and dissipation imply, that
+the solver solves them, and that the results do not depend on the mesh or the time step at
+the level stated. They do not establish that the model is right: the choices in Section~3 are
+modelling assumptions, and the only data used so far are the calibrated interactions of the
+point model. The measured volumes (Heine et al.) and an antibiotic experiment would test the
+growth law and $\lambda$.
+\end{document}
