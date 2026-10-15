@@ -343,6 +343,14 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   logical :: ok
   if (.not. eco_inited) call eco_native_init()
   eco_damp = .true.
+  ! optional antibiotic: PROPS(17) = total time at which it is switched on, PROPS(18) = alpha*
+  if (NPROPS >= 18) then
+    if (TIME(2) >= PROPS(17) - 1d-12) then
+      eco_alstar = PROPS(18)
+    else
+      eco_alstar = 0d0
+    end if
+  end if
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   if (DTIME > 0d0) then
