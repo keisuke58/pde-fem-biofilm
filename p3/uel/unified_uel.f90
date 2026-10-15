@@ -695,13 +695,16 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
     do q = 1, NGP
       call vm_p(gp_sig(:, q), SVARS(NSV*NGP + 2*q - 1), SVARS(NSV*NGP + 2*q))
     end do
-    call keep_record(JELEM, U, COORDS, sv, SVARS(NSV*NGP+1:NSV*NGP+2*NGP), DTIME, PROPS(1:16))
   end if
   if (LFLAGS(3) == 1 .or. LFLAGS(3) == 2) then
     call tangent(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), K)
     AMATRX = K
   end if
   if (DTIME > 0d0) call store_growth(U, COORDS, sv, PROPS(1:16), DTIME)
+  ! after store_growth: the record holds the end-of-increment alpha - 1 (it was one increment behind before)
+  if (NSVARS >= NSV*NGP + 2*NGP) then
+    call keep_record(JELEM, U, COORDS, sv, SVARS(NSV*NGP+1:NSV*NGP+2*NGP), DTIME, PROPS(1:16))
+  end if
   SVARS(1:NSV*NGP) = reshape(sv, [NSV*NGP])
 end subroutine UEL
 
