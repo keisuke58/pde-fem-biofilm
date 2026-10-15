@@ -107,7 +107,12 @@ def functional(U, Un, P, F):
     # psi = 0.999, against 8 for psi = 0.5), so they act on the composition only and do no work
     # on the phase (weight held at w, like the constraint).  The physical energy Psi_int
     # (interactions, antibiotic) carries the weight w.
-    E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * Wf * psi_barrier(s, s0, psi)
+    # P["barrier"]: "frozen" = weight w held fixed (a regularised constraint, no force on phi);
+    # "const" = constant weight lam (stored energy independent of phi, so the energy inequality
+    # d/dt E = -2 D holds exactly, and still no force on phi)
+    bmode = P.get("barrier", "stored")
+    Wb = Wf if bmode == "frozen" else (1.0 if bmode == "const" else w)   # "stored": Klempt 2026 literal, weight w
+    E = jnp.sum(hw * (lam * w * psi_int(s, psi, P) + lam * Wb * psi_barrier(s, s0, psi)
                       - ka * (al - 1.0) * phi * jnp.sum(s * psi, 1)))
     E += 0.5 * beta * jnp.sum(jnp.diff(phi) ** 2) / dx
     # phi <= 1 (a volume fraction): one-sided barrier, a regularised indicator like the point
@@ -121,6 +126,21 @@ def functional(U, Un, P, F):
     D = jnp.sum(hw * (0.5 * P["eta_phi"] * ((phi - phin) / dt) ** 2 + lam * W * Dpm + 0.5 * ((al - aln) / dt) ** 2))
     C = jnp.sum(hw * lam * W * gam * (jnp.sum(s, 1) + s0 - 1.0))
     return E + dt * D + C
+
+
+def energy(U, P):
+    """Stored energy E_h of the state (the functional without dissipation and constraint)."""
+    N, dx = P["N"], P["dx"]
+    phi, s, s0, psi, gam, al = unpack(U, N)
+    hw = jnp.full(N, dx).at[0].set(dx / 2).at[-1].set(dx / 2)
+    w = weight(phi, P)
+    bmode = P.get("barrier", "stored")
+    Wb = 1.0 if bmode == "const" else w
+    E = jnp.sum(hw * (P["lam"] * w * psi_int(s, psi, P) + P["lam"] * Wb * psi_barrier(s, s0, psi)
+                      - P["ka"] * (al - 1.0) * phi * jnp.sum(s * psi, 1) + P.get("kphi", 1e-5) / (1.0 - phi) ** 2))
+    E += 0.5 * P["beta"] * jnp.sum(jnp.diff(phi) ** 2) / dx
+    wm = 0.5 * (w[1:] + w[:-1])
+    return E + 0.5 * P["beta_s"] * jnp.sum(wm[:, None] * jnp.diff(s, axis=0) ** 2) / dx
 
 
 def residual(U, Un, P):
@@ -213,12 +233,12 @@ def advance(newton, U, dt, depth=0, max_depth=12):
     return V, max(i1, i2), max(r1, r2), n1 + n2
 
 
-def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, ast=0.0, ab_on=None, weight="phi2",
+def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, ast=0.0, ab_on=None, weight="phi2", barrier="stored",
         T=0.2375, steps=2375, L=1.0, n_out=10):
     N = len(phi0_x)
     A, _ = theta_to_matrices(jnp.asarray(theta))
     P0 = {"N": N, "dt": T / steps, "dx": L / (N - 1), "c": C_STAR, "A": A, "b": jnp.ones(5), "ast": 0.0,
-          "lam": lam, "ka": ka, "beta": beta, "beta_s": beta_s, "eta_phi": eta_phi, "eps": eps, "weight": weight}
+          "lam": lam, "ka": ka, "beta": beta, "beta_s": beta_s, "eta_phi": eta_phi, "eps": eps, "weight": weight, "barrier": barrier}
     P1 = dict(P0, ast=ast)
     n0, n1 = make_newton(P0), make_newton(P1)
     X = np.zeros((N, NV)); X[:, 0] = phi0_x
@@ -226,13 +246,16 @@ def run(phi0_x, g_comp, theta, *, lam, ka, beta, beta_s, eta_phi=1.0, eps=1e-6, 
     X[:, 1:6] *= ((1 - X[:, 6]) / X[:, 1:6].sum(1))[:, None]
     X[:, 7:12] = np.clip(g_comp[6:11], 1e-10, 1 - 1e-10); X[:, 13] = 1.0
     U = jnp.asarray(X.ravel()); outs = [np.asarray(U)]; worst = 0.0; maxit = 0; nsteps_total = 0
+    Es = [float(energy(U, P0))]
     save = set(int(round(steps * j / n_out)) for j in range(1, n_out + 1))
     for k in range(steps):
         on = ast > 0 and ab_on is not None and (k + 0.5) / steps >= ab_on
         U, it, r, nsub = advance(n1 if on else n0, U, T / steps)
         maxit = max(maxit, it); worst = max(worst, r); nsteps_total += nsub
+        Es.append(float(energy(U, P1 if on else P0)))
         if k + 1 in save:
             outs.append(np.asarray(U))
+    run.energy = np.array(Es)
     return np.array(outs), maxit, worst, nsteps_total
 
 
