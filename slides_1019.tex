@@ -680,4 +680,24 @@ $24^3$ & 13\,824 & 15\,625 & 110\,592 & 864\\
 8 integration points per hexahedral element ($2\times2\times2$)
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Appendix L: finite element formulation}
+\scriptsize\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\raggedright}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.76\linewidth}@{}}
+\toprule
+balance & $\operatorname{div}\boldsymbol\sigma=\mathbf 0$ in the current configuration, no body force; weak form by ANSYS (static, large deformation)\\
+kinematics & $\mathbf F=\mathbf F_e\mathbf F_g$, $\mathbf F_g=\alpha\mathbf I$; Cauchy stress from $\mathbf F_e$\\
+material & neo-Hooke in $\mathbf F_e$, stiffness $(\phi^2+f)E$ with a small void part $f$; tangent returned by the material routine\\
+element & SOLID185, 8 nodes, $2\times2\times2$ integration with B-bar (default), for $\nu=0.49$\\
+nonlinear solver & full Newton--Raphson, fixed steps (no automatic time stepping), up to 50 iterations, default force tolerance\\
+coupling & staggered: ANSYS solves the mechanics with $\phi$ fixed; at the end of each step the partner element
+            updates $\phi$ explicitly and solves the nutrient (linear system, PARDISO) on its neighbour operator\\
+stability & explicit update of $\phi$: $\Delta t\le h^2/(2\beta)$; met for all meshes used\\
+supports & 3-2-1: one corner node $u_x,u_y,u_z$, one $u_y,u_z$, one $u_z$ (6 dofs, only rigid-body motion)\\
+\bottomrule
+\end{tabular}\\[6pt]
+\textbf{Time step} (one species, $8^3$, $T^*=1.1$): $\Delta T^*=0.1\to0.05\to0.025$ changes the seed von Mises$/E$ by
+$-3.0\,\%$ and $-1.5\,\%$ ($\alpha-1$: $-0.7\,\%$, $-0.3\,\%$), first order; the calibrated runs use $\Delta T^*=1/95\approx0.011$.
+\end{frame}
+
 \end{document}

@@ -509,6 +509,25 @@ and 15\,625 nodes, with eight integration points per element, so about
 粗いメッシュで足ります。節点は 3 つのメッシュでそれぞれ 729、4\,913、15\,625 個で、1 要素に積分点が 8 個
 あるので、積分点は約 4\,000、33\,000、111\,000 個です。
 
+\slide{(Appendix L, only if asked) finite element formulation}{1:00}
+\EN ANSYS solves the balance of momentum without body force, statically,
+with large deformations. The deformation gradient is split into an elastic
+and a growth part, and the material routine returns the Cauchy stress of a
+neo-Hooke material and its tangent. The elements are SOLID185 with B-bar,
+because $\nu$ is 0.49. Newton--Raphson runs with fixed steps. The coupling is
+staggered: the mechanics is solved with $\phi$ fixed, then your element
+updates $\phi$ explicitly and solves the nutrient. The explicit step is stable
+on all meshes. Only rigid-body motion is fixed, with six degrees of freedom
+at three corner nodes. Halving the time step twice changes the stress by
+3 and 1.5\,\%, so first order, and the calibrated runs use a step about ten
+times smaller.
+\JA ANSYS は体積力なしのつり合いの式を、静的に大変形で解いています。変形勾配を弾性部分と成長部分に
+分け、材料ルーチンが Neo-Hooke 材料の Cauchy 応力と接線を返します。要素は SOLID185 で、$\nu$ が 0.49 なので
+B-bar を使っています。Newton--Raphson は固定の刻みです。連成は交互に解きます。まず $\phi$ を固定して力学を解き、
+その後にオリバーの要素が $\phi$ を陽解法で進め、栄養を解きます。陽解法の安定条件は、どのメッシュでも満たして
+います。拘束は 3 つの角の節点の 6 自由度だけで、剛体運動を止めるだけです。時間刻みを 2 回半分にすると
+応力は 3\,\% と 1.5\,\% 変わるので 1 次の収束です。較正した計算はその約 10 分の 1 の刻みを使っています。
+
 \slide{References}{(no talk)}
 \EN Leave this slide up only if asked; the four papers are the ones cited on
 the slides. Three appendix slides follow (notation, background of the growth
