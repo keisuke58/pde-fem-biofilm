@@ -1,0 +1,527 @@
+% Meeting Oliver x Dr. Soleimani x Nishioka, 2026-10-19 (coupling ideas)
+% Copy of slides_1005.tex with one added frame: growth from the living biomass, first results
+% Build: .\build_slides.ps1   (pdflatex, twice)
+% Speaker script (EN + JA, one section per slide): speaker_notes_1005.tex
+% CONSTRAINT: keep total page count <= 25 (raised from 20 on 3 Oct). Check the built PDF's page count
+% before adding a frame; trim an existing frame rather than tacking more on.
+% Wording: no internal labels (run names, switch numbers) -- say what a run
+% does, not what it was called while building it.
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{warn}{RGB}{200,30,30}
+\tikzset{fbox/.style={draw,rounded corners,align=center,font=\footnotesize,minimum height=0.95cm,text width=#1},
+  fbox/.default=2.3cm,
+  used/.style={fbox,fill=gray!15},
+  mine/.style={fbox,fill=c3!18,draw=c3},
+  arr/.style={-{Latex[length=2mm]},thick}}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\setbeamertemplate{navigation symbols}{}
+
+\title{Master's Thesis: Status and Plan}
+\subtitle{Biofilm growth coupled into the IKM FEM element, following Klempt et al.}
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{%
+\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover\\
+\small Keio University}
+\date{19 October 2026}
+
+\begin{document}
+\maketitle
+
+
+% --------------------------------------------------------
+\begin{frame}{Since the last meeting: the scope of the FEM part is fixed}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\colorbox{c3!12}{\parbox{0.95\linewidth}{%
+\textbf{Thesis}\\[3pt]
+\begin{itemize}
+  \item \textbf{one and two species}
+  \item coupled into the IKM element (Klempt et al.\ 2024)
+  \item composition from the point model (Klempt et al.\ 2026)
+\end{itemize}}}
+\end{column}
+\begin{column}{0.48\textwidth}
+\colorbox{gray!12}{\parbox{0.95\linewidth}{%
+\textbf{Continuation at Keio}\\[3pt]
+\begin{itemize}
+  \item more species (from four)
+  \item two-way coupling
+\end{itemize}}}
+\end{column}
+\end{columns}
+\vspace{10pt}
+\centering\small One and two species can be checked against published examples.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Verification, step by step}
+\centering
+\begin{tikzpicture}[ node distance=0.35cm and 0.5cm]
+\node[mine] (a) {growth law\\ $\mathbf F_g=\alpha\mathbf I$};
+\node[mine,right=of a] (b) {point model\\ (Klempt 2026)};
+\node[mine,right=of b] (c) {coupling at\\ one point};
+\node[mine,right=of c] (d) {whole model\\ 512 elements};
+\draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\node[below=0.25cm of a,font=\scriptsize,text width=2.3cm,align=center] {closed form exact;\\ free growth $10^{-10}$};
+\node[below=0.25cm of b,font=\scriptsize,text width=2.3cm,align=center] {14 paper examples\\ reproduced};
+\node[below=0.25cm of c,font=\scriptsize,text width=2.3cm,align=center] {exact solution\\ to $3\times10^{-11}$};
+\node[below=0.25cm of d,font=\scriptsize,text width=2.3cm,align=center] {same pattern\\ cosine 1.0000};
+\end{tikzpicture}
+
+\vspace{14pt}
+\small Each step is checked before the next one builds on it.
+\begin{itemize}\footnotesize
+  \item point model: two misprints in Klempt et al.\ 2026 identified (no $+\gamma$ in Eq.\ 17, no $\tfrac12$ in Eq.\ 19)
+  \item same point model in Fritsch et al.\ 2025: their figures reproduced within 0.013
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{The coupling: what the element does and what is added}
+\centering
+\small The element solves the biofilm field of Klempt et al.\ 2024 (Eq.\ 34):
+\[
+\dot\phi-\beta\,\Delta\phi-k_\alpha\,\alpha
++|\nabla\phi|\,r\,\frac{c}{k+c}\,\mathbf n_\phi\!\cdot\mathbf n_c=0
+\]
+\begin{tikzpicture}[ node distance=0.45cm and 0.55cm]
+\node[used,fbox=2.6cm] (f) {element field\\ (Klempt 2024)\\ $\phi$, $c$};
+\node[mine,fbox=2.4cm,right=of f] (e) {Eq.\ 36 at each\\ Gauss point\\ $\dot\alpha=k_\alpha\phi$};
+\node[mine,fbox=2.0cm,right=of e] (g) {growth\\ $\mathbf F_g=\alpha\mathbf I$};
+\node[mine,fbox=1.7cm,right=of g] (s) {stress};
+\draw[arr] (f)--node[above,font=\scriptsize]{$\phi$}(e);
+\draw[arr] (e)--node[above,font=\scriptsize]{$\alpha$}(g);
+\draw[arr] (g)--(s);
+\node[above=0.15cm of f,font=\scriptsize,text=gray] {unchanged};
+\node[above=0.15cm of g,font=\scriptsize,text=c3] {added in this work};
+\end{tikzpicture}
+
+\vspace{12pt}
+\footnotesize Klempt 2024 Table 2: $k_\alpha=10^{-3}$, $E=10$ Pa, $\nu=0.49$.
+$\beta,r,k,d,g$: the framework's example input, not from the paper.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Model and boundary conditions}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig_model_setup.png}
+\end{center}
+\vspace{-6pt}
+\footnotesize
+\begin{itemize}
+  \item 2 mm cube, 512 elements; only rigid-body motion fixed
+  \item nutrient $c=1$ on the face $y=-1$ mm; seed of 32 elements with $\phi=1$
+  \item uniform growth is stress free; stress comes from differences in growth
+  \item used for Checks 1--3 and the two-species runs (ANSYS); the Klempt 2024
+        reproduction uses the paper's 20\,$\mu$m cube (Python)
+\end{itemize}
+\end{frame}
+
+
+% --------------------------------------------------------
+\begin{frame}{What I implemented}
+\centering
+\begin{tikzpicture}[ node distance=0.5cm and 0.45cm]
+\node[used,fbox=2.2cm] (a) {ANSYS\\ IKM element};
+\node[mine,fbox=3.3cm,right=of a] (b) {material call (Fortran)\\ Eq.\ 36, composition};
+\node[mine,fbox=2.0cm,right=of b] (c) {bridge\\ C + socket};
+\node[mine,fbox=2.4cm,right=of c] (d) {point model\\ Python / JAX};
+\draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\draw[arr] (d.south) to[bend left=22] node[below,font=\scriptsize]{new $\phi_i$, $\psi_i$ back to every Gauss point} (b.south);
+\end{tikzpicture}
+
+\vspace{10pt}
+\begin{tabular}{@{}ll@{}}
+\textbf{speed} & single-element run 357\,s $\to$ \textbf{5.6\,s}\\
+\textbf{check} & every ANSYS call replayed in Python, difference 0\\
+\end{tabular}
+
+\vspace{6pt}
+\begin{columns}[T]
+\begin{column}{0.42\textwidth}\footnotesize
+\textcolor{gray}{\textbf{used as it is}}
+\begin{itemize}
+  \item IKM element: field, stiffness
+  \item point-model equations (Klempt et al.\ 2026)
+\end{itemize}
+\end{column}
+\begin{column}{0.56\textwidth}\footnotesize
+\textcolor{c3}{\textbf{written in this work}}
+\begin{itemize}
+  \item Eq.\ 36 and the composition step in the material call
+  \item Fortran $\to$ Python bridge, sub-stepping
+  \item point-model solver (JAX): all 14 paper examples
+  \item checks: closed form in ANSYS, call replay, about 440 tests
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+% --------------------------------------------------------
+\begin{frame}{Checks 1 and 2: exact solution and whole model}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\centering\small\textbf{1. Exact solution}\\
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig1005_exact.png}\\
+$\alpha$ matches to $3\times10^{-11}$
+\end{column}
+\begin{column}{0.48\textwidth}
+\centering\small\textbf{2. Whole model, 512 elements}\\
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig1005_whole_model.png}\\
+same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Check 3: the seeded element and its neighbours}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{assets/fig1005_element220.png}
+\end{center}
+\vspace{-6pt}
+\small
+\begin{itemize}
+  \item $\alpha-1=1.1\times10^{-3}=k_\alpha\phi t$, as Eq.\ 36 says
+  \item seed compressed; neighbours carry about 25$\times$ its von Mises stress
+  \item stresses $\le10^{-4}$ Pa: slow growth, soft biofilm ($E=10$ Pa)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Four things found along the way (partner element)}
+\begin{enumerate}
+  \item growth variable = mean of both species fields $\Rightarrow$ halved with one species\\
+        {\footnotesize the unused field stays at its start value; intended?}
+  \item start values must satisfy $\phi_1+\phi_2\le1$\\
+        {\footnotesize the example input starts both at 1; for one species I start the second at 0}
+  \item first result set not in equilibrium $\Rightarrow$ excluded\\
+        {\footnotesize zero stress on the first calls while the element sets up its operators}
+  \item front-growth term inactive (reading slip) $\Rightarrow$ the seed does not spread\\
+        {\footnotesize it also uses $|\Delta\phi|$ where Eq.\ 34 has $|\nabla\phi|$; corrected in a test copy, $\phi$ exceeds 1}
+\end{enumerate}
+\vspace{8pt}
+\small Questions for Oliver. Checks 1--3 do not depend on them.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two species: composition from the point model (Klempt et al.\ 2026)}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{assets/fig_coupling_schematic.png}
+\end{center}
+\vspace{-6pt}
+\small
+\begin{itemize}
+  \item the field sets the \textbf{amount}, the point model the \textbf{composition}
+  \item one-way: the composition does not act on the stress
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two species: results in the packed seed (ANSYS, $T^*=1$)}
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+case (Klempt et al.\ 2026) & paper & coupled, $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.85$ / $0.95$\\
+\midrule
+3: coexistence & $0.60$ & $0.667$ & $0.668$ / $0.664$\\
+6: one species wins & $\approx0$ ($\psi_1=0.05$) & $0.021$ ($\psi_1=0.048$) & --\\
+\bottomrule
+\end{tabular}\\[4pt]
+\footnotesize share $\phi_1/(\phi_1+\phi_2)$; paper: point model alone; parameters $c^*=100$, $\alpha^*=10$
+\vspace{10pt}
+\begin{itemize}\small
+  \item same type of outcome; the ratio shifts because the field sets the amount
+  \item converged in the coupling time step
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Added since 5 October: growth from the living biomass}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{assets/fig_coupling_schematic_live.png}
+\end{center}
+\vspace{-8pt}
+\begin{columns}[T]
+\begin{column}{0.40\textwidth}
+\scriptsize
+Eq.\ 36 uses the amount: $\dot\alpha=k_\alpha\phi$.\\
+Here: $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\phi_i\psi_i$,
+so lysis in the point model lowers the growth.\\[2pt]
+$\kappa$ chosen so that the mean growth of the seed equals Eq.\ 36
+(an assumption, not from a paper).
+\end{column}
+\begin{column}{0.58\textwidth}
+\scriptsize\setlength\tabcolsep{3pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+seed means, $T^*=1$ & Eq.\ 36 & living & diff.\\
+\midrule
+$\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
+von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
+von Mises, $16^3$; $24^3$ & & & $-8.0$; $-7.8\,\%$\\
+antibiotic vs.\ none, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
+\bottomrule
+\end{tabular}\\[2pt]
+five species calibrated (CH), $E=10$ Pa; $16^3$, $24^3$ and the antibiotic
+case with the previous calibration
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Two modelling assumptions}
+\begin{enumerate}
+  \item \textbf{time link $s=0.15$}: point model advances $s\,\Delta t$ per step
+        (no paper links the two time scales)\\
+        \small case 6: winner appears for $s\gtrsim0.15$; case 3: share moves by 0.03--0.06
+  \item \textbf{cap $\phi_{\rm cap}=0.9$} on the amount seen by the point model\\
+        \small case 3: 0.664--0.668 for $\phi_{\rm cap}=0.85$--$0.95$
+\end{enumerate}
+\vspace{8pt}
+\small All other parameters are the published values.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Limits}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+  \item composition is local, not carried with the front: effect on the mean
+        $\le0.001$ (right, Python)
+  \item $s$ has no source in a paper
+  \item Eq.\ 34 as printed moves the colony instead of growing it (Appendix D)
+  \item two $\alpha$: the element's own and Eq.\ 36 are integrated separately (Check 2)
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\linewidth]{assets/fig_composition_transport_slide.png}\\
+\scriptsize Composition at $T^*=1$ of the points first reached at each time; Klempt 2024
+test case 4.1 field (Python, 20\,$\mu$m cube), Klempt 2026 cases 3 and 6.
+\end{column}
+\end{columns}
+\end{frame}
+
+
+
+% --------------------------------------------------------
+\begin{frame}{Status and timeline}
+\centering
+\begin{tikzpicture}[x=2.6cm, y=-0.55cm]
+  \foreach \m/\lbl in {0/Oct, 1/Nov, 2/Dec} {
+    \draw[gray!40] (\m,0) -- (\m,3.4);
+    \node[above,font=\scriptsize] at (\m+0.5,0) {\lbl};
+  }
+  \draw[gray!40] (3,0) -- (3,3.4);
+  \draw[fill=c3!70] (0,0.6) rectangle (0.75,1.3);
+  \node[white,font=\scriptsize] at (0.375,0.95) {coupling (done)};
+  \draw[fill=c3!45] (0.3,1.6) rectangle (0.95,2.3);
+  \node[font=\scriptsize] at (0.625,1.95) {runs, figures};
+  \draw[fill=c3!25] (0.45,2.6) rectangle (1.25,3.3);
+  \node[font=\scriptsize] at (0.85,2.95) {writing};
+  \draw[fill=warn!25,draw=warn!70] (1.25,0.6) rectangle (2.0,1.3);
+  \draw[fill=warn!70] (1.25,0.6) rectangle (1.4,1.3);
+  \node[font=\scriptsize] at (1.7,0.95) {submit};
+  \draw[fill=warn!40] (2.1,0.6) rectangle (2.9,1.3);
+  \node[font=\scriptsize] at (2.5,0.95) {present};
+\end{tikzpicture}
+\vspace{4pt}
+\small
+\begin{itemize}
+  \item admission granted 18 Aug 2026; examiners Prof.\ Junker (IKM), Dr.\ Wangenheim (IDS);
+        supervisors Prof.\ Soleimani, Dr.\ Geisler; thesis in English
+  \item NIFE internship completed (04.05--24.07), report submitted
+  \item \textbf{submission in November} (aiming for early November); presentation in
+        December, date to be fixed with both examiners
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Questions for this meeting}
+\begin{enumerate}
+  \item \textbf{Scope:} one and two species in the thesis, more at Keio?
+  \item \textbf{Assumptions:} $s$ and $\phi_{\rm cap}$ with sensitivity studies acceptable?
+  \item \textbf{Keio:} anything needed for the double degree this term?
+  \item \textbf{Klempt et al.\ 2024:} form of Eq.\ 34/35, $t_{\rm ref}$, unit of $\mu$, Eq.\ 36 or Table 1?
+  \item \textbf{Structure:} TMCMC calibration, a short internship section, then the ANSYS coupling?
+  \item \textbf{Submission:} printed copies, electronic version, Keio side?
+\end{enumerate}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{References}
+\small
+\begin{itemize}
+  \item Klempt, Soleimani, Junker (2023), PAMM: precursor spatial model
+  \item Klempt, Soleimani, Wriggers, Junker (2024), Biomech.\ Model.\ Mechanobiol.:
+        growth field, Eq.\ 34/36, Table 2
+  \item Klempt, Geisler, Soleimani, Junker (2026), Arch.\ Appl.\ Mech.:
+        multi-species point model, Table 1 cases
+  \item Fritsch et al.\ (2025), arXiv:2512.15145: Bayesian updating, same model
+\end{itemize}
+\end{frame}
+
+
+% ========================================================
+% Appendix: notation and background
+% ========================================================
+\appendix
+\begin{frame}{Appendix A: notation}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Growth field and mechanics (Klempt et al.\ 2024)}\\[2pt]
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
+\toprule
+$\phi$ & biofilm volume fraction (0 = void, 1 = dense)\\
+$c$ & nutrient concentration\\
+$\alpha$ & expansion variable, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; growth is $\alpha-1$\\
+$\mathbf F=\mathbf F_e\mathbf F_g$ & elastic / growth split\\
+$k_\alpha$ & growth factor ($10^{-3}$ per $T^*$)\\
+$\beta$ & phase-field regularisation\\
+$r,\ k$ & front growth rate, Monod constant\\
+$T^*$ & normalised time, $T^*\in[0,1]$\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Point model (Klempt et al.\ 2026)}\\[2pt]
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
+\toprule
+$\phi_i$ & volume fraction of species $i$\\
+$\phi_0$ & void, $\phi_0=1-\sum_i\phi_i$\\
+$\psi_i$ & living fraction (viability) of species $i$\\
+$\gamma$ & Lagrange multiplier for $\sum\phi_i+\phi_0=1$\\
+$A_{ij}$ & interaction matrix (self, cooperation, competition)\\
+$b_i$ & sensitivity to the antibiotic\\
+$c^*,\ \alpha^*$ & nutrient, antibiotic concentration\\
+$\eta_i$ & viscosity (time scale) of species $i$\\
+\bottomrule
+\end{tabular}\\[6pt]
+\textbf{Coupling (this work)}\\[2pt]
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
+\toprule
+$\phi_{3D}$ & amount from the element field\\
+$\phi_i/\sum_j\phi_j$ & composition (share of species $i$)\\
+$s$ & time link: point model advances $s\,\Delta t$\\
+$\phi_{\rm cap}$ & largest amount the point model sees\\
+\bottomrule
+\end{tabular}
+\end{column}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix B: background, growth field and mechanics}
+\small
+\textbf{Kinematics.} Growth is a volume change: $\mathbf F=\mathbf F_e\mathbf F_g$ with
+isotropic $\mathbf F_g=\alpha\mathbf I$. Stress comes only from $\mathbf F_e$ (neo-Hookean).
+A body that can grow freely stays stress free; stress appears where growth is constrained.\\
+\textbf{Material} (Klempt et al.\ 2024, Eq.\ 20 and Table 2): $E=10$ Pa, $\nu=0.49$,
+stiffness weighted with $\phi^2$ (void: floor $10^{-3}E$); no viscosity.
+Stresses scale linearly with $E$ (the example input's 1000 MPa gives $10^8\times$ larger values).
+\vspace{4pt}
+
+\textbf{Field equations} (Klempt et al.\ 2024, from an extended Hamilton principle):
+\[
+\dot\phi=\underbrace{\beta\,\Delta\phi}_{\text{diffusion}}
++\underbrace{k_\alpha\,\alpha}_{\text{local source}}
+-\underbrace{r\,\frac{c}{k+c}\,\nabla\phi\cdot\frac{\nabla c}{|\nabla c|}}_{\text{front growth towards nutrient}},
+\qquad
+\dot\alpha=k_\alpha\,\phi
+\]
+\begin{itemize}
+  \item $\phi$ and $c$ are nodal fields of the element; $\alpha$ is an internal
+        variable at the Gauss points
+  \item The front term moves the biofilm boundary up the nutrient gradient; it vanishes
+        where $\phi$ or $c$ is uniform
+  \item The nutrient diffuses much faster than the biofilm grows (quasi-static $c$)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix C: point model and one substep of the coupled run}
+\footnotesize
+\textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space dependence, implicit, $\Delta t=10^{-4}$:
+\vspace{-4pt}
+\[
+\begin{aligned}
+(\eta_{\phi,i}+\eta_i\psi_i^2)\,\dot\phi_i+\eta_i\phi_i\psi_i\,\dot\psi_i
+&= c^*\psi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\gamma-(\text{barrier})\\[-2pt]
+\eta_i\,(\phi_i\psi_i\,\dot\phi_i+\phi_i^2\,\dot\psi_i)
+&= c^*\phi_i\textstyle\sum_j A_{ij}\phi_j\psi_j-\alpha^* b_i\,\psi_i-(\text{barrier}),
+\qquad \textstyle\sum_i\phi_i+\phi_0=1
+\end{aligned}
+\]
+\vspace{-6pt}
+
+\textbf{One substep $t_n\to t_{n+1}$}: ANSYS solves only $\operatorname{div}\boldsymbol\sigma=\mathbf 0$;
+the material routine turns $\mathbf F$ into $\boldsymbol\sigma$ after removing the growth.\\[2pt]
+\scriptsize
+\renewcommand{\arraystretch}{1.0}
+\begin{tabular}{@{}r@{\hspace{6pt}}l@{}}
+\textcolor{gray}{1} & \textbf{repeat} \textcolor{gray}{(Newton iteration of ANSYS)}\\
+\textcolor{gray}{2} & \quad $\mathbf F$ at every Gauss point from the current displacements\\
+\textcolor{gray}{3} & \quad \textbf{for each Gauss point}\\
+\textcolor{gray}{4} & \quad\quad $\phi_{3D}=\phi_1+\phi_2$ from the element; restore the converged state of $t_n$\\
+\textcolor{gray}{5} & \quad\quad $\alpha_{n+1}=\alpha_n+k_\alpha\,\phi_{3D}\,\Delta t$ \hfill\textcolor{gray}{Eq.\ 36}\\
+\textcolor{gray}{6} & \quad\quad $\mathbf F_e=\mathbf F\,\mathbf F_g^{-1}$, $\mathbf F_g=\alpha_{n+1}\mathbf I$ $\;\to\;$ $\boldsymbol\sigma$, tangent\\
+\textcolor{gray}{7} & \quad\quad \textbf{if} two species and $\phi_{3D}\ge\phi_{\min}$:\\
+\textcolor{gray}{8} & \quad\quad\quad scale the point model to $\min(\phi_{3D},\phi_{\rm cap})$\\
+\textcolor{gray}{9} & \quad\quad\quad bridge (Fortran $\to$ C $\to$ socket $\to$ Python): $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$\\
+\textcolor{gray}{10} & \quad\quad\quad scale back; store $\phi_i,\psi_i,\gamma$ as state variables\\
+\textcolor{gray}{11} & \quad\quad return $\boldsymbol\sigma$ and the tangent to ANSYS\\
+\textcolor{gray}{12} & \quad assemble the residual, update the displacements\\
+\textcolor{gray}{13} & \textbf{until} converged\\
+\textcolor{gray}{14} & the element advances $\phi_1,\phi_2,c$ to $t_{n+1}$ (its own solver)\\
+\end{tabular}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix D: Klempt et al.\ 2024 test cases, reproduced in Python}
+\vspace{-6pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{assets/fig_klempt2024_fig3.png}
+\end{center}
+\vspace{-8pt}
+\scriptsize
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+test case & time scale & RMS $\phi$ & RMS $c$\\
+\midrule
+4.1 (Fig.\ 4) & 2 & 0.03 & 0.02\\
+4.2 ``high'' (Fig.\ 7) & 10 & 0.04 & 0.04\\
+4.2 ``low'' (Fig.\ 7) & 4--5 & 0.09 & 0.05\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.51\textwidth}
+Independent solver on the paper's 20\,$\mu$m cube, not the ANSYS model.
+Table 2 unchanged; growth on both faces and consumption $g\phi c$ (two
+departures from Eq.\ 34/35 as printed); nutrient in a 2\,$\mu$m corner block;
+one time scale per run ($T^*=t/t_{\rm ref}$, Sec.\ 4). Curves agree; the
+shape agrees in kind (egg towards the corner) but is more slender, also with
+other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
+\end{column}
+\end{columns}
+\end{frame}
+
+\end{document}
