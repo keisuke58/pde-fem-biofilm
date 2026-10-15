@@ -29,6 +29,8 @@ Sets (the order is the instruction's):
   B2  15 Oct, the CH MAP changed during B: the two B runs that took the new MAP
       again with the old one (map_pin.txt), then 8^3 (a), (c) with the new MAP:
       -Set B2 -After A10 -AfterLog F:\biofilm_upf_cal5pm\_cal5.log
+  B3  A-12: B's CH runs (16^3, 24^3, (c), antibiotic) with the new raw-data MAP,
+      tag ..._raw (about 7 h): -Set B3 -After B2
   -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
   restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
@@ -40,7 +42,7 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2', 'B3')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
     [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
@@ -114,6 +116,16 @@ $sets = @{
         @{ n = 'CH 16^3 (c) kappa 2.8, old MAP (redo)'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-Kappa', '2.8', '-Tag', 'k2800') },
         @{ n = 'CH 8^3 (a), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-MapSha', 'latest', '-Tag', 'raw') },
         @{ n = 'CH 8^3 (c), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
+    )
+    # A-12 (15 Oct): B's CH runs again with the new raw-data MAP (tag ..._raw; the
+    # old-MAP files stay, theta_source in the JSON tells them apart). 8^3 is in B2.
+    B3 = @(
+        @{ n = 'CH 16^3 (a), new MAP'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 16^3 (c), new MAP'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') },
+        @{ n = 'CH 16^3 (c) antibiotic, new MAP'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-AlphaStar', '0.32') + $b1 + @('-MapSha', 'latest', '-Tag', 'k0882_ab_raw') },
+        @{ n = 'CH 16^3 (a) antibiotic, new MAP'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-AlphaStar', '0.32') + $b1 + @('-MapSha', 'latest', '-Tag', 'ab_raw') },
+        @{ n = 'CH 24^3 (a), new MAP'; m = 110; a = @('-Conditions', 'CH', '-Mesh', '24', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 24^3 (c), new MAP'; m = 250; a = @('-Conditions', 'CH', '-Mesh', '24', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
     )
     # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
     A7 = @(
