@@ -19,6 +19,10 @@ Steps:
   2. T = 0.2375 in 60 fixed increments: phi and c free except c = 1 at x = 1; mechanics held fixed, as in
      driver.py check 2. Expected (driver.py, 20 elements): phi(0) 0.776, c(0) 0.936.
 Nodal output: NT11 = phi, NT12 = c (*NODE PRINT).
+
+Procedure (15 Oct 2026, A-11): Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC, so both
+steps are a transient *COUPLED TEMPERATURE-DISPLACEMENT without DELTMX, i.e. with fixed increments (the steady-state
+form tried on IKMHIWI03 chose its own increments and gave wrong values). UNSYMM: the element tangent is not symmetric.
 """
 import sys
 from pathlib import Path
@@ -52,7 +56,7 @@ def deck(n, path):
     out = ["*HEADING", f"unified two-level model, user element, column of {n} elements (p3/uel/driver.py check 2)",
            "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += ["*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
+    out += ["*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=16, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=COL"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
@@ -64,10 +68,10 @@ def deck(n, path):
         out.extend(", ".join(ids[k:k + 16]) for k in range(0, len(ids), 16))
     nset("ALL", np.ones(len(nodes), bool)); nset("SEED", seed); nset("REST", ~seed); nset("TOP", top)
     nset("X0", np.isclose(nodes[:, 0], 0.0))
-    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*STATIC, DIRECT", "1e-8, 1e-8",
+    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", "1e-8, 1e-8",
             "*BOUNDARY", "ALL, 1, 3, 0.0", "SEED, 11, 11, 0.9", "REST, 11, 11, 1e-4", "ALL, 12, 12, 1.0",
             "*END STEP",
-            "*STEP, NAME=GROW, INC=1000", "*STATIC, DIRECT", f"{0.2375 / 60:.10g}, 0.2375",
+            "*STEP, NAME=GROW, INC=1000", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{0.2375 / 60:.10g}, 0.2375",
             "*BOUNDARY, OP=NEW", "ALL, 1, 3, 0.0", "TOP, 12, 12, 1.0",
             "*NODE PRINT, NSET=X0, FREQUENCY=10", "NT", "*NODE PRINT, NSET=ALL, FREQUENCY=60", "NT",
             "*END STEP"]
