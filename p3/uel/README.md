@@ -112,6 +112,10 @@ Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, the fixe
 free-form element in one file, joined by `!DEC$ FREEFORM` (Intel Fortran). Instructions for IKMHIWI03:
 `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
 
-Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column); Abaqus cannot
-print a user element's state variables, so the stresses there need a dummy overlay mesh or a file written by
-the element.
+Abaqus cannot print a user element's state variables, so the element keeps the latest Gauss-point record (x, y,
+z, phi, c, alpha - 1, living biomass, von Mises, pressure) and `UEXTERNALDB` appends it to `uel_gp.txt` in the job
+directory every 10th increment and at the end of the analysis (it also reads the point model's constants at
+LOP = 0, before any element call). Through the emulation (which now passes each element its own JELEM) the file
+equals the state variables: 8^3, vM mean 0.0130, max 0.0164 over the elements with phi > 0.5.
+
+Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column).

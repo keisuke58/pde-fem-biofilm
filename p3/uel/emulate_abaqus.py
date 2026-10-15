@@ -29,7 +29,7 @@ I = lambda v: ct.byref(ct.c_int(v))
 D = lambda v: ct.byref(ct.c_double(v))
 
 
-def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True, md=False):
+def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True, md=False, jelem=1):
     rhs = F(np.zeros((NDOF, 1))); amat = F(np.zeros((NDOF, NDOF))); sv = F(svars.copy())
     z = F(np.zeros(NDOF)); energy = F(np.zeros(8)); time = F(np.zeros(2)); params = F(np.zeros(3))
     time[:] = ttot
@@ -38,7 +38,7 @@ def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True, md=False):
     pnewdt = ct.c_double(1.0)
     p = lambda a: a.ctypes.data_as(ct.c_void_p)
     lib.uel_(p(rhs), p(amat), p(sv), p(energy), I(NDOF), I(1), I(len(svars)), p(props), I(len(props)), p(coords), I(3), I(8),
-             p(U), p(DU), p(z), p(z), I(1), p(time), D(dt), I(1), I(kinc), I(1), p(params), I(0), p(jd), p(zz), p(predef),
+             p(U), p(DU), p(z), p(z), I(1), p(time), D(dt), I(1), I(kinc), I(jelem), p(params), I(0), p(jd), p(zz), p(predef),
              I(1), p(lflags), I(NDOF), p(zz), I(1), ct.byref(pnewdt), p(jp), I(2), D(0.0))
     return -rhs[:, 0], amat, sv, pnewdt.value
 
@@ -50,7 +50,7 @@ def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-
         R = np.zeros(len(U)); rows, cols, vals = [], [], []; SVn = []
         for e, el in enumerate(elems):
             ed = EDS[e]
-            Re, Ke, sv, pn = uel(F(U[ed]), F((U[ed] - U0[ed])[:, None]), F(nodes[el].T), SV[e], props, dt, kinc, ttot, finite, md)
+            Re, Ke, sv, pn = uel(F(U[ed]), F((U[ed] - U0[ed])[:, None]), F(nodes[el].T), SV[e], props, dt, kinc, ttot, finite, md, e + 1)
             assert pn == 1.0, "UEL asked for a smaller increment"
             R[ed] += Re; rows.append(np.repeat(ed, NDOF)); cols.append(np.tile(ed, NDOF)); vals.append(Ke.ravel())
             SVn.append(sv)
@@ -96,6 +96,8 @@ def seed(n, antibiotic=False, finite=True, nu=0.3, md=False):
     st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SV])          # element mean of vM, p
     pe = np.array([phi.ravel()[el].mean() for el in elems])
     inb = pe > 0.5
+    if not inb.any():                       # coarse meshes: no element mean above 0.5
+        inb = pe >= pe.max()
     j = n // 2
     print(f"seed {n}^3{', antibiotic' if antibiotic else ''}, {'finite' if finite else 'small'} strain, nu {nu}{', mean dilatation' if md else ''}: biofilm volume (reference) {(phi[:-1, :-1, :-1].sum() * h ** 3):.4f} "
           f"(node sum), phi at centre {phi[j, j, 1]:.3f}, alpha-1 nutrient side (element at x = 0.7, z near 0) "

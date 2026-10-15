@@ -48,6 +48,11 @@ module unified_uel_mod
   logical, save :: kin_md = .false.
   ! Cauchy stress (11 22 33 12 23 13) at the Gauss points from the last call of residual
   double precision, save :: gp_sig(6, 8) = 0d0
+  ! Gauss-point records for the output file (Abaqus cannot print a user element's state variables):
+  ! per element and Gauss point x, y, z (reference), phi, c, xi = alpha - 1, living, von Mises, pressure
+  integer, parameter :: NREC = 9
+  double precision, allocatable, save :: out_rec(:,:,:)
+  integer, save :: out_nel = 0
 contains
 
   subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
@@ -598,7 +603,7 @@ end subroutine uel_store
 
 
 ! ---- Abaqus entry point ---------------------------------------------------------------------------
-! *USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, COORDINATES=3, VARIABLES=112
+! *USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, I PROPERTIES=2, COORDINATES=3, VARIABLES=128
 ! 1, 2, 3, 11, 12
 ! SVARS per element: NSV x NGP = 14 x 8 = 112 (composition 1-12, growth 13, started 14).
 ! Abaqus hands the element the state variables of the start of the increment at every
@@ -606,7 +611,9 @@ end subroutine uel_store
 ! iteration) and the end-of-increment values are written back.  The nodal dofs in U are ordered
 ! node by node as listed above (1, 2, 3, 11, 12), which is the order the module uses.
 ! The point model's constants are read once from BIOFILM_ECO_CASE (ecology_native.f, through
-! UEXTERNALDB or at the first call).
+! UEXTERNALDB or at the first call).  With VARIABLES = 128 the Gauss-point results (phi, c, alpha - 1,
+! living biomass, von Mises, pressure) are also written to uel_gp.txt by UEXTERNALDB, every 10th
+! increment and at the end of the analysis.
 subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, COORDS, MCRD, NNODE, &
                U, DU, V, A, JTYPE, TIME, DTIME, KSTEP, KINC, JELEM, PARAMS, NDLOAD, JDLTYP, ADLMAG, &
                PREDEF, NPREDF, LFLAGS, MLVARX, DDLMAG, MDLOAD, PNEWDT, JPROPS, NJPROP, PERIOD)
@@ -653,6 +660,7 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
     do q = 1, NGP
       call vm_p(gp_sig(:, q), SVARS(NSV*NGP + 2*q - 1), SVARS(NSV*NGP + 2*q))
     end do
+    call keep_record(JELEM, U, COORDS, sv, SVARS(NSV*NGP+1:NSV*NGP+2*NGP), DTIME, PROPS(1:16))
   end if
   if (LFLAGS(3) == 1 .or. LFLAGS(3) == 2) then
     call tangent(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), K)
@@ -661,3 +669,70 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   if (DTIME > 0d0) call store_growth(U, COORDS, sv, PROPS(1:16), DTIME)
   SVARS(1:NSV*NGP) = reshape(sv, [NSV*NGP])
 end subroutine UEL
+
+subroutine keep_record(jel, U, coords, sv, st, dt, props)
+  ! the latest values of an element's Gauss points; the last call of an increment is the converged one
+  use unified_uel_mod
+  implicit none
+  integer, intent(in) :: jel
+  double precision, intent(in) :: U(NDOF), coords(3, NN), sv(NSV, NGP), st(2*NGP), dt, props(16)
+  double precision, allocatable :: tmp(:,:,:)
+  double precision :: N(8), dNr(3,8), gpc(2), ph, c, xin, liv
+  integer :: i, j, l, q, a, nnew
+  if (jel > out_nel) then
+    nnew = max(jel, 2 * out_nel, 64)
+    allocate(tmp(NREC, NGP, nnew)); tmp = -1d30
+    if (out_nel > 0) tmp(:, :, 1:out_nel) = out_rec
+    call move_alloc(tmp, out_rec); out_nel = nnew
+  end if
+  gpc = [-1d0, 1d0] / sqrt(3d0)
+  q = 0
+  do l = 1, 2
+    do j = 1, 2
+      do i = 1, 2
+        q = q + 1
+        call shape(gpc(i), gpc(j), gpc(l), N, dNr)
+        ph = 0d0; c = 0d0
+        do a = 1, NN
+          ph = ph + N(a) * U(NDN*(a-1)+4); c = c + N(a) * U(NDN*(a-1)+5)
+        end do
+        liv = 0d0
+        if (sv(14,q) > 0.5d0) liv = sum(sv(1:5,q) * sv(7:11,q))
+        xin = sv(13,q)
+        out_rec(1:3, q, jel) = matmul(coords, N)
+        out_rec(4:9, q, jel) = [ph, c, xin, liv, st(2*q-1), st(2*q)]
+      end do
+    end do
+  end do
+end subroutine keep_record
+
+subroutine write_records(kstep, kinc, ttot)
+  ! appends the Gauss-point records to uel_gp.txt in the job directory
+  use unified_uel_mod
+  implicit none
+  integer, intent(in) :: kstep, kinc
+  double precision, intent(in) :: ttot
+  integer :: u, e, q
+  if (out_nel == 0) return
+  open(newunit=u, file='uel_gp.txt', position='append', status='unknown', action='write')
+  write(u, '(a,i4,a,i6,a,es16.8)') '# step ', kstep, ' increment ', kinc, ' total time ', ttot
+  write(u, '(a)') '# element gp x y z phi c alpha-1 living von_Mises pressure'
+  do e = 1, out_nel
+    if (out_rec(1, 1, e) < -1d29) cycle
+    do q = 1, NGP
+      write(u, '(i8,i3,9es16.8)') e, q, out_rec(:, q, e)
+    end do
+  end do
+  close(u)
+end subroutine write_records
+
+subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
+  ! LOP 0: read the point model's constants once, before any element call (one thread);
+  ! LOP 2 (end of an increment): every 10th increment, and LOP 3 (end of the analysis), write uel_gp.txt
+  use unified_uel_mod
+  implicit none
+  integer :: LOP, LRESTART, KSTEP, KINC
+  double precision :: TIME(2), DTIME
+  if (LOP == 0 .and. .not. eco_inited) call eco_native_init()
+  if ((LOP == 2 .and. mod(KINC, 10) == 0) .or. LOP == 3) call write_records(KSTEP, KINC, TIME(2))
+end subroutine UEXTERNALDB
