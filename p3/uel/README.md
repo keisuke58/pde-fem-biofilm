@@ -231,3 +231,12 @@ codes share no source. Seed = elements with mean nodal phi > 0.5.
 The growth agrees to 1e-6; the stress difference halves with the mesh, as expected from the element
 formulation (mean dilatation against B-bar; in ANSYS alone, enhanced strain against B-bar differs by 12.7 % at
 8^3 and 2.5 % at 16^3). The largest value sits at mirror-image elements in the two codes (equal values).
+
+## Rigid substrate (A-18, 15 Oct 2026, ANSYS)
+
+The frozen seed of A-16 (8^3) on a plate 0.25 thick with shared interface nodes (81), plate bottom fixed,
+compared with u = 0 on the base (`results/2026-10-uel/rigid_plate_8.json`). Relative difference of the von Mises
+stress (seed / seed interior / layer above the interface): plate 10^9 times stiffer than the biofilm +4e-12 /
++8e-12 / +4e-12; 10^3 times -0.045 / -0.058 / -0.045 %; 10 times -4.2 / -5.4 / -4.3 %. alpha - 1 is identical
+(phi frozen). A tooth or implant (GPa, over 10^8 times the biofilm) can therefore be replaced by u = 0 on the
+surface the biofilm sits on, for the growth-induced stress; external loads such as occlusion need their own check.
