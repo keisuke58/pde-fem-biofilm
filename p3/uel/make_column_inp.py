@@ -23,6 +23,7 @@ Nodal output: NT11 = phi, NT12 = c (*NODE PRINT).
 Procedure (15 Oct 2026, A-11): Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC, so both
 steps are a transient *COUPLED TEMPERATURE-DISPLACEMENT without DELTMX, i.e. with fixed increments (the steady-state
 form tried on IKMHIWI03 chose its own increments and gave wrong values). UNSYMM: the element tangent is not symmetric.
+The transient procedure needs a specific heat: dummy C3D8T elements on the same nodes with 1e-9 material (overlay).
 """
 import sys
 from pathlib import Path
@@ -48,6 +49,17 @@ def eco_file(path):
     path.write_text("\n".join(lines) + "\n")
 
 
+
+def overlay(elems, offset=100000):
+    """dummy coupled elements on the same nodes: a transient *COUPLED TEMPERATURE-DISPLACEMENT needs a specific
+    heat, and the model has no material otherwise (IKMHIWI03, third try of A-11). Stiffness, conductivity and
+    specific heat 1e-9 of the element's, so they change nothing (relative 1e-9)."""
+    out = ["*ELEMENT, TYPE=C3D8T, ELSET=DUMMY"]
+    out += [f"{offset + e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
+    out += ["*SOLID SECTION, ELSET=DUMMY, MATERIAL=DUMMY", "", "*MATERIAL, NAME=DUMMY", "*ELASTIC", "1e-9, 0.3",
+            "*CONDUCTIVITY", "1e-9", "*SPECIFIC HEAT", "1e-9", "*DENSITY", "1.0"]
+    return out
+
 def deck(n, path):
     nodes, elems, xs = column(n)
     P = props_base(s=1.0)
@@ -61,6 +73,7 @@ def deck(n, path):
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
     out += ["*UEL PROPERTY, ELSET=COL", ", ".join(vals[0:8]), ", ".join(vals[8:16]), "1, 0, 0"]   # JPROPS: finite strain, no mean dilatation, nutrient in the reference configuration
+    out += overlay(elems)
 
     def nset(name, mask):
         ids = [str(i + 1) for i in np.where(mask)[0]]

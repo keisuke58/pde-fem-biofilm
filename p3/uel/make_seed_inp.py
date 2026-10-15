@@ -27,7 +27,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from driver import props_base  # noqa: E402
-from make_column_inp import eco_file  # noqa: E402
+from make_column_inp import eco_file, overlay  # noqa: E402
 
 
 def cube(n):
@@ -61,6 +61,7 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
     vals.append(str(1 if md else 0))                    # JPROPS(2): 1 mean dilatation (nearly incompressible)
     vals.append(str(1 if cur else 0))                   # JPROPS(3): 1 nutrient in the current configuration
     out += ["*UEL PROPERTY, ELSET=ALLE"] + [", ".join(vals[k:k + 8]) for k in range(0, len(vals), 8)]
+    out += overlay(elems)     # specific heat for the transient coupled procedure
 
     def nset(name, mask):
         ids = [str(i + 1) for i in np.where(mask)[0]]
