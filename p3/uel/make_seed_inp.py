@@ -14,6 +14,10 @@ GROW: T = 0.2375 in 60 fixed increments, c = 1 at x = 1, u = 0 at
 z = 0. Parameters as fuel_front_3d_coupled.run: D = 0.2, L0 = 2, beta = 0.02, eta_phi = 1, K_phi = 1e-5.
 The Python script splits the equations explicitly on a finite-difference grid, so it is a comparison,
 not a reference to the last digit (expected within a few per cent at n = 16).
+
+Procedure (15 Oct 2026, A-11): Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC, so both
+steps are a transient *COUPLED TEMPERATURE-DISPLACEMENT without DELTMX, i.e. with fixed increments (the steady-state
+form tried on IKMHIWI03 chose its own increments and gave wrong values). UNSYMM: the element tangent is not symmetric.
 """
 import sys
 from pathlib import Path
@@ -49,7 +53,7 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
         P = np.r_[P, t0 + 0.5 * T, 0.65]
     out = ["*HEADING", f"unified two-level model, user element, 3D seed, {n}^3 elements", "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
+    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=ALLE"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
@@ -66,11 +70,11 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
     nset("SUPPLY", np.isclose(nodes[:, 0], 1.0))
     nset("PROBE", np.isclose(nodes[:, 1], 0.5) & (nodes[:, 2] <= 0.3 + 1e-12))
     phi = seed_phi(nodes)
-    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*STATIC, DIRECT", f"{t0:g}, {t0:g}", "*BOUNDARY", "ALL, 1, 3, 0.0",
+    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", "*BOUNDARY", "ALL, 1, 3, 0.0",
             "ALL, 12, 12, 0.1"]
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
-    out += ["*STEP, NAME=GROW, INC=1000", "*STATIC, DIRECT", f"{T / nin:.10g}, {T:.10g}",
+    out += ["*STEP, NAME=GROW, INC=1000", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / nin:.10g}, {T:.10g}",
             "*BOUNDARY, OP=NEW", "BASE, 1, 3, 0.0", "SUPPLY, 12, 12, 1.0",
             "*NODE PRINT, NSET=PROBE, FREQUENCY=1000", "U, NT", "*END STEP"]
     path.write_text("\n".join(out) + "\n")

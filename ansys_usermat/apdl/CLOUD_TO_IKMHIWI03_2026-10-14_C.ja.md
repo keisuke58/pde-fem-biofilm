@@ -248,6 +248,14 @@ ANSYS の計算とは別のプロセスなので、B の列を止めずに回し
 4. 報告：各ジョブの PASS / FAIL、増分数と Newton の反復数（.sta）、計算時間。`.dat`（PROBE の節点の U と NT だけ）を
    `ansys_usermat/apdl/results/2026-10-uel/` に、各ジョブの `uel_gp.txt` を `<ジョブ名>_gp.txt` として一緒に置いて push
 （クラウドが模擬実行と節点・積分点ごとに比べる）。.odb は push しない。
+**3 回目（15日 15 時、2 回目の報告を受けて）：** `git pull` のあと `make_abaqus_source.py` と 0 の入力の生成をやり直す。
+   - 入力は両方のステップが**過渡の** `*COUPLED TEMPERATURE-DISPLACEMENT`（`DELTMX` なし = 固定の刻み。2 回目の
+     `STEADY STATE` は刻みを自分で決めて値も合わなかった）。`*USER ELEMENT` に `UNSYMM`（要素の接線は非対称）。
+   - リンクは 2 回目と同じ `run_abaqus.ps1 -LibsDll` で。
+   - 応力のファイル：環境変数 `BIOFILM_UEL_GP` に絶対パス（例 `F:\abaqus_work\uel_column_gp.txt`）を入れてから回す
+     （2 回目は `uel_gp.txt` ができなかった。ソルバーの作業フォルダが違うのかもしれないので、場所を決めて書く）。
+   - 柱で NT11 = 0.776、NT12 = 0.936 になったら、シードの 4 本も。ならなければ、x = 0 の節点の NT11、NT12 と `.sta` の
+     増分の数を報告して止める。
 5. 止まったら：
    - `*STATIC` が自由度 11、12 を受け付けない → `*COUPLED TEMPERATURE-DISPLACEMENT, STEADY STATE` に替えて 1 回だけ試す。
    - 収束しない（残差の判定が自由度 11、12 の大きさに合わない）→ .msg の最後の 50 行を報告して止める（直しはクラウドで）。

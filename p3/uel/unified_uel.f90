@@ -747,9 +747,13 @@ subroutine write_records(kstep, kinc, ttot)
   implicit none
   integer, intent(in) :: kstep, kinc
   double precision, intent(in) :: ttot
-  integer :: u, e, q
+  integer :: u, e, q, st
+  character(len=512) :: path
   if (out_nel == 0) return
-  open(newunit=u, file='uel_gp.txt', position='append', status='unknown', action='write')
+  ! the file: BIOFILM_UEL_GP if set (an absolute path), else uel_gp.txt in the solver's directory
+  call get_environment_variable('BIOFILM_UEL_GP', path, status=st)
+  if (st /= 0) path = 'uel_gp.txt'
+  open(newunit=u, file=trim(path), position='append', status='unknown', action='write')
   write(u, '(a,i4,a,i6,a,es16.8)') '# step ', kstep, ' increment ', kinc, ' total time ', ttot
   write(u, '(a)') '# element gp x y z phi c alpha-1 living von_Mises pressure'
   do e = 1, out_nel
