@@ -50,6 +50,9 @@ third contributions of the thesis (Section~\ref{sec:intro_structure}):
       (Section~\ref{sec:theory_point}), run at every Gauss point alongside the
       field (\S\ref{sec:ch5-composition}).
 \end{itemize}
+The same coupling also carries the five-species model calibrated in
+Chapter~\ref{ch:heine}; this is shown once, as a link between the two chapters
+(\S\ref{sec:ch5-five}), without a published case to check against.
 
 %-----------------------------------------------------------------------
 \section{The constitutive model}
@@ -920,6 +923,46 @@ model for most of the time.
     scheme of this chapter on the reproduced field of Klempt et al.\ 2024,
     test case~4.1; Klempt et al.\ 2026, cases~3 and~6.}
   \label{fig:ch5-spreading}
+\end{figure}
+
+\subsection{The calibrated five-species model in the element}
+\label{sec:ch5-five}
+
+% Source: ansys_usermat/apdl/results/2026-10-cal5/w8_CH_g1_s015_raw*.json (IKMHIWI03, 14-15 Oct 2026),
+% figure fig_thesis_cal5.py.
+The coupling of Section~\ref{sec:ch5-composition} takes the number of species
+as a parameter, so the point model calibrated in Chapter~\ref{ch:heine} can be
+run in the element without changes to the routine. I used the MAP of the
+commensal flow condition (CH) from the calibration to the measured data, with
+$c^*=25$ and $\alpha^*=0$, and otherwise the setting of the two-species runs:
+the same $8^3$ model, the growth law~\eqref{eq:ch5-eq36} driven by the field,
+$\phi_{\rm cap}=0.9$, $s=0.15$, $\Delta t=0.025$ up to $T^*=1$, and equal
+shares at the start. The coupling is one-way, so the growth and the stress do
+not depend on the composition: the seed mean of $\alpha-1$ is
+$6.752\times10^{-4}$, the same to all printed digits as in the two-species
+runs, and with the stiffness of Klempt et al.\ 2024 ($E=10$~Pa, $\nu=0.49$)
+the seed mean of the von Mises stress is $4.68\times10^{-4}$~Pa.
+
+Figure~\ref{fig:ch5-five} shows the composition at a Gauss point of the seed.
+\textit{A.~naeslundii} becomes the largest share ($0.38$ at $T^*=1$), followed
+by \textit{S.~oralis} and \textit{V.~dispar} ($0.23$ each);
+\textit{F.~nucleatum} and \textit{P.~gingivalis} fall to $0.09$ and $0.08$.
+The living volume fraction $\sum_i\phi_i\psi_i$ drops in the first steps,
+where the two late colonisers lose almost all of their living part, and is
+$0.40$ at $T^*=1$. The start from equal shares is not the measured Day-1
+composition, so these numbers show that the calibrated model runs inside the
+element, not a prediction of the measured CH composition.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_thesis_cal5.pdf}
+  \caption[Calibrated five-species model in the element]{%
+    The five-species point model calibrated in Chapter~\ref{ch:heine}
+    (commensal flow condition, MAP) in the element with the one-way coupling of
+    this chapter, $8^3$, at a Gauss point of the seed: (a) shares
+    $\phi_i/\sum_j\phi_j$, (b) living volume fractions $\phi_i\psi_i$ and their
+    sum. Equal shares at the start.}
+  \label{fig:ch5-five}
 \end{figure}
 
 %-----------------------------------------------------------------------
