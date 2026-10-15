@@ -60,6 +60,13 @@ def overlay(elems, offset=100000):
             "*CONDUCTIVITY", "1e-9", "*SPECIFIC HEAT", "1e-9", "*DENSITY", "1.0"]
     return out
 
+
+# Abaqus's default convergence check for the temperature-type DOFs (here phi and c) is 0.5 % of the average flux, so
+# most increments were accepted after one iteration and the error built up (seed 8^3: c 1 % and alpha - 1 12 % low,
+# 15 Oct 2026). Tighter residual and correction tolerances for every field, more iterations before a cutback.
+CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8",
+        "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
+
 def deck(n, path):
     nodes, elems, xs = column(n)
     P = props_base(s=1.0)
@@ -81,10 +88,10 @@ def deck(n, path):
         out.extend(", ".join(ids[k:k + 16]) for k in range(0, len(ids), 16))
     nset("ALL", np.ones(len(nodes), bool)); nset("SEED", seed); nset("REST", ~seed); nset("TOP", top)
     nset("X0", np.isclose(nodes[:, 0], 0.0))
-    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", "1e-8, 1e-8",
+    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", "1e-8, 1e-8", *CTRL,
             "*BOUNDARY", "ALL, 1, 3, 0.0", "SEED, 11, 11, 0.9", "REST, 11, 11, 1e-4", "ALL, 12, 12, 1.0",
             "*END STEP",
-            "*STEP, NAME=GROW, INC=1000", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{0.2375 / 60:.10g}, 0.2375",
+            "*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{0.2375 / 60:.10g}, 0.2375", *CTRL,
             "*BOUNDARY, OP=NEW", "ALL, 1, 3, 0.0", "TOP, 12, 12, 1.0",
             "*NODE PRINT, NSET=X0, FREQUENCY=10", "NT", "*NODE PRINT, NSET=ALL, FREQUENCY=60", "NT",
             "*END STEP"]

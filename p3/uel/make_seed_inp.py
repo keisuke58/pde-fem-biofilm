@@ -27,7 +27,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from driver import props_base  # noqa: E402
-from make_column_inp import eco_file, overlay  # noqa: E402
+from make_column_inp import CTRL, eco_file, overlay  # noqa: E402
 
 
 def cube(n):
@@ -44,6 +44,13 @@ def seed_phi(nodes):
     r = np.sqrt((nodes[:, 0] - 0.5) ** 2 + (nodes[:, 1] - 0.5) ** 2 + nodes[:, 2] ** 2)
     return 0.5 * (1 - np.tanh((r - 0.25) / 0.03)) * 0.9 + 1e-4
 
+
+
+# Abaqus's default convergence check for the temperature-type DOFs (here phi and c) is 0.5 % of the average flux, so
+# most increments were accepted after one iteration and the error built up (seed 8^3: c 1 % and alpha - 1 12 % low,
+# 15 Oct 2026). Tighter residual and correction tolerances for every field, more iterations before a cutback.
+CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8",
+        "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
 
 def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md=False, cur=False):
     nodes, elems = cube(n)
@@ -71,11 +78,11 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
     nset("SUPPLY", np.isclose(nodes[:, 0], 1.0))
     nset("PROBE", np.isclose(nodes[:, 1], 0.5) & (nodes[:, 2] <= 0.3 + 1e-12))
     phi = seed_phi(nodes)
-    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", "*BOUNDARY", "ALL, 1, 3, 0.0",
+    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL, "*BOUNDARY", "ALL, 1, 3, 0.0",
             "ALL, 12, 12, 0.1"]
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
-    out += ["*STEP, NAME=GROW, INC=1000", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / nin:.10g}, {T:.10g}",
+    out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / nin:.10g}, {T:.10g}", *CTRL,
             "*BOUNDARY, OP=NEW", "BASE, 1, 3, 0.0", "SUPPLY, 12, 12, 1.0",
             "*NODE PRINT, NSET=PROBE, FREQUENCY=1000", "U, NT", "*END STEP"]
     path.write_text("\n".join(out) + "\n")

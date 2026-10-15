@@ -152,4 +152,9 @@ needs a specific heat (third try): dummy C3D8T elements on the same nodes with s
 heat 1e-9 (`make_column_inp.overlay`). Linking needs the DLL
 runtime (`run_abaqus.ps1 -LibsDll`) because of the OPEN / WRITE of the output file.
 
-Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column).
+Abaqus runs (IKMHIWI03, 15 Oct 2026, fourth try): all five jobs pass. Column: NT11 = 0.77532, NT12 = 0.93565 at x = 0.
+Seed 8^3 against the emulation, Gauss point by Gauss point: phi within 2.6e-7 and the living biomass identical, but c up
+to 0.011 and alpha - 1 up to 0.009 lower (von Mises mean 0.01135 against 0.01300). Abaqus accepted most increments after
+one iteration (70 iterations in 61 increments): its default check for temperature-type DOFs, 0.5 % of the average
+flux, is too loose for phi and c. The decks now set `*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL` to 1e-8 and allow more
+iterations, and state AMPLITUDE=STEP on the growth step; the fifth try reruns the seeds.
