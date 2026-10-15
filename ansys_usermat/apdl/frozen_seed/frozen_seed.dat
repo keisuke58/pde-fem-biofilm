@@ -1,0 +1,119 @@
+! frozen_seed.dat -- request A-16: the hemispherical seed with frozen phase in
+! ANSYS (SOLID185, default B-bar, NLGEOM), the same problem as
+! p3/uel/seed_frozen_reference.py. Needs the exe built with
+! usermat_frozen_wrap.f (build_and_run.ps1). N = elements per edge.
+! Unit cube, nodal phi = seed_phi of p3/uel/make_seed_inp.py held as the
+! nodal temperature; alpha_dot = k_alpha phi; (phi^2 + f) E; u = 0 on z = 0.
+/BATCH
+/PREP7
+N = 8
+EYOUNG = 10.0
+NU = 0.49
+FV = 1.0e-3
+KALPHA = 1.0e-3
+C10 = EYOUNG/(2*(1+NU))/2
+D1 = 2/(EYOUNG/(3*(1-2*NU)))
+ET,1,SOLID185
+ERESX,NO
+TB,USER,1,1,4
+TBDATA,1,C10,D1,FV,KALPHA
+TB,STATE,1,,12
+BLOCK,0,1,0,1,0,1
+ESIZE,1/N
+MSHKEY,1
+VMESH,ALL
+! nodal phi as the temperature (seed_phi: centre (0.5, 0.5, 0), radius 0.25,
+! 0.9 inside, tanh edge of width 0.03, 1e-4 outside)
+*GET,NNMAX,NODE,0,NUM,MAX
+*DO,I_,1,NNMAX
+  R_ = SQRT((NX(I_)-0.5)**2+(NY(I_)-0.5)**2+NZ(I_)**2)
+  BF,I_,TEMP,0.5*(1-TANH((R_-0.25)/0.03))*0.9+1e-4
+*ENDDO
+NSEL,S,LOC,Z,0
+D,ALL,UX,0,,,,UY,UZ
+ALLSEL
+FINISH
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+TIME,1.1
+AUTOTS,OFF
+NSUBST,11,11,11
+KBC,1                ! stepped: phi (the temperature) is held from t = 0, not ramped
+OUTRES,ALL,ALL
+OUTRES,SVAR,ALL
+CNVTOL,F,,1e-8,2,1e-12
+NEQIT,50
+SOLVE
+FINISH
+/POST1
+SET,LAST
+*GET,EMAX_,ELEM,0,NUM,MAX
+ETABLE,EA,SVAR,10
+ETABLE,EPHI,SVAR,11
+ETABLE,EFS,SVAR,12
+ETABLE,ESEQ,S,EQV
+ETABLE,ESX,S,X
+ETABLE,ESY,S,Y
+ETABLE,ESZ,S,Z
+ETABLE,ECX,CENT,X
+ETABLE,ECY,CENT,Y
+ETABLE,ECZ,CENT,Z
+*DIM,V1_,ARRAY,EMAX_
+*DIM,V2_,ARRAY,EMAX_
+*DIM,V3_,ARRAY,EMAX_
+*DIM,V4_,ARRAY,EMAX_
+*DIM,V5_,ARRAY,EMAX_
+*DIM,V6_,ARRAY,EMAX_
+*DIM,V7_,ARRAY,EMAX_
+*DIM,V8_,ARRAY,EMAX_
+*DIM,V9_,ARRAY,EMAX_
+*DIM,V10_,ARRAY,EMAX_
+*DIM,V11_,ARRAY,EMAX_
+*VFILL,V1_(1),RAMP,1,1
+*VGET,V2_(1),ELEM,1,ETAB,ECX
+*VGET,V3_(1),ELEM,1,ETAB,ECY
+*VGET,V4_(1),ELEM,1,ETAB,ECZ
+*VGET,V5_(1),ELEM,1,ETAB,EA
+*VGET,V6_(1),ELEM,1,ETAB,ESEQ
+*VGET,V7_(1),ELEM,1,ETAB,ESX
+*VGET,V8_(1),ELEM,1,ETAB,ESY
+*VGET,V9_(1),ELEM,1,ETAB,ESZ
+*VGET,V10_(1),ELEM,1,ETAB,EPHI
+*VGET,V11_(1),ELEM,1,ETAB,EFS
+*CFOPEN,frozen_elems,csv
+*VWRITE
+('elem,cx,cy,cz,alpha,seqv,sx,sy,sz,phi_gp_mean,phiscale_gp_mean')
+*VWRITE,V1_(1),V2_(1),V3_(1),V4_(1),V5_(1),V6_(1),V7_(1),V8_(1),V9_(1),V10_(1),V11_(1)
+(F8.0,10(',',E24.16))
+*CFCLOS
+! interpolation check: SVAR 11 (phi at the Gauss points) of two elements in
+! the seed's edge, copied unaveraged to their nodes (ERESX,NO, one element
+! selected; ERESX,NO in /PREP7), so the value at a node is that of the Gauss point next to it
+*CFOPEN,frozen_gp,csv
+*VWRITE
+('elem,node,x,y,z,phi_gp')
+*DIM,EC_,ARRAY,2,3
+EC_(1,1) = 0.6875,0.5625
+EC_(1,2) = 0.5625,0.6875
+EC_(1,3) = 0.0625,0.1875
+*DO,K_,1,2
+  ESEL,S,CENT,X,EC_(K_,1)-0.01,EC_(K_,1)+0.01
+  ESEL,R,CENT,Y,EC_(K_,2)-0.01,EC_(K_,2)+0.01
+  ESEL,R,CENT,Z,EC_(K_,3)-0.01,EC_(K_,3)+0.01
+  *GET,E_,ELEM,0,NUM,MIN
+  NSLE,S
+  N_ = 0
+  *DO,J_,1,8
+    N_ = NDNEXT(N_)
+    X_ = NX(N_)
+    Y_ = NY(N_)
+    Z_ = NZ(N_)
+    *GET,G_,NODE,N_,SVAR,11
+    *VWRITE,E_,N_,X_,Y_,Z_,G_
+(F8.0,',',F8.0,4(',',E24.16))
+  *ENDDO
+*ENDDO
+*CFCLOS
+ALLSEL
+FINISH
