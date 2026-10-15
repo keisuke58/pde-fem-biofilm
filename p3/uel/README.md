@@ -33,5 +33,12 @@ gfortran -O2 -ffree-line-length-none test_uel_wrapper.f90 unified_uel.o ecology_
 
 Result: second call = first call (RHS, AMATRX, SVARS identical), RHS + R = 0, all 8 Gauss points started.
 
-Not yet: a run inside Abaqus (input deck with `*USER ELEMENT`; Keio or IKMHIWI03), finite-strain mechanics
+Abaqus input: `make_column_inp.py [n] [outdir]` writes `uel_column.inp` (check 2 as an Abaqus job: a 1e-8
+step that prescribes phi and c at every node, the only way to give these dofs initial values, then 60
+increments) and `uel_eco.txt` (the point model, read through `BIOFILM_ECO_CASE`). The build and run
+commands are in its header. `emulate_abaqus.py` runs the same two steps by calling `UEL` itself with
+Abaqus's argument list and the point model from that file: 20 elements give alpha - 1 0.1371,
+phi(0) 0.776, c(0) 0.936, living 0.526, the numbers of `driver.py` (15 Oct 2026).
+
+Not yet: the run inside Abaqus (Keio or IKMHIWI03; expect phi(0) = NT11 0.776, c(0) = NT12 0.936), finite-strain mechanics
 (small strain now), a closed-form tangent (central differences now).
