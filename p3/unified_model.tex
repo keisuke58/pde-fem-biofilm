@@ -458,6 +458,66 @@ the point model only at about Day~5 and gave much weaker antibiotic effects.
 without antibiotic, with a broad antibiotic and with an anaerobe-specific one.}
 \end{center}
 
+\section{Finite element implementation}
+\label{sec:fem}
+
+The model is written as an Abaqus user element (\path{p3/uel/unified_uel.f90}): an 8-node
+hexahedron with the displacement, $\phi$ and $c$ at the nodes (Abaqus degrees of freedom 1--3, 11,
+12) and the composition, the growth $\xi=\alpha-1$ and a start flag at the $2\times2\times2$ Gauss
+points. The phase and nutrient equations and the growth \eqref{eq:growth} are solved implicitly,
+with the composition advanced once per increment by the point model of Klempt et al.\ 2026 at every
+Gauss point where $\phi$ has passed $\phi_{\min}=0.05$ (staggered, the nutrient of the start of the
+increment). The mechanics is finite strain, $\mathbf F=\mathbf F_e\mathbf F_g$,
+$\mathbf F_g=\alpha\mathbf I$, with the energy per reference volume
+\[W=\alpha^3(\phi^2+f)\Big[\frac{\mu}{2}\big(J_e^{-2/3}\,\mathbf I:\mathbf C_e-3\big)+\frac K2(J_e-1)^2\Big],\]
+the mechanical term of Klempt et al.\ 2024 (Eq.~20) with a volumetric penalty in place of the
+incompressibility constraint; small strain is an option. The tangent is written in closed form.
+An antibiotic can be switched on at a given time through two element properties. The field and the
+point model share one time: $T^*=1$ is Day~21 for both.
+
+Abaqus is not available in the cloud; the element is checked by calling its entry point with
+Abaqus's argument list (\path{p3/uel/emulate_abaqus.py}). The run inside Abaqus is the next step.
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}Yp{5.2cm}@{}}
+\toprule
+check & result\\
+\midrule
+one element, uniform field: Gauss-point composition against the point model solved to convergence & $7.8\times10^{-16}$\\
+1D column, 20 and 40 elements, against the 1D finite-difference model (Section~\ref{sec:results}) &
+$\alpha-1$ $0.1371$ / $0.1370$ (1D: $0.137$), $\phi(0)$ $0.776$ / $0.772$ ($0.77$), $c(0)$ $0.936$ / $0.938$ ($0.938$)\\
+repeated calls in one increment (as Abaqus iterates) & residual, tangent, state identical\\
+closed-form tangent against central differences & $8.7\times10^{-10}$ (all rows), $7.2\times10^{-11}$
+(mechanics, displacement gradients about $0.3$)\\
+free growth $\mathbf u=(\alpha-1)\mathbf X$ & mechanics residual $2\times10^{-21}$\\
+3D seed, $16^3$, small strain, against the finite-difference 3D model ($\lambda=0$) & $\phi$ at the
+centre $0.778$ / $0.779$; edge $0.0135$ / $0.0126$; antibiotic $-23\,\%$ / $-24\,\%$\\
+finite against small strain, $8^3$ & edge $0.0141$ against $0.0143$ ($\alpha-1\approx0.07$)\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\paragraph{3D with the composition acting on the phase ($\lambda=1$).} Finite differences, $16^3$,
+point model converged at every node and step. The absolute level of the point model's energy is
+not fixed by the calibration (only its derivatives enter the point model), and with $\lambda>0$
+it pushes the phase down: without a reference the biofilm shrinks by $16\,\%$ without antibiotic.
+With the reference $\Psi_{\rm ref}=0.32$ (the time average of the untreated point model's energy)
+the untreated biofilm stays near $\lambda=0$, and the antibiotic shrinks the biofilm itself.
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}Yccc@{}}
+\toprule
+& biofilm volume (reference) & $\phi$, centre & edge $30^\circ$\\
+\midrule
+$\lambda=0$, no antibiotic & $0.0361$ & $0.78$ & $0.0126$\\
+$\lambda=0$, antibiotic & $0.0361$ & $0.78$ & $0.0096$\\
+$\lambda=1$, $\Psi_{\rm ref}=0.32$, no antibiotic & $0.0351$ & $0.78$ & $0.0115$\\
+$\lambda=1$, $\Psi_{\rm ref}=0.32$, antibiotic & $0.0309$ ($-12\,\%$) & $0.67$ & $0.0083$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+$\Psi_{\rm ref}$ is a new parameter, the energy of forming the biofilm; the time average is one
+choice, and it should be fixed by the measured volume.
+
 \section{Assumptions and open points}
 
 \begin{center}\small
@@ -482,15 +542,18 @@ local nutrient in the point model, $c^*c/c_{\rm ref}$ with $c_{\rm ref}=1$ & the
 option; the relation of $c^*$ to $c$ should come from the nutrient level of the calibration & no\\
 front term of Klempt et al.\ 2024 left out & not derivable from a potential; the edge moves by
 the kinematics (Proposition~\ref{prop:front}) & 1D, 2D, 3D\\
-2D/3D mechanics: small strain, $\nu=0.3$, nutrient in the reference configuration & checks of
-the kinematics only & no\\
+mechanics: penalty in place of the incompressibility constraint, $\nu=0.3$ so far; nutrient in
+the reference configuration & finite strain in the element (Section~\ref{sec:fem}); the
+finite-difference 3D runs are small strain & finite against small strain\\
+reference energy $\Psi_{\rm ref}$ for $\lambda>0$ & the calibration does not fix the level of the
+point model's energy & one choice\\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-\noindent Open: the composition acting on the phase ($\lambda>0$) and $\beta_s$ in 3D (the 3D
-runs use the decoupled limit); finite strain, $\nu=0.49$ and nutrient diffusion in the current
-configuration in 2D/3D; the limit $\phi\to0$ of the composition equations (regularised by
+\noindent Open: $\beta_s$ in 3D; $\nu=0.49$ in the element (locking of the 8-node hexahedron
+needs an F-bar or mixed form); nutrient diffusion in the current configuration; the run inside
+Abaqus; the limit $\phi\to0$ of the composition equations (regularised by
 $\varepsilon$); existence and uniqueness (not attempted); a reader other than me; the overlap
 with F.\ Klempt's unpublished two-species work (only published sources were used; to be
 discussed before any publication). The checks establish that the equations are the ones the
