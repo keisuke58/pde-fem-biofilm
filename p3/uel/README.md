@@ -43,7 +43,7 @@ commands are in its header. `emulate_abaqus.py` runs the same two steps by calli
 Abaqus's argument list and the point model from that file: 20 elements give alpha - 1 0.1371,
 phi(0) 0.776, c(0) 0.936, living 0.526, the numbers of `driver.py` (15 Oct 2026).
 
-3D seed: `make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic]` writes `uel_seed.inp`, the seed of
+3D seed: `make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic] [--small]` writes the seed deck, the seed of
 `JAXFEM/fuel_front_3d_coupled.py` (unit cube, hemisphere of radius 0.25 on z = 0, nutrient at x = 1). Optional
 PROPS(17) = total time at which the antibiotic starts and PROPS(18) = alpha* (the element switches
 `eco_alstar` from TIME(2)). `emulate_abaqus.py --seed n [--antibiotic]` runs it (8^3: 1 min, 16^3: 45 min, most of it
@@ -59,5 +59,39 @@ explicit splitting), 15 Oct 2026:
 
 The two discretisations agree within 8 %, and the antibiotic effect within one percentage point.
 
-Not yet: the run inside Abaqus (Keio or IKMHIWI03; expect phi(0) = NT11 0.776, c(0) = NT12 0.936), finite-strain mechanics
-(small strain now), a closed-form tangent (central differences now).
+3D seed decks are named `uel_seed<n>[_small][_ab].inp` (the Abaqus job name); `--small` writes JPROPS(1) = 0.
+
+Finite strain (default since 15 Oct 2026): F = F_e F_g, F_g = (1 + xi) I, total Lagrangian, energy
+(1+xi)^3 (phi^2 + f) [mu/2 (J_e^(-2/3) tr C_e - 3) + K/2 (J_e - 1)^2] (Klempt et al. 2024 Eq. 20 with a volumetric
+penalty in place of the incompressibility constraint, as the UMAT core); `nh_stress`. Small strain with JPROPS(1) = 0
+(`--small` in the deck generators and the emulation), as the Python 3D model. Checks (`test_uel_wrapper`): tangent
+against central differences, mechanics rows, 1.0e-11 (small displacement) and 7.2e-11 (displacement gradients
+about 0.3); free growth u = xi X gives a mechanics residual of 2e-21. 8^3 seed: edge 0.0141 (finite) against
+0.0143 (small strain), alpha - 1 about 0.07.
+
+Near incompressibility (nu = 0.49; Klempt et al. 2024 use an incompressible material) the fully integrated
+hexahedron locks. JPROPS(2) = 1 switches on the mean dilatation (Q1/P0, Simo, Taylor and Pister 1985): the
+volumetric energy sees the element mean of J_e, one pressure per element, as the element pressure that Klempt
+et al. 2024 condense. Its residual equals the gradient of the element energy computed independently in Python
+(3.9e-11); its tangent is by central differences for now. `bilayer_test.py`: strip clamped at one end, top half
+grown, tip deflection against beam theory (0.75 xi L^2 / h):
+
+| nu | mesh | fully integrated | mean dilatation |
+|---|---|---|---|
+| 0.3 | 40 x 4 | 0.994 | 1.048 |
+| 0.3 | 80 x 8 | 1.020 | 1.034 |
+| 0.49 | 40 x 4 | **0.674** | 1.066 |
+| 0.49 | 80 x 8 | 0.910 | 1.051 |
+
+Both converge to about 1.04; with nu = 0.49 the fully integrated element is a third too stiff on the coarse
+mesh. Started from u = 0 with the full growth, a nearly incompressible grown layer is in hydrostatic
+compression and the tangent is indefinite (geometric stiffness), so the test raises the growth in steps, as a
+run does. F-bar (de Souza Neto et al. 1996) was tried first and dropped: same residual check, but erratic
+Newton convergence in this test.
+
+Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, the fixed-form point model and the
+free-form element in one file, joined by `!DEC$ FREEFORM` (Intel Fortran). Instructions for IKMHIWI03:
+`ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
+
+Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column); a closed-form
+tangent for the mean dilatation; 3D runs with nu = 0.49.
