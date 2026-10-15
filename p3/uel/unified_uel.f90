@@ -19,7 +19,8 @@
 !   mechanics: finite strain (default), F = F_e F_g, F_g = (1 + xi) I, int P : Grad N dV = 0 with
 !              P from W = (1+xi)^3 (phi^2 + f) [mu/2 (J_e^(-2/3) tr C_e - 3) + K/2 (J_e - 1)^2]
 !              (nh_stress; Klempt et al. 2024 Eq. 20, volumetric penalty in place of the constraint);
-!              or small strain, sigma = (phi^2 + f) C : (eps - xi I) (JPROPS(1) = 0; kin_finite)
+!              or small strain, sigma = (phi^2 + f) C : (eps - xi I) (JPROPS(1) = 0; kin_finite);
+!              JPROPS(2) = 1: mean dilatation against volumetric locking (kin_md; bilayer_test.py)
 !   composition: the point model of Klempt et al. 2026 at every Gauss point, advanced once per
 !              increment over s*dt with the nutrient of the start of the increment (staggered),
 !              by ecology_native.f (biofilm_py_bridge).
@@ -38,6 +39,11 @@ module unified_uel_mod
   integer, parameter :: NN = 8, NDN = 5, NDOF = NN * NDN, NGP = 8, NSV = 14
   ! kinematics: .true. finite strain (default), .false. small strain; Abaqus: JPROPS(1) = 1 / 0
   logical, save :: kin_finite = .true.
+  ! mean dilatation (Q1/P0, Simo, Taylor and Pister 1985) against volumetric locking near
+  ! incompressibility (finite strain only): the volumetric energy sees the element mean theta of
+  ! J_e = J / alpha^3 instead of J_e at each Gauss point (one pressure per element, condensed, as
+  ! Klempt et al. 2024 do with their element pressure); Abaqus: JPROPS(2) = 1
+  logical, save :: kin_md = .false.
 contains
 
   subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
@@ -156,6 +162,8 @@ contains
     double precision :: ph, phn, c, cn, gph(3), gc(3), eps(6), sig(6), Cm(6,6), lamL, mu, Ef
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
     double precision :: Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
+    double precision :: Fdi(3,3), Jdet, Fgp(3,3,NGP), dNgp(3,8,NGP), wgp(NGP), agp(NGP), sgp(NGP), Jgp(NGP)
+    double precision :: vol, th, pv
     integer :: a, i, j, k, q, jd
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
@@ -167,6 +175,7 @@ contains
     end do
     gpc = [-1d0, 1d0] / sqrt(3d0)
     R = 0d0
+    vol = 0d0; th = 0d0; pv = 0d0
     q = 0
     do k = 1, 2
       do j = 1, 2
@@ -212,7 +221,17 @@ contains
             do jd = 1, 3
               Fd(jd,jd) = Fd(jd,jd) + 1d0
             end do
-            call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+            if (kin_md) then
+              ! deviatoric part here; the volumetric part after the loop with the element mean
+              call nh_stress(Fd, Ef, 1d0 + xin, mu, 0d0, Pk, AFk, dPk)
+              call inv3(Fd, Fdi, Jdet)
+              Fgp(:,:,q) = transpose(Fdi); dNgp(:,:,q) = dN; wgp(q) = w
+              agp(q) = 1d0 + xin; sgp(q) = Ef; Jgp(q) = Jdet
+              vol = vol + w; th = th + w * Jdet / agp(q)**3
+              pv = pv + w * agp(q)**3 * Ef
+            else
+              call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+            end if
           else
             sig = Ef * matmul(Cm, eps)
           end if
@@ -231,6 +250,16 @@ contains
         end do
       end do
     end do
+    if (kin_finite .and. kin_md) then
+      ! U_vol = sum_q w_q alpha_q^3 s_q K/2 (theta - 1)^2, theta = sum_q w_q J_q/alpha_q^3 / V
+      th = th / vol
+      do q = 1, NGP
+        do a = 1, NN
+          R(NDN*(a-1)+1:NDN*(a-1)+3) = R(NDN*(a-1)+1:NDN*(a-1)+3) + pv * (lamL + 2d0*mu/3d0) * (th - 1d0) &
+               * wgp(q) * Jgp(q) / agp(q)**3 / vol * matmul(Fgp(:,:,q), dNgp(:,a,q))
+        end do
+      end do
+    end if
   end subroutine residual
 
   subroutine advance_composition(U, Un, coords, sv, props, dt, ok)
@@ -306,6 +335,10 @@ contains
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
     double precision :: aff, dxp, dxc, kpp, kcc, kcp, m(6), Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
     integer :: a, b, i, j, l, q, ia, ib, jd, kd
+    if (kin_finite .and. kin_md) then        ! mean dilatation: tangent by central differences of the residual
+      call tangent_fd(U, Un, coords, sv, props, dt, K)
+      return
+    end if
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
     lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
@@ -446,11 +479,12 @@ subroutine uel_set_phi_init(v) bind(C, name="uel_set_phi_init")
   eco_haveinit = .true.
 end subroutine uel_set_phi_init
 
-subroutine uel_set_finite(k) bind(C, name="uel_set_finite")
+subroutine uel_set_finite(k, fb) bind(C, name="uel_set_finite")
   use unified_uel_mod
   use iso_c_binding
-  integer(c_int), value :: k
+  integer(c_int), value :: k, fb
   kin_finite = (k /= 0)
+  kin_md = (fb /= 0)
 end subroutine uel_set_finite
 
 subroutine uel_set_alstar(x) bind(C, name="uel_set_alstar")
@@ -522,6 +556,8 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   ! kinematics: JPROPS(1) = 0 small strain, otherwise (or no integer property) finite strain
   kin_finite = .true.
   if (NJPROP >= 1) kin_finite = (JPROPS(1) /= 0)
+  kin_md = .false.
+  if (NJPROP >= 2) kin_md = (JPROPS(2) /= 0)
   ! optional antibiotic: PROPS(17) = total time at which it is switched on, PROPS(18) = alpha*
   if (NPROPS >= 18) then
     if (TIME(2) >= PROPS(17) - 1d-12) then
