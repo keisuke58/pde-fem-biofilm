@@ -21,9 +21,9 @@
 !   composition: the point model of Klempt et al. 2026 at every Gauss point, advanced once per
 !              increment over s*dt with the nutrient of the start of the increment (staggered),
 !              by ecology_native.f (biofilm_py_bridge).
-! Residual is assembled as Abaqus wants it: RHS = -R.  AMATRX = dR/dU by central differences of R
-! with the composition held at its increment value (an exact Newton tangent of the discrete
-! equations solved; a closed-form tangent is a later optimisation).
+! Residual is assembled as Abaqus wants it: RHS = -R.  AMATRX = dR/dU in closed form (tangent), with
+! the composition held at its increment value: the exact Newton tangent of the discrete equations
+! solved.  tangent_fd (central differences of R) is kept as its check.
 !
 ! PROPS (NPROPS = 16): E_bio, nu, f_void, beta, eta_phi, K_phi, lam, Psi_ref, L0, Y, mu_b, D,
 !                      s (time link), n_sub, phi_min, c_ref (<= 0: constant c*; > 0: local nutrient c/c_ref)
@@ -239,6 +239,93 @@ contains
   end subroutine store_growth
 
   subroutine tangent(U, Un, coords, sv, props, dt, K)
+    ! closed-form K = dR/dU of residual (composition held fixed); tangent_fd is the check
+    double precision, intent(in) :: U(NDOF), Un(NDOF), coords(3, NN), sv(NSV, NGP), props(16), dt
+    double precision, intent(out) :: K(NDOF, NDOF)
+    double precision :: N(8), dNr(3,8), dN(3,8), Jm(3,3), Ji(3,3), det, w, gpc(2), Bm(6,3,8)
+    double precision :: ph, c, eps(6), Cm(6,6), lamL, mu, Ef, dEf, CB(6,3), Cmv(6), sig0(6)
+    double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
+    double precision :: aff, dxp, dxc, kpp, kcc, kcp, m(6)
+    integer :: a, b, i, j, l, q, ia, ib
+    E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
+    lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
+    lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
+    Cm = 0d0
+    Cm(1:3,1:3) = lamL
+    do i = 1, 3
+      Cm(i,i) = lamL + 2*mu; Cm(3+i,3+i) = mu
+    end do
+    m = [1d0, 1d0, 1d0, 0d0, 0d0, 0d0]
+    Cmv = matmul(Cm, m)
+    gpc = [-1d0, 1d0] / sqrt(3d0)
+    K = 0d0
+    q = 0
+    do l = 1, 2
+      do j = 1, 2
+        do i = 1, 2
+          q = q + 1
+          call shape(gpc(i), gpc(j), gpc(l), N, dNr)
+          Jm = matmul(dNr, transpose(coords))
+          call inv3(Jm, Ji, det)
+          dN = matmul(transpose(Ji), dNr)
+          w = det
+          ph = 0d0; c = 0d0
+          do a = 1, NN
+            ph = ph + N(a) * U(NDN*(a-1)+4); c = c + N(a) * U(NDN*(a-1)+5)
+          end do
+          liv = 0d0
+          if (sv(14,q) > 0.5d0) liv = sum(sv(1:5,q) * sv(7:11,q))
+          psi = 0d0
+          if (sv(14,q) > 0.5d0) psi = psi_pm(sv(1:12,q), eco_alstar)
+          aff = Y * log(max(c, 1d-12)) - mub
+          xid = L0 * max(ph, 0d0) * liv * max(aff, 0d0)
+          dxp = 0d0; dxc = 0d0
+          if (aff > 0d0 .and. ph > 0d0) dxp = L0 * liv * aff
+          if (aff > 0d0 .and. c > 1d-12) dxc = L0 * max(ph, 0d0) * liv * Y / c
+          xin = sv(13,q) + dt * xid
+          ! B matrices (Voigt: 11 22 33 12 23 13 engineering shear, as in residual)
+          Bm = 0d0
+          do a = 1, NN
+            Bm(1,1,a) = dN(1,a); Bm(2,2,a) = dN(2,a); Bm(3,3,a) = dN(3,a)
+            Bm(4,1,a) = dN(2,a); Bm(4,2,a) = dN(1,a)
+            Bm(5,2,a) = dN(3,a); Bm(5,3,a) = dN(2,a)
+            Bm(6,1,a) = dN(3,a); Bm(6,3,a) = dN(1,a)
+          end do
+          eps = 0d0
+          do a = 1, NN
+            eps = eps + matmul(Bm(:,:,a), U(NDN*(a-1)+1:NDN*(a-1)+3))
+          end do
+          eps(1:3) = eps(1:3) - xin
+          Ef = max(ph, 0d0)**2 + f
+          dEf = 0d0
+          if (ph > 0d0) dEf = 2d0 * ph
+          sig0 = matmul(Cm, eps)                       ! sigma / Ef
+          kpp = etaph/dt + 6d0*kphi/(1d0-ph)**4 + lam * 2d0 * (psi - psiref)
+          kcc = 1d0/dt + Y * dxc
+          kcp = Y * dxp
+          do b = 1, NN
+            CB = matmul(Cm, Bm(:,:,b))
+            do a = 1, NN
+              ia = NDN*(a-1); ib = NDN*(b-1)
+              ! mechanics: d(B_a^T sigma)/du_b, /dphi_b, /dc_b
+              K(ia+1:ia+3, ib+1:ib+3) = K(ia+1:ia+3, ib+1:ib+3) + w * Ef * matmul(transpose(Bm(:,:,a)), CB)
+              K(ia+1:ia+3, ib+4) = K(ia+1:ia+3, ib+4) + w * N(b) * matmul(transpose(Bm(:,:,a)), &
+                                     dEf * sig0 - Ef * dt * dxp * Cmv)
+              K(ia+1:ia+3, ib+5) = K(ia+1:ia+3, ib+5) - w * N(b) * Ef * dt * dxc * matmul(transpose(Bm(:,:,a)), Cmv)
+              ! phase
+              K(ia+4, ib+4) = K(ia+4, ib+4) + w * (N(a)*N(b)*kpp + beta * dot_product(dN(:,a), dN(:,b)))
+              ! nutrient
+              K(ia+5, ib+5) = K(ia+5, ib+5) + w * (N(a)*N(b)*kcc + D * dot_product(dN(:,a), dN(:,b)))
+              K(ia+5, ib+4) = K(ia+5, ib+4) + w * N(a)*N(b)*kcp
+            end do
+          end do
+        end do
+      end do
+    end do
+  end subroutine tangent
+
+  subroutine tangent_fd(U, Un, coords, sv, props, dt, K)
+    ! central differences of residual: the check of tangent
     double precision, intent(in) :: U(NDOF), Un(NDOF), coords(3, NN), sv(NSV, NGP), props(16), dt
     double precision, intent(out) :: K(NDOF, NDOF)
     double precision :: Up(NDOF), Um(NDOF), Rp(NDOF), Rm(NDOF), hstep
@@ -251,7 +338,7 @@ contains
       call residual(Um, Un, coords, sv, props, dt, Rm)
       K(:, m) = (Rp - Rm) / (2d0 * hstep)
     end do
-  end subroutine tangent
+  end subroutine tangent_fd
 end module unified_uel_mod
 
 

@@ -31,7 +31,10 @@ gfortran -O2 -ffree-line-length-none test_uel_wrapper.f90 unified_uel.o ecology_
 ./test_uel_wrapper
 ```
 
-Result: second call = first call (RHS, AMATRX, SVARS identical), RHS + R = 0, all 8 Gauss points started.
+Result: second call = first call (RHS, AMATRX, SVARS identical), RHS + R = 0, all 8 Gauss points started;
+the closed-form tangent (`tangent`) equals central differences of the residual (`tangent_fd`) to 8.7e-10
+relative, with a displacement field and growth active. Same results as before in `driver.py` and the
+emulation; 8^3 seed 70 s -> 53 s.
 
 Abaqus input: `make_column_inp.py [n] [outdir]` writes `uel_column.inp` (check 2 as an Abaqus job: a 1e-8
 step that prescribes phi and c at every node, the only way to give these dofs initial values, then 60

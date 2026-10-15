@@ -20,7 +20,7 @@ program test_uel_wrapper
   double precision :: RHS(NDOFEL,1), AM(NDOFEL,NDOFEL), SV0(NSVARS), SV1(NSVARS), SV2(NSVARS), ENERGY(8), &
        PROPS(NPROPS), COORDS(3,8), U(NDOFEL), DU(NDOFEL,1), V(NDOFEL), A(NDOFEL), TIME(2), DTIME, PARAMS(3), &
        ADLMAG(1,1), PREDEF(2,1,8), DDLMAG(1,1), PNEWDT, PERIOD, RHS1(NDOFEL,1), AM1(NDOFEL,NDOFEL), &
-       th(20), R(NDOF), sv(NSV,NGP), Un(NDOF), g(5)
+       th(20), R(NDOF), sv(NSV,NGP), Un(NDOF), g(5), Kx(NDOF,NDOF), Kf(NDOF,NDOF), U2(NDOF)
   integer :: JDLTYP(1,1), LFLAGS(5), JPROPS(1), ia, q
   logical :: okc
   double precision, parameter :: cs = 25d0, al = 0d0, tol = 1d-26
@@ -56,6 +56,15 @@ program test_uel_wrapper
   call advance_composition(U, Un, COORDS, sv, PROPS, DTIME, okc)
   call residual(U, Un, COORDS, sv, PROPS, DTIME, R)
   print '(a,es10.2)', 'RHS + R (module residual) ', maxval(abs(RHS(:,1) + R))
+  ! closed-form tangent against central differences, with a displacement field and growth active
+  U2 = U
+  do ia = 1, 8
+    U2(5*(ia-1)+1) = 1d-3 * ia; U2(5*(ia-1)+2) = -5d-4 * ia; U2(5*(ia-1)+3) = 2d-4 * (9 - ia)
+  end do
+  call tangent(U2, Un, COORDS, sv, PROPS, DTIME, Kx)
+  call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
+  print '(a,es10.2,a,es10.2)', 'closed-form tangent vs central differences: max |diff| ', maxval(abs(Kx-Kf)), &
+        ', relative to max |K| ', maxval(abs(Kx-Kf)) / maxval(abs(Kf))
   q = 0
   do ia = 1, NGP
     if (SV1(14*(ia-1)+14) > 0.5d0) q = q + 1
