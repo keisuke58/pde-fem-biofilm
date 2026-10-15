@@ -1120,3 +1120,29 @@ ANSYS が 20 秒で終わった。lock を消して `F:\biofilm_upf_cal5pm` で�
 
 作業ディレクトリ：`F:\biofilm_upf_cal5sc`（B3）、`_cal5gp`（A-7）、`_cal5pm`（A-10）。3 つとも `map_pin.txt` で旧 CH MAP に固定
 （`-MapSha latest` の run だけ新しい MAP）。
+
+## A-14. 方式 (c) を Abaqus のキューブで（15日夜）
+
+設定は ANSYS の本線に合わせた：新しい CH の θ（Tmcmc202601 6e18e0b）、栄養 `--cons 1 --diff 1`（基準デッキの CONSUMPTION11 = 1、
+MY_DIFF1 = 1）、T* = 1。(a) は dt 0.025、s 0.15、`write_eco_cfg.py --theta-json` だけ（ANSYS の `w8_CH_g1_s015_raw` と同じ）。
+(c) は dt 1/95、`--growth --kappa 8.135097e-3`、eco に `--phi-init`（phi_init.json @ 6e18e0b の CH）`--newton 12,1e-20 --theta-tol 1e-12`
+（`run_calibrated.ps1 -Growth` と同じ）。`run_comp.ps1 -Native` に、出来上がった eco ファイルを渡す `-EcoCfg` を足した。
+`make_cube_inp.py --theta-json` は `final_theta_MAP/<C>.json`（"0".."19" の辞書で `theta_full` がない）で止まったので、
+両方の形を読むように直した。4 本とも COMPLETED（8³ は 1 本 0.7 分、16³ は 4.5 分）。
+
+シードの平均（同じプログラムの中での比）：
+
+| | (a) α − 1 | (c) α − 1 | α の差 | (a) vM [Pa] | (c) vM [Pa] | vM の差 |
+|---|---|---|---|---|---|---|
+| ANSYS 8³ | 6.7517e−4 | 6.7515e−4 | −0.003 % | 4.684e−4 | 4.357e−4 | **−7.0 %** |
+| Abaqus 8³ | 5.1513e−4 | 5.0366e−4 | −2.23 % | 2.386e−4 | 2.351e−4 | **−1.5 %** |
+| Abaqus 16³ | 6.0539e−4 | 5.9750e−4 | −1.30 % | 4.769e−4 | 4.560e−4 | **−4.4 %** |
+
+- 8³ では合わない。κ は ANSYS のシードの表し方（φ は積分点で 1 か 0）で α が (a) と同じになるように決めた値で、Abaqus のシード
+  （φ は節点、シードの平均 φ 0.45）では (c) の α が 2.2 % 小さく出る。vM の差も小さい。
+- 16³ では両方とも ANSYS に近づく（α −1.3 %、vM −4.4 %）。ANSYS の 16³ (c)（B4）が出たらそれと比べる。
+- 組成は合っている：Abaqus (a) のシードのシェア 0.416 に対し ANSYS (a) は 0.395、(c) は 0.750 に対し 0.755、栄養 c は 1 % 以内。
+- 値そのもの（Abaqus 8³ の vM は ANSYS の 0.51 倍）は README のとおり比べない。
+- 入力は `make_cube_inp.py` で作り直せる（`--json ansys_usermat/apdl/results/2026-10-cal5/w8_CH_cal_k0814_raw.json --n 8|16
+  --theta-json CH.json --cons 1 --diff 1 --T 1.0`、(a) `--dt 0.025`、(c) `--dt 0.010526315789473684 --growth --kappa 8.135097e-3`）。
+  出力は `F:\abaqus_work\comp_a14_cube{8,16}_CH_{a,c}`。

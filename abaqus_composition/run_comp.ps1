@@ -20,7 +20,9 @@ param(
     [string]$WorkRoot = 'F:\abaqus_work',
     # the point model in Fortran (make_umat.py --native): no C shim, no material
     # server; the case constants go to BIOFILM_ECO_CASE (write_eco_cfg.py)
-    [switch]$Native
+    [switch]$Native,
+    # with -Native: a ready BIOFILM_ECO_CASE file (write_eco_cfg.py --theta-json ...) in place of -Case
+    [string]$EcoCfg = ''
 )
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..')
@@ -46,7 +48,8 @@ if (-not (Get-Command ifort -ErrorAction SilentlyContinue)) {
 }
 if ($Native) {
     & $py (Join-Path $repo 'abaqus_composition\make_umat.py') (Join-Path $wd 'umat_comp.for') --native
-    & $py (Join-Path $repo 'abaqus_composition\write_eco_cfg.py') $Case (Join-Path $wd 'eco_case.txt')
+    if ($EcoCfg) { Copy-Item $EcoCfg (Join-Path $wd 'eco_case.txt') }
+    else { & $py (Join-Path $repo 'abaqus_composition\write_eco_cfg.py') $Case (Join-Path $wd 'eco_case.txt') }
     Push-Location $wd
     try {
         @("compile_fortran += ['/libs:dll', '/threads']") | Set-Content abaqus_v6.env -Encoding ascii
