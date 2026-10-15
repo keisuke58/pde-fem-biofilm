@@ -22,7 +22,8 @@
 !              P from W = (1+xi)^3 (phi^2 + f) [mu/2 (J_e^(-2/3) tr C_e - 3) + K/2 (J_e - 1)^2]
 !              (nh_stress; Klempt et al. 2024 Eq. 20, volumetric penalty in place of the constraint);
 !              or small strain, sigma = (phi^2 + f) C : (eps - xi I) (JPROPS(1) = 0; kin_finite);
-!              JPROPS(2) = 1: mean dilatation against volumetric locking (kin_md; bilayer_test.py)
+!              JPROPS(2) = 1: mean dilatation against volumetric locking (kin_md; bilayer_test.py);
+!              JPROPS(3) = 1: nutrient in the current configuration (kin_cur)
 !   composition: the point model of Klempt et al. 2026 at every Gauss point, advanced once per
 !              increment over s*dt with the nutrient of the start of the increment (staggered),
 !              by ecology_native.f (biofilm_py_bridge).
@@ -46,6 +47,9 @@ module unified_uel_mod
   ! J_e = J / alpha^3 instead of J_e at each Gauss point (one pressure per element, condensed, as
   ! Klempt et al. 2024 do with their element pressure); Abaqus: JPROPS(2) = 1
   logical, save :: kin_md = .false.
+  ! nutrient in the current configuration (finite strain only): amount J c per reference volume and the
+  ! pulled-back flux J D C^-1 Grad c; Abaqus: JPROPS(3) = 1. Tangent by central differences for now.
+  logical, save :: kin_cur = .false.
   ! Cauchy stress (11 22 33 12 23 13) at the Gauss points from the last call of residual
   double precision, save :: gp_sig(6, 8) = 0d0
   ! Gauss-point records for the output file (Abaqus cannot print a user element's state variables):
@@ -172,7 +176,7 @@ contains
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
     double precision :: Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
     double precision :: Fdi(3,3), Jdet, Fgp(3,3,NGP), dNgp(3,8,NGP), wgp(NGP), agp(NGP), sgp(NGP), Jgp(NGP)
-    double precision :: vol, th, pv, Sc(3,3)
+    double precision :: vol, th, pv, Sc(3,3), Cinv(3,3), Fn(3,3), Fni(3,3), Jn
     integer :: a, i, j, k, q, jd
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
@@ -247,6 +251,19 @@ contains
           if (kin_finite) then
             call inv3(Fd, Fdi, Jdet)
             Sc = matmul(Pk, transpose(Fd)) / Jdet       ! Cauchy (deviatoric only with mean dilatation)
+            if (kin_cur) then
+              Cinv = matmul(Fdi, transpose(Fdi))
+              Fn = 0d0
+              do a = 1, NN
+                do jd = 1, 3
+                  Fn(:, jd) = Fn(:, jd) + Un(NDN*(a-1)+1:NDN*(a-1)+3) * dN(jd,a)
+                end do
+              end do
+              do jd = 1, 3
+                Fn(jd,jd) = Fn(jd,jd) + 1d0
+              end do
+              call inv3(Fn, Fni, Jn)
+            end if
             gp_sig(:, q) = [Sc(1,1), Sc(2,2), Sc(3,3), Sc(1,2), Sc(2,3), Sc(1,3)]
           else
             gp_sig(:, q) = sig
@@ -261,7 +278,12 @@ contains
             end if
             R(NDN*(a-1)+4) = R(NDN*(a-1)+4) + w * ( N(a) * (etaph*(ph-phn)/dt + 2d0*kphi/(1d0-ph)**3 &
                                                     + lam * 2d0*ph * (psi - psiref)) + beta * dot_product(dN(:,a), gph) )
+            if (kin_finite .and. kin_cur) then
+              R(NDN*(a-1)+5) = R(NDN*(a-1)+5) + w * ( N(a) * ((Jdet*c - Jn*cn)/dt + Y*xid) &
+                                                       + D * Jdet * dot_product(matmul(Cinv, dN(:,a)), gc) )
+            else
             R(NDN*(a-1)+5) = R(NDN*(a-1)+5) + w * ( N(a) * ((c-cn)/dt + Y*xid) + D * dot_product(dN(:,a), gc) )
+            end if
           end do
         end do
       end do
@@ -362,6 +384,10 @@ contains
     integer :: a, b, i, j, l, q, ia, ib, jd, kd
     double precision :: Gq(3,3,NGP), Jq(NGP), aq(NGP), sq(NGP), wq(NGP), Nq(8,NGP), dap(NGP), dac(NGP), dEq(NGP)
     double precision :: gv(3,8,NGP), Bv(3,8), Vv, thv, pvv, Kb, Av, dpv, dth, dB(3), cq, Fi(3,3), Jdet
+    if (kin_finite .and. kin_cur) then          ! nutrient in the current configuration: by differences
+      call tangent_fd(U, Un, coords, sv, props, dt, K)
+      return
+    end if
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
     lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
@@ -562,6 +588,13 @@ subroutine uel_set_finite(k, fb) bind(C, name="uel_set_finite")
   kin_md = (fb /= 0)
 end subroutine uel_set_finite
 
+subroutine uel_set_current(k) bind(C, name="uel_set_current")
+  use unified_uel_mod
+  use iso_c_binding
+  integer(c_int), value :: k
+  kin_cur = (k /= 0)
+end subroutine uel_set_current
+
 subroutine uel_set_alstar(x) bind(C, name="uel_set_alstar")
   use biofilm_py_bridge
   use iso_c_binding
@@ -636,6 +669,8 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   if (NJPROP >= 1) kin_finite = (JPROPS(1) /= 0)
   kin_md = .false.
   if (NJPROP >= 2) kin_md = (JPROPS(2) /= 0)
+  kin_cur = .false.
+  if (NJPROP >= 3) kin_cur = (JPROPS(3) /= 0)
   ! optional antibiotic: PROPS(17) = total time at which it is switched on, PROPS(18) = alpha*
   if (NPROPS >= 18) then
     if (TIME(2) >= PROPS(17) - 1d-12) then
