@@ -1,4 +1,4 @@
-\documentclass[]{jarticle}
+\documentclass[dvipdfmx]{jarticle}
 \usepackage{jtwocolumn,jscescnf}
 \usepackage[dvipdfmx]{graphicx}
 \usepackage{url}
@@ -56,18 +56,19 @@ material point evolves in time, but has no space; a continuum growth model
 describes where a biofilm grows and what stresses it carries, but does not
 distinguish species. Both follow from the extended Hamilton principle. First,
 the 15 interaction coefficients of a five-species point model are estimated
-with a two-phase, GPU-accelerated transitional Markov chain Monte Carlo
-(TMCMC) method from in-vitro time courses under four conditions; the forward
-model runs about 200 times faster than on the CPU, and the inferred
-interactions predict the measured pH, which was not used in the calibration
-($R^2=0.78$). Second, the growth kinematics $\mathbf F=\mathbf F_e\mathbf F_g$
+with transitional Markov chain Monte Carlo (TMCMC) from in-vitro time courses
+under four conditions; compiled with JAX, the forward model runs about 150
+times faster on the GPU than on the CPU, every stage is repeated with three
+seeds, and the result states which of the 15 coefficients the data determine.
+Second, the growth kinematics $\mathbf F=\mathbf F_e\mathbf F_g$
 with $\mathbf F_g=\alpha\mathbf I$ is implemented as an ANSYS user material,
 verified against closed-form solutions, and coupled to the biofilm element of
 the Institute of Continuum Mechanics (Leibniz University Hannover). Third, for
 two species the point model runs at every Gauss point: the field sets the
-amount of biofilm, the point model its composition. The stresses converge
-under mesh refinement for the converted diffusion coefficient. The coupling is
-one-way and verified, not validated.
+amount of biofilm, the point model its composition. The calibrated
+five-species model runs in the element with the same coupling. The stresses
+converge under mesh refinement for the converted diffusion coefficient. The
+coupling is one-way and verified, not validated.
 }
 
 \keywords{
@@ -281,6 +282,9 @@ $A_{ij}<0$ は抑制（競合）を意味する．
 
 
 %%=================================================================
+% TODO (15 Oct 2026): sections 3-5 still describe the earlier two-phase runs (digitised data, pH R^2).
+% Rewrite them in December from the final thesis Ch. 3 (four stages, three seeds, criteria (a)-(e),
+% identifiability, raw data with the two-channel likelihood; pH only as a check), once the raw runs pass.
 \section{GPU 加速 TMCMC によるパラメータ推定}
 %%=================================================================
 
@@ -590,6 +594,26 @@ $s\,T^*c\approx0.03$ から $0.08$ の間で入れ替わりが起こり，
   \label{fig:clock}
 \end{figure}
 
+\subsection{較正した 5 菌種の組み込み}
+
+連成は菌種の数をパラメータとして持つので，3 章で較正した 5 菌種の点モデルを，
+ルーチンを変えずに要素に入れられる．共生・流れ条件（CH）の MAP（$c^*=25$，$\alpha^*=0$）を用い，
+2 菌種と同じ設定（$8^3$，式 (36)，$\phi_{\rm cap}=0.9$，$s=0.15$，$\Delta t=0.025$，$T^*=1$）で，
+点モデルは較正した Day~1 の状態から始めた．
+連成は一方向なので，成長と応力は組成によらず，シードの $\alpha-1$ の平均は 2 菌種と全桁同じ
+$6.752\times10^{-4}$ である．
+シードの Gauss 点では，\textit{So} が最大の割合を保ちつつ $0.74$ から $0.54$ に下がり，
+\textit{Vei}（$0.15$），\textit{An}（$0.13$），\textit{Pg}（$0.08$）が増える（図\,\ref{fig:five}）．
+生きた体積分率 $\sum_i\phi_i\psi_i$ は $0.81$ から $0.24$ に下がる．
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_thesis_cal5.png}
+  \caption{\textbf{較正した 5 菌種の点モデルを要素の中で動かした結果}（CH，$8^3$，シードの Gauss 点）．
+    (a) 割合 $\phi_i/\sum_j\phi_j$，(b) 生きた体積分率 $\phi_i\psi_i$ とその和．}
+  \label{fig:five}
+\end{figure}
+
 %%=================================================================
 \section{考察}
 %%=================================================================
@@ -626,14 +650,15 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
 推定と有限要素解析の両面から結び付けた．主な成果を以下に示す．
 
 \begin{enumerate}
-  \item 5 菌種の相互作用 15 成分を 2 段階 GPU-TMCMC で推定した．
-        GPU で CPU の約 200 倍の速さとなり，
-        推定に使っていない pH を $R^2=0.778$ で予測した．
+  \item 5 菌種の相互作用 15 成分を GPU 加速 TMCMC で推定した．
+        GPU で CPU の約 150 倍の速さとなり，各段を 3 つのシードで繰り返して，
+        データが決める成分を示した．
   \item 成長の運動学 $\mathbf F_g=\alpha\mathbf I$ を ANSYS の材料ルーチンとして実装し，
         閉じた形の解と厳密解で検証して，バイオフィルムの有限要素に組み込んだ．
   \item 2 菌種について，場が量を，点モデルが組成を決める連成を行い，
         組成が $s\,T^*c_{\rm rel}$ だけで決まること，ケース 6 が双安定であることを示した．
   \item 換算した $\beta=0.02$\,mm$^2/T^*$ で，シードの応力は $8^3$--$24^3$ で 3\% 以内に収束した．
+  \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}
 
 \paragraph{謝辞}
