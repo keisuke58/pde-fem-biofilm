@@ -1,0 +1,102 @@
+{
+ "request": "A-14",
+ "condition": "CH",
+ "theta": "Tmcmc202601 6e18e0b",
+ "kappa": 0.008135097,
+ "measures": "seed means (Abaqus: <job>.seed.txt, centroid of the last increment; ANSYS: seed_BIOFILM1); (c)/(a) - 1 within each program",
+ "meshes": [
+  {
+   "n": 8,
+   "abaqus_a": {
+    "job": "a14_cube8_CH_a",
+    "seed_elements": 32,
+    "alpha_minus_1": 0.0005151325,
+    "vM": 0.000238599752444062
+   },
+   "abaqus_c": {
+    "job": "a14_cube8_CH_c",
+    "seed_elements": 32,
+    "alpha_minus_1": 0.00050366,
+    "vM": 0.0002350655009417672
+   },
+   "ansys_a": {
+    "run": "w8_CH_g1_s015_raw",
+    "seed_elements": 32,
+    "alpha_minus_1": 0.000675170909375,
+    "vM": 0.00046838145
+   },
+   "ansys_c": {
+    "run": "w8_CH_cal_k0814_raw",
+    "seed_elements": 32,
+    "alpha_minus_1": 0.000675151109375,
+    "vM": 0.000435683315625
+   },
+   "abaqus_diff_alpha": -0.022270969119595585,
+   "abaqus_diff_vM": -0.014812469275815365,
+   "ansys_diff_alpha": -2.9325908040611637e-05,
+   "ansys_diff_vM": -0.06981090812840685
+  },
+  {
+   "n": 16,
+   "abaqus_a": {
+    "job": "a14_cube16_CH_a",
+    "seed_elements": 256,
+    "alpha_minus_1": 0.0006053903125,
+    "vM": 0.0004768943368851651
+   },
+   "abaqus_c": {
+    "job": "a14_cube16_CH_c",
+    "seed_elements": 256,
+    "alpha_minus_1": 0.0005974964062499999,
+    "vM": 0.0004559888654800993
+   },
+   "ansys_a": {
+    "run": "w16_CH_g1_s015_raw",
+    "seed_elements": 256,
+    "alpha_minus_1": 0.0006561609484375,
+    "vM": 0.0005744544970703125
+   },
+   "ansys_c": {
+    "run": "w16_CH_cal_k0814_raw",
+    "seed_elements": 256,
+    "alpha_minus_1": 0.0006543100835937499,
+    "vM": 0.000533572453125
+   },
+   "abaqus_diff_alpha": -0.013039366648272988,
+   "abaqus_diff_vM": -0.04383669460537076,
+   "ansys_diff_alpha": -0.0028207482450113286,
+   "ansys_diff_vM": -0.07116672278450031
+  },
+  {
+   "n": 24,
+   "abaqus_a": {
+    "job": "a14_cube24_CH_a",
+    "seed_elements": 864,
+    "alpha_minus_1": 0.0006255241666666667,
+    "vM": 0.0005409391489216367
+   },
+   "abaqus_c": {
+    "job": "a14_cube24_CH_c",
+    "seed_elements": 864,
+    "alpha_minus_1": 0.0006202689814814815,
+    "vM": 0.000513800321881748
+   },
+   "ansys_a": {
+    "run": "w24_CH_g1_s015_raw",
+    "seed_elements": 864,
+    "alpha_minus_1": 0.0006518213631944444,
+    "vM": 0.0005938823711342594
+   },
+   "ansys_c": {
+    "run": "w24_CH_cal_k0814_raw",
+    "seed_elements": 864,
+    "alpha_minus_1": 0.000649004825462963,
+    "vM": 0.0005524529766550926
+   },
+   "abaqus_diff_alpha": -0.00840125044758766,
+   "abaqus_diff_vM": -0.05016983350898163,
+   "ansys_diff_alpha": -0.004321027033661662,
+   "ansys_diff_vM": -0.06976026986630468
+  }
+ ]
+}
