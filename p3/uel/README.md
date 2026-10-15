@@ -108,6 +108,29 @@ With nu = 0.49 the fully integrated element puts spurious pressure into the stre
 is resolved, as the thesis's 8^3 to 24^3 study of the element does. For the Keio Abaqus runs with a UMAT at
 nu = 0.49 this means hybrid elements (C3D8H), not C3D8.
 
+Large growth (`--L0 10`, alpha - 1 = 0.28 on the nutrient side, 8^3, nu = 0.3): small strain overstates the edge
+displacement by 10 % (0.0560 against 0.0507 finite strain) and the von Mises mean by 3 % (0.0413 against 0.0402).
+At the default growth (alpha - 1 = 0.07) the difference is 1.4 %.
+
+Nutrient in the current configuration (JPROPS(3) = 1, finite strain): amount J c per reference volume and the
+pulled-back flux J D C^-1 Grad c. `current_config_test.py`: a uniformly expanded element (J = 1.331, no reaction,
+no flux) keeps the amount, c = 0.7513 = 1/1.331; a bar stretched to F = diag(2, 1, 1) carries half the reference
+flux, as D J / F11^2 says. Tangent by differences. 8^3 seed: edge 0.0136 against 0.0141 (reference configuration),
+von Mises mean 0.0123 against 0.0130 (the grown biofilm dilutes the nutrient a little).
+
+Composition acting on the phase (`--lam 1 --psiref 0.32`, 16^3, small strain, as the Python 3D model of
+`JAXFEM/fuel_front_3d_coupled.py`):
+
+| 16^3, lam = 1, Psi_ref = 0.32 | UEL (emulated) | Python 3D |
+|---|---|---|
+| biofilm volume (reference), no antibiotic | 0.0346 | 0.0351 |
+| same, antibiotic from T* = 0.5 | 0.0304 (-12 %) | 0.0309 (-12 %) |
+| phi at the centre, no antibiotic / antibiotic | 0.783 / 0.676 | 0.78 / 0.67 |
+| edge 30 deg, no antibiotic / antibiotic | 0.0124 / 0.0090 | 0.0115 / 0.0083 |
+| von Mises mean (phi > 0.5), no antibiotic / antibiotic | 0.0136 / 0.0082 (-39 %) | (not computed) |
+
+The antibiotic shrinks the biofilm itself by the same 12 % in both discretisations.
+
 Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, the fixed-form point model and the
 free-form element in one file, joined by `!DEC$ FREEFORM` (Intel Fortran). Instructions for IKMHIWI03:
 `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
