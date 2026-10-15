@@ -433,6 +433,24 @@ $\kappa = 8.14\cdot10^{-3}$ で平均の $\alpha-1$ は式 36 と 0.003\,\% ま�
 成長の量ではなく、シードの中での分布の差です（von Mises$/(\alpha-1)$ が 0.69 から 0.64 Pa）。
 成長と応力は $\kappa$ に比例します。
 
+\slide{(Appendix F, only if asked) implementation and tools}{1:00}
+\EN There are three parts. First, the preparation: the calibration in Python
+with JAX gives the parameters, and a Python script writes them with the
+Day-1 state into a case file; the APDL deck holds the mesh, the seed and the
+rate $\kappa$. Second, one ANSYS run: ANSYS 2022 R2 with my Fortran linked in.
+Your element is unchanged and gives $\phi_{3D}$; the material routine calls
+the point model, which is also in Fortran in the same executable, and uses
+its living biomass to update $\alpha$. Third, APDL macros and Python export
+the results to JSON for the figures. I build with Intel Fortran and Visual
+Studio and run the jobs from PowerShell, one at a time.
+\JA 3 つの部分があります。1 つ目は準備です。Python と JAX で較正したパラメータを、Python の
+スクリプトが Day 1 の状態と一緒に case ファイルに書きます。APDL のデッキにはメッシュ、シード、
+速さ $\kappa$ が入っています。2 つ目は ANSYS の 1 回の計算です。ANSYS 2022 R2 に私の Fortran を
+リンクしたものです。オリバーの要素はそのままで、$\phi_{3D}$ を渡します。材料ルーチンは同じ
+実行ファイルの中の Fortran の点モデルを呼び、その生きたバイオマスで $\alpha$ を更新します。
+3 つ目は、APDL のマクロと Python で結果を JSON に書き出し、図にします。ビルドは Intel Fortran と
+Visual Studio、計算は PowerShell から 1 本ずつ回しています。
+
 \slide{References}{(no talk)}
 \EN Leave this slide up only if asked; the four papers are the ones cited on
 the slides. Three appendix slides follow (notation, background of the growth
