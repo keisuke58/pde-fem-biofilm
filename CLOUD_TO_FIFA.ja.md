@@ -4,6 +4,18 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+
+## 2026年10月15日（P3 の計算を Abaqus で：次に fifa を使うときに）
+
+`KEIO_SERVER_HANDOFF.ja.md` §7 を読む。急がない（11月以降でよい）。やること：
+1. `git pull`（master）。`python3 p3/uel/make_abaqus_source.py`、`python3 p3/uel/make_column_inp.py 20 p3/uel/abaqus_in`、
+   `python3 p3/uel/make_seed_inp.py 8 p3/uel/abaqus_in`。
+2. `export BIOFILM_ECO_CASE=$PWD/p3/uel/abaqus_in/uel_eco.txt BIOFILM_UEL_GP=$PWD/p3/uel/abaqus_in/<job>_gp.txt`、
+   `abaqus job=uel_column user=p3/uel/unified_uel_abaqus.for cpus=1 interactive`（`p3/uel/abaqus_in` で）。
+3. 期待：柱は x = 0 で NT11 0.7753、NT12 0.9357（IKMHIWI03）。`uel_seed8` の φ > 0.5 の要素の vM 平均 0.01300、最大 0.01637。
+4. 結果（`.sta` と `_gp.txt` の gzip）を `keio/uel-check` ブランチで push し、合ったかを書く。リンクで止まったら、
+   最初のエラーを書いて止める（Windows では `/libs:dll` が要った）。
+
 ## 2026年10月8日 夜（lab の設定が済んだ）
 
 - ユーザーが fifa で `git remote add lab ...`、`git ls-remote lab`、`git push lab master:main` を実行し、通った

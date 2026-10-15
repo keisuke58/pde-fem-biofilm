@@ -10,6 +10,8 @@ phi = 1 at their nodes and 0 elsewhere (MY_BIOSTART1 = 1); only rigid-body
 motion held (3-2-1 at three corners); no flux of phi through the faces
 (Eq. 34's boundary condition, natural here). One species, Eq. 36 in the UMAT
 (prop(28) = 1), Klempt 2024 stiffness (E = 10 Pa, nu = 0.49), units mm, MPa.
+Five calibrated species: --theta-json final_theta_MAP/CH.json (mode 7); with --growth scheme (c), growth from
+the living biomass (mode 9, kappa), the P3 computation (15 Oct 2026).
 Writes OUT.seed.txt with the seed's Abaqus element numbers.
 """
 import argparse
@@ -56,6 +58,15 @@ def main():
                     help="*SOLUTION TECHNIQUE, TYPE=SEPARATED and, without the nutrient UEL, a symmetric solve: "
                          "less memory for fine meshes (phi does not depend on the displacement, so dropping the "
                          "coupling blocks of the Jacobian changes the iterations, not the converged solution)")
+    ap.add_argument("--theta-json", default=None,
+                    help="five species from a calibrated MAP (final_theta_MAP/<C>.json, key theta_full): theta in "
+                         "prop(8:27), prop(37) = 5, composition mode prop(28) = 7 (the point model's constants come "
+                         "from BIOFILM_ECO_CASE, write_eco_cfg.py --theta-json, as in the ANSYS runs)")
+    ap.add_argument("--growth", action="store_true",
+                    help="scheme (c), growth from the living biomass: mode prop(28) = 9 with prop(7) = kappa, "
+                         "s = 0.2375 and c_ref = 1, as run_calibrated.ps1 -Growth (needs --theta-json)")
+    ap.add_argument("--kappa", type=float, default=8.135097e-3,
+                    help="kappa of --growth (8.135097e-3: the raw-data CH MAP, A-13, 15 Oct 2026)")
     a = ap.parse_args()
     n, h = a.n, 2.0 / a.n
     therm = [a.beta, a.kalpha, a.pen]
@@ -109,6 +120,16 @@ def main():
         p[7:27] = list(ms.ECOLOGY_CASE["theta"])
         p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap
         p[36] = float(a.nsp)
+    if a.theta_json:                                 # five calibrated species (P3, Keio continuation)
+        th = json.loads(Path(a.theta_json).read_text())["theta_full"]
+        th = [th[str(i)] for i in range(20)] if isinstance(th, dict) else list(th)
+        p[7:27] = [float(x) for x in th]
+        p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap
+        p[36] = 5.0
+        if a.growth:                                 # scheme (c): mode 9, as run_calibrated.ps1 -Growth
+            p[6], p[27], p[30], p[32] = a.kappa, 9.0, 0.2375, 1.0
+    elif a.growth:
+        raise SystemExit("--growth needs --theta-json")
     OFF = 1000000
     uel = bc_nut = ""
     if a.cons is not None:                           # nutrient UEL overlaid on every element

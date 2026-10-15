@@ -44,7 +44,12 @@ param(
     [Parameter(Mandatory=$true)][string]$InpFile,
     [string]$UserFile,
     [string]$WorkDir = "F:\abaqus_work",
-    [int]$Cpus = 1
+    [int]$Cpus = 1,
+    # job-local abaqus_v6.env with compile_fortran += /libs:dll /threads: a
+    # user source with Fortran OPEN/WRITE pulls the static libifcoremt, which
+    # clashes with Abaqus's libifcoremd at link time (LNK2005; as in
+    # abaqus_composition/run_comp.ps1). Needed for p3/uel (uel_gp.txt).
+    [switch]$LibsDll
 )
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -87,6 +92,12 @@ $jobName = [IO.Path]::GetFileNameWithoutExtension($InpFile)
 $jobDir = Join-Path $WorkDir $jobName
 New-Item -ItemType Directory -Path $jobDir -Force | Out-Null
 Copy-Item $inpPath $jobDir -Force
+$envFile = Join-Path $jobDir 'abaqus_v6.env'
+if ($LibsDll) {
+    @("compile_fortran += ['/libs:dll', '/threads']") | Set-Content $envFile -Encoding ascii
+} elseif (Test-Path $envFile) {
+    Remove-Item $envFile -Force
+}
 
 $userArg = @()
 if ($UserFile) {

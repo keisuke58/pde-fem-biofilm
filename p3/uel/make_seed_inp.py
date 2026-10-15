@@ -9,11 +9,17 @@ Writes uel_seed<n>[_small][_nu49][_md][_ab].inp (the Abaqus job name) and uel_ec
 current configuration (--cur).
 VARIABLES = 128: SVARS(113:128) hold von Mises stress and pressure per Gauss point. With --antibiotic the element
 gets PROPS(17) = the total time at which the antibiotic starts (T* = 0.5) and PROPS(18) = alpha* = 0.65. Build and run as in make_column_inp.py (job=uel_seed).
-Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1, u = 0;
+Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1 and 1 on the supply face
+x = 1 already here (switching the supply inside the first growth increment lowered the growth by 12 % on 8^3: the
+jump enters the consistent mass term; Abaqus, 15 Oct 2026), u = 0;
 GROW: T = 0.2375 in 60 fixed increments, c = 1 at x = 1, u = 0 at
 z = 0. Parameters as fuel_front_3d_coupled.run: D = 0.2, L0 = 2, beta = 0.02, eta_phi = 1, K_phi = 1e-5.
 The Python script splits the equations explicitly on a finite-difference grid, so it is a comparison,
 not a reference to the last digit (expected within a few per cent at n = 16).
+
+Procedure (15 Oct 2026, A-11): Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC, so both
+steps are a transient *COUPLED TEMPERATURE-DISPLACEMENT without DELTMX, i.e. with fixed increments (the steady-state
+form tried on IKMHIWI03 chose its own increments and gave wrong values). UNSYMM: the element tangent is not symmetric.
 """
 import sys
 from pathlib import Path
@@ -23,7 +29,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from driver import props_base  # noqa: E402
-from make_column_inp import eco_file  # noqa: E402
+from make_column_inp import CTRL, eco_file, overlay  # noqa: E402
 
 
 def cube(n):
@@ -41,6 +47,13 @@ def seed_phi(nodes):
     return 0.5 * (1 - np.tanh((r - 0.25) / 0.03)) * 0.9 + 1e-4
 
 
+
+# Abaqus's default convergence check for the temperature-type DOFs (here phi and c) is 0.5 % of the average flux, so
+# most increments were accepted after one iteration and the error built up (seed 8^3: c 1 % and alpha - 1 12 % low,
+# 15 Oct 2026). Tighter residual and correction tolerances for every field, more iterations before a cutback.
+CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8",
+        "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
+
 def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md=False, cur=False):
     nodes, elems = cube(n)
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=lam, psiref=psiref, nu=nu)
@@ -49,7 +62,7 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
         P = np.r_[P, t0 + 0.5 * T, 0.65]
     out = ["*HEADING", f"unified two-level model, user element, 3D seed, {n}^3 elements", "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
+    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=ALLE"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
@@ -57,20 +70,21 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
     vals.append(str(1 if md else 0))                    # JPROPS(2): 1 mean dilatation (nearly incompressible)
     vals.append(str(1 if cur else 0))                   # JPROPS(3): 1 nutrient in the current configuration
     out += ["*UEL PROPERTY, ELSET=ALLE"] + [", ".join(vals[k:k + 8]) for k in range(0, len(vals), 8)]
+    out += overlay(elems)     # specific heat for the transient coupled procedure
 
     def nset(name, mask):
         ids = [str(i + 1) for i in np.where(mask)[0]]
         out.append(f"*NSET, NSET={name}")
         out.extend(", ".join(ids[k:k + 16]) for k in range(0, len(ids), 16))
     nset("ALL", np.ones(len(nodes), bool)); nset("BASE", np.isclose(nodes[:, 2], 0.0))
-    nset("SUPPLY", np.isclose(nodes[:, 0], 1.0))
+    nset("SUPPLY", np.isclose(nodes[:, 0], 1.0)); nset("NOSUP", ~np.isclose(nodes[:, 0], 1.0))
     nset("PROBE", np.isclose(nodes[:, 1], 0.5) & (nodes[:, 2] <= 0.3 + 1e-12))
     phi = seed_phi(nodes)
-    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*STATIC, DIRECT", f"{t0:g}, {t0:g}", "*BOUNDARY", "ALL, 1, 3, 0.0",
-            "ALL, 12, 12, 0.1"]
+    out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL, "*BOUNDARY", "ALL, 1, 3, 0.0",
+            "NOSUP, 12, 12, 0.1", "SUPPLY, 12, 12, 1.0"]   # supply 1 from the start, as the Python 3D model
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
-    out += ["*STEP, NAME=GROW, INC=1000", "*STATIC, DIRECT", f"{T / nin:.10g}, {T:.10g}",
+    out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / nin:.10g}, {T:.10g}", *CTRL,
             "*BOUNDARY, OP=NEW", "BASE, 1, 3, 0.0", "SUPPLY, 12, 12, 1.0",
             "*NODE PRINT, NSET=PROBE, FREQUENCY=1000", "U, NT", "*END STEP"]
     path.write_text("\n".join(out) + "\n")

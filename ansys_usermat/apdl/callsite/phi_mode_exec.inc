@@ -31,7 +31,9 @@ C       prop(28) = 7: COMPOSITION from the point model, amount from the
 C                     3D field (unchanged): see the branch below.
 C       prop(28) = 10: as 7, but the growth is the point model's own
 C                     increase R = sum phi_i after / before one step
-C                     (15 Oct, A-10): ln(1 + alpha) += ln(R) / 3, no rate
+C                     (15 Oct, A-10): ln(1 + alpha) += ln(1 + phi_3D
+C                     (R - 1)) / 3 (option 3: weighted by phi_3D) where
+C                     phi_3D >= 0.5 (option 1), 0 elsewhere, no rate
 C                     parameter (prop(7) unused). An assumption (the new
 C                     biomass pushes the material apart), not a paper's.
 C       prop(28) = 5, 6: REACTION STEP of a transport/reaction split
@@ -506,12 +508,21 @@ C               (unused by mode 7), so that the cache hands it back too
           END IF
           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
      &                                dTime, ALPHA_NEW)
-C         mode 10: volume J = product of R, alpha = J^(1/3) (alpha - 1
-C         here); 0 where the point model did not run (PM_PHIINT = 0)
+C         mode 10: volume J = product of 1 + w (R - 1), w = phi_3D in
+C         [0, 1] (15 Oct, A-10 option 3: a point with little biomass
+C         grows little; at the front, phi_3D just above phi_min, R was
+C         about 10 in one step), alpha = J^(1/3) (alpha - 1 here); 0
+C         where the point model did not run (PM_PHIINT = 0)
           IF (prop(28) .GT. 9.5D0) THEN
             ALPHA_NEW = ALPHA_N
-            IF (PM_OK) ALPHA_NEW = (1.0D0 + ALPHA_N)
-     &                           * EXP(PM_PHIINT / 3.0D0) - 1.0D0
+C           option 1 as well (15 Oct): only points with phi_3D >= 0.5
+C           grow; below, the point model runs but the volume stays
+            IF (PM_OK .AND. PHI_USED .GE. 0.5D0) THEN
+              CM_F = MIN(MAX(PHI_USED, 0.0D0), 1.0D0)
+              ALPHA_NEW = (1.0D0 + ALPHA_N) * (1.0D0 + CM_F
+     &                  * (EXP(PM_PHIINT) - 1.0D0))**(1.0D0/3.0D0)
+     &                  - 1.0D0
+            END IF
           END IF
 C         prop(36) = d (not 0): species-weighted growth law, the
 C         composition into the growth (5 Oct, two_way_growth_rate.py):

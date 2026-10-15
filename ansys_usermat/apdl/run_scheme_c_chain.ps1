@@ -29,6 +29,11 @@ Sets (the order is the instruction's):
   B2  15 Oct, the CH MAP changed during B: the two B runs that took the new MAP
       again with the old one (map_pin.txt), then 8^3 (a), (c) with the new MAP:
       -Set B2 -After A10 -AfterLog F:\biofilm_upf_cal5pm\_cal5.log
+  B3  A-12: B's CH runs (16^3, 24^3, (c), antibiotic) with the new raw-data MAP,
+      tag ..._raw (about 7 h): -Set B3 -After B2
+  B4  A-13: B3's (c) runs with kappa 8.135097e-3 (new theta). 15 Oct: B3 was
+      stopped after its 24^3 (a) run (its 24^3 (c) had the old kappa):
+      -Set B4 -AfterIdle
   -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
   restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
@@ -40,10 +45,11 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2', 'B3', 'B4')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
     [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
+    [switch]$AfterIdle,       # wait until no run_calibrated.ps1 runs in WorkDir (a run left over from a stopped chain)
     [string]$WorkDir = 'F:\biofilm_upf_cal5sc',
     [switch]$DryRun,
     [switch]$Worker
@@ -115,6 +121,23 @@ $sets = @{
         @{ n = 'CH 8^3 (a), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-MapSha', 'latest', '-Tag', 'raw') },
         @{ n = 'CH 8^3 (c), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
     )
+    # A-12 (15 Oct): B's CH runs again with the new raw-data MAP (tag ..._raw; the
+    # old-MAP files stay, theta_source in the JSON tells them apart). 8^3 is in B2.
+    B3 = @(
+        @{ n = 'CH 16^3 (a), new MAP'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 16^3 (c), new MAP'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') },
+        @{ n = 'CH 16^3 (c) antibiotic, new MAP'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-AlphaStar', '0.32') + $b1 + @('-MapSha', 'latest', '-Tag', 'k0882_ab_raw') },
+        @{ n = 'CH 16^3 (a) antibiotic, new MAP'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-AlphaStar', '0.32') + $b1 + @('-MapSha', 'latest', '-Tag', 'ab_raw') },
+        @{ n = 'CH 24^3 (a), new MAP'; m = 110; a = @('-Conditions', 'CH', '-Mesh', '24', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 24^3 (c), new MAP'; m = 250; a = @('-Conditions', 'CH', '-Mesh', '24', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
+    )
+    # A-13 (15 Oct): kappa redetermined for the new CH theta (8.135097e-3: (c)
+    # seed alpha - 1 = (a)'s to 0.003 % on 8^3); B3's (c) runs with it
+    B4 = @(
+        @{ n = 'CH 16^3 (c), new MAP, kappa 8.135e-3'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-Kappa', '8.135097e-3', '-MapSha', 'latest', '-Tag', 'k0814_raw') },
+        @{ n = 'CH 16^3 (c) antibiotic, new MAP, kappa 8.135e-3'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-Kappa', '8.135097e-3', '-AlphaStar', '0.32') + $b1 + @('-MapSha', 'latest', '-Tag', 'k0814_ab_raw') },
+        @{ n = 'CH 24^3 (c), new MAP, kappa 8.135e-3'; m = 250; a = @('-Conditions', 'CH', '-Mesh', '24', '-Growth', '-Kappa', '8.135097e-3', '-MapSha', 'latest', '-Tag', 'k0814_raw') }
+    )
     # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
     A7 = @(
         @{ n = '(c) g(p) off (= w8_CH_cal_k0882)'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-Tag', 'k0882_gp0') },
@@ -134,6 +157,7 @@ if (-not $Worker) {
     if ($After) { $cmd += " -After $After" }
     if ($AfterLog) { $cmd += " -AfterLog `"$AfterLog`"" }
     if ($From -gt 1) { $cmd += " -From $From" }
+    if ($AfterIdle) { $cmd += " -AfterIdle" }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
     Write-Output "started, PID $($r.ProcessId); log $log"
@@ -155,7 +179,14 @@ if ($After) {
         Start-Sleep 60
     }
 }
-L "chain $Set start: $($runs.Count) runs, branch $br, exe $WorkDir"
+if ($AfterIdle) {
+    L "chain $Set waiting until no run_calibrated runs in $WorkDir"
+    $wd = [regex]::Escape($WorkDir)
+    while (Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -match 'run_calibrated\.ps1' -and $_.CommandLine -match $wd }) {
+        Start-Sleep 60
+    }
+}
+L "chain $Set start:$($runs.Count) runs, branch $br, exe $WorkDir"
 foreach ($r in $runs) {
     L "chain $Set next: $($r.n), estimate $($r.m) min"
     $t1 = Get-Date
