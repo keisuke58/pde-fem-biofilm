@@ -72,6 +72,14 @@ program test_uel_wrapper
     print '(a,es10.2,a,es10.2)', '   mechanics rows only: max |diff| ', maxval(abs(Kx(mrows,:)-Kf(mrows,:))), &
           ', relative ', maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
   end do
+  ! mean dilatation, nu = 0.49, with growth active
+  kin_finite = .true.; kin_md = .true.
+  PROPS(2) = 0.49d0
+  call tangent(U2, Un, COORDS, sv, PROPS, DTIME, Kx)
+  call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
+  print '(a,es10.2,a,es10.2)', 'mean dilatation, nu 0.49: tangent vs central differences, all rows ', &
+        maxval(abs(Kx-Kf)) / maxval(abs(Kf)), ', mechanics rows ', maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
+  kin_md = .false.; PROPS(2) = 0.3d0
   ! large deformation (displacement gradients about 0.3)
   kin_finite = .true.
   U2(mrows) = 30d0 * U2(mrows)
@@ -79,6 +87,12 @@ program test_uel_wrapper
   call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
   print '(a,es10.2)', 'finite strain, large deformation, mechanics rows: relative diff ', &
         maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
+  kin_md = .true.; PROPS(2) = 0.49d0
+  call tangent(U2, Un, COORDS, sv, PROPS, DTIME, Kx)
+  call tangent_fd(U2, Un, COORDS, sv, PROPS, DTIME, Kf)
+  print '(a,es10.2)', 'same, mean dilatation, nu 0.49: relative diff ', &
+        maxval(abs(Kx(mrows,:)-Kf(mrows,:))) / maxval(abs(Kf(mrows,:)))
+  kin_md = .false.; PROPS(2) = 0.3d0
   ! free growth: uniform xi, u = xi X, phi and c uniform -> no stress in the mechanics rows
   svg = sv; svg(13,:) = 0.05d0; svg(1:5,:) = 0d0           ! no living biomass: xi stays 0.05
   U2 = 0d0

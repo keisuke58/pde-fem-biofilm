@@ -200,6 +200,7 @@ ANSYS の計算とは別のプロセスなので、B の列を止めずに回し
    python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in
    python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --small
    python p3\uel\make_seed_inp.py 16 p3\uel\abaqus_in --small --antibiotic
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --nu 0.49 --md
    $env:BIOFILM_ECO_CASE = (Resolve-Path p3\uel\abaqus_in\uel_eco.txt).Path
    ```
    `unified_uel_abaqus.for` は固定形式の `ecology_native.f` と自由形式の `unified_uel.f90` を `!DEC$ FREEFORM` でつないだ
@@ -212,6 +213,9 @@ ANSYS の計算とは別のプロセスなので、B の列を止めずに回し
    0.0141 / 0.0035（有限）、0.0143 / 0.0035（微小）、中心の φ 0.643。1 本数分の見込み。
 3. 3D のシード 16³、微小ひずみ、T* = 0.5 から抗菌薬（`uel_seed16_small_ab`、PROPS(17:18) で要素が自分で切り替える）。
    模擬実行では境界の変位 0.0104 / 0.0027、中心の φ 0.778。
+3b. 3D のシード 8³、ν = 0.49、平均膨張（`uel_seed8_nu49_md`、JPROPS(2) = 1、Klempt 2024 と同じくほぼ非圧縮）。
+   模擬実行では境界の変位 0.0184 / 0.0042。応力（vM と圧力）は SVARS(113:128) に入るが、Abaqus はユーザー要素の
+   状態変数を .dat に出せないので、比べるのは変位（U）と NT だけでよい。
 4. 報告：各ジョブの PASS / FAIL、増分数と Newton の反復数（.sta）、計算時間。`.dat`（PROBE の節点の U と NT だけ）を
    `ansys_usermat/apdl/results/2026-10-uel/` に置いて push（クラウドが模擬実行と節点ごとに比べる）。.odb は push しない。
 5. 止まったら：

@@ -52,11 +52,11 @@ def deck(n, path):
     out = ["*HEADING", f"unified two-level model, user element, column of {n} elements (p3/uel/driver.py check 2)",
            "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += ["*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, I PROPERTIES=1, COORDINATES=3, VARIABLES=112", "1, 2, 3, 11, 12",
+    out += ["*USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, I PROPERTIES=2, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=COL"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
-    out += ["*UEL PROPERTY, ELSET=COL", ", ".join(vals[0:8]), ", ".join(vals[8:16]), "1"]   # JPROPS(1) = 1: finite strain
+    out += ["*UEL PROPERTY, ELSET=COL", ", ".join(vals[0:8]), ", ".join(vals[8:16]), "1, 0"]   # JPROPS: finite strain, no mean dilatation
 
     def nset(name, mask):
         ids = [str(i + 1) for i in np.where(mask)[0]]

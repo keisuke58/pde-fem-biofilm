@@ -10,6 +10,8 @@
 !   1-12  composition g = (s_1..5, s_0, psi_1..5, gamma)  (the point model's state)
 !   13    growth xi = alpha - 1
 !   14    flag: 1 once the point model has started (phi above phi_min)
+! With NSVARS = 8 x 14 + 16 = 128 the element also writes von Mises stress and pressure (Cauchy,
+! pressure positive in compression) at each Gauss point to SVARS(113:128) (pairs, Gauss point order).
 !
 ! Equations (weak form, implicit Euler; p3/unified_model.tex, Sections 3-4, beta_s = 0):
 !   phase    : int N [eta_phi (phi - phi_n)/dt + 2 K_phi/(1-phi)^3 + lam h'(phi) (Psi_pm - Psi_ref)]
@@ -44,6 +46,8 @@ module unified_uel_mod
   ! J_e = J / alpha^3 instead of J_e at each Gauss point (one pressure per element, condensed, as
   ! Klempt et al. 2024 do with their element pressure); Abaqus: JPROPS(2) = 1
   logical, save :: kin_md = .false.
+  ! Cauchy stress (11 22 33 12 23 13) at the Gauss points from the last call of residual
+  double precision, save :: gp_sig(6, 8) = 0d0
 contains
 
   subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
@@ -163,7 +167,7 @@ contains
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
     double precision :: Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
     double precision :: Fdi(3,3), Jdet, Fgp(3,3,NGP), dNgp(3,8,NGP), wgp(NGP), agp(NGP), sgp(NGP), Jgp(NGP)
-    double precision :: vol, th, pv
+    double precision :: vol, th, pv, Sc(3,3)
     integer :: a, i, j, k, q, jd
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
@@ -235,6 +239,13 @@ contains
           else
             sig = Ef * matmul(Cm, eps)
           end if
+          if (kin_finite) then
+            call inv3(Fd, Fdi, Jdet)
+            Sc = matmul(Pk, transpose(Fd)) / Jdet       ! Cauchy (deviatoric only with mean dilatation)
+            gp_sig(:, q) = [Sc(1,1), Sc(2,2), Sc(3,3), Sc(1,2), Sc(2,3), Sc(1,3)]
+          else
+            gp_sig(:, q) = sig
+          end if
           do a = 1, NN
             if (kin_finite) then
               R(NDN*(a-1)+1:NDN*(a-1)+3) = R(NDN*(a-1)+1:NDN*(a-1)+3) + w * matmul(Pk, dN(:,a))
@@ -258,9 +269,18 @@ contains
           R(NDN*(a-1)+1:NDN*(a-1)+3) = R(NDN*(a-1)+1:NDN*(a-1)+3) + pv * (lamL + 2d0*mu/3d0) * (th - 1d0) &
                * wgp(q) * Jgp(q) / agp(q)**3 / vol * matmul(Fgp(:,:,q), dNgp(:,a,q))
         end do
+        gp_sig(1:3, q) = gp_sig(1:3, q) + pv * (lamL + 2d0*mu/3d0) * (th - 1d0) / vol / agp(q)**3
       end do
     end if
   end subroutine residual
+
+  subroutine vm_p(sg, vm, p)
+    ! von Mises stress and pressure (positive in compression) of a Cauchy stress (11 22 33 12 23 13)
+    double precision, intent(in) :: sg(6)
+    double precision, intent(out) :: vm, p
+    p = -(sg(1) + sg(2) + sg(3)) / 3d0
+    vm = sqrt(0.5d0 * ((sg(1)-sg(2))**2 + (sg(2)-sg(3))**2 + (sg(3)-sg(1))**2) + 3d0 * (sg(4)**2 + sg(5)**2 + sg(6)**2))
+  end subroutine vm_p
 
   subroutine advance_composition(U, Un, coords, sv, props, dt, ok)
     ! once per increment: start the point model where phi has reached phi_min, advance it over
@@ -335,10 +355,8 @@ contains
     double precision :: E, nu, f, beta, etaph, kphi, lam, psiref, L0, Y, mub, D, liv, xid, xin, psi
     double precision :: aff, dxp, dxc, kpp, kcc, kcp, m(6), Fd(3,3), Pk(3,3), AFk(3,3,3,3), dPk(3,3)
     integer :: a, b, i, j, l, q, ia, ib, jd, kd
-    if (kin_finite .and. kin_md) then        ! mean dilatation: tangent by central differences of the residual
-      call tangent_fd(U, Un, coords, sv, props, dt, K)
-      return
-    end if
+    double precision :: Gq(3,3,NGP), Jq(NGP), aq(NGP), sq(NGP), wq(NGP), Nq(8,NGP), dap(NGP), dac(NGP), dEq(NGP)
+    double precision :: gv(3,8,NGP), Bv(3,8), Vv, thv, pvv, Kb, Av, dpv, dth, dB(3), cq, Fi(3,3), Jdet
     E = props(1); nu = props(2); f = props(3); beta = props(4); etaph = props(5); kphi = props(6)
     lam = props(7); psiref = props(8); L0 = props(9); Y = props(10); mub = props(11); D = props(12)
     lamL = E*nu/((1+nu)*(1-2*nu)); mu = E/(2*(1+nu))
@@ -405,7 +423,18 @@ contains
             do jd = 1, 3
               Fd(jd,jd) = Fd(jd,jd) + 1d0
             end do
-            call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+            if (kin_md) then
+              ! deviatoric part per Gauss point; the volumetric part with the element mean after the loop
+              call nh_stress(Fd, Ef, 1d0 + xin, mu, 0d0, Pk, AFk, dPk)
+              call inv3(Fd, Fi, Jdet)
+              Gq(:,:,q) = transpose(Fi); Jq(q) = Jdet; aq(q) = 1d0 + xin; sq(q) = Ef; wq(q) = w
+              Nq(:,q) = N; dap(q) = dt * dxp; dac(q) = dt * dxc; dEq(q) = dEf
+              do a = 1, NN
+                gv(:,a,q) = matmul(Gq(:,:,q), dN(:,a))
+              end do
+            else
+              call nh_stress(Fd, Ef, 1d0 + xin, mu, lamL + 2d0*mu/3d0, Pk, AFk, dPk)
+            end if
           end if
           do b = 1, NN
             CB = matmul(Cm, Bm(:,:,b))
@@ -437,6 +466,47 @@ contains
         end do
       end do
     end do
+    if (kin_finite .and. kin_md) then
+      ! volumetric part: R_a += A B_a, A = pv K (theta - 1), B_a = d theta / d u_a
+      Kb = lamL + 2d0*mu/3d0
+      Vv = sum(wq); thv = sum(wq * Jq / aq**3) / Vv; pvv = sum(wq * aq**3 * sq); Av = pvv * Kb * (thv - 1d0)
+      do a = 1, NN
+        Bv(:,a) = 0d0
+        do q = 1, NGP
+          Bv(:,a) = Bv(:,a) + wq(q) * Jq(q) / aq(q)**3 * gv(:,a,q) / Vv
+        end do
+      end do
+      do b = 1, NN
+        ib = NDN*(b-1)
+        do a = 1, NN
+          ia = NDN*(a-1)
+          do kd = 1, 3
+            do jd = 1, 3
+              cq = pvv * Kb * Bv(jd,a) * Bv(kd,b)
+              do q = 1, NGP
+                cq = cq + Av * wq(q) * Jq(q) / aq(q)**3 / Vv * (gv(jd,a,q)*gv(kd,b,q) - gv(jd,b,q)*gv(kd,a,q))
+              end do
+              K(ia+jd, ib+kd) = K(ia+jd, ib+kd) + cq
+            end do
+          end do
+          ! phi_b (through s and alpha) and c_b (through alpha)
+          dpv = 0d0; dth = 0d0; dB = 0d0
+          do q = 1, NGP
+            dpv = dpv + wq(q) * Nq(b,q) * (3d0 * aq(q)**2 * sq(q) * dap(q) + aq(q)**3 * dEq(q))
+            dth = dth - 3d0 * wq(q) * Nq(b,q) * Jq(q) / aq(q)**4 * dap(q) / Vv
+            dB = dB - 3d0 * wq(q) * Nq(b,q) * Jq(q) / aq(q)**4 * dap(q) / Vv * gv(:,a,q)
+          end do
+          K(ia+1:ia+3, ib+4) = K(ia+1:ia+3, ib+4) + Kb * ((thv - 1d0) * dpv + pvv * dth) * Bv(:,a) + Av * dB
+          dpv = 0d0; dth = 0d0; dB = 0d0
+          do q = 1, NGP
+            dpv = dpv + wq(q) * Nq(b,q) * 3d0 * aq(q)**2 * sq(q) * dac(q)
+            dth = dth - 3d0 * wq(q) * Nq(b,q) * Jq(q) / aq(q)**4 * dac(q) / Vv
+            dB = dB - 3d0 * wq(q) * Nq(b,q) * Jq(q) / aq(q)**4 * dac(q) / Vv * gv(:,a,q)
+          end do
+          K(ia+1:ia+3, ib+5) = K(ia+1:ia+3, ib+5) + Kb * ((thv - 1d0) * dpv + pvv * dth) * Bv(:,a) + Av * dB
+        end do
+      end do
+    end if
   end subroutine tangent
 
   subroutine tangent_fd(U, Un, coords, sv, props, dt, K)
@@ -551,6 +621,7 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
                       PNEWDT, PERIOD
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF)
   logical :: ok
+  integer :: q
   if (.not. eco_inited) call eco_native_init()
   eco_damp = .true.
   ! kinematics: JPROPS(1) = 0 small strain, otherwise (or no integer property) finite strain
@@ -577,6 +648,12 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   end if
   call residual(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), R)
   RHS(1:NDOF, 1) = -R
+  ! optional output: SVARS(NSV*NGP + 2q - 1 : NSV*NGP + 2q) = von Mises, pressure at Gauss point q
+  if (NSVARS >= NSV*NGP + 2*NGP) then
+    do q = 1, NGP
+      call vm_p(gp_sig(:, q), SVARS(NSV*NGP + 2*q - 1), SVARS(NSV*NGP + 2*q))
+    end do
+  end if
   if (LFLAGS(3) == 1 .or. LFLAGS(3) == 2) then
     call tangent(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), K)
     AMATRX = K
