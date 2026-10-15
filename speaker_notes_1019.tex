@@ -469,12 +469,12 @@ ring at the seed edge, where the seed pushes against its neighbours.
 \slide{(Appendix J, only if asked) analysis conditions}{0:45}
 \EN The model is a 2 mm cube with the seed in the centre. Only rigid-body
 motion is fixed, and the nutrient is held at one on one face. Day 21 is
-$T^*=1$, in 95 steps, with large deformations. The material is neo-Hooke
+$T^*=1$, in steps of 0.025, with large deformations. The material is neo-Hooke
 with the stiffness of Klempt 2024. The values that are not from a paper,
 the scaled $\beta$, the time link $s$ and the rate $\kappa$, are marked as
 assumptions.
 \JA モデルは 2 mm の立方体で、中央にシードがあります。拘束は剛体運動を止めるだけで、栄養は 1 つの
-面で 1 に固定しています。21 日目が $T^*=1$ で、95 ステップ、大変形で解いています。材料は
+面で 1 に固定しています。21 日目が $T^*=1$ で、刻み 0.025、大変形で解いています。材料は
 Neo-Hooke で、剛性は Klempt 2024 の値です。論文から取っていない値（換算した $\beta$、時間のつなぎ
 $s$、速さ $\kappa$）は、仮定として明記しています。
 
@@ -500,14 +500,14 @@ staggered: the mechanics is solved with $\phi$ fixed, then your element
 updates $\phi$ explicitly and solves the nutrient. The explicit step is stable
 on all meshes. Only rigid-body motion is fixed, with six degrees of freedom
 at three corner nodes. Halving the time step twice changes the stress by
-3 and 1.5\,\%, so first order, and the calibrated runs use a step about ten
-times smaller.
+3 and 1.5\,\%, so first order; the runs use the finest of these steps,
+0.025, and the living-biomass runs a smaller one.
 \JA ANSYS は体積力なしのつり合いの式を、静的に大変形で解いています。変形勾配を弾性部分と成長部分に
 分け、材料ルーチンが Neo-Hooke 材料の Cauchy 応力と接線を返します。要素は SOLID185 で、$\nu$ が 0.49 なので
 B-bar を使っています。Newton--Raphson は固定の刻みです。連成は交互に解きます。まず $\phi$ を固定して力学を解き、
 その後にオリバーの要素が $\phi$ を陽解法で進め、栄養を解きます。陽解法の安定条件は、どのメッシュでも満たして
 います。拘束は 3 つの角の節点の 6 自由度だけで、剛体運動を止めるだけです。時間刻みを 2 回半分にすると
-応力は 3\,\% と 1.5\,\% 変わるので 1 次の収束です。較正した計算はその約 10 分の 1 の刻みを使っています。
+応力は 3\,\% と 1.5\,\% 変わるので 1 次の収束です。計算には一番細かい 0.025 を使い、生きたバイオマスの計算はさらに細かい刻みです。
 
 \slide{References}{(no talk)}
 \EN Leave this slide up only if asked; the four papers are the ones cited on
