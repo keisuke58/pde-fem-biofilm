@@ -164,3 +164,9 @@ abaqus_composition/*.json
 data/heine_species_distribution_biofilm.xlsx
 data/raw_heine/
 *.xlsx
+
+# p3/uel build outputs
+p3/uel/*.so
+p3/uel/test_uel_wrapper
+p3/uel/unified_uel_abaqus.for
+p3/uel/abaqus_in/

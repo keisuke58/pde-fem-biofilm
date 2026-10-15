@@ -54,6 +54,10 @@ C                             last bit); 0 (default): bit for bit
         integer, save :: eco_nwmax = 6
         double precision, save :: eco_nwtol = 0.0d0
         double precision, save :: eco_thtol = 0.0d0
+C       damped Newton (15 Oct 2026, the unified-model element p3/uel):
+C       the step is shortened so that phi_i, phi_0, psi_i stay inside
+C       (0, 1) by 10 %; off by default (the element runs unchanged)
+        logical, save :: eco_damp = .false.
       contains
 
         subroutine eco_native_set(nact, cstar, alstar, eta, theta,
@@ -411,7 +415,19 @@ C             the paper pipeline's newton_step keeps g once |Q|^2 < tol
               q = -q
               call eco_solve(jac, q, dl, ok)
               if (.not. ok) return
-              gg = gg + dl
+              if (eco_damp) then
+                s = 1.0d0
+                do i = 1, 11
+                  if (dl(i) .lt. 0.0d0) then
+                    s = min(s, -0.9d0 * gg(i) / dl(i))
+                  else if (dl(i) .gt. 0.0d0) then
+                    s = min(s, 0.9d0 * (1.0d0 - gg(i)) / dl(i))
+                  end if
+                end do
+                gg = gg + s * dl
+              else
+                gg = gg + dl
+              end if
               call eco_clip(gg, mask)
             end do
             gp = gg

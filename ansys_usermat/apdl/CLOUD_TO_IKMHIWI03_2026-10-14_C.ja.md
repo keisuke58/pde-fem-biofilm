@@ -160,6 +160,100 @@ Day 21 まで回して実測の体積と比べるために、次を試す。ど�
      （E = 600 Pa で 190〜230 Pa）と比べる。
 4. どの倍率でも止まるなら、止まった時刻と要素と、その周りの φ を書いて終わる（無理に回さない）。
 
+## A-9. 場の広がりに (c) の成長を渡せるか（15日追加、読むだけ、計算なし）
+
+今の (c) では、場の式（Eq. 34 の源 k_α α、Eq. 36）は USERMAT の α と別に進む。溶菌が起きても φ₃D は減らない。
+慶應で (c) の α（または κΣφ̄_i）を場の源の項に渡したいので、Oliver の要素のソースを**読むだけ**で次を調べて報告してほしい：
+1. USSFin（場の更新）が使う α はどこで積分され、どの配列に入っているか（locbio など）。
+2. USSFin から USERMAT の状態変数（ustatev(84) の α、ustatev(72:83) の点モデル）を読めるか。読めないなら、
+   どこで値を受け渡すのが一番小さい変更か（共有の配列、ファイル、ANSYS の関数）。
+3. 場の更新と USERMAT の呼ばれる順番（同じ刻みの中でどちらが先か）。
+変更や計算はしない。Oliver のコードの中身はこのリポジトリに書かず、場所（ファイルと関数の名前）と仕組みだけを書く。
+
+## A-10. κ なしの成長を要素で（15日追加、A-9 の後）
+
+`RESEARCH_IDEAS.ja.md` §14、`JAXFEM/growth_from_point_model.py`。方式 (a)（モード 7）は毎刻み、点モデルを
+min(φ₃D, φ_cap) に縮めて進め、また縮め直す。そのとき**点モデルが増やした分 R = Σφ_i(進めた後)/Σφ_i(進める前)** を捨てている。
+これを体積の伸びと読む新しいモードを 1 つ足す（例 prop(28) = 10、既定は今のまま）：
+- 点モデルの扱いはモード 7 と全く同じ（縮める、進める、縮め直す）。
+- 成長だけ Eq. 36 のかわりに ln(1 + α_{n+1}) = ln(1 + α_n) + ln(R)/3（α は内部変数 α − 1。体積 J = R の積、α = J^{1/3}）。
+  速さのパラメータはない（κ も k_α も使わない）。R は部分刻みをすべて進めた後の値（1 刻み分）。
+- 点モデルが動いていない点（φ₃D < φ_min）は成長 0。
+- **確かめ：** モード 7 で R を記録だけして（成長は Eq. 36 のまま）、`growth_from_point_model.run_with_phi` に
+  シードの第 1 Gauss 点の phi_used の列と Day-1 の状態を渡したときの ln J と、要素の ln R の和が 1e−10 で一致すること。
+- 回すもの（CH、8³、局所栄養はモード 7 の本線と同じ）：`w8_CH_pm10`。CS も（`w8_CS_pm10`）。
+- 報告：シードの α − 1 平均と vM 平均（(a) の基準と並べて）、シードの第 1 Gauss 点の体積比 α³ を Day 3、6、10、15、21 で
+  実測 CH（0.222、0.224、0.344、0.382、0.400、10⁶ µm³）と並べた表。Python では Day 3 → 21 で 1.27 倍（実測 1.80）。
+- α − 1 が 0.1 程度になるので、A-8 と同じく空の要素がつぶれるかもしれない。A-8 で決めた空の硬さを使う。
+- これは仮定（増えた菌が空隙を埋めずに材料を押し広げる）で、論文の式ではない、とログと報告に書く。
+
+## A-12. CH の θ を最終の MAP（生データ・2 通路）に差し替える（15日追加、B の列より先、A-11 より先）
+
+EML 側で CH の最終の MAP が出た（Tmcmc202601 **6e18e0b**、`docs/revision/generated/final_theta_MAP/CH.json`：
+生データ・2 通路の最終段 `CH_ult_2c_raw_a33w`、seed 123、max logL −26.52）。これまでの CH の計算はすべて
+2d8d99e（読み取り値・1 通路、seed 7）の θ。`CLAUDE.md` の決まりどおり、MAP が変わったので第 4 章の 8³ の 5 菌種を回し直す。
+Tmcmc202601 は読むだけ（clone を 6e18e0b 以降に上げるだけで、そちらのファイルは変えない）。
+**15日 14 時の更新：** IKMHIWI03 はもう `map_pin.txt` / `-MapSha` と B2 の列（新しい MAP で 8³ の (a)、(c)、初期値は
+`phi_init.json` から）を用意している（68e40ee）。下の 2 と 4 は B2 がしているので、足りないのは 1、3、5、6 だけ。
+
+1. Tmcmc202601 の clone を 6e18e0b 以降にする。新旧の `CH.json` の θ（20 個）と、`phi_init.json` の CH の初期値を並べた表を
+   報告に書く（旧は同じファイルの `superseded` の欄と `superseded/` のフォルダにある）。
+2. 点モデルの設定ファイル：`write_eco_cfg.py --theta-json <新しい CH.json> --phi-init v1,v2,v3,v4,v5 <出力>`。
+   初期値は `phi_init.json` の CH の値を**そのまま**（合計 1.001 になるが、推定もこの状態で回っている。`write_eco_cfg.py` は
+   合計が 1 を超えても縮めないので推定と同じ）。ψ の初期値は既定の 0.999（`psi_init: null`）で、今と同じ。
+3. 確かめ（0D）：要素の 1 つの Gauss 点の組成の列と、Python の点モデル（推定と同じ関数）を同じ初期値から回した列を比べる。
+   注意：Fortran の点モデルは始めに空隙 φ₀ を小さな正の値に切る（`biofilm_ecology_init_state`）が、推定は φ₀ = −0.001 から
+   始まり 1 段目で戻る。差は 1 段目だけのはずなので、1 段目の差と、Day 3 以降の最大の差を書く（1e−3 以下、後は小さいはず）。
+4. 回し直し：修論 第 4 章の 5 菌種 CH 8³（方式 (a)、本線と同じ設定、κ も同じ）。旧と並べて、シードの α − 1 平均、vM 平均、
+   Day 21 の組成（5 菌種）を表にする。JSON は `--source "Tmcmc202601@<sha>:docs/revision/generated/final_theta_MAP/CH.json"` で
+   書き出して push。
+5. そのあと B の列の CH の計算（16³、24³、(c)、抗菌薬）は新しい θ で。旧 θ で終わったものは消さずに残し、ファイル名か
+   JSON の `theta_source` で区別できるようにする。CS は EML 側でまだ旧（読み取り値・1 通路）なので、そのまま。
+6. 報告：`IKMHIWI03_TO_CLOUD.ja.md` に A-12 として。修論の数字の差し替えはクラウドがする（修論の本文には触らない）。
+
+## A-11. 一つの原理のモデルを Abaqus の UEL で（15日追加、B の列の合間に、1 本数分）
+
+`p3/uel/`（README.md）。統一モデル（`p3/unified_model.tex`）の Abaqus ユーザー要素を、本物の Abaqus で初めて動かす。
+クラウドでは Abaqus の引数どおりに `UEL` を呼ぶ模擬実行で確かめてあり、その値と比べる。慶應の続きの準備で、修論には入れない。
+ANSYS の計算とは別のプロセスなので、B の列を止めずに回してよい（cpus=1）。
+
+0. 準備（リポジトリ直下で。`p3\uel\abaqus_in\` は git に入らない）：
+   ```
+   python p3\uel\make_abaqus_source.py
+   python p3\uel\make_column_inp.py 20 p3\uel\abaqus_in
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --small
+   python p3\uel\make_seed_inp.py 16 p3\uel\abaqus_in --small --antibiotic
+   python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --nu 0.49 --md
+   $env:BIOFILM_ECO_CASE = (Resolve-Path p3\uel\abaqus_in\uel_eco.txt).Path
+   ```
+   `unified_uel_abaqus.for` は**全部が固定形式**の 1 ファイル（15日 15 時に直した）。最初の版は自由形式の部分を
+   `!DEC$ FREEFORM` でつないでいて、Abaqus の `ifort /fpp` がそれを固定形式として読んで壊れた（報告ありがとう）。
+   いまは要素の部分を固定形式に変換して書く（7 桁目から、継続は 6 桁目、注釈は 1 桁目、132 桁まで）。クラウドで
+   `gfortran -cpp -ffixed-form -ffixed-line-length-132` でコンパイルし、模擬実行が最後の桁まで同じことを確かめた。
+   **git pull のあと `make_abaqus_source.py` をもう一度実行してから**回し直す。点モデルは環境変数 `BIOFILM_ECO_CASE` のファイルから読む（どのジョブも同じファイル）。
+   ジョブは `.\run_abaqus.ps1 -InpFile p3\uel\abaqus_in\<名前>.inp -UserFile p3\uel\unified_uel_abaqus.for`
+   （同じ PowerShell で、環境変数を設定した後に）。
+1. 1D の柱 `uel_column`（20 要素、力学は固定）。
+   **合格：** x = 0 の節点で NT11（φ）= 0.776、NT12（c）= 0.936（模擬実行とドライバーの値）。
+2. 3D のシード 8³：有限ひずみ（`uel_seed8`）と微小ひずみ（`uel_seed8_small`）。模擬実行では境界の変位（仰角 30°、栄養側 / 反対側）が
+   0.0141 / 0.0035（有限）、0.0143 / 0.0035（微小）、中心の φ 0.643。1 本数分の見込み。
+3. 3D のシード 16³、微小ひずみ、T* = 0.5 から抗菌薬（`uel_seed16_small_ab`、PROPS(17:18) で要素が自分で切り替える）。
+   模擬実行では境界の変位 0.0104 / 0.0027、中心の φ 0.778。
+3b. 3D のシード 8³、ν = 0.49、平均膨張（`uel_seed8_nu49_md`、JPROPS(2) = 1、Klempt 2024 と同じくほぼ非圧縮）。
+   模擬実行では境界の変位 0.0184 / 0.0042。
+   応力：Abaqus はユーザー要素の状態変数を .dat に出せないので、要素が自分で `uel_gp.txt`（ジョブのフォルダ）に
+   積分点ごとの φ、c、α − 1、生きた割合、vM、圧力を書く（10 増分ごとと解析の終わり、UEXTERNALDB）。模擬実行では
+   8³（ν = 0.3、有限ひずみ）の最後で、φ > 0.5 の要素の vM 平均 0.0130、最大 0.0164。
+4. 報告：各ジョブの PASS / FAIL、増分数と Newton の反復数（.sta）、計算時間。`.dat`（PROBE の節点の U と NT だけ）を
+   `ansys_usermat/apdl/results/2026-10-uel/` に、各ジョブの `uel_gp.txt` を `<ジョブ名>_gp.txt` として一緒に置いて push
+（クラウドが模擬実行と節点・積分点ごとに比べる）。.odb は push しない。
+5. 止まったら：
+   - `*STATIC` が自由度 11、12 を受け付けない → `*COUPLED TEMPERATURE-DISPLACEMENT, STEADY STATE` に替えて 1 回だけ試す。
+   - 収束しない（残差の判定が自由度 11、12 の大きさに合わない）→ .msg の最後の 50 行を報告して止める（直しはクラウドで）。
+   - NT12 が出力されない → 出力の指定を報告して止める。
+   - コンパイルのエラー → ログの最初のエラーを報告して止める。
+
 ## B. 長い列（会議のあと、21〜30 日も回す）
 
 `run_chain.ps1 -Export ansys_usermat\apdl\results\2026-10-cal5 -Push` で、1 本ごとに push。順番：

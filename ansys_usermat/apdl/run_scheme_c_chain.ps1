@@ -23,6 +23,14 @@ Sets (the order is the instruction's):
       p_ref 2.4e-10 and 2.4e-9 MPa. Exe F:\biofilm_upf_cal5gp (cal5sc plus
       that form in growth_from_phi.f), so:
       -Set A7 -WorkDir F:\biofilm_upf_cal5gp -After A8 -AfterLog F:\biofilm_upf_cal5sc\_cal5.log
+  A10 growth from the point model's own increase, no kappa (mode 10): a check
+      run without the local nutrient, then CH and CS. Exe F:\biofilm_upf_cal5pm:
+      -Set A10 -WorkDir F:\biofilm_upf_cal5pm -After A7 -AfterLog F:\biofilm_upf_cal5gp\_cal5.log
+  B2  15 Oct, the CH MAP changed during B: the two B runs that took the new MAP
+      again with the old one (map_pin.txt), then 8^3 (a), (c) with the new MAP:
+      -Set B2 -After A10 -AfterLog F:\biofilm_upf_cal5pm\_cal5.log
+  -From n starts at the set's n-th run (after an interruption; 15 Oct: the PC
+  restarted during CH 24^3 (c), B was resumed with -From 10).
   -After B starts a set when B has ended (one ANSYS at a time in WorkDir;
   -AfterLog when the other set logs in another work dir).
 Minutes per run (IKMHIWI03, -np 1): 8^3 1-2, 16^3 (a) 10 / (c) 23, 24^3 about
@@ -32,9 +40,10 @@ off unless set; it reproduces F:\biofilm_upf_cal5 to the last digit).
 Log: <WorkDir>\_cal5.log (lines "chain <set> ...").
 #>
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7')][string]$Set,
+    [Parameter(Mandatory = $true)][ValidateSet('A6', 'B', 'A8', 'A7', 'A10', 'B2')][string]$Set,
     [string]$After = '',      # wait until the log says "chain <After> end" (written after this start)
     [string]$AfterLog = '',   # the log to wait on (default: this work dir's)
+    [int]$From = 1,           # start at run number <From> of the set (1-based; after an interruption)
     [string]$WorkDir = 'F:\biofilm_upf_cal5sc',
     [switch]$DryRun,
     [switch]$Worker
@@ -88,6 +97,24 @@ $sets = @{
         @{ n = '(c) kappa 2.8 void x100 E 600 Pa'; m = 3; j = 'w8_CH_cal_k2800_v100_E600'; r = @('-Steps', '475');
            a = @('-Conditions', 'CH', '-Growth', '-Kappa', '2.8', '-YoungVoid', '-1e-1', '-YoungBio', '6e-4', '-Tag', 'k2800_v100_E600') }
     )
+    # A-10 (15 Oct): growth from the point model's own increase, no kappa (mode 10,
+    # exe F:\biofilm_upf_cal5pm). The check run has no local nutrient (prop(33) = 0)
+    # so that a10_check.py can compare with the Python model to 1e-10. A run that
+    # stops is run once more with the void ten times stiffer (A-8's first step).
+    A10 = @(
+        @{ n = 'CH mode 10 check (no local nutrient)'; m = 2; a = @('-Conditions', 'CH', '-Pm10', '-ExtraProps', '33=0', '-Tag', 'chk') },
+        @{ n = 'CH mode 10'; m = 2; j = 'w8_CH_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CH', '-Pm10') },
+        @{ n = 'CS mode 10'; m = 2; j = 'w8_CS_pm10'; r = @('-YoungVoid', '-1e-2', '-Tag', 'v10'); a = @('-Conditions', 'CS', '-Pm10') }
+    )
+    # 15 Oct: the CH MAP was replaced by the raw-data one (Tmcmc202601 6e18e0b)
+    # during B; two B runs took it. Redo them with the old MAP (map_pin.txt in the
+    # work dir), then the 8^3 baselines (a) and (c) with the new MAP (-MapSha latest)
+    B2 = @(
+        @{ n = 'CH 16^3 (a) antibiotic, old MAP (redo)'; m = 10; a = @('-Conditions', 'CH', '-Mesh', '16', '-AlphaStar', '0.32') + $b1 + @('-Tag', 'ab') },
+        @{ n = 'CH 16^3 (c) kappa 2.8, old MAP (redo)'; m = 25; a = @('-Conditions', 'CH', '-Mesh', '16', '-Growth', '-Kappa', '2.8', '-Tag', 'k2800') },
+        @{ n = 'CH 8^3 (a), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-MapSha', 'latest', '-Tag', 'raw') },
+        @{ n = 'CH 8^3 (c), new raw-data MAP'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-MapSha', 'latest', '-Tag', 'k0882_raw') }
+    )
     # A-7 (15 Oct): compression slows the (c) growth; the point model is unchanged
     A7 = @(
         @{ n = '(c) g(p) off (= w8_CH_cal_k0882)'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-Tag', 'k0882_gp0') },
@@ -95,7 +122,8 @@ $sets = @{
         @{ n = '(c) g(p) p_ref 2.4e-9 MPa'; m = 2; a = @('-Conditions', 'CH', '-Growth', '-ExtraProps', '49=2.4e-9,50=2', '-Tag', 'k0882_gp10') }
     )
 }
-$runs = $sets[$Set]
+$runs = @($sets[$Set])
+if ($From -gt 1) { $runs = @($runs[($From - 1)..($runs.Count - 1)]) }
 
 if (-not $Worker) {
     $tot = ($runs | ForEach-Object { $_.m } | Measure-Object -Sum).Sum
@@ -105,6 +133,7 @@ if (-not $Worker) {
     $cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$PSCommandPath`" -Worker -Set $Set -WorkDir `"$WorkDir`""
     if ($After) { $cmd += " -After $After" }
     if ($AfterLog) { $cmd += " -AfterLog `"$AfterLog`"" }
+    if ($From -gt 1) { $cmd += " -From $From" }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
     Write-Output "started, PID $($r.ProcessId); log $log"

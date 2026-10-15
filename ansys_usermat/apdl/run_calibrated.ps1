@@ -56,6 +56,7 @@ param(
     [string]$Out = 'ansys_usermat\apdl\results\2026-10-cal5',
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
+    [switch]$Pm10,            # mode 10 (A-10): mode 7's point model, growth = its own increase R, no kappa; exe with mode 10 (F:\biofilm_upf_cal5pm)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
     [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
     [string]$B = '',          # b1,..,b5 (write_eco_cfg.py --b); empty = theta's own (0 in the MAP files)
@@ -65,6 +66,7 @@ param(
     [string]$ExtraProps = '',  # more i=v for make_wired_deck --props (e.g. the stress feedback test, 52=..,53=..)
     [int]$Steps = 95,         # -Growth: deltim = 1/Steps (95 as before; 190 halves the step when a large kappa distorts elements)
     [string]$Tag = '',
+    [string]$MapSha = '',     # C=<40-hex sha>,... pins a condition's MAP; 'latest' ignores <WorkDir>\map_pin.txt
     [switch]$Push,
     [switch]$Worker,
     [string]$Branch = ''
@@ -81,6 +83,7 @@ if (-not $Worker) {
            '-Branch', $br)
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
+    if ($Pm10) { if ($Growth) { throw "-Pm10 and -Growth exclude each other" }; $a += '-Pm10' }
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
     if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
     if ($B) { $a += @('-B', $B) }
@@ -88,6 +91,7 @@ if (-not $Worker) {
     if ($Steps -ne 95) { $a += @('-Steps', "$Steps") }
     if ($ExtraProps) { $a += @('-ExtraProps', $ExtraProps) }
     if ($YoungVoid) { $a += @('-YoungVoid', $YoungVoid) }
+    if ($MapSha) { $a += @('-MapSha', $MapSha) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -108,6 +112,18 @@ $outs = 'all_stress.csv', 'elem_stress.csv', 'nut_field.csv', 'comp_trace.csv', 
 $Conditions = @($Conditions -split ',' | Where-Object { $_ })
 
 function Find-Map($c) {
+    # a pinned MAP first (15 Oct: the CH MAP was replaced by the raw-data one
+    # while sets compared against the old one were queued): -MapSha C=sha,...,
+    # else <WorkDir>\map_pin.txt (lines C=sha); -MapSha latest ignores the pin
+    $pins = @{}
+    $pinFile = Join-Path $WorkDir 'map_pin.txt'
+    if ($MapSha -ne 'latest' -and (Test-Path $pinFile)) {
+        Get-Content $pinFile | Where-Object { $_ -match '^\s*(\w+)\s*=\s*([0-9a-f]{40})' } | ForEach-Object { $pins[$Matches[1]] = $Matches[2] }
+    }
+    if ($MapSha -and $MapSha -ne 'latest') {
+        $MapSha -split ',' | Where-Object { $_ -match '^\s*(\w+)\s*=\s*([0-9a-f]{40})' } | ForEach-Object { $pins[$Matches[1]] = $Matches[2] }
+    }
+    if ($pins.ContainsKey($c)) { L "  $c.json pinned at $($pins[$c].Substring(0,7))"; return $pins[$c] }
     # the last commit on the branch that touched <C>.json, or $null
     # with the token from .env when there is one: the unauthenticated API
     # limit (60 an hour) is per IP and shared by the university network
@@ -147,7 +163,7 @@ $cfgPath = @{
 }
 
 function Run-Condition($c, $sha) {
-    $job = if ($Growth) { "w${Mesh}_${c}_cal" } else { "w${Mesh}_${c}_g1_s015" }
+    $job = if ($Growth) { "w${Mesh}_${c}_cal" } elseif ($Pm10) { "w${Mesh}_${c}_pm10" } else { "w${Mesh}_${c}_g1_s015" }
     if ($Tag) { $job += "_$Tag" }
     $tj = Join-Path $WorkDir "${c}_theta_MAP_$($sha.Substring(0,7)).json"
     Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/$c.json" -OutFile $tj -UseBasicParsing
@@ -165,16 +181,30 @@ function Run-Condition($c, $sha) {
     if ($YoungBio -gt 0) { $mk += @('--set', "YOUNG_BIO=$($YoungBio.ToString('R'))") }
     # void floor (A-8, 15 Oct): a stiffer void so a large growth does not crush it
     if ($YoungVoid) { $mk += @('--set', "YOUNG_VOID=$YoungVoid") }
-    if ($Growth) {
+    if ($Growth -or $Pm10) {
         # P3 stage 2 (10 Oct): the point model free at each point from the
         # Day-1 state, s = 0.2375 (T* = 1 is Day 21), deltim = 1/95 so one
         # coupling step is 25 x 1e-4 of point-model time, the paper's Newton
         # control, the deck-vs-file theta check with a tolerance
-        $cfg = Join-Path $WorkDir "${c}_config.json"
-        Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
+        # Day-1 state: phi_init_state of phi_init.json at the MAP's own commit
+        # (the final_theta_MAP README); MAP commits without that file (the
+        # earlier CH, CS) keep the calibration config.json as before
+        $pi = $null
+        try {
+            $pj = (Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/phi_init.json" -UseBasicParsing).Content | ConvertFrom-Json
+            if ($pj.$c -and $pj.$c.phi_init_state) { $pi = ($pj.$c.phi_init_state | ForEach-Object { ([double]$_).ToString('R') }) -join ',' }
+        } catch { }
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
-        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
-            --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
+        if ($pi) {
+            L "  Day-1 state from phi_init.json @ $($sha.Substring(0,7)): $pi"
+            $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init $pi `
+                --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
+        } else {
+            $cfg = Join-Path $WorkDir "${c}_config.json"
+            Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/master/$($cfgPath[$c])" -OutFile $cfg -UseBasicParsing
+            $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init-config $cfg `
+                --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
+        }
         $mk += @('--deltim', (1.0 / $Steps).ToString('R'), '--time', '1.0')
     } elseif ($ab.Count -gt 0) {
         # the antibiotic needs the case file; theta_tol for APDL's last bit
@@ -188,6 +218,9 @@ function Run-Condition($c, $sha) {
     if ($th.Count -ne 20) { throw "$($eco): $($th.Count) theta values" }
     $props = ((0..19 | ForEach-Object { "$($_ + 8)=$($th[$_])" }) -join ',') + ',37=5'
     if ($Growth) { $props += ",7=$($Kappa.ToString('R')),28=9,31=0.2375,33=1.0" }
+    # mode 10: mode 7 as in the base deck (phi_min 0.01, phi_cap 0.9, local
+    # nutrient c_ref 1), on the Day 1-21 time of -Growth; no kappa
+    if ($Pm10) { $props += ",28=10,31=0.2375" }
     if ($ExtraProps) { $props += ",$ExtraProps" }
     if ($Weights) {
         if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
@@ -201,7 +234,7 @@ function Run-Condition($c, $sha) {
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    if ($Growth -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    if ($Growth -or $Pm10 -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
     L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', void '$YoungVoid', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `
@@ -227,7 +260,7 @@ function Run-Condition($c, $sha) {
     $o | ForEach-Object { L "  export: $_" }
     if ($Push) {
         $files = @("$Out\$job.json", "$Out\${job}_pm.json") -replace '\\', '/'
-        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
+        $what = if ($Growth) { "growth from the calibrated point model, $c, ${Mesh}^3, kappa $Kappa" } elseif ($Pm10) { "growth from the point model's own increase, no kappa, $c, ${Mesh}^3" } else { "Calibrated five-species $c in the element, ${Mesh}^3" }
         Push-Files $files "$what (automatic)"
     }
     return $true

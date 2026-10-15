@@ -750,3 +750,77 @@ F: の `.rst` のうち JSON が git にないもの：
   ある試しか、後で直したもの。
 - `.gitignore` の `*.csv` で外れているもの：`results/2026-10-01_paper_values` の 5 本（0.1 MB、`figs_1005.py` が読む）。
   `cal5_compare_*.csv/png` は JSON から作り直せる。
+  （14日のうちに git に入れた、e4bd0de。）
+
+## 15日：PC の再起動で列が止まった。CH 24³ は終わっていた。A-11 はコンパイルで止まった
+
+### 再起動と再開
+
+14日 21:59 に PC が再起動した（Windows の更新と思われる）。列の process（B、A8 の待ち、A7 の待ち）はすべて消えた。
+- `w24_CH_cal_k0882`（CH 24³ (c)）は 21:44 に T* = 1（第 95 刻み）まで解き終わり、POST1 の途中だった。
+  結果ファイル (.rst) から後処理だけをやり直した（28 秒、エラー 0）。JSON は push 済み（99a8a42）。解き直してはいない。
+  計算時間は 4 時間 8 分（見込みの 90 分を大きく超えた）。
+- B の残り 3 本（CH 16³ の抗菌薬 (c)、(a)、κ = 2.8 の 16³）は 15日 13:20 に再開した（`run_scheme_c_chain.ps1` に
+  `-From` を足した）。A8 と A7 も同じ順で待たせ直した。
+
+### CH のメッシュ収束（3 点目）
+
+| メッシュ | シード要素 | (a) α − 1 | (a) vM [Pa] | (c) α − 1 | (c) vM [Pa] | (c) と (a) の差（vM） | (c) と (a) の差（α − 1） |
+|---|---|---|---|---|---|---|---|
+| 8³ | 32 | 6.7517e−4 | 4.6838e−4 | 6.7518e−4 | 4.3192e−4 | −7.78 % | +0.00 % |
+| 16³ | 256 | 6.5616e−4 | 5.7445e−4 | 6.5426e−4 | 5.2862e−4 | −7.98 % | −0.29 % |
+| 24³ | 864 | 6.5182e−4 | 5.9388e−4 | 6.4897e−4 | 5.4732e−4 | −7.84 % | −0.44 % |
+
+- vM の絶対値は 16³ → 24³ で +3.4 %（(a)）、+3.5 %（(c)）。8³ → 16³ の +23 % より小さく、収束に向かっている。
+- (c) と (a) の差は 3 つのメッシュで −7.8 〜 −8.0 %。比べるだけなら 8³ で足りる。
+
+### A-11（Abaqus の UEL）：コンパイルのエラーで止めた
+
+準備の 5 本の `.inp` と `uel_eco.txt` は作れた。そのため `driver.py` が読む `libunified_uel.so` を Windows の gfortran で
+作った（README のコマンドに `-static` を足しただけ。`.so` の名前のままの DLL を ctypes が読める。git には入れない）。
+
+`uel_column` を `run_abaqus.ps1` で回すと、Abaqus のコンパイルで止まった（エラー 30 個）。**最初のエラー：**
+```
+unified_uel_abaqus.for(487): error #5082: Syntax error, found '&' when expecting one of: <END-OF-STATEMENT> ; <END-OF-FILE>
+      end module biofilm_py_bridgeied_uel&
+-----------------------------------------^
+```
+487 行目のファイルの中身は `      end module biofilm_py_bridge` で正しい（その次の行が `!DEC$ FREEFORM`）。改行は CRLF でそろっている。
+Abaqus 2024 の `compile_fortran` は `ifort /c /fpp /extend-source ...`。`/fpp` の前処理が、ファイルを固定形式として読み、
+`!DEC$ FREEFORM` から後の自由形式の行（行末の `&` の継続）を前の行につないでしまっているように見える
+（`biofilm_py_bridge` に `ied_uel&` がついている）。そのあとのエラーは、1096 行目などで `NN`、`NSV`、`NGP` が
+宣言式に使えない（モジュールが壊れたため）。直しはクラウドに任せる（指示 5 のとおり）。案：全体を固定形式にする（`/fpp` も `/extend-source` もそのまま通る）。
+参考：Oliver の `Ussfin` の頭の注記にも、固定形式の `.F` の中で `!DEC$ FREEFORM` / `NOFREEFORM` で自由形式の部分を挟むと、
+コンパイルは通るのに実行時に壊れた（PARDISO の接続）、とある。そこでは自由形式の部分を別にコンパイルして `.mod` を `USE` した。
+
+### A-9：場の広がりに (c) の成長を渡せるか（読むだけ、変更も計算もしていない）
+
+読んだもの：`F:\biofilm_upf_cal5sc` の Oliver の要素のソース（`Ussfin_P21-V21_Conection_Test.F`、`USolBeg_P21-V21_Conection_Test.F`、
+`Usermat_P21-V21_v222.F`、`userdata_P21-V21_Conection_Test.f`、`usercm.inc`）。中身はここに写さず、場所と仕組みだけ書く。
+
+1. **場の α（locbio）の置き場所と積分。**
+   - 場の値はすべて、ANSYS のメモリに取った 1 本の共有配列（`userdata` の `InitVals`、`fAnsMemAlloc`）に置かれ、
+     `GetVals` / `SetVals`（位置 = オフセット + 番号）で読み書きされる。オフセットは `USolBeg` で順に決まり、
+     共通ブロック `/usercm/`（`usercm.inc`）で全ルーチンに見える。
+   - locbio は `ofs_dp_bioloc1_n`（と `_n1`、種 2〜5 も同じ）、長さ nTot = nGP + 表面の節点数。番号 1〜nGP が積分点
+     （ID = (要素 − 1)·要素あたりの積分点数 + kDomIntPt、`Usermat` と同じ式）、その後ろが表面の点。
+   - `USSFin` の点ごとのループの中で、φ の更新（Eq. 34）の源の項が `KLocal1 × bioloc1_n` を使い、そのあと
+     bioloc1 自体を `bioloc1_n = bioloc1_n1 + dt · KLocal1 · bio1_n1`（Eq. 36、陽解法）で進める。最後に `SetVals` で書き戻す。
+     USolBeg で bioloc の初期値は 1 の側（Klempt の α、1 から始まる）。
+2. **USSFin から USERMAT の状態変数は読めるか。**
+   - `USSFin` は要素や積分点の引数を持たず、ustatev には直接触れない（`get_ElmData` の宣言はあるが、状態変数を読む使い方はない）。
+   - ただし **逆向きの受け渡しはもうある：** `Usermat` が積分点ごとに変形勾配 F と座標を `SetVals(ofs_dp_F_n + 9(ID−1))`
+     などで共有配列に書き、`USSFin` が `GetVals(ofs_dp_F_n, 9·nGP)` で読んでいる。
+   - **一番小さい変更：** 同じ仕組みで α 用の場所を 1 つ足す。
+     (i) `usercm.inc`（2 つあるコピーの両方）に `ofs_dp_alphaC_n` を足す、
+     (ii) `USolBeg` でオフセットを nGP 分取る（`InitVals` の前）、
+     (iii) 私たちの fragment で `ustatev(84) = ALPHA_NEW` の直後に `SetVals(ofs_dp_alphaC_n + ID − 1)` で書く、
+     (iv) `USSFin` でそれを読み、積分点（ID ≤ nGP）の源の項の bioloc1_n のかわりに 1 + α を使う（表面の点はそのまま）。
+     ファイルや ANSYS の関数（`*GET` など）は要らない。単位に注意：USERMAT の α は α − 1、bioloc は 1 から始まる α。
+3. **呼ばれる順番。**
+   - 1 つの部分刻み（substep）の中で、まず平衡の反復ごとに `Usermat` が呼ばれ、そのとき場の値（bio、bioloc、栄養）は
+     前の部分刻みの `USSFin` が書いた値を読む。収束したあとに `USSFin`（「部分刻みの後に呼ばれる」）が 1 回呼ばれ、
+     自分の細かい時間刻み（`DO WHILE` の内側のループ）で場を進め、`_n1 ← _n` を入れ替え、`SetVals` で書き戻す。
+   - したがって (iii) で書いた α は、同じ部分刻みの `USSFin` が読む（最後の平衡反復の値 = 収束した値）。場が受け取る α は
+     「この部分刻みの終わり」の値で、USERMAT が次の部分刻みで見る φ はその場の更新の後の値になる（1 刻みずれた陽解法の結合で、
+     今の F の受け渡しと同じ）。他の 4 本も同じソースなので回していない。
