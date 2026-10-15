@@ -125,8 +125,15 @@ bar, the equations are, as printed (Eqs.~34--36),
   &\dot\alpha-k_\alpha\,\phi=0,
    \label{eq:theory_alpha}
 \end{align}
-with zero-flux conditions for $\phi$ and $c$ on the boundary. In the confirmed
-form the consumption term in~\eqref{eq:theory_c} is $g\,\phi\,c$. Time is
+with zero-flux conditions for $\phi$ and $c$ on the boundary. The authors confirmed
+that their implementation uses the consumption $g\,\phi\,c$ instead of the printed
+$g\,\phi$, so that the nutrient equation in the form used for the implementation is
+\begin{equation}
+  \dot c-d\,\nabla_X^2 c+g\,\phi\,c=0.
+  \label{eq:theory_c_impl}
+\end{equation}
+The numbers in Chapter~\ref{ch:ansys} are computed with the printed form~\eqref{eq:theory_c}
+unless stated otherwise. Time is
 normalised and written in units of $T^*$. The parameters of Table~2 of the paper are listed in
 Table~\ref{tab:theory_klempt2024}.
 
