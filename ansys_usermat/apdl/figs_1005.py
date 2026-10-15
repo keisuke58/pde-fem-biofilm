@@ -6,7 +6,7 @@ started at 0 with rate 0), stored in results/2026-10-01_paper_values/
 in F:\biofilm_upf_wired as phi_trace_ds_pv_exact_1sp.csv and <name>_ds_kl_*.csv).
 Stiffness also as in Table 2 / Eq. 20 (2 Oct): E = 10 Pa, nu = 0.49, weighted
 with phi^2 (void floor 1e-3): --set YOUNG_BIO=1e-5 --set POISSON_BIO=0.49
---set YOUNG_VOID=-1e-3 (deck units MPa). Stresses are plotted in Pa.
+--set YOUNG_VOID=-1e-3 (deck units MPa). Stresses are plotted divided by E (15 Oct 2026).
 Decks: make_wired_deck.py on the partner's stage-1 deck with
   --set K_LOCAL1=1e-3 --set K_LOCAL2=0 --set MY_BIOSTART2=0.0
   and --props 7=1e-3,28=1 (Eq. 36 in the material routine) or 28=3 (the
@@ -94,10 +94,13 @@ def fig_exact():
     return float(eb.max()), float(el.max())
 
 
+E = 10.0   # Pa, Klempt 2024 Table 2; stresses are shown as von Mises / E
+
+
 def read_all(p):
     rows = read_rows(p)[1:]
     a = np.array([[float(x) for x in r] for r in rows])
-    return a[:, 0].astype(int), a[:, 1] * 1e6, a[:, 2:5].mean(axis=1) * 1e6, a[:, 5]   # MPa -> Pa
+    return a[:, 0].astype(int), a[:, 1] * 1e6 / E, a[:, 2:5].mean(axis=1) * 1e6 / E, a[:, 5]   # MPa -> Pa, / E
 
 
 def fig_whole():
@@ -113,8 +116,8 @@ def fig_whole():
     lo, hi = q1[m].min(), q1[m].max()
     ax[0].plot([lo, hi], [lo, hi], "k--", lw=1, label="1 : 1")
     ax[0].plot([lo, hi], [ratio * lo, ratio * hi], "r-", lw=1, label=f"{ratio:.2f} : 1 (median)")
-    ax[0].set(xlabel="von Mises [Pa], Eq. 36 in the material routine",
-              ylabel="von Mises [Pa], the element's own growth variable",
+    ax[0].set(xlabel="von Mises$/E$, Eq. 36 in the material routine",
+              ylabel="von Mises$/E$, the element's own growth variable",
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
     fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
@@ -126,7 +129,7 @@ def fig_whole():
 def read_elem(p):
     a = np.array([[float(x) for x in r] for r in read_rows(p)[1:]])
     a = a[1:]                                                    # drop result set 1
-    return a[:, 2], a[:, 9] * 1e6, a[:, 3:6].mean(axis=1) * 1e6, a[:, 11] * 1e6, a[:, 10]   # MPa -> Pa
+    return a[:, 2], a[:, 9] * 1e6 / E, a[:, 3:6].mean(axis=1) * 1e6 / E, a[:, 11] * 1e6 / E, a[:, 10]   # MPa -> Pa, / E
 
 
 def fig_elem():
@@ -139,7 +142,7 @@ def fig_elem():
         ax[0].plot(t, nb, "C3" + ls, marker="s", ms=4, label=f"largest neighbour, {name}")
         ax[1].plot(t, al, "C2" + ls, marker="o", ms=4, label=name)
         out[name] = (float(q[-1]), float(p[-1]), float(nb[-1]), float(al[-1]))
-    ax[0].set(xlabel=r"time $T^*$", ylabel="von Mises [Pa]", title="seeded element 220 and its neighbours")
+    ax[0].set(xlabel=r"time $T^*$", ylabel="von Mises$/E$", title="seeded element 220 and its neighbours")
     ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
     ax[0].legend(fontsize=8)
     ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha - 1$", title=r"growth $\alpha - 1$ of element 220")
