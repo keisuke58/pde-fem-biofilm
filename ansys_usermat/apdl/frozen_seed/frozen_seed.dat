@@ -97,10 +97,14 @@ ETABLE,ECZ,CENT,Z
 EC_(1,1) = 0.6875,0.5625
 EC_(1,2) = 0.5625,0.6875
 EC_(1,3) = 0.0625,0.1875
+! points in the seed's edge; the element that contains each (any N)
 *DO,K_,1,2
-  ESEL,S,CENT,X,EC_(K_,1)-0.01,EC_(K_,1)+0.01
-  ESEL,R,CENT,Y,EC_(K_,2)-0.01,EC_(K_,2)+0.01
-  ESEL,R,CENT,Z,EC_(K_,3)-0.01,EC_(K_,3)+0.01
+  XC_ = (NINT(EC_(K_,1)*N-0.5+1e-9)+0.5)/N
+  YC_ = (NINT(EC_(K_,2)*N-0.5+1e-9)+0.5)/N
+  ZC_ = (NINT(EC_(K_,3)*N-0.5+1e-9)+0.5)/N
+  ESEL,S,CENT,X,XC_-0.25/N,XC_+0.25/N
+  ESEL,R,CENT,Y,YC_-0.25/N,YC_+0.25/N
+  ESEL,R,CENT,Z,ZC_-0.25/N,ZC_+0.25/N
   *GET,E_,ELEM,0,NUM,MIN
   NSLE,S
   N_ = 0
