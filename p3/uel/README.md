@@ -173,3 +173,25 @@ over the elements with phi > 0.5):
 | 8^3, nu = 0.49, mean dilatation | 0.013419 / 0.015773 | 0.013419 / 0.015773 |
 
 The unified model runs in Abaqus 2024 as a user element (results in `ansys_usermat/apdl/results/2026-10-uel/`).
+
+## Toward real numbers (15 Oct 2026, `calibrate_growth.py`)
+
+The growth rate is chosen so that the seed's mean alpha - 1 at Day 21 equals the measured CH volume increase,
+V(21)/V(3) = 1.80, read as alpha^3 = 1.80 from Day 1 (alpha - 1 = 0.216; assumptions: all of the increase is growth,
+little growth from Day 1 to 3). 8^3, finite strain, nu = 0.49, mean dilatation.
+- With the yield Y = 1 the growth has a ceiling, alpha - 1 = 0.107 near L0 = 13: faster growth eats the nutrient and
+  starves the seed (L0 = 40 gives 0.052). The measured increase is out of reach.
+- With less nutrient per growth it is reached: Y = 0.25, L0 = 53.1 gives alpha - 1 = 0.2154 and von Mises / E = 0.0794;
+  Y = 0.1, L0 = 113.9 gives 0.2165 and 0.0773. The stress does not depend on the choice of Y within 3 %.
+- von Mises / (E (alpha - 1)) = 0.36-0.37 in the seed, about a fifth of a laterally fixed film's 1/(1 - nu).
+
+Seed von Mises mean (max) for measured stiffness values:
+
+| E | von Mises mean | max | pressure |
+|---|---|---|---|
+| 10 Pa (Klempt et al. 2024) | 0.77-0.79 Pa | 0.89-0.92 Pa | 0.36-0.39 Pa |
+| 600 Pa | 46-48 Pa | 53-55 Pa | 22-23 Pa |
+| 41 kPa (Pattem et al. 2018, upper end) | 3.2-3.3 kPa | 3.6-3.8 kPa | 1.5-1.6 kPa |
+
+All far below the pressures reported to stop growth (0.1-1 MPa). The stiffness spans three decades and is the
+largest uncertainty. Not yet: the tooth and implant geometry, detachment, a stiffness for the measured composition.
