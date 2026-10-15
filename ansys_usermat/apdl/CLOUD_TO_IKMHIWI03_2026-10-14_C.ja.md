@@ -193,6 +193,8 @@ EML 側で CH の最終の MAP が出た（Tmcmc202601 **6e18e0b**、`docs/revis
 生データ・2 通路の最終段 `CH_ult_2c_raw_a33w`、seed 123、max logL −26.52）。これまでの CH の計算はすべて
 2d8d99e（読み取り値・1 通路、seed 7）の θ。`CLAUDE.md` の決まりどおり、MAP が変わったので第 4 章の 8³ の 5 菌種を回し直す。
 Tmcmc202601 は読むだけ（clone を 6e18e0b 以降に上げるだけで、そちらのファイルは変えない）。
+**15日 14 時の更新：** IKMHIWI03 はもう `map_pin.txt` / `-MapSha` と B2 の列（新しい MAP で 8³ の (a)、(c)、初期値は
+`phi_init.json` から）を用意している（68e40ee）。下の 2 と 4 は B2 がしているので、足りないのは 1、3、5、6 だけ。
 
 1. Tmcmc202601 の clone を 6e18e0b 以降にする。新旧の `CH.json` の θ（20 個）と、`phi_init.json` の CH の初期値を並べた表を
    報告に書く（旧は同じファイルの `superseded` の欄と `superseded/` のフォルダにある）。
@@ -225,8 +227,11 @@ ANSYS の計算とは別のプロセスなので、B の列を止めずに回し
    python p3\uel\make_seed_inp.py 8 p3\uel\abaqus_in --nu 0.49 --md
    $env:BIOFILM_ECO_CASE = (Resolve-Path p3\uel\abaqus_in\uel_eco.txt).Path
    ```
-   `unified_uel_abaqus.for` は固定形式の `ecology_native.f` と自由形式の `unified_uel.f90` を `!DEC$ FREEFORM` でつないだ
-   1 ファイル（ifort 用）。点モデルは環境変数 `BIOFILM_ECO_CASE` のファイルから読む（どのジョブも同じファイル）。
+   `unified_uel_abaqus.for` は**全部が固定形式**の 1 ファイル（15日 15 時に直した）。最初の版は自由形式の部分を
+   `!DEC$ FREEFORM` でつないでいて、Abaqus の `ifort /fpp` がそれを固定形式として読んで壊れた（報告ありがとう）。
+   いまは要素の部分を固定形式に変換して書く（7 桁目から、継続は 6 桁目、注釈は 1 桁目、132 桁まで）。クラウドで
+   `gfortran -cpp -ffixed-form -ffixed-line-length-132` でコンパイルし、模擬実行が最後の桁まで同じことを確かめた。
+   **git pull のあと `make_abaqus_source.py` をもう一度実行してから**回し直す。点モデルは環境変数 `BIOFILM_ECO_CASE` のファイルから読む（どのジョブも同じファイル）。
    ジョブは `.\run_abaqus.ps1 -InpFile p3\uel\abaqus_in\<名前>.inp -UserFile p3\uel\unified_uel_abaqus.for`
    （同じ PowerShell で、環境変数を設定した後に）。
 1. 1D の柱 `uel_column`（20 要素、力学は固定）。

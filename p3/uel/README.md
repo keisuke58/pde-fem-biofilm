@@ -131,9 +131,13 @@ Composition acting on the phase (`--lam 1 --psiref 0.32`, 16^3, small strain, as
 
 The antibiotic shrinks the biofilm itself by the same 12 % in both discretisations.
 
-Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, the fixed-form point model and the
-free-form element in one file, joined by `!DEC$ FREEFORM` (Intel Fortran). Instructions for IKMHIWI03:
-`ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
+Abaqus source: `make_abaqus_source.py` writes `unified_uel_abaqus.for`, all in fixed form: the point model as it
+is and the element converted from free to fixed form (column 7, continuation in column 6, comments from column 1,
+132 columns for Abaqus's /extend-source). The first version joined a free-form part with `!DEC$ FREEFORM`; Abaqus's
+`ifort /fpp` read it as fixed form and broke the module (IKMHIWI03, A-11, 15 Oct 2026). Check without Abaqus:
+`gfortran -cpp -ffixed-form -ffixed-line-length-132 -c unified_uel_abaqus.for`, then `test_uel_wrapper` and the
+emulation with that object give the same results to the last digit (column 0.1371 / 0.776 / 0.936; 8^3 seed edge
+0.0141, vM mean 0.012997). Instructions for IKMHIWI03: `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md` A-11.
 
 Abaqus cannot print a user element's state variables, so the element keeps the latest Gauss-point record (x, y,
 z, phi, c, alpha - 1, living biomass, von Mises, pressure) and `UEXTERNALDB` appends it to `uel_gp.txt` in the job
