@@ -42,27 +42,44 @@
 
 % --------------------------------------------------------
 \begin{frame}{Since the last meeting: the scope of the FEM part is fixed}
-\begin{columns}[T]
-\begin{column}{0.5\textwidth}
-\colorbox{c3!12}{\parbox{0.95\linewidth}{%
-\textbf{Thesis}\\[3pt]
-\begin{itemize}
-  \item \textbf{one and two species}
-  \item coupled into the IKM element (Klempt et al.\ 2024)
-  \item composition from the point model (Klempt et al.\ 2026)
-\end{itemize}}}
-\end{column}
-\begin{column}{0.48\textwidth}
-\colorbox{gray!12}{\parbox{0.95\linewidth}{%
-\textbf{Continuation at Keio}\\[3pt]
-\begin{itemize}
-  \item more species (from four)
-  \item two-way coupling
-\end{itemize}}}
-\end{column}
-\end{columns}
-\vspace{10pt}
-\centering\small One and two species can be checked against published examples.
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,
+  sp/.style={circle,draw=black!60,minimum size=0.32cm,inner sep=0},
+  lab/.style={font=\scriptsize,align=center},
+  hd/.style={font=\small\bfseries}]
+% thesis panel
+\draw[rounded corners,fill=c3!8,draw=c3] (0,0) rectangle (7.4,4.6);
+\node[hd,text=c3] at (3.7,4.25) {Thesis (LUH)};
+% one species
+\draw[rounded corners,fill=white,draw=c3!50] (0.3,1.25) rectangle (3.55,3.85);
+\node[sp,fill=c3!70] at (1.9,3.2) {};
+\node[lab] at (1.9,2.3) {one species\\[1pt] growth law, Eq.\ 36};
+\node[lab,text=black!60] at (1.9,1.6) {vs.\ Klempt et al.\ 2024};
+% two species
+\draw[rounded corners,fill=white,draw=c3!50] (3.85,1.25) rectangle (7.1,3.85);
+\node[sp,fill=c3!70] at (5.25,3.2) {}; \node[sp,fill=orange!70] at (5.7,3.2) {};
+\node[lab] at (5.5,2.3) {two species\\[1pt] composition, point model};
+\node[lab,text=black!60] at (5.5,1.6) {vs.\ Klempt et al.\ 2026};
+% one-way arrow
+\node[draw,rounded corners,fill=white,font=\scriptsize] (f) at (1.9,0.6) {field $\phi$};
+\node[draw,rounded corners,fill=white,font=\scriptsize] (pm) at (5.5,0.6) {composition $\phi_i,\psi_i$};
+\draw[arr,c3] (f)--node[above,font=\scriptsize]{one-way}(pm);
+% keio panel
+\draw[rounded corners,fill=gray!8,draw=gray] (7.8,0) rectangle (12.6,4.6);
+\node[hd,text=black!70] at (10.2,4.25) {Continuation (Keio)};
+\draw[rounded corners,fill=white,draw=gray!60] (8.1,1.25) rectangle (12.3,3.85);
+\foreach \x/\c in {9.3/c3!70,9.75/orange!70,10.2/green!50!black!50,10.65/red!60,11.1/violet!60}
+  \node[sp,fill=\c] at (\x,3.2) {};
+\node[lab] at (10.2,2.3) {five species, calibrated\\[1pt] (first runs: Appendix G)};
+\node[lab,text=black!60] at (10.2,1.6) {growth from the living biomass};
+\node[draw,rounded corners,fill=white,font=\scriptsize] (f2) at (8.95,0.6) {field};
+\node[draw,rounded corners,fill=white,font=\scriptsize] (pm2) at (11.45,0.6) {composition};
+\draw[arr,black!60] (f2.15)--(pm2.165);
+\draw[arr,black!60] (pm2.195)--node[below,font=\scriptsize]{two-way}(f2.345);
+\end{tikzpicture}
+
+\vspace{8pt}
+\small One and two species can be checked against published examples; the rest has no reference yet.
 \end{frame}
 
 % --------------------------------------------------------
@@ -204,18 +221,22 @@ same pattern (cosine 1.0000); factor $0.455=\tfrac12\cdot\tfrac{10}{11}$
 
 % --------------------------------------------------------
 \begin{frame}{Four things found along the way (partner element)}
-\begin{enumerate}
-  \item growth variable = mean of both species fields $\Rightarrow$ halved with one species\\
-        {\footnotesize the unused field stays at its start value; intended?}
-  \item start values must satisfy $\phi_1+\phi_2\le1$\\
-        {\footnotesize the example input starts both at 1; for one species I start the second at 0}
-  \item first result set not in equilibrium $\Rightarrow$ excluded\\
-        {\footnotesize zero stress on the first calls while the element sets up its operators}
-  \item front-growth term inactive (reading slip) $\Rightarrow$ the seed does not spread\\
-        {\footnotesize it also uses $|\Delta\phi|$ where Eq.\ 34 has $|\nabla\phi|$; corrected in a test copy, $\phi$ exceeds 1}
-\end{enumerate}
-\vspace{8pt}
-\small Questions for Oliver. Checks 1--3 do not depend on them.
+\centering\footnotesize\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}c>{\raggedright}p{0.3\linewidth}>{\raggedright}p{0.3\linewidth}>{\raggedright\arraybackslash}p{0.28\linewidth}@{}}
+\toprule
+ & what I found & effect & what I did\\
+\midrule
+1 & growth variable is the mean of both species fields & growth halved with one species (unused field stays at its start value) & asked Oliver whether intended\\
+2 & start values must satisfy $\phi_1+\phi_2\le1$ & example input starts both at 1 & one species: second field starts at 0\\
+3 & first result set not in equilibrium & zero stress while the element sets up its operators & first result set excluded\\
+4 & front-growth term inactive (reading slip); $|\Delta\phi|$ where Eq.\ 34 has $|\nabla\phi|$ & seed does not spread & corrected in a test copy: then $\phi$ exceeds 1\\
+\bottomrule
+\end{tabular}
+
+\vspace{10pt}
+\begin{tikzpicture}
+\node[draw=c3,fill=c3!8,rounded corners,font=\small,inner sep=5pt] {Checks 1--3 do not depend on these four points.};
+\end{tikzpicture}
 \end{frame}
 
 % --------------------------------------------------------
@@ -286,16 +307,52 @@ case with the previous calibration
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Two modelling assumptions}
-\begin{enumerate}
-  \item \textbf{time link $s=0.15$}: point model advances $s\,\Delta t$ per step
-        (no paper links the two time scales)\\
-        \small case 6: winner appears for $s\gtrsim0.15$; case 3: share moves by 0.03--0.06
-  \item \textbf{cap $\phi_{\rm cap}=0.9$} on the amount seen by the point model\\
-        \small case 3: 0.664--0.668 for $\phi_{\rm cap}=0.85$--$0.95$
-\end{enumerate}
-\vspace{8pt}
-\small All other parameters are the published values.
+\begin{frame}{Two modelling assumptions, each with a sensitivity study}
+\begin{columns}[T]
+\begin{column}{0.49\textwidth}
+\centering\textbf{\small 1. time link $s=0.15$}\\[4pt]
+\begin{tikzpicture}[x=0.55cm,y=0.55cm]
+\draw[thick,->] (0,1.6)--(8.3,1.6) node[right,font=\scriptsize]{field, $\Delta t$};
+\foreach \k in {0,...,8} \draw (\k,1.45)--(\k,1.75);
+\draw[thick,->,orange!80!black] (0,0)--(8.3,0) node[right,font=\scriptsize]{point model};
+\foreach \k in {0,...,8} \draw[orange!80!black] (\k*0.15,-0.15)--(\k*0.15,0.15);
+\foreach \k in {0,2,4,6,8} \draw[gray,densely dotted] (\k,1.45)--(\k*0.15,0.15);
+\node[font=\scriptsize,orange!80!black,anchor=west] at (0,-0.6) {8 field steps $=8\cdot0.15\,\Delta t=1.2\,\Delta t$};
+\node[font=\scriptsize,align=center] at (4,-1.45) {each step: point model advances $s\,\Delta t$\\(no paper links the two clocks)};
+\end{tikzpicture}\\[6pt]
+\scriptsize\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}ll@{}}
+\toprule
+case (Klempt et al.\ 2026) & effect of $s$\\
+\midrule
+6: one species wins & winner appears for $s\gtrsim0.15$\\
+3: coexistence & share moves by 0.03--0.06\\
+\bottomrule
+\end{tabular}
+\end{column}
+\begin{column}{0.49\textwidth}
+\centering\textbf{\small 2. cap $\phi_{\rm cap}=0.9$}\\[4pt]
+\begin{tikzpicture}[x=0.55cm,y=1.7cm]
+\draw[->] (0,0)--(8.3,0) node[right,font=\scriptsize]{$\phi_{3D}$};
+\draw[->] (0,0)--(0,1.15) node[above,font=\scriptsize]{seen by point model};
+\draw[thick,c3] (0,0)--(7.2,0.9)--(8,0.9);
+\draw[gray,densely dashed] (7.2,0.9)--(8,1.0);
+\draw[gray,dotted] (0,0.9) node[left,font=\scriptsize,text=black]{0.9}--(7.2,0.9);
+\node[font=\scriptsize] at (8,-0.12) {1};
+\node[font=\scriptsize,align=center] at (3.6,-0.5) {the amount given to the point model\\is $\min(\phi_{3D},\phi_{\rm cap})$};
+\end{tikzpicture}\\[6pt]
+\scriptsize\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+$\phi_{\rm cap}$ & 0.85 & 0.90 & 0.95\\
+\midrule
+case 3 share & 0.668 & 0.667 & 0.664\\
+\bottomrule
+\end{tabular}
+\end{column}
+\end{columns}
+\vspace{6pt}
+\centering\small All other parameters are the published values.
 \end{frame}
 
 % --------------------------------------------------------
