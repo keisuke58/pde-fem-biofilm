@@ -655,16 +655,29 @@ Values not from a paper are marked as assumed.
 \begin{frame}{Appendix K: mesh convergence}
 \vspace{-4pt}
 \begin{center}
-\includegraphics[width=\linewidth]{assets/fig_mesh_convergence.png}
+\includegraphics[width=\linewidth,height=0.42\textheight,keepaspectratio]{assets/fig_mesh_convergence.png}
 \end{center}
 \vspace{-6pt}
-\footnotesize
+\scriptsize\setlength\tabcolsep{4pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+mesh & elements & nodes & integration points & seed elements\\
+\midrule
+$8^3$ & 512 & 729 & 4\,096 & 32\\
+$16^3$ & 4\,096 & 4\,913 & 32\,768 & 256\\
+$24^3$ & 13\,824 & 15\,625 & 110\,592 & 864\\
+\bottomrule
+\end{tabular}
+\hfill
+\begin{minipage}[t]{0.42\linewidth}\vspace{-30pt}
 \begin{itemize}
   \item seed stress: $+23\,\%$ from $8^3$ to $16^3$, $+3.4\,\%$ from $16^3$ to $24^3$; converging
   \item seed growth changes by less than $3.5\,\%$
-  \item the difference between the two growth laws is $-7$ to $-8\,\%$ on every mesh, so $8^3$ is enough to compare them
-  \item measured-data calibration at $24^3$ with growth from the living biomass: still running
+  \item difference of the growth laws: $-7$ to $-8\,\%$ on every mesh
+  \item $24^3$ with the measured-data calibration: still running
 \end{itemize}
+\end{minipage}\\[2pt]
+8 integration points per hexahedral element ($2\times2\times2$)
 \end{frame}
 
 \end{document}
