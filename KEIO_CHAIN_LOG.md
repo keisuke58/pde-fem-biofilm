@@ -546,3 +546,28 @@ emulation agree at 2x6x8 to 4.1e-7 (alpha - 1) and 4.7e-7 (vM) after a fix of th
 `unified_uel.f90` (alpha - 1 had been one increment behind; commit 55062c1). With `--bulge 1`: 3.9e-7 and 5.2e-7.
 Seed means (inner layer, 48 elements): alpha - 1 0.04634 (bulge 0), 0.04427 (bulge 1); vM/E 0.04775 and 0.04620;
 largest vM/E 0.2728 and 0.2927, both in the top row of elements at theta 67.5 deg (r 2.09 and 3.08).
+
+## 16 Oct 2026, fifa: tooth data provenance and licence, UEL on the implant sector
+
+Request: `CLOUD_TO_FIFA.ja.md`, entry of 15 Oct late night, item 1 (no computation). Nothing from the dataset was copied into the repository.
+
+**Where the tooth data is on fifa** (`/home/nishioka/IKM_Hiwi/`, not in this repository)
+- `FEM/external_tooth_models/OpenJaw_Dataset/`: Patient_1, Patient_2, Patient_3, `Dataset_Structure.pdf`; per patient a `Teeth/` folder of STL files (`P1_Tooth_18.stl` ...); 92 MB in all. It contains no LICENSE or README of its own.
+- `FEM/external_tooth_models/Open-Full-Jaw-main/` and `Open-Full-Jaw/` (clone of `https://github.com/diku-dk/Open-Full-Jaw.git`, 95 MB): the pipeline and docs of the same group; the dataset folder holds only a README.
+- `FEM/*.inp`: 38 decks built on these STL files (`biofilm_3tooth.inp` 26 MB, `p23_*`, `p30_*`, `p31_*`).
+- `tier2b_real/mesh_crown_real.py` reads `.../OpenJaw_Dataset/Patient_1/Teeth/P1_Tooth_30.stl`; `tier2b_real/_crown_real_watertight.stl` (194 KB, already in this public repository) is the clinical crown of that tooth, uprighted, scaled and capped.
+
+**Source**: Gholamalizadeh et al., Open-Full-Jaw: An open-access dataset and pipeline for finite element models of human jaw, Comput. Methods Programs Biomed. 224 (2022) 107009, University of Copenhagen (cited in `refs_openjaw.bib`, `biofilm_3tooth_refs.bib`). The OpenJaw archive (ERDA, Univ. Copenhagen) states research use and citation; I did not find a redistribution grant.
+
+**Licence**: `Open-Full-Jaw/LICENSE` is CC BY-NC-SA 4.0 (attribution, non-commercial, share-alike). It is the licence of that repository (code, docs); whether it covers the OpenJaw STL files is not stated in the data folder. Unknown: the exact terms of the three-patient STL archive.
+
+**Consequences / proposal for the cloud session**
+- Do not put any OpenJaw STL or mesh derived from it into the public repository until the terms are confirmed (ask the authors or read the ERDA archive page).
+- `tier2b_real/_crown_real_watertight.stl` is a derivative of P1_Tooth_30. Under CC BY-NC-SA it would need attribution, NC and the same licence; under "research use only" it should probably be removed. Decide after the terms are known.
+- Add a provenance entry to `THIRD_PARTY.md` (citation above, licence as found, "STL files not redistributed").
+
+## 16 Oct 2026, fifa: UEL checks (branches keio/uel-check, keio/uel-implant)
+
+- Frozen seed 24^3 (`p3/uel/results/seed_frozen_24.json`): vM mean over elements within 0.2 (3D) of (0.5, 0.5, 0) is 6.549e-3, ANSYS 24^3 6.536e-3 (+0.2 %). Seed (phi > 0.5, 420 elements): alpha - 1 8.70e-4, vM 5.093e-3, largest vM 1.345e-2 at (0.479, 0.646, 0.021).
+- Implant sector (`p3/uel/make_implant_uel_inp.py`, 2x6x8 elements, 90 degrees): Abaqus and the Python emulation agree to 4e-7 (alpha - 1) and 5e-7 (vM/E), also with `--bulge 1` (3.9e-7, 5.2e-7). Inner layer: alpha - 1 0.04634, vM/E 0.04775, largest vM/E 0.2728 at (r, theta, z) = (2.09, 67.5, 1.875). With `--bulge 1`: 0.04427, 0.04620, 0.2927 at (3.08, 67.5, 1.875).
+- Bug found and fixed in `unified_uel.f90`: the Gauss-point record (`uel_gp.txt`) was taken before `store_growth`, so its alpha - 1 was one increment behind (vM and pressure were not). Now taken after. The 8^3 seed in Abaqus still gives vM mean 0.01342, max 0.01577 (emulation 0.013419 / 0.015773).
