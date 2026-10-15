@@ -46,7 +46,18 @@ phi(0) 0.776, c(0) 0.936, living 0.526, the numbers of `driver.py` (15 Oct 2026)
 3D seed: `make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic]` writes `uel_seed.inp`, the seed of
 `JAXFEM/fuel_front_3d_coupled.py` (unit cube, hemisphere of radius 0.25 on z = 0, nutrient at x = 1). Optional
 PROPS(17) = total time at which the antibiotic starts and PROPS(18) = alpha* (the element switches
-`eco_alstar` from TIME(2)). `emulate_abaqus.py --seed n [--antibiotic]` runs it (8^3: 70 s).
+`eco_alstar` from TIME(2)). `emulate_abaqus.py --seed n [--antibiotic]` runs it (8^3: 1 min, 16^3: 45 min, most of it
+the dense-fill sparse direct solve in Python). Against `JAXFEM/fuel_front_3d_coupled.py` (lam = 0, 16^3, finite differences,
+explicit splitting), 15 Oct 2026:
+
+| 16^3 | UEL (emulated) | Python 3D |
+|---|---|---|
+| phi at the centre | 0.778 | 0.779 |
+| alpha - 1, nutrient side | 0.080 (element) | 0.085 (node) |
+| edge 30 deg, nutrient / far side | 0.0135 / 0.0036 | 0.0126 / 0.0034 |
+| same, antibiotic from T* = 0.5 | 0.0104 / 0.0027 (-23 %) | 0.0096 / 0.0025 (-24 %) |
+
+The two discretisations agree within 8 %, and the antibiotic effect within one percentage point.
 
 Not yet: the run inside Abaqus (Keio or IKMHIWI03; expect phi(0) = NT11 0.776, c(0) = NT12 0.936), finite-strain mechanics
 (small strain now), a closed-form tangent (central differences now).
