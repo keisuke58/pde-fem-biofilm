@@ -493,6 +493,9 @@ free growth $\mathbf u=(\alpha-1)\mathbf X$ & mechanics residual $2\times10^{-21
 3D seed, $16^3$, small strain, against the finite-difference 3D model ($\lambda=0$) & $\phi$ at the
 centre $0.778$ / $0.779$; edge $0.0135$ / $0.0126$; antibiotic $-23\,\%$ / $-24\,\%$\\
 finite against small strain, $8^3$ & edge $0.0141$ against $0.0143$ ($\alpha-1\approx0.07$)\\
+element with $\lambda=1$, $\Psi_{\rm ref}=0.32$, $16^3$, against the finite-difference 3D model & volume $0.0346\to0.0304$ ($-12\,\%$), finite differences $0.0351\to0.0309$ ($-12\,\%$); von Mises mean $-39\,\%$\\
+large growth ($\alpha-1=0.28$), finite against small strain, $8^3$ & edge $0.0507$ against $0.0560$ (small strain $10\,\%$ larger), von Mises mean $3\,\%$\\
+nutrient in the current configuration: uniform expansion, stretched bar & amount conserved, $c=1/1.331$; flux $DJ/F_{11}^2$; $8^3$ seed: edge $-4\,\%$, von Mises $-6\,\%$\\
 $\nu=0.49$, 3D seed, von Mises mean ($8^3$ / $16^3$) & fully integrated $0.0232$ / $0.0201$, mean dilatation $0.0134$ / $0.0163$ ($\nu=0.3$: $0.0130$ / $0.0144$)\\
 \bottomrule
 \end{tabularx}
@@ -543,9 +546,11 @@ local nutrient in the point model, $c^*c/c_{\rm ref}$ with $c_{\rm ref}=1$ & the
 option; the relation of $c^*$ to $c$ should come from the nutrient level of the calibration & no\\
 front term of Klempt et al.\ 2024 left out & not derivable from a potential; the edge moves by
 the kinematics (Proposition~\ref{prop:front}) & 1D, 2D, 3D\\
-mechanics: penalty in place of the incompressibility constraint, $\nu=0.3$ so far; nutrient in
-the reference configuration & finite strain in the element (Section~\ref{sec:fem}); the
-finite-difference 3D runs are small strain & finite against small strain\\
+mechanics: penalty in place of the incompressibility constraint, with the mean dilatation at
+$\nu=0.49$; nutrient in the reference configuration by default & finite strain in the element
+(Section~\ref{sec:fem}), the current configuration as an option; the finite-difference 3D runs
+are small strain & finite against small strain, $\nu=0.3$ against $0.49$, reference against
+current configuration\\
 reference energy $\Psi_{\rm ref}$ for $\lambda>0$ & the calibration does not fix the level of the
 point model's energy & one choice\\
 \bottomrule
@@ -555,7 +560,7 @@ point model's energy & one choice\\
 \noindent Open: $\beta_s$ in 3D (volumetric locking at $\nu=0.49$ is removed by the mean
 dilatation: in a bilayer strip the tip deflection is $1.07$ times beam theory on a coarse mesh,
 against $0.67$ fully integrated, and in the 3D seed the fully integrated element overstates the
-von Mises stress by $23\,\%$ even at $16^3$); nutrient diffusion in the current configuration; the run inside
+von Mises stress by $23\,\%$ even at $16^3$); the run inside
 Abaqus; the limit $\phi\to0$ of the composition equations (regularised by
 $\varepsilon$); existence and uniqueness (not attempted); a reader other than me; the overlap
 with F.\ Klempt's unpublished two-species work (only published sources were used; to be
