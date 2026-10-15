@@ -42,44 +42,22 @@
 
 % --------------------------------------------------------
 \begin{frame}{Since the last meeting: the scope of the FEM part is fixed}
-\centering
-\begin{tikzpicture}[x=1cm,y=1cm,
-  sp/.style={circle,draw=black!60,minimum size=0.32cm,inner sep=0},
-  lab/.style={font=\scriptsize,align=center},
-  hd/.style={font=\small\bfseries}]
-% thesis panel
-\draw[rounded corners,fill=c3!8,draw=c3] (0,0) rectangle (7.4,4.6);
-\node[hd,text=c3] at (3.7,4.25) {Thesis (LUH)};
-% one species
-\draw[rounded corners,fill=white,draw=c3!50] (0.3,1.25) rectangle (3.55,3.85);
-\node[sp,fill=c3!70] at (1.9,3.2) {};
-\node[lab] at (1.9,2.3) {one species\\[1pt] growth law, Eq.\ 36};
-\node[lab,text=black!60] at (1.9,1.6) {vs.\ Klempt et al.\ 2024};
-% two species
-\draw[rounded corners,fill=white,draw=c3!50] (3.85,1.25) rectangle (7.1,3.85);
-\node[sp,fill=c3!70] at (5.25,3.2) {}; \node[sp,fill=orange!70] at (5.7,3.2) {};
-\node[lab] at (5.5,2.3) {two species\\[1pt] composition, point model};
-\node[lab,text=black!60] at (5.5,1.6) {vs.\ Klempt et al.\ 2026};
-% one-way arrow
-\node[draw,rounded corners,fill=white,font=\scriptsize] (f) at (1.9,0.6) {field $\phi$};
-\node[draw,rounded corners,fill=white,font=\scriptsize] (pm) at (5.5,0.6) {composition $\phi_i,\psi_i$};
-\draw[arr,c3] (f)--node[above,font=\scriptsize]{one-way}(pm);
-% keio panel
-\draw[rounded corners,fill=gray!8,draw=gray] (7.8,0) rectangle (12.6,4.6);
-\node[hd,text=black!70] at (10.2,4.25) {Continuation (Keio)};
-\draw[rounded corners,fill=white,draw=gray!60] (8.1,1.25) rectangle (12.3,3.85);
-\foreach \x/\c in {9.3/c3!70,9.75/orange!70,10.2/green!50!black!50,10.65/red!60,11.1/violet!60}
-  \node[sp,fill=\c] at (\x,3.2) {};
-\node[lab] at (10.2,2.3) {five species, calibrated\\[1pt] (first runs: Appendix G)};
-\node[lab,text=black!60] at (10.2,1.6) {growth from the living biomass};
-\node[draw,rounded corners,fill=white,font=\scriptsize] (f2) at (8.95,0.6) {field};
-\node[draw,rounded corners,fill=white,font=\scriptsize] (pm2) at (11.45,0.6) {composition};
-\draw[arr,black!60] (f2.15)--(pm2.165);
-\draw[arr,black!60] (pm2.195)--node[below,font=\scriptsize]{two-way}(f2.345);
-\end{tikzpicture}
+\centering\small\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}>{\raggedright}p{0.17\linewidth}>{\raggedright}p{0.27\linewidth}>{\raggedright}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}@{}}
+\toprule
+ & content & reference & coupling\\
+\midrule
+\multicolumn{4}{@{}l}{\textcolor{c3}{\textbf{thesis (LUH)}}}\\
+one species & growth law, Eq.\ 36 & Klempt et al.\ 2024 & field $\to$ growth\\
+two species & composition from the point model & Klempt et al.\ 2026 & field $\to$ composition (one-way)\\
+\midrule
+\multicolumn{4}{@{}l}{\textcolor{black!60}{\textbf{continuation (Keio)}}}\\
+five species & calibrated point model; first runs in Appendix G & none yet & two-way: composition and stress act back\\
+\bottomrule
+\end{tabular}
 
-\vspace{8pt}
-\small One and two species can be checked against published examples; the rest has no reference yet.
+\vspace{10pt}
+One and two species can be checked against published examples; five species have no reference yet.
 \end{frame}
 
 % --------------------------------------------------------
