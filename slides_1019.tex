@@ -580,4 +580,42 @@ case with the previous calibration.\\[4pt]
 compared with Eq.\ 36.
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Appendix G: calibrated five-species model in the element}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth]{assets/fig_cal5_appendix.png}
+\end{center}
+\vspace{-4pt}
+\footnotesize
+\begin{itemize}
+  \item commensal flow condition (CH), parameters from the calibration to the measured data; $E=10$ Pa, $8^3$
+  \item (a) with Eq.\ 36 the shares move from equal shares to An $0.38$, Vei $0.23$, So $0.23$, Fn $0.09$, Pg $0.08$ at $T^*=1$
+  \item (b) living biomass from $0.90$ to $0.44$, mostly from So
+  \item growth $\alpha-1$ is the same as with two species to all digits ($6.752\cdot10^{-4}$); only the composition differs
+  \item (c) growth from the living biomass: same mean growth, seed von Mises $-7.0\,\%$ ($8^3$), $-7.1\,\%$ ($16^3$)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix H: two and five species, implementation}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}>{\raggedright}p{0.17\linewidth}>{\raggedright}p{0.38\linewidth}>{\raggedright\arraybackslash}p{0.39\linewidth}@{}}
+\toprule
+ & two species (5 October) & five species (since 10 October)\\
+\midrule
+point model & Python, through a material server (Fortran $\to$ C $\to$ socket $\to$ Python) &
+  Fortran, in the same executable (no server, about 4 times faster, same results)\\
+parameters & Klempt et al.\ 2026 cases 3 and 6 ($c^*=100$, $\alpha^*=10$) &
+  calibration (TMCMC, MAP, $5\times5$ interactions), $c^*=25$, $\alpha^*=0$\\
+start & equal shares & equal shares; calibrated Day-1 state for the living-biomass growth\\
+stiffness & partner's example input, $E=1000$ MPa & Klempt 2024, $E=10$ Pa\\
+coupling (Eq.\ 36) & \multicolumn{2}{l}{same code: amount scaled to $\phi_{3D}$, $\phi_{\rm cap}=0.9$, time link $s=0.15$}\\
+growth from the living biomass & -- & yes; point model runs on its own, $s=0.2375$ ($T^*=1$ is Day 21)\\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize The number of species is a parameter (1 to 5) of the same routine.
+\end{frame}
+
 \end{document}
