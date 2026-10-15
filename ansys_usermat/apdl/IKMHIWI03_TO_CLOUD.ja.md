@@ -885,3 +885,23 @@ Tmcmc202601 で 13:41 に CH の MAP が 6e18e0b に替わり、B の列の 2 �
 作業ディレクトリの `map_pin.txt` で旧 MAP に固定した（`run_calibrated.ps1` が読む。`-MapSha latest` で外す）。
 B2 の列で、その 2 本を旧 MAP で回し直し、新しい MAP の 8³ の (a)、(c) を回す。新しい MAP の Day-1 の状態は、
 README のとおり同じ commit の `phi_init.json` の `phi_init_state`（旧の commit にはこのファイルがないので、固定した run は前と同じ）。
+
+### A-11 の 2 回目（cfa9102 の固定形式のソース）：コンパイルは通った。`*STATIC` で止まり、指示 5 の 1 回を試して止めた
+
+1. **コンパイル：通った。**
+2. **リンク：止まった**（`LNK2005`、`libifcoremt` の関数が `libifcoremd` と二重）。
+   - ソースの OPEN / WRITE（`uel_gp.txt`）が静的な実行時ライブラリを引き込むため。10/05 の Abaqus UMAT と同じ問題で、
+     同じ直し方をした：`run_abaqus.ps1 -LibsDll` で、ジョブのフォルダに `abaqus_v6.env`（`compile_fortran += ['/libs:dll', '/threads']`）を書く。
+   - これでリンクは通った。
+3. **入力の読み込み：エラー。**
+   `TEMPERATURE BOUNDARY CONDITION VIA DOF 11 IS SPECIFIED FOR NODE 1 IN A *STATIC PROCEDURE. THIS IS CURRENTLY NOT ALLOWED`
+   （自由度 11、12 の境界条件は `*STATIC` では使えない。連成の温度変位解析を使え、という文）。
+4. **指示 5 の 1 回：** `*STATIC, DIRECT` を `*COUPLED TEMPERATURE-DISPLACEMENT, STEADY STATE` に替えた（`uel_column_ctd`）。
+   - 解析は最後まで回った（14 秒、エラー 0）。
+   - **しかし値が合わない：** x = 0 の節点（1〜4）で NT11 = 0.8561、NT12 = 7.889e6（期待 0.776、0.936）。
+   - `.sta`：自動の刻みになり、刻みが 0.00396 から 0.0676 まで大きくなって 10 増分で終わった（`DIRECT` の固定の刻みにならない）。
+     定常の連成では、要素に渡る刻みや時間の扱い（LFLAGS）が `*STATIC` と違うのだと思う。
+   - `uel_gp.txt` はジョブのフォルダにできていない。
+5. **止めた。** `.dat` と `.sta` を `results/2026-10-uel/uel_column_ctd.*` に置いた（.msg は警告 2 つだけ、入力の処理のもの）。
+   - 案：過渡の `*COUPLED TEMPERATURE-DISPLACEMENT`（`DELTMX` など）にして、最大の刻みを初めの刻みと同じにする（固定の刻みの代わり）。
+   - シードの 4 本は回していない。
