@@ -9,7 +9,9 @@ Writes uel_seed<n>[_small][_nu49][_md][_ab].inp (the Abaqus job name) and uel_ec
 current configuration (--cur).
 VARIABLES = 128: SVARS(113:128) hold von Mises stress and pressure per Gauss point. With --antibiotic the element
 gets PROPS(17) = the total time at which the antibiotic starts (T* = 0.5) and PROPS(18) = alpha* = 0.65. Build and run as in make_column_inp.py (job=uel_seed).
-Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1, u = 0;
+Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1 and 1 on the supply face
+x = 1 already here (switching the supply inside the first growth increment lowered the growth by 12 % on 8^3: the
+jump enters the consistent mass term; Abaqus, 15 Oct 2026), u = 0;
 GROW: T = 0.2375 in 60 fixed increments, c = 1 at x = 1, u = 0 at
 z = 0. Parameters as fuel_front_3d_coupled.run: D = 0.2, L0 = 2, beta = 0.02, eta_phi = 1, K_phi = 1e-5.
 The Python script splits the equations explicitly on a finite-difference grid, so it is a comparison,
@@ -75,11 +77,11 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
         out.append(f"*NSET, NSET={name}")
         out.extend(", ".join(ids[k:k + 16]) for k in range(0, len(ids), 16))
     nset("ALL", np.ones(len(nodes), bool)); nset("BASE", np.isclose(nodes[:, 2], 0.0))
-    nset("SUPPLY", np.isclose(nodes[:, 0], 1.0))
+    nset("SUPPLY", np.isclose(nodes[:, 0], 1.0)); nset("NOSUP", ~np.isclose(nodes[:, 0], 1.0))
     nset("PROBE", np.isclose(nodes[:, 1], 0.5) & (nodes[:, 2] <= 0.3 + 1e-12))
     phi = seed_phi(nodes)
     out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL, "*BOUNDARY", "ALL, 1, 3, 0.0",
-            "ALL, 12, 12, 0.1"]
+            "NOSUP, 12, 12, 0.1", "SUPPLY, 12, 12, 1.0"]   # supply 1 from the start, as the Python 3D model
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
     out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / nin:.10g}, {T:.10g}", *CTRL,

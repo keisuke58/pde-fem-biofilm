@@ -158,3 +158,8 @@ to 0.011 and alpha - 1 up to 0.009 lower (von Mises mean 0.01135 against 0.01300
 one iteration (70 iterations in 61 increments): its default check for temperature-type DOFs, 0.5 % of the average
 flux, is too loose for phi and c. The decks now set `*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL` to 1e-8 and allow more
 iterations, and state AMPLITUDE=STEP on the growth step; the fifth try reruns the seeds.
+Fifth try: same values, so the tolerance was not the cause. The cause was the start: Abaqus switched the supply at
+x = 1 from 0.1 to 1 inside the first growth increment (start-of-increment value 0.1), the emulation had it at 1 from
+the start. With the same switch in the emulation, Abaqus and the emulation agree Gauss point by Gauss point to
+c 1.8e-6, alpha - 1 5e-6, von Mises 2e-6: the element works in Abaqus. The jump enters the consistent mass term and
+lowered the growth by 12 % on 8^3; the seed deck now prescribes the supply already in the INIT step.
