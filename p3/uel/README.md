@@ -40,7 +40,7 @@ commands are in its header. `emulate_abaqus.py` runs the same two steps by calli
 Abaqus's argument list and the point model from that file: 20 elements give alpha - 1 0.1371,
 phi(0) 0.776, c(0) 0.936, living 0.526, the numbers of `driver.py` (15 Oct 2026).
 
-3D seed: `make_seed_inp.py [n] [outdir] [--lam 1 --psiref 1.75] [--antibiotic]` writes `uel_seed.inp`, the seed of
+3D seed: `make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic]` writes `uel_seed.inp`, the seed of
 `JAXFEM/fuel_front_3d_coupled.py` (unit cube, hemisphere of radius 0.25 on z = 0, nutrient at x = 1). Optional
 PROPS(17) = total time at which the antibiotic starts and PROPS(18) = alpha* (the element switches
 `eco_alstar` from TIME(2)). `emulate_abaqus.py --seed n [--antibiotic]` runs it (8^3: 70 s).
