@@ -63,14 +63,14 @@ def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-
     raise RuntimeError("no convergence")
 
 
-def seed(n, antibiotic=False, finite=True, nu=0.3, md=False, L0=2.0, lam=0.0, psiref=0.0, cur=False):
+def seed(n, antibiotic=False, finite=True, nu=0.3, md=False, L0=2.0, lam=0.0, psiref=0.0, cur=False, Y=1.0):
     import time as _t
     from make_seed_inp import cube, seed_phi
     sys.path.insert(0, str(HERE.parents[1] / "JAXFEM")); sys.path.insert(0, str(HERE.parents[1]))
     from fuel_front_3d_species import edge_disp
     nodes, elems = cube(n)
     T, nin, t0 = 0.2375, 60, 1e-8
-    P = props_base(s=1.0, D=0.2, L0=L0, lam=lam, psiref=psiref, nu=nu)     # as make_seed_inp.deck
+    P = props_base(s=1.0, D=0.2, L0=L0, lam=lam, psiref=psiref, nu=nu, Y=Y, mu_b=Y * np.log(0.1))  # as make_seed_inp.deck (c_stop = 0.1 for any Y)
     if antibiotic:
         P = np.r_[P, t0 + 0.5 * T, 0.65]
     props = F(P)
@@ -106,6 +106,9 @@ def seed(n, antibiotic=False, finite=True, nu=0.3, md=False, L0=2.0, lam=0.0, ps
           f"{edge_disp(np.linspace(0, 1, nn), u, 30, np.pi):.4f}; biofilm (phi > 0.5) von Mises mean / max "
           f"{st[inb, 0].mean():.4e} / {st[inb, 0].max():.4e}, pressure mean {st[inb, 1].mean():.4e}; "
           f"{_t.time() - time_start:.0f} s")
+    return dict(alpha_seed=float(np.mean([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv, b in zip(SV, inb) if b])),
+                vm_mean=float(st[inb, 0].mean()), vm_max=float(st[inb, 0].max()), p_mean=float(st[inb, 1].mean()),
+                edge=float(edge_disp(np.linspace(0, 1, nn), u, 30, 0.0)), SV=SV, U=U, nodes=nodes, elems=elems)
 
 
 if __name__ == "__main__":
