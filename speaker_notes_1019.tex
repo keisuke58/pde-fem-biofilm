@@ -451,6 +451,30 @@ Studio and run the jobs from PowerShell, one at a time.
 3 つ目は、APDL のマクロと Python で結果を JSON に書き出し、図にします。ビルドは Intel Fortran と
 Visual Studio、計算は PowerShell から 1 本ずつ回しています。
 
+\slide{(Appendix G, only if asked) calibrated five-species model}{1:00}
+\EN I also ran the coupling with the five-species model calibrated to the
+measured data of the commensal flow condition. With Eq.\ 36 the growth is the
+same as with two species to all digits; only the composition changes. At the
+end An is the largest share, and the living biomass falls from 0.90 to 0.44,
+mostly through So. With growth from the living biomass, the mean growth is
+the same and the seed stress is about 7\,\% lower on both meshes.
+\JA 測定データで較正した 5 種のモデル（共生菌・流れの条件）でも連成を回しました。式 36 では、成長は
+2 種のときと全桁同じで、組成だけが変わります。最後は An の割合が最も大きく、生きたバイオマスは
+0.90 から 0.44 に下がり、その多くは So の分です。生きたバイオマスで成長させると、平均の成長は同じで、
+シードの応力は 2 つのメッシュとも約 7\,\% 低くなります。
+
+\slide{(Appendix H, only if asked) two and five species, implementation}{1:00}
+\EN The coupling is the same code; the number of species is a parameter.
+Three things changed: I moved the point model from Python, called through a
+material server, into Fortran in the same executable, which gives the same
+results about four times faster; the paper's parameters were replaced by the
+calibrated ones; and the growth from the living biomass was added. The
+stiffness is that of Klempt 2024 instead of your example input.
+\JA 連成は同じコードで、種の数はパラメータです。変えたのは 3 点です。点モデルを、材料サーバー経由で
+呼んでいた Python から、同じ実行ファイルの中の Fortran に移しました（結果は同じで、約 4 倍速い）。
+論文のパラメータを較正した値に置き換えました。そして、生きたバイオマスで成長させる方式を足しました。
+剛性はオリバーの例の値ではなく、Klempt 2024 の値です。
+
 \slide{References}{(no talk)}
 \EN Leave this slide up only if asked; the four papers are the ones cited on
 the slides. Three appendix slides follow (notation, background of the growth
