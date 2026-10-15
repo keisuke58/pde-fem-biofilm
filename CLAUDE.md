@@ -34,7 +34,8 @@ Abaqus run is possible here but nothing has been run here yet.
   that organisation, so **the user syncs it by hand on fifa:**
   `git fetch origin master && git push lab origin/master:main` (never the
   stale local `master`). CI runs by hand only; run `pytest tests/` before
-  every push.
+  every push, except when only slides, notes or figures changed (the user, 15 Oct
+  2026: no tests for slide work).
 
 ## Key directories
 

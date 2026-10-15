@@ -271,7 +271,7 @@ $\kappa$ chosen so that the mean growth of the seed equals Eq.\ 36
 \scriptsize\setlength\tabcolsep{2pt}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-seed means, $T^*=1$ & Eq.\ 36 & living & diff.\\
+seed, $T^*=1$ & Eq.\ 36 & living & diff.\\
 \midrule
 $\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
 von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
@@ -526,45 +526,44 @@ other diffusion and a 2nd-order scheme. Table 3's pressure fits $\mu$ in MPa.
 
 % --------------------------------------------------------
 \begin{frame}{Appendix E: growth from the living biomass, implementation and runs}
-\begin{columns}[T]
-\begin{column}{0.46\textwidth}
-\scriptsize
-\textbf{Change in the material routine} (Appendix C, line 5 only):
+\vspace{-6pt}
 \[
 \ln\alpha_{n+1}=\ln\alpha_n+\kappa\,\phi_{3D}\!\int_{t_n}^{t_{n+1}}\!\sum_i\phi_i\psi_i\,dt
+\qquad\text{(Appendix C, line 5 only)}
 \]
-\begin{itemize}
-  \item same form as Klempt 2024 Table 1 (increment of $\ln\alpha$); $\phi_{3D}\in[0,1]$
-        marks where the biofilm is
-  \item point model at each Gauss point runs on its own (not scaled to $\phi_{3D}$),
-        started when $\phi_{3D}\ge\phi_{\min}$ from the calibrated Day-1 state
-  \item integral over the point model's own substeps, clock $s$ per unit $T^*$
-  \item point-model state kept as state variables; the element itself unchanged
-  \item $\kappa=8.14\cdot10^{-3}$: the mean $\alpha-1$ of the seed at $T^*=1$ equals Eq.\ 36
-        (difference $-0.003\,\%$); assumed, not from a paper
-\end{itemize}
+\vspace{-4pt}
+\begin{columns}[T]
+\begin{column}{0.44\textwidth}
+\scriptsize\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\raggedright}p{0.3\linewidth}>{\raggedright\arraybackslash}p{0.66\linewidth}@{}}
+\toprule
+item & how\\
+\midrule
+form & increment of $\ln\alpha$, as Klempt 2024 Table 1\\
+$\phi_{3D}\in[0,1]$ & only marks where the biofilm is\\
+point model & one per Gauss point, on its own (not scaled to $\phi_{3D}$)\\
+start & when $\phi_{3D}\ge\phi_{\min}$, from the calibrated Day-1 state\\
+integral & over its own substeps, clock $s$ per unit $T^*$\\
+storage & state variables of the Gauss point; element unchanged\\
+$\kappa$ & $8.14\cdot10^{-3}$: mean $\alpha-1$ as Eq.\ 36 ($-0.003\,\%$); assumed\\
+\bottomrule
+\end{tabular}
 \end{column}
-\begin{column}{0.52\textwidth}
-\scriptsize\setlength\tabcolsep{2pt}
+\begin{column}{0.53\textwidth}
+\scriptsize\setlength\tabcolsep{2pt}\renewcommand{\arraystretch}{1.15}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-seed means, $T^*=1$ & Eq.\ 36 & living & diff.\\
+seed, $T^*=1$ & Eq.\ 36 & living & diff.\\
 \midrule
 $\alpha-1$, $8^3$ & $6.752\cdot10^{-4}$ & $6.752\cdot10^{-4}$ & $0.0\,\%$\\
 von Mises, $8^3$ [Pa] & $4.684\cdot10^{-4}$ & $4.357\cdot10^{-4}$ & $-7.0\,\%$\\
-von Mises, $16^3$; $24^3$ & & & $-7.1$; $-7.8\,\%$\\
-antibiotic vs.\ none, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
+vM, $16^3$; $24^3$ & & & $-7.1$; $-7.8\,\%$\\
+vM$/(\alpha-1)$ [Pa] & $0.69$ & $0.64$ & \\
+antibiotic, $8^3$ & $0\,\%$ & $-32\,\%$ & \\
 \bottomrule
 \end{tabular}\\[3pt]
-five species calibrated (CH), $E=10$ Pa, $\nu=0.49$; $24^3$ and the antibiotic
-case with the previous calibration.\\[4pt]
-\begin{itemize}
-  \item the difference is not in the amount but in how the growth is spread inside the seed
-        (von Mises$/(\alpha-1)$ 0.69 $\to$ 0.64 Pa)
-  \item $\alpha-1$ and the stress scale with $\kappa$
-  \item antibiotic: in Eq.\ 36 only the composition changes; here the growth drops
-        (same sensitivity for all species, strength assumed)
-\end{itemize}
+CH, $E=10$ Pa, $\nu=0.49$; $24^3$ and the antibiotic case with the previous calibration.
+Same amount of growth, different spread inside the seed; $\alpha-1$ and stress scale with $\kappa$.
 \end{column}
 \end{columns}
 \end{frame}
@@ -587,14 +586,16 @@ compared with Eq.\ 36.
 \includegraphics[width=\linewidth]{assets/fig_cal5_appendix.png}
 \end{center}
 \vspace{-4pt}
-\footnotesize
-\begin{itemize}
-  \item commensal flow condition (CH), parameters from the calibration to the measured data; $E=10$ Pa, $8^3$
-  \item (a) with Eq.\ 36 the shares move from equal shares to An $0.38$, Vei $0.23$, So $0.23$, Fn $0.09$, Pg $0.08$ at $T^*=1$
-  \item (b) living biomass from $0.90$ to $0.44$, mostly from So
-  \item growth $\alpha-1$ is the same as with two species to all digits ($6.752\cdot10^{-4}$); only the composition differs
-  \item (c) growth from the living biomass: same mean growth, seed von Mises $-7.0\,\%$ ($8^3$), $-7.1\,\%$ ($16^3$)
-\end{itemize}
+\scriptsize\renewcommand{\arraystretch}{1.15}\setlength\tabcolsep{3pt}
+\begin{tabular}{@{}>{\raggedright}p{0.15\linewidth}>{\raggedright}p{0.07\linewidth}>{\raggedright}p{0.27\linewidth}>{\raggedright}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}@{}}
+\toprule
+ & start & $T^*=1$ & growth $\alpha-1$ & seed von Mises\\
+\midrule
+shares (Eq.\ 36) & 0.2 each & An 0.38, Vei 0.23, So 0.23, Fn 0.09, Pg 0.08 & $6.752\cdot10^{-4}$, same as two species & $4.68\cdot10^{-4}$ Pa\\
+living biomass $\sum_i\phi_i\psi_i$ & 0.90 & 0.44 (mostly So lost) & same mean & $-7.0\,\%$ ($8^3$),\newline $-7.1\,\%$ ($16^3$)\\
+\bottomrule
+\end{tabular}\\[3pt]
+commensal flow condition (CH), calibration to the measured data, $E=10$ Pa, $8^3$
 \end{frame}
 
 % --------------------------------------------------------
@@ -616,6 +617,17 @@ growth from the living biomass & -- & yes; point model runs on its own, $s=0.237
 \bottomrule
 \end{tabular}\\[6pt]
 \footnotesize The number of species is a parameter (1 to 5) of the same routine.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix I: fields on the mid-plane, five species}
+\vspace{-4pt}
+\begin{center}
+\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{assets/fig_cal5_fields.png}
+\end{center}
+\vspace{-6pt}
+\scriptsize Element values at $T^*=1$, $16^3$. The two growth laws give the same nutrient and almost the same
+$\alpha-1$; the stress ring around the seed is lower with growth from the living biomass.
 \end{frame}
 
 \end{document}
