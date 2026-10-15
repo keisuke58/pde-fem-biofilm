@@ -144,6 +144,9 @@ z, phi, c, alpha - 1, living biomass, von Mises, pressure) and `UEXTERNALDB` app
 directory (or at the absolute path in BIOFILM_UEL_GP) every 10th increment and at the end of the analysis (it also reads the point model's constants at
 LOP = 0, before any element call). Through the emulation (which now passes each element its own JELEM) the file
 equals the state variables: 8^3, vM mean 0.0130, max 0.0164 over the elements with phi > 0.5.
+Until 16 Oct 2026 the record was taken before the growth update, so its alpha - 1 was one increment behind (vM and
+pressure were not); now it is taken after `store_growth`. Implant sector 2x6x8 (`make_implant_uel_inp.py`): the file
+agrees with the emulation to 4e-7 in alpha - 1 and 5e-7 in vM at the last increment (before: 2 % in alpha - 1).
 
 Abaqus procedure: Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC (IKMHIWI03, second try of
 A-11), so the decks use a transient *COUPLED TEMPERATURE-DISPLACEMENT with fixed increments (no DELTMX) and declare the
