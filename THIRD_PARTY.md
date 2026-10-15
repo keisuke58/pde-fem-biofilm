@@ -149,3 +149,21 @@ al. 2019, Blaszczyk et al. 2022) are not open access and are **not** bundled;
 Unpublished experimental data provided by the experimental side (Heine) for the
 companion Nishioka–Heine paper, not third-party licensed content. Provenance and
 sheet layout are recorded in [`data/README.md`](data/README.md).
+
+---
+## `tier2b_real/_crown_real_watertight.stl` — clinical crown derived from the Open-Full-Jaw dataset
+
+> **Open-Full-Jaw: An open-access dataset and pipeline for finite element models of human jaw**
+> Torkan Gholamalizadeh et al.
+> *Computer Methods and Programs in Biomedicine* (2022) **224**:107009
+> Dataset and pipeline: <https://github.com/diku-dk/Open-Full-Jaw> (University of Copenhagen)
+
+The file is derived from `Patient_1/Teeth/P1_Tooth_30.stl` of the OpenJaw dataset by
+`tier2b_real/mesh_crown_real.py`: the clinical crown is cut out, uprighted, scaled and its cervical loop is
+closed. It is a modified version. The Open-Full-Jaw repository is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License
+(<https://creativecommons.org/licenses/by-nc-sa/4.0/>); the derived file is shared under the same licence,
+with the credit above, for non-commercial research use. The dataset archive asks for research use and
+citation of the work above. Only this one derived crown is in the repository; the original OpenJaw STL files
+and the meshes built from them are **not** redistributed (they stay on the Keio server). Provenance checked
+on 16 Oct 2026 (`KEIO_CHAIN_LOG.md`).
