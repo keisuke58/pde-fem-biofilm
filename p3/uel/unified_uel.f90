@@ -315,3 +315,49 @@ subroutine uel_store(U, coords, sv, props, dt) bind(C, name="uel_store")
   real(c_double), value :: dt
   call store_growth(U, coords, sv, props, dt)
 end subroutine uel_store
+
+
+! ---- Abaqus entry point ---------------------------------------------------------------------------
+! *USER ELEMENT, NODES=8, TYPE=U1, PROPERTIES=16, COORDINATES=3, VARIABLES=112
+! 1, 2, 3, 11, 12
+! SVARS per element: NSV x NGP = 14 x 8 = 112 (composition 1-12, growth 13, started 14).
+! Abaqus hands the element the state variables of the start of the increment at every
+! iteration; the composition is therefore advanced from them on every call (the same result each
+! iteration) and the end-of-increment values are written back.  The nodal dofs in U are ordered
+! node by node as listed above (1, 2, 3, 11, 12), which is the order the module uses.
+! The point model's constants are read once from BIOFILM_ECO_CASE (ecology_native.f, through
+! UEXTERNALDB or at the first call).
+subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, COORDS, MCRD, NNODE, &
+               U, DU, V, A, JTYPE, TIME, DTIME, KSTEP, KINC, JELEM, PARAMS, NDLOAD, JDLTYP, ADLMAG, &
+               PREDEF, NPREDF, LFLAGS, MLVARX, DDLMAG, MDLOAD, PNEWDT, JPROPS, NJPROP, PERIOD)
+  use unified_uel_mod
+  implicit none
+  integer :: NDOFEL, NRHS, NSVARS, NPROPS, MCRD, NNODE, JTYPE, KSTEP, KINC, JELEM, NDLOAD, NPREDF, &
+             MLVARX, MDLOAD, NJPROP
+  integer :: JDLTYP(MDLOAD, *), LFLAGS(*), JPROPS(*)
+  double precision :: RHS(MLVARX, *), AMATRX(NDOFEL, NDOFEL), SVARS(*), ENERGY(8), PROPS(*), &
+                      COORDS(MCRD, NNODE), U(NDOFEL), DU(MLVARX, *), V(NDOFEL), A(NDOFEL), TIME(2), &
+                      DTIME, PARAMS(*), ADLMAG(MDLOAD, *), PREDEF(2, NPREDF, NNODE), DDLMAG(MDLOAD, *), &
+                      PNEWDT, PERIOD
+  double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF)
+  logical :: ok
+  if (.not. eco_inited) call eco_native_init()
+  eco_damp = .true.
+  Un = U(1:NDOF) - DU(1:NDOF, 1)
+  sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
+  if (DTIME > 0d0) then
+    call advance_composition(U, Un, COORDS, sv, PROPS(1:16), DTIME, ok)
+    if (.not. ok) then
+      PNEWDT = 0.5d0                       ! ask Abaqus for a smaller increment
+      return
+    end if
+  end if
+  call residual(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), R)
+  RHS(1:NDOF, 1) = -R
+  if (LFLAGS(3) == 1 .or. LFLAGS(3) == 2) then
+    call tangent(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), K)
+    AMATRX = K
+  end if
+  if (DTIME > 0d0) call store_growth(U, COORDS, sv, PROPS(1:16), DTIME)
+  SVARS(1:NSV*NGP) = reshape(sv, [NSV*NGP])
+end subroutine UEL

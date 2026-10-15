@@ -20,5 +20,18 @@ Results (15 Oct 2026):
   substrate 0.1371 / 0.1370, phi(0) 0.776 / 0.772, c(0) 0.936 / 0.938, living 0.526; the 1D finite-difference
   model `JAXFEM/unified_two_level_fuel_1d.py` gives 0.137, 0.77, 0.938, 0.53. Newton residual < 1e-10.
 
-Not yet: the Abaqus wrapper (`SUBROUTINE UEL` with Abaqus's argument list calling `residual` and
-`tangent`), finite-strain mechanics (small strain now), a closed-form tangent (central differences now).
+The Abaqus entry point `SUBROUTINE UEL` is at the end of `unified_uel.f90`. On every call it advances the
+composition from the start-of-increment SVARS (so repeated Newton iterations of one increment give the
+same result), returns RHS = -R and, for LFLAGS(3) = 1 or 2, AMATRX = dR/dU; on a point-model failure it
+sets PNEWDT = 0.5. NSVARS = 8 x 14, NPROPS = 16 (order in the header of `unified_uel.f90`).
+`test_uel_wrapper.f90` calls it twice from the same state:
+
+```
+gfortran -O2 -ffree-line-length-none test_uel_wrapper.f90 unified_uel.o ecology_native.o -o test_uel_wrapper
+./test_uel_wrapper
+```
+
+Result: second call = first call (RHS, AMATRX, SVARS identical), RHS + R = 0, all 8 Gauss points started.
+
+Not yet: a run inside Abaqus (input deck with `*USER ELEMENT`; Keio or IKMHIWI03), finite-strain mechanics
+(small strain now), a closed-form tangent (central differences now).
