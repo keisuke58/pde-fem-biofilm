@@ -147,7 +147,9 @@ equals the state variables: 8^3, vM mean 0.0130, max 0.0164 over the elements wi
 
 Abaqus procedure: Abaqus does not allow boundary conditions on DOF 11 and 12 in *STATIC (IKMHIWI03, second try of
 A-11), so the decks use a transient *COUPLED TEMPERATURE-DISPLACEMENT with fixed increments (no DELTMX) and declare the
-element UNSYMM. The steady-state form chose its own increments and gave NT12 = 7.9e6 at x = 0. Linking needs the DLL
+element UNSYMM. The steady-state form chose its own increments and gave NT12 = 7.9e6 at x = 0. The transient form
+needs a specific heat (third try): dummy C3D8T elements on the same nodes with stiffness, conductivity and specific
+heat 1e-9 (`make_column_inp.overlay`). Linking needs the DLL
 runtime (`run_abaqus.ps1 -LibsDll`) because of the OPEN / WRITE of the output file.
 
 Not yet: the run inside Abaqus (expect phi(0) = NT11 0.776, c(0) = NT12 0.936 for the column).
