@@ -1,0 +1,141 @@
+{
+ "request": "A-18",
+ "n": 8,
+ "plate_thickness": 0.25,
+ "plate_nu": 0.3,
+ "plate_layers": 2,
+ "E_biofilm": 10.0,
+ "reference": "frozen_seed.dat (A-16), u = 0 at z = 0",
+ "measures": "seed = biofilm elements with mean nodal phi > 0.5; core = centroid within 0.2 of (0.5, 0.5, 0); layer1 = biofilm elements with centroid z = h/2; p = (SX + SY + SZ)/3 (tension > 0)",
+ "runs": [
+  {
+   "seed_elements": 16,
+   "seed_alpha_minus_1": 0.0006760574633517535,
+   "seed_vM": 0.0036558877569175573,
+   "core_elements": 4,
+   "core_vM": 0.007022877441133584,
+   "layer1_elements": 64,
+   "layer1_vM": 0.0008685468294362527,
+   "layer1_p": -0.0004676749720199772,
+   "max_vM_biofilm": 0.007022877441133586,
+   "max_vM_centroid": [
+    0.4375,
+    0.5625,
+    0.0625
+   ],
+   "biofilm_elements": 512,
+   "plate_elements": 0,
+   "run": "rigid_plate_8_ref",
+   "E_plate": null,
+   "exit": 0,
+   "errors": 0,
+   "nodes": 729,
+   "elements": 512
+  },
+  {
+   "seed_elements": 16,
+   "seed_alpha_minus_1": 0.0006760574633517535,
+   "seed_vM": 0.0036558877569325427,
+   "core_elements": 4,
+   "core_vM": 0.007022877441188528,
+   "layer1_elements": 64,
+   "layer1_vM": 0.0008685468294399977,
+   "layer1_p": -0.00046767497201997244,
+   "max_vM_biofilm": 0.00702287744118853,
+   "max_vM_centroid": [
+    0.5625,
+    0.4375,
+    0.0625
+   ],
+   "biofilm_elements": 512,
+   "plate_elements": 128,
+   "max_vM_plate": 0.002321549888206784,
+   "run": "rigid_plate_8_E1e10",
+   "E_plate": 10000000000.0,
+   "exit": 0,
+   "errors": 0,
+   "nodes": 891,
+   "elements": 640,
+   "plate_elements_mat2": 128,
+   "rel_diff": {
+    "seed_alpha_minus_1": 0.0,
+    "seed_vM": 4.098943406916078e-12,
+    "core_vM": 7.823519609928553e-12,
+    "layer1_vM": 4.311662138434258e-12,
+    "layer1_p": -1.021405182655144e-14,
+    "max_vM_biofilm": 7.823519609928553e-12
+   },
+   "shared_interface": true
+  },
+  {
+   "seed_elements": 16,
+   "seed_alpha_minus_1": 0.0006760574633517535,
+   "seed_vM": 0.003654239149415868,
+   "core_elements": 4,
+   "core_vM": 0.0070188067464351765,
+   "layer1_elements": 64,
+   "layer1_vM": 0.0008681530222007194,
+   "layer1_p": -0.00046749806990013316,
+   "max_vM_biofilm": 0.007018806746435177,
+   "max_vM_centroid": [
+    0.5625,
+    0.4375,
+    0.0625
+   ],
+   "biofilm_elements": 512,
+   "plate_elements": 128,
+   "max_vM_plate": 0.002319803438068548,
+   "run": "rigid_plate_8_E1e04",
+   "E_plate": 10000.0,
+   "exit": 0,
+   "errors": 0,
+   "nodes": 891,
+   "elements": 640,
+   "plate_elements_mat2": 128,
+   "rel_diff": {
+    "seed_alpha_minus_1": 0.0,
+    "seed_vM": -0.0004509458745197703,
+    "core_vM": -0.0005796334526023683,
+    "layer1_vM": -0.00045340932945314716,
+    "layer1_p": -0.00037825868482976865,
+    "max_vM_biofilm": -0.0005796334526024793
+   },
+   "shared_interface": true
+  },
+  {
+   "seed_elements": 16,
+   "seed_alpha_minus_1": 0.0006760574633517535,
+   "seed_vM": 0.003501154898141097,
+   "core_elements": 4,
+   "core_vM": 0.006642933923494177,
+   "layer1_elements": 64,
+   "layer1_vM": 0.000831616324109698,
+   "layer1_p": -0.0004509403143348838,
+   "max_vM_biofilm": 0.006642933923494178,
+   "max_vM_centroid": [
+    0.4375,
+    0.5625,
+    0.0625
+   ],
+   "biofilm_elements": 512,
+   "plate_elements": 128,
+   "max_vM_plate": 0.002158842129302875,
+   "run": "rigid_plate_8_E1e02",
+   "E_plate": 100.0,
+   "exit": 0,
+   "errors": 0,
+   "nodes": 891,
+   "elements": 640,
+   "plate_elements_mat2": 128,
+   "rel_diff": {
+    "seed_alpha_minus_1": 0.0,
+    "seed_vM": -0.042324291407382475,
+    "core_vM": -0.05410083271766153,
+    "layer1_vM": -0.04251987811702129,
+    "layer1_p": -0.03578266677990749,
+    "max_vM_biofilm": -0.05410083271766164
+   },
+   "shared_interface": true
+  }
+ ]
+}

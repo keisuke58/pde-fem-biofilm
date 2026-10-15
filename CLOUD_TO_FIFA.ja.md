@@ -5,6 +5,31 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月15日 深夜（歯の形状の準備：データの出典と、UEL をインプラントの形へ。急がない、24³ のあとで）
+
+P3 で歯やインプラントの形に進む準備。IKMHIWI03 で A-18（硬い板と固定境界の比較）を回している。歯は固定境界
+（バイオフィルムが乗る面で u = 0）で置き換えられる見込み。
+
+**1. 歯のデータの出典を調べる（最優先、計算なし）**
+- fifa の上で、歯の形状データを探す：`OpenJaw_Dataset`（`biofilm_3tooth_assembly.py` が `external_tooth_models/OpenJaw_Dataset/Patient_1`
+  の `P1_Tooth_23/30/31` を読む）、`tier2b_real/_crown_real_watertight.stl` の元になったファイル、ほかの STL や歯のメッシュ。
+  例：`find ~ / -iname '*openjaw*' -o -iname '*tooth*.stl' -o -iname '*crown*.stl' 2>/dev/null`。
+- 見つけたものについて報告に：置き場所、ファイル数と大きさ、**出典**（論文、URL、DOI）、**ライセンス**（README、LICENSE、
+  データの利用条件）、患者データなら匿名化と再配布の可否。分からなければ「分からない」と書く。
+- **データそのものはコミットしない。** このリポジトリは公開。ライセンスが再配布を認めていると確かめられるまで、
+  リポジトリに入れるのは出典の記録だけ（`THIRD_PARTY.md` に追記する案を報告に書く。追記はクラウドでやる）。
+- `tier2b_real/_crown_real_watertight.stl` はすでに公開リポジトリに入っている。出典が分かったら、ライセンス上問題ないかも書く。
+
+**2. UEL をインプラントの扇形に載せる（1 のあと）**
+- 形は `abaqus_composition/make_implant_inp.py` と同じ（半径 2.05 mm の首、厚さ 0.25、高さ 2.0、90° の扇形、六面体）。
+  内側の面（チタン）は u = 0、扇形の切り口は対称面、栄養は上面（z = 2.0）で c = 1、最初のシードは内側の 1 層で φ = 0.9。
+- `p3/uel/make_implant_uel_inp.py` を作る：`make_implant_inp.py` のメッシュ（節点と六面体）を使い、要素と手順は
+  `p3/uel/make_seed_inp.py` と同じ（UNSYMM、VARIABLES = 128、INIT と GROW の 2 段、`--md`、ν = 0.49）。
+- まず `p3/uel/emulate_abaqus.py` と同じやり方（ctypes）で Python から回し、そのあと Abaqus で回して一致を確かめる
+  （立方体のときは 4〜5 桁一致）。小さいメッシュ（例：nr 2、nt 6、nz 8）から。
+- 報告：シードの α − 1 と vM/E の平均、最大値とその位置、Python と Abaqus の差。`keio/uel-implant` ブランチに push。
+- `--bulge 1`（歯冠に近い形）は、扇形で一致を確かめてから。
+
 ## 2026年10月15日 夜（UEL の 24³ と、Abaqus での確認。急がない）
 
 ANSYS（IKMHIWI03）と UEL の独立な比較（`p3/uel/README.md` の「Cross-code check with ANSYS」）で、シード内部の vM の差が
