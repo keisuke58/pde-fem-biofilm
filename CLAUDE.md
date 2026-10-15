@@ -386,6 +386,9 @@ that it is not shared with anyone without asking him first.
   it). Cases A1j, A1k, A2.1a-c, A2.2a-c, A2.3a-c were not saved in his
   Workbench files; results are on the cluster, or recreate them from the
   existing cases.
+  **15 Oct:** sent him the result of the check by WhatsApp: no error found in
+  the math; two remarks (consumption scales with c0 when NUT_POS = 3, missing
+  parameters silently become 0); offered the other minor points by mail.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
