@@ -312,6 +312,19 @@ A-10b（重みだけ）は第 5 刻みで止まった。成長するのは **φ�
 3. 報告：新しい θ・新しい κ での (c) と (a) の vM の差（8³、16³、24³）。旧い θ では −7.8〜−8.0 % だった。
 4. **κ = 2.8 はやめる**（ユーザーの決定。空の硬さやメッシュを変えても T* ≈ 0.35 で止まる。体積の較正も先送り）。並んでいれば外す。
 
+## A-14. 方式 (c) を Abaqus のキューブで（15日夜、P3 の計算を慶應の Abaqus に移す準備）
+
+`abaqus_composition/make_cube_inp.py` に `--theta-json <C>.json`（較正済みの 5 菌種、mode 7）と `--growth --kappa`（方式 (c)、
+mode 9、κ、s = 0.2375、c_ref = 1。`run_calibrated.ps1 -Growth` と同じ定数）を足した。新しい CH の θ で作った入力の定数は、
+ANSYS の `w8_CH_cal_k0814_raw` の props と 25 個すべて一致（クラウドで確かめた）。`make_umat.py --native` の UMAT は gfortran で通る。
+1. Tmcmc202601 6e18e0b の `CH.json`、`write_eco_cfg.py --theta-json ... --phi-init <phi_init.json の CH>` で `BIOFILM_ECO_CASE`。
+2. 8³ を 2 本：(a) = `--theta-json CH.json`（mode 7）と (c) = `--theta-json CH.json --growth --kappa 8.135097e-3`。
+   栄養は ANSYS の本線と同じ扱い（`--cons` と `--diff` は 10/07 の Abaqus の 5 菌種の run と同じ値）。`run_comp.ps1 -Native`。
+3. 比べるもの：**同じプログラムの中での (c) と (a) の vM の比**（ANSYS 8³ で −7.0 %）と、シードの α − 1 の比
+   （ANSYS で −0.003 %）。Abaqus と ANSYS の値そのものは、シードの表し方の違いで 8³ では vM が 0.5 倍程度になる
+   （`abaqus_composition/README.md`）ので、比べない。
+4. 合えば 16³ も（Abaqus の 16³ は数分）。報告は A-14 として。
+
 ## B. 長い列（会議のあと、21〜30 日も回す）
 
 `run_chain.ps1 -Export ansys_usermat\apdl\results\2026-10-cal5 -Push` で、1 本ごとに push。順番：

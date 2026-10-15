@@ -122,3 +122,30 @@ Rudolf et al. 2025 が比べたのも拡散）。前線の項は WP3 の必須�
 - 計算は Abaqus（慶應のサーバー）だけ。KEIO_PLAN の WP1、WP2、WP4〜WP6 はもともと Abaqus。
 - WP3 で NEM の計算を足したくなったら、NEM の演算子（Rudolf et al. 2025 の Eq. 4–13）を Python で
   書くしかない。オリバーのソースは持っていかない。
+
+## 7. P3 の計算を Abaqus で（2026年10月15日）
+
+方針（`P3_OUTLINE.ja.md`）：P3 の計算の主役は**方式 (c)**（生きている量で成長、κ）。その裏付けと次の段階が
+**一つの原理のモデル**（`p3/unified_model.pdf`）。どちらも慶應の Abaqus で回せる形にした。
+
+**方式 (c)（UMAT、キューブ）：**
+- `python abaqus_composition/make_cube_inp.py OUT.inp --json <ANSYS の JSON> --theta-json CH.json --growth --kappa 8.135097e-3`
+  （mode 9。`--growth` なしは mode 7、(a) の比較用）。点モデルは `BIOFILM_ECO_CASE`（`write_eco_cfg.py --theta-json ... --phi-init ...`）。
+- θ は Tmcmc202601 の `final_theta_MAP/CH.json`（6e18e0b 以降、生データ・2 通路）。初期値は同じ commit の `phi_init.json`
+  （合計 1.001 のまま渡す。推定と同じ）。κ = 8.135097e−3 は新しい θ で (c) のシードの成長が (a) と同じになる値。
+- ANSYS（IKMHIWI03）での (c) と (a) の vM の差：8³ で −7.0 %（16³、24³ は B4）。Abaqus では同じプログラムの中の比で比べる（A-14）。
+
+**一つの原理のモデル（UEL、`p3/uel/`、README）：** Abaqus 2024 で動き、模擬実行と 4〜5 桁一致した（IKMHIWI03、15日）。
+- ソース：`python p3/uel/make_abaqus_source.py` → `unified_uel_abaqus.for`（全部固定形式、ifort）。
+- 入力：`make_column_inp.py`（柱の検査）、`make_seed_inp.py n outdir [--small] [--nu 0.49 --md] [--antibiotic] [--cur]`。
+- 環境変数：`BIOFILM_ECO_CASE`（点モデル）、`BIOFILM_UEL_GP`（積分点の結果のファイル、絶対パス）。`cpus=1`。
+- Abaqus で分かった注意（入力の生成にもう入っている）：
+  - 自由度 11、12（φ、c）は `*STATIC` では使えない → 過渡の `*COUPLED TEMPERATURE-DISPLACEMENT`（`DELTMX` なし = 固定の刻み）、
+    `*USER ELEMENT, UNSYMM`；
+  - 過渡の連成には比熱が要る → 同じ節点にダミーの C3D8T（材料 1e−9）；
+  - 補給の面（c = 1）は INIT のステップから与える（成長のステップの 1 増分目で切り替えると、8³ で成長が 12 % 下がる）；
+  - Windows では Fortran の OPEN/WRITE のため `/libs:dll`（`run_abaqus.ps1 -LibsDll`）が要った。Linux の ifort では未確認。
+- 期待値（模擬実行、`p3/uel/emulate_abaqus.py`）：柱 NT11 0.776、NT12 0.936。シード 8³ の vM 平均（φ > 0.5）0.01300（有限ひずみ）。
+- **慶應で最初にすること：** fifa で `uel_column` と `uel_seed8` を回し、上の値と比べる（Linux の ifort で同じになるか）。
+
+一つの原理のモデルを論文にするかは、Felix と Meisam に相談してから決める（Felix の未発表の 2 菌種の仕事と重なるため）。
