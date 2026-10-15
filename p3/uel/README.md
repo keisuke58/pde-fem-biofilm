@@ -173,3 +173,61 @@ over the elements with phi > 0.5):
 | 8^3, nu = 0.49, mean dilatation | 0.013419 / 0.015773 | 0.013419 / 0.015773 |
 
 The unified model runs in Abaqus 2024 as a user element (results in `ansys_usermat/apdl/results/2026-10-uel/`).
+
+## Toward real numbers (15 Oct 2026, `calibrate_growth.py`)
+
+The growth rate is chosen so that the seed's mean alpha - 1 at Day 21 equals the measured CH volume increase,
+V(21)/V(3) = 1.80, read as alpha^3 = 1.80 from Day 1 (alpha - 1 = 0.216; assumptions: all of the increase is growth,
+little growth from Day 1 to 3). 8^3, finite strain, nu = 0.49, mean dilatation.
+- With the yield Y = 1 the growth has a ceiling, alpha - 1 = 0.107 near L0 = 13: faster growth eats the nutrient and
+  starves the seed (L0 = 40 gives 0.052). The measured increase is out of reach.
+- With less nutrient per growth it is reached: Y = 0.25, L0 = 53.1 gives alpha - 1 = 0.2154 and von Mises / E = 0.0794;
+  Y = 0.1, L0 = 113.9 gives 0.2165 and 0.0773. The stress does not depend on the choice of Y within 3 %.
+- von Mises / (E (alpha - 1)) = 0.36-0.37 in the seed, about a fifth of a laterally fixed film's 1/(1 - nu).
+
+Seed von Mises mean (max) for measured stiffness values:
+
+| E | von Mises mean | max | pressure |
+|---|---|---|---|
+| 10 Pa (Klempt et al. 2024) | 0.77-0.79 Pa | 0.89-0.92 Pa | 0.36-0.39 Pa |
+| 600 Pa | 46-48 Pa | 53-55 Pa | 22-23 Pa |
+| 41 kPa (Pattem et al. 2018, upper end) | 3.2-3.3 kPa | 3.6-3.8 kPa | 1.5-1.6 kPa |
+
+All far below the pressures reported to stop growth (0.1-1 MPa). The stiffness spans three decades and is the
+largest uncertainty. Not yet: the tooth and implant geometry, detachment, a stiffness for the measured composition.
+
+## Limit of Klempt et al. 2024 (15 Oct 2026, `klempt2024_limit_test.py`)
+
+With one species, the living fraction frozen near 1, the nutrient fixed at c = 1, the phase fixed at
+phi = 1 and lambda = 0, the growth reaction is Eq. 36 of Klempt et al. 2024, alpha_dot = k_alpha phi with
+k_alpha = L0 liv ln 10. One element (one Gauss-point state, finite strain, E = 10 Pa, nu = 0.49, f = 1e-3),
+compared with references written without the element's source:
+
+| case | quantity | k_alpha = 1e-3, T = 1.1 (Table 2) | k_alpha = 0.5, T = 1 (alpha = 1.5) |
+|---|---|---|---|
+| free (3-2-1) | alpha - 1 vs Eq. 36 | 1.097802e-3 vs 1.097801e-3 | 0.4990009 vs 0.4990005 |
+| free | edge stretch vs alpha, stress | equal to 8 digits, sigma 1e-12 | equal to 8 digits, sigma 4e-14 |
+| all u = 0 | sigma vs (phi^2+f) K (alpha^-3 - 1) | rel. 3e-14 | rel. 2e-16 |
+| u_x = 0 at both ends | lateral stretch, sigma_xx vs numpy minimisation of W | rel. 8e-9 | rel. 2e-10 |
+
+The small difference in alpha - 1 (1e-6 relative) is the drift of the frozen point model over the run.
+This checks the growth law and the finite-strain mechanics of Klempt et al. 2024 (Eq. 20, 36). The phase
+equation of Klempt et al. 2024 (the k_alpha alpha term and the front term of Eq. 34) is not a limit of
+this model, so their Section 4 test cases cannot be reproduced with the element; the Python reproduction
+(`JAXFEM/`, Appendix D of the 19 Oct deck) covers them.
+
+## Cross-code check with ANSYS: seed with the phase frozen (A-16, 15 Oct 2026)
+
+Same problem in the UEL (`seed_frozen_reference.py`, mean dilatation) and in ANSYS (SOLID185 B-bar with the
+unchanged core of the thesis USERMAT, phi as nodal temperature; `ansys_usermat/apdl/frozen_seed/`). The two
+codes share no source. Seed = elements with mean nodal phi > 0.5.
+
+| | 8^3 UEL | 8^3 ANSYS | diff. | 16^3 UEL | 16^3 ANSYS | diff. |
+|---|---|---|---|---|---|---|
+| seed alpha - 1 | 6.76058e-4 | 6.76057e-4 | 1.2e-6 | 8.81599e-4 | 8.81598e-4 | 8e-7 |
+| seed von Mises | 3.8496e-3 | 3.6559e-3 | -5.0 % | 5.4222e-3 | 5.2881e-3 | -2.5 % |
+| largest von Mises | 7.2210e-3 | 7.0229e-3 | -2.7 % | 1.18150e-2 | 1.17799e-2 | -0.3 % |
+
+The growth agrees to 1e-6; the stress difference halves with the mesh, as expected from the element
+formulation (mean dilatation against B-bar; in ANSYS alone, enhanced strain against B-bar differs by 12.7 % at
+8^3 and 2.5 % at 16^3). The largest value sits at mirror-image elements in the two codes (equal values).

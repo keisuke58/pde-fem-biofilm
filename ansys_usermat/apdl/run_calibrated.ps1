@@ -56,6 +56,7 @@ param(
     [string]$Out = 'ansys_usermat\apdl\results\2026-10-cal5',
     [string]$Weights = '',    # f1,f2,f3,f4,f5 for prop(38:42); empty = Eq. 36 unchanged
     [switch]$Growth,          # mode 9: alpha from the point model's live biomass (P3 stage 2)
+    [switch]$Day1,            # A-17: mode 7 with the point model from the MAP commit's phi_init.json (prop(55) = 1; exe F:\biofilm_upf_cal5d1)
     [switch]$Pm10,            # mode 10 (A-10): mode 7's point model, growth = its own increase R, no kappa; exe with mode 10 (F:\biofilm_upf_cal5pm)
     [double]$Kappa = 8.822731e-3,   # prop(7) of -Growth: CH at T* = 1 as Eq. 36 (10 Oct)
     [string]$AlphaStar = '',  # antibiotic alpha* (write_eco_cfg.py --alpha-star); empty = 0 as before
@@ -84,6 +85,7 @@ if (-not $Worker) {
     if ($Push) { $a += '-Push' }
     if ($Growth) { $a += @('-Growth', '-Kappa', $Kappa.ToString('R')) }
     if ($Pm10) { if ($Growth) { throw "-Pm10 and -Growth exclude each other" }; $a += '-Pm10' }
+    if ($Day1) { if ($Growth -or $Pm10) { throw "-Day1 is for mode 7 (without -Growth, -Pm10)" }; $a += '-Day1' }
     if ($YoungBio -gt 0) { $a += @('-YoungBio', $YoungBio.ToString('R')) }
     if ($AlphaStar) { $a += @('-AlphaStar', $AlphaStar) }
     if ($B) { $a += @('-B', $B) }
@@ -140,6 +142,16 @@ function Find-Map($c) {
     } catch { L "  $c lookup failed: $($_.Exception.Message)"; return $null }
 }
 
+# Day-1 state: phi_init_state of phi_init.json at the MAP's own commit (the
+# final_theta_MAP README); $null for MAP commits without that file
+function Get-PhiInit($sha, $c) {
+    try {
+        $pj = (Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/phi_init.json" -UseBasicParsing).Content | ConvertFrom-Json
+        if ($pj.$c -and $pj.$c.phi_init_state) { return ($pj.$c.phi_init_state | ForEach-Object { ([double]$_).ToString('R') }) -join ',' }
+    } catch { }
+    return $null
+}
+
 function Push-Files($files, $msg) {
     $c = & (Join-Path $repo 'commit.ps1') -Files $files -Message $msg 2>&1
     $c | ForEach-Object { L "  commit: $_" }
@@ -189,11 +201,7 @@ function Run-Condition($c, $sha) {
         # Day-1 state: phi_init_state of phi_init.json at the MAP's own commit
         # (the final_theta_MAP README); MAP commits without that file (the
         # earlier CH, CS) keep the calibration config.json as before
-        $pi = $null
-        try {
-            $pj = (Invoke-WebRequest "https://raw.githubusercontent.com/keisuke58/Tmcmc202601/$sha/$mapDir/phi_init.json" -UseBasicParsing).Content | ConvertFrom-Json
-            if ($pj.$c -and $pj.$c.phi_init_state) { $pi = ($pj.$c.phi_init_state | ForEach-Object { ([double]$_).ToString('R') }) -join ',' }
-        } catch { }
+        $pi = Get-PhiInit $sha $c
         $eco = Join-Path $WorkDir "eco_${c}_cal.txt"
         if ($pi) {
             L "  Day-1 state from phi_init.json @ $($sha.Substring(0,7)): $pi"
@@ -206,6 +214,15 @@ function Run-Condition($c, $sha) {
                 --newton 12,1e-20 --theta-tol 1e-12 @ab $eco 2>&1
         }
         $mk += @('--deltim', (1.0 / $Steps).ToString('R'), '--time', '1.0')
+    } elseif ($Day1) {
+        # A-17: mode 7 as before, the point model from the Day-1 state of the
+        # MAP's phi_init.json (prop(55) = 1); the server's Newton control, so
+        # only the start differs; theta_tol for APDL's last bit
+        $pi = Get-PhiInit $sha $c
+        if (-not $pi) { throw "-Day1: no phi_init.json for $c at $sha" }
+        L "  Day-1 state from phi_init.json @ $($sha.Substring(0,7)): $pi"
+        $eco = Join-Path $WorkDir "eco_${c}_d1.txt"
+        $o = & $py abaqus_composition\write_eco_cfg.py --theta-json $tj --phi-init $pi --theta-tol 1e-12 @ab $eco 2>&1
     } elseif ($ab.Count -gt 0) {
         # the antibiotic needs the case file; theta_tol for APDL's last bit
         $eco = Join-Path $WorkDir "eco_${c}_ab.txt"
@@ -221,6 +238,7 @@ function Run-Condition($c, $sha) {
     # mode 10: mode 7 as in the base deck (phi_min 0.01, phi_cap 0.9, local
     # nutrient c_ref 1), on the Day 1-21 time of -Growth; no kappa
     if ($Pm10) { $props += ",28=10,31=0.2375" }
+    if ($Day1) { $props += ",55=1" }
     if ($ExtraProps) { $props += ",$ExtraProps" }
     if ($Weights) {
         if ($Growth) { throw "-Weights is the species-weighted Eq. 36, not for -Growth" }
@@ -234,7 +252,7 @@ function Run-Condition($c, $sha) {
     foreach ($f in $outs) { $p = Join-Path $WorkDir $f; if (Test-Path $p) { Remove-Item $p -Force } }
     # ANSYS appends to <job>.err: an earlier run's warnings would count for this one
     Remove-Item (Join-Path $WorkDir "$job.err") -Force -ErrorAction SilentlyContinue
-    if ($Growth -or $Pm10 -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
+    if ($Growth -or $Pm10 -or $Day1 -or $ab.Count -gt 0) { $env:BIOFILM_ECO_CASE = $eco } else { Remove-Item Env:\BIOFILM_ECO_CASE -ErrorAction SilentlyContinue }
     L "START $job (theta $c.json @ $($sha.Substring(0,7)), weights '$Weights', growth $Growth kappa $Kappa, alpha* '$AlphaStar' b '$B', extra props '$ExtraProps', void '$YoungVoid', steps $Steps, $WorkDir)"
     $t0 = Get-Date
     $p = Start-Process "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe" -WorkingDirectory $WorkDir `

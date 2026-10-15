@@ -121,7 +121,9 @@ def main():
         p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap
         p[36] = float(a.nsp)
     if a.theta_json:                                 # five calibrated species (P3, Keio continuation)
-        th = json.loads(Path(a.theta_json).read_text())["theta_full"]
+        th = json.loads(Path(a.theta_json).read_text())
+        if isinstance(th, dict) and "theta_full" in th:  # a run's theta_MAP.json; final_theta_MAP/<C>.json is {"0": .., "19": ..}
+            th = th["theta_full"]
         th = [th[str(i)] for i in range(20)] if isinstance(th, dict) else list(th)
         p[7:27] = [float(x) for x in th]
         p[27], p[28], p[29], p[30], p[31] = 7.0, 0.01, a.chi0, a.s, a.cap

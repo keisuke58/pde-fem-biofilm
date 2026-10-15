@@ -33,8 +33,9 @@ Abaqus run is possible here but nothing has been run here yet.
   (branch `main`), remote `lab` on fifa. fifa's Claude is not allowed to touch
   that organisation, so **the user syncs it by hand on fifa:**
   `git fetch origin master && git push lab origin/master:main` (never the
-  stale local `master`). CI runs by hand only; run `pytest tests/` before
-  every push.
+  stale local `master`). CI runs by hand only; run `pytest tests/` after
+  code changes now and then, not before every push (the user, 15 Oct 2026); never
+  for slides, notes or figures.
 
 ## Key directories
 
@@ -386,6 +387,9 @@ that it is not shared with anyone without asking him first.
   it). Cases A1j, A1k, A2.1a-c, A2.2a-c, A2.3a-c were not saved in his
   Workbench files; results are on the cluster, or recreate them from the
   existing cases.
+  **15 Oct:** sent him the result of the check by WhatsApp: no error found in
+  the math; two remarks (consumption scales with c0 when NUT_POS = 3, missing
+  parameters silently become 0); offered the other minor points by mail.
 
 ## Slides, notes and other documents for supervisors (decided 2026-10-02)
 
