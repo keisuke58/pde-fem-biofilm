@@ -710,3 +710,13 @@ What the numbers say (answer to (e), with its caveats):
   the 4x12x16 and 2x6x8 runs of that case converged), so the stall sets in at a finer mesh too; the law-on case at
   6x18x24 converges (48 min) and gives ratio 1.00 against 1.01 at 4x12x16 and 1.17 at 2x6x8: the main case is
   converged in the ratio with the law, and the band maximum 0.059 -> 0.066 -> 0.068 settles as well.
+
+## Formal check of the implicit gate (16 Oct 2026, Lean 4, `lean/HomeostaticGate.lean`)
+
+`lean p3/uel/lean/HomeostaticGate.lean` (core Lean 4.15, no Mathlib) proves for one material point with the implicit
+gate, alpha_{n+1} = alpha_n + c g(p(alpha_{n+1})), c >= 0, g = 0 above p_h: if p(alpha_0) <= p_h then p(alpha_n) <= p_h
+for every n, and alpha never decreases. The proof uses only that g vanishes above p_h and that the point's pressure
+is a function of its own growth; it needs neither a monotone p nor the hyperelastic law. In the finite element model
+the second assumption fails (a Gauss point is loaded by its neighbours' growth), which is the overshoot reported in
+"Implicit gate". The statements are stated over any type with the order and arithmetic facts they use, passed as
+hypotheses; the real numbers satisfy them.
