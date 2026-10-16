@@ -57,7 +57,156 @@ module unified_uel_mod
   integer, parameter :: NREC = 9
   double precision, allocatable, save :: out_rec(:,:,:)
   integer, save :: out_nel = 0
+  ! ---- WP4: the composition of a newly colonised Gauss point (KEIO_PLAN.ja.md, WP4) ----------------
+  ! When phi of the field first exceeds phi_min at a Gauss point, the point model there has no
+  ! composition yet.  init_rule chooses what it starts from (Abaqus: JPROPS(4); emulation: uel_set_init_rule):
+  !   0  the file's phi_init line (the Day-1 state), psi = 0.999, gamma = 0: the default, unchanged;
+  !   1  copy of the nearest colonised Gauss point (state at the end of the previous increment);
+  !   2  phi-weighted mean of the colonised Gauss points within init_radius (PROPS(19); <= 0: 1.5 times
+  !      the element's size, the cube root of its volume); none within the radius: rule 1;
+  !   3  the point model's steady state under the Gauss point's nutrient, integrated from the default
+  !      start (steady_state); no steady state within the horizon: rule 0.
+  ! Rules 1-3 apply only once a colonised Gauss point exists somewhere (the seed itself, started in the
+  ! first growth increment, keeps the default: the measured Day-1 state).
+  ! Rules 1 and 2 need the other elements' Gauss points, which a UEL call does not see.  They are read
+  ! from a module-level registry (reg) that every element writes at every call: position, phi of the
+  ! field at the start of the increment, composition and the started flag of its Gauss points, in two
+  ! slots per element keyed by the start-of-increment total time TIME(2).  A query during the increment
+  ! with key t reads, for each element, its newest slot with key < t: the state at the end of the
+  ! previous increment, written at that increment's last (converged) call.  Abaqus guarantees no call
+  ! order among elements, only that every element is called at every iteration, so the result does not
+  ! depend on the order (nothing written in the current increment is read) and a cutback (same TIME(2))
+  ! simply overwrites the slot.  Threads (mp_mode=threads): distinct elements write distinct memory and
+  ! read only the other slot, so the element calls are safe; the growth of the registry is not, so
+  ! with cpus > 1 set BIOFILM_UEL_NEL (number of elements) for the allocation at UEXTERNALDB LOP = 0.
+  ! MPI domain decomposition would give each process only its own elements (neighbours across a domain
+  ! boundary missing): run with one domain.  The decks of this directory run with cpus=1.
+  ! The started flag sv(14) records the start: 1 the default state (rule 0, or a fallback of rules 1-3,
+  ! e.g. the seed itself, which has no colonised neighbour yet), 1 + rule when rule 1-3 was applied.
+  integer, save :: init_rule = 0
+  double precision, save :: init_radius = 0d0
+  integer, parameter :: NRG = 17            ! x, y, z, phi_n, g(12), started
+  double precision, allocatable, save :: reg(:,:,:,:)      ! (NRG, NGP, element, slot)
+  double precision, allocatable, save :: reg_key(:,:)      ! (element, slot); -huge: empty
+  integer, save :: reg_nel = 0
 contains
+
+  subroutine reg_size(nel)
+    ! room for nel elements in the registry (grows; call once, single-threaded, when threads are used)
+    integer, intent(in) :: nel
+    double precision, allocatable :: tmp(:,:,:,:), tk(:,:)
+    integer :: nnew
+    if (nel <= reg_nel) return
+    nnew = max(nel, 2 * reg_nel, 64)
+    allocate(tmp(NRG, NGP, nnew, 2)); tmp = 0d0
+    allocate(tk(nnew, 2)); tk = -huge(1d0)
+    if (reg_nel > 0) then
+      tmp(:, :, 1:reg_nel, :) = reg
+      tk(1:reg_nel, :) = reg_key
+    end if
+    call move_alloc(tmp, reg); call move_alloc(tk, reg_key); reg_nel = nnew
+  end subroutine reg_size
+
+  subroutine reg_put(jel, tkey, coords, Un, sv)
+    ! this element's Gauss points after advance_composition, into the slot of key tkey (a new key
+    ! replaces the older of the two slots)
+    integer, intent(in) :: jel
+    double precision, intent(in) :: tkey, coords(3, NN), Un(NDOF), sv(NSV, NGP)
+    double precision :: N(8), dNr(3,8), gpc(2), phn
+    integer :: a, i, j, k, q, s
+    if (jel < 1) return
+    if (jel > reg_nel) call reg_size(jel)
+    if (reg_key(jel, 1) == tkey) then
+      s = 1
+    else if (reg_key(jel, 2) == tkey) then
+      s = 2
+    else
+      s = 1
+      if (reg_key(jel, 2) < reg_key(jel, 1)) s = 2
+    end if
+    reg_key(jel, s) = tkey
+    gpc = [-1d0, 1d0] / sqrt(3d0)
+    q = 0
+    do k = 1, 2
+      do j = 1, 2
+        do i = 1, 2
+          q = q + 1
+          call shape(gpc(i), gpc(j), gpc(k), N, dNr)
+          phn = 0d0
+          do a = 1, NN
+            phn = phn + N(a) * Un(NDN*(a-1)+4)
+          end do
+          reg(1:3, q, jel, s) = matmul(coords, N)
+          reg(4, q, jel, s) = phn
+          reg(5:16, q, jel, s) = sv(1:12, q)
+          reg(17, q, jel, s) = sv(14, q)
+        end do
+      end do
+    end do
+  end subroutine reg_put
+
+  subroutine reg_neighbours(tkey, x, rule, radius, g, found)
+    ! rule 1: g = composition of the nearest colonised Gauss point of the previous increment;
+    ! rule 2: phi-weighted mean of those within radius, else the nearest.  found = .false.: none yet.
+    double precision, intent(in) :: tkey, x(3), radius
+    integer, intent(in) :: rule
+    double precision, intent(out) :: g(12)
+    logical, intent(out) :: found
+    double precision :: d2, dmin, wsum, w, gacc(12), gnear(12), key
+    integer :: e, q, s, sb
+    found = .false.; g = 0d0
+    dmin = huge(1d0); wsum = 0d0; gacc = 0d0; gnear = 0d0
+    do e = 1, reg_nel
+      ! the newest slot older than this increment
+      sb = 0; key = -huge(1d0)
+      do s = 1, 2
+        if (reg_key(e, s) < tkey .and. reg_key(e, s) > key) then
+          sb = s; key = reg_key(e, s)
+        end if
+      end do
+      if (sb == 0) cycle
+      do q = 1, NGP
+        if (reg(17, q, e, sb) < 0.5d0) cycle
+        d2 = sum((reg(1:3, q, e, sb) - x)**2)
+        if (d2 < dmin) then
+          dmin = d2; gnear = reg(5:16, q, e, sb); found = .true.
+        end if
+        if (rule == 2 .and. d2 <= radius**2) then
+          w = max(reg(4, q, e, sb), 0d0)
+          wsum = wsum + w; gacc = gacc + w * reg(5:16, q, e, sb)
+        end if
+      end do
+    end do
+    if (.not. found) return
+    if (rule == 2 .and. wsum > 0d0) then
+      g = gacc / wsum
+    else
+      g = gnear
+    end if
+  end subroutine reg_neighbours
+
+  subroutine steady_state(crel, g, ok)
+    ! the point model integrated from the default start under the nutrient crel (< 0: c*) until the
+    ! change over a block of 20 steps of 0.1 (point-model time 2) is below 1e-9 in every component;
+    ! ok = .false. when that does not happen within 100 blocks (time 200) or the solve fails
+    double precision, intent(in) :: crel
+    double precision, intent(out) :: g(12)
+    logical, intent(out) :: ok
+    double precision :: gn(12), pint
+    logical :: have, lok
+    integer :: blk
+    ok = .false.
+    call biofilm_ecology_init_state(5, g, have)
+    if (.not. have) return
+    do blk = 1, 100
+      call eco_substeps(g, eco_theta, 2d0, 20, crel, gn, pint, lok)
+      if (.not. lok) return
+      if (maxval(abs(gn(1:11) - g(1:11))) < 1d-9) then
+        g = gn; ok = .true.; return
+      end if
+      g = gn
+    end do
+  end subroutine steady_state
 
   subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
     ! growth F_g = ag I (ag = alpha = 1 + xi), F_e = F / ag; energy per reference volume
@@ -309,18 +458,40 @@ contains
     vm = sqrt(0.5d0 * ((sg(1)-sg(2))**2 + (sg(2)-sg(3))**2 + (sg(3)-sg(1))**2) + 3d0 * (sg(4)**2 + sg(5)**2 + sg(6)**2))
   end subroutine vm_p
 
-  subroutine advance_composition(U, Un, coords, sv, props, dt, ok)
+  subroutine advance_composition(U, Un, coords, sv, props, dt, ok, jel, tkey)
     ! once per increment: start the point model where phi has reached phi_min, advance it over
-    ! s*dt with the nutrient of the start of the increment, then store xi_n (done after convergence)
+    ! s*dt with the nutrient of the start of the increment, then store xi_n (done after convergence).
+    ! jel, tkey (element number, start-of-increment total time): needed by init_rule 1 and 2, which
+    ! read the registry; without them (driver.py) those rules fall back to the default start.
     double precision, intent(in) :: U(NDOF), Un(NDOF), coords(3, NN), props(16), dt
     double precision, intent(inout) :: sv(NSV, NGP)
     logical, intent(out) :: ok
-    double precision :: N(8), dNr(3,8), gpc(2), phn, cn, gnew(12), pint, crel
-    logical :: have
-    integer :: a, i, j, k, q, nsub
+    integer, intent(in), optional :: jel
+    double precision, intent(in), optional :: tkey
+    double precision :: N(8), dNr(3,8), gpc(2), phn, cn, gnew(12), pint, crel, Jm(3,3), Ji(3,3), det
+    double precision :: vol, rad, xg(3), g(12)
+    logical :: have, found
+    integer :: a, i, j, k, q, nsub, rule
     gpc = [-1d0, 1d0] / sqrt(3d0)
     nsub = max(1, nint(props(14)))
     ok = .true.
+    rule = init_rule
+    if (rule >= 1 .and. .not. (present(jel) .and. present(tkey))) rule = 0
+    rad = init_radius
+    if (rule == 2 .and. rad <= 0d0) then
+      vol = 0d0
+      do k = 1, 2
+        do j = 1, 2
+          do i = 1, 2
+            call shape(gpc(i), gpc(j), gpc(k), N, dNr)
+            Jm = matmul(dNr, transpose(coords))
+            call inv3(Jm, Ji, det)
+            vol = vol + det
+          end do
+        end do
+      end do
+      rad = 1.5d0 * vol**(1d0/3d0)
+    end if
     q = 0
     do k = 1, 2
       do j = 1, 2
@@ -331,13 +502,25 @@ contains
           do a = 1, NN
             phn = phn + N(a) * Un(NDN*(a-1)+4); cn = cn + N(a) * Un(NDN*(a-1)+5)
           end do
+          crel = -1d0
+          if (props(16) > 0d0) crel = max(cn, 0d0) / props(16)
           if (sv(14,q) < 0.5d0 .and. phn > props(15)) then
-            call biofilm_ecology_init_state(5, sv(1:12,q), have)
-            sv(14,q) = 1d0
+            found = .false.
+            if (rule >= 1 .and. rule <= 3) then
+              ! only once a colonised Gauss point exists (the seed itself starts from the default)
+              xg = matmul(coords, N)
+              call reg_neighbours(tkey, xg, min(rule, 2), rad, g, found)
+              if (found .and. rule == 3) call steady_state(crel, g, found)
+            end if
+            if (found) then
+              sv(1:12,q) = g
+              sv(14,q) = 1d0 + rule
+            else
+              call biofilm_ecology_init_state(5, sv(1:12,q), have)
+              sv(14,q) = 1d0
+            end if
           end if
           if (sv(14,q) > 0.5d0) then
-            crel = -1d0
-            if (props(16) > 0d0) crel = max(cn, 0d0) / props(16)
             call eco_substeps(sv(1:12,q), eco_theta, props(13)*dt, nsub, crel, gnew, pint, ok)
             if (.not. ok) return
             sv(1:12,q) = gnew
@@ -602,6 +785,33 @@ subroutine uel_set_alstar(x) bind(C, name="uel_set_alstar")
   eco_alstar = x
 end subroutine uel_set_alstar
 
+subroutine uel_set_init_rule(rule, radius) bind(C, name="uel_set_init_rule")
+  ! WP4: the start of a newly colonised Gauss point (rule 0-3, see the module header) and the radius
+  ! of rule 2 (<= 0: 1.5 times the element's size); the registry is cleared
+  use unified_uel_mod
+  use iso_c_binding
+  integer(c_int), value :: rule
+  real(c_double), value :: radius
+  init_rule = rule
+  init_radius = radius
+  if (reg_nel > 0) then
+    reg = 0d0; reg_key = -huge(1d0)
+  end if
+end subroutine uel_set_init_rule
+
+subroutine uel_steady_state(crel, g, ok) bind(C, name="uel_steady_state")
+  ! rule 3's steady state under the nutrient crel (< 0: c*), for the tests
+  use unified_uel_mod
+  use iso_c_binding
+  real(c_double), value :: crel
+  real(c_double), intent(out) :: g(12)
+  integer(c_int), intent(out) :: ok
+  logical :: lok
+  call steady_state(crel, g, lok)
+  ok = 0
+  if (lok) ok = 1
+end subroutine uel_steady_state
+
 subroutine uel_element(U, Un, coords, sv, props, dt, R, K) bind(C, name="uel_element")
   use unified_uel_mod
   use iso_c_binding
@@ -679,14 +889,20 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
       eco_alstar = 0d0
     end if
   end if
+  ! WP4: the start of a newly colonised Gauss point, JPROPS(4) (0-3) and the radius of rule 2, PROPS(19);
+  ! absent: the module values (uel_set_init_rule from the emulation; 0 = the default start)
+  if (NJPROP >= 4) init_rule = JPROPS(4)
+  if (NPROPS >= 19) init_radius = PROPS(19)
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   if (DTIME > 0d0) then
-    call advance_composition(U, Un, COORDS, sv, PROPS(1:16), DTIME, ok)
+    call advance_composition(U, Un, COORDS, sv, PROPS(1:16), DTIME, ok, JELEM, TIME(2))
     if (.not. ok) then
       PNEWDT = 0.5d0                       ! ask Abaqus for a smaller increment
       return
     end if
+    ! the registry for rules 1 and 2 (the other elements read it in the next increment)
+    if (init_rule >= 1) call reg_put(JELEM, TIME(2), COORDS, Un, sv)
   end if
   call residual(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), R)
   RHS(1:NDOF, 1) = -R
@@ -773,8 +989,17 @@ subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
   ! LOP 2 (end of an increment): every 10th increment, and LOP 3 (end of the analysis), write uel_gp.txt
   use unified_uel_mod
   implicit none
-  integer :: LOP, LRESTART, KSTEP, KINC
+  integer :: LOP, LRESTART, KSTEP, KINC, st, nel
   double precision :: TIME(2), DTIME
+  character(len=64) :: buf
   if (LOP == 0 .and. .not. eco_inited) call eco_native_init()
+  if (LOP == 0) then
+    ! WP4 registry: allocate once here (single-threaded) when BIOFILM_UEL_NEL is set, for cpus > 1
+    call get_environment_variable('BIOFILM_UEL_NEL', buf, status=st)
+    if (st == 0) then
+      read(buf, *, iostat=st) nel
+      if (st == 0 .and. nel > 0) call reg_size(nel)
+    end if
+  end if
   if ((LOP == 2 .and. mod(KINC, 10) == 0) .or. LOP == 3) call write_records(KSTEP, KINC, TIME(2))
 end subroutine UEXTERNALDB

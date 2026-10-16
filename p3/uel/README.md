@@ -240,6 +240,71 @@ The growth agrees to 1e-6; the stress difference halves with the mesh, as expect
 formulation (mean dilatation against B-bar; in ANSYS alone, enhanced strain against B-bar differs by 12.7 % at
 8^3 and 2.5 % at 16^3). The largest value sits at mirror-image elements in the two codes (equal values).
 
+## The composition of a newly colonised Gauss point (WP4, 16 Oct 2026, `init_rule_study.py`)
+
+When phi of the field first exceeds phi_min at a Gauss point, the point model there has no composition.
+Until now the element started it from the file's `phi_init` line (the Day-1 state of the calibration, psi = 0.999,
+gamma = 0) wherever and whenever that happens, the same state for the seed and for every point the biofilm
+spreads to; the ANSYS USERMAT (`INIT_ECO_IF_ZERO`) does the same with a fixed default composition. Felix Klempt's
+answer (KEIO_PLAN.ja.md §1) was that this is outside the model, and suggested the neighbour's composition or a
+neighbourhood mean. `unified_uel.f90` now has `init_rule` (Abaqus JPROPS(4), `make_seed_inp.py --init-rule k`;
+emulation `uel_set_init_rule`): 0 the default (unchanged: column 20, seed 8^3 and implant 2x6x8 reproduce the
+earlier runs and `results/implant_2x6x8.json` bit for bit), 1 the composition of the nearest colonised Gauss point,
+2 the phi-weighted mean of the colonised Gauss points within 1.5 element sizes (PROPS(19) sets the radius), 3 the
+point model's steady state under the local nutrient. A rule applies only once a colonised point exists, so the seed
+itself keeps the Day-1 state; the state variable 14 records the start (1 default, 1 + rule). Rules 1 and 2 need the
+other elements, which a UEL call does not see: every element writes its Gauss points (position, phi, composition,
+started) into a module-level registry at every call, two slots per element keyed by the start-of-increment total
+time, and a query reads each element's newest slot older than the current increment, i.e. the state at the end of
+the previous increment, written at that increment's last (converged) call. Abaqus guarantees no call order among
+elements, only that all are called every iteration, so nothing read is written in the same increment and the
+result does not depend on the order; a cutback overwrites the slot. With threads the element calls are safe
+(distinct elements, distinct memory, reads of the other slot), the growth of the registry is not: set
+`BIOFILM_UEL_NEL` so UEXTERNALDB allocates it at LOP = 0; MPI domains would lose the neighbours across a domain
+boundary, so one domain. The decks here run with cpus=1 anyway. `tests/test_uel_init_rule.py` checks the default
+against the pre-WP4 build (1e-12) and each rule against the same start advanced by `uel_advance` with the
+neighbours found in Python (1e-14).
+
+Study with the point model seeing the local nutrient (c_ref = 1; with c_ref = 0 every point sees c* and a colonised
+point's composition depends only on its age, so copying a neighbour copies a clock and rules 0-2 differ by 1e-5).
+Column of driver.py check 2 (mechanics fixed) and the seed of `make_seed_inp.py` (finite strain, nu = 0.3, E = 1).
+"Late" = the Gauss points colonised after the first growth increment (20 / 44 / 88 of 68-72 / 128-140 / 252-280 in
+the column, 184 of 508 at 8^3 and 748 of 1612 at 12^3), the same set for every rule; living = sum phi_i psi_i there.
+
+| column | rule | front x | alpha - 1 at the substrate | living, late points | share of species 1, late | alpha - 1, late |
+|---|---|---|---|---|---|---|
+| 20 | 0 default | 0.2351 | 0.1353 | 0.495 | 0.541 | 0.0149 |
+| 20 | 1 nearest | 0.2359 | 0.1353 | 0.513 | 0.377 | 0.0153 |
+| 20 | 2 mean | 0.2359 | 0.1353 | 0.513 | 0.377 | 0.0153 |
+| 20 | 3 steady state | 0.2525 | 0.1352 | 0.891 | 0.031 | 0.0444 |
+| 40 | 0 / 1 / 2 / 3 | 0.2240 / 0.2251 / 0.2251 / 0.2597 | 0.1353 | 0.433 / 0.513 / 0.513 / 0.891 | 0.472 / 0.377 / 0.377 / 0.031 | 0.0169 / 0.0173 / 0.0173 / 0.0521 |
+| 80 | 0 / 1 / 2 / 3 | 0.2178 / 0.2190 / 0.2190 / 0.2767 | 0.1354 | 0.458 / 0.513 / 0.513 / 0.891 | 0.493 / 0.377 / 0.377 / 0.031 | 0.0191 / 0.0196 / 0.0196 / 0.0594 |
+
+| seed | rule | alpha - 1 (phi > 0.5) | alpha - 1, all colonised | vM/E mean / max (phi > 0.5) | edge 30 deg | living, late | share 1, late | alpha - 1, late |
+|---|---|---|---|---|---|---|---|---|
+| 8^3 | 0 | 0.04155 | 0.01803 | 0.01511 / 0.01906 | 0.01627 | 0.557 | 0.667 | 0.0065 |
+| 8^3 | 1 | 0.04157 | 0.01772 | 0.01511 / 0.01906 | 0.01627 | 0.479 | 0.633 | 0.0057 |
+| 8^3 | 2 | 0.04157 | 0.01774 | 0.01511 / 0.01906 | 0.01627 | 0.480 | 0.634 | 0.0057 |
+| 8^3 | 3 | 0.04152 | 0.01896 | 0.01511 / 0.01907 | 0.01631 | 0.765 | 0.060 | 0.0092 |
+| 12^3 | 0 | 0.04168 | 0.01837 | 0.01718 / 0.03057 | 0.01446 | 0.556 | 0.666 | 0.0071 |
+| 12^3 | 1 | 0.04170 | 0.01803 | 0.01719 / 0.03057 | 0.01447 | 0.481 | 0.634 | 0.0064 |
+| 12^3 | 2 | 0.04170 | 0.01804 | 0.01719 / 0.03057 | 0.01447 | 0.482 | 0.635 | 0.0064 |
+| 12^3 | 3 | 0.04162 | 0.01963 | 0.01717 / 0.03056 | 0.01445 | 0.761 | 0.060 | 0.0100 |
+
+What the numbers say. The stress and the growth of the seed do not depend on the rule (vM/E to four digits, the
+seed's alpha - 1 to 0.1 %): the newly colonised points carry little biomass and grow little within T, and the seed
+keeps its own state under every rule. The rule shows in the composition and growth of the new points only: nearest
+and mean are the same to 1e-3 (the colonised neighbours of a new point differ little among themselves), give the
+composition of the front a value that does not change with the mesh (column 0.513 / 0.377 at 20, 40 and 80
+elements; seed 0.479 / 0.481 at 8^3 and 12^3), and change their growth by -2 to +3 %. The default's late composition
+moves with the mesh (column living 0.495 / 0.433 / 0.458) because the age of the Day-1 state at a point then depends on
+when the mesh lets phi_min be crossed. The steady state (rule 3) is a different biofilm at the front (living 0.89 and
+species 1 at 3 % instead of 38-54 %, three times the growth of the new points) and it moves the column's front by 7 to
+27 % with the mesh, because a point that starts at the attractor skips the transient the seed went through.
+Recommendation: rule 1 (nearest colonised Gauss point) as the physical choice for runs where the biofilm spreads, rule 2
+when a smoother start is wanted (same result here), rule 3 only as a bound. The thesis runs keep the default (the
+seed-dominated quantities are the same to four digits, so nothing there changes).
+
 ## Rigid substrate (A-18, 15 Oct 2026, ANSYS)
 
 The frozen seed of A-16 (8^3) on a plate 0.25 thick with shared interface nodes (81), plate bottom fixed,
