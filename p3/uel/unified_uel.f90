@@ -33,6 +33,8 @@
 !
 ! PROPS (NPROPS = 16): E_bio, nu, f_void, beta, eta_phi, K_phi, lam, Psi_ref, L0, Y, mu_b, D,
 !                      s (time link), n_sub, phi_min, c_ref (<= 0: constant c*; > 0: local nutrient c/c_ref)
+!   optional 17, 18: antibiotic start time and alpha*; 19, 20: homeostatic-pressure law p_ref and form
+!   (module header; absent or p_ref <= 0: off)
 ! The point model's theta, c*, alpha* (antibiotic) and eta come from biofilm_py_bridge
 ! (eco_native_set, or the file named by BIOFILM_ECO_CASE).
 
@@ -57,7 +59,67 @@ module unified_uel_mod
   integer, parameter :: NREC = 9
   double precision, allocatable, save :: out_rec(:,:,:)
   integer, save :: out_nel = 0
+  ! Homeostatic-pressure growth law (keio_wp2/README.ja.md, stages 2B and 4-7; the P3 law of KEIO_PLAN.ja.md;
+  ! an assumption of this work, not from a paper): the growth rate xidot is multiplied by
+  !   g = min(1, max(0, 1 - p_n / p_h)),
+  ! p_n = the Gauss point's Cauchy pressure (positive in compression) at the start of the increment, i.e. the
+  ! converged pressure of the previous increment, SVARS(NSV*NGP + 2q) (VARIABLES = 128). The gate is explicit
+  ! (staggered, as keio_wp2 and the ANSYS cal5gp build): within an increment g is a constant, so the tangent
+  ! keeps its form with xidot, dxidot/dphi and dxidot/dc scaled by g. Because xi never decreases and g is
+  ! clipped at 0, the explicit gate cannot oscillate: p overshoots p_h by at most one increment of growth,
+  ! dt xidot dp/dxi, a first-order error (homeostatic_test.py shows the order).
+  ! PROPS(19) = p_ref (absent or <= 0: off, g = 1 exactly, every result unchanged); PROPS(20) = form:
+  !   0  p_h = p_ref                      (keio_wp2 "E": p_ref = P_h E k_alpha T*)
+  !   1  p_h = p_ref (phi_n^2 + f)         (keio_wp2 "local stiffness", phi_n of the start of the increment)
+  !   2  g = 1 / (1 + max(p_n, 0) / p_ref) (the ANSYS cal5gp build, BIOFILM_HOMEOSTATIC_FACTOR form 2)
+  ! gp_gate(q) holds g of the element being processed: set by set_gate (from UEL) or uel_set_gate; 1 otherwise.
+  double precision, save :: gp_gate(8) = 1d0
 contains
+
+  double precision function growth_gate(pref, iform, pn, phn, f) result(g)
+    ! the factor g of the homeostatic-pressure law (see the module header); pref <= 0 gives 1
+    double precision, intent(in) :: pref, pn, phn, f
+    integer, intent(in) :: iform
+    double precision :: ph
+    g = 1d0
+    if (pref <= 0d0) return
+    if (iform == 2) then
+      g = 1d0 / (1d0 + max(pn, 0d0) / pref)
+      return
+    end if
+    ph = pref
+    if (iform == 1) ph = pref * (min(max(phn, 0d0), 1d0)**2 + f)
+    if (ph <= 0d0) return
+    g = min(1d0, max(0d0, 1d0 - pn / ph))
+  end function growth_gate
+
+  subroutine set_gate(Un, props, nprops, st)
+    ! gp_gate from the start-of-increment pressures st(2q) (SVARS(NSV*NGP + 2q)) and phi_n at the Gauss points
+    double precision, intent(in) :: Un(NDOF), props(*), st(2*NGP)
+    integer, intent(in) :: nprops
+    double precision :: N(8), dNr(3,8), gpc(2), phn
+    integer :: a, i, j, k, q, iform
+    gp_gate = 1d0
+    if (nprops < 19) return
+    if (props(19) <= 0d0) return
+    iform = 0
+    if (nprops >= 20) iform = nint(props(20))
+    gpc = [-1d0, 1d0] / sqrt(3d0)
+    q = 0
+    do k = 1, 2
+      do j = 1, 2
+        do i = 1, 2
+          q = q + 1
+          call shape(gpc(i), gpc(j), gpc(k), N, dNr)
+          phn = 0d0
+          do a = 1, NN
+            phn = phn + N(a) * Un(NDN*(a-1)+4)
+          end do
+          gp_gate(q) = growth_gate(props(19), iform, st(2*q), phn, props(3))
+        end do
+      end do
+    end do
+  end subroutine set_gate
 
   subroutine nh_stress(F, sf, ag, mu, Kb, P, AF, dPda)
     ! growth F_g = ag I (ag = alpha = 1 + xi), F_e = F / ag; energy per reference volume
@@ -210,8 +272,9 @@ contains
           if (sv(14,q) > 0.5d0) liv = sum(sv(1:5,q) * sv(7:11,q))
           psi = 0d0
           if (sv(14,q) > 0.5d0) psi = psi_pm(sv(1:12,q), eco_alstar)
-          xid = L0 * max(ph, 0d0) * liv * max(Y * log(max(c, 1d-12)) - mub, 0d0)
-          ! growth: xi_{n+1} = xi_n + dt xidot, with xi_n stored in sv(13,q)
+          xid = L0 * max(ph, 0d0) * liv * max(Y * log(max(c, 1d-12)) - mub, 0d0) * gp_gate(q)
+          ! growth: xi_{n+1} = xi_n + dt xidot, with xi_n stored in sv(13,q); gp_gate = 1 unless the
+          ! homeostatic-pressure law is on (module header)
           xin = sv(13,q) + dt * xid
           ! small-strain mechanics with the growth eigenstrain
           eps = 0d0
@@ -367,7 +430,7 @@ contains
           liv = 0d0
           if (sv(14,q) > 0.5d0) liv = sum(sv(1:5,q) * sv(7:11,q))
           sv(13,q) = sv(13,q) + dt * props(9) * max(ph, 0d0) * liv &
-                     * max(props(10) * log(max(c, 1d-12)) - props(11), 0d0)
+                     * max(props(10) * log(max(c, 1d-12)) - props(11), 0d0) * gp_gate(q)
         end do
       end do
     end do
@@ -419,10 +482,10 @@ contains
           psi = 0d0
           if (sv(14,q) > 0.5d0) psi = psi_pm(sv(1:12,q), eco_alstar)
           aff = Y * log(max(c, 1d-12)) - mub
-          xid = L0 * max(ph, 0d0) * liv * max(aff, 0d0)
+          xid = L0 * max(ph, 0d0) * liv * max(aff, 0d0) * gp_gate(q)
           dxp = 0d0; dxc = 0d0
-          if (aff > 0d0 .and. ph > 0d0) dxp = L0 * liv * aff
-          if (aff > 0d0 .and. c > 1d-12) dxc = L0 * max(ph, 0d0) * liv * Y / c
+          if (aff > 0d0 .and. ph > 0d0) dxp = L0 * liv * aff * gp_gate(q)
+          if (aff > 0d0 .and. c > 1d-12) dxc = L0 * max(ph, 0d0) * liv * Y / c * gp_gate(q)
           xin = sv(13,q) + dt * xid
           ! B matrices (Voigt: 11 22 33 12 23 13 engineering shear, as in residual)
           Bm = 0d0
@@ -612,6 +675,14 @@ subroutine uel_element(U, Un, coords, sv, props, dt, R, K) bind(C, name="uel_ele
   call tangent(U, Un, coords, sv, props, dt, K)
 end subroutine uel_element
 
+subroutine uel_set_gate(g) bind(C, name="uel_set_gate")
+  ! the growth gate per Gauss point for the C entry points (uel_element, uel_store); 1 = off
+  use unified_uel_mod
+  use iso_c_binding
+  real(c_double), intent(in) :: g(8)
+  gp_gate = g
+end subroutine uel_set_gate
+
 subroutine uel_advance(U, Un, coords, sv, props, dt, ok) bind(C, name="uel_advance")
   use unified_uel_mod
   use iso_c_binding
@@ -681,6 +752,10 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   end if
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
+  ! optional homeostatic-pressure law: PROPS(19) = p_ref, PROPS(20) = form (module header); needs the
+  ! start-of-increment pressures of VARIABLES = 128
+  gp_gate = 1d0
+  if (NSVARS >= NSV*NGP + 2*NGP) call set_gate(Un, PROPS, NPROPS, SVARS(NSV*NGP+1:NSV*NGP+2*NGP))
   if (DTIME > 0d0) then
     call advance_composition(U, Un, COORDS, sv, PROPS(1:16), DTIME, ok)
     if (.not. ok) then

@@ -5,6 +5,33 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月16日 深夜（恒常圧の成長則を UEL に入れた：Abaqus で 1 本確かめる。急がない、8×24×32 のあとで）
+
+WP2（`keio_wp2/`）の恒常圧の成長則 α̇ = k_α φ min(1, max(0, 1 − p/p_h))（p は圧縮を正とする圧力）を
+`p3/uel/unified_uel.f90` に入れた。PROPS(19) = p_h/E、PROPS(20) = 形（0：p_h 一定、1：p_h (φ² + f)、2：1/(1 + p/p_h)）。
+**PROPS が 16 個のままなら off で、今までの結果はビット単位で同じ**（2×6×8 の bulge 0/1、凍結シード 8³ で差 0）。
+増分の始めの圧力（SVARS(113:128) の p、VARIABLES = 128 が要る）を使う陽的な扱いなので、接線はそのまま（成長の項に
+g を掛けるだけ）。1 要素の検証は `p3/uel/homeostatic_test.py`、模擬実行の結果は `p3/uel/README.md` の
+「Homeostatic-pressure growth law」、デッキは `make_implant_uel_inp.py --p-ref 0.05`（タグ `_ph0.05`）。
+
+1. `git pull origin master`、ライブラリと `unified_uel_abaqus.for` を作り直す（`python3 make_abaqus_source.py`。
+   固定形式への変換は gfortran で確かめてある）。
+2. Abaqus で 2×6×8、bulge 0、p_h/E = 0.05、外面は自由（速い。模擬実行は 8 秒）：
+   ```
+   cd p3/uel && python3 make_implant_uel_inp.py abaqus_in --p-ref 0.05
+   export BIOFILM_ECO_CASE=$PWD/abaqus_in/uel_eco.txt BIOFILM_UEL_GP=$PWD/abaqus_in/uel_implant2x6x8_ph0.05_gp.txt
+   (cd abaqus_in && abaqus job=uel_implant2x6x8_ph0.05 user=../unified_uel_abaqus.for cpus=1 interactive)
+   python3 compare_implant_gp.py abaqus_in/uel_implant2x6x8_ph0.05_gp.txt results/implant_2x6x8_ph0.05.json
+   ```
+   期待：増分の刻みが同じ（60 増分、カットバックなし）なら、Gauss 点の α − 1 と vM は 1e−6 以下で合う（PASS）。
+   帰還は増分の始めの圧力で決まるので、Abaqus が別の刻みで切ると差は時間離散化の分（1〜2 %）になる。その場合は
+   `.sta` の増分列を報告に貼る。
+3. 時間があれば外面を固定した方（`--p-ref 0.05 --outer fixed`、タグ `_ph0.05_of`、`results/implant_2x6x8_ph0.05_of.json`）
+   も同じ手順で。こちらは閉じ込めが強く、帰還の効きが大きい（上面の角の vM/E が 0.36 → 0.08）。
+4. 6×18×24 の固定シードに帰還を入れた模擬実行（`--nr 6 --nt 18 --nz 24 --seed-layers 3 --p-ref 0.05`、bulge 0 と 1。
+   1 本 35 分程度）は、クラウドでは回していない。8×24×32 のあとに時間があれば。
+5. 結果（`_gp.txt` の gzip、`.sta`、PASS/FAIL）を `keio/uel-implant` に push し、`KEIO_CHAIN_LOG.md` に報告。
+
 ## 2026年10月16日 夜（bulge 1 の 6×18×24 が収束した。自動の増分制御を入れた。急がない）
 
 夕方の項の未解決（固定シード、bulge 1 の 6×18×24 が最初の増分で止まる）が片付いた。詳しくは `p3/uel/README.md` の
