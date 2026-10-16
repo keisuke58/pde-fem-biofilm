@@ -246,7 +246,7 @@ When phi of the field first exceeds phi_min at a Gauss point, the point model th
 Until now the element started it from the file's `phi_init` line (the Day-1 state of the calibration, psi = 0.999,
 gamma = 0) wherever and whenever that happens, the same state for the seed and for every point the biofilm
 spreads to; the ANSYS USERMAT (`INIT_ECO_IF_ZERO`) does the same with a fixed default composition. Felix Klempt's
-answer (KEIO_PLAN.ja.md §1) was that this is outside the model, and suggested the neighbour's composition or a
+answer (KEIO_PLAN.ja.md §6) was that this is outside the model, and suggested the neighbour's composition or a
 neighbourhood mean. `unified_uel.f90` now has `init_rule` (Abaqus JPROPS(4), `make_seed_inp.py --init-rule k`;
 emulation `uel_set_init_rule`): 0 the default (unchanged: column 20, seed 8^3 and implant 2x6x8 reproduce the
 earlier runs and `results/implant_2x6x8.json` bit for bit), 1 the composition of the nearest colonised Gauss point,

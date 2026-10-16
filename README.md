@@ -80,7 +80,7 @@ private mirror (`mmc-research-group/nishioka-biofilm-fem`, branch `main`).
 |---|---|
 | [`thesis/README.md`](thesis/README.md) | Structure of the thesis and the submission timeline |
 | [`REPO_MAP.md`](REPO_MAP.md) | Categorised guide to the whole tree |
-| [`KEIO_PLAN.ja.md`](KEIO_PLAN.ja.md) | Keio continuation: paper targets (§0) and work packages |
+| [`KEIO_PLAN.ja.md`](KEIO_PLAN.ja.md) | Keio continuation: goals and deadlines (§0), paper targets (§1), work packages (§3) |
 | [`COUPLING_STATUS.md`](COUPLING_STATUS.md) | One page: what is done in the coupling and what is not |
 | [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | What reproduces from Klempt 2024 and with which departures |
 | [`ansys_usermat/apdl/FRONT_TERM_FIX.md`](ansys_usermat/apdl/FRONT_TERM_FIX.md) | Findings in the partner element (surface points, front term) |

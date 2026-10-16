@@ -86,7 +86,7 @@ credited, the licence is linked, and any changes are indicated. **The PDF is
 bundled verbatim; no changes have been made to it.**
 `references/Rudolf2025_NEM_efficiency_FEAD.txt` is a plain-text extraction
 (`pdftotext -layout`), a change of format only, under the same licence and
-credit. Added 2026-10-06. Reading notes: `KEIO_PLAN.ja.md` §4d.
+credit. Added 2026-10-06. Reading notes: `KEIO_PLAN.ja.md` §8.
 
 ## `references/Vogel2020_adaptive_gradient_damage_IJNME.pdf` — Vogel and Junker (2020), adaptive reference for the gradient-enhanced damage model
 
