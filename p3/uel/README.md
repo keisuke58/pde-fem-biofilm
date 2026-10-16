@@ -590,6 +590,8 @@ Cervical line (nutrient on the outer face, bottom u_z = 0, bulge 1):
 | 4x12x16 | uz | free | 0.05 | implicit | 0.0482 | 0.0378 | 0.0380 | 1.01 | 0.065 | 0.055 (+9 %) |
 | 4x12x16 | uz | fixed | 0.05 | explicit | 0.0227 | 0.0206 | 0.0442 | 2.14 | 0.073 | 0.146 (+191 %) |
 | 4x12x16 | uz | fixed | 0.05 | implicit | 0.0220 | 0.0200 | 0.0433 | 2.17 | 0.071 | 0.139 (+179 %) |
+| 6x18x24 | uz | free | 0.05 | explicit | 0.0470 | 0.0369 | 0.0369 | 1.00 | 0.068 | 0.047 (-6 %) |
+| 6x18x24 | uz | free | 0.05 | implicit | 0.0466 | 0.0366 | 0.0365 | 1.00 | 0.067 | 0.046 (-7 %) |
 
 What the rerun shows:
 
@@ -609,8 +611,10 @@ What the rerun shows:
   and the explicit one remains adequate for these runs; the maximum pressure near a constrained corner is a statement
   about the elastic corner and the law's one-sidedness, to be read with the core values, as in the mesh study.
 
-6x18x24 with the implicit gate (bottom u_z = 0, outer face free, p_h/E = 0.05, nutrient on the outer face): see the row
-in the cervical table of `results/implant_cervical_summary.json` (`cervical_study.py --table-only`) when present.
+The 6x18x24 main case (13 min with the implicit gate against 14 min explicit) confirms it at the third level: ratio
+1.00 with either gate, band maximum 0.067 against 0.068, and no seed element above p_h in that case with either gate
+(the free outer face and the crown's nutrient keep the pressure below p_h everywhere; the excess is a feature of the
+constrained corners).
 
 ## Cervical line of the tooth-like sector (16 Oct 2026, cloud; `cervical_study.py`, P3 (e))
 
