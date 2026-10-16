@@ -2,8 +2,11 @@
 abaqus_composition/make_implant_inp.py: a 90 degree sector of a biofilm layer around the collar of a
 dental implant, hexahedra in (r, theta, z).
 
-    python make_implant_uel_inp.py [outdir] [--nr 2 --nt 6 --nz 8] [--bulge b] [--nu 0.49] [--small] [--no-md]
+    python make_implant_uel_inp.py [outdir] [--nr 2 --nt 6 --nz 8] [--bulge b] [--nu 0.49] [--small] [--no-md] [--seed-layers n]
     BIOFILM_ECO_CASE=<outdir>/uel_eco.txt python make_implant_uel_inp.py [outdir] --run [same options]
+
+--seed-layers n seeds the inner n element layers instead of one (the seed of one element layer thins with
+every refinement; n = nr/2 keeps it 0.125 mm thick at every level, for the mesh convergence; tag _sl<n>).
 
 Geometry (mm, chosen for this work, as make_implant_inp.py): inner radius 2.05, layer 0.25 thick, 2.0 high.
   - inner face (r = ri): bonded to the titanium, u = 0 (the implant is taken as rigid);
@@ -17,8 +20,11 @@ parameters as fuel_front_3d_coupled (D = 0.2, L0 = 2, beta = 0.02).
 
 Without --run it writes uel_implant<nr>x<nt>x<nz>[...].inp, uel_eco.txt and the .json with the seed
 elements. With --run it solves the same problem in Python through the Abaqus entry point UEL
-(emulate_abaqus.py) and writes results/implant_<nr>x<nt>x<nz>.json: seed means of alpha - 1 and
-vM/E (Gauss-point means per element), the largest vM and its centroid.
+(emulate_abaqus.py) and writes results/implant_<nr>x<nt>x<nz>[_b1].json: seed means of alpha - 1 and
+vM/E (Gauss-point means per element), the same over the seed interior (without the element rows at z = 0,
+z = 2.0 and at the two sector cuts, where the fixed inner face meets a free face), the largest vM/E and
+its centroid (over all elements and over the interior), and the wall time. `implant_convergence.py`
+tabulates the levels; `compare_implant_gp.py` compares an Abaqus run's uel_gp.txt with the .json.
 """
 import argparse
 import json
@@ -60,12 +66,13 @@ def sector(nr, nt, nz, bulge=0.0, ri=RI, thick=THICK, height=HEIGHT):
     return np.array(nodes), np.array(elems), np.array(layer), np.array(ijk)
 
 
-def seed_phi(nodes, elems, layer):
-    """nodal share of the inner-layer elements around each node (make_implant_inp.py), 0.9 times it, plus 1e-4"""
+def seed_phi(nodes, elems, layer, seed_layers=1):
+    """nodal share of the seeded elements (the inner seed_layers element layers; make_implant_inp.py: one) around
+    each node, 0.9 times it, plus 1e-4"""
     around = np.zeros(len(nodes)); inseed = np.zeros(len(nodes))
     for el, ly in zip(elems, layer):
         around[el] += 1
-        if ly == 0:
+        if ly < seed_layers:
             inseed[el] += 1
     return 0.9 * inseed / around + 1e-4
 
@@ -75,7 +82,7 @@ def sets(nodes, ijk, tol=1e-9):
                 SYMX=np.abs(nodes[:, 0]) < tol, SYMY=np.abs(nodes[:, 1]) < tol)
 
 
-def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, name=""):
+def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name=""):
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu)
     S = sets(nodes, ijk)
     out = ["*HEADING", f"unified two-level model, user element, implant sector {name}, {len(elems)} elements", "*NODE"]
@@ -95,7 +102,7 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, name="")
     for k, m in S.items():
         nset(k, m)
     nset("NOTOP", ~S["TOP"])
-    phi = seed_phi(nodes, elems, layer)
+    phi = seed_phi(nodes, elems, layer, seed_layers)
     out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T0:g}, {T0:g}", *CTRL, "*BOUNDARY", "ALL, 1, 3, 0.0",
             "NOTOP, 12, 12, 0.1", "TOP, 12, 12, 1.0"]
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
@@ -106,13 +113,20 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, name="")
     return phi
 
 
-def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, nstop=NINC):
+def element_jk(e, nr, nt):
+    """(j, k) of element e: sector() numbers the elements i fastest, then j (theta), then k (z)"""
+    return (e // nr) % nt, e // (nr * nt)
+
+
+def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC):
+    import time as _t
     from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment  # needs BIOFILM_ECO_CASE
+    t_start = _t.time()
     props = F(props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu))
     S = sets(nodes, ijk)
     SV = [F(np.zeros(NSVT)) for _ in elems]
     U0 = np.zeros(NDN * len(nodes)); U = U0.copy()
-    U[3::NDN] = seed_phi(nodes, elems, layer); U[4::NDN] = np.where(S["TOP"], 1.0, 0.1)
+    U[3::NDN] = seed_phi(nodes, elems, layer, seed_layers); U[4::NDN] = np.where(S["TOP"], 1.0, 0.1)
     U, SV, _ = increment(U0, U, np.ones(len(U), bool), nodes, elems, SV, props, T0, 1, finite=finite, md=md)
     fixed = np.zeros(len(U), bool)
     for d in range(3):
@@ -128,14 +142,26 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, nstop=NINC):
     st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SV])
     cen = np.array([nodes[el].mean(0) for el in elems])
     E = 10.0 * 0 + 1.0                                      # props_base default Y = 1: vM/E is vM itself
-    s = layer == 0
+    s = layer < seed_layers
+    nr, nt, nz = int(layer.max()) + 1, int(ijk[:, 1].max()), int(ijk[:, 2].max())
+    jk = np.array([element_jk(e, nr, nt) for e in range(len(elems))])
+    # interior: not in the top or bottom row of elements (z = 0, z = HEIGHT) and not in the rows at the
+    # sector cuts (theta = 0, 90 degrees), where the fixed inner face meets a free face (possible singularities)
+    inner = (jk[:, 0] > 0) & (jk[:, 0] < nt - 1) & (jk[:, 1] > 0) & (jk[:, 1] < nz - 1)
+    si = s & inner
+    rtz = lambda c: [float(np.hypot(*c[:2])), float(np.degrees(np.arctan2(c[1], c[0]))), float(c[2])]  # noqa: E731
     im = int(st[:, 0].argmax())
-    return dict(seed_elements=int(s.sum()), seed_alpha_minus_1=float(xi[s].mean()), seed_vM_over_E=float(st[s, 0].mean() / E),
+    ii = int(np.where(inner)[0][st[inner, 0].argmax()]) if inner.any() else im
+    return dict(seed_layers=int(seed_layers), seed_thickness=float(seed_layers * THICK / nr), seed_elements=int(s.sum()), seed_alpha_minus_1=float(xi[s].mean()), seed_vM_over_E=float(st[s, 0].mean() / E),
+                seed_interior_elements=int(si.sum()),
+                seed_interior_alpha_minus_1=float(xi[si].mean()) if si.any() else None,
+                seed_interior_vM_over_E=float(st[si, 0].mean() / E) if si.any() else None,
                 alpha_minus_1_all_mean=float(xi.mean()), max_vM_over_E=float(st[im, 0] / E), max_centroid_xyz=cen[im].tolist(),
-                max_centroid_r_theta_z=[float(np.hypot(*cen[im, :2])), float(np.degrees(np.arctan2(cen[im, 1], cen[im, 0]))),
-                                        float(cen[im, 2])],
+                max_centroid_r_theta_z=rtz(cen[im]),
+                max_interior_vM_over_E=float(st[ii, 0] / E), max_interior_centroid_r_theta_z=rtz(cen[ii]),
+                wall_time_s=float(_t.time() - t_start),
                 elements=dict(cx=cen[:, 0].round(6).tolist(), cy=cen[:, 1].round(6).tolist(), cz=cen[:, 2].round(6).tolist(),
-                              layer=layer.tolist(), alpha_minus_1=[float(f"{v:.7g}") for v in xi],
+                              layer=layer.tolist(), interior=inner.astype(int).tolist(), alpha_minus_1=[float(f"{v:.7g}") for v in xi],
                               vM_over_E=[float(f"{v / E:.7g}") for v in st[:, 0]]))
 
 
@@ -149,11 +175,12 @@ if __name__ == "__main__":
     ap.add_argument("--nu", type=float, default=0.49)
     ap.add_argument("--small", action="store_true")
     ap.add_argument("--no-md", action="store_true")
+    ap.add_argument("--seed-layers", type=int, default=1, help="seed = the inner n element layers (n = nr/2: 0.125 mm at every level)")
     ap.add_argument("--run", action="store_true")
     a = ap.parse_args()
     nodes, elems, layer, ijk = sector(a.nr, a.nt, a.nz, a.bulge)
-    tag = f"{a.nr}x{a.nt}x{a.nz}" + (f"_b{a.bulge:g}" if a.bulge else "") + ("_small" if a.small else "") + ("_nomd" if a.no_md else "")
-    kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small)
+    tag = f"{a.nr}x{a.nt}x{a.nz}" + (f"_b{a.bulge:g}" if a.bulge else "") + ("_small" if a.small else "") + ("_nomd" if a.no_md else "") + (f"_sl{a.seed_layers}" if a.seed_layers != 1 else "")
+    kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small, seed_layers=a.seed_layers)
     if a.run:
         r = run(nodes, elems, layer, ijk, **kw)
         r.update(nr=a.nr, nt=a.nt, nz=a.nz, bulge=a.bulge, nu=a.nu, kinematics=("small" if a.small else "finite") + " strain"
@@ -165,5 +192,5 @@ if __name__ == "__main__":
         od = Path(a.outdir); od.mkdir(parents=True, exist_ok=True)
         deck(od / f"uel_implant{tag}.inp", nodes, elems, layer, ijk, name=tag, **kw)
         eco_file(od / "uel_eco.txt")
-        (od / f"uel_implant{tag}.json").write_text(json.dumps({"seed": (np.where(layer == 0)[0] + 1).tolist()}))
+        (od / f"uel_implant{tag}.json").write_text(json.dumps({"seed": (np.where(layer < a.seed_layers)[0] + 1).tolist()}))
         print(f"wrote {od / f'uel_implant{tag}.inp'}: {len(elems)} elements, {len(nodes)} nodes")

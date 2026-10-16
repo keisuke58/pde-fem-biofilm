@@ -248,3 +248,44 @@ stress (seed / seed interior / layer above the interface): plate 10^9 times stif
 +8e-12 / +4e-12; 10^3 times -0.045 / -0.058 / -0.045 %; 10 times -4.2 / -5.4 / -4.3 %. alpha - 1 is identical
 (phi frozen). A tooth or implant (GPa, over 10^8 times the biofilm) can therefore be replaced by u = 0 on the
 surface the biofilm sits on, for the growth-induced stress; external loads such as occlusion need their own check.
+
+## Implant sector: mesh convergence (16 Oct 2026, cloud, Python emulation)
+
+`make_implant_uel_inp.py --run` at nr x nt x nz = f (2 x 6 x 8), f = 1, 2, 3 (4 on fifa); `implant_convergence.py
+[--bulge 1] [--fixed-seed]` tabulates `results/implant_*.json`: seed means, the interior without the edge rows, the
+seed core (a fixed region: seed elements with 0.25 <= z <= 1.75 and 15 <= theta <= 75 degrees), the largest vM/E and
+the observed order. Times are with four runs sharing four cores. The .json now also holds the interior means, the
+largest value without the edge rows and the wall time; `compare_implant_gp.py <uel_gp.txt> <json>` compares an
+Abaqus run element by element (exit 1 above `--tol`).
+
+Seed = the inner element layer (as `make_implant_inp.py`), bulge 0:
+
+| level | elements | time | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
+|---|---|---|---|---|---|---|---|
+| 2x6x8 | 96 | 12 s | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
+| 4x12x16 | 768 | 160 s | 0.03523 | 0.02358 | 0.01180 | 0.01349 | 0.2375 (2.077, 71.2, 1.938) |
+| 6x18x24 | 2592 | 25 min | 0.02962 | 0.01482 | 0.00960 | 0.00729 | 0.2004 (2.069, 77.5, 1.958) |
+
+With bulge 1 at 2x6x8 / 4x12x16: seed alpha - 1 0.04427 / 0.03302, seed vM/E 0.04620 / 0.02383, largest vM/E 0.2927 /
+0.2912 at (3.08, 67.5, 1.875) / (3.07, 71.3, 1.938). This seed thins with the mesh (0.125, 0.0625, 0.042 mm), so the
+problem changes with the level and nothing converges (seed vM/E -51 %, -37 %). For a convergence study the seed must be
+fixed: `--seed-layers f` seeds the inner f layers, 0.125 mm at every level (`_sl<f>` in the file name). With that seed,
+bulge 0:
+
+| level | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
+|---|---|---|---|---|---|
+| 2x6x8 | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
+| 4x12x16 | 0.04481 | 0.06206 | 0.01467 | 0.03637 | 0.7791 (2.077, 63.7, 1.938) |
+
+The core moves by -18 % (alpha - 1) and +2.6 % (vM/E); the seed mean of vM/E rises by 30 % and the largest vM/E almost
+triples, at the top face next to the fixed inner face, where the seed (phi = 0.9) meets the empty layer (phi = 1e-4): a
+singular corner, to be left out of the compared quantities as the cube's corners are. The 6x18x24 and 8x24x32 levels
+of this seed are for fifa (`CLOUD_TO_FIFA.ja.md`, 16 Oct evening); the order can only be read from three levels.
+
+Newton: at 6x18x24 with the 0.125 mm seed the full Newton step of the first growth increment diverged in the mechanics
+(phi and c already converged, a 0.235 mm displacement step on 0.042 mm elements, then NaN from an inverted element; the
+element itself returned PNEWDT = 1). `emulate_abaqus.increment` now halves the step when the residual grows by more than
+half or is not finite (up to 6 times; Abaqus: `*CONTROLS, PARAMETERS=LINE SEARCH`): bulge 0 then needs five halvings
+in increment 1 and plain Newton after. The converged state is unchanged (`tests/test_uel_implant.py`, 2x6x8 to 1e-6).
+Open: 6x18x24 with bulge 1 and the 0.125 mm seed still stops with "no convergence" (30 iterations) in increment 1.
+Not yet tried: a smaller first increment, more iterations, or Abaqus itself with line search.
