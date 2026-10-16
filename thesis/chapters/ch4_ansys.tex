@@ -325,10 +325,13 @@ $24^3$; on $8^3$ it is $0.062$. Runs to $T^*=5$ confirm this: on $8^3$ they
 stay smooth at $\lambda=0.048$ and stop at $0.080$, on $16^3$ at $0.136$ and
 $0.144$, and on $24^3$ at $0.130$ and $0.158$ (Figure~\ref{fig:ch5-stability}).
 Runs to $T^*=1.1$ are too short to show an instability near the limit. The
-results of this chapter use $\lambda\le0.128$ on $16^3$, $\lambda\le0.072$
-on $24^3$ and $\lambda\le0.04$ on $8^3$, below the band; the only exception
-is the $24^3$ run at $\Delta t=0.05$ ($\lambda=0.144$) in the time-step series
-below, whose seed growth follows the first-order trend of the other steps.
+results of this chapter use $\lambda\le0.04$ on $8^3$ and $\lambda\le0.072$
+on $24^3$, below the band, and $\lambda\le0.128$ on $16^3$, inside the band
+but below $0.136$, where the runs to $T^*=5$ on $16^3$ still stay smooth. The
+time-step series below has two further cases on $24^3$: at $\Delta t=0.05$
+($\lambda=0.144$, inside the band) the seed growth follows the first-order
+trend of the other steps, and at $\Delta t=0.1$ ($\lambda=0.288$) the run gave
+no result, so the $24^3$ series starts at $\Delta t=0.05$.
 
 \begin{figure}[htbp]
   \centering
@@ -724,7 +727,7 @@ do not change.
 elements, and its seed is 32 of them. I solved the same mechanical problem
 (seed growth $1.1\times10^{-3}$, the stiffness above) with a linear
 hexahedral solver in Python on $8^3$, $16^3$ and $32^3$ elements. The seed
-averages of von Mises and mean stress on $8^3$ are about $1.6$ to $1.75$
+averages of von Mises and mean stress on $8^3$ are about $1.5$ to $1.75$
 times those on $16^3$ and $32^3$, which agree with each other; the peaks at
 the corners of the seed do not converge, because those corners are
 singular. I therefore quote seed averages and not peaks. With the element's
@@ -762,7 +765,8 @@ changes by $3\,\%$ from $16^3$ to $24^3$.
 % Source: RUN_WP3_IKMHIWI03.md, block C (results/2026-10-wp3_fix/), wp3_alpha_profile.py, wp3_figs.py.
 \paragraph{Order of convergence.} With the surface points corrected
 (\S\ref{sec:ch5-limitations}), I repeated the seed growth on the three meshes
-with $\Delta t=0.1$, $0.05$, $0.025$ and $0.0125$ (Figure~\ref{fig:ch5-wp3-conv});
+with $\Delta t=0.1$, $0.05$, $0.025$ and $0.0125$, on $24^3$ from $\Delta t=0.05$
+(Figure~\ref{fig:ch5-wp3-conv});
 the seed values agree with Table~\ref{tab:ch5-mesh} within $0.03\,\%$.
 Halving the time step halves the change, so the update is first order in time,
 and the error at $\Delta t=0.025$ is about $1\,\%$ in the seed von Mises stress.

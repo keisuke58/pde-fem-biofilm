@@ -97,9 +97,11 @@ e = st[16]["el"]
 check("alpha-1 monitored element T*=1.1", "8.9\\times10^{-4}", e["alpha"][-1])
 check("vM monitored element", "4.7\\times10^{-4}", e["seqv"][-1] * 1e6)
 check("largest vM in model", "7.2\\times10^{-4}", st[16]["vmax"])
-flag("Conclusion 'example mesh overestimates seed stress by ~1.7' vs Table 4.2",
-     st[8]["vm"] > 1.5 * st[16]["vm"],
-     f"ANSYS seed vM 8^3/16^3 = {st[8]['vm'] / st[16]['vm']:.2f}, mean stress ratio {st[8]['p'] / st[16]['p']:.2f} (factor 1.7 is the beta=0 Python study)")
+flag("Conclusion: no 'factor of about 1.7' for the beta=0.02 mesh", "factor of about 1.7" not in c6,
+     "the 1.5-1.75 factor belongs to the sharp-seed Python study (item 9)")
+check("conclusion: seed vM 8^3 below 16^3 [%]", "18", (1 - st[8]["vm"] / st[16]["vm"]) * 100, tol=1.0, note="%")
+flag("conclusion: seed mean stress 8^3 vs 16^3 within 1 %", abs(st[8]["p"] / st[16]["p"] - 1) < 0.01,
+     f"ratio {st[8]['p'] / st[16]['p']:.3f}")
 
 # 3. Table 4.3 (beta sensitivity, mean stress in the seed) ----------------------------------------------
 beta = {8: ["2026-10-wp3_fix/wp3e_n8_b0005.json", "2026-10-wp3_fix/wp3c_n8_b001.json", runs[8],
@@ -178,14 +180,14 @@ def lam(mesh, nn, bs):
 for mesh, t in ((8, "0.062"), (16, "0.149"), (24, "0.173")):
     check(f"lambda_max N=32 {mesh}^3", t, lam(mesh, 32, True))
 check("lambda_max N=32 unweighted 8^3", "0.180", lam(8, 32, False))
-# lambda of the runs vs the stated band
-band = {8: (0.062, 0.062), 16: (0.122, 0.140), 24: (0.122, 0.162)}
+# lambda of the runs vs the largest lambda at which the runs to T*=5 stayed smooth (ch4 text)
+smooth = {8: 0.048, 16: 0.136, 24: 0.130}
 for n, dt, b in ((16, 0.1, 0.02), (24, 0.025, 0.02), (8, 0.025, 0.1)):
     lm = b * dt / (2.0 / n) ** 2
-    flag(f"lambda {n}^3 dt={dt} beta={b}", lm < band[n][0], f"{lm:.3f} vs band {band[n]}; text: results use lambda<=0.128/0.072/0.04 'below the band'")
-flag("24^3 run at dt=0.1 exists (convergence series dt=0.1..0.0125)",
-     (RES / "2026-10-wp3_fix/wp3c_n24_dt01.json").exists() and "all_stress" in load("2026-10-wp3_fix/wp3c_n24_dt01.json"),
-     f"lambda would be {0.02 * 0.1 / (2 / 24) ** 2:.3f} (unstable, no result)")
+    flag(f"lambda {n}^3 dt={dt} beta={b} below smooth T*=5 run", lm <= smooth[n], f"{lm:.3f} vs {smooth[n]}")
+has24 = (RES / "2026-10-wp3_fix/wp3c_n24_dt01.json").exists() and "all_stress" in load("2026-10-wp3_fix/wp3c_n24_dt01.json")
+flag("24^3 dt=0.1: text and results agree", has24 or "on $24^3$ from $\\Delta t=0.05$" in c4,
+     f"result present: {has24}; lambda {0.02 * 0.1 / (2 / 24) ** 2:.3f}")
 
 # 8. closed forms (one element, alpha = 1.05) -----------------------------------------------------------------
 K = 2 / 5e3
@@ -198,8 +200,8 @@ check("extra term at nu=0.3 [%]", "31", (1 - 2 * .3) / (1 + .3) * 100, tol=0.5)
 ms = {int(m.group(1)): (float(m.group(2)), float(m.group(3))) for m in
       re.finditer(r"\|\s*(\d+)\^3[^|]*\|\s*\d+\s*\|\s*([\d.e-]+)\s*\|\s*[\d.e-]+\s*\|\s*(-[\d.e-]+)\s*\|", (APDL / "MESH_STUDY.md").read_text())}
 rat = [ms[8][i] / ms[n][i] for i in (0, 1) for n in (16, 32)]
-flag("Python study: 8^3/(16^3,32^3) ratios in 1.6-1.75 (vM, then p)", all(1.55 <= r <= 1.78 for r in rat),
-     ", ".join(f"{r:.2f}" for r in rat))
+flag("Python study: 8^3/(16^3,32^3) ratios in 1.5-1.75 (vM, then p)",
+     all(1.45 <= r <= 1.78 for r in rat) and "$1.5$ to $1.75$" in c4, ", ".join(f"{r:.2f}" for r in rat))
 
 # 10. cross-chapter consistency (abstract / ch1 / ch4 / ch6) --------------------------------------------------
 for key, pat in (("3e-11 in alpha", r"3\\times10\^\{-11\}"), ("150x speed-up", r"about 150 times"), ("15 coefficients", r"\b15\b")):
