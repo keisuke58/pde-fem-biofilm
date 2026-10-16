@@ -1,4 +1,4 @@
-% 村松先生とのミーティング（2026年11月2日（月）17:00 JST / 9:00 CET）用
+% 村松先生とのミーティング（2026年11月2日（月）17:00 JST / 9:00 CET）用。10月16日に一体解法の要素と 3 次元の歯頸線の結果を追加
 % NEM（Neighbored Element Method）の基礎と、10月6日に届いた資料
 %
 % ビルド: lualatex slides_1102_nem_ja.tex   （2回）
@@ -230,25 +230,6 @@ $\nabla^2\phi$ & Taylor 展開＋重み付き最小二乗 & Galerkin（形状関
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{NEM の論文の流れ}
-\small
-\begin{tabular}{p{0.34\linewidth}p{0.58\linewidth}}
-\toprule
-論文 & 加えたこと \\
-\midrule
-Jantos, Hackl, Junker (2019) & トポロジー最適化の密度に，近傍の Taylor 展開と陽解法 \\
-Junker et al.\ (2019) & 勾配型の脆性損傷へ。名前が NEM になる \\
-Vogel, Junker (2020) & 同じ損傷モデルを適応的な有限要素で解いた参照解 \\
-Blaszczyk, Jantos, Junker (2022) & 重み付き最小二乗で，任意の点の配置と Neumann 境界に対応 \\
-Junker, Riesselmann, Balzani (2022) & 有限ひずみ，要素の除去 \\
-Rudolf et al.\ (2025) & 精度とコストを ANSYS と比較（著者に Klempt，Soleimani） \\
-von Zabiensky, Jantos, Junker (2026) & 接触の第 3 媒体の正則化に応用 \\
-\bottomrule
-\end{tabular}
-
-\vspace{8pt}
-{\small 詳しい人：Tobias Rudolf，Ilayda Kök，May von Zabiensky（IKM）}
-\end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{修論の連成と，慶應で足す 2 本の矢印}
@@ -274,12 +255,27 @@ von Zabiensky, Jantos, Junker (2026) & 接触の第 3 媒体の正則化に応�
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{8. 10月に進めたこと：$\mathbf u,\phi,c$ を一体で解く要素}
+\small
+変位，$\phi$，$c$ を 1 つの六面体要素の未知数にし（Klempt 2024 の書き方），Newton 法で同時に解く要素を Fortran で作った（Abaqus の UEL，Python からも同じコードを呼べる）。
+\begin{itemize}
+  \item \textbf{検証}：Klempt 2024 の極限（自由成長，全拘束）で閉じた形と一致。$\phi$ を凍結したシードで ANSYS（交互解法）と比べ，$\alpha$ は $10^{-6}$ 以内，シード内部の von Mises は $24^3$ で $-0.2\,\%$。
+  \item \textbf{恒常圧の成長則}：$\dot\alpha=k_\alpha\phi\,\min(1,\max(0,1-p/p_h))$ を入れた。全拘束では独立に解いた常微分方程式に時間の 1 次で収束，$p=p_h$ で成長が止まる。
+  \item \textbf{インプラントの扇形}：シードの厚さを固定して 3 段のメッシュ。内部の $\alpha-1$ は 2 次以上で収束，上面の角は特異。
+  \item \textbf{歯頸線}：下の付録のとおり，軸対称の試作の「集中が消える」は 3 次元の要素ではそのままは成り立たなかった。
+\end{itemize}
+\vspace{2pt}
+{\footnotesize 値の多く（$p_h$，形の寸法，境界条件）はこの研究で決めた仮定。Abaqus 本体での確認は慶應のサーバーで実行中。}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{ご相談したいこと}
 \begin{enumerate}
   \item 数値面（NEM と Galerkin の比較）を短い論文 1 本にする方向でよいか
   \item 応力から成長への成長則：研究室で扱っている成長・リモデリングのモデルで，使えるものはあるか
   \item Felix との共同研究（2 菌種モデル）と，慶應での研究の分け方
   \item 慶應の計算環境（Abaqus のライセンス，並列計算）
+  \item 恒常圧 $p_h$ を決める実験（研究室で比べられるデータはあるか）
 \end{enumerate}
 \end{frame}
 
@@ -365,21 +361,29 @@ Klempt 2024 の Eq.\ 30 の力学の項 $\phi\mu(\mathbf I:\tilde{\mathbf C}_e-3
   \item 栄養はインプラントで上面（歯肉縁），歯で外側の面から。$d=1$ mm$^2/T^*$，$g=1/T^*$，$r=10$ mm$/T^*$（Table 2 を 2 mm に換算）。
         前線の項はコロニーの全面で成長する形（$w=0.5$，私の修正）。
   \item 層は $T^*\approx0.1$ までに埋まり，成長は栄養なしの 3 倍，応力は 20〜30 倍。
-  \item $P_h=0.1$ の帰還で成長は $T^*\approx0.3$ で止まり（0.12 倍），歯頸線の集中は消える。
+  \item $P_h=0.1$ の帰還で成長は $T^*\approx0.3$ で止まり（0.12 倍），この軸対称の試作では歯頸線の集中が消える（3 次元の要素での結果は次のページ）。
 \end{itemize}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{付録（予備）：帰還があると，応力は境界条件によらない}
-\centering
-\includegraphics[width=0.98\linewidth]{assets/fig_nutrient_bc.png}
-
+\begin{frame}{付録（予備）：3 次元の要素で確かめた歯頸線（10月16日）}
 \small
+扇形の歯の形，栄養は外側の面から，シードの厚さ 0.125 mm，$E=1$，$p_h/E=0.05$。比 = 歯頸線の帯の平均 vM/E ÷ 内部の平均。
+\begin{center}\footnotesize
+\begin{tabular}{llcccc}
+\toprule
+下面 & 外面 & 帰還 & 比 & 歯頸線の vM/E & 最大 $p/E$\\
+\midrule
+$u_z=0$ & 自由 & なし / あり & 0.94 / 1.17 & 0.086 / 0.043 & 0.23 / 0.07\\
+$u_z=0$ & 固定 & なし / あり & 3.6 / 4.3 & 0.51 / 0.044 & 1.2 / 0.09\\
+\bottomrule
+\end{tabular}
+\end{center}
 \begin{itemize}
-  \item 下面の拘束（自由，$u_z=0$，固定）を変えても，帰還ありの最大の周方向応力は 3.0〜3.2$\times10^{-3}$ Pa。
-        帰還なしでは $2.9\times10^{-2}$〜$1.6\times10^{-1}$ Pa と 5 倍の幅がある。
-  \item 応力の大きさを決めるのは形や境界ではなく $p_h$。予測は境界の不確かさに強くなるが，$p_h$ を実験から決めることが一番大事になる。
-  \item 次：同じ 3 通りを ANSYS／Abaqus の 3 次元で確かめる。
+  \item 外面が自由なら，帰還がなくても集中は出ない（歯頸線の角は栄養が届かず成長が小さい）。集中は外面も固定したときに出る。
+  \item 帰還は比を下げないが，歯頸線の応力の大きさを約 1/12 に，最大圧力を $p_h$ の近くに抑える。
+  \item 境界条件 4 通りで，帰還ありでも歯頸線の応力は大きく変わる。境界条件によらないのは，外面が自由なときの最大圧力だけ。
+  \item 主な場合（帰還あり）の比はメッシュで 1.17，1.01，1.00 と収束。
 \end{itemize}
 \end{frame}
 
