@@ -13,7 +13,7 @@ this task.
 The 15 interaction coefficients of a five-species point model were estimated
 with TMCMC from the in-vitro time courses of Heine et al.\ under four
 conditions. Compiled with JAX, the forward model runs about 150 times faster
-on the GPU than on the CPU, which makes posteriors with $10{,}000$ samples routine. Every stage was
+on the GPU than on the CPU, which makes posteriors with up to $18{,}000$ particles routine. Every stage was
 repeated with three seeds and checked against convergence criteria; CS and CH
 meet them at every final stage, and the DS and DH results are provisional. The data
 determine $4$, $6$, $8$ and $9$ of the $15$ entries in the four conditions, and the

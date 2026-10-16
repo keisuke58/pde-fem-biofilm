@@ -372,7 +372,7 @@ typically $c_v=1$.
 \paragraph{Computation on the GPU.}
 The cost lies in the forward model, evaluated for every sample at every stage.
 I compile the point model with JAX~\cite{jax2018github} and evaluate the whole
-ensemble, $N_p = 10{,}000$ samples in the production runs, in one batched call
+ensemble, $N_p = 5{,}000$ to $18{,}000$ particles at the final stage, in one batched call
 (\texttt{jax.vmap}). This is about 150 times faster than the CPU baseline
 (Section~\ref{sec:heine_gpu}).
 
