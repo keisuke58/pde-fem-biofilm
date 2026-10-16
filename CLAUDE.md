@@ -301,6 +301,8 @@ this machine's specific workflow.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
+  **16 Oct 2026:** the user gave her Chapters 1 and 2 of the LUH thesis; Chapter 3
+  follows once its results are final (the raw-data DS/DH runs).
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
