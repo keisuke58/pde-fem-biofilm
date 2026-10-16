@@ -720,3 +720,8 @@ is a function of its own growth; it needs neither a monotone p nor the hyperelas
 the second assumption fails (a Gauss point is loaded by its neighbours' growth), which is the overshoot reported in
 "Implicit gate". The statements are stated over any type with the order and arithmetic facts they use, passed as
 hypotheses; the real numbers satisfy them.
+The same file shows with two coupled points (`coupled_implicit_can_overshoot`, integer values, checked by evaluation)
+that the bound fails once a point's pressure depends on a neighbour: with p1 = a1 + a2, p2 = a2, p_h = 2 and both points
+on the implicit gate, a state solving both implicit equations has point 1 stopped (a1' = a1) and p1' = 3 > p_h.
+A Mathlib version over the reals, with a counterexample for the explicit gate, is in `lean/mathlib/` (to be checked on
+fifa, `CLOUD_TO_FIFA.ja.md`).

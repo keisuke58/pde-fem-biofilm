@@ -73,4 +73,39 @@ theorem growth_monotone
   rw [step n]
   exact le_add _ _ (increment_nonneg _)
 
+/-!
+## Two coupled points: the implicit gate can overshoot
+
+Minimal model of a Gauss point loaded by a neighbour. Point 1's pressure depends on its own growth and on its
+neighbour's, p1 = a1 + a2; point 2's only on its own, p2 = a2. Both points use the implicit gate,
+a_i' = a_i + c * g(p_i'), with the step gate g(p) = 0 above p_h and 1 at or below (a special case of the gate class
+above; the real gate min(1, max(0, 1 - p/p_h)) behaves the same way above p_h). Integer values for a check by
+evaluation: p_h = 2, c = 1, start a1 = a2 = 1, so p1 = 2 <= p_h and p2 = 1 <= p_h.
+
+The state a1' = 1, a2' = 2 solves both implicit equations (point 1 has stopped, g(p1') = g(3) = 0; point 2 still
+grows, g(p2') = g(2) = 1), and p1' = 3 > p_h. So the single-point theorem fails once the pressure of a point depends
+on a neighbour: its own growth stops, but the neighbour's growth keeps raising its pressure.
+-/
+
+/-- The step gate on integers: 0 above `ph`, 1 at or below. -/
+def stepGate (ph p : Int) : Int := if ph < p then 0 else 1
+
+theorem coupled_implicit_can_overshoot :
+    let ph : Int := 2
+    let c : Int := 1
+    let a1 : Int := 1
+    let a2 : Int := 1
+    let a1' : Int := 1
+    let a2' : Int := 2
+    let p1 := fun (x y : Int) => x + y      -- point 1: own growth plus the neighbour's
+    let p2 := fun (y : Int) => y            -- point 2: own growth only
+    -- both implicit equations hold
+    a1' = a1 + c * stepGate ph (p1 a1' a2') ∧
+    a2' = a2 + c * stepGate ph (p2 a2') ∧
+    -- the start is at or below p_h ...
+    p1 a1 a2 ≤ ph ∧ p2 a2 ≤ ph ∧
+    -- ... and point 1 ends above p_h, although its own growth has stopped
+    ph < p1 a1' a2' ∧ a1' = a1 := by
+  decide
+
 end HomeostaticGate
