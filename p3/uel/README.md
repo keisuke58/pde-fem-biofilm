@@ -552,6 +552,8 @@ the outer face (the bottom-free row of each level for reference):
 | 4x12x16 | fixed | fixed | off | 0.1023 | 0.1147 | 0.0724 | 0.63 | 0.141 | 2.075 |
 | 4x12x16 | fixed | fixed | 0.05 | 0.0201 | 0.0175 | 0.0066 | 0.38 | 0.011 | 0.157 |
 | 4x12x16 | fixed | fixed | 0.02 | 0.0098 | 0.0087 | 0.0034 | 0.39 | 0.006 | 0.086 |
+| 6x18x24 | uz | free | off | did not converge (below, increment 58) | | | | | |
+| 6x18x24 | uz | free | 0.05 | 0.0470 | 0.0369 | 0.0369 | 1.00 | 0.068 | 0.047 |
 
 What the numbers say (answer to (e), with its caveats):
 
@@ -587,3 +589,7 @@ What the numbers say (answer to (e), with its caveats):
   increment, then the next increment fails again), so it is the state, not the increment: the nearly incompressible
   grown layer under a full kinematic constraint at the corner, where p/E reaches 1-2. The law-on cases converge.
   Not forced; a smaller growth (shorter T) or a softer constraint would be the way to run them.
+  The 6x18x24 law-off case with u_z = 0 below and the outer face free stops the same way at increment 58 (t = 0.22;
+  the 4x12x16 and 2x6x8 runs of that case converged), so the stall sets in at a finer mesh too; the law-on case at
+  6x18x24 converges (48 min) and gives ratio 1.00 against 1.01 at 4x12x16 and 1.17 at 2x6x8: the main case is
+  converged in the ratio with the law, and the band maximum 0.059 -> 0.066 -> 0.068 settles as well.

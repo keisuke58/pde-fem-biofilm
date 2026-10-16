@@ -1594,5 +1594,33 @@
 "max_vM_over_E": 1.0535864601284357,
 "cutbacks": 0,
 "wall_time_s": 113.08990502357483
+},
+{
+"nr": 6,
+"mesh": "6x18x24",
+"bulge": 1.0,
+"bottom": "uz",
+"outer": "free",
+"nut": "outer",
+"p_ref": 0.05,
+"band_elements": 108,
+"core_elements": 648,
+"core_alpha_minus_1": 0.04699552126095679,
+"core_vM_over_E": 0.03692131033950617,
+"core_p_over_E": 0.030911036075617283,
+"band_alpha_minus_1": 0.029090019388888888,
+"band_vM_over_E": 0.03691132671296297,
+"band_p_over_E": 0.022147467814814806,
+"ratio": 0.9997295971770395,
+"band_max_vM_over_E": 0.06773009,
+"band_max_at_r_theta_z": [
+2.1667339095518856,
+17.499987451335212,
+0.125
+],
+"seed_max_p_over_E": 0.04679545,
+"max_vM_over_E": 0.10236803407597057,
+"cutbacks": 0,
+"wall_time_s": 811.8013360500336
 }
 ]
