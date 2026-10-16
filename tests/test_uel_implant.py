@@ -4,7 +4,7 @@ von Mises stress of results/implant_2x6x8.json (the values Abaqus reproduced to 
 plus the convergence table (implant_convergence.py) and the Abaqus comparison (compare_implant_gp.py) on
 synthetic data.
 
-Needs gfortran (builds libunified_uel.so in p3/uel if it is missing) and scipy; skipped without them.
+Needs gfortran (builds libunified_uel.so in p3/uel if it is missing or older than the source) and scipy; skipped without them.
 The run takes about 10 s.
 """
 import json
@@ -27,7 +27,8 @@ pytestmark = pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortr
 @pytest.fixture(scope="module")
 def lib():
     so = UEL / "libunified_uel.so"
-    if not so.exists():
+    srcs = (UEL / "unified_uel.f90", ROOT / "ansys_usermat" / "coupling" / "ecology_native.f")
+    if not so.exists() or max(x.stat().st_mtime for x in srcs) > so.stat().st_mtime:   # rebuild when stale
         eco = ROOT / "ansys_usermat" / "coupling" / "ecology_native.f"
         subprocess.run(["gfortran", "-O2", "-fPIC", "-c", str(eco), "-o", "ecology_native.o"], cwd=UEL, check=True)
         subprocess.run(["gfortran", "-O2", "-fPIC", "-ffree-line-length-none", "-c", "unified_uel.f90", "-o", "unified_uel.o"],

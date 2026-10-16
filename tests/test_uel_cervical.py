@@ -3,7 +3,7 @@ bonded face and the seed core are non-empty, fixed regions at every level, the c
 with the homeostatic-pressure law on the band's stress is lower than without it. Coarsest level, 2x6x8, bulge 1,
 bottom u_z = 0, a third of the GROW step (nstop = 20) so the two runs take about 6 s together.
 
-Needs gfortran (builds libunified_uel.so in p3/uel if it is missing) and scipy; skipped without them.
+Needs gfortran (builds libunified_uel.so in p3/uel if it is missing or older than the source) and scipy; skipped without them.
 """
 import json
 import os
@@ -25,7 +25,8 @@ pytestmark = pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortr
 @pytest.fixture(scope="module")
 def lib(tmp_path_factory):
     so = UEL / "libunified_uel.so"
-    if not so.exists():
+    srcs = (UEL / "unified_uel.f90", ROOT / "ansys_usermat" / "coupling" / "ecology_native.f")
+    if not so.exists() or max(x.stat().st_mtime for x in srcs) > so.stat().st_mtime:   # rebuild when stale
         eco = ROOT / "ansys_usermat" / "coupling" / "ecology_native.f"
         subprocess.run(["gfortran", "-O2", "-fPIC", "-c", str(eco), "-o", "ecology_native.o"], cwd=UEL, check=True)
         subprocess.run(["gfortran", "-O2", "-fPIC", "-ffree-line-length-none", "-c", "unified_uel.f90", "-o", "unified_uel.o"],

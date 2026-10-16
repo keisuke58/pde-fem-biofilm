@@ -3,7 +3,7 @@ p3/uel/homeostatic_test.py): the fully constrained cube is backward Euler on the
 to round-off, first order in dt, and reaches p_h from below without overshoot; the consistent tangent matches central
 differences with and without the mean dilatation; the explicit gate (the default) still gives the stored results.
 
-Needs gfortran (builds libunified_uel.so in p3/uel if it is missing) and scipy; skipped without them. About 15 s.
+Needs gfortran (builds libunified_uel.so in p3/uel if it is missing or older than the source) and scipy; skipped without them. About 15 s.
 """
 import json
 import os
@@ -25,7 +25,8 @@ pytestmark = pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortr
 @pytest.fixture(scope="module")
 def ht(tmp_path_factory):
     so = UEL / "libunified_uel.so"
-    if not so.exists():
+    srcs = (UEL / "unified_uel.f90", ROOT / "ansys_usermat" / "coupling" / "ecology_native.f")
+    if not so.exists() or max(x.stat().st_mtime for x in srcs) > so.stat().st_mtime:   # rebuild when stale
         eco = ROOT / "ansys_usermat" / "coupling" / "ecology_native.f"
         subprocess.run(["gfortran", "-O2", "-fPIC", "-c", str(eco), "-o", "ecology_native.o"], cwd=UEL, check=True)
         subprocess.run(["gfortran", "-O2", "-fPIC", "-ffree-line-length-none", "-c", "unified_uel.f90", "-o", "unified_uel.o"],

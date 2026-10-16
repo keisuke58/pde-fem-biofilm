@@ -3,7 +3,7 @@ PROPS(20) form; p3/uel/homeostatic_test.py): the default is unchanged to the las
 Klempt et al. 2024 with the law on, the fully constrained cube follows the ODE alpha_dot = k_alpha g(p(alpha)) with
 first order in dt, growth stops at p_h, and the tangent with the gate active matches central differences.
 
-Needs gfortran (builds libunified_uel.so in p3/uel if it is missing) and scipy; skipped without them. About 10 s.
+Needs gfortran (builds libunified_uel.so in p3/uel if it is missing or older than the source) and scipy; skipped without them. About 10 s.
 """
 import os
 import shutil
@@ -24,7 +24,8 @@ pytestmark = pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortr
 @pytest.fixture(scope="module")
 def ht(tmp_path_factory):
     so = UEL / "libunified_uel.so"
-    if not so.exists():
+    srcs = (UEL / "unified_uel.f90", ROOT / "ansys_usermat" / "coupling" / "ecology_native.f")
+    if not so.exists() or max(x.stat().st_mtime for x in srcs) > so.stat().st_mtime:   # rebuild when stale
         eco = ROOT / "ansys_usermat" / "coupling" / "ecology_native.f"
         subprocess.run(["gfortran", "-O2", "-fPIC", "-c", str(eco), "-o", "ecology_native.o"], cwd=UEL, check=True)
         subprocess.run(["gfortran", "-O2", "-fPIC", "-ffree-line-length-none", "-c", "unified_uel.f90", "-o", "unified_uel.o"],
