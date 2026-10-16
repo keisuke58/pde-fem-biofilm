@@ -499,6 +499,119 @@ the differences halve, first order, and the 60 increments of the decks are withi
 
 Not run: 6x18x24 with the law (35 min per case here), and Abaqus with the law (`CLOUD_TO_FIFA.ja.md`, 16 Oct, late).
 
+### Implicit gate (16 Oct 2026, cloud; `unified_uel.f90` `implicit_gate`, `homeostatic_test.py`, `tests/test_uel_gate_implicit.py`)
+
+An option that evaluates the gate with the pressure of the end of the increment, as a remedy for the explicit
+overshoot above. Switch: **PROPS(20) = form + 10** (10, 11, 12 are the implicit versions of forms 0, 1, 2);
+`make_implant_uel_inp.py --gate-implicit` (tag `_gi`), `homeostatic_implant.py --gate-implicit`,
+`cervical_study.py --gate-implicit`, `homeostatic_test.py` (`implicit=True`). The explicit gate stays the default
+and its code path is untouched: the 2x6x8 cases (bulge 0 and 1, p_h/E = 0.05 free and fixed), the frozen seed 8^3
+and the one-element runs are bit-identical between the element before and after the change (the two builds
+compared in one process, difference 0.0), and the stored `.json` of `_ph0.05` is matched exactly by the test.
+
+Formulation. At every Gauss point q of an element
+
+    h_q(xi) = xi_q - xi_n,q - dt r_q g(p_q(xi, U)) = 0,    r_q = L0 phi liv (Y ln c - mu_b)_+,    g = min(1, max(0, 1 - p/p_h)),
+
+with p_q = -tr(sigma_q)/3 from F_e = F/(1 + xi_q). Without the mean dilatation p_q depends on xi_q only (p = (phi^2 + f)
+K (1 - J alpha^-3) for the neo-Hooke penalty, rising with xi), so the eight equations are decoupled, monotone scalars with
+one root each in [xi_n, xi_n + dt r]. With the mean dilatation the volume term p_q = -K (theta - 1) pv/(V alpha_q^3)
+couples the eight Gauss points, and the 8x8 system is solved. Solver: damped Newton from the predictor xi_n + dt r
+g(p(xi_n)), one-sided derivative of g at its two kinks (dg/dp = -1/p_h where 0 < g < 1, 0 on the clipped side, the value
+Fortran's min/max evaluate on; no smoothing, so p reaches p_h exactly where g = 0), iterates clamped to the box, the
+step halved until max|h| decreases, iterated to round-off (1e-16 in xi: a local residual of 1e-14 leaves 1e-12 of
+noise in the element residual, which spoils a difference check of the tangent). Failure (max|h| > 1e-11) makes UEL
+return PNEWDT = 0.5 (a cutback); it has not happened in any run. Consistent tangent by the implicit function theorem,
+A = d xi/dU = -(dh/dxi)^-1 dh/dU, where dh/dU has dr/dphi, dr/dc, and r dg/dp dp/dU with dp/dF through the stress
+(dp/dF = -(A:F + P)/(3J) + p F^-T, A = dP/dF), dp/dphi through phi^2 + f, and with the mean dilatation dp/du and
+dp/dphi through pv and theta of all eight points. A enters the element tangent as sum_q (dR/d xi_q) A(q, :):
+the displacement rows through dP/d xi (and the volume term), the nutrient rows through Y (xi - xi_n)/dt, replacing
+the explicit dxidot/dphi, dxidot/dc columns. In the clipped range (g = 0 or 1) A has only the dr/dphi, dr/dc part
+(g = 1) or vanishes (g = 0); the tangent is exact on either side of a kink, so the global Newton is quadratic except
+in an increment in which a Gauss point crosses a kink. Form 1 keeps p_h = p_ref (phi_n^2 + f) with phi_n of the start
+of the increment (only the pressure is implicit); form 2 (hyperbolic) is smooth. Small strain is covered as well
+(p linear in xi).
+
+Checks (`homeostatic_test.py`, implicit part; E = 10 Pa, nu = 0.49, k_alpha = 1e-3, p_h = 0.25 Pa, the cube fully
+constrained):
+
+| check | result |
+|---|---|
+| (b) element against the scalar backward Euler on the ODE alpha_dot = k_alpha g(p(alpha)) | 1.1e-10 to 1.3e-10 at 11-88 increments (the drift of the frozen point model, as for the explicit gate); forms 1 and 2 the same |
+| (b) error against the ODE (scipy, rtol 1e-12), T = 1.1 | 1.19e-5, 6.02e-6, 3.03e-6, 1.52e-6 at 11, 22, 44, 88 increments (ratios 1.975, 1.988, 1.994: first order, the mirror image of the explicit 1.25e-5 ... 1.5e-6) |
+| (c) approach to p_h | p below p_h at every increment: largest p/p_h 0.99932 (T = 4, 40 increments), 0.99959 (160), 1 - 6e-11 (T = 16, 40 increments; alpha - 1 = alpha_h - 1 to 1e-9, last increment 2.5e-14); the explicit gate on the T = 16 run overshoots. Same limit with the mean dilatation (the coupled 8x8 solve) |
+| (d) tangent against central differences, distorted element, g = 0.23 at the end of the increment | 1.2e-8 (no mean dilatation), 1.0e-8 (mean dilatation) at h = 1e-5; 1.0e-7 at h = 1e-6 and 1.2e-6 at 1e-7 (round-off of the residual, amplified by the gate's gain dt r (dp/dxi)/p_h, divided by 2h); small strain 1.5e-10. The implicit terms change the tangent by a factor 6-9 |
+| global Newton, implant 2x6x8 p_h/E = 0.05 | 3 iterations in 59 of 60 increments, 4 in one; residuals 4.7e-2, 5.1e-4, 2.2e-6, 5.2e-12 (increment 1), 3.2e-2, 3.8e-5, 3.2e-9, 1.7e-15 (increment 11): quadratic; no cutback. Local solve: at most a few Newton steps per Gauss point |
+
+`tests/test_uel_gate_implicit.py` runs (b)-(d) and the explicit default (the stored `_ph0.05` 2x6x8 element values
+exactly) in about 11 s.
+
+Application: the cases where the explicit overshoot was largest, rerun with the implicit gate (`homeostatic_implant.py
+--levels 1 2 --p-ref 0.05 --gate-implicit`; `cervical_study.py --levels 1 2 --bottom uz --outer free fixed --p-ref 0.05
+0.02 --nut outer --gate-implicit`; tags `_gi`). Implant sector, fixed 0.125 mm seed, p_h/E = 0.05; the pressure columns
+give the largest element p/E in the top row of the seed and below it, with the excess above p_h:
+
+| mesh | bulge | outer face | gate | core alpha-1 | core vM/E | corner vM/E | corner alpha-1 | max p/E top row (above p_h) | max p/E below the top row | stopped |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2x6x8 | 1 | free | explicit | 0.0097 | 0.0128 | 0.060 | 0.0701 | 0.0524 (+5 %) | 0.0507 (+1 %) | 0.08 |
+| 2x6x8 | 1 | free | implicit | 0.0097 | 0.0127 | 0.060 | 0.0694 | 0.0519 (+4 %) | 0.0505 (+1 %) | 0.06 |
+| 2x6x8 | 1 | fixed | explicit | 0.0043 | 0.0106 | 0.082 | 0.0648 | 0.0630 (+26 %) | 0.0648 (+30 %) | 0.19 |
+| 2x6x8 | 1 | fixed | implicit | 0.0042 | 0.0105 | 0.081 | 0.0642 | 0.0619 (+24 %) | 0.0643 (+29 %) | 0.19 |
+| 2x6x8 | 0 | free | explicit | 0.0117 | 0.0142 | 0.060 | 0.0749 | 0.0537 (+7 %) | 0.0518 (+4 %) | 0.08 |
+| 2x6x8 | 0 | free | implicit | 0.0116 | 0.0141 | 0.059 | 0.0742 | 0.0532 (+6 %) | 0.0514 (+3 %) | 0.08 |
+| 2x6x8 | 0 | fixed | explicit | 0.0048 | 0.0102 | 0.078 | 0.0646 | 0.0604 (+21 %) | 0.0633 (+27 %) | 0.23 |
+| 2x6x8 | 0 | fixed | implicit | 0.0047 | 0.0101 | 0.077 | 0.0640 | 0.0595 (+19 %) | 0.0628 (+26 %) | 0.21 |
+| 4x12x16 | 1 | free | explicit | 0.0076 | 0.0112 | 0.115 | 0.0304 | 0.0828 (+66 %) | 0.0576 (+15 %) | 0.05 |
+| 4x12x16 | 1 | free | implicit | 0.0076 | 0.0112 | 0.114 | 0.0289 | 0.0812 (+62 %) | 0.0568 (+14 %) | 0.05 |
+| 4x12x16 | 1 | fixed | explicit | 0.0060 | 0.0109 | 0.115 | 0.0303 | 0.0854 (+71 %) | 0.0662 (+32 %) | 0.10 |
+| 4x12x16 | 1 | fixed | implicit | 0.0059 | 0.0108 | 0.114 | 0.0288 | 0.0837 (+67 %) | 0.0650 (+30 %) | 0.09 |
+| 4x12x16 | 0 | free | explicit | 0.0090 | 0.0127 | 0.106 | 0.0351 | 0.0746 (+49 %) | 0.0562 (+12 %) | 0.05 |
+| 4x12x16 | 0 | free | implicit | 0.0090 | 0.0126 | 0.105 | 0.0340 | 0.0730 (+46 %) | 0.0556 (+11 %) | 0.04 |
+| 4x12x16 | 0 | fixed | explicit | 0.0069 | 0.0116 | 0.109 | 0.0345 | 0.0804 (+61 %) | 0.0676 (+35 %) | 0.11 |
+| 4x12x16 | 0 | fixed | implicit | 0.0068 | 0.0115 | 0.107 | 0.0333 | 0.0789 (+58 %) | 0.0663 (+33 %) | 0.10 |
+
+Cervical line (nutrient on the outer face, bottom u_z = 0, bulge 1):
+
+| mesh | bottom | outer | p_h/E | gate | core alpha-1 | core vM/E | band mean vM/E | ratio | band max vM/E | max p/E (seed, above p_h) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2x6x8 | uz | free | 0.02 | explicit | 0.0230 | 0.0183 | 0.0241 | 1.31 | 0.030 | 0.035 (+74 %) |
+| 2x6x8 | uz | free | 0.02 | implicit | 0.0229 | 0.0182 | 0.0239 | 1.31 | 0.030 | 0.034 (+71 %) |
+| 2x6x8 | uz | fixed | 0.02 | explicit | 0.0020 | 0.0042 | 0.0221 | 5.24 | 0.027 | 0.040 (+99 %) |
+| 2x6x8 | uz | fixed | 0.02 | implicit | 0.0018 | 0.0042 | 0.0219 | 5.21 | 0.027 | 0.038 (+88 %) |
+| 2x6x8 | uz | free | 0.05 | explicit | 0.0488 | 0.0371 | 0.0434 | 1.17 | 0.059 | 0.069 (+37 %) |
+| 2x6x8 | uz | free | 0.05 | implicit | 0.0483 | 0.0367 | 0.0430 | 1.17 | 0.059 | 0.068 (+36 %) |
+| 2x6x8 | uz | fixed | 0.05 | explicit | 0.0056 | 0.0103 | 0.0439 | 4.25 | 0.051 | 0.092 (+83 %) |
+| 2x6x8 | uz | fixed | 0.05 | implicit | 0.0054 | 0.0103 | 0.0434 | 4.22 | 0.050 | 0.088 (+77 %) |
+| 4x12x16 | uz | free | 0.02 | explicit | 0.0249 | 0.0191 | 0.0216 | 1.13 | 0.031 | 0.032 (+62 %) |
+| 4x12x16 | uz | free | 0.02 | implicit | 0.0246 | 0.0188 | 0.0214 | 1.14 | 0.031 | 0.032 (+59 %) |
+| 4x12x16 | uz | fixed | 0.02 | explicit | 0.0110 | 0.0103 | 0.0236 | 2.29 | 0.036 | 0.081 (+307 %) |
+| 4x12x16 | uz | fixed | 0.02 | implicit | 0.0105 | 0.0099 | 0.0230 | 2.34 | 0.035 | 0.076 (+280 %) |
+| 4x12x16 | uz | free | 0.05 | explicit | 0.0486 | 0.0381 | 0.0385 | 1.01 | 0.066 | 0.055 (+11 %) |
+| 4x12x16 | uz | free | 0.05 | implicit | 0.0482 | 0.0378 | 0.0380 | 1.01 | 0.065 | 0.055 (+9 %) |
+| 4x12x16 | uz | fixed | 0.05 | explicit | 0.0227 | 0.0206 | 0.0442 | 2.14 | 0.073 | 0.146 (+191 %) |
+| 4x12x16 | uz | fixed | 0.05 | implicit | 0.0220 | 0.0200 | 0.0433 | 2.17 | 0.071 | 0.139 (+179 %) |
+
+What the rerun shows:
+
+- Explicit and implicit agree to 1-2 % in every measure (core alpha - 1 and vM/E, corner, band mean, ratio, band
+  maximum; the implicit values are the smaller ones, as backward Euler against forward Euler), and the explicit
+  60-increment runs were already within 2 % of their dt limit (above). Newton: 3 iterations per increment with either
+  gate (181-190 per run), no cutback, the local solve adds 2-5 % wall time.
+- **The overshoot above p_h is not the explicit lag.** With the implicit gate a Gauss point's own growth stops at
+  p = p_h exactly, yet the largest pressure of the top row stays at 1.46 p_h against 1.49 p_h (4x12x16, bulge 0, free),
+  1.62 against 1.66 (bulge 1), and 1.8 against 1.9 p_h at the cervical corner with the outer face fixed. g = 0 only stops
+  the growth of that point; the neighbours that are still growing (and the rigid faces) keep loading it, and nothing in
+  the law lets the pressure fall again. The mesh dependence (4-7 % at 2x6x8, 46-67 % at 4x12x16 in the top row) is
+  therefore the corner singularity seen through finer elements, as the law-off corner stress is, not a time-step
+  error; refining dt (explicit `_n120`, `_n240`, above) or taking the gate implicitly does not change it. Below the top
+  row the excess is 11-15 % with the outer face free and 26-35 % with it fixed, the same with either gate.
+- So the implicit gate is the cleaner scheme (no overshoot from the point's own growth, consistent tangent, same cost),
+  and the explicit one remains adequate for these runs; the maximum pressure near a constrained corner is a statement
+  about the elastic corner and the law's one-sidedness, to be read with the core values, as in the mesh study.
+
+6x18x24 with the implicit gate (bottom u_z = 0, outer face free, p_h/E = 0.05, nutrient on the outer face): see the row
+in the cervical table of `results/implant_cervical_summary.json` (`cervical_study.py --table-only`) when present.
+
 ## Cervical line of the tooth-like sector (16 Oct 2026, cloud; `cervical_study.py`, P3 (e))
 
 Where the cervical line is: in the WP2 tooth (`keio_wp2/homeostatic_tooth.py`, stages 6 and 7) the stress concentrates

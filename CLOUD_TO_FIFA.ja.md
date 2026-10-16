@@ -5,6 +5,17 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月16日 深夜・追記（恒常圧の成長則に陰的な帰還を足した。Abaqus の確認は陰的でも回せる）
+
+下の項の帰還（増分の始めの圧力、陽的）に加えて、増分の終わりの圧力で帰還を評価する陰的な扱いを入れた
+（`p3/uel/unified_uel.f90` の `implicit_gate`：Gauss 点ごとの局所 Newton と、陰関数の微分を含む一貫した接線）。
+切り替えは **PROPS(20) = 形 + 10**（10/11/12 が 0/1/2 の陰的版）、デッキは `make_implant_uel_inp.py --p-ref 0.05 --gate-implicit`
+（タグ `_ph0.05_gi`、模擬実行の結果は `results/implant_2x6x8_ph0.05_gi.json`）。既定（PROPS(20) < 10）は変えていないので、
+下の項の陽的な確認はそのまま。Abaqus の確認を陰的でも回すなら、下の手順 2 の `--p-ref 0.05` を `--p-ref 0.05 --gate-implicit`
+に、ジョブ名と比較先の `.json` を `_ph0.05_gi` に読み替えるだけ（1 増分の Newton は 3 回、2 次収束。帰還が 0 と 1 の間の
+Gauss 点では p が p_h を下から追うので、刻みが違っても差は小さいはず）。局所 Newton が収束しない要素は PNEWDT = 0.5 で
+カットバックを頼む（模擬実行では一度も起きていない）。詳しくは `p3/uel/README.md` の「Implicit gate」。
+
 ## 2026年10月16日 深夜（恒常圧の成長則を UEL に入れた：Abaqus で 1 本確かめる。急がない、8×24×32 のあとで）
 
 WP2（`keio_wp2/`）の恒常圧の成長則 α̇ = k_α φ min(1, max(0, 1 − p/p_h))（p は圧縮を正とする圧力）を

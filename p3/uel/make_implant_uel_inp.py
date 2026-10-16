@@ -34,7 +34,8 @@ Boundary conditions beyond make_implant_inp.py: `--outer fixed` (u = 0 on r = ri
 (keio_wp2/README.ja.md stage 6-7). `--ninc n` changes the increments of GROW (tag `_n<n>`), a time-step check.
 `homeostatic_implant.py` runs and tabulates the matrix. `--nut outer` (tag `_no`) supplies the nutrient on the outer
 face r = ri + 0.25 instead of the top (saliva on a crown, as the keio_wp2 tooth of stage 7); `cervical_study.py`
-uses it for the cervical line of the tooth-like sector (P3 (e)).
+uses it for the cervical line of the tooth-like sector (P3 (e)). `--gate-implicit` (tag `_gi`) evaluates the gate
+with the end-of-increment pressure (PROPS(20) = form + 10; unified_uel.f90 module header): no overshoot of p_h.
 """
 import argparse
 import json
@@ -94,11 +95,12 @@ def sets(nodes, ijk, tol=1e-9):
                 BOTTOM=np.isclose(nodes[:, 2], 0.0, atol=tol), SYMX=np.abs(nodes[:, 0]) < tol, SYMY=np.abs(nodes[:, 1]) < tol)
 
 
-def element_props(nu, p_ref=0.0, p_form=0):
-    """the 16 properties, plus (17, 18: antibiotic off; 19, 20) when the homeostatic-pressure law is on"""
+def element_props(nu, p_ref=0.0, p_form=0, gate_implicit=False):
+    """the 16 properties, plus (17, 18: antibiotic off; 19, 20) when the homeostatic-pressure law is on;
+    gate_implicit: PROPS(20) = p_form + 10"""
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu)
     if p_ref > 0:
-        P = np.r_[P, 1e30, 0.0, p_ref, float(p_form)]
+        P = np.r_[P, 1e30, 0.0, p_ref, float(p_form + (10 if gate_implicit else 0))]
     return P
 
 
@@ -116,8 +118,8 @@ def extra_bc(outer, bottom):
 
 
 def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name="", p_ref=0.0, p_form=0,
-         outer="free", bottom="free", nut="top"):
-    P = element_props(nu, p_ref, p_form)
+         outer="free", bottom="free", nut="top", gate_implicit=False):
+    P = element_props(nu, p_ref, p_form, gate_implicit)
     S = sets(nodes, ijk)
     NUT = "TOP" if nut == "top" else "OUTER"
     out = ["*HEADING", f"unified two-level model, user element, implant sector {name}, {len(elems)} elements", "*NODE"]
@@ -159,17 +161,19 @@ def element_jk(e, nr, nt):
 
 
 def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC, maxit=30, p_ref=0.0, p_form=0,
-        outer="free", bottom="free", ninc=None, nut="top"):
+        outer="free", bottom="free", ninc=None, nut="top", gate_implicit=False, hist=None):
     """INIT and GROW in the emulation; GROW with automatic incrementation (emulate_abaqus.march, as the deck).
     nstop: GROW ends at nstop * T/NINC (the full step by default); maxit: Newton iterations per attempt (I_C);
     p_ref, p_form: the homeostatic-pressure law (PROPS(19), PROPS(20) of unified_uel.f90; 0 = off);
+    gate_implicit: the implicit gate (PROPS(20) = p_form + 10);
     outer, bottom: extra_bc; ninc: increments of the full GROW step (default NINC; a time-step check);
-    nut: the face with c = 1, "top" (the implant deck) or "outer" (saliva on the crown, keio_wp2 stage 7)."""
+    nut: the face with c = 1, "top" (the implant deck) or "outer" (saliva on the crown, keio_wp2 stage 7);
+    hist: a list that receives the Newton history of every GROW iteration (emulate_abaqus.increment)."""
     import time as _t
     from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment, march  # needs BIOFILM_ECO_CASE
     t_start = _t.time()
     NI = NINC if ninc is None else ninc
-    props = F(element_props(nu, p_ref, p_form))
+    props = F(element_props(nu, p_ref, p_form, gate_implicit))
     S = sets(nodes, ijk)
     NUT = "TOP" if nut == "top" else "OUTER"
     SV = [F(np.zeros(NSVT)) for _ in elems]
@@ -191,7 +195,7 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
     U[NDN * np.where(S[NUT])[0] + 4] = 1.0
     log = []
     U, SV, info = march(U, fixed, nodes, elems, SV, props, T if nstop == NINC else nstop * (T / NI), nstop if nstop != NINC else NI,
-                        t0=T0, finite=finite, md=md, maxit=maxit, log=log)
+                        t0=T0, finite=finite, md=md, maxit=maxit, log=log, hist=hist)
     xi = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv in SV])
     st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SV])
     cen = np.array([nodes[el].mean(0) for el in elems])
@@ -214,7 +218,8 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
                 alpha_minus_1_all_mean=float(xi.mean()), max_vM_over_E=float(st[im, 0] / E), max_centroid_xyz=cen[im].tolist(),
                 max_centroid_r_theta_z=rtz(cen[im]),
                 max_interior_vM_over_E=float(st[ii, 0] / E), max_interior_centroid_r_theta_z=rtz(cen[ii]),
-                p_ref=float(p_ref), p_form=int(p_form), outer=outer, bottom=bottom, nut=nut, increments_nominal=int(NI),
+                p_ref=float(p_ref), p_form=int(p_form), gate_implicit=bool(gate_implicit), outer=outer, bottom=bottom, nut=nut,
+                increments_nominal=int(NI),
                 wall_time_s=float(_t.time() - t_start),
                 incrementation=dict(increments=info["increments"], cutbacks=info["cutbacks"], iterations=info["iterations"],
                                     dt_min=info["dt_min"], dt_base=T / NI,
@@ -237,6 +242,7 @@ if __name__ == "__main__":
     ap.add_argument("--seed-layers", type=int, default=1, help="seed = the inner n element layers (n = nr/2: 0.125 mm at every level)")
     ap.add_argument("--p-ref", type=float, default=0.0, help="homeostatic-pressure law: p_ref / E (PROPS(19)); 0 = off")
     ap.add_argument("--p-form", type=int, default=0, help="its form (PROPS(20)): 0 p_h = p_ref, 1 p_h = p_ref (phi^2 + f), 2 hyperbolic")
+    ap.add_argument("--gate-implicit", action="store_true", help="the implicit gate, p of the end of the increment (PROPS(20) = form + 10; tag _gi)")
     ap.add_argument("--outer", choices=("free", "fixed"), default="free", help="outer face r = ri + 0.25: free or u = 0")
     ap.add_argument("--bottom", choices=("free", "uz", "fixed"), default="free", help="bottom face z = 0: free, u_z = 0 or u = 0")
     ap.add_argument("--ninc", type=int, default=None, help="increments of the GROW step (default 60; a time-step check)")
@@ -245,10 +251,11 @@ if __name__ == "__main__":
     a = ap.parse_args()
     nodes, elems, layer, ijk = sector(a.nr, a.nt, a.nz, a.bulge)
     tag = f"{a.nr}x{a.nt}x{a.nz}" + (f"_b{a.bulge:g}" if a.bulge else "") + ("_small" if a.small else "") + ("_nomd" if a.no_md else "") + (f"_sl{a.seed_layers}" if a.seed_layers != 1 else "")
-    tag += (f"_ph{a.p_ref:g}" + (f"f{a.p_form}" if a.p_form else "") if a.p_ref > 0 else "") + ("_of" if a.outer == "fixed" else "")
+    tag += (f"_ph{a.p_ref:g}" + (f"f{a.p_form}" if a.p_form else "") + ("_gi" if a.gate_implicit else "") if a.p_ref > 0 else "")
+    tag += "_of" if a.outer == "fixed" else ""
     tag += {"free": "", "uz": "_bz", "fixed": "_bf"}[a.bottom] + ("_no" if a.nut == "outer" else "") + (f"_n{a.ninc}" if a.ninc else "")
     kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small, seed_layers=a.seed_layers, p_ref=a.p_ref, p_form=a.p_form,
-              outer=a.outer, bottom=a.bottom, nut=a.nut)
+              outer=a.outer, bottom=a.bottom, nut=a.nut, gate_implicit=a.gate_implicit)
     if a.run:
         r = run(nodes, elems, layer, ijk, ninc=a.ninc, **kw)
         r.update(nr=a.nr, nt=a.nt, nz=a.nz, bulge=a.bulge, nu=a.nu, kinematics=("small" if a.small else "finite") + " strain"

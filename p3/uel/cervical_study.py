@@ -3,7 +3,7 @@ gingiva-side condition on the bottom face, with and without the homeostatic-pres
 section 1, P3 (e); the keio_wp2 tooth of stages 6 and 7).
 
     BIOFILM_ECO_CASE=<dir>/uel_eco.txt python cervical_study.py [--levels 1 2] [--bottom uz fixed] [--outer free fixed]
-                                                                 [--p-ref 0 0.05 0.02] [--nut top outer] [--table-only]
+                                                                 [--p-ref 0 0.05 0.02] [--nut top outer] [--gate-implicit] [--table-only]
 
 Where the cervical line is. In the WP2 tooth (keio_wp2/homeostatic_tooth.py) the stress concentration sits at z = 0
 of the first element ring on the bonded face: the crown's surface r_in(z) = r_i + b sin(pi z / 2h) is steepest there
@@ -29,7 +29,8 @@ WP2 tooth of stage 7, `--nut outer`, tag `_no`), where the growth is uniform alo
 loaded as in keio_wp2. A case whose
 results/implant_<tag>.json exists is not rerun; bottom-free runs of homeostatic_implant.py are tabulated too when
 present. Writes results/implant_cervical_summary.json and prints the table, the spread of the ratio over the four
-boundary-condition combinations and the change between levels.
+boundary-condition combinations and the change between levels. --gate-implicit runs the law-on cases with the
+implicit gate (tag `_gi`, column "gate"); the spread lines use the explicit runs.
 """
 import argparse
 import glob
@@ -49,9 +50,10 @@ BAND_Z = (0.0, 0.25)            # the cervical band in z (mm); theta as the core
 BOTTOM_TAG = {"free": "", "uz": "_bz", "fixed": "_bf"}
 
 
-def tag_of(f, bottom, outer, p_ref, bulge=1.0, nut="top"):
+def tag_of(f, bottom, outer, p_ref, bulge=1.0, nut="top", gate_implicit=False):
     t = f"{2 * f}x{6 * f}x{8 * f}" + ("_b1" if bulge else "") + (f"_sl{f}" if f > 1 else "")
-    return t + (f"_ph{p_ref:g}" if p_ref > 0 else "") + ("_of" if outer == "fixed" else "") + BOTTOM_TAG[bottom] + ("_no" if nut == "outer" else "")
+    t += f"_ph{p_ref:g}" + ("_gi" if gate_implicit else "") if p_ref > 0 else ""
+    return t + ("_of" if outer == "fixed" else "") + BOTTOM_TAG[bottom] + ("_no" if nut == "outer" else "")
 
 
 def masks(r):
@@ -75,6 +77,7 @@ def measures(r):
     bm = float(vm[band].mean()) if band.any() else float("nan")
     return dict(nr=r["nr"], mesh=f"{r['nr']}x{r['nt']}x{r['nz']}", bulge=r.get("bulge", 0.0), bottom=r.get("bottom", "free"),
                 outer=r.get("outer", "free"), nut=r.get("nut", "top"), p_ref=r.get("p_ref", 0.0),
+                gate="implicit" if r.get("gate_implicit") else "explicit",
                 band_elements=int(band.sum()), core_elements=int(core.sum()),
                 core_alpha_minus_1=float(xi[core].mean()) if core.any() else float("nan"), core_vM_over_E=cm,
                 core_p_over_E=float(p[core].mean()) if core.any() else float("nan"),
@@ -88,10 +91,11 @@ def measures(r):
 
 
 def table(rows):
-    out = ["| nutrient | mesh | bottom | outer | p_h/E | core alpha-1 | core vM/E | band mean vM/E | ratio | band max vM/E | max p/E (seed) |",
-           "|" + "---|" * 11]
+    out = ["| nutrient | mesh | bottom | outer | p_h/E | gate | core alpha-1 | core vM/E | band mean vM/E | ratio | band max vM/E | max p/E (seed) |",
+           "|" + "---|" * 12]
     for s in rows:
-        out.append(f"| {s['nut']} | {s['mesh']} | {s['bottom']} | {s['outer']} | {s['p_ref'] if s['p_ref'] else 'off'} | {s['core_alpha_minus_1']:.4f} "
+        out.append(f"| {s['nut']} | {s['mesh']} | {s['bottom']} | {s['outer']} | {s['p_ref'] if s['p_ref'] else 'off'} "
+                   f"| {s['gate'] if s['p_ref'] else '-'} | {s['core_alpha_minus_1']:.4f} "
                    f"| {s['core_vM_over_E']:.4f} | {s['band_vM_over_E']:.4f} | {s['ratio']:.2f} | {s['band_max_vM_over_E']:.3f} "
                    f"| {s['seed_max_p_over_E']:.3f} |")
     return "\n".join(out)
@@ -102,6 +106,8 @@ def spread(rows, bottoms=("uz", "fixed"), outers=("free", "fixed")):
     same for the band mean vM/E; then the change of the ratio from one level to the next per case"""
     out, by = [], {}
     for s in rows:
+        if s["gate"] == "implicit":
+            continue                                        # the spread lines compare the explicit runs
         by[(s["nut"], s["nr"], s["p_ref"], s["bottom"], s["outer"])] = s
     nuts = sorted({s["nut"] for s in rows}, reverse=True)
     levels = sorted({s["nr"] for s in rows}); prefs = sorted({s["p_ref"] for s in rows})
@@ -128,7 +134,7 @@ def spread(rows, bottoms=("uz", "fixed"), outers=("free", "fixed")):
 def load_rows(bulge=1.0):
     rows = []
     for fpath in sorted(glob.glob(str(OUT / "implant_*.json"))):
-        m = re.match(r"implant_(\d+)x(\d+)x(\d+)(_b1)?(_sl\d+)?(_ph[\d.]+)?(_of)?(_b[zf])?(_no)?\.json$", Path(fpath).name)
+        m = re.match(r"implant_(\d+)x(\d+)x(\d+)(_b1)?(_sl\d+)?(_ph[\d.]+)?(_gi)?(_of)?(_b[zf])?(_no)?\.json$", Path(fpath).name)
         if not m or bool(m.group(4)) != bool(bulge):
             continue
         r = json.load(open(fpath))
@@ -136,7 +142,8 @@ def load_rows(bulge=1.0):
             continue
         rows.append(measures(r))
     order = {"free": 0, "uz": 1, "fixed": 2}
-    rows.sort(key=lambda s: (s["nut"] != "top", s["nr"], order[s["bottom"]], s["outer"] != "free", -s["p_ref"] if s["p_ref"] else 0))
+    rows.sort(key=lambda s: (s["nut"] != "top", s["nr"], order[s["bottom"]], s["outer"] != "free", -s["p_ref"] if s["p_ref"] else 0,
+                             s["gate"] != "explicit"))
     return rows
 
 
@@ -147,6 +154,7 @@ def main():
     ap.add_argument("--outer", nargs="+", default=["free", "fixed"])
     ap.add_argument("--p-ref", type=float, nargs="+", default=[0.0, 0.05, 0.02])
     ap.add_argument("--nut", nargs="+", default=["top", "outer"], help="face with c = 1: top (implant deck) and/or outer (crown)")
+    ap.add_argument("--gate-implicit", action="store_true", help="the implicit gate for the law-on cases (tag _gi)")
     ap.add_argument("--table-only", action="store_true")
     a = ap.parse_args()
     OUT.mkdir(exist_ok=True)
@@ -157,13 +165,13 @@ def main():
                 for bottom in a.bottom:
                     for outer in a.outer:
                         for p_ref in a.p_ref:
-                            tag = tag_of(f, bottom, outer, p_ref, nut=nut)
+                            tag = tag_of(f, bottom, outer, p_ref, nut=nut, gate_implicit=a.gate_implicit and p_ref > 0)
                             path = OUT / f"implant_{tag}.json"
                             if path.exists():
                                 continue
                             nodes, elems, layer, ijk = mi.sector(2 * f, 6 * f, 8 * f, 1.0)
                             r = mi.run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=f, p_ref=p_ref, outer=outer,
-                                       bottom=bottom, nut=nut)
+                                       bottom=bottom, nut=nut, gate_implicit=a.gate_implicit and p_ref > 0)
                             r.update(nr=2 * f, nt=6 * f, nz=8 * f, bulge=1.0, nu=0.49, kinematics="finite strain, mean dilatation",
                                      elements_total=len(elems))
                             path.write_text(json.dumps(r))
