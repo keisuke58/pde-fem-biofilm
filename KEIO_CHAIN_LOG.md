@@ -578,3 +578,75 @@ Built with the corrected `unified_uel.f90` (Gauss-point record after the growth 
 - `uel_column` (20 elements): x = 0, NT11 0.77532, NT12 0.93565 (IKMHIWI03 0.7753, 0.9357).
 - `uel_seed8` (8^3, default options): elements with phi > 0.5: vM mean 0.01300, max 0.01637 (expected 0.01300 / 0.01637). alpha - 1 mean 0.03571.
 Output: `p3/uel/results/abaqus_fifa/` (`.sta` and the Gauss-point files, gzip).
+
+---
+
+## 2026-10-16 09:46: chain `20261008d` ran on fifa
+
+Automatic entry from `scripts/run_chain_keio.py`. No analysis: what runs next is for the cloud session to decide.
+
+| job | status | wall clock | vs reference |
+|---|---|---|---|
+| `fx42l_p0` | PASS | 36 min 2 s | identical |
+| `fx42l_p100` | PASS | 37 min 45 s | identical |
+| `fx42l_fo_p0` | PASS | 47 min 41 s | identical |
+| `ff42l` | PASS | 28 min 45 s | identical |
+| `ff42l_fo` | PASS | 30 min 22 s | identical |
+
+
+
+Wall clock is comparable with IKMHIWI03 only if the machine was otherwise idle: the numbers are deterministic, the timing is not.
+
+<!-- keio-chain -->
+```json
+{
+ "chain": "20261008d",
+ "runs": [
+  {
+   "job": "fx42l_p0",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 2162,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42l_p0.txt"
+  },
+  {
+   "job": "fx42l_p100",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 2265,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42l_p100.txt"
+  },
+  {
+   "job": "fx42l_fo_p0",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 2861,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/fx42l_fo_p0.txt"
+  },
+  {
+   "job": "ff42l",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1725,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff42l.txt"
+  },
+  {
+   "job": "ff42l_fo",
+   "cpus": 4,
+   "status": "PASS",
+   "seconds": 1822,
+   "verdict": "identical",
+   "detail": "15 lines, every digit equal",
+   "file": "abaqus_composition/results_keio_1008/ff42l_fo.txt"
+  }
+ ]
+}
+```
