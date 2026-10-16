@@ -272,20 +272,75 @@ problem changes with the level and nothing converges (seed vM/E -51 %, -37 %). F
 fixed: `--seed-layers f` seeds the inner f layers, 0.125 mm at every level (`_sl<f>` in the file name). With that seed,
 bulge 0:
 
+| level | elements | time | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
+|---|---|---|---|---|---|---|---|
+| 2x6x8 | 96 | 12 s | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
+| 4x12x16 | 768 | 201 s | 0.04481 | 0.06206 | 0.01467 | 0.03637 | 0.7791 (2.077, 63.7, 1.938) |
+| 6x18x24 | 2592 | 33 min | 0.04440 | 0.06125 | 0.01432 | 0.03606 | 1.2245 (2.069, 62.5, 1.958) |
+
+Bulge 1, same seed (the third level with one cutback, see below; 36 min):
+
 | level | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
 |---|---|---|---|---|---|
-| 2x6x8 | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
-| 4x12x16 | 0.04481 | 0.06206 | 0.01467 | 0.03637 | 0.7791 (2.077, 63.7, 1.938) |
+| 2x6x8 | 0.04427 | 0.04620 | 0.01490 | 0.03253 | 0.2927 (3.076, 67.5, 1.875) |
+| 4x12x16 | 0.04278 | 0.06100 | 0.01206 | 0.03206 | 0.9808 (3.072, 63.7, 1.938) |
+| 6x18x24 | 0.04173 | 0.05913 | 0.01166 | 0.03113 | 1.5766 (3.067, 62.5, 1.958) |
 
-The core moves by -18 % (alpha - 1) and +2.6 % (vM/E); the seed mean of vM/E rises by 30 % and the largest vM/E almost
-triples, at the top face next to the fixed inner face, where the seed (phi = 0.9) meets the empty layer (phi = 1e-4): a
-singular corner, to be left out of the compared quantities as the cube's corners are. The 6x18x24 and 8x24x32 levels
-of this seed are for fifa (`CLOUD_TO_FIFA.ja.md`, 16 Oct evening); the order can only be read from three levels.
+Changes from the level before and the observed order p (three levels, q = q_inf + C h^p; "-" where the differences
+do not shrink with one sign):
+
+| quantity | bulge 0: 1 -> 2, 2 -> 3, p (q_inf) | bulge 1: 1 -> 2, 2 -> 3, p (q_inf) |
+|---|---|---|
+| core alpha - 1 | -18.3 %, -2.4 %, 2.9 (0.01416) | -19.1 %, -3.3 %, 2.5 (0.01142) |
+| core vM/E | +2.6 %, -0.9 %, - | -1.4 %, -2.9 %, - |
+| seed alpha - 1 | -3.3 %, -0.9 %, 1.4 (0.04384) | -3.4 %, -2.5 %, - |
+| seed vM/E | +30 %, -1.3 %, - | +32 %, -3.1 %, - |
+| max vM/E (all) | +186 %, +57 %, - | +235 %, +61 %, - |
+
+The core, a fixed region away from the edges, settles: alpha - 1 to 2-3 % at the third level with an order between 2
+and 3, vM/E within 1-3 % at every level (its changes are below the level where an order can be read). Bulge 1 lowers
+the core by 17-19 % in alpha - 1 and 8-14 % in vM/E (the wider collar at the top takes more nutrient). The seed means
+include the top row and the sector cuts, so they move more. The largest vM/E does not converge: it sits in the top row
+of elements next to the fixed inner face, where the seed (phi = 0.9) meets the empty layer (phi = 1e-4) and the
+displacement is fixed on one side and free on the other, and grows 0.27 -> 0.78 -> 1.22 (bulge 0) and 0.29 -> 0.98 ->
+1.58 (bulge 1) as the element reaches closer to the corner, as a singular corner does. It stays at theta = 62-68
+degrees, in the inner element column, half an element below the top face. It is reported but left out of the compared quantities, as
+the cube's corners are. The 8x24x32 level (sl4) is for fifa (`CLOUD_TO_FIFA.ja.md`, 16 Oct evening and night).
 
 Newton: at 6x18x24 with the 0.125 mm seed the full Newton step of the first growth increment diverged in the mechanics
 (phi and c already converged, a 0.235 mm displacement step on 0.042 mm elements, then NaN from an inverted element; the
 element itself returned PNEWDT = 1). `emulate_abaqus.increment` now halves the step when the residual grows by more than
 half or is not finite (up to 6 times; Abaqus: `*CONTROLS, PARAMETERS=LINE SEARCH`): bulge 0 then needs five halvings
 in increment 1 and plain Newton after. The converged state is unchanged (`tests/test_uel_implant.py`, 2x6x8 to 1e-6).
-Open: 6x18x24 with bulge 1 and the 0.125 mm seed still stops with "no convergence" (30 iterations) in increment 1.
-Not yet tried: a smaller first increment, more iterations, or Abaqus itself with line search.
+With bulge 1 the line search was not enough: 6x18x24 stopped after 30 iterations in increment 1 (the residual crept
+from 2.6e-2 to 3.5e-3 with steps of 1/8 to 1/16).
+
+Cause (16 Oct, evening; first growth increment of 6x18x24 sl3 with bulge 1, own Newton loop with the residual per dof
+kind and the corner Jacobians of the deformed elements): the geometry is sound before the step (smallest corner det J
+7.8e-5 > 0, the sheared elements at the bulge included) and the residual is ordinary (u 3.8e-3, phi 5.3e-3, c 2.6e-2),
+but the first Newton update is 0.97 mm at the top face in the empty layer (phi = 1e-4, r = 3.22), which inverts 94
+elements at once. The update depends on the increment length: 6.3e-5, 2.5e-4, 1.0e-3, 2.4e-3 and 5.8e-3 mm at dt/64,
+dt/16, dt/4, dt/2 and 3 dt/4 (linear in dt, as a response to the growth of one increment should be), 0.97 mm at dt and
+2.1e-2 mm at 2 dt. So the coupled tangent of the start state (alpha = 1, u = 0, the empty layer at its floor stiffness
+f = 1e-3) is nearly singular at the base increment dt = T/60: an eigenvalue of the 1/dt-reaction part crosses zero near
+that dt and the near-null mode sits in the soft layer. It is not an inverted element and not the bulge geometry; the
+bulge only moves the crossing onto the base increment (bulge 0 at the same level: 2.7e-2 mm, five halvings). At dt/4
+the increment converges quadratically in three iterations, 4x12x16 sl2 in five at the full dt.
+
+Remedy, as Abaqus would do it: automatic time incrementation (`emulate_abaqus.march`, used by
+`make_implant_uel_inp.run`). dt starts at T/60, which is also the largest increment; an increment whose Newton fails
+(residual not finite, 30 iterations, or PNEWDT < 1 from the element) is retried from the same start state with dt/4,
+at most five times in one increment; after two consecutive increments converged in at most four iterations dt grows by
+1.5 up to T/60; the last increment ends at T. Without a failure the increments are the 60 fixed ones, so converged
+runs are unchanged (2x6x8, bulge 0 and 1: every per-element value identical, scalars to 2e-15). The .json records
+`incrementation` (increments, cutbacks, iterations, smallest dt and the increment log). The deck's GROW step carries
+the same settings: `*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10` (never reached, phi and c are in [0, 1]; it switches
+Abaqus to automatic incrementation), data line `dt0 = T/60, T, DTMIN = dt0/4^5, DTMAX = dt0`, and
+`*CONTROLS, PARAMETERS=TIME INCREMENTATION` with I_C = 30 iterations and I_A = 5 cutbacks per increment; the cutback
+factor 0.25 and the growth factor 1.5 are Abaqus's defaults. `tests/test_uel_implant.py` forces a failure in
+increment 3 of a 2x3x4 sector and checks the retry, the recovery of dt and the end time.
+
+With it, 6x18x24 sl3 with bulge 1 converges: the first attempt at dt = T/60 uses its 30 iterations, the retry at dt/4
+converges in three, dt is back at T/60 from increment 8 on, 64 increments and 253 iterations in all (36 min, three
+other runs on the four cores). Bulge 0 at the same level ran before the cutback existed (five line-search halvings in
+increment 1, no cutback), so its .json has no `incrementation` record.

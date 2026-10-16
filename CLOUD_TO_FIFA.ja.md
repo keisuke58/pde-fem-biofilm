@@ -5,6 +5,59 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月16日 夜（bulge 1 の 6×18×24 が収束した。自動の増分制御を入れた。急がない）
+
+夕方の項の未解決（固定シード、bulge 1 の 6×18×24 が最初の増分で止まる）が片付いた。詳しくは `p3/uel/README.md` の
+「Implant sector: mesh convergence」の後半。
+
+- **原因：** 要素のつぶれでも歯冠の形でもない。最初の成長増分で、出発状態（α = 1、u = 0、空の層は床の剛性 f = 1e−3）の
+  連成接線が、増分 dt = T/60 のちょうど近くでほぼ特異になる（1/dt と反応の項の固有値がそこで 0 を横切る）。Newton の
+  最初の更新が dt/4 で 1e−3 mm、dt/2 で 2.4e−3 mm なのに、dt では 0.97 mm（0.04 mm の要素に）で 94 要素が一度に裏返る。
+  dt/4 では 3 回で二次収束する。bulge 0 の同じ段では同じ現象が弱く出ていた（0.027 mm、line search 5 回）。
+- **対処（Abaqus と同じ自動増分）：** `emulate_abaqus.march`。dt は T/60 から始め、それが上限。増分の Newton が失敗
+  （残差が非有限、30 回、要素の PNEWDT < 1）したら同じ出発状態から dt/4 でやり直す（1 増分に 5 回まで）。2 増分続けて
+  4 回以内で収束したら dt を 1.5 倍（上限 T/60）。最後の増分は T で終わる。失敗がなければ従来の固定 60 増分と同じで、
+  収束済みの結果は変わらない（2×6×8 の bulge 0 と 1 で要素ごとの値が同一）。json に `incrementation`（増分数、
+  カットバック数、反復数、最小 dt、増分の記録）が入る。
+- **デッキも同じ設定になった**（`make_implant_uel_inp.py` が書く）：GROW 段が
+  `*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10`（φ と c は [0, 1] なので届かない。自動増分に切り替えるためだけ）、
+  データ行 `dt0 = T/60, T, DTMIN = dt0/4^5, DTMAX = dt0`、`*CONTROLS, PARAMETERS=TIME INCREMENTATION` に
+  `20, 30, , 30, , , , 5`（反復 30 回、カットバック 5 回）。縮小率 0.25 と拡大率 1.5 は Abaqus の既定値。
+  夕方の項の `NINC` を 120 にする案と `*CONTROLS, PARAMETERS=LINE SEARCH` を足す案は**不要になった**（デッキを作り直せば
+  自動増分が入る。古い `.inp` は使わない）。
+- **結果（固定シード、3 段）：** コア（0.25 ≤ z ≤ 1.75、15° ≤ θ ≤ 75°）の α − 1 は bulge 0 で 0.01795 / 0.01467 /
+  0.01432（次数 2.9）、bulge 1 で 0.01490 / 0.01206 / 0.01166（次数 2.5）。コアの vM/E は bulge 0 で 0.0354 / 0.0364 /
+  0.0361、bulge 1 で 0.0325 / 0.0321 / 0.0311（段ごとに 1〜3 %、次数は読めない）。最大 vM/E は上面の角（固定面の隣、
+  シードと空の層の境目）で段ごとに上がり続ける（0.27 → 0.78 → 1.22、bulge 1 は 0.29 → 0.98 → 1.58）。角の特異点なので
+  報告はするが比べる量から外す。bulge 1 はコアの α − 1 を 17〜19 %、vM/E を 8〜14 % 下げる。
+  6×18×24 の bulge 1 は 64 増分、カットバック 1 回、36 分（クラウド、4 コアに 4 本）。
+
+**fifa でやること（夕方の項の 2〜4 を置き換える）：**
+1. `git pull origin master`、ライブラリを作り直す。`results/` に json がある段は飛ばす（2×6×8、4×12×16、6×18×24 の
+   固定シードは bulge 0 と 1 とも済み）。
+2. 残りは 8×24×32 の固定シード（`--seed-layers 4`）の bulge 0 と 1。1 本ずつ nohup で（6144 要素。クラウドの目安では
+   2〜3 時間、カットバックが入ればもう少し）：
+   ```
+   cd p3/uel && python3 make_implant_uel_inp.py /tmp/imp && export BIOFILM_ECO_CASE=/tmp/imp/uel_eco.txt
+   python3 make_implant_uel_inp.py --run --nr 8 --nt 24 --nz 32 --seed-layers 4
+   python3 make_implant_uel_inp.py --run --nr 8 --nt 24 --nz 32 --seed-layers 4 --bulge 1
+   python3 implant_convergence.py --fixed-seed; python3 implant_convergence.py --fixed-seed --bulge 1
+   ```
+   `5 cutbacks did not converge` で止まったら、その増分番号と stderr の最後の 30 行を報告に書いて止める（無理に通さない）。
+3. Abaqus で 1 本（6×18×24、固定シード、**bulge 1**。カットバックが Abaqus でも同じに働くかを見る）：
+   ```
+   python3 make_implant_uel_inp.py abaqus_in --nr 6 --nt 18 --nz 24 --seed-layers 3 --bulge 1
+   python3 make_abaqus_source.py
+   export BIOFILM_ECO_CASE=$PWD/abaqus_in/uel_eco.txt BIOFILM_UEL_GP=$PWD/abaqus_in/uel_implant6x18x24_b1_sl3_gp.txt
+   (cd abaqus_in && abaqus job=uel_implant6x18x24_b1_sl3 user=../unified_uel_abaqus.for cpus=1 interactive)
+   python3 compare_implant_gp.py abaqus_in/uel_implant6x18x24_b1_sl3_gp.txt results/implant_6x18x24_b1_sl3.json
+   ```
+   期待：`.sta` の最初の増分がカットバック（attempt 2、dt 9.9e−4）のあと収束し、以後は 1.5 倍ずつ戻って 3.96e−3 に
+   戻る。増分の刻みが模擬実行と同じなら Gauss 点の値は 1e−6 以下で合うはず（PASS）。刻みが違っていれば（Abaqus が
+   別の増分で切った、など）差は時間離散化の分（1e−3 程度）になるので、`.sta` の増分列を報告に貼る。
+4. json（5 MB 以下）、`.sta`、表を `keio/uel-implant` に push し、`KEIO_CHAIN_LOG.md` に報告（4 段のコアの値と次数、
+   最大値が角に留まるか、Abaqus の増分列）。
+
 ## 2026年10月16日 夕方（扇形のメッシュ収束：クラウドで出た分と、fifa に残す分。急がない）
 
 クラウド（gfortran + Python の模擬実行）で 2×6×8、4×12×16、6×18×24 を回した（`p3/uel/README.md` の

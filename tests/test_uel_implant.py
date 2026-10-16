@@ -65,6 +65,62 @@ def test_implant_2x6x8_matches_reference(lib, eco_case):
     assert xi.min() >= 0.0 and xi[(layer == 0) & (jk[:, 1] == 7)].mean() > xi[(layer == 0) & (jk[:, 1] == 0)].mean()
 
 
+def test_cutback_recovers_from_forced_failure(lib, eco_case, monkeypatch):
+    """automatic incrementation (emulate_abaqus.march): the first attempt of increment 3 is made to fail, the
+    increment is retried with dt/4, dt recovers by 1.5 after two easy increments up to the base dt, the step still
+    ends at T, and the result stays within the time-discretisation error of the uncut run. 2x3x4, about 5 s."""
+    import emulate_abaqus as ea
+    import make_implant_uel_inp as mi
+    nodes, elems, layer, ijk = mi.sector(2, 3, 4)
+    ref = mi.run(nodes, elems, layer, ijk)
+    assert ref["incrementation"]["cutbacks"] == 0 and ref["incrementation"]["increments"] == mi.NINC
+    real, state = ea.increment, dict(seen=0)
+
+    def failing(U0, U, fixed, nodes, elems, SV, props, dt, kinc, **kw):
+        if kinc == 3 and state["seen"] == 0:
+            state["seen"] = 1
+            raise ea.NoConvergence("forced")
+        return real(U0, U, fixed, nodes, elems, SV, props, dt, kinc, **kw)
+    monkeypatch.setattr(ea, "increment", failing)
+    r = mi.run(nodes, elems, layer, ijk)
+    inc = r["incrementation"]; dt0 = mi.T / mi.NINC
+    assert inc["cutbacks"] == 1 and inc["dt_min"] == pytest.approx(dt0 / 4)
+    log = inc["log"]
+    assert [row for row in log if row[3] == "cut"] == [[3, pytest.approx(2 * dt0, rel=1e-6), pytest.approx(dt0, rel=1e-6), "cut"]]
+    done = [row for row in log if row[3] != "cut"]
+    dts = [row[2] for row in done]
+    assert dts[2] == pytest.approx(dt0 / 4, rel=1e-3) and dts[3] == pytest.approx(dt0 / 4, rel=1e-3)
+    assert dts[4] == pytest.approx(dt0 * 1.5 / 4, rel=1e-3) and max(dts) <= dt0 * (1 + 1e-9)
+    assert sum(dts) == pytest.approx(mi.T, rel=1e-9) and inc["increments"] == len(done) > mi.NINC
+    assert all(d2 <= d1 * 1.5 * (1 + 1e-9) for d1, d2 in zip(dts[2:], dts[3:]))
+    for k in ("seed_alpha_minus_1", "seed_vM_over_E", "max_vM_over_E"):
+        assert r[k] == pytest.approx(ref[k], rel=2e-3), k
+    # exhausted cutbacks raise
+
+    def always(U0, U, fixed, nodes, elems, SV, props, dt, kinc, **kw):
+        if dt > 1e-6:                                   # every GROW attempt; INIT (dt = 1e-8) is not in march
+            raise ea.NoConvergence("always")
+        return real(U0, U, fixed, nodes, elems, SV, props, dt, kinc, **kw)
+    monkeypatch.setattr(ea, "increment", always)
+    with pytest.raises(RuntimeError, match="5 cutbacks"):
+        mi.run(nodes, elems, layer, ijk)
+
+
+def test_deck_automatic_incrementation(tmp_path):
+    """the GROW step of the deck carries the settings march emulates: DELTMX, dt0 = DTMAX = T/NINC, DTMIN = dt0/4^5,
+    30 iterations and 5 cutbacks per increment"""
+    import make_implant_uel_inp as mi
+    nodes, elems, layer, ijk = mi.sector(2, 3, 4)
+    mi.deck(tmp_path / "d.inp", nodes, elems, layer, ijk, seed_layers=1)
+    text = (tmp_path / "d.inp").read_text()
+    grow = text[text.index("*STEP, NAME=GROW"):]
+    dt0 = mi.T / mi.NINC
+    assert "*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10" in grow
+    assert f"{dt0:.10g}, {mi.T:.10g}, {dt0 / 1024:.6g}, {dt0:.10g}" in grow
+    assert "*CONTROLS, PARAMETERS=TIME INCREMENTATION\n20, 30, , 30, , , , 5" in grow
+    assert "DELTMX" not in text[:text.index("*STEP, NAME=GROW")]      # INIT keeps its fixed increment
+
+
 def test_compare_gp_record_roundtrip(tmp_path):
     """a uel_gp.txt whose Gauss-point values equal the element means of the .json compares to 0"""
     from compare_implant_gp import compare

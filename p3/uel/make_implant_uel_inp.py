@@ -41,6 +41,8 @@ from make_column_inp import CTRL, eco_file, overlay  # noqa: E402
 
 RI, THICK, HEIGHT = 2.05, 0.25, 2.0
 T, NINC, T0 = 0.2375, 60, 1e-8
+# *CONTROLS, PARAMETERS=TIME INCREMENTATION: I0, IR as CTRL, I_C = 30 iterations, I_A = 5 cutbacks per increment
+CTRL_AUTO = [*CTRL[:2], "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30, , 30, , , , 5"]
 
 
 def sector(nr, nt, nz, bulge=0.0, ri=RI, thick=THICK, height=HEIGHT):
@@ -107,7 +109,11 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_lay
             "NOTOP, 12, 12, 0.1", "TOP, 12, 12, 1.0"]
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
-    out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T / NINC:.10g}, {T:.10g}", *CTRL,
+    # GROW: automatic incrementation as emulate_abaqus.march: DELTMX (never reached, phi and c are in [0, 1]) switches
+    # it on, the data line gives dt0 = DTMAX = T/NINC and DTMIN = T/NINC/4^5; the controls allow 30 iterations (I_C)
+    # and 5 cutbacks (I_A) per increment; the cutback factor 0.25 and the growth factor 1.5 are Abaqus's defaults
+    out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10",
+            f"{T / NINC:.10g}, {T:.10g}, {T / NINC / 4 ** 5:.6g}, {T / NINC:.10g}", *CTRL_AUTO,
             "*BOUNDARY, OP=NEW", "INNER, 1, 3, 0.0", "SYMX, 1, 1, 0.0", "SYMY, 2, 2, 0.0", "TOP, 12, 12, 1.0", "*END STEP"]
     Path(path).write_text("\n".join(out) + "\n")
     return phi
@@ -118,9 +124,11 @@ def element_jk(e, nr, nt):
     return (e // nr) % nt, e // (nr * nt)
 
 
-def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC):
+def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC, maxit=30):
+    """INIT and GROW in the emulation; GROW with automatic incrementation (emulate_abaqus.march, as the deck).
+    nstop: GROW ends at nstop * T/NINC (the full step by default); maxit: Newton iterations per attempt (I_C)."""
     import time as _t
-    from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment  # needs BIOFILM_ECO_CASE
+    from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment, march  # needs BIOFILM_ECO_CASE
     t_start = _t.time()
     props = F(props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu))
     S = sets(nodes, ijk)
@@ -135,9 +143,9 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
     fixed[NDN * np.where(S["SYMY"])[0] + 1] = True
     fixed[NDN * np.where(S["TOP"])[0] + 4] = True
     U[NDN * np.where(S["TOP"])[0] + 4] = 1.0
-    for k in range(nstop):
-        U, SV, _ = increment(U.copy(), U, fixed, nodes, elems, SV, props, T / NINC, k + 1, ttot=T0 + k * T / NINC,
-                             finite=finite, md=md)
+    log = []
+    U, SV, info = march(U, fixed, nodes, elems, SV, props, T if nstop == NINC else nstop * (T / NINC), nstop, t0=T0,
+                        finite=finite, md=md, maxit=maxit, log=log)
     xi = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv in SV])
     st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SV])
     cen = np.array([nodes[el].mean(0) for el in elems])
@@ -160,6 +168,9 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
                 max_centroid_r_theta_z=rtz(cen[im]),
                 max_interior_vM_over_E=float(st[ii, 0] / E), max_interior_centroid_r_theta_z=rtz(cen[ii]),
                 wall_time_s=float(_t.time() - t_start),
+                incrementation=dict(increments=info["increments"], cutbacks=info["cutbacks"], iterations=info["iterations"],
+                                    dt_min=info["dt_min"], dt_base=T / NINC,
+                                    log=[[k, float(f"{t:.10g}"), float(f"{d:.10g}"), it] for k, t, d, it in log]),
                 elements=dict(cx=cen[:, 0].round(6).tolist(), cy=cen[:, 1].round(6).tolist(), cz=cen[:, 2].round(6).tolist(),
                               layer=layer.tolist(), interior=inner.astype(int).tolist(), alpha_minus_1=[float(f"{v:.7g}") for v in xi],
                               vM_over_E=[float(f"{v / E:.7g}") for v in st[:, 0]]))
@@ -187,7 +198,7 @@ if __name__ == "__main__":
                  + ("" if a.no_md else ", mean dilatation"), elements_total=len(elems))
         out = HERE / "results"; out.mkdir(exist_ok=True)
         (out / f"implant_{tag}.json").write_text(json.dumps(r))
-        print({k: v for k, v in r.items() if k != "elements"})
+        print({k: (v if k != "incrementation" else {kk: vv for kk, vv in v.items() if kk != "log"}) for k, v in r.items() if k != "elements"})
     else:
         od = Path(a.outdir); od.mkdir(parents=True, exist_ok=True)
         deck(od / f"uel_implant{tag}.inp", nodes, elems, layer, ijk, name=tag, **kw)
