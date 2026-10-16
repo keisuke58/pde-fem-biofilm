@@ -4,22 +4,55 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
-## 2026年10月16日 夜（Lean と Mathlib：成長則の証明の確認。急がない、計算の合間に）
+## 2026年10月16日 夜（Lean と Mathlib：成長則の証明の確認。計算の合間に、ただし手順は省かない）
 
 クラウドで、恒常圧の成長則（陰的）が 1 つの材料点では p_h を超えないことを Lean で証明した（`p3/uel/lean/HomeostaticGate.lean`、
-Lean 本体だけ、確認済み）。実数そのもので証明する Mathlib 版（`p3/uel/lean/mathlib/`）は、クラウドではディスクが足りず
-**未確認**。fifa で確認してほしい（約 5 GB、ネットワークが要る）：
+Lean 本体だけ、クラウドで確認済み）。実数そのもので証明する Mathlib 版（`p3/uel/lean/mathlib/`）は、クラウドではディスクが
+足りず**未確認**。論文の付録に使う前に、fifa で次の手順どおりに確認してほしい。**どの手順も、結果をそのまま記録する。証明や
+文を直さない**（直すのはクラウド）。
 
+**0. 準備**（空き 8 GB 以上、ネットワーク。`df -h` で確認して記録）
 ```
+git pull origin master
 curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
 source ~/.elan/env
-cd p3/uel/lean/mathlib && lake exe cache get && lake build
-lean ../HomeostaticGate.lean        # 本体だけの版（数秒）
+cd p3/uel/lean/mathlib
+cat lean-toolchain                 # leanprover/lean4:v4.15.0 のはず
 ```
 
-`lake build` がエラーなしで終われば PASS。エラーが出たら、直さずにそのまま報告（Mathlib の名前の変更などは
-クラウドで直す）。`.lake/` はリポジトリに入れない（`.gitignore` を確認）。結果は `KEIO_CHAIN_LOG.md` に 1 行。
+**1. Mathlib を取って、証明をビルドする**
+```
+lake exe cache get                 # ビルド済みの Mathlib（約 5 GB）。失敗したら 2 回まで再試行、だめならログを残して止める
+time lake build                    # エラー 0 で終わること。警告は全文を記録
+```
+**合格：** `lake build` の終了コード 0、`error` の行が 0。
 
+**2. 公理の確認（`sorry` やずるがないこと）**
+```
+lake env lean CheckAxioms.lean
+```
+**合格：** 4 つの定理それぞれが `propext`、`Classical.choice`、`Quot.sound` だけに依存し、`sorryAx` が出ない。
+
+**3. 否定の試験（本当に検査しているか）**
+```
+lake env lean ShouldFail.lean ; echo "exit=$?"
+```
+**合格：** **エラーになること**（偽の主張「陽的でも超えない」を、陰的の証明の写しで示そうとしている）。エラーにならなければ、
+検査が働いていないので、そこで止めて報告。
+
+**4. 本体だけの版も同じ環境で**
+```
+lean ../HomeostaticGate.lean ; echo "exit=$?"     # exit=0、エラー 0
+```
+
+**5. 報告**（`KEIO_CHAIN_LOG.md` に、`keio/lean-check` に push）
+- Lean と Mathlib の版（`lean --version`、`lake-manifest.json` の mathlib の rev）
+- 手順 1〜4 の合否と、出力の要点（警告、エラーの全文、`#print axioms` の出力の全文）
+- かかった時間とディスク使用量
+- `.lake/` と `lake-manifest.json` 以外の生成物はコミットしない（`.lake/` は `.gitignore` 済み。`lake-manifest.json` は
+  コミットしてよい：版を固定するため）
+
+エラーが出た場合（Mathlib の名前の変更、`norm_num` が閉じない、など）は、エラーの全文と行番号を報告に貼るだけでよい。
 
 ## 2026年10月16日 深夜・追記（恒常圧の成長則に陰的な帰還を足した。Abaqus の確認は陰的でも回せる）
 

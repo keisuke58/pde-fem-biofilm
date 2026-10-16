@@ -9,6 +9,7 @@
 
   Build (fifa, see CLOUD_TO_FIFA.ja.md):  cd p3/uel/lean/mathlib && lake exe cache get && lake build
   Not yet checked: written in the cloud session, where Mathlib does not fit on the disk.
+  Also: CheckAxioms.lean (no sorry, standard axioms only) and ShouldFail.lean (must give an error).
 -/
 import Mathlib
 
