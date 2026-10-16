@@ -5,6 +5,47 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 ---
 
 
+## 2026年10月16日 夕方（扇形のメッシュ収束：クラウドで出た分と、fifa に残す分。急がない）
+
+クラウド（gfortran + Python の模擬実行）で 2×6×8、4×12×16、6×18×24 を回した（`p3/uel/README.md` の
+「Implant sector: mesh convergence」、`p3/uel/results/implant_*.json`。表は `python3 p3/uel/implant_convergence.py
+[--bulge 1] [--fixed-seed]`）。分かったこと：
+
+- **内側 1 層のシードはメッシュと一緒に薄くなる**（0.125 → 0.0625 → 0.042 mm）ので問題そのものが変わり、収束しない
+  （シードの vM/E が −51 %、−37 %）。収束を見るには `--seed-layers f`（f = nr/2。シードの厚さを 0.125 mm で固定、
+  ファイル名に `_sl<f>`）を使う。朝の依頼の 1〜2 はこの固定シードで読み替える。
+- 固定シードでは、最大 vM/E が上面と固定面の角（シードと空の層の境目）で、細かくするほど上がる（0.27 → 0.78）。角の
+  特異点なので、比べる量は**シードのコア**（0.25 ≤ z ≤ 1.75、15° ≤ θ ≤ 75° のシード要素。`implant_convergence.py` が
+  json の要素データから計算する）にする。コアは 2 段で α − 1 が −18 %、vM/E が +2.6 %。
+- 6×18×24 の固定シードでは模擬実行の Newton が最初の増分で発散した（力学だけ。要素は PNEWDT = 1 のまま）。
+  `emulate_abaqus.py` の `increment` に、残差が増えたら刻みを半分にする line search を入れた（Abaqus なら
+  `*CONTROLS, PARAMETERS=LINE SEARCH`）。収束した解は同じ（`tests/test_uel_implant.py`）。bulge 1 の 6×18×24 は
+  line search を入れても最初の増分で 30 回で収束しない（未解決）。
+
+**fifa でやること：**
+1. `git pull origin master`、ライブラリを作り直す（`p3/uel/driver.py` の 3 行）。
+2. クラウドで終わらなかった段を回す（1 本ずつ nohup で。クラウドの目安：6×18×24 は 25〜40 分、8×24×32 は 2〜3 時間。
+   すでに `results/` にある json は飛ばす）：
+   ```
+   cd p3/uel && python3 make_implant_uel_inp.py /tmp/imp && export BIOFILM_ECO_CASE=/tmp/imp/uel_eco.txt
+   for f in 3 4; do python3 make_implant_uel_inp.py --run --nr $((2*f)) --nt $((6*f)) --nz $((8*f)) --seed-layers $f; done
+   python3 implant_convergence.py --fixed-seed
+   ```
+   bulge 1 の固定シード（`--bulge 1 --seed-layers 3`）は、最初の増分で止まったら `make_implant_uel_inp.py` の
+   `NINC` を 120 にして（増分を半分に）試し、それでも止まれば報告だけ。
+3. 細かい段を 1 本、Abaqus でも（6×18×24、固定シード、bulge 0）：
+   ```
+   python3 make_implant_uel_inp.py abaqus_in --nr 6 --nt 18 --nz 24 --seed-layers 3    # uel_implant6x18x24_sl3.inp
+   python3 make_abaqus_source.py
+   export BIOFILM_ECO_CASE=$PWD/abaqus_in/uel_eco.txt BIOFILM_UEL_GP=$PWD/abaqus_in/uel_implant6x18x24_sl3_gp.txt
+   (cd abaqus_in && abaqus job=uel_implant6x18x24_sl3 user=../unified_uel_abaqus.for cpus=1 interactive)
+   python3 compare_implant_gp.py abaqus_in/uel_implant6x18x24_sl3_gp.txt results/implant_6x18x24_sl3.json
+   ```
+   期待：2×6×8 と同じく α − 1、vM/E とも 1e−6 以下（PASS）。Abaqus の Newton が最初の増分で止まったら、GROW 段に
+   `*CONTROLS, PARAMETERS=LINE SEARCH` を足して再実行し、そのことを報告に書く。
+4. json と表を `keio/uel-implant` に push し、`KEIO_CHAIN_LOG.md` に報告（コアの α − 1 と vM/E の段ごとの値と次数、
+   最大値の位置が角に留まるか）。
+
 ## 2026年10月16日（インプラントの扇形でメッシュ収束。急がない）
 
 歯のデータの出典の報告と、扇形での Abaqus と Python の一致（4e−7）をありがとう。歯冠の STL は残し、出典と

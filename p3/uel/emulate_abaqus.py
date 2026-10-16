@@ -43,10 +43,17 @@ def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True, md=False, 
     return -rhs[:, 0], amat, sv, pnewdt.value
 
 
-def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10, finite=True, md=False, cur=False):
-    """one Abaqus increment: Newton on the free dofs, every element called with the start-of-increment SVARS"""
+def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10, finite=True, md=False, cur=False,
+              maxit=30, line_search=True):
+    """one Abaqus increment: Newton on the free dofs, every element called with the start-of-increment SVARS.
+    line_search: when a full Newton step raises the residual by more than half, or the element returns NaN
+    (an inverted element), the step is halved, up to 6 times (Abaqus: *CONTROLS, PARAMETERS=LINE SEARCH). The
+    converged state is the same; without it the Newton of the implant sector with a seed of three element
+    layers (6x18x24, 16 Oct 2026) diverged in the first growth increment at the stiff-soft corner of the top face."""
     EDS = [np.array([NDN * n + d for n in el for d in range(NDN)]) for el in elems]
-    for it in range(30):
+    free = np.where(~fixed)[0]
+    Up, dU, s, rp, cuts = None, None, 1.0, None, 0
+    for it in range(maxit):
         R = np.zeros(len(U)); rows, cols, vals = [], [], []; SVn = []
         for e, el in enumerate(elems):
             ed = EDS[e]
@@ -54,12 +61,20 @@ def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-
             assert pn == 1.0, "UEL asked for a smaller increment"
             R[ed] += Re; rows.append(np.repeat(ed, NDOF)); cols.append(np.tile(ed, NDOF)); vals.append(Ke.ravel())
             SVn.append(sv)
-        free = np.where(~fixed)[0]
         r = np.abs(R[free]).max() if free.size else 0.0
+        if line_search and dU is not None and cuts < 6 and (not np.isfinite(r) or r > 1.5 * rp):
+            s *= 0.5; cuts += 1
+            print(f"  increment {kinc}, iteration {it}: residual {r:.2e} after {rp:.2e}, step halved to {s:g}", file=sys.stderr, flush=True)
+            U = Up.copy(); U[free] += s * dU
+            continue
+        if not np.isfinite(r):
+            raise RuntimeError(f"increment {kinc}: residual not finite")
         if r < tol:
             return U, SVn, it
         K = sp.csr_matrix((np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))), shape=(len(U), len(U)))
-        U = U.copy(); U[free] += spla.spsolve(K[free][:, free].tocsc(), -R[free])
+        dU = spla.spsolve(K[free][:, free].tocsc(), -R[free])
+        Up, rp, s, cuts = U, r, 1.0, 0
+        U = U.copy(); U[free] += dU
     raise RuntimeError("no convergence")
 
 
