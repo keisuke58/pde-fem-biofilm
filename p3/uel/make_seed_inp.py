@@ -2,11 +2,12 @@
 user element: unit cube, n^3 elements, a hemispherical seed (radius 0.25, centre (0.5, 0.5, 0)) on the
 substrate z = 0, nutrient supplied at the face x = 1.
 
-    python make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic] [--small] [--nu 0.49] [--md] [--cur]
+    python make_seed_inp.py [n] [outdir] [--lam 1 --psiref 0.32] [--antibiotic] [--small] [--nu 0.49] [--md] [--cur] [--init-rule k]
 
 Writes uel_seed<n>[_small][_nu49][_md][_ab].inp (the Abaqus job name) and uel_eco.txt (make_column_inp.eco_file, b_i = 1). JPROPS(1) = 1 finite strain
 (default), 0 small strain (--small, as the Python 3D model); JPROPS(2) = 1 mean dilatation (--md); JPROPS(3) = 1 nutrient in the
-current configuration (--cur).
+current configuration (--cur); JPROPS(4) = k (--init-rule k, 1-3): what a newly colonised Gauss point starts its composition
+from (WP4, unified_uel.f90 header; the deck name gets _init<k>); without it the deck is as before (the default start).
 VARIABLES = 128: SVARS(113:128) hold von Mises stress and pressure per Gauss point. With --antibiotic the element
 gets PROPS(17) = the total time at which the antibiotic starts (T* = 0.5) and PROPS(18) = alpha* = 0.65. Build and run as in make_column_inp.py (job=uel_seed).
 Steps: INIT (1e-8): phi (dof 11) per node as the Python seed, c (dof 12) = c_stop = 0.1 and 1 on the supply face
@@ -54,7 +55,7 @@ def seed_phi(nodes):
 CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8",
         "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
 
-def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md=False, cur=False):
+def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md=False, cur=False, init_rule=0):
     nodes, elems = cube(n)
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=lam, psiref=psiref, nu=nu)
     T, nin, t0 = 0.2375, 60, 1e-8
@@ -62,13 +63,16 @@ def deck(n, path, lam=0.0, psiref=0.0, antibiotic=False, finite=True, nu=0.3, md
         P = np.r_[P, t0 + 0.5 * T, 0.65]
     out = ["*HEADING", f"unified two-level model, user element, 3D seed, {n}^3 elements", "*NODE"]
     out += [f"{i + 1}, {x:.10g}, {y:.10g}, {z:.10g}" for i, (x, y, z) in enumerate(nodes)]
-    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
+    nj = 4 if init_rule else 3
+    out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(P)}, I PROPERTIES={nj}, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12",
             "*ELEMENT, TYPE=U1, ELSET=ALLE"]
     out += [f"{e + 1}, " + ", ".join(str(k + 1) for k in el) for e, el in enumerate(elems)]
     vals = [f"{v:.10g}" for v in P]
     vals.append(str(1 if finite else 0))                # JPROPS(1): 1 finite strain, 0 small strain
     vals.append(str(1 if md else 0))                    # JPROPS(2): 1 mean dilatation (nearly incompressible)
     vals.append(str(1 if cur else 0))                   # JPROPS(3): 1 nutrient in the current configuration
+    if init_rule:
+        vals.append(str(int(init_rule)))                # JPROPS(4): the start of a newly colonised Gauss point (WP4)
     out += ["*UEL PROPERTY, ELSET=ALLE"] + [", ".join(vals[k:k + 8]) for k in range(0, len(vals), 8)]
     out += overlay(elems)     # specific heat for the transient coupled procedure
 
@@ -101,8 +105,9 @@ if __name__ == "__main__":
     ab = "--antibiotic" in args
     nu, md = get("--nu", 0.3), "--md" in args
     name = (f"uel_seed{n}" + ("_small" if "--small" in args else "") + (f"_nu{int(round(nu * 100))}" if nu != 0.3 else "")
-            + ("_md" if md else "") + ("_cur" if "--cur" in args else "") + ("_ab" if ab else "") + ".inp")
+            + ("_md" if md else "") + ("_cur" if "--cur" in args else "") + ("_ab" if ab else "")
+            + (f"_init{int(get('--init-rule', 0))}" if get("--init-rule", 0) else "") + ".inp")
     deck(n, od / name, lam=get("--lam", 0.0), psiref=get("--psiref", 0.0), antibiotic=ab,
-         finite="--small" not in args, nu=nu, md=md, cur="--cur" in args)
+         finite="--small" not in args, nu=nu, md=md, cur="--cur" in args, init_rule=int(get("--init-rule", 0)))
     eco_file(od / "uel_eco.txt")
     print(f"wrote {od / name} and {od / 'uel_eco.txt'}")
