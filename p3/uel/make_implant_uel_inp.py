@@ -23,8 +23,16 @@ elements. With --run it solves the same problem in Python through the Abaqus ent
 (emulate_abaqus.py) and writes results/implant_<nr>x<nt>x<nz>[_b1].json: seed means of alpha - 1 and
 vM/E (Gauss-point means per element), the same over the seed interior (without the element rows at z = 0,
 z = 2.0 and at the two sector cuts, where the fixed inner face meets a free face), the largest vM/E and
-its centroid (over all elements and over the interior), and the wall time. `implant_convergence.py`
-tabulates the levels; `compare_implant_gp.py` compares an Abaqus run's uel_gp.txt with the .json.
+its centroid (over all elements and over the interior), the seed mean pressure (positive in compression) and
+the wall time. `implant_convergence.py` tabulates the levels; `compare_implant_gp.py` compares an Abaqus run's
+uel_gp.txt with the .json.
+
+Homeostatic-pressure law (16 Oct 2026; unified_uel.f90 module header, homeostatic_test.py): `--p-ref x` sets
+PROPS(19) = p_ref / E (the deck's E is 1) and `--p-form` its form (0: p_h = p_ref, as keio_wp2 "E"); tag `_ph<x>`.
+Boundary conditions beyond make_implant_inp.py: `--outer fixed` (u = 0 on r = ri + 0.25, a rigid confinement; tag
+`_of`), `--bottom uz|fixed` (tags `_bz`, `_bf`), for the boundary-condition dependence with and without the law
+(keio_wp2/README.ja.md stage 6-7). `--ninc n` changes the increments of GROW (tag `_n<n>`), a time-step check.
+`homeostatic_implant.py` runs and tabulates the matrix.
 """
 import argparse
 import json
@@ -80,12 +88,34 @@ def seed_phi(nodes, elems, layer, seed_layers=1):
 
 
 def sets(nodes, ijk, tol=1e-9):
-    return dict(INNER=ijk[:, 0] == 0, TOP=np.isclose(nodes[:, 2], HEIGHT, atol=tol),
-                SYMX=np.abs(nodes[:, 0]) < tol, SYMY=np.abs(nodes[:, 1]) < tol)
+    return dict(INNER=ijk[:, 0] == 0, OUTER=ijk[:, 0] == ijk[:, 0].max(), TOP=np.isclose(nodes[:, 2], HEIGHT, atol=tol),
+                BOTTOM=np.isclose(nodes[:, 2], 0.0, atol=tol), SYMX=np.abs(nodes[:, 0]) < tol, SYMY=np.abs(nodes[:, 1]) < tol)
 
 
-def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name=""):
+def element_props(nu, p_ref=0.0, p_form=0):
+    """the 16 properties, plus (17, 18: antibiotic off; 19, 20) when the homeostatic-pressure law is on"""
     P = props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu)
+    if p_ref > 0:
+        P = np.r_[P, 1e30, 0.0, p_ref, float(p_form)]
+    return P
+
+
+def extra_bc(outer, bottom):
+    """boundary lines of the GROW step for the outer face (free | fixed: u = 0) and the bottom face (free | uz:
+    u_z = 0 | fixed: u = 0); the defaults are the free faces of make_implant_inp.py"""
+    out = []
+    if outer == "fixed":
+        out.append("OUTER, 1, 3, 0.0")
+    if bottom == "uz":
+        out.append("BOTTOM, 3, 3, 0.0")
+    elif bottom == "fixed":
+        out.append("BOTTOM, 1, 3, 0.0")
+    return out
+
+
+def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name="", p_ref=0.0, p_form=0,
+         outer="free", bottom="free"):
+    P = element_props(nu, p_ref, p_form)
     S = sets(nodes, ijk)
     out = ["*HEADING", f"unified two-level model, user element, implant sector {name}, {len(elems)} elements", "*NODE"]
     out += [f"{i + 1}, {x:.12g}, {y:.12g}, {z:.12g}" for i, (x, y, z) in enumerate(nodes)]
@@ -114,7 +144,8 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_lay
     # and 5 cutbacks (I_A) per increment; the cutback factor 0.25 and the growth factor 1.5 are Abaqus's defaults
     out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10",
             f"{T / NINC:.10g}, {T:.10g}, {T / NINC / 4 ** 5:.6g}, {T / NINC:.10g}", *CTRL_AUTO,
-            "*BOUNDARY, OP=NEW", "INNER, 1, 3, 0.0", "SYMX, 1, 1, 0.0", "SYMY, 2, 2, 0.0", "TOP, 12, 12, 1.0", "*END STEP"]
+            "*BOUNDARY, OP=NEW", "INNER, 1, 3, 0.0", "SYMX, 1, 1, 0.0", "SYMY, 2, 2, 0.0", *extra_bc(outer, bottom),
+            "TOP, 12, 12, 1.0", "*END STEP"]
     Path(path).write_text("\n".join(out) + "\n")
     return phi
 
@@ -124,13 +155,17 @@ def element_jk(e, nr, nt):
     return (e // nr) % nt, e // (nr * nt)
 
 
-def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC, maxit=30):
+def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC, maxit=30, p_ref=0.0, p_form=0,
+        outer="free", bottom="free", ninc=None):
     """INIT and GROW in the emulation; GROW with automatic incrementation (emulate_abaqus.march, as the deck).
-    nstop: GROW ends at nstop * T/NINC (the full step by default); maxit: Newton iterations per attempt (I_C)."""
+    nstop: GROW ends at nstop * T/NINC (the full step by default); maxit: Newton iterations per attempt (I_C);
+    p_ref, p_form: the homeostatic-pressure law (PROPS(19), PROPS(20) of unified_uel.f90; 0 = off);
+    outer, bottom: extra_bc; ninc: increments of the full GROW step (default NINC; a time-step check)."""
     import time as _t
     from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment, march  # needs BIOFILM_ECO_CASE
     t_start = _t.time()
-    props = F(props_base(s=1.0, D=0.2, L0=2.0, lam=0.0, psiref=0.0, nu=nu))
+    NI = NINC if ninc is None else ninc
+    props = F(element_props(nu, p_ref, p_form))
     S = sets(nodes, ijk)
     SV = [F(np.zeros(NSVT)) for _ in elems]
     U0 = np.zeros(NDN * len(nodes)); U = U0.copy()
@@ -141,11 +176,17 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
         fixed[NDN * np.where(S["INNER"])[0] + d] = True
     fixed[NDN * np.where(S["SYMX"])[0] + 0] = True
     fixed[NDN * np.where(S["SYMY"])[0] + 1] = True
+    if outer == "fixed":
+        for d in range(3):
+            fixed[NDN * np.where(S["OUTER"])[0] + d] = True
+    if bottom in ("uz", "fixed"):
+        for d in ((2,) if bottom == "uz" else (0, 1, 2)):
+            fixed[NDN * np.where(S["BOTTOM"])[0] + d] = True
     fixed[NDN * np.where(S["TOP"])[0] + 4] = True
     U[NDN * np.where(S["TOP"])[0] + 4] = 1.0
     log = []
-    U, SV, info = march(U, fixed, nodes, elems, SV, props, T if nstop == NINC else nstop * (T / NINC), nstop, t0=T0,
-                        finite=finite, md=md, maxit=maxit, log=log)
+    U, SV, info = march(U, fixed, nodes, elems, SV, props, T if nstop == NINC else nstop * (T / NI), nstop if nstop != NINC else NI,
+                        t0=T0, finite=finite, md=md, maxit=maxit, log=log)
     xi = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv in SV])
     st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SV])
     cen = np.array([nodes[el].mean(0) for el in elems])
@@ -164,16 +205,18 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
                 seed_interior_elements=int(si.sum()),
                 seed_interior_alpha_minus_1=float(xi[si].mean()) if si.any() else None,
                 seed_interior_vM_over_E=float(st[si, 0].mean() / E) if si.any() else None,
+                seed_p_over_E=float(st[s, 1].mean() / E), seed_max_p_over_E=float(st[s, 1].max() / E),
                 alpha_minus_1_all_mean=float(xi.mean()), max_vM_over_E=float(st[im, 0] / E), max_centroid_xyz=cen[im].tolist(),
                 max_centroid_r_theta_z=rtz(cen[im]),
                 max_interior_vM_over_E=float(st[ii, 0] / E), max_interior_centroid_r_theta_z=rtz(cen[ii]),
+                p_ref=float(p_ref), p_form=int(p_form), outer=outer, bottom=bottom, increments_nominal=int(NI),
                 wall_time_s=float(_t.time() - t_start),
                 incrementation=dict(increments=info["increments"], cutbacks=info["cutbacks"], iterations=info["iterations"],
-                                    dt_min=info["dt_min"], dt_base=T / NINC,
+                                    dt_min=info["dt_min"], dt_base=T / NI,
                                     log=[[k, float(f"{t:.10g}"), float(f"{d:.10g}"), it] for k, t, d, it in log]),
                 elements=dict(cx=cen[:, 0].round(6).tolist(), cy=cen[:, 1].round(6).tolist(), cz=cen[:, 2].round(6).tolist(),
                               layer=layer.tolist(), interior=inner.astype(int).tolist(), alpha_minus_1=[float(f"{v:.7g}") for v in xi],
-                              vM_over_E=[float(f"{v / E:.7g}") for v in st[:, 0]]))
+                              vM_over_E=[float(f"{v / E:.7g}") for v in st[:, 0]], p_over_E=[float(f"{v / E:.7g}") for v in st[:, 1]]))
 
 
 if __name__ == "__main__":
@@ -187,13 +230,21 @@ if __name__ == "__main__":
     ap.add_argument("--small", action="store_true")
     ap.add_argument("--no-md", action="store_true")
     ap.add_argument("--seed-layers", type=int, default=1, help="seed = the inner n element layers (n = nr/2: 0.125 mm at every level)")
+    ap.add_argument("--p-ref", type=float, default=0.0, help="homeostatic-pressure law: p_ref / E (PROPS(19)); 0 = off")
+    ap.add_argument("--p-form", type=int, default=0, help="its form (PROPS(20)): 0 p_h = p_ref, 1 p_h = p_ref (phi^2 + f), 2 hyperbolic")
+    ap.add_argument("--outer", choices=("free", "fixed"), default="free", help="outer face r = ri + 0.25: free or u = 0")
+    ap.add_argument("--bottom", choices=("free", "uz", "fixed"), default="free", help="bottom face z = 0: free, u_z = 0 or u = 0")
+    ap.add_argument("--ninc", type=int, default=None, help="increments of the GROW step (default 60; a time-step check)")
     ap.add_argument("--run", action="store_true")
     a = ap.parse_args()
     nodes, elems, layer, ijk = sector(a.nr, a.nt, a.nz, a.bulge)
     tag = f"{a.nr}x{a.nt}x{a.nz}" + (f"_b{a.bulge:g}" if a.bulge else "") + ("_small" if a.small else "") + ("_nomd" if a.no_md else "") + (f"_sl{a.seed_layers}" if a.seed_layers != 1 else "")
-    kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small, seed_layers=a.seed_layers)
+    tag += (f"_ph{a.p_ref:g}" + (f"f{a.p_form}" if a.p_form else "") if a.p_ref > 0 else "") + ("_of" if a.outer == "fixed" else "")
+    tag += {"free": "", "uz": "_bz", "fixed": "_bf"}[a.bottom] + (f"_n{a.ninc}" if a.ninc else "")
+    kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small, seed_layers=a.seed_layers, p_ref=a.p_ref, p_form=a.p_form,
+              outer=a.outer, bottom=a.bottom)
     if a.run:
-        r = run(nodes, elems, layer, ijk, **kw)
+        r = run(nodes, elems, layer, ijk, ninc=a.ninc, **kw)
         r.update(nr=a.nr, nt=a.nt, nz=a.nz, bulge=a.bulge, nu=a.nu, kinematics=("small" if a.small else "finite") + " strain"
                  + ("" if a.no_md else ", mean dilatation"), elements_total=len(elems))
         out = HERE / "results"; out.mkdir(exist_ok=True)

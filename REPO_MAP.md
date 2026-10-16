@@ -127,6 +127,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `umat_tangent_test/` | Single-element UMAT tangent and eigenstrain cross-check harnesses, including the dual-UMAT growth comparison in `xcheck_eigenstrain/XCHECK_RESULTS.md` |
 | `ANSYS_ENVIRONMENT.md` | Full hardware, licence and product inventory for the IKMHIWI03 ANSYS machine |
 | [`runs/`](runs/) | Per-run validation logs / env configs (provenance) |
+| `travel/` | Personal travel planning notes (trip memo, hotel research); not part of the research |
 
 ## Documentation
 

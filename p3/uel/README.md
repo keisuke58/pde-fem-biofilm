@@ -250,7 +250,8 @@ answer (KEIO_PLAN.ja.md §1) was that this is outside the model, and suggested t
 neighbourhood mean. `unified_uel.f90` now has `init_rule` (Abaqus JPROPS(4), `make_seed_inp.py --init-rule k`;
 emulation `uel_set_init_rule`): 0 the default (unchanged: column 20, seed 8^3 and implant 2x6x8 reproduce the
 earlier runs and `results/implant_2x6x8.json` bit for bit), 1 the composition of the nearest colonised Gauss point,
-2 the phi-weighted mean of the colonised Gauss points within 1.5 element sizes (PROPS(19) sets the radius), 3 the
+2 the phi-weighted mean of the colonised Gauss points within 1.5 element sizes (PROPS(21) sets the radius; absent or
+<= 0: 1.5 element sizes; PROPS(19:20) belong to the homeostatic-pressure law), 3 the
 point model's steady state under the local nutrient. A rule applies only once a colonised point exists, so the seed
 itself keeps the Day-1 state; the state variable 14 records the start (1 default, 1 + rule). Rules 1 and 2 need the
 other elements, which a UEL call does not see: every element writes its Gauss points (position, phi, composition,
@@ -409,3 +410,91 @@ With it, 6x18x24 sl3 with bulge 1 converges: the first attempt at dt = T/60 uses
 converges in three, dt is back at T/60 from increment 8 on, 64 increments and 253 iterations in all (36 min, three
 other runs on the four cores). Bulge 0 at the same level ran before the cutback existed (five line-search halvings in
 increment 1, no cutback), so its .json has no `incrementation` record.
+
+## Homeostatic-pressure growth law (16 Oct 2026, cloud; `homeostatic_test.py`, `homeostatic_implant.py`)
+
+The growth law of the Keio WP2 study (`keio_wp2/README.ja.md`, stages 2B and 4-7; the P3 law of `KEIO_PLAN.ja.md`;
+an assumption of this work, not from a paper) as an option of the element:
+
+    alpha_dot = k_alpha phi g,   g = min(1, max(0, 1 - p / p_h)),   p = -tr(sigma)/3 (Cauchy, positive in compression)
+
+with p_h = p_ref (PROPS(20) = 0, the "E" form of WP2, p_ref = P_h E k_alpha T*) or p_h = p_ref (phi^2 + f) (form 1,
+the "local stiffness" form); form 2 is g = 1/(1 + max(p, 0)/p_ref), the form of the ANSYS cal5gp build. PROPS(19) =
+p_ref switches it on; with 16 properties, or p_ref <= 0, g = 1 exactly and every earlier result is unchanged to the
+last bit (2x6x8 bulge 0 and 1, frozen seed 8^3: difference 0.0 before and after the change; the committed .json to
+2e-15). In the element the growth rate xidot = L0 phi liv (Y ln c - mu_b) plays k_alpha phi, so g multiplies it.
+
+Time integration: p is taken at the start of the increment (the converged pressure of the previous increment,
+SVARS(113:128), so VARIABLES = 128 is required), as keio_wp2 and the ANSYS build do. The gate is then a constant
+within the increment and the consistent tangent keeps its form, with xidot and its derivatives with respect to phi
+and c multiplied by g; `tangent_check` (one distorted element with g = 0.5) gives 3.8e-10 against central differences
+of the residual, and the gate changes the tangent by 6 % (so the check sees it). An implicit gate would add
+dP/dalpha (dalpha/dp)(dp/dF) to the displacement block and, with the mean dilatation, couple the eight Gauss points of
+an element through the element pressure; it was not needed: since xi never decreases and g is clipped at 0, the
+explicit gate cannot oscillate, p overshoots p_h by at most one increment of growth, dt xidot dp/dxi, and the error is
+first order in dt like the rest of the scheme.
+
+Verification on one element in the Klempt et al. 2024 limit (`klempt2024_limit_test.py`: one species, c = 1, phi = 1,
+E = 10 Pa, nu = 0.49, f = 1e-3, k_alpha = 1e-3), references written without the element's source:
+
+| case | result |
+|---|---|
+| (a) free growth, any form, p_ref = 1e-3 | p = 1e-12, alpha - 1 = 1.100001e-3 = k_alpha T (Eq. 36; the 1e-6 is the frozen point model's drift), equal to the law-off run to 1e-14 |
+| (b) all u = 0, p_h = 0.25 Pa: ODE alpha_dot = k_alpha g(p(alpha)), p = (phi^2+f) K (1 - alpha^-3), scipy rtol 1e-12 | element = scalar forward Euler on the ODE to 1.3e-10; error against the ODE 1.25e-5, 6.2e-6, 3.1e-6, 1.5e-6 at 11, 22, 44, 88 increments (ratios 2.02, 2.01, 2.006: first order); p equals the closed form to 1e-9 |
+| (c) homeostatic limit, T = 4 (free growth 4e-3) | growth stops: alpha - 1 = 4.9993e-4 against alpha_h - 1 = 5.0000e-4, p = 0.24997 against p_h = 0.25, last increment 1.7e-8 (first 1e-4); form 2 keeps growing (1.58e-3, p = 0.79) |
+| (d) tangent, g = 0.5 | 3.8e-10 |
+
+`tests/test_uel_homeostatic.py` runs (a)-(d) and the bit-identity of the default in about 2 s.
+
+Implant sector (`homeostatic_implant.py`; the deck: `make_implant_uel_inp.py --p-ref 0.05 [--outer fixed]`), fixed
+0.125 mm seed, E = 1, p_h/E = 0.05 (2.4 times the seed-core pressure without the law at 2x6x8, 0.021; a quarter of
+the top-row corner's 0.19) and 0.02. Two conditions on the outer face r = 2.3: free (as before) and u = 0 (a rigid
+confinement; the WP2 stages varied the bottom face, which `--bottom uz|fixed` now also allows). Core = the seed core of
+the mesh study; corner = the largest vM/E in the top row of elements (the singular corner); stopped = share of seed
+elements whose end pressure is at or above p_h. Wall times with one other job on the four cores.
+
+| mesh | bulge | outer face | p_h/E | core alpha - 1 | core vM/E | core p/E | seed alpha - 1 | corner vM/E | corner alpha - 1 | max p/E (seed) | stopped | time |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2x6x8 | 0 | free | off | 0.0179 | 0.0354 | 0.0208 | 0.0463 | 0.273 | 0.277 | 0.187 | 0 | 9 s |
+| 2x6x8 | 0 | free | 0.05 | 0.0117 | 0.0142 | 0.0115 | 0.0195 | 0.060 | 0.075 | 0.054 | 0.08 | 8 s |
+| 2x6x8 | 0 | free | 0.02 | 0.0075 | 0.0080 | 0.0067 | 0.0107 | 0.030 | 0.071 | 0.023 | 0.12 | 8 s |
+| 2x6x8 | 0 | fixed | off | 0.0179 | 0.0423 | 0.0988 | 0.0463 | 0.359 | 0.277 | 0.311 | 0 | 8 s |
+| 2x6x8 | 0 | fixed | 0.05 | 0.0048 | 0.0102 | 0.0271 | 0.0102 | 0.078 | 0.065 | 0.063 | 0.23 | 7 s |
+| 2x6x8 | 0 | fixed | 0.02 | 0.0020 | 0.0045 | 0.0127 | 0.0043 | 0.036 | 0.026 | 0.029 | 0.29 | 6 s |
+| 2x6x8 | 1 | free | off | 0.0149 | 0.0325 | 0.0219 | 0.0443 | 0.293 | 0.275 | 0.204 | 0 | 11 s |
+| 2x6x8 | 1 | free | 0.05 | 0.0097 | 0.0128 | 0.0117 | 0.0185 | 0.060 | 0.070 | 0.052 | 0.08 | 9 s |
+| 2x6x8 | 1 | fixed | off | 0.0149 | 0.0399 | 0.0843 | 0.0443 | 0.354 | 0.275 | 0.301 | 0 | 8 s |
+| 2x6x8 | 1 | fixed | 0.05 | 0.0043 | 0.0106 | 0.0261 | 0.0102 | 0.082 | 0.065 | 0.065 | 0.19 | 8 s |
+| 4x12x16 | 0 | free | off | 0.0147 | 0.0364 | 0.0246 | 0.0448 | 0.779 | 0.402 | 0.498 | 0 | 193 s |
+| 4x12x16 | 0 | free | 0.05 | 0.0090 | 0.0127 | 0.0100 | 0.0186 | 0.106 | 0.035 | 0.075 | 0.05 | 146 s |
+| 4x12x16 | 0 | fixed | off | 0.0147 | 0.0385 | 0.0498 | 0.0448 | 0.817 | 0.402 | 0.517 | 0 | 196 s |
+| 4x12x16 | 0 | fixed | 0.05 | 0.0069 | 0.0116 | 0.0177 | 0.0144 | 0.109 | 0.035 | 0.080 | 0.11 | 151 s |
+| 4x12x16 | 1 | free | off | 0.0121 | 0.0321 | 0.0236 | 0.0428 | 0.981 | 0.399 | 0.591 | 0 | 211 s |
+| 4x12x16 | 1 | free | 0.05 | 0.0076 | 0.0112 | 0.0097 | 0.0180 | 0.115 | 0.030 | 0.083 | 0.05 | 164 s |
+| 4x12x16 | 1 | fixed | off | 0.0121 | 0.0351 | 0.0435 | 0.0428 | 0.998 | 0.399 | 0.594 | 0 | 196 s |
+| 4x12x16 | 1 | fixed | 0.05 | 0.0060 | 0.0109 | 0.0163 | 0.0141 | 0.115 | 0.030 | 0.085 | 0.10 | 152 s |
+
+Time step (2x6x8, bulge 0, p_h/E = 0.05, 60 / 120 / 240 increments): core alpha - 1 0.0117 / 0.0115 / 0.0114 and corner
+vM/E 0.060 / 0.059 / 0.059 with the free outer face, 0.0048 / 0.0048 / 0.0047 and 0.078 / 0.077 / 0.077 with it fixed:
+the differences halve, first order, and the 60 increments of the decks are within 2 %. Observations:
+
+- The corner growth is cut by the law: corner alpha - 1 0.28 -> 0.07 (2x6x8) and 0.40 -> 0.035 (4x12x16), its vM/E
+  0.27-0.36 -> 0.06-0.08 and 0.78-1.00 -> 0.11-0.12, i.e. about 1.2-2.3 p_h. The corner value still rises with the mesh
+  (0.06 -> 0.11, against 0.27 -> 0.78 without the law): the corner is still singular in the elastic response, but the
+  growth that drives it is capped.
+- Boundary dependence: without the law the fixed outer face raises the seed's largest pressure 1.7 times (0.19 ->
+  0.31) and the corner vM/E 1.3 times (2x6x8; 1.05 at 4x12x16); with the law the largest pressure is 0.054 / 0.063
+  (2x6x8) and 0.075 / 0.080 (4x12x16) for free / fixed, both p_h plus the explicit overshoot, and the corner vM/E differs
+  by 3-5 % (0.060 / 0.078 at 2x6x8 is the exception, 30 %). The core vM/E is not independent of the condition: the
+  confinement raises the pressure earlier, g falls below 1 sooner and the core grows less (0.0127 free against 0.0116
+  fixed at 4x12x16, 9 % apart, against 6 % apart without the law), so the WP2 statement "the stress no longer depends on
+  the boundary condition" holds for the pressure level and the corner, not for the mean von Mises stress of the core.
+- Bulge 1 against 0: without the law the corner differs by 7-26 %, with it by 0-8 %; the core by the same 17-19 % in
+  alpha - 1 either way (the nutrient effect of the wider collar, not a stress effect). The cervical-line concentration
+  of the WP2 tooth (stage 6) needs the constrained bottom face: this sector's bottom is free (`--bottom uz|fixed` is
+  available, not run).
+- The overshoot above p_h grows with the mesh (8 % at 2x6x8, 50-70 % at 4x12x16 in the top row) because the corner's
+  dp/dxi per increment grows; with 60 increments the core values are converged in dt (above), the corner's p is not.
+  An implicit gate, or a smaller increment where g is between 0 and 1, would remove it.
+
+Not run: 6x18x24 with the law (35 min per case here), and Abaqus with the law (`CLOUD_TO_FIFA.ja.md`, 16 Oct, late).

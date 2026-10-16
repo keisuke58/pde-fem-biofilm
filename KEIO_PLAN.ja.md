@@ -38,6 +38,14 @@ Meisam Soleimani からのメール、6日までの Abaqus の結果を反映し
   - **P3 応用：** 恒常圧の成長則、インプラントと歯（WP2、`keio_wp2/` 第5〜7段と IKMHIWI03 の
     Abaqus 12本）。帰還があると歯頸線の集中が消え、応力が境界条件によらなくなる、という結果がある。
     慶應の Abaqus と Python で進められる。
+    **10月16日：恒常圧の成長則を UEL に入れた**（`p3/uel/unified_uel.f90`、PROPS(19) = p_h/E、PROPS(20) = 形。
+    既定は off で既存の結果はビット単位で同じ）。法則は WP2 の B：α̇ = k_α φ min(1, max(0, 1 − p/p_h))、p は増分の
+    始めの圧力（圧縮が正、陽的）。1 要素で検証済み（自由成長は Eq. 36、全拘束は ODE に 1 次で収束、p = p_h で成長が
+    止まる、接線は差分と 4e−10）：`p3/uel/homeostatic_test.py`、`tests/test_uel_homeostatic.py`。扇形（2×6×8、
+    4×12×16、bulge 0/1、外面が自由と固定）では、帰還で上面の角の vM/E が 0.27〜0.36 から 0.06〜0.08 に下がり、
+    シードの最大圧力が境界条件によらず p_h の近くにそろう（`p3/uel/README.md` の「Homeostatic-pressure growth law」）。
+    fifa で Abaqus の確認（`CLOUD_TO_FIFA.ja.md` 10月16日 深夜）。歯の形（bulge 1）の歯頸線は、この扇形では下面が
+    自由なので集中が出ない。下面の条件は `--bottom uz|fixed` で入れられる（未計算）。
   - **P1 数値面：** NEM と Galerkin の比較（WP3、CMAME か FEAD）。今ある材料は途中段階
     （2次元の Python 比較、表面の点の φ の不具合、前線の項の判定に2回不合格）。手法の注意点としては
     まとまるが、目を引く新しい結果はまだない。NEM は Junker 先生のグループの手法なので、彼らと共著が前提。
