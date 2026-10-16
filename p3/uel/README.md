@@ -498,3 +498,98 @@ the differences halve, first order, and the 60 increments of the decks are withi
   An implicit gate, or a smaller increment where g is between 0 and 1, would remove it.
 
 Not run: 6x18x24 with the law (35 min per case here), and Abaqus with the law (`CLOUD_TO_FIFA.ja.md`, 16 Oct, late).
+
+## Cervical line of the tooth-like sector (16 Oct 2026, cloud; `cervical_study.py`, P3 (e))
+
+Where the cervical line is: in the WP2 tooth (`keio_wp2/homeostatic_tooth.py`, stages 6 and 7) the stress concentrates
+at z = 0 of the element ring on the bonded face, where the crown's surface r_in(z) = r_i + b sin(pi z / 2h) is steepest
+(38 degrees for b = 1 mm) and meets the bottom face, whose condition stands for the gingiva or the bone. The sector of
+`make_implant_uel_inp.py --bulge 1` has the same surface, so the cervical line is the bottom edge of the bonded inner
+face (z = 0, r = r_i). Measures (E = 1 in the decks, so vM/E is the von Mises stress; p = -tr(sigma)/3, Cauchy, positive
+in compression; element values are Gauss-point means): cervical band = seed elements (the inner 0.125 mm) with
+0 <= z <= 0.25 mm and 15 <= theta <= 75 degrees (one element row at 2x6x8, two at 4x12x16, three at 6x18x24, a fixed
+region like the core); core = the seed core of the mesh study (0.25 <= z <= 1.75, same angles); ratio = band mean vM/E
+over core mean vM/E; the band's largest element vM/E and the largest p/E over the seed are given beside it. The bottom
+edge is a corner of the elastic problem (a rigid oblique face meets a constrained bottom face), so the band maximum
+need not converge; the ratio uses band means. The keio_wp2 stage-7 profiles give, with the same bands on the hoop
+stress of the wall ring, ratio 2.0 (bottom u_z = 0) and 4.0 (clamped) without the feedback and 0.9 / 1.0 with it,
+with the largest value moving from the cervical line to the top: that is the Python result "with the feedback the
+cervical-line concentration disappears and the stress becomes independent of the boundary conditions".
+
+Runs: bulge 1, seed 0.125 mm, bottom u_z = 0 (`--bottom uz`) or u = 0 (`fixed`), outer face free or u = 0, law off
+or p_h/E = 0.05 and 0.02, 2x6x8 and 4x12x16, with the nutrient on the top face (the implant deck) and on the outer
+face (`--nut outer`, saliva on a crown, as the WP2 tooth of stage 7). Tags `_bz`, `_bf`, `_no`; the full table is
+`results/implant_cervical_summary.json` (`cervical_study.py --table-only`). Nutrient on the top face: the bottom
+row does not grow within T (alpha - 1 about 1e-5 against 0.012-0.015 in the core, the nutrient from the top has not
+reached it), so the band's vM/E is 0.04-0.5 of the core with every condition, with or without the law: there is no
+cervical concentration to remove in that deck, and the question needs the nutrient of the crown. With the nutrient on
+the outer face (the bottom-free row of each level for reference):
+
+| mesh | bottom | outer | p_h/E | core alpha-1 | core vM/E | band mean vM/E | ratio | band max vM/E | max p/E (seed) |
+|---|---|---|---|---|---|---|---|---|---|
+| 2x6x8 | free | free | off | 0.1204 | 0.0919 | 0.0989 | 1.08 | 0.118 | 0.152 |
+| 2x6x8 | uz | free | off | 0.1204 | 0.0919 | 0.0860 | 0.94 | 0.117 | 0.228 |
+| 2x6x8 | uz | free | 0.05 | 0.0488 | 0.0371 | 0.0434 | 1.17 | 0.059 | 0.069 |
+| 2x6x8 | uz | free | 0.02 | 0.0230 | 0.0183 | 0.0241 | 1.31 | 0.030 | 0.035 |
+| 2x6x8 | uz | fixed | off | 0.1204 | 0.1406 | 0.5077 | 3.61 | 0.677 | 1.215 |
+| 2x6x8 | uz | fixed | 0.05 | 0.0056 | 0.0103 | 0.0439 | 4.25 | 0.051 | 0.092 |
+| 2x6x8 | uz | fixed | 0.02 | 0.0020 | 0.0042 | 0.0221 | 5.24 | 0.027 | 0.040 |
+| 2x6x8 | fixed | free | off | 0.1204 | 0.1271 | 0.0779 | 0.61 | 0.125 | 0.868 |
+| 2x6x8 | fixed | free | 0.05 | 0.0371 | 0.0331 | 0.0056 | 0.17 | 0.007 | 0.104 |
+| 2x6x8 | fixed | free | 0.02 | 0.0169 | 0.0160 | 0.0025 | 0.16 | 0.003 | 0.051 |
+| 2x6x8 | fixed | fixed | off | 0.1204 | 0.1034 | 0.0431 | 0.42 | 0.048 | 1.885 |
+| 2x6x8 | fixed | fixed | 0.05 | 0.0050 | 0.0077 | 0.0025 | 0.32 | 0.003 | 0.082 |
+| 2x6x8 | fixed | fixed | 0.02 | 0.0017 | 0.0032 | 0.0012 | 0.36 | 0.001 | 0.035 |
+| 4x12x16 | uz | free | off | 0.1023 | 0.0873 | 0.0746 | 0.85 | 0.156 | 0.150 |
+| 4x12x16 | uz | free | 0.05 | 0.0486 | 0.0381 | 0.0385 | 1.01 | 0.066 | 0.055 |
+| 4x12x16 | uz | free | 0.02 | 0.0249 | 0.0191 | 0.0216 | 1.13 | 0.031 | 0.032 |
+| 4x12x16 | uz | fixed | off | did not converge (below) | | | | | |
+| 4x12x16 | uz | fixed | 0.05 | 0.0227 | 0.0206 | 0.0442 | 2.14 | 0.073 | 0.146 |
+| 4x12x16 | uz | fixed | 0.02 | 0.0110 | 0.0103 | 0.0236 | 2.29 | 0.036 | 0.081 |
+| 4x12x16 | fixed | free | off | did not converge (below) | | | | | |
+| 4x12x16 | fixed | free | 0.05 | 0.0431 | 0.0350 | 0.0060 | 0.17 | 0.017 | 0.078 |
+| 4x12x16 | fixed | free | 0.02 | 0.0214 | 0.0169 | 0.0024 | 0.14 | 0.007 | 0.037 |
+| 4x12x16 | fixed | fixed | off | 0.1023 | 0.1147 | 0.0724 | 0.63 | 0.141 | 2.075 |
+| 4x12x16 | fixed | fixed | 0.05 | 0.0201 | 0.0175 | 0.0066 | 0.38 | 0.011 | 0.157 |
+| 4x12x16 | fixed | fixed | 0.02 | 0.0098 | 0.0087 | 0.0034 | 0.39 | 0.006 | 0.086 |
+| 6x18x24 | uz | free | off | did not converge (below, increment 58) | | | | | |
+| 6x18x24 | uz | free | 0.05 | 0.0470 | 0.0369 | 0.0369 | 1.00 | 0.068 | 0.047 |
+
+What the numbers say (answer to (e), with its caveats):
+
+- In the element the cervical band grows less than the core even with the crown's nutrient: alpha - 1 0.065 against
+  0.120 at 2x6x8, 0.04-0.06 against 0.10 at 4x12x16, with the bottom free as well. The nodal c at the inner corner
+  (r = r_i, z = 0) is about 0 at the end of the run (0.27 along the rest of the bonded face): the oblique face
+  wedges that corner away from the outer face and the no-flux bottom. The WP2 tooth has no such starvation (its
+  phase fills the layer by T* = 0.04), so the WP2 concentration with bottom u_z = 0 (ratio 2.0) does not appear
+  here with the outer face free: ratio 0.94 / 0.85 without the law, 1.0-1.3 with it, at the two levels.
+- The concentration appears when the outer face is constrained too (u_z = 0 below, u = 0 outside): ratio 3.6 at
+  2x6x8 without the law, band max 0.68 and p/E 1.2 at the corner. The law does not lower this ratio (4.3 / 5.2 at
+  2x6x8, 2.1 / 2.3 at 4x12x16 for p_h/E = 0.05 / 0.02): the core stops growing first (its alpha - 1 falls to 0.006 at
+  2x6x8, 0.023 at 4x12x16) while the band, which grows less, keeps growing. What the law does is cap the band's
+  level: band mean 0.51 -> 0.044 (2x6x8, 12 times lower), band max 0.68 -> 0.05-0.07, and the largest pressure
+  1.2 -> 0.09-0.15, i.e. p_h with the explicit overshoot. With the bottom clamped (u = 0) the band is below the core
+  with or without the law (ratio 0.14-0.6): the clamp takes the growth strain of the bottom row as pressure (p/E up
+  to 0.7-2.1 without the law) and leaves little deviatoric stress.
+- Boundary-condition independence does not hold for the band in the element: with the law the band mean vM/E spans
+  0.0025-0.044 over the four conditions (spread 160-190 % of the mean, 2x6x8 and 4x12x16, both p_h), the ratio
+  0.17-4.3 (spread 210-290 %); without the law the spread is 230-260 % (2x6x8). What becomes independent is the
+  largest pressure when the outer face is free (0.055-0.10 for p_h/E = 0.05, 0.03-0.05 for 0.02, every bottom
+  condition), as in the homeostatic study above; with the outer face fixed it is 0.08-0.16. So the WP2 result holds in
+  the element for the pressure level and the top corner, not for the cervical band: there, the growth distribution
+  set by the nutrient and the kinematic constraint decide, and the law only scales the level.
+- Mesh: the ratio changes by -9 to -14 % between 2x6x8 and 4x12x16 for u_z = 0 below with the outer face free, by
+  +1 to +17 % with the bottom clamped, and by -50 to -56 % for u_z = 0 below with the outer face fixed (the case with
+  the concentration), so that ratio is not converged; the band maximum rises with the mesh (0.117 -> 0.156 without
+  the law, 0.059 -> 0.066 with it, bottom u_z = 0, outer free), the corner behaviour of the mesh study.
+- Two law-off cases at 4x12x16 with the crown's nutrient did not converge: u_z = 0 below with the outer face fixed
+  (increment 80) and the bottom clamped with the outer face free (increment 69). In both, Newton stalls from
+  increment 57 (t = 0.22 of 0.2375, alpha - 1 near 0.1 at nu = 0.49): the residual stops at about 1e-5 after 30
+  iterations with line-search halvings, and the cutbacks down to dt = 1e-12 do not help (five cutbacks in one
+  increment, then the next increment fails again), so it is the state, not the increment: the nearly incompressible
+  grown layer under a full kinematic constraint at the corner, where p/E reaches 1-2. The law-on cases converge.
+  Not forced; a smaller growth (shorter T) or a softer constraint would be the way to run them.
+  The 6x18x24 law-off case with u_z = 0 below and the outer face free stops the same way at increment 58 (t = 0.22;
+  the 4x12x16 and 2x6x8 runs of that case converged), so the stall sets in at a finer mesh too; the law-on case at
+  6x18x24 converges (48 min) and gives ratio 1.00 against 1.01 at 4x12x16 and 1.17 at 2x6x8: the main case is
+  converged in the ratio with the law, and the band maximum 0.059 -> 0.066 -> 0.068 settles as well.

@@ -32,7 +32,9 @@ PROPS(19) = p_ref / E (the deck's E is 1) and `--p-form` its form (0: p_h = p_re
 Boundary conditions beyond make_implant_inp.py: `--outer fixed` (u = 0 on r = ri + 0.25, a rigid confinement; tag
 `_of`), `--bottom uz|fixed` (tags `_bz`, `_bf`), for the boundary-condition dependence with and without the law
 (keio_wp2/README.ja.md stage 6-7). `--ninc n` changes the increments of GROW (tag `_n<n>`), a time-step check.
-`homeostatic_implant.py` runs and tabulates the matrix.
+`homeostatic_implant.py` runs and tabulates the matrix. `--nut outer` (tag `_no`) supplies the nutrient on the outer
+face r = ri + 0.25 instead of the top (saliva on a crown, as the keio_wp2 tooth of stage 7); `cervical_study.py`
+uses it for the cervical line of the tooth-like sector (P3 (e)).
 """
 import argparse
 import json
@@ -114,9 +116,10 @@ def extra_bc(outer, bottom):
 
 
 def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name="", p_ref=0.0, p_form=0,
-         outer="free", bottom="free"):
+         outer="free", bottom="free", nut="top"):
     P = element_props(nu, p_ref, p_form)
     S = sets(nodes, ijk)
+    NUT = "TOP" if nut == "top" else "OUTER"
     out = ["*HEADING", f"unified two-level model, user element, implant sector {name}, {len(elems)} elements", "*NODE"]
     out += [f"{i + 1}, {x:.12g}, {y:.12g}, {z:.12g}" for i, (x, y, z) in enumerate(nodes)]
     out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(P)}, I PROPERTIES=3, COORDINATES=3, VARIABLES=128",
@@ -133,10 +136,10 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_lay
     nset("ALL", np.ones(len(nodes), bool))
     for k, m in S.items():
         nset(k, m)
-    nset("NOTOP", ~S["TOP"])
+    nset("NO" + NUT, ~S[NUT])
     phi = seed_phi(nodes, elems, layer, seed_layers)
     out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{T0:g}, {T0:g}", *CTRL, "*BOUNDARY", "ALL, 1, 3, 0.0",
-            "NOTOP, 12, 12, 0.1", "TOP, 12, 12, 1.0"]
+            f"NO{NUT}, 12, 12, 0.1", f"{NUT}, 12, 12, 1.0"]
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
     # GROW: automatic incrementation as emulate_abaqus.march: DELTMX (never reached, phi and c are in [0, 1]) switches
@@ -145,7 +148,7 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_lay
     out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10",
             f"{T / NINC:.10g}, {T:.10g}, {T / NINC / 4 ** 5:.6g}, {T / NINC:.10g}", *CTRL_AUTO,
             "*BOUNDARY, OP=NEW", "INNER, 1, 3, 0.0", "SYMX, 1, 1, 0.0", "SYMY, 2, 2, 0.0", *extra_bc(outer, bottom),
-            "TOP, 12, 12, 1.0", "*END STEP"]
+            f"{NUT}, 12, 12, 1.0", "*END STEP"]
     Path(path).write_text("\n".join(out) + "\n")
     return phi
 
@@ -156,20 +159,22 @@ def element_jk(e, nr, nt):
 
 
 def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, nstop=NINC, maxit=30, p_ref=0.0, p_form=0,
-        outer="free", bottom="free", ninc=None):
+        outer="free", bottom="free", ninc=None, nut="top"):
     """INIT and GROW in the emulation; GROW with automatic incrementation (emulate_abaqus.march, as the deck).
     nstop: GROW ends at nstop * T/NINC (the full step by default); maxit: Newton iterations per attempt (I_C);
     p_ref, p_form: the homeostatic-pressure law (PROPS(19), PROPS(20) of unified_uel.f90; 0 = off);
-    outer, bottom: extra_bc; ninc: increments of the full GROW step (default NINC; a time-step check)."""
+    outer, bottom: extra_bc; ninc: increments of the full GROW step (default NINC; a time-step check);
+    nut: the face with c = 1, "top" (the implant deck) or "outer" (saliva on the crown, keio_wp2 stage 7)."""
     import time as _t
     from emulate_abaqus import NDN, NGP, NSV, NSVT, F, increment, march  # needs BIOFILM_ECO_CASE
     t_start = _t.time()
     NI = NINC if ninc is None else ninc
     props = F(element_props(nu, p_ref, p_form))
     S = sets(nodes, ijk)
+    NUT = "TOP" if nut == "top" else "OUTER"
     SV = [F(np.zeros(NSVT)) for _ in elems]
     U0 = np.zeros(NDN * len(nodes)); U = U0.copy()
-    U[3::NDN] = seed_phi(nodes, elems, layer, seed_layers); U[4::NDN] = np.where(S["TOP"], 1.0, 0.1)
+    U[3::NDN] = seed_phi(nodes, elems, layer, seed_layers); U[4::NDN] = np.where(S[NUT], 1.0, 0.1)
     U, SV, _ = increment(U0, U, np.ones(len(U), bool), nodes, elems, SV, props, T0, 1, finite=finite, md=md)
     fixed = np.zeros(len(U), bool)
     for d in range(3):
@@ -182,8 +187,8 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
     if bottom in ("uz", "fixed"):
         for d in ((2,) if bottom == "uz" else (0, 1, 2)):
             fixed[NDN * np.where(S["BOTTOM"])[0] + d] = True
-    fixed[NDN * np.where(S["TOP"])[0] + 4] = True
-    U[NDN * np.where(S["TOP"])[0] + 4] = 1.0
+    fixed[NDN * np.where(S[NUT])[0] + 4] = True
+    U[NDN * np.where(S[NUT])[0] + 4] = 1.0
     log = []
     U, SV, info = march(U, fixed, nodes, elems, SV, props, T if nstop == NINC else nstop * (T / NI), nstop if nstop != NINC else NI,
                         t0=T0, finite=finite, md=md, maxit=maxit, log=log)
@@ -209,7 +214,7 @@ def run(nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, 
                 alpha_minus_1_all_mean=float(xi.mean()), max_vM_over_E=float(st[im, 0] / E), max_centroid_xyz=cen[im].tolist(),
                 max_centroid_r_theta_z=rtz(cen[im]),
                 max_interior_vM_over_E=float(st[ii, 0] / E), max_interior_centroid_r_theta_z=rtz(cen[ii]),
-                p_ref=float(p_ref), p_form=int(p_form), outer=outer, bottom=bottom, increments_nominal=int(NI),
+                p_ref=float(p_ref), p_form=int(p_form), outer=outer, bottom=bottom, nut=nut, increments_nominal=int(NI),
                 wall_time_s=float(_t.time() - t_start),
                 incrementation=dict(increments=info["increments"], cutbacks=info["cutbacks"], iterations=info["iterations"],
                                     dt_min=info["dt_min"], dt_base=T / NI,
@@ -235,14 +240,15 @@ if __name__ == "__main__":
     ap.add_argument("--outer", choices=("free", "fixed"), default="free", help="outer face r = ri + 0.25: free or u = 0")
     ap.add_argument("--bottom", choices=("free", "uz", "fixed"), default="free", help="bottom face z = 0: free, u_z = 0 or u = 0")
     ap.add_argument("--ninc", type=int, default=None, help="increments of the GROW step (default 60; a time-step check)")
+    ap.add_argument("--nut", choices=("top", "outer"), default="top", help="face with c = 1: top (implant collar) or outer (saliva on a crown)")
     ap.add_argument("--run", action="store_true")
     a = ap.parse_args()
     nodes, elems, layer, ijk = sector(a.nr, a.nt, a.nz, a.bulge)
     tag = f"{a.nr}x{a.nt}x{a.nz}" + (f"_b{a.bulge:g}" if a.bulge else "") + ("_small" if a.small else "") + ("_nomd" if a.no_md else "") + (f"_sl{a.seed_layers}" if a.seed_layers != 1 else "")
     tag += (f"_ph{a.p_ref:g}" + (f"f{a.p_form}" if a.p_form else "") if a.p_ref > 0 else "") + ("_of" if a.outer == "fixed" else "")
-    tag += {"free": "", "uz": "_bz", "fixed": "_bf"}[a.bottom] + (f"_n{a.ninc}" if a.ninc else "")
+    tag += {"free": "", "uz": "_bz", "fixed": "_bf"}[a.bottom] + ("_no" if a.nut == "outer" else "") + (f"_n{a.ninc}" if a.ninc else "")
     kw = dict(nu=a.nu, md=not a.no_md, finite=not a.small, seed_layers=a.seed_layers, p_ref=a.p_ref, p_form=a.p_form,
-              outer=a.outer, bottom=a.bottom)
+              outer=a.outer, bottom=a.bottom, nut=a.nut)
     if a.run:
         r = run(nodes, elems, layer, ijk, ninc=a.ninc, **kw)
         r.update(nr=a.nr, nt=a.nt, nz=a.nz, bulge=a.bulge, nu=a.nu, kinematics=("small" if a.small else "finite") + " strain"
