@@ -699,8 +699,9 @@ the model, also inside the seed, $7.2\times10^{-4}$~Pa. The element's own growth
 variable gives $0.49$ times the growth and the stress of
 equation~\eqref{eq:ch5-eq36}, which is $\tfrac12\times1.1/1.125$ for this time
 step (see the whole-model check above). With the framework's example
-stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly) the stresses are about
-$4\times10^{8}$ times larger. Changing $\nu$ from $0.49$ to $0.45$ or $0.499$
+stiffness ($E=1000$~MPa, $\nu=0.3$, blended linearly) the mean stress in the
+seed is about $4\times10^{8}$ times larger and the von Mises stress about
+$2\times10^{8}$ times. Changing $\nu$ from $0.49$ to $0.45$ or $0.499$
 changes the mean stress in the seed by less than $2\,\%$.
 
 The first author of the paper has since suggested that its stiffness unit may
@@ -782,7 +783,7 @@ von Mises stress from above, the second from below; on $48^3$ they give
 $6.11$ and $6.07\times10^{-4}$~Pa, so the converged value lies between the
 two, $2\,\%$ above the element's value on $24^3$ after extrapolation to
 $\Delta t\to0$. With the Gauss-point values the code reproduces the
-element's seed stress within $3\,\%$ on $8^3$ and within $1\,\%$ on $16^3$
+element's seed stress within $3.5\,\%$ on $8^3$ and within $1\,\%$ on $16^3$
 and $24^3$; on the coarse mesh the Gauss points smooth the step in
 $\alpha$ at the surface of the seed inside an element, which lowers the
 stress. The stress converges only to about first order, because the
@@ -804,7 +805,7 @@ error over the cube is $5.1$, $1.9$ and $1.1\,\%$. The error is largest near
 the edge of the seed, where the gradient of $\phi$ is steepest ($5.5\,\%$ at
 $0.4$~mm from the centre on $8^3$, $0.2\,\%$ on $24^3$), and smallest at the
 centre ($0.5$ to $0.2\,\%$). The domain integral of $\alpha-1$ is within
-$0.2\,\%$ on every mesh: the explicit update conserves the mass of $\phi$ up to
+$0.3\,\%$ on every mesh: the explicit update conserves the mass of $\phi$ up to
 the source, and the mesh error redistributes the growth between the seed and
 its surroundings. At $\Delta t=0.0125$ the errors are about $0.2\,\%$ larger
 than after extrapolation.
@@ -864,9 +865,9 @@ the ANSYS run equals the same scheme run on its own, with a difference of
 $0$, and every call to the point model is reproduced bit for bit. In
 the packed seed, at $T^*=1$ (example input, $\Delta t=0.025$):
 \begin{itemize}
-\item case~3 (coexistence): the paper gives $\phi_1=0.60$, $\phi_2=0.40$ for the point model
-      alone at its end time, and my implementation gives $\phi_1=0.5945$,
-      $\phi_2=0.3926$ there (share $0.602$) and a share of $0.614$ at
+\item case~3 (coexistence): the paper gives $\bar\phi_1=0.60$, $\bar\phi_2=0.40$ for the point model
+      alone at its end time, and my implementation gives $\bar\phi_1=0.5945$,
+      $\bar\phi_2=0.3926$ there (share $0.602$) and a share of $0.614$ at
       $s\,T^*=0.15$; the coupled run gives $\phi_1/(\phi_1+\phi_2)=0.6665$;
 \item case~6 (one species wins): the paper gives $\bar\phi_1\approx0$ with
       $\psi_1=0.05$; the coupled run gives $\phi_1/(\phi_1+\phi_2)=0.0209$ with $\psi_1=0.048$.
@@ -1030,7 +1031,7 @@ not compared with a measured spatial composition.
 \item \emph{Consumption.} All ANSYS results in this chapter use the consumption
       $g\,\phi$ as printed (Eq.~35). The authors confirmed the form $g\,\phi\,c$
       (Chapter~\ref{ch:theory}, Appendix~\ref{app:klempt2024}), which I use in the
-      Python and Abaqus comparisons; there the share follows the local nutrient under both
+      Python comparisons; there the share follows the local nutrient under both
       forms (\S\ref{sec:ch5-outlook-python}).
 \item \emph{No growth towards the nutrient.} The element's front term is
       switched off, so the biofilm spreads only by diffusion. The composition
