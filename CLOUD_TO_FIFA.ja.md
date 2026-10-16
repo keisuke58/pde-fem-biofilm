@@ -4,6 +4,22 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年10月16日 夜（Lean と Mathlib：成長則の証明の確認。急がない、計算の合間に）
+
+クラウドで、恒常圧の成長則（陰的）が 1 つの材料点では p_h を超えないことを Lean で証明した（`p3/uel/lean/HomeostaticGate.lean`、
+Lean 本体だけ、確認済み）。実数そのもので証明する Mathlib 版（`p3/uel/lean/mathlib/`）は、クラウドではディスクが足りず
+**未確認**。fifa で確認してほしい（約 5 GB、ネットワークが要る）：
+
+```
+curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+source ~/.elan/env
+cd p3/uel/lean/mathlib && lake exe cache get && lake build
+lean ../HomeostaticGate.lean        # 本体だけの版（数秒）
+```
+
+`lake build` がエラーなしで終われば PASS。エラーが出たら、直さずにそのまま報告（Mathlib の名前の変更などは
+クラウドで直す）。`.lake/` はリポジトリに入れない（`.gitignore` を確認）。結果は `KEIO_CHAIN_LOG.md` に 1 行。
+
 
 ## 2026年10月16日 深夜・追記（恒常圧の成長則に陰的な帰還を足した。Abaqus の確認は陰的でも回せる）
 

@@ -170,3 +170,6 @@ p3/uel/*.so
 p3/uel/test_uel_wrapper
 p3/uel/unified_uel_abaqus.for
 p3/uel/abaqus_in/
+
+# Lean build output
+.lake/
