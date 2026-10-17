@@ -491,3 +491,21 @@ comp_trace は g_new の最後のビットだけ違う行がある（0.180000000
   1. CH を回し直す: `.\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CH,CS -Growth -Tag ic -Push`（κ は既定の 8.822731e-3 のまま。初期値の差は小さいが、較正と同じ軌道にするため）。ログに `phi_init from phi_init.json @ <sha>` が出ていることを確認。
   2. 10月10日の CH（初期値は旧 config.json）は消さずに残す（初期値の感度として比べる）。
   3. DS・DH は `DS.json`・`DH.json` と `phi_init.json` の DS・DH が置かれてから同じコマンドで。
+
+## クラウドから（10月17日）：最終 MAP が生データ・2 通路に変わった。CS・CH・DH は確定、DS は 10/19 ごろ
+
+- **10月12日の上の節の run 名は古い**（論文の図から読み取ったデータ・1 通路）。今の最終 MAP は Heine の生データ・2 通路の尤度（生きた菌 ↔ φψ/Σφψ、全菌 ↔ φ/Σφ、生きた割合）。
+  古い json は tmcmc202601 の `final_theta_MAP/superseded/` に移した。`run_calibrated.ps1` は `<C>.json` と `phi_init.json` を同じ commit から取るので、**スクリプトの変更は要らない**（pull し直して回すだけ）。
+- **今の最終 MAP**（tmcmc202601 `claude/gate-off-map-check` の `docs/revision/generated/final_theta_MAP/`）
+
+  | 条件 | run | max logL | 生きた菌の組成 RMSE | 状態 |
+  |---|---|---|---|---|
+  | CS | `CS_ult_2c_raw_seed42`（磨いた MAP） | −32.34 | 0.087 | 確定（10/17 差し替え） |
+  | CH | `CH_ult_2c_raw_a33w_seed7`（磨いた MAP） | −25.87 | 0.059 | 確定 |
+  | DH | `DH_p2_2c_raw_seed42`（**段 (iii)**、粒子の最良値） | −51.41 | 0.073 | 確定（DH は段 (iv) が seed で山が分かれるため段 (iii) が最終） |
+  | DS | — | — | — | ult 走行中（10/19 ごろ）。`DS.json` が置かれたら回す |
+
+- **回すもの**: `.\ansys_usermat\apdl\run_calibrated.ps1 -Conditions CS,CH,DH -Growth -Tag raw2c -Push`。ログの `phi_init from phi_init.json @ <sha>` の sha が 10/17 以降であることを確かめる。
+  10月12日以前の結果（旧 MAP）は消さずに残す（比べる用）。
+- **注意（初期値の和）**: DH の `phi_init` は和が 1.0004（Day 1 の組成を [0.001, 0.99] に clip したため）。`make_initial_state` は和が 0.999999 を超えると縮めないので、溶媒の体積分率 φ0 が −0.0004 になる。
+  較正も同じ初期値で回っているので、FEM でもこのまま使う（較正と同じ軌道にするため）。ただし FEM 側で φ0 ≥ 0 を前提にしている箇所があれば知らせてほしい。
