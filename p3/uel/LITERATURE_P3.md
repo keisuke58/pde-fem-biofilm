@@ -16,7 +16,7 @@ stresses scale with E); (iii) the homeostatic pressure p_h at which confined gro
 | S. mutans biofilm elastic modulus | about 0.28 kPa (+/- 0.35, n = 30) in a group paper; 380 Pa in the thesis of the same group (conflict) | Southampton thesis and paper (eprints.soton.ac.uk 359755, 157185) | **values conflict; read both** |
 | S. epidermidis biofilm | storage modulus 11 +/- 3 Pa, loss modulus 1.9 +/- 0.5 Pa at 1 Hz, yield stress about 20 Pa | rheometer study (Soft Matter 2013, c2sm27005f) | not a plaque organism |
 | Plaque-simulating dextran gel | 17 kPa | same search | surrogate, not plaque |
-| Confined E. coli | pressures in the hundreds of kPa; growth and division arrest under pressure | bioRxiv 2024.09.20.614086 | preprint; the P3 slides cite Chu et al. 2018 (about 10 kPa for a confined colony), **not found in this search, verify the citation and the value** |
+| Confined E. coli (Chu et al. 2018, Nat. Commun. 9, 4087, doi 10.1038/s41467-018-06552-z; checked in the PMC full text, 17 Oct) | all tested strains generated pressures greater than about 1.5 psi (about 10 kPa) on the chamber roof (Fig. 1c); the stress-response reporter rpoH rose at about 0.75 psi (about 5 kPa) (Fig. 1d-f); turgor pressure of cells estimated at 30-100 kPa; **the paper gives no pressure at which growth stalls** (it says growth arrest happens at relatively low pressures at the boundary and attributes it to a possible adaptive response) | PMC6173693 | checked |
 | Regrowth in an in vitro pocket model, 48 h | control 408 um and 290 um (two surfaces); treated 34 and 33 um | manufacturer-sponsored in vitro study | weak source; do not use |
 
 ## What the values say about the model
@@ -27,16 +27,18 @@ stresses scale with E); (iii) the homeostatic pressure p_h at which confined gro
   value E = 10 Pa lies in this range; the partner's example stiffness (E = 1000 MPa) does not and is only a bring-up
   value. Stresses in the model scale with E, so with E = 10-300 Pa the cervical band stresses are of order
   0.04 E = 0.4-12 Pa.
-- **p_h:** with p_h/E = 0.05 and E = 10-300 Pa, p_h = 0.5-15 Pa. This is far below the 10 kPa quoted for confined
-  colonies, which concern single-species colonies in microfluidic chambers at much higher stiffness. If the model is
+- **p_h:** with p_h/E = 0.05 and E = 10-300 Pa, p_h = 0.5-15 Pa. This is far below the ~10 kPa that confined
+  colonies were found to exert (Chu et al. 2018: pressure generated, not a stall pressure), which concern single-species
+  colonies in microfluidic chambers at much higher stiffness. If the model is
   read with E of the order of kPa (as the confined-colony work suggests for the matrix under pressure), p_h/E = 0.05
   gives p_h of the order of 100 Pa; to reach 10 kPa one needs p_h/E of about 1 at E = 10 kPa. The ratio p_h/E is
   therefore the quantity to vary (0.02-1), and P3 should say that its value cannot be set from the literature yet.
 
 ## Open items (to read before writing P3)
 
-1. Chu et al. 2018 (Nat. Commun. 9, 4087): the stall pressure and how it was measured; whether it applies to a biofilm
-   in a flow or on a surface.
+1. ~~Chu et al. 2018~~ checked on 17 Oct: it gives about 10 kPa generated and about 5 kPa for the stress response, **not a
+   homeostatic (stall) pressure**. Earlier statements in this repository (keio_wp2/README.ja.md, the 2 Nov slides) that
+   "growth stops at about 10 kPa (Chu et al.)" were corrected. A stall pressure for a biofilm still has to be found.
 2. A review of dental plaque mechanics (modulus, yield stress, cohesion): not found in this search.
 3. In vivo plaque growth after cleaning (toothbrushing-cessation studies) for the growth rate k_alpha and the time scale.
 4. Whether any study gives the stress or deformation at the cervical margin (gingival margin) of plaque.
