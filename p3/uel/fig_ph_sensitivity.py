@@ -1,5 +1,5 @@
 """fig_ph_sensitivity.py -- sensitivity of the cervical result to the homeostatic pressure p_h/E, which the
-literature does not fix (LITERATURE_P3.md). Concentration ratio and band stress against p_h/E = 0.02-0.2, with the
+literature does not fix (LITERATURE_P3.md). Concentration ratio and band stress against p_h/E = 0.02-1, with the
 law-off value as a horizontal line, for the outer face free and fixed (nutrient from the crown, bulge 1, bottom
 u_z = 0, explicit gate, mesh 4x12x16; Gauss-point means).
 
@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 rows = json.load(open(ROOT / "p3/uel/results/implant_cervical_summary.json"))
 NR = 4
-PREFS = [0.02, 0.05, 0.1, 0.2]
+PREFS = [0.02, 0.05, 0.1, 0.2, 0.5, 1.0]
 
 
 def pick(outer, pref):
