@@ -820,23 +820,28 @@ What the numbers say (answer to (e), with its caveats):
 
 ### Sensitivity to p_h/E (17 Oct 2026, cloud; `fig_ph_sensitivity.py` -> `assets/fig_ph_sensitivity.png`)
 
-The literature does not fix p_h (`LITERATURE_P3.md`), so the cervical result is given over p_h/E = 0.02, 0.05,
-0.1, 0.2 (`cervical_study.py --levels 1 2 --bottom uz --outer free fixed --p-ref 0.1 0.2 --nut outer`; 0.02 and
-0.05 from the runs above). Bottom u_z = 0, explicit gate, 4x12x16 (2x6x8 in brackets):
+The literature does not fix p_h (`LITERATURE_P3.md`), so the cervical result is given over p_h/E = 0.02-1
+(`cervical_study.py --levels 1 2 --bottom uz --outer free fixed --p-ref 0.1 0.2 0.5 1 --nut outer`; 0.02 and 0.05
+from the runs above). Bottom u_z = 0, explicit gate, 4x12x16 (2x6x8 in brackets); no cutback in any run:
 
-| outer face | | no law | 0.02 | 0.05 | 0.1 | 0.2 |
-|---|---|---|---|---|---|---|
-| free | ratio | 1.36 (1.22) | 0.54 (0.44) | 0.65 (0.59) | 0.81 (0.77) | 0.99 (0.93) |
-| free | band mean vM/E | 0.220 | 0.018 | 0.041 | 0.075 | 0.117 |
-| fixed | ratio | 0.99 | 0.34 (0.64) | 0.42 (0.29) | 0.48 (0.34) | 0.54 (0.47) |
-| fixed | band mean vM/E | 0.135 | 0.0023 | 0.0053 | 0.0093 | 0.016 |
+| outer face | | no law | 0.02 | 0.05 | 0.1 | 0.2 | 0.5 | 1 |
+|---|---|---|---|---|---|---|---|---|
+| free | ratio | 1.36 (1.22) | 0.54 (0.44) | 0.65 (0.59) | 0.81 (0.77) | 0.99 (0.93) | 1.17 (1.09) | 1.26 (1.15) |
+| free | band mean vM/E | 0.220 | 0.018 | 0.041 | 0.075 | 0.117 | 0.166 | 0.190 |
+| free | max p/E (seed) | 0.349 | 0.038 | 0.052 | 0.097 | 0.162 | 0.247 | 0.291 |
+| fixed | ratio | 0.99 | 0.34 (0.64) | 0.42 (0.29) | 0.48 (0.34) | 0.54 (0.47) | 0.58 (0.56) | 0.70 (0.65) |
+| fixed | band mean vM/E | 0.135 | 0.0023 | 0.0053 | 0.0093 | 0.016 | 0.032 | 0.058 |
 
-- The ratio rises with p_h/E and stays below 1 up to 0.2 (free outer face: 0.99 at 0.2, the law-off value 1.36);
-  the band stress grows a little slower than p_h (x6.5 free, x7 fixed for x10 in p_h/E) and stays below the law-off
-  value. The statement "the law removes the cervical concentration" therefore holds for p_h/E <= 0.2 and is lost
-  near p_h/E = 0.2 with the outer face free, where the gate rarely closes in the band. Larger p_h/E (0.5, 1) tend to
-  the law-off result; not run.
-- Mesh change 2x6x8 -> 4x12x16 at 0.1 and 0.2: +5 % and +6 % (free), +40 % and +15 % (fixed).
+- Outer face free: the ratio rises with p_h/E, passes 1 between 0.2 and 0.5 and tends to the law-off 1.36 (1.26 at
+  p_h/E = 1). Above p_h/E of about 0.3 the largest pressure without the law (0.35) is barely reached, so the gate
+  hardly closes and the result is the law-off one. The statement "the law removes the cervical concentration"
+  holds for p_h/E <= 0.2 only; for larger p_h/E the law lowers the band stress (0.17-0.19 against 0.22) but the
+  concentration stays.
+- Outer face fixed: the ratio stays below 1 for all p_h/E, as it is already about 1 without the law; the band stress
+  falls by a factor 2 (p_h/E = 1) to 60 (0.02).
+- So P3 has to state p_h/E with its claim: the concentration is removed when p_h is at most about 0.2 E, i.e. when
+  p_h is below the pressure that growth alone would build in the band. With E = 10-300 Pa this is p_h <= 2-60 Pa.
+- Mesh change 2x6x8 -> 4x12x16 for 0.1-1: +5 to +9 % (free), +4 to +40 % (fixed).
 
 ## Formal check of the implicit gate (16 Oct 2026, Lean 4, `lean/HomeostaticGate.lean`)
 
