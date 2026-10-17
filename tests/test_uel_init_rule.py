@@ -181,7 +181,7 @@ def test_rule_weighted_mean(em):
     expect = advance_from(em, g, 2, nodes, elems, props, Uprev, Ucur, qs)
     got = comp(SVcur, 2, em)
     assert np.array_equal(got[qs, 13], 3 * np.ones(4))
-    assert np.allclose(got[qs, :12], expect, rtol=0, atol=1e-14)
+    assert np.allclose(got[qs, :12], expect, rtol=0, atol=1e-12)   # round-off of the weighted sum; the rule is checked, not the summation order
     near = comp(run_column(em, 1, NINC)[3][k][1], 2, em)[qs, :12]
     assert np.abs(got[qs, :12] - near).max() > 1e-5                 # more than one neighbour in the radius, different compositions
 
