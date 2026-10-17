@@ -373,7 +373,7 @@ contains
           call shape(gpc(i), gpc(j), gpc(k), N, dNr)
           Jm = matmul(dNr, transpose(coords))
           call inv3(Jm, Ji, det)
-          Nq(:, q) = N; dNq(:, :, q) = matmul(transpose(Ji), dNr); wq(q) = det
+          Nq(:, q) = N; dNq(:, :, q) = shape_grad(Ji, dNr); wq(q) = det
           ph = 0d0; phn = 0d0; c = 0d0
           do an = 1, NN
             ph = ph + N(an) * U(NDN*(an-1)+4); phn = phn + N(an) * Un(NDN*(an-1)+4); c = c + N(an) * U(NDN*(an-1)+5)
@@ -596,6 +596,17 @@ contains
     end do
   end subroutine nh_stress
 
+  function shape_grad(Ji, dNr) result(dN)
+    ! dN/dX = Jm^-1 dN/dxi, Jm(i,j) = dX_j/dxi_i = sum_a dNr(i,a) X_j^a, Ji = Jm^-1 (inv3). Until 17 Oct 2026 this was
+    ! matmul(transpose(Ji), dNr), i.e. Jm^-T, which is right only for an element whose Jm is symmetric (an axis-aligned
+    ! brick): a rotated or skewed element got a rotated gradient operator, and free growth u = xi X then left a residual
+    ! of order xi E (tests/test_uel_kinematics.py). The implant sector's elements are rotated by theta and skewed by the
+    ! crown, so every sector result before that date carries this error (p3/uel/README.md, "Shape gradient").
+    double precision, intent(in) :: Ji(3,3), dNr(3,8)
+    double precision :: dN(3,8)
+    dN = matmul(Ji, dNr)
+  end function shape_grad
+
   subroutine shape(xi, eta, zeta, N, dN)
     double precision, intent(in) :: xi, eta, zeta
     double precision, intent(out) :: N(8), dN(3, 8)
@@ -699,7 +710,7 @@ contains
           call shape(gpc(i), gpc(j), gpc(k), N, dNr)
           Jm = matmul(dNr, transpose(coords))
           call inv3(Jm, Ji, det)
-          dN = matmul(transpose(Ji), dNr)
+          dN = shape_grad(Ji, dNr)
           w = det
           ph = 0d0; phn = 0d0; c = 0d0; cn = 0d0; gph = 0d0; gc = 0d0
           do a = 1, NN
@@ -949,7 +960,7 @@ contains
           call shape(gpc(i), gpc(j), gpc(l), N, dNr)
           Jm = matmul(dNr, transpose(coords))
           call inv3(Jm, Ji, det)
-          dN = matmul(transpose(Ji), dNr)
+          dN = shape_grad(Ji, dNr)
           w = det
           ph = 0d0; c = 0d0
           do a = 1, NN

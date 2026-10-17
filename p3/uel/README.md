@@ -315,6 +315,64 @@ stress (seed / seed interior / layer above the interface): plate 10^9 times stif
 (phi frozen). A tooth or implant (GPa, over 10^8 times the biofilm) can therefore be replaced by u = 0 on the
 surface the biofilm sits on, for the growth-induced stress; external loads such as occlusion need their own check.
 
+## Shape gradient of rotated and skewed elements (17 Oct 2026, cloud): a bug, its fix and the reruns
+
+Found while diagnosing the law-off runs that did not converge (cervical line, below). The element computed the
+shape-function gradient as `matmul(transpose(Ji), dNr)`, i.e. Jm^-T dN/dxi with Jm(i,j) = dX_j/dxi_i, where Jm^-1
+dN/dxi is right. The two agree only when Jm is symmetric, i.e. for an axis-aligned brick: every cube, column, strip
+and seed run of this directory, and every check (energy gradient, tangent, beam theory, Klempt 2024 limit, frozen
+seed against ANSYS) was on such a mesh, so none could see it. A rotated or skewed element got a rotated gradient
+operator, in the mechanics and in the phi and c diffusion alike: a unit cube rotated by 45 and 30 degrees under free
+growth u = xi X (xi = 0.1, E = 1) left a mechanics residual of 9.9e-2, the same cube axis-aligned 3.5e-19. The implant
+sector's elements are rotated by theta and skewed by the crown, so every sector result before 17 Oct carried this
+error. Fix: `shape_grad` (one helper used by residual, tangent and the implicit gate); check:
+`tests/test_uel_kinematics.py` (free growth on the aligned, rotated and skewed cube 5e-17, 2e-18 with and without the
+mean dilatation; the nodal-force norm of a uniform strain is the same on the rotated element as on the aligned one to
+1e-12; the closed-form tangent against central differences on the skewed element, 1e-7 relative), 0.4 s.
+
+What changed and what did not:
+
+- Axis-aligned cases: the column (20 elements, `emulate_abaqus.py`), the 8^3 seed (nu 0.49, mean dilatation) and the
+  frozen seed 8^3 differ from the element before the fix by at most 5.6e-16 in the nodal values and 2.6e-15 in the state
+  variables (round-off: Jm's off-diagonal entries are 1e-17, not 0, so Jm^-1 and Jm^-T differ in the last bit); the
+  stored `results/seed_frozen_8.json` reproduces the old element bit for bit and the new one to 1e-13 in the von Mises
+  means (the location of the largest value moves between two symmetric elements that tie). `klempt2024_limit_test.py`,
+  `homeostatic_test.py`, the implicit-gate and init-rule tests: unchanged.
+- Sector cases: every `results/implant_*.json` was regenerated on 17 Oct with the corrected element (91 cases at 2x6x8
+  and 4x12x16 in 50 min on two cores, no cutback in any of them; the 6x18x24 cases are listed where they finished).
+  The tables of the three sections below were replaced by the regenerated ones; their prose still describes the
+  16 Oct runs where it quotes numbers. Direction of the change, seed means over the inner 0.125 mm:
+
+| case | seed alpha - 1 | seed vM/E | largest vM/E | largest p/E (seed) |
+|---|---|---|---|---|
+| 2x6x8, bulge 0, nutrient on top | 0.0463 -> 0.0441 | 0.0477 -> 0.0250 | 0.273 -> 0.106 | 0.187 -> 0.064 |
+| 4x12x16 sl2, bulge 1, nutrient on top | 0.0428 -> 0.0407 | 0.0610 -> 0.0264 | 0.981 -> 0.232 | 0.591 -> 0.134 |
+| 4x12x16 sl2, bulge 1, outer face fixed | 0.0428 -> 0.0407 | 0.0681 -> 0.0432 | 0.998 -> 0.403 | 0.594 -> 0.296 |
+| 2x6x8, bulge 1, nutrient on the outer face, bottom u_z = 0 | 0.1101 -> 0.2175 | 0.0880 -> 0.1296 | 0.149 -> 0.163 | 0.228 -> 0.186 |
+| 4x12x16 sl2, bulge 1, nutrient on the outer face, bottom u_z = 0 | 0.0992 -> 0.2283 | 0.0848 -> 0.1648 | 0.221 -> 0.272 | 0.150 -> 0.349 |
+| 4x12x16 sl2, bulge 1, p_h/E = 0.05, free | 0.0180 -> 0.0241 | 0.0157 -> 0.0137 | 0.115 -> 0.083 | 0.083 -> 0.039 |
+
+  The growth with the nutrient on the top face changes by 5 % (the nutrient diffuses along z, where the elements
+  are not skewed), with the nutrient on the outer face it doubles (the radial diffusion through the crown's skewed
+  elements was wrong). The stresses fall by half or more: the spurious growth force of a rotated element is of the
+  order of its growth stress, and the "singular corner" values that grew with the mesh (0.27 -> 0.78 -> 1.22 at
+  the top of the bonded face) were mostly that force (0.106 -> 0.243 now at the first two levels). The pressure
+  overshoot above p_h with the free outer face is gone (0.039 for p_h/E = 0.05 at 4x12x16, against 0.083 before).
+
+The law-off runs that did not converge (4x12x16 with the crown's nutrient, bottom clamped or u_z = 0 with the outer
+face fixed; 6x18x24 with u_z = 0 and the outer face free). Diagnosis on the first (increment 57, own Newton loop on
+the saved state): the phi and c rows converge to 1e-17 while the u rows stall at 1e-5; the closed-form tangent equals
+central differences to 3e-11 on the elements holding the stalled dofs (not a tangent error); those elements are in the
+empty layer (phi < 0.2, stiffness f E = 1e-3 E) at the outer corner near theta = 90 degrees, where 66 elements already
+had J < 0 at a Gauss point in the converged state of increment 56 (J_e from -3.7 to 3.4, nodal displacements up to
+0.30 mm in a 0.25 mm layer, with the bottom nodes clamped): the spurious growth forces had pushed the soft empty layer
+until it folded, the tangent had one negative eigenvalue (-4.4e-5 against the next 3.3e-5) and the Newton direction
+reduced the residual only to s = 0.5. So the stall was not the near-incompressible grown layer (its J_e stayed in
+0.53-1.22) and no mixed or perturbed-Lagrangian formulation was needed: with the corrected gradient the three cases run
+in 3 iterations per increment at the base increment, no cutback (4x12x16: 84 s and 125 s; 6x18x24 with u_z = 0 and the
+outer face free: 14 min, 183 iterations in 60 increments), and the other 4x12x16 law-off runs the same (180-223
+iterations in 60 increments).
+
 ## Implant sector: mesh convergence (16 Oct 2026, cloud, Python emulation)
 
 `make_implant_uel_inp.py --run` at nr x nt x nz = f (2 x 6 x 8), f = 1, 2, 3 (4 on fifa); `implant_convergence.py
@@ -324,54 +382,69 @@ the observed order. Times are with four runs sharing four cores. The .json now a
 largest value without the edge rows and the wall time; `compare_implant_gp.py <uel_gp.txt> <json>` compares an
 Abaqus run element by element (exit 1 above `--tol`).
 
+(Tables regenerated on 17 Oct 2026 with the corrected shape gradient, section "Shape gradient"; the text after them
+is the 16 Oct reading of the earlier runs and quotes their numbers. The largest vM/E now sits at the top row next to
+the sector cut theta = 0 at 4x12x16 and at theta = 52 / 22 degrees at 2x6x8.)
+
 Seed = the inner element layer (as `make_implant_inp.py`), bulge 0:
 
 | level | elements | time | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
 |---|---|---|---|---|---|---|---|
-| 2x6x8 | 96 | 12 s | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
-| 4x12x16 | 768 | 160 s | 0.03523 | 0.02358 | 0.01180 | 0.01349 | 0.2375 (2.077, 71.2, 1.938) |
-| 6x18x24 | 2592 | 25 min | 0.02962 | 0.01482 | 0.00960 | 0.00729 | 0.2004 (2.069, 77.5, 1.958) |
+| 2x6x8 | 96 | 8 s | 0.04413 | 0.02501 | 0.01721 | 0.01562 | 0.1062 (2.094, 52.5, 1.875) |
+| 4x12x16 | 768 | 133 s | 0.03049 | 0.00833 | 0.01028 | 0.00382 | 0.0489 (2.077, 3.7, 1.938) |
+| 6x18x24 | 2592 | (17 Oct, running at the time of writing; see `results/implant_6x18x24.json` when present) | | | | | |
 
-With bulge 1 at 2x6x8 / 4x12x16: seed alpha - 1 0.04427 / 0.03302, seed vM/E 0.04620 / 0.02383, largest vM/E 0.2927 /
-0.2912 at (3.08, 67.5, 1.875) / (3.07, 71.3, 1.938). This seed thins with the mesh (0.125, 0.0625, 0.042 mm), so the
-problem changes with the level and nothing converges (seed vM/E -51 %, -37 %). For a convergence study the seed must be
-fixed: `--seed-layers f` seeds the inner f layers, 0.125 mm at every level (`_sl<f>` in the file name). With that seed,
-bulge 0:
+With bulge 1 at 2x6x8 / 4x12x16: seed alpha - 1 0.04264 / 0.02886, seed vM/E 0.02263 / 0.00739. This seed thins with the
+mesh (0.125, 0.0625, 0.042 mm), so the problem changes with the level and nothing converges. For a convergence study
+the seed must be fixed: `--seed-layers f` seeds the inner f layers, 0.125 mm at every level (`_sl<f>` in the file
+name). With that seed, bulge 0:
 
 | level | elements | time | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
 |---|---|---|---|---|---|---|---|
-| 2x6x8 | 96 | 12 s | 0.04634 | 0.04775 | 0.01795 | 0.03544 | 0.2728 (2.094, 67.5, 1.875) |
-| 4x12x16 | 768 | 201 s | 0.04481 | 0.06206 | 0.01467 | 0.03637 | 0.7791 (2.077, 63.7, 1.938) |
-| 6x18x24 | 2592 | 33 min | 0.04440 | 0.06125 | 0.01432 | 0.03606 | 1.2245 (2.069, 62.5, 1.958) |
+| 2x6x8 | 96 | 8 s | 0.04413 | 0.02501 | 0.01721 | 0.01562 | 0.1062 (2.094, 52.5, 1.875) |
+| 4x12x16 | 768 | 135 s | 0.04219 | 0.02934 | 0.01392 | 0.01578 | 0.2431 (2.077, 41.2, 1.938) |
+| 6x18x24 | 2592 | 25 min | 0.04155 | 0.02928 | 0.01354 | 0.01566 | 0.3236 (2.069, 2.5, 1.958) |
 
-Bulge 1, same seed (the third level with one cutback, see below; 36 min):
+Bulge 1, same seed:
 
 | level | seed alpha - 1 | seed vM/E | core alpha - 1 | core vM/E | max vM/E, at (r, theta, z) |
 |---|---|---|---|---|---|
-| 2x6x8 | 0.04427 | 0.04620 | 0.01490 | 0.03253 | 0.2927 (3.076, 67.5, 1.875) |
-| 4x12x16 | 0.04278 | 0.06100 | 0.01206 | 0.03206 | 0.9808 (3.072, 63.7, 1.938) |
-| 6x18x24 | 0.04173 | 0.05913 | 0.01166 | 0.03113 | 1.5766 (3.067, 62.5, 1.958) |
+| 2x6x8 | 0.04264 | 0.02263 | 0.01567 | 0.01309 | 0.1023 (3.076, 22.5, 1.875) |
+| 4x12x16 | 0.04066 | 0.02642 | 0.01250 | 0.01314 | 0.2320 (3.072, 3.7, 1.938) |
+| 6x18x24 | 0.03935 | 0.02581 | 0.01197 | 0.01269 | 0.3019 (3.067, 47.5, 1.958) |
 
 Changes from the level before and the observed order p (three levels, q = q_inf + C h^p; "-" where the differences
 do not shrink with one sign):
 
 | quantity | bulge 0: 1 -> 2, 2 -> 3, p (q_inf) | bulge 1: 1 -> 2, 2 -> 3, p (q_inf) |
 |---|---|---|
-| core alpha - 1 | -18.3 %, -2.4 %, 2.9 (0.01416) | -19.1 %, -3.3 %, 2.5 (0.01142) |
-| core vM/E | +2.6 %, -0.9 %, - | -1.4 %, -2.9 %, - |
-| seed alpha - 1 | -3.3 %, -0.9 %, 1.4 (0.04384) | -3.4 %, -2.5 %, - |
-| seed vM/E | +30 %, -1.3 %, - | +32 %, -3.1 %, - |
-| max vM/E (all) | +186 %, +57 %, - | +235 %, +61 %, - |
+| core alpha - 1 | -19.1 %, -2.7 %, 2.8 (0.01336) | -20.3 %, -4.2 %, 2.2 (0.01161) |
+| core vM/E | +1.0 %, -0.8 %, - | +0.4 %, -3.5 %, - |
+| seed alpha - 1 | -4.4 %, -1.5 %, 1.0 (0.04031) | -4.6 %, -3.2 %, - |
+| seed vM/E | +17 %, -0.2 %, - | +17 %, -2.3 %, - |
+| max vM/E (all) | +129 %, +33 %, - | +127 %, +30 %, 0.15 |
 
-The core, a fixed region away from the edges, settles: alpha - 1 to 2-3 % at the third level with an order between 2
-and 3, vM/E within 1-3 % at every level (its changes are below the level where an order can be read). Bulge 1 lowers
-the core by 17-19 % in alpha - 1 and 8-14 % in vM/E (the wider collar at the top takes more nutrient). The seed means
-include the top row and the sector cuts, so they move more. The largest vM/E does not converge: it sits in the top row
-of elements next to the fixed inner face, where the seed (phi = 0.9) meets the empty layer (phi = 1e-4) and the
-displacement is fixed on one side and free on the other, and grows 0.27 -> 0.78 -> 1.22 (bulge 0) and 0.29 -> 0.98 ->
-1.58 (bulge 1) as the element reaches closer to the corner, as a singular corner does. It stays at theta = 62-68
-degrees, in the inner element column, half an element below the top face. It is reported but left out of the compared quantities, as
+Against the criteria of KEIO_PLAN.ja.md P3 (c): the core alpha - 1 has order 2.8 (bulge 0) and 2.2 (bulge 1), both above
+2; the core vM/E changes by 0.8 % (bulge 0) and 3.5 % (bulge 1) between the last two levels, the second just above the
+3 % mark. The largest vM/E (the top row next to the sector cut or at 47 degrees, 0.11 -> 0.24 -> 0.32) still grows with
+the mesh, as a corner does, at a third of its earlier values. Wall times with two runs on four cores; 6x18x24 with
+bulge 1 took one cutback in increment 1 (29 min), bulge 0 none (25 min).
+
+The 16 Oct reading of the earlier runs (numbers of the element before the fix): the core, a fixed region away from
+the edges, settles: alpha - 1 to 2-3 % at the third level with an order between 2 and 3, vM/E within 1-3 % at every
+level (its changes are below the level where an order can be read). Bulge 1 lowers the core by 17-19 % in alpha - 1
+and 8-14 % in vM/E (the wider collar at the top takes more nutrient). The seed means include the top row and the
+sector cuts, so they move more. The largest vM/E does not converge: it sits in the top row of elements next to the
+fixed inner face, where the seed (phi = 0.9) meets the empty layer (phi = 1e-4) and the displacement is fixed on one
+side and free on the other, and grows 0.27 -> 0.78 -> 1.22 (bulge 0) and 0.29 -> 0.98 -> 1.58 (bulge 1) as the element
+reaches closer to the corner, as a singular corner does. It is reported but left out of the compared quantities, as
 the cube's corners are. The 8x24x32 level (sl4) is for fifa (`CLOUD_TO_FIFA.ja.md`, 16 Oct evening and night).
+
+The three paragraphs that follow (Newton, cause, remedy) describe the 16 Oct runs before the shape-gradient fix.
+The first-increment failure of 6x18x24 with bulge 1 and the nutrient on the top face is still there after the fix
+(NaN steps in increment 1, one cutback to dt/4, then the base increment; section "Shape gradient"), so it is the
+near-null mode of the soft empty layer at the start state and not the spurious growth force; the runs with the
+nutrient on the outer face and the law-on runs at 6x18x24 need no cutback.
 
 Newton: at 6x18x24 with the 0.125 mm seed the full Newton step of the first growth increment diverged in the mechanics
 (phi and c already converged, a 0.235 mm displacement step on 0.042 mm elements, then NaN from an inverted element; the
@@ -453,26 +526,47 @@ confinement; the WP2 stages varied the bottom face, which `--bottom uz|fixed` no
 the mesh study; corner = the largest vM/E in the top row of elements (the singular corner); stopped = share of seed
 elements whose end pressure is at or above p_h. Wall times with one other job on the four cores.
 
-| mesh | bulge | outer face | p_h/E | core alpha - 1 | core vM/E | core p/E | seed alpha - 1 | corner vM/E | corner alpha - 1 | max p/E (seed) | stopped | time |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2x6x8 | 0 | free | off | 0.0179 | 0.0354 | 0.0208 | 0.0463 | 0.273 | 0.277 | 0.187 | 0 | 9 s |
-| 2x6x8 | 0 | free | 0.05 | 0.0117 | 0.0142 | 0.0115 | 0.0195 | 0.060 | 0.075 | 0.054 | 0.08 | 8 s |
-| 2x6x8 | 0 | free | 0.02 | 0.0075 | 0.0080 | 0.0067 | 0.0107 | 0.030 | 0.071 | 0.023 | 0.12 | 8 s |
-| 2x6x8 | 0 | fixed | off | 0.0179 | 0.0423 | 0.0988 | 0.0463 | 0.359 | 0.277 | 0.311 | 0 | 8 s |
-| 2x6x8 | 0 | fixed | 0.05 | 0.0048 | 0.0102 | 0.0271 | 0.0102 | 0.078 | 0.065 | 0.063 | 0.23 | 7 s |
-| 2x6x8 | 0 | fixed | 0.02 | 0.0020 | 0.0045 | 0.0127 | 0.0043 | 0.036 | 0.026 | 0.029 | 0.29 | 6 s |
-| 2x6x8 | 1 | free | off | 0.0149 | 0.0325 | 0.0219 | 0.0443 | 0.293 | 0.275 | 0.204 | 0 | 11 s |
-| 2x6x8 | 1 | free | 0.05 | 0.0097 | 0.0128 | 0.0117 | 0.0185 | 0.060 | 0.070 | 0.052 | 0.08 | 9 s |
-| 2x6x8 | 1 | fixed | off | 0.0149 | 0.0399 | 0.0843 | 0.0443 | 0.354 | 0.275 | 0.301 | 0 | 8 s |
-| 2x6x8 | 1 | fixed | 0.05 | 0.0043 | 0.0106 | 0.0261 | 0.0102 | 0.082 | 0.065 | 0.065 | 0.19 | 8 s |
-| 4x12x16 | 0 | free | off | 0.0147 | 0.0364 | 0.0246 | 0.0448 | 0.779 | 0.402 | 0.498 | 0 | 193 s |
-| 4x12x16 | 0 | free | 0.05 | 0.0090 | 0.0127 | 0.0100 | 0.0186 | 0.106 | 0.035 | 0.075 | 0.05 | 146 s |
-| 4x12x16 | 0 | fixed | off | 0.0147 | 0.0385 | 0.0498 | 0.0448 | 0.817 | 0.402 | 0.517 | 0 | 196 s |
-| 4x12x16 | 0 | fixed | 0.05 | 0.0069 | 0.0116 | 0.0177 | 0.0144 | 0.109 | 0.035 | 0.080 | 0.11 | 151 s |
-| 4x12x16 | 1 | free | off | 0.0121 | 0.0321 | 0.0236 | 0.0428 | 0.981 | 0.399 | 0.591 | 0 | 211 s |
-| 4x12x16 | 1 | free | 0.05 | 0.0076 | 0.0112 | 0.0097 | 0.0180 | 0.115 | 0.030 | 0.083 | 0.05 | 164 s |
-| 4x12x16 | 1 | fixed | off | 0.0121 | 0.0351 | 0.0435 | 0.0428 | 0.998 | 0.399 | 0.594 | 0 | 196 s |
-| 4x12x16 | 1 | fixed | 0.05 | 0.0060 | 0.0109 | 0.0163 | 0.0141 | 0.115 | 0.030 | 0.085 | 0.10 | 152 s |
+| mesh | bulge | outer face | p_h/E | gate | increments | core alpha-1 | core vM/E | core p/E | seed alpha-1 | corner vM/E | corner alpha-1 | max p/E (seed) | stopped share | s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2x6x8 | 0 | free | off | - | 60 | 0.0172 | 0.0156 | 0.0047 | 0.0441 | 0.106 | 0.2498 | 0.064 | 0.00 | 8 |
+| 2x6x8 | 0 | free | 0.02 | explicit | 60 | 0.0110 | 0.0075 | 0.0033 | 0.0178 | 0.033 | 0.0764 | 0.017 | 0.00 | 8 |
+| 2x6x8 | 0 | free | 0.05 | explicit | 60 | 0.0145 | 0.0107 | 0.0044 | 0.0278 | 0.057 | 0.1348 | 0.033 | 0.00 | 8 |
+| 2x6x8 | 0 | free | 0.05 | explicit | 120 | 0.0143 | 0.0106 | 0.0043 | 0.0275 | 0.056 | 0.1338 | 0.033 | 0.00 | 16 |
+| 2x6x8 | 0 | free | 0.05 | explicit | 240 | 0.0142 | 0.0105 | 0.0042 | 0.0273 | 0.056 | 0.1331 | 0.032 | 0.00 | 25 |
+| 2x6x8 | 0 | free | 0.05 | implicit | 60 | 0.0145 | 0.0107 | 0.0043 | 0.0276 | 0.057 | 0.1338 | 0.033 | 0.00 | 9 |
+| 2x6x8 | 0 | fixed | off | - | 60 | 0.0172 | 0.0363 | 0.1242 | 0.0441 | 0.255 | 0.2498 | 0.322 | 0.00 | 7 |
+| 2x6x8 | 0 | fixed | 0.02 | explicit | 60 | 0.0018 | 0.0026 | 0.0112 | 0.0039 | 0.017 | 0.0203 | 0.025 | 0.25 | 6 |
+| 2x6x8 | 0 | fixed | 0.05 | explicit | 60 | 0.0036 | 0.0060 | 0.0238 | 0.0090 | 0.041 | 0.0502 | 0.056 | 0.25 | 6 |
+| 2x6x8 | 0 | fixed | 0.05 | explicit | 120 | 0.0036 | 0.0060 | 0.0236 | 0.0089 | 0.041 | 0.0501 | 0.056 | 0.25 | 12 |
+| 2x6x8 | 0 | fixed | 0.05 | explicit | 240 | 0.0036 | 0.0059 | 0.0235 | 0.0089 | 0.041 | 0.0500 | 0.056 | 0.25 | 22 |
+| 2x6x8 | 0 | fixed | 0.05 | implicit | 60 | 0.0036 | 0.0059 | 0.0236 | 0.0089 | 0.041 | 0.0496 | 0.056 | 0.25 | 7 |
+| 2x6x8 | 1 | free | off | - | 60 | 0.0157 | 0.0131 | 0.0033 | 0.0426 | 0.102 | 0.2470 | 0.063 | 0.00 | 8 |
+| 2x6x8 | 1 | free | 0.02 | explicit | 60 | 0.0105 | 0.0066 | 0.0028 | 0.0176 | 0.032 | 0.0779 | 0.016 | 0.00 | 8 |
+| 2x6x8 | 1 | free | 0.05 | explicit | 60 | 0.0137 | 0.0093 | 0.0036 | 0.0271 | 0.055 | 0.1347 | 0.032 | 0.00 | 8 |
+| 2x6x8 | 1 | free | 0.05 | implicit | 60 | 0.0137 | 0.0092 | 0.0035 | 0.0270 | 0.055 | 0.1338 | 0.032 | 0.00 | 9 |
+| 2x6x8 | 1 | fixed | off | - | 60 | 0.0157 | 0.0282 | 0.1162 | 0.0426 | 0.255 | 0.2470 | 0.311 | 0.00 | 8 |
+| 2x6x8 | 1 | fixed | 0.02 | explicit | 60 | 0.0016 | 0.0019 | 0.0106 | 0.0036 | 0.017 | 0.0193 | 0.025 | 0.25 | 6 |
+| 2x6x8 | 1 | fixed | 0.05 | explicit | 60 | 0.0034 | 0.0046 | 0.0227 | 0.0085 | 0.040 | 0.0478 | 0.056 | 0.25 | 6 |
+| 2x6x8 | 1 | fixed | 0.05 | implicit | 60 | 0.0033 | 0.0046 | 0.0225 | 0.0084 | 0.039 | 0.0472 | 0.056 | 0.25 | 7 |
+| 4x12x16 | 0 | free | off | - | 60 | 0.0139 | 0.0158 | 0.0073 | 0.0422 | 0.243 | 0.3537 | 0.138 | 0.00 | 135 |
+| 4x12x16 | 0 | free | 0.05 | explicit | 60 | 0.0107 | 0.0095 | 0.0048 | 0.0244 | 0.086 | 0.1155 | 0.040 | 0.00 | 135 |
+| 4x12x16 | 0 | free | 0.05 | implicit | 60 | 0.0107 | 0.0094 | 0.0048 | 0.0243 | 0.085 | 0.1149 | 0.040 | 0.00 | 140 |
+| 4x12x16 | 0 | fixed | off | - | 60 | 0.0139 | 0.0268 | 0.0686 | 0.0422 | 0.409 | 0.3537 | 0.298 | 0.00 | 144 |
+| 4x12x16 | 0 | fixed | 0.05 | explicit | 60 | 0.0047 | 0.0075 | 0.0211 | 0.0135 | 0.094 | 0.0590 | 0.070 | 0.16 | 143 |
+| 4x12x16 | 0 | fixed | 0.05 | implicit | 60 | 0.0046 | 0.0074 | 0.0208 | 0.0133 | 0.093 | 0.0573 | 0.069 | 0.16 | 149 |
+| 4x12x16 | 1 | free | off | - | 60 | 0.0125 | 0.0131 | 0.0057 | 0.0407 | 0.232 | 0.3506 | 0.134 | 0.00 | 137 |
+| 4x12x16 | 1 | free | 0.05 | explicit | 60 | 0.0100 | 0.0081 | 0.0040 | 0.0241 | 0.083 | 0.1184 | 0.039 | 0.00 | 136 |
+| 4x12x16 | 1 | free | 0.05 | implicit | 60 | 0.0100 | 0.0081 | 0.0039 | 0.0239 | 0.083 | 0.1178 | 0.039 | 0.00 | 143 |
+| 4x12x16 | 1 | fixed | off | - | 60 | 0.0125 | 0.0210 | 0.0667 | 0.0407 | 0.403 | 0.3506 | 0.296 | 0.00 | 145 |
+| 4x12x16 | 1 | fixed | 0.05 | explicit | 60 | 0.0042 | 0.0058 | 0.0205 | 0.0132 | 0.093 | 0.0591 | 0.069 | 0.16 | 142 |
+| 4x12x16 | 1 | fixed | 0.05 | implicit | 60 | 0.0042 | 0.0057 | 0.0202 | 0.0130 | 0.092 | 0.0575 | 0.068 | 0.16 | 151 |
+| 6x18x24 | 0 | free | off | - | 60 | 0.0135 | 0.0157 | 0.0076 | 0.0416 | 0.324 | 0.3862 | 0.170 | 0.00 | 1518 |
+| 6x18x24 | 1 | free | off | - | 60 | 0.0120 | 0.0127 | 0.0058 | 0.0393 | 0.302 | 0.3770 | 0.161 | 0.00 | 1730 |
+
+(regenerated 17 Oct 2026 after the shape-gradient fix, now with the time-step and implicit-gate rows; the text below
+describes the 16 Oct runs and quotes their numbers, which the fix changed: see "Shape gradient" for the direction of
+the change. The overshoot above p_h is gone from the free-outer-face cases, 0.039-0.040 for p_h/E = 0.05, and is
+0.056 / 0.069-0.070 with the outer face fixed at 2x6x8 / 4x12x16.)
 
 Time step (2x6x8, bulge 0, p_h/E = 0.05, 60 / 120 / 240 increments): core alpha - 1 0.0117 / 0.0115 / 0.0114 and corner
 vM/E 0.060 / 0.059 / 0.059 with the free outer face, 0.0048 / 0.0048 / 0.0047 and 0.078 / 0.077 / 0.077 with it fixed:
@@ -545,6 +639,12 @@ constrained):
 
 `tests/test_uel_gate_implicit.py` runs (b)-(d) and the explicit default (the stored `_ph0.05` 2x6x8 element values
 exactly) in about 11 s.
+
+Note (17 Oct 2026): the two tables below are the runs before the shape-gradient fix (section "Shape gradient"); they
+are kept for the comparison of the two gates, which the rerun repeats: explicit and implicit agree to 1-2 % in the
+core, band and corner measures in every regenerated case but one (4x12x16, u_z = 0 below, outer face free,
+p_h/E = 0.02 with the crown's nutrient: core alpha - 1 0.0560 against 0.0525, largest pressure 0.038 against 0.023,
+the implicit value is p_h), see `results/implant_cervical_summary.json` for the regenerated pairs.
 
 Application: the cases where the explicit overshoot was largest, rerun with the implicit gate (`homeostatic_implant.py
 --levels 1 2 --p-ref 0.05 --gate-implicit`; `cervical_study.py --levels 1 2 --bottom uz --outer free fixed --p-ref 0.05
@@ -644,72 +744,76 @@ the outer face (the bottom-free row of each level for reference):
 
 | mesh | bottom | outer | p_h/E | core alpha-1 | core vM/E | band mean vM/E | ratio | band max vM/E | max p/E (seed) |
 |---|---|---|---|---|---|---|---|---|---|
-| 2x6x8 | free | free | off | 0.1204 | 0.0919 | 0.0989 | 1.08 | 0.118 | 0.152 |
-| 2x6x8 | uz | free | off | 0.1204 | 0.0919 | 0.0860 | 0.94 | 0.117 | 0.228 |
-| 2x6x8 | uz | free | 0.05 | 0.0488 | 0.0371 | 0.0434 | 1.17 | 0.059 | 0.069 |
-| 2x6x8 | uz | free | 0.02 | 0.0230 | 0.0183 | 0.0241 | 1.31 | 0.030 | 0.035 |
-| 2x6x8 | uz | fixed | off | 0.1204 | 0.1406 | 0.5077 | 3.61 | 0.677 | 1.215 |
-| 2x6x8 | uz | fixed | 0.05 | 0.0056 | 0.0103 | 0.0439 | 4.25 | 0.051 | 0.092 |
-| 2x6x8 | uz | fixed | 0.02 | 0.0020 | 0.0042 | 0.0221 | 5.24 | 0.027 | 0.040 |
-| 2x6x8 | fixed | free | off | 0.1204 | 0.1271 | 0.0779 | 0.61 | 0.125 | 0.868 |
-| 2x6x8 | fixed | free | 0.05 | 0.0371 | 0.0331 | 0.0056 | 0.17 | 0.007 | 0.104 |
-| 2x6x8 | fixed | free | 0.02 | 0.0169 | 0.0160 | 0.0025 | 0.16 | 0.003 | 0.051 |
-| 2x6x8 | fixed | fixed | off | 0.1204 | 0.1034 | 0.0431 | 0.42 | 0.048 | 1.885 |
-| 2x6x8 | fixed | fixed | 0.05 | 0.0050 | 0.0077 | 0.0025 | 0.32 | 0.003 | 0.082 |
-| 2x6x8 | fixed | fixed | 0.02 | 0.0017 | 0.0032 | 0.0012 | 0.36 | 0.001 | 0.035 |
-| 4x12x16 | uz | free | off | 0.1023 | 0.0873 | 0.0746 | 0.85 | 0.156 | 0.150 |
-| 4x12x16 | uz | free | 0.05 | 0.0486 | 0.0381 | 0.0385 | 1.01 | 0.066 | 0.055 |
-| 4x12x16 | uz | free | 0.02 | 0.0249 | 0.0191 | 0.0216 | 1.13 | 0.031 | 0.032 |
-| 4x12x16 | uz | fixed | off | did not converge (below) | | | | | |
-| 4x12x16 | uz | fixed | 0.05 | 0.0227 | 0.0206 | 0.0442 | 2.14 | 0.073 | 0.146 |
-| 4x12x16 | uz | fixed | 0.02 | 0.0110 | 0.0103 | 0.0236 | 2.29 | 0.036 | 0.081 |
-| 4x12x16 | fixed | free | off | did not converge (below) | | | | | |
-| 4x12x16 | fixed | free | 0.05 | 0.0431 | 0.0350 | 0.0060 | 0.17 | 0.017 | 0.078 |
-| 4x12x16 | fixed | free | 0.02 | 0.0214 | 0.0169 | 0.0024 | 0.14 | 0.007 | 0.037 |
-| 4x12x16 | fixed | fixed | off | 0.1023 | 0.1147 | 0.0724 | 0.63 | 0.141 | 2.075 |
-| 4x12x16 | fixed | fixed | 0.05 | 0.0201 | 0.0175 | 0.0066 | 0.38 | 0.011 | 0.157 |
-| 4x12x16 | fixed | fixed | 0.02 | 0.0098 | 0.0087 | 0.0034 | 0.39 | 0.006 | 0.086 |
-| 6x18x24 | uz | free | off | did not converge (below, increment 58) | | | | | |
-| 6x18x24 | uz | free | 0.05 | 0.0470 | 0.0369 | 0.0369 | 1.00 | 0.068 | 0.047 |
+| 2x6x8 | free | free | off | 0.2187 | 0.1210 | 0.1262 | 1.04 | 0.126 | 0.076 |
+| 2x6x8 | uz | free | 0.05 | 0.1152 | 0.0607 | 0.0361 | 0.59 | 0.036 | 0.049 |
+| 2x6x8 | uz | free | 0.02 | 0.0632 | 0.0319 | 0.0139 | 0.44 | 0.014 | 0.021 |
+| 2x6x8 | uz | free | off | 0.2187 | 0.1290 | 0.1580 | 1.22 | 0.158 | 0.186 |
+| 2x6x8 | uz | fixed | 0.05 | 0.0074 | 0.0013 | 0.0004 | 0.29 | 0.000 | 0.071 |
+| 2x6x8 | uz | fixed | 0.02 | 0.0026 | 0.0005 | 0.0003 | 0.64 | 0.000 | 0.031 |
+| 2x6x8 | uz | fixed | off | 0.2187 | 0.0856 | 0.0718 | 0.84 | 0.072 | 1.558 |
+| 2x6x8 | fixed | free | 0.05 | 0.1160 | 0.0607 | 0.0237 | 0.39 | 0.024 | 0.049 |
+| 2x6x8 | fixed | free | 0.02 | 0.0637 | 0.0319 | 0.0106 | 0.33 | 0.011 | 0.020 |
+| 2x6x8 | fixed | free | off | 0.2187 | 0.1326 | 0.1248 | 0.94 | 0.125 | 0.337 |
+| 2x6x8 | fixed | fixed | 0.05 | 0.0075 | 0.0013 | 0.0001 | 0.07 | 0.000 | 0.073 |
+| 2x6x8 | fixed | fixed | 0.02 | 0.0026 | 0.0005 | 0.0001 | 0.27 | 0.000 | 0.032 |
+| 2x6x8 | fixed | fixed | off | 0.2187 | 0.0868 | 0.0521 | 0.60 | 0.052 | 1.664 |
+| 4x12x16 | uz | free | 0.05 | 0.1024 | 0.0629 | 0.0410 | 0.65 | 0.052 | 0.052 |
+| 4x12x16 | uz | free | 0.02 | 0.0560 | 0.0334 | 0.0181 | 0.54 | 0.024 | 0.038 |
+| 4x12x16 | uz | free | off | 0.2300 | 0.1615 | 0.2200 | 1.36 | 0.272 | 0.349 |
+| 4x12x16 | uz | fixed | 0.05 | 0.0257 | 0.0126 | 0.0053 | 0.42 | 0.006 | 0.153 |
+| 4x12x16 | uz | fixed | 0.02 | 0.0136 | 0.0068 | 0.0023 | 0.34 | 0.003 | 0.089 |
+| 4x12x16 | uz | fixed | off | 0.2300 | 0.1363 | 0.1347 | 0.99 | 0.197 | 1.657 |
+| 4x12x16 | fixed | free | 0.05 | 0.1030 | 0.0631 | 0.0300 | 0.47 | 0.047 | 0.052 |
+| 4x12x16 | fixed | free | 0.02 | 0.0571 | 0.0340 | 0.0155 | 0.46 | 0.023 | 0.036 |
+| 4x12x16 | fixed | free | off | 0.2300 | 0.1593 | 0.2406 | 1.51 | 0.347 | 0.748 |
+| 4x12x16 | fixed | fixed | 0.05 | 0.0257 | 0.0126 | 0.0042 | 0.34 | 0.006 | 0.153 |
+| 4x12x16 | fixed | fixed | 0.02 | 0.0136 | 0.0068 | 0.0021 | 0.30 | 0.003 | 0.089 |
+| 4x12x16 | fixed | fixed | off | 0.2300 | 0.1352 | 0.1591 | 1.18 | 0.254 | 1.972 |
+| 6x18x24 | uz | free | 0.05 | 0.0999 | 0.0632 | 0.0422 | 0.67 | 0.058 | 0.053 |
+| 6x18x24 | uz | free | off | 0.2330 | 0.1710 | 0.2337 | 1.37 | 0.330 | 0.442 |
+
+(Table regenerated on 17 Oct 2026 with the corrected shape gradient, section "Shape gradient"; every law-off case now
+converges, 60 increments, no cutback, 3 iterations per increment with the outer face free and 3-4 with it fixed. The
+6x18x24 rows are the main case with and without the law. The bullets below replace the 16 Oct reading, whose numbers
+came from the element before the fix.)
 
 What the numbers say (answer to (e), with its caveats):
 
-- In the element the cervical band grows less than the core even with the crown's nutrient: alpha - 1 0.065 against
-  0.120 at 2x6x8, 0.04-0.06 against 0.10 at 4x12x16, with the bottom free as well. The nodal c at the inner corner
-  (r = r_i, z = 0) is about 0 at the end of the run (0.27 along the rest of the bonded face): the oblique face
-  wedges that corner away from the outer face and the no-flux bottom. The WP2 tooth has no such starvation (its
-  phase fills the layer by T* = 0.04), so the WP2 concentration with bottom u_z = 0 (ratio 2.0) does not appear
-  here with the outer face free: ratio 0.94 / 0.85 without the law, 1.0-1.3 with it, at the two levels.
-- The concentration appears when the outer face is constrained too (u_z = 0 below, u = 0 outside): ratio 3.6 at
-  2x6x8 without the law, band max 0.68 and p/E 1.2 at the corner. The law does not lower this ratio (4.3 / 5.2 at
-  2x6x8, 2.1 / 2.3 at 4x12x16 for p_h/E = 0.05 / 0.02): the core stops growing first (its alpha - 1 falls to 0.006 at
-  2x6x8, 0.023 at 4x12x16) while the band, which grows less, keeps growing. What the law does is cap the band's
-  level: band mean 0.51 -> 0.044 (2x6x8, 12 times lower), band max 0.68 -> 0.05-0.07, and the largest pressure
-  1.2 -> 0.09-0.15, i.e. p_h with the explicit overshoot. With the bottom clamped (u = 0) the band is below the core
-  with or without the law (ratio 0.14-0.6): the clamp takes the growth strain of the bottom row as pressure (p/E up
-  to 0.7-2.1 without the law) and leaves little deviatoric stress.
-- Boundary-condition independence does not hold for the band in the element: with the law the band mean vM/E spans
-  0.0025-0.044 over the four conditions (spread 160-190 % of the mean, 2x6x8 and 4x12x16, both p_h), the ratio
-  0.17-4.3 (spread 210-290 %); without the law the spread is 230-260 % (2x6x8). What becomes independent is the
-  largest pressure when the outer face is free (0.055-0.10 for p_h/E = 0.05, 0.03-0.05 for 0.02, every bottom
-  condition), as in the homeostatic study above; with the outer face fixed it is 0.08-0.16. So the WP2 result holds in
-  the element for the pressure level and the top corner, not for the cervical band: there, the growth distribution
-  set by the nutrient and the kinematic constraint decide, and the law only scales the level.
-- Mesh: the ratio changes by -9 to -14 % between 2x6x8 and 4x12x16 for u_z = 0 below with the outer face free, by
-  +1 to +17 % with the bottom clamped, and by -50 to -56 % for u_z = 0 below with the outer face fixed (the case with
-  the concentration), so that ratio is not converged; the band maximum rises with the mesh (0.117 -> 0.156 without
-  the law, 0.059 -> 0.066 with it, bottom u_z = 0, outer free), the corner behaviour of the mesh study.
-- Two law-off cases at 4x12x16 with the crown's nutrient did not converge: u_z = 0 below with the outer face fixed
-  (increment 80) and the bottom clamped with the outer face free (increment 69). In both, Newton stalls from
-  increment 57 (t = 0.22 of 0.2375, alpha - 1 near 0.1 at nu = 0.49): the residual stops at about 1e-5 after 30
-  iterations with line-search halvings, and the cutbacks down to dt = 1e-12 do not help (five cutbacks in one
-  increment, then the next increment fails again), so it is the state, not the increment: the nearly incompressible
-  grown layer under a full kinematic constraint at the corner, where p/E reaches 1-2. The law-on cases converge.
-  Not forced; a smaller growth (shorter T) or a softer constraint would be the way to run them.
-  The 6x18x24 law-off case with u_z = 0 below and the outer face free stops the same way at increment 58 (t = 0.22;
-  the 4x12x16 and 2x6x8 runs of that case converged), so the stall sets in at a finer mesh too; the law-on case at
-  6x18x24 converges (48 min) and gives ratio 1.00 against 1.01 at 4x12x16 and 1.17 at 2x6x8: the main case is
-  converged in the ratio with the law, and the band maximum 0.059 -> 0.066 -> 0.068 settles as well.
+- With the crown's nutrient the band grows as the core does: alpha - 1 0.218 / 0.228 in the band against 0.219 / 0.230
+  in the core (2x6x8 / 4x12x16, every bottom condition); the starvation of the inner corner seen before the fix (c about
+  0 there) was the wrong radial diffusion through the crown's skewed elements. Without the law the cervical band is then
+  the most stressed region of the seed when the outer face is free: ratio 1.22 (u_z = 0 below, outer face free), 0.84
+  (u_z = 0, outer face fixed), 0.94 (clamped, free), 0.60 (clamped, fixed) at 2x6x8, and 1.36, 0.99, 1.51, 1.18 at
+  4x12x16; with the outer face free the band maximum is the largest vM/E of the whole seed at 4x12x16 (0.27 and 0.35,
+  against 0.13-0.16 at 2x6x8: the corner value rises with the mesh, as a corner of the elastic problem does; the band
+  mean rises as well, 0.158 -> 0.220 and 0.125 -> 0.241), with it fixed the largest value sits at the top corner (0.51,
+  0.83). The WP2 concentration (ratio 2.0 with u_z = 0 below) is therefore reproduced in direction, at 1.2-1.5 in the
+  element.
+- The law removes the concentration and lowers the level. With p_h/E = 0.05 the ratio falls to 0.59 / 0.29 / 0.39 /
+  0.07 (2x6x8, the four conditions in the order above) and 0.65 / 0.42 / 0.47 / 0.34 (4x12x16); with 0.02 to 0.3-0.6.
+  The band mean vM/E falls from 0.16-0.24 to 0.03-0.04 (outer face free: 4-6 times) and from 0.05-0.16 to 0.0001-0.005
+  (outer face fixed: 25 times and more), the band maximum from 0.27-0.35 to 0.05 (free) and 0.006 (fixed) at 4x12x16.
+  The core grows less too (alpha - 1 0.23 -> 0.10 free, -> 0.026 fixed), but the band stops first, because its
+  pressure is the highest: so the ratio falls, the opposite of the 16 Oct reading.
+- The largest pressure of the seed: without the law 0.35 (u_z = 0, free), 0.75 (clamped, free) and 1.66-1.97 (outer
+  face fixed) at 4x12x16; with the law 0.052 = p_h (free outer face, both bottom conditions, p_h/E = 0.05; 0.036-0.038
+  for 0.02) and 0.153 = 3 p_h with the outer face fixed (0.089 = 4.5 p_h for 0.02), the one-sidedness of the law at a
+  constrained corner noted under "Implicit gate" (the implicit gate gives 0.142 there). So the pressure level is set by
+  p_h when the outer face is free, and the corner with two rigid faces exceeds it by the growth of its neighbours.
+- Boundary-condition independence does not hold for the band with the law: the band mean vM/E spans 0.0001-0.036
+  (2x6x8) and 0.004-0.041 (4x12x16) over the four conditions, the ratio 0.07-0.65; it holds for the largest pressure
+  with the outer face free (0.052 for both bottom conditions at 4x12x16). Without the law the spread of the ratio over
+  the conditions is 69 % (2x6x8) and 41 % (4x12x16) of the mean.
+- Mesh: the law-off ratio rises from 2x6x8 to 4x12x16 by 11 % (u_z = 0, free), 18 % (u_z = 0, fixed), 60 % (clamped,
+  free) and 96 % (clamped, fixed); with the law by 10-44 % (p_h/E = 0.05; the clamped-fixed case from 0.07 to 0.34 is a
+  ratio of two small numbers). Third level, main case (u_z = 0 below, outer face free; 14 min per run, no cutback,
+  3 iterations per increment): without the law the ratio 1.22 -> 1.36 -> 1.37 and the band mean 0.158 -> 0.220 ->
+  0.234 settle (+0 % and +6 % at the last step) while the band maximum (0.158 -> 0.272 -> 0.330) and the largest
+  pressure (0.186 -> 0.349 -> 0.442, at the cervical corner) keep rising, the corner of the elastic problem; with
+  p_h/E = 0.05 the ratio 0.59 -> 0.65 -> 0.67, the band mean 0.036 -> 0.041 -> 0.042, the band maximum 0.036 -> 0.052
+  -> 0.058 and the largest pressure 0.049 -> 0.052 -> 0.053 = p_h: with the law the ratio, the band mean and the
+  largest pressure are converged to 3 % at the third level (the band maximum still moves by 12 %), because the
+  growth that loads the corner is capped.
 
 ## Formal check of the implicit gate (16 Oct 2026, Lean 4, `lean/HomeostaticGate.lean`)
 
