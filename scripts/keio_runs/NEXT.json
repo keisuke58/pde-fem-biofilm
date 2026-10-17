@@ -1,135 +1,103 @@
 {
- "chain": "20261008d",
+ "chain": "20261017a",
  "out": "abaqus_composition/results_keio_1008",
  "runs": [
   {
-   "job": "fx42l_p0",
+   "job": "nf8_c6_g6",
    "make": [
-    "abaqus_composition/make_klempt_inp.py",
-    "{inp}",
-    "--case", "fig7_low",
-    "--n", "20",
-    "--dt", "0.001",
-    "--T", "1.0",
-    "--every", "10",
-    "--eps", "1e-8",
-    "--hstab", "0",
-    "--E", "0.01",
-    "--pen", "0"
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--cons", "6", "--T", "1.0", "--n", "8"
    ],
    "summarise": [
-    "abaqus_composition/compare_paper.py",
-    "{dat}",
-    "--case", "fig7_low"
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
    ],
-   "reference": "abaqus_composition/results_1006/fx42l_p0.txt",
+   "reference": "abaqus_composition/results_1006/nf8_c6_g6.txt",
    "case": "2sp_case6",
    "cpus": 4,
-   "timeout_min": 120
+   "timeout_min": 60
   },
   {
-   "job": "fx42l_p100",
+   "job": "fr8_c6_g6",
    "make": [
-    "abaqus_composition/make_klempt_inp.py",
-    "{inp}",
-    "--case", "fig7_low",
-    "--n", "20",
-    "--dt", "0.001",
-    "--T", "1.0",
-    "--every", "10",
-    "--eps", "1e-8",
-    "--hstab", "0",
-    "--E", "0.01",
-    "--pen", "100"
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--cons", "6", "--T", "1.0", "--n", "8",
+    "--front", "10", "--blend", "0.5", "--dt", "0.01"
    ],
    "summarise": [
-    "abaqus_composition/compare_paper.py",
-    "{dat}",
-    "--case", "fig7_low"
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
    ],
-   "reference": "abaqus_composition/results_1006/fx42l_p100.txt",
+   "reference": "abaqus_composition/results_1006/fr8_c6_g6.txt",
    "case": "2sp_case6",
    "cpus": 4,
-   "timeout_min": 120
+   "timeout_min": 60
   },
   {
-   "job": "fx42l_fo_p0",
+   "job": "cs16_c6_g6",
    "make": [
-    "abaqus_composition/make_klempt_inp.py",
-    "{inp}",
-    "--case", "fig7_low",
-    "--n", "20",
-    "--dt", "0.001",
-    "--T", "1.0",
-    "--every", "10",
-    "--eps", "1e-8",
-    "--hstab", "0",
-    "--E", "0.01",
-    "--pen", "0",
-    "--first-order"
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--cons", "6", "--T", "1.0", "--n", "16"
    ],
    "summarise": [
-    "abaqus_composition/compare_paper.py",
-    "{dat}",
-    "--case", "fig7_low"
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
    ],
-   "reference": "abaqus_composition/results_1006/fx42l_fo_p0.txt",
+   "reference": "abaqus_composition/results_1006/cs16_c6_g6.txt",
    "case": "2sp_case6",
    "cpus": 4,
-   "timeout_min": 150
+   "timeout_min": 30
   },
   {
-   "job": "ff42l",
+   "job": "cs24_c6_g6",
    "make": [
-    "abaqus_composition/make_klempt_inp.py",
-    "{inp}",
-    "--case", "fig7_low",
-    "--n", "20",
-    "--dt", "0.001",
-    "--T", "1.0",
-    "--every", "10",
-    "--eps", "1e-8",
-    "--hstab", "0",
-    "--E", "0.01",
-    "--pen", "100",
-    "--felix"
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--T", "1.0", "--n", "24", "--cons", "6"
    ],
    "summarise": [
-    "abaqus_composition/compare_paper.py",
-    "{dat}",
-    "--case", "fig7_low"
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
    ],
-   "reference": "abaqus_composition/results_1006/ff42l.txt",
+   "reference": "abaqus_composition/results_1006/cs24_c6_g6.txt",
    "case": "2sp_case6",
    "cpus": 4,
-   "timeout_min": 120
+   "timeout_min": 30
   },
   {
-   "job": "ff42l_fo",
+   "job": "cs32_c6_g6",
    "make": [
-    "abaqus_composition/make_klempt_inp.py",
-    "{inp}",
-    "--case", "fig7_low",
-    "--n", "20",
-    "--dt", "0.001",
-    "--T", "1.0",
-    "--every", "10",
-    "--eps", "1e-8",
-    "--hstab", "0",
-    "--E", "0.01",
-    "--pen", "100",
-    "--felix",
-    "--first-order"
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--T", "1.0", "--n", "32", "--cons", "6"
    ],
    "summarise": [
-    "abaqus_composition/compare_paper.py",
-    "{dat}",
-    "--case", "fig7_low"
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
    ],
-   "reference": "abaqus_composition/results_1006/ff42l_fo.txt",
+   "reference": "abaqus_composition/results_1006/cs32_c6_g6.txt",
    "case": "2sp_case6",
    "cpus": 4,
-   "timeout_min": 120
+   "timeout_min": 45
+  },
+  {
+   "job": "cs40_c6_g6",
+   "make": [
+    "abaqus_composition/make_cube_inp.py", "{inp}",
+    "--json", "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json",
+    "--case", "2sp_case6", "--T", "1.0", "--n", "40", "--cons", "6", "--separated"
+   ],
+   "summarise": [
+    "abaqus_composition/compare_ansys.py", "{dat}",
+    "ansys_usermat/apdl/results/2026-10-05_ansys/ds_c6_nut_g6_b002.json"
+   ],
+   "reference": "abaqus_composition/results_1006/cs40_c6_g6.txt",
+   "case": "2sp_case6",
+   "cpus": 4,
+   "timeout_min": 60
   }
  ]
 }

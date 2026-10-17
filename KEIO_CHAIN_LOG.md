@@ -519,3 +519,147 @@ compute, which needs a growth-law or scope decision that is not mine to make.
 Promoted `scripts/keio_runs/20261008d_fig7_low.json` to `NEXT.json` unchanged
 (same chain name, already new: `git log --all` shows no commit with
 "chain 20261008d" or any chain-log entry for it).
+
+---
+
+## 2026-10-17: chain `20261008d` did run, but its results landed on the wrong branch
+
+**What I found.** Chain `20261008d` (the `fig7_low` family queued in the entry
+above) did run on fifa, on 2026-10-16: commit `eb82384` ("Keio server (fifa):
+chain 20261008d summaries (6 run(s), automatic)") carries the five result
+files and a `KEIO_CHAIN_LOG.md` append in exactly the shape
+`run_chain_keio.py` writes. But that commit is not on `keio/fifa-first-run`
+and was never going to reach it by a normal `git pull --ff-only` here: `git
+log --oneline` on this branch (after `git fetch --unshallow` to rule out a
+shallow-clone artifact) showed only two commits, and `git merge-base` found
+no common ancestor at all between `keio/fifa-first-run` and the branch that
+actually carries `eb82384`, `origin/keio/chain-20261008d` - until unshallowing
+the fetch, which revealed the true relationship: `eb82384`'s parent chain
+does pass back through this branch's own tip (`907d838`, this file's previous
+entry), but only after first merging in a large amount of unrelated work from
+`master` (`PR #126`, `keio/uel-implant`'s mesh-convergence and tooth-data
+work, further `KEIO_CHAIN_LOG.md` appends about Abaqus UEL column/seed-8^3
+checks that never happened on this branch). In other words: whatever was
+checked out on fifa for this run was not a clean `keio/fifa-first-run`
+checkout; it was a checkout that had `master` merged into it, and
+`run_chain_keio.py`'s push then created a new remote branch
+(`keio/chain-20261008d`) off of that mixed state instead of landing back on
+`keio/fifa-first-run`.
+
+**What I did about it.** I did not merge or rebase `keio/chain-20261008d`
+into `keio/fifa-first-run` - that would pull in the unrelated `master`/UEL
+history too, which is exactly the kind of operation the hard rules ask me to
+avoid ("never rebase anything that is already on origin", and more basically,
+mixing in work this branch was never meant to carry). Instead I read the six
+changed files directly out of commit `eb82384` (`git show
+eb82384:<path>`) and wrote the five result files into
+`abaqus_composition/results_keio_1008/` here by hand, as plain new files on
+top of `keio/fifa-first-run`'s own history - the same effect as the chain's
+own commit, without importing its ancestry. No `git checkout`, `reset`, or
+`clean` was run against anything already committed on this branch, and
+nothing from `master`/`keio/uel-implant` is pulled in.
+
+**The comparison fifa's run actually produced**, independently re-diffed from
+the `eb82384` blobs against their `results_1006` reference (stripping `#`
+lines and blank lines from both sides, not trusting the file's own `# vs
+...: identical` line):
+
+| job | vs `results_1006/<job>.txt` |
+|---|---|
+| `fx42l_p0` | identical, every printed digit |
+| `fx42l_p100` | identical |
+| `fx42l_fo_p0` | identical |
+| `ff42l` | identical |
+| `ff42l_fo` | identical |
+
+**Full re-check of everything now in `results_keio_1008/`** (18 files:
+the 13 already here plus these 5), each diffed against the reference named
+in its own header (or, for `wp2_imp_free_ph01.txt`, which has no `# vs`
+line, against `results_1007/wp2_imp_free_ph01.txt`): all 18 are identical to
+their IKMHIWI03 reference in every printed digit. Nothing disagreed, so
+there is nothing to chase before starting something new.
+
+**This finishes `KEIO_PLAN.ja.md` WP1.** With `fig7_low` now verified
+alongside `fig4_corner` (chain `20261008b`) and `fig7_high` (chain
+`20261008c`), every Klempt 2024 reproduction variant that has an IKMHIWI03
+reference in `results_1006/`/`results_1007/` has been reproduced on fifa and
+matches exactly, across 0th/1st-order consumption, the phi cap on/off, and
+the front term as printed vs. Felix's current form. Section 4's one-week WP1
+target is done; there is no more planned-but-unqueued WP1 work waiting, so
+this decision has to look at the next work package.
+
+**The two open questions from PR #58.** Re-checked, no regression:
+`requirements.txt` still pins `numpy==2.4.2`, `matplotlib==3.10.8`,
+`pytest==9.0.2` (fifa's actual versions; recommendation stands as before -
+keep the pins at fifa's versions, since the digit-exact agreement above was
+produced with them, and only raise them with a reason and a re-check of this
+family). `KEIO_SERVER_HANDOFF.ja.md` section 1 still names `master`, not
+`claude/plan-next-hxjjve`, as the working branch; no further edit needed.
+
+**What I chose for the next chain, and why.** `scripts/keio_runs/NEXT.json`
+is now chain `20261017a`, six jobs from the cube/ANSYS-comparison family
+(`make_cube_inp.py --json <ANSYS JSON> ...` / `compare_ansys.py`), all
+sharing the same reference ANSYS run (`ds_c6_nut_g6_b002.json`,
+`results_1006/*_c6_g6.txt`): `nf8_c6_g6` (no front term, baseline), `fr8_c6_g6`
+(front term, same mesh), then the mesh-convergence sweep `cs16_c6_g6`,
+`cs24_c6_g6`, `cs32_c6_g6`, `cs40_c6_g6`. This is:
+- the other comparison route `KEIO_SERVER_HANDOFF.ja.md` section 3 names
+  (cube geometry against an ANSYS reference via `compare_ansys.py`, as
+  opposed to the Klempt-paper route via `compare_paper.py` that WP1 just
+  finished) and that `KEIO_SERVER_ENV.ja.md` section 9 still lists as mostly
+  unconfirmed on Linux (only the single smoke job `nf8_c6_g1`, chain
+  `20261008s2`, has been run there so far);
+- directly the WP3 task named in `KEIO_PLAN.ja.md` section 4 ("メッシュ収束
+  （ANSYS 24^3 まで、Abaqus 48^3 まで）"), which matters because WP3 is one
+  of the two candidate second papers and its ANSYS side has a hard deadline
+  (IKMHIWI03 only until mid-December, `KEIO_SERVER_HANDOFF.ja.md` section 6);
+  confirming fifa reproduces this mesh family now, while IKMHIWI03 is still
+  available to re-run against if something disagrees, is lower-risk than
+  waiting;
+- bounded and fast: the matching IKMHIWI03 times for these six jobs are 5.2
+  + 21.7 + 1.1 + 3.5 + 11.2 + 20.1 = 62.8 minutes total, well under the
+  four-hour guidance even allowing for the roughly 1.3x slowdown fifa showed
+  on the Klempt family, and six jobs is exactly at, not over, the job-count
+  guideline.
+
+I deliberately left out of this chain, for the same reasons given in the
+prior two decisions: `nf24_c6_g1` (its own IKMHIWI03 reference recorded a
+`FileNotFoundError` - the Windows run itself never produced a `.dat`, so
+there is no valid reference to reproduce; re-running it on fifa would not
+settle anything until someone first finds out why the IKMHIWI03 job failed,
+which is IKMHIWI03/ANSYS-side work, not fifa's); the remaining `g1`
+front-term-weight family (`fr8_c6_g1`, `fr16_c6_g1`, `fr16_c6_g1_w025`,
+`fr16_c6_g1_w075`, `pr8_c6_g1`, `pr16_c6_g1`) - a natural next chain once this
+one finishes, held back only to keep this chain at six jobs; the implant/tooth
+jobs (`imp_*`, `tooth_*` in `results_1006/`, the rest of `results_1007/`'s
+`wp2_*` family) - WP2, not decided as the main paper target until December
+per `KEIO_PLAN.ja.md` section 0; and any new WP2/WP4/5/6 compute, which still
+needs a growth-law or scope decision that is not mine to make.
+
+**Validation before writing `NEXT.json`.** Ran `python3 scripts/run_chain_keio.py
+--name 20261017a --runs scripts/keio_runs/20261017a_cube_g6.json --dry-run
+--worker`: all six `make_cube_inp.py` calls succeeded (rc 0, each `.inp`
+generated) before the manifest was committed; the generated `.inp` files were
+deleted afterwards (gitignored, not results). `python3 -c
+"import json;json.load(open('scripts/keio_runs/NEXT.json'))"` parses cleanly.
+Ran `pytest tests/ -k "klempt or compare_ansys or cube or keio" -q`: 26
+passed, 0 failed, in well under a minute (not the full ~14 minute suite,
+same bounded-subset practice as the prior two decisions).
+
+**Not touched.** `KEIO_SERVER_HANDOFF.ja.md`, `KEIO_PLAN.ja.md`,
+`KEIO_SERVER_ENV.ja.md` and `scripts/run_chain_keio.py` are read-only this
+round. No `.inp`, Abaqus output, or mesh-sidecar `.json` is committed (one
+dry-run cleanup accidentally `rm`'d two pre-existing tracked files,
+`abaqus_composition/pset_41.json` and `pset_42.json`, via an overbroad glob;
+caught immediately via `git status` and restored with `git checkout --`
+before anything was staged). Nothing from `F:\felix_private`, Felix's
+code/theory, or Oliver's ANSYS sources appears anywhere in what I read or
+write here. `keio/chain-20261008d` and the unrelated history merged into it
+are left exactly as they are on `origin` - not merged, not rebased, not
+deleted.
+
+**Files committed this round.** `abaqus_composition/results_keio_1008/fx42l_p0.txt`,
+`fx42l_p100.txt`, `fx42l_fo_p0.txt`, `ff42l.txt`, `ff42l_fo.txt` (recovered
+from `eb82384`), `scripts/keio_runs/20261017a_cube_g6.json` and
+`scripts/keio_runs/NEXT.json` (the new decision), `KEIO_CHAIN_LOG.md` (this
+entry).
