@@ -392,9 +392,10 @@ Seed = the inner element layer (as `make_implant_inp.py`), bulge 0:
 |---|---|---|---|---|---|---|---|
 | 2x6x8 | 96 | 8 s | 0.04413 | 0.02501 | 0.01721 | 0.01562 | 0.1062 (2.094, 52.5, 1.875) |
 | 4x12x16 | 768 | 133 s | 0.03049 | 0.00833 | 0.01028 | 0.00382 | 0.0489 (2.077, 3.7, 1.938) |
-| 6x18x24 | 2592 | (17 Oct, running at the time of writing; see `results/implant_6x18x24.json` when present) | | | | | |
+| 6x18x24 | 2592 | 24 min | 0.02350 | 0.00355 | 0.00772 | 0.00147 | 0.0241 (2.069, 57.5, 1.958) |
 
-With bulge 1 at 2x6x8 / 4x12x16: seed alpha - 1 0.04264 / 0.02886, seed vM/E 0.02263 / 0.00739. This seed thins with the
+With bulge 1 at 2x6x8 / 4x12x16 / 6x18x24: seed alpha - 1 0.04264 / 0.02886 / 0.02212, seed vM/E 0.02263 / 0.00739 /
+0.00310 (25 min, no cutback). This seed thins with the
 mesh (0.125, 0.0625, 0.042 mm), so the problem changes with the level and nothing converges. For a convergence study
 the seed must be fixed: `--seed-layers f` seeds the inner f layers, 0.125 mm at every level (`_sl<f>` in the file
 name). With that seed, bulge 0:
@@ -644,7 +645,9 @@ Note (17 Oct 2026): the two tables below are the runs before the shape-gradient 
 are kept for the comparison of the two gates, which the rerun repeats: explicit and implicit agree to 1-2 % in the
 core, band and corner measures in every regenerated case but one (4x12x16, u_z = 0 below, outer face free,
 p_h/E = 0.02 with the crown's nutrient: core alpha - 1 0.0560 against 0.0525, largest pressure 0.038 against 0.023,
-the implicit value is p_h), see `results/implant_cervical_summary.json` for the regenerated pairs.
+the implicit value is p_h), see `results/implant_cervical_summary.json` for the regenerated pairs. The 6x18x24 main
+case with the implicit gate (15 min): ratio 0.67 with either gate, band mean 0.0420 against 0.0422, band maximum 0.057
+against 0.058, largest pressure 0.053 with both.
 
 Application: the cases where the explicit overshoot was largest, rerun with the implicit gate (`homeostatic_implant.py
 --levels 1 2 --p-ref 0.05 --gate-implicit`; `cervical_study.py --levels 1 2 --bottom uz --outer free fixed --p-ref 0.05
