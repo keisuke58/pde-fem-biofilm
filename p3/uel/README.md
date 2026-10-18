@@ -843,6 +843,27 @@ from the runs above). Bottom u_z = 0, explicit gate, 4x12x16 (2x6x8 in brackets)
   p_h is below the pressure that growth alone would build in the band. With E = 10-300 Pa this is p_h <= 2-60 Pa.
 - Mesh change 2x6x8 -> 4x12x16 for 0.1-1: +5 to +9 % (free), +4 to +40 % (fixed).
 
+### Threshold p_h = p_0 (18 Oct 2026, cloud; `threshold_study.py`, `fig_threshold.py` -> `assets/fig_threshold.png`)
+
+p_0 = the mean pressure in the cervical band without the law, the pressure growth alone builds there. In the main
+case the ratio crosses 1 near p_h = p_0. Test in three more cases that change p_0 (nutrient from the outer face,
+outer face free, explicit gate; p_h = m p_0 with m = 0.5, 1, 1.5, 2; 4x12x16, no cutback in any run):
+
+| case | p_0/E | law-off ratio | m = 0.5 | 1 | 1.5 | 2 | crossing m (p_h/E) |
+|---|---|---|---|---|---|---|---|
+| main (bulge 1, bottom u_z = 0) | 0.214 | 1.36 | 0.83 | 1.00 | 1.09 | 1.15 | 1.0 (0.21) |
+| half the growth time (T/2) | 0.095 | 1.22 | 0.83 | 0.97 | 1.04 | 1.07 | 1.2 (0.11) |
+| half the crown bulge (slope 20 deg) | 0.149 | 1.18 | 0.91 | 1.00 | 1.05 | 1.08 | 1.0 (0.15) |
+| bottom face clamped (u = 0) | 0.301 | 1.51 | 0.70 | 0.90 | 1.02 | 1.10 | 1.4 (0.43) |
+
+- p_0 changes by a factor 3 and the crossing in p_h/E by a factor 4 (0.11-0.43), but in p_h/p_0 the crossing lies
+  at 1.0-1.4 in all four cases. The rule for P3: **the law removes the cervical concentration when p_h is below
+  about p_0**, the band pressure that growth would build without the law. p_h and E need not be known separately.
+- 2x6x8 gives the same picture (crossing at m = 1.3-1.6) except the clamped case, which has no concentration without
+  the law at that mesh (ratio 0.94).
+- Limits: one geometry family (the sector), one nutrient supply, outer face free. The outer-face-fixed cases of the
+  previous section have no concentration without the law (ratio 0.99), so the rule says nothing there.
+
 ## Formal check of the implicit gate (16 Oct 2026, Lean 4, `lean/HomeostaticGate.lean`)
 
 `lean p3/uel/lean/HomeostaticGate.lean` (core Lean 4.15, no Mathlib) proves for one material point with the implicit
