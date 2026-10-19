@@ -64,7 +64,7 @@ Open:
   4 Oct one pair of gLV entries had mixed CS and CH values, and the posterior
   was mislabelled NUTS; both fixed).
 
-## Timeline to submission and colloquium (decided 4 Oct, revised 6 Oct)
+## Timeline to submission and colloquium (decided 4 Oct, revised 6 Oct and 19 Oct)
 
 | when | what |
 |---|---|
@@ -72,12 +72,14 @@ Open:
 | 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
 | **12 Oct** | **content frozen** (decided 6 Oct): ch4 with the week runs that have arrived by then, ch3 TMCMC as it is; afterwards only format and typos. **Nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
 | 16 Oct | his comments on the format |
-| 19 Oct | last changes, printing, binding |
-| **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
+| 19 Oct | ch3 replaced by the final EML results; figures redrawn at text width (ch1, ch4); ch3 to Assoc. Prof. Muramatsu (Slack, scheduled) |
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
-| 2 Nov | meeting with Assoc. Prof. Muramatsu (`slides_1102_nem_ja.tex`) |
-| 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| 16 Dec, 13:00 | colloquium (proposed by the IKM office on 8 Oct and accepted; waiting for Dr. Wangenheim and the room) |
+| 31 Oct - 2 Nov | in Hannover: **test print** of the whole thesis, ask the copy shop for the binding time; meeting with Assoc. Prof. Muramatsu on 2 Nov (`slides_1102_nem_ja.tex`) |
+| 3-10 Nov | away |
+| **11-12 Nov** | **final print and binding** (two copies), PDF for the electronic version (the printing date of 19 Oct belonged to the old 20 Oct submission) |
+| **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
+| 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
+| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct) |
 
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
