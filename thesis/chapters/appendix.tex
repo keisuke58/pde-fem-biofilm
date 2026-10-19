@@ -84,8 +84,26 @@ Table~\ref{tab:heine_rmse}.
 \end{algorithm}
 
 \paragraph{Settings.}
-Stage~(i) uses $N_p=2{,}000$ to $3{,}000$ particles and the final stage
-$5{,}000$ to $20{,}000$ (Table~\ref{tab:heine_timing}); the gauge is $c^*=25$.
+Table~\ref{tab:app_np} lists the particles and mutation steps of every
+stage; the gauge is $c^*=25$.
+
+\begin{table}[htbp]
+  \centering\small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    Stage & CS & CH & DS & DH\\
+    \midrule
+    (i)   & $1{,}000\times40$  & $1{,}000\times40$  & $1{,}000\times40$   & $1{,}000\times40$\\
+    (ii)  & $2{,}000\times120$ & $2{,}000\times150$ & $3{,}000\times100$  & $2{,}000\times80$\\
+    (iii) & $2{,}000\times160$ & $2{,}000\times150$ & $18{,}000\times150$ & $\mathbf{20{,}000\times120}$\\
+    (iv)  & $\mathbf{5{,}000\times150}$ & $\mathbf{5{,}000\times150}$ & $\mathbf{18{,}000\times150}$ & $20{,}000\times150$\\
+    \bottomrule
+  \end{tabular}
+  \caption[Particles and mutation steps per stage]{Particles $N_p$ times
+  mutation steps $n_{\mathrm{mut}}$ per seed. Bold: the final stage of each
+  condition; DH stage~(iv) did not meet criterion~(e) and is not used.}
+  \label{tab:app_np}
+\end{table}
 The acceptance criteria, the definition of an identified entry and the
 treatment of entries with several posterior modes are given in
 Section~\ref{sec:heine_gpu}.
