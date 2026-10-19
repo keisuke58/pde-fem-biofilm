@@ -140,7 +140,7 @@ check("point model ran in 304 of 512 elements", "304", ran.sum(), tol=0)
 check("point model ran in 1970 of 4096 elements", "1970", share("2026-10-05_ansys/ds16_c6_all_b002.json")[3].sum(), tol=0)
 
 # 5. calibrated five-species run (CH, raw-data MAP, Day-1 start; ch4 section 'five') ---------------------
-pm = load("2026-10-cal5/w8_CH_g1_s015_raw_d1_pm.json")
+pm = load("2026-10-cal5/w8_CH_g1_s015_final_d1_pm.json")
 C = {c: i for i, c in enumerate(pm["columns"])}
 rows = [r for r in pm["seed_trace"] if r[C["ip"]] == pm["seed_trace"][0][C["ip"]]]
 last = {}
@@ -152,13 +152,13 @@ phi, psi = g[:, :5], g[:, 5:10]
 shr = phi / phi.sum(1, keepdims=True)
 live = (phi * psi).sum(1)
 check("five-species living fraction start", "0.81", live[0])
-check("five-species living fraction end", "0.24", live[-1])
+check("five-species living fraction end", "0.23", live[-1])
 check("S. oralis share start", "0.74", shr[0, 0])
-check("S. oralis share end", "0.54", shr[-1, 0])
+check("S. oralis share end", "0.55", shr[-1, 0])
 check("A. naeslundii share end", "0.13", shr[-1, 1], tol=0.006)
 check("V. dispar share end", "0.15", shr[-1, 2])
 check("P. gingivalis share end", "0.08", shr[-1, 4])
-ref = seed_stats("2026-10-cal5/w8_CH_g1_s015_raw_d1.json")
+ref = seed_stats("2026-10-cal5/w8_CH_g1_s015_final_d1.json")
 check("five-species seed mean alpha-1", "6.752\\times10^{-4}", ref["alpha_seed"])
 check("five-species seed mean vM", "4.68\\times10^{-4}", ref["vm"])
 

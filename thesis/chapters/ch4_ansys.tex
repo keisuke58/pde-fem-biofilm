@@ -933,7 +933,7 @@ model for most of the time.
 \subsection{The calibrated five-species model in the element}
 \label{sec:ch5-five}
 
-% Source: ansys_usermat/apdl/results/2026-10-cal5/w8_CH_g1_s015_raw*.json (IKMHIWI03, 14-15 Oct 2026),
+% Source: ansys_usermat/apdl/results/2026-10-cal5/w8_CH_g1_s015_final_d1*.json (IKMHIWI03, 19 Oct 2026; final CH MAP, Tmcmc202601 baa0a37),
 % figure fig_thesis_cal5.py.
 The coupling of Section~\ref{sec:ch5-composition} takes the number of species
 as a parameter, so the point model calibrated in Chapter~\ref{ch:heine} can be
@@ -953,21 +953,18 @@ Klempt et al.\ 2024 ($E=10$~Pa, $\nu=0.49$) the seed mean of the von Mises
 stress is $4.68\times10^{-4}$~Pa.
 
 Figure~\ref{fig:ch5-five} shows the composition at a Gauss point of the seed.
-\textit{S.~oralis} stays the largest share but falls from $0.74$ to $0.54$ at
+\textit{S.~oralis} stays the largest share but falls from $0.74$ to $0.55$ at
 $T^*=1$, while \textit{V.~dispar} ($0.15$), \textit{A.~naeslundii} ($0.13$)
 and \textit{P.~gingivalis} ($0.08$) grow and \textit{F.~nucleatum} stays near
 $0.09$. The
-living volume fraction $\sum_i\phi_i\psi_i$ falls from $0.81$ to $0.24$, mostly
+living volume fraction $\sum_i\phi_i\psi_i$ falls from $0.81$ to $0.23$, mostly
 through the living part of \textit{S.~oralis}. Started from equal shares
-instead, \textit{A.~naeslundii} would become the largest share ($0.38$), so the
+instead (a run with the preliminary MAP), \textit{A.~naeslundii} would become the largest share ($0.38$), so the
 composition in the element depends on the start as in the point model alone.
 These numbers show that the calibrated model runs inside the element; they are
-not compared with a measured spatial composition. The run uses the CH MAP of
-15 October, the best particle of one seed; the final MAP of
-Chapter~\ref{ch:heine} differs from it only in entries that are not identified
-in CH, and in the point model over the $21$ days the two give compositions
-within $0.03$ of each other and total volumes within $0.006$. The growth and the
-stress of this run do not depend on the composition.
+not compared with a measured spatial composition. An earlier run with a
+preliminary CH MAP, which differs only in entries not identified in CH, gave the
+same growth, stress and nutrient field to all digits and shares within $0.02$.
 
 \begin{figure}[htbp]
   \centering

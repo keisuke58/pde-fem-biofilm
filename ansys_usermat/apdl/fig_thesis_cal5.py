@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from fig_cal5_appendix import NAMES, trace  # noqa: E402
 
 if __name__ == "__main__":
-    t, phi, psi = trace("w8_CH_g1_s015_raw_d1_pm.json")
+    t, phi, psi = trace("w8_CH_g1_s015_final_d1_pm.json")
     sh = phi / phi.sum(1, keepdims=True); liv = phi * psi
     fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.1))
     for i in range(5):

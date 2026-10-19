@@ -82,7 +82,7 @@ Open:
 - the RMSE printed in `eml_fit.pdf` (best particle: 0.090 / 0.060 / 0.057 / 0.073) differs slightly from the refined
   MAP in the table (0.087 / 0.059 / 0.058 / 0.073); the caption says so.
 - CH leave-one-day-out prediction (about 20 Oct), optional.
-- ~~ch4 CH MAP~~ 19 Oct: 6e18e0b is not the final MAP (best particle of seed 123 vs polished seed 7); differs only in
+- ~~ch4 CH MAP~~ 19 Oct (rerun done the same day, `w8_CH_g1_s015_final_d1`, text, figure and audit switched): 6e18e0b is not the final MAP (best particle of seed 123 vs polished seed 7); differs only in
   non-identified entries; point-model trajectories within 0.03 (composition), 0.006 (total volume), 0.037 (living volume).
   The ch4 run drives growth by the field (one-way), so growth and stress are unaffected; a sentence was added.
   Optional: rerun the 8^3 case on IKMHIWI03 with the final MAP to refresh the shares (0.74 -> 0.54 etc.).
