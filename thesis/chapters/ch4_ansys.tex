@@ -161,16 +161,9 @@ $1.1\times10^{-6}$, with no part of the range degrading.
 \section{Verification of the growth law}
 \label{sec:ch5-verification}
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.95\linewidth]{\ansysfigdir flow_vv_thesis.png}
-  \caption[Where this chapter's checks sit]{%
-    The verification and validation hierarchy with the evidence of this
-    chapter placed on it. All of it is verification, that is, whether the
-    implementation solves the equations it states. Validation against a
-    measured stress is not attempted.}
-  \label{fig:ch5-vv}
-\end{figure}
+The checks of this section are verification: they test whether the
+implementation solves the equations it states. Validation against a measured
+stress is not attempted (Section~\ref{sec:ch5-verification-limits}).
 
 \subsection{Growth kinematics against closed forms}
 % Source: ansys_usermat/apdl/ free and constrained decks; closed_form_reference.py.
@@ -358,7 +351,7 @@ no result, so the $24^3$ series starts at $\Delta t=0.05$.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir flow_oliver_solution_loop.png}
+  \includegraphics[width=\linewidth]{../ch5_flow/flow_oliver_solution_loop_print.pdf}
   \caption[Partner framework solution loop]{%
     Solution loop of the partner framework, traced from its source, and the
     point at which the growth law of this chapter attaches.}

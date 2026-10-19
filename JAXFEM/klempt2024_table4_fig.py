@@ -73,12 +73,12 @@ def main(argv=None):
     ap.add_argument("--out", default=str(OUT))
     args = ap.parse_args(argv)
     SCALE["high"], SCALE["low"] = args.s_high, args.s_low
-    figstyle.apply(size=11)
+    figstyle.apply(size=8.5)      # drawn at the thesis print width (0.85 x 6.3 in)
     cmap, norm = figstyle.klempt_cmap()
     F = {sub: fields(sub, args.growth) for sub in SCALE}
     P = paper_panels()
     L, ky = K.L, K.N // 2
-    fig, ax = plt.subplots(len(TIMES), 4, figsize=(9.6, 13.2))
+    fig, ax = plt.subplots(len(TIMES), 4, figsize=(5.35, 7.4))
     heads = ['"high", this work', '"high", paper', '"low", this work', '"low", paper']
     for r, t in enumerate(TIMES):
         for col, (sub, kind) in enumerate((("high", "sim"), ("high", "pap"),
@@ -94,15 +94,12 @@ def main(argv=None):
             for sp in a.spines.values():
                 sp.set_visible(True)
             if r == 0:
-                a.set_title(heads[col], fontsize=10.5)
+                a.set_title(heads[col], fontsize=8)
         ax[r, 0].set_ylabel(f"{round(t * 100)} %")
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-    fig.colorbar(sm, ax=ax, shrink=0.4, pad=0.02, label=r"$\phi$ [-]")
-    fig.suptitle("Klempt et al. 2024, test case 4.2 (Table 4): vertical mid-plane, nutrient face at "
-                 "the bottom.\nThis work: Python reproduction (Table 2, time scale "
-                 f"{SCALE['high']:g} / {SCALE['low']:g}, growth {args.growth}, consumption $g\\phi c$); "
-                 "paper: Table 4 (CC BY 4.0)", fontsize=10.5)
-    fig.savefig(args.out, dpi=200)
+    fig.colorbar(sm, ax=ax, shrink=0.4, pad=0.03, label=r"$\phi$")
+    print(f"time scale {SCALE['high']:g} / {SCALE['low']:g}, growth {args.growth}")   # in the caption, not the figure
+    fig.savefig(args.out, dpi=250)
     print("wrote", args.out)
 
 

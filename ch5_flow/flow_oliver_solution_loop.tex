@@ -1,3 +1,4 @@
+\providecommand{\olboxwidth}{9.6cm}% main box width (the thesis print version sets 11cm)
 % flow_oliver_solution_loop.tex — the solution loop of the partner ANSYS/UPF
 % framework, and where our constitutive law attaches to it.
 %
@@ -9,7 +10,7 @@
 \begin{tikzpicture}[
   every node/.style = {font=\small},
   N/.style    = {draw, rounded corners=3pt, align=left, thick,
-                 text width=9.6cm, inner sep=6pt},
+                 text width=\olboxwidth, inner sep=6pt},
   Nonce/.style= {N, fill=gray!10},
   Ngp/.style  = {N, fill=orange!12},
   Nfld/.style = {N, fill=teal!12},
