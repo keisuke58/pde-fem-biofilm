@@ -170,6 +170,9 @@ fifa は master を読むので、`claude/plan-next-hxjjve` を master に取り
   組成によらない（修論 4.7）ので、幅が出るのは組成・生きた量で成長させる版（方式 (c)、生きた量 Σφψ）と P3 の成長則；
   (3) その版で TSM か、少数の代表粒子（事後の分位点）で応力の幅を出す。Geisler 先生との共著の候補になる。
   決めること：使う版（方式 (c) か P3 か）、粒子の選び方、TSM のコードが使えるか（Geisler 先生に聞く）。
+  手がかり：オリバーの資料の Mathematica ノートブック `BiofilmTSMMathematica20250117_4species__changing.nb` の構成名が
+  「TSM-Growth」（`ansys_usermat/OLIVER_MODEL_NOTES.ja.md` §7）。IKM ではバイオフィルムの成長と TSM の組み合わせが
+  始まっている可能性があるので、Geisler 先生に聞くときはこのノートブックとの関係から。
 
 ---
 
