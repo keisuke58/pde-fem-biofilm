@@ -81,6 +81,14 @@ Open:
 | 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
 | 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
+Open with Dr. Soleimani (19 Oct):
+- his comments on the 9 Oct draft (asked for by 15 Oct) have not arrived;
+- mail of 19 Oct asks how to print (copy shop or the IKM printer; sides, colour, binding), the form of the electronic
+  version, and whether handing in on Fri 13 Nov is fine;
+- follow-up: when he answers the printing mail, ask in the same reply whether he had time to look at the draft
+  ("Any comments on the format before the final print would be very welcome"); if nothing has come by about 26 Oct,
+  send one reminder that covers both. Do not send him a newer draft unless he asks (decided 9 Oct).
+
 Colloquium practice during the trips (decided 19 Oct):
 - Adriatic, 21-27 Oct: a little quiz between buses (before submission, so light);
 - Portugal, 3-10 Nov: quiz (`QUIZ_COLLOQUIUM.ja.md`) and the reading plan below;
