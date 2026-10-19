@@ -173,6 +173,12 @@ fifa は master を読むので、`claude/plan-next-hxjjve` を master に取り
   手がかり：オリバーの資料の Mathematica ノートブック `BiofilmTSMMathematica20250117_4species__changing.nb` の構成名が
   「TSM-Growth」（`ansys_usermat/OLIVER_MODEL_NOTES.ja.md` §7）。IKM ではバイオフィルムの成長と TSM の組み合わせが
   始まっている可能性があるので、Geisler 先生に聞くときはこのノートブックとの関係から。
+  **10月19日、第 1 段（`uq/posterior_growth_band.py`、`assets/fig_posterior_growth_band.png`）**：EML の最終の事後分布の
+  200 粒子（`data/posterior_final/`）で、方式 (c) のシードの成長（＝応力、線形の範囲）の MAP に対する 90 % 区間は
+  CS 0.94〜1.05、CH 0.92〜1.11、DS 0.96〜1.06、DH 0.94〜1.05（幅 10〜19 %、CH が最大）。式 36（修論の方式）では幅 0。
+  方式 (c) と式 36 の差（シードの応力 −7 %）は、CH の事後の幅と同じ桁。仮定：シードは詰まった状態（φ_3D = 1）、
+  T* = t/21、成長は小さく α − 1 = κ∫Σφψ。幅は小さく線形なので、この問題では TSM なしの粒子の積分で足りる。
+  TSM が要るのは、空間に広がる場合や P3 の成長則（非線形）。次：P3 の成長則で同じことをするか、代表 3 粒子で UEL を回して線形の仮定を確かめる。
 
 ---
 
