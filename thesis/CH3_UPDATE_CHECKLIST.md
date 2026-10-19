@@ -60,3 +60,24 @@ Other chapters
       consistency, the EML repo is not in this checkout)
 - [ ] pdflatex + bibtex + pdflatex x2, no errors, page count
 - [ ] hand Chapter 3 to Assoc. Prof. Muramatsu (she has Chapters 1 and 2)
+
+## 4. Status (19 Oct 2026)
+
+Done from `thesis/HANDOFF_EML_2026-10-19.md` (final runs; DH final = stage (iii), not p2 as planned on 16 Oct):
+- text of the fit section (status of (a)-(e), RMSE of the three channels), CS limit (0.078), counts 5/6/9/8,
+  one-sided bounds, a35 (sign change withdrawn), ln B (-0.06, +0.03, +7.5, +2.1), recovery test (new subsection),
+  knockout (about a quarter; DH ratio not determined by the data; DS numbers), pH (DH R^2 0.71, 85 % in band; CH level only),
+  discussion limits, ch6 summary and pH; `tab:heine_rmse` rebuilt from the handoff numbers.
+- an italic note in Section 3.3 marks the table and figures that are still from the earlier runs.
+
+Still needed from the EML repository (export into this repository):
+- per-entry posterior median, 90 % interval and class per condition -> `tab:heine_ident` and the two paragraphs that
+  name entries (commensal: which entries; dysbiotic: a24 etc.)
+- figures from `figures/raw/`: paper_fig2_v2 -> eml_fit.pdf, fig3_ident_matrix -> eml_ident.pdf,
+  fig4_posteriors_v2 -> eml_posteriors.pdf, seed_maps_4cond -> eml_seed_maps.pdf, fig6_checks_v2 -> eml_checks.pdf,
+  optionally recovery.pdf and cs_tradeoff.pdf
+- ln Z per condition; confirm that the MAP values (-32.34 etc.) are log-likelihoods
+- particle counts and wall-clock times of the final stages (tab:heine_timing, ch2 l. 375, appendix settings)
+- pH regression R^2 (0.93 over 90 points) still valid?
+- CH leave-one-day-out prediction (about 20 Oct), optional
+Then remove the italic note and the TODO comments in ch3, rerun the audit and the build.

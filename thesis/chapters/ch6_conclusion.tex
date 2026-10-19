@@ -14,9 +14,10 @@ The 15 interaction coefficients of a five-species point model were estimated
 with TMCMC from the in-vitro time courses of Heine et al.\ under four
 conditions. Compiled with JAX, the forward model runs about 150 times faster
 on the GPU than on the CPU, which makes posteriors with up to $18{,}000$ particles routine. Every stage was
-repeated with three seeds and checked against convergence criteria; CS and CH
-meet them at every final stage, and the DS and DH results are provisional. The data
-determine $4$, $6$, $8$ and $9$ of the $15$ entries in the four conditions, and the
+repeated with three seeds and checked against convergence criteria; CS, CH and DS
+meet them at every final stage; in DH the last stage split across seeds, and DH
+is reported from the stage before. The data
+determine $5$, $6$, $9$ and $8$ of the $15$ entries in the four conditions, and the
 pH, which was not used in the inference, serves as a check. With a metabolic sign prior, the same type of model
 also predicts sparse in-vivo data of ten patients out of sample.
 
@@ -83,7 +84,7 @@ different spreading is outside what this scheme can show.
 \paragraph{Calibrated and chosen parameters.} The interaction coefficients of
 Chapter~\ref{ch:heine} come from measured time courses; the pH, which did not enter the inference, follows
 the measured rise in DH through a regression on the predicted fractions
-($R^2=0.63$, provisional)
+($R^2=0.71$)
 (Section~\ref{sec:heine_validation}). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
 cases of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, chosen there
 to show coexistence and the survival of one species. The calibrated
@@ -122,7 +123,7 @@ also more accurate for the same cost is the comparison planned at Keio.
 interaction matrix symmetric. A symmetric matrix cannot describe one species
 feeding another without the reverse, which the metabolic literature reports for
 several of the pairs. In this work the symmetric model reproduces the
-in-vitro time courses and, provisionally, the rise of the pH in DH; whether a directed term is needed
+in-vitro time courses and the rise of the pH in DH; whether a directed term is needed
 for in-vivo data is open.
 
 \section{Limitations}
