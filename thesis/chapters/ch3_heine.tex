@@ -71,7 +71,7 @@ the inference and serves as a check (Section~\ref{sec:heine_validation}).
 
 The forward model is the coupled $\bphi$--$\bpsi$ system of
 Section~\ref{sec:theory_hamilton}, integrated by implicit Euler with Newton's
-method ($2{,}500$ steps over the $21$ days) with a logarithmic barrier that keeps
+method ($2{,}500$ steps over the $21$ days) with a barrier term that diverges at $0$ and $1$ and keeps
 $\phi_i$ and $\psi_i$ inside $(0,1)$. Only the product $c^*a_{ij}$ enters, so
 $c^*=25$ fixes the scale (Section~\ref{sec:theory_replicator}); the assays
 contain no antibiotic, so $\alpha^*=0$.
@@ -247,8 +247,9 @@ gives the evidence estimates, which are read only as indications.
 \label{sec:heine_fit}
 
 % Numbers: thesis/HANDOFF_EML_2026-10-19.md and thesis/EML_numbers_2026-10-19.md (final EML runs, 19 Oct 2026).
-Stages (ii)--(iv) of CS, CH and DS meet the criteria (a)--(e) with three seeds
-each. In DH, stage~(iii) meets them, but at stage~(iv) the seeds settle in
+Stages (ii)--(iv) of CS and CH and stages (iii)--(iv) of DS meet the criteria
+(a)--(e) with three seeds each; DS stage~(ii) fails (d), because one seed found a
+higher mode (spread of the maximum log-likelihood $1.70$). In DH, stage~(iii) meets them, but at stage~(iv) the seeds settle in
 different posterior modes: criterion~(e) fails, with the medians of $a_{22}$
 differing by $0.79$ posterior standard deviations. The DH results are therefore
 taken from stage~(iii), and this split is discussed as a limitation in
@@ -401,7 +402,7 @@ the live-fraction weight and in their prior boxes.
     \bottomrule
   \end{tabular}
   \caption[Classification of the interaction entries]{Posterior median and
-  $90\,\%$ interval of the identified entries at the final stage, three seeds
+  $90\,\%$ interval of the identified and sign-only entries at the final stage, three seeds
   pooled; s.o.: sign only; n.i.: not identified. Species $1$--$5$: \textit{So},
   \textit{An}, \textit{Vei}, \textit{Fn}, \textit{Pg}. DH from stage~(iii).}
   \label{tab:heine_ident}
@@ -531,7 +532,7 @@ necessary: several runs that looked converged did not meet them.
 
 \paragraph{Limitations.}
 The likelihood treats the five fractions as independent although they sum to
-one, so the posterior intervals may be somewhat too narrow. The community live
+one, so the posterior intervals are too narrow (Section~\ref{sec:heine_recovery}). The community live
 fraction does not determine the species-specific viabilities $\psi_i$ (in the
 model they span $0.03$--$0.96$), so the living fractions of individual species
 are not predictions of the calibrated model. The interaction coefficients are
