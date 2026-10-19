@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ansys_usermat")); sys.path.insert(0, str(ROOT / "ansys_usermat/apdl"))
 import figstyle  # noqa: E402
 
-figstyle.apply(10)
+figstyle.apply(8.5)   # drawn at the thesis text width (6.3 in)
 import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
@@ -24,16 +24,16 @@ from fig_cal5_appendix import NAMES, trace  # noqa: E402
 if __name__ == "__main__":
     t, phi, psi = trace("w8_CH_g1_s015_final_d1_pm.json")
     sh = phi / phi.sum(1, keepdims=True); liv = phi * psi
-    fig, ax = plt.subplots(1, 2, figsize=(9.0, 3.1))
+    fig, ax = plt.subplots(1, 2, figsize=(6.3, 2.5))
     for i in range(5):
-        l, = ax[0].plot(t, sh[:, i], lw=1.5, label=NAMES[i])
-        ax[1].plot(t, liv[:, i], lw=1.5, color=l.get_color())
-    ax[1].plot(t, liv.sum(1), color="#222", lw=1.8, label="$\\sum_i\\phi_i\\psi_i$")
-    ax[0].set(xlabel="$T^*$", ylabel="$\\phi_i/\\sum_j\\phi_j$", title="(a) composition", ylim=(0, 0.85), xlim=(0, 1))
+        l, = ax[0].plot(t, sh[:, i], lw=1.1, label=NAMES[i])
+        ax[1].plot(t, liv[:, i], lw=1.1, color=l.get_color())
+    ax[1].plot(t, liv.sum(1), color="#222", lw=1.4, label="$\\Sigma_i\\phi_i\\psi_i$")
+    ax[0].set(xlabel="$T^*$", ylabel="$\\phi_i/\\Sigma_j\\phi_j$", title="(a) composition", ylim=(0, 0.85), xlim=(0, 1))
     ax[1].set(xlabel="$T^*$", ylabel="$\\phi_i\\psi_i$", title="(b) living volume fractions", xlim=(0, 1))
-    ax[0].legend(ncol=3, fontsize=8, frameon=False, loc="center right")
-    ax[1].legend(fontsize=8, frameon=False, loc="upper right")
+    ax[0].legend(ncol=2, fontsize=7.5, frameon=False, loc="center right", handlelength=1.2, columnspacing=0.8)
+    ax[1].legend(fontsize=7.5, frameon=False, loc="upper right", handlelength=1.2)
     fig.tight_layout()
     out = ROOT / "assets" / "fig_thesis_cal5"
-    fig.savefig(out.with_suffix(".pdf")); fig.savefig(out.with_suffix(".png"), dpi=170)
+    fig.savefig(out.with_suffix(".pdf")); fig.savefig(out.with_suffix(".png"), dpi=250)
     print("final shares", sh[-1].round(3), "sum phi", phi.sum(1)[[0, -1]].round(3), "living", liv.sum(1)[[0, -1]].round(3))
