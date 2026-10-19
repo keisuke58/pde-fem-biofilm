@@ -178,6 +178,9 @@ def disp(Uf, n):
 
 def grid(field, Uf, keep):
     n = field.shape[0]
+    if CASE == "two":                                   # cut the front half away (y < 0) to show both seeds
+        yc = -1 + (np.arange(n) + 0.5) * 2 / n
+        keep = keep & (yc[None, :, None] > 0)
     g = pv.ImageData(dimensions=(n + 1,) * 3, spacing=(2.0 / n,) * 3, origin=(-1, -1, -1)).cast_to_structured_grid()
     g.points = g.points + MAG * disp(Uf, n)
     g.cell_data["v"] = np.nan_to_num(field).ravel(order="F")
@@ -227,7 +230,7 @@ for j, (get, lab, cm, clim, fmt) in enumerate(PANELS):
         tm = pl.add_mesh(grid(np.zeros((NM,) * 3), U[0], tooth_m), color="#c8c3b8", ambient=0.5, diffuse=0.6)
     pl.add_text(lab, position="upper_edge", font_size=14, font="times", color="black")
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).extract_feature_edges(), color="#9a9a9a", line_width=1.0)
-    pl.add_mesh(pv.Plane((0, 0, -1.005), (0, 0, 1), 2.6, 2.6), color="#b0b0b0")
+    pl.add_mesh(pv.Plane(center=(0, 0, -1.005), direction=(0, 0, 1), i_size=2.6, j_size=2.6), color="#b0b0b0")
     pl.camera_position = CAM
     pl.camera.zoom(0.82)
     acts.append((a, tm, get))
