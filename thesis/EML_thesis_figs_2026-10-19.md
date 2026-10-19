@@ -43,4 +43,5 @@
 | `eml_checks.pdf` | 160 × 70 mm | 見出しを短く（「DH: knockout」「CH: pH (stage iv)」「DH: pH (stage iii)」）。凡例は 3 パネル共通で下に 1 つ。pH の点を小さく | なし |
 | `eml_cs_tradeoff.pdf` | 160 × 68 mm | 幅 16 cm に。凡例は下 | **`\includegraphics[width=0.5\textwidth]` → `width=\textwidth` に** |
 
-図 3.2（`eml_fit.pdf`）は前の版のまま。
+図 3.2（`eml_fit.pdf`）: **前の版の配置のまま**（見出しに条件名と RMSE、凡例は上、箱ひげ）、幅 160 mm × 195 mm・Times・8 pt 以上にした（2026-10-19、ユーザー決定）。
+見出しの RMSE（CS 0.090・CH 0.060・DS 0.057・DH 0.073）は各 seed の最良の粒子の値で、EML の本文の「0.090–0.093」などと同じ。磨いた MAP の値（CS 0.087・CH 0.059）とは少し違うので、キャプション・本文の値をそろえること。
