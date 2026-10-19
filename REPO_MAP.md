@@ -108,6 +108,8 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `QUIZ_COLLOQUIUM.ja.md` | Question bank for colloquium practice (Japanese, short answers) and a log of what was asked |
 | `STATUS_2026-10.ja.md` | Status note (15 Oct 2026, Japanese): dates up to the colloquium, decisions of 14-15 Oct, what scheme (c) showed, what is waited for and what is still open |
 | `p3/` | Working note of the Keio continuation (P3): `unified_model.tex`, the two-level model from one variational principle (derivation, discretisation, verification, results, assumptions and open points), built with pdflatex |
+| `uq/` | Keio continuation, uncertainty of growth and stress over the final posterior of thesis ch. 3 (`data/posterior_final/`, EML export): `posterior_growth_band.py` (point model only), `p3_posterior.py` (P3 element with posterior particles) |
+| `figdata/` | Cached data of the thesis figures that need a simulation (`.npz`), so they can be redrawn without a rerun |
 | `UNIFIED_MODEL_CONCEPT.ja.md` | Concept of one spatial multispecies model from one extended Hamilton principle (15 Oct 2026, Japanese): energy and equations from Klempt et al. 2024 and 2026, which coupling choices disappear, the 1D prototype `JAXFEM/unified_1d.py` and its first results |
 | `P3_STEP3_FEM_PLAN.ja.md` | Plan for step 3 of the unified model (15 Oct 2026, Japanese): a 3D finite-element implementation in Abaqus (UEL with u, phi, c; composition and growth at the integration points), the verification order against the Python results, and what follows |
 | `P3_OUTLINE.ja.md` | Outline of the P3 paper (15 Oct 2026, Japanese): growth from the living biomass, sections with the material in hand and what is missing, order of work and open decisions |
@@ -134,4 +136,4 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 `README.md`, [`DOCS.md`](DOCS.md) (full index),
 [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md)
 (read first for what is verified vs assumed), `PLAN_NEXT.md`, `methods_supplement_fem.md`.
-Historical notes live under [`archive/`](archive/).
+Historical notes live under [`archive/`](archive/); the root scripts, reports and results of the first half of 2026 that nothing uses any more were moved to [`archive/legacy_2026H1/`](archive/legacy_2026H1/) on 19 Oct 2026.
