@@ -207,11 +207,14 @@ for this material ($\nu=0.125$) (Figure~\ref{fig:ch5-closedform}).
   \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.png}
   \caption[The two growth cases, solved in ANSYS]{%
     One SOLID185 element, $\alpha=1.05$, the same material, differing only
-    in the boundary conditions. Left: every stress component of both solves.
-    Right: the constrained value decomposed into the continuum term and the
-    spherical term of \S\ref{sec:ch5-verification-limits}. Only their sum
-    reproduces the solver. The spherical term does not enter the von Mises
-    stress.}
+    in the boundary conditions. (a)~Every stress component of both solves
+    (8 nodes, 6 components each); the closed form is zero for the free case,
+    so the values there are solver noise, and the $16$ constrained components
+    that are exactly zero cannot be shown on the log axis. (b)~The constrained
+    value decomposed into the continuum term and the spherical term of
+    \S\ref{sec:ch5-verification-limits}: their sum, $-1.019276\times10^{-4}$,
+    agrees with the solver's $-1.0193\times10^{-4}$ to every printed digit; the
+    spherical term is $47\,\%$ of it and does not enter the von Mises stress.}
   \label{fig:ch5-closedform}
 \end{figure}
 
@@ -259,9 +262,11 @@ $5$ (the material has no viscosity here, so time has no physical unit), without 
   \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.png}
   \caption[Newton convergence with the finite-difference tangent]{%
     Convergence of the $12\,240$-element solve, read from the solver's
-    listing. Left: force residual against equilibrium iteration, one curve per
-    substep, with the ANSYS criterion dashed. Right: the time increment chosen
-    for each substep and the iterations it needed.}
+    listing: the load step finished in $6$ substeps. (a)~Force residual against the equilibrium iteration,
+    one curve per substep (circle: converged), with the ANSYS criterion dashed.
+    (b)~The time increment of each substep and, above the bars, the iterations
+    it needed. The automatic time stepping only enlarged the increment; the
+    last one is short because the load step ends there.}
   \label{fig:ch5-convergence}
 \end{figure}
 
