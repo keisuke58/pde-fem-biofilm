@@ -26,3 +26,21 @@
 
 キャプション例（英語）:
 > Viable species fractions of the MAP estimate of each seed (coloured lines; 42, 123, 7), 10–90% band (grey) and median (dashed) of the posterior prediction pooled over the three seeds, and measured viable composition (dots: median, boxes: replicates, interquartile range; Day 1 is the initial condition). Stage (iv) for CS, CH and DS; stage (iii) for DH. The seeds' maximum log-likelihoods and composition RMSEs are listed in Table X / given in the text.
+
+
+## 第 3 章の残りの図（2026-10-19 追加、同じ基準）
+
+すべて幅 160 mm、Times、文字は印刷時に 8 pt 以上（目盛り 8・軸ラベル 9・列の見出し 10 pt）、上のタイトルなし、凡例は図の下に 1 つ。
+元: Tmcmc202601 の `tools/thesis_figs_ch3.py`（入力は `make_eml_figs56.py` が書く `_thesis_inputs.npz` と `figures/raw/recovery.json`）、
+パイプラインは `docs/revision/EML_submission/figures/fig1_pipeline_thesis.tex`。
+
+| ファイル | 大きさ | 変えたところ | キャプションで直すこと |
+|---|---|---|---|
+| `eml_pipeline.pdf` | 160 × 86 mm | 3 段に並べ替え（モデル・データ → 4 段の推定 → 受け入れの条件）。中身は同じ | なし |
+| `eml_ident.pdf` | 160 × 125 mm | 4 条件を 2 × 2 に。各条件の左が行列 (a)、右がネットワーク (b)。色の目盛りは下に横向き | 「(a) 各条件の左の行列、(b) 右のネットワーク」と分かるように。条件の見出しは「CS (stage iv)」など |
+| `eml_posteriors.pdf` | 160 × 110 mm | 見出しは「CS (stage iv)」＋その下に「N identified」 | なし |
+| `eml_recovery.pdf` | 160 × 112 mm | 条件の順を CS・CH・DS・DH に。凡例に「† not covered」 | 各パネルの下の「covered N/15」はそのまま |
+| `eml_checks.pdf` | 160 × 70 mm | 見出しを短く（「DH: knockout」「CH: pH (stage iv)」「DH: pH (stage iii)」）。凡例は 3 パネル共通で下に 1 つ。pH の点を小さく | なし |
+| `eml_cs_tradeoff.pdf` | 160 × 68 mm | 幅 16 cm に。凡例は下 | **`\includegraphics[width=0.5\textwidth]` → `width=\textwidth` に** |
+
+図 3.2（`eml_fit.pdf`）は前の版のまま。
