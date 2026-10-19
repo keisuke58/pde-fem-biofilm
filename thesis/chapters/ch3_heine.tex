@@ -588,7 +588,9 @@ $\bA$ shared by all patients and a growth vector $\bb^{(p)}$ per patient. It is
 tested by leave-one-patient-out cross-validation: $\bA$ is fitted on nine
 patients and frozen, the held-out patient's $\bb^{(p)}$ is fitted from the
 first week only, and the second and third weeks are predicted.
-Table~\ref{tab:heine_signprior} lists the prediction errors.
+Table~\ref{tab:heine_signprior} lists the prediction errors, and
+Figures~\ref{fig:heine_loo_patients} and~\ref{fig:heine_loo_scatter} show the
+predictions of the best model.
 
 \begin{table}[htbp]
   \centering\small
@@ -611,6 +613,28 @@ Table~\ref{tab:heine_signprior} lists the prediction errors.
     $0.281$; the best model reaches $0.147$.}
   \label{tab:heine_signprior}
 \end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{dieckow_loo_patients.pdf}
+  \caption[Leave-one-patient-out prediction per patient]{Leave-one-patient-out
+  prediction for the ten patients with the best model of
+  Table~\ref{tab:heine_signprior} (gLV with the eHOMD and pFBA sign prior). Bars:
+  observed guild fractions in weeks~$1$ to $3$ (light to dark); markers: weeks~$2$
+  and $3$ predicted with $\bA$ fitted on the other nine patients and the
+  patient's growth vector fitted on week~$1$ only. RMSE per patient.}
+  \label{fig:heine_loo_patients}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.55\textwidth]{dieckow_loo_scatter.pdf}
+  \caption[Predicted against observed guild fractions]{Predicted against observed
+  guild fractions of Figure~\ref{fig:heine_loo_patients}, all patients, guilds and
+  both predicted weeks ($200$ values). The pooled RMSE ($0.052$) is slightly above
+  the mean of the per-patient values ($0.049$).}
+  \label{fig:heine_loo_scatter}
+\end{figure}
 
 \paragraph{Results.}
 \begin{itemize}
