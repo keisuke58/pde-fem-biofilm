@@ -173,3 +173,4 @@ p3/uel/abaqus_in/
 
 # Lean build output
 .lake/
+!data/heine_volume/*.csv
