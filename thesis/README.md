@@ -79,7 +79,7 @@ Open:
 | **11-12 Nov** | **final print and binding** (two copies; calendar: City Copy Shop on 12 Nov, unless Dr. Soleimani says the IKM printer is fine), PDF for the electronic version (the printing date of 19 Oct belonged to the old 20 Oct submission) |
 | **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
 | 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct) |
+| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
