@@ -31,7 +31,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.animation import FuncAnimation, PillowWriter  # noqa: E402
 
-NF, NM, NFRAMES = 48, 16, 45
+NF, NM, NFRAMES = 48, 16, 88
 cells8 = W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
 
 
@@ -105,7 +105,7 @@ def draw(i):
 
 anim = FuncAnimation(fig, draw, frames=len(frames))
 out = ROOT / "assets" / "anim_wp3_seed"
-anim.save(out.with_suffix(".gif"), writer=PillowWriter(fps=10), dpi=110)
+anim.save(out.with_suffix(".gif"), writer=PillowWriter(fps=16), dpi=220)
 draw(len(frames) - 1)
-fig.savefig(out.with_suffix(".png"), dpi=170)
+fig.savefig(out.with_suffix(".png"), dpi=400); fig.savefig(out.with_suffix(".pdf"))
 print("wrote", out.with_suffix(".gif"))
