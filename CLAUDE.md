@@ -288,21 +288,24 @@ this machine's specific workflow.
   likelihood). Ch. 3 now uses the archived EML runs (Tmcmc202601,
   `claude/gate-off-map-check`): four stages, three seeds, criteria (a)-(e),
   identifiability, pH only as a check (not in the likelihood). The R^2 = 0.78
-  claim is gone from abstract and conclusion. DS and DH are from stage (iii) and
-  provisional; when their final stage passes, update numbers and figures
-  (`thesis/figures/eml_*.pdf`) from the EML repo. Chapters 4 and 5 already use
-  the final CH MAP. Build with pdflatex + bibtex (no latexmk in the cloud).
-  **13 Oct:** the EML analysis moved to the measured (raw) data of N. Heine
-  with a two-channel likelihood (viable and total composition, live fraction).
-  The Ch. 3 methods now describe that; the results still show the earlier
-  digitised runs, flagged in the text, until the raw runs pass. No raw data
-  tables in the thesis (available on request only). If the raw CH MAP differs,
-  rerun the 8^3 five-species run of Ch. 4.
+  claim is gone from abstract and conclusion. Build with pdflatex + bibtex (no
+  latexmk in the cloud). **13 Oct:** the EML analysis moved to the measured
+  (raw) data of N. Heine with a two-channel likelihood (viable and total
+  composition, live fraction). No raw data tables in the thesis (available on
+  request only).
+  **Final (19 Oct 2026):** Ch. 3 shows the final raw-data runs, cross-checked
+  with the EML session: CS, CH, DS at stage (iv), DH at stage (iii) (its stage
+  (iv) splits; stated as a limitation). Nothing in Ch. 3 is provisional any
+  more. Ch. 4's five-species run was rerun on IKMHIWI03 with the final CH MAP
+  (`w8_CH_g1_s015_final_d1`, 19 Oct); the equal-shares run is marked as from
+  the preliminary MAP. Section 3.6 has the two Dieckow LOO figures; Joshi dropped.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
-  **16 Oct 2026:** the user gave her Chapters 1 and 2 of the LUH thesis; Chapter 3
-  follows once its results are final (the raw-data DS/DH runs).
+  **16 Oct 2026:** the user gave her Chapters 1 and 2 of the LUH thesis.
+  Chapter 3 (final, extracted PDF) is scheduled by the user in Slack for
+  Fri 23 Oct; Japanese message with ，． punctuation. Next online meeting
+  2 Nov 9:00.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
@@ -341,6 +344,13 @@ this machine's specific workflow.
   **Confirmed 13 Oct (Wunnenberg):** in person, IKM Room 320, 16 Dec 13:00;
   talk 20 min, then 10-20 min questions (30-40 min total). The office handles
   the assessments.
+  **19 Oct:** Dr. Wangenheim (second examiner) will not attend the colloquium
+  (his mail); the committee is the usual IKM members.
+- **Printing and submission (19 Oct 2026):** test print 31 Oct-2 Nov in
+  Hannover (also check the binding lead time), final print and binding 12 Nov
+  (City Copy Shop unless the IKM printer is fine), submission **Fri 13 Nov**.
+  Meisam was asked on 19 Oct (printer and format); follow up around 26 Oct if
+  no reply. Details in `thesis/README.md`.
 
 - **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never
   in the thesis body, whatever the meeting with Oliver decides. The thesis keeps only
