@@ -174,3 +174,6 @@ p3/uel/abaqus_in/
 # Lean build output
 .lake/
 !data/heine_volume/*.csv
+
+# 事後分布の粒子と点モデルの軌道（EML 側から、モデルの出力だけ・生データなし、2026-10-19）
+!data/posterior_final/*.npz
