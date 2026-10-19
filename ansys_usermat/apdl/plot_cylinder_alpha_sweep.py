@@ -8,9 +8,12 @@ displacement of the outer surface against alpha, with the straight line
 through the alpha = 0.01 run. Right: the radial displacement across the arc
 divided by alpha -- identical curves would mean a purely linear response.
 
+    IKMHIWI03 (listings on F:):
     python ansys_usermat/apdl/plot_cylinder_alpha_sweep.py \
-        0.01=F:/biofilm_upf_kusepy/gcr_g0.txt 0.02=.../asw_0p02.txt ... \
-        -o assets/growth_cylinder_alpha_sweep.png
+        0.01=F:/biofilm_upf_kusepy/gcr_g0.txt 0.02=.../asw_0p02.txt ...
+        -> results/cylinder_alpha_sweep.json (reduced data, pushed) and the figure
+    anywhere else, from the reduced data:
+    python ansys_usermat/apdl/plot_cylinder_alpha_sweep.py -> assets/growth_cylinder_alpha_sweep.png
 """
 import argparse
 import sys
@@ -27,19 +30,35 @@ BLUE = "#2a78d6"
 SEQ = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"]
 
 
+DATA = Path(__file__).resolve().parent / "results" / "cylinder_alpha_sweep.json"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("runs", nargs="+", help="alpha=path to the result listing")
+    ap.add_argument("runs", nargs="*", help="alpha=path to the result listing (IKMHIWI03); "
+                    "without runs the reduced data of --data are plotted")
+    ap.add_argument("--data", type=Path, default=DATA,
+                    help="reduced data (alpha, u_r across the arc): written when runs are given, read otherwise")
     ap.add_argument("-o", "--out", type=Path,
                     default=Path("assets/growth_cylinder_alpha_sweep.png"))
     a = ap.parse_args(argv)
 
-    runs = []
-    for arg in a.runs:
-        al, path = arg.split("=", 1)
-        r = reduce(path)
-        runs.append((float(al), r["u_r"]))
-        print(f"alpha={al}: max u_r {r['u_r'].max():.5e}")
+    import json
+    if a.runs:
+        runs = []
+        for arg in a.runs:
+            al, path = arg.split("=", 1)
+            r = reduce(path)
+            runs.append((float(al), np.asarray(r["u_r"], float)))
+            print(f"alpha={al}: max u_r {r['u_r'].max():.5e}")
+        a.data.parent.mkdir(parents=True, exist_ok=True)
+        a.data.write_text(json.dumps({"theta_deg": [float(t) for t in THETA],
+                                      "runs": [{"alpha_minus_1": al, "u_r": [float(v) for v in u]}
+                                               for al, u in sorted(runs)]}, indent=1))
+        print(f"wrote {a.data}")
+    else:
+        d = json.loads(a.data.read_text())
+        runs = [(r["alpha_minus_1"], np.asarray(r["u_r"], float)) for r in d["runs"]]
     runs.sort()
     alphas = np.array([al for al, _ in runs])
     umax = np.array([u.max() for _, u in runs])
@@ -49,57 +68,41 @@ def main(argv=None):
     import matplotlib.pyplot as plt
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import figstyle
-    figstyle.apply(11)
-    plt.rcParams.update({"font.size": 9, "axes.edgecolor": INK2,
-                         "axes.labelcolor": INK, "xtick.color": INK2,
-                         "ytick.color": INK2})
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(10.0, 3.9),
+    figstyle.apply(8.5)          # drawn at the thesis text width (6.3 in): text prints at 7.5-9 pt
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(6.3, 2.6),
                                    gridspec_kw={"width_ratios": [1, 1.25]})
 
-    # ---- left: max u_r vs alpha, against the line through the first run ----
+    # ---- (a) max u_r vs alpha, against the line through the first run ----
     xs = np.linspace(0, alphas.max() * 1.05, 50)
-    axL.plot(xs, umax[0] / alphas[0] * xs, ls=(0, (4, 3)), lw=1.2, color=INK2,
-             zorder=1)
-    xl = alphas.max() * 0.72
-    axL.text(xl + 0.004, umax[0] / alphas[0] * xl, "linear from $\\alpha-1$ = 0.01",
-             ha="left", va="top", fontsize=8, color=INK2)
-    axL.axvspan(0.01, 0.015, color=GRID, zorder=0)
-    axL.text(0.0135, umax.max() * 0.55, "old limit\n(floating\nlayer)",
-             ha="left", va="center", fontsize=7.5, color=INK2)
-    axL.plot(alphas, umax, "o-", color=BLUE, lw=2, ms=6, zorder=3,
-             markeredgecolor="white", markeredgewidth=1.5)
-    for al, u in zip(alphas, umax):
-        if al >= 0.05:
-            axL.annotate(f"{u:.2e}", (al, u), xytext=(-6, 6),
-                         textcoords="offset points", ha="right", fontsize=7.5,
-                         color=INK2)
-    axL.set_xlabel("prescribed growth $\\alpha-1$")
-    axL.set_ylabel("max radial displacement $u_r$")
+    axL.plot(xs, umax[0] / alphas[0] * xs, ls=(0, (4, 3)), lw=0.9, color=INK2, zorder=1,
+             label="linear from $\\alpha-1=0.01$")
+    axL.plot(alphas, umax, "o-", color=BLUE, lw=1.3, ms=4, zorder=3, markeredgecolor="white",
+             markeredgewidth=0.8, label="ANSYS")
+    axL.set_xlabel("$\\alpha-1$")
+    axL.set_ylabel("max $u_r$")
     axL.set_xlim(0, alphas.max() * 1.08)
     axL.set_ylim(0, umax.max() * 1.15)
-    axL.set_title("all runs reach the end time, $\\alpha-1\\leq0.2$",
-                  fontsize=10, color=INK)
+    axL.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+    axL.set_title("(a) largest radial displacement", fontsize=9)
+    axL.legend(fontsize=7.5, frameon=False, loc="upper left")
 
-    # ---- right: u_r / alpha across the arc ----
+    # ---- (b) u_r / alpha across the arc ----
     for (al, u), col in zip(runs, SEQ):
-        axR.plot(THETA, u / al, lw=2, color=col, label=f"$\\alpha-1$ = {al:g}")
-    axR.set_xlabel("$\\theta$ across the arc  [deg]")
+        axR.plot(THETA, u / al, lw=1.2, color=col, label=f"{al:g}")
+    axR.set_xlabel("$\\theta$ across the arc [deg]")
     axR.set_ylabel("$u_r / (\\alpha-1)$")
-    axR.set_title("radial displacement across the arc",
-                  fontsize=10, color=INK)
-    axR.legend(frameon=False, fontsize=8, loc="lower center", ncol=5,
-               handlelength=1.6, columnspacing=1.0)
+    axR.set_title("(b) displacement across the arc", fontsize=9)
+    axR.legend(frameon=False, fontsize=7.5, loc="lower center", ncol=5, title="$\\alpha-1$",
+               title_fontsize=7.5, handlelength=1.2, columnspacing=0.8)
     lo, hi = min((u / al).min() for al, u in runs), max((u / al).max() for al, u in runs)
-    axR.set_ylim(lo - 0.35 * (hi - lo), hi + 0.1 * (hi - lo))
+    axR.set_ylim(lo - 0.45 * (hi - lo), hi + 0.1 * (hi - lo))
 
     for ax in (axL, axR):
-        ax.grid(color=GRID, lw=0.8)
+        ax.grid(color=GRID, lw=0.6)
         ax.set_axisbelow(True)
-        for s in ("top", "right"):
-            ax.spines[s].set_visible(False)
-    fig.tight_layout()
+    fig.tight_layout(w_pad=1.5)
     a.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(a.out, dpi=200, facecolor="#fcfcfb")
+    fig.savefig(a.out, dpi=250)
     print(f"wrote {a.out}")
 
 
