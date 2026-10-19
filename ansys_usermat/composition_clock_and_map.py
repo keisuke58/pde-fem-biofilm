@@ -127,7 +127,7 @@ def fig_clock():
                    columnspacing=1.0, markerscale=1.6)
         fig.tight_layout(rect=(0, 0.21, 1, 1), w_pad=1.0)
         out = ROOT / "assets" / "fig_composition_clock.png"
-        fig.savefig(out, dpi=250); print("wrote", out)
+        fig.savefig(out, dpi=250); fig.savefig(out.with_suffix(".pdf")); print("wrote", out)
 
 
 def fig_map():
@@ -143,7 +143,7 @@ def fig_map():
     ax[0].set_ylabel(r"start share $\phi_1/(\phi_1+\phi_2)$")
     fig.colorbar(im, ax=ax, label=r"$\phi_1/(\phi_1+\phi_2)$ at $T^*=1$")
     out = ROOT / "assets" / "fig_composition_map.png"
-    fig.savefig(out, dpi=200, bbox_inches="tight"); print("wrote", out)
+    fig.savefig(out, dpi=200, bbox_inches="tight"); fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight"); print("wrote", out)
 
 
 if __name__ == "__main__":

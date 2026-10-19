@@ -99,7 +99,7 @@ def main(argv=None):
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     fig.colorbar(sm, ax=ax, shrink=0.4, pad=0.03, label=r"$\phi$")
     print(f"time scale {SCALE['high']:g} / {SCALE['low']:g}, growth {args.growth}")   # in the caption, not the figure
-    fig.savefig(args.out, dpi=250)
+    fig.savefig(args.out, dpi=250); fig.savefig(Path(args.out).with_suffix(".pdf"))
     print("wrote", args.out)
 
 

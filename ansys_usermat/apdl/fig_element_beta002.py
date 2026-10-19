@@ -48,7 +48,7 @@ def main():
     ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[0].legend(fontsize=7.5, frameon=False)
     ax[1].set(xlabel=r"$T^*$", ylabel=r"$\alpha-1$", title=r"(b) growth of the seed element")
     ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[1].legend(fontsize=7.5, frameon=False)
-    fig.tight_layout(w_pad=1.5); fig.savefig(OUT, dpi=300); print("wrote", OUT)
+    fig.tight_layout(w_pad=1.5); fig.savefig(OUT, dpi=300); fig.savefig(OUT.with_suffix(".pdf")); print("wrote", OUT)
 
 
 if __name__ == "__main__":

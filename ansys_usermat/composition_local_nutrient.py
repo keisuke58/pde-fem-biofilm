@@ -234,7 +234,7 @@ def thesis_figure(lams=(2.0, 3.0, 4.0)):
     ax[0, 0].set_ylabel("(a) nutrient\n$y$ [mm]"); ax[1, 0].set_ylabel("(b) case 6\n$y$ [mm]")
     c1 = fig.add_axes([0.85, 0.53, 0.018, 0.40]); fig.colorbar(imc, cax=c1, label="nutrient $c$")
     c2 = fig.add_axes([0.85, 0.11, 0.018, 0.40]); fig.colorbar(ims, cax=c2, label=r"$\phi_1/(\phi_1+\phi_2)$")
-    fig.savefig(THESIS_OUT, dpi=300)
+    fig.savefig(THESIS_OUT, dpi=300); fig.savefig(THESIS_OUT.with_suffix(".pdf"))
     print("wrote", THESIS_OUT)
 
 

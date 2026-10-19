@@ -95,7 +95,7 @@ $\mathbf F_v^{\,n}$ and returns the Cauchy stress and $\mathbf F_v^{\,n+1}$:
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\linewidth]{\ansysfigdir flow_growth_kinematics.png}
+  \includegraphics[width=0.9\linewidth]{../ch5_flow/flow_growth_kinematics_standalone.pdf}
   \caption[Multiplicative growth kinematics]{%
     The configurations the decomposition introduces. Growth carries the
     reference state to an intermediate one that is stress free but generally
@@ -197,7 +197,7 @@ for this material ($\nu=0.125$) (Figure~\ref{fig:ch5-closedform}).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_closed_form.pdf}
   \caption[The two growth cases, solved in ANSYS]{%
     One SOLID185 element, $\alpha=1.05$, the same material, differing only
     in the boundary conditions. (a)~Every stress component of both solves
@@ -234,7 +234,7 @@ to $\alpha-1=0.2$ converges (Figure~\ref{fig:ch5-alpha-sweep}).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir growth_cylinder_alpha_sweep.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir growth_cylinder_alpha_sweep.pdf}
   \caption[The bonded curved shell under increasing growth]{%
     The bonded two-layer shell ($2.4$k elements) under prescribed growth
     $\alpha-1 = 0.01$ to $0.2$; all runs reach the end time. (a)~Largest radial
@@ -254,7 +254,7 @@ $5$ (the material has no viscosity here, so time has no physical unit), without 
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir v222_convergence.pdf}
   \caption[Newton convergence with the finite-difference tangent]{%
     Convergence of the $12\,240$-element solve, read from the solver's
     listing: the load step finished in $6$ substeps. (a)~Force residual against the equilibrium iteration,
@@ -335,7 +335,7 @@ no result, so the $24^3$ series starts at $\Delta t=0.05$.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\linewidth]{\ansysfigdir fig_wp3_stability.png}
+  \includegraphics[width=0.9\linewidth]{\ansysfigdir fig_wp3_stability.pdf}
   \caption[Stability of the explicit field update]{Runs of the element against
     $\lambda=\beta\Delta t/h^2$. Smooth: the run reaches the end time with
     $\alpha-1\ge0$ and no oscillation between neighbouring elements;
@@ -382,7 +382,7 @@ follow the text, Eq.~36, as does the partner's element.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_alpha_law.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_klempt2024_alpha_law.pdf}
   \caption[Eq.~36 against Table~1 of Klempt et al.\ 2024]{%
     The two growth laws of Klempt et al.\ 2024 on the reproduced field of
     test case~4.1 (Python), $k_\alpha=10^{-3}$. (a)~Equation~36 and (b)~Table~1,
@@ -657,7 +657,7 @@ gradient from its neighbours (Figure~\ref{fig:ch5-exact}).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_exact.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_exact.pdf}
   \caption[Coupled run against the exact solution]{%
     A gradient-free region of the coupled ANSYS run (dots): (a)~$\phi$ and
     (b)~$\alpha-1$ against $\phi=\sinh(k_\alpha t)$, $\alpha-1=\cosh(k_\alpha t)-1$
@@ -676,7 +676,7 @@ both species fields, one of them unused, and a lag of one substep
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_whole_model.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_whole_model.pdf}
   \caption[Two ways of computing the growth, whole model]{%
     Element von Mises stress from equation~\eqref{eq:ch5-eq36} against the
     element's own growth variable, one point per element.}
@@ -713,7 +713,7 @@ do not change.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_element_beta002.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_element_beta002.pdf}
   \caption[A seed element and its neighbours]{%
     (a)~Von Mises stress of a monitored element inside the seed and of its most
     loaded neighbour and (b)~growth $\alpha-1$ of that element over time;
@@ -813,7 +813,7 @@ than after extrapolation.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_wp3_convergence.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_wp3_convergence.pdf}
   \caption[Convergence in time and mesh]{Seed growth at $T^*=1.1$,
     $\beta=0.02$~mm$^2/T^*$, surface points corrected. Left: seed mean of the
     von Mises stress against the element size $h$ for two time steps and the
@@ -899,7 +899,7 @@ species~1, at every nutrient level (Figure~\ref{fig:ch5-map}).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_map.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_map.pdf}
   \caption[Which species wins in case 6]{%
     Case~6 of Klempt et al.\ 2026 in the coupling scheme of this chapter, one
     packed point (Python): $\phi_1/(\phi_1+\phi_2)$ at $T^*=1$ against the
@@ -923,7 +923,7 @@ model for most of the time.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_spreading.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_spreading.pdf}
   \caption[Composition along a spreading front]{%
     Composition along a spreading front, computed in Python with the coupling
     scheme of this chapter on the reproduced field of Klempt et al.\ 2024,
@@ -1153,7 +1153,7 @@ with this dependence.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_clock.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_clock.pdf}
   \caption[The nutrient as the clock of the point model]{%
     $\phi_1/(\phi_1+\phi_2)$ at the end of every seed element of the $8^3$
     ANSYS runs ($\beta=0.02$~mm$^2/T^*$; consumption $0$ to $6\,T^{*-1}$,
@@ -1165,7 +1165,7 @@ with this dependence.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_local_nutrient_thesis.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_composition_local_nutrient_thesis.pdf}
   \caption[Local nutrient in the point model]{%
     Local nutrient in the point model, computed in Python on the example model
     (section through the seed, $32^3$ grid). (a)~Nutrient $c$, held at $y=-1$~mm
@@ -1211,7 +1211,7 @@ this step needs a working front term.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig_two_way_step2_thesis.png}
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_two_way_step2_thesis.pdf}
   \caption[Composition acting on the spreading]{%
     Composition acting on the spreading, computed in Python on the reproduced
     field of Klempt et al.\ 2024, test case~4.1 (mid-plane $z=10~\mu$m),

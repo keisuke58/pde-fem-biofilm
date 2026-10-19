@@ -110,7 +110,7 @@ def main():
         a.set_xlabel(r"$x$ [$\mu$m]")
     fig.colorbar(im0, ax=ax[0, :], label=r"$\phi$", shrink=0.9, pad=0.02)
     fig.colorbar(im, ax=ax[1:, :], label=r"$\phi_1/(\phi_1+\phi_2)$", shrink=0.9, pad=0.02)
-    fig.savefig(OUT, dpi=250)
+    fig.savefig(OUT, dpi=250); fig.savefig(OUT.with_suffix(".pdf"))
     print("wrote", OUT)
     for name, d in chis.items():
         w = np.where(snaps[10] >= T.PHI_MIN, snaps[10], 0.0)

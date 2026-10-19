@@ -193,7 +193,7 @@ def thesis_figure(npz):
     b.set_xlabel(r"$T^*$"); b.set_ylabel(r"mean $\phi$")
     b.set_title("(c) mean $\\phi$", fontsize=9)
     b.legend(frameon=False, fontsize=7.5, handlelength=1.6)
-    fig.savefig(THESIS_OUT, dpi=300)
+    fig.savefig(THESIS_OUT, dpi=300); fig.savefig(THESIS_OUT.with_suffix(".pdf"))
     print("wrote", THESIS_OUT)
 
 

@@ -89,7 +89,7 @@ def fig_exact():
         ax[2].set(xlabel=r"$T^*$", ylabel="difference", title="(c) ANSYS $-$ discrete")
         ax[2].legend()
         fig.tight_layout(w_pad=0.8)
-        fig.savefig(OUT / "fig1005_exact.png", dpi=250)
+        fig.savefig(OUT / "fig1005_exact.png", dpi=250); fig.savefig(OUT / "fig1005_exact.pdf")
     plt.close(fig)
     return float(eb.max()), float(el.max())
 
@@ -121,7 +121,7 @@ def fig_whole():
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
     fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
-    fig.savefig(OUT / "fig1005_whole_model.png")
+    fig.savefig(OUT / "fig1005_whole_model.png"); fig.savefig(OUT / "fig1005_whole_model.pdf")
     plt.close(fig)
     return cos, ratio, float(q1.max()), float(q2.max())
 

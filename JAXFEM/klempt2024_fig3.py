@@ -126,7 +126,7 @@ def main(argv=None):
         ax2.set_title(f"paper, {round(t * 100)} %", fontsize=8)
     print(f"nutrient {a.source}, time scale {a.s:g}, growth {a.growth}")   # in the caption, not the figure
     fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.02, wspace=0.02, hspace=0.15)
-    fig.savefig(a.out, dpi=300)
+    fig.savefig(a.out, dpi=400)   # 3D isosurfaces: PNG at 400 dpi (a vector PDF would be very large)
     print("wrote", a.out)
 
 

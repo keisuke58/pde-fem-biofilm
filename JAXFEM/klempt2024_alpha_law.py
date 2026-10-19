@@ -109,7 +109,7 @@ def main():
         b.set_title("(c) mean growth")
         b.legend(frameon=False, handlelength=1.8, ncol=2, loc="upper center", bbox_to_anchor=(0.42, -0.27),
                  columnspacing=0.8)
-        fig.savefig(OUT, dpi=250)
+        fig.savefig(OUT, dpi=250); fig.savefig(OUT.with_suffix(".pdf"))
     print("wrote", OUT)
 
 

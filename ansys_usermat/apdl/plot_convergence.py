@@ -135,7 +135,7 @@ def plot(substeps, out):
 
     cum = substeps[-1]["cum_iter"]
     fig.tight_layout(w_pad=1.5)
-    fig.savefig(out, dpi=250)
+    fig.savefig(out, dpi=250); fig.savefig(Path(out).with_suffix(".pdf"))   # PDF: vector, used by the thesis
     print(f"{len(substeps)} substeps, {cum} cumulative iterations")
     print(f"wrote {out}")
 

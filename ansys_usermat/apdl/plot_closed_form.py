@@ -136,7 +136,7 @@ def plot(free, cons, out):
     axR.legend(fontsize=7.5, frameon=False, loc="upper center", ncol=3, handlelength=1.0, columnspacing=0.8)
 
     fig.tight_layout(w_pad=1.5)
-    fig.savefig(out, dpi=250)
+    fig.savefig(out, dpi=250); fig.savefig(Path(out).with_suffix(".pdf"))   # PDF: vector, used by the thesis
     print(f"closed form {pred:.6e}, ANSYS {meas:.6e}, spherical term {100 * spur / pred:.0f} %")
     print(f"wrote {out}")
 

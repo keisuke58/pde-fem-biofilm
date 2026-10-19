@@ -102,7 +102,7 @@ def main(argv=None):
         ax.set_axisbelow(True)
     fig.tight_layout(w_pad=1.5)
     a.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(a.out, dpi=250)
+    fig.savefig(a.out, dpi=250); fig.savefig(Path(a.out).with_suffix(".pdf"))   # PDF: vector, used by the thesis
     print(f"wrote {a.out}")
 
 
