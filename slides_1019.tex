@@ -165,6 +165,41 @@ $\beta,r,k,d,g$: the framework's example input, not from the paper.
 \end{columns}
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Second version: the point model in Fortran}
+\centering
+\begin{tikzpicture}[ node distance=0.5cm and 0.6cm]
+\node[used,fbox=2.2cm] (a) {ANSYS\\ IKM element};
+\node[mine,fbox=3.3cm,right=of a] (b) {material call (Fortran)\\ Eq.\ 36, composition};
+\node[mine,fbox=3.6cm,right=of b] (d) {point model (Fortran)\\ same equations};
+\draw[arr] (a)--(b); \draw[arr] (b)--(d);
+\draw[arr] (d.south) to[bend left=22] node[below,font=\scriptsize]{new $\phi_i$, $\psi_i$ back to every Gauss point} (b.south);
+\end{tikzpicture}
+
+\vspace{8pt}
+\small
+\begin{itemize}
+  \item replaces the bridge and the Python process; the material call is unchanged
+  \item per sub-step: Newton on the $12$ unknowns $\phi_1..\phi_5,\ \phi_0,\ \psi_1..\psi_5,\ \gamma$
+        ($6$ iterations), exact Jacobian written out, LU with pivoting
+\end{itemize}
+
+\vspace{4pt}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{check} & \textbf{result}\\
+\midrule
+against the Python solver ($16$ states, $4$ cases) & largest relative difference $8\times10^{-15}$\\
+ANSYS, $8^3$, two species, one week & stress, nutrient identical; point model $\le1.6\times10^{-12}$\\
+run time, same model & $156$\,s $\to$ \textbf{36\,s}\\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}
+\footnotesize\textcolor{gray}{No server or port: one executable, so runs on a cluster or in parallel need no extra process.}
+\end{frame}
+
 
 % --------------------------------------------------------
 \begin{frame}{Checks 1 and 2: exact solution and whole model}
