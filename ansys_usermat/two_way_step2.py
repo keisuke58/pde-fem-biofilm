@@ -26,8 +26,8 @@ eta_2 = 2, so species 1 relaxes twice as fast; r_1/r_2 = 2 gives d = 1/3. That
 the front rate scales like 1/eta_i is an assumption. At coupling step 0.025:
 case 3 0.704 -> 0.735, case 6 0.704 -> 0.648 (share 0.041 -> 0.046); largest
 pointwise change of phi 0.32 / 0.47. Thesis figure:
-    python ansys_usermat/two_way_step2.py --dt 0.025 --d 0.3333333333 --save s.npz
-    python ansys_usermat/two_way_step2.py --thesis s.npz
+    python ansys_usermat/two_way_step2.py --dt 0.025 --d 0.3333333333 --save figdata/two_way_step2.npz
+    python ansys_usermat/two_way_step2.py --thesis figdata/two_way_step2.npz
 
 Sensitivity, T* = 1, d = 0.5 (species 1 grows 3x as fast as species 2),
 mean phi one-way -> two-way and biomass-weighted share phi_1/(phi_1+phi_2):
@@ -166,20 +166,20 @@ def thesis_figure(npz):
     """Thesis version: phi at T* = 1 on the mid-plane for case 6 without and with
     the feedback, and the mean phi of both cases over time. No title (the
     caption carries it)."""
-    figstyle.apply(size=11)
+    figstyle.apply(size=8.5)          # drawn at the thesis text width (6.3 in)
     z = np.load(npz)
     dk = next(k.split("|")[1] for k in z.files if k.startswith("2sp_case6|") and k.split("|")[1] != "0.0")
     dlab = "1/3" if abs(float(dk) - 1 / 3) < 1e-6 else f"{float(dk):g}"
     K = T.K
     kz = K.N // 2
     cmap, norm = figstyle.klempt_cmap()
-    fig, ax = plt.subplots(1, 3, figsize=(12, 3.9), gridspec_kw={"width_ratios": [1, 1, 1.25]})
-    fig.subplots_adjust(left=0.06, right=0.98, bottom=0.15, top=0.9, wspace=0.35)
-    for a, d, ttl in ((ax[0], "0.0", "one-way"), (ax[1], dk, f"with feedback, $d={dlab}$")):
+    fig, ax = plt.subplots(1, 3, figsize=(6.3, 2.4), gridspec_kw={"width_ratios": [1, 1, 1.3]})
+    fig.subplots_adjust(left=0.08, right=0.985, bottom=0.18, top=0.88, wspace=0.42)
+    for a, d, ttl in ((ax[0], "0.0", "(a) one-way"), (ax[1], dk, f"(b) feedback, $\\delta={dlab}$")):
         phi = z[f"2sp_case6|{d}|phi"]
         im = a.imshow(phi[:, :, kz].T, origin="lower", extent=(0, K.L, 0, K.L), cmap=cmap, norm=norm,
                       interpolation="bilinear")
-        a.set_title(f"case 6, {ttl}", fontsize=11)
+        a.set_title(ttl, fontsize=9)
         a.set_xlabel(r"$x$ [$\mu$m]"); a.grid(False)
         a.set_xticks([0, 10, 20]); a.set_yticks([0, 10, 20])
     ax[0].set_ylabel(r"$y$ [$\mu$m]"); ax[1].set_yticklabels([])
@@ -187,11 +187,12 @@ def thesis_figure(npz):
     cb.set_label(r"$\phi$ at $T^*=1$")
     b = ax[2]
     for c, col, lab in (("2sp_case3", "C0", "case 3"), ("2sp_case6", "C3", "case 6")):
-        b.plot(z[f"{c}|0.0|t"], z[f"{c}|0.0|phi_mean"], color="0.4", lw=1.2,
+        b.plot(z[f"{c}|0.0|t"], z[f"{c}|0.0|phi_mean"], color="0.4", lw=1.0,
                label="one-way" if c == "2sp_case3" else None)
-        b.plot(z[f"{c}|{dk}|t"], z[f"{c}|{dk}|phi_mean"], "--", color=col, lw=1.8, label=f"{lab}, with feedback")
+        b.plot(z[f"{c}|{dk}|t"], z[f"{c}|{dk}|phi_mean"], "--", color=col, lw=1.3, label=f"{lab}, feedback")
     b.set_xlabel(r"$T^*$"); b.set_ylabel(r"mean $\phi$")
-    b.legend(frameon=False, fontsize=9)
+    b.set_title("(c) mean $\\phi$", fontsize=9)
+    b.legend(frameon=False, fontsize=7.5, handlelength=1.6)
     fig.savefig(THESIS_OUT, dpi=300)
     print("wrote", THESIS_OUT)
 
