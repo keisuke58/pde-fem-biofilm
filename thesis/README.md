@@ -81,6 +81,13 @@ Open:
 | 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
 | 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
+Colloquium practice during the trips (decided 19 Oct):
+- Adriatic, 21-27 Oct: a little quiz between buses (before submission, so light);
+- Portugal, 3-10 Nov: quiz (`QUIZ_COLLOQUIUM.ja.md`) and the reading plan below;
+- Greece, 21-28 Nov: full run-through of the talk, Q&A in English;
+- Egypt, 3-9 Dec: only the questions that went wrong;
+- Hannover, 10-15 Dec: two or three full rehearsals aloud.
+
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
 2. ch4 verification and coupling, redoing the closed-form stress by hand;
