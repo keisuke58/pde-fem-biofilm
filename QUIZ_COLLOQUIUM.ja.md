@@ -124,7 +124,7 @@
 |---|---|---|---|
 | H1 | 5 species | Why these five? | They are the defined consortium of Heine et al., from early colonisers to the pathogen Pg. ／ Heine らが決めた菌群で、初期定着菌から病原菌 Pg まで並ぶ |
 | H2 | 15 unknowns | With 25 data points, is that not too many? | Yes, which is why I report which entries the data determine instead of a single best fit. ／ 多い。だから最適値一つではなく、どの成分が決まるかを報告した |
-| H3 | 4, 6, 8, 9 | What about the entries that are not identified? | I do not interpret them; they stay at the prior. ／ 解釈しない。事前分布のまま |
+| H3 | 5, 6, 9, 8 | What about the entries that are not identified? | I do not interpret them; they stay at the prior. ／ 解釈しない。事前分布のまま |
 | H4 | c* = 25 | Does the choice of c* change the results? | No, only c* times A enters, so another c* rescales A. ／ 変わらない。c*×A でしか入らないので、A の大きさが変わるだけ |
 | H5 | 147 times | Why not use a gradient-based sampler? | I did not compare them; I used TMCMC because it runs all particles in parallel on the GPU. ／ 比較していない。粒子を GPU で並列に回せる TMCMC を使った |
 | H6 | E = 10 Pa | Real biofilms are stiffer, up to kPa. | Yes; in this setting the stress scales with E, so the pattern holds and only the magnitude changes. ／ その通り。この設定では応力は E に比例するので、分布は同じで大きさだけ変わる |
@@ -138,6 +138,19 @@
 | H14 | −8 % | Is that difference significant? | It is one mesh and one rate chosen by me, so it shows the effect, not a precise value. ／ メッシュ 1 つ、速さは私が決めた値なので、効果の有無を示すもので、精密な値ではない |
 | H15 | 20 min | (準備) | Main slides 16, appendix for questions. ／ 本編 16 枚、質問には付録で答える |
 
+## I. DH が段階 (iii) の理由（10月19日、日本語と英語）
+
+要点：最後の段階で、3 つの seed が違うモードに分かれた。当てはまりの良さは変わらない。データが決めきれないことを、制約として書いた。
+
+| # | 予想される質問 | 答え（EN ／ JA） |
+|---|---|---|
+| I1 | Why is DH reported from stage (iii), not the final stage? | At stage (iv) the three seeds settled in different posterior modes, so criterion (e) failed: the medians of a22 differed by 0.79 posterior standard deviations, and the limit is 0.5. Stage (iii) passes all criteria, so I report that one. ／ 段階 (iv) では 3 つの seed が別々のモードに落ち着き、基準 (e) を満たさなかった（a22 の中央値が事後標準偏差の 0.79 倍ずれた。上限は 0.5 倍）。段階 (iii) は全部の基準を満たすので、そちらを使った |
+| I2 | Does that make the DH results unreliable? | The fit is good: the viable composition has an RMSE of 0.073. What the split shows is that the data do not fix the size of the late Pg increase, and I do not interpret that part. ／ 当てはまりは良い（生菌の組成の RMSE 0.073）。分かれたことから分かるのは、後半の Pg の増え方の大きさをデータが決められないということ。そこは解釈していない |
+| I3 | Why did the final stage split? | The final stage uses the most data. Two sets of coefficients explain the DH data about equally well, and the seeds found different ones. ／ 最後の段階は使うデータが一番多い。DH のデータをほぼ同じくらい説明できる係数の組が 2 つあり、seed ごとに違う方を見つけた |
+| I4 | Would more particles or a longer run fix it? | More particles would sample both modes better, but they cannot decide between them. That needs more measurements in the late phase. ／ 粒子を増やせば両方のモードをよく拾えるが、どちらかには決められない。決めるには後半の測定点がもっと必要 |
+| I5 | Does this affect the stress results? | No. The finite element runs of Chapters 4 and 5 use the CH posterior, which passes at the final stage. ／ 影響しない。第 4・5 章の有限要素の計算は CH の結果を使っていて、CH は最後の段階まで基準を満たしている |
+| I6 | Which DH results can I trust? | The entries reported as identified: eight in DH, for example the self-limitation of Vei and Fn. ／ 同定できたと書いた成分（DH では 8 つ。例えば Vei と Fn の自己抑制） |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
@@ -149,3 +162,4 @@
 | 10月13日 | Q&A：F19〜F27 を表示 | （読む用） |
 | 10月13日 | 基本の数値 G1〜G15 を表示 | （読む用） |
 | 10月13日 | 数値ごとの予想質問 H1〜H15 を表示 | （読む用） |
+| 10月19日 | Q&A：DH が段階 (iii) の理由 I1〜I6 を表示 | （読む用） |
