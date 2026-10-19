@@ -70,14 +70,17 @@ Done from `thesis/HANDOFF_EML_2026-10-19.md` (final runs; DH final = stage (iii)
   discussion limits, ch6 summary and pH; `tab:heine_rmse` rebuilt from the handoff numbers.
 - an italic note in Section 3.3 marks the table and figures that are still from the earlier runs.
 
-Still needed from the EML repository (export into this repository):
-- per-entry posterior median, 90 % interval and class per condition -> `tab:heine_ident` and the two paragraphs that
-  name entries (commensal: which entries; dysbiotic: a24 etc.)
-- figures from `figures/raw/`: paper_fig2_v2 -> eml_fit.pdf, fig3_ident_matrix -> eml_ident.pdf,
-  fig4_posteriors_v2 -> eml_posteriors.pdf, seed_maps_4cond -> eml_seed_maps.pdf, fig6_checks_v2 -> eml_checks.pdf,
-  optionally recovery.pdf and cs_tradeoff.pdf
-- ln Z per condition; confirm that the MAP values (-32.34 etc.) are log-likelihoods
-- particle counts and wall-clock times of the final stages (tab:heine_timing, ch2 l. 375, appendix settings)
-- pH regression R^2 (0.93 over 90 points) still valid?
-- CH leave-one-day-out prediction (about 20 Oct), optional
-Then remove the italic note and the TODO comments in ch3, rerun the audit and the build.
+Done the same day from `thesis/EML_numbers_2026-10-19.md` and the seven figures (`thesis/figures/eml_*.pdf`):
+`tab:heine_ident` (all 15 entries), entry paragraphs, a45 (identified in DS and DH, sign open), `tab:heine_rmse`
+(three RMSE, ln L of the MAP, ln Z), `tab:heine_timing` (final stages), pH regression (continuous records, R^2 0.88;
+DH 0.71 / RMSE 0.097 / 85 %; CH RMSE 0.082, 44 %), new figures `fig:heine_cs_tradeoff` and `fig:heine_recovery`,
+all captions, particle counts in ch2, ch6 and the appendix (up to 20,000). The note on old figures is removed.
+Audit 0 FAIL; build without errors or overfull boxes, 84 pages.
+
+Open:
+- appendix l. 87: stage (i) particle counts (2,000-3,000) are from the earlier runs; check against the EML runs.
+- the RMSE printed in `eml_fit.pdf` (best particle: 0.090 / 0.060 / 0.057 / 0.073) differs slightly from the refined
+  MAP in the table (0.087 / 0.059 / 0.058 / 0.073); the caption says so.
+- CH leave-one-day-out prediction (about 20 Oct), optional.
+- `ch4_ansys.tex` five-species section: check that the CH MAP used there (6e18e0b) is the final one.
+- hand Chapter 3 to Assoc. Prof. Muramatsu.
