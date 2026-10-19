@@ -1,0 +1,66 @@
+{
+ "CS": {
+  "runs": [
+   "CS_ult_2c_raw_seed123",
+   "CS_ult_2c_raw_seed42",
+   "CS_ult_2c_raw_seed7"
+  ],
+  "n_pooled": 15000,
+  "n_saved": 200,
+  "map_run_seed": 42,
+  "sum_phipsi_day21_q05_q50_q95": [
+   0.8875791862065112,
+   0.9043768085919854,
+   0.9221723041153005
+  ],
+  "map_sum_phipsi_day21": 0.9072301123602681
+ },
+ "CH": {
+  "runs": [
+   "CH_ult_2c_raw_a33w_seed123",
+   "CH_ult_2c_raw_a33w_seed42",
+   "CH_ult_2c_raw_a33w_seed7"
+  ],
+  "n_pooled": 15000,
+  "n_saved": 200,
+  "map_run_seed": 7,
+  "sum_phipsi_day21_q05_q50_q95": [
+   0.34916562897701603,
+   0.45875565406240504,
+   0.5354248301888441
+  ],
+  "map_sum_phipsi_day21": 0.5113988397271397
+ },
+ "DS": {
+  "runs": [
+   "DS_ult_2c_raw_seed123",
+   "DS_ult_2c_raw_seed42",
+   "DS_ult_2c_raw_seed7"
+  ],
+  "n_pooled": 54000,
+  "n_saved": 200,
+  "map_run_seed": 42,
+  "sum_phipsi_day21_q05_q50_q95": [
+   0.36817898597549514,
+   0.41498688849075965,
+   0.46084946265168414
+  ],
+  "map_sum_phipsi_day21": 0.40909318153855884
+ },
+ "DH": {
+  "runs": [
+   "DH_p2_2c_raw_seed123",
+   "DH_p2_2c_raw_seed42",
+   "DH_p2_2c_raw_seed7"
+  ],
+  "n_pooled": 60000,
+  "n_saved": 200,
+  "map_run_seed": 42,
+  "sum_phipsi_day21_q05_q50_q95": [
+   0.5115696114884328,
+   0.5704474210528838,
+   0.621530229019304
+  ],
+  "map_sum_phipsi_day21": 0.5736489869626926
+ }
+}
