@@ -24,6 +24,10 @@ thesis results (CLAUDE.md).
 
 ## Rules
 
+- **Figures (19 Oct 2026): all in Times**, drawn at the printed width (16 cm) with text of 7.5 pt or more, vector PDF
+  (3D renderings PNG at 400 dpi), no title inside the figure, panel letters as in the caption. Body text Latin Modern.
+  Figure scripts call `figstyle.apply()`; data of figures that need a simulation are cached in `figdata/`.
+
 The document rules of `../CLAUDE.md` apply (first person singular, notation
 as in the papers, no AI-sounding wording, units, figures in Times New Roman).
 

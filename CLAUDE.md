@@ -456,6 +456,13 @@ examiners). Check each one before the document is handed over.
   calls `figstyle.apply()` from `ansys_usermat/figstyle.py` (Times New Roman,
   Liberation Serif where it is not installed, STIX mathematics). New figure
   scripts use it too; do not set fonts per script.
+  **Thesis figures (19 Oct 2026, all checked):** every figure of the thesis is
+  in Times (matplotlib: Times New Roman / Liberation Serif via `figstyle`;
+  the EML figures of Ch. 3: Nimbus Roman; TikZ: `mathptmx`). Draw at the
+  printed width (text width 6.3 in = 16 cm) so text prints at 7.5 pt or more,
+  save as vector PDF (3D renderings as PNG at 400 dpi), no title in the figure
+  (the caption carries it), panel letters (a), (b) matching the caption.
+  The body text stays Latin Modern; only the figures are Times.
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
