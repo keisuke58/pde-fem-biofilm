@@ -47,20 +47,11 @@
 見出しの RMSE（CS 0.090・CH 0.060・DS 0.057・DH 0.073）は各 seed の最良の粒子の値で、EML の本文の「0.090–0.093」などと同じ。磨いた MAP の値（CS 0.087・CH 0.059）とは少し違うので、キャプション・本文の値をそろえること。
 
 
-## Latin Modern 版（`*_lm.pdf`、2026-10-19 夜）
+## 字体は Latin Modern で確定（2026-10-19 夜、ユーザー決定）
 
-修論の本文（`main.tex` は `lmodern`）とほかの図 27 枚は **Latin Modern** なので、EML の図 8 枚を Latin Modern でも描いた。
-Times 版（今までのファイル名）も残す（ユーザー決定: どちらも必要）。中身・大きさ・配置・文字の大きさは同じで、字体だけ違う。
-
-| Times 版 | Latin Modern 版 |
-|---|---|
-| `eml_pipeline.pdf` | `eml_pipeline_lm.pdf` |
-| `eml_fit.pdf` | `eml_fit_lm.pdf` |
-| `eml_seed_maps.pdf` | `eml_seed_maps_lm.pdf` |
-| `eml_ident.pdf` | `eml_ident_lm.pdf` |
-| `eml_posteriors.pdf` | `eml_posteriors_lm.pdf` |
-| `eml_recovery.pdf` | `eml_recovery_lm.pdf` |
-| `eml_checks.pdf` | `eml_checks_lm.pdf` |
-| `eml_cs_tradeoff.pdf` | `eml_cs_tradeoff_lm.pdf` |
-
-本文と字体をそろえるなら、`ch3_heine.tex` の `\includegraphics` を `_lm` の方に変える。
+修論の本文（`main.tex` は `lmodern`）とほかの図 27 枚に合わせて、**EML の図 8 枚は Latin Modern を正式版**にした。
+- **正式版（Latin Modern）**: 今までと同じファイル名（`eml_pipeline.pdf`, `eml_fit.pdf`, `eml_seed_maps.pdf`, `eml_ident.pdf`,
+  `eml_posteriors.pdf`, `eml_recovery.pdf`, `eml_checks.pdf`, `eml_cs_tradeoff.pdf`）。`ch3_heine.tex` は**直さなくてよい**。
+- **Times 版**も残す: `eml_*_times.pdf`（同じ中身・大きさ・配置、字体だけ Times）。
+- 画質: すべてベクタ（文字はフォント埋め込み）。図の中のビットマップは `eml_ident.pdf` の色の目盛りのグラデーションだけで、600 dpi。
+- 上の表の「Times」と書いた所は、正式版では Latin Modern と読み替える。
