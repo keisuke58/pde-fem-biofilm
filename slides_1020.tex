@@ -323,7 +323,7 @@ case with the previous calibration
 \begin{frame}{Growth from the living biomass with synthetic data}
 \vspace{-6pt}
 \begin{center}
-\includegraphics[width=\linewidth,height=0.43\textheight,keepaspectratio]{assets/fig_scheme_c_synthetic.png}
+\includegraphics[width=\linewidth,height=0.37\textheight,keepaspectratio]{assets/fig_scheme_c_synthetic.png}
 \end{center}
 \vspace{-8pt}
 \begin{columns}[T]
@@ -332,22 +332,24 @@ case with the previous calibration
 Same seed problem; point model: four-species case of Fritsch et al.\ 2025 with its true parameters
 (no measured data), own void, start $\phi_i=0.02$.
 $T^*=1$ spans their 1500-step validation run ($s=0.15$); antibiotic $\alpha^*=50$ from $T^*=0.5$ as in
-their Fig.~18. $\kappa$ as before (same seed growth at $T^*=1$, an assumption).
+their Fig.~18. $\kappa$ matched to the seed growth of Eq.\ 36 at $T^*=1$ (an assumption), or $\kappa=k_\alpha$ of Klempt et al.\ 2024.
 Local nutrient: $c^*=25\,c(x)$, $c=1$ on one face, $\Lambda^2=gL^2/d=16$.
 (c): $\alpha-1$ on the mid-plane with the local nutrient.
 \end{column}
 \begin{column}{0.58\textwidth}
 \scriptsize\setlength\tabcolsep{3pt}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-seed, $T^*=1$, $32^3$ field, $16^3$ stress & $\alpha-1$ & von Mises\\
+seed, $T^*=1$ & \multicolumn{2}{c}{$\kappa$ matched} & \multicolumn{2}{c}{$\kappa=k_\alpha$ (nothing fitted)}\\
+ & $\alpha-1$ & von Mises & $\alpha-1$ & von Mises\\
 \midrule
-Eq.\ 36 & $6.56\cdot10^{-4}$ & $6.07\cdot10^{-4}$ Pa\\
-living biomass, uniform $c$ & same & $+12\,\%$\\
-\quad antibiotic from $T^*=0.5$ & $-12\,\%$ & $-13\,\%$\\
-\quad local nutrient, $\Lambda=4$ & $-58\,\%$ & $-68\,\%$\\
+Eq.\ 36 & $6.56\cdot10^{-4}$ & $6.07\cdot10^{-4}$ Pa & & \\
+living, uniform $c$ & same & $+12\,\%$ & $-42\,\%$ & $-35\,\%$\\
+\quad antibiotic & $-12\,\%$ & $-13\,\%$ & $-12\,\%$ & $-13\,\%$\\
+\quad local nutrient & $-58\,\%$ & $-72\,\%$ & $-58\,\%$ & $-72\,\%$\\
 \bottomrule
-\end{tabular}\\[3pt]
+\end{tabular}\\[1pt]
+antibiotic and nutrient rows: change against the uniform-$c$ run of the same $\kappa$.\\[2pt]
 The sign of the stress change follows the time course of the living biomass: here it rises from $0.08$
 (growth comes late, $+12\,\%$), in the calibrated run it falls ($-7\,\%$).
 \end{column}
