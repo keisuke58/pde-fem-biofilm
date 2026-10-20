@@ -108,7 +108,10 @@ Table~\ref{tab:ch5-living-sens} varies one choice at a time in the separate exam
 The choices of the point model ($\phi_{\min}$, $\alpha^*_0$, the antibiotic uptake) move the living volume
 fraction but hardly the growth and the stress. The outer increment moves everything: halving it lowers
 $\phi_{3D}$ in the seed by $16\,\%$ and raises the stress by $41\,\%$. The coupled runs are therefore not
-converged in time at $\Delta T^*=0.025$ [Python: ..; ANSYS $16^3$: ..].
+converged in time at $\Delta T^*=0.025$. The Python version, which integrates the fields with its own finer
+steps inside each outer step, changes by less than $0.5\,\%$ when the outer step is halved (living volume
+fraction $0.830$ and $0.834$, stress $1.082$ and $1.083\cdot10^{-3}$~Pa on $32^3$; $0.829$ and $0.832$ on
+$16^3$), so the dependence lies in the time integration of the fields in the element [ANSYS: ..].
 
 \paragraph{A limitation of the discretisation.}
 The examples are mirror-symmetric in $x$ and $z$, the results are not: on $8^3$ $\phi_{3D}$ differs by up to
