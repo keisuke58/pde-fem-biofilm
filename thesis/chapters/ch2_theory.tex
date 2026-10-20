@@ -319,19 +319,21 @@ The field model has a single biofilm variable $\phi$ and says where the
 biofilm is and how much there is; it does not distinguish species. The point
 model distinguishes species but has no space. Klempt et al.\ 2024 drop the
 mechanical term in the equation for $\phi$, so in their model the stress does
-not act back on growth. I combine the two models in the same one-way manner:
+not act back on growth. I combine the two models as follows:
 \begin{itemize}
-  \item the field model, solved by the element, gives the amount of biofilm
-        $\phi$ at every Gauss point and, through
-        Eq.~\eqref{eq:theory_alpha}, the growth $\alpha$ and the stress;
-  \item the point model runs at every Gauss point and gives the composition,
-        the shares $\phi_i/\sum_j\phi_j$ and the viabilities $\psi_i$, with
-        its amount scaled to the field's $\phi$.
+  \item the field model, solved by the element, gives the biofilm $\phi_{3D}$,
+        the nutrient $c$ and, in its second nutrient field, an antibiotic, and
+        through Eq.~\eqref{eq:theory_alpha} the growth $\alpha$ and the stress;
+  \item the point model runs, unchanged, at every Gauss point; it receives the
+        nutrient and the antibiotic from the fields and returns $\phi_i$ and
+        $\psi_i$;
+  \item only its living biomass, $\sum_i\phi_i\psi_i$, consumes the nutrient and
+        takes up the antibiotic, and the nutrient steers the spreading of
+        $\phi_{3D}$ through the front term.
 \end{itemize}
-How the two time scales are linked, and the assumptions this needs, are given
-in Chapter~\ref{ch:ansys}. In this one-way form the composition does not act
-on the stiffness or on the spreading; a coupling in that direction is outlined
-as future work.
+How the two times are linked is given in Chapter~\ref{ch:ansys}. The stress does
+not act back, and the composition does not act on the stiffness; these
+directions are outlined as future work.
 
 %=======================================================================
 \section{Bayesian Inference and TMCMC}
