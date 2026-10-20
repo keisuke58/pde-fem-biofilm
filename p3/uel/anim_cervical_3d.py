@@ -1,4 +1,4 @@
-"""anim_cervical_3d.py -- 3D video of the tooth-like sector of the cervical study (P3 (e)): the biofilm layer around a
+"""anim_cervical_3d.py -- 3D video (synthetic: no experimental data; the four-species case of Fritsch et al. 2025, see synthetic_eco) of the tooth-like sector of the cervical study (P3 (e)): the biofilm layer around a
 crown-shaped collar (bulge 1), 4 x 12 x 16, inner face bonded, bottom u_z = 0, outer face free, nutrient from the
 outer face (saliva), seed of 0.125 mm; without the homeostatic-pressure law and with p_h/E = 0.05. The same runs as
 cervical_study.py (mi.run with these options), now with the state stored at every increment. The 90 degree sector is
@@ -21,7 +21,26 @@ NR = 4
 
 
 def cache(p):
-    return ROOT / "figdata" / f"anim_cervical_{p:g}.npz"
+    return ROOT / "figdata" / f"anim_cervical_f4_{p:g}.npz"
+
+
+def synthetic_eco(path):
+    """point model without experimental data: the four-species synthetic case of Fritsch et al. 2025 (Case II, M3:
+    theta* = the "true mean" of their Fig. 16, c* = 25, alpha* = 0, phi_init 0.02 each; JAXFEM/fritsch2025_cases.py),
+    put into the five-species slots of the element with species 5 absent (phi_init 0, a55 = 1, no interactions);
+    same file format as make_column_inp.eco_file"""
+    sys.path.insert(0, str(ROOT / "JAXFEM"))
+    from fritsch2025_cases import CASES
+    c = CASES["fritsch_4sp_M3"]
+    A, b = c["A"], c["b"]
+    th = [0.0] * 20
+    th[0], th[1], th[2], th[3], th[4] = A[0][0], A[0][1], A[1][1], b[0], b[1]
+    th[5], th[6], th[7], th[8], th[9] = A[2][2], A[2][3], A[3][3], b[2], b[3]
+    th[10], th[11], th[12], th[13] = A[0][2], A[0][3], A[1][2], A[1][3]
+    th[14], th[15] = 1.0, 1.0
+    lines = ["5", f"{c['c_star']} 0.0", " ".join(["1.0"] * 5), " ".join(f"{v:.17g}" for v in th),
+             "phi_init " + " ".join(f"{v:.17g}" for v in c["phi_init"] + [0.0]), "newton 60 1e-26"]
+    path.write_text("\n".join(lines) + "\n")
 
 
 if len(sys.argv) > 1 and sys.argv[1] == "--run":
@@ -55,10 +74,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "--run":
 # ---- run both cases in subprocesses (the point model is read from BIOFILM_ECO_CASE once per process)
 SCR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(HERE))
-eco = SCR / "uel_eco.txt"
-if not eco.exists():
-    from make_column_inp import eco_file
-    eco_file(eco)
+eco = SCR / "uel_eco_synthetic.txt"
+synthetic_eco(eco)
 procs = [subprocess.Popen([sys.executable, __file__, "--run", str(p)], env=dict(os.environ, BIOFILM_ECO_CASE=str(eco)))
          for p in (0.0, 0.05) if not cache(p).exists()]
 for pr in procs:
@@ -74,8 +91,8 @@ import pyvista as pv  # noqa: E402
 
 pv.OFF_SCREEN = True
 pv.global_theme.font.family = "times"
-MAG = 5.0
-MIRRORS = [(1, 1), (-1, 1), (-1, -1), (1, -1)]           # sector theta 0-90 to the full ring
+MAG = max(1.0, float(round(0.1 / max(np.abs(A['u'][..., :3]).max(), np.abs(B['u'][..., :3]).max()), 1)))   # magnified only when small
+MIRRORS = [(1, 1), (-1, 1), (-1, -1)]                    # three quarters of the ring; the front one cut away
 
 
 def ring(Un, cell, kind="cell"):
@@ -98,7 +115,7 @@ def core(Un):
     nr = NR
     inner = nodes[::nr + 1]
     pts = []
-    for sx, sy in MIRRORS:
+    for sx, sy in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
         pts.append(inner * np.array([sx, sy, 1.0]))
     return pv.PolyData(np.vstack(pts)).delaunay_3d().extract_surface()
 
@@ -108,7 +125,7 @@ PANELS = [(lambda i: (A["u"][i], A["u"][i][:, 3], "point"), "phase phi (without 
           (lambda i: (A["u"][i], A["vm"][i], "cell"), "von Mises / E (without the law)", "viridis", (0, vtop)),
           (lambda i: (B["u"][iB[i]], B["vm"][iB[i]], "cell"), "von Mises / E (with the law, p_h/E = 0.05)", "viridis",
            (0, vtop))]
-CAM = [(13.0, -10.5, 8.0), (0, 0, 0.8), (0, 0, 1)]
+CAM = [(12.0, -10.0, 4.5), (0, 0, 0.9), (0, 0, 1)]
 COLLAR = core(None)
 
 pl = pv.Plotter(shape=(1, 3), off_screen=True, window_size=(2400, 912), border=False)
@@ -122,7 +139,6 @@ for j, (get, lab, cm, clim) in enumerate(PANELS):
                                          width=0.7, height=0.07, label_font_size=24, fmt="%.2f" if j == 0 else "%.3f",
                                          n_labels=5, font_family="times", color="black"))
     pl.add_mesh(COLLAR, color="#c8c3b8", ambient=0.45, diffuse=0.6)
-    pl.add_mesh(pv.Disc(center=(0, 0, -0.01), inner=0, outer=3.6, normal=(0, 0, 1), c_res=64), color="#b0b0b0")
     pl.add_text(lab, position="upper_edge", font_size=13, font="times", color="black")
     pl.camera_position = CAM
     pl.camera.zoom(1.0)
@@ -130,7 +146,7 @@ for j, (get, lab, cm, clim) in enumerate(PANELS):
 pl.subplot(0, 0)
 title = pl.add_text("", position="upper_left", font_size=16, font="times", color="black")
 pl.subplot(0, 2)
-pl.add_text(f"collar (grey) rigid; nutrient from the outside; displacement x{MAG:g}", position="lower_right",
+pl.add_text(f"four-species synthetic case of Fritsch et al. 2025 (no experimental data); collar (grey) rigid; nutrient from the outside; displacement x{MAG:g}", position="lower_right",
             font_size=8, font="times", color="#555555")
 pl.link_views()
 
@@ -142,7 +158,7 @@ def frame(i, azim):
     pl.camera.azimuth = azim
 
 
-out = ROOT / "assets" / "anim_cervical_3d"
+out = ROOT / "assets" / "anim_cervical_f4_3d"
 cam0 = pl.camera.azimuth
 pl.open_movie(str(out.with_suffix(".mp4")), framerate=12, quality=9)
 nf = len(tA)
