@@ -1618,3 +1618,27 @@ v2_8_sep_ab（8³、シード 32 要素・辺 32 要素の平均）：
 - 追加：`make_living_deck.py` の感度の選択肢（--phi-min、--cons-ab、--deltim）、`run_living.ps1` の `--eco`（その本だけ別の点モデルの
   ファイル）、40 時刻の後処理 `post_fields_living_dense.mac` と `post_living_dense.ps1`。
 - 感度の旧版（L 固定）で分かったこと：r = 10 mm/T* は 0.3 分で要素が潰れて停止（A-19 と同じ）。
+
+## A-23. L の受け渡しの直接の照合（追記 9）と、夜の計算のまとめ
+
+### 1. USSFin が使う L ＝ 材料ルーチンが同じ増分で書いた L（差 0）
+- デバッグ用のビルド `F:\biofilm_upf_living4dbg`（living4 の USSFin に WRITE を足しただけ。本番のビルドは触っていない）で、v2f_8_mix_ab と
+  同じデッキ（dbg_8_mix_ab）を回した。結果は v2f_8_mix_ab と全桁同じ（WRITE は結果を変えない）。
+- USSFin は呼ばれるたびに、要素 220（シード）と 25（四隅）の 8 個の Gauss 点について、時刻、使った L、点の座標を書く
+  （`results/2026-10-living/ussfin_L_trace_dbg_8_mix_ab.json`、CSV は git の対象外なので JSON に）。照合 `check_living_handover.py`：
+  - **USSFin の時刻は増分の初めの時刻**（sGdp_Time、0、0.0025、0.0275、…）。そう読むと、USSFin が使った L は、材料ルーチンが
+    **同じ増分**で書いた L（pm トレースの L）と**全 41 増分で差 0**（要素 220、25 とも。荷重ステップ 1 の開始状態 0.54945 も含む）。
+    1 増分遅れではない：材料ルーチンが増分の中で書き、同じ増分の終わりに USSFin が読む（Python 版は 1 ステップ遅れ）。
+  - 8 個の点の座標の平均は要素の重心と 1e−14 で一致：USSFin の点の番号と材料ルーチンの ID（(elemId − 1)·8 + 点）は同じ並び。
+- 照合はこの 1 本（8³）。16³ は同じビルド（デバッグの WRITE なし）なので、受け渡しは同じはず。
+- mix_ab の T* = 1 のシード：L 0.048 で消費 g φ L c が小さくなり、c は 0.907（Python 0.937）。境界の値 1 の側へ上がっている。
+
+### 2. 夜の計算（切り離し、終わると自動で push）
+- 16³（`F:\biofilm_upf_living4\_living_f16a.log`、`_f16b.log`）：v2f_16_mix_ab → v2f_16_sep_ab → v2f_16_mix → v2f_16_sep。
+  mix_ab と sep_ab の 40 時刻の場も自動（`_living_dense16mix.log`、`_living_dense16.log`）。
+- 8³ の感度（`F:\biofilm_upf_living4s\_living_fsens8.log`）と閾値 α*₀ = 40、60（`_living_fthr8.log`）。
+- 24³ の v2f_24_sep_ab（`F:\biofilm_upf_living4m\_living_m24.log`）：最初の荷重ステップに 20 分以上かかっている（16³ は数分）。
+  終わるかどうかは分からない。
+- **表は自動**：上の連鎖が全部終わると `summarize_living.py` が `results/2026-10-living/A23_summary.md`（各本の T* = 0.25 刻みの
+  シードと四隅の表、check_living_trace の結果、sep_ab のシードの c と L の 40 増分の時間変化）を作って push（`_living_final.log`）。
+  24³ が終わるか 21 日 20:00 になったら、もう一度作って push。
