@@ -19,6 +19,20 @@
    - 16³ の本番 8 本は IKMHIWI03 で連鎖中（切り離し、終わると自動で push）。
      ログ `F:\biofilm_upf_living\_living_prod16.log`。
 
+## 21 日夜までの追記（A-20〜A-22、詳しくは `IKMHIWI03_TO_CLOUD.ja.md`）
+
+- **ビルドは `F:\biofilm_upf_living4` が最終**：living の A-19 の変更に加えて
+  - usermat（repo の `callsite/phi_mode_exec.inc`）：最初の荷重ステップは場だけを解く（prop(60) = 1、`make_living_deck.py --start-step 0.0025`）。
+  - USSFin（オリバーの要素、repo には入れない）：**L を毎回読む 1 行**（今までは初期化の中で 1 回だけ読んでいて L が固定だった、A-22）。
+  - 点モデルのファイル：`newton 50 1e-20`（最初のステップの Newton を収束させる、A-20）。
+  - 差分：`F:\oliver_element_patches_2026-10-21\`（**ユーザーが OneDrive などに写す**）。
+- **使える結果は `v2f_*` と `fsens_*` だけ**（`results/2026-10-living/`）。lv8_*、v2_8_*、v2s_*、sens_*、i8* は L が固定の版で使わない。
+  - 8³：v2f_8_sep_ab、v2f_8_mix_ab、v2f_8_sep、v2f_8_mix。感度 fsens_phimin001、fsens_dt00125、fsens_gab4、fsens_a10、fsens_r10（r = 10 は
+    要素が潰れて止まる）、閾値 fsens_a40、fsens_a60。
+  - 16³：v2f_16_mix_ab → v2f_16_sep_ab → v2f_16_mix → v2f_16_sep（1 本 約 70 分）。40 時刻の場 fields_v2f_16_{mix,sep}_ab_dense.json。
+  - 24³：v2f_24_sep_ab（メッシュ収束、終わるかどうかは時間次第）。
+- 照合：`check_living_trace.py <job> --eco abaqus_composition/eco_fritsch_2sp_a50.txt`（点モデルだけを見る。L の受け渡しは見えない）。
+
 ## 別の PC で次にやること（優先順）
 
 1. **check_living_trace.py を回す**（クラウド、Python と jax が要る）：
