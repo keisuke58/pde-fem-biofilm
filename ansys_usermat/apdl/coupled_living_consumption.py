@@ -7,10 +7,10 @@ quadrature points):
                  - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
                                                                    upwinded
     d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    0 = d lap c - g phi L f(c)                                     Eq. 35, quasi-static, consumption by the LIVING
-                                                                   biomass only: L = sum_i phi_i psi_i / sum_i phi_i,
-                                                                   the living share of the point model's biomass
-                                                                   (decided 20 Oct), f(c) = c
+    0 = d lap c - g phi (sum_i phibar_i) c                         Eq. 35, quasi-static, consumption by the LIVING
+                                                                   biomass only: phibar_i = phi_i psi_i of the point
+                                                                   model (Klempt et al. 2026; Oliver's form, decided
+                                                                   20 Oct, replacing the normalised share)
     0 = d_a lap a - g_a phi L a                                    the second nutrient field repurposed for the
                                                                    antibiotic, same equation
   c = 1 on the wall y = -1 mm (nutrient), a = 1 on the wall y = +1 mm from T* = T_AB on (antibiotic), zero flux
@@ -132,8 +132,8 @@ def start_state(phi_a, phi_b):
 
 
 def living(G):
-    """living share of the point model's biomass, sum phi_i psi_i / sum phi_i"""
-    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1) / np.maximum(G[:, :N_SP].sum(1), 1e-30)
+    """living volume fraction of the point model, sum_i phibar_i = sum_i phi_i psi_i (Klempt et al. 2026 notation)"""
+    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1)
 
 
 def grad(u):

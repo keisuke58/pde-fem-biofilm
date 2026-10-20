@@ -7,7 +7,7 @@ Draft of the new method text: `thesis/chapters/ch4_coupling_draft.tex` (not yet 
 
 | section | now | new |
 |---|---|---|
-| 4.1 Scope | point model gives the composition, one-way | point model used as published (unchanged); nutrient and antibiotic fields feed it, its living share feeds the consumption back; growth unchanged |
+| 4.1 Scope | point model gives the composition, one-way | point model used as published (unchanged); nutrient and antibiotic fields feed it, its living biomass sum phibar_i feeds the consumption back; growth unchanged |
 | 4.2 Model | Eq. 34 without front term, Eq. 35 g phi c | Eq. 34 with the front term (as printed), Eq. 35 with consumption g phi L c; one sentence that g phi in the paper is a misprint; the second nutrient field carries the antibiotic |
 | 4.3 Implementation | bridge, server, native | unchanged in structure; the call now passes (c_n, c_{n+1}, a_n, a_{n+1}) and returns L |
 | 4.4 Verification | closed forms | unchanged |

@@ -5,10 +5,10 @@ start state and its inputs, and compared with what ANSYS stored.
 
 Per traced Gauss point and step (the converged, i.e. last, row of each (ldstep, isubst)):
     start state gold_1..12, end state gnew_1..12, n_sub, dt_couple (= s dt), and the inputs c0, c1, a0, a1
-    (nutrient and antibiotic at the start and end of the increment), L (the living share passed back).
+    (nutrient and antibiotic at the start and end of the increment), L (the living biomass sum phi_i psi_i passed back).
 Python: n_sub steps of dt_couple / n_sub with c* = c*_0 ((1 - w) c0 + w c1), alpha* = alpha*_0 ((1 - w) a0 + w a1),
 w = k / n_sub, k = 1..n_sub (the rule of coupled_living_consumption.py), constants from the point-model file
-(default abaqus_composition/eco_fritsch_2sp.txt). Also checks L = sum phi_i psi_i / sum phi_i of gnew, and that
+(default abaqus_composition/eco_fritsch_2sp.txt). Also checks L = sum phi_i psi_i of gnew, and that
 the start state of each step is the end state of the step before (the state is carried, not rescaled).
 
     python ansys_usermat/apdl/check_living_trace.py JOB [--results DIR] [--eco FILE] [--max-steps N]
@@ -87,11 +87,11 @@ def main():
             g = np.asarray(g)
             worst = max(worst, float(np.abs(g - g1).max()))
             phi, psi = g1[:n_act], g1[6:6 + n_act]
-            worst_L = max(worst_L, abs(float(r[C["L"]]) - float((phi * psi).sum() / phi.sum())))
+            worst_L = max(worst_L, abs(float(r[C["L"]]) - float((phi * psi).sum())))
             n_checked += 1
     print(f"{a.job}: {len(points)} traced points, {n_checked} steps replayed")
     print(f"  max |gnew(ANSYS) - gnew(Python)| = {worst:.3e}")
-    print(f"  max |L(ANSYS) - sum(phi psi)/sum(phi)| = {worst_L:.3e}")
+    print(f"  max |L(ANSYS) - sum(phi psi)| = {worst_L:.3e}")
     print(f"  max gap between a step's start and the previous step's end (carried state) = {worst_gap:.3e}")
     ok = worst < 1e-8 and worst_L < 1e-12 and worst_gap < 1e-14
     print("PASS" if ok else "CHECK: differences above the expected round-off")

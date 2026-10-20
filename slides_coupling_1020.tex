@@ -46,10 +46,10 @@
   $\phi_i$, $\psi_i$, $\phi_0$, used as published};
 \draw[arr] ([yshift=4mm]f.east) -- node[above,font=\footnotesize]{$c^*(t)$, $\alpha^*(t)$, linear in time}
   ([yshift=4mm]p.west);
-\draw[arr] ([yshift=-4mm]p.west) -- node[below,font=\footnotesize]{living share $L=\sum_i\phi_i\psi_i/\sum_i\phi_i$}
+\draw[arr] ([yshift=-4mm]p.west) -- node[below,font=\footnotesize]{living biomass $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$}
   ([yshift=-4mm]f.east);
 \node[align=center,font=\small,text width=13cm] at (4.6,-2.4) {
-  $L$ scales the consumption of $c$ and $a$ $\;\to\;$ $c$ enters the front term of Eq.\ 34 $\;\to\;$
+  $\sum_i\bar\phi_i$ scales the consumption of $c$ and $a$ $\;\to\;$ $c$ enters the front term of Eq.\ 34 $\;\to\;$
   spreading of $\phi_{3D}$ $\;\to\;$ growth $\alpha$ (Eq.\ 36) $\;\to\;$ stress};
 \end{tikzpicture}
 \end{frame}
@@ -58,8 +58,8 @@
 \begin{frame}{Equations}
 \begin{align*}
 c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad \alpha^*\ \text{likewise}\\
-0&=d\,\nabla^2c-g\,\phi_{3D}\,L\,c,\qquad L=\textstyle\sum_i\phi_i\psi_i/\sum_i\phi_i\\
-0&=d_a\nabla^2a-g_a\,\phi_{3D}\,L\,a\\
+0&=d\,\nabla^2c-g\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,c,\qquad \bar\phi_i=\phi_i\psi_i\\
+0&=d_a\nabla^2a-g_a\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,a\\
 \dot\phi&=\beta\nabla^2\phi+k_\alpha\alpha-\|\nabla\phi\|\,\tfrac{r\,c}{k+c}\,\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c},
 \qquad \dot\alpha=k_\alpha\phi
 \end{align*}
@@ -103,7 +103,7 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 % --------------------------------------------------------
 \begin{frame}{Assumptions and open points}
 \begin{itemize}\setlength{\itemsep}{8pt}
-  \item \textcolor{warn}{Assumptions}: linear interpolation, $L$ one step late, start values of new points, $\phi_{\min}$
+  \item \textcolor{warn}{Assumptions}: linear interpolation, $\sum_i\bar\phi_i$ one step late, start values of new points, $\phi_{\min}$
   \item No transport of species between points
   \item Front term needs upwinding
   \item Antibiotic: synthetic data only ($b=0$ in the calibration)
@@ -122,7 +122,7 @@ $d$, $g$, $d_a$, $g_a$ & diffusion and consumption of nutrient and antibiotic\\
 $\beta$, $k_\alpha$, $r$, $k$ & diffusion of $\phi$, growth rate, front growth and Monod constant (Eq.\ 34, 36)\\
 $\phi_i$, $\psi_i$, $\phi_0$ & volume fraction and living fraction of species $i$, auxiliary void (Klempt et al.\ 2026)\\
 $c^*$, $\alpha^*$, $b_i$ & nutrient and antibiotic of the point model, antibiotic sensitivity\\
-$L$ & living share of the point model's biomass, $\sum_i\phi_i\psi_i/\sum_i\phi_i$\\
+$\bar\phi_i$ & living volume fraction of species $i$, $\phi_i\psi_i$ (Klempt et al.\ 2026)\\
 $T^*$, $s$ & normalised time; point-model time per unit $T^*$\\
 \bottomrule
 \end{tabular}
