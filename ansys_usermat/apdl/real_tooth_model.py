@@ -497,10 +497,10 @@ def film_surface(field, keep, reduce="max"):
     pts = np.asarray(surf.points)
     nrm = np.asarray(surf["Normals"])
     f = RegularGridInterpolator((ax,) * 3, np.nan_to_num(field), bounds_error=False,
-                                fill_value=0.0 if reduce == "max" else 1.0)
+                                fill_value=1.0 if reduce == "min" else 0.0)
     depths = np.linspace(0.0, DEPTH, 10)
     samples = np.stack([f(pts - d * nrm) for d in depths], 0)
-    surf.point_data["v"] = samples.max(0) if reduce == "max" else samples.min(0)
+    surf.point_data["v"] = {"max": samples.max, "min": samples.min, "mean": samples.mean}[reduce](0)
     return surf
 
 
@@ -523,16 +523,16 @@ def render(tag, D, png_only=False):
     vm_panel = (lambda i: (vm_fine(VM[i]) * 1e3, KEEP(i), "max"), "von Mises (mPa), film", "viridis", (0, vtop), "%.1f")
     if nutrient:
         C = D["c"]
-        cmin = float(np.floor(st["film"]["c_min"] * 10) / 10)
-        c_panel = (lambda i: (fill_nearest(C[i].astype(float), tooth), KEEP(i), "min"), "nutrient c (minimum through the film)",
-                   "Blues", (cmin, 1.0), "%.2f")
+        ctop = float(np.ceil(st["film"]["c_max"] * 20) / 20)           # the film's own range (c is 1 at the box faces)
+        c_panel = (lambda i: (fill_nearest(C[i].astype(float), tooth), KEEP(i), "mean"), "nutrient c, film mean",
+                   "Blues", (0.0, ctop), "%.2f")
         panels = [c_panel, am1_panel, vm_panel]
     else:
         panels = [phi_panel, am1_panel, vm_panel]
     note = (f"molar FDI 46 (grey, E = 1e4 Pa) at real size, cube {L:g} mm; film 0.5 mm, beta = {BETA:.2f} mm^2/T*; "
             f"bottom face clamped; undeformed; film surface = phi > 0.05, colour = maximum of the field through the film")
     if nutrient:
-        note += f"; c = 1 on the box faces around the crown, g/d = {float(D['q']):g} /mm^2, c panel = minimum through the film"
+        note += f"; c = 1 on the box faces around the crown, g/d = {float(D['q']):g} /mm^2, c panel = mean through the film"
     if gate:
         note += f"; growth gate 1 - p/p_h, p_h = {float(D['p_h']) * 1e3:.2f} mPa (0.5 x the film mean pressure without the gate)"
     pl = pv.Plotter(shape=(1, 3), off_screen=True, window_size=(2400, 912), border=False)
@@ -570,6 +570,10 @@ def render(tag, D, png_only=False):
     cam0 = pl.camera.azimuth
     t0 = time.time()
     if png_only:
+        for i in range(nf):                                  # replay the camera moves of the movie (the azimuth
+            pl.camera.azimuth = cam0 + 30.0 * i / (nf - 1) - 15.0   # setter accumulates with linked views), so the
+        for k in range(24):                                  # last frame is the same view as the movie's
+            pl.camera.azimuth = cam0 + 15.0 + 15.0 * (k + 1) / 24
         frame(nf - 1, cam0)
         pl.screenshot(str(out.with_suffix(".png")))
     else:
