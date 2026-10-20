@@ -1,0 +1,71 @@
+% Draft (20 Oct 2026) of the new coupling text for Chapter 4, replacing the scaled scheme of
+% Section \ref{sec:ch5-composition}. Not included in the build yet. Plan: thesis/CH4_REWRITE_PLAN.md.
+% Decisions: MEETING_2026-10-20.md. Numbers marked [..] are filled in from the runs.
+
+\section{Coupling the point model to the field}
+\label{sec:ch5-composition}
+
+\paragraph{The point model as published.}
+Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth} formulate their model on a
+material point, with $\phi_0$ as an auxiliary variable that enforces $\sum_i\phi_i+\phi_0=1$
+and is not to be read as a physical void. I therefore do not change the point model: its
+equations~\eqref{eq:ch5-point}, its parameters and its constraint stay as published, and it is
+called at every Gauss point with given inputs and returns its state. The inputs are the nutrient $c^*$,
+the antibiotic $\alpha^*$ and the start values; the outputs are $\phi_i$ and $\psi_i$. The
+field keeps its own amount $\phi_{3D}$, and the point model keeps its own state, which is carried
+from one increment to the next as state variables of the Gauss point.
+
+\paragraph{From the field to the point model.}
+The element solves the nutrient $c(\mathbf x,t)$ of Klempt et al.\ 2024, held at given sources
+and diffusing through the domain. The point model needs $c^*$ at its own, much smaller time
+steps. Between the increments $t_n$ and $t_{n+1}$ I interpolate linearly,
+\begin{equation}
+c^*(t)=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}\,c_n+\tfrac{t-t_n}{\Delta t}\,c_{n+1}\Bigr],
+\qquad t_n\le t\le t_{n+1},
+\label{eq:ch5-cstar}
+\end{equation}
+with $c_n,c_{n+1}$ the nutrient at the Gauss point and $c^*_0$ the nutrient level of the point
+model's own examples. Klempt et al.\ 2026 already use a time-dependent $c^*$ (their four-species
+case~3), so the point model accepts such an input without change. The model of Klempt et al.\
+2024 has no antibiotic. The element solves a second nutrient for its second species, which I do
+not use; I use this field for the antibiotic $a(\mathbf x,t)$, with its own sources and the same
+diffusion, and pass $\alpha^*(t)=\alpha^*_0\,a$ to the point model, interpolated as
+in~\eqref{eq:ch5-cstar}.
+
+\paragraph{From the point model to the field.}
+Only living biomass consumes nutrient. In Eq.~35 of Klempt et al.\ 2024 the consumption is
+written $g\phi$; the implementation uses $g\phi c$, and the printed form is a misprint. I scale
+the consumption by the living share of the biomass at the Gauss point,
+\begin{equation}
+0=d\,\nabla^2c-g\,\phi_{3D}\,L\,c,\qquad
+L=\frac{\sum_{i=1}^N\phi_i\psi_i}{\sum_{i=1}^N\phi_i},
+\label{eq:ch5-consumption}
+\end{equation}
+so that $L=1$ gives back Eq.~35 and a dead biofilm, $L=0$, consumes nothing. The void $\phi_0$
+has no living fraction and is not part of the sum, and dividing by $\sum_i\phi_i$ keeps the point
+model's own packing from being counted a second time next to $\phi_{3D}$. The antibiotic is taken
+up in the same way, $0=d_a\nabla^2a-g_a\phi_{3D}La$. The growth law~\eqref{eq:ch5-eq36} is
+unchanged: the inflation $\alpha$ measures how much biomass has been produced, whether alive or
+dead. The spreading of $\phi_{3D}$ follows Eq.~34 with its front term, which depends on $c$; this
+is the path by which the point model reaches the growth and the stress. $L$ is taken from the
+previous increment.
+
+\paragraph{Time.}
+Klempt et al.\ 2024 normalise time with a reference time chosen for the problem at hand. I choose
+$T^*=1$ as the duration covered by the point model's data, so that both models run on the same
+time: the point model advances $s\,\Delta T^*$ per increment with $s$ the length of that window in
+its own units, not a fitted value. For the synthetic data of Fritsch et al.\
+\cite{Fritsch2025BayesianMicrofilms}, case~I (1000 steps of $10^{-4}$), $s=0.1$. With this choice
+the coupled run reproduces the point model alone: [replay numbers].
+
+\paragraph{Start values.}
+The point model starts where the field first reaches $\phi_{\min}=0.01$. Where a seed is placed,
+the start values are those of the seed (one species, or a mixture). A Gauss point that the
+spreading biofilm reaches later starts from the $\phi_{3D}$-weighted mean state of the points it
+grows from. This is an assumption: the point model has no transport between points, so species
+meet only through this rule. [sensitivity to $\phi_{\min}$].
+
+\paragraph{Assumptions.} The coupling rests on four choices that neither paper fixes, each
+with its sensitivity in Section~\ref{sec:ch5-results}: the linear interpolation of $c^*$ and
+$\alpha^*$ in time, $L$ from the previous increment, the start values of newly reached points,
+and $\phi_{\min}$. The time link is no longer one of them.

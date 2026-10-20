@@ -14,7 +14,10 @@ Python 版（合成データ、同じ仕様）：`ansys_usermat/apdl/coupled_liv
 
 ## 1. 実装（オリバーの見積もり 3〜5 時間）
 
-基にするビルド：`F:\biofilm_upf_native`（点モデルが Fortran、`ecology_native.f`）。新しいディレクトリ `F:\biofilm_upf_living` に
+基にするビルド：`F:\biofilm_upf_native`（点モデルが Fortran、`ecology_native.f`）。
+**土台はモード 8（prop(28) = 8、10/2、`SPLIT_COUPLING.md`「Second scheme」）**：すでに「点モデルを縮めずに自分の状態で
+走らせる」方式なので、1a はほぼこれでよい。足すのは、初期値を要素の集合ごとに（prop(30), prop(32) を材料ごとに）と、
+新しく始まる点の扱い。新しいディレクトリ `F:\biofilm_upf_living` に
 コピーして作業し、`link_v222.ps1` でリンク（`/auto` を必ず）。
 
 ### 1a. 点モデルはブラックボックス（式は変えない）
@@ -50,6 +53,8 @@ Python 版（合成データ、同じ仕様）：`ansys_usermat/apdl/coupled_liv
    クラウドがこの入力で Python の点モデルを回して全桁一致を確かめるので、列を足しておく（`c0, c1, a0, a1, L`）。
 2. **L = 1 にすると今の結合と同じ消費になる**こと（モードを切り替えた 1 本と比べて、栄養の場が全桁一致）。
 3. 抗菌薬なしで a ≡ 0 になること。
+4. 結果が来たらクラウドで `python ansys_usermat/apdl/check_living_trace.py <job>` を回す（pm トレースに c0, c1, a0, a1, L の列が
+   必要。結果 JSON は `results/2026-10-living/` に）。
 
 ## 3. 本番（16³、`-smp -np 4`、`run_chain.ps1` で切り離して）
 Python 版と同じ 4 本（前線項 r と r/10 で、計 8 本。時間がなければ r/10 を先に）：
