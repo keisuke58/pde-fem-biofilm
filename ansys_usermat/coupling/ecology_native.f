@@ -322,8 +322,45 @@ C         crel < 0: no local nutrient (c = c*).
           integer, intent(in) :: n_sub
           double precision, intent(out) :: g_new(12), phi_int
           logical, intent(out) :: ok
+          call eco_substeps_x(g, theta, dt_h, n_sub, crel, .false.,
+     &                        0.0d0, 0.0d0, 0.0d0, 0.0d0, g_new,
+     &                        phi_int, ok)
+        end subroutine eco_substeps
+
+        subroutine biofilm_ecology_hook_lin(g, theta, dt, n_sub, c0, c1,
+     &                                      a0, a1, g_new, phi_int, ok)
+C         the coupling agreed with the partner on 20 Oct 2026
+C         (MEETING_2026-10-20.md, coupled_living_consumption.py): c* and
+C         alpha* from the 3D fields, linearly interpolated in time over
+C         the inner steps, at the end of inner step k (w = k / n_sub)
+C           c*_k = c*_file ((1 - w) c0 + w c1)
+C           alpha*_k = alpha*_file ((1 - w) a0 + w a1)
+C         c*_file, alpha*_file from the configuration file (Fritsch et
+C         al. 2025 Case I: 100 and 10), c, a the fields' values (c = 1 on
+C         the nutrient wall). The equations of the point model unchanged.
+          real(c_double), intent(in)  :: g(12), theta(20), dt
+          real(c_double), intent(in)  :: c0, c1, a0, a1
+          integer, intent(in)         :: n_sub
+          real(c_double), intent(out) :: g_new(12)
+          real(c_double), intent(out) :: phi_int
+          logical, intent(out)        :: ok
+          call eco_substeps_x(g, theta, dt, n_sub, -1.0d0, .true.,
+     &                        c0, c1, a0, a1, g_new, phi_int, ok)
+        end subroutine biofilm_ecology_hook_lin
+
+        subroutine eco_substeps_x(g, theta, dt_h, n_sub, crel, lin,
+     &                            c0, c1, a0, a1, g_new, phi_int, ok)
+C         the body of eco_substeps; lin = .true.: c and alpha per inner
+C         step from (c0, c1), (a0, a1) as in biofilm_ecology_hook_lin
+          double precision, intent(in) :: g(12), theta(20), dt_h, crel
+          double precision, intent(in) :: c0, c1, a0, a1
+          logical, intent(in) :: lin
+          integer, intent(in) :: n_sub
+          double precision, intent(out) :: g_new(12), phi_int
+          logical, intent(out) :: ok
           double precision :: a(5,5), b(5), mask(5), gp(12), gg(12)
           double precision :: q(12), jac(12,12), dl(12), dts, c, s
+          double precision :: al, w
           integer :: i, it, ks, n
           ok = .false.
           g_new = g
@@ -401,12 +438,18 @@ C         seed_inactive: zero the switched-off species once
             end if
           end if
           dts = dt_h / dble(n_sub)
+          al = eco_alstar
           do ks = 1, n_sub
+            if (lin) then
+              w = dble(ks) / dble(n_sub)
+              c = eco_cstar * ((1.0d0 - w) * c0 + w * c1)
+              al = eco_alstar * ((1.0d0 - w) * a0 + w * a1)
+            end if
             gg = gp
             call eco_clip(gg, mask)
             do it = 1, eco_nwmax
               call eco_clip(gg, mask)
-              call eco_resjac(gg, gp, dts, a, b, c, eco_alstar, eco_eta,
+              call eco_resjac(gg, gp, dts, a, b, c, al, eco_eta,
      &                        mask, q, jac)
 C             the paper pipeline's newton_step keeps g once |Q|^2 < tol
               if (eco_nwtol .gt. 0.0d0) then
@@ -439,7 +482,7 @@ C             the paper pipeline's newton_step keeps g once |Q|^2 < tol
           end do
           g_new = gp
           ok = .true.
-        end subroutine eco_substeps
+        end subroutine eco_substeps_x
 
         subroutine biofilm_py_hook(F, Fv, alpha, C10, C01, D1, eta,
      &                             mtype, dt, stress, Fvnew, dsde, ok)

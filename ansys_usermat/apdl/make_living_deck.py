@@ -1,0 +1,127 @@
+"""make_living_deck.py -- run decks for the coupling agreed with the partner on 20 Oct 2026 (A-19,
+MEETING_2026-10-20.md, CLOUD_TO_IKMHIWI03_2026-10-20.ja.md): the point model as a black box at every Gauss point
+(usermat prop(28) = 11), consumption by the living biomass g phi L c in the element (LIVING_CONS = 1), the
+front term of Klempt 2024 Eq. 34 with |grad phi| (FRONT_GRAD = 1), the second nutrient field as the antibiotic
+(source on the face y = +1 mm from T* = NUT2_TSTART on). Same set-up as the Python version
+coupled_living_consumption.py.
+
+    python ansys_usermat/apdl/make_living_deck.py BASE.dat OUT.dat --layout sep|mix [--ab] [--front 1|0.1|0]
+        [--l1] [--cons G]
+
+  --layout sep : species A (point-model species 1) in the Chapter 4 seed (component BIOFILM1 of the base deck),
+                 species B in the four vertical edge columns |x|, |y| > 0.75 mm; one field phi (bio1) = 1 in both
+  --layout mix : A and B together in the seed, the file's start (Fritsch Case I: 0.25, 0.30)
+  --ab         : antibiotic a = 1 on the elements of the layer y = +1 mm from T* = 0.5 (Dirichlet, as the nutrient)
+  --front F    : r = F x 10 mm/T* (Klempt 2024 Table 2, r = 100 um/T* on the 20 um cube, converted to the 2 mm
+                 cube), k = 1; 0 switches the front term off (ORI_WEIGHT11 = 0)
+  --l1         : L = 1 (prop(57) = 1): the consumption without the living share, for check 2
+  --cons G     : g for both fields (default 4: Thiele number g L^2/d = 4 with L = 1 mm, d = 1 mm^2/T*)
+
+The base deck is one of the partner's decks as derived for Chapter 4 (base_w<n>_c6_g1_s015.dat, never
+committed). The nutrient keeps the base deck's component NUTRIENT1 (the element layer at y = -1 mm, c = 1).
+Point model: BIOFILM_ECO_CASE = abaqus_composition/eco_fritsch_2sp.txt (theta in prop(8:27) from it).
+Post: post_fields_living.mac (fields at T* = 0.25, 0.5, 0.75, 1) after the base deck's own post macros.
+"""
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+sys.path.insert(0, str(HERE))
+from deck_components import centroids, cmblock, read_components, read_mesh  # noqa: E402
+
+CASE = ROOT / "abaqus_composition" / "eco_fritsch_2sp.txt"
+R_TABLE2 = 100.0e-3 * (2.0 / 20.0e-3)   # 10 mm/T*
+
+
+def case_theta():
+    lines = [l.split() for l in CASE.read_text().splitlines() if l.strip()]
+    th = [float(x) for x in lines[3]]
+    assert len(th) == 20
+    return th
+
+
+def set_scalar(text, name, value):
+    rx = re.compile(rf"^({re.escape(name)}\s*=\s*)([^\s!]+)", re.M)
+    hits = rx.findall(text)
+    if len(hits) != 1:
+        sys.exit(f"STOP: {name}: {len(hits)} assignments, expected 1")
+    return rx.sub(lambda m: m.group(1) + value, text)
+
+
+def replace_cmblock(text, name, ids):
+    rx = re.compile(rf"^CMBLOCK,\s*{name}\s*,ELEM,\s*(\d+)\s*\r?\n\(8i10\)\r?\n((?:[ \d]+\r?\n)+)", re.M | re.I)
+    m = rx.search(text)
+    if not m or len(rx.findall(text)) != 1:
+        sys.exit(f"STOP: component {name} not found once")
+    nl = "\r\n" if "\r\n" in m.group(0) else "\n"
+    return text[:m.start()] + cmblock(name, ids).replace("\n", nl) + nl + text[m.end():]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("base")
+    ap.add_argument("out")
+    ap.add_argument("--layout", choices=("sep", "mix"), required=True)
+    ap.add_argument("--ab", action="store_true")
+    ap.add_argument("--front", type=float, default=0.1)
+    ap.add_argument("--l1", action="store_true")
+    ap.add_argument("--cons", type=float, default=4.0)
+    ap.add_argument("--dt-ussfin", type=float, default=0.0025)
+    ap.add_argument("--old-cons", action="store_true",
+                    help="LIVING_CONS = 0: the element's own consumption (g phi, zero order) for comparison")
+    a = ap.parse_args()
+
+    nodes, elems = read_mesh(a.base)
+    cen = centroids(nodes, elems)
+    comps = read_components(a.base)
+    seed = set(comps["BIOFILM1"])
+    h = 2.0 / round(len(elems) ** (1 / 3))
+    cols = {e for e, c in cen.items() if abs(c[0]) > 0.75 and abs(c[1]) > 0.75}
+    top = {e for e, c in cen.items() if c[1] > 1.0 - h}
+    bio1 = seed | cols if a.layout == "sep" else seed
+
+    th = case_theta()
+    props = {28: 11, 29: 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2, 57: 1 if a.l1 else 0,
+             58: 0.55, 59: 0.5625}
+    props.update({7 + i: v for i, v in enumerate(th, start=1)})
+    tmp = Path(a.out).with_suffix(".tmp.dat")
+    cmd = [sys.executable, str(HERE / "make_wired_deck.py"), a.base, str(tmp),
+           "--props", ",".join(f"{k}={v!r}" for k, v in sorted(props.items())), "--post", "all"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(r.stdout + r.stderr)
+    text = tmp.read_text(encoding="latin-1")
+    tmp.unlink()
+
+    r_front = a.front * R_TABLE2
+    scal = {"MY_BIOSTART1": "1.0", "MY_BIOSTART2": "0.0", "MY_NUTSTART1": "1.0",
+            "MY_NUTSTART2": "1.0" if a.ab else "0.0", "MY_DIFF1": "1", "MY_DIFF2": "1",
+            "CONSUMPTION11": repr(a.cons), "CONSUMPTION12": "0", "CONSUMPTION21": repr(a.cons),
+            "CONSUMPTION22": "0", "MAX_GROWTH11": repr(r_front), "MAX_GROWTH21": "0", "HALF_VELO11": "1",
+            "ORI_WEIGHT11": "1" if a.front > 0 else "0", "ORI_WEIGHT21": "0",
+            "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
+    for k, v in scal.items():
+        text = set_scalar(text, k, v)
+    nl = "\r\n" if "\r\n" in text else "\n"
+    m = re.search(r"^PENALTY1\s*=.*$", text, re.M)
+    new = (f"{nl}! pde-fem-biofilm 20 Oct 2026 (A-19): living share, front term, antibiotic{nl}"
+           f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {0.5 if a.ab else 0.0}{nl}")
+    text = text[:m.end()] + new + text[m.end():]
+    text = replace_cmblock(text, "BIOFILM1", bio1)
+    text = replace_cmblock(text, "NUTRIENT2", top)
+    head = (f"! make_living_deck.py: layout {a.layout}, antibiotic {a.ab}, front r = {r_front:g} mm/T*, "
+            f"L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
+            f"NUTRIENT2 (y = +1 layer) {len(top)} elements{nl}")
+    text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,post_fields_living.mac{nl}FINISH{nl}"
+    Path(a.out).write_text(text, encoding="latin-1", newline="")
+    print(head.strip())
+
+
+if __name__ == "__main__":
+    main()

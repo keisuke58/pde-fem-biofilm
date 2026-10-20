@@ -69,7 +69,188 @@ C       the field's nutrient at this Gauss point (modes 7 and 9): as
 C       shipped "not available" (-1D30; the field's c itself can be
 C       < 0), paste_fragments.py --nut-var NAME makes it CM_NUT = NAME
         CM_NUT = -1.0D30
-        IF (prop(28) .GT. 8.5D0 .AND. prop(28) .LT. 9.5D0) THEN
+        IF (prop(28) .GT. 10.5D0 .AND. prop(28) .LT. 11.5D0) THEN
+C         --- coupling with the living share (prop(28) = 11, 20 Oct) ----
+C         As agreed with the partner on 20 Oct 2026 (MEETING_2026-10-20.md;
+C         Python: coupled_living_consumption.py). The point model is a
+C         black box with its own constraint sum phi_i + phi_0 = 1: its
+C         state is carried from step to step and NOT scaled to the field.
+C         It starts where the field reaches phi_min = prop(29).
+C         Inputs: c* and alpha* from the two field variables at this
+C         point, nutrient 1 (c) and nutrient 2 (a, the antibiotic),
+C         linearly interpolated over the inner steps between the value
+C         seen at the previous increment and the one seen now (the field
+C         is solved at the end of each increment, so the pair is one
+C         increment behind the step; ustatev(85), ustatev(86)).
+C         Output: the living share L = sum phi_i psi_i / sum phi_i (0
+C         before the start), ustatev(87), and in the userdata pool
+C         (ofs_dp_Living) for the consumption g phi L c in USSFin.
+C         Growth: Eq. 36 with the field's phi, unchanged.
+C         Start state: prop(56) = 1 two mono-species regions, species B
+C         where |x| and |y| > prop(59) (default 0.5625 mm, half way
+C         between the seed's edge 0.375 and the corner columns' 0.75),
+C         species A elsewhere; amounts (prop(58) - 1e-6, 1e-6), prop(58)
+C         = 0.55 by default (Fritsch's total). Otherwise both species
+C         from the file's phi_init line (Fritsch Case I: 0.25, 0.30).
+C         prop(57) = 1: L = 1 (check against the consumption without the
+C         living share). ustatev(88) = 1 once (85:86) hold values,
+C         ustatev(89) = phi_1/(phi_1 + phi_2), the share of species A.
+          CM_NSP = 2
+          IF (nProp .GE. 37) THEN
+            IF (prop(37) .GT. 0.0D0) CM_NSP = MIN(MAX(NINT(prop(37)),
+     &                                          1), 5)
+          END IF
+          SP_SUM = MIN(MAX(PHI_USED, 0.0D0), SP_PHIMAX)
+          DO PM_I = 1, 12
+            PM_GOLD(PM_I) = ustatev(71 + PM_I)
+          END DO
+          SP_MIN = 0.0D0
+          IF (nProp .GE. 29) SP_MIN = prop(29)
+          DO PM_I = 1, 20
+            PM_TH(PM_I) = prop(7 + PM_I)
+          END DO
+          CM_TS = 1.0D0
+          IF (nProp .GE. 31) THEN
+            IF (prop(31) .GT. 0.0D0) CM_TS = prop(31)
+          END IF
+          CM_DT = CM_TS * dTime
+          PM_NSUB = 1
+          IF (CM_DT .GT. PM_DTMAX) PM_NSUB = CEILING(CM_DT / PM_DTMAX)
+          SP_ID = SPLIT_ID(elemId, kDomIntPt)
+          PM_OK = .TRUE.
+          PM_PHIINT = 0.0D0
+          LV_C1 = Sdp_nut1_n
+          LV_A1 = Sdp_nut2_n
+          IF (ustatev(88) .GT. 0.5D0) THEN
+            LV_C0 = ustatev(85)
+            LV_A0 = ustatev(86)
+          ELSE
+            LV_C0 = LV_C1
+            LV_A0 = LV_A1
+          END IF
+          IF (PM_GOLD(7) .EQ. 0.0D0 .AND. SP_SUM .LT. SP_MIN) THEN
+            SP_HITI = 2
+            DO PM_I = 1, 12
+              PM_GNEW(PM_I) = PM_GOLD(PM_I)
+            END DO
+          ELSE
+            IF (PM_GOLD(7) .EQ. 0.0D0) THEN
+              LV_LAY = 0
+              IF (nProp .GE. 56) LV_LAY = NINT(prop(56))
+              DO PM_I = 1, 12
+                PM_GOLD(PM_I) = 0.0D0
+              END DO
+              IF (LV_LAY .EQ. 1) THEN
+                LV_TOT = 0.55D0
+                LV_TH = 0.5625D0
+                IF (nProp .GE. 58) THEN
+                  IF (prop(58) .GT. 0.0D0) LV_TOT = prop(58)
+                END IF
+                IF (nProp .GE. 59) THEN
+                  IF (prop(59) .GT. 0.0D0) LV_TH = prop(59)
+                END IF
+                LV_B = (ABS(coords(1)) .GT. LV_TH .AND.
+     &                  ABS(coords(2)) .GT. LV_TH)
+                IF (LV_B) THEN
+                  PM_GOLD(1) = 1.0D-6
+                  PM_GOLD(2) = LV_TOT - 1.0D-6
+                ELSE
+                  PM_GOLD(1) = LV_TOT - 1.0D-6
+                  PM_GOLD(2) = 1.0D-6
+                END IF
+                PM_GOLD(7) = 0.999D0
+                PM_GOLD(8) = 0.999D0
+                PM_GOLD(6) = 1.0D0 - LV_TOT
+              ELSE
+                CALL biofilm_ecology_init_state(CM_NSP, PM_GOLD,
+     &                                          CA_HAVE)
+                IF (.NOT. CA_HAVE) THEN
+                  DO PM_I = 1, 12
+                    PM_GOLD(PM_I) = 0.0D0
+                  END DO
+                  PM_GOLD(1) = 0.25D0
+                  PM_GOLD(2) = 0.30D0
+                  PM_GOLD(7) = 0.999D0
+                  PM_GOLD(8) = 0.999D0
+                  PM_GOLD(6) = 1.0D0 - 0.55D0
+                END IF
+              END IF
+            END IF
+            CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
+     &                           PM_GNEW, PM_PHIINT, SP_HIT)
+            IF (SP_HIT) THEN
+              SP_HITI = 1
+            ELSE
+              SP_HITI = 0
+              CALL biofilm_ecology_hook_lin(PM_GOLD, PM_TH, CM_DT,
+     &             PM_NSUB, LV_C0, LV_C1, LV_A0, LV_A1, PM_GNEW,
+     &             PM_PHIINT, PM_OK)
+              IF (PM_OK) THEN
+                DO PM_I = 1, 12
+                  IF (PM_GNEW(PM_I) .NE. PM_GNEW(PM_I)) PM_OK = .FALSE.
+                END DO
+                CM_S = PM_GNEW(1)
+                DO PM_I = 2, CM_NSP
+                  CM_S = CM_S + PM_GNEW(PM_I)
+                END DO
+                IF (CM_S .LE. 0.0D0) PM_OK = .FALSE.
+              END IF
+              IF (PM_OK) CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst,
+     &                        PM_GOLD, PM_GNEW, PM_PHIINT)
+            END IF
+          END IF
+          IF (PM_OK) THEN
+            DO PM_I = 1, 12
+              ustatev(71 + PM_I) = PM_GNEW(PM_I)
+            END DO
+          ELSE
+            keycut = 1
+          END IF
+          LV_L = 0.0D0
+          ustatev(89) = 0.0D0
+          IF (PM_GNEW(7) .NE. 0.0D0) THEN
+            CM_S = 0.0D0
+            LV_L = 0.0D0
+            DO PM_I = 1, CM_NSP
+              CM_S = CM_S + PM_GNEW(PM_I)
+              LV_L = LV_L + PM_GNEW(PM_I) * PM_GNEW(6 + PM_I)
+            END DO
+            IF (CM_S .GT. 0.0D0) THEN
+              LV_L = LV_L / CM_S
+              ustatev(89) = PM_GNEW(1) / CM_S
+            ELSE
+              LV_L = 0.0D0
+            END IF
+          END IF
+          IF (nProp .GE. 57) THEN
+            IF (prop(57) .GT. 0.5D0) LV_L = 1.0D0
+          END IF
+          ustatev(85) = LV_C1
+          ustatev(86) = LV_A1
+          ustatev(87) = LV_L
+          ustatev(88) = 1.0D0
+          LV_V(1) = LV_L
+          Si_Kerr = SetVals(ofs_dp_Living + (ID-1), 1, LV_V)
+          CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+     &                                dTime, ALPHA_NEW)
+          IF (kDomIntPt .EQ. 1 .AND.
+     &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+     &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
+            IF (.NOT. CM_TRACE_OPEN) THEN
+              OPEN(96, FILE='comp_trace.csv', STATUS='UNKNOWN',
+     &             POSITION='APPEND')
+              CM_TRACE_OPEN = .TRUE.
+            END IF
+            WRITE(96,'(I0,5(",",I0),6(",",ES24.16E3),'//
+     &            '29(",",ES24.16E3))')
+     &        elemId, kDomIntPt, ldstep, isubst, PM_NSUB, SP_HITI,
+     &        dTime, CM_DT, PHI_USED, SP_SUM, ALPHA_N, ALPHA_NEW,
+     &        (PM_GOLD(PM_I), PM_I = 1, 12),
+     &        (PM_GNEW(PM_I), PM_I = 1, 12),
+     &        LV_C0, LV_C1, LV_A0, LV_A1, LV_L
+            FLUSH(96)
+          END IF
+        ELSE IF (prop(28) .GT. 8.5D0 .AND. prop(28) .LT. 9.5D0) THEN
 C         --- growth from the calibrated point model (10 Oct 2026) ----
 C         P3 design (tmcmc202601, docs/fem_coupling/P3_point_model_
 C         alpha_design.md), live-biomass form. The point model runs on

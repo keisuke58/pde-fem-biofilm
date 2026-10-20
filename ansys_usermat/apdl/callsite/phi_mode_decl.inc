@@ -61,3 +61,8 @@ C     --- composition from an independent point model (prop(28) = 8) ---
 C     --- growth from the calibrated point model (prop(28) = 9) --------
       DOUBLE PRECISION CA_CHI
       LOGICAL CA_HAVE
+C     --- coupling with the living share (prop(28) = 11, 20 Oct) -------
+      DOUBLE PRECISION LV_C0, LV_C1, LV_A0, LV_A1, LV_L, LV_TOT, LV_TH
+      DOUBLE PRECISION LV_V(1)
+      INTEGER LV_LAY
+      LOGICAL LV_B
