@@ -32,28 +32,35 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=0.5$ and
     \toprule
     & & $\phi_{3D}$ & $\sum_i\bar\phi_i$ & A & $c$ & $a$ & $\alpha-1$ & $\sigma_{vM}$ [Pa]\\
     \midrule
-    separate, antibiotic & seed, $T^*=1$ & 1.000 & 0.947 & 0.981 & 0.771 & 0.993 & $1.00\cdot10^{-3}$ & $3.67\cdot10^{-4}$\\
-    & corners, $T^*=1$ & 0.941 & 0.632 & 0.019 & 0.879 & 1.000 & [..] & [..]\\
+    separate, antibiotic & seed, $T^*=1$ & 0.579 & 0.567 & 0.969 & 0.475 & 0.990 & $6.35\cdot10^{-4}$ & $1.57\cdot10^{-4}$\\
+    & corners, $T^*=1$ & 0.614 & 0.448 & 0.031 & 0.688 & 1.000 & $5.40\cdot10^{-4}$ & $1.61\cdot10^{-4}$\\
     separate, no antibiotic & seed & [..] & & & & & & \\
-    mixed, antibiotic & seed & [..] & & & & & & \\
+    mixed, antibiotic & seed, $T^*=0.5$ & 0.632 & 0.904 & 0.542 & 0.387 & 0 & $4.20\cdot10^{-4}$ & $2.02\cdot10^{-4}$\\
+    & seed, $T^*=1$ & 0.539 & 0.048 & 0.521 & 0.907 & 0.999 & $6.98\cdot10^{-4}$ & $1.21\cdot10^{-4}$\\
     mixed, no antibiotic & seed & [..] & & & & & & \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{What the antibiotic does.}
-Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives: in the seed its
-living fraction falls from $0.86$ to $0.05$ within one increment. Species A survives in the seed and
-dies in the corner blocks. Whether a species survives depends on the balance in its equation for
+Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives. In the mixed seed the
+living volume fraction falls from $0.90$ to $0.07$ by $T^*=0.75$, and the nutrient, no longer consumed,
+rises from $0.39$ to $0.88$. Species A in the separate seed loses part of its living biomass ($0.96$ to
+$0.57$). Whether a species survives depends on the balance in its equation for
 $\psi_i$ between the nutrient term $c^*\phi_i\sum_jA_{ij}\phi_j\psi_j$ and the antibiotic term
-$\alpha^*b_i\psi_i$: in the seed $c^*=100\,c\approx77$ outweighs $\alpha^*b_1=50$, in the corners [..].
+$\alpha^*b_i\psi_i$: with $c^*=100\,c$ and $\alpha^*b_1=50$, species A grows where $c>0.5$ and declines where $c<0.5$.
+The seed lies near this threshold: $c=0.475$ in ANSYS ($8^3$) and $0.533$ in Python ($32^3$), and the living
+fraction of A at $T^*=1$ is $0.57$ and $0.81$.
 The nutrient field thus decides where the antibiotic acts, which a point model with a constant $c^*$
 cannot show. Through the consumption [..] the nutrient left by the dead biomass [..] the spreading and
 the stress [..].
 
 \paragraph{Python against ANSYS.}
 The Python version with the boundary conditions of the ANSYS deck (the nutrient and the antibiotic held on
-whole element layers) gives [..] (Figure~[..]); the remaining difference comes from the discretisation
+whole element layers) gives in the mixed seed at $T^*=1$ a living fraction of $0.050$ and $c=0.937$ (ANSYS
+$0.048$ and $0.907$), in the separate seed $0.805$ and $0.533$ (ANSYS $0.567$ and $0.475$). In both the
+seed's $\phi_{3D}$ falls below 1 as the front term moves biomass towards the nutrient (Python $0.77$,
+ANSYS $0.58$ at $T^*=1$); the remaining difference comes from the discretisation
 of the fields ($32^3$ finite volumes against $8^3$ elements of the neighboured element method).
 
 \paragraph{Sensitivity.} Table~[..] varies one choice at a time [A-22]: $\phi_{\min}$ $0.01$/$0.1$,
