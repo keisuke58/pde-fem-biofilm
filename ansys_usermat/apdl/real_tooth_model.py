@@ -570,11 +570,10 @@ def render(tag, D, png_only=False):
     cam0 = pl.camera.azimuth
     t0 = time.time()
     if png_only:
-        for i in range(nf):                                  # replay the camera moves of the movie (the azimuth
-            pl.camera.azimuth = cam0 + 30.0 * i / (nf - 1) - 15.0   # setter accumulates with linked views), so the
-        for k in range(24):                                  # last frame is the same view as the movie's
-            pl.camera.azimuth = cam0 + 15.0 + 15.0 * (k + 1) / 24
         frame(nf - 1, cam0)
+        pl.camera_position = CAM                             # the movie ends 30 degrees past CAM (its last 24 frames
+        pl.camera.Azimuth(30.0)                              # turn to +30) and its screenshot keeps that view
+        pl.render()
         pl.screenshot(str(out.with_suffix(".png")))
     else:
         pl.open_movie(str(out.with_suffix(".mp4")), framerate=16, quality=9)
