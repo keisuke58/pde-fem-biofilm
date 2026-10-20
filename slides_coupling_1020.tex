@@ -67,6 +67,36 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \end{frame}
 
 % --------------------------------------------------------
+\begin{frame}{Nutrient and antibiotic: from the nodes to the Gauss points}
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.9, transform shape]
+\node[box=3.0cm,fill=gray!12] (n) at (0,0) {\textbf{nodes}\\ $c_a$, $a_a$ (element unknowns)\\ solved at the end of the increment};
+\node[box=3.2cm,fill=gray!12] (g) at (4.1,0) {\textbf{Gauss point} $g$\\ $c_g=\sum_a N_a(\boldsymbol\xi_g)\,c_a$\\ $a_g$ likewise\\ stored per point};
+\node[box=3.0cm,fill=c3!15,draw=c3] (m) at (8.2,0) {\textbf{material routine}\\ next increment: pair\\ $(c_n, c_{n+1})$, $(a_n, a_{n+1})$};
+\node[box=2.6cm,fill=c3!15,draw=c3] (p) at (11.9,0) {\textbf{point model}\\ $c^*(t)$, $\alpha^*(t)$\\ linear over the inner steps};
+\draw[arr] (n) -- (g); \draw[arr] (g) -- (m); \draw[arr] (m) -- (p);
+\end{tikzpicture}\\[10pt]
+\begin{itemize}\setlength{\itemsep}{4pt}
+  \item As strains from displacements: the shape functions at the Gauss point
+  \item The antibiotic in the second nutrient field takes the same path
+  \item One increment behind: the field is solved after the material routine
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{First ANSYS run: what is checked}
+\centering
+\includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{assets/fig_living_trace_check.png}\\[2pt]
+\raggedright\small
+\begin{itemize}\setlength{\itemsep}{2pt}
+  \item (a) $c_{n+1}$ of one increment is $c_n$ of the next: the pair is passed on without a jump
+  \item (b) point model in ANSYS = Python with the same inputs, $10^{-12}$ or better from the second increment
+  \item \textcolor{warn}{First increment}: no nutrient yet ($c=0$); start from the steady field instead
+  \item \textcolor{warn}{To do}: linear field $c=(y+1)/2$, values at each Gauss point (node $\to$ Gauss point)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
 \begin{frame}{Time: one clock for both models}
 \begin{itemize}\setlength{\itemsep}{8pt}
   \item $T^*=1$ = duration of the point model's data
