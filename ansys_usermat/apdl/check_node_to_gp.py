@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""check_node_to_gp.py -- are the nutrient c and the antibiotic a that the material routine receives at a Gauss point
+"""check_node_to_gp.py -- NOTE (A-20, 20 Oct): not applicable to the partner element. In the neighboured element
+method the fields phi, c, a live at the integration points (and surface points); there are no nodal values and no
+interpolation, the material routine reads its own point. Kept for elements with nodal fields.
+
+ are the nutrient c and the antibiotic a that the material routine receives at a Gauss point
 the element's nodal values interpolated with its shape functions? (A-19, Oliver's question of 20 Oct.)
 
 Input (CSV, from IKMHIWI03, any result set of a run of the coupling, e.g. lv8_sep at T* = 0.5):

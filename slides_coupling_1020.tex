@@ -67,19 +67,19 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Nutrient and antibiotic: from the nodes to the Gauss points}
+\begin{frame}{Nutrient and antibiotic at the Gauss points}
 \centering
 \begin{tikzpicture}[font=\footnotesize, scale=0.9, transform shape]
-\node[box=3.0cm,fill=gray!12] (n) at (0,0) {\textbf{nodes}\\ $c_a$, $a_a$ (element unknowns)\\ solved at the end of the increment};
-\node[box=3.2cm,fill=gray!12] (g) at (4.1,0) {\textbf{Gauss point} $g$\\ $c_g=\sum_a N_a(\boldsymbol\xi_g)\,c_a$\\ $a_g$ likewise\\ stored per point};
-\node[box=3.0cm,fill=c3!15,draw=c3] (m) at (8.2,0) {\textbf{material routine}\\ next increment: pair\\ $(c_n, c_{n+1})$, $(a_n, a_{n+1})$};
-\node[box=2.6cm,fill=c3!15,draw=c3] (p) at (11.9,0) {\textbf{point model}\\ $c^*(t)$, $\alpha^*(t)$\\ linear over the inner steps};
-\draw[arr] (n) -- (g); \draw[arr] (g) -- (m); \draw[arr] (m) -- (p);
+\node[box=3.6cm,fill=gray!12] (g) at (0,0) {\textbf{element (NEM)}\\ $\phi_{3D}$, $c$, $a$ solved at the\\ Gauss points (and surface points)};
+\node[box=3.2cm,fill=c3!15,draw=c3] (m) at (4.6,0) {\textbf{material routine}\\ reads its own point:\\ pair $(c_n, c_{n+1})$, $(a_n, a_{n+1})$};
+\node[box=3.0cm,fill=c3!15,draw=c3] (p) at (8.8,0) {\textbf{point model}\\ $c^*(t)$, $\alpha^*(t)$\\ linear over the inner steps};
+\draw[arr] (g) -- (m); \draw[arr] (m) -- (p);
 \end{tikzpicture}\\[10pt]
 \begin{itemize}\setlength{\itemsep}{4pt}
-  \item As strains from displacements: the shape functions at the Gauss point
+  \item No interpolation from nodes: the fields live at the integration points
   \item The antibiotic in the second nutrient field takes the same path
-  \item One increment behind: the field is solved after the material routine
+  \item One increment behind: the fields are solved after the material routine
+  \item First increment: the supplied values $c=1$, $a=0$
 \end{itemize}
 \end{frame}
 
@@ -90,11 +90,10 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \raggedright\small
 \begin{itemize}\setlength{\itemsep}{2pt}
   \item (a) $c_{n+1}$ of one increment is $c_n$ of the next: the pair is passed on without a jump
-  \item (b) point model in ANSYS = Python with the same inputs: $4\times10^{-10}$ or better after each point's first
-        step (three runs, with and without antibiotic)
-  \item \textcolor{warn}{First step} of each point: no nutrient yet ($c=0$), a stiff start; it changes by $2\times10^{-3}$
-        with the inner step in Python alone. Fix: start from the steady nutrient field
-  \item \textcolor{warn}{To do}: linear field $c=(y+1)/2$, values at each Gauss point (node $\to$ Gauss point)
+  \item (b) point model in ANSYS = Python with the same inputs: $2\times10^{-12}$ or better in every step
+        (four runs, with and without antibiotic)
+  \item The first step needs up to 38 Newton iterations from the start state; with a tolerance-controlled
+        Newton (up to 50) both codes agree there too
 \end{itemize}
 \end{frame}
 

@@ -118,12 +118,33 @@ _P = jax.tree_util.tree_map(jnp.asarray, _P)
 FRAC = (jnp.arange(N_SUB) + 1.0) / N_SUB    # interpolation weight at the end of each inner step
 
 
+import jax_hamilton_0d_5species_demo as _demo  # noqa: E402
+NW_MAX, NW_TOL = 50, 1e-20                  # as the Fortran point model (A-20): stop once |Q|^2 < tol
+
+
+def _newton(g_prev, q):
+    """Newton until |Q|^2 < NW_TOL (at most NW_MAX), as ecology_native.f; the first step from the start state
+    needs ~40 iterations, the fixed 6 of the demo's newton_step leave it unconverged (A-20)."""
+    mask = q["active_mask"]
+    F = lambda gg: _demo.residual(gg, g_prev, q)  # noqa: E731
+
+    def body(st):
+        it, g, _ = st
+        g = _demo.clip_state(g, mask)
+        Q = F(g)
+        done = jnp.sum(Q * Q) < NW_TOL
+        step = _demo.clip_state(g + jnp.linalg.solve(jax.jacfwd(F)(g), -Q), mask)
+        return it + 1, jnp.where(done, g, step), done
+
+    return jax.lax.while_loop(lambda st: (st[0] < NW_MAX) & ~st[2], body, (0, g_prev, False))[1]
+
+
 def _one_point(g, c0, c1, a0, a1):
     def body(gg, w):
         p = dict(_P)
         p["c"] = CASE["c_star"] * ((1 - w) * c0 + w * c1)
         p["alpha"] = (ALPHA0 or CASE["alpha_star"]) * ((1 - w) * a0 + w * a1)
-        return eco.newton_step(gg, p), None
+        return _newton(gg, p), None
     return jax.lax.scan(body, g, FRAC)[0]
 
 
