@@ -285,15 +285,27 @@ def vm_fine(i):
 
 
 def film_surface(field, keep):
+    """Envelope of the cells with phi > 0.05 (smoothed), coloured by the maximum of the field through the film:
+    at each surface point the field is sampled along the inward normal over DEPTH mm and the maximum is taken, so the
+    colour shows the film under the surface and not only the thin diffuse front at the envelope."""
     g = pv.ImageData(dimensions=(NF + 1,) * 3, spacing=(H,) * 3, origin=(-L / 2,) * 3)
-    g.cell_data["v"] = np.nan_to_num(field).ravel(order="F")
     g.cell_data["keep"] = keep.ravel(order="F").astype(float)
-    surf = g.threshold(0.5, scalars="keep").extract_surface()
-    if surf.n_points:
-        surf = surf.smooth_taubin(n_iter=30, pass_band=0.08, feature_angle=150.0)
+    surf = g.threshold(0.5, scalars="keep").extract_surface(algorithm="dataset_surface").extract_largest()
+    if surf.n_points == 0:
+        surf.point_data["v"] = np.zeros(0)
+        return surf
+    surf = surf.smooth_taubin(n_iter=60, pass_band=0.05, feature_angle=150.0)
+    surf = surf.compute_normals(point_normals=True, cell_normals=False, auto_orient_normals=True)
+    pts = np.asarray(surf.points)
+    nrm = np.asarray(surf["Normals"])
+    f = RegularGridInterpolator((ax,) * 3, np.nan_to_num(field), bounds_error=False, fill_value=0.0)
+    depths = np.linspace(0.0, DEPTH, 10)
+    vals = np.stack([f(pts - d * nrm) for d in depths], 0).max(0)
+    surf.point_data["v"] = vals
     return surf
 
 
+DEPTH = 1.5                                              # mm, sampling depth of the film colouring
 # the tooth surface drawn half a cell inside its voxel set, so that it does not poke through the film
 tooth_draw = tooth_mesh.compute_normals(point_normals=True, cell_normals=False, auto_orient_normals=True)
 tooth_draw.points = np.asarray(tooth_draw.points) - 0.5 * H * np.asarray(tooth_draw["Normals"])
@@ -306,7 +318,8 @@ PANELS = [(lambda i: (PHI[i].astype(float), KEEP(i)), "phase phi", "Greens", (0,
           (lambda i: (vm_fine(i) * 1e3, KEEP(i)), "von Mises (mPa), film", "viridis", (0, vtop * 1e3), "%.1f")]
 CAM = [(-3.6 * L / 2, -1.9 * L / 2, 1.3 * L / 2), (0, 0, -0.7), (0, 0, 1)]
 NOTE = (f"molar FDI 46 (grey, E = 1e4 Pa) at real size, cube {L:g} mm; film 0.5 mm, beta = {BETA:.2f} mm^2/T* "
-        f"(4 x the 2 mm cube value, see the script); bottom face clamped; undeformed")
+        f"(4 x the 2 mm cube value, see the script); bottom face clamped; undeformed; "
+        f"film surface = phi > 0.05, colour = maximum of the field through the film")
 
 pl = pv.Plotter(shape=(1, 3), off_screen=True, window_size=(2400, 912), border=False)
 acts = []
