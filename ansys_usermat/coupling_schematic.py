@@ -264,9 +264,9 @@ def main_agreed(thesis=False):
     panel(ax, "macro", "1", "Macro: 3D fields", "Klempt et al. 2024 (Ch. 2, 4)")
     x, _ = PX["macro"]
     eqs(ax, x + 0.018, 0.70, [
-        r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\alpha\, +$ front$(c)$",
-        r"$0 = d\,\Delta c - g\,\phi\,\Sigma_i\bar\phi_i\,c$",
-        r"$0 = d_a\Delta a - g_a\phi\,\Sigma_i\bar\phi_i\,a$",
+        r"$\dot\phi_{3D} = \beta\,\Delta\phi_{3D} + k_\alpha\alpha\, +$ front$(c)$",
+        r"$0 = d\,\Delta c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
+        r"$0 = d_a\Delta a - g_a\phi_{3D}\Sigma_i\bar\phi_i\,a$",
     ], size=12.0, gap=0.058)
     ax.text(x + 0.018, 0.51, "nutrient $c$, antibiotic $a$\n(second nutrient field)", fontsize=10.5 * FS,
             color=PANEL["macro"][1], va="center", linespacing=1.25, zorder=4)
@@ -289,7 +289,7 @@ def main_agreed(thesis=False):
     x, w = PX["mech"]
     eqs(ax, x + 0.025, 0.695, [
         r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
-        r"$E(\phi) = (\phi^2 + f)\,E_{bio}$",
+        r"$E(\phi_{3D}) = (\phi_{3D}^2 + f)\,E_{bio}$",
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
     ])
     stress_sketch(ax, x + 0.085, 0.375, 0.026)

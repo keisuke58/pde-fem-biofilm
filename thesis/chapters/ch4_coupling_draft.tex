@@ -34,7 +34,8 @@ in~\eqref{eq:ch5-cstar}.
 
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. In Eq.~35 of Klempt et al.\ 2024 the consumption is
-written $g\phi$; the implementation uses $g\phi c$, and the printed form is a misprint. I scale
+written $g\phi$ with $\phi=\phi_{3D}$; the implementation uses $g\phi_{3D}c$, and the printed form is a misprint.
+Throughout, $\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point model. I scale
 the consumption by the living biomass at the Gauss point,
 \begin{equation}
 0=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad
