@@ -67,7 +67,11 @@ RUNS = {                                   # tag: (nutrient, gate, g/d in 1/mm^2
     "gate": (False, True, None),
     "nutrient_gate": (True, True, 10 * Q_TABLE2),
     "nutrient_t2": (True, False, Q_TABLE2),
+    "monod": (True, False, 10 * Q_TABLE2),
+    "monod_both": (True, False, 10 * Q_TABLE2),
 }
+R_TABLE2 = 100.0 * 1e-3 * (L_CUBE_MM * 1e3 / L_PAPER_UM) * (SEED_THICK / 0.25)   # r = 100 um/T* -> 20 mm/T* here
+MONOD = {"monod": (R_TABLE2, 1.0, "printed"), "monod_both": (R_TABLE2, 1.0, "both")}
 
 
 def cache_path(tag):
@@ -256,21 +260,73 @@ def p_threshold():
 
 
 # ---------------------------------------------------------------- run
-def run(nutrient, gate, q=None, tag=None, stress_every=STRESS_EVERY, nm=NM, verbose=True):
+def grad_open(u):
+    """Gradient by central differences between open cells (one-sided next to the tooth and the box faces, zero where
+    a cell has no open neighbour along an axis)."""
+    g = []
+    for axn in range(3):
+        fw = (np.roll(u, -1, axn) - u) / H
+        bw = (u - np.roll(u, 1, axn)) / H
+        okf = OPEN & np.roll(OPEN, -1, axn)
+        okb = OPEN & np.roll(OPEN, 1, axn)
+        e1 = [slice(None)] * 3; e1[axn] = -1; okf[tuple(e1)] = False
+        e0 = [slice(None)] * 3; e0[axn] = 0; okb[tuple(e0)] = False
+        n = okf.astype(float) + okb
+        g.append(np.where(n > 0, (np.where(okf, fw, 0.0) + np.where(okb, bw, 0.0)) / np.maximum(n, 1), 0.0))
+    return g
+
+
+def upwind_adv(phi, v):
+    """sum_a v_a d(phi)/dx_a, first-order upwind; a difference across the tooth or out of the box is zero."""
+    out = np.zeros_like(phi)
+    for axn in range(3):
+        okf = OPEN & np.roll(OPEN, -1, axn)
+        okb = OPEN & np.roll(OPEN, 1, axn)
+        e1 = [slice(None)] * 3; e1[axn] = -1; okf[tuple(e1)] = False
+        e0 = [slice(None)] * 3; e0[axn] = 0; okb[tuple(e0)] = False
+        fw = np.where(okf, np.roll(phi, -1, axn) - phi, 0.0) / H
+        bw = np.where(okb, phi - np.roll(phi, 1, axn), 0.0) / H
+        out += np.maximum(v[axn], 0.0) * bw + np.minimum(v[axn], 0.0) * fw
+    return out
+
+
+def front_term(phi, n_c, speed, form):
+    """The front term of Eq. 34 moved to the right-hand side: -||grad phi|| r c/(k + c) n_phi . n_c
+    = -speed n_c . grad phi with speed = r c/(k + c). form "printed": as Eq. 34 (a transport of phi towards the
+    nutrient); "both": speed |n_c . grad phi| (growth on both faces, the form that fits the paper's figures,
+    KLEMPT2024_REPRODUCTION.md sections 9 to 12). Upwinded (the cell Peclet number is far above 1)."""
+    v = [speed * n for n in n_c]
+    a = -upwind_adv(phi, v)
+    if form == "both":
+        a = np.maximum(a, -upwind_adv(phi, [-x for x in v]))
+    return np.where(OPEN, a, 0.0)
+
+
+def unit_grad_c(c, eps=1e-3):
+    g = grad_open(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + eps ** 2)
+    return [x / nrm for x in g]
+
+
+def run(nutrient, gate, q=None, tag=None, stress_every=STRESS_EVERY, nm=NM, verbose=True, monod=None):
     """Field run with the nutrient and/or the gate; returns the cache dict and writes figdata/real_tooth_<tag>.npz.
     Without the gate the stress is solved every stress_every frames and interpolated linearly in between; with the
-    gate it is solved every frame (the gate needs the pressure at the start of each frame)."""
+    gate it is solved every frame (the gate needs the pressure at the start of each frame).
+    monod = (r, k, form): adds the front term of Eq. 34 (front_term); c is then solved before every RK4 step, the
+    time step also obeys 0.4 h / (r/(1 + k)) and the step count per frame is raised accordingly."""
     tag = tag or ("nutrient_" if nutrient else "") + ("gate" if gate else "")
     cache = cache_path(tag)
     if cache.exists():
         return dict(np.load(cache))
     walls = {}
     dt = 0.15 * H * H / BETA
+    if monod:
+        dt = min(dt, 0.4 * H / (monod[0] / (1 + monod[1])))
     per = int(np.ceil(TEND / NFRAMES / dt))
     dt = TEND / (NFRAMES * per)
     if verbose:
-        print(f"[{tag}] field: dt = {dt:.4f} T*, {per} steps per frame; nutrient {nutrient} q = {q}; gate {gate}",
-              flush=True)
+        print(f"[{tag}] field: dt = {dt:.4f} T*, {per} steps per frame; nutrient {nutrient} q = {q}; gate {gate}; "
+              f"monod {monod}", flush=True)
     phi = np.where(seed, 1.0, 0.0)
     alpha = np.ones_like(phi)
     c = np.where(OPEN, 1.0, 0.0) if nutrient else None
@@ -287,8 +343,10 @@ def run(nutrient, gate, q=None, tag=None, stress_every=STRESS_EVERY, nm=NM, verb
     t_field = t_c = t_stress = 0.0
     t_run = time.time()
 
-    def rhs(phi, alpha, cfac, gfac):
+    def rhs(phi, alpha, cfac, gfac, fr_=None):
         dphi = BETA * lap(phi) + KA * alpha - PEN * (np.maximum(phi - 1, 0) + np.minimum(phi, 0))
+        if fr_ is not None:
+            dphi = dphi + front_term(phi, fr_[0], fr_[1], monod[2])
         return np.where(OPEN, dphi, 0.0), np.where(OPEN, KA * phi * cfac * gfac, 0.0)
 
     for fr in range(NFRAMES + 1):
@@ -325,11 +383,19 @@ def run(nutrient, gate, q=None, tag=None, stress_every=STRESS_EVERY, nm=NM, verb
             break
         t1 = time.time()
         cf = c if nutrient else 1.0
-        for _ in range(per):
-            k1 = rhs(phi, alpha, cf, gf)
-            k2 = rhs(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], cf, gf)
-            k3 = rhs(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], cf, gf)
-            k4 = rhs(phi + dt * k3[0], alpha + dt * k3[1], cf, gf)
+        for st_ in range(per):
+            fr_ = None
+            if monod:
+                if st_ > 0:
+                    t2 = time.time()
+                    c = nut.solve(phi)
+                    cf = c
+                    t_c += time.time() - t2
+                fr_ = (unit_grad_c(c), monod[0] * c / (monod[1] + c))
+            k1 = rhs(phi, alpha, cf, gf, fr_)
+            k2 = rhs(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], cf, gf, fr_)
+            k3 = rhs(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], cf, gf, fr_)
+            k4 = rhs(phi + dt * k3[0], alpha + dt * k3[1], cf, gf, fr_)
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
             alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
         t_field += time.time() - t1
@@ -668,7 +734,8 @@ if __name__ == "__main__":
         sys.exit(0)
     tag = args[0]
     nutrient, gate, q = RUNS[tag]
-    D = run(nutrient, gate, q=q, tag=tag, stress_every=NFRAMES if tag == "nutrient_t2" else STRESS_EVERY)
+    D = run(nutrient, gate, q=q, tag=tag, stress_every=NFRAMES if tag == "nutrient_t2" else STRESS_EVERY,
+            monod=MONOD.get(tag))
     if tag == "base":
         D.update(nutrient=False, gate=False, nm=NM, q=np.nan, p_0=np.nan, p_h=np.nan)
     print(json.dumps(stats(D), indent=1))
