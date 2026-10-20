@@ -65,4 +65,4 @@ C     --- coupling with the living share (prop(28) = 11, 20 Oct) -------
       DOUBLE PRECISION LV_C0, LV_C1, LV_A0, LV_A1, LV_L, LV_TOT, LV_TH
       DOUBLE PRECISION LV_V(1)
       INTEGER LV_LAY
-      LOGICAL LV_B
+      LOGICAL LV_B, LV_FIRST

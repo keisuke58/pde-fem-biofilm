@@ -20,6 +20,10 @@ coupled_living_consumption.py.
                  --v2): phi_min = 0.1, species B in four small corner blocks (|x|, |y| > 0.75 mm and |z| within the
                  seed's height), antibiotic uptake g_a = 0.25 (Lambda_a^2 = 0.25) and a = 1 on the elements of all
                  outer faces from T* = 0.5. alpha*_0 = 50 comes from the point-model file (eco_fritsch_2sp_a50.txt).
+  --start-step S : a first load step of one increment of length S (e.g. 0.0025, one USSFin step; shorter steps are
+                 rounded up to MY_USSFIN_DT_MIN inside the element) in which only the fields are solved (prop(60) = 1:
+                 the point model takes its start state but is not advanced), then the run from S to 1 + S in the
+                 base deck's increments, so the point model starts from the solved nutrient field (addendum 4).
 
 The base deck is one of the partner's decks as derived for Chapter 4 (base_w<n>_c6_g1_s015.dat, never
 committed). The nutrient keeps the base deck's component NUTRIENT1 (the element layer at y = -1 mm, c = 1).
@@ -80,6 +84,7 @@ def main():
     ap.add_argument("--old-cons", action="store_true",
                     help="LIVING_CONS = 0: the element's own consumption (g phi, zero order) for comparison")
     ap.add_argument("--v2", action="store_true")
+    ap.add_argument("--start-step", type=float, default=0.0)
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -99,6 +104,8 @@ def main():
     th = case_theta()
     props = {28: 11, 29: 0.1 if a.v2 else 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2,
              57: 1 if a.l1 else 0, 58: 0.55, 59: 0.5625}
+    if a.start_step > 0:
+        props[60] = 1
     props.update({7 + i: v for i, v in enumerate(th, start=1)})
     tmp = Path(a.out).with_suffix(".tmp.dat")
     cmd = [sys.executable, str(HERE / "make_wired_deck.py"), a.base, str(tmp),
@@ -126,9 +133,23 @@ def main():
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
+    if a.start_step > 0:
+        s = a.start_step
+        rx = re.compile(r"^deltim,([^,\s!]+)[^\r\n]*\r?\ntime,([^\s!]+)[^\r\n]*$", re.M | re.I)
+        m = rx.search(text)
+        if not m or len(rx.findall(text)) != 1:
+            sys.exit("STOP: deltim/time pair not found once")
+        dt, t_end = float(m.group(1)), float(m.group(2))
+        text = text[:m.start()] + f"deltim,{s!r},{s!r},{s!r}{nl}time,{s!r}" + text[m.end():]
+        rs = re.compile(r"^OUTRES,ALL,ALL\r?\nsolve[ \t]*$", re.M)
+        m = rs.search(text)
+        if not m or len(rs.findall(text)) != 1:
+            sys.exit("STOP: final solve not found once")
+        text = (text[:m.end()] + f"{nl}! start step done: the run itself{nl}deltim,{dt!r},{dt!r},{dt!r}{nl}"
+                f"time,{t_end + s!r}{nl}solve" + text[m.end():])
     head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}layout {a.layout}, antibiotic {a.ab}, "
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
-            f"phi_min {props[29]:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
+            f"phi_min {props[29]:g}, start step {a.start_step:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
             f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
     text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,post_fields_living.mac{nl}FINISH{nl}"
     Path(a.out).write_text(text, encoding="latin-1", newline="")

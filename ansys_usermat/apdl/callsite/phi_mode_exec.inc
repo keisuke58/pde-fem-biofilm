@@ -123,19 +123,31 @@ C         ustatev(89) = phi_1/(phi_1 + phi_2), the share of species A.
           PM_PHIINT = 0.0D0
           LV_C1 = Sdp_nut1_n
           LV_A1 = Sdp_nut2_n
+C         prop(60) = 1: load step 1 is a short start step that only
+C         solves the fields (21 Oct 2026, addendum 4 of CLOUD_TO_
+C         IKMHIWI03_2026-10-20). The point model gets its start state
+C         there but is not advanced, its L (start state) is passed on so
+C         that the first solve has the consumption, and ustatev(88)
+C         stays 0; from load step 2 on it runs with c0 = c1 = the solved
+C         field, as the Python version starts from the steady field.
+          LV_FIRST = .FALSE.
+          IF (nProp .GE. 60) LV_FIRST = (prop(60) .GT. 0.5D0 .AND.
+     &                                  ldstep .EQ. 1)
           IF (ustatev(88) .GT. 0.5D0) THEN
             LV_C0 = ustatev(85)
             LV_A0 = ustatev(86)
           ELSE
-C           first increment: the fields are solved only at its end, so
-C           the pool still holds c = 0 inside; use the supply values
-C           c = 1, a = 0 (the antibiotic starts later) and interpolate
-C           from them in the second increment (20 Oct 2026, addendum to
-C           CLOUD_TO_IKMHIWI03_2026-10-20; starting the point model one
-C           increment later instead leaves L = 0 in the first solve, and
-C           the partner's element then loses the seed: phi 1 -> 0.1)
-            LV_C1 = 1.0D0
-            LV_A1 = 0.0D0
+C           without the start step, the first increment: the fields are
+C           solved only at its end, so the pool still holds c = 0
+C           inside; use the supply values c = 1, a = 0 and interpolate
+C           from them in the second increment (20 Oct 2026; starting
+C           the point model one increment later instead leaves L = 0 in
+C           a full-length first solve, and the partner's element then
+C           loses the seed: phi 1 -> 0.1)
+            IF (ldstep .EQ. 1 .AND. .NOT. LV_FIRST) THEN
+              LV_C1 = 1.0D0
+              LV_A1 = 0.0D0
+            END IF
             LV_C0 = LV_C1
             LV_A0 = LV_A1
           END IF
@@ -187,6 +199,12 @@ C           the partner's element then loses the seed: phi 1 -> 0.1)
                 END IF
               END IF
             END IF
+            IF (LV_FIRST) THEN
+              SP_HITI = 3
+              DO PM_I = 1, 12
+                PM_GNEW(PM_I) = PM_GOLD(PM_I)
+              END DO
+            ELSE
             CALL SPLIT_CACHE_GET(SP_ID, ldstep, isubst, PM_GOLD,
      &                           PM_GNEW, PM_PHIINT, SP_HIT)
             IF (SP_HIT) THEN
@@ -208,6 +226,7 @@ C           the partner's element then loses the seed: phi 1 -> 0.1)
               END IF
               IF (PM_OK) CALL SPLIT_CACHE_PUT(SP_ID, ldstep, isubst,
      &                        PM_GOLD, PM_GNEW, PM_PHIINT)
+            END IF
             END IF
           END IF
           IF (PM_OK) THEN
@@ -234,7 +253,7 @@ C           the partner's element then loses the seed: phi 1 -> 0.1)
           ustatev(85) = LV_C1
           ustatev(86) = LV_A1
           ustatev(87) = LV_L
-          ustatev(88) = 1.0D0
+          IF (.NOT. LV_FIRST) ustatev(88) = 1.0D0
           LV_V(1) = LV_L
           Si_Kerr = SetVals(ofs_dp_Living + (ID-1), 1, LV_V)
           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
