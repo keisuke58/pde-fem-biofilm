@@ -1226,6 +1226,103 @@
    },
    "seconds": 57.229435443878174,
    "label": "crop 1 mm, rigid, sdf tooth, void dropped, h = h_f, piecewise constant"
+  },
+  "field96_r2_pc": {
+   "film elements": 28838,
+   "film elements any": 28838,
+   "film volume mm^3": 16.688657407407405,
+   "band volume mm^3": 8.452546296296294,
+   "core volume mm^3": 8.236111111111109,
+   "first layer elements": 2666,
+   "outer elements": 26172,
+   "film vM mean": 0.0032271115561232785,
+   "band vM mean": 0.0035451766035432698,
+   "core vM mean": 0.0029006881382890736,
+   "first layer vM mean": 0.007511656607890826,
+   "outer vM mean": 0.002790668139188681,
+   "vM max": 0.015795110494081586,
+   "vM max at": [
+    -4.791666666666667,
+    3.791666666666667,
+    -2.0416666666666674
+   ],
+   "vM max in band": true,
+   "vM max in first layer": false,
+   "vM p95": 0.010343605726511634,
+   "vM p99": 0.01270827211340261,
+   "vM median": 0.0018985286525119503,
+   "p max": 0.17099562513781433,
+   "p max at": [
+    -5.208333333333334,
+    3.124999999999999,
+    -1.208333333333334
+   ],
+   "p mean": 0.0023155513878839744,
+   "p band mean": 0.0025009113933189197,
+   "vM max all": 0.015795110494081586,
+   "band/core": 1.2221846798168168,
+   "first/outer": 2.6917054387106942,
+   "layer vM mean": 0.0076013824689723794,
+   "layer band vM mean": 0.009290180208417211,
+   "layer volume mm^3": 2.3200231481481475,
+   "h": 0.08333333333333333,
+   "h/h_f": 0.5,
+   "box cells": [
+    [
+     0,
+     44
+    ],
+    [
+     4,
+     92
+    ],
+    [
+     16,
+     56
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     -0.666666666666667
+    ],
+    [
+     -7.333333333333333,
+     7.333333333333332
+    ],
+    [
+     -5.333333333333334,
+     1.3333333333333321
+    ]
+   ],
+   "mesh": [
+    88,
+    176,
+    80
+   ],
+   "elements in box": 1239040,
+   "tooth elements": 497295,
+   "active elements": 129384,
+   "gap elements": 4343,
+   "void": "drop",
+   "void thr": 0.01,
+   "interp": "pc",
+   "tooth mode": "sdf",
+   "rigid": true,
+   "solver": {
+    "solver": "pyamg smoothed aggregation + cg",
+    "dof": 401910,
+    "iterations": 58,
+    "relative residual": 8.833663844758102e-11,
+    "seconds prepare": 13.68878984451294,
+    "seconds assembly": 6.886913776397705,
+    "seconds setup": 10.393471002578735,
+    "seconds solve": 23.819783210754395,
+    "elements": 129384,
+    "floating dropped": 0
+   },
+   "seconds": 55.088974952697754,
+   "label": "96^3 field, crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.01), h = h_f/2 = 0.083, piecewise constant"
   }
  },
  "levels": {
