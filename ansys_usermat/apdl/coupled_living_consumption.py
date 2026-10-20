@@ -3,11 +3,14 @@ with synthetic data only.
 
 Macro (3D, Klempt et al. 2024), the Chapter 4 seed problem on the 2 mm cube, NF^3 cells (cell centres stand for the
 quadrature points):
-    d phi/dt   = beta lap phi + k_alpha alpha - penalty            Eq. 34 as in Chapter 4 (no front term)
+    d phi/dt   = beta lap phi + k_alpha alpha - penalty            Eq. 34; with --front F also the front term
+                 - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
+                                                                   upwinded
     d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    0 = d lap c - g phi L c                                        Eq. 35, quasi-static, consumption by the LIVING
-                                                                   biomass only, L = sum_i phi_i psi_i of the point
-                                                                   model (phi_0 excluded), f(c) = c
+    0 = d lap c - g phi L f(c)                                     Eq. 35, quasi-static, consumption by the LIVING
+                                                                   biomass only: L = sum_i phi_i psi_i / sum_i phi_i,
+                                                                   the living share of the point model's biomass
+                                                                   (decided 20 Oct), f(c) = c
     0 = d_a lap a - g_a phi L a                                    the second nutrient field repurposed for the
                                                                    antibiotic, same equation
   c = 1 on the wall y = -1 mm (nutrient), a = 1 on the wall y = +1 mm from T* = T_AB on (antibiotic), zero flux
@@ -64,6 +67,9 @@ import wp3_stress_reference as S  # noqa: E402
 from fritsch2025_cases import CASES  # noqa: E402
 
 NF = int(sys.argv[sys.argv.index("--nf") + 1]) if "--nf" in sys.argv else 32
+FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv else 0.0
+R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
+K_MONOD = 1.0
 NM, T_END, DT_C, PHI_MIN = 16, 1.0, 0.025, 0.01
 LAM_C2 = LAM_A2 = 4.0                       # g L^2 / d, L = 1 mm
 T_AB = 0.5
@@ -72,7 +78,7 @@ N_SP = 2
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps
 H = W.L / NF
 RES = HERE / "results" / "2026-10-3d"
-TAG = "" if NF == 32 else f"_nf{NF}"
+TAG = ("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
 
 
 # ---------------------------------------------------------------- point model (black box)
@@ -115,7 +121,31 @@ def start_state(phi_a, phi_b):
 
 
 def living(G):
-    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1)
+    """living share of the point model's biomass, sum phi_i psi_i / sum phi_i"""
+    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1) / np.maximum(G[:, :N_SP].sum(1), 1e-30)
+
+
+def grad(u):
+    """central differences, one-sided at the walls"""
+    return [np.gradient(u, H, axis=a) for a in range(3)]
+
+
+def upwind_adv(u, v):
+    out = np.zeros_like(u)
+    for a in range(3):
+        fw = (np.roll(u, -1, a) - u) / H; bw = (u - np.roll(u, 1, a)) / H
+        e = [slice(None)] * 3; e[a] = -1; fw[tuple(e)] = 0.0
+        e[a] = 0; bw[tuple(e)] = 0.0
+        out += np.maximum(v[a], 0) * bw + np.minimum(v[a], 0) * fw
+    return out
+
+
+def front(phi, c):
+    """-r c/(k + c) n_c . grad phi (Klempt 2024 Eq. 34 as printed), upwinded"""
+    g = grad(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    sp_ = R_FRONT * c / (K_MONOD + c)
+    return -upwind_adv(phi, [sp_ * x / nrm for x in g])
 
 
 # ---------------------------------------------------------------- macro fields
@@ -180,6 +210,8 @@ def run(example, antibiotic):
     a = np.zeros_like(phi)
     lap = np.empty_like(phi)
     dt = 0.15 * H * H / W.BETA
+    if FRONT:
+        dt = min(dt, 0.4 * H / (R_FRONT / (1 + K_MONOD)))
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
     hist = dict(t=[0.0], living_seed=[float(L[seed].mean())], share_a_seed=[], share_a_edges=[], living_edges=[],
                 c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum())])
@@ -194,11 +226,16 @@ def run(example, antibiotic):
     for k in range(int(round(T_END / DT_C))):
         T1 = (k + 1) * DT_C
         # (1) macro phi, alpha
+        cf = c
         for _ in range(per):
+            if FRONT:
+                cf = nut.solve(phi, L)        # the front follows the nutrient within the outer step
             def f(ph, al):
                 W.laplacian(ph, H, lap)
-                return (W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0)),
-                        W.K_ALPHA * ph)
+                d = W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                if FRONT:
+                    d = d + front(ph, cf)
+                return d, W.K_ALPHA * ph
             k1 = f(phi, alpha); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
             k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1]); k4 = f(phi + dt * k3[0], alpha + dt * k3[1])
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
@@ -265,7 +302,7 @@ def main():
     for k, h in R.items():
         print(f"| {k} | {h['living_seed'][-1]:.3f} | {h['share_a_seed'][-1]:.3f} | {h['living_edges'][-1]:.3f} | "
               f"{h['share_a_edges'][-1]:.3f} | {h['c_seed'][-1]:.3f} | {h['a_seed'][-1]:.3f} | {h['colonised'][-1]} |")
-    print("seed alpha-1 and vM (same in every run: Eq. 34/36 unchanged):",
+    print("seed alpha-1 and vM:",
           {k: (round(h['seed_am1'], 8), round(h['seed_vm_Pa'], 8)) for k, h in R.items()})
 
     figstyle.apply(size=8)
