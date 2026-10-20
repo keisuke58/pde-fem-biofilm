@@ -349,8 +349,8 @@ this machine's specific workflow.
 - **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
   ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **13 Nov is the internal deadline**
-  (finished; sent early only if I judge it complete, as the submission version, not a draft); last check and PDF in Hannover 10-15 Dec; two copies printed there and handed
-  over at the colloquium. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
+  (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
+  Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
   `thesis/README.md`.
 
 - **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never

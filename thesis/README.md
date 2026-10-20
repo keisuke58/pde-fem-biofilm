@@ -82,8 +82,9 @@ Open:
 | 3-10 Nov | away |
 | **13 Nov** | **internal deadline** (decided 20 Oct): the thesis is finished and ready to submit; sent to Dr. Soleimani only if I judge it complete (then as the submission version, not a draft) |
 | 20-28 Nov | away: read the finished thesis chapter by chapter, Q&A practice |
-| 10-15 Dec | in Hannover: last check, **PDF to Dr. Soleimani by 15 Dec, 13:00** (24 h before the colloquium, his mail of 20 Oct); **print two copies** at the university (Timo asked 20 Oct) |
-| 16 Dec, 13:00 | printed copies handed over; colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
+| 10-11 Dec | in Hannover: last check; **print two copies** at the university on Fri 11 Dec (with the Stundenzettel; Timo asked 20 Oct) |
+| **Mon 14 Dec** | **PDF and the two printed copies to Dr. Soleimani** (deadline 15 Dec, 13:00, his mail of 20 Oct; decided 20 Oct) |
+| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
 Dr. Soleimani's answer (20 Oct): printing, ask Timo (Timo Rabing, IKM, rabing@ikm.uni-hannover.de); students usually print
 at the university, which is cheap. Schedule: the PDF may be submitted up to 24 hours before the colloquium (so by 15 Dec,
