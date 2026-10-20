@@ -137,3 +137,16 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md)
 (read first for what is verified vs assumed), `PLAN_NEXT.md`, `methods_supplement_fem.md`.
 Historical notes live under [`archive/`](archive/); the root scripts, reports and results of the first half of 2026 that nothing uses any more were moved to [`archive/legacy_2026H1/`](archive/legacy_2026H1/) on 19 Oct 2026.
+
+## The coupling agreed with Oliver (20 Oct 2026)
+
+| file | what |
+|---|---|
+| `MEETING_2026-10-20.md` | the meeting and the decisions after it |
+| `ansys_usermat/apdl/coupled_living_consumption.py` | Python version on the seed problem, synthetic two-species data |
+| `ansys_usermat/apdl/check_living_trace.py` | replay check of an ANSYS trace against the Python point model |
+| `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` | ANSYS implementation instructions (A-19) |
+| `ansys_usermat/coupling_schematic.py --agreed` | the schematic (`assets/fig_coupling_schematic_agreed*.png`) |
+| `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex` | Chapter 4 rewrite |
+| `slides_coupling_1020.tex` | key-point slides |
+| `references/Klempt2026_multispecies_interaction_AAM.pdf` | the point model paper (published, CC BY 4.0) |

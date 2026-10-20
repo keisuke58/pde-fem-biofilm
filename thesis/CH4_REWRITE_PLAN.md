@@ -36,3 +36,13 @@ Also: abstract, Ch. 1 contributions, Ch. 6 conclusion (one sentence each); the C
 
 Wording: do not call the point model a "black box" in the thesis (the user, 20 Oct); write that it is used as
 published, unchanged, with given inputs.
+
+## Also to change with Chapter 4 (found 20 Oct)
+
+- Ch. 2 `ch2_theory.tex` l. 116, 322-332: "I combine the two models in the same one-way manner" -> the new coupling.
+- Ch. 6 `ch6_conclusion.tex` l. 73 (table: "yes (one-way)") and l. 137 (limitation "One-way coupling").
+- Defence deck: Part 3 slides, Backup 5 (sensitivity to s and phi_cap), the "Inactive front term" limitation
+  (the front term is now on), "Assumptions" item; speaker notes for these.
+- `ansys_usermat/COUPLING_BASICS.ja.md`, `REPO_MAP.md`, `abaqus_composition/README.md`, `thesis_ch5/README.md`:
+  one line each pointing to the new coupling.
+- Keio report (`keio_report/`) after the thesis is fixed.

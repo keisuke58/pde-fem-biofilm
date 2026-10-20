@@ -95,7 +95,7 @@
 | F23 | Can you compare commensal and dysbiotic directly? | Not fully: the two communities also differ in the Veillonella species and the Pg strain. ／ 完全にはできない。Veillonella の種と Pg の株も違うから |
 | F24 | What is lambda in the stability analysis? | beta times the time step over the mesh size squared; above a limit the explicit update becomes unstable. ／ β × 時間刻み ÷ メッシュ幅の 2 乗。限界を超えると陽的な更新が不安定になる |
 | F25 | Why does the limit depend on the neighbours? | The thirtieth neighbour lies in a shell of seven equal points, and which five are taken makes the stencil slightly asymmetric. ／ 30 番目の近傍は同じ距離の 7 点の殻にあり、どの 5 点を取るかで少し非対称になる |
-| F26 | Is the coupling one-way or two-way? | One-way: the composition drives the growth, but the stress does not act back on growth or composition yet. ／ 一方向。組成が成長を決めるが、応力はまだ成長や組成に戻らない |
+| F26 | Is the coupling one-way or two-way? | Two-way through the nutrient: the fields give the point model its nutrient and antibiotic, and only its living biomass consumes them; the nutrient then steers the spreading. The stress does not act back. ／ 栄養を通して双方向。場が点モデルに栄養と抗菌薬を渡し、生きている菌だけがそれを消費する。栄養が広がりを決める。応力は戻らない（20 Oct 更新） |
 | F27 | What was the hardest part? | Getting the convergence of the inference and of the element right; several runs that looked fine failed the checks. ／ 推定と要素の収束をきちんと確かめること。よく見えた計算がいくつも判定に落ちた |
 
 ## G. 覚えておく基本の数値（10月13日）
