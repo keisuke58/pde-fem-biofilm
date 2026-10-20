@@ -80,7 +80,10 @@ def main():
     ap.add_argument("--front", type=float, default=0.1)
     ap.add_argument("--l1", action="store_true")
     ap.add_argument("--cons", type=float, default=4.0)
-    ap.add_argument("--dt-ussfin", type=float, default=0.0025)
+    # inner USSFin step. 0.1 (>= the outer increment) = one inner step, as in all Chapter 4 decks. The element advances
+    # phi by the outer increment at every inner step (A-25), so a smaller value makes phi run (outer / inner) times
+    # too fast; the earlier default 0.0025 did exactly that (living runs before u1_, 21 Oct 2026).
+    ap.add_argument("--dt-ussfin", type=float, default=0.1)
     ap.add_argument("--old-cons", action="store_true",
                     help="LIVING_CONS = 0: the element's own consumption (g phi, zero order) for comparison")
     ap.add_argument("--v2", action="store_true")
