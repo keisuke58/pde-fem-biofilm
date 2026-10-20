@@ -1404,3 +1404,84 @@ exe は A-16 のもの（`F:\biofilm_upf_frozen`）。1 本 1 分未満、4 本�
 - **まとめ（ユーザーの判断、15日 23:30）：** A-14 はここまでで終わり、32³ は回さない。「(c) は (a) より vM が小さい」は両方のコード・
   全メッシュで成り立つ。残る差（24³ で ANSYS −7.0 %、Abaqus −5.0 %）はシードの表し方の違いと見る。
 - 値そのもの（Abaqus 24³ の (a) の vM は ANSYS 24³ の 0.91 倍、8³ では 0.51 倍）も細かくするほど近づく。
+
+## A-19. オリバーと決めた結合を ANSYS に（20日 20〜21 時、CLOUD_TO_IKMHIWI03_2026-10-20.ja.md）
+
+### 0. 退避
+- `F:\biofilm_upf_*` 23 個から自分たちのファイル（hook・growth・core の旧版、ps1、mac、ログ 73 本、eco・theta・config、
+  デッキ）を `ansys_usermat/apdl/f_backup_2026-10-20/` に集めた（repo と同じものと重複は除き 124 ファイル 9 MB、デッキは
+  `decks.zip` 8 MB）。**push していない**：自動モードの判定が「公開 repo に入れてよいか」で止めた（デッキはオリバーの要素の
+  入力）。IKMHIWI03 のローカルにだけある。
+- オリバーの要素（`F:\biofilm_upf_oliver`、各ビルドの改変版）と `F:\felix_private`（4 GB）の OneDrive へのコピーも同じ判定で
+  止められた。**ユーザーが手でコピーする**。
+- 気づいたこと：`ansys_usermat/oliver_wired_source/`（usercm.inc、USolBeg）がすでに公開 repo にある。
+
+### 1. 実装（ビルド `F:\biofilm_upf_living`、cal5d1 のソースから。/auto、-np 1）
+cal5d1 を土台にした（native と同じ Fortran の点モデルで、断片が最新）。自分たちのコード（repo）：
+- `ansys_usermat/coupling/ecology_native.f`：`biofilm_ecology_hook_lin`（c0, c1, a0, a1）。内側の小ステップ k = 1..n_sub の
+  終わりで w = k/n_sub、c\* = c\*_file((1 − w)c0 + w c1)、α\* = α\*_file((1 − w)a0 + w a1)。点モデルの式は変えていない
+  （本体を `eco_substeps_x` に移し、元の `eco_substeps` はそれを呼ぶだけ、結果は同じ）。
+- `callsite/phi_mode_exec.inc`：モード 11（prop(28) = 11）。点モデルの状態を縮めずに持ち越す（ustatev(72:83)）、
+  φ ≥ prop(29) = 0.01 で開始、theta は prop(8:27)、s = prop(31) = 0.1（n_sub = 25、1e−4 刻み）。
+  - c = 栄養 1、a = 栄養 2 の Gauss 点の値（pool）。**場は増分の終わりに解かれるので、使う組は 1 増分遅れ**：
+    この増分で見た値 c1 と、前の増分で見た値 c0（ustatev(85), (86)）の間を補間する。
+  - L = Σ_i φ_i ψ_i（割らない、20 日の決定）を ustatev(87) と pool（新しい `ofs_dp_Living`）に書く。開始前は 0。
+    USSFin は同じ増分の終わりに読む（Python は 1 ステップ遅れ）。
+  - 成長は式 36 のまま（BIOFILM_ALPHA_FROM_PHI）。ustatev(89) = A の割合。
+  - **初期値**（prop(56) = 1 分離）：|x| と |y| が prop(59) = 0.5625 mm を超える点は B（1e−6, 0.55 − 1e−6）、ほかは A。
+    混合（prop(56) = 2）はファイルの phi_init（0.25, 0.30）。**新しく始まる点も同じ位置の規則**（同じ要素の他の Gauss 点は
+    材料ルーチンから見えないので、指示の第 1 案はやめた。修論の仮定になる：「新しく始まる点は、近い方の種の単一種の
+    初期値」）。prop(57) = 1 で L = 1。
+  - pm トレース（comp_trace.csv）の末尾に c0, c1, a0, a1, L の 5 列。
+- オリバーの要素（repo には入れない。どこを変えたかだけ）：
+  - USolBeg：ORI_WEIGHT12 と ORI_WEIGHT22 の読み込みが OriWeight11 に代入していた 2 行を、それぞれ 12、22 に直した
+    （10/2 に見つけた上書き）。新しい APDL パラメータ LIVING_CONS、FRONT_GRAD、NUT2_TSTART（無ければ 0 = 今まで
+    どおり）。pool に GP ごとの L の配列を 1 つ足した（0 で初期化）。
+  - usercm.inc：上の 3 つと pool の位置の COMMON ブロックを 1 つ。
+  - USSFin：
+    - **消費**：LIVING_CONS = 1 のとき、栄養の行列で右辺の 0 次の項 g φ をやめ、対角に −g φ L を足す（D Δc = g φ L c）。
+      栄養 2（抗菌薬）も CONSUMPTION21 で同じ形。φ = bio1 + bio2 を [0, 1] に切る。
+      **注意：オリバーの要素の今の消費は g φ（0 次、論文の印字の形）で、g φ c ではなかった。**
+    - **前線項**：FRONT_GRAD = 1 で |Δφ| の代わりに |∇φ|（式 34 の印字どおり）。
+    - **抗菌薬**：栄養 2 の Dirichlet 値は sGdp_Time > NUT2_TSTART まで 0。
+  - Usermat：use の only リストに hook_lin を足した。
+- デッキ：`make_living_deck.py`（基準デッキ `base_w<n>_c6_g1_s015.dat` から）。BIOFILM1 = 4 章のシード（＋分離なら縦の 4 辺
+  |x|, |y| > 0.75 mm、φ = 1 は同じ bio1 の場）、NUTRIENT1 = y = −1 mm の層（c = 1、今のまま）、NUTRIENT2 = y = +1 mm の層
+  （a = 1、T\* > 0.5 から）。g = 4（d = 1、Λ² = 4）を両方の場、r = MAX_GROWTH11 = 10 または 1 mm/T\*、k = HALF_VELO11 = 1、
+  ORI_WEIGHT11 = 1。USSFin の時間刻み 0.0025（1 増分 0.025 を 10 回）。点モデル `eco_fritsch_living.txt`
+  （eco_fritsch_2sp.txt ＋ theta_tol 1e−12）。後処理 `post_fields_living.mac`、まとめ `fields_living.py`
+  （`results/2026-10-living/fields_<job>.json` と、check_living_trace.py が読む `<job>_pm.json`）。実行 `run_living.ps1`
+  （切り離し、-np 1）。
+
+### 2. 確認（8³、r/10、1 本 3〜4 分）
+1. pm トレース：`results/2026-10-living/<job>_pm.json` に列 c0, c1, a0, a1, L。シード要素 220 と辺の要素 25 の積分点 1。
+   **check_living_trace.py はクラウドで回してほしい**（IKMHIWI03 では回していない）。
+2. **「L = 1 で今の消費と全桁一致」は成り立たない**：今の要素は g φ（0 次）なので、L = 1 の g φ c とは別の式。
+   古い消費のまま回した 1 本（lv8_sep_old）は c が負になり、前線項の c/(k + c)（k = 1）が c → −1 で発散して要素が潰れた
+   （エラーで停止）。代わりに L = 1 の 1 本（lv8_sep_l1）を出した。
+3. 抗菌薬なし：a は全要素・全時刻で 0（lv8_sep、lv8_sep_l1、lv8_mix）。
+
+8³ の結果（シード 32 要素・辺 32 要素の平均、T\* = 1）：
+
+| ジョブ | 場所 | φ | L | A の割合 | c | a | α − 1 | vM [Pa] |
+|---|---|---|---|---|---|---|---|---|
+| lv8_sep | シード | 1.000 | 0.969 | 0.981 | 0.760 | 0 | 1.000e−3 | 3.76e−4 |
+| lv8_sep | 辺 | 0.915 | 0.967 | 0.016 | 0.853 | 0 | 8.15e−4 | 4.26e−4 |
+| lv8_sep_ab | シード | 1.000 | 0.954 | 0.981 | 0.762 | 0.753 | 1.000e−3 | 3.69e−4 |
+| lv8_sep_ab | 辺 | 0.918 | 0.953 | 0.015 | 0.857 | 0.843 | 8.18e−4 | 4.25e−4 |
+| lv8_mix | シード | 1.000 | 0.962 | 0.748 | 0.804 | 0 | 1.004e−3 | 3.33e−4 |
+| lv8_mix | 辺 | 0.992 | 0.965 | 0.786 | 0.920 | 0 | 6.98e−4 | 9.96e−4 |
+| lv8_sep_l1 | シード | 0.501 | 1 | 0.974 | 0.357 | 0 | 5.19e−4 | 1.36e−4 |
+
+- φ の最大は 1.0002（r/10）、1 を少しだけ超える（罰則項の範囲）。
+- **r（10 mm/T\*）の 8³ は 0.3 分で要素が潰れて停止**（lv8_sep_r1）。セル Péclet 数 r h/β = 125 で中心差分の陽解法では
+  無理。16³ の r も同じになる見込み（本番の連鎖には入れてある）。風上差分にするなら USSFin の前線項を変える必要がある。
+- **気になる点（クラウドで確かめてほしい）**：L = 1 の 1 本は、L ≈ 0.97 の lv8_sep と比べてシードの φ が 1.0 → 0.5、
+  c が 0.76 → 0.36 と大きく変わる（T\* = 0.25 ですでに φ 0.54）。L の差は数 % なのに。前線項の cos（∇φ と ∇c の向き、
+  正規化してあるので符号の切り替え）が敏感に効いているように見える。Python 版（同じ設定）と 8³・16³ で比べてほしい。
+  8³ は h = 0.25 mm で前線項には粗い。
+- 今の lv8_* は L の定義を直した後のビルドで回したもの（最初に回した 1 本は割る形だったので捨てた）。
+
+### 3. 本番（16³、r/10 を先に 4 本、そのあと r で 4 本）
+`run_living.ps1 -Name prod16` で 20:42 から連鎖中（-np 1）。終わると JSON を自動で push。1 本の時間はまだ分からない
+（8³ が 3.5 分）。ログ `F:\biofilm_upf_living\_living_prod16.log`。r の 4 本は上の理由で止まる見込み。

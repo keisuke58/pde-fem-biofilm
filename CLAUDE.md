@@ -133,6 +133,12 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   its `.rst` (a `/POST1` + `FILE,<job>,rst` deck with the three
   `post_*.mac`); resume a set with `-From n`; delete a killed run's
   leftover `<job>.lock` or ANSYS exits at once without a `.err`.
+- **Coupling agreed with Oliver (20 Oct 2026):** `F:\biofilm_upf_living` = the cal5d1
+  sources plus usermat mode 11 (point model as a black box, c* and alpha* interpolated)
+  and Oliver's USSFin/USolBeg with LIVING_CONS / FRONT_GRAD / NUT2_TSTART (changes
+  described in `IKMHIWI03_TO_CLOUD.ja.md` A-19, never committed). Decks
+  `make_living_deck.py`, runs `run_living.ps1` (-np 1). Hand-off for another PC:
+  `HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
