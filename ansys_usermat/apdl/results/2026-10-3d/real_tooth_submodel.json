@@ -353,6 +353,103 @@
    },
    "seconds": 27.739300966262817,
    "label": "full box, rigid tooth, sdf tooth"
+  },
+  "crop1_rigid_sdf_m4": {
+   "film elements": 432,
+   "film elements any": 720,
+   "film volume mm^3": 16.03819444444444,
+   "band volume mm^3": 7.795717592592591,
+   "core volume mm^3": 8.24247685185185,
+   "first layer elements": 203,
+   "outer elements": 229,
+   "film vM mean": 0.002494755459973777,
+   "band vM mean": 0.0026146415517823733,
+   "core vM mean": 0.002381367441806705,
+   "first layer vM mean": 0.0035675271169462804,
+   "outer vM mean": 0.0017966445321193562,
+   "vM max": 0.009791407713393605,
+   "vM max at": [
+    -4.166666666666667,
+    4.499999999999999,
+    -2.166666666666667
+   ],
+   "vM max in band": false,
+   "vM max in first layer": false,
+   "vM p95": 0.006763328291305254,
+   "vM p99": 0.008585838968132921,
+   "vM median": 0.0019252102987694902,
+   "p max": 0.02982413164290602,
+   "p max at": [
+    -3.833333333333334,
+    4.499999999999999,
+    -2.166666666666667
+   ],
+   "p mean": 0.002232977835919971,
+   "p band mean": 0.0021739766152380977,
+   "vM max all": 0.009791407713393605,
+   "band/core": 1.0979580495980439,
+   "first/outer": 1.9856610771736563,
+   "layer vM mean": 0.0018303310200205813,
+   "layer band vM mean": 0.002135698997368855,
+   "layer volume mm^3": 1.770254629629629,
+   "h": 0.3333333333333333,
+   "h/h_f": 4.0,
+   "box cells": [
+    [
+     0,
+     92
+    ],
+    [
+     8,
+     188
+    ],
+    [
+     36,
+     108
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     -0.3333333333333339
+    ],
+    [
+     -7.333333333333333,
+     7.666666666666666
+    ],
+    [
+     -5.0,
+     1.0
+    ]
+   ],
+   "mesh": [
+    23,
+    45,
+    18
+   ],
+   "elements in box": 18630,
+   "tooth elements": 7537,
+   "active elements": 11093,
+   "gap elements": 0,
+   "void": "keep",
+   "void thr": 0.01,
+   "interp": "pc",
+   "tooth mode": "sdf",
+   "rigid": true,
+   "solver": {
+    "solver": "pyamg smoothed aggregation + cg",
+    "dof": 35697,
+    "iterations": 42,
+    "relative residual": 7.075644324954238e-11,
+    "seconds prepare": 0.3313446044921875,
+    "seconds assembly": 0.2014145851135254,
+    "seconds setup": 0.6479718685150146,
+    "seconds solve": 25.44505286216736,
+    "elements": 11093,
+    "floating dropped": 0
+   },
+   "seconds": 26.645138263702393,
+   "label": "crop 1 mm, rigid, sdf tooth, void kept"
   }
  },
  "levels": {}
