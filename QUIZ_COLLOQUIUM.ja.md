@@ -72,7 +72,7 @@
 |---|---|---|
 | F1 | What is the main contribution? | I brought a calibrated multispecies point model into a finite element growth model, and verified each step. ／ 較正した多菌種の点モデルを有限要素の成長モデルに組み込み、各段階を検証した |
 | F2 | Why a Bayesian method? | The data are sparse, so I need to know which interactions the data determine and which they leave open. ／ データが少ないので、何が決まり何が決まらないかを事後分布で示す |
-| F3 | How many interactions are determined? | Four, six, eight and nine of the fifteen; in the commensal conditions only the early colonisers. ／ 15 個のうち 4、6、8、9 個。常在では初期定着菌の間だけ |
+| F3 | How many interactions are determined? | Five, six, nine and eight of the fifteen in CS, CH, DS and DH; in the commensal conditions only the early colonisers. ／ 15 個のうち CS 5、CH 6、DS 9、DH 8 個。常在では初期定着菌の間だけ |
 | F4 | Why is A symmetric? | Only the symmetric part enters the free energy, so directed effects cannot be represented; a limitation. ／ 自由エネルギーには対称部分しか入らない。一方向の作用は表せない（限界） |
 | F5 | How do you know the ANSYS implementation is correct? | It reproduces the closed-form solution, and the growth field agrees with a finite-volume reference within about one percent. ／ 閉じた形の解を再現し、有限体積法の基準解と 1 % 程度で一致 |
 | F6 | Why did you run to T* = 5? | Near the limit the unstable mode starts very small; short runs look smooth even when the step is too large. ／ 限界近くでは不安定モードが小さく、短い計算では見えない |
@@ -104,7 +104,7 @@
 |---|---|---|
 | G1 | Species and conditions | Five species, four conditions (CS, CH, DS, DH), days 1 to 21 ／ 5 菌種、4 条件、1〜21 日 |
 | G2 | Interaction unknowns | Fifteen entries of a symmetric five-by-five matrix ／ 対称 5×5 行列の 15 成分 |
-| G3 | Identified entries | 4, 6, 8, 9 of 15 (CS, CH, DS, DH; DS and DH provisional) ／ 15 個中 4、6、8、9 個（DS・DH は暫定） |
+| G3 | Identified entries | 5, 6, 9, 8 of 15 (CS, CH, DS, DH; DH from stage iii) ／ 15 個中 5、6、9、8 個（DH は段階 (iii)） |
 | G4 | Nutrient scale | c* = 25, fixed because only c* times A enters ／ c* = 25。c*×A の積でしか入らないので固定 |
 | G5 | GPU speedup | 170 times per step, 147 times end to end ／ 1 段あたり 170 倍、全体で 147 倍 |
 | G6 | Stiffness (Klempt 2024) | E = 10 Pa, Poisson ratio 0.49, shear modulus 3.3557 Pa ／ E = 10 Pa、ν = 0.49、μ = 3.3557 Pa |
