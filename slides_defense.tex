@@ -708,4 +708,24 @@ authors' implementation (printed: $g\phi$), front term with an isotropic share.
 \takeaway{The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced after each substep.}
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Backup 13: the verification problem in 3D}
+\centering
+\includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{assets/anim_wp3_seed_3d.png}\\[2pt]
+\small\raggedright
+Seed in the centre of the 2\,mm cube, one octant cut away; $\beta=0.02$\,mm$^2/T^*$, $k_\alpha=10^{-3}/T^*$,
+$E=10$\,Pa. Field: reference solution on $48^3$; stress: $16^3$. Video: \texttt{assets/anim\_wp3\_seed\_3d.mp4}.
+\takeaway{Seed von Mises $6.19\times10^{-4}$\,Pa at $T^*=1.1$, within $0.2\,\%$ of the value in the thesis; the stress forms a ring at the edge of the seed.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 14: outlook, stress at a wall and a homeostatic-pressure law}
+\centering
+\includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{assets/anim_law_3d.png}\\[2pt]
+\small\raggedright
+Not part of the thesis: the same model with the seed in a corner on a clamped face, without and with growth scaled by
+$g=\min(1,\max(0,1-p/p_h))$; $p_h=3.3$\,mPa chosen by me. Video: \texttt{assets/anim\_law\_3d.mp4}.
+\takeaway{Where growing biofilm meets a fixed surface the stress concentrates (about 20 times the centre value); limiting growth by pressure removes the concentration. Continuation at Keio.}
+\end{frame}
+
 \end{document}

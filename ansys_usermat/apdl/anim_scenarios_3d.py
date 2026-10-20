@@ -9,7 +9,7 @@ once per frame (88 frames) and held over the frame's RK4 steps.
          alpha_dot = k_alpha phi g, g = min(1, max(0, 1 - p/p_h)), p = -tr(sigma)/3, explicit gate per element;
          p_h = 0.4 x the 95th percentile of p in the biofilm at the end of the run without the law.
          Video: phi with the law, von Mises without and with the law on one colour scale.
-  two    two seeds of 0.5 x 0.5 x 0.5 mm on the bottom face, 1 mm apart; they spread and meet.
+  two    two seeds of 0.5 x 0.5 x 0.5 mm on the bottom face, 0.125 mm apart; they spread and meet.
   tooth  a stiff half cylinder (radius 0.7 mm, axis along y on the bottom face, E = 1e4 Pa, no growth, no flux of phi
          into it) with a biofilm layer 0.25 mm thick on one flank of it.
 
@@ -53,7 +53,7 @@ tooth = np.zeros((NF,) * 3, bool)
 if CASE == "law":
     seed = (X < 0) & (Y < 0) & (Z < -0.5)
 elif CASE == "two":
-    seed = (np.abs(Y) < 0.25) & (Z < -0.5) & ((np.abs(X + 0.5) < 0.25) | (np.abs(X - 0.5) < 0.25))
+    seed = (np.abs(Y) < 0.25) & (Z < -0.5) & ((np.abs(X + 0.3125) < 0.25) | (np.abs(X - 0.3125) < 0.25))
 elif CASE == "tooth":
     r = np.sqrt(X ** 2 + (Z + 1) ** 2)
     tooth = r < 0.7
