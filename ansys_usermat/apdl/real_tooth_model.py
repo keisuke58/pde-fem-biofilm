@@ -69,9 +69,11 @@ RUNS = {                                   # tag: (nutrient, gate, g/d in 1/mm^2
     "nutrient_t2": (True, False, Q_TABLE2),
     "monod": (True, False, 10 * Q_TABLE2),
     "monod_both": (True, False, 10 * Q_TABLE2),
+    "monod_r01": (True, False, 10 * Q_TABLE2),
 }
 R_TABLE2 = 100.0 * 1e-3 * (L_CUBE_MM * 1e3 / L_PAPER_UM) * (SEED_THICK / 0.25)   # r = 100 um/T* -> 20 mm/T* here
-MONOD = {"monod": (R_TABLE2, 1.0, "printed"), "monod_both": (R_TABLE2, 1.0, "both")}
+MONOD = {"monod": (R_TABLE2, 1.0, "printed"), "monod_both": (R_TABLE2, 1.0, "both"),
+         "monod_r01": (0.1 * R_TABLE2, 1.0, "printed")}         # r / 10, sensitivity
 
 
 def cache_path(tag):
