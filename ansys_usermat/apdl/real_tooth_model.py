@@ -414,7 +414,7 @@ def stats(D):
 def run_record(tag, D):
     """The json entry of one run: settings, solver counts, wall times, end numbers and z profiles."""
     nutrient, gate, q = RUNS[tag]
-    r = dict(nutrient=nutrient, gate=gate, g_over_d_per_mm2=q, stress_every=int(np.diff(D["solved"])[0]),
+    r = dict(nutrient_on=nutrient, gate_on=gate, g_over_d_per_mm2=q, stress_every=int(np.diff(D["solved"])[0]),
              stress_mesh=int(D["nm"]) if "nm" in D else NM, amg_iterations_max=int(D["iters"].max()))
     if "cg_iters" in D:
         r["nutrient_solver_iterations_max"] = int(D["cg_iters"].max())
@@ -632,7 +632,7 @@ def summary():
              "nutrient_t2": "nutrient, Table 2 ratio"}
     style = {"base": dict(color="k", ls="-"), "nutrient": dict(color="C0", ls="-"), "gate": dict(color="C3", ls="--"),
              "nutrient_gate": dict(color="C2", ls="-."), "nutrient_t2": dict(color="C0", ls=":")}
-    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.3))
+    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.5))
     for tag in ("base", "nutrient", "gate", "nutrient_gate", "nutrient_t2"):
         if tag not in res["runs"]:
             continue
@@ -644,15 +644,16 @@ def summary():
     for a in axs:
         a.axhspan(Z_CEJ - BAND_HALF, Z_CEJ + BAND_HALF, color="0.85", zorder=0, lw=0)
         a.set_ylabel("z (mm)")
-        a.set_ylim(-3.6, -0.4)
+        a.set_ylim(-3.2, -0.9)
     axs[0].set_xlabel("von Mises (mPa), film mean by z")
     axs[1].set_xlabel(r"$\alpha - 1$ ($10^{-3}$), film mean by z")
     axs[2].set_xlabel("c, film mean by z")
     axs[2].set_xlim(0, 1.05)
     for a, letter in zip(axs, "abc"):
         a.text(0.02, 0.98, f"({letter})", transform=a.transAxes, ha="left", va="top")
-    axs[1].legend(loc="lower right", frameon=False, fontsize=6.5)
-    fig.tight_layout(w_pad=0.6)
+    h, lab_ = axs[1].get_legend_handles_labels()
+    fig.legend(h, lab_, loc="lower center", ncol=5, frameon=False, fontsize=7, columnspacing=1.2, handlelength=2.2)
+    fig.tight_layout(w_pad=0.6, rect=(0, 0.08, 1, 1))
     out = ROOT / "assets" / "fig_real_tooth_physics"
     fig.savefig(out.with_suffix(".pdf"))
     fig.savefig(out.with_suffix(".png"), dpi=200)

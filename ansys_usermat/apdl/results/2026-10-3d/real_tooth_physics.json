@@ -30,8 +30,8 @@
  },
  "runs": {
   "base": {
-   "nutrient": false,
-   "gate": false,
+   "nutrient_on": false,
+   "gate_on": false,
    "g_over_d_per_mm2": null,
    "stress_every": 3,
    "stress_mesh": 32,
@@ -130,8 +130,8 @@
    }
   },
   "nutrient": {
-   "nutrient": true,
-   "gate": false,
+   "nutrient_on": true,
+   "gate_on": false,
    "g_over_d_per_mm2": 10.0,
    "stress_every": 3,
    "stress_mesh": 32,
@@ -260,7 +260,63 @@
    }
   },
   "gate": {
-   "nutrient": false,
+   "nutrient_on": false,
+   "gate_on": true,
+   "g_over_d_per_mm2": null,
+   "stress_every": 1,
+   "stress_mesh": 32,
+   "amg_iterations_max": 65,
+   "wall_field_s": 18.898797035217285,
+   "wall_c_s": 4.601478576660156e-05,
+   "wall_stress_s": 700.6923453807831,
+   "seed": {
+    "phi_mean": 0.5417510635076379,
+    "am1_mean": 0.0004889085717352968,
+    "c_mean": 1.0
+   },
+   "film": {
+    "cells": 1857,
+    "volume_phi_mm3": 17.240218908698466,
+    "am1_mean": 0.0005213788073102697,
+    "am1_max": 0.0010099411010742188,
+    "c_min": 1.0,
+    "c_mean": 1.0,
+    "c_max": 1.0,
+    "elements": 37,
+    "vm_mean_Pa": 0.0016795507257779104,
+    "vm_max_Pa": 0.0022814804688096046,
+    "vm_p95_Pa": 0.0021553262602537868,
+    "p_mean_Pa": 0.0011847853232678529,
+    "p_max_Pa": 0.001631156774237752,
+    "elements_phi_gt_0p3": 130,
+    "vm_mean_phi_gt_0p3_Pa": 0.0010668585126180775,
+    "vm_max_phi_gt_0p3_Pa": 0.0022814804688096046,
+    "share_p_ge_p_h_end": 0.0,
+    "share_p_ge_p_h_end_phi_gt_0p3": 0.0
+   },
+   "band": {
+    "z_mm": [
+     -2.1,
+     -1.1
+    ],
+    "elements": 18,
+    "rest_elements": 19,
+    "vm_mean_Pa": 0.001695727997381861,
+    "vm_p95_Pa": 0.0021674612537026404,
+    "vm_max_Pa": 0.0022814804688096046,
+    "p_mean_Pa": 0.0011229775943017255,
+    "rest_vm_mean_Pa": 0.001664224889521536,
+    "rest_vm_p95_Pa": 0.002059594984166324,
+    "rest_vm_max_Pa": 0.002187270438298583,
+    "rest_p_mean_Pa": 0.001243340013867342,
+    "ratio_vm_mean_band_over_rest": 1.0189295978318063,
+    "ratio_vm_p95_band_over_rest": 1.0523725637154715,
+    "ratio_vm_max_band_over_rest": 1.043071962598418,
+    "am1_mean": 0.0005361253268098178,
+    "rest_am1_mean": 0.0005001879426750924,
+    "share_p_ge_p_h_end": 0.0,
+    "rest_share_p_ge_p_h_end": 0.0
+   },
    "gate": {
     "p_0_Pa": 0.003705469658598304,
     "p_h_Pa": 0.001852734829299152,
@@ -338,61 +394,6 @@
     ],
     "g_mean_film_end": 0.36052083410337216
    },
-   "g_over_d_per_mm2": null,
-   "stress_every": 1,
-   "stress_mesh": 32,
-   "amg_iterations_max": 65,
-   "wall_field_s": 18.898797035217285,
-   "wall_c_s": 4.601478576660156e-05,
-   "wall_stress_s": 700.6923453807831,
-   "seed": {
-    "phi_mean": 0.5417510635076379,
-    "am1_mean": 0.0004889085717352968,
-    "c_mean": 1.0
-   },
-   "film": {
-    "cells": 1857,
-    "volume_phi_mm3": 17.240218908698466,
-    "am1_mean": 0.0005213788073102697,
-    "am1_max": 0.0010099411010742188,
-    "c_min": 1.0,
-    "c_mean": 1.0,
-    "c_max": 1.0,
-    "elements": 37,
-    "vm_mean_Pa": 0.0016795507257779104,
-    "vm_max_Pa": 0.0022814804688096046,
-    "vm_p95_Pa": 0.0021553262602537868,
-    "p_mean_Pa": 0.0011847853232678529,
-    "p_max_Pa": 0.001631156774237752,
-    "elements_phi_gt_0p3": 130,
-    "vm_mean_phi_gt_0p3_Pa": 0.0010668585126180775,
-    "vm_max_phi_gt_0p3_Pa": 0.0022814804688096046,
-    "share_p_ge_p_h_end": 0.0,
-    "share_p_ge_p_h_end_phi_gt_0p3": 0.0
-   },
-   "band": {
-    "z_mm": [
-     -2.1,
-     -1.1
-    ],
-    "elements": 18,
-    "rest_elements": 19,
-    "vm_mean_Pa": 0.001695727997381861,
-    "vm_p95_Pa": 0.0021674612537026404,
-    "vm_max_Pa": 0.0022814804688096046,
-    "p_mean_Pa": 0.0011229775943017255,
-    "rest_vm_mean_Pa": 0.001664224889521536,
-    "rest_vm_p95_Pa": 0.002059594984166324,
-    "rest_vm_max_Pa": 0.002187270438298583,
-    "rest_p_mean_Pa": 0.001243340013867342,
-    "ratio_vm_mean_band_over_rest": 1.0189295978318063,
-    "ratio_vm_p95_band_over_rest": 1.0523725637154715,
-    "ratio_vm_max_band_over_rest": 1.043071962598418,
-    "am1_mean": 0.0005361253268098178,
-    "rest_am1_mean": 0.0005001879426750924,
-    "share_p_ge_p_h_end": 0.0,
-    "rest_share_p_ge_p_h_end": 0.0
-   },
    "profiles": {
     "z_vm_mm": [
      -2.75,
@@ -437,7 +438,64 @@
    }
   },
   "nutrient_gate": {
-   "nutrient": true,
+   "nutrient_on": true,
+   "gate_on": true,
+   "g_over_d_per_mm2": 10.0,
+   "stress_every": 1,
+   "stress_mesh": 32,
+   "amg_iterations_max": 64,
+   "nutrient_solver_iterations_max": 11,
+   "wall_field_s": 20.737756729125977,
+   "wall_c_s": 393.03590846061707,
+   "wall_stress_s": 701.1690366268158,
+   "seed": {
+    "phi_mean": 0.5417508982126988,
+    "am1_mean": 0.00011345082307555988,
+    "c_mean": 0.17002396528674044
+   },
+   "film": {
+    "cells": 1857,
+    "volume_phi_mm3": 17.240213906323465,
+    "am1_mean": 0.0001038211805562403,
+    "am1_max": 0.00019359588623046875,
+    "c_min": 0.0672607421875,
+    "c_mean": 0.13511872176014741,
+    "c_max": 0.236572265625,
+    "elements": 37,
+    "vm_mean_Pa": 0.0004603352304862661,
+    "vm_max_Pa": 0.0006261446978896856,
+    "vm_p95_Pa": 0.0005970825790427624,
+    "p_mean_Pa": 0.00033059387788926943,
+    "p_max_Pa": 0.0009042359888553619,
+    "elements_phi_gt_0p3": 130,
+    "vm_mean_phi_gt_0p3_Pa": 0.000295154612551694,
+    "vm_max_phi_gt_0p3_Pa": 0.0006261446978896856,
+    "share_p_ge_p_h_end": 0.0,
+    "share_p_ge_p_h_end_phi_gt_0p3": 0.0
+   },
+   "band": {
+    "z_mm": [
+     -2.1,
+     -1.1
+    ],
+    "elements": 18,
+    "rest_elements": 19,
+    "vm_mean_Pa": 0.00046084395014784404,
+    "vm_p95_Pa": 0.0005668571713613346,
+    "vm_max_Pa": 0.000590683426707983,
+    "p_mean_Pa": 0.00028359711238105473,
+    "rest_vm_mean_Pa": 0.00045985328554371864,
+    "rest_vm_p95_Pa": 0.000623025739332661,
+    "rest_vm_max_Pa": 0.0006261446978896856,
+    "rest_p_mean_Pa": 0.0003751171294233676,
+    "ratio_vm_mean_band_over_rest": 1.0021543058085451,
+    "ratio_vm_p95_band_over_rest": 0.9098455097031946,
+    "ratio_vm_max_band_over_rest": 0.9433656927844014,
+    "am1_mean": 0.00010379786905088381,
+    "rest_am1_mean": 0.00010385467937299273,
+    "share_p_ge_p_h_end": 0.0,
+    "rest_share_p_ge_p_h_end": 0.0
+   },
    "gate": {
     "p_0_Pa": 0.003705469658598304,
     "p_h_Pa": 0.001852734829299152,
@@ -515,62 +573,6 @@
     ],
     "g_mean_film_end": 0.82156438543646
    },
-   "g_over_d_per_mm2": 10.0,
-   "stress_every": 1,
-   "stress_mesh": 32,
-   "amg_iterations_max": 64,
-   "nutrient_solver_iterations_max": 11,
-   "wall_field_s": 20.737756729125977,
-   "wall_c_s": 393.03590846061707,
-   "wall_stress_s": 701.1690366268158,
-   "seed": {
-    "phi_mean": 0.5417508982126988,
-    "am1_mean": 0.00011345082307555988,
-    "c_mean": 0.17002396528674044
-   },
-   "film": {
-    "cells": 1857,
-    "volume_phi_mm3": 17.240213906323465,
-    "am1_mean": 0.0001038211805562403,
-    "am1_max": 0.00019359588623046875,
-    "c_min": 0.0672607421875,
-    "c_mean": 0.13511872176014741,
-    "c_max": 0.236572265625,
-    "elements": 37,
-    "vm_mean_Pa": 0.0004603352304862661,
-    "vm_max_Pa": 0.0006261446978896856,
-    "vm_p95_Pa": 0.0005970825790427624,
-    "p_mean_Pa": 0.00033059387788926943,
-    "p_max_Pa": 0.0009042359888553619,
-    "elements_phi_gt_0p3": 130,
-    "vm_mean_phi_gt_0p3_Pa": 0.000295154612551694,
-    "vm_max_phi_gt_0p3_Pa": 0.0006261446978896856,
-    "share_p_ge_p_h_end": 0.0,
-    "share_p_ge_p_h_end_phi_gt_0p3": 0.0
-   },
-   "band": {
-    "z_mm": [
-     -2.1,
-     -1.1
-    ],
-    "elements": 18,
-    "rest_elements": 19,
-    "vm_mean_Pa": 0.00046084395014784404,
-    "vm_p95_Pa": 0.0005668571713613346,
-    "vm_max_Pa": 0.000590683426707983,
-    "p_mean_Pa": 0.00028359711238105473,
-    "rest_vm_mean_Pa": 0.00045985328554371864,
-    "rest_vm_p95_Pa": 0.000623025739332661,
-    "rest_vm_max_Pa": 0.0006261446978896856,
-    "rest_p_mean_Pa": 0.0003751171294233676,
-    "ratio_vm_mean_band_over_rest": 1.0021543058085451,
-    "ratio_vm_p95_band_over_rest": 0.9098455097031946,
-    "ratio_vm_max_band_over_rest": 0.9433656927844014,
-    "am1_mean": 0.00010379786905088381,
-    "rest_am1_mean": 0.00010385467937299273,
-    "share_p_ge_p_h_end": 0.0,
-    "rest_share_p_ge_p_h_end": 0.0
-   },
    "profiles": {
     "z_vm_mm": [
      -2.75,
@@ -643,8 +645,8 @@
    }
   },
   "nutrient_t2": {
-   "nutrient": true,
-   "gate": false,
+   "nutrient_on": true,
+   "gate_on": false,
    "g_over_d_per_mm2": 1.0,
    "stress_every": 66,
    "stress_mesh": 32,
