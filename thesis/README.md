@@ -85,6 +85,13 @@ Open:
 | 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
 | 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
+Dr. Soleimani's answer (20 Oct): printing, ask Timo (Timo Rabing, IKM, rabing@ikm.uni-hannover.de); students usually print
+at the university, which is cheap. Schedule: the PDF may be submitted up to 24 hours before the colloquium (so by 15 Dec,
+13:00), the printed copies afterwards. Mail to Timo sent 20 Oct (where, how, binding, lead time; two copies, ~90 pages, colour,
+printing in December). Plan: PDF ready around 13 Nov anyway; print in Hannover on 14-15 Dec and hand the copies over at the
+colloquium (fallback 17-18 Dec, before the Christmas closures). Still to ask him: whether the PDF counts as the formal
+submission or the examination office / Prof. Junker must be told.
+
 Open with Dr. Soleimani (19 Oct):
 - his comments on the 9 Oct draft (asked for by 15 Oct) have not arrived;
 - mail of 19 Oct asks how to print (copy shop or the IKM printer; sides, colour, binding), the form of the electronic
