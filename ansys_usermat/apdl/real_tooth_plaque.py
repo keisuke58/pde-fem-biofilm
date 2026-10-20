@@ -645,25 +645,30 @@ def render(step, png_only=False, vtop=None):
         pl.add_text(lab, position="upper_edge", font_size=13, font="times", color="black")
         pl.add_mesh(pv.Plane(center=(0, 0, -8.01), direction=(0, 0, 1), i_size=24, j_size=24), color="#c8c8c8")
         pl.camera_position = cam
-        pl.camera.zoom(1.5)
         acts.append(a)
     if cut:
-        # cut-away close-up: the film cells (phi > 0.3) of the approximal sector around the distal contact, clipped by
-        # a vertical plane through the crown axis along the mesio-distal direction, coloured by phi
+        # cut-away close-up of the distal film: the offset surface sdf = 0.15 mm (mid-depth of the band) coloured by phi,
+        # which shows colonies and channels laterally, and the horizontal section 0.6 mm above the gingival margin, which
+        # shows the structure across the thickness; both clipped to a box around the distal film
         md = G["md"]; cx, cy = G["crown_centre"]
         pl.subplot(0, 3)
         pl.set_background("white")
-        img = pv.ImageData(dimensions=(NF + 1,) * 3, spacing=(H,) * 3, origin=(-L / 2,) * 3)
+        Xg, Yg, Zg = np.meshgrid(ax, ax, ax, indexing="ij")
+        dist = np.asarray(D["film0"], bool) & (np.broadcast_to(azimuth_weight(G), (NF,) * 3) > 0.5) & \
+            (((Xg - cx) * md[0] + (Yg - cy) * md[1]) > 0) & (Zg < Z_GM + 2.0)
+        cen_cut = np.array([Xg[dist].mean(), Yg[dist].mean(), Zg[dist].mean()])   # centre of the distal film
+        box_cut = [cen_cut[0] - 3, cen_cut[0] + 3, cen_cut[1] - 3, cen_cut[1] + 3, Z_GM - 0.2, Z_GM + 3.0]
+        pts_img = pv.ImageData(dimensions=(NF,) * 3, spacing=(H,) * 3, origin=(ax[0],) * 3)
+        pts_img.point_data["sdf"] = G["sdf"].ravel(order="F")
+        off = pts_img.contour([0.15], scalars="sdf").clip_box(box_cut, invert=False)
+        cells_img = pv.ImageData(dimensions=(NF + 1,) * 3, spacing=(H,) * 3, origin=(-L / 2,) * 3)
+        cut_state = {"off": off, "img": cells_img, "z_sec": Z_GM + 0.6, "box": box_cut, "act_off": None, "act_sec": None}
+        pl.add_mesh(tooth_draw, color="#d8d3c8", ambient=0.35, diffuse=0.7, specular=0.15, smooth_shading=True)
+        pl.add_text("distal film: phi at 0.15 mm depth, section z = %.1f mm" % (Z_GM + 0.6),
+                    position="upper_edge", font_size=11, font="times", color="black")
         normal = np.array([md[1], -md[0], 0.0])
-        cen_cut = np.array([cx + 4.5 * md[0], cy + 4.5 * md[1], Z_GM + 0.8])
-        v_phi = pl.add_mesh(pv.Sphere(radius=0.01, center=cen_cut), opacity=0.0)   # placeholder, replaced per frame
-        pl.add_mesh(tooth_draw.clip(normal=normal, origin=cen_cut, invert=False), color="#d8d3c8", ambient=0.35,
-                    diffuse=0.7, specular=0.15, smooth_shading=True)
-        pl.add_text("cut-away: phi in the film, distal", position="upper_edge", font_size=13, font="times", color="black")
-        d_cam = 5.5
-        pl.camera_position = [tuple(cen_cut + normal * d_cam + np.array([0, 0, 1.5])), tuple(cen_cut), (0, 0, 1)]
-        pl.camera.zoom(1.0)
-        cut_state = {"actor": None, "img": img, "normal": normal, "cen": cen_cut}
+        pl.camera_position = [tuple(cen_cut + np.array([md[0], md[1], 0]) * 9.5 - normal * 3.5 + np.array([0, 0, 6.5])),
+                              tuple(cen_cut), (0, 0, 1)]
     pl.subplot(0, 0)
     title = pl.add_text("", position="upper_left", font_size=15, font="times", color="black")
     pl.subplot(0, 2)
@@ -673,8 +678,20 @@ def render(step, png_only=False, vtop=None):
             f"void dropped, solved every 6th frame, linear in time between; range 0 to {vtop:.1f} mPa = 95th percentile on the last frame")
     pl.add_text(note, position="lower_right", font_size=7, font="times", color="#555555")
     pl.link_views([0, 1, 2])
+    pl.subplot(0, 0)
+    pl.camera_position = cam
+    pl.camera.zoom(0.85)
+    cam_shared = pl.camera.copy()
+
+    last = {"i": None}
 
     def frame(i, azim):
+        if i == last["i"]:                                      # the turn at the end: only the camera moves
+            pl.subplot(0, 0)
+            pl.camera = cam_shared.copy()
+            pl.camera.azimuth = azim
+            return
+        last["i"] = i
         phi, am, tt = phi_at(i)
         keep = (phi > 0.05) & OPEN
         s = _surface(keep)
@@ -682,23 +699,23 @@ def render(step, png_only=False, vtop=None):
             a.mapper.SetInputData(_colour(s.copy(), f))
         if cut:
             pl.subplot(0, 3)
+            fp = f_field(phi)
+            off = cut_state["off"].copy()
+            off.point_data["phi"] = fp(np.asarray(off.points))
+            off = off.threshold(0.05, scalars="phi")
             img = cut_state["img"]
             img.cell_data["phi"] = phi.ravel(order="F")
-            sel = (phi > FILM_PHI) & OPEN
-            img.cell_data["sel"] = sel.ravel(order="F").astype(float)
-            vox = img.threshold(0.5, scalars="sel").clip(normal=cut_state["normal"], origin=cut_state["cen"], invert=False)
-            vox = vox.clip_box([cut_state["cen"][0] - 4, cut_state["cen"][0] + 4, cut_state["cen"][1] - 4,
-                                cut_state["cen"][1] + 4, Z_GM - 0.3, Z_GM + 4.5], invert=False)
-            if cut_state["actor"] is not None:
-                pl.remove_actor(cut_state["actor"], render=False)
-            cut_state["actor"] = pl.add_mesh(vox, scalars="phi", cmap="Greens", clim=(0, 1), show_scalar_bar=False,
+            sec = img.slice(normal=(0, 0, 1), origin=(0, 0, cut_state["z_sec"])).clip_box(cut_state["box"], invert=False)
+            sec = sec.threshold(0.05, scalars="phi")
+            for key, mesh in (("act_off", off), ("act_sec", sec)):
+                if cut_state[key] is not None:
+                    pl.remove_actor(cut_state[key], render=False)
+                cut_state[key] = pl.add_mesh(mesh, scalars="phi", cmap="Greens", clim=(0, 1), show_scalar_bar=False,
                                              ambient=0.4, diffuse=0.6)
         title.SetText(2, f"T* = {tt:.2f}")
-        for j in range(3):
-            pl.subplot(0, j)
-            pl.camera_position = cam
-            pl.camera.zoom(1.5)
-            pl.camera.azimuth = azim
+        pl.subplot(0, 0)
+        pl.camera = cam_shared.copy()                           # one camera for the three linked views
+        pl.camera.azimuth = azim
 
     out = ROOT / "assets" / f"anim_real_tooth_plaque_{step}_3d"
     nfr = 3 * (n - 1) + 1
@@ -789,7 +806,10 @@ def figure():
         axb.bar(np.arange(len(regs)) + (ci - (nb - 1) / 2) * wdt, vals, wdt, color=cols[ci], label=lab)
     axb.set_xticks(np.arange(len(regs))); axb.set_xticklabels([r[1] for r in regs], rotation=30, ha="right", fontsize=7.5)
     axb.set_ylabel("mean von Mises (mPa)")
-    axb.legend(fontsize=7, frameon=False)
+    axb.set_yscale("log")
+    axb.set_ylim(1.0, 60)
+    axb.set_yticks([1, 2, 5, 10, 20, 50]); axb.set_yticklabels(["1", "2", "5", "10", "20", "50"])
+    axb.legend(fontsize=7, frameon=False, ncol=2, loc="upper left")
     axb.set_title("(b) mean stress by region, $h$ = 0.042 mm", fontsize=9, loc="left")
     # (c) section through the film of step 3 with the resolved stress: the vertical plane through the crown axis along
     # the mesio-distal direction (mesial and distal films and the fissure deposits in one picture)
@@ -800,9 +820,17 @@ def figure():
     org, h, shp = d["origin"], float(d["h"]), d["shape"]
     axes3 = [org[k] + (np.arange(shp[k]) + 0.5) * h for k in range(3)]
     # sample the plane: points s along md (horizontal) and z
+    # the plane is shifted sideways through the largest groove deposit (the mesial fossa), so that it shows the
+    # mesial and distal films and a fissure deposit in one picture
+    normal = np.array([md[1], -md[0]])
+    lab_f, nlab = ndi.label(G["fissure"])
+    sizes = ndi.sum(G["fissure"], lab_f, range(1, nlab + 1))
+    big = lab_f == (1 + int(np.argmax(sizes)))
+    Xg, Yg, Zg = np.meshgrid(ax_, ax_, ax_, indexing="ij")
+    off = float((Xg[big].mean() - cx) * normal[0] + (Yg[big].mean() - cy) * normal[1])
     s_ax = np.arange(-7.0, 7.0, h); z_ax = np.arange(Z_GM - 0.5, 5.6, h)
     S, ZZ = np.meshgrid(s_ax, z_ax, indexing="ij")
-    px = cx + S * md[0]; py = cy + S * md[1]
+    px = cx + S * md[0] + off * normal[0]; py = cy + S * md[1] + off * normal[1]
     pts = np.stack([px.ravel(), py.ravel(), ZZ.ravel()], 1)
     fi = RegularGridInterpolator(tuple(axes3), np.where(act, vm, np.nan), method="nearest", bounds_error=False, fill_value=np.nan)
     ft = RegularGridInterpolator(tuple(axes3), te.astype(float), method="nearest", bounds_error=False, fill_value=0.0)
@@ -819,7 +847,7 @@ def figure():
     axc.axhline(Z_GM, color="#eb6834", lw=0.7, ls="--"); axc.text(s_ax[0] + 0.1, Z_GM + 0.08, "gingival margin", color="#eb6834", fontsize=7)
     axc.set_xlabel("distance along the mesio-distal axis (mm), mesial left")
     axc.set_ylabel("$z$ (mm)")
-    axc.set_title(f"(c) step 3, von Mises in the vertical section along the mesio-distal axis, $h$ = {h:.3f} mm", fontsize=9, loc="left")
+    axc.set_title(f"(c) step 3, von Mises in the vertical section along the mesio-distal axis through the mesial fossa, $h$ = {h:.3f} mm", fontsize=9, loc="left")
     axc.grid(False)
     cb = fig.colorbar(imc, ax=axc, fraction=0.025, pad=0.02)
     cb.set_label("von Mises (mPa), scale: 99th percentile", fontsize=8); cb.ax.tick_params(labelsize=7.5)
