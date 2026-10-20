@@ -182,22 +182,30 @@ def measures(case, n, phi, am1, vm, p):
 
 
 def fit_converging(hs, v):
-    """v = v0 + c h^p by least squares on all meshes; order from the last three by the same fit."""
+    """Convergence of a mean: change per refinement, first- and second-order extrapolations (linear least squares
+    on all meshes), and a free fit v = v0 + c h^p (order bounded to [0.3, 4]). The free fit is marked reliable only
+    when the changes are monotone and the last one is above the solver's resolution (0.2 %); otherwise the first-
+    order value is the h -> 0 estimate (the seed stress converges with order about 1, wp3_stress_reference)."""
     from scipy.optimize import least_squares
     hs, v = np.asarray(hs, float), np.asarray(v, float)
-
-    def fit(hh, vv):
-        f = lambda q: q[0] + q[1] * hh ** q[2] - vv
-        best = None
-        for p0 in (1.0, 2.0):
-            q = least_squares(f, [vv[-1], vv[0] - vv[-1], p0], bounds=([-np.inf, -np.inf, 0.05], [np.inf, np.inf, 6]))
-            if best is None or q.cost < best.cost:
-                best = q
-        return best.x
-    q = fit(hs, v)
-    q3 = fit(hs[-3:], v[-3:])
-    return {"order": float(q[2]), "h->0": float(q[0]), "order last3": float(q3[2]), "h->0 last3": float(q3[0]),
-            "error % at h->0 fit": [float((x / q[0] - 1) * 100) for x in v]}
+    change = [float((v[i + 1] / v[i] - 1) * 100) for i in range(len(v) - 1)]
+    ext = {}
+    for pp in (1, 2):
+        A = np.stack([np.ones_like(hs), hs ** pp], 1)
+        ext[pp] = float(np.linalg.lstsq(A, v, rcond=None)[0][0])
+    f = lambda q: q[0] + q[1] * hs ** q[2] - v
+    best = None
+    for p0 in (1.0, 2.0):
+        q = least_squares(f, [v[-1], v[0] - v[-1], p0], bounds=([-np.inf, -np.inf, 0.3], [np.inf, np.inf, 4.0]))
+        if best is None or q.cost < best.cost:
+            best = q
+    order = float(best.x[2])
+    mono = all(c > 0 for c in change) or all(c < 0 for c in change)
+    reliable = bool(mono and abs(change[-1]) > 0.2 and 0.31 < order < 3.99)
+    h0 = float(best.x[0]) if reliable else ext[1]
+    return {"change % per refinement": change, "h->0 p=1": ext[1], "h->0 p=2": ext[2],
+            "free fit order": order, "free fit h->0": float(best.x[0]), "free fit reliable": reliable,
+            "h->0": h0, "error % at h->0": [float((x / h0 - 1) * 100) for x in v]}
 
 
 def fit_power(hs, v):
@@ -240,6 +248,15 @@ def run_case(case, meshes):
               flush=True)
         np.savez_compressed(ROOT / "figdata" / f"wall_stress_{case}_{n}.npz", vm=vm.astype(np.float32),
                             p=p.astype(np.float32), phi=phi.astype(np.float32))
+    fits = compute_fits(case, rows)
+    out = load_json()                                  # merge (the cases may run in parallel processes)
+    out["cases"][case] = {"meshes": rows, "fits": fits}
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(json.dumps(out, indent=1))
+    print("wrote", OUT_JSON, flush=True)
+
+
+def compute_fits(case, rows):
     ns = sorted(int(k) for k in rows)
     hs = [2.0 / n for n in ns]
     fits = {}
@@ -249,18 +266,24 @@ def run_case(case, meshes):
         fits[k] = fit_converging(hs, [rows[str(n)][k] for n in ns])
     for k in ["vM max", "vM p95", "vM p99", "p max"] + (["band vM max", "wall vM max", "core vM max"] if case != "centre" else []):
         fits[k] = fit_power(hs, [rows[str(n)][k] for n in ns])
+    print(f"== {case}: fits over {ns}")
     for k, f in fits.items():
-        if "order" in f:
-            print(f"  {k:16s} order {f['order']:.2f} (last three {f['order last3']:.2f}) h->0 {f['h->0']:.4e}"
-                  f"  error % {' / '.join(f'{e:+.1f}' for e in f['error % at h->0 fit'])}")
+        if "h->0" in f:
+            tag = f"order {f['free fit order']:.2f}" if f["free fit reliable"] else "order n/a (p = 1 used)"
+            print(f"  {k:16s} change {' / '.join(f'{e:+.2f}' for e in f['change % per refinement'])} %  {tag}"
+                  f"  h->0 {f['h->0']:.4e}  error % {' / '.join(f'{e:+.1f}' for e in f['error % at h->0'])}")
         else:
             print(f"  {k:16s} ~ h^({-f['s']:+.2f}), pair slopes {' / '.join(f'{e:.2f}' for e in f['pair slopes'])},"
                   f" change {' / '.join(f'{e:+.1f}' for e in f['change % per refinement'])} %")
-    out = load_json()                                  # merge (the cases may run in parallel processes)
-    out["cases"][case] = {"meshes": rows, "fits": fits}
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    return fits
+
+
+def refit():
+    out = load_json()
+    for case, d in out["cases"].items():
+        d["fits"] = compute_fits(case, d["meshes"])
     OUT_JSON.write_text(json.dumps(out, indent=1))
-    print("wrote", OUT_JSON, flush=True)
+    print("wrote", OUT_JSON)
 
 
 def figure():
@@ -287,7 +310,7 @@ def figure():
                     label=lab)
         f = C[case]["fits"]
         ax.text(0.03, 0.97, f"maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$\n"
-                            f"band mean: order {f['band vM mean']['order']:.1f}",
+                            f"band mean: {f['band vM mean']['change % per refinement'][-1]:+.1f} % at the last step",
                 transform=ax.transAxes, va="top", ha="left", fontsize=7.5)
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xticks(hs); ax.set_xticklabels([f"{h:.3g}" for h in hs])
@@ -331,9 +354,13 @@ def main(argv=None):
     ap.add_argument("--meshes", type=int, nargs="+", default=[16, 24, 32, 48])
     ap.add_argument("--field-only", action="store_true")
     ap.add_argument("--figure", action="store_true")
+    ap.add_argument("--refit", action="store_true", help="recompute the fits from the stored meshes")
     a = ap.parse_args(argv)
+    if a.refit:
+        refit()
     if a.figure:
         figure()
+    if a.refit or a.figure:
         return
     for case in a.cases:
         if a.field_only:

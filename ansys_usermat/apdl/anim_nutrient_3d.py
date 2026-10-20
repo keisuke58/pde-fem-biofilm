@@ -306,13 +306,15 @@ all_f = np.ones((NF,) * 3, bool)
 all_m = np.ones((NM,) * 3, bool)
 pm_end = down(PHI[-1].astype(float), NM)
 vtop = float(np.percentile(VM[-1][pm_end > 0.3], 95)) * 1e3
-atop = float(np.nanmax(D["am1_0"])) * 1e3                       # colour scale of the run without limitation
+atop = float(np.nanmax(AM1[-1])) * 1e3                           # own colour scale; the note gives the ratio to c = 1
 cmin = float(np.floor(C[-1].min() * 10) / 10)
 PANELS = [(lambda i: (C[i], U[i], all_f), "nutrient c", "Blues", (cmin, 1.0), "%.2f"),
           (lambda i: (AM1[i] * 1e3, U[i], all_f), "alpha - 1 (1e-3)", "Oranges", (0, atop), "%.1f"),
           (lambda i: (VM[i] * 1e3, U[i], all_m), "von Mises (mPa)", "viridis", (0, vtop), "%.1f")]
 CAM = [(-4.0, -3.3, 2.6), (0, 0, -0.1), (0, 0, 1)]
-NOTE = (f"c = 1 on the top face, g/d = {Q:g} /mm^2 (Table 2 x {G_FACTOR:g}); "
+R = res["ratio_with_over_without"]
+NOTE = (f"c = 1 on the top face, g/d = {Q:g} /mm^2 (Table 2 x {G_FACTOR:g}); seed mean alpha - 1 and von Mises = "
+        f"{R['seed_mean_alpha_minus_1']:.2f} and {R['seed_mean_vm_Pa']:.2f} x the run with c = 1; "
         f"bottom face clamped; displacement x{MAG:g}")
 
 pl = pv.Plotter(shape=(1, 3), off_screen=True, window_size=(2400, 912), border=False)
