@@ -81,6 +81,13 @@ ONLY = _opt("--only", None, str)            # run only this example, e.g. separa
 CHECK = "--check" in sys.argv               # c = 1 and a = 1 everywhere from the start: the seed point model must
                                             # equal Fritsch Case I run alone (klempt2026_reproduction)
 LAM_C2 = LAM_A2 = 0.0 if CHECK else 4.0     # g L^2 / d, L = 1 mm
+# example setting v2 (20 Oct, after the first runs): --v2 = B in four small corner blocks at the seed's height,
+# antibiotic weakly taken up (Lambda_a^2 = 0.25), alpha*_0 = 50 (Fritsch's validation value), antibiotic from all
+# outer faces from T* = 0.5; use with --phi-min 0.1 --front 0.1
+V2 = "--v2" in sys.argv
+if V2 and not CHECK:
+    LAM_A2 = 0.25
+ALPHA0 = 50.0 if V2 else None
 T_AB = -1.0 if CHECK else 0.5
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
@@ -89,7 +96,7 @@ H = W.L / NF
 RES = HERE / "results" / "2026-10-3d"
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
-       + ("_check" if CHECK else ""))
+       + ("_check" if CHECK else "") + ("_v2" if V2 else ""))
 
 
 # ---------------------------------------------------------------- point model (black box)
@@ -115,7 +122,7 @@ def _one_point(g, c0, c1, a0, a1):
     def body(gg, w):
         p = dict(_P)
         p["c"] = CASE["c_star"] * ((1 - w) * c0 + w * c1)
-        p["alpha"] = CASE["alpha_star"] * ((1 - w) * a0 + w * a1)
+        p["alpha"] = (ALPHA0 or CASE["alpha_star"]) * ((1 - w) * a0 + w * a1)
         return eco.newton_step(gg, p), None
     return jax.lax.scan(body, g, FRAC)[0]
 
@@ -172,12 +179,17 @@ class Reaction:
                 ok = np.ones((NF,) * 3, bool)
                 e = [slice(None)] * 3; e[ax] = -1 if sgn == 1 else 0; ok[tuple(e)] = False
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
-        j = 0 if side < 0 else -1
-        diag[:, j, :] += 2.0
+        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)]
+        for ax_, j in faces:
+            sl = [slice(None)] * 3; sl[ax_] = j
+            diag[tuple(sl)] += 2.0
         self.A0 = sp.csr_matrix((-np.ones(sum(r.size for r in rows)) / H ** 2,
                                  (np.concatenate(rows), np.concatenate(cols))), shape=(n3, n3))
         self.d0 = diag.ravel() / H ** 2
-        b = np.zeros((NF,) * 3); b[:, j, :] = 2.0 / H ** 2
+        b = np.zeros((NF,) * 3)
+        for ax_, j in faces:
+            sl = [slice(None)] * 3; sl[ax_] = j
+            b[tuple(sl)] += 2.0 / H ** 2
         self.b, self.q = b.ravel(), q
 
     def solve(self, phi, L, value=1.0):
@@ -205,6 +217,9 @@ def run(example, antibiotic):
     ax = -1 + (np.arange(NF) + 0.5) * H
     X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
     edges = (np.abs(X) > 0.75) & (np.abs(Y) > 0.75)
+    if V2:                                        # four small corner blocks at the seed's height
+        zmax = np.abs(Z[seed]).max() + 1e-9
+        edges = edges & (np.abs(Z) <= zmax)
     phi = (seed | (edges if example == "separate" else False)).astype(float)
     alpha = np.ones_like(phi)
     G = np.zeros((NF, NF, NF, 12))
@@ -215,7 +230,7 @@ def run(example, antibiotic):
     else:
         G[seed] = start_state(*CASE["phi_init"])
     on = phi >= PHI_MIN
-    nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, +1)
+    nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
     c = nut.solve(phi, L)
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
