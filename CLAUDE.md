@@ -353,6 +353,10 @@ this machine's specific workflow.
   Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
   `thesis/README.md`.
 
+- **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
+  3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
+  four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
+  `fritsch_4sp_M3`). The thesis Chapters 3 and 4 keep their calibrated results as they are.
 - **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never
   in the thesis body, whatever the meeting with Oliver decides. The thesis keeps only
   the existing Outlook paragraph (Ch. 6, with Wanner and Gujer 1986); the antibiotic
