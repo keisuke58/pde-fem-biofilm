@@ -387,21 +387,55 @@ def stats(D):
                   elements_phi_gt_0p3=int(film_m3.sum()), vm_mean_phi_gt_0p3_Pa=float(vm[film_m3].mean()),
                   vm_max_phi_gt_0p3_Pa=float(vm[film_m3].max())),
         band=dict(z_mm=[Z_CEJ - BAND_HALF, Z_CEJ + BAND_HALF], elements=int(sb.sum()), rest_elements=int(sr.sum()),
-                  vm_mean_Pa=float(vm[sb].mean()), vm_max_Pa=float(vm[sb].max()), p_mean_Pa=float(p[sb].mean()),
-                  rest_vm_mean_Pa=float(vm[sr].mean()), rest_vm_max_Pa=float(vm[sr].max()),
+                  vm_mean_Pa=float(vm[sb].mean()), vm_p95_Pa=float(np.percentile(vm[sb], 95)),
+                  vm_max_Pa=float(vm[sb].max()), p_mean_Pa=float(p[sb].mean()),
+                  rest_vm_mean_Pa=float(vm[sr].mean()), rest_vm_p95_Pa=float(np.percentile(vm[sr], 95)),
+                  rest_vm_max_Pa=float(vm[sr].max()), rest_p_mean_Pa=float(p[sr].mean()),
                   ratio_vm_mean_band_over_rest=float(vm[sb].mean() / vm[sr].mean()),
+                  ratio_vm_p95_band_over_rest=float(np.percentile(vm[sb], 95) / np.percentile(vm[sr], 95)),
                   ratio_vm_max_band_over_rest=float(vm[sb].max() / vm[sr].max()),
                   am1_mean=float(am1[film_f & BAND_F].mean()), rest_am1_mean=float(am1[film_f & ~BAND_F].mean())),
     )
+    p0, p_h = p_threshold()                                   # the same threshold for every run (from the base run)
+    out["film"]["share_p_ge_p_h_end"] = float((p[film_m] >= p_h).mean())
+    out["film"]["share_p_ge_p_h_end_phi_gt_0p3"] = float((p[film_m3] >= p_h).mean())
+    out["band"]["share_p_ge_p_h_end"] = float((p[sb] >= p_h).mean())
+    out["band"]["rest_share_p_ge_p_h_end"] = float((p[sr] >= p_h).mean())
     if bool(D["gate"]):
-        p_h = float(D["p_h"])
-        out["gate"] = dict(p_0_Pa=float(D["p_0"]), p_h_Pa=p_h,
+        out["gate"] = dict(p_0_Pa=float(D["p_0"]), p_h_Pa=float(D["p_h"]),
                            closed_share_film_end=float((p[film_m] >= p_h).mean()),
                            closed_share_band_end=float((p[sb] >= p_h).mean()),
                            closed_share_rest_end=float((p[sr] >= p_h).mean()),
                            closed_share_per_frame=[float(x) for x in D["gate_closed_share"]],
                            g_mean_film_end=float(np.clip(1 - p[film_m] / p_h, 0, 1).mean()))
     return out
+
+
+def run_record(tag, D):
+    """The json entry of one run: settings, solver counts, wall times, end numbers and z profiles."""
+    nutrient, gate, q = RUNS[tag]
+    r = dict(nutrient=nutrient, gate=gate, g_over_d_per_mm2=q, stress_every=int(np.diff(D["solved"])[0]),
+             stress_mesh=int(D["nm"]) if "nm" in D else NM, amg_iterations_max=int(D["iters"].max()))
+    if "cg_iters" in D:
+        r["nutrient_solver_iterations_max"] = int(D["cg_iters"].max())
+    for k in ("wall_field", "wall_c", "wall_stress"):
+        if k in D:
+            r[k + "_s"] = float(D[k])
+    r.update(stats(D))
+    r["profiles"] = profiles(D)
+    return r
+
+
+JSON_PATH = RESDIR / "real_tooth_physics.json"
+
+
+def save_run_json(tag, D):
+    """Merge this run's numbers into real_tooth_physics.json right after the run (a restart loses at most one run)."""
+    res = json.loads(JSON_PATH.read_text()) if JSON_PATH.exists() else {}
+    res.setdefault("runs", {})[tag] = run_record(tag, D)
+    RESDIR.mkdir(parents=True, exist_ok=True)
+    JSON_PATH.write_text(json.dumps(res, indent=1) + "\n")
+    print(f"[{tag}] numbers merged into {JSON_PATH}", flush=True)
 
 
 def profiles(D):
@@ -587,19 +621,9 @@ def summary():
         if tag == "base":
             D.update(nutrient=False, gate=False, nm=NM, q=np.nan, p_0=np.nan, p_h=np.nan)
         caches[tag] = D
-        nutrient, gate, q = RUNS[tag]
-        r = dict(nutrient=nutrient, gate=gate, g_over_d_per_mm2=q, stress_every=int(np.diff(D["solved"])[0]),
-                 amg_iterations_max=int(D["iters"].max()))
-        if "cg_iters" in D:
-            r["nutrient_solver_iterations_max"] = int(D["cg_iters"].max())
-        for k in ("wall_field", "wall_c", "wall_stress"):
-            if k in D:
-                r[k + "_s"] = float(D[k])
-        r.update(stats(D))
-        r["profiles"] = profiles(D)
-        res["runs"][tag] = r
+        res["runs"][tag] = run_record(tag, D)
     RESDIR.mkdir(parents=True, exist_ok=True)
-    (RESDIR / "real_tooth_physics.json").write_text(json.dumps(res, indent=1) + "\n")
+    JSON_PATH.write_text(json.dumps(res, indent=1) + "\n")
     # figure
     label = {"base": "no nutrient, no gate", "nutrient": "nutrient", "gate": "gate", "nutrient_gate": "nutrient + gate",
              "nutrient_t2": "nutrient, Table 2 ratio"}
@@ -644,5 +668,6 @@ if __name__ == "__main__":
     if tag == "base":
         D.update(nutrient=False, gate=False, nm=NM, q=np.nan, p_0=np.nan, p_h=np.nan)
     print(json.dumps(stats(D), indent=1))
+    save_run_json(tag, D)
     if "--no-video" not in sys.argv:
         render(tag, D, png_only="--png-only" in sys.argv)

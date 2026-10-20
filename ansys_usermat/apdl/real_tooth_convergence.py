@@ -203,16 +203,26 @@ def mechanics(n, phi_m, am1_m, tooth_m, tol=1e-10):
     ndof = 3 * (n + 1) ** 3
     Ee = np.where(tooth_m.ravel(), E_TOOTH, E_BIO * (np.clip(phi_m.ravel(), 0, 1) ** 2 + FLOOR))
     eps0 = np.where(tooth_m.ravel(), 0.0, am1_m.ravel())
-    rows = np.repeat(dofs, 24, 1).ravel()
-    cols = np.tile(dofs, (1, 24)).ravel()
-    K = sp.csr_matrix(((Ke0[None] * Ee[:, None, None]).ravel(), (rows, cols)), shape=(ndof, ndof))
-    del rows, cols
     F = np.zeros(ndof)
     np.add.at(F, dofs.ravel(), (fe0[None] * (Ee * eps0)[:, None]).ravel())
     fix = (3 * idx[:, :, 0].ravel()[:, None] + np.arange(3)).ravel()
     free = np.setdiff1d(np.arange(ndof), fix)
-    Kff = K[free][:, free].tocsr()
-    del K
+    fmap = np.full(ndof, -1, np.int32)                       # dof -> index among the free dofs
+    fmap[free] = np.arange(len(free), dtype=np.int32)
+    # assembled in chunks of elements straight into the free-dof matrix: the 96^3 mesh (2.7M dof, 510M entries
+    # before summing) does not fit as one COO triplet list
+    Kff = None
+    fd = fmap[dofs]
+    for c0 in range(0, len(dofs), 65536):
+        d = fd[c0:c0 + 65536]
+        rows = np.repeat(d, 24, 1).ravel()
+        cols = np.tile(d, (1, 24)).ravel()
+        val = (Ke0[None] * Ee[c0:c0 + 65536, None, None]).ravel()
+        keep = (rows >= 0) & (cols >= 0)
+        Kc = sp.csr_matrix((val[keep], (rows[keep], cols[keep])), shape=(len(free),) * 2)
+        Kff = Kc if Kff is None else Kff + Kc
+        del rows, cols, val, keep, Kc
+    Kff.sum_duplicates()
     xn = np.linspace(-L / 2, L / 2, n + 1)
     Xn, Yn, Zn = np.meshgrid(xn, xn, xn, indexing="ij")
     P = np.stack([Xn.ravel(), Yn.ravel(), Zn.ravel()], 1)
@@ -540,116 +550,86 @@ def print_summary(out):
 
 # ---------------------------------------------------------------- figure
 def figure():
+    """(a) the stress measures against the element size on log axes, (b) the ratios between them; the 96^3 field
+    solid, the finest field dashed (same symbols)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
-    from matplotlib.ticker import FixedLocator, NullLocator, ScalarFormatter
+    from matplotlib.ticker import FixedLocator, NullLocator
     sys.path.insert(0, str(ROOT / "ansys_usermat"))
     import figstyle
     figstyle.apply(size=9)
     out = load_json()
-    Fd, Sd = out["field"], out["stress"]
+    Sd = out["stress"]
+    fields = sorted(Sd, key=int)
+    ls_of = {nf: ls for nf, ls in zip(fields, ("-", "--", ":"))}
     col = {"max": "#2a78d6", "p99": "#6250d6", "p95": "#1baf7a", "band": "#eb6834", "core": "#8c6a00",
-           "film": "#444444", "first": "#b03060"}
-    mk = {"max": "o", "p99": "^", "p95": "v", "band": "s", "core": "D", "film": "x", "first": "p"}
+           "film": "#444444", "first": "#b03060", "outer": "#777777"}
+    mk = {"max": "o", "p99": "^", "p95": "v", "band": "s", "core": "D", "film": "x", "first": "p", "outer": "h"}
 
-    def axes_h(ax, hs, ns, yt=None):
+    def rows_of(nf):
+        rows = Sd[nf]
+        ns = sorted(int(x) for x in rows)
+        return rows, ns, [L / n for n in ns]
+
+    def axes_h(ax, hs, ns):
         ax.set_xscale("log")
         ax.xaxis.set_major_locator(FixedLocator(hs)); ax.xaxis.set_minor_locator(NullLocator())
-        ax.set_xticklabels([f"{h:.2g}\n${n}^3$" for h, n in zip(hs, ns)])
-        if yt is not None:
-            ax.set_yscale("log")
-            ax.yaxis.set_major_locator(FixedLocator(yt)); ax.yaxis.set_minor_locator(NullLocator())
-            ax.yaxis.set_major_formatter(ScalarFormatter()); ax.set_yticklabels([f"{v:g}" for v in yt])
+        ax.set_xticklabels([f"{h:.2g}\n${n}^3$" for h, n in zip(hs, ns)], fontsize=7.5)
         ax.set_xlim(hs[0] * 1.15, hs[-1] / 1.15)
+        ax.set_xlabel("stress element $h$ (mm), mesh")
 
-    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.9), gridspec_kw={"width_ratios": [0.8, 1.1, 1.1]})
-    # (a) field convergence, relative to the finest grid
+    fig, axs = plt.subplots(1, 2, figsize=(6.3, 3.0))
+    # (a) measures
     ax = axs[0]
-    ns = sorted(int(k) for k in Fd if k.isdigit())
-    hs = [L / n for n in ns]
-    for k, lab, c, m in (("film volume mm^3", "film volume", "#1baf7a", "o"),
-                         ("seed am1 mean", r"seed mean $\alpha-1$", "#eb6834", "s"),
-                         ("am1 max", r"max $\alpha-1$", "#2a78d6", "^"),
-                         ("seed volume mm^3", "seed volume", "#8c6a00", "D")):
-        v = np.array([Fd[str(n)][k] for n in ns])
-        ax.plot(hs, v / v[-1], marker=m, color=c, lw=1.5, ms=4.5, mfc="white", label=lab)
-    ax.axhline(1.0, color="#999999", lw=0.8)
-    axes_h(ax, hs, ns)
-    ax.set_xlabel("field cell $h$ (mm), grid")
-    ax.set_ylabel(f"value / value on ${ns[-1]}^3$")
-    ax.set_title("(a) growth field", fontsize=9)
-    ax.legend(fontsize=6.5, frameon=False, loc="lower left", handlelength=1.8)
-    # (b) stress measures, log-log, field 96 solid and the finest field dashed
-    ax = axs[1]
     series = (("vM max", "maximum", "max"), ("vM p99", "99th percentile", "p99"),
               ("vM p95", "95th percentile", "p95"), ("band vM mean", "band mean", "band"),
-              ("film vM mean", "film mean", "film"), ("core vM mean", "core mean", "core"),
-              ("first layer vM mean", "first-layer mean", "first"))
-    fields = sorted(Sd, key=int)
-    for nf, ls in zip(fields, ("-", "--", ":")):
-        rows = Sd[nf]
-        ns_s = sorted(int(x) for x in rows)
-        hs_s = [L / n for n in ns_s]
+              ("film vM mean", "film mean", "film"), ("core vM mean", "core mean", "core"))
+    for nf in fields:
+        rows, ns, hs = rows_of(nf)
         for key, lab, c in series:
-            v = np.array([rows[str(n)][key] for n in ns_s]) * 1e3
-            ax.plot(hs_s, v, ls=ls, marker=mk[c], color=col[c], lw=1.4, ms=4.5, mfc="white" if c != "film" else col[c],
-                    label=lab if ls == "-" else None)
-    rows = Sd[fields[0]]
-    ns_s = sorted(int(x) for x in rows)
-    hs_s = [L / n for n in ns_s]
-    axes_h(ax, hs_s, ns_s, [1, 2, 5, 10, 20])
-    allv = [rows[str(n)][k] * 1e3 for n in ns_s for k, _, _ in series]
-    ax.set_ylim(min(allv) / 1.3, max(allv) * 1.3)
-    ax.set_xlabel("stress element $h$ (mm), mesh")
-    ax.set_ylabel("von Mises (mPa)")
-    ax.set_title("(b) stress, film elements", fontsize=9)
-    f = out["stress fits"].get(fields[0], {})
+            v = np.array([rows[str(n)][key] for n in ns], float) * 1e3
+            ax.plot(hs, v, ls=ls_of[nf], marker=mk[c], color=col[c], lw=1.3, ms=4.5,
+                    mfc="white" if c != "film" else col[c], label=lab if nf == fields[0] else None)
+    rows, ns, hs = rows_of(fields[0])
+    axes_h(ax, hs, ns)
+    ax.set_yscale("log")
+    ax.set_ylabel("von Mises in the film (mPa)")
+    ax.set_title("(a) measures", fontsize=9, loc="left")
+    f = out.get("stress fits", {}).get(fields[-1], {})
     if "vM max" in f:
-        ax.text(0.03, 0.97, f"maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$\nband mean "
-                            f"{f['band vM mean']['change % per refinement'][-1]:+.1f} % at the last step",
-                transform=ax.transAxes, va="top", ha="left", fontsize=7)
-    fld_txt = f"solid: field ${fields[0]}^3$" + (f", dashed: field ${fields[-1]}^3$" if len(fields) > 1 else "")
-    ax.text(0.97, 0.03, fld_txt, transform=ax.transAxes, va="bottom", ha="right", fontsize=6.5, color="#555555")
-    # (c) band mean, 95th percentile, maximum against h on linear axes with the fits to h -> 0
-    ax = axs[2]
-    rows = Sd[fields[0]]
-    fits = out["stress fits"][fields[0]]
-    hh = np.linspace(0, hs_s[0] * 1.05, 200)
-    for key, lab, c in (("vM max", "maximum", "max"), ("vM p95", "95th percentile", "p95"),
-                        ("band vM mean", "band mean", "band")):
-        v = np.array([rows[str(n)][key] for n in ns_s]) * 1e3
-        ax.plot(hs_s, v, ls="none", marker=mk[c], color=col[c], ms=5, mfc="white", label=lab)
-        g = fits[key]
-        if "s" in g:                                   # power law, drawn where it is fitted
-            hp = np.linspace(hs_s[-1] * 0.5, hs_s[0] * 1.05, 100)
-            ax.plot(hp, g["a"] * hp ** (-g["s"]) * 1e3, color=c and col[c], lw=1, ls="--")
-            ax.text(hs_s[-1] * 0.5, g["a"] * (hs_s[-1] * 0.5) ** (-g["s"]) * 1e3 * 1.05, f"$\\sim h^{{-{g['s']:.2f}}}$",
-                    color=col[c], fontsize=7, va="bottom", ha="left")
-        else:
-            p_ = g["free fit order"] if g["free fit reliable"] else 1.0
-            A = np.stack([np.ones(len(hs_s)), np.array(hs_s) ** p_], 1)
-            q = np.linalg.lstsq(A, v, rcond=None)[0]
-            ax.plot(hh, q[0] + q[1] * hh ** p_, color=col[c], lw=1, ls="-")
-            ax.plot([0], [g["h->0"] * 1e3], marker="*", color=col[c], ms=8, ls="none")
-            ax.text(0.02, g["h->0"] * 1e3 * 1.08, f"$h \\to 0$: {g['h->0'] * 1e3:.2f} mPa", color=col[c],
-                    fontsize=7, va="bottom", ha="left")
-    if len(fields) > 1:
-        rows2 = Sd[fields[-1]]
-        ns2 = sorted(int(x) for x in rows2)
-        for key, c in (("vM max", "max"), ("vM p95", "p95"), ("band vM mean", "band")):
-            ax.plot([L / n for n in ns2], [rows2[str(n)][key] * 1e3 for n in ns2], ls="none", marker=mk[c],
-                    color=col[c], ms=5, mfc=col[c], alpha=0.5)
-    ax.set_xlim(-0.03, hs_s[0] * 1.08)
+        ax.text(0.03, 0.03, f"field ${fields[-1]}^3$: maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$, "
+                            f"film mean $\\sim h^{{-{f['film vM mean']['free fit order'] * 0 + fit_power(hs if False else [L / n for n in f['meshes']], [Sd[fields[-1]][str(n)]['film vM mean'] for n in f['meshes']])['s']:.2f}}}$",
+                transform=ax.transAxes, va="bottom", ha="left", fontsize=7)
+    # (b) ratios
+    ax = axs[1]
+    ratios = (("vM max", "film vM mean", "maximum / film mean", "max"),
+              ("vM p99", "film vM mean", "99th percentile / film mean", "p99"),
+              ("vM p95", "film vM mean", "95th percentile / film mean", "p95"),
+              ("band vM mean", "core vM mean", "band mean / core mean", "band"),
+              ("first layer vM mean", "outer vM mean", "first layer / outer", "first"))
+    for nf in fields:
+        rows, ns, hs = rows_of(nf)
+        for a, b, lab, c in ratios:
+            pts = [(h, rows[str(n)][a] / rows[str(n)][b]) for h, n in zip(hs, ns)
+                   if rows[str(n)][a] is not None and rows[str(n)][b]]
+            if pts:
+                ax.plot(*zip(*pts), ls=ls_of[nf], marker=mk[c], color=col[c], lw=1.3, ms=4.5, mfc="white",
+                        label=lab if nf == fields[0] else None)
+    ax.axhline(1.0, color="#999999", lw=0.8)
+    rows, ns, hs = rows_of(fields[0])
+    axes_h(ax, hs, ns)
     ax.set_ylim(0, None)
-    ax.set_xlabel("stress element $h$ (mm)")
-    ax.set_ylabel("von Mises (mPa)")
-    ax.set_title("(c) converging and not", fontsize=9)
-    ax.legend(fontsize=6.5, frameon=False, loc="center right", handlelength=1.5)
-    fig.tight_layout(w_pad=0.6, rect=[0, 0.10, 1, 1])
-    fig.legend(*axs[1].get_legend_handles_labels(), loc="lower center", ncol=7, fontsize=7, frameon=False,
-               bbox_to_anchor=(0.5, 0.0), handlelength=1.6, columnspacing=0.9)
+    ax.set_ylabel("ratio")
+    ax.set_title("(b) ratios", fontsize=9, loc="left")
+    ax.legend(fontsize=7, frameon=False, loc="upper right", handlelength=1.8)
+    hl = axs[0].get_legend_handles_labels()
+    h2 = [Line2D([], [], color="#333333", ls=ls_of[nf], lw=1.3) for nf in fields]
+    l2 = [f"field ${nf}^3$" for nf in fields]
+    fig.tight_layout(w_pad=1.0, rect=[0, 0.11, 1, 1])
+    fig.legend(hl[0] + h2, hl[1] + l2, loc="lower center", ncol=4, fontsize=7, frameon=False,
+               bbox_to_anchor=(0.5, 0.0), handlelength=1.8, columnspacing=1.0)
     FIG.parent.mkdir(exist_ok=True)
     fig.savefig(FIG.with_suffix(".pdf"))
     fig.savefig(FIG.with_suffix(".png"), dpi=300)
