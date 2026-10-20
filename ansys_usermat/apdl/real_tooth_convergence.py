@@ -1,0 +1,638 @@
+#!/usr/bin/env python3
+"""Mesh convergence of the biofilm stress on the real molar (anim_real_tooth_3d.py).
+
+The demonstration on the molar FDI 46 (results/2026-10-3d/REAL_TOOTH.md) computes its growth field on 96^3 cells and
+its stress on 32^3 hex8 elements, where the 0.5 mm film is one element thick. This script repeats the final state on
+coarser and finer grids and separates the numbers that converge with the mesh from those that do not, as
+wall_stress_convergence.py does for the 2 mm cube.
+
+Field (same model and geometry as the demonstration: d phi/dt = beta lap phi + k_alpha alpha - penalty, d alpha/dt =
+k_alpha phi, beta = 0.08 mm^2/T*, k_alpha = 1e-3 /T*, penalty 5, T* = 1.1, RK4, zero flux at the walls and at the
+voxelised tooth; seed phi = 1 within 0.5 mm of the tooth on the -x flank, z = -3 .. -1 mm): final state only, on
+48^3, 96^3, 144^3 and 192^3 cells (h = 0.333, 0.167, 0.111, 0.083 mm), cached in figdata/real_tooth_conv_field_<n>.npz.
+The tooth and the seed are re-voxelised on every grid (cell centre inside the STL / within the seed region), so the
+field convergence includes the geometry. dt = min(0.15 h^2/beta, T/66), the time step of the demonstration on 96^3
+(a run with dt/2 on 96^3 checks that the time error is below the mesh differences).
+
+Stress (mesh_study_seed.element_matrices, hex8 B-bar, small strain, E = 10 Pa (phi^2 + 1e-3) in film and space,
+E = 1e4 Pa in the tooth without growth, nu = 0.49, eigenstrain (alpha - 1) I, bottom face clamped) on 16^3, 24^3,
+32^3 and 48^3 elements (64^3 optional), each with the fields block-averaged from the 96^3 grid and from the 192^3
+grid; both divide every stress mesh, so between two stress meshes only the mechanics changes, and between the two
+field grids only the field. pyamg smoothed aggregation + CG, tol 1e-10, residual and time in the JSON.
+
+Element sets in physical space, the same on every mesh (phi, z of the element centre): film = elements with
+phi > 0.3 that are not tooth; cervical band = film with z in [-2.1, -1.1] mm (0.5 mm either side of the CEJ at
+z = -1.6); core = the rest of the film; first layer = film elements with a tooth element among their six neighbours;
+outer = the rest. Reported per mesh: film mean von Mises, band mean, core mean, band/core, first-layer and outer
+means, maximum with its element centre, 95th and 99th percentiles, maximum and mean pressure p = -tr(sigma)/3.
+Fits as in wall_stress_convergence.py: v = v0 + c h^p for the means (observed order and h -> 0 value), v = a h^-s
+for the maxima and percentiles; Richardson order from the 48/96/192 field triple.
+
+    python ansys_usermat/apdl/real_tooth_convergence.py --field-only            # the four field grids (about 5 min)
+    python ansys_usermat/apdl/real_tooth_convergence.py                         # fields + stress meshes (about 15 min)
+    python ansys_usermat/apdl/real_tooth_convergence.py --meshes 64 --stress-fields 192   # optional 64^3 (slow)
+    python ansys_usermat/apdl/real_tooth_convergence.py --figure
+        -> ansys_usermat/apdl/results/2026-10-3d/real_tooth_convergence.json, assets/fig_real_tooth_convergence.pdf/.png
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")        # two agents share four cores; threaded BLAS only slows the CG down
+
+import numpy as np
+import scipy.sparse as sp
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+sys.path.insert(0, str(HERE))
+import mesh_study_seed as S  # noqa: E402
+
+# the demonstration's settings (anim_real_tooth_3d.py)
+L = 16.0
+BETA0, KA, PEN, TEND = 0.02, 1e-3, 5.0, 1.1
+SEED_THICK = 0.5
+BETA = BETA0 * (SEED_THICK / 0.25) ** 2        # 0.08 mm^2/T*
+E_BIO, E_TOOTH, FLOOR, NU = 10.0, 1e4, 1e-3, 0.49
+Z_TOP = 5.5
+SEED_Z, SEED_HALF_ANGLE = (-3.0, -1.0), 60.0
+NFRAMES = 66                                   # dt of the demonstration = TEND / NFRAMES
+STL = ROOT / "assets" / "geometry" / "mendeley_xjsx7nfhj8_D46.stl"
+CACHE_DEMO = ROOT / "figdata" / "anim_real_tooth_3d.npz"
+OUT_JSON = HERE / "results" / "2026-10-3d" / "real_tooth_convergence.json"
+FIG = ROOT / "assets" / "fig_real_tooth_convergence"
+Z_CEJ, BAND_HALF = -1.6, 0.5
+FILM_PHI = 0.3
+FIELD_GRIDS = (48, 96, 144, 192)
+STRESS_MESHES = (16, 24, 32, 48)
+STRESS_FIELDS = (96, 192)
+
+
+def down(a, n):
+    f = a.shape[0] // n
+    assert f * n == a.shape[0], (a.shape, n)
+    return a.reshape(n, f, n, f, n, f).mean((1, 3, 5))
+
+
+# ---------------------------------------------------------------- geometry (copied from anim_real_tooth_3d.py)
+def load_tooth():
+    """The molar, centred on its crown in x and y, crown top at Z_TOP."""
+    import pyvista as pv
+    m = pv.read(STL).triangulate().clean()
+    P = np.asarray(m.points)
+    top = P[:, 2].max()
+    crown = P[P[:, 2] > top - 7.0]
+    shift = np.array([crown[:, 0].mean(), crown[:, 1].mean(), top - Z_TOP])
+    m.points = P - shift
+    return m
+
+
+def geometry(nf):
+    """Signed distance, tooth mask, open mask and seed mask on the nf^3 cell grid."""
+    import pyvista as pv
+    h = L / nf
+    ax = -L / 2 + (np.arange(nf) + 0.5) * h
+    X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
+    cen = pv.ImageData(dimensions=(nf,) * 3, spacing=(h,) * 3, origin=(ax[0],) * 3)
+    sdf = np.asarray(cen.compute_implicit_distance(load_tooth())["implicit_distance"]).reshape((nf,) * 3, order="F")
+    tooth = sdf < 0
+    ang = np.degrees(np.arctan2(Y, -X))
+    seed = ~tooth & (sdf < SEED_THICK) & (Z > SEED_Z[0]) & (Z < SEED_Z[1]) & (np.abs(ang) < SEED_HALF_ANGLE)
+    return sdf.astype(np.float32), tooth, ~tooth, seed
+
+
+def make_lap(OPEN, h):
+    """7-point Laplacian with zero flux at the walls and at the tooth (masks precomputed)."""
+    oks = []
+    for axn in range(3):
+        for sgn in (1, -1):
+            on = np.roll(OPEN, -sgn, axn)
+            edge = [slice(None)] * 3
+            edge[axn] = -1 if sgn == 1 else 0
+            ok = OPEN & on
+            ok[tuple(edge)] = False
+            oks.append((axn, sgn, ok))
+
+    def lap(u):
+        out = np.zeros_like(u)
+        for axn, sgn, ok in oks:
+            out += np.where(ok, np.roll(u, -sgn, axn) - u, 0.0)
+        return out / h ** 2
+    return lap
+
+
+def field(nf, dt_factor=1.0, force=False):
+    """Final state (phi, alpha - 1) on the nf^3 grid at T* (cached) and the field measures."""
+    tag = f"{nf}" if dt_factor == 1.0 else f"{nf}_dt{dt_factor:g}"
+    cache = ROOT / "figdata" / f"real_tooth_conv_field_{tag}.npz"
+    if cache.exists() and not force:
+        d = np.load(cache)
+        return d["phi"], d["am1"], d["tooth"], d["seed"], json.loads(str(d["info"]))
+    h = L / nf
+    t0 = time.time()
+    sdf, tooth, OPEN, seed = geometry(nf)
+    t_sdf = time.time() - t0
+    dt = min(0.15 * h * h / BETA, TEND / NFRAMES) * dt_factor
+    nstep = int(np.ceil(TEND / dt))
+    dt = TEND / nstep
+    print(f"field {nf}^3: h = {h:.4f} mm, tooth {tooth.sum()} cells = {tooth.sum() * h ** 3:.1f} mm^3, seed "
+          f"{seed.sum()} cells = {seed.sum() * h ** 3:.2f} mm^3, sdf {t_sdf:.0f} s; dt = {dt:.4f}, {nstep} steps",
+          flush=True)
+    lap = make_lap(OPEN, h)
+    phi = np.where(seed, 1.0, 0.0)
+    alpha = np.ones_like(phi)
+
+    def rhs(phi, alpha):
+        dphi = BETA * lap(phi) + KA * alpha - PEN * (np.maximum(phi - 1, 0) + np.minimum(phi, 0))
+        return np.where(OPEN, dphi, 0.0), np.where(OPEN, KA * phi, 0.0)
+
+    t0 = time.time()
+    for s in range(nstep):
+        k1 = rhs(phi, alpha)
+        k2 = rhs(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
+        k3 = rhs(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1])
+        k4 = rhs(phi + dt * k3[0], alpha + dt * k3[1])
+        phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+        alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        if (s + 1) % max(1, nstep // 4) == 0:
+            print(f"  step {s + 1}/{nstep}  phi volume {phi.sum() * h ** 3:.3f} mm^3  {time.time() - t0:.0f} s",
+                  flush=True)
+    am1 = np.where(OPEN, alpha - 1.0, 0.0)
+    info = {"h": h, "cells": nf ** 3, "dt": dt, "steps": nstep, "dt_factor": dt_factor,
+            "tooth cells": int(tooth.sum()), "tooth volume mm^3": float(tooth.sum() * h ** 3),
+            "seed cells": int(seed.sum()), "seed volume mm^3": float(seed.sum() * h ** 3),
+            "seconds sdf": t_sdf, "seconds field": time.time() - t0}
+    info.update(field_measures(phi, am1, OPEN, seed, h))
+    print("  " + ", ".join(f"{k} {v:.4g}" if isinstance(v, float) else f"{k} {v}" for k, v in info.items()
+                           if k not in ("h", "cells", "dt_factor")), flush=True)
+    cache.parent.mkdir(exist_ok=True)
+    np.savez_compressed(cache, phi=phi.astype(np.float32), am1=am1.astype(np.float32), tooth=tooth, seed=seed,
+                        sdf=sdf, info=json.dumps(info))
+    return phi.astype(np.float32), am1.astype(np.float32), tooth, seed, info
+
+
+def field_measures(phi, am1, OPEN, seed, h):
+    return {"film volume mm^3": float(phi[OPEN].sum() * h ** 3),
+            "volume phi>0.5 mm^3": float((phi > 0.5).sum() * h ** 3),
+            "volume phi>0.3 mm^3": float((phi > FILM_PHI).sum() * h ** 3),
+            "seed phi mean": float(phi[seed].mean()),
+            "seed am1 mean": float(am1[seed].mean()), "am1 max": float(am1[OPEN].max()),
+            "am1 mean phi>0.3": float(am1[phi > FILM_PHI].mean())}
+
+
+# ---------------------------------------------------------------- mechanics (Mech of anim_real_tooth_3d.py, tol 1e-10)
+def mechanics(n, phi_m, am1_m, tooth_m, tol=1e-10):
+    import pyamg
+    h = L / n
+    Ke0, fe0, B0, D, m = S.element_matrices(h, NU, False)
+    idx = np.arange((n + 1) ** 3, dtype=np.int64).reshape(n + 1, n + 1, n + 1)
+    off = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
+    conn = np.stack([idx[i:i + n, j:j + n, k:k + n].ravel() for i, j, k in off], 1)
+    dofs = np.concatenate([3 * conn[:, [a]] + np.arange(3) for a in range(8)], 1).astype(np.int32)
+    ndof = 3 * (n + 1) ** 3
+    Ee = np.where(tooth_m.ravel(), E_TOOTH, E_BIO * (np.clip(phi_m.ravel(), 0, 1) ** 2 + FLOOR))
+    eps0 = np.where(tooth_m.ravel(), 0.0, am1_m.ravel())
+    rows = np.repeat(dofs, 24, 1).ravel()
+    cols = np.tile(dofs, (1, 24)).ravel()
+    K = sp.csr_matrix(((Ke0[None] * Ee[:, None, None]).ravel(), (rows, cols)), shape=(ndof, ndof))
+    del rows, cols
+    F = np.zeros(ndof)
+    np.add.at(F, dofs.ravel(), (fe0[None] * (Ee * eps0)[:, None]).ravel())
+    fix = (3 * idx[:, :, 0].ravel()[:, None] + np.arange(3)).ravel()
+    free = np.setdiff1d(np.arange(ndof), fix)
+    Kff = K[free][:, free].tocsr()
+    del K
+    xn = np.linspace(-L / 2, L / 2, n + 1)
+    Xn, Yn, Zn = np.meshgrid(xn, xn, xn, indexing="ij")
+    P = np.stack([Xn.ravel(), Yn.ravel(), Zn.ravel()], 1)
+    B = np.zeros((ndof, 6))                                  # rigid body modes for the AMG near-nullspace
+    B[0::3, 0] = 1; B[1::3, 1] = 1; B[2::3, 2] = 1
+    B[0::3, 3] = -P[:, 1]; B[1::3, 3] = P[:, 0]
+    B[1::3, 4] = -P[:, 2]; B[2::3, 4] = P[:, 1]
+    B[0::3, 5] = P[:, 2]; B[2::3, 5] = -P[:, 0]
+    t0 = time.time()
+    ml = pyamg.smoothed_aggregation_solver(Kff, B=B[free], max_coarse=1000)
+    t_setup = time.time() - t0
+    res = []
+    u = np.zeros(ndof)
+    u[free] = ml.solve(F[free], tol=tol, accel="cg", maxiter=2000, residuals=res)
+    rel = float(np.linalg.norm(Kff @ u[free] - F[free]) / np.linalg.norm(F[free]))
+    info = {"solver": "pyamg smoothed aggregation + cg", "dof": int(len(free)), "iterations": len(res),
+            "relative residual": rel, "seconds setup": t_setup, "seconds solve": time.time() - t0 - t_setup}
+    print(f"    amg-cg {len(free)} dof: {len(res)} iterations, relative residual {rel:.1e}, "
+          f"setup {t_setup:.0f} s, solve {info['seconds solve']:.0f} s", flush=True)
+    eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
+    sig = Ee[:, None] * (eps @ D.T)
+    p = -sig[:, :3].mean(1)
+    s = sig[:, :3] + p[:, None]
+    vm = np.sqrt(1.5 * ((s ** 2).sum(1) + 2 * (sig[:, 3:] ** 2).sum(1)))
+    return vm.reshape((n,) * 3), p.reshape((n,) * 3), info
+
+
+def element_sets(n, phi_m, tooth_m):
+    h = L / n
+    ax = -L / 2 + (np.arange(n) + 0.5) * h
+    X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
+    film = (phi_m > FILM_PHI) & ~tooth_m
+    band = film & (Z > Z_CEJ - BAND_HALF) & (Z < Z_CEJ + BAND_HALF)
+    core = film & ~band
+    touch = np.zeros_like(film)
+    for axn in range(3):
+        for sgn in (1, -1):
+            nb = np.roll(tooth_m, sgn, axn)
+            edge = [slice(None)] * 3
+            edge[axn] = 0 if sgn == 1 else -1
+            nb[tuple(edge)] = False
+            touch |= nb
+    first = film & touch
+    outer = film & ~touch
+    return dict(film=film, band=band, core=core, first=first, outer=outer), (X, Y, Z)
+
+
+def measures(n, phi_m, tooth_m, vm, p):
+    sets, (X, Y, Z) = element_sets(n, phi_m, tooth_m)
+    film, band, core, first, outer = (sets[k] for k in ("film", "band", "core", "first", "outer"))
+    imax = np.unravel_index(np.argmax(np.where(film, vm, -np.inf)), vm.shape)
+    ipmax = np.unravel_index(np.argmax(np.where(film, p, -np.inf)), p.shape)
+    vmf = vm[film]
+    r = {"h": L / n, "elements": n ** 3,
+         "film elements": int(film.sum()), "film volume mm^3": float(film.sum() * (L / n) ** 3),
+         "band elements": int(band.sum()), "core elements": int(core.sum()),
+         "first layer elements": int(first.sum()), "outer elements": int(outer.sum()),
+         "film vM mean": float(vmf.mean()),
+         "band vM mean": float(vm[band].mean()) if band.any() else None,
+         "core vM mean": float(vm[core].mean()) if core.any() else None,
+         "band/core": float(vm[band].mean() / vm[core].mean()) if band.any() and core.any() else None,
+         "first layer vM mean": float(vm[first].mean()) if first.any() else None,
+         "outer vM mean": float(vm[outer].mean()) if outer.any() else None,
+         "first/outer": float(vm[first].mean() / vm[outer].mean()) if first.any() and outer.any() else None,
+         "vM max": float(vmf.max()), "vM max at": [float(X[imax]), float(Y[imax]), float(Z[imax])],
+         "vM max in band": bool(band[imax]), "vM max in first layer": bool(first[imax]),
+         "vM p95": float(np.percentile(vmf, 95)), "vM p99": float(np.percentile(vmf, 99)),
+         "vM median": float(np.median(vmf)),
+         "p max": float(p[film].max()), "p max at": [float(X[ipmax]), float(Y[ipmax]), float(Z[ipmax])],
+         "p mean": float(p[film].mean()), "p band mean": float(p[band].mean()) if band.any() else None,
+         "vM max all": float(vm[~tooth_m].max())}
+    return r
+
+
+# ---------------------------------------------------------------- fits (as wall_stress_convergence.py)
+def fit_converging(hs, v):
+    """Convergence of a mean: change per refinement, first- and second-order extrapolations (linear least squares
+    on all meshes), and a free fit v = v0 + c h^p (order bounded to [0.3, 4]). The free fit is marked reliable only
+    when the changes are monotone and the last one is above the solver's resolution (0.2 %); otherwise the first-
+    order value is the h -> 0 estimate."""
+    from scipy.optimize import least_squares
+    hs, v = np.asarray(hs, float), np.asarray(v, float)
+    change = [float((v[i + 1] / v[i] - 1) * 100) for i in range(len(v) - 1)]
+    ext = {}
+    for pp in (1, 2):
+        A = np.stack([np.ones_like(hs), hs ** pp], 1)
+        ext[pp] = float(np.linalg.lstsq(A, v, rcond=None)[0][0])
+    f = lambda q: q[0] + q[1] * hs ** q[2] - v                      # noqa: E731
+    best = None
+    for p0 in (1.0, 2.0):
+        q = least_squares(f, [v[-1], v[0] - v[-1], p0], bounds=([-np.inf, -np.inf, 0.3], [np.inf, np.inf, 4.0]))
+        if best is None or q.cost < best.cost:
+            best = q
+    order = float(best.x[2])
+    mono = all(c > 0 for c in change) or all(c < 0 for c in change)
+    reliable = bool(mono and abs(change[-1]) > 0.2 and 0.31 < order < 3.99)
+    h0 = float(best.x[0]) if reliable else ext[1]
+    return {"change % per refinement": change, "h->0 p=1": ext[1], "h->0 p=2": ext[2],
+            "free fit order": order, "free fit h->0": float(best.x[0]), "free fit reliable": reliable,
+            "h->0": h0, "error % at h->0": [float((x / h0 - 1) * 100) for x in v],
+            "spread % over meshes": float((v.max() / v.min() - 1) * 100)}
+
+
+def fit_power(hs, v):
+    """v = a h^-s (log-log least squares) and the slope of each successive pair."""
+    hs, v = np.asarray(hs, float), np.asarray(v, float)
+    s, loga = np.polyfit(np.log(1 / hs), np.log(v), 1)
+    pair = [float(np.log(v[i + 1] / v[i]) / np.log(hs[i] / hs[i + 1])) for i in range(len(v) - 1)]
+    return {"s": float(s), "a": float(np.exp(loga)), "pair slopes": pair,
+            "change % per refinement": [float((v[i + 1] / v[i] - 1) * 100) for i in range(len(v) - 1)],
+            "spread % over meshes": float((v.max() / v.min() - 1) * 100)}
+
+
+def richardson(hs, v):
+    """Observed order and extrapolated value from three grids with a constant refinement ratio."""
+    hs, v = np.asarray(hs, float), np.asarray(v, float)
+    r = hs[0] / hs[1]
+    d1, d2 = v[1] - v[0], v[2] - v[1]
+    if d1 == 0 or d2 == 0 or d1 / d2 <= 0:
+        return {"order": None, "h->0": float(v[2]), "note": "differences not monotone"}
+    p = float(np.log(d1 / d2) / np.log(r))
+    v0 = float(v[2] + d2 / (r ** p - 1))
+    return {"order": p, "h->0": v0, "ratio": float(r), "error % finest": float((v[2] / v0 - 1) * 100)}
+
+
+# ---------------------------------------------------------------- driver
+def load_json():
+    if OUT_JSON.exists():
+        return json.loads(OUT_JSON.read_text())
+    return {"model": {"L mm": L, "beta mm^2/T*": BETA, "k_alpha 1/T*": KA, "penalty": PEN, "T*": TEND,
+                      "E_bio Pa": E_BIO, "E_tooth Pa": E_TOOTH, "nu": NU, "floor": FLOOR,
+                      "seed": {"thickness mm": SEED_THICK, "z mm": list(SEED_Z), "half angle deg": SEED_HALF_ANGLE},
+                      "film": f"elements with phi > {FILM_PHI}, not tooth",
+                      "band": f"film, z in [{Z_CEJ - BAND_HALF}, {Z_CEJ + BAND_HALF}] mm (CEJ at {Z_CEJ})",
+                      "core": "film outside the band",
+                      "first layer": "film elements with a tooth element among the six neighbours",
+                      "p": "-tr(sigma)/3, compression positive", "units": "Pa, mm"},
+            "field": {}, "stress": {}}
+
+
+def save_json(out):
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(json.dumps(out, indent=1))
+
+
+def run_fields(grids, dt_check=True):
+    out = load_json()
+    for nf in grids:
+        _, _, _, _, info = field(nf)
+        out["field"][str(nf)] = info
+        save_json(out)
+    if dt_check:
+        _, _, _, _, info = field(96, dt_factor=0.5)
+        out["field"]["96 dt/2"] = info
+    if CACHE_DEMO.exists() and "96" in out["field"]:
+        d = np.load(CACHE_DEMO)
+        phi_c, am1_c = d["phi"][-1].astype(float), d["am1"][-1].astype(float)
+        phi, am1, tooth, seed, _ = field(96)
+        out["field"]["96 demo cache (float16)"] = dict(
+            field_measures(phi_c, am1_c, ~tooth, seed, L / 96),
+            **{"max |phi - phi_demo|": float(np.abs(phi - phi_c).max()),
+               "max |am1 - am1_demo|": float(np.abs(am1 - am1_c).max())})
+    out["field fits"] = field_fits(out["field"])
+    save_json(out)
+    print("wrote", OUT_JSON, flush=True)
+
+
+def field_fits(F):
+    ns = sorted(int(k) for k in F if k.isdigit())
+    hs = [L / n for n in ns]
+    fits = {}
+    keys = ["film volume mm^3", "seed am1 mean", "am1 max", "volume phi>0.5 mm^3", "seed volume mm^3",
+            "tooth volume mm^3", "seed phi mean"]
+    for k in keys:
+        v = [F[str(n)][k] for n in ns]
+        fits[k] = {"grids": ns, "values": v}
+        if len(ns) >= 3:
+            fits[k]["fit"] = fit_converging(hs, v)
+        tri = [n for n in (48, 96, 192) if n in ns]
+        if len(tri) == 3:
+            fits[k]["richardson 48/96/192"] = richardson([L / n for n in tri], [F[str(n)][k] for n in tri])
+    if "96 dt/2" in F:
+        fits["dt check 96"] = {k: {"dt": F["96"][k], "dt/2": F["96 dt/2"][k],
+                                   "change %": float((F["96 dt/2"][k] / F["96"][k] - 1) * 100)}
+                               for k in keys if F["96"][k]}
+    return fits
+
+
+def run_stress(meshes, field_grids):
+    for nf in field_grids:
+        phi_f, am1_f, tooth_f, seed_f, _ = field(nf)
+        for n in meshes:
+            if nf % n:
+                print(f"skip stress {n}^3 on field {nf}^3 ({nf} not a multiple of {n})")
+                continue
+            t0 = time.time()
+            phi_m, am1_m = down(phi_f.astype(float), n), down(am1_f.astype(float), n)
+            tooth_m = down(tooth_f.astype(float), n) > 0.5
+            print(f"stress {n}^3 on field {nf}^3: tooth {tooth_m.sum()} elements, film "
+                  f"{((phi_m > FILM_PHI) & ~tooth_m).sum()} elements", flush=True)
+            vm, p, info = mechanics(n, phi_m, am1_m, tooth_m)
+            r = measures(n, phi_m, tooth_m, vm, p)
+            r["tooth elements"] = int(tooth_m.sum())
+            r["solver"] = info
+            r["seconds"] = time.time() - t0
+            print(f"  film {r['film vM mean']:.4e} band {r['band vM mean']:.4e} core {r['core vM mean']:.4e} "
+                  f"ratio {r['band/core']:.2f} first {r['first layer vM mean']:.4e} outer {r['outer vM mean']:.4e} "
+                  f"max {r['vM max']:.4e} at {r['vM max at']} p95 {r['vM p95']:.4e} p99 {r['vM p99']:.4e} "
+                  f"pmax {r['p max']:.4e} pmean {r['p mean']:.4e} ({r['seconds']:.0f} s)", flush=True)
+            np.savez_compressed(ROOT / "figdata" / f"real_tooth_conv_stress_f{nf}_m{n}.npz",
+                                vm=vm.astype(np.float32), p=p.astype(np.float32), phi=phi_m.astype(np.float32),
+                                tooth=tooth_m)
+            out = load_json()
+            out["stress"].setdefault(str(nf), {})[str(n)] = r
+            out["stress fits"] = stress_fits(out["stress"])
+            save_json(out)
+    print("wrote", OUT_JSON, flush=True)
+
+
+CONV_KEYS = ["film vM mean", "band vM mean", "core vM mean", "band/core", "first layer vM mean",
+             "outer vM mean", "first/outer", "p mean", "p band mean", "vM median"]
+POWER_KEYS = ["vM max", "vM p99", "vM p95", "p max"]
+
+
+def stress_fits(Sd):
+    fits = {}
+    for nf, rows in Sd.items():
+        ns = sorted(int(k) for k in rows)
+        if len(ns) < 3:
+            continue
+        hs = [L / n for n in ns]
+        f = {"meshes": ns}
+        for k in CONV_KEYS:
+            v = [rows[str(n)][k] for n in ns]
+            if any(x is None for x in v):
+                continue
+            f[k] = fit_converging(hs, v)
+        for k in POWER_KEYS:
+            f[k] = fit_power(hs, [rows[str(n)][k] for n in ns])
+        fits[nf] = f
+    # field influence at fixed stress mesh
+    if len(Sd) >= 2:
+        a, b = sorted(Sd, key=int)[0], sorted(Sd, key=int)[-1]
+        common = sorted(set(Sd[a]) & set(Sd[b]), key=int)
+        infl = {"fields": [a, b]}
+        for k in CONV_KEYS + POWER_KEYS:
+            infl[k] = {n: float((Sd[b][n][k] / Sd[a][n][k] - 1) * 100) for n in common
+                       if Sd[a][n][k] not in (None, 0) and Sd[b][n][k] is not None}
+        fits["field influence"] = infl
+    return fits
+
+
+def refit():
+    out = load_json()
+    out["field fits"] = field_fits(out["field"])
+    out["stress fits"] = stress_fits(out["stress"])
+    save_json(out)
+    print_summary(out)
+
+
+def print_summary(out):
+    for nf, f in out.get("stress fits", {}).items():
+        if nf == "field influence":
+            continue
+        print(f"== stress on field {nf}^3, meshes {f['meshes']}")
+        for k in CONV_KEYS:
+            if k not in f:
+                continue
+            g = f[k]
+            tag = f"order {g['free fit order']:.2f}" if g["free fit reliable"] else "order n/a (p = 1 used)"
+            print(f"  {k:20s} change {' / '.join(f'{e:+.2f}' for e in g['change % per refinement'])} %  {tag}"
+                  f"  h->0 {g['h->0']:.4e}  error % {' / '.join(f'{e:+.1f}' for e in g['error % at h->0'])}")
+        for k in POWER_KEYS:
+            g = f[k]
+            print(f"  {k:20s} ~ h^({-g['s']:+.2f}), pair slopes {' / '.join(f'{e:.2f}' for e in g['pair slopes'])},"
+                  f" change {' / '.join(f'{e:+.1f}' for e in g['change % per refinement'])} %")
+    for k, g in out.get("field fits", {}).items():
+        if "fit" in g:
+            print(f"  field {k:20s} {g['values']}  order {g['fit']['free fit order']:.2f} "
+                  f"({'ok' if g['fit']['free fit reliable'] else 'n/a'}) h->0 {g['fit']['h->0']:.5g}"
+                  + (f"  richardson order {g['richardson 48/96/192']['order']}"
+                     if "richardson 48/96/192" in g and g["richardson 48/96/192"]["order"] is not None else ""))
+
+
+# ---------------------------------------------------------------- figure
+def figure():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    from matplotlib.ticker import FixedLocator, NullLocator, ScalarFormatter
+    sys.path.insert(0, str(ROOT / "ansys_usermat"))
+    import figstyle
+    figstyle.apply(size=9)
+    out = load_json()
+    Fd, Sd = out["field"], out["stress"]
+    col = {"max": "#2a78d6", "p99": "#6250d6", "p95": "#1baf7a", "band": "#eb6834", "core": "#8c6a00",
+           "film": "#444444", "first": "#b03060"}
+    mk = {"max": "o", "p99": "^", "p95": "v", "band": "s", "core": "D", "film": "x", "first": "p"}
+
+    def axes_h(ax, hs, ns, yt=None):
+        ax.set_xscale("log")
+        ax.xaxis.set_major_locator(FixedLocator(hs)); ax.xaxis.set_minor_locator(NullLocator())
+        ax.set_xticklabels([f"{h:.2g}\n${n}^3$" for h, n in zip(hs, ns)])
+        if yt is not None:
+            ax.set_yscale("log")
+            ax.yaxis.set_major_locator(FixedLocator(yt)); ax.yaxis.set_minor_locator(NullLocator())
+            ax.yaxis.set_major_formatter(ScalarFormatter()); ax.set_yticklabels([f"{v:g}" for v in yt])
+        ax.set_xlim(hs[0] * 1.15, hs[-1] / 1.15)
+
+    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.9), gridspec_kw={"width_ratios": [0.8, 1.1, 1.1]})
+    # (a) field convergence, relative to the finest grid
+    ax = axs[0]
+    ns = sorted(int(k) for k in Fd if k.isdigit())
+    hs = [L / n for n in ns]
+    for k, lab, c, m in (("film volume mm^3", "film volume", "#1baf7a", "o"),
+                         ("seed am1 mean", r"seed mean $\alpha-1$", "#eb6834", "s"),
+                         ("am1 max", r"max $\alpha-1$", "#2a78d6", "^"),
+                         ("seed volume mm^3", "seed volume", "#8c6a00", "D")):
+        v = np.array([Fd[str(n)][k] for n in ns])
+        ax.plot(hs, v / v[-1], marker=m, color=c, lw=1.5, ms=4.5, mfc="white", label=lab)
+    ax.axhline(1.0, color="#999999", lw=0.8)
+    axes_h(ax, hs, ns)
+    ax.set_xlabel("field cell $h$ (mm), grid")
+    ax.set_ylabel(f"value / value on ${ns[-1]}^3$")
+    ax.set_title("(a) growth field", fontsize=9)
+    ax.legend(fontsize=6.5, frameon=False, loc="lower left", handlelength=1.8)
+    # (b) stress measures, log-log, field 96 solid and the finest field dashed
+    ax = axs[1]
+    series = (("vM max", "maximum", "max"), ("vM p99", "99th percentile", "p99"),
+              ("vM p95", "95th percentile", "p95"), ("band vM mean", "band mean", "band"),
+              ("film vM mean", "film mean", "film"), ("core vM mean", "core mean", "core"),
+              ("first layer vM mean", "first-layer mean", "first"))
+    fields = sorted(Sd, key=int)
+    for nf, ls in zip(fields, ("-", "--", ":")):
+        rows = Sd[nf]
+        ns_s = sorted(int(x) for x in rows)
+        hs_s = [L / n for n in ns_s]
+        for key, lab, c in series:
+            v = np.array([rows[str(n)][key] for n in ns_s]) * 1e3
+            ax.plot(hs_s, v, ls=ls, marker=mk[c], color=col[c], lw=1.4, ms=4.5, mfc="white" if c != "film" else col[c],
+                    label=lab if ls == "-" else None)
+    rows = Sd[fields[0]]
+    ns_s = sorted(int(x) for x in rows)
+    hs_s = [L / n for n in ns_s]
+    axes_h(ax, hs_s, ns_s, [1, 2, 5, 10, 20])
+    allv = [rows[str(n)][k] * 1e3 for n in ns_s for k, _, _ in series]
+    ax.set_ylim(min(allv) / 1.3, max(allv) * 1.3)
+    ax.set_xlabel("stress element $h$ (mm), mesh")
+    ax.set_ylabel("von Mises (mPa)")
+    ax.set_title("(b) stress, film elements", fontsize=9)
+    f = out["stress fits"].get(fields[0], {})
+    if "vM max" in f:
+        ax.text(0.03, 0.97, f"maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$\nband mean "
+                            f"{f['band vM mean']['change % per refinement'][-1]:+.1f} % at the last step",
+                transform=ax.transAxes, va="top", ha="left", fontsize=7)
+    fld_txt = f"solid: field ${fields[0]}^3$" + (f", dashed: field ${fields[-1]}^3$" if len(fields) > 1 else "")
+    ax.text(0.97, 0.03, fld_txt, transform=ax.transAxes, va="bottom", ha="right", fontsize=6.5, color="#555555")
+    # (c) band mean, 95th percentile, maximum against h on linear axes with the fits to h -> 0
+    ax = axs[2]
+    rows = Sd[fields[0]]
+    fits = out["stress fits"][fields[0]]
+    hh = np.linspace(0, hs_s[0] * 1.05, 200)
+    for key, lab, c in (("vM max", "maximum", "max"), ("vM p95", "95th percentile", "p95"),
+                        ("band vM mean", "band mean", "band")):
+        v = np.array([rows[str(n)][key] for n in ns_s]) * 1e3
+        ax.plot(hs_s, v, ls="none", marker=mk[c], color=col[c], ms=5, mfc="white", label=lab)
+        g = fits[key]
+        if "s" in g:                                   # power law, drawn where it is fitted
+            hp = np.linspace(hs_s[-1] * 0.5, hs_s[0] * 1.05, 100)
+            ax.plot(hp, g["a"] * hp ** (-g["s"]) * 1e3, color=c and col[c], lw=1, ls="--")
+            ax.text(hs_s[-1] * 0.5, g["a"] * (hs_s[-1] * 0.5) ** (-g["s"]) * 1e3 * 1.05, f"$\\sim h^{{-{g['s']:.2f}}}$",
+                    color=col[c], fontsize=7, va="bottom", ha="left")
+        else:
+            p_ = g["free fit order"] if g["free fit reliable"] else 1.0
+            A = np.stack([np.ones(len(hs_s)), np.array(hs_s) ** p_], 1)
+            q = np.linalg.lstsq(A, v, rcond=None)[0]
+            ax.plot(hh, q[0] + q[1] * hh ** p_, color=col[c], lw=1, ls="-")
+            ax.plot([0], [g["h->0"] * 1e3], marker="*", color=col[c], ms=8, ls="none")
+            ax.text(0.02, g["h->0"] * 1e3 * 1.08, f"$h \\to 0$: {g['h->0'] * 1e3:.2f} mPa", color=col[c],
+                    fontsize=7, va="bottom", ha="left")
+    if len(fields) > 1:
+        rows2 = Sd[fields[-1]]
+        ns2 = sorted(int(x) for x in rows2)
+        for key, c in (("vM max", "max"), ("vM p95", "p95"), ("band vM mean", "band")):
+            ax.plot([L / n for n in ns2], [rows2[str(n)][key] * 1e3 for n in ns2], ls="none", marker=mk[c],
+                    color=col[c], ms=5, mfc=col[c], alpha=0.5)
+    ax.set_xlim(-0.03, hs_s[0] * 1.08)
+    ax.set_ylim(0, None)
+    ax.set_xlabel("stress element $h$ (mm)")
+    ax.set_ylabel("von Mises (mPa)")
+    ax.set_title("(c) converging and not", fontsize=9)
+    ax.legend(fontsize=6.5, frameon=False, loc="center right", handlelength=1.5)
+    fig.tight_layout(w_pad=0.6, rect=[0, 0.10, 1, 1])
+    fig.legend(*axs[1].get_legend_handles_labels(), loc="lower center", ncol=7, fontsize=7, frameon=False,
+               bbox_to_anchor=(0.5, 0.0), handlelength=1.6, columnspacing=0.9)
+    FIG.parent.mkdir(exist_ok=True)
+    fig.savefig(FIG.with_suffix(".pdf"))
+    fig.savefig(FIG.with_suffix(".png"), dpi=300)
+    print("wrote", FIG.with_suffix(".pdf"), FIG.with_suffix(".png"))
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fields", type=int, nargs="+", default=list(FIELD_GRIDS))
+    ap.add_argument("--meshes", type=int, nargs="+", default=list(STRESS_MESHES))
+    ap.add_argument("--stress-fields", type=int, nargs="+", default=list(STRESS_FIELDS))
+    ap.add_argument("--field-only", action="store_true")
+    ap.add_argument("--stress-only", action="store_true", help="fields from the cache")
+    ap.add_argument("--no-dt-check", action="store_true")
+    ap.add_argument("--figure", action="store_true")
+    ap.add_argument("--refit", action="store_true", help="recompute the fits and print the summary")
+    a = ap.parse_args(argv)
+    if a.refit:
+        refit()
+    if a.figure:
+        figure()
+    if a.refit or a.figure:
+        return
+    if not a.stress_only:
+        run_fields(a.fields, dt_check=not a.no_dt_check)
+    if not a.field_only:
+        run_stress(a.meshes, a.stress_fields)
+        print_summary(load_json())
+
+
+if __name__ == "__main__":
+    main()

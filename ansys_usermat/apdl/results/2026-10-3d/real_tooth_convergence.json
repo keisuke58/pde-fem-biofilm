@@ -1,0 +1,128 @@
+{
+ "model": {
+  "L mm": 16.0,
+  "beta mm^2/T*": 0.08,
+  "k_alpha 1/T*": 0.001,
+  "penalty": 5.0,
+  "T*": 1.1,
+  "E_bio Pa": 10.0,
+  "E_tooth Pa": 10000.0,
+  "nu": 0.49,
+  "floor": 0.001,
+  "seed": {
+   "thickness mm": 0.5,
+   "z mm": [
+    -3.0,
+    -1.0
+   ],
+   "half angle deg": 60.0
+  },
+  "film": "elements with phi > 0.3, not tooth",
+  "band": "film, z in [-2.1, -1.1] mm (CEJ at -1.6)",
+  "core": "film outside the band",
+  "first layer": "film elements with a tooth element among the six neighbours",
+  "p": "-tr(sigma)/3, compression positive",
+  "units": "Pa, mm"
+ },
+ "field": {
+  "48": {
+   "h": 0.3333333333333333,
+   "cells": 110592,
+   "dt": 0.016666666666666666,
+   "steps": 66,
+   "dt_factor": 1.0,
+   "tooth cells": 23090,
+   "tooth volume mm^3": 855.185185185185,
+   "seed cells": 366,
+   "seed volume mm^3": 13.555555555555552,
+   "seconds sdf": 1.5545029640197754,
+   "seconds field": 1.176825761795044,
+   "film volume mm^3": 17.120459880251676,
+   "volume phi>0.5 mm^3": 9.259259259259258,
+   "volume phi>0.3 mm^3": 16.18518518518518,
+   "seed phi mean": 0.5661547339029497,
+   "seed am1 mean": 0.0007970203270757055,
+   "am1 max": 0.0010324276047244396,
+   "am1 mean phi>0.3": 0.00071867198994822
+  },
+  "96": {
+   "h": 0.16666666666666666,
+   "cells": 884736,
+   "dt": 0.016666666666666666,
+   "steps": 66,
+   "dt_factor": 1.0,
+   "tooth cells": 184601,
+   "tooth volume mm^3": 854.634259259259,
+   "seed cells": 2954,
+   "seed volume mm^3": 13.675925925925922,
+   "seconds sdf": 10.430558919906616,
+   "seconds field": 9.108832836151123,
+   "film volume mm^3": 17.24143307472499,
+   "volume phi>0.5 mm^3": 8.611111111111109,
+   "volume phi>0.3 mm^3": 17.20833333333333,
+   "seed phi mean": 0.5417499561532011,
+   "seed am1 mean": 0.000756889928130093,
+   "am1 max": 0.0010142055172952524,
+   "am1 mean phi>0.3": 0.0006747128553156401
+  }
+ },
+ "stress": {},
+ "field fits": {
+  "film volume mm^3": {
+   "grids": [
+    48
+   ],
+   "values": [
+    17.120459880251676
+   ]
+  },
+  "seed am1 mean": {
+   "grids": [
+    48
+   ],
+   "values": [
+    0.0007970203270757055
+   ]
+  },
+  "am1 max": {
+   "grids": [
+    48
+   ],
+   "values": [
+    0.0010324276047244396
+   ]
+  },
+  "volume phi>0.5 mm^3": {
+   "grids": [
+    48
+   ],
+   "values": [
+    9.259259259259258
+   ]
+  },
+  "seed volume mm^3": {
+   "grids": [
+    48
+   ],
+   "values": [
+    13.555555555555552
+   ]
+  },
+  "tooth volume mm^3": {
+   "grids": [
+    48
+   ],
+   "values": [
+    855.185185185185
+   ]
+  },
+  "seed phi mean": {
+   "grids": [
+    48
+   ],
+   "values": [
+    0.5661547339029497
+   ]
+  }
+ }
+}
