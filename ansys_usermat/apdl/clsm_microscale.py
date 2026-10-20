@@ -548,7 +548,7 @@ def cmd_run(a):
 def cmd_checks(a):
     out = load_json()
     C = out["checks"]
-    want = set(a.which) if a.which else {"faces", "phimap", "flip", "mesh", "subregion"}
+    want = set(a.which) if a.which else {"faces", "phimap", "flip", "mesh", "subregion", "mesh0", "subregion0"}
     # 1. lateral faces, phi map, flip on DH_d6 coarse
     case = "DH_d6"
     st0 = load_stack(case)
@@ -585,34 +585,38 @@ def cmd_checks(a):
         C["flip"] = {"case": case, "level": "coarse", "run": m}
         save_json(out)
     # 2. mesh: full lateral resolution (1.44 um) against the coarse mesh (2.88 um) on two stacks
-    if "mesh" in want:
-        C.setdefault("mesh", {})
+    for key in ("mesh", "mesh0"):
+        if key not in want:
+            continue
+        C.setdefault(key, {})
         for case in a.mesh_cases:
-            if case in C["mesh"] and not a.force:
+            if case in C[key] and not a.force:
                 continue
             s0 = load_stack(case)
-            b = beta_of(s0)
+            b = beta_of(s0) if key == "mesh" else 0.0
             rows = {}
             for lev, f in (("coarse", 2), ("full", 1)):
                 s = coarsen(s0, f)
-                m, _ = run_one(s, b, tag=f"{case}_{lev}_beta")
+                m, _ = run_one(s, b, tag=f"{case}_{lev}_{'beta' if key == 'mesh' else 'beta0'}")
                 m["uniform"] = run_uniform(s, b)
-                print_m(f"mesh {case} {lev}", m)
+                print_m(f"{key} {case} {lev}", m)
                 rows[lev] = m
-                C["mesh"][case] = rows
+                C[key][case] = rows
                 save_json(out)
     # 3. sub-region of the 256-wide stack of DH day 6 at 0.72, 1.44 and 2.88 um
-    if "subregion" in want and ("subregion" not in C or a.force):
+    for key in ("subregion", "subregion0"):
+        if key not in want or (key in C and not a.force):
+            continue
         s0 = load_stack("DH_d6", s0=True)
         sub = subregion(s0, 64, 192, 64, 192)                 # central 92 x 92 um
-        b = beta_of(s0)
-        C["subregion"] = {"case": "DH_d6 (256-wide stack)", "region": "central 128 x 128 voxels = 92 x 92 um",
-                          "beta": b, "data": s0["meta"], "runs": {}}
+        b = beta_of(s0) if key == "subregion" else 0.0
+        C[key] = {"case": "DH_d6 (256-wide stack)", "region": "central 128 x 128 voxels = 92 x 92 um",
+                  "beta": b, "data": s0["meta"], "runs": {}}
         for f in (4, 2, 1):
             s = coarsen(sub, f)
-            m, _ = run_one(s, b, tag=f"DH_d6_sub_f{f}")
-            print_m(f"sub-region h = {s['hx'] * 1e3:.2f} um", m)
-            C["subregion"]["runs"][f"h{s['hx'] * 1e3:.2f}"] = m
+            m, _ = run_one(s, b, tag=f"DH_d6_sub_f{f}_{'beta' if key == 'subregion' else 'beta0'}")
+            print_m(f"{key} h = {s['hx'] * 1e3:.2f} um", m)
+            C[key]["runs"][f"h{s['hx'] * 1e3:.2f}"] = m
             save_json(out)
     print("wrote", OUT_JSON)
 
@@ -780,16 +784,20 @@ def cmd_table(a):
             print(f"| {case.replace('_d', ' day ')} | " + " | ".join(cells)
                   + f" | {r['corr vM phi']['spearman']:+.2f} | {r['corr vM thickness']['spearman']:+.2f} |")
     C = out.get("checks", {})
-    if "mesh" in C:
-        print("\nmesh (beta run): coarse 2.88 um / full 1.44 um lateral, mPa")
-        for case, rows in C["mesh"].items():
+    for key in ("mesh", "mesh0"):
+      if key not in C:
+        continue
+      print(f"\n{key}: coarse 2.88 um / full 1.44 um lateral, mPa")
+      for case, rows in C[key].items():
             for lev, m in rows.items():
                 print(f"| {case} {lev} | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
                       f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} "
                       f"| uniform {mp(m['uniform']['vM mean all'])} |")
-    if "subregion" in C:
-        print("\nsub-region of the 256-wide stack, mPa")
-        for k, m in C["subregion"]["runs"].items():
+    for key in ("subregion", "subregion0"):
+      if key not in C:
+        continue
+      print(f"\n{key} of the 256-wide stack, mPa")
+      for k, m in C[key]["runs"].items():
             print(f"| {k} | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
                   f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} |")
     for key in ("faces", "phimap"):
@@ -815,7 +823,7 @@ def main(argv=None):
     r.add_argument("--only-beta", choices=("beta", "beta0"))
     r.add_argument("--force", action="store_true")
     c = sub.add_parser("checks")
-    c.add_argument("--which", nargs="+", choices=("faces", "phimap", "flip", "mesh", "subregion"))
+    c.add_argument("--which", nargs="+", choices=("faces", "phimap", "flip", "mesh", "subregion", "mesh0", "subregion0"))
     c.add_argument("--mesh-cases", nargs="+", default=["DH_d6", "CH_d6"])
     c.add_argument("--force", action="store_true")
     f = sub.add_parser("figure")
