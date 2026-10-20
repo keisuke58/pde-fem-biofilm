@@ -27,15 +27,12 @@
 
 % --------------------------------------------------------
 \begin{frame}{What changes}
-\begin{itemize}\setlength{\itemsep}{6pt}
-  \item The point model of Klempt et al.\ 2026 is used \textbf{as published}: equations, parameters and its
-        constraint $\sum_i\phi_i+\phi_0=1$ unchanged. It is called at every Gauss point with given inputs and
-        returns its state.
-  \item No longer: scaling the point model to the field amount ($\phi_0=1-\phi_{3D}$).
-  \item Field to point model: nutrient $c^*$ and antibiotic $\alpha^*$ from 3D fields, interpolated in time.
-  \item Point model to field: only the living biomass consumes nutrient and takes up antibiotic.
-  \item Growth law Eq.\ 36 unchanged; Eq.\ 34 with its front term, so the nutrient reaches growth and stress.
-  \item Into the thesis (Chapter 4), replacing the earlier coupling.
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item Point model (Klempt et al.\ 2026) used as published
+  \item No scaling to the field ($\phi_0=1-\phi_{3D}$ dropped)
+  \item Field $\to$ point model: $c^*$, $\alpha^*$ from 3D fields
+  \item Point model $\to$ field: only living biomass consumes
+  \item Eq.\ 34 with front term, Eq.\ 36 unchanged
 \end{itemize}
 \end{frame}
 
@@ -59,36 +56,22 @@
 
 % --------------------------------------------------------
 \begin{frame}{Equations}
-\small
 \begin{align*}
-&\text{inputs, } t_n\le t\le t_{n+1}: &
-c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad
-\alpha^*(t)=\alpha^*_0\,a(t)\ \text{likewise}\\[2pt]
-&\text{nutrient (Eq.\ 35):} & 0&=d\,\nabla^2c-g\,\phi_{3D}\,L\,c\\
-&\text{antibiotic:} & 0&=d_a\nabla^2a-g_a\,\phi_{3D}\,L\,a\\
-&\text{spreading (Eq.\ 34):} & \dot\phi&=\beta\nabla^2\phi+k_\alpha\alpha
-  -\|\nabla\phi\|\,\tfrac{r\,c}{k+c}\,\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}\\
-&\text{growth (Eq.\ 36):} & \dot\alpha&=k_\alpha\,\phi
+c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad \alpha^*\ \text{likewise}\\
+0&=d\,\nabla^2c-g\,\phi_{3D}\,L\,c,\qquad L=\textstyle\sum_i\phi_i\psi_i/\sum_i\phi_i\\
+0&=d_a\nabla^2a-g_a\,\phi_{3D}\,L\,a\\
+\dot\phi&=\beta\nabla^2\phi+k_\alpha\alpha-\|\nabla\phi\|\,\tfrac{r\,c}{k+c}\,\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c},
+\qquad \dot\alpha=k_\alpha\phi
 \end{align*}
-\begin{itemize}\setlength{\itemsep}{2pt}
-  \item $L=1$ gives back Eq.\ 35; a dead biofilm ($L=0$) consumes nothing. $\phi_0$ has no living fraction.
-  \item Eq.\ 35 is printed as $g\phi$; the implementation uses $g\phi c$ (misprint, confirmed).
-  \item The antibiotic acts on the stress only indirectly: $\psi_i\downarrow\ \to L\downarrow\ \to c\uparrow\ \to$
-        front term.
-\end{itemize}
+\small $g\phi$ in Eq.\ 35 of the paper is a misprint; $g\phi c$ is used.
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Time: one clock for both models}
-\begin{itemize}\setlength{\itemsep}{6pt}
-  \item Klempt et al.\ 2024 normalise time with a reference time chosen for the problem. I choose
-        $T^*=1$ as the duration of the point model's data.
-  \item The point model then advances $s\,\Delta T^*$ per increment, with $s$ the length of that window in its
-        own units: \textbf{$s$ follows, it is not fitted.}
-  \item Synthetic data of Fritsch et al.\ 2025, case I: 1000 steps of $10^{-4}$, so $s=0.1$.
-  \item Checked with synthetic data (four species): with its own constraint and $s$ from the window, the coupled
-        point model reproduces the point model alone to $7\times10^{-7}$. Scaled to the field amount instead,
-        the error is $0.019$, and a fitted $s$ comes out a third too low.
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item $T^*=1$ = duration of the point model's data
+  \item $s$ follows from it, not fitted (synthetic: $s=0.1$)
+  \item Check (synthetic): error $7\times10^{-7}$; with scaling $0.019$
 \end{itemize}
 \end{frame}
 
@@ -96,39 +79,34 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \begin{frame}{Examples and checks}
 \begin{columns}[T]
 \begin{column}{0.48\textwidth}
-\textbf{Examples} (synthetic, Fritsch et al.\ 2025 case I, two species, $b=(1,2)$)
-\begin{itemize}\setlength{\itemsep}{2pt}\small
-  \item A in the centre seed, B in the four vertical edges
-  \item A and B mixed in the seed from the start
-  \item nutrient from one wall, antibiotic from the opposite wall from $T^*=0.5$
-  \item each with and without antibiotic
+\textbf{Examples} (synthetic, two species)
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item A centre, B edges
+  \item A and B mixed
+  \item with / without antibiotic
 \end{itemize}
 \end{column}
-\begin{column}{0.5\textwidth}
+\begin{column}{0.48\textwidth}
 \textbf{Checks}
-\begin{itemize}\setlength{\itemsep}{2pt}\small
-  \item uniform $c$ and $a$: the coupled point model equals the point model alone
-  \item ANSYS against Python step by step (same inputs)
-  \item $\phi$ stays in $[0,1]$ with the front term
-  \item sensitivity: $\phi_{\min}$, coupling step, mesh
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item equals point model alone
+  \item ANSYS = Python
+  \item $0\le\phi\le1$
+  \item $\phi_{\min}$, step, mesh
 \end{itemize}
-\textcolor{warn}{\small Python runs in progress; ANSYS on 21 October.}
 \end{column}
 \end{columns}
+\vspace{8pt}
+\centering\textcolor{warn}{\small Results to follow}
 \end{frame}
 
 % --------------------------------------------------------
 \begin{frame}{Assumptions and open points}
-\begin{itemize}\setlength{\itemsep}{5pt}
-  \item \textcolor{warn}{Assumptions} (not in the papers): linear interpolation of $c^*$, $\alpha^*$ in time;
-        $L$ from the previous increment; start values of newly reached points (mean state of the points the
-        biofilm grows from); threshold $\phi_{\min}=0.01$.
-  \item The point model has no transport between points: species A and B meet only through the start values
-        of new points.
-  \item The front term as printed moves the biofilm towards the nutrient; its large cell P\'eclet number needs
-        upwinding (overshoot check).
-  \item The calibrated five-species model has $b=0$ (no antibiotic in the data): the antibiotic is shown with
-        synthetic data only.
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item \textcolor{warn}{Assumptions}: linear interpolation, $L$ one step late, start values of new points, $\phi_{\min}$
+  \item No transport of species between points
+  \item Front term needs upwinding
+  \item Antibiotic: synthetic data only ($b=0$ in the calibration)
 \end{itemize}
 \end{frame}
 
