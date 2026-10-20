@@ -127,6 +127,15 @@ C         ustatev(89) = phi_1/(phi_1 + phi_2), the share of species A.
             LV_C0 = ustatev(85)
             LV_A0 = ustatev(86)
           ELSE
+C           first increment: the fields are solved only at its end, so
+C           the pool still holds c = 0 inside; use the supply values
+C           c = 1, a = 0 (the antibiotic starts later) and interpolate
+C           from them in the second increment (20 Oct 2026, addendum to
+C           CLOUD_TO_IKMHIWI03_2026-10-20; starting the point model one
+C           increment later instead leaves L = 0 in the first solve, and
+C           the partner's element then loses the seed: phi 1 -> 0.1)
+            LV_C1 = 1.0D0
+            LV_A1 = 0.0D0
             LV_C0 = LV_C1
             LV_A0 = LV_A1
           END IF

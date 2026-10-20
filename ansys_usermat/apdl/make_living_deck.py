@@ -16,6 +16,10 @@ coupled_living_consumption.py.
                  cube), k = 1; 0 switches the front term off (ORI_WEIGHT11 = 0)
   --l1         : L = 1 (prop(57) = 1): the consumption without the living share, for check 2
   --cons G     : g for both fields (default 4: Thiele number g L^2/d = 4 with L = 1 mm, d = 1 mm^2/T*)
+  --v2         : example setting v2 (CLOUD_TO_IKMHIWI03_2026-10-20.ja.md, addendum 2; coupled_living_consumption.py
+                 --v2): phi_min = 0.1, species B in four small corner blocks (|x|, |y| > 0.75 mm and |z| within the
+                 seed's height), antibiotic uptake g_a = 0.25 (Lambda_a^2 = 0.25) and a = 1 on the elements of all
+                 outer faces from T* = 0.5. alpha*_0 = 50 comes from the point-model file (eco_fritsch_2sp_a50.txt).
 
 The base deck is one of the partner's decks as derived for Chapter 4 (base_w<n>_c6_g1_s015.dat, never
 committed). The nutrient keeps the base deck's component NUTRIENT1 (the element layer at y = -1 mm, c = 1).
@@ -75,6 +79,7 @@ def main():
     ap.add_argument("--dt-ussfin", type=float, default=0.0025)
     ap.add_argument("--old-cons", action="store_true",
                     help="LIVING_CONS = 0: the element's own consumption (g phi, zero order) for comparison")
+    ap.add_argument("--v2", action="store_true")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -83,12 +88,17 @@ def main():
     seed = set(comps["BIOFILM1"])
     h = 2.0 / round(len(elems) ** (1 / 3))
     cols = {e for e, c in cen.items() if abs(c[0]) > 0.75 and abs(c[1]) > 0.75}
-    top = {e for e, c in cen.items() if c[1] > 1.0 - h}
+    if a.v2:
+        zmax = max(abs(cen[e][2]) for e in seed) + 1e-9
+        cols = {e for e in cols if abs(cen[e][2]) <= zmax}
+        top = {e for e, c in cen.items() if max(abs(c[0]), abs(c[1]), abs(c[2])) > 1.0 - h}
+    else:
+        top = {e for e, c in cen.items() if c[1] > 1.0 - h}
     bio1 = seed | cols if a.layout == "sep" else seed
 
     th = case_theta()
-    props = {28: 11, 29: 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2, 57: 1 if a.l1 else 0,
-             58: 0.55, 59: 0.5625}
+    props = {28: 11, 29: 0.1 if a.v2 else 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2,
+             57: 1 if a.l1 else 0, 58: 0.55, 59: 0.5625}
     props.update({7 + i: v for i, v in enumerate(th, start=1)})
     tmp = Path(a.out).with_suffix(".tmp.dat")
     cmd = [sys.executable, str(HERE / "make_wired_deck.py"), a.base, str(tmp),
@@ -102,7 +112,8 @@ def main():
     r_front = a.front * R_TABLE2
     scal = {"MY_BIOSTART1": "1.0", "MY_BIOSTART2": "0.0", "MY_NUTSTART1": "1.0",
             "MY_NUTSTART2": "1.0" if a.ab else "0.0", "MY_DIFF1": "1", "MY_DIFF2": "1",
-            "CONSUMPTION11": repr(a.cons), "CONSUMPTION12": "0", "CONSUMPTION21": repr(a.cons),
+            "CONSUMPTION11": repr(a.cons), "CONSUMPTION12": "0",
+            "CONSUMPTION21": repr(0.25 if a.v2 else a.cons),
             "CONSUMPTION22": "0", "MAX_GROWTH11": repr(r_front), "MAX_GROWTH21": "0", "HALF_VELO11": "1",
             "ORI_WEIGHT11": "1" if a.front > 0 else "0", "ORI_WEIGHT21": "0",
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
@@ -115,9 +126,10 @@ def main():
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
-    head = (f"! make_living_deck.py: layout {a.layout}, antibiotic {a.ab}, front r = {r_front:g} mm/T*, "
-            f"L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
-            f"NUTRIENT2 (y = +1 layer) {len(top)} elements{nl}")
+    head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}layout {a.layout}, antibiotic {a.ab}, "
+            f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
+            f"phi_min {props[29]:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
+            f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
     text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,post_fields_living.mac{nl}FINISH{nl}"
     Path(a.out).write_text(text, encoding="latin-1", newline="")
     print(head.strip())
