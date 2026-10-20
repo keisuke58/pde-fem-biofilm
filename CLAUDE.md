@@ -349,7 +349,7 @@ this machine's specific workflow.
 - **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
   ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **13 Nov is the internal deadline**
-  (finished, not sent: no second draft); last check and PDF in Hannover 10-15 Dec; two copies printed there and handed
+  (finished; sent early only if I judge it complete, as the submission version, not a draft); last check and PDF in Hannover 10-15 Dec; two copies printed there and handed
   over at the colloquium. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
   `thesis/README.md`.
 

@@ -80,7 +80,7 @@ Open:
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
 | 31 Oct - 2 Nov | in Hannover: read-through of the PDF (a test print only if the university print service is easy to reach); meeting with Assoc. Prof. Muramatsu on 2 Nov (`slides_1102_nem_ja.tex`) |
 | 3-10 Nov | away |
-| **13 Nov** | **internal deadline** (decided 20 Oct): the thesis is finished and ready to submit; it is not sent (no second draft to Dr. Soleimani, decided 9 Oct) |
+| **13 Nov** | **internal deadline** (decided 20 Oct): the thesis is finished and ready to submit; sent to Dr. Soleimani only if I judge it complete (then as the submission version, not a draft) |
 | 20-28 Nov | away: read the finished thesis chapter by chapter, Q&A practice |
 | 10-15 Dec | in Hannover: last check, **PDF to Dr. Soleimani by 15 Dec, 13:00** (24 h before the colloquium, his mail of 20 Oct); **print two copies** at the university (Timo asked 20 Oct) |
 | 16 Dec, 13:00 | printed copies handed over; colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
