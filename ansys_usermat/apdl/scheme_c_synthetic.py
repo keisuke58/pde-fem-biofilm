@@ -48,11 +48,16 @@ import wp3_stress_reference as S  # noqa: E402
 from fritsch2025_cases import CASES  # noqa: E402
 
 NF, NM, T_END, DT_C, S_LINK, LAM = 32, 16, 1.0, 0.025, 0.15, 4.0
+# options: --nf 48 (field grid, mesh check); --kappa-ka (kappa = k_alpha of Klempt 2024 Table 2, nothing fitted)
+if "--nf" in sys.argv:
+    NF = int(sys.argv[sys.argv.index("--nf") + 1])
+KAPPA_KA = "--kappa-ka" in sys.argv
+TAG = ("" if NF == 32 else f"_nf{NF}") + ("_kappa_ka" if KAPPA_KA else "")
 CASE = CASES["fritsch_4sp_val_fig18"]
 N_SP = 4
 H = W.L / NF
-OUT_JSON = HERE / "results" / "2026-10-3d" / "scheme_c_synthetic.json"
-OUT_FIG = ROOT / "assets" / "fig_scheme_c_synthetic"
+OUT_JSON = HERE / "results" / "2026-10-3d" / f"scheme_c_synthetic{TAG}.json"
+OUT_FIG = ROOT / "assets" / f"fig_scheme_c_synthetic{TAG}"
 
 
 def theta20():
@@ -181,8 +186,11 @@ def run(case, kappa=None):
 def main():
     R = {"a": run("a")}
     # kappa: equal seed growth at T* = 1 for c = 1 without antibiotic, from a unit-kappa run
-    probe = run("c", kappa=1.0)
-    kappa = R["a"]["am1_seed"][-1] / probe["am1_seed"][-1]
+    if KAPPA_KA:
+        kappa = W.K_ALPHA
+    else:
+        probe = run("c", kappa=1.0)
+        kappa = R["a"]["am1_seed"][-1] / probe["am1_seed"][-1]
     print(f"kappa = {kappa:.4e} /T*", flush=True)
     for case in ("c", "c_ab", "c_nut"):
         R[case] = run(case, kappa=kappa)
