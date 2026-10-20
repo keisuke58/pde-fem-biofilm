@@ -89,8 +89,8 @@ Dr. Soleimani's answer (20 Oct): printing, ask Timo (Timo Rabing, IKM, rabing@ik
 at the university, which is cheap. Schedule: the PDF may be submitted up to 24 hours before the colloquium (so by 15 Dec,
 13:00), the printed copies afterwards. Mail to Timo sent 20 Oct (where, how, binding, lead time; two copies, ~90 pages, colour,
 printing in December). Plan: PDF ready around 13 Nov anyway; print in Hannover on 14-15 Dec and hand the copies over at the
-colloquium (fallback 17-18 Dec, before the Christmas closures). Still to ask him: whether the PDF counts as the formal
-submission or the examination office / Prof. Junker must be told.
+colloquium (fallback 17-18 Dec, before the Christmas closures). Reply sent 20 Oct: asked whether the PDF counts as the
+formal submission or the examination office / Prof. Junker must be told, and again for comments on the draft.
 
 Open with Dr. Soleimani (19 Oct):
 - his comments on the 9 Oct draft (asked for by 15 Oct) have not arrived;
