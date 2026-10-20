@@ -86,6 +86,7 @@ def main():
         last[(r[C["elem"]], r[C["ip"]], int(r[C["ldstep"]]), int(r[C["isubst"]]))] = r
     points = sorted({k[:2] for k in last})
     worst, worst_L, worst_gap, n_checked = 0.0, 0.0, 0.0, 0
+    worst_after1, bad, gaps = 0.0, [], []
     for pt in points:
         steps = sorted(k[2:] for k in last if k[:2] == pt)
         if a.max_steps:
@@ -96,14 +97,22 @@ def main():
             g0 = np.array([float(r[C[f"gold_{i}"]]) for i in range(1, 13)])
             g1 = np.array([float(r[C[f"gnew_{i}"]]) for i in range(1, 13)])
             if prev is not None:
-                worst_gap = max(worst_gap, float(np.abs(g0 - prev).max()))
+                gap = float(np.abs(g0 - prev).max())
+                worst_gap = max(worst_gap, gap)
+                if gap > 1e-12:
+                    gaps.append((pt[0], st, gap))
             prev = g1
             if g0[:n_act].sum() == 0:            # point model not started yet
                 continue
             n_sub = int(float(r[C["n_sub"]])); dt = float(r[C["dt_couple"]]) / n_sub
             c0, c1, a0, a1 = (float(r[C[k]]) for k in ("c0", "c1", "a0", "a1"))
             g = np.asarray(replay(jnp.asarray(g0), dt, n_sub, c0, c1, a0, a1))
-            worst = max(worst, float(np.abs(g - g1).max()))
+            e = float(np.abs(g - g1).max())
+            worst = max(worst, e)
+            if st != steps[0]:
+                worst_after1 = max(worst_after1, e)
+            if e > 1e-8:
+                bad.append((pt[0], st, e))
             phi, psi = g1[:n_act], g1[6:6 + n_act]
             worst_L = max(worst_L, abs(float(r[C["L"]]) - float((phi * psi).sum())))
             n_checked += 1
@@ -111,6 +120,11 @@ def main():
     print(f"  max |gnew(ANSYS) - gnew(Python)| = {worst:.3e}")
     print(f"  max |L(ANSYS) - sum(phi psi)| = {worst_L:.3e}")
     print(f"  max gap between a step's start and the previous step's end (carried state) = {worst_gap:.3e}")
+    print(f"  max |gnew(ANSYS) - gnew(Python)| after each point's first step = {worst_after1:.3e}")
+    for b in bad[:8]:
+        print(f"    step with difference > 1e-8: element {b[0]}, (ldstep, isubst) {b[1]}, {b[2]:.2e}")
+    for gp in gaps[:8]:
+        print(f"    start != previous end: element {gp[0]}, (ldstep, isubst) {gp[1]}, {gp[2]:.2e} (a step missing in the trace?)")
     ok = worst < 1e-8 and worst_L < 1e-12 and worst_gap < 1e-14
     print("PASS" if ok else "CHECK: differences above the expected round-off")
 

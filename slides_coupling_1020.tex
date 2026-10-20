@@ -90,8 +90,10 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \raggedright\small
 \begin{itemize}\setlength{\itemsep}{2pt}
   \item (a) $c_{n+1}$ of one increment is $c_n$ of the next: the pair is passed on without a jump
-  \item (b) point model in ANSYS = Python with the same inputs, $10^{-12}$ or better from the second increment
-  \item \textcolor{warn}{First increment}: no nutrient yet ($c=0$); start from the steady field instead
+  \item (b) point model in ANSYS = Python with the same inputs: $4\times10^{-10}$ or better after each point's first
+        step (three runs, with and without antibiotic)
+  \item \textcolor{warn}{First step} of each point: no nutrient yet ($c=0$), a stiff start; it changes by $2\times10^{-3}$
+        with the inner step in Python alone. Fix: start from the steady nutrient field
   \item \textcolor{warn}{To do}: linear field $c=(y+1)/2$, values at each Gauss point (node $\to$ Gauss point)
 \end{itemize}
 \end{frame}
