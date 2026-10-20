@@ -1,67 +1,67 @@
-# Speaker notes: Biofilm Growth and Stress in 3D (slides_3d_demo, 20 Oct 2026)
+# Speaker notes: Biofilm Growth and Stress on a Real Molar (slides_3d_demo, 20 Oct 2026)
 
 About 30 seconds per slide. EN: a text that can be said aloud. JA: the same meaning.
 The PowerPoint version (`slides_3d_demo.pptx`) carries the EN text in the notes field of each slide.
 
 ## 1. Title
-EN: I will show the growth model of my thesis in three dimensions, first the verification problem and then three
-demonstrations with the same model.
-JA: 修論の成長モデルを 3 次元で見せます。最初に検証問題、そのあと同じモデルを使った 3 つの例です。
+EN: I will show the growth model of my thesis in three dimensions, first on the thesis test problem and then on a real
+molar, with stresses that I checked against mesh refinement.
+JA: 修論の成長モデルを 3 次元で見せます。最初に修論の検証問題、次に本物の大臼歯の上で、メッシュを細かくして確かめた応力を示します。
 
-## 2. What the videos show
-EN: The videos show the biofilm phase, the growth and the von Mises stress over time. The growth model is the one of
-Klempt et al. 2024. I added a homeostatic-pressure law that slows growth when the pressure approaches p_h. Only the
-first case is a thesis result; the others are demonstrations, and no experimental data are used.
-JA: 動画は、バイオフィルムの相、成長、von Mises 応力の時間変化です。成長モデルは Klempt ら 2024 のもので、圧力が p_h に近づくと
-成長を遅くする恒常圧の則を私が加えました。修論の結果は最初の例だけで、ほかは例示です。実験データは使っていません。
+## 2. What I show
+EN: The growth model is the one of Klempt et al. 2024. I added a nutrient that the saliva supplies and the biofilm uses up,
+and a limit on growth by pressure. Only the first case is a thesis result, every stress I quote is mesh-converged, and no
+experimental data are used.
+JA: 成長モデルは Klempt ら 2024 のものです。唾液から来て膜が消費する栄養と、圧力で成長を止める則を加えました。修論の結果は最初の例
+だけで、示す応力はすべてメッシュで収束を確かめたものです。実験データは使っていません。
 
-## 3. Verification problem
-EN: This is the verification problem of Chapter 4: a seed in the centre of the 2 mm cube. One octant is cut away. The
-seed stress at the end is 6.19 times 10 to the minus 4 pascal, which agrees with the thesis value to 0.2 percent. The
-stress forms a ring at the edge of the seed.
-JA: 第 4 章の検証問題です。2 mm の立方体の中心にシードがあり、1/8 を切り取って見せています。最後のシードの応力は 6.19e−4 Pa
-で、修論の値と 0.2 % で一致します。応力はシードの縁に輪のように出ます。
+## 3. Verification
+EN: This is the verification problem of Chapter 4: a seed in the centre of the 2 mm cube. The seed stress at the end agrees
+with the thesis value to 0.2 percent, and the stress forms a ring at the edge of the seed.
+JA: 第 4 章の検証問題で、2 mm の立方体の中心にシードがあります。最後のシードの応力は修論の値と 0.2 % で一致し、応力はシードの縁に
+輪のように出ます。
 
-## 4. Seed in a corner and on an edge
-EN: Here I move the seed to a corner and to an edge and clamp the bottom face, like a substrate. The biofilm spreads
-along the walls, and the stress concentrates in the biofilm next to the clamped face: its mean there is ten to twelve
-times the seed stress of the centre case, and this mean is converged to one percent. The pointwise peak at the corner
-grows with the mesh, so I do not quote it; the colour scale stops at the 95th percentile.
-JA: シードを角と辺に動かし、底面を基材のように固定しました。バイオフィルムは壁に沿って広がり、固定面に接するバイオフィルムで応力が
-集中します。その帯の平均は中心の場合のシードの応力の 10〜12 倍で、1 % まで収束しています。角の点の最大値はメッシュと
-ともに増えるので言いません。色の上限は 95 % 点です。
+## 4. Stress next to a fixed surface
+EN: When the seed touches a clamped face, the stress concentrates in the biofilm next to it. The mean over that layer
+converges, to within one percent, and is ten to twelve times the free-seed value. The pointwise maximum at the corner keeps
+growing with refinement, so I only quote means and percentiles.
+JA: シードが固定面に接すると、接する層で応力が集中します。その層の平均は 1 % 以内に収束し、自由なシードの 10〜12 倍です。角の
+点の最大値は細かくするほど増えるので、平均と百分位点だけを言います。
 
-## 5. Two seeds
-EN: Two seeds on the clamped face, a little apart. They grow into each other, and the stress is highest under each
-seed, at the clamped face.
-JA: 固定面の上に、少し離して 2 つのシードを置きました。広がって互いにつながり、応力はそれぞれのシードの下、固定面のところで
-最大になります。
+## 5. A real molar
+EN: This is a lower first molar at its real size, from a public data set under CC BY 4.0. A half-millimetre film sits on one
+flank near the gum line. The growth field converges to two percent; the stress colours come from the film model of the next
+slide.
+JA: CC BY 4.0 の公開データの下顎第一大臼歯を実寸で使っています。歯茎の近くの片側に 0.5 mm の膜があります。成長の場は 2 % まで
+収束していて、応力の色は次のスライドの膜のモデルから来ています。
 
-## 6. The growth law
-EN: The same corner seed, with and without the homeostatic-pressure law, on one colour scale. Without the law the stress
-at the clamped edge reaches about 15 millipascal. With the law the growth stops where the pressure reaches p_h, and the
-concentration goes away. The value of p_h is chosen by me.
-JA: 同じ角のシードで、恒常圧の則なしとありを同じ色の目盛りで比べています。則なしでは固定面の縁で約 15 mPa になります。
-則ありでは圧力が p_h に達したところで成長が止まり、集中が消えます。p_h の値は私が決めたものです。
+## 6. Resolving the film
+EN: On meshes of the whole box the film is only one or two elements thick and the stress does not converge. I solve the
+film alone with the tooth as rigid, down to 28 micrometres. With six elements across the film the mean converges to
+3.3 millipascal, and the highest values sit in the tenth of a millimetre next to the tooth.
+JA: 箱全体のメッシュでは膜が要素 1〜2 個分しかなく、応力が収束しません。歯を剛体として膜だけを 0.028 mm まで細かく解くと、膜を
+6 要素以上で切れば平均が 3.3 mPa に収束します。一番大きいのは歯に接する 0.1 mm です。
 
-## 7. Tooth-like collar
-EN: Now a biofilm layer on a crown-shaped collar, as around a tooth or an implant. The point model uses the
-four-species synthetic case of Fritsch et al. 2025 with their true parameters, so no experimental data enter. One
-quarter is cut away so that the layer is visible.
-JA: 次は、歯やインプラントのまわりのような、歯冠形のカラーの上のバイオフィルム層です。点モデルには Fritsch ら 2025 の
-4 菌種の合成ケースを真の値のまま使っているので、実験データは入っていません。層が見えるように 1/4 を切り取っています。
+## 7. Nutrient and the growth limit
+EN: With the nutrient used up in the film, growth and stress drop to about one seventh; at the paper's ratio to two thirds.
+The pressure limit alone gives about 0.7. The consumption rate and the threshold are my choices.
+JA: 膜の中で栄養が使われると、成長と応力は約 1/7 に下がります。論文の比では約 2/3 です。圧力の則だけでは約 0.7 です。消費の速さと
+しきい値は私が選んだ値です。
 
-## 8. Section and composition
-EN: On the left, species three takes over the seed and species four almost disappears. On the right, the section at 45
-degrees: without the law the stress reaches 0.68 times E at the bonded base; with the law the largest value is 0.12
-times E.
-JA: 左は、シードで種 3 が優勢になり、種 4 はほぼ消えることを示します。右は 45° の断面で、則なしでは接着した付け根で
-0.68E、則ありでは最大でも 0.12E です。
+## 8. Tooth-like collar
+EN: On a crown-shaped collar I use the four-species synthetic case of Fritsch et al. 2025 with their true parameters, so no
+experimental data enter. Growth is large here, so this run is finite strain.
+JA: 歯冠形のカラーでは、Fritsch ら 2025 の 4 菌種の合成ケースを真の値のまま使っているので、実験データは入っていません。成長が
+大きいので、この計算は有限ひずみです。
 
-## 9. Summary
-EN: The 3D view reproduces the thesis value. When the seed touches a wall, the stress concentrates in the biofilm next to
-the fixed surface, ten to twelve times the centre value as a band mean, and the homeostatic-pressure law removes this
-concentration. The next step at Keio is a real
-tooth surface with the calibrated parameters.
-JA: 3 次元でも修論の値を再現します。シードが壁に触れると、固定面に接するバイオフィルムで応力が集中し（帯の平均で中心の
-10〜12 倍）、恒常圧の則がそれを消します。慶應での次の段階は、本物の歯の表面と較正したパラメータです。
+## 9. Section and composition
+EN: Species three takes over and species four almost disappears. Without the limit the stress reaches 0.68 times E at the
+bonded base; with it, 0.12 times E.
+JA: 種 3 が優勢になり、種 4 はほぼ消えます。則なしでは接着した付け根で 0.68E、則ありでは 0.12E です。
+
+## 10. Summary
+EN: The 3D view reproduces the thesis value. Next to fixed surfaces the stress is ten to twelve times the free value. On the
+real molar the film needs six elements across it, and then the film mean is 3.3 millipascal. Next at Keio: the calibrated
+parameters on this tooth, and an implant.
+JA: 3 次元でも修論の値を再現します。固定面のそばでは応力が自由な場合の 10〜12 倍です。本物の大臼歯では膜を 6 要素以上で切る必要
+があり、そのとき膜の平均は 3.3 mPa です。慶應での次は、較正した値をこの歯に入れることと、インプラントです。
