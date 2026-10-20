@@ -95,6 +95,13 @@ FORTRAN = "--fortran" in sys.argv
 # layer y < -0.75 mm of the 8^3 deck, the antibiotic at a = 1 on the whole outer shell of elements (any |x_i| > 0.75 mm)
 # from T* = 0.5; without it, c and a are held on the faces only
 ANSYS_BC = "--ansys-bc" in sys.argv
+# --start-position: newly colonised cells start from a fresh start state chosen by position, the rule of the ANSYS
+# runs (A-19): in "separate" species B where |x| and |y| > 0.5625 mm, species A elsewhere; in "mixed" the mixed start.
+# Without it they inherit the phi-weighted mean state of their colonised neighbours (psi included).
+START_POSITION = "--start-position" in sys.argv
+# --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
+# the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
+MIX_EQUAL = "--mix-equal" in sys.argv
 T_AB = -1.0 if CHECK else 0.5
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
@@ -104,7 +111,8 @@ RES = HERE / "results" / "2026-10-3d"
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "")
+       + ("_mixeq" if MIX_EQUAL else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _cst = FN.init(ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt"))
@@ -263,11 +271,12 @@ def run(example, antibiotic):
     alpha = np.ones_like(phi)
     G = np.zeros((NF, NF, NF, 12))
     tot = sum(CASE["phi_init"])
+    MIX_START = (tot / 2, tot / 2) if MIX_EQUAL else tuple(CASE["phi_init"])
     if example == "separate":
         G[seed] = start_state(tot - 1e-6, 1e-6)
         G[edges] = start_state(1e-6, tot - 1e-6)
     else:
-        G[seed] = start_state(*CASE["phi_init"])
+        G[seed] = start_state(*MIX_START)
     on = phi >= PHI_MIN
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
@@ -326,7 +335,15 @@ def run(example, antibiotic):
         c, a = c_new, a_new
         # (4) newly colonised cells inherit the neighbours' state
         new = (phi >= PHI_MIN) & ~on
-        if new.any():
+        if new.any() and START_POSITION:
+            if example == "separate":
+                isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
+                G[new & isb] = start_state(1e-6, tot - 1e-6)
+                G[new & ~isb] = start_state(tot - 1e-6, 1e-6)
+            else:
+                G[new] = start_state(*MIX_START)
+            on = on | new
+        elif new.any():
             num, den = neighbours_mean(G, np.where(on, phi, 0.0))
             fill = new & (den > 0)
             gs = num[fill] / den[fill][:, None]
