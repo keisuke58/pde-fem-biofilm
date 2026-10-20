@@ -88,6 +88,9 @@ V2 = "--v2" in sys.argv
 if V2 and not CHECK:
     LAM_A2 = 0.25
 ALPHA0 = 50.0 if V2 else None
+# --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
+# with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
+FORTRAN = "--fortran" in sys.argv
 T_AB = -1.0 if CHECK else 0.5
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
@@ -96,7 +99,11 @@ H = W.L / NF
 RES = HERE / "results" / "2026-10-3d"
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
-       + ("_check" if CHECK else "") + ("_v2" if V2 else ""))
+       + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else ""))
+if FORTRAN:
+    import ecology_native_ctypes as FN
+    _cst = FN.init(ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt"))
+    assert _cst["nact"] == 2 and _cst["c_star"] == 100.0
 
 
 # ---------------------------------------------------------------- point model (black box)
@@ -293,8 +300,14 @@ def run(example, antibiotic):
         # (3) point models of the colonised cells
         idx = np.flatnonzero(on.ravel())
         Gf = G.reshape(-1, 12)
-        Gf[idx] = np.asarray(STEP(jnp.asarray(Gf[idx]), jnp.asarray(c.ravel()[idx]), jnp.asarray(c_new.ravel()[idx]),
-                                  jnp.asarray(a.ravel()[idx]), jnp.asarray(a_new.ravel()[idx])))
+        if FORTRAN:
+            Gf[idx], okf = FN.step_lin(Gf[idx], S_LINK * DT_C, N_SUB, c.ravel()[idx], c_new.ravel()[idx],
+                                       a.ravel()[idx], a_new.ravel()[idx])
+            assert okf.all(), "Fortran point model failed"
+        else:
+            Gf[idx] = np.asarray(STEP(jnp.asarray(Gf[idx]), jnp.asarray(c.ravel()[idx]),
+                                      jnp.asarray(c_new.ravel()[idx]), jnp.asarray(a.ravel()[idx]),
+                                      jnp.asarray(a_new.ravel()[idx])))
         G = Gf.reshape((NF,) * 3 + (12,))
         c, a = c_new, a_new
         # (4) newly colonised cells inherit the neighbours' state
