@@ -70,8 +70,10 @@ FIELD_DEFAULT = 192
 OUT_JSON = HERE / "results" / "2026-10-3d" / "real_tooth_submodel.json"
 FIG = ROOT / "assets" / "fig_real_tooth_submodel"
 CONV_JSON = RC.OUT_JSON
-# the convergence levels: name -> (h / h_f of the 192^3 field, settings)
-LEVELS = {"m4": 4.0, "m2": 2.0, "r1": 1.0, "r2": 0.5, "r3": 1 / 3}
+# the convergence levels: name -> (h / h_f, void, void threshold). The void is kept where the crop is affordable
+# (h >= h_f) and dropped on the refined meshes (phi <= 0.05 left out, free film surface; checked: 0.02 % on the film mean)
+LEVELS = {"m4": (4.0, "keep", VOID_PHI), "m2": (2.0, "keep", VOID_PHI), "r1": (1.0, "keep", VOID_PHI),
+          "r2": (0.5, "drop", 0.05), "r3": (1 / 3, "drop", 0.1)}
 H_F192 = L / 192
 
 
@@ -327,7 +329,7 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
     B[0::3, 3] = -P[:, 1]; B[1::3, 3] = P[:, 0]
     B[1::3, 4] = -P[:, 2]; B[2::3, 4] = P[:, 1]
     B[0::3, 5] = P[:, 2]; B[2::3, 5] = -P[:, 0]
-    ml = pyamg.smoothed_aggregation_solver(Kff, B=B, max_coarse=1000)
+    ml = pyamg.smoothed_aggregation_solver(Kff, B=B, max_coarse=1000, coarse_solver="splu")
     t_setup = time.time() - t0
     res = []
     uf = ml.solve(F, tol=tol, accel="cg", maxiter=3000, residuals=res)
@@ -458,15 +460,15 @@ def run_checks(field_src=FIELD_DEFAULT, force=False):
                     "crop box cells": crop_box(phi, tooth, h_f), "crop box mm": box_mm(crop_box(phi, tooth, h_f), h_f)}
     save_json(out)
     C = out["checks"]
-    kw = dict(tooth=tooth, sdf=sdf, h_f=h_f, verbose=True)
 
-    def do(name, label, **k):
+    def do(name, label, fld=fld, **k):
         if name in C and not force:
             print(f"check {name} already in {OUT_JSON.name}, skipped", flush=True)
             return
         print(f"check {name}: {label}", flush=True)
-        res = solve_submodel(phi, am1, **kw, **k)
+        res = solve_submodel(fld["phi"], fld["am1"], tooth=fld["tooth"], sdf=fld["sdf"], h_f=fld["h_f"], **k)
         C[name] = dict(record(res), label=label)
+        out = load_json()                              # reload: a level run may have written meanwhile
         out["checks"] = C
         save_json(out)
     h4 = 4 * h_f                                       # 48^3 on the full box, h = 0.333 mm
@@ -484,9 +486,14 @@ def run_checks(field_src=FIELD_DEFAULT, force=False):
     do("crop1_drop05_m2", "crop 1 mm, rigid, void dropped (phi <= 0.05), h = 2 h_f", h=h2, margin=1.0, void="drop",
        void_thr=0.05)
     do("crop1_voxel_m2", "crop 1 mm, rigid, voxel tooth, void kept, h = 2 h_f", h=h2, margin=1.0, tooth_mode="voxel")
-    do("crop1_drop_r1_pc", "crop 1 mm, rigid, sdf tooth, void dropped, h = h_f, piecewise constant", h=h_f, void="drop")
-    do("crop1_drop_r1_tri", "crop 1 mm, rigid, sdf tooth, void dropped, h = h_f, trilinear", h=h_f, void="drop",
-       interp="tri")
+    do("crop1_drop_r1_pc", "crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.01), h = h_f", h=h_f, void="drop")
+    # the interpolation matters only on refined meshes (h < h_f): checked at ratio 2 on the 96^3 field (h = 0.083),
+    # which also gives the influence of the field grid at fixed h against the 192^3 field
+    f96 = load_field(96)
+    do("field96_r2_pc", "96^3 field, crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.01), h = h_f/2 = 0.083, "
+       "piecewise constant", fld=f96, h=f96["h_f"] / 2, void="drop")
+    do("field96_r2_tri", "96^3 field, as above, trilinear", fld=f96, h=f96["h_f"] / 2, void="drop", interp="tri")
+    out = load_json()
     out["checks summary"] = checks_summary(C)
     save_json(out)
     print(json.dumps(out["checks summary"], indent=1))
@@ -511,7 +518,9 @@ def checks_summary(C):
              ("void dropped (phi <= 0.01) vs kept (h = 0.167)", "crop1_rigid_sdf_m2", "crop1_drop_m2"),
              ("void dropped (phi <= 0.05) vs kept (h = 0.167)", "crop1_rigid_sdf_m2", "crop1_drop05_m2"),
              ("voxel vs sdf tooth (crop, h = 0.167)", "crop1_rigid_sdf_m2", "crop1_voxel_m2"),
-             ("trilinear vs piecewise-constant field (h = h_f)", "crop1_drop_r1_pc", "crop1_drop_r1_tri")]
+             ("trilinear vs piecewise-constant field (96^3 field, h = h_f/2 = 0.083)", "field96_r2_pc",
+              "field96_r2_tri"),
+             ("field 96^3 vs 192^3 at h = 0.083 (void dropped, phi <= 0.01)", "crop1_drop_r1_pc", "field96_r2_pc")]
     conv = RC.load_json()["stress"].get("192", {}).get("48")
     S = {}
     for label, a, b in pairs:
@@ -533,10 +542,10 @@ def run_levels(levels, field_src=FIELD_DEFAULT, void=None, force=False):
         if lev in out["levels"] and not force:
             print(f"level {lev} already in {OUT_JSON.name}, skipped", flush=True)
             continue
-        ratio = LEVELS[lev]
-        v = void if void else ("keep" if ratio >= 1 else "drop")
-        print(f"level {lev}: h = {ratio * h_f:.4f} mm, void {v}", flush=True)
-        res = solve_submodel(phi, am1, ratio * h_f, tooth=tooth, sdf=sdf, h_f=h_f, void=v)
+        ratio, v, thr = LEVELS[lev]
+        v = void or v
+        print(f"level {lev}: h = {ratio * h_f:.4f} mm, void {v} (phi <= {thr})", flush=True)
+        res = solve_submodel(phi, am1, ratio * h_f, tooth=tooth, sdf=sdf, h_f=h_f, void=v, void_thr=thr)
         save_npz(lev, res)
         out = load_json()
         out["levels"][lev] = record(res)
