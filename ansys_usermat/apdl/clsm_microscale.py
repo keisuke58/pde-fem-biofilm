@@ -722,10 +722,10 @@ def cmd_video(a):
     pl = pv.Plotter(off_screen=True, window_size=(1600, 1000))
     pl.set_background("white")
     pl.add_mesh(iso, scalars="vm", cmap="viridis", clim=(0, vmax), smooth_shading=True, ambient=0.35, diffuse=0.7,
-                specular=0.1, scalar_bar_args=dict(title="von Mises (mPa)", vertical=False, position_x=0.25,
-                                                   position_y=0.04, width=0.5, height=0.07, label_font_size=22,
-                                                   title_font_size=24, fmt="%.1f", n_labels=5, font_family="times",
-                                                   color="black"))
+                specular=0.1, scalar_bar_args=dict(title=" ", vertical=False, position_x=0.25,
+                                                   position_y=0.03, width=0.5, height=0.06, label_font_size=22,
+                                                   fmt="%.1f", n_labels=5, font_family="times", color="black"))
+    pl.add_text("von Mises (mPa)", position=(0.44, 0.115), viewport=True, font_size=13, font="times", color="black")
     pl.add_mesh(pv.Plane(center=(Lx / 2, Ly / 2, -0.3), direction=(0, 0, 1), i_size=1.15 * Lx, j_size=1.15 * Ly),
                 color="#b8b8b8", ambient=0.4)
     pl.add_mesh(pv.Box((0, Lx, 0, Ly, 0, Lz)).extract_feature_edges(), color="#8a8a8a", line_width=1.0)
