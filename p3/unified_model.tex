@@ -24,7 +24,7 @@
 \title{\bfseries A two-level oral-biofilm model from one variational principle\\[2pt]
 \large derivation, discretisation, verification and first results}
 \author{Keisuke Nishioka}
-\date{Working note, 15 October 2026 (Keio continuation; not part of the thesis)}
+\date{Working note, 15 October 2026, growth limited by pressure added 20 October (Keio continuation; not part of the thesis)}
 \begin{document}
 \maketitle
 
@@ -521,6 +521,98 @@ $\lambda=1$, $\Psi_{\rm ref}=0.32$, antibiotic & $0.0309$ ($-12\,\%$) & $0.67$ &
 \end{center}
 $\Psi_{\rm ref}$ is a new parameter, the energy of forming the biofilm; the time average is one
 choice, and it should be fixed by the measured volume.
+
+\section{Growth limited by pressure}
+\label{sec:homeostatic}
+
+Added on 16--20 October 2026. The growth rate of the element can be scaled by a homeostatic-pressure
+gate, an assumption of this work and not taken from a paper:
+\begin{equation}
+\dot\xi=g\,\dot\xi_0,\qquad g=\min\bigl(1,\max(0,\,1-p/p_h)\bigr),\qquad p=-\tfrac13\operatorname{tr}\boldsymbol\sigma,
+\label{eq:gate}
+\end{equation}
+with $\dot\xi_0$ the growth rate of Section~\ref{sec:fem} and $p$ the Cauchy pressure, positive in
+compression. The pressure is taken from the start of the increment, so $g$ is constant within an
+increment and the tangent keeps its form; since $\xi$ never decreases and $g\ge0$, the gate cannot
+oscillate and $p$ overshoots $p_h$ by at most one increment of growth. An implicit gate (pressure of the
+end of the increment) is an option. Without the gate every earlier result is unchanged to the last bit.
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}Yp{6.2cm}@{}}
+\toprule
+check (one element, Klempt et al.\ 2024 limit, $E=10$\,Pa, $\nu=0.49$) & result\\
+\midrule
+free growth, gate active & $\alpha-1=1.100001\times10^{-3}=k_\alpha T$, equal to the run without the gate to $10^{-14}$\\
+all $\mathbf u=0$, $p_h=0.25$\,Pa, against the ODE $\dot\alpha=k_\alpha g(p(\alpha))$ & error $1.25$, $0.62$, $0.31$, $0.15\times10^{-5}$ at 11, 22, 44, 88 increments (first order)\\
+homeostatic limit, $T=4$ & growth stops at $\alpha-1=4.9993\times10^{-4}$ (exact $5.0000\times10^{-4}$), $p=0.24997$\,Pa\\
+tangent with $g=0.5$ against central differences & $3.8\times10^{-10}$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\paragraph{Cervical line of a tooth-like collar.} A 90\textdegree\ sector of a $0.25$\,mm layer on a collar
+whose radius grows from $2.05$ to $3.05$\,mm over its $2$\,mm height (a crown; slope $38^\circ$ at the
+base), inner face bonded, bottom $u_z=0$, outer face free, nutrient from the outer face, seed $0.125$\,mm.
+Band: the seed elements with $z\le0.25$\,mm; core: the seed with $0.25\le z\le1.75$\,mm; ratio = band
+mean von Mises over core mean. Without the gate the band is the most stressed region of the seed:
+\begin{center}\small
+\begin{tabular}{@{}lccc@{\qquad}ccc@{}}
+\toprule
+& \multicolumn{3}{c}{without the gate} & \multicolumn{3}{c}{$p_h/E=0.05$}\\
+mesh & ratio & band vM$/E$ & max $p/E$ & ratio & band vM$/E$ & max $p/E$\\
+\midrule
+$2\times6\times8$ & $1.22$ & $0.158$ & $0.186$ & $0.59$ & $0.036$ & $0.049$\\
+$4\times12\times16$ & $1.36$ & $0.220$ & $0.349$ & $0.65$ & $0.041$ & $0.052$\\
+$6\times18\times24$ & $1.37$ & $0.234$ & $0.442$ & $0.67$ & $0.042$ & $0.053$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Without the gate the ratio and the band mean settle with the mesh, but the largest pressure keeps
+rising at the corner of the elastic problem. With the gate the ratio, the band mean and the largest
+pressure ($=p_h$) are converged to $3\,\%$ at the third level, because the growth that loads the corner
+is capped. Clamping the bottom or fixing the outer face changes the numbers but not the conclusion
+(\path{p3/uel/README.md}).
+
+\paragraph{Which $p_h$.} The literature does not fix $p_h$. Over $p_h/E=0.02$ to $1$ the ratio rises from
+$0.54$ to $1.26$ and passes 1 between $0.2$ and $0.5$. Let $p_0$ be the band mean pressure without the
+gate. In four cases that change $p_0$ by a factor of 3 (the case above, half the growth time, half the
+bulge, the bottom clamped) the ratio crosses 1 at $p_h/p_0=1.0$, $1.2$, $1.0$ and $1.4$
+(Fig.~\ref{fig:threshold}): the gate removes the cervical concentration when $p_h$ is below about the
+pressure that growth alone builds there. $p_h$ and $E$ need not be known separately.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_threshold.pdf}
+\caption{Ratio of band to core von Mises stress against $p_h/E$ (left) and against $p_h/p_0$ (right)
+for four cases; $4\times12\times16$ filled, $2\times6\times8$ open.}
+\label{fig:threshold}
+\end{figure}
+
+\paragraph{Posterior spread.} The interaction parameters of the point model are uncertain (thesis,
+Chapter~3). Particles of the final posteriors (200 per condition) were run through the same collar:
+30 random particles each for CH, DS and DH at $2\times6\times8$, 10 for CH at $4\times12\times16$, and
+the MAP. The coefficient of variation of the band von Mises stress is $19$, $12$ and $4\,\%$ (CH, DS, DH)
+without the gate and $1.5$, $1.0$ and $0.5\,\%$ with $p_h/E=0.05$; at $4\times12\times16$ (CH) $10\,\%$ and
+$0.5\,\%$. The ratio stays below 1 for every particle with the gate ($0.61$--$0.68$ at
+$4\times12\times16$) and above 1 without it ($1.34$--$1.37$). The MAP is an outlier without the gate
+(band vM$/E$ $0.50$ against at most $0.26$ for the particles). The gate absorbs the posterior spread of
+the composition, so the conclusion of this section does not hinge on the calibration.
+
+\paragraph{Illustration without experimental data.} The collar was also run with the four-species
+synthetic case of Fritsch et al.\ 2025 (their true parameters, $c^*=25$; the fifth species absent),
+so that it can be shown without the calibration (Fig.~\ref{fig:cervf4}; 3D videos in
+\path{assets/anim_cervical_f4_3d.mp4} and, for the cube, \path{assets/anim_law_3d.mp4}).
+Growth is large in this case (displacement up to $0.31$\,mm in the $0.25$\,mm layer). Without the gate the
+largest von Mises stress in the section is $0.68E$ at the bonded base; with $p_h/E=0.05$ it is $0.12E$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_cervical_f4.pdf}
+\caption{Synthetic four-species case: (a) shares of $\bar\phi_i$ in the seed over time; (b), (c) von Mises
+stress on the section at $45^\circ$ at the end, deformed at true scale, without and with the gate
+($p_h/E=0.05$).}
+\label{fig:cervf4}
+\end{figure}
 
 \section{Assumptions and open points}
 
