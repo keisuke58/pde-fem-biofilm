@@ -346,11 +346,12 @@ this machine's specific workflow.
   the assessments.
   **19 Oct:** Dr. Wangenheim (second examiner) will not attend the colloquium
   (his mail); the committee is the usual IKM members.
-- **Printing and submission (19 Oct 2026):** test print 31 Oct-2 Nov in
-  Hannover (also check the binding lead time), final print and binding 12 Nov
-  (City Copy Shop unless the IKM printer is fine), submission **Fri 13 Nov**.
-  Meisam was asked on 19 Oct (printer and format); follow up around 26 Oct if
-  no reply. Details in `thesis/README.md`.
+- **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
+  24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
+  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **13 Nov is the internal deadline**
+  (finished, not sent: no second draft); last check and PDF in Hannover 10-15 Dec; two copies printed there and handed
+  over at the colloquium. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
+  `thesis/README.md`.
 
 - **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never
   in the thesis body, whatever the meeting with Oliver decides. The thesis keeps only
