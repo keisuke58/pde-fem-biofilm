@@ -1,0 +1,64 @@
+{
+ "deck": "F:\\biofilm_upf_living4s\\sym_a0_dbgnem.dat",
+ "emulate": [
+  {
+   "cap": 30,
+   "r0": 0.18705683438948686,
+   "gauss_points_truncated": 4096,
+   "surface_nodes_truncated": 326,
+   "n_points": 4482,
+   "inside_final_gp": [
+    31,
+    44
+   ],
+   "identical_to_ansys": [
+    4482,
+    4482
+   ]
+  },
+  {
+   "cap": 60,
+   "r0": 0.2356768431740137,
+   "gauss_points_truncated": 3968,
+   "surface_nodes_truncated": 326,
+   "n_points": 4482,
+   "inside_final_gp": [
+    60,
+    77
+   ]
+  },
+  {
+   "cap": 120,
+   "r0": 0.2969342156877127,
+   "gauss_points_truncated": 4096,
+   "surface_nodes_truncated": 386,
+   "n_points": 4482,
+   "inside_final_gp": [
+    121,
+    164
+   ]
+  },
+  {
+   "cap": 200,
+   "r0": 0.3520544412178779,
+   "gauss_points_truncated": 4096,
+   "surface_nodes_truncated": 386,
+   "n_points": 4482,
+   "inside_final_gp": [
+    203,
+    246
+   ]
+  },
+  {
+   "cap": 400,
+   "r0": 0.4435608011993815,
+   "gauss_points_truncated": 4096,
+   "surface_nodes_truncated": 290,
+   "n_points": 4482,
+   "inside_final_gp": [
+    401,
+    509
+   ]
+  }
+ ]
+}
