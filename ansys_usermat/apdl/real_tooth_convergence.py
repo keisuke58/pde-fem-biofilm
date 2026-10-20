@@ -620,10 +620,10 @@ def figure():
     ax.axhline(1.0, color="#999999", lw=0.8)
     rows, ns, hs = rows_of(fields[0])
     axes_h(ax, hs, ns)
-    ax.set_ylim(0, None)
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.45)
     ax.set_ylabel("ratio")
     ax.set_title("(b) ratios", fontsize=9, loc="left")
-    ax.legend(fontsize=7, frameon=False, loc="upper right", handlelength=1.8)
+    ax.legend(fontsize=7, frameon=False, loc="upper left", handlelength=1.8, ncol=2, columnspacing=0.8)
     hl = axs[0].get_legend_handles_labels()
     h2 = [Line2D([], [], color="#333333", ls=ls_of[nf], lw=1.3) for nf in fields]
     l2 = [f"field ${nf}^3$" for nf in fields]
