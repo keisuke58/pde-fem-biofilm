@@ -20,10 +20,15 @@ E = 1e4 Pa in the tooth without growth, nu = 0.49, eigenstrain (alpha - 1) I, bo
 grid; both divide every stress mesh, so between two stress meshes only the mechanics changes, and between the two
 field grids only the field. pyamg smoothed aggregation + CG, tol 1e-10, residual and time in the JSON.
 
-Element sets in physical space, the same on every mesh (phi, z of the element centre): film = elements with
-phi > 0.3 that are not tooth; cervical band = film with z in [-2.1, -1.1] mm (0.5 mm either side of the CEJ at
-z = -1.6); core = the rest of the film; first layer = film elements with a tooth element among their six neighbours;
-outer = the rest. Reported per mesh: film mean von Mises, band mean, core mean, band/core, first-layer and outer
+Element sets in physical space, the same on every mesh: they are defined on the field grid (film = cells with
+phi > 0.3 that are not tooth; cervical band = film with z in [-2.1, -1.1] mm, 0.5 mm either side of the CEJ at
+z = -1.6; core = the rest of the film) and every stress element is weighted by the fraction of its field cells in
+the set, so the means are volume means over the same region on every mesh (a 1 mm element holding half a
+millimetre of film counts with weight 0.5; with the block-averaged phi > 0.3 instead, the 16^3 mesh would hold
+13 film elements and no band). Maximum, location and counts use the majority-film elements (fraction > 0.5), the
+percentiles are volume-weighted over every element with film in it; first layer = majority-film elements with a
+tooth element among their six neighbours, outer = the rest (a layer one element thick, so mesh-dependent by
+construction). Reported per mesh: film mean von Mises, band mean, core mean, band/core, first-layer and outer
 means, maximum with its element centre, 95th and 99th percentiles, maximum and mean pressure p = -tr(sigma)/3.
 Fits as in wall_stress_convergence.py: v = v0 + c h^p for the means (observed order and h -> 0 value), v = a h^-s
 for the maxima and percentiles; Richardson order from the 48/96/192 field triple.
@@ -235,13 +240,28 @@ def mechanics(n, phi_m, am1_m, tooth_m, tol=1e-10):
     return vm.reshape((n,) * 3), p.reshape((n,) * 3), info
 
 
-def element_sets(n, phi_m, tooth_m):
+def fine_sets(nf, phi_f, tooth_f):
+    """Film, band and core on the field grid: the physical regions that every stress mesh is measured on."""
+    h = L / nf
+    z = -L / 2 + (np.arange(nf) + 0.5) * h
+    Z = z[None, None, :]
+    film = (phi_f > FILM_PHI) & ~tooth_f
+    band = film & (Z > Z_CEJ - BAND_HALF) & (Z < Z_CEJ + BAND_HALF)
+    return dict(film=film, band=band, core=film & ~band)
+
+
+def element_sets(n, tooth_m, fine):
+    """Weights per stress element = fraction of its field cells in the film / band / core (the same physical
+    region on every mesh, so a 1 mm element that holds half a millimetre of film counts with weight 0.5);
+    majority-film elements (weight > 0.5) for counts, maximum and location; first layer = majority-film
+    elements with a tooth element among the six neighbours, outer = the other majority-film elements."""
     h = L / n
     ax = -L / 2 + (np.arange(n) + 0.5) * h
     X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
-    film = (phi_m > FILM_PHI) & ~tooth_m
-    band = film & (Z > Z_CEJ - BAND_HALF) & (Z < Z_CEJ + BAND_HALF)
-    core = film & ~band
+    w = {k: down(v.astype(float), n) for k, v in fine.items()}
+    for k in w:
+        w[k][tooth_m] = 0.0
+    film = w["film"] > 0.5
     touch = np.zeros_like(film)
     for axn in range(3):
         for sgn in (1, -1):
@@ -250,35 +270,51 @@ def element_sets(n, phi_m, tooth_m):
             edge[axn] = 0 if sgn == 1 else -1
             nb[tuple(edge)] = False
             touch |= nb
-    first = film & touch
-    outer = film & ~touch
-    return dict(film=film, band=band, core=core, first=first, outer=outer), (X, Y, Z)
+    return w, dict(film=film, first=film & touch, outer=film & ~touch), (X, Y, Z)
 
 
-def measures(n, phi_m, tooth_m, vm, p):
-    sets, (X, Y, Z) = element_sets(n, phi_m, tooth_m)
-    film, band, core, first, outer = (sets[k] for k in ("film", "band", "core", "first", "outer"))
+def wmean(v, w):
+    return float((v * w).sum() / w.sum()) if w.sum() > 0 else None
+
+
+def wpercentile(v, w, q):
+    """Volume-weighted percentile: the value below which q % of the weight lies."""
+    i = np.argsort(v)
+    v, w = v[i], w[i]
+    c = np.cumsum(w) - 0.5 * w
+    return float(np.interp(q / 100 * w.sum(), c, v))
+
+
+def measures(n, phi_m, tooth_m, vm, p, fine):
+    w, sets, (X, Y, Z) = element_sets(n, tooth_m, fine)
+    film, first, outer = sets["film"], sets["first"], sets["outer"]
+    any_film = w["film"] > 0
     imax = np.unravel_index(np.argmax(np.where(film, vm, -np.inf)), vm.shape)
     ipmax = np.unravel_index(np.argmax(np.where(film, p, -np.inf)), p.shape)
     vmf = vm[film]
-    r = {"h": L / n, "elements": n ** 3,
-         "film elements": int(film.sum()), "film volume mm^3": float(film.sum() * (L / n) ** 3),
-         "band elements": int(band.sum()), "core elements": int(core.sum()),
+    h = L / n
+    r = {"h": h, "elements": n ** 3,
+         "film elements": int(film.sum()), "film elements any": int(any_film.sum()),
+         "film elements block phi>0.3": int(((phi_m > FILM_PHI) & ~tooth_m).sum()),
+         "film volume mm^3": float(w["film"].sum() * h ** 3), "band volume mm^3": float(w["band"].sum() * h ** 3),
+         "core volume mm^3": float(w["core"].sum() * h ** 3),
          "first layer elements": int(first.sum()), "outer elements": int(outer.sum()),
-         "film vM mean": float(vmf.mean()),
-         "band vM mean": float(vm[band].mean()) if band.any() else None,
-         "core vM mean": float(vm[core].mean()) if core.any() else None,
-         "band/core": float(vm[band].mean() / vm[core].mean()) if band.any() and core.any() else None,
+         "film vM mean": wmean(vm, w["film"]),
+         "band vM mean": wmean(vm, w["band"]), "core vM mean": wmean(vm, w["core"]),
          "first layer vM mean": float(vm[first].mean()) if first.any() else None,
          "outer vM mean": float(vm[outer].mean()) if outer.any() else None,
-         "first/outer": float(vm[first].mean() / vm[outer].mean()) if first.any() and outer.any() else None,
          "vM max": float(vmf.max()), "vM max at": [float(X[imax]), float(Y[imax]), float(Z[imax])],
-         "vM max in band": bool(band[imax]), "vM max in first layer": bool(first[imax]),
-         "vM p95": float(np.percentile(vmf, 95)), "vM p99": float(np.percentile(vmf, 99)),
-         "vM median": float(np.median(vmf)),
+         "vM max in band": bool(Z_CEJ - BAND_HALF < Z[imax] < Z_CEJ + BAND_HALF),
+         "vM max in first layer": bool(first[imax]),
+         "vM max any film": float(vm[any_film].max()),
+         "vM p95": wpercentile(vm[any_film], w["film"][any_film], 95),
+         "vM p99": wpercentile(vm[any_film], w["film"][any_film], 99),
+         "vM median": wpercentile(vm[any_film], w["film"][any_film], 50),
          "p max": float(p[film].max()), "p max at": [float(X[ipmax]), float(Y[ipmax]), float(Z[ipmax])],
-         "p mean": float(p[film].mean()), "p band mean": float(p[band].mean()) if band.any() else None,
+         "p mean": wmean(p, w["film"]), "p band mean": wmean(p, w["band"]),
          "vM max all": float(vm[~tooth_m].max())}
+    r["band/core"] = r["band vM mean"] / r["core vM mean"] if r["core vM mean"] else None
+    r["first/outer"] = r["first layer vM mean"] / r["outer vM mean"] if r["outer vM mean"] else None
     return r
 
 
@@ -340,10 +376,12 @@ def load_json():
     return {"model": {"L mm": L, "beta mm^2/T*": BETA, "k_alpha 1/T*": KA, "penalty": PEN, "T*": TEND,
                       "E_bio Pa": E_BIO, "E_tooth Pa": E_TOOTH, "nu": NU, "floor": FLOOR,
                       "seed": {"thickness mm": SEED_THICK, "z mm": list(SEED_Z), "half angle deg": SEED_HALF_ANGLE},
-                      "film": f"elements with phi > {FILM_PHI}, not tooth",
+                      "film": f"field cells with phi > {FILM_PHI}, not tooth; each stress element weighted by "
+                              "its film volume fraction (means, percentiles); majority-film elements "
+                              "(fraction > 0.5) for counts, maximum, location",
                       "band": f"film, z in [{Z_CEJ - BAND_HALF}, {Z_CEJ + BAND_HALF}] mm (CEJ at {Z_CEJ})",
                       "core": "film outside the band",
-                      "first layer": "film elements with a tooth element among the six neighbours",
+                      "first layer": "majority-film elements with a tooth element among the six neighbours",
                       "p": "-tr(sigma)/3, compression positive", "units": "Pa, mm"},
             "field": {}, "stress": {}}
 
@@ -396,27 +434,35 @@ def field_fits(F):
     return fits
 
 
-def run_stress(meshes, field_grids):
+def run_stress(meshes, field_grids, force=False):
+    """One solve per (field grid, stress mesh); each result goes to the JSON and a small npz as soon as it is
+    finished, and a pair already in the JSON is skipped (unless force), so a restart loses at most one solve."""
     for nf in field_grids:
         phi_f, am1_f, tooth_f, seed_f, _ = field(nf)
+        fine = fine_sets(nf, phi_f, tooth_f)
         for n in meshes:
             if nf % n:
                 print(f"skip stress {n}^3 on field {nf}^3 ({nf} not a multiple of {n})")
+                continue
+            if not force and str(n) in load_json()["stress"].get(str(nf), {}):
+                print(f"stress {n}^3 on field {nf}^3 already in {OUT_JSON.name}, skipped", flush=True)
                 continue
             t0 = time.time()
             phi_m, am1_m = down(phi_f.astype(float), n), down(am1_f.astype(float), n)
             tooth_m = down(tooth_f.astype(float), n) > 0.5
             print(f"stress {n}^3 on field {nf}^3: tooth {tooth_m.sum()} elements, film "
-                  f"{((phi_m > FILM_PHI) & ~tooth_m).sum()} elements", flush=True)
+                  f"{(down(fine['film'].astype(float), n) > 0.5).sum()} majority elements", flush=True)
             vm, p, info = mechanics(n, phi_m, am1_m, tooth_m)
-            r = measures(n, phi_m, tooth_m, vm, p)
+            r = measures(n, phi_m, tooth_m, vm, p, fine)
             r["tooth elements"] = int(tooth_m.sum())
             r["solver"] = info
             r["seconds"] = time.time() - t0
-            print(f"  film {r['film vM mean']:.4e} band {r['band vM mean']:.4e} core {r['core vM mean']:.4e} "
-                  f"ratio {r['band/core']:.2f} first {r['first layer vM mean']:.4e} outer {r['outer vM mean']:.4e} "
-                  f"max {r['vM max']:.4e} at {r['vM max at']} p95 {r['vM p95']:.4e} p99 {r['vM p99']:.4e} "
-                  f"pmax {r['p max']:.4e} pmean {r['p mean']:.4e} ({r['seconds']:.0f} s)", flush=True)
+            fmt = lambda x: "n/a" if x is None else f"{x:.4g}"                                  # noqa: E731
+            print(f"  film {fmt(r['film vM mean'])} band {fmt(r['band vM mean'])} core {fmt(r['core vM mean'])} "
+                  f"ratio {fmt(r['band/core'])} first {fmt(r['first layer vM mean'])} outer "
+                  f"{fmt(r['outer vM mean'])} max {r['vM max']:.4g} at {r['vM max at']} p95 {r['vM p95']:.4g} "
+                  f"p99 {r['vM p99']:.4g} pmax {r['p max']:.4g} pmean {fmt(r['p mean'])} ({r['seconds']:.0f} s)",
+                  flush=True)
             np.savez_compressed(ROOT / "figdata" / f"real_tooth_conv_stress_f{nf}_m{n}.npz",
                                 vm=vm.astype(np.float32), p=p.astype(np.float32), phi=phi_m.astype(np.float32),
                                 tooth=tooth_m)
@@ -620,6 +666,7 @@ def main(argv=None):
     ap.add_argument("--no-dt-check", action="store_true")
     ap.add_argument("--figure", action="store_true")
     ap.add_argument("--refit", action="store_true", help="recompute the fits and print the summary")
+    ap.add_argument("--force-stress", action="store_true", help="recompute stress meshes already in the JSON")
     a = ap.parse_args(argv)
     if a.refit:
         refit()
@@ -630,7 +677,7 @@ def main(argv=None):
     if not a.stress_only:
         run_fields(a.fields, dt_check=not a.no_dt_check)
     if not a.field_only:
-        run_stress(a.meshes, a.stress_fields)
+        run_stress(a.meshes, a.stress_fields, force=a.force_stress)
         print_summary(load_json())
 
 
