@@ -491,8 +491,9 @@ $\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point mode
 
 \paragraph{From the field to the point model.}
 The element solves the nutrient $c$ of Klempt et al.\ 2024, held at given sources and diffusing through
-the domain, and passes its value at the Gauss point, interpolated from the nodes with the shape
-functions, to the material routine. The point model needs $c^*$ at its own, much smaller time steps.
+the domain. As $\phi_{3D}$, the nutrient is a field of the integration points themselves (the
+neighboured element method solves it on the Gauss points and the surface points), so the material
+routine receives the value at its own Gauss point directly, without an interpolation from nodes. The point model needs $c^*$ at its own, much smaller time steps.
 Between the increments $t_n$ and $t_{n+1}$ I interpolate linearly,
 \begin{equation}
 c^*(t)=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}\,c_n+\tfrac{t-t_n}{\Delta t}\,c_{n+1}\Bigr],
@@ -506,7 +507,8 @@ antibiotic. The element solves a second nutrient for its second species, which I
 field for an antibiotic $a$, with its own sources and the same diffusion, and pass
 $\alpha^*(t)=\alpha^*_0\,a$ to the point model, interpolated as in~\eqref{eq:ch5-cstar}. Because the
 element advances its fields after the material routine, the pair $(c_n,c_{n+1})$ is the one of the
-previous increment.
+previous increment; in the first increment, before the fields are solved, the point model receives the
+supplied values $c=1$, $a=0$.
 
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al.\ 2024 is printed as
