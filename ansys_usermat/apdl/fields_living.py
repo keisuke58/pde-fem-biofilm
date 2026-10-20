@@ -87,12 +87,14 @@ def trace(run, d, out, seed, edges):
         pick["edge"] = int(el[edges][np.argmin(q[edges])])
     want = {str(v) for v in pick.values()}
     rows = [r for r in csv.reader(open(p)) if r and r[0] in want and r[1] == "1"]
-    res = HERE / "results" / "2026-10-living" / f"trace_{run}.json"
+    # the layout check_living_trace.py reads (<job>_pm.json: columns, seed_trace)
+    res = HERE / "results" / "2026-10-living" / f"{run}_pm.json"
     res.write_text(json.dumps({"run": run, "columns": TRACE_COLS, "picked": pick,
                                "note": "every call at integration point 1 (equilibrium iterations included; hit = 1 "
                                        "is a cached repeat, 2 = point model not started); c0, c1, a0, a1 the "
-                                       "nutrient and antibiotic pairs interpolated over the inner steps, L after",
-                               "rows": [[x.strip() for x in r] for r in rows]}, separators=(",", ":")))
+                                       "nutrient and antibiotic pairs interpolated over the inner steps, L = sum "
+                                       "phi_i psi_i after the step",
+                               "seed_trace": [[x.strip() for x in r] for r in rows]}, separators=(",", ":")))
     print(f"wrote {res}: {pick}, {len(rows)} rows")
 
 

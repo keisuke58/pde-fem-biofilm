@@ -90,8 +90,8 @@ foreach ($spec in $Runs) {
     $o = & $py ansys_usermat\apdl\fields_living.py $job $keep $deck 2>&1
     $o | ForEach-Object { L "  $_" }
     $done += "ansys_usermat/apdl/results/2026-10-living/fields_$job.json"
-    if (Test-Path "ansys_usermat\apdl\results\2026-10-living\trace_$job.json") {
-        $done += "ansys_usermat/apdl/results/2026-10-living/trace_$job.json"
+    if (Test-Path "ansys_usermat\apdl\results\2026-10-living\${job}_pm.json") {
+        $done += "ansys_usermat/apdl/results/2026-10-living/${job}_pm.json"
     }
 }
 if ($Push -and $done.Count) {

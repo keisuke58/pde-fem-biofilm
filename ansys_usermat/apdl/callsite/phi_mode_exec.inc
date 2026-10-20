@@ -82,9 +82,11 @@ C         linearly interpolated over the inner steps between the value
 C         seen at the previous increment and the one seen now (the field
 C         is solved at the end of each increment, so the pair is one
 C         increment behind the step; ustatev(85), ustatev(86)).
-C         Output: the living share L = sum phi_i psi_i / sum phi_i (0
-C         before the start), ustatev(87), and in the userdata pool
-C         (ofs_dp_Living) for the consumption g phi L c in USSFin.
+C         Output: the living biomass L = sum_i phibar_i = sum_i phi_i
+C         psi_i of the point model (Klempt et al. 2026's phibar; phi_0
+C         not counted; 0 before the start; decided 20 Oct, the partner's
+C         form), ustatev(87), and in the userdata pool (ofs_dp_Living)
+C         for the consumption g phi L c in USSFin.
 C         Growth: Eq. 36 with the field's phi, unchanged.
 C         Start state: prop(56) = 1 two mono-species regions, species B
 C         where |x| and |y| > prop(59) (default 0.5625 mm, half way
@@ -215,12 +217,7 @@ C         ustatev(89) = phi_1/(phi_1 + phi_2), the share of species A.
               CM_S = CM_S + PM_GNEW(PM_I)
               LV_L = LV_L + PM_GNEW(PM_I) * PM_GNEW(6 + PM_I)
             END DO
-            IF (CM_S .GT. 0.0D0) THEN
-              LV_L = LV_L / CM_S
-              ustatev(89) = PM_GNEW(1) / CM_S
-            ELSE
-              LV_L = 0.0D0
-            END IF
+            IF (CM_S .GT. 0.0D0) ustatev(89) = PM_GNEW(1) / CM_S
           END IF
           IF (nProp .GE. 57) THEN
             IF (prop(57) .GT. 0.5D0) LV_L = 1.0D0
