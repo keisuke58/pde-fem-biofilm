@@ -91,6 +91,10 @@ ALPHA0 = 50.0 if V2 else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
 # with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
 FORTRAN = "--fortran" in sys.argv
+# --ansys-bc: the boundary conditions of the ANSYS decks (A-19/A-21): the nutrient held at c = 1 on the whole element
+# layer y < -0.75 mm of the 8^3 deck, the antibiotic at a = 1 on the whole outer shell of elements (any |x_i| > 0.75 mm)
+# from T* = 0.5; without it, c and a are held on the faces only
+ANSYS_BC = "--ansys-bc" in sys.argv
 T_AB = -1.0 if CHECK else 0.5
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
@@ -99,7 +103,8 @@ H = W.L / NF
 RES = HERE / "results" / "2026-10-3d"
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
-       + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else ""))
+       + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
+       + ("_ansysbc" if ANSYS_BC else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _cst = FN.init(ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt"))
@@ -223,8 +228,14 @@ class Reaction:
     def solve(self, phi, L, value=1.0):
         if value == 0.0:
             return np.zeros((NF,) * 3)
-        A = (self.A0 + sp.diags(self.d0 + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsc()
-        return (value * spla.spsolve(A, self.b)).reshape((NF,) * 3)
+        A = (self.A0 + sp.diags(self.d0 + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
+        b = self.b.copy()
+        if getattr(self, "fixed", None) is not None:      # cells held at the value (the ANSYS element layers)
+            f = self.fixed.ravel()
+            D = sp.diags((~f).astype(float))
+            A = (D @ A + sp.diags(f.astype(float))).tocsr()
+            b = np.where(f, 1.0, b)
+        return (value * spla.spsolve(A.tocsc(), b)).reshape((NF,) * 3)
 
 
 def neighbours_mean(G, w):
@@ -259,6 +270,9 @@ def run(example, antibiotic):
         G[seed] = start_state(*CASE["phi_init"])
     on = phi >= PHI_MIN
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
+    if ANSYS_BC:
+        nut.fixed = Y < -0.75
+        ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if V2 else (Y > 0.75)
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
     c = nut.solve(phi, L)
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
