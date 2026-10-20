@@ -450,6 +450,297 @@
    },
    "seconds": 26.645138263702393,
    "label": "crop 1 mm, rigid, sdf tooth, void kept"
+  },
+  "crop2_rigid_sdf_m4": {
+   "film elements": 432,
+   "film elements any": 720,
+   "film volume mm^3": 16.03819444444444,
+   "band volume mm^3": 7.795717592592591,
+   "core volume mm^3": 8.24247685185185,
+   "first layer elements": 203,
+   "outer elements": 229,
+   "film vM mean": 0.002494774642208515,
+   "band vM mean": 0.0026146650054751173,
+   "core vM mean": 0.002381382584105278,
+   "first layer vM mean": 0.003567572167661353,
+   "outer vM mean": 0.0017966407898266042,
+   "vM max": 0.009791413351894101,
+   "vM max at": [
+    -4.166666666666667,
+    4.5,
+    -2.166666666666667
+   ],
+   "vM max in band": false,
+   "vM max in first layer": false,
+   "vM p95": 0.006763357957022637,
+   "vM p99": 0.008585931322809085,
+   "vM median": 0.0019251605577172489,
+   "p max": 0.029824753170694985,
+   "p max at": [
+    -3.833333333333334,
+    4.5,
+    -2.166666666666667
+   ],
+   "p mean": 0.0022331634148569828,
+   "p band mean": 0.0021741625605208323,
+   "vM max all": 0.009791413351894101,
+   "band/core": 1.0979609168753064,
+   "first/outer": 1.9856902881547418,
+   "layer vM mean": 0.0018303288925497127,
+   "layer band vM mean": 0.0021356994373003227,
+   "layer volume mm^3": 1.770254629629629,
+   "h": 0.3333333333333333,
+   "h/h_f": 4.0,
+   "box cells": [
+    [
+     0,
+     104
+    ],
+    [
+     0,
+     192
+    ],
+    [
+     24,
+     120
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     0.6666666666666661
+    ],
+    [
+     -8.0,
+     8.0
+    ],
+    [
+     -6.0,
+     2.0
+    ]
+   ],
+   "mesh": [
+    26,
+    48,
+    24
+   ],
+   "elements in box": 29952,
+   "tooth elements": 11882,
+   "active elements": 18070,
+   "gap elements": 0,
+   "void": "keep",
+   "void thr": 0.01,
+   "interp": "pc",
+   "tooth mode": "sdf",
+   "rigid": true,
+   "solver": {
+    "solver": "pyamg smoothed aggregation + cg",
+    "dof": 57114,
+    "iterations": 41,
+    "relative residual": 7.430241147619656e-11,
+    "seconds prepare": 0.7088298797607422,
+    "seconds assembly": 0.7694642543792725,
+    "seconds setup": 1.2557404041290283,
+    "seconds solve": 94.97943758964539,
+    "elements": 18070,
+    "floating dropped": 0
+   },
+   "seconds": 97.7390251159668,
+   "label": "crop 2 mm, rigid, sdf tooth, void kept"
+  },
+  "crop1_drop_m4": {
+   "film elements": 432,
+   "film elements any": 720,
+   "film volume mm^3": 16.03819444444444,
+   "band volume mm^3": 7.795717592592591,
+   "core volume mm^3": 8.24247685185185,
+   "first layer elements": 203,
+   "outer elements": 229,
+   "film vM mean": 0.002494773374660918,
+   "band vM mean": 0.0026146557555040144,
+   "core vM mean": 0.0023813888663173563,
+   "first layer vM mean": 0.0035675753758628195,
+   "outer vM mean": 0.0017966449487409532,
+   "vM max": 0.009792241080196872,
+   "vM max at": [
+    -4.166666666666667,
+    4.499999999999999,
+    -2.166666666666667
+   ],
+   "vM max in band": false,
+   "vM max in first layer": false,
+   "vM p95": 0.006763961899153529,
+   "vM p99": 0.008586954384060966,
+   "vM median": 0.001926117313894227,
+   "p max": 0.029817003948351822,
+   "p max at": [
+    -3.833333333333334,
+    4.499999999999999,
+    -2.166666666666667
+   ],
+   "p mean": 0.002229598080758983,
+   "p band mean": 0.002170566544782414,
+   "vM max all": 0.009792241080196872,
+   "band/core": 1.0979541361287157,
+   "first/outer": 1.9856874772964423,
+   "layer vM mean": 0.0018304270403480065,
+   "layer band vM mean": 0.0021358026395498103,
+   "layer volume mm^3": 1.770254629629629,
+   "h": 0.3333333333333333,
+   "h/h_f": 4.0,
+   "box cells": [
+    [
+     0,
+     92
+    ],
+    [
+     8,
+     188
+    ],
+    [
+     36,
+     108
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     -0.3333333333333339
+    ],
+    [
+     -7.333333333333333,
+     7.666666666666666
+    ],
+    [
+     -5.0,
+     1.0
+    ]
+   ],
+   "mesh": [
+    23,
+    45,
+    18
+   ],
+   "elements in box": 18630,
+   "tooth elements": 7537,
+   "active elements": 2093,
+   "gap elements": 0,
+   "void": "drop",
+   "void thr": 0.01,
+   "interp": "pc",
+   "tooth mode": "sdf",
+   "rigid": true,
+   "solver": {
+    "solver": "pyamg smoothed aggregation + cg",
+    "dof": 7125,
+    "iterations": 42,
+    "relative residual": 9.988603324629959e-11,
+    "seconds prepare": 0.33908939361572266,
+    "seconds assembly": 0.04724311828613281,
+    "seconds setup": 0.10618400573730469,
+    "seconds solve": 0.5150072574615479,
+    "elements": 2093,
+    "floating dropped": 0
+   },
+   "seconds": 1.0296697616577148,
+   "label": "crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.01)"
+  },
+  "crop1_rigid_sdf_m2": {
+   "film elements": 3462,
+   "film elements any": 4335,
+   "film volume mm^3": 16.784722222222218,
+   "band volume mm^3": 8.159143518518517,
+   "core volume mm^3": 8.625578703703702,
+   "first layer elements": 762,
+   "outer elements": 2700,
+   "film vM mean": 0.0028889948812926697,
+   "band vM mean": 0.003041488057222949,
+   "core vM mean": 0.0027447478979017934,
+   "first layer vM mean": 0.005219952141606069,
+   "outer vM mean": 0.0024107484086166838,
+   "vM max": 0.013529396411816995,
+   "vM max at": [
+    -4.583333333333334,
+    4.083333333333333,
+    -2.25
+   ],
+   "vM max in band": false,
+   "vM max in first layer": false,
+   "vM p95": 0.008913684244658316,
+   "vM p99": 0.010372370504981259,
+   "vM median": 0.0018116678007640266,
+   "p max": 0.055464374226975394,
+   "p max at": [
+    -4.583333333333334,
+    4.083333333333333,
+    -2.416666666666667
+   ],
+   "p mean": 0.0022642003572922197,
+   "p band mean": 0.002255406690652159,
+   "vM max all": 0.013529396411816995,
+   "band/core": 1.1081119907398407,
+   "first/outer": 2.1652828320651425,
+   "layer vM mean": 0.004542834163483005,
+   "layer band vM mean": 0.005217775729835317,
+   "layer volume mm^3": 2.342592592592592,
+   "h": 0.16666666666666666,
+   "h/h_f": 2.0,
+   "box cells": [
+    [
+     0,
+     92
+    ],
+    [
+     8,
+     188
+    ],
+    [
+     36,
+     108
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     -0.3333333333333339
+    ],
+    [
+     -7.333333333333333,
+     7.666666666666666
+    ],
+    [
+     -5.0,
+     1.0
+    ]
+   ],
+   "mesh": [
+    46,
+    90,
+    36
+   ],
+   "elements in box": 149040,
+   "tooth elements": 60187,
+   "active elements": 88853,
+   "gap elements": 0,
+   "void": "keep",
+   "void thr": 0.01,
+   "interp": "pc",
+   "tooth mode": "sdf",
+   "rigid": true,
+   "solver": {
+    "solver": "pyamg smoothed aggregation + cg",
+    "dof": 276126,
+    "iterations": 46,
+    "relative residual": 9.280883449246995e-11,
+    "seconds prepare": 1.8512611389160156,
+    "seconds assembly": 3.893667459487915,
+    "seconds setup": 8.129986047744751,
+    "seconds solve": 14.888011932373047,
+    "elements": 88853,
+    "floating dropped": 0
+   },
+   "seconds": 28.82117009162903,
+   "label": "crop 1 mm, rigid, sdf tooth, void kept, h = 2 h_f"
   }
  },
  "levels": {}
