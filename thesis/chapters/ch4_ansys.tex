@@ -45,10 +45,10 @@ third contributions of the thesis (Section~\ref{sec:intro_structure}):
       and verified against closed forms (\S\ref{sec:ch5-model}--\ref{sec:ch5-verification}),
       and coupled to the element's biofilm field through the growth equation
       at every Gauss point (\S\ref{sec:ch5-coupling});
-\item for two species, the composition from the point model of Klempt et
-      al.~\cite{Klempt2026ContinuumBacterialGrowth}
-      (Section~\ref{sec:theory_point}), run at every Gauss point alongside the
-      field (\S\ref{sec:ch5-composition}).
+\item the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}
+      (Section~\ref{sec:theory_point}), unchanged, at every Gauss point: the nutrient
+      and an antibiotic come from fields of the element, and its living biomass sets
+      their consumption (\S\ref{sec:ch5-composition}).
 \end{itemize}
 The same coupling also carries the five-species model calibrated in
 Chapter~\ref{ch:heine}; this is shown once, as a link between the two chapters
@@ -450,7 +450,7 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.
 \end{enumerate}
 
 %-----------------------------------------------------------------------
-\section{Two species: composition from the point model}
+\section{The point model at every Gauss point}
 \label{sec:ch5-composition}
 
 % Source: Klempt 2026; klempt2026_reproduction.py; fritsch2025_cases.py.
@@ -478,149 +478,105 @@ interaction matrix of Eq.~19 reproduces the figures without its prefactor
 $\tfrac12$. The same model reproduces the figures of Fritsch et
 al.~\cite{Fritsch2025BayesianMicrofilms} within $0.013$.
 
-% Source: SPLIT_COUPLING.md option (i); composition_reference.py.
-\paragraph{Amount from the field, composition from the point model.} The
-element already solves two species fields, so the point model is not needed to
-say how much biofilm there is; Klempt et al.\ 2024 define $\phi$ as the
-total biofilm fraction, which is $1-\phi_0$ of the point model. I therefore
-let the field decide the amount, $\phi_{3D}=\phi_1+\phi_2$, which
-drives growth through~\eqref{eq:ch5-eq36}, and let the point model decide only
-the composition (the shares $\phi_i/\sum_j\phi_j$) and $\psi_i$. At each
-Gauss point and substep its state is scaled to $\sum_i\phi_i=\phi_{3D}$,
-advanced, and scaled again; $\phi_i$, $\psi_i$ and $\gamma$ are stored as state
-variables. The parameters are those of the paper's Table~1 cases ($c^*=100$,
-$\alpha^*=10$, $\eta_i$ per case).
+% Rewritten 20-21 Oct 2026 for the coupling agreed with the partner (MEETING_2026-10-20.md,
+% thesis/CH4_REWRITE_PLAN.md). Python: coupled_living_consumption.py; ANSYS: usermat mode 11 (A-19).
+\paragraph{The point model as published.}
+Klempt et al.\ formulate their model on a material point, with $\phi_0$ as an auxiliary variable that
+enforces $\sum_i\phi_i+\phi_0=1$ and is not to be read as a physical void
+\cite{Klempt2026ContinuumBacterialGrowth}. I therefore do not change the point model: its
+equations~\eqref{eq:ch5-point}, its parameters and its constraint stay as published. It is called at
+every Gauss point with given inputs and returns its state, which is carried from one increment to the
+next as state variables of the Gauss point. The field keeps its own amount $\phi_{3D}$. Throughout,
+$\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point model.
 
-\paragraph{Consistency with the point model.} The scaling changes nothing
-when the field's amount is the one the point model would produce on its own.
-Driven by that amount, the coupled scheme gives back the composition
-of the point model alone: to $1.2\times10^{-5}$ in case~3 and to
-$6\times10^{-17}$ in case~6 of the paper, at coupling steps from $0.01$ down to
-$0.0025$.
-The coupled composition can therefore differ from the paper only where the
-field's amount differs from the point model's. No published work states how the
-two models are to be combined, since each prescribes its own evolution of the
-amount; a coupling that needs no such choice would require a spatial
-multi-species model derived from a single variational principle.
+\paragraph{From the field to the point model.}
+The element solves the nutrient $c$ of Klempt et al.\ 2024, held at given sources and diffusing through
+the domain, and passes its value at the Gauss point, interpolated from the nodes with the shape
+functions, to the material routine. The point model needs $c^*$ at its own, much smaller time steps.
+Between the increments $t_n$ and $t_{n+1}$ I interpolate linearly,
+\begin{equation}
+c^*(t)=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}\,c_n+\tfrac{t-t_n}{\Delta t}\,c_{n+1}\Bigr],
+\qquad t_n\le t\le t_{n+1},
+\label{eq:ch5-cstar}
+\end{equation}
+with $c_n,c_{n+1}$ the nutrient at the Gauss point and $c^*_0$ the nutrient level of the point model's
+own examples. Klempt et al.\ 2026 already use a time-dependent $c^*$ (their four-species case~3), so
+the point model accepts such an input without change. The field of Klempt et al.\ 2024 has no
+antibiotic. The element solves a second nutrient for its second species, which I do not use; I use this
+field for an antibiotic $a$, with its own sources and the same diffusion, and pass
+$\alpha^*(t)=\alpha^*_0\,a$ to the point model, interpolated as in~\eqref{eq:ch5-cstar}. Because the
+element advances its fields after the material routine, the pair $(c_n,c_{n+1})$ is the one of the
+previous increment.
 
-\paragraph{A second scheme.} Klempt et al.\ describe their model as a
-material point model and state that $\phi_0$ ``rather serves as a numerical
-auxiliary quantity'' and is not to be read as physical voids
-\cite{Klempt2026ContinuumBacterialGrowth}. The scaled scheme above uses
-$\phi_0=1-\phi_{3D}$ and so gives $\phi_0$ a physical meaning. I
-therefore also implemented a second scheme that keeps $\phi_0$ auxiliary:
-at each Gauss point the point model runs on its own, unscaled, from the step
-in which the field first reaches $\phi_{\min}$, and supplies only the
-composition, while the amount remains the field's. Its composition is then
-always the paper's trajectory, shifted by the local arrival time of the
-biofilm, and needs no cap. In the packed seed at $T^*=1$ it gives
-$\phi_1/(\phi_1+\phi_2)=0.614$ in case~3 and $0.014$ in case~6, the values of the point model
-alone at its own time $s\,T^*=0.15$, against $0.667$ and $0.021$ for the scaled scheme. The two schemes
-differ in what they let the composition depend on: the local amount in the
-first, the local age of the biofilm in the second.
+\paragraph{From the point model to the field.}
+Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al.\ 2024 is printed as
+$g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint. I scale it by the living volume
+fraction of the point model,
+\begin{equation}
+0=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad \bar\phi_i=\phi_i\psi_i,
+\label{eq:ch5-consumption}
+\end{equation}
+in the notation of Klempt et al.\ 2026. The point model normalises its volume, so $\bar\phi_i\in[0,1]$
+is the living volume fraction of species $i$ at the point, and $\phi_{3D}\sum_i\bar\phi_i\le\phi_{3D}$
+is the living volume fraction in the field. A dead biofilm consumes nothing; the void $\phi_0$ has no
+living fraction and is not part of the sum. The antibiotic is taken up in the same way,
+$0=d_a\nabla^2a-g_a\phi_{3D}\bigl(\sum_i\bar\phi_i\bigr)a$. The growth law~\eqref{eq:ch5-eq36} is
+unchanged: the inflation $\alpha$ measures how much biomass has been produced, alive or dead. The
+spreading of $\phi_{3D}$ follows Eq.~34 of Klempt et al.\ 2024 with its front term, which depends on
+$c$; this is the path by which the point model reaches the growth and the stress. An antibiotic acts on
+the stress only through it: it lowers $\psi_i$, so less nutrient is consumed and more reaches the front.
 
-The composition does not act back on the stress. In Klempt et al.\ 2024 no
-material parameter depends on the species; in the earlier spatial model of
-Klempt et al.~\cite{Klempt2023NumericalComparison} species identity enters only
-through the front growth factor and the nutrient consumption, and I take both
-equal for all species. A composition-dependent front factor would be the
-natural two-way extension.
+\paragraph{Time.}
+Klempt et al.\ 2024 normalise time with a reference time chosen for the problem at hand. I choose
+$T^*=1$ as the duration covered by the point model's data, so that both models run on the same time: the
+point model advances $s\,\Delta T^*$ per increment, with $s$ the length of that window in its own units,
+not a fitted value. For the synthetic data of Fritsch et al.~\cite{Fritsch2025BayesianMicrofilms},
+case~I (1000 steps of $10^{-4}$), $s=0.1$. With synthetic four-species data and this choice, a point
+model that keeps its own constraint reproduces the point model alone to $7\times10^{-7}$; scaled to the
+field amount instead, the error is $0.019$, and a value of $s$ fitted to the data comes out a third too
+low because it absorbs that error.
 
-% Source: SPLIT_COUPLING.md: s sweep, phi_cap, phi_min.
-\paragraph{Assumptions.} Three numbers are not given by either paper, and I
-state each as an assumption.
-\begin{itemize}
-\item \emph{Time link $s$.} Klempt et al.\ 2024 normalise time to
-      $T^*\in[0,1]$; the 2026 paper runs $500$ to $1500$ steps of $10^{-4}$ in
-      its own unit. No paper links the two. The point model advances
-      $s\,\Delta t$ per substep, with $s=0.15$, which maps the 2026 horizon onto
-      $T^*=1$.
-\item \emph{Cap $\phi_{\rm cap}=0.9$.} Where the field is fully packed,
-      $\phi_{3D}\to1$, the point model would be held at a void fraction below
-      its own packing limit, and the composition then depends on the coupling
-      time step. The point model therefore sees $\min(\phi_{3D},\phi_{\rm cap})$.
-\item \emph{Threshold $\phi_{\min}=0.01$.} Started from $\phi=0$ the
-      point model creates biomass, because its barrier terms make $\phi=0$ a
-      non-equilibrium. It is therefore not run where
-      $\phi_{3D}<\phi_{\min}$, and the composition is held there. The local source of~\eqref{eq:ch5-field} raises $\phi$ in the void by about
-      $k_\alpha T^*\le10^{-3}$, well below the threshold.
-\end{itemize}
+\paragraph{Start values.}
+The point model starts at a Gauss point once $\phi_{3D}$ there reaches $\phi_{\min}$. Where a seed is
+placed, the start values are those of the seed (one species, or a mixture). A Gauss point that the
+spreading biofilm reaches later starts with the single-species values of the nearer seed. The point
+model has no transport between points, so species meet only through this rule.
 
-% Added 4 Oct 2026: the whole coupled step in one place
-% (callsite/phi_mode_exec.inc, composition branch; usermat_py_hook.f;
-% coupling/material_server.py).
-\paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one
-substep of the coupled run. ANSYS solves only the equilibrium
-$\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method; the
-material routine turns the deformation at a Gauss point into a stress after
-removing the growth, and, for two species, asks the point model for the new
-composition. The composition is stored and does not enter the stress, so it
-does not affect the Newton iteration.
+\paragraph{Assumptions.} The coupling rests on choices that neither paper fixes, each with its
+sensitivity in Section~\ref{sec:ch5-results}: the linear interpolation of $c^*$ and $\alpha^*$ in time;
+$\sum_i\bar\phi_i$ taken from the previous increment; the start values of newly reached points; the
+threshold $\phi_{\min}$; and, for the examples, the uptake of the antibiotic. The time link is no longer
+one of them.
+
+\paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one increment of the coupled
+run. ANSYS solves the equilibrium $\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method;
+the material routine turns the deformation at a Gauss point into a stress after removing the growth and
+advances the point model. Its state does not enter the stress, so it does not affect the Newton
+iteration.
 
 \begin{algorithm}[htbp]
-\caption{One substep $t_n\to t_{n+1}$ of the coupled run}
+\caption{One increment $t_n\to t_{n+1}$ of the coupled run}
 \label{alg:ch5-coupled}
 \begin{algorithmic}[1]
-\REQUIRE at every Gauss point the converged state of $t_n$: $\alpha_n$ and
-  the point-model state $(\phi_i,\psi_i,\gamma)_n$; the element's fields
-  $\phi_1,\phi_2,c$ of $t_n$
+\REQUIRE at every Gauss point $\alpha_n$, the point-model state $(\phi_i,\psi_i,\gamma)_n$ and the pair
+  $(c,a)$ seen in the previous increment; the element's fields $\phi_{3D}$, $c$, $a$ of $t_n$
 \ENSURE displacements, stresses and state of $t_{n+1}$
 \REPEAT[Newton iteration of ANSYS]
-  \STATE compute the deformation gradient $\mathbf F$ at every Gauss point from the current displacements
   \FORALL{Gauss points}
-    \STATE $\phi_{3D}\leftarrow\phi_1+\phi_2$ from the element; restore the state of $t_n$
     \STATE $\alpha_{n+1}\leftarrow\alpha_n+k_\alpha\,\phi_{3D}\,\Delta t$ \COMMENT{Eq.~\eqref{eq:ch5-eq36}}
-    \STATE $\mathbf F_e\leftarrow\mathbf F\,\mathbf F_g^{-1}$ with $\mathbf F_g=\alpha_{n+1}\mathbf I$
-    \STATE stress $\boldsymbol\sigma$ and tangent from $W(\mathbf F_e)$ and $E(\phi)$, Eq.~\eqref{eq:ch5-stiffness}
-    \IF{two species and $\phi_{3D}\ge\phi_{\min}$}
-      \STATE scale the point-model state to $\sum_i\phi_i=\min(\phi_{3D},\phi_{\rm cap})$
-      \IF{this state was already advanced in this substep}
-        \STATE take the stored result
-      \ELSE
-        \STATE send state, parameters, $s\,\Delta t$ and $n_{\rm sub}$ through the bridge (Fortran, C, local socket)
-        \STATE the point model, Eq.~\eqref{eq:ch5-point}, takes $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ ($n_{\rm sub}$: number of point-model steps per substep) and returns $(\phi_i,\psi_i,\gamma)_{n+1}$
+    \STATE $\mathbf F_e\leftarrow\mathbf F\,\mathbf F_g^{-1}$, $\mathbf F_g=\alpha_{n+1}\mathbf I$; stress and tangent from $W(\mathbf F_e)$ and $E(\phi_{3D})$
+    \IF{$\phi_{3D}\ge\phi_{\min}$ or the point model has started}
+      \IF{not yet advanced in this increment}
+        \STATE $(c_n,c_{n+1})$, $(a_n,a_{n+1})$ from the previous and the current value at the Gauss point
+        \STATE $n_{\rm sub}$ steps of $s\Delta t/n_{\rm sub}$ of Eq.~\eqref{eq:ch5-point} with $c^*$, $\alpha^*$ from~\eqref{eq:ch5-cstar}
+        \STATE store $(\phi_i,\psi_i,\gamma)_{n+1}$ and $\sum_i\bar\phi_i$
       \ENDIF
-      \STATE scale back to $\phi_{3D}$; store $\phi_i$, $\psi_i$, $\gamma$ as state variables
     \ENDIF
-    \STATE return $\boldsymbol\sigma$ and the tangent to ANSYS
   \ENDFOR
-  \STATE assemble the residual and update the displacements
 \UNTIL{the residual meets the convergence criterion}
-\STATE the element advances its fields $\phi_1,\phi_2,c$ to $t_{n+1}$ (Eq.~\eqref{eq:ch5-field}, its own solver)
+\STATE the element advances $\phi_{3D}$ (Eq.~34 with the front term), $c$ and $a$ (Eq.~\eqref{eq:ch5-consumption} with $\sum_i\bar\phi_i$)
 \end{algorithmic}
 \end{algorithm}
-
-\begin{table}[htbp]
-  \centering
-  \caption[Sensitivity to the two coupling assumptions]{%
-    Share of species~1, $\phi_1/(\phi_1+\phi_2)$, at $T^*=1$ (case~3 of Klempt et al.\ 2026, coexistence;
-    case~6, one species wins). Computed with the same scheme the ANSYS runs
-    use. ``Front'' is a point the field fills from $0.05$ to $1$.}
-  \label{tab:ch5-sensitivity}
-  \begin{tabular}{lcccc}
-    \hline
-    & $s=0.05$ & $s=0.15$ & $s=0.5$ & $s=1$\\
-    \hline
-    case 3, front & 0.638 & 0.672 & 0.701 & 0.744\\
-    case 6, front & 0.230 & 0.014 & 0.014 & 0.014\\
-    \hline
-    & $\phi_{\rm cap}=0.85$ & $\phi_{\rm cap}=0.9$ & $\phi_{\rm cap}=0.95$ &\\
-    \hline
-    case 3, packed seed & 0.668 & 0.667 & 0.664 &\\
-    case 6, packed seed & 0.023 & 0.021 & 0.014 &\\
-    \hline
-  \end{tabular}
-\end{table}
-
-Table~\ref{tab:ch5-sensitivity} shows what the assumptions do. The time link
-matters: in case~6 the winner only emerges for $s\gtrsim0.15$ and the result
-does not change for larger $s$; in case~3 the share keeps rising slowly with $s$,
-from $0.672$ at $s=0.15$ to $0.744$ at $s=1$, while the outcome, coexistence,
-stays the same. The cap does not: between $0.85$ and $0.9$
-the packed seed and the interior agree, so the composition is continuous across
-the edge of the packed region. With $\phi_{\rm cap}=0.9$ the result is
-converged at a coupling time step of $0.025$ (to $0.0016$ against $0.0125$);
-$\phi_{\rm cap}=0.95$ needs $0.0125$.
 
 %-----------------------------------------------------------------------
 \section{Results}
@@ -1009,14 +965,15 @@ same growth, stress and nutrient field to all digits and shares within $0.02$.
       $24^3$, while the interior error falls from $5.2$ to $1.2\,\%$. A fit of the
       surface value that is exact for linear fields, as used for the
       temperature, would remove it.
-\item \emph{One-way composition.} The species composition does not act back on
-      the mechanics, because in the formulation followed here no material
-      parameter depends on the species.
-\item \emph{Assumptions.} The time link $s$, the cap $\phi_{\rm cap}$, the
-      converted $\beta$ and the start composition of points the biofilm
-      reaches later are not given by the papers. All are reported with their
-      sensitivity; the stresses depend on $\beta$, the composition on $s$ and,
-      outside the seed, on the start composition.
+\item \emph{No stress feedback.} The composition reaches the mechanics only
+      through the nutrient and the front term; no material parameter depends on
+      the species, and the stress does not act back on growth.
+\item \emph{No transport between points.} The point model has no space, so species
+      meet only through the start values of newly reached points.
+\item \emph{Assumptions.} The interpolation of $c^*$ and $\alpha^*$ in time, the
+      one-increment lag of $\sum_i\bar\phi_i$, the start values of newly reached
+      points, $\phi_{\min}$, the antibiotic uptake and the converted $\beta$ are not
+      given by the papers. All are reported with their sensitivity.
 \item \emph{Pressure term.} The spherical term of
       \S\ref{sec:ch5-verification-limits} is documented, not corrected. It does
       not change the von Mises stress at a given deformation, and at
@@ -1060,9 +1017,10 @@ same growth, stress and nutrient field to all digits and shares within $0.02$.
 \label{sec:ch5-outlook}
 
 % Source: ROADMAP_TWO_WAY.md.
-The coupling of this chapter is one-way: the field drives growth and stress,
-and the point model returns a composition that nothing reads back. Four steps
-would close the loop, ordered by how well the literature supports them.
+The coupling of this chapter closes the loop through the nutrient: the field
+feeds the point model, and the living biomass sets the consumption. The steps
+below were the path towards it, ordered by how well the literature supports
+them; the first is now part of the coupling, the others remain open.
 \begin{enumerate}
 \item \emph{Local nutrient into the point model.} Klempt et
       al.~\cite{Klempt2026ContinuumBacterialGrowth} treat $c^*$ as a given,

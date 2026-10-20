@@ -104,7 +104,7 @@ def main():
     for r in rows:
         last[(r[C["elem"]], r[C["ip"]], int(r[C["ldstep"]]), int(r[C["isubst"]]))] = r
     points = sorted({k[:2] for k in last})
-    worst, worst_L, worst_gap, n_checked, n_missing = 0.0, 0.0, 0.0, 0, 0
+    worst, worst_L, worst_gap, n_checked, n_missing, bad = 0.0, 0.0, 0.0, 0, 0, []
     for pt in points:
         steps = sorted(k[2:] for k in last if k[:2] == pt)
         if a.max_steps:
@@ -127,7 +127,10 @@ def main():
             n_sub = int(float(r[C["n_sub"]])); dt = float(r[C["dt_couple"]]) / n_sub
             c0, c1, a0, a1 = (float(r[C[k]]) for k in ("c0", "c1", "a0", "a1"))
             g = np.asarray(replay(jnp.asarray(g0), dt, n_sub, c0, c1, a0, a1))
-            worst = max(worst, float(np.abs(g - g1).max()))
+            e = float(np.abs(g - g1).max())
+            worst = max(worst, e)
+            if e > 1e-8:
+                bad.append((pt[0], st, e))
             phi, psi = g1[:n_act], g1[6:6 + n_act]
             worst_L = max(worst_L, abs(float(r[C["L"]]) - float((phi * psi).sum())))
             n_checked += 1
@@ -137,6 +140,8 @@ def main():
     print(f"  max gap between a step's start and the previous step's end (carried state) = {worst_gap:.3e}"
           f" ({n_missing} places with substeps missing from the trace)")
     print(f"  Newton as in the point-model file: up to {nw_max} iterations, |Q|^2 < {nw_tol:g}")
+    for b in bad[:8]:
+        print(f"    step with difference > 1e-8: element {b[0]}, (ldstep, isubst) {b[1]}, {b[2]:.2e}")
     ok = worst < 1e-8 and worst_L < 1e-12 and worst_gap < 1e-14
     print("PASS" if ok else "CHECK: differences above the expected round-off")
 

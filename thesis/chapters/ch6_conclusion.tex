@@ -70,7 +70,7 @@ composition as a local state at each Gauss point.
     Soleimani et al.\ 2023~\cite{Soleimani2023CoAggregation} & two fields, co-aggregation & ANSYS user element & no & from the species fields\\
     Klempt et al.\ 2024~\cite{Klempt2024DiffusionDrivenGrowth} & one field & ANSYS user element & yes & none\\
     Klempt et al.\ 2026~\cite{Klempt2026ContinuumBacterialGrowth} & $n$ fractions at a point & none & no & point model\\
-    this work & one field and a point model per Gauss point & ANSYS, IKM element & yes (one-way) & point model, local nutrient\\
+    this work & one field and a point model per Gauss point & ANSYS, IKM element & yes (no feedback) & point model, nutrient and antibiotic fields\\
     \bottomrule
   \end{tabular}
 \end{table} The number of transported fields therefore does not grow with the
@@ -134,17 +134,18 @@ for in-vivo data is open.
         verified against closed forms and against the published models. No
         measured stress of a growing oral biofilm was available to validate
         them.
-  \item \emph{One-way coupling.} The composition does not act on the
-        stiffness, the spreading or the stress, following Klempt et al.\ 2024,
-        who drop the mechanical term in the growth equation.
-  \item \emph{Spreading in ANSYS.} The front term of the element is inactive,
-        so the biofilm spreads only by diffusion in the ANSYS runs. The
-        composition varies there through the local nutrient, but not through
-        growth towards the nutrient.
-  \item \emph{Assumptions.} The link between the time of the point model and
-        that of the field, and the cap on the amount handed to the point
-        model, are not given by the papers. Both are reported with their
-        sensitivity.
+  \item \emph{No stress feedback.} The composition reaches the spreading only
+        through the nutrient; it does not act on the stiffness, and the stress
+        does not act back on growth, following Klempt et al.\ 2024, who drop the
+        mechanical term in the growth equation.
+  \item \emph{Front term.} The front term of the element was inactive in the
+        earlier runs; with it switched on, its large cell P\'eclet number needs
+        an upwind treatment, and its strength $r$ converted from Klempt et al.\ 2024
+        fills the domain quickly, so a tenth of it is used.
+  \item \emph{Assumptions.} The interpolation of the nutrient and the antibiotic
+        in time, the start values of points the biofilm reaches later and the
+        threshold for starting the point model are not given by the papers. All
+        are reported with their sensitivity.
   \item \emph{The source model.} The test cases of Klempt et al.\ 2024 are
         reproduced only with stated departures from the printed equations
         (Appendix~\ref{app:klempt2024}), and the paper gives two forms of the
