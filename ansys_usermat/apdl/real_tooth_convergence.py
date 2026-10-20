@@ -592,7 +592,7 @@ def figure():
             v = np.array([rows[str(n)][key] for n in ns], float) * 1e3
             ax.plot(hs, v, ls=ls_of[nf], marker=mk[c], color=col[c], lw=1.3, ms=4.5,
                     mfc="white" if c != "film" else col[c], label=lab if nf == fields[0] else None)
-    rows, ns, hs = rows_of(fields[0])
+    ns = sorted({int(n) for nf in fields for n in Sd[nf]}); hs = [L / n for n in ns]
     axes_h(ax, hs, ns)
     ax.set_yscale("log")
     ax.set_ylabel("von Mises in the film (mPa)")
@@ -618,7 +618,7 @@ def figure():
                 ax.plot(*zip(*pts), ls=ls_of[nf], marker=mk[c], color=col[c], lw=1.3, ms=4.5, mfc="white",
                         label=lab if nf == fields[0] else None)
     ax.axhline(1.0, color="#999999", lw=0.8)
-    rows, ns, hs = rows_of(fields[0])
+    ns = sorted({int(n) for nf in fields for n in Sd[nf]}); hs = [L / n for n in ns]
     axes_h(ax, hs, ns)
     ax.set_ylim(0, ax.get_ylim()[1] * 1.45)
     ax.set_ylabel("ratio")

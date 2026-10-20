@@ -79,8 +79,13 @@ So the growth field of the demonstration is converged to about 2 % in its means 
 On the 192^3 field the same meshes give film means 0.63, 1.23, 1.93, 2.44 mPa, band means 0.57, 1.31, 2.01,
 2.56 mPa and maxima 1.73, 4.09, 5.78, 9.77 mPa: within 5 % of the 96^3-field values on every mesh and within
 0.5 % for the film mean on 48^3, so the field grid is not what limits the stress; the stress mesh is. The 64^3
-mesh (h = 0.25 mm) on the 192^3 field was still running when this was written; the JSON holds it when done, and
-the next step is the mesh beyond (96^3, 2.7M dof, which the chunked assembly makes possible on this machine).
+mesh on the 192^3 field (h = 0.25 mm, two elements across the film, 811k dof, 117 CG iterations, 100 s) gives
+film mean 2.65 mPa (+8.7 % on 48^3), band 2.75 (+7.4 %), core 2.56, band/core 1.08, 95th percentile 7.43,
+99th 9.27, maximum 11.4 mPa at (-4.9, 3.9, -2.1) mm (+16.5 %, pair slope 0.53 against 1.3 before), maximum p
+38 mPa, mean p 2.22 mPa. Over the five meshes the film mean has observed order 0.51 and a free-fit h -> 0 value
+of 4.8 mPa, the band mean order 0.66 and 4.3 mPa; the last changes (7 to 9 %) are the first below 10 %. The
+growth of the maximum slows once the film is two elements thick (~h^-1.35 over the five meshes). The next step
+is the 96^3 mesh (h = 0.167 mm, 2.7M dof), which the chunked assembly makes possible on this machine.
 
 What the table says:
 
@@ -115,10 +120,11 @@ What the table says:
 - The stress level: "of the order of millipascal", "the film mean is a few mPa", "the stress is roughly uniform
   along the film with its largest values at the ends of the band". The film mean von Mises on the meshes
   computed here is 0.66, 1.28, 2.05 and 2.43 mPa (16^3 to 48^3) and extrapolates to about 5 mPa, so a sentence
-  needs the mesh with it: "2.0 mPa on the 32^3 mesh of the video, 2.4 mPa on 48^3, not converged (observed
-  order about 0.5)". The maximum of 6.0 mPa in `REAL_TOOTH.md` and in the video is the 32^3 value; on 48^3 it
-  is 10.1 mPa, and it should not be quoted as a value of the model. The same holds for the maximum pressure
-  (16.5 mPa on 32^3, 34 mPa on 48^3) and for the 95th percentile (5.3 and 6.6 mPa).
+  needs the mesh with it: "2.0 mPa on the 32^3 mesh of the video, 2.4 mPa on 48^3, 2.65 mPa on 64^3, not
+  converged (observed order about 0.5, still +9 % at the last step; extrapolated 4 to 5 mPa)". The maximum of
+  6.0 mPa in `REAL_TOOTH.md` and in the video is the 32^3 value; on 48^3 it is 10.1 mPa and on 64^3 11.4 mPa,
+  and it should not be quoted as a value of the model. The same holds for the maximum pressure (16.5 mPa on
+  32^3, 34 to 38 mPa on 48^3 and 64^3) and for the 95th percentile (5.3, 6.6, 7.4 mPa).
 - The comparison with the 2 mm cube ("stresses of the same order, mPa") holds; a number beyond the order does
   not.
 - The location of the maximum, the end of the band on the +y side, is mesh-independent.
