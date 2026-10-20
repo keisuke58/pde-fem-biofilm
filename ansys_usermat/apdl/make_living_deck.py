@@ -89,6 +89,8 @@ def main():
     ap.add_argument("--phi-min", type=float, help="prop(29), default 0.1 with --v2, else 0.01")
     ap.add_argument("--cons-ab", type=float, help="CONSUMPTION21, default 0.25 with --v2, else --cons")
     ap.add_argument("--deltim", type=float, help="outer increment of the run (with --start-step), default the base's")
+    ap.add_argument("--neigh", type=int, help="NEIGHBOR_CNT, the element's maximum number of neighbours (base: 30); "
+                    "the search keeps the first ones found in element order (A-23, the symmetry check)")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -132,6 +134,8 @@ def main():
             "CONSUMPTION22": "0", "MAX_GROWTH11": repr(r_front), "MAX_GROWTH21": "0", "HALF_VELO11": "1",
             "ORI_WEIGHT11": "1" if a.front > 0 else "0", "ORI_WEIGHT21": "0",
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
+    if a.neigh is not None:
+        scal["NEIGHBOR_CNT"] = str(a.neigh)
     for k, v in scal.items():
         text = set_scalar(text, k, v)
     nl = "\r\n" if "\r\n" in text else "\n"
