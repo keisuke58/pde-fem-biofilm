@@ -290,6 +290,8 @@ def figure():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    from matplotlib.ticker import FixedLocator, NullLocator, ScalarFormatter
     import figstyle
     figstyle.apply(size=9)
     out = load_json()
@@ -297,51 +299,63 @@ def figure():
     col = {"max": "#2a78d6", "p99": "#6250d6", "p95": "#1baf7a", "band": "#eb6834", "core": "#8c6a00",
            "seed": "#444444"}
     mk = {"max": "o", "p99": "^", "p95": "v", "band": "s", "core": "D", "seed": "x"}
-    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.5))
-    for ax, case in zip(axs[:2], ("corner", "edge")):
+
+    def axes_h(ax, hs, ns, yt):
+        ax.set_xscale("log"); ax.set_yscale("log")
+        ax.xaxis.set_major_locator(FixedLocator(hs)); ax.xaxis.set_minor_locator(NullLocator())
+        ax.set_xticklabels([f"{h:.2g}\n${n}^3$" for h, n in zip(hs, ns)])
+        ax.yaxis.set_major_locator(FixedLocator(yt)); ax.yaxis.set_minor_locator(NullLocator())
+        ax.yaxis.set_major_formatter(ScalarFormatter()); ax.set_yticklabels([f"{v:g}" for v in yt])
+        ax.set_xlim(hs[0] * 1.15, hs[-1] / 1.15)
+        ax.set_xlabel("element size $h$ (mm), mesh")
+
+    fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.9))
+    series = (("vM max", "maximum", "max"), ("vM p99", "99th percentile", "p99"),
+              ("vM p95", "95th percentile", "p95"), ("band vM mean", "band mean", "band"),
+              ("core vM mean", "core mean", "core"), ("seed vM mean", "seed mean", "seed"))
+    for k, (ax, case) in enumerate(zip(axs[:2], ("corner", "edge"))):
         rows = C[case]["meshes"]
-        ns = sorted(int(k) for k in rows)
-        hs = np.array([2.0 / n for n in ns])
-        for key, lab, c in (("vM max", "maximum", "max"), ("vM p99", "99th percentile", "p99"),
-                            ("vM p95", "95th percentile", "p95"), ("band vM mean", "band mean", "band"),
-                            ("core vM mean", "core mean", "core"), ("seed vM mean", "seed mean", "seed")):
+        ns = sorted(int(x) for x in rows)
+        hs = [2.0 / n for n in ns]
+        for key, lab, c in series:
             v = np.array([rows[str(n)][key] for n in ns]) * 1e3
             ax.plot(hs, v, marker=mk[c], color=col[c], lw=1.5, ms=5, mfc="white" if c != "seed" else col[c],
                     label=lab)
         f = C[case]["fits"]
-        ax.text(0.03, 0.97, f"maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$\n"
-                            f"band mean: {f['band vM mean']['change % per refinement'][-1]:+.1f} % at the last step",
-                transform=ax.transAxes, va="top", ha="left", fontsize=7.5)
-        ax.set_xscale("log"); ax.set_yscale("log")
-        ax.set_xticks(hs); ax.set_xticklabels([f"{h:.3g}" for h in hs])
-        ax.minorticks_off()
-        ax.set_xlabel("element size $h$ (mm)")
-        ax.set_title(f"({'ab'[axs.tolist().index(ax)]}) {case} seed, clamped face", fontsize=9)
-        ax.invert_xaxis()
+        ax.text(0.97, 0.30, f"maximum $\\sim h^{{-{f['vM max']['s']:.2f}}}$\nband mean "
+                            f"{f['band vM mean']['change % per refinement'][-1]:+.1f} % at the last step",
+                transform=ax.transAxes, va="top", ha="right", fontsize=7.5)
+        axes_h(ax, hs, ns, [1, 2, 5, 10, 20, 50])
+        ax.set_ylim(1.0, 40)
+        ax.set_title(f"({'ab'[k]}) {case} seed, clamped face", fontsize=9)
     axs[0].set_ylabel("von Mises (mPa)")
-    axs[0].legend(loc="lower left", fontsize=7, frameon=False, ncol=1, handlelength=1.6)
-    # (c) ratios: band/core and max over the centre seed mean, against h
+    axs[1].set_yticklabels([])
+    # (c) ratios: solid = corner, dashed = edge
     ax = axs[2]
     cen = C["centre"]["meshes"]
     for case, ls in (("corner", "-"), ("edge", "--")):
         rows = C[case]["meshes"]
-        ns = sorted(int(k) for k in rows)
-        hs = np.array([2.0 / n for n in ns])
+        ns = sorted(int(x) for x in rows)
+        hs = [2.0 / n for n in ns]
         ref = np.array([cen[str(n)]["seed vM mean"] for n in ns])
         ax.plot(hs, [rows[str(n)]["vM max"] for n in ns] / ref, ls=ls, marker=mk["max"], color=col["max"], lw=1.5,
-                ms=5, mfc="white", label=f"{case}: maximum / centre seed mean")
+                ms=5, mfc="white")
         ax.plot(hs, [rows[str(n)]["band vM mean"] for n in ns] / ref, ls=ls, marker=mk["band"], color=col["band"],
-                lw=1.5, ms=5, mfc="white", label=f"{case}: band mean / centre seed mean")
+                lw=1.5, ms=5, mfc="white")
         ax.plot(hs, [rows[str(n)]["band/core"] for n in ns], ls=ls, marker=mk["core"], color=col["core"], lw=1.5,
-                ms=5, mfc="white", label=f"{case}: band mean / core mean")
-    ax.set_xscale("log"); ax.set_yscale("log")
-    ax.set_xticks(hs); ax.set_xticklabels([f"{h:.3g}" for h in hs]); ax.minorticks_off()
-    ax.invert_xaxis()
-    ax.set_xlabel("element size $h$ (mm)")
+                ms=5, mfc="white")
+    axes_h(ax, hs, ns, [2, 5, 10, 20, 50])
+    ax.set_ylim(1.0, 70)
     ax.set_ylabel("ratio")
-    ax.set_title("(c) ratios", fontsize=9)
-    ax.legend(loc="lower left", fontsize=6.3, frameon=False, handlelength=2.2)
-    fig.tight_layout(w_pad=1.0)
+    ax.set_title("(c) ratios (solid corner, dashed edge)", fontsize=9)
+    hnd = [Line2D([], [], color=col["max"], marker=mk["max"], mfc="white", lw=1.5, ms=5, label="maximum / centre seed mean"),
+           Line2D([], [], color=col["band"], marker=mk["band"], mfc="white", lw=1.5, ms=5, label="band mean / centre seed mean"),
+           Line2D([], [], color=col["core"], marker=mk["core"], mfc="white", lw=1.5, ms=5, label="band mean / core mean")]
+    ax.legend(handles=hnd, loc="lower left", bbox_to_anchor=(0.0, 0.0), fontsize=6.5, frameon=False,
+              handlelength=2.2, labelspacing=0.3)
+    fig.tight_layout(w_pad=0.8, rect=[0, 0.09, 1, 1])
+    fig.legend(*axs[0].get_legend_handles_labels(), loc="lower center", ncol=6, fontsize=7.5, frameon=False,
+               bbox_to_anchor=(0.5, 0.0), handlelength=1.8, columnspacing=1.2)
     FIG.parent.mkdir(exist_ok=True)
     fig.savefig(FIG.with_suffix(".pdf"))
     fig.savefig(FIG.with_suffix(".png"), dpi=300)

@@ -93,9 +93,11 @@ movie(s, "anim_seed_edge_3d", Inches(6.75), Inches(1.1), Inches(6.3))
 text(s, Inches(0.5), Inches(1.2) + h, Inches(12.3), Inches(2.5), [
     "Same model and seed volume as case 1; bottom face clamped (the substrate). Left: corner (three faces), right: edge "
     "(two faces).",
-    "The biofilm spreads along the walls; the stress concentrates where the seed meets the clamped face, about 15 mPa "
-    "against 0.76 mPa in the centre. The largest values sit at the clamped edge and depend on the mesh; the colour scale "
-    "stops at the 95th percentile."], size=16)
+    "The biofilm spreads along the walls; the stress concentrates in the biofilm next to the clamped face: the mean over "
+    "its bottom quarter millimetre is 7.6 mPa (corner) and 6.4 mPa (edge), 10 to 12 times the seed stress of the centre "
+    "case (0.61 mPa); these means change by less than 1 % from 24³ to 48³. The pointwise maximum sits where the clamped "
+    "face meets a free wall and grows with refinement (about h^−0.4), so the colour scale stops at the 95th percentile, "
+    "about 15 mPa, which does not depend on the mesh."], size=16)
 
 # 5 two seeds (if rendered)
 if (A / "anim_two_3d.mp4").exists():
@@ -109,8 +111,8 @@ if (A / "anim_two_3d.mp4").exists():
 s = frame("3. The growth law removes the concentration", n); n += 1
 h = movie(s, "anim_law_3d", Inches(0.7), Inches(1.0), Inches(11.9))
 text(s, Inches(0.7), Inches(1.05) + h, Inches(11.9), Inches(1.6), [
-    "Corner seed, same colour scale in both stress panels. Without the law the stress at the clamped edge reaches about "
-    "15 mPa; with the law it stays well below. p_h = 3.3 mPa is chosen by me (0.4 times the 95th percentile of the "
+    "Corner seed, same colour scale in both stress panels. Without the law the stress in the biofilm next to the clamped "
+    "face reaches about 15 mPa (95th percentile); with the law it stays well below. p_h = 3.3 mPa is chosen by me (0.4 times the 95th percentile of the "
     "pressure without the law), not taken from a paper."], size=16)
 
 # 7 collar
@@ -133,8 +135,9 @@ text(s, Inches(0.7), Inches(5.6), Inches(11.9), Inches(1.6), [
 s = frame("Summary", n); n += 1
 text(s, Inches(0.6), Inches(1.3), Inches(12.1), Inches(5.6), [
     "• Case 1 reproduces the thesis value of the seed stress (0.2 % difference) and shows it in 3D.",
-    "• Moving the seed to a wall breaks the symmetry; the stress then concentrates where growing biofilm meets a fixed "
-    "surface, about 20 times the centre value.",
+    "• Moving the seed to a wall breaks the symmetry; the stress then concentrates in the biofilm next to the fixed "
+    "surface, 10 to 12 times the seed stress of the centre case (band mean, converged to 1 %; the pointwise maximum is "
+    "mesh-dependent and is not quoted).",
     "• The homeostatic-pressure law removes this concentration, in the cube and on the tooth-like collar "
     "(0.68 to 0.12 times E).",
     "• Synthetic data only (Fritsch et al. 2025) keep the demonstration independent of the calibration.",

@@ -24,10 +24,12 @@ JA: 第 4 章の検証問題です。2 mm の立方体の中心にシードが�
 
 ## 4. Seed in a corner and on an edge
 EN: Here I move the seed to a corner and to an edge and clamp the bottom face, like a substrate. The biofilm spreads
-along the walls, and the stress concentrates where it meets the clamped face, about twenty times the centre value.
-The peak sits at the clamped edge and depends on the mesh, so the colour scale stops at the 95th percentile.
-JA: シードを角と辺に動かし、底面を基材のように固定しました。バイオフィルムは壁に沿って広がり、固定面と接するところで応力が
-集中します。中心の場合の約 20 倍です。最大値は固定面の縁にありメッシュに依存するので、色の上限は 95 % 点にしました。
+along the walls, and the stress concentrates in the biofilm next to the clamped face: its mean there is ten to twelve
+times the seed stress of the centre case, and this mean is converged to one percent. The pointwise peak at the corner
+grows with the mesh, so I do not quote it; the colour scale stops at the 95th percentile.
+JA: シードを角と辺に動かし、底面を基材のように固定しました。バイオフィルムは壁に沿って広がり、固定面に接するバイオフィルムで応力が
+集中します。その帯の平均は中心の場合のシードの応力の 10〜12 倍で、1 % まで収束しています。角の点の最大値はメッシュと
+ともに増えるので言いません。色の上限は 95 % 点です。
 
 ## 5. Two seeds
 EN: Two seeds on the clamped face, a little apart. They grow into each other, and the stress is highest under each
@@ -57,8 +59,9 @@ JA: 左は、シードで種 3 が優勢になり、種 4 はほぼ消えるこ�
 0.68E、則ありでは最大でも 0.12E です。
 
 ## 9. Summary
-EN: The 3D view reproduces the thesis value. When the seed touches a wall, the stress concentrates where growing biofilm
-meets a fixed surface, and the homeostatic-pressure law removes this concentration. The next step at Keio is a real
+EN: The 3D view reproduces the thesis value. When the seed touches a wall, the stress concentrates in the biofilm next to
+the fixed surface, ten to twelve times the centre value as a band mean, and the homeostatic-pressure law removes this
+concentration. The next step at Keio is a real
 tooth surface with the calibrated parameters.
-JA: 3 次元でも修論の値を再現します。シードが壁に触れると、成長するバイオフィルムが固定面と接するところで応力が集中し、
-恒常圧の則がそれを消します。慶應での次の段階は、本物の歯の表面と較正したパラメータです。
+JA: 3 次元でも修論の値を再現します。シードが壁に触れると、固定面に接するバイオフィルムで応力が集中し（帯の平均で中心の
+10〜12 倍）、恒常圧の則がそれを消します。慶應での次の段階は、本物の歯の表面と較正したパラメータです。

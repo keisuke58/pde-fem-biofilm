@@ -51,8 +51,8 @@
 \small
 $\beta=0.02$\,mm$^2/T^*$, $k_\alpha=10^{-3}/T^*$, $E=10$\,Pa, $\nu=0.49$, $T^*=1.1$; one octant cut away.
 Field on $48^3$ (reference solution), stress on $16^3$.\\
-Seed von Mises at $T^*=1.1$: $6.19\times10^{-4}$\,Pa (thesis, $16^3$: $6.18\times10^{-4}$\,Pa).
-The stress forms a ring at the edge of the seed.\quad\video{anim_wp3_seed_3d.mp4}
+Seed von Mises at $T^*=1.1$: $6.19\times10^{-4}$\,Pa (thesis, $16^3$: $6.18\times10^{-4}$\,Pa);
+largest value $0.79$\,mPa, converged from $24^3$ on. The stress forms a ring at the edge of the seed.\quad\video{anim_wp3_seed_3d.mp4}
 \end{frame}
 
 % --------------------------------------------------------
@@ -63,9 +63,12 @@ The stress forms a ring at the edge of the seed.\quad\video{anim_wp3_seed_3d.mp4
 
 \small\raggedright
 Same model and seed volume as case 1; bottom face clamped (the substrate). Left: corner (three faces), right: edge
-(two faces). The biofilm spreads along the walls; the stress concentrates where the seed meets the clamped face,
-about 15\,mPa against 0.76\,mPa in the centre. The largest values sit at the clamped edge and depend on the mesh;
-the colour scale stops at the 95th percentile.\\
+(two faces). The biofilm spreads along the walls; the stress concentrates in the biofilm next to the clamped face: the mean over
+its bottom quarter millimetre is 7.6\,mPa (corner) and 6.4\,mPa (edge), 10 to 12 times the seed stress of the centre
+case (0.61\,mPa) and about 5 times the mean of the layer above it; these means change by less than 1\,\% from
+$24^3$ to $48^3$. The pointwise maximum sits where the clamped face meets a free wall and grows with refinement
+(16 to 26\,mPa, about $h^{-0.4}$), so the colour scale stops at the 95th percentile, about 15\,mPa, which does not
+depend on the mesh.\\
 \video{anim_seed_corner_3d.mp4}\quad\video{anim_seed_edge_3d.mp4}
 \end{frame}
 
@@ -85,8 +88,8 @@ The two seeds join, and the stress is highest along the clamped face under both 
 \includegraphics[width=0.95\linewidth]{assets/anim_law_3d.png}
 
 \small\raggedright
-Corner seed, same colour scale in both stress panels. Without the law the stress at the clamped edge reaches about
-15\,mPa; with the law it stays well below. $p_h=3.3$\,mPa is chosen by me (0.4 times the 95th percentile of the
+Corner seed, same colour scale in both stress panels. Without the law the stress in the biofilm next to the clamped
+face reaches about 15\,mPa (95th percentile, the top of the colour scale); with the law it stays well below. $p_h=3.3$\,mPa is chosen by me (0.4 times the 95th percentile of the
 pressure without the law), not taken from a paper.\quad\video{anim_law_3d.mp4}
 \end{frame}
 
@@ -118,8 +121,9 @@ with $p_h/E=0.05$ the largest value is $0.12E$.
 \small
 \begin{itemize}\setlength\itemsep{6pt}
 \item Case 1 reproduces the thesis value of the seed stress (0.2\,\% difference) and shows it in 3D.
-\item Moving the seed to a wall breaks the symmetry; the stress then concentrates where growing biofilm meets a
-      fixed surface, about 20 times the centre value.
+\item Moving the seed to a wall breaks the symmetry; the stress then concentrates in the biofilm next to the fixed
+      surface, 10 to 12 times the seed stress of the centre case (mean over the bottom quarter millimetre; the
+      pointwise maximum at the corner is mesh-dependent and is not quoted).
 \item The homeostatic-pressure law removes this concentration, in the cube and on the tooth-like collar
       (0.68 to 0.12 times $E$).
 \item Synthetic data only (Fritsch et al.\ 2025) keep the demonstration independent of the calibration.
