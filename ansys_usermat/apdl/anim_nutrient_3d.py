@@ -301,17 +301,14 @@ def grid(field, Uf, keep):
     return g.threshold(0.5, scalars="keep") if not keep.all() else g
 
 
-# the c panel shows the half y > 0 cut away so the gradient inside the cube is visible; the seed touches y = -1,
-# so its cut face y = 0 (corner) or the whole layer (layer) stays in view
-yc = -1 + (np.arange(NF) + 0.5) * 2 / NF
-cut_f = np.broadcast_to(yc[None, :, None] < 0, (NF,) * 3)
+# no cut: both seeds touch the faces x = -1 and y = -1 that face the camera, so the walls show c inside the biofilm
 all_f = np.ones((NF,) * 3, bool)
 all_m = np.ones((NM,) * 3, bool)
 pm_end = down(PHI[-1].astype(float), NM)
 vtop = float(np.percentile(VM[-1][pm_end > 0.3], 95)) * 1e3
 atop = float(np.nanmax(D["am1_0"])) * 1e3                       # colour scale of the run without limitation
 cmin = float(np.floor(C[-1].min() * 10) / 10)
-PANELS = [(lambda i: (C[i], U[i], cut_f), "nutrient c (half y > 0 cut away)", "Blues", (cmin, 1.0), "%.1f"),
+PANELS = [(lambda i: (C[i], U[i], all_f), "nutrient c", "Blues", (cmin, 1.0), "%.2f"),
           (lambda i: (AM1[i] * 1e3, U[i], all_f), "alpha - 1 (1e-3)", "Oranges", (0, atop), "%.1f"),
           (lambda i: (VM[i] * 1e3, U[i], all_m), "von Mises (mPa)", "viridis", (0, vtop), "%.1f")]
 CAM = [(-4.0, -3.3, 2.6), (0, 0, -0.1), (0, 0, 1)]
