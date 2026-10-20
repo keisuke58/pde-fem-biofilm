@@ -84,6 +84,31 @@
      0.49999991059303284
     ],
     "fraction of band cells at the floor": 0.3695637455144553
+   },
+   "field": {
+    "step": 1,
+    "name": "distribution",
+    "t mean mm": 0.32133995976545,
+    "band volume mm^3": 25.6417824074074,
+    "contact area mm^2": 79.79643249511719,
+    "t volume-weighted mm": 0.3469342589378357,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 46229,
+    "film volume mm^3": 26.752893518518512,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3469342589378357,
+     0.49999991059303284
+    ],
+    "fraction of band cells at the floor": 0.3695637455144553,
+    "beta mm^2/T*": 0.03304299831745953,
+    "dt": 0.016666666666666666,
+    "steps": 66,
+    "seconds field": 215.1657304763794,
+    "phi volume end mm^3": 30.318252577040646,
+    "am1 max": 0.001100178767593718,
+    "am1 mean in film": 0.000813238228716702,
+    "phi mean in film": 0.6179918816241113
    }
   },
   "2": {
@@ -107,6 +132,35 @@
     "surface t: cov before floor": 0.41526147723197937,
     "random field: cov": 0.25,
     "random field: correlation length mm": 0.32133995976545
+   },
+   "field": {
+    "step": 2,
+    "name": "thickness variation",
+    "t mean mm": 0.3217628229565065,
+    "band volume mm^3": 25.08564814814814,
+    "contact area mm^2": 77.96316528320312,
+    "t volume-weighted mm": 0.3508647382259369,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 45268,
+    "film volume mm^3": 26.196759259259252,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3508647382259369,
+     0.8043643832206726
+    ],
+    "fraction of band cells at the floor": 0.33851619451877824,
+    "surface t: cov after floor": 0.30090874433517456,
+    "surface t: cov before floor": 0.41526147723197937,
+    "random field: cov": 0.25,
+    "random field: correlation length mm": 0.32133995976545,
+    "beta mm^2/T*": 0.03304299831745953,
+    "dt": 0.016666666666666666,
+    "steps": 66,
+    "seconds field": 210.5893156528473,
+    "phi volume end mm^3": 29.762147802278925,
+    "am1 max": 0.001100178767593718,
+    "am1 mean in film": 0.0007951682500173705,
+    "phi mean in film": 0.5998827558673293
    }
   },
   "3": {
