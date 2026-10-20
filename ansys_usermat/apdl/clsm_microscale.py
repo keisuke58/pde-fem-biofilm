@@ -24,8 +24,8 @@ Processing of a stack (``load_stack``):
     fitted to z_b (least squares, outliers beyond two slices dropped), the stack
     is tilted by up to 11 degrees in DH day 10; each column is shifted by an
     integer number of slices so that the plane is z = 0, slices below it are
-    dropped, and the box is cut above the film (99th percentile of the local
-    top plus a margin). The mirror assumption (substratum at the far side) is
+    dropped, and the box is cut above the film (H_top = the top of the last
+    slice where the film covers 5 % of the area, plus a margin of 30 %). The mirror assumption (substratum at the far side) is
     run as a check on one stack;
   - voxel size: 0.18 um pixels (nife_intern notes), 1024 px per field of view,
     stride 8 in the saved arrays: 1.44 um laterally (0.72 um for the 256-wide
@@ -50,8 +50,7 @@ faces on rollers (normal displacement zero: the mirror symmetry of the zero-flux
 growth field; free and periodic faces are run as checks), pyamg AMG-CG.
 
 Measures over the film (phi(0) > 0.3): mean von Mises, by height (bottom quarter
-on the substratum, middle half, top quarter of H_top = 95th percentile of the
-local film top), 95th percentile, mean pressure (compression positive), the
+on the substratum, middle half, top quarter of H_top), 95th percentile, mean pressure (compression positive), the
 Pearson and Spearman correlation of the local von Mises with the local phi and
 with the local thickness of the column, and the same for a laterally uniform
 film with the stack's own mean profile phi(z), weighted with the film's voxel
@@ -71,6 +70,7 @@ import json
 import os
 import sys
 import time
+import warnings
 from pathlib import Path
 
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -95,6 +95,7 @@ PX_FOV = 1024               # pixels per field of view (stride 8 -> 128)
 SIG_XY_UM, SIG_Z_UM = 1.44, 1.0
 P_BG, P_REF = 10.0, 95.0
 THR = 0.3                   # film = phi > THR
+COV_TOP = 0.05              # H_top: top of the last slice where the film covers this fraction of the area
 E_BIO, NU, FLOOR = 10.0, 0.49, 1e-3
 K_ALPHA, PENALTY, T_END = 1e-3, 5.0, 1.1
 BETA0, H_REF = 0.02, 0.25   # mm^2/T*, mm
@@ -152,21 +153,22 @@ def load_stack(case, flip=False, p_bg=P_BG, p_ref=P_REF, s0=False, verbose=True)
     tilt = np.degrees(np.arctan(np.hypot(c[1] * dz_um / pix_um, c[2] * dz_um / pix_um)))
     shift = np.rint(plane).astype(int)
     # flatten: column (x, y) slice z goes to z - shift; the box keeps z' = 0 .. nz_box - 1
-    zt = np.where(has, nz - 1 - film[:, :, ::-1].argmax(2), np.nan) - shift   # local top, flattened
-    top99 = int(np.nanpercentile(zt, 99))
-    nz_box = min(top99 + max(3, int(round(0.2 * top99))) + 1, nz - int(np.min(shift)))
-    nz_box = max(nz_box, 2)
-    out = np.zeros((nx, ny, nz_box), np.float32)
+    nz_all = nz - int(np.min(shift))
+    out = np.zeros((nx, ny, nz_all), np.float32)
     for sft in np.unique(shift):
         m = shift == sft
         src = phi[m]                                          # (ncol, nz)
-        k0, k1 = max(sft, 0), min(nz, nz_box + sft)
+        k0, k1 = max(sft, 0), min(nz, nz_all + sft)
         if k1 > k0:
             out[m, (k0 - sft):(k1 - sft)] = src[:, k0:k1]
+    cov = (out > THR).mean((0, 1))                            # film coverage per slice
+    k_top = int(np.where(cov >= COV_TOP)[0].max()) + 1       # slices up to the top of the film
+    H_top = k_top * dz_um
+    nz_box = max(2, min(k_top + max(3, int(round(0.3 * k_top))), nz_all))
+    out = np.ascontiguousarray(out[:, :, :nz_box])
     filmb = out > THR
     thick = filmb.sum(2) * dz_um                               # biovolume per column, um
     ztop = np.where(filmb.any(2), (nz_box - filmb[:, :, ::-1].argmax(2)) * dz_um, np.nan)
-    H_top = float(np.nanpercentile(ztop, 95))
     H = float(thick.mean())
     meta = {"file": path.name, "shape": [nx, ny, nz], "pixel um": pix_um, "dz um": dz_um,
             "S percentiles": {"bg": float(lo), "ref": float(hi)}, "p_bg": p_bg, "p_ref": p_ref, "flip": flip,
@@ -193,7 +195,9 @@ def coarsen(st, f):
     phi2 = phi[:nx2 * f, :ny2 * f].reshape(nx2, f, ny2, f, nz).mean((1, 3))
     thick = st["thick"][:nx2 * f, :ny2 * f].reshape(nx2, f, ny2, f).mean((1, 3))
     zt = st["ztop"][:nx2 * f, :ny2 * f].reshape(nx2, f, ny2, f)
-    ztop = np.nanmean(np.where(np.isnan(zt), np.nan, zt), (1, 3))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        ztop = np.nanmean(zt, (1, 3))
     return {"phi": phi2.astype(np.float32), "hx": st["hx"] * f, "hz": st["hz"], "thick": thick, "ztop": ztop,
             "meta": dict(st["meta"], coarsen=f)}
 
@@ -459,11 +463,11 @@ def load_json():
         "phi": f"clip((S - S_p{P_BG:g}) / (S_p{P_REF:g} - S_p{P_BG:g}), 0, 1) of the smoothed channel sum S "
                f"(sigma {SIG_XY_UM} um lateral, {SIG_Z_UM} um in z); film = phi > {THR}",
         "substratum": "plane fitted to the first film slice of every column (the sharp edge at the low z index), "
-                      "columns shifted to z = 0 (integer slices), box cut above the 99th percentile of the local top",
+                      "columns shifted to z = 0 (integer slices), box cut at H_top + 30 % (at least 3 slices)",
         "voxel": f"{PIX_UM_FULL} um pixels, {PX_FOV} px per field, lateral stride of the arrays; z step = pooled "
                  "stack depth of the day (zprofiles_all_ti.csv) / slices of the stack",
-        "bands": "bottom: z < H_top/4 (at least the first slice), middle: to 3 H_top/4, top: above; H_top = 95th "
-                 "percentile of the local film top", "units": "stress Pa, lengths mm in the solver, um in the tables"},
+        "bands": "bottom: z < H_top/4 (at least the first slice), middle: to 3 H_top/4, top: above; H_top = top of "
+                 "the last slice where the film covers at least 5 % of the area", "units": "stress Pa, lengths mm in the solver, um in the tables"},
         "cases": {}, "checks": {}}
 
 
@@ -746,6 +750,60 @@ def cmd_video(a):
     print("wrote", out.with_suffix(".mp4"), "iso points", iso.n_points, "vmax mPa", vmax)
 
 
+def cmd_table(a):
+    """Markdown tables of the results for the report."""
+    out = load_json()
+    mp = lambda v: "-" if v is None else f"{v * 1e3:.2f}"
+    print("| stack | dz (um) | tilt (deg) | H (um) | H_top (um) | film (% of box) | beta (mm^2/T*) |")
+    print("|---|---|---|---|---|---|---|")
+    for case in CASES:
+        rec = out["cases"].get(case)
+        if not rec:
+            continue
+        d = rec["data"]
+        b = rec["runs"].get("coarse_beta", {}).get("beta mm2/T*", float("nan"))
+        print(f"| {case.replace('_d', ' day ')} | {d['dz um']:.2f} | {d['tilt deg']:.1f} | {d['H um']:.1f} | "
+              f"{d['H_top um']:.1f} | {d['film fraction of box'] * 100:.0f} | {b:.2e} |")
+    for bname in ("beta", "beta0"):
+        print(f"\n{bname}: von Mises in mPa, real structure / uniform film with the same mean profile")
+        print("| stack | mean | bottom | middle | top | p95 | p mean | max | r_S(phi) | r_S(thickness) |")
+        print("|---|---|---|---|---|---|---|---|---|---|")
+        for case in CASES:
+            rec = out["cases"].get(case)
+            if not rec or f"coarse_{bname}" not in rec["runs"]:
+                continue
+            r, u = rec["runs"][f"coarse_{bname}"], rec["runs"][f"uniform_{bname}"]
+            cells = [f"{mp(r[k])} / {mp(u[k])}" for k in ("vM mean all", "vM mean bottom", "vM mean middle",
+                                                            "vM mean top", "vM p95", "p mean all", "vM max")]
+            print(f"| {case.replace('_d', ' day ')} | " + " | ".join(cells)
+                  + f" | {r['corr vM phi']['spearman']:+.2f} | {r['corr vM thickness']['spearman']:+.2f} |")
+    C = out.get("checks", {})
+    if "mesh" in C:
+        print("\nmesh (beta run): coarse 2.88 um / full 1.44 um lateral, mPa")
+        for case, rows in C["mesh"].items():
+            for lev, m in rows.items():
+                print(f"| {case} {lev} | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
+                      f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} "
+                      f"| uniform {mp(m['uniform']['vM mean all'])} |")
+    if "subregion" in C:
+        print("\nsub-region of the 256-wide stack, mPa")
+        for k, m in C["subregion"]["runs"].items():
+            print(f"| {k} | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
+                  f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} |")
+    for key in ("faces", "phimap"):
+        if key in C:
+            print(f"\n{key}, mPa")
+            for k, m in C[key]["runs"].items():
+                print(f"| {k} | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
+                      f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} "
+                      f"| {m['corr vM phi']['spearman']:+.2f} | {m['corr vM thickness']['spearman']:+.2f} |")
+    if "flip" in C:
+        m = C["flip"]["run"]
+        print(f"\nflip: | {mp(m['vM mean all'])} | {mp(m['vM mean bottom'])} | {mp(m['vM mean middle'])} "
+              f"| {mp(m['vM mean top'])} | {mp(m['vM p95'])} | {mp(m['p mean all'])} | {mp(m['vM max'])} "
+              f"| uniform {mp(m['uniform']['vM mean all'])} | H {m['data']['H um']:.1f} H_top {m['data']['H_top um']:.1f}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -762,8 +820,9 @@ def main(argv=None):
     f.add_argument("--case", default="DH_d6")
     v = sub.add_parser("video")
     v.add_argument("--case", default="DH_d21")
+    sub.add_parser("table")
     a = ap.parse_args(argv)
-    {"run": cmd_run, "checks": cmd_checks, "figure": cmd_figure, "video": cmd_video}[a.cmd](a)
+    {"run": cmd_run, "checks": cmd_checks, "figure": cmd_figure, "video": cmd_video, "table": cmd_table}[a.cmd](a)
 
 
 if __name__ == "__main__":
