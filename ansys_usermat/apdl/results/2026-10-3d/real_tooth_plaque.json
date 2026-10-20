@@ -1,0 +1,145 @@
+{
+ "model": {
+  "field grid": 192,
+  "h_f mm": 0.08333333333333333,
+  "k_alpha 1/T*": 0.001,
+  "penalty": 5.0,
+  "T*": 1.1,
+  "beta rule": "0.02 (t_mean / 0.25 mm)^2 mm^2/T*, t_mean of the step-1 map, one value for the three steps",
+  "E_bio Pa": 10.0,
+  "floor": 0.001,
+  "nu": 0.49,
+  "stress": "film submodel (real_tooth_submodel.py): rigid tooth, crop, void phi <= 0.05 dropped, voxel wall",
+  "film": "cells with phi > 0.3, not tooth, at the final state",
+  "regions": {
+   "band": "film with z in [-1.1, -0.10000000000000009] mm (gingival margin + 1.0 mm)",
+   "approximal": "film with azimuth weight > 0.5 (within about 21 deg of the mesio-distal axis), not fissure",
+   "buccal-lingual": "film with azimuth weight <= 0.5, not fissure",
+   "fissure": "film in the groove-fossa fill (closing, ball 0.6 mm, z > 2.0)",
+   "layer": "film within 0.1 mm of the tooth surface",
+   "core": "film outside the band"
+  }
+ },
+ "shape": {
+  "Z_GM mm": -1.1,
+  "Z_HOC mm": 2.0,
+  "T_IP mm": 0.5,
+  "T_BL mm": 0.25,
+  "T_MIN mm": 0.25,
+  "LAM_BL mm": 1.0,
+  "LAM_IP mm": 0.75,
+  "SIG_THETA deg": 25.0,
+  "R_FISSURE mm": 0.6,
+  "COV_T": 0.25,
+  "ELL_REL": 1.0,
+  "SEED_T": 0,
+  "POROSITY": 0.4,
+  "P_BASE": 0.03,
+  "ELL_C mm": 0.16666666666666666,
+  "SEED_C": 1,
+  "mesio-distal axis (x, y)": [
+   -0.18391750490491907,
+   0.9829416825984891
+  ],
+  "crown extent along / across mm": [
+   11.948051882466277,
+   9.77487291127906
+  ],
+  "root separation direction (x, y)": [
+   -0.34633442759513855,
+   0.9381110668182373
+  ],
+  "crown centre (x, y) mm": [
+   -0.2049766331911087,
+   -0.16664458811283112
+  ],
+  "fissure fill mm^3": 1.111111111111111,
+  "seconds sdf": 93.03479337692261
+ },
+ "idealised film": {
+  "film vM mean": 0.003287,
+  "band vM mean": 0.003479,
+  "layer vM mean": 0.00776,
+  "vM p95": 0.01062,
+  "p mean": 0.00227,
+  "film volume mm^3": 17.33,
+  "t mean mm": 0.5,
+  "source": "real_tooth_submodel.json level r2"
+ },
+ "steps": {
+  "1": {
+   "map": {
+    "step": 1,
+    "name": "distribution",
+    "t mean mm": 0.32133995976545,
+    "band volume mm^3": 25.6417824074074,
+    "contact area mm^2": 79.79643249511719,
+    "t volume-weighted mm": 0.3469342589378357,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 46229,
+    "film volume mm^3": 26.752893518518512,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3469342589378357,
+     0.49999991059303284
+    ],
+    "fraction of band cells at the floor": 0.3695637455144553
+   }
+  },
+  "2": {
+   "map": {
+    "step": 2,
+    "name": "thickness variation",
+    "t mean mm": 0.3217628229565065,
+    "band volume mm^3": 25.08564814814814,
+    "contact area mm^2": 77.96316528320312,
+    "t volume-weighted mm": 0.3508647382259369,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 45268,
+    "film volume mm^3": 26.196759259259252,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3508647382259369,
+     0.8043643832206726
+    ],
+    "fraction of band cells at the floor": 0.33851619451877824,
+    "surface t: cov after floor": 0.30090874433517456,
+    "surface t: cov before floor": 0.41526147723197937,
+    "random field: cov": 0.25,
+    "random field: correlation length mm": 0.32133995976545
+   }
+  },
+  "3": {
+   "map": {
+    "step": 3,
+    "name": "internal structure",
+    "t mean mm": 0.3217628229565065,
+    "band volume mm^3": 25.08564814814814,
+    "contact area mm^2": 77.96316528320312,
+    "t volume-weighted mm": 0.3508647382259369,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 45268,
+    "film volume mm^3": 26.196759259259252,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3508647382259369,
+     0.8043643832206726
+    ],
+    "fraction of band cells at the floor": 0.33851619451877824,
+    "surface t: cov after floor": 0.30090874433517456,
+    "surface t: cov before floor": 0.41526147723197937,
+    "random field: cov": 0.25,
+    "random field: correlation length mm": 0.32133995976545,
+    "porosity: mean inside the envelope": 0.37326588318458953,
+    "porosity: profile": {
+     "base": 0.03,
+     "top": 0.77,
+     "mean target": 0.4
+    },
+    "channel field: correlation length mm": 0.16666666666666666,
+    "coverage of the first cell layer": 0.9763980625275209,
+    "film volume with channels mm^3": 16.418402777777775
+   }
+  }
+ }
+}
