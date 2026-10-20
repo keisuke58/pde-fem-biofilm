@@ -193,6 +193,46 @@
     "channel field: correlation length mm": 0.16666666666666666,
     "coverage of the first cell layer": 0.9763980625275209,
     "film volume with channels mm^3": 16.418402777777775
+   },
+   "field": {
+    "step": 3,
+    "name": "internal structure",
+    "t mean mm": 0.3217628229565065,
+    "band volume mm^3": 25.08564814814814,
+    "contact area mm^2": 77.96316528320312,
+    "t volume-weighted mm": 0.3508647382259369,
+    "fissure volume mm^3": 1.111111111111111,
+    "film cells": 45268,
+    "film volume mm^3": 26.196759259259252,
+    "t on the band: min/mean/max mm": [
+     0.25,
+     0.3508647382259369,
+     0.8043643832206726
+    ],
+    "fraction of band cells at the floor": 0.33851619451877824,
+    "surface t: cov after floor": 0.30090874433517456,
+    "surface t: cov before floor": 0.41526147723197937,
+    "random field: cov": 0.25,
+    "random field: correlation length mm": 0.32133995976545,
+    "porosity: mean inside the envelope": 0.37326588318458953,
+    "porosity: profile": {
+     "base": 0.03,
+     "top": 0.77,
+     "mean target": 0.4
+    },
+    "channel field: correlation length mm": 0.16666666666666666,
+    "coverage of the first cell layer": 0.9763980625275209,
+    "film volume with channels mm^3": 16.418402777777775,
+    "beta mm^2/T*": 0.03304299831745953,
+    "dt": 0.016666666666666666,
+    "steps": 66,
+    "seconds field": 217.579745054245,
+    "phi volume end mm^3": 19.984111453212936,
+    "am1 max": 0.0009934746105029202,
+    "am1 mean in film": 0.0005192376784070409,
+    "phi mean in film": 0.3883949463964056,
+    "porosity at the end (phi < 0.3 in the initial envelope)": 0.24918264557744985,
+    "porosity at the end (phi < 0.5 in the initial envelope)": 0.8034152160466554
    }
   }
  }
