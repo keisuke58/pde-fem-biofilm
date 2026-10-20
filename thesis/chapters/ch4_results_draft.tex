@@ -1,0 +1,61 @@
+% Draft (21 Oct 2026) of the new results for the coupling of Section 4.6, to replace the paragraph "Two species"
+% and Figures fig:ch5-map, fig:ch5-spreading in ch4_ansys.tex. Numbers marked [..] come from A-21/A-22 (ANSYS 8^3,
+% 16^3) and coupled_living_consumption.py --ansys-bc --fortran (Python). Not in the build yet.
+
+\paragraph{The coupled point model against the point model alone.}
+With uniform fields, $c=1$ everywhere and the antibiotic $a=1$ from the start, every point model in the
+coupled run must follow the point model alone. Fritsch et al.'s synthetic case~I
+\cite{Fritsch2025BayesianMicrofilms} run this way agrees with the point model alone to $2\times10^{-14}$
+(Python, with the Fortran point model of the ANSYS runs and with an independent implementation in JAX,
+which agree with each other to $2\times10^{-16}$). In ANSYS every step of the traced Gauss points is
+recomputed from its start state and its inputs $(c_n,c_{n+1},a_n,a_{n+1})$; they agree to
+$1.8\times10^{-12}$ in every step, once Newton's method is iterated to its tolerance: the first step from
+the start state needs up to 38 iterations, a fixed budget of 6 or 12 leaves it unconverged.
+
+\paragraph{Two examples.}
+Following the partner's suggestion, two examples use the same model with different start values
+(synthetic data, case~I of Fritsch et al., two species, $b=(1,2)$): species A in the seed of this chapter
+and species B in four small blocks at the corners, and both species mixed in the seed. The nutrient is
+held on the face $y=-1$~mm, the antibiotic on all outer faces from $T^*=0.5$, with $\alpha^*_0=50$ and a
+weaker uptake than the nutrient ($g_aL^2/d_a=0.25$ against $4$; an assumption). The front term uses a
+tenth of the converted Table~2 value of $r$; the full value fills the cube within [..].
+Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=0.5$ and $1$.
+
+\begin{table}[htbp]
+  \centering
+  \caption[The coupled examples]{%
+    The two examples in ANSYS ($8^3$ [$16^3$]), means over the seed and over the corner blocks:
+    biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$, share of species A, nutrient $c$,
+    antibiotic $a$, growth $\alpha-1$ and von Mises stress.}
+  \label{tab:ch5-living}
+  \begin{tabular}{llccccccc}
+    \toprule
+    & & $\phi_{3D}$ & $\sum_i\bar\phi_i$ & A & $c$ & $a$ & $\alpha-1$ & $\sigma_{vM}$ [Pa]\\
+    \midrule
+    separate, antibiotic & seed, $T^*=1$ & 1.000 & 0.947 & 0.981 & 0.771 & 0.993 & $1.00\cdot10^{-3}$ & $3.67\cdot10^{-4}$\\
+    & corners, $T^*=1$ & 0.941 & 0.632 & 0.019 & 0.879 & 1.000 & [..] & [..]\\
+    separate, no antibiotic & seed & [..] & & & & & & \\
+    mixed, antibiotic & seed & [..] & & & & & & \\
+    mixed, no antibiotic & seed & [..] & & & & & & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{What the antibiotic does.}
+Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives: in the seed its
+living fraction falls from $0.86$ to $0.05$ within one increment. Species A survives in the seed and
+dies in the corner blocks. Whether a species survives depends on the balance in its equation for
+$\psi_i$ between the nutrient term $c^*\phi_i\sum_jA_{ij}\phi_j\psi_j$ and the antibiotic term
+$\alpha^*b_i\psi_i$: in the seed $c^*=100\,c\approx77$ outweighs $\alpha^*b_1=50$, in the corners [..].
+The nutrient field thus decides where the antibiotic acts, which a point model with a constant $c^*$
+cannot show. Through the consumption [..] the nutrient left by the dead biomass [..] the spreading and
+the stress [..].
+
+\paragraph{Python against ANSYS.}
+The Python version with the boundary conditions of the ANSYS deck (the nutrient and the antibiotic held on
+whole element layers) gives [..] (Figure~[..]); the remaining difference comes from the discretisation
+of the fields ($32^3$ finite volumes against $8^3$ elements of the neighboured element method).
+
+\paragraph{Sensitivity.} Table~[..] varies one choice at a time [A-22]: $\phi_{\min}$ $0.01$/$0.1$,
+the outer increment $0.025$/$0.0125$ (the one-increment lag), $r$ full/tenth, the antibiotic uptake
+$0.25$/$4$, $\alpha^*_0$ $10$/$50$.
