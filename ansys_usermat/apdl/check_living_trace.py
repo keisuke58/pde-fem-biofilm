@@ -47,13 +47,40 @@ def main():
 
     n_act, cs0, al0, eta, th = read_eco(a.eco)
     A, B = eco.theta_to_matrices(jnp.asarray(th, dtype=jnp.float64))
-    pm = json.load(open(Path(a.results) / f"{a.job}_pm.json"))
+    res_dir = Path(a.results)
+    path = res_dir / f"{a.job}_pm.json"
+    if not path.exists():
+        path = res_dir / f"trace_{a.job}.json"          # A-19 export (fields_living.py): key "rows", column "hit"
+    pm = json.load(open(path))
+    if "seed_trace" not in pm:
+        pm["seed_trace"] = pm["rows"]
     C = {k: i for i, k in enumerate(pm["columns"])}
     need = ["c0", "c1", "a0", "a1", "L"]
     miss = [k for k in need if k not in C]
     if miss:
         raise SystemExit(f"trace has no columns {miss}: add them in the material routine (A-19, check 1)")
+    P0 = eco.default_hparams(1.0)
+    P0.update(A=A, b_diag=B, active_mask=eco.active_mask(n_act),
+              Eta=jnp.asarray(eta, dtype=jnp.float64), EtaPhi=jnp.asarray(eta, dtype=jnp.float64))
+    P0 = jax.tree_util.tree_map(jnp.asarray, P0)
+
+    @jax.jit
+    def _scan(g, dt, ws, c0, c1, a0, a1):
+        def body(gg, w):
+            q = dict(P0)
+            q["dt_h"] = dt
+            q["c"] = cs0 * ((1 - w) * c0 + w * c1)
+            q["alpha"] = al0 * ((1 - w) * a0 + w * a1)
+            return eco.newton_step(gg, q), None
+        return jax.lax.scan(body, g, ws)[0]
+
+    def replay(g, dt, n_sub, c0, c1, a0, a1):
+        ws = jnp.arange(1, n_sub + 1, dtype=jnp.float64) / n_sub
+        return _scan(g, jnp.float64(dt), ws, c0, c1, a0, a1)
+
     rows = pm["seed_trace"]
+    if "hit" in C:                                      # 0 = computed, 1 = cached repeat, 2 = not started
+        rows = [r for r in rows if r[C["hit"]].strip() == "0"]
     last = {}
     for r in rows:
         last[(r[C["elem"]], r[C["ip"]], int(r[C["ldstep"]]), int(r[C["isubst"]]))] = r
@@ -75,16 +102,7 @@ def main():
                 continue
             n_sub = int(float(r[C["n_sub"]])); dt = float(r[C["dt_couple"]]) / n_sub
             c0, c1, a0, a1 = (float(r[C[k]]) for k in ("c0", "c1", "a0", "a1"))
-            P = eco.default_hparams(dt)
-            P.update(A=A, b_diag=B, active_mask=eco.active_mask(n_act),
-                     Eta=jnp.asarray(eta, dtype=jnp.float64), EtaPhi=jnp.asarray(eta, dtype=jnp.float64))
-            g = jnp.asarray(g0)
-            for k in range(1, n_sub + 1):
-                w = k / n_sub
-                P["c"] = cs0 * ((1 - w) * c0 + w * c1)
-                P["alpha"] = al0 * ((1 - w) * a0 + w * a1)
-                g = eco.newton_step(g, jax.tree_util.tree_map(jnp.asarray, P))
-            g = np.asarray(g)
+            g = np.asarray(replay(jnp.asarray(g0), dt, n_sub, c0, c1, a0, a1))
             worst = max(worst, float(np.abs(g - g1).max()))
             phi, psi = g1[:n_act], g1[6:6 + n_act]
             worst_L = max(worst_L, abs(float(r[C["L"]]) - float((phi * psi).sum())))
