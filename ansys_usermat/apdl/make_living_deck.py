@@ -85,6 +85,10 @@ def main():
                     help="LIVING_CONS = 0: the element's own consumption (g phi, zero order) for comparison")
     ap.add_argument("--v2", action="store_true")
     ap.add_argument("--start-step", type=float, default=0.0)
+    # sensitivities (addendum 5): each overrides one value of the setting
+    ap.add_argument("--phi-min", type=float, help="prop(29), default 0.1 with --v2, else 0.01")
+    ap.add_argument("--cons-ab", type=float, help="CONSUMPTION21, default 0.25 with --v2, else --cons")
+    ap.add_argument("--deltim", type=float, help="outer increment of the run (with --start-step), default the base's")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -106,6 +110,10 @@ def main():
              57: 1 if a.l1 else 0, 58: 0.55, 59: 0.5625}
     if a.start_step > 0:
         props[60] = 1
+    if a.phi_min is not None:
+        props[29] = a.phi_min
+    if a.deltim is not None and a.start_step <= 0:
+        sys.exit("STOP: --deltim only with --start-step")
     props.update({7 + i: v for i, v in enumerate(th, start=1)})
     tmp = Path(a.out).with_suffix(".tmp.dat")
     cmd = [sys.executable, str(HERE / "make_wired_deck.py"), a.base, str(tmp),
@@ -120,7 +128,7 @@ def main():
     scal = {"MY_BIOSTART1": "1.0", "MY_BIOSTART2": "0.0", "MY_NUTSTART1": "1.0",
             "MY_NUTSTART2": "1.0" if a.ab else "0.0", "MY_DIFF1": "1", "MY_DIFF2": "1",
             "CONSUMPTION11": repr(a.cons), "CONSUMPTION12": "0",
-            "CONSUMPTION21": repr(0.25 if a.v2 else a.cons),
+            "CONSUMPTION21": repr(a.cons_ab if a.cons_ab is not None else 0.25 if a.v2 else a.cons),
             "CONSUMPTION22": "0", "MAX_GROWTH11": repr(r_front), "MAX_GROWTH21": "0", "HALF_VELO11": "1",
             "ORI_WEIGHT11": "1" if a.front > 0 else "0", "ORI_WEIGHT21": "0",
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
@@ -140,6 +148,8 @@ def main():
         if not m or len(rx.findall(text)) != 1:
             sys.exit("STOP: deltim/time pair not found once")
         dt, t_end = float(m.group(1)), float(m.group(2))
+        if a.deltim is not None:
+            dt = a.deltim
         text = text[:m.start()] + f"deltim,{s!r},{s!r},{s!r}{nl}time,{s!r}" + text[m.end():]
         rs = re.compile(r"^OUTRES,ALL,ALL\r?\nsolve[ \t]*$", re.M)
         m = rs.search(text)
@@ -149,7 +159,8 @@ def main():
                 f"time,{t_end + s!r}{nl}solve" + text[m.end():])
     head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}layout {a.layout}, antibiotic {a.ab}, "
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
-            f"phi_min {props[29]:g}, start step {a.start_step:g}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
+            f"g_a {scal['CONSUMPTION21']}, phi_min {props[29]:g}, start step {a.start_step:g}, "
+            f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
             f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
     text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,post_fields_living.mac{nl}FINISH{nl}"
     Path(a.out).write_text(text, encoding="latin-1", newline="")

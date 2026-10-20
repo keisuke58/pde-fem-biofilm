@@ -55,6 +55,9 @@ $exe = "$env:AWP_ROOT222\ANSYS\bin\winx64\ANSYS222.exe"
 foreach ($spec in $Runs) {
     $parts = $spec -split ':', 3
     $job, $mesh, $opts = $parts[0], $parts[1], $parts[2]
+    # --eco FILE (a file name in WorkDir): this run's point-model file instead of eco_fritsch_living.txt
+    $eco = 'eco_fritsch_living.txt'
+    if ($opts -match '--eco\s+(\S+)') { $eco = $Matches[1]; $opts = ($opts -replace '--eco\s+\S+', '').Trim() }
     $base = Join-Path $WorkDir "base_w${mesh}_c6_g1_s015.dat"
     $deck = Join-Path $WorkDir "$job.dat"
     $o = & $py ansys_usermat\apdl\make_living_deck.py $base $deck @($opts -split ' ' | Where-Object { $_ }) 2>&1
@@ -63,9 +66,9 @@ foreach ($spec in $Runs) {
     Push-Location $WorkDir
     Remove-Item comp_trace.csv, fields_*.csv, all_stress.csv, nut_field.csv, "$job.lock" -ErrorAction SilentlyContinue
     Get-ChildItem -Filter "$job.*" | Where-Object { $_.Extension -notin '.dat' } | Remove-Item -ErrorAction SilentlyContinue
-    $env:BIOFILM_ECO_CASE = Join-Path $WorkDir 'eco_fritsch_living.txt'
+    $env:BIOFILM_ECO_CASE = Join-Path $WorkDir $eco
     $t0 = Get-Date
-    L "START $job ($mesh^3: $opts)"
+    L "START $job ($mesh^3: $opts; point model $eco)"
     # as run_calibrated.ps1: a hidden window and a poll (-NoNewWindow -Wait exits at once in the detached process)
     $p = Start-Process $exe -WorkingDirectory $WorkDir -ArgumentList '-b', '-np', '1', '-j', $job, '-custom',
         '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden

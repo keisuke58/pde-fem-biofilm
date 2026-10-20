@@ -28,9 +28,11 @@ def g7(x):
     return float(f"{x:.7g}")
 
 
-def main(run, d, deck):
+def main(run, d, deck, n="4"):
+    """n = 4: post_fields_living.mac; n = 40: post_fields_living_dense.mac (fields_<run>_dense.json, no trace)"""
+    n = int(n)
     out = {"run": run, "t": []}
-    for k in range(1, 5):
+    for k in range(1, n + 1):
         rows = [{c.strip(): v for c, v in r.items()} for r in csv.DictReader(open(Path(d) / f"fields_{k}.csv"))]
         rows = [r for r in rows if any(float(r[c]) != 0 for c in ("cx", "cy", "cz"))]
         out["t"].append(g7(float(rows[0]["t"])))
@@ -50,11 +52,13 @@ def main(run, d, deck):
     out["edges"] = [int(e) for e, s in zip(out["elem"], edges) if s]
     res = HERE / "results" / "2026-10-living"
     res.mkdir(parents=True, exist_ok=True)
-    p = res / f"fields_{run}.json"
+    p = res / (f"fields_{run}.json" if n == 4 else f"fields_{run}_dense.json")
     p.write_text(json.dumps(out, separators=(",", ":")))
     print(f"wrote {p}: t = {out['t']}, {len(out['elem'])} elements, seed {seed.sum()}, edges {edges.sum()}")
     print("| T* | region | phi | L | share A | c | a | alpha-1 | vM [Pa] |")
     for k, t in enumerate(out["t"]):
+        if n != 4 and (k + 1) % 10:
+            continue
         for name, m in (("seed", seed), ("edges", edges)):
             v = {c: np.array(out[c][k])[m].mean() for c in COLS}
             print(f"| {t:g} | {name} | {v['phi']:.4f} | {v['L']:.4f} | {v['shareA']:.4f} | {v['nut']:.4f} | "
@@ -63,7 +67,8 @@ def main(run, d, deck):
     print(f"phi range over all elements and times: [{phi.min():.4f}, {phi.max():.4f}]")
     ab = np.array(out["ab"])
     print(f"a range over all elements and times: [{ab.min():.4g}, {ab.max():.4g}]")
-    trace(run, d, out, seed, edges)
+    if n == 4:
+        trace(run, d, out, seed, edges)
 
 
 TRACE_COLS = (["elem", "ip", "ldstep", "isubst", "n_sub", "hit", "dtime", "dt_couple", "phi_used", "phi_seen",
@@ -99,4 +104,4 @@ def trace(run, d, out, seed, edges):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])
