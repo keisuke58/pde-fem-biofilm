@@ -78,12 +78,12 @@ Open:
 | 16 Oct | his comments on the format |
 | 19 Oct | ch3 replaced by the final EML results; figures redrawn at text width (ch1, ch4); ch3 to Assoc. Prof. Muramatsu (Slack, scheduled) |
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
-| 31 Oct - 2 Nov | in Hannover: **test print** of the whole thesis, ask the copy shop for the binding time; meeting with Assoc. Prof. Muramatsu on 2 Nov (`slides_1102_nem_ja.tex`) |
+| 31 Oct - 2 Nov | in Hannover: read-through of the PDF (a test print only if the university print service is easy to reach); meeting with Assoc. Prof. Muramatsu on 2 Nov (`slides_1102_nem_ja.tex`) |
 | 3-10 Nov | away |
-| **11-12 Nov** | **final print and binding** (two copies; calendar: City Copy Shop on 12 Nov, unless Dr. Soleimani says the IKM printer is fine), PDF for the electronic version (the printing date of 19 Oct belonged to the old 20 Oct submission) |
-| **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
-| 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
+| **13 Nov** | **internal deadline** (decided 20 Oct): the thesis is finished and ready to submit; it is not sent (no second draft to Dr. Soleimani, decided 9 Oct) |
+| 20-28 Nov | away: read the finished thesis chapter by chapter, Q&A practice |
+| 10-15 Dec | in Hannover: last check, **PDF to Dr. Soleimani by 15 Dec, 13:00** (24 h before the colloquium, his mail of 20 Oct); **print two copies** at the university (Timo asked 20 Oct) |
+| 16 Dec, 13:00 | printed copies handed over; colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
 
 Dr. Soleimani's answer (20 Oct): printing, ask Timo (Timo Rabing, IKM, rabing@ikm.uni-hannover.de); students usually print
 at the university, which is cheap. Schedule: the PDF may be submitted up to 24 hours before the colloquium (so by 15 Dec,
