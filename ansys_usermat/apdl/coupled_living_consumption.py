@@ -386,7 +386,7 @@ def main():
     ax1.set_ylabel(r"seed mean $\Sigma_i\phi_i\psi_i$"); ax2.set_ylabel(r"seed mean share of A")
     ax1.set_title("(e)", fontsize=7.5, loc="left"); ax2.set_title("(f)", fontsize=7.5, loc="left")
     ax1.legend(fontsize=6.5, frameon=False, ncol=2)
-    out = ROOT / "assets" / f"fig_coupled_living_consumption{TAG}"
+    out = ROOT / "assets" / f"fig_coupled_living_consumption{TAG.replace('.', 'p')}"
     fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight"); fig.savefig(out.with_suffix(".png"), dpi=300,
                                                                           bbox_inches="tight")
     print("wrote", out.with_suffix(".pdf"))
