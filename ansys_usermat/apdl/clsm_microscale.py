@@ -639,7 +639,7 @@ def cmd_figure(a):
             vm = np.array([np.nan if v is None else v for v in r["vM profile"]]) * 1e3
             vu = np.array(u["vM profile"]) * 1e3
             cnt = np.array(r["film count per slice"])
-            okk = cnt > 0.01 * cnt.max()
+            okk = (cnt > 0) & (z <= rec["data"]["H_top um"])
             col = cm(i / (len(days) - 1))
             ax.plot(vm[okk], z[okk], color=col, lw=1.3, label=f"day {d}")
             ax.plot(vu[okk], z[okk], color=col, lw=1.0, ls="--")
@@ -684,8 +684,8 @@ def cmd_figure(a):
             r = rec["runs"]["coarse_beta"]
             tb = np.array(r["thickness bins um"])
             vb = np.array([np.nan if v is None else v for v in r["vM by thickness bin"]]) * 1e3
-            ax.plot(tb, vb / r["vM mean all"] / 1e3, color=cmc(0.35 + 0.6 * i / (len(days) - 1)), lw=1.1,
-                    marker="o", ms=2.5, label=f"{cond} day {d}")
+            ax.plot(tb, vb / r["vM mean all"] / 1e3, color=cmc(0.35 + 0.6 * i / (len(days) - 1)), lw=0.9,
+                    marker="o", ms=2, label=f"{cond} day {d}")
     ax.axhline(1, color="grey", lw=0.6)
     ax.set_xlabel("local film thickness of the column ($\\mu$m)")
     ax.set_ylabel("von Mises / film mean")
@@ -705,11 +705,11 @@ def cmd_video(a):
     case = a.case
     st = coarsen(load_stack(case), 2)
     beta = beta_of(load_stack(case, verbose=False))
-    npz = FIGDATA / f"clsm_microscale_{case}_coarse_beta.npz"
+    npz = FIGDATA / f"clsm_microscale_{case}_coarse_{a.run}.npz"
     d = np.load(npz)
     vm = d["vm"] * 1e3
     h = (st["hx"], st["hx"], st["hz"])
-    phi_T, am1, _ = grow(st["phi"], h, beta)
+    phi_T, am1, _ = grow(st["phi"], h, beta if a.run == "beta" else 0.0)
     nx, ny, nz = vm.shape
     sp_um = tuple(v * 1e3 for v in h)
     g = pv.ImageData(dimensions=(nx + 1, ny + 1, nz + 1), spacing=sp_um, origin=(0, 0, 0))
@@ -717,7 +717,7 @@ def cmd_video(a):
     g.cell_data["vm"] = vm.ravel(order="F")
     gp = g.cell_data_to_point_data()
     iso = gp.contour([THR], scalars="phi")
-    vmax = float(np.percentile(vm[st["phi"] > THR], 95))
+    vmax = float(np.percentile(iso.point_data["vm"], 95))
     Lx, Ly, Lz = nx * sp_um[0], ny * sp_um[1], nz * sp_um[2]
     pl = pv.Plotter(off_screen=True, window_size=(1600, 1000))
     pl.set_background("white")
@@ -726,12 +726,14 @@ def cmd_video(a):
                                                    position_y=0.04, width=0.5, height=0.07, label_font_size=22,
                                                    title_font_size=24, fmt="%.1f", n_labels=5, font_family="times",
                                                    color="black"))
-    pl.add_mesh(pv.Plane((Lx / 2, Ly / 2, -0.3), (0, 0, 1), 1.15 * Lx, 1.15 * Ly), color="#b8b8b8", ambient=0.4)
+    pl.add_mesh(pv.Plane(center=(Lx / 2, Ly / 2, -0.3), direction=(0, 0, 1), i_size=1.15 * Lx, j_size=1.15 * Ly),
+                color="#b8b8b8", ambient=0.4)
     pl.add_mesh(pv.Box((0, Lx, 0, Ly, 0, Lz)).extract_feature_edges(), color="#8a8a8a", line_width=1.0)
-    pl.add_text(f"{case.replace('_d', ' day ')}: grown film (phi = {THR}) on the substratum, "
+    what = "grown with spreading" if a.run == "beta" else "structure as measured, no spreading (beta = 0)"
+    pl.add_text(f"{case.replace('_d', ' day ')}: film surface phi = {THR}, {what}, "
                 f"{Lx:.0f} x {Ly:.0f} x {Lz:.0f} um", position="upper_left", font_size=13, font="times",
                 color="black")
-    pl.add_text("colour: von Mises at T* (95th percentile of the film at the top of the scale)",
+    pl.add_text("colour: von Mises at T* on the surface (its 95th percentile at the top of the scale)",
                 position="lower_right", font_size=9, font="times", color="#555555")
     pl.camera_position = [(Lx / 2 - 1.6 * Lx, Ly / 2 - 1.4 * Ly, 2.2 * Lx * Lz / Lx if False else 1.4 * Lx),
                           (Lx / 2, Ly / 2, Lz / 3), (0, 0, 1)]
@@ -817,9 +819,10 @@ def main(argv=None):
     c.add_argument("--mesh-cases", nargs="+", default=["DH_d6", "CH_d6"])
     c.add_argument("--force", action="store_true")
     f = sub.add_parser("figure")
-    f.add_argument("--case", default="DH_d6")
+    f.add_argument("--case", default="DH_d21")
     v = sub.add_parser("video")
     v.add_argument("--case", default="DH_d21")
+    v.add_argument("--run", default="beta0", choices=("beta", "beta0"))
     sub.add_parser("table")
     a = ap.parse_args(argv)
     {"run": cmd_run, "checks": cmd_checks, "figure": cmd_figure, "video": cmd_video, "table": cmd_table}[a.cmd](a)
