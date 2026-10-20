@@ -21,3 +21,14 @@ d alpha/dt = kappa phi sum phi_i psi_i, kappa = 1.72e-3 /T* (equal seed growth a
   growth is 12 % lower at the end (the calibrated ANSYS runs: 32 %, a longer exposure without regrowth).
 - With the local nutrient the living biomass and the growth vary across the seed (more growth on the nutrient
   side); growth and stress drop to about a third, with the same kappa.
+
+## Mesh check and kappa = k_alpha (20 Oct, later)
+
+Field grid 48^3 instead of 32^3 (`--nf 48`, `scheme_c_synthetic_nf48.json`): seed alpha - 1 changes by 0.9 % in every
+run, kappa by 0.3 %; the ratios do not change: living biomass vs Eq. 36 von Mises +11.5 % (32^3: +12.4 %); against the
+uniform-c run of (c), antibiotic -12.4 % / -13.0 % (alpha - 1 / von Mises), local nutrient -57.6 % / -71.6 %
+(32^3: -12.4 / -13.1, -57.6 / -71.7).
+
+kappa = k_alpha of Klempt 2024 (`--kappa-ka`, nothing fitted, `scheme_c_synthetic_kappa_ka.json`): growth 42 % and
+von Mises 35 % below Eq. 36 for uniform c; the antibiotic and nutrient ratios are the same as with the matched kappa
+(to 1e-8: the growth is linear in kappa).
