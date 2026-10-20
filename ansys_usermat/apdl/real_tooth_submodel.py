@@ -134,6 +134,27 @@ def box_mm(box, h_f):
     return [[-L / 2 + i0 * h_f, -L / 2 + i1 * h_f] for i0, i1 in box]
 
 
+def flat_film_reference(fld):
+    """Mesh-free reference from the field alone: for a flat film bonded to a rigid wall with a free surface the
+    stress is local, sigma_xx = sigma_yy = -E (alpha - 1) / (1 - nu), sigma_zz = 0, so von Mises = E (alpha - 1) /
+    (1 - nu) and p = 2/3 of it in every cell. Means over the film, band and core cells of the field grid (the
+    curvature of the flank, the film ends and the staircase of the wall are what the FEM adds to this)."""
+    phi, am1, tooth, sdf, nf = fld["phi"], fld["am1"], fld["tooth"], fld["sdf"], fld["nf"]
+    sets = RC.fine_sets(nf, phi, tooth)
+    s = E_BIO * (np.clip(phi, 0, 1) ** 2 + FLOOR) * am1 / (1 - NU)
+    lay = (sdf >= 0) & (sdf < LAYER)
+    out = {"note": "von Mises = E (alpha - 1) / (1 - nu), p = 2/3 of it, per field cell; flat film on a rigid wall"}
+    for k, m in sets.items():
+        out[f"{k} vM mean"] = float(s[m].mean())
+        out[f"{k} p mean"] = float(2 / 3 * s[m].mean())
+    out["layer vM mean"] = float(s[sets["film"] & lay].mean())
+    out["layer band vM mean"] = float(s[sets["band"] & lay].mean())
+    for q in (50, 95, 99):
+        out[f"vM p{q}"] = float(np.percentile(s[sets["film"]], q))
+    out["vM max"] = float(s[sets["film"]].max())
+    return out
+
+
 # ---------------------------------------------------------------- the stress mesh on the crop
 class Mesh:
     """Uniform hex8 mesh on the field box [i0, i1) x ... with element size h = ratio * h_f (ratio = m or 1/r)."""
@@ -493,6 +514,9 @@ def run_checks(field_src=FIELD_DEFAULT, force=False):
     do("field96_r2_pc", "96^3 field, crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.01), h = h_f/2 = 0.083, "
        "piecewise constant", fld=f96, h=f96["h_f"] / 2, void="drop")
     do("field96_r2_tri", "96^3 field, as above, trilinear", fld=f96, h=f96["h_f"] / 2, void="drop", interp="tri")
+    if "r2" in out.get("levels", {}):                  # the same on the 192^3 field, against the r2 level (2M dof)
+        do("crop1_r2_tri", "192^3 field, crop 1 mm, rigid, sdf tooth, void dropped (phi <= 0.05), h = h_f/2 = 0.042, "
+           "trilinear (level r2 is piecewise constant)", h=h_f / 2, void="drop", void_thr=0.05, interp="tri")
     out = load_json()
     out["checks summary"] = checks_summary(C)
     save_json(out)
@@ -520,11 +544,14 @@ def checks_summary(C):
              ("voxel vs sdf tooth (crop, h = 0.167)", "crop1_rigid_sdf_m2", "crop1_voxel_m2"),
              ("trilinear vs piecewise-constant field (96^3 field, h = h_f/2 = 0.083)", "field96_r2_pc",
               "field96_r2_tri"),
-             ("field 96^3 vs 192^3 at h = 0.083 (void dropped, phi <= 0.01)", "crop1_drop_r1_pc", "field96_r2_pc")]
+             ("field 96^3 vs 192^3 at h = 0.083 (void dropped, phi <= 0.01)", "crop1_drop_r1_pc", "field96_r2_pc"),
+             ("void dropped (phi <= 0.01) vs kept (h = 0.083)", "level:r1", "crop1_drop_r1_pc"),
+             ("trilinear vs piecewise-constant field (192^3 field, h = h_f/2 = 0.042)", "level:r2", "crop1_r2_tri")]
     conv = RC.load_json()["stress"].get("192", {}).get("48")
+    levels = load_json().get("levels", {})
     S = {}
     for label, a, b in pairs:
-        ra = conv if a == "conv:192:48" else C.get(a)
+        ra = conv if a == "conv:192:48" else levels.get(a[6:]) if a.startswith("level:") else C.get(a)
         rb = C.get(b)
         if ra is None or rb is None:
             continue
@@ -537,6 +564,9 @@ def run_levels(levels, field_src=FIELD_DEFAULT, void=None, force=False):
     JSON and an npz as soon as it is solved and is skipped on a rerun."""
     fld = load_field(field_src)
     phi, am1, tooth, sdf, h_f = fld["phi"], fld["am1"], fld["tooth"], fld["sdf"], fld["h_f"]
+    out = load_json()
+    out["field"]["flat film"] = flat_film_reference(fld)
+    save_json(out)
     for lev in levels:
         out = load_json()
         if lev in out["levels"] and not force:
@@ -587,6 +617,10 @@ def print_summary(out):
     if "h" not in f:
         return
     print("== submodel levels", f["levels"], "h", [f"{h:.4f}" for h in f["h"]])
+    flat = out.get("field", {}).get("flat film")
+    if flat:
+        print("   flat-film reference: " + ", ".join(f"{k} {v * 1e3:.4g} mPa" for k, v in flat.items()
+                                                      if isinstance(v, float)))
     for k in CONV_KEYS:
         if k not in f:
             continue
@@ -631,8 +665,9 @@ def figure():
     series = (("vM max", "maximum", "max"), ("vM p99", "99th percentile", "p99"), ("vM p95", "95th percentile", "p95"),
               ("layer vM mean", "0.1 mm at the tooth, mean", "layer"), ("band vM mean", "band mean", "band"),
               ("film vM mean", "film mean", "film"), ("core vM mean", "core mean", "core"))
-    fig = plt.figure(figsize=(6.3, 5.6))
-    gs = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.05], width_ratios=[1.35, 1.0], hspace=0.5, wspace=0.35)
+    fig = plt.figure(figsize=(6.3, 6.0))
+    gs = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.0], width_ratios=[1.0, 1.0], hspace=0.75, wspace=0.3,
+                          left=0.1, right=0.98, top=0.96, bottom=0.08)
     ax = fig.add_subplot(gs[0, :])
     for key, lab, c in series:
         v = np.array([lev[k][key] for k in names], float) * 1e3
@@ -641,6 +676,11 @@ def figure():
         if key in conv.get(cn[0], {}):
             cv = np.array([conv[n][key] for n in cn], float) * 1e3
             ax.plot(ch, cv, ":", marker=mk[c], color=col[c], lw=1.0, ms=3.5, mfc="white", alpha=0.6)
+    flat = out.get("field", {}).get("flat film")
+    if flat:
+        ax.axhline(flat["film vM mean"] * 1e3, color=col["film"], lw=0.8, ls="--")
+        ax.text(hs.min() / 1.1, flat["film vM mean"] * 1e3 * 1.06, "film mean, flat-film\nestimate from the field",
+                fontsize=6.5, color=col["film"], ha="right", va="bottom")
     ax.set_xscale("log"); ax.set_yscale("log")
     allh = np.unique(np.concatenate([hs, ch]))
     ax.xaxis.set_major_locator(FixedLocator(allh)); ax.xaxis.set_minor_locator(NullLocator())
@@ -648,30 +688,34 @@ def figure():
     ax.set_xlim(allh.max() * 1.2, allh.min() / 1.2)
     ax.set_xlabel("stress element $h$ (mm)")
     ax.set_ylabel("von Mises in the film (mPa)")
-    ax.axvspan(0.5 / 5, 0.5, color="#000000", alpha=0.04, lw=0)
-    ax.text(0.5 / np.sqrt(5), ax.get_ylim()[0] * 1.15, "fewer than 5 elements\nacross the film", fontsize=7,
+    ax.axvspan(0.5 / 5, allh.max() * 1.2, color="#000000", alpha=0.04, lw=0)
+    ax.text(np.sqrt(0.1 * allh.max()), ax.get_ylim()[0] * 1.1, "fewer than 5 elements across the film", fontsize=7,
             ha="center", va="bottom", color="#555555")
     ax.set_title("(a) measures against the element size", fontsize=9, loc="left")
     hl = ax.get_legend_handles_labels()
     h2 = [Line2D([], [], color="#333333", ls="-", lw=1.3), Line2D([], [], color="#333333", ls=":", lw=1.0, alpha=0.6)]
     l2 = ["film submodel, rigid tooth", "full box, elastic tooth"]
-    ax.legend(hl[0] + h2, hl[1] + l2, fontsize=7, frameon=False, loc="upper right", bbox_to_anchor=(1.0, 1.02),
-              ncol=3, handlelength=1.8, columnspacing=0.9)
+    ax.legend(hl[0] + h2, hl[1] + l2, fontsize=7, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.22),
+              ncol=3, handlelength=1.8, columnspacing=1.2)
     # sections on the finest level
     fine = names[-1]
     d = np.load(ROOT / "figdata" / f"real_tooth_submodel_{fine}.npz")
-    vm, tooth, active = d["vm"] * 1e3, d["tooth"], d["active"]
+    vm, tooth, wfilm = d["vm"] * 1e3, d["tooth"], d["w_film"]
     org, h, shp = d["origin"], float(d["h"]), d["shape"]
     axes = [org[k] + (np.arange(shp[k]) + 0.5) * h for k in range(3)]
     vmax = lev[fine]["vM p99"] * 1e3
     cmap = plt.get_cmap("viridis")
     grey = ListedColormap(["#d0ccc4"])
 
-    def section(axp, img, tooth2, ext, xl, yl, title):
+    def section(axp, img, tooth2, film2, ext, ax1, ax2, xl, yl, title, pad=0.4):
         axp.imshow(np.ma.masked_where(~tooth2.T, np.ones_like(img.T)), cmap=grey, extent=ext, origin="lower",
                    vmin=0, vmax=1, interpolation="nearest")
         im = axp.imshow(np.ma.masked_invalid(img.T), cmap=cmap, extent=ext, origin="lower", vmin=0, vmax=vmax,
                         interpolation="nearest")
+        if film2.any():                                   # zoom on the film in this section
+            ii, kk = np.where(film2)
+            axp.set_xlim(ax1[ii.min()] - pad, ax1[ii.max()] + pad)
+            axp.set_ylim(ax2[kk.min()] - pad, ax2[kk.max()] + pad)
         axp.set_xlabel(xl); axp.set_ylabel(yl)
         axp.set_title(title, fontsize=9, loc="left")
         axp.grid(False)
@@ -680,20 +724,19 @@ def figure():
     kz = int(np.argmin(np.abs(axes[2] - Z_CEJ)))
     ext = [org[0], org[0] + shp[0] * h, org[1], org[1] + shp[1] * h]
     axb = fig.add_subplot(gs[1, 0])
-    im = section(axb, vm[:, :, kz], tooth[:, :, kz], ext, "$x$ (mm)", "$y$ (mm)",
-                 f"(b) section $z$ = {axes[2][kz]:.2f} mm (band), $h$ = {h:.3f} mm")
+    section(axb, vm[:, :, kz], tooth[:, :, kz], wfilm[:, :, kz] > 0, ext, axes[0], axes[1], "$x$ (mm)", "$y$ (mm)",
+            f"(b) section $z$ = {axes[2][kz]:.2f} mm (band), $h$ = {h:.3f} mm")
     ky = int(np.argmin(np.abs(axes[1] - 0.0)))
     extc = [org[0], org[0] + shp[0] * h, org[2], org[2] + shp[2] * h]
     axc = fig.add_subplot(gs[1, 1])
-    section(axc, vm[:, ky, :], tooth[:, ky, :], extc, "$x$ (mm)", "$z$ (mm)", f"(c) section $y$ = {axes[1][ky]:.2f} mm")
-    sel = np.isfinite(vm[:, ky, :])
-    if sel.any():
-        ii, kk = np.where(sel)
-        axc.set_xlim(axes[0][ii.min()] - 0.3, axes[0][ii.max()] + 0.3)
-        axc.set_ylim(axes[2][kk.min()] - 0.3, axes[2][kk.max()] + 0.3)
-    axc.axhline(Z_CEJ - BAND_HALF, color="#eb6834", lw=0.7, ls="--"); axc.axhline(Z_CEJ + BAND_HALF, color="#eb6834", lw=0.7, ls="--")
-    cb = fig.colorbar(im, ax=[axb, axc], orientation="horizontal", fraction=0.05, pad=0.16, aspect=40)
-    cb.set_label("von Mises (mPa), scale to the 99th percentile; tooth grey")
+    im = section(axc, vm[:, ky, :], tooth[:, ky, :], wfilm[:, ky, :] > 0, extc, axes[0], axes[2], "$x$ (mm)",
+                 "$z$ (mm)", f"(c) section $y$ = {axes[1][ky]:.2f} mm")
+    for zz in (Z_CEJ - BAND_HALF, Z_CEJ + BAND_HALF):
+        axc.axhline(zz, color="#eb6834", lw=0.7, ls="--")
+    axc.text(axc.get_xlim()[0] + 0.05, Z_CEJ, "band", color="#eb6834", fontsize=7, va="center")
+    cb = fig.colorbar(im, ax=[axb, axc], orientation="vertical", fraction=0.04, pad=0.03, aspect=30)
+    cb.set_label("von Mises (mPa), scale: 99th percentile", fontsize=8)
+    cb.ax.tick_params(labelsize=7.5)
     FIG.parent.mkdir(exist_ok=True)
     fig.savefig(FIG.with_suffix(".pdf"))
     fig.savefig(FIG.with_suffix(".png"), dpi=300)
@@ -717,6 +760,7 @@ def main(argv=None):
         run_levels(a.levels, src, void=a.void, force=a.force)
     if a.refit:
         out = load_json()
+        out["field"]["flat film"] = flat_film_reference(load_field(src))
         out["fits"] = fits(out["levels"])
         out["checks summary"] = checks_summary(out["checks"])
         save_json(out)
