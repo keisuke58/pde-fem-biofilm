@@ -878,3 +878,23 @@ that the bound fails once a point's pressure depends on a neighbour: with p1 = a
 on the implicit gate, a state solving both implicit equations has point 1 stopped (a1' = a1) and p1' = 3 > p_h.
 A Mathlib version over the reals, with a counterexample for the explicit gate, is in `lean/mathlib/` (to be checked on
 fifa, `CLOUD_TO_FIFA.ja.md`).
+
+## Finite against small strain at large growth (20 Oct 2026, cloud; `finite_vs_small_f4.py`)
+
+The tooth-like collar with the synthetic four-species case of Fritsch et al. 2025 (no experimental data; the deck of
+`anim_cervical_3d.py`: 4x12x16, bulge 1, bottom u_z = 0, outer face free, nutrient from the outer face, seed 0.125 mm)
+grows to alpha - 1 = 0.40 in the seed without the gate, so the kinematics matters. Same runs with `finite=False`:
+
+| p_h/E | strain | seed alpha-1 | core vM/E | band vM/E | ratio | band max vM/E | max p/E (seed) |
+|---|---|---|---|---|---|---|---|
+| off | finite | 0.396 | 0.313 | 0.469 | 1.50 | 0.677 | 0.895 |
+| off | small | 0.396 | 0.244 | 0.319 | 1.30 | 0.423 | 0.453 |
+| 0.05 | finite | 0.121 | 0.078 | 0.041 | 0.52 | 0.057 | 0.064 |
+| 0.05 | small | 0.132 | 0.078 | 0.056 | 0.72 | 0.066 | 0.071 |
+
+- Without the gate small strain underestimates the band stress by a third and the largest pressure by half; the growth
+  itself is the same (it does not depend on the stress then).
+- With the gate the stresses are small and the two kinematics differ less in absolute terms (band 0.041 against 0.056),
+  but the ratio still moves from 0.52 to 0.72, because the gate reads the pressure, which differs.
+- The conclusion holds in both: ratio above 1 without the gate, below 1 with it. Numbers at this level of growth need
+  finite strain; the cube demonstrations (alpha - 1 about 1e-3) do not.
