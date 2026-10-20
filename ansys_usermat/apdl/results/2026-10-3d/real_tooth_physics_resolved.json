@@ -449,5 +449,95 @@
   "h_mm": 0.08333333333333333,
   "source": "/home/user/pde-fem-biofilm/figdata/real_tooth_nutrient_t2.npz"
  },
- "_note": "Final states of the real-molar runs (96^3 field) re-solved with the film submodel at h = 0.083 mm (void phi<=0.05 dropped, rigid voxel wall). The 96^3 field's wall is a 0.167 mm staircase; resolved below it, the film mean is 3.66 mPa for the base run against 3.26-3.29 mPa with the 192^3 field's finer wall (REAL_TOOTH_SUBMODEL.md). Compare runs by the ratio to the base run; the absolute level of the base run is 3.3 mPa."
+ "_note": "Final states of the real-molar runs (96^3 field) re-solved with the film submodel at h = 0.083 mm (void phi<=0.05 dropped, rigid voxel wall). The 96^3 field's wall is a 0.167 mm staircase; resolved below it, the film mean is 3.66 mPa for the base run against 3.26-3.29 mPa with the 192^3 field's finer wall (REAL_TOOTH_SUBMODEL.md). Compare runs by the ratio to the base run; the absolute level of the base run is 3.3 mPa.",
+ "monod_r01": {
+  "measures": {
+   "film elements": 73792,
+   "film elements any": 73792,
+   "film volume mm^3": 42.703703703703695,
+   "band volume mm^3": 16.023148148148145,
+   "core volume mm^3": 26.68055555555555,
+   "first layer elements": 6768,
+   "outer elements": 67024,
+   "film vM mean": 0.0003381883973940554,
+   "band vM mean": 0.00038779875041500673,
+   "core vM mean": 0.0003083946386216257,
+   "first layer vM mean": 0.0007891793411386555,
+   "outer vM mean": 0.00029264789388391794,
+   "vM max": 0.00196570824398321,
+   "vM max at": [
+    -5.291666666666667,
+    3.125,
+    -1.291666666666667
+   ],
+   "vM max in band": true,
+   "vM max in first layer": true,
+   "vM p95": 0.0009808176368357616,
+   "vM p99": 0.001233839876760743,
+   "vM median": 0.00021450337763534392,
+   "p max": 0.006442445406582488,
+   "p max at": [
+    -5.208333333333334,
+    3.041666666666666,
+    -1.291666666666667
+   ],
+   "p mean": 0.00021881535514169367,
+   "p band mean": 0.00023501595114888116,
+   "vM max all": 0.00196570824398321,
+   "band/core": 1.257475655699719,
+   "first/outer": 2.6966855310829345,
+   "layer vM mean": 0.0007070386835836526,
+   "layer band vM mean": 0.0008593642039883936,
+   "layer volume mm^3": 4.24074074074074,
+   "h": 0.08333333333333333,
+   "h/h_f": 0.5,
+   "box cells": [
+    [
+     0,
+     52
+    ],
+    [
+     0,
+     96
+    ],
+    [
+     12,
+     60
+    ]
+   ],
+   "box mm": [
+    [
+     -8.0,
+     0.6666666666666661
+    ],
+    [
+     -8.0,
+     8.0
+    ],
+    [
+     -6.0,
+     2.0
+    ]
+   ],
+   "mesh": [
+    104,
+    192,
+    96
+   ],
+   "elements in box": 1916928,
+   "tooth elements": 759624,
+   "active elements": 217824,
+   "gap elements": 0,
+   "void": "drop",
+   "void thr": 0.05,
+   "interp": "pc",
+   "tooth mode": "voxel",
+   "rigid": true,
+   "cut boundary": false,
+   "region": false
+  },
+  "seconds": 90.3045585155487,
+  "h_mm": 0.08333333333333333,
+  "source": "/home/user/pde-fem-biofilm/figdata/real_tooth_monod_r01.npz"
+ }
 }
