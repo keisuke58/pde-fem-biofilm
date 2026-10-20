@@ -23,7 +23,7 @@ film submodel of real_tooth_submodel.py (rigid tooth, crop, void phi <= 0.05 dro
 
     python ansys_usermat/apdl/real_tooth_plaque.py --geom                   # signed distance, fissure set, axes (cached)
     python ansys_usermat/apdl/real_tooth_plaque.py --field 1 2 3            # the field runs (cached per step)
-    python ansys_usermat/apdl/real_tooth_plaque.py --stress 3 --levels r2 r1  # final-state stress (JSON + npz)
+    python ansys_usermat/apdl/real_tooth_plaque.py --stress 3 --levels r1 r1t r2t  # final-state stress (JSON + npz)
     python ansys_usermat/apdl/real_tooth_plaque.py --video-stress 1 3       # stress of every 6th frame at h_f
     python ansys_usermat/apdl/real_tooth_plaque.py --render 1 3 [--png-only]
     python ansys_usermat/apdl/real_tooth_plaque.py --figure
@@ -96,7 +96,10 @@ IDEAL = {"film vM mean": 3.287e-3, "band vM mean": 3.479e-3, "layer vM mean": 7.
          "p mean": 2.27e-3, "film volume mm^3": 17.33, "t mean mm": 0.5, "source": "real_tooth_submodel.json level r2"}
 
 STEPS = {1: "distribution", 2: "thickness variation", 3: "internal structure"}
-LEVELS = {"r2": 0.5, "r1": 1.0}
+# level -> (h / h_f, void threshold): elements with phi <= thr are dropped. The diffuse front (phi 0.05..0.3, E below
+# 1 Pa) is kept at h_f (r1) and dropped on the fine mesh (r2t: phi <= 0.3, about 1.7 M dof instead of 3.7 M); r1t is the
+# same drop at h_f, so r1t -> r2t is the mesh refinement at a fixed void set and r1 -> r1t the effect of the front.
+LEVELS = {"r1": (1.0, 0.05), "r1t": (1.0, 0.3), "r2t": (0.5, 0.3), "r2": (0.5, 0.05)}
 
 
 # ---------------------------------------------------------------- geometry
@@ -410,12 +413,12 @@ def run_stress(step, levels, force=False):
         if stress_path(step, lev).exists() and not force:
             print(f"step {step} level {lev}: cached, skipped", flush=True)
             continue
-        ratio = LEVELS[lev]
-        print(f"step {step} level {lev}: h = {ratio * H:.4f} mm", flush=True)
-        res = SM.solve_submodel(phi, am1, ratio * H, tooth=tooth, sdf=sdf, h_f=H, void="drop", void_thr=0.05,
+        ratio, thr = LEVELS[lev]
+        print(f"step {step} level {lev}: h = {ratio * H:.4f} mm, void phi <= {thr} dropped", flush=True)
+        res = SM.solve_submodel(phi, am1, ratio * H, tooth=tooth, sdf=sdf, h_f=H, void="drop", void_thr=thr,
                                 tooth_mode="voxel")
         meas = region_measures(res, G, phi, D["film0"])
-        meas.update({"h": ratio * H, "h/h_f": ratio, "solver": res["solver"], "seconds": res["seconds"],
+        meas.update({"h": ratio * H, "h/h_f": ratio, "void thr": thr, "solver": res["solver"], "seconds": res["seconds"],
                      "submodel measures": {k: v for k, v in res["measures"].items()
                                            if isinstance(v, (int, float, str, bool)) or v is None}})
         M = res["mesh"]
@@ -780,7 +783,7 @@ def figure():
                 v = IDEAL.get(f"{key} vM mean")
             else:
                 st = out["steps"].get(str(s), {}).get("stress", {})
-                lev = "r2" if "r2" in st else ("r1" if "r1" in st else None)
+                lev = next((k for k in ("r2t", "r2", "r1t", "r1") if k in st), None)
                 v = st[lev].get(f"{key} vM mean") if lev else None
             vals.append(np.nan if v is None else v * 1e3)
         axb.bar(np.arange(len(regs)) + (ci - (nb - 1) / 2) * wdt, vals, wdt, color=cols[ci], label=lab)
@@ -791,7 +794,7 @@ def figure():
     # (c) section through the film of step 3 with the resolved stress: the vertical plane through the crown axis along
     # the mesio-distal direction (mesial and distal films and the fissure deposits in one picture)
     axc = fig.add_subplot(gs[1, :])
-    lev = "r2" if stress_path(3, "r2").exists() else "r1"
+    lev = next(k for k in ("r2t", "r2", "r1t", "r1") if stress_path(3, k).exists())
     d = np.load(stress_path(3, lev))
     vm, act, te = d["vm"] * 1e3, d["active"], d["tooth"]
     org, h, shp = d["origin"], float(d["h"]), d["shape"]
@@ -833,7 +836,7 @@ def main(argv=None):
     ap.add_argument("--map", nargs="*", type=int, help="print the map diagnostics of the steps (no run)")
     ap.add_argument("--field", nargs="*", type=int)
     ap.add_argument("--stress", nargs="*", type=int)
-    ap.add_argument("--levels", nargs="+", default=["r2"], choices=list(LEVELS))
+    ap.add_argument("--levels", nargs="+", default=["r2t"], choices=list(LEVELS))
     ap.add_argument("--video-stress", nargs="*", type=int)
     ap.add_argument("--render", nargs="*", type=int)
     ap.add_argument("--png-only", action="store_true")
