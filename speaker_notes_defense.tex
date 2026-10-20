@@ -53,17 +53,19 @@ consistently within a framework that already works.
 一緒に計算することが、この修論の目的です。
 
 \slide{Approach}{2:30}
-\EN This is the whole work on one slide. On the left, the growth field of
-Klempt et al.\ 2024 in the IKM element gives the amount of biofilm at every
-Gauss point. In the middle, one copy of the point model of Klempt et al.\
-2026 sits at every Gauss point and decides only the composition. On the
-right, growth and stress use the amount only. The coupling is one-way: the
-composition is an output, it does not act back. The talk follows the three
-parts: calibrating the point model, the growth law in ANSYS, and the
-composition at every Gauss point.
+\EN This is the whole work on one slide. On the left, the fields of Klempt
+et al.\ 2024 in the IKM element: the biofilm, the nutrient and, in the
+element's second nutrient field, an antibiotic. In the middle, one copy of the
+point model of Klempt et al.\ 2026 sits at every Gauss point, unchanged. It
+receives the nutrient and the antibiotic from the fields, and its living
+biomass sets how much of both is consumed. On the right, growth and stress
+follow from the biofilm field. The talk follows the three parts: calibrating
+the point model, the growth law in ANSYS, and the point model at every Gauss
+point.
 \JA 全体を1枚にした図です。左：Klempt 2024 の成長場が、各 Gauss 点のバイオフィルムの
-量を決めます。中央：Klempt 2026 の点モデルを各 Gauss 点に1つずつ置き、組成だけを決めます。
-右：成長と応力は量だけを使います。一方向の結合で、組成は出力であって戻りません。
+量と栄養、抗菌薬（要素の2つめの栄養の場）を解きます。中央：Klempt 2026 の点モデルを各 Gauss 点に
+そのまま置き、場から栄養と抗菌薬を受け取ります。生きている菌だけがそれを消費します。右：成長と応力は
+バイオフィルムの場から決まります。
 発表はこの順に3部です。
 \hint{最初の「何をしたか」を30秒で言えるようにしておく。}
 

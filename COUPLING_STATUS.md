@@ -1,5 +1,10 @@
 # Coupling status: what is done and what is not (5 Oct 2026)
 
+> **Superseded in part (20 Oct 2026):** the coupling is now the one agreed with Oliver (`MEETING_2026-10-20.md`):
+> point model unchanged with its own constraint (no scaling to phi_3D, no phi_cap), c* and the antibiotic from fields,
+> consumption by sum phibar_i, front term on, s from the duration of the data. Rows 3-5 below describe the earlier
+> scaled scheme.
+
 Slide numbers refer to `slides_1005.tex` (5 Oct deck). Runs of 5 Oct:
 `ansys_usermat/apdl/RUN_1005_IKMHIWI03.md` (record), numbers as JSON in
 `ansys_usermat/apdl/results/2026-10-05_ansys/` (tables:
