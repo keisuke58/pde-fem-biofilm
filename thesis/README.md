@@ -113,6 +113,7 @@ Colloquium practice during the trips (decided 19 Oct):
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
 2. ch4 verification and coupling, redoing the closed-form stress by hand;
-3. ch4 results, assumptions and sensitivity (s, phi_cap, d);
+3. ch4 results, assumptions and sensitivity (s, phi_cap, d); **20 Oct: Ch. 4 is being rewritten for the coupling agreed
+   with Oliver, `thesis/CH4_REWRITE_PLAN.md`;**
 4. ch3 calibration and ch6;
 5. `QA_1005.md` and new questions, answered aloud.

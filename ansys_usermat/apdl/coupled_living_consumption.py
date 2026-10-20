@@ -7,10 +7,10 @@ quadrature points):
                  - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
                                                                    upwinded
     d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    0 = d lap c - g phi L f(c)                                     Eq. 35, quasi-static, consumption by the LIVING
-                                                                   biomass only: L = sum_i phi_i psi_i / sum_i phi_i,
-                                                                   the living share of the point model's biomass
-                                                                   (decided 20 Oct), f(c) = c
+    0 = d lap c - g phi (sum_i phibar_i) c                         Eq. 35, quasi-static, consumption by the LIVING
+                                                                   biomass only: phibar_i = phi_i psi_i of the point
+                                                                   model (Klempt et al. 2026; Oliver's form, decided
+                                                                   20 Oct, replacing the normalised share)
     0 = d_a lap a - g_a phi L a                                    the second nutrient field repurposed for the
                                                                    antibiotic, same equation
   c = 1 on the wall y = -1 mm (nutrient), a = 1 on the wall y = +1 mm from T* = T_AB on (antibiotic), zero flux
@@ -70,15 +70,26 @@ NF = int(sys.argv[sys.argv.index("--nf") + 1]) if "--nf" in sys.argv else 32
 FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv else 0.0
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
-NM, T_END, DT_C, PHI_MIN = 16, 1.0, 0.025, 0.01
-LAM_C2 = LAM_A2 = 4.0                       # g L^2 / d, L = 1 mm
-T_AB = 0.5
+def _opt(name, default, cast=float):
+    return cast(sys.argv[sys.argv.index(name) + 1]) if name in sys.argv else default
+
+
+NM, T_END = 16, 1.0
+DT_C = _opt("--dtc", 0.025)                 # outer (coupling) step; halved to test the one-step lag
+PHI_MIN = _opt("--phi-min", 0.01)
+ONLY = _opt("--only", None, str)            # run only this example, e.g. separate_ab
+CHECK = "--check" in sys.argv               # c = 1 and a = 1 everywhere from the start: the seed point model must
+                                            # equal Fritsch Case I run alone (klempt2026_reproduction)
+LAM_C2 = LAM_A2 = 0.0 if CHECK else 4.0     # g L^2 / d, L = 1 mm
+T_AB = -1.0 if CHECK else 0.5
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps
 H = W.L / NF
 RES = HERE / "results" / "2026-10-3d"
-TAG = ("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
+TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
+       + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
+       + ("_check" if CHECK else ""))
 
 
 # ---------------------------------------------------------------- point model (black box)
@@ -121,8 +132,8 @@ def start_state(phi_a, phi_b):
 
 
 def living(G):
-    """living share of the point model's biomass, sum phi_i psi_i / sum phi_i"""
-    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1) / np.maximum(G[:, :N_SP].sum(1), 1e-30)
+    """living volume fraction of the point model, sum_i phibar_i = sum_i phi_i psi_i (Klempt et al. 2026 notation)"""
+    return (G[:, :N_SP] * G[:, 6:6 + N_SP]).sum(1)
 
 
 def grad(u):
@@ -207,7 +218,7 @@ def run(example, antibiotic):
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, +1)
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
     c = nut.solve(phi, L)
-    a = np.zeros_like(phi)
+    a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
     dt = 0.15 * H * H / W.BETA
     if FRONT:
@@ -262,6 +273,7 @@ def run(example, antibiotic):
             on = on | fill
         # (5) living biomass for the next step
         L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
+        hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
         hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
@@ -275,6 +287,8 @@ def run(example, antibiotic):
     print(f"[{example}, antibiotic {antibiotic}] {time.time() - t0:.0f} s; colonised {int(on.sum())} cells; "
           f"seed: living {hist['living_seed'][-1]:.3f}, share A {hist['share_a_seed'][-1]:.3f}, "
           f"c {hist['c_seed'][-1]:.3f}", flush=True)
+    hist["seed_state_end"] = G[seed].mean(0).tolist()
+    hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
     vm, p = S.solve_fields(NM, W.block_mean(phi, NM), W.block_mean(alpha - 1, NM))
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
@@ -288,16 +302,35 @@ def mid(u):
 
 def main():
     R, SN = {}, {}
-    for ex in ("separate", "mixed"):
-        for abx in (False, True):
-            key = f"{ex}{'_ab' if abx else ''}"
+    keys = [f"{ex}{'_ab' if abx else ''}" for ex in ("separate", "mixed") for abx in (False, True)]
+    if CHECK:
+        keys = ["mixed_ab"]
+    elif ONLY:
+        keys = [ONLY]
+    for key in keys:
+            ex, abx = key.replace("_ab", ""), key.endswith("_ab")
             R[key], SN[key] = run(ex, abx)
             np.savez_compressed(ROOT / "figdata" / f"coupled_living_{key}{TAG}.npz",
                                 **{f"{k}_{T}": v for T, d in SN[key].items() for k, v in d.items()})
     res = {"setting": {"field": f"{NF}^3", "point_model": "Fritsch et al. 2025 Case I, true parameters",
                        "s": S_LINK, "inner_steps_per_outer": N_SUB, "Lambda2_c": LAM_C2, "Lambda2_a": LAM_A2,
                        "antibiotic_from": T_AB, "phi_min": PHI_MIN}, "runs": R}
+    if CHECK:
+        import klempt2026_reproduction as K
+        K.DT = CASE["dt"]
+        ref = K.simulate(CASE)
+        got = np.array(R["mixed_ab"]["seed_state_end"])
+        d = dict(phi=float(np.abs(got[:N_SP] - ref["phi"][-1]).max()),
+                 psi=float(np.abs(got[6:6 + N_SP] - ref["psi"][-1]).max()),
+                 phi0=float(abs(got[5] - ref["phi0"][-1])))
+        res["check_vs_point_model_alone"] = dict(max_abs_diff=d, coupled_end=got.tolist(),
+                                                 alone_phi=ref["phi"][-1].tolist(), alone_psi=ref["psi"][-1].tolist(),
+                                                 spread_over_seed_cells=R["mixed_ab"]["seed_state_spread"])
+        print("CHECK: coupled seed point model vs Fritsch Case I alone, max |diff|:", d,
+              "spread over seed cells", R["mixed_ab"]["seed_state_spread"])
     (RES / f"coupled_living_consumption{TAG}.json").write_text(json.dumps(res, indent=1, default=float) + "\n")
+    if CHECK or ONLY:
+        return
     print("\n| run | seed living T*=1 | seed share A | edges living | edges share A | seed c | seed a | colonised |")
     for k, h in R.items():
         print(f"| {k} | {h['living_seed'][-1]:.3f} | {h['share_a_seed'][-1]:.3f} | {h['living_edges'][-1]:.3f} | "

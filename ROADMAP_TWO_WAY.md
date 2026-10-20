@@ -1,6 +1,10 @@
 # Towards a two-way coupling (written 2 Oct 2026)
 
-**State at the end of the thesis:** the coupling is one-way, macro → micro.
+> **Update 20 Oct 2026:** the thesis now uses the coupling agreed with Oliver (`MEETING_2026-10-20.md`): the point
+> model's living biomass sets the nutrient and antibiotic consumption, so the coupling is two-way through the nutrient.
+> The stress still does not act back. The text below is the state of 2 Oct.
+
+**State at the end of the thesis (as of 2 Oct):** the coupling is one-way, macro → micro.
 - The element's field φ (Klempt et al. 2024) drives growth, α, and the
   stress.
 - The point model (Klempt et al. 2026) runs at every Gauss point and gives

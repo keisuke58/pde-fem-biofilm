@@ -355,10 +355,22 @@ this machine's specific workflow.
   Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
   `thesis/README.md`.
 
-- **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`. Point
-  model as a black box with its own constraint (no phi_0 = 1 - phi_3D); c* and the antibiotic alpha* from 3D fields
-  (the second nutrient field repurposed), linearly interpolated in time; Eq. 35 consumption by the living biomass
-  only, g phi_3D (sum phi_i psi_i) f(c), the same for the antibiotic; Eq. 34 and 36 unchanged. Replaces coupling (a).
+- **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`.
+  - Point model used as published, unchanged, with its own constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D,
+    no phi_cap; ANSYS mode 8 is the base). In documents never call it a "black box" (the user): "used as published".
+  - c* and the antibiotic alpha* from 3D fields (the element's second nutrient field carries the antibiotic),
+    linearly interpolated in time over the inner steps.
+  - Eq. 35 consumption by the living biomass: g phi_3D (sum_i phibar_i) c, phibar_i = phi_i psi_i (Klempt 2026
+    notation; a volume fraction of the normalised point volume, not divided by sum phi_i). Same for the antibiotic.
+    Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
+  - Eq. 34 with its front term switched on (r: Table 2 converted and r/10); Eq. 36 unchanged.
+  - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
+  - Write phi_3D in every field equation, phi_i for the point model.
+  - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
+    ANSYS: `CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
+    thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
+    `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
+  - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,

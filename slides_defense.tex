@@ -74,9 +74,9 @@ resulting stresses consistently within an existing finite element framework.
 % --------------------------------------------------------
 \begin{frame}{Approach}
 \centering
-\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{fig_coupling_schematic_thesis.png}
-\takeaway{The field determines the amount $\phi_{3D}$, the point model the composition;
-growth and stress depend on the amount only (one-way coupling).}
+\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{assets/fig_coupling_schematic_agreed.png}
+\takeaway{The point model runs unchanged at every Gauss point; nutrient and antibiotic come from the
+fields, and only living biomass consumes them.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -305,8 +305,8 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \begin{itemize}\setlength{\itemsep}{7pt}
   \item \textbf{Verification, not validation}: no measured stress of a growing
         oral biofilm was available
-  \item \textbf{One-way coupling}: the composition does not act on stiffness, spreading
-        or stress (as in Klempt et al.\ 2024)
+  \item \textbf{No stress feedback}: the composition reaches the spreading only through the
+        nutrient; the stress does not act back (as in Klempt et al.\ 2024)
   \item \textbf{Inactive front term}: no growth towards the nutrient in ANSYS; the front term of
         the element is inactive
   \item \textbf{Assumptions}: the time link $s$, $\phi_{\rm cap}$, the
