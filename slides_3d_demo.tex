@@ -1,0 +1,159 @@
+% 3D visualisations of the growth model (20 Oct 2026): stills of the videos in assets/*.mp4 with links.
+% Build: pdflatex twice. Rules of CLAUDE.md (supervisor documents): first person singular, no internal labels,
+% values not from a paper marked as such, appendix with notation.
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\definecolor{c3}{RGB}{30,80,160}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\setbeamertemplate{navigation symbols}{}
+\newcommand{\video}[1]{\href{run:assets/#1}{\scriptsize\textcolor{c3}{$\blacktriangleright$ video: \texttt{\detokenize{assets/#1}}}}}
+
+\title{Biofilm Growth and Stress in 3D}
+\subtitle{Videos of the growth model: verification problem, seed position, growth law, tooth-like collar}
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover}
+\date{20 October 2026}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{What the videos show}
+\small
+\begin{itemize}\setlength\itemsep{5pt}
+\item Biofilm phase $\phi$, growth $\alpha-1$ with $\mathbf F_g=\alpha\mathbf I$, and the von Mises stress, in 3D over time.
+\item Growth model of Klempt et al.\ (2024): $\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha$ (plus the bound on $\phi$),
+      $\dot\alpha=k_\alpha\phi$; stiffness $E(\phi^2+f)$.
+\item Homeostatic-pressure law (added in this work): growth is scaled by
+      $g=\min\bigl(1,\max(0,\,1-p/p_h)\bigr)$, $p=-\tfrac13\operatorname{tr}\boldsymbol\sigma$.
+\item Four cases:
+  \begin{enumerate}
+  \item the verification problem of the thesis (seed in the centre of the 2\,mm cube),
+  \item the same model with the seed in a corner or on an edge,
+  \item the corner seed with and without the growth law,
+  \item a tooth-like collar with synthetic four-species data (Fritsch et al.\ 2025).
+  \end{enumerate}
+\item Only case 1 is a thesis result. Cases 2--4 are demonstrations with the same model.
+      \textbf{No experimental data are used.}
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{1. Verification problem: seed in the centre of the cube}
+\centering
+\includegraphics[width=0.95\linewidth]{assets/anim_wp3_seed_3d.png}
+
+\small
+$\beta=0.02$\,mm$^2/T^*$, $k_\alpha=10^{-3}/T^*$, $E=10$\,Pa, $\nu=0.49$, $T^*=1.1$; one octant cut away.
+Field on $48^3$ (reference solution), stress on $16^3$.\\
+Seed von Mises at $T^*=1.1$: $6.19\times10^{-4}$\,Pa (thesis, $16^3$: $6.18\times10^{-4}$\,Pa).
+The stress forms a ring at the edge of the seed.\quad\video{anim_wp3_seed_3d.mp4}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{2. Seed in a corner and on an edge}
+\centering
+\includegraphics[width=0.49\linewidth]{assets/anim_seed_corner_3d.png}\hfill
+\includegraphics[width=0.49\linewidth]{assets/anim_seed_edge_3d.png}
+
+\small\raggedright
+Same model and seed volume as case 1; bottom face clamped (the substrate). Left: corner (three faces), right: edge
+(two faces). The biofilm spreads along the walls; the stress concentrates where the seed meets the clamped face,
+about 15\,mPa against 0.76\,mPa in the centre. The largest values sit at the clamped edge and depend on the mesh;
+the colour scale stops at the 95th percentile.\\
+\video{anim_seed_corner_3d.mp4}\quad\video{anim_seed_edge_3d.mp4}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{3. The growth law removes the concentration}
+\centering
+\includegraphics[width=0.95\linewidth]{assets/anim_law_3d.png}
+
+\small\raggedright
+Corner seed, same colour scale in both stress panels. Without the law the stress at the clamped edge reaches about
+15\,mPa; with the law it stays well below. $p_h=3.3$\,mPa is chosen by me (0.4 times the 95th percentile of the
+pressure without the law), not taken from a paper.\quad\video{anim_law_3d.mp4}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{4. Tooth-like collar with synthetic four-species data}
+\centering
+\includegraphics[width=0.93\linewidth]{assets/anim_cervical_f4_3d.png}
+
+\small\raggedright
+A 0.25\,mm biofilm layer on a crown-shaped collar (radius 2.05 to 3.05\,mm, 2\,mm high), inner face bonded, nutrient
+from the outside. Point model: the four-species case of Fritsch et al.\ (2025) with their true parameters
+(synthetic, no experimental data). One quarter is cut away. Growth is large here (displacement up to 0.31\,mm),
+drawn at true scale.\quad\video{anim_cervical_f4_3d.mp4}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{4. Section and composition}
+\centering
+\includegraphics[width=0.82\linewidth]{assets/fig_cervical_f4.pdf}
+
+\small\raggedright
+(a) Species 3 takes over the seed (share 0.47 at the end), species 4 almost disappears (0.02).
+(b), (c) Section at $45^\circ$: without the law the von Mises stress reaches $0.68E$ at the bonded base;
+with $p_h/E=0.05$ the largest value is $0.12E$.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Summary}
+\small
+\begin{itemize}\setlength\itemsep{6pt}
+\item Case 1 reproduces the thesis value of the seed stress (0.2\,\% difference) and shows it in 3D.
+\item Moving the seed to a wall breaks the symmetry; the stress then concentrates where growing biofilm meets a
+      fixed surface, about 20 times the centre value.
+\item The homeostatic-pressure law removes this concentration, in the cube and on the tooth-like collar
+      (0.68 to 0.12 times $E$).
+\item Synthetic data only (Fritsch et al.\ 2025) keep the demonstration independent of the calibration.
+\item Next: a real tooth or implant surface, and the calibrated parameters of Chapter 3 at Keio.
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\appendix
+\begin{frame}{Appendix A: notation and equations}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi$ & biofilm phase (volume fraction) \\
+$\alpha$ & growth, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; growth is $\alpha-1$ \\
+$\beta$, $k_\alpha$ & diffusion of $\phi$, growth rate (Klempt et al.\ 2024, Eq.\ 34/36) \\
+$E(\phi^2+f)$ & stiffness, $f=10^{-3}$ (void) \\
+$p$, $p_h$ & pressure $-\tfrac13\operatorname{tr}\boldsymbol\sigma$, homeostatic pressure \\
+$\phi_i,\psi_i,\bar\phi_i=\phi_i\psi_i$ & point model (Klempt et al.\ 2026): volume fraction, living fraction \\
+$c^*$ & nutrient scale of the point model (25 in the four-species case) \\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}
+Cases 1--3: $\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha-P\,[\max(0,\phi-1)+\min(0,\phi)]$,\;
+$\dot\alpha=k_\alpha\phi\,g$ ($g=1$ without the law), $P=5$.\\
+Case 4: growth from the point model in the unified element of this work, scaled by the same $g$.
+\end{frame}
+
+\begin{frame}{Appendix B: settings}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+case & geometry & mesh (field / stress) & support & source of the values \\
+\midrule
+1 & cube, seed in the centre & $48^3$ / $16^3$ & rigid body & thesis (Ch.\ 4) \\
+2 & cube, corner or edge seed & $48^3$ / $16^3$ & bottom clamped & thesis values \\
+3 & cube, corner seed & $48^3$ / $16^3$ & bottom clamped & $p_h$ chosen by me \\
+4 & collar (quarter) & $4\times12\times16$ & inner face bonded & Fritsch et al.\ 2025 \\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}
+Small strain, hex8 with B-bar in cases 1--3; finite strain in case 4. Videos: \texttt{assets/*.mp4};
+scripts: \texttt{ansys\_usermat/apdl/anim\_*.py}, \texttt{p3/uel/anim\_cervical\_3d.py}.
+\end{frame}
+\end{document}

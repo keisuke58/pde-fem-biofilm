@@ -56,7 +56,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "--run":
         Un, SVn, it = orig(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=ttot, **kw)
         xi = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, 12].mean() for sv in SVn])
         st = np.array([sv[NSV * NGP:].reshape(NGP, 2).mean(0) for sv in SVn])
-        snaps.append((ttot + dt, Un.reshape(-1, NDN)[:, :4].copy(), xi, st[:, 0], st[:, 1]))
+        gs = np.array([sv[:NSV * NGP].reshape(NGP, NSV)[:, :12].mean(0) for sv in SVn])   # point-model state
+        snaps.append((ttot + dt, Un.reshape(-1, NDN)[:, :5].copy(), xi, st[:, 0], st[:, 1], gs))
         return Un, SVn, it
 
     ea.increment = rec
@@ -67,7 +68,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "--run":
     cache(p_ref).parent.mkdir(exist_ok=True)
     np.savez_compressed(cache(p_ref), t=np.array([s[0] for s in snaps]), u=np.array([s[1] for s in snaps]),
                         xi=np.array([s[2] for s in snaps]), vm=np.array([s[3] for s in snaps]),
-                        p=np.array([s[4] for s in snaps]), nodes=nodes, elems=elems, layer=layer)
+                        p=np.array([s[4] for s in snaps]), g=np.array([s[5] for s in snaps]), nodes=nodes,
+                        elems=elems, layer=layer)
     print("stored", len(snaps), "increments")
     sys.exit()
 
