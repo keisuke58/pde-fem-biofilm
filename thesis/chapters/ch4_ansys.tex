@@ -507,8 +507,10 @@ antibiotic. The element solves a second nutrient for its second species, which I
 field for an antibiotic $a$, with its own sources and the same diffusion, and pass
 $\alpha^*(t)=\alpha^*_0\,a$ to the point model, interpolated as in~\eqref{eq:ch5-cstar}. Because the
 element advances its fields after the material routine, the pair $(c_n,c_{n+1})$ is the one of the
-previous increment; in the first increment, before the fields are solved, the point model receives the
-supplied values $c=1$, $a=0$.
+previous increment. A short first load step, one internal step of the element's field solver
+($0.0025$ in $T^*$), solves the fields before the point model starts, so the point model begins with the
+solved nutrient (in the seed $c=0.79$) and the living biomass of its start state already enters the
+first consumption.
 
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al.\ 2024 is printed as
