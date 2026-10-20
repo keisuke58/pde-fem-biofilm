@@ -55,6 +55,9 @@ Eq. 24 calls this "the simplest possible functional dependency, a linear
 relation". Zeroth order in `c`. So first-order consumption is not the paper
 either.
 
+**Settled (6 and 20 Oct 2026):** the zeroth-order g phi of Eq. 35/24 is a misprint; the implementation uses
+first-order consumption g phi c (Meisam, 6 Oct; Oliver, 20 Oct). This agrees with the plateau check of section 10.
+
 **Consequence.** The earlier report that Fig. 4 came "within 0.17 / 0.10"
 is the agreement of a variant the paper does not use, and must not be quoted as
 agreement with Klempt 2024.
