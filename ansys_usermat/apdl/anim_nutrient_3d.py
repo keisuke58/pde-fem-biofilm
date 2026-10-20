@@ -26,11 +26,14 @@ hex8 B-bar on 16^3, bottom face clamped, solved once per frame. Both runs, with 
            ansys_usermat/apdl/results/2026-10-3d/nutrient_<case>.json
 """
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
-import numpy as np
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")        # threaded BLAS makes the 110k-vector dot products of the CG 100x slower
+import numpy as np  # noqa: E402
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
