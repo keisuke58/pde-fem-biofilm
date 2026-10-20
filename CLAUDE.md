@@ -19,7 +19,8 @@ Abaqus run is possible here but nothing has been run here yet.
 ## Which machine is this?
 
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
-  scripts and Portable Git applies. Available until mid-December 2026.
+  scripts and Portable Git applies. **Available only until 21 Oct 2026** (the user, 20 Oct;
+  earlier: mid-December).
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
@@ -54,7 +55,8 @@ Abaqus run is possible here but nothing has been run here yet.
 - `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, and
   Soleimani et al. 2023 (Sci. Rep., two-species co-aggregation in an ANSYS user
   element) and Feng et al. 2021 (Bull. Math. Biol., two-species oral biofilm,
-  spreading driven by the summed species growth), each with
+  spreading driven by the summed species growth), and Klempt et al. 2026 (Arch. Appl. Mech.,
+  the point model, `Klempt2026_multispecies_interaction_AAM.pdf`), each with
   a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
@@ -350,9 +352,13 @@ this machine's specific workflow.
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
   ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **13 Nov is the internal deadline**
   (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
-  Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission. Details in
+  Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
   `thesis/README.md`.
 
+- **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`. Point
+  model as a black box with its own constraint (no phi_0 = 1 - phi_3D); c* and the antibiotic alpha* from 3D fields
+  (the second nutrient field repurposed), linearly interpolated in time; Eq. 35 consumption by the living biomass
+  only, g phi_3D (sum phi_i psi_i) f(c), the same for the antibiotic; Eq. 34 and 36 unchanged. Replaces coupling (a).
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,

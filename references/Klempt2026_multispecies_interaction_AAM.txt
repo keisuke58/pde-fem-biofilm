@@ -1,0 +1,1011 @@
+Archive of Applied Mechanics (2026) 96:164
+https://doi.org/10.1007/s00419-026-03160-y
+
+ O R I G I NA L
+
+
+
+
+Felix Klempt · Hendrik Geisler · Meisam Soleimani ·
+Philipp Junker
+
+A continuum multi-species bacterial growth model with a
+novel interaction scheme
+
+
+Received: 15 October 2025 / Revised: 18 December 2025 / Accepted: 6 July 2026 / Published online: 22 July 2026
+© The Author(s) 2026
+
+
+Abstract Biofilms are complex structures which are inhabited by numerous amount of different species of
+microorganisms. Due to their ubiquity, they influence human life on an everyday basis. It is therefore important
+to understand the interactions between different bacterial populations within a biofilm and their reactions to
+outside conditions. For this purpose, mathematical models and in silico experiments have proven themselves
+to be fundamental. In combination with in vitro and in vivo experiments, they can give more insights and focus
+researchers’ attention, reducing costs in the process. In this work, a comprehensive multi-species continuum-
+based model for the development of bacterial populations is presented. This model is capable of replicating a
+variety of different bacteria interactions with an arbitrary number of species, while still being comprehensive
+to encourage usage by researchers less familiar with mathematical modeling. In addition to a nutrient source,
+antibiotic agents and their effect on the biofilm can also be depicted. The model is derived using Hamilton’s
+principle of stationary action, ensuring thermodynamic consistency automatically. The numerical examples
+demonstrate the model’s capability to qualitatively reproduce complex interaction patterns.
+
+Keywords Bacterial populations · Multi-species · Bacterial interaction · Continuum model
+
+
+1 Introduction
+
+The necessity to model and simulate the interaction between different bacterial species stems from the ubiquity
+of microbial biofilms. It is estimated that half of the existing biomass are prokaryotes [6,30]. Much of that mass
+is located in dense biofilm communities, containing hundreds of species, i.e., upwards of 500 different species
+in dental biofilms [10,18]. In these multi-species systems, complex interactions and relationships between
+different species emerge [8,23]. The first, theoretical interaction is Neutralism, if biofilms do not interact at all
+with each other. With a lack of enough resources, i.e., space, nutrients or other necessary compounds, different
+species of bacteria have to compete with each other. Often times, the bacterial communities are then dominated
+by one species, but other ones persist [8]. If both species benefit from the presence of one another, it is called
+Protocooperation. This has often been demonstrated [8]. Other interactions are Allelopathy [25], where one
+species produces chemicals, which in turn influence the others. This can lead to Ammensalism, where one
+species harms the other and Commensalism, where one species benefits from the other. These interactions lead
+to the stabilization of the biofilm [8]. To control harmful and use beneficial bacterial species, an understanding
+of the underlying principles is necessary, but the large number of interactions pose a challenge for in vitro
+experiments [24]. In addition to species interacting with each other, biofilms are characterized by their spatial
+structure as well as detachment and attachment processes at the biofilm surface. Spatial structures in biofilms are
+induced by the diffusion of suspended substances such as nutrients, antibiotics, signal molecules or oxygen.
+Felix Klempt (B) · Hendrik Geisler · Meisam Soleimani · Philipp Junker · Institute of Continuum Mechanics, Leibniz University
+Hannover, Hannover, Germany
+E-mail: klempt@ikm.uni-hannover.de
+164 Page 2 of 13                                                                                     F. Klempt et al.
+
+
+This gradient of substances induces then the growth of different species at different places in the biofilm,
+resulting in an even more heterogenetic structure. While both of the effects are invaluable for a comprehensive
+description of biofilm, this work is focused on the description of the interaction of different bacteria species
+on a single material point, not on the overall structure which is evolving macroscopically. On its own it is
+not capable of depicting gradient based behavior. For this, it can be combined with non-local models such
+as [11] to display complex behavior in addition to the complex interactions inside of the biofilm. The model
+presented has the following key novelties which makes it a suitable extension to existing, non-local biofilm
+growth models. These novelties are:
+  • due to the derivation of the model through Hamilton’s principle of stationary action, the model is inherently
+     thermodynamically consistent. It is based on the foundations of physics.
+  • straightforward parameter identification. Key parameters have a direct biological interpretation, which
+     simplifies calibration. For instance, the viscosity η represents the metabolic inertia (or reaction delay) of a
+     species, allowing the model to distinguish between fast-responding and slow-adapting populations based
+     on simple growth curves.
+  • the kinetics of bacterial growth is modeled. Fast and slow growing species can be investigated in the same
+     simulation.
+  • even though the model is simple in its mathematical formulation, complex behavior can be described.
+Mathematical models can provide an environment where hypotheses can be tested rapidly and connections
+between different aspects can be drawn. Additionally, an in silico experiment, i.e., a simulation, takes consid-
+erably less time than an in vitro or an in vivo experiment. Models based on mathematical descriptions have thus
+proven themselves to be a viable tool in analyzing complicated processes [3]. Prominent modeling approaches
+are Individual Based Modeling (IbM), cellular automaton (CA) and continuum-based modeling. IbM seems
+to be the natural approach since bacterial populations themselves consists of individual cells, which can be
+seen as particles. Behaviors like cell divisions and interactions between two cells can be modeled directly as
+an interaction between two individual particles. There exist several open-source software systems using this
+approach, such as BacSim [13], Infobiotics Workbench [2], iDynoMiCS [15], Simbiotics [21], and NUFEB
+[16]. IbM models containing multiple species have been used to study the effects of EPS [12] as well as detach-
+ment and sloughing [31,32] on multi species biofilm. In combination with the continuum approach, physical
+factors, like nutrient gradients, have been included [20,23]. To avoid the stochastic effects resulting from the
+randomized placement of the individual particles in the modeling approach of IbM, the same simulation has to
+be repeated or it can be combined with cellular automata rules, see [14]. Multi-species models based fully on
+cellular automata are, for example, [19,27,28]. Another way of modeling biofilm is the continuum approach.
+Here, the incorporation of governing laws from physics comes naturally. Thermodynamic consistency can be
+assured automatically when using the right modeling approach. The thermodynamics and mechanics of growth
+are discussed in detail by [4] and [17]. Additionally, continuum-based models are deterministic, stochastic
+effects are thus not present and models do not need additional runs to average out random effects before con-
+clusions can be drawn. Although the derivation of these models can be more complex, analytical studies can
+be performed to compare and characterize model results [1]. The complexity of these models makes them very
+predictive, but also hard to understand, especially for researchers not familiar with material modeling. Easier
+models can focus the attention on more important and relevant aspects of biofilm formation and growth, as well
+as species interaction. Multi-species continuum-based models in literature, which are suitable to model an arbi-
+trary number of species, i.e., [1,29], link the species via shared resources as space and nutrient available. This
+means that only competition between the species can be depicted. Models, which can depict Protocooperation,
+solve the problem of interaction with an additional interaction variable, which developes where one or both
+species are present and enhance the growth process of the other species [5,26]. For a small number of species,
+i.e., dual-species systems, this is a suitable approach, but since for every interaction between two species an
+interaction variable is necessary, the number of internal variables and consequently the computational cost
+becomes unreasonable when the number of species increases.
+     In this work, a continuum model is presented which provides a framework for integrating a theoretically
+arbitrary number of species into the bacterial population. It is capable of displaying a wide variety of possible
+interactions from mutually inhibitory species to a symbiotic relationship. The integration of interaction is done
+via a constant interaction matrix. Thus, no additional internal variables need to be introduced. The model
+is derived from Hamilton’s principle of stationary action, ensuring thermodynamic consistency. The energy
+density function is modeled to be comprehensive. The complexity of the model stems from the dissipation
+function, which is formulated as a function of the product of the internal variables. It thus interconnects the
+governing evolution equations leading to complex material behavior.
+A continuum multi-species bacterial growth model                                                   Page 3 of 13 164
+
+
+   The article is structured as follows. In Sect. 2, the mathematical derivation of the model is presented.
+The necessary variables and assumptions are introduced and the governing equations are shown. In Sect. 3, a
+numerical study displaying the behavior of the models with different numbers of species, initial conditions and
+parameters is presented to show the versatility of the model. The last chapter, Sect. 4, gives a short conclusion
+and an outlook for future investigations possible with this model.
+
+
+2 Mathematical description
+
+In this work, a comprehensive model for bacterial growth, death and interaction is presented. An arbitrary
+number of species with interactions can be modeled. The model is derived based on Hamilton’s principle of
+stationary action. Hamilton’s principle provides a physically sound way of material modeling, in particular,
+the automatic fulfillment of the first and second law of thermodynamics through the derivation of the model
+from a potential [9]. Thus, the bacterial growth model presented in this work is thermodynamically consistent.
+In addition, necessary constraints can be considered in Hamilton’s principle simply by adding corresponding
+potentials. Hamilton’s principle for a quasi-static and isothermal process is given by [9,11] as
+                                              
+                                         H = (G + C + D) dt → stat .                                       (1)
+                                                                                ξ ,γ
+                                                   τ
+
+The Hamilton functional H consists of three parts: the total potential G , the constraint functional C and the
+dissipation energy D. Hamilton’s principle states that H is stationary for all thermodynamic state variables. In
+this case, the thermodynamic state variables are the internal variables ξ and the Lagrange multiplier γ .
+    In the following, the individual parts are described in more detail. The total potential G is given as
+                                                               0            0
+                                                                            
+                                   G :=        dV −          f · u dV −   t · u dA                           (2)
+                                       0               0                    ∂0
+
+with the Helmholtz free energy , the density ρ0 , the body force f  , the traction force t  and the displacements
+u. No external forces are applied to this continuum model. Therefore, the external forces f  and t  are set to
+zero.
+    The constraint functional                     
+                                             C :=     γ ( f (ξ )) dV,                                            (3)
+                                                        0
+
+allows incorporation of the holonomic constraint f (ξ ) with the Lagrange parameter γ .
+    The dissipated energy is given as             
+                                                       D:=        Ddiss dV.                                     (4)
+                                                             0
+
+with the volume-specific dissipated potential Ddiss .
+   To arrive at a sensible description of a predictive model for bacterial growth and death, suitable model
+assumptions have to be made, which will be explained in the following.
+   The set of internal variables ξ is given as         
+                                                       φ
+                                                 ξ=       .                                             (5)
+                                                       ψ
+The volume fraction φi i ∈ {1, 2, · · · , n}, which indicates the volume covered by each of n species of bacteria,
+as well as the empty space φ0 , is listed in the vector
+                                               ⎛ ⎞
+                                                φ0
+                                               ⎜φ1 ⎟
+                                               ⎜φ ⎟
+                                         φ=⎜       2⎟
+                                               ⎜ . ⎟ with φi ∈ [0, 1], ∀i.                                    (6)
+                                               ⎝ .. ⎠
+                                                φn
+164 Page 4 of 13                                                                                     F. Klempt et al.
+
+
+In order to model the growth as well as the death of bacteria, a second state variable per species is necessary.
+The percentage of living bacteria of the nth species is given by
+                                           ⎛ ⎞
+                                              ψ1
+                                           ⎜ ψ2 ⎟
+                                      ψ =⎜       ⎟
+                                           ⎝ ... ⎠ with ψi ∈ [0, 1], ∀i.                                     (7)
+                                                  ψn
+Therefore, the volume covered by living bacteria of species i is
+                                                  φ̄i :=φi ψi with ∀i.                                           (8)
+The amount of dead cells is consequently τi :=φi (1 − ψi ) with i ∈ {1, 2, · · · , n}. Since the total volume of
+all bacteria plus the empty space cannot exceed the available volume, the holonomic constraint
+                                                           n
+                                                  f =          φl − 1 = 0                                        (9)
+                                                        l=0
+
+has to be fulfilled at all times.Since the model is formulated as a material point model, interpreting the empty
+space as physical voids or channels within the barterial population would be inappropriate. The empty space
+variable φ0 rather serves as a numerical auxiliary quantity used to enforce the holonomic volume constraint
+given by Eq. (9) The nutrients are modeled by a given variable c , and the antibiotics by the given variable
+α  . Both are possibly time-dependent. Since living bacteria thrive with nutrients and the percentage of living
+bacteria reduces with antibiotics present, the energy density function is modeled as
+                                          1                1
+                                      = − c φ̄ · A · φ̄ + α  ψ · B · ψ.                                     (10)
+                                          2                2
+The quadratic approach is chosen to allow for a linear dependency between nutrients and φ̄i and antibiotics
+and ψi . Additionally, the quadratic approach ensures the convexity of the free energy density. The symmetric
+growth coefficient matrix
+                                                ⎛                   ⎞
+                                                  a11 a12 · · · a1n
+                                                ⎜a12 a22 · · · a2n ⎟
+                                           A=⎜                      ⎟
+                                                ⎝ ... ... . . . ... ⎠                                   (11)
+                                                        a1n a2n · · · ann
+and the antibiotic sensitivity matrix
+                                                   ⎛                   ⎞
+                                                    b1 0 · · · 0
+                                                   ⎜ 0 b2 · · · 0 ⎟
+                                                 B=⎜                   ⎟
+                                                   ⎝ ... ... . . . ... ⎠ .                                     (12)
+                                                           0 0 · · · bn
+allow to specify the effect of nutrients and antibiotics on each species. Furthermore, the off-diagonal entries
+of the matrix A describe how the different species of bacteria interact with one another, i.e., if they promote or
+impair each others growth. While in principle the entries of the matrices can have any form, i.e., be a function
+of any parameters or variables of the model, for simplicity reasons a zero-order Taylor series, i.e., a constant, is
+chosen to represent the interactions with nutrients and antibiotics. Hereby, a positive value indicates an equally
+favorable, a negative value an equally disadvantageous interaction. The interaction between two species is
+consequently modeled with a single scalar with no need for additional state variables as in [26]. This modeling
+choice vastly decreases simulation time.
+    The dissipated energy is modeled as
+                                                         ∂ s
+                                                Ddiss :=       · ξ.                                           (13)
+                                                          ∂ ξ̇
+For more information on modeling assumptions concerning energy dissipation in the Hamiltonian framework,
+see [9]. The dissipation function is modeled as
+
+                                                 ˙ φ̇) =   1 ˙             1
+                                    s
+                                        =   s
+                                                (φ̄,         φ̄ · η · φ̄˙ + φ̇ · η · φ̇.                       (14)
+                                                           2               2
+A continuum multi-species bacterial growth model                                                              Page 5 of 13 164
+
+
+with the diagonal viscosity matrix
+                                                  ⎛                   ⎞
+                                                   η1 0 · · · 0
+                                                  ⎜ 0 η2 · · · 0 ⎟
+                                                η=⎜                   ⎟
+                                                  ⎝ ... ... . . . ... ⎠ .                                                (15)
+                                                        0 0 · · · ηn
+In this context, the viscosity parameter η does not describe a fluid mechanical property of the biomass, but
+rather acts as a kinetic resistance governing the rate of evolution. Biologically, ηi represents the metabolic
+inertia of the i-th species. A high value corresponds to a species that reacts slowly to environmental changes
+(e.g., due to complex metabolic switching), whereas a low value describes a rapidly adapting population. This
+ensures that the population growth follows a physical timescale rather than occurring instantaneously. The
+dissipation function is the sum of two parts. The first part describes the dissipation due to the change in living
+bacteria species. Due to the living species being the product of the two state variables φ̄i = φi ψi , the rates
+of the internal variables φ̇ and ψ̇ are directly linked together. This allows for complicated, non-linear effects
+in the model. Using only the first term of the dissipation function would lead to a rank-deficient system of
+differential equations. The second term depending only on the rate of the volume fraction of each species leads
+to a full rank. The overall resulting behavior is rate-dependent.
+    By evaluating Hamilton’s principle, the strong form of the evolution equations are found as
+                                             ⎛                    ⎞
+                                                          n−1
+            δφ H = 0 ∀δφ ⇔ 0 = −c ψi ⎝aii φ̄i +                ai j φ̄ j ⎠ + ηi (φ̇i ψi2 + φ̄i ψ̇i + φ̇i ) + γ          (16)
+                                                           j
+                                               ⎛                      ⎞
+                                                         n−1
+           δψ H = 0 ∀δψ ⇔ 0 = −c φi ⎝aii φ̄i +                 ai j φ̄ j ⎠ + α  ψi bi + ηi (ψ̇i φi2 + φ̄i φ̇i ) + γ    (17)
+                                                           j
+                                        n
+            δγ H = 0 ∀δγ ⇔ 0 =               φl − 1                                                                      (18)
+                                       l=0
+
+The variable describing the empty space φ0 is described through the constraint in Eq. (9). The model was
+implemented using Wolfram Mathematica [7] in an implicit framework on a material point. Therefore, the
+governing Eqs. (16), (17) and (18) are solved using Newton’s method at each time step. The volume constraint
+Eq. (9) is enforced by means of a Lagrange multiplicator γ . To enforce φi , ψi ∈ [0, 1], the barrier method is
+used with a penalty parameter K p,i = ηi 10−4 [22].
+
+
+3 Numerical results
+
+Several numerical experiments were performed to investigate the behavior of the model. First, a model with two
+species was chosen. This minimal model helps in understanding the interaction between different variables.
+For further investigation, a four species model was implemented. The four species model allows for a more
+thorough investigation of the model as well as showing more complex behaviors. The time step size t is set
+constant to t = 10−4 Time throughout the numerical experiments. The unit of time can be chosen to represent
+an appropriate timescale for bacterial growth and has to be determined in subsequent in vitro experiments.
+
+
+3.1 Two species
+
+For the two species model, five cases are investigated. They differ in the parameters listed in Table 1. It should
+be noted that the parameters chosen in this numerical study are representative, normalized values intended to
+investigate the qualitative behavior of the model stability and interaction patterns, rather than fitting a specific
+biological organism.
+     The results from the first test case are depicted in Fig. 1a and b. Figure 1a shows the plot of the state variables
+φ and ψ over time. The volume of each species φi is given with a solid colored line. The empty space φ0
+is shown in black. The dashed line represents the percentage of living bacteria of a given species ψi . In this
+first test case, the only interaction between both species is due to the limited amount of space available, since
+164 Page 6 of 13                                                                                                                                                                         F. Klempt et al.
+
+
+Table 1 Values for the parameters of the simulations performed with two species present. The variables describing the nutrients
+c and the antibiotics α  are left constant at c = 100 mJ3 and α  = 10 mJ3
+
+Variable                      Unit                            Case 1                     Case 2                    Case 3                     Case 4                         Case 5                   Case 6
+a11                           [-]                             2                          1                         1                          1                              1                        1
+a12                           [-]                             0                          0                         1                          0                              0                        -1
+a22                           [-]                             1                          1                         1                          1                              1                        1
+b1                            [-]                             0                          0                         0                          1                              1                        0
+b2                            [-]                             0                          0                         0                          2                              2                        0
+η1                            [ m Tkgime ]                    1                          1                         1                          1                              1                        1
+
+η2                            [ m Tkgime ]                    1                          2                         2                          2                              2                        2
+initial φ1                    [-]                             0.2                        0.2                       0.2                        0.2                            0.25                     0.2
+initial φ2                    [-]                             0.2                        0.2                       0.2                        0.3                            0.3                      0.2
+
+
+            1                                                                                                 1
+
+           0.8                                                                                               0.8
+
+           0.6                                                                                               0.6
+                                                                                                φ1
+   Value
+
+
+
+
+                                                                                                φ2   Value
+           0.4                                                                                               0.4
+                                                                                                φ0
+           0.2                                                                                  ψ1           0.2
+                                                                                                ψ2                                                                                                    φ1 ψ1
+            0                                                                                  sum            0                                                                                       φ2 ψ2
+                 50     100     150   200       250     300       350   400     450      500                           50      100     150   200      250     300      350       400   450      500
+                                             time steps                                                                                            time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 1
+  ing cells ψi of test case 1
+Fig. 1 Results of the test case with two species with different growth parameters. The species only interact through the space
+available and don’t enhance each other’s growth. Both species are fully resistant to antibiotics
+
+
+            1                                                                                                 1
+
+
+           0.8                                                                                               0.8
+
+           0.6                                                                                               0.6
+                                                                                                φ1
+   Value
+
+
+
+
+                                                                                                     Value
+
+
+
+
+           0.4                                                                                  φ2           0.4
+                                                                                                φ0
+           0.2                                                                                  ψ1           0.2
+                                                                                                ψ2                                                                                                    φ1 ψ1
+            0                                                                                  sum            0                                                                                       φ2 ψ2
+                  200         400     600         800         1,000     1,200    1,400                                   200         400     600        800         1,000    1,200      1,400
+                                             time steps                                                                                            time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 2
+  ing cells ψi of test case 2
+Fig. 2 Results of the test case with two species with different viscosities. The species only interact through the space available
+and do not enhance each other’s growth. Both species are fully resistant to antibiotics
+
+
+
+the off-diagonal terms of the growth parameter matrix A are set to zero. The diagonal entries of the growth
+parameters matrix are chosen to be a11 > a22 . This results in a faster growth rate of species 1. Once the empty
+space converges to zero, kinks in the graphs emerge and the volume fraction φ2 drops down rapidly. As soon
+as the volume fraction of species 2 reaches a value close to zero, its percentage of living cells ψ2 drops down.
+Similar effects can be observed in the results of test case 2 in Fig. 2a and b. In this test case, the viscosity of the
+species ηi differs. A higher viscosity leads to a slower reaction of the bacterial species. The simulation time
+is thus elongated to be 1500 time steps. The aforementioned model behaviors from case 1 are also visible and
+even more prominent. While in case 1 the amount of species 2 φ2 is already at a low percentage of around 10%
+and still declining before the empty space reaches zero. In case 2, φ2 is at roughly 30% and ascending. The
+different amounts of species 2 present, result in different reaction from species 1. In the first case, the slope of
+the φ1 -curve changes only slightly, while in case 2 a prominent kink is observable. The drop in the percentage
+of living bacteria of species 2 ψ2 is comparable for both cases, as is the converged steady state solution.
+A continuum multi-species bacterial growth model                                                                                                                             Page 7 of 13 164
+
+
+           1                                                                                              0.6
+
+          0.8                                                                                             0.5
+
+          0.6
+                                                                                             φ1
+  Value
+
+
+
+
+                                                                                                  Value
+                                                                                                          0.4
+          0.4                                                                                φ2
+                                                                                             φ0           0.3
+          0.2                                                                                ψ1
+                                                                                             ψ2                                                                                              φ1 ψ1
+           0                                                                                sum           0.2
+                                                                                                                                                                                             φ2 ψ2
+                50     100     150   200      250     300      350   400     450      500                       50     100     150   200      250     300      350   400      450      500
+                                           time steps                                                                                      time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 3
+  ing cells ψi of test case 3
+Fig. 3 Results of the test case with two species. The species interact and enhance each others growth. Both species are fully
+resistant to antibiotics
+
+           1                                                                                               1
+
+
+          0.8                                                                                             0.8
+
+
+          0.6                                                                                             0.6
+                                                                                             φ1
+  Value
+
+
+
+
+                                                                                                  Value
+          0.4                                                                                φ2           0.4
+                                                                                             φ0
+          0.2                                                                                ψ1           0.2
+                                                                                             ψ2                                                                                              φ1 ψ1
+           0                                                                                sum            0                                                                                 φ2 ψ2
+                 200         400     600        800         1,000    1,200    1,400                              200         400     600        800         1,000    1,200     1,400
+                                           time steps                                                                                      time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 4
+  ing cells ψi of test case 4
+Fig. 4 Results of the test cases with sensitivity of antibiotics. The initial volume fractions of species φi differ. Species 1 starts
+with an initial volume fraction of φ1 = 0.2, species 2 with φ2 = 0.3
+
+           1                                                                                               1
+
+
+          0.8                                                                                             0.8
+
+
+          0.6                                                                                             0.6
+                                                                                             φ1
+  Value
+
+
+
+
+                                                                                                  Value
+
+
+
+
+          0.4                                                                                φ2           0.4
+                                                                                             φ0
+          0.2                                                                                ψ1           0.2
+                                                                                             ψ2                                                                                              φ1 ψ1
+           0                                                                                sum            0                                                                                 φ2 ψ2
+                 200         400     600        800         1,000    1,200    1,400                              200         400     600        800         1,000    1,200     1,400
+                                           time steps                                                                                      time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 5
+  ing cells ψi of test case 5
+Fig. 5 Results of the test cases with sensitivity of antibiotics. The initial volume fractions of species φi differ. Species 1 starts
+with an initial volume fraction of φ1 = 0.2, species 2 with φ2 = 0.3
+
+
+
+When interactions between the species are enabled via ai j  = 0 for i  = j, as it is in test case 3, the survival of
+the other species is favorable for both species. An equilibrium between the two species emerges, where none
+gets extinguished. This can be observed in the result of test case 3 in Fig. 3a and b.
+    For antibiotics sensitive bacterial species, longer simulation times are necessary as well. It can be observed
+in Figs. 4a and 5a, that the percentage of living species ψi drops initially. Although the sensitivity for antibiotics
+of species 2 is higher than that of species 1, due to the higher initial condition, species 2 can prevail over species
+1 in the fourth test case. If the difference of the initial amount of bacteria is closer, as it is in test case 5, it is not
+enough and species 1 prevails instead. This can be seen in Fig. 5a. The amount of living bacteria of each species
+φ̄i = φi ψi can be observed for both cases in Figs. 4b and 5b. In all cases above, the interaction between different
+species is modeled with a positive integer to model cooperative behavior. To model competition, a negative
+value for the off-diagonal entries of the interaction matrix A can be used. The results of this simulation are
+shown in Fig. 6. It can be observed, that the slower reacting species 2, i.e., the species with a higher viscosity ηi ,
+comes out dominant. While a faster reaction is advantageous when reacting to nutrients, it can be detrimental
+when reacting negatively to another species. Early in the simulation, the percentage of living bacteria of species
+164 Page 8 of 13                                                                                                                                           F. Klempt et al.
+
+
+            1                                                                                     1
+
+
+           0.8                                                                                   0.8
+
+
+           0.6                                                                                   0.6
+                                                                                    φ1
+   Value
+
+
+
+
+                                                                                         Value
+           0.4                                                                      φ2           0.4
+                                                                                    φ0
+           0.2                                                                      ψ1           0.2
+                                                                                    ψ2                                                                             φ1 ψ1
+            0                                                                      sum            0                                                                φ2 ψ2
+                 200   400     600          800     1,000   1,200   1,400                                  200   400   600        800      1,000   1,200   1,400
+                                       time steps                                                                            time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 6
+  ing cells ψi of test case 6
+Fig. 6 Results of the test cases with negative entry in the growth coefficient matrix
+
+Table 2 Values for the parameters of the simulations performed with four species present
+
+Variable                     Unit                   Case 1                  Case 2                     Case 3                             Case 4
+b1                           [–]                    0.4                     0.4                        0.4                                10
+b2                           [–]                    0.3                     0.3                        0.3                                2
+b3                           [–]                    0.2                     0.2                        0.2                                1
+b4                           [–]                    0.1                     0.1                        0.1                                0.01
+initial φ1                   [–]                    0.02                    0.02                       0.02                               0.02
+initial φ2                   [–]                    0.02                    0.02                       0.02                               0.02
+initial φ3                   [–]                    0.02                    0.02                       0.02                               0.02
+initial φ4                   [–]                    0.02                    0.2                        0.02                               0.02
+nutrients c                 [ mJ3 ]                100                     100                        50 + 50 Sin(500t)                  100
+antibiotics α               [ mJ3 ]                10                      10                         10                                 Piecewise {0, {100, t > 500}}
+
+
+
+1 ψ1 drops of faster than the the living percentage of species 2 ψ2 . This leads to a difference in volume growth,
+where the species 2 with more living cells flourishes. The drop off in percentage of living cells is different
+from the experiment, where no interactions is present (c.f. Figure 1). There is no negative part in the driving
+force in these simulation, thus the percentage of living cells ψi stays at a relatively high level.
+Additional simulation with varying viscosities ηi were performed. The results are listed in Appendix 1.
+
+
+3.2 Four species
+
+In theory, an arbitrary number of species can be inserted into the model. For this study, a bacterial population
+consisting of four species is considered. The growth parameter matrix A stays the same throughout all numerical
+experiments in this chapter, as do the viscosities ηi , only the antibiotic sensitivity parameters bi as well as the
+nutrient concentration c and the concentration of antibiotics α  are changed. The values for the symmetric
+growth coefficient matrix A and the diagonal viscosity matrix η are
+                                                         ⎛        ⎞
+                                                          1555
+                                                      1 ⎜5 1 3 3⎟
+                                                A= ⎝              ⎠                                            (19)
+                                                      2 5312
+                                                          5321
+and                                                            ⎛           ⎞
+                                                                0.8 0 0 0
+                                                               ⎜ 0 1.0 0 0 ⎟ kg
+                                                             η=⎝                    ,
+                                                                 0 0 1.5 0 ⎠ m Time
+                                                                                                                                                                     (20)
+                                                                 0 0 0 2.0
+respectively. The values for the remaining parameters of the four cases investigated are listed in Table 2.
+In Figs. 7 and 8, the results can be seen. The first case shows all four species with the same initial amount of
+bacteria. Since the antibiotic sensitivity differs in all four species, with species 1 being the most sensitive and
+species 4 being the least sensitive, the initial drop in living percentage of each species ψi is also different.
+Species 4 is the only species with a minimum of 20% of its cells still living. Due to the greater growing
+A continuum multi-species bacterial growth model                                                                                                                                 Page 9 of 13 164
+
+
+           1                                                                                     φ1
+                                                                                                              0.4
+                                                                                                 φ2
+          0.8                                                                                    φ3
+                                                                                                              0.3
+                                                                                                 φ4
+          0.6
+                                                                                                 φ0
+  Value
+
+
+
+
+                                                                                                      Value
+                                                                                                              0.2
+          0.4                                                                                    ψ1
+                                                                                                 ψ2                                                                                                φ1 ψ1
+          0.2                                                                                    ψ3           0.1                                                                                  φ2 ψ2
+                                                                                                 ψ4                                                                                                φ3 ψ3
+           0                                                                                    sum            0                                                                                   φ4 ψ4
+                50         100    150   200       250     300    350    400      450      500                       50         100    150   200      250     300    350    400      450      500
+                                               time steps                                                                                         time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 1
+  ing cells ψi of test case 1
+Fig. 7 Result of the first test case with four species
+
+           1                                                                                     φ1
+                                                                                                              0.4
+                                                                                                 φ2
+          0.8                                                                                    φ3
+                                                                                                 φ4           0.3
+          0.6
+                                                                                                 φ0
+  Value
+
+
+
+
+                                                                                                      Value
+          0.4                                                                                    ψ1           0.2
+
+                                                                                                 ψ2                                                                                                φ1 ψ1
+          0.2                                                                                    ψ3           0.1                                                                                  φ2 ψ2
+                                                                                                 ψ4                                                                                                φ3 ψ3
+           0                                                                                    sum            0                                                                                   φ4 ψ4
+                50         100    150   200       250     300    350    400      450      500                       50         100    150   200      250     300    350    400      450      500
+                                               time steps                                                                                         time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 2
+  ing cells ψi of test case 2
+Fig. 8 Result of the second test case with four species. The initial volume fractions of species φi differ. Species 1, 2 and 3 start
+with an initial volume fraction of φ1 = φ2 = φ3 = 0.02, species 4 starts with φ4 = 0.2
+
+          100                                                                                                 100
+
+           80                                                                                                  80
+
+           60                                                                                                  60
+  Value
+
+
+
+
+                                                                                                      Value
+
+
+
+
+           40                                                                                                  40
+
+           20                                                                                                  20
+                                                                                                 c                                                                                                   c
+            0                                                                                    α              0                                                                                    α
+                     200         400     600          800       1,000    1,200         1,400                             200         400     600         800       1,000    1,200         1,400
+                                                time steps                                                                                         time steps
+
+
+          (a) Nutrients and antibiotics for test case 3                                                       (b) Nutrients and antibiotics for test case 4
+Fig. 9 Functions with which nutrients and antibiotics are applied in test cases 3 and 4
+
+
+parameter of the first species, however, in the course of the simulation, the first species takes over as the
+dominant species. The different viscosities ηi determine how fast each species grows. This can be seen in
+Figs. 7a and 8a, where the first species’ gradient in the beginning is much greater than that of each other
+species. The second case investigated here only differs in the initial conditions, i.e., the fourth species gets a
+head start in the simulation. Since there is now less free space available to all species, the equilibrium between
+all species is reached earlier. In addition to that, by the last time step, species 4 still has more volume than
+species 3, which, in the prior experiment, had more. For the nutrients, as well as the antibiotics, an arbitrary
+function can be implemented. In the following test case, the nutrients were applied with a Sine function (see
+Fig. 9a). The results can be seen in Fig. 10a and b. The general shape of the results roughly mimics these from
+Fig. 7a, with the exception of the fluctuation due to little (or no) nutrients in the system.
+     For the final case investigated, the sensitivity towards antibiotics was adjusted. The first species now has
+a high sensitivity of b1 = 10, while the fourth species is almost resistant against antibiotics with b4 = 0.01.
+After one-third of the simulation time, antibiotics are inserted into the system (see Fig. 9b). Every species,
+except the resistant species 4, almost immediately dies, as can be observed in Fig. 11a and b. After the insertion
+of antibiotics, resistant species 4 takes over the space which was inhabited by the other species prior to the
+insertion. The second species, which is not as sensitive to antibiotics but has a smaller viscosity than species 4,
+i.e. η2 <η4 , and is thus more reactive to changes in the system, regains some space but is ultimately dominated
+164 Page 10 of 13                                                                                                                         F. Klempt et al.
+
+
+           1                                                            φ1
+                                                                                     0.4
+                                                                        φ2
+          0.8                                                           φ3
+                                                                                     0.3
+                                                                        φ4
+          0.6
+                                                                        φ0
+  Value
+
+
+
+
+                                                                             Value
+                                                                                     0.2
+          0.4                                                           ψ1
+                                                                        ψ2                                                                        φ1 ψ1
+          0.2                                                           ψ3           0.1                                                          φ2 ψ2
+                                                                        ψ4                                                                        φ3 ψ3
+           0                                                           sum            0                                                           φ4 ψ4
+                200   400   600        800     1,000   1,200   1,400                       200   400   600        800     1,000   1,200   1,400
+                                  time steps                                                                 time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 3
+  ing cells ψi of test case 3
+Fig. 10 Result of the third test case with four species. Nutrients are applied with a sine function
+
+
+           1                                                            φ1            1
+
+                                                                        φ2           0.8
+          0.8                                                           φ3
+                                                                        φ4           0.6
+          0.6
+                                                                        φ0
+  Value
+
+
+
+
+                                                                             Value
+          0.4                                                           ψ1           0.4
+                                                                        ψ2                                                                        φ1 ψ1
+          0.2                                                           ψ3           0.2                                                          φ2 ψ2
+                                                                        ψ4                                                                        φ3 ψ3
+           0                                                           sum            0                                                           φ4 ψ4
+                200   400   600        800     1,000   1,200   1,400                       200   400   600        800     1,000   1,200   1,400
+                                  time steps                                                                 time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 4
+  ing cells ψi of test case 4
+Fig. 11 Result of the forth test case with four species. Antibiotics are applied with a step function at time step 500
+
+
+
+by the fourth species. In this example, cooperative behavior is not the dominating factor of species survival.
+The resistance against antibiotics is more important.
+
+
+
+4 Conclusion and outlook
+
+In this work, a new multi-species model for growth in bacterial populations is presented. In principle, an
+arbitrary number of species can be described using this model. For the description, one internal variable is
+needed to describe the empty space as well as two additional internal variables for each species. In this work,
+bacteria species are modeled with the variables of the volume fraction of all, living and dead, bacterial cells φ,
+as well as the percentage of living cells inside the volume fraction ψ. This leads to the amount of living cells
+given by φ̄ = φψ. The interactions between each species are modeled with energies.
+    A dissipated function is introduced as a function of the living bacteria φ̄ and thus a product of the internal
+state variables, leading to a coupled system of evolution equations, capable of non-linear effects. The free
+energy density is modeled with little assumptions concerning the growth and death of bacteria. Nevertheless,
+the model is capable of producing complex results. Many behaviors as observed in multi-species bacterial
+interactions can be modeled. Additionally, the kinetics of bacterial growth is modeled. The reduced number
+of parameters of the model simplifies the pending validation of the model with in vitro experiments. The
+model is also suitable for further investigation of bacterial behavior, for example, accounting for stochastic
+properties. It can be used in combination with existing, non-local biofilm growth models to depict the complex
+interactions between different species of bacteria as well as structural properties of macroscopic biofilms
+(spatial heterogeneity) and the suspended substances within.
+
+Acknowledgements The authors highly acknowledge the funding by the German Research Foundation (Deutsche Forschungs-
+gemeinschaft, DFG) through the project grant SFB/TRR-298-SIIRI – Project-ID 426335750. Funded by the European Union
+(ERC, Gen-TSM, project number 101124463). Views and opinions expressed are however those of the author(s) only and do
+not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European
+Union nor the granting authority can be held responsible for them.
+A continuum multi-species bacterial growth model                                                                                      Page 11 of 13 164
+
+
+Author contribution F.K. and H.G. wrote the main manuscript. F.K., H.G. and M.S. developed the material model. M.S.
+implemented the material model. F.K. and H.G. prepared the results. M.S. and P.J. supervised the project. All authors reviewed
+the manuscript
+
+Funding Open Access funding enabled and organized by Projekt DEAL.
+
+Data Availability No datasets were generated or analysed during the current study.
+
+Declarations
+
+
+Conflict of interest The authors declare no conflict of interest.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use,
+sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original
+author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The images or other
+third party material in this article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit
+line to the material. If material is not included in the article’s Creative Commons licence and your intended use is not permitted
+by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To
+view a copy of this licence, visit http://creativecommons.org/licenses/by/4.0/.
+
+
+Appendix 1
+
+Additional simulation were performed to further investigate the behavior of the viscosities ηi . The simulations provided here are
+based on the cases 4 and 5 for the two species model respectively.
+  See Figs. 12, 13, 14, 15 and Table 3.
+
+
+           1                                                                          1
+
+
+          0.8                                                                        0.8
+
+
+          0.6                                                                        0.6
+                                                                        φ1
+  Value
+
+
+
+
+                                                                             Value
+
+
+
+
+          0.4                                                           φ2           0.4
+                                                                        φ0
+          0.2                                                           ψ1           0.2
+                                                                        ψ2                                                                        φ1 ψ1
+           0                                                           sum            0                                                           φ2 ψ2
+                200   400   600        800     1,000   1,200   1,400                       200   400   600        800     1,000   1,200   1,400
+                                  time steps                                                                 time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 4
+  ing cells ψi of test case 4
+Fig. 12 Results of the additional case with two species based on test case 4 with varying viscosites. The viscosities have been
+switched compared to case 4
+
+
+
+
+           1                                                                          1
+
+
+          0.8                                                                        0.8
+
+
+          0.6                                                                        0.6
+                                                                        φ1
+  Value
+
+
+
+
+                                                                             Value
+
+
+
+
+          0.4                                                           φ2           0.4
+                                                                        φ0
+          0.2                                                           ψ1           0.2
+                                                                        ψ2                                                                        φ1 ψ1
+           0                                                           sum            0                                                           φ2 ψ2
+                200   400   600        800     1,000   1,200   1,400                       200   400   600        800     1,000   1,200   1,400
+                                  time steps                                                                 time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 5
+  ing cells ψi of test case 5
+Fig. 13 Results of the additional case with two species based on test case 5 with varying viscosites. The viscosities have been
+switched compared to case 5
+164 Page 12 of 13                                                                                                                                   F. Klempt et al.
+
+
+            1                                                                               1
+
+
+           0.8                                                                             0.8
+
+           0.6                                                                             0.6
+                                                                              φ1
+   Value
+
+
+
+
+                                                                                   Value
+           0.4                                                                φ2           0.4
+                                                                              φ0
+           0.2                                                                ψ1           0.2
+                                                                              ψ2                                                                                φ1 ψ1
+            0                                                                sum            0                                                                   φ2 ψ2
+                 200   400    600        800     1,000   1,200       1,400                           200   400   600        800     1,000   1,200   1,400
+                                    time steps                                                                         time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 4
+  ing cells ψi of test case 4
+Fig. 14 Results of the additional case with two species based on test case 4 with varying viscosities. The viscosities have been
+set equal
+
+            1                                                                               1
+
+
+           0.8                                                                             0.8
+
+           0.6                                                                             0.6
+                                                                              φ1
+   Value
+
+
+
+
+                                                                                   Value
+           0.4                                                                φ2           0.4
+                                                                              φ0
+           0.2                                                                ψ1           0.2
+                                                                              ψ2                                                                                φ1 ψ1
+            0                                                                sum            0                                                                   φ2 ψ2
+                 200   400    600        800     1,000   1,200       1,400                           200   400   600        800     1,000   1,200   1,400
+                                    time steps                                                                         time steps
+
+
+  (a) Volume fractions φi and percentage of liv- (b) Amount of living cells φ̄i of test case 5
+  ing cells ψi of test case 5
+Fig. 15 Results of the additional case with two species based on test case 5 with varying viscosites. The viscosities have been set
+equal
+
+Table 3 Values for the parameters of the additional simulations performed with two species present. The variables describing the
+nutrients c and the antibiotics α  are left constant at c = 100 mJ3 and α  = 10 mJ3
+
+Variable                     Unit                                Case 4                         Case 5                      Case 4                      Case 5
+a11                          [–]                                 1                               1                            1                             1
+a12                          [–]                                 0                               0                            0                             0
+a22                          [–]                                 1                               1                            1                             1
+b1                           [–]                                 1                               1                            1                             1
+b2                           [–]                                 2                               2                            2                             2
+η1                           [ m Tkgime ]                        2                               2                            1                             1
+
+η2                           [ m Tkgime ]                        1                               1                            1                             1
+initial φ1                   [–]                                 0.2                             0.25                         0.2                           0.25
+initial φ2                   [–]                                 0.3                             0.3                          0.3                           0.3
+
+
+
+References
+
+1. Alpkvista, E., Klapper, I.: A multidimensional multispecies continuum model for heterogeneous biofilm development. Bull.
+   Math. Biol. 69, 765–789 (2007)
+2. Blakes, J., Twycross, J., Romero-Campero, F.J., Krasnogor, N.: The infobiotics workbench: an integrated in silico modelling
+   platform for systems and synthetic biology. Bioinformatics 27(23), 3323–3324 (2011)
+3. Chaudhry, M.A.S., Beg, S.A.: A review on the mathematical modeling of biofilm processes: advances in fundamentals of
+   biofilm modeling. Chem. Eng. Technol. Ind. Chem. Plant Equip. Process Eng. Biotechnol. 21(9), 701–710 (1998)
+4. Epstein, M., Maugin, G.A.: Thermomechanics of volumetric growth in uniform bodies. Int. J. Plast 16(7–8), 951–978 (2000)
+5. Feng, D., Neuweiler, I., Nogueira, R., Nackenhorst, U.: Modeling of symbiotic bacterial biofilm growth with an example of
+   the Streptococcus-veillonella sp. system. Bull. Math. Biol. 83(5), 48 (2021)
+6. Flemming, H.-C., Wingender, J.: The biofilm matrix. Nat. Rev. Microbiol. 8(9), 623–633 (2010)
+7. Wolfram Research. Inc: Mathematica, Version 14.2. Champaign, IL, Champaign (2024)
+8. James, G.A., Beaudette, L., Costerton, J.W.: Interspecies bacterial interactions in biofilms. J. Ind. Microbiol. Biotechnol.
+   15(4), 257–262 (1995)
+9. Junker, P., Balzani, D.: An extended hamilton principle as unifying theory for coupled problems and dissipative microstructure
+   evolution. Continuum Mech. Thermodyn. 33(4), 1931–1956 (2021)
+A continuum multi-species bacterial growth model                                                              Page 13 of 13 164
+
+
+10. Klapper, I., Dockery, J.: Mathematical description of microbial biofilms. SIAM Rev. 52(2), 221–265 (2010)
+11. Klempt, F., Soleimani, M., Wriggers, P., Junker, P.: A hamilton principle-based model for diffusion-driven biofilm growth.
+    Biomech. Model. Mechanobiol. 1, 1–23 (2024)
+12. Kreft, J.-U., Wimpenny, J.W.: Effect of eps on biofilm structure and function as revealed by an individual-based model of
+    biofilm growth. Water Sci. Technol. 43(6), 135 (2001)
+13. Kreft, J.-U., Booth, G., Wimpenny, J.W.T.: Bacsim, a simulator for individual-based modelling of bacterial colony growth.
+    Microbiology 144(12), 3275–3287 (1998)
+14. Kreft, J.-U., Picioreanu, C., van Loosdrecht, M.C.M., Wimpenny, J.W.T.: Individual-based modelling of biofilms. Microbi-
+    ology 147(11), 2897–2912 (2001)
+15. Lardon, L.A., Merkey, B.V., Martins, S., Dötsch, A., Picioreanu, C., Kreft, J.-U., Smets, B.F.: idynomics: next-generation
+    individual-based modelling of biofilms. Environ. Microbiol. 13(9), 2416–2434 (2011)
+16. Li, B., Taniguchi, D., Gedara, J.P., Gogulancea, V., Gonzalez-Cabaleiro, R., Chen, J., McGough, A.S., Ofiteru, I.D., Curtis,
+    T.P., Zuliani, P.: Nufeb: A massively parallel simulator for individual-based modelling of microbial communities. PLoS
+    Comput. Biol. 15(12), e1007125 (2019)
+17. Lubarda, V.A., Hoger, A.: On the mechanics of solids with a growing mass. Int. J. Solids Struct. 39(18), 4627–4664 (2002)
+18. Marsh, P.D.: Dental plaque: biological significance of a biofilm and community life-style. J. Clin. Periodontol. 32, 7–15
+    (2005)
+19. Martin, B., Tamanai-Shacoori, Z., Bronsard, J., Ginguené, F., Meuric, V., Mahé, F., Bonnaure-Mallet, M.: A new mathematical
+    model of bacterial interactions in two-species oral biofilms. PLoS ONE 12(3), e0173153 (2017)
+20. Martin, K.J., Picioreanu, C., Nerenberg, R.: Assessing microbial competition in a hydrogen-based membrane biofilm reactor
+    (mbfr) using multidimensional modeling. Biotechnol. Bioeng. 112(9), 1843–1853 (2015)
+21. Naylor, J., Fellermann, H., Ding, Y., Mohammed, W.K., Jakubovics, N.S., Mukherjee, J., Biggs, C.A., Wright, P.C., Krasnogor,
+    N.: Simbiotics: a multiscale integrative platform for 3d modeling of bacterial populations. ACS Synth. Biol. 6(7), 1194–1210
+    (2017)
+22. Nesterov, Y., et al.: Lectures on Convex Optimization, vol. 137. Springer (2018)
+23. Picioreanu, C., Kreft, J.-U., Van Loosdrecht, M.C.: Particle-based multidimensional multispecies biofilm model. Appl. Env-
+    iron. Microbiol. 70(5), 3024–3040 (2004)
+24. Picioreanu, C., Xavier, J., van Loosdrecht, M.C.: Advances in mathematical modeling of biofilm structure. Biofilms 1(4),
+    337–349 (2004)
+25. Rahman, K.A., Sudarsan, R., Eberl, H.J.: A mixed-culture biofilm model with cross-diffusion. Bull. Math. Biol. 77(11),
+    2086–2124 (2015)
+26. Soleimani, M., Szafranski, S.P., Qu, T., Mukherjee, R., Stiesch, M., Wriggers, P., Junker, P.: Numerical and experimental
+    investigation of multi-species bacterial co-aggregation. Sci. Rep. 13(1), 11839 (2023)
+27. Tang, Y., Liu, H.: Modeling multidimensional and multispecies biofilms in porous media. Biotechnol. Bioeng. 114(8), 1679–
+    1687 (2017)
+28. Tang, Y., Valocchi, A.J.: An improved cellular automaton method to model multispecies biofilms. Water Res. 47(15), 5729–
+    5742 (2013)
+29. Wanner, O., Gujer, W.: A multispecies biofilm model. Biotechnol. Bioeng. 28(3), 314–328 (1986)
+30. Whitman, W.B., Coleman, D.C., Wiebe, W.J.: Prokaryotes: the unseen majority. Proc. Natl. Acad. Sci. 95(12), 6578–6583
+    (1998)
+31. Xavier, J.B., Picioreanu, C., van Loosdrecht, M.C.M.: A modelling study of the activity and structure of biofilms in biological
+    reactors. Biofilms 1(4), 377–391 (2004)
+32. Xavier, J.B., Picioreanu, C., Van Loosdrecht, M.C.M.: A framework for multidimensional modelling of activity and structure
+    of multispecies biofilms. Environ. Microbiol. 7(8), 1085–1103 (2005)
+
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional
+affiliations.
+

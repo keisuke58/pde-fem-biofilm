@@ -92,6 +92,8 @@ at the university, which is cheap. Schedule: the PDF may be submitted up to 24 h
 printing in December). Plan: PDF ready around 13 Nov anyway; print in Hannover on 14-15 Dec and hand the copies over at the
 colloquium (fallback 17-18 Dec, before the Christmas closures). Reply sent 20 Oct: asked whether the PDF counts as the
 formal submission or the examination office / Prof. Junker must be told, and again for comments on the draft.
+**Answer (20 Oct, 18:39):** "you only need to send a PDF to me. that's it". The PDF to Dr. Soleimani is the whole
+submission; no examination office, no separate notice to Prof. Junker.
 
 Open with Dr. Soleimani (19 Oct):
 - his comments on the 9 Oct draft (asked for by 15 Oct) have not arrived;
