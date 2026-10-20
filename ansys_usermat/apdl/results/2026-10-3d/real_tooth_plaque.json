@@ -196,7 +196,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004924162875332939,
+     "film without fissures p mean": 0.004474857458835627
     },
     "r1t": {
      "film vM mean": 0.0056117216414907885,
@@ -283,7 +285,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004904449904633959,
+     "film without fissures p mean": 0.004367328387371991
     },
     "r2t": {
      "film vM mean": 0.00578140857076855,
@@ -370,7 +374,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004981796029971592,
+     "film without fissures p mean": 0.0036109406746665006
     }
    },
    "video": {
@@ -550,7 +556,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004596410268177454,
+     "film without fissures p mean": 0.004200322630681754
     },
     "r1t": {
      "film vM mean": 0.005305319093334031,
@@ -637,7 +645,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004571585276477954,
+     "film without fissures p mean": 0.004085532256168842
     },
     "r2t": {
      "film vM mean": 0.005470286174332243,
@@ -724,7 +734,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.004641746446737825,
+     "film without fissures p mean": 0.0033697648490339013
     }
    }
   },
@@ -885,7 +897,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.002330347710398677,
+     "film without fissures p mean": 0.002243608708079609
     },
     "r1t": {
      "film vM mean": 0.002294957593685635,
@@ -972,7 +986,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.0022932481562242964,
+     "film without fissures p mean": 0.002166121519334157
     },
     "r2t": {
      "film vM mean": 0.0023273753451996536,
@@ -1059,7 +1075,9 @@
       "rigid": true,
       "cut boundary": false,
       "region": false
-     }
+     },
+     "film without fissures vM mean": 0.002323487690207709,
+     "film without fissures p mean": 0.001747069171888201
     }
    },
    "video": {
@@ -1102,5 +1120,36 @@
     "seconds render": 337.1023042201996
    }
   }
+ },
+ "clsm aggregates": {
+  "source": "CLSM/FISH stacks of the in-vitro biofilms (CH, DH), N. Heine et al., processed in nife_intern; aggregates over the 8 stacks of day >= 6, threshold 0.5 (0.25) x the 95th percentile",
+  "cov of the local thickness": [
+   0.26,
+   0.16
+  ],
+  "lateral correlation length um": [
+   14,
+   18
+  ],
+  "correlation length / mean column thickness": [
+   1.1,
+   0.7
+  ],
+  "porosity inside the occupied band": [
+   0.46,
+   0.36
+  ],
+  "lateral coverage": [
+   0.97,
+   1.0
+  ],
+  "correlation length of the column signal um": 18,
+  "voxel um": [
+   1.44,
+   1.44,
+   2.0
+  ],
+  "field of view um": 184,
+  "note": "in-vitro 21-day films on titanium, about 40 um thick; only relative values transferred"
  }
 }
