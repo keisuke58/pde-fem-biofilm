@@ -126,3 +126,12 @@ python ansys_usermat/apdl/anim_real_tooth_3d.py            # full run, about 13 
 python ansys_usermat/apdl/anim_real_tooth_3d.py --png-only # re-render the last frame from the cache
 ```
 Needs pyvista (off screen), imageio-ffmpeg, scipy and pyamg (`pip install pyamg`).
+
+## Addendum (20 Oct 2026): the stress values above are mesh values
+
+The stress mesh of this run (32^3, h = 0.5 mm) leaves the 0.5 mm film one element thick, and the mesh study
+(`REAL_TOOTH_CONVERGENCE.md`) shows that no full-box mesh up to 64^3 converges. The film submodel
+(`REAL_TOOTH_SUBMODEL.md`: rigid tooth, crop box, h down to 0.028 mm) converges once the film has six elements across it:
+film mean von Mises 3.3 mPa (within 1 %), cervical band 3.5 mPa, the 0.1 mm next to the tooth 7.8 mPa, 95th percentile
+10.5 mPa. The 6.0 mPa maximum, 5.2 mPa 95th percentile and 16.5 mPa maximum pressure quoted above are the values of the
+32^3 mesh and are not model values; the pointwise maximum has no converged value.

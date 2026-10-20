@@ -170,3 +170,10 @@ python ansys_usermat/apdl/real_tooth_model.py --summary            # json + figu
 Each run skips itself when its cache exists and merges its numbers into
 `real_tooth_physics.json` as soon as it finishes; `--summary` rebuilds the json and the
 figure from all caches. Needs pyvista (off screen), imageio-ffmpeg, scipy and pyamg.
+
+## Addendum (20 Oct 2026): resolved stress
+
+The stresses in this report come from the 32^3 full-box mesh and are not converged. `REAL_TOOTH_RESOLVED.md` re-solves the
+final state of every run with the film submodel at h = 0.083 mm. Relative to the run without nutrient and gate, the film mean
+von Mises stress is 0.14 (nutrient, g/d = 10 /mm^2), 0.71 (gate), 0.13 (both) and 0.68 (nutrient at the Table 2 ratio).
+The growth and nutrient numbers above are unchanged.
