@@ -55,6 +55,28 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
   \end{tabular}
 \end{table}
 
+\paragraph{Where the two regions meet.}
+Figure~\ref{fig:ch5-contact} follows the separate example without antibiotic to $T^*=2$ (Python, $32^3$, Eq.~35
+with its time derivative). The regions of A and B grow until their fronts meet about $0.8$~mm from the centre of
+the seed along the diagonal, and the boundary stays there: its position on the diagonal is $0.795$~mm at
+$T^*=1$, $1.5$ and $2$, and the share of A drops from above $0.95$ to below $0.05$ within one cell. The
+composition is not carried with the biomass in this coupling: a point keeps the state of its point model, and a
+point the biofilm reaches starts from the state of its neighbours. Neither species can therefore invade the
+other; mixing is confined to the points that start between the two fronts. With the start rule of the ANSYS runs
+(species B near the edges, A elsewhere) the boundary has the shape set by the rule instead of the shape of the
+meeting fronts, at the same position on the diagonal. Displacing one species by the other would need the species
+to be transported in the field equations, as in a species-resolved continuum model.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_contact_zone.pdf}
+  \caption[Where the regions of A and B meet]{%
+    Separate example without antibiotic, Python on $32^3$, to $T^*=2$: share of A on the mid-plane $z=0$ (grey
+    where $\phi_{3D}<0.1$, line $\phi_{3D}=0.5$) for points that start from the state of their neighbours (top)
+    and by position as in the ANSYS runs (middle), and along the diagonal from the centre of the seed (bottom).}
+  \label{fig:ch5-contact}
+\end{figure}
+
 \paragraph{What the antibiotic does.}
 Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives. In the mixed seed the
 living volume fraction falls to $0.23$ and the nutrient, no longer consumed, rises from $0.46$ to $0.84$.

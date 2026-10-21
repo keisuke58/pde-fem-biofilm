@@ -1,0 +1,38 @@
+{
+ "neighbours": {
+  "0.5": {
+   "contact_mm": 0.79654430299334,
+   "mixed_width_mm": 0.0
+  },
+  "1.0": {
+   "contact_mm": 0.7953617814225268,
+   "mixed_width_mm": 0.0
+  },
+  "1.5": {
+   "contact_mm": 0.795298781964277,
+   "mixed_width_mm": 0.0
+  },
+  "2.0": {
+   "contact_mm": 0.7952865179419772,
+   "mixed_width_mm": 0.0
+  }
+ },
+ "position": {
+  "0.5": {
+   "contact_mm": 0.7958307141790942,
+   "mixed_width_mm": 0.0
+  },
+  "1.0": {
+   "contact_mm": 0.7967305668850394,
+   "mixed_width_mm": 0.0
+  },
+  "1.5": {
+   "contact_mm": 0.7958534771257959,
+   "mixed_width_mm": 0.0
+  },
+  "2.0": {
+   "contact_mm": 0.7952864925068877,
+   "mixed_width_mm": 0.0
+  }
+ }
+}

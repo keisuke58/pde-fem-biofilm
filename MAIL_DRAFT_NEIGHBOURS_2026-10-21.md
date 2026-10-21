@@ -47,6 +47,12 @@ ANSYS and, as a check, in a separate Python version.
 - The mixed example depends on the start share: with Fritsch's start (0.25, 0.30) species B prevails, with
   equal amounts A survives. [add: share sweep, A-31]
 
+Where A and B meet (your open question): the regions grow until the fronts meet and the boundary then stays in
+place (position on the diagonal 0.795 mm at T* = 1, 1.5 and 2; the share of A changes from above 0.95 to below
+0.05 within one cell). The composition is not transported with the biomass in this coupling, so neither species
+invades the other; points reached between the fronts start mixed. Displacement would need the species in the field
+equations. [figure: fig_contact_zone]
+
 4. Two things I noticed in the element (no change to the code for these runs)
 - Neighbour selection: GetNhgb enlarges its radius until there are enough points and then takes exactly
   NEIGHBOR_CNT of them in element order, so the last distance shell is cut by the numbering. Results of
