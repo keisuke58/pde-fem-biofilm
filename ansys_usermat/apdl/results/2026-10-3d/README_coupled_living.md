@@ -1,6 +1,9 @@
 # Python runs of the agreed coupling (`coupled_living_consumption*.json`): which results to use
 
-The file name carries the settings. **Main results (21 Oct, later): quasi-static (no `_transc`) or `_transc1e+08`**,
+**Current main results (21 Oct, evening): names with `_gc1`** (nutrient uptake g l^2/d = 1, Klempt 2024 Table 2 converted),
+quasi-static. Everything without `_gc1` used g l^2/d = 4 (Oliver's example deck) and is superseded.
+
+Earlier note: quasi-static (no `_transc`) or `_transc1e+08`
 which agree to < 0.005: d of Klempt 2024 Table 2 converted to the 2 mm cube is 1e8 mm^2/T*, so the time derivative
 of Eq. 35 does not matter. `_transc1`, `_transc0.3`, `_transc3` (d = 1, 0.3, 3 mm^2/T*, Oliver's example deck value
 and around it) are a **slow-diffusion sensitivity** only. Never mix them in one table without saying which is which.

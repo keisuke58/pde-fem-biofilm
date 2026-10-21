@@ -40,7 +40,7 @@ Computations: eta_c = 1e-10 ("steady state for the nutrients"). Time step: 10^3 
 | relaxation time of c over the cube, L^2/d | 4e-8 T* | 4e-8 T* | (quasi-steady) |
 | g | 10^8 1/T* | 10^8 1/T* | via the Thiele number below |
 | Thiele number g L^2/d, L = cube edge | 4 | 4 | |
-| Thiele number with the half edge (l = 1 mm here, 10 um there) | 1 | **1** | **4** (deck CONSUMPTION = 4 with MY_DIFF = 1 and l = 1 mm): 4 x the paper's value, **open decision** |
+| Thiele number with the half edge (l = 1 mm here, 10 um there) | 1 | **1** | **1** since 21 Oct evening (the user: as the paper); earlier runs used 4 (Oliver's example deck), superseded |
 | r | 100 | 10 mm/T* (as a speed) | r/10 = 1 mm/T* (assumption, sensitivity 0..1) |
 | k_alpha | 10^-3 1/T* | 10^-3 1/T* | 10^-3 |
 | E, nu | 10 Pa, 0.49 | same | same |
