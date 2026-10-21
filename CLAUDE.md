@@ -28,7 +28,9 @@ Abaqus run is possible here but nothing has been run here yet.
   detached chain (`run_chain.ps1`); long work still goes through the detached scripts, not the browser session.
   **Claude from the phone (Remote Control, 21 Oct 2026):** `.\scripts\start_remote_control.ps1` starts
   `claude remote-control` in its own PowerShell window (repository `C:\Users\nishioka\git\pde-fem-biofilm`), so it
-  survives a closed tunnel tab; the session appears in the Claude Code app (permission mode auto). A session started in
+  survives a closed tunnel tab, and restarts it whenever it exits (log `F:\remote_control.log`); `-Install` adds a
+  scheduled task that starts it at every logon (after a reboot), `-Uninstall` removes it. The session appears in the
+  Claude Code app (permission mode auto). A session started in
   the tunnel terminal itself dropped after a few minutes ("computer unreachable").
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
