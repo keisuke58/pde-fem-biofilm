@@ -129,3 +129,32 @@ theta* = [1, 0.1, 1, 1, 2]. Four-species case II: `fritsch_4sp_M1..M3` in the sa
 | antibiotic source (all outer faces), nutrient source (layer y = -1 mm) | set-up of the examples | Oliver's sketch ("defined sources") |
 | **phi_min = 0.001** (start of a point model; decided 21 Oct: the converged value) | 0.1 / 0.03 / 0.01 / 0.003 / 0.001 change the seed values by at most 0.018 (c), 0.003 to 0.001 by 0.001 | no paper value; converged |
 | mixed start with equal amounts | Oliver (20 Oct) | meeting |
+
+## Choice of each constant and the candidates considered (memo, 21 Oct 2026, the user: "keep the choice and the candidates")
+
+Lengths on the 2 mm deck cube (x 1/100 for the paper's 20 um cube, `thesis/main_um.tex`). "Chosen" = the main runs
+(Python tag `_front1_phimin0.001_..._a100_gab1_gc1_tab0.333333`, ANSYS `u3_`). Numbers in brackets: 16^3 Python, seed.
+
+| constant | chosen | candidates considered | why / evidence |
+|---|---|---|---|
+| beta (Eq. 34) | 0.02 mm^2/T* (Table 2, 2 um^2/T*) | 1e-4 (Oliver's deck), 0.005, 0.01, 0.05, 0.1 | paper value; 1e-4 not resolved by any mesh (thesis Table "Sensitivity to beta") |
+| d (Eq. 35) | 1e8 mm^2/T*, quasi-static (Table 2) | 1 (Oliver's deck), 0.3, 3 (`_transc`) | paper value; with dc/dt kept the seed changes < 0.005; d = 1 is a slow-diffusion sensitivity |
+| g (Eq. 35), as g l^2/d | 1 (Table 2) | 4 (Oliver's deck), 6 and 0 to 8 (Ch. 4 scans) | paper value (the user, 21 Oct evening) |
+| r (front term) | 10 mm/T* (Table 2 read as a speed) | r/10 (superseded), r = 100 as printed | paper value; the cube fills in ~0.2 T*, as Klempt's "high" case (13 %) |
+| k (Monod) | 1 | none | Table 2 |
+| k_alpha | 1e-3 1/T* | none (maze: 1e-6, Table 6) | Table 2 |
+| E, nu | 10 Pa, 0.49 | 10 kPa (Felix: the paper's unit may be wrong), 1000 MPa / 0.3 (Oliver's deck) | Table 2; stresses scale with E |
+| void floor f | 1e-3 | 1e-2, 1e-4, 1e-5 | converged: 1e-3 -> 0 changes the seed stress by 0.13 % |
+| c*_0 | 100 | 50 + 50 sin(500 t) (Klempt 2026 case 3, separate results) | Fritsch case I |
+| alpha*_0 | 100 | 1, 3, 10 (Fritsch case I), 30, 50 (earlier), 300 | Klempt 2026 case 4 (100 after one third); effect switches on between 30 and 100 [sep_ab 0.944 (30) -> 0.137 (100)] |
+| antibiotic onset | T* = 1/3 | 0.5 (earlier runs), 0 (case 3) | Klempt 2026 case 4 ("t > 500" of 1500 steps) |
+| antibiotic diffusion and uptake | same as the nutrient (g_a l^2/d = 1) | 1/16 of the uptake (earlier, superseded), 0.25 | Oliver: second nutrient field, same equation |
+| antibiotic source | all outer faces (layer 0.25 mm) | top face only (`--ab-top`) | set-up of the examples (Oliver's sketch: "defined sources") |
+| phi_min | 0.001 | 0.1, 0.03, 0.01, 0.003 | converged: 0.003 -> 0.001 changes c by 0.001 |
+| time link s | 0.1 (T* = 1 = data window of Fritsch case I) | 0.15 (Klempt 2026 case 3, 1500 steps) | decision 20 Oct (time: T* = 1 = duration of the point-model data) |
+| start shares (mixed) | equal amounts 0.275 / 0.275 | Fritsch (0.25, 0.30); share sweep | Oliver (20 Oct) |
+| outer step dT* | 0.025 | 0.0125 (`_dtc0.0125`) | one-step lag of sum phibar; halving changes the seed by < 1 % |
+| mesh | 16^3 and 32^3 (64^3 planned, `--fast`) | 8^3, 24^3 | composition converged at 16^3; phi_3D and stress not (front term, below) |
+| front-term scheme | first-order upwind (main runs so far) | second-order MUSCL (`--tvd`) | numerical diffusion ~ v h / 2 = 15 beta on 16^3; decision pending the 32^3 TVD runs |
+| obstacles | four square bars 0.25 mm, positions read off Fig. 9 | round bars as in the paper (needs finer grids) | Klempt 2024 Sect. 4.3 gives no coordinates |
+| maze | Table 6 (d 1e13 um^2/T*, beta 10, k_alpha 1e-6, r 200), own maze 560 um, T* = 8 | the paper's maze (no data) | Table 6; the paper gives the maze times only in per cent |
