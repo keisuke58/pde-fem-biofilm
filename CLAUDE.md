@@ -391,8 +391,9 @@ this machine's specific workflow.
     cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
     < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
-  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: lv8_/v2_/v2s_/sens_ and v2f_/fsens_
-    invalid, u1_ quasi-static comparison, u2_ main) and `results/2026-10-3d/README_coupled_living.md` (Python: `_transc1` main).
+  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: u3_ = paper values, main) and
+    `results/2026-10-3d/README_coupled_living.md` (Python: `_front1 ... _a10_gab1_gc1` = paper values, main); case 3 of
+    Klempt 2026 Table 2 apart in `results/2026-10-3d-case3/`. Paper outline (co-authored): `papers/coupling_paper/OUTLINE.md`.
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
