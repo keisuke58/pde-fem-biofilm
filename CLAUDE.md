@@ -19,9 +19,9 @@ Abaqus run is possible here but nothing has been run here yet.
 ## Which machine is this?
 
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
-  scripts and Portable Git applies. **Available without a time limit** (the user, 21 Oct 2026: "無限に
-  使えます", only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached
-  while the user is away; nothing has to be rushed or backed up because of a deadline.
+  scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
+  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
+  user is away. Back up Oliver's element patches and `F:\felix_private\` before the end of December.
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
