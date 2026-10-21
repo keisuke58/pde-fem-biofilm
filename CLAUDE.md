@@ -375,6 +375,8 @@ this machine's specific workflow.
   - Eq. 34 with its front term switched on (r: Table 2 converted and r/10); Eq. 36 unchanged.
   - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
   - Write phi_3D in every field equation, phi_i for the point model.
+  - The living volume fraction is written $\sum_i\bar\phi_i$ ($\bar\phi_i=\phi_i\psi_i$) in every document and figure,
+    never "L" (the user, 21 Oct). "L" stays only as a variable name in code and in the IKMHIWI03/cloud working notes.
   - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
     ANSYS: `CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
     thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic

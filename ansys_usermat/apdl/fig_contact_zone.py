@@ -71,7 +71,7 @@ def main():
     have = [(lab, key, sp, load(key, sp)) for lab, key, sp in RUNS]
     have = [h for h in have if h[3] is not None]
     rows = [(lab, key, sp, d, "shareA") for lab, key, sp, d in have]
-    rows += [(lab + ": living", key, sp, d, "L") for lab, key, sp, d in have if key.endswith("_ab")]
+    rows += [(lab + r": $\Sigma_i\bar\phi_i$", key, sp, d, "L") for lab, key, sp, d in have if key.endswith("_ab")]
     if not have:
         raise SystemExit("no runs yet")
     fig = plt.figure(figsize=(6.3, 1.7 * len(rows) + 2.0))
@@ -118,7 +118,7 @@ def main():
     fig.savefig(ROOT / "assets" / "fig_contact_zone.pdf"); fig.savefig(ROOT / "assets" / "fig_contact_zone.png", dpi=300)
     (HERE / "results/2026-10-3d/contact_zone.json").write_text(json.dumps(out, indent=1) + "\n")
     for lab, v in out.items():
-        if "living" not in lab:
+        if "Sigma" not in lab:
             print(lab, {T: (x["contact_mm"] and round(x["contact_mm"], 3), round(x["mixed_width_mm"], 3)) for T, x in v.items()})
 
 
