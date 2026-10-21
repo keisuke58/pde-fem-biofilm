@@ -29,7 +29,8 @@ def g7(x):
 
 
 def main(run, d, deck, n="4"):
-    """n = 4: post_fields_living.mac; n = 40: post_fields_living_dense.mac (fields_<run>_dense.json, no trace)"""
+    """n = 4: post_fields_living.mac; n = 40: post_fields_living_dense.mac (fields_<run>_dense.json, no trace);
+    n = 11: post_fields_living_early.mac (fields_<run>_early.json, no trace)"""
     n = int(n)
     out = {"run": run, "t": []}
     for k in range(1, n + 1):
@@ -52,12 +53,12 @@ def main(run, d, deck, n="4"):
     out["edges"] = [int(e) for e, s in zip(out["elem"], edges) if s]
     res = HERE / "results" / "2026-10-living"
     res.mkdir(parents=True, exist_ok=True)
-    p = res / (f"fields_{run}.json" if n == 4 else f"fields_{run}_dense.json")
+    p = res / {4: f"fields_{run}.json", 11: f"fields_{run}_early.json"}.get(n, f"fields_{run}_dense.json")
     p.write_text(json.dumps(out, separators=(",", ":")))
     print(f"wrote {p}: t = {out['t']}, {len(out['elem'])} elements, seed {seed.sum()}, edges {edges.sum()}")
     print("| T* | region | phi | L | share A | c | a | alpha-1 | vM [Pa] |")
     for k, t in enumerate(out["t"]):
-        if n != 4 and (k + 1) % 10:
+        if n == 40 and (k + 1) % 10:
             continue
         for name, m in (("seed", seed), ("edges", edges)):
             v = {c: np.array(out[c][k])[m].mean() for c in COLS}
