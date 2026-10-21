@@ -102,7 +102,9 @@ if "--gc" in sys.argv:
 # --transient-c D: keep the time derivative of Eq. 35 (and of the antibiotic field), (1/D) du/dt = lap u - q phi L u,
 # D in mm^2/T* (the element's MY_DIFF = 1), backward Euler with the field step; default: quasi-steady (0 = ...)
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
-AB_TOP = "--ab-top" in sys.argv          # antibiotic from the top layer y > 0.75 mm only (not all outer faces)
+AB_TOP = "--ab-top" in sys.argv
+C_SINE = "--c-sine" in sys.argv
+CKPT_SEC = float(os.environ.get("CKPT_SEC", 120.0))   # checkpoint interval (seconds)
 SNAP_EVERY = float(sys.argv[sys.argv.index("--snap-every") + 1]) if "--snap-every" in sys.argv else None
 MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
@@ -121,10 +123,21 @@ START_POSITION = "--start-position" in sys.argv
 MIX_EQUAL = "--mix-equal" in sys.argv
 T_AB = -1.0 if CHECK else (float(sys.argv[sys.argv.index("--tab") + 1]) if "--tab" in sys.argv else 0.5)
 CASE = CASES["fritsch_2sp"]
-N_SP = 2
-S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps
+# --case k26c3: Klempt et al. 2026, Table 2, case 3 (four species): A = 1/2 [[1,5,5,5],[5,1,3,3],[5,3,1,2],[5,3,2,1]],
+# eta = (0.8, 1, 1.5, 2), b = (0.4, 0.3, 0.2, 0.1), start phi = 0.02 each, c* = 50 + 50 sin(500 t) (use --c-sine),
+# alpha* = 10 from the start (use --tab 0), dt = 1e-4, 1500 steps (the four-species runs; antibiotic of case 4 after
+# one third = step 500). In the examples species 1, 2 play "A" (seed) and 3, 4 play "B" (corners).
+K26C3 = "--case" in sys.argv and sys.argv[sys.argv.index("--case") + 1] == "k26c3"
+if K26C3:
+    CASE = dict(n=4, A=[[0.5, 2.5, 2.5, 2.5], [2.5, 0.5, 1.5, 1.5], [2.5, 1.5, 0.5, 1.0], [2.5, 1.5, 1.0, 0.5]],
+                b=[0.4, 0.3, 0.2, 0.1], eta=[0.8, 1.0, 1.5, 2.0], phi_init=[0.02] * 4, c_star=100.0,
+                alpha_star=10.0, dt=1.0e-4, steps=1500)
+N_SP = CASE.get("n", 2)
+GROUP_A = [0, 1] if N_SP == 4 else [0]
+S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
 H = W.L / NF
-RES = HERE / "results" / "2026-10-3d"
+RES = HERE / "results" / ("2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
+RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
@@ -133,17 +146,25 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
+       + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
        + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
+    if K26C3:                                   # point-model file of Klempt 2026 Table 2 case 3
+        _A, _b = CASE["A"], CASE["b"]
+        _th = [_A[0][0], _A[0][1], _A[1][1], _b[0], _b[1], _A[2][2], _A[2][3], _A[3][3], _b[2], _b[3],
+               _A[0][2], _A[0][3], _A[1][2], _A[1][3], 0, 0, 0, 0, 0, 0]
+        _eco = ROOT / "abaqus_composition" / "eco_klempt2026_t2c3.txt"
+        _eco.write_text("4\n100.0 10.0\n" + " ".join(f"{v:g}" for v in CASE["eta"] + [1.0]) + "\n"
+                        + " ".join(f"{v:g}" for v in _th) + "\nphi_init 0.02 0.02 0.02 0.02 0.0\nnewton 50 1e-20\n")
     if "--alpha0" in sys.argv:                  # the same file with alpha*_0 replaced (second line: c*_0 alpha*_0)
         _l = _eco.read_text().splitlines()
         _l[1] = f"{_l[1].split()[0]} {ALPHA0:g}"
-        _eco = ROOT / "abaqus_composition" / f"eco_fritsch_2sp_a{ALPHA0:g}.txt"
+        _eco = ROOT / "abaqus_composition" / f"{_eco.stem.replace('_a50', '')}_a{ALPHA0:g}.txt"
         _eco.write_text("\n".join(_l) + "\n")
     _cst = FN.init(_eco)
-    assert _cst["nact"] == 2 and _cst["c_star"] == 100.0
+    assert _cst["nact"] == N_SP and _cst["c_star"] == 100.0
     assert ALPHA0 is None or _cst["alpha_star"] == ALPHA0
 
 
@@ -152,6 +173,8 @@ def theta20():
     A, b = CASE["A"], CASE["b"]
     th = [0.0] * 20
     th[0], th[1], th[2], th[3], th[4] = A[0][0], A[0][1], A[1][1], b[0], b[1]
+    if N_SP == 4:
+        th[5:14] = [A[2][2], A[2][3], A[3][3], b[2], b[3], A[0][2], A[0][3], A[1][2], A[1][3]]
     return jnp.asarray(th, dtype=jnp.float64)
 
 
@@ -160,8 +183,8 @@ DT_SUB = S_LINK * DT_C / N_SUB
 _A, _B = eco.theta_to_matrices(theta20())
 _P = eco.default_hparams(DT_SUB)
 _P.update(A=_A, b_diag=_B, active_mask=eco.active_mask(N_SP),
-          Eta=jnp.asarray(CASE["eta"] + [1.0] * 3, dtype=jnp.float64),
-          EtaPhi=jnp.asarray(CASE["eta"] + [1.0] * 3, dtype=jnp.float64))
+          Eta=jnp.asarray(CASE["eta"] + [1.0] * (5 - N_SP), dtype=jnp.float64),
+          EtaPhi=jnp.asarray(CASE["eta"] + [1.0] * (5 - N_SP), dtype=jnp.float64))
 _P = jax.tree_util.tree_map(jnp.asarray, _P)
 FRAC = (jnp.arange(N_SUB) + 1.0) / N_SUB    # interpolation weight at the end of each inner step
 
@@ -199,12 +222,21 @@ def _one_point(g, c0, c1, a0, a1):
 STEP = jax.jit(jax.vmap(_one_point))
 
 
-def start_state(phi_a, phi_b):
+def start_state(*phis):
     g = np.zeros(12)
-    g[0], g[1] = phi_a, phi_b
-    g[5] = 1.0 - phi_a - phi_b
+    g[:len(phis)] = phis
+    g[5] = 1.0 - sum(phis)
     g[6:11] = 0.999
     return g
+
+
+def group_state(tot, group):
+    """start state with the amount tot shared by the species in group, 1e-6 for the others"""
+    other = [i for i in range(N_SP) if i not in group]
+    ph = [1e-6] * N_SP
+    for i in group:
+        ph[i] = (tot - 1e-6 * len(other)) / len(group)
+    return start_state(*ph)
 
 
 def living(G):
@@ -275,6 +307,12 @@ class Reaction:
         return (value * spla.spsolve(A.tocsc(), b)).reshape((NF,) * 3)
 
 
+def c_supply(T):
+    """held nutrient value at T*: 1, or with --c-sine 0.5 + 0.5 sin(500 t), t = S_LINK T* the point-model time
+    (Klempt et al. 2026, Table 2, case 3: c* = 50 + 50 sin(500 t) with c* = c*_0 c, c*_0 = 100)"""
+    return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else 1.0
+
+
 def neighbours_mean(G, w):
     """phi-weighted mean of the 6-neighbour states (w = weight per cell, 0 where not colonised)."""
     num = np.zeros_like(G); den = np.zeros(G.shape[:3])
@@ -300,11 +338,15 @@ def run(example, antibiotic):
     alpha = np.ones_like(phi)
     G = np.zeros((NF, NF, NF, 12))
     tot = sum(CASE["phi_init"])
-    MIX_START = ((tot * MIX_SHARE, tot * (1 - MIX_SHARE)) if MIX_SHARE is not None
-                 else (tot / 2, tot / 2) if MIX_EQUAL else tuple(CASE["phi_init"]))
+    GROUP_B = [i for i in range(N_SP) if i not in GROUP_A]
+    if MIX_SHARE is not None:
+        MIX_START = tuple(tot * MIX_SHARE / len(GROUP_A) if i in GROUP_A else tot * (1 - MIX_SHARE) / len(GROUP_B)
+                          for i in range(N_SP))
+    else:
+        MIX_START = tuple([tot / N_SP] * N_SP) if MIX_EQUAL else tuple(CASE["phi_init"])
     if example == "separate":
-        G[seed] = start_state(tot - 1e-6, 1e-6)
-        G[edges] = start_state(1e-6, tot - 1e-6)
+        G[seed] = group_state(tot, GROUP_A)
+        G[edges] = group_state(tot, GROUP_B)
     else:
         G[seed] = start_state(*MIX_START)
     on = phi >= PHI_MIN
@@ -313,7 +355,7 @@ def run(example, antibiotic):
         nut.fixed = Y < -0.75
         ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
-    c = nut.solve(phi, L)
+    c = nut.solve(phi, L, c_supply(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
     dt = 0.15 * H * H / W.BETA
@@ -325,18 +367,35 @@ def run(example, antibiotic):
 
     def shares(m):
         ph = G[m][:, :N_SP]
-        return float((ph[:, 0] / ph.sum(1)).mean())
+        return float((ph[:, GROUP_A].sum(1) / ph.sum(1)).mean())
     hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
     hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
     snaps = {}
     t0 = time.time()
-    for k in range(int(round(T_END / DT_C))):
+    # checkpoint (a cloud container stops when idle): the state is saved every CKPT_SEC seconds and a rerun with the
+    # same options continues from it; the file is removed when the run has finished
+    ckpt = ROOT / "figdata" / "ckpt" / f"{example}{'_ab' if antibiotic else ''}{TAG}.npz"
+    ckpt.parent.mkdir(parents=True, exist_ok=True)
+    k0 = 0
+    if ckpt.exists():
+        z = np.load(ckpt, allow_pickle=False)
+        phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
+        hist = json.loads(str(z["hist"]))
+        snaps = {}
+        for name in z.files:
+            if name.startswith("snap|"):
+                _, T, f = name.split("|")
+                snaps.setdefault(float(T), {})[f] = z[name].copy()
+        k0 = int(z["k_done"]) + 1
+        print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
+    t_ck = time.time()
+    for k in range(k0, int(round(T_END / DT_C))):
         T1 = (k + 1) * DT_C
         # (1) macro phi, alpha
         cf = c
         for _ in range(per):
             if FRONT:
-                cf = nut.solve(phi, L, u_prev=cf, dtau=dt)  # the front follows the nutrient within the outer step
+                cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt)  # the front follows the nutrient
             def f(ph, al):
                 W.laplacian(ph, H, lap)
                 d = W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
@@ -351,7 +410,7 @@ def run(example, antibiotic):
         if TRANSIENT_D is not None and FRONT:
             c_new = cf                        # already advanced over the outer step in the inner steps
         else:
-            c_new = nut.solve(phi, L, u_prev=c, dtau=DT_C)
+            c_new = nut.solve(phi, L, c_supply(T1), u_prev=c, dtau=DT_C)
         a_new = ab.solve(phi, L, 1.0 if (antibiotic and T1 > T_AB + 1e-12) else 0.0, u_prev=a, dtau=DT_C)
         # (3) point models of the colonised cells
         idx = np.flatnonzero(on.ravel())
@@ -371,8 +430,8 @@ def run(example, antibiotic):
         if new.any() and START_POSITION:
             if example == "separate":
                 isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
-                G[new & isb] = start_state(1e-6, tot - 1e-6)
-                G[new & ~isb] = start_state(tot - 1e-6, 1e-6)
+                G[new & isb] = group_state(tot, GROUP_B)
+                G[new & ~isb] = group_state(tot, GROUP_A)
             else:
                 G[new] = start_state(*MIX_START)
             on = on | new
@@ -398,9 +457,18 @@ def run(example, antibiotic):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
             snaps[round(T1, 3)] = dict(phi=phi.copy(), c=c.copy(), a=a.copy(), L=L.copy(), shareA=shA)
+        if time.time() - t_ck > CKPT_SEC:
+            tmp = ckpt.with_suffix(".tmp.npz")
+            np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G,
+                     hist=json.dumps(hist, default=float),
+                     **{f"snap|{T}|{f}": v for T, dd in snaps.items() for f, v in dd.items()})
+            os.replace(tmp, ckpt)
+            t_ck = time.time()
     print(f"[{example}, antibiotic {antibiotic}] {time.time() - t0:.0f} s; colonised {int(on.sum())} cells; "
           f"seed: living {hist['living_seed'][-1]:.3f}, share A {hist['share_a_seed'][-1]:.3f}, "
           f"c {hist['c_seed'][-1]:.3f}", flush=True)
+    if ckpt.exists():
+        ckpt.unlink()
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
@@ -432,7 +500,7 @@ def main():
     if CHECK:
         import klempt2026_reproduction as K
         K.DT = CASE["dt"]
-        ref = K.simulate(CASE)
+        ref = K.simulate(CASE, variant="newton30")   # converged Newton (6 fixed iterations do not converge for 4 species)
         got = np.array(R["mixed_ab"]["seed_state_end"])
         d = dict(phi=float(np.abs(got[:N_SP] - ref["phi"][-1]).max()),
                  psi=float(np.abs(got[6:6 + N_SP] - ref["psi"][-1]).max()),

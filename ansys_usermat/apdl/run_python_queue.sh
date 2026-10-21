@@ -16,7 +16,7 @@ for args in "$@"; do
   after=$(ls -t ansys_usermat/apdl/results/2026-10-3d/*.json | head -n 3)
   new=$(for f in $after; do [ "$f" -nt "$log.stamp" ] 2>/dev/null && echo "$f"; done)
   echo "[$(date -u +%FT%TZ)] end ($rc): $args" >> "$log"
-  for f in $(git status --porcelain ansys_usermat/apdl/results/2026-10-3d/ | awk '{print $2}'); do
+  for f in $(git status --porcelain ansys_usermat/apdl/results/2026-10-3d/ ansys_usermat/apdl/results/2026-10-3d-case3/ | awk '{print $2}'); do
     git add "$f"
   done
   if ! git diff --cached --quiet; then
