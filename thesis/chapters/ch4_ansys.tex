@@ -514,7 +514,10 @@ first consumption.
 
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al.\ 2024 is printed as
-$g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint. I scale it by the living volume
+$g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint.
+In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
+$K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
+I scale it by the living volume
 fraction of the point model,
 \begin{equation}
 0=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad \bar\phi_i=\phi_i\psi_i,

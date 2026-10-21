@@ -37,6 +37,8 @@ in~\eqref{eq:ch5-cstar}.
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. In Eq.~35 of Klempt et al.\ 2024 the consumption is
 written $g\phi$ with $\phi=\phi_{3D}$; the implementation uses $g\phi_{3D}c$, and the printed form is a misprint.
+In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
+$K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
 Throughout, $\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point model. I scale
 the consumption by the living biomass at the Gauss point,
 \begin{equation}
