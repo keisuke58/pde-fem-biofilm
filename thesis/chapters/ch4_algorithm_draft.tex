@@ -1,0 +1,26 @@
+% Algorithm of the agreed coupling (21 Oct 2026), one outer increment, as implemented in Python (--transient-c)
+% and, after addendum 23, in ANSYS. Included by thesis/figs_src/coupling_algorithm.tex for a standalone check.
+\begin{algorithm}[htbp]
+\caption{One outer increment $T^*_n\to T^*_{n+1}$ of the coupling}
+\label{alg:ch5-coupling}
+\begin{algorithmic}[1]
+\REQUIRE fields $\phi_{3D}^n$, $\alpha^n$, $c^n$, $a^n$; at every point the state
+  $(\phi_1,\phi_2,\phi_0,\psi_1,\psi_2,\gamma)$ of the point model and $\sum_i\bar\phi_i^{\,n}=\phi_1\psi_1+\phi_2\psi_2$
+\STATE $\phi_{3D}^{n+1},\alpha^{n+1}$: Eq.~34 with the front term driven by $\nabla c^n$, Eq.~36
+  $\dot\alpha=k_\alpha\phi_{3D}$
+\STATE $c^{n+1}$: $\dfrac{c^{n+1}-c^n}{d\,\Delta T}=\nabla^2c^{n+1}-\dfrac{g}{d}\,\phi_{3D}\Bigl(\sum_i\bar\phi_i^{\,n}\Bigr)c^{n+1}$,
+  $c=1$ on the nutrient layer
+\STATE $a^{n+1}$: the same with $d_a$, $g_a$; $a=1$ on the outer layers once $T^*>T^*_a$
+\FORALL{points with $\phi_{3D}^{n+1}\ge\phi_{\min}$}
+  \IF{the point model has not started}
+    \STATE start from the state of the colonised neighbours (or by position)
+  \ENDIF
+  \FOR{$k=1,\dots,n_{\mathrm{sub}}$, $w=k/n_{\mathrm{sub}}$}
+    \STATE $c^*=c^*_0\,[(1-w)\,c^n+w\,c^{n+1}]$, \quad $\alpha^*=\alpha^*_0\,[(1-w)\,a^n+w\,a^{n+1}]$
+    \STATE advance the point model by $s\,\Delta T/n_{\mathrm{sub}}$ (Klempt et al.\ 2026, Newton) $\to\phi_i,\psi_i$
+  \ENDFOR
+  \STATE $\sum_i\bar\phi_i^{\,n+1}=\sum_i\phi_i\psi_i$
+\ENDFOR
+\STATE stress with $\mathbf F_g=\alpha^{n+1}\mathbf I$
+\end{algorithmic}
+\end{algorithm}
