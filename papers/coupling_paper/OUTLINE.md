@@ -83,6 +83,8 @@ Option: a short PAMM paper from the GAMM annual meeting in spring 2027 as an ear
 submission slip past June: a major revision can take more than six months.
 
 ## Scope and authorship notes (the user, 21 Oct 2026)
-- Scope: the LUH coupling work only; the Keio continuation (tooth geometry, Abaqus) is not part of this paper for now.
+- Scope (corrected, the user): include a non-cubic geometry, as Klempt et al. 2024 did with the maze and the grate
+  (their Tables 6-8): a maze/grate example in Python first, and the tooth/implant geometry of the Keio continuation
+  (Abaqus, Keio server) if it is ready in time.
 - **Assoc. Prof. Muramatsu is to be a co-author (the user, 21 Oct 2026).** Ask her consent at the meeting of
   2 Nov 2026 and tell Meisam when authorship is agreed (Jan-Feb 2027); all authors must agree.
