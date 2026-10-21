@@ -10,3 +10,7 @@ numbers of different generations in one table without saying which is which.
 | `v2f_`, `fsens_`, `fthr_`, `sym_*`, `dbg_*` | L fixed | **do not use for results**: phi advanced 10x too fast (inner USSFin step 0.0025, A-25). `sym_*` stay valid only as the neighbour/symmetry test (A-24) |
 | `u1_` (A-27..A-31) | one inner step (`--dt-ussfin 0.1`), **quasi-static** c and a (0 = d lap c - ...) | valid, but only as the **quasi-static comparison** |
 | `u2_` (addendum 23, after the trip) | `NUT_TRANSIENT = 1`: dc/dt and da/dt as in Eq. 35 and Oliver's sketch | **the main ANSYS results** once they exist |
+
+Figures made from these runs: `assets/anim_u1_16_*.gif`, `assets/frames_u1_16_*.pdf` (quasi-static u1_, comparison only;
+remake from u2_), `assets/fig_coupled_examples.pdf` (Python, quasi-static, before the start rule: do not use).
+`assets/fig_contact_zone.pdf` is from the time-derivative Python runs (`_transc1`): current.
