@@ -30,7 +30,8 @@ ANSYS and, as a check, in a separate Python version.
 - ANSYS and Python agree on 16^3 to within 0.02 in the living volume fraction and the nutrient of the seed;
   the seed stress is about 12 % higher in ANSYS. Halving the outer increment changes the stress by 0.3 %.
 
-3. The two examples you suggested (16^3, T* = 1, seed)                                  [update]
+3. The two examples you suggested (16^3, T* = 1, seed)   [QS: quasi-static ANSYS u1_ numbers; replace with the
+   time-derivative results (Python _transc1 / ANSYS u2_) before sending]
 
 | example | living volume fraction | nutrient c | share of A | stress [mPa] |
 |---|---|---|---|---|

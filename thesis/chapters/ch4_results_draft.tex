@@ -1,3 +1,7 @@
+% GENERATIONS (21 Oct): numbers marked QS below are quasi-static (0 = d lap c - ...; ANSYS u1_, Python without
+% _transc). They are the COMPARISON, not the main result. The main results are with dc/dt and da/dt (Python
+% _transc1 now, ANSYS u2_ after the trip). Replace every QS number in the main tables; keep QS only where the
+% text says 'quasi-static'. See results/2026-10-living/README.md and results/2026-10-3d/README_coupled_living.md.
 % Draft (21 Oct 2026) of the new results for the coupling of Section 4.6, to replace the paragraph "Two species"
 % and Figures fig:ch5-map, fig:ch5-spreading in ch4_ansys.tex. Source of the set-up: MEETING_2026-10-20.md.
 % ANSYS numbers: 8^3, runs u1_* (one inner USSFin step as in Chapter 4, A-27); [16^3] to fill from A-28.
@@ -36,7 +40,7 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
 
 \begin{table}[htbp]
   \centering
-  \caption[The coupled examples]{%
+  \caption[The coupled examples]{% [QS: quasi-static numbers, to be replaced]
     The two examples in ANSYS ($16^3$) at $T^*=1$, means over the seed and over the corner blocks:
     biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$ (points not yet started count as $0$),
     nutrient $c$, growth $\alpha-1$ and von Mises stress.}
@@ -114,7 +118,7 @@ the neighboured element method).
 
 \begin{table}[htbp]
   \centering
-  \caption[Python against ANSYS]{%
+  \caption[Python against ANSYS]{% [QS: quasi-static numbers, to be replaced]
     Seed at $T^*=1$: living volume fraction $\sum_i\bar\phi_i$ / nutrient $c$ / stress $\sigma_{vM}$ in
     $10^{-3}$~Pa, ANSYS on $8^3$ and $16^3$, Python on $16^3$ and $32^3$.}
   \label{tab:ch5-living-py}
@@ -139,7 +143,7 @@ Table~\ref{tab:ch5-living-sens} varies one choice at a time in the separate exam
 
 \begin{table}[htbp]
   \centering
-  \caption[Sensitivity of the coupled example]{%
+  \caption[Sensitivity of the coupled example]{% [QS: quasi-static numbers, to be replaced]
     Separate example with antibiotic, ANSYS $8^3$, seed at $T^*=1$: one choice changed at a time.}
   \label{tab:ch5-living-sens}
   \begin{tabular}{lccccc}

@@ -383,6 +383,8 @@ this machine's specific workflow.
   - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
     printed; 21 Oct: had been dropped everywhere). Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
+  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: lv8_/v2_/v2s_/sens_ and v2f_/fsens_
+    invalid, u1_ quasi-static comparison, u2_ main) and `results/2026-10-3d/README_coupled_living.md` (Python: `_transc1` main).
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
