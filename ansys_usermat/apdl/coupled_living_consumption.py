@@ -68,6 +68,7 @@ from fritsch2025_cases import CASES  # noqa: E402
 
 NF = int(sys.argv[sys.argv.index("--nf") + 1]) if "--nf" in sys.argv else 32
 FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv else 0.0
+TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
 def _opt(name, default, cast=float):
@@ -187,7 +188,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -307,7 +308,38 @@ def lap_obst(u, out):
     return out
 
 
+
+
+def _nb(a, s_):
+    """neighbour in direction s_ along axis a exists and is open (walls, obstacles)"""
+    if OBSTACLE:
+        return NB[a, s_]
+    m = np.ones((NF,) * 3, bool)
+    e = [slice(None)] * 3; e[a] = -1 if s_ == 1 else 0; m[tuple(e)] = False
+    return m
+
+
+def upwind_adv_tvd(u, v):
+    """v . grad u with MUSCL face values (minmod slopes), upwind; zero derivative into walls as the first-order form"""
+    out = np.zeros_like(u)
+    for a in range(3):
+        mp, mm = _nb(a, 1), _nb(a, -1)
+        up_, um_ = np.roll(u, -1, a), np.roll(u, 1, a)
+        dp = np.where(mp, up_ - u, 0.0); dm = np.where(mm, u - um_, 0.0)
+        sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.abs(dp), np.abs(dm)), 0.0)
+        # v > 0: (u_{i+1/2}^- - u_{i-1/2}^-) / H, faces from the left cells
+        fr = u + 0.5 * sl; fl = np.roll(u + 0.5 * sl, 1, a)
+        dP = np.where(mm, (fr - fl) / H, 0.0)
+        # v < 0: faces from the right cells
+        fl2 = u - 0.5 * sl; fr2 = np.roll(u - 0.5 * sl, -1, a)
+        dN = np.where(mp, (fr2 - fl2) / H, 0.0)
+        out += np.maximum(v[a], 0) * dP + np.minimum(v[a], 0) * dN
+    return out
+
+
 def upwind_adv(u, v):
+    if TVD:
+        return upwind_adv_tvd(u, v)
     out = np.zeros_like(u)
     for a in range(3):
         fw = (np.roll(u, -1, a) - u) / H; bw = (u - np.roll(u, 1, a)) / H
