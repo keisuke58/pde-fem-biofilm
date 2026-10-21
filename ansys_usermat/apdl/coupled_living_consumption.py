@@ -77,7 +77,7 @@ def _opt(name, default, cast=float):
     return cast(sys.argv[sys.argv.index(name) + 1]) if name in sys.argv else default
 
 
-NM, T_END = 16, 1.0
+NM, T_END = 16, 1.0   # stress mesh (NM = NF below 16^3, see after --nf)
 T_END = float(sys.argv[sys.argv.index("--tend") + 1]) if "--tend" in sys.argv else T_END
 DT_C = _opt("--dtc", 0.025)                 # outer (coupling) step; halved to test the one-step lag
 PHI_MIN = _opt("--phi-min", 0.01)
@@ -139,6 +139,7 @@ N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
 H = W.L / NF
+NM = min(NM, NF)                              # the stress mesh cannot be finer than the field grid (8^3 runs)
 SHAPE = (NF // 2, NF, NF // 2) if FAST else (NF,) * 3
 QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None)) if FAST else (slice(None),) * 3   # full -> computed
 
