@@ -42,6 +42,23 @@ try {
     $ErrorActionPreference = "Continue"
     $out = & git push $url "HEAD:$Branch" 2>&1 | Out-String
     $code = $LASTEXITCODE
+    # Rejected because the remote branch moved on (the cloud session pushes to the same working branch while the
+    # unattended chains here commit results, 21 Oct 2026): fetch, rebase the local commits onto it, push again.
+    # Not for master. A rebase that does not apply cleanly is aborted and the push fails as before.
+    if ($code -ne 0 -and $Branch -ne "master" -and $out -match '(rejected|fetch first|non-fast-forward)') {
+        Write-Output "  rejected: remote $Branch moved on; fetching and rebasing"
+        & git fetch $url $Branch 2>&1 | Out-Null
+        $rb = & git rebase --autostash FETCH_HEAD 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            & git rebase --abort 2>&1 | Out-Null
+            Write-Output "  rebase failed, aborted: $(($rb -replace [regex]::Escape($tok), '***').Trim())"
+        } else {
+            $head = (& git rev-parse HEAD).Trim()
+            Write-Output "  rebased, now $($head.Substring(0,7))"
+            $out = & git push $url "HEAD:$Branch" 2>&1 | Out-String
+            $code = $LASTEXITCODE
+        }
+    }
     $ErrorActionPreference = $prev
     ($out -replace [regex]::Escape($tok), '***').Trim() -split "`n" |
         ForEach-Object { $_ -replace '^\s*git(\.exe)?\s*:\s*', '' } |
