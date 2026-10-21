@@ -95,6 +95,11 @@ if "--alpha0" in sys.argv:
     ALPHA0 = float(sys.argv[sys.argv.index("--alpha0") + 1])
 if "--gab" in sys.argv:
     LAM_A2 = float(sys.argv[sys.argv.index("--gab") + 1])
+# --gc G: nutrient consumption g L^2 / d (default 4, an assumption); --mix-share S: share of A in the mixed start
+# (same total as Fritsch's; 0.5 = --mix-equal); --tab T: antibiotic from T* = T (default 0.5)
+if "--gc" in sys.argv:
+    LAM_C2 = float(sys.argv[sys.argv.index("--gc") + 1])
+MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
 # with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
 FORTRAN = "--fortran" in sys.argv
@@ -109,7 +114,7 @@ START_POSITION = "--start-position" in sys.argv
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
 MIX_EQUAL = "--mix-equal" in sys.argv
-T_AB = -1.0 if CHECK else 0.5
+T_AB = -1.0 if CHECK else (float(sys.argv[sys.argv.index("--tab") + 1]) if "--tab" in sys.argv else 0.5)
 CASE = CASES["fritsch_2sp"]
 N_SP = 2
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps
@@ -121,6 +126,8 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
+       + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}")
        + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -287,7 +294,8 @@ def run(example, antibiotic):
     alpha = np.ones_like(phi)
     G = np.zeros((NF, NF, NF, 12))
     tot = sum(CASE["phi_init"])
-    MIX_START = (tot / 2, tot / 2) if MIX_EQUAL else tuple(CASE["phi_init"])
+    MIX_START = ((tot * MIX_SHARE, tot * (1 - MIX_SHARE)) if MIX_SHARE is not None
+                 else (tot / 2, tot / 2) if MIX_EQUAL else tuple(CASE["phi_init"]))
     if example == "separate":
         G[seed] = start_state(tot - 1e-6, 1e-6)
         G[edges] = start_state(1e-6, tot - 1e-6)
