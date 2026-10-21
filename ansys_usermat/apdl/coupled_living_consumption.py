@@ -103,7 +103,8 @@ if "--gc" in sys.argv:
 # D in mm^2/T* (the element's MY_DIFF = 1), backward Euler with the field step; default: quasi-steady (0 = ...)
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
 AB_TOP = "--ab-top" in sys.argv
-C_SINE = "--c-sine" in sys.argv          # antibiotic from the top layer y > 0.75 mm only (not all outer faces)
+C_SINE = "--c-sine" in sys.argv
+CKPT_SEC = float(os.environ.get("CKPT_SEC", 120.0))   # checkpoint interval (seconds)
 SNAP_EVERY = float(sys.argv[sys.argv.index("--snap-every") + 1]) if "--snap-every" in sys.argv else None
 MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
@@ -371,7 +372,24 @@ def run(example, antibiotic):
     hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
     snaps = {}
     t0 = time.time()
-    for k in range(int(round(T_END / DT_C))):
+    # checkpoint (a cloud container stops when idle): the state is saved every CKPT_SEC seconds and a rerun with the
+    # same options continues from it; the file is removed when the run has finished
+    ckpt = ROOT / "figdata" / "ckpt" / f"{example}{'_ab' if antibiotic else ''}{TAG}.npz"
+    ckpt.parent.mkdir(parents=True, exist_ok=True)
+    k0 = 0
+    if ckpt.exists():
+        z = np.load(ckpt, allow_pickle=False)
+        phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
+        hist = json.loads(str(z["hist"]))
+        snaps = {}
+        for name in z.files:
+            if name.startswith("snap|"):
+                _, T, f = name.split("|")
+                snaps.setdefault(float(T), {})[f] = z[name].copy()
+        k0 = int(z["k_done"]) + 1
+        print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
+    t_ck = time.time()
+    for k in range(k0, int(round(T_END / DT_C))):
         T1 = (k + 1) * DT_C
         # (1) macro phi, alpha
         cf = c
@@ -439,9 +457,18 @@ def run(example, antibiotic):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
             snaps[round(T1, 3)] = dict(phi=phi.copy(), c=c.copy(), a=a.copy(), L=L.copy(), shareA=shA)
+        if time.time() - t_ck > CKPT_SEC:
+            tmp = ckpt.with_suffix(".tmp.npz")
+            np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G,
+                     hist=json.dumps(hist, default=float),
+                     **{f"snap|{T}|{f}": v for T, dd in snaps.items() for f, v in dd.items()})
+            os.replace(tmp, ckpt)
+            t_ck = time.time()
     print(f"[{example}, antibiotic {antibiotic}] {time.time() - t0:.0f} s; colonised {int(on.sum())} cells; "
           f"seed: living {hist['living_seed'][-1]:.3f}, share A {hist['share_a_seed'][-1]:.3f}, "
           f"c {hist['c_seed'][-1]:.3f}", flush=True)
+    if ckpt.exists():
+        ckpt.unlink()
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
