@@ -39,8 +39,12 @@ Only living biomass consumes nutrient. In Eq.~35 of Klempt et al.\ 2024 the cons
 written $g\phi$ with $\phi=\phi_{3D}$; the implementation uses $g\phi_{3D}c$, and the printed form is a misprint.
 In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
 $K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
-The time derivative of Eq.~35 is kept: with $d=1$~mm$^2/T^*$ the nutrient and the antibiotic need a time of
-order $0.1$ to $0.4\,T^*$ to adjust on the $2$~mm cube, not short against $T^*=1$ (an assumption with its own sensitivity, [..]).
+The time derivative of Eq.~35 is kept. With the diffusivity of Table~2 of Klempt et al.\ 2024, $d=10^{10}~\mu$m$^2/T^*$
+on their $20~\mu$m cube, converted like $\beta$ to $d=10^8$~mm$^2/T^*$ on the $2$~mm cube, the nutrient adjusts within
+about $4\cdot10^{-8}\,T^*$, so the fields are solved quasi-steadily; with the time derivative and this $d$ the seed values
+change by less than $0.005$ (Python). The antibiotic is given the same diffusivity (an assumption). Only a diffusion
+slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$ the living volume fraction of the mixed
+seed with antibiotic would be $0.65$ instead of $0.20$.
 Throughout, $\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point model. I scale
 the consumption by the living biomass at the Gauss point,
 \begin{equation}

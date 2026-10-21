@@ -1,8 +1,9 @@
 # Python runs of the agreed coupling (`coupled_living_consumption*.json`): which results to use
 
-The file name carries the settings. **Main results: names with `_transc1`** (Eq. 35 and the antibiotic field with
-their time derivative, d = 1 mm^2/T*, as in Oliver's sketch). Names without `_transc` are **quasi-static**
-(0 = d lap c - ...): comparison only. Never mix the two in one table without saying which is which.
+The file name carries the settings. **Main results (21 Oct, later): quasi-static (no `_transc`) or `_transc1e+08`**,
+which agree to < 0.005: d of Klempt 2024 Table 2 converted to the 2 mm cube is 1e8 mm^2/T*, so the time derivative
+of Eq. 35 does not matter. `_transc1`, `_transc0.3`, `_transc3` (d = 1, 0.3, 3 mm^2/T*, Oliver's example deck value
+and around it) are a **slow-diffusion sensitivity** only. Never mix them in one table without saying which is which.
 
 | tag | meaning |
 |---|---|

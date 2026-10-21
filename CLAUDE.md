@@ -383,7 +383,9 @@ this machine's specific workflow.
     `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
   - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
   - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
-    printed; 21 Oct: had been dropped everywhere). Before writing or changing any coupling equation, check it term by
+    printed; 21 Oct: had been dropped everywhere). **d from Klempt 2024 Table 2** (the user): 1e10 um^2/T* on the 20 um
+    cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
+    < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
   - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: lv8_/v2_/v2s_/sens_ and v2f_/fsens_
     invalid, u1_ quasi-static comparison, u2_ main) and `results/2026-10-3d/README_coupled_living.md` (Python: `_transc1` main).
