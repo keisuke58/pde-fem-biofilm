@@ -123,7 +123,7 @@ theta* = [1, 0.1, 1, 1, 2]. Four-species case II: `fritsch_4sp_M1..M3` in the sa
 |---|---|---|
 | beta, d, g, k_alpha, k, r, E, nu | Table 2 of Klempt 2024, converted (table above) | paper |
 | A, b, eta, start phi, c*_0 = 100, alpha*_0 = 10, s = 0.1 | Fritsch case I (= Klempt 2026 Table 1 style) | paper |
-| antibiotic from T* = 0.5 | half of the period, as Klempt 2026 Table 2 case 4 | paper |
+| antibiotic from T* = 0.5 | **correction (21 Oct): Klempt 2026 case 4 inserts it after one third** ("t > 500" of 1500 steps); 0.5 kept for now, 1/3 is the paper value: **open decision** (sensitivity --tab 0.25/0.75 queued; case-3 runs: from the start) | paper (1/3) |
 | antibiotic diffusion and uptake | same as the nutrient | Oliver (20 Oct): the second nutrient field, same equation |
 | antibiotic source (all outer faces), nutrient source (layer y = -1 mm) | set-up of the examples | Oliver's sketch ("defined sources") |
 | phi_min = 0.1 (start of a point model) | assumption, sensitivity 0.01 | no paper value |
