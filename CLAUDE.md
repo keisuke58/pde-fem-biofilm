@@ -380,6 +380,9 @@ this machine's specific workflow.
     thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
     `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
   - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
+  - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
+    printed; 21 Oct: had been dropped everywhere). Before writing or changing any coupling equation, check it term by
+    term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
