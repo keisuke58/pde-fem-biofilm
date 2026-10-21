@@ -97,6 +97,10 @@ def main():
     ap.add_argument("--uniform", action="store_true",
                     help="phi = 1 in every element (BIOFILM1 = all), for the uniform-field check S3 (addendum 15); "
                          "use with --cons 0 --front 0 --l1 and no --ab, so c = 1 stays the solution")
+    ap.add_argument("--tend", type=float,
+                    help="end time T* of the run (with --start-step; default the base's, 1); fields are then written at "
+                         "T*/4, T*/2, 3T*/4, T* (post_fields_living_t<T*>.mac, e.g. _t2 for 2). Deck values only "
+                         "(addendum 21); the antibiotic still starts at T* = 0.5")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -122,8 +126,8 @@ def main():
         props[60] = 1
     if a.phi_min is not None:
         props[29] = a.phi_min
-    if a.deltim is not None and a.start_step <= 0:
-        sys.exit("STOP: --deltim only with --start-step")
+    if (a.deltim is not None or a.tend is not None) and a.start_step <= 0:
+        sys.exit("STOP: --deltim and --tend only with --start-step")
     props.update({7 + i: v for i, v in enumerate(th, start=1)})
     tmp = Path(a.out).with_suffix(".tmp.dat")
     cmd = [sys.executable, str(HERE / "make_wired_deck.py"), a.base, str(tmp),
@@ -162,7 +166,9 @@ def main():
         dt, t_end = float(m.group(1)), float(m.group(2))
         if a.deltim is not None:
             dt = a.deltim
-        text = text[:m.start()] + f"deltim,{s!r},{s!r},{s!r}{nl}time,{s!r}" + text[m.end():]
+        if a.tend is not None:
+            t_end = a.tend
+        text =text[:m.start()] + f"deltim,{s!r},{s!r},{s!r}{nl}time,{s!r}" + text[m.end():]
         rs = re.compile(r"^OUTRES,ALL,ALL\r?\nsolve[ \t]*$", re.M)
         m = rs.search(text)
         if not m or len(rs.findall(text)) != 1:
@@ -173,9 +179,11 @@ def main():
             f"layout {a.layout}, antibiotic {a.ab}, "
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
             f"g_a {scal['CONSUMPTION21']}, phi_min {props[29]:g}, start step {a.start_step:g}, "
-            f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
+            f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}, "
+            f"end T* {a.tend if a.tend is not None else 'base'}; BIOFILM1 {len(bio1)} elements, "
             f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
-    text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,post_fields_living.mac{nl}FINISH{nl}"
+    post = "post_fields_living.mac" if a.tend is None or a.tend == 1 else f"post_fields_living_t{a.tend:g}.mac"
+    text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,{post}{nl}FINISH{nl}"
     Path(a.out).write_text(text, encoding="latin-1", newline="")
     print(head.strip())
 
