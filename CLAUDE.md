@@ -58,7 +58,8 @@ Abaqus run is possible here but nothing has been run here yet.
   element) and Feng et al. 2021 (Bull. Math. Biol., two-species oral biofilm,
   spreading driven by the summed species growth), and Klempt et al. 2026 (Arch. Appl. Mech.,
   the point model, `Klempt2026_multispecies_interaction_AAM.pdf`), each with
-  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`. **Parameter tables of all these papers,
+  with the conversion to the 2 mm cube: `references/PARAMETER_TABLES.md`** (look there first for any parameter value).
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
@@ -372,14 +373,26 @@ this machine's specific workflow.
   - Eq. 35 consumption by the living biomass: g phi_3D (sum_i phibar_i) c, phibar_i = phi_i psi_i (Klempt 2026
     notation; a volume fraction of the normalised point volume, not divided by sum phi_i). Same for the antibiotic.
     Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
-  - Eq. 34 with its front term switched on (r: Table 2 converted and r/10); Eq. 36 unchanged.
+  - Eq. 34 with its front term switched on; Eq. 36 unchanged. **Paper values only (the user, 21 Oct evening):** r, d, g
+    of Klempt 2024 Table 2 converted (r = 10 mm/T*, g l^2/d = 1), alpha*_0 = 10 (Fritsch case I), antibiotic with the
+    nutrient's diffusion and uptake; see the last table of `references/PARAMETER_TABLES.md`. r/10, alpha*_0 = 50,
+    g_a = 0.25 and g l^2/d = 4 are superseded.
   - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
   - Write phi_3D in every field equation, phi_i for the point model.
+  - The living volume fraction is written $\sum_i\bar\phi_i$ ($\bar\phi_i=\phi_i\psi_i$) in every document and figure,
+    never "L" (the user, 21 Oct). "L" stays only as a variable name in code and in the IKMHIWI03/cloud working notes.
   - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
     ANSYS: `CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
     thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
     `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
   - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
+  - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
+    printed; 21 Oct: had been dropped everywhere). **d from Klempt 2024 Table 2** (the user): 1e10 um^2/T* on the 20 um
+    cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
+    < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
+    term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
+  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: lv8_/v2_/v2s_/sens_ and v2f_/fsens_
+    invalid, u1_ quasi-static comparison, u2_ main) and `results/2026-10-3d/README_coupled_living.md` (Python: `_transc1` main).
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,

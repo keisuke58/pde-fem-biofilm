@@ -7,7 +7,7 @@ quadrature points):
                  - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
                                                                    upwinded
     d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    0 = d lap c - g phi (sum_i phibar_i) c                         Eq. 35, quasi-static, consumption by the LIVING
+    dc/dt = d lap c - g phi (sum_i phibar_i) c                     Eq. 35 (--transient-c d; without it quasi-static 0 = ...), consumption by the LIVING
                                                                    biomass only: phibar_i = phi_i psi_i of the point
                                                                    model (Klempt et al. 2026; Oliver's form, decided
                                                                    20 Oct, replacing the normalised share)
@@ -99,6 +99,11 @@ if "--gab" in sys.argv:
 # (same total as Fritsch's; 0.5 = --mix-equal); --tab T: antibiotic from T* = T (default 0.5)
 if "--gc" in sys.argv:
     LAM_C2 = float(sys.argv[sys.argv.index("--gc") + 1])
+# --transient-c D: keep the time derivative of Eq. 35 (and of the antibiotic field), (1/D) du/dt = lap u - q phi L u,
+# D in mm^2/T* (the element's MY_DIFF = 1), backward Euler with the field step; default: quasi-steady (0 = ...)
+TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
+AB_TOP = "--ab-top" in sys.argv          # antibiotic from the top layer y > 0.75 mm only (not all outer faces)
+SNAP_EVERY = float(sys.argv[sys.argv.index("--snap-every") + 1]) if "--snap-every" in sys.argv else None
 MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
 # with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
@@ -127,7 +132,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -256,11 +261,12 @@ class Reaction:
             b[tuple(sl)] += 2.0 / H ** 2
         self.b, self.q = b.ravel(), q
 
-    def solve(self, phi, L, value=1.0):
+    def solve(self, phi, L, value=1.0, u_prev=None, dtau=None):
         if value == 0.0:
             return np.zeros((NF,) * 3)
-        A = (self.A0 + sp.diags(self.d0 + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
-        b = self.b.copy()
+        m = 0.0 if (TRANSIENT_D is None or u_prev is None) else 1.0 / (TRANSIENT_D * dtau)
+        A = (self.A0 + sp.diags(self.d0 + m + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
+        b = self.b.copy() + (m * u_prev.ravel() / value if m else 0.0)
         if getattr(self, "fixed", None) is not None:      # cells held at the value (the ANSYS element layers)
             f = self.fixed.ravel()
             D = sp.diags((~f).astype(float))
@@ -305,7 +311,7 @@ def run(example, antibiotic):
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
         nut.fixed = Y < -0.75
-        ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if V2 else (Y > 0.75)
+        ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
     c = nut.solve(phi, L)
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
@@ -330,7 +336,7 @@ def run(example, antibiotic):
         cf = c
         for _ in range(per):
             if FRONT:
-                cf = nut.solve(phi, L)        # the front follows the nutrient within the outer step
+                cf = nut.solve(phi, L, u_prev=cf, dtau=dt)  # the front follows the nutrient within the outer step
             def f(ph, al):
                 W.laplacian(ph, H, lap)
                 d = W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
@@ -342,8 +348,11 @@ def run(example, antibiotic):
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
             alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
         # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
-        c_new = nut.solve(phi, L)
-        a_new = ab.solve(phi, L, 1.0 if (antibiotic and T1 > T_AB + 1e-12) else 0.0)
+        if TRANSIENT_D is not None and FRONT:
+            c_new = cf                        # already advanced over the outer step in the inner steps
+        else:
+            c_new = nut.solve(phi, L, u_prev=c, dtau=DT_C)
+        a_new = ab.solve(phi, L, 1.0 if (antibiotic and T1 > T_AB + 1e-12) else 0.0, u_prev=a, dtau=DT_C)
         # (3) point models of the colonised cells
         idx = np.flatnonzero(on.ravel())
         Gf = G.reshape(-1, 12)
@@ -384,7 +393,8 @@ def run(example, antibiotic):
         hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()))
-        if abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9:
+        if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
+                or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
             snaps[round(T1, 3)] = dict(phi=phi.copy(), c=c.copy(), a=a.copy(), L=L.copy(), shareA=shA)

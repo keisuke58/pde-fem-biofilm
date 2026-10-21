@@ -514,17 +514,27 @@ first consumption.
 
 \paragraph{From the point model to the field.}
 Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al.\ 2024 is printed as
-$g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint. I scale it by the living volume
+$g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint.
+In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
+$K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
+The time derivative of Eq.~35 is kept. With the diffusivity of Table~2 of Klempt et al.\ 2024, $d=10^{10}~\mu$m$^2/T^*$
+on their $20~\mu$m cube, converted like $\beta$ to $d=10^8$~mm$^2/T^*$ on the $2$~mm cube, the nutrient adjusts within
+about $4\cdot10^{-8}\,T^*$, so the fields are solved quasi-steadily; with the time derivative and this $d$ the seed values
+change by less than $0.005$ (Python). The consumption follows the same table: $g=10^8\,T^{*-1}$, so that $g\ell^2/d=1$ with the half edge
+$\ell=1$~mm. The antibiotic is given the same diffusivity and a sixteenth of this uptake (assumptions). Only a diffusion
+slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$ the living volume fraction of the mixed
+seed with antibiotic would be $0.65$ instead of $0.20$.
+I scale it by the living volume
 fraction of the point model,
 \begin{equation}
-0=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad \bar\phi_i=\phi_i\psi_i,
+\dot c=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad \bar\phi_i=\phi_i\psi_i,
 \label{eq:ch5-consumption}
 \end{equation}
 in the notation of Klempt et al.\ 2026. The point model normalises its volume, so $\bar\phi_i\in[0,1]$
 is the living volume fraction of species $i$ at the point, and $\phi_{3D}\sum_i\bar\phi_i\le\phi_{3D}$
 is the living volume fraction in the field. A dead biofilm consumes nothing; the void $\phi_0$ has no
 living fraction and is not part of the sum. The antibiotic is taken up in the same way,
-$0=d_a\nabla^2a-g_a\phi_{3D}\bigl(\sum_i\bar\phi_i\bigr)a$. The growth law~\eqref{eq:ch5-eq36} is
+$\dot a=d_a\nabla^2a-g_a\phi_{3D}\bigl(\sum_i\bar\phi_i\bigr)a$. The growth law~\eqref{eq:ch5-eq36} is
 unchanged: the inflation $\alpha$ measures how much biomass has been produced, alive or dead. The
 spreading of $\phi_{3D}$ follows Eq.~34 of Klempt et al.\ 2024 with its front term, which depends on
 $c$; this is the path by which the point model reaches the growth and the stress. An antibiotic acts on
@@ -1062,7 +1072,7 @@ assumption; the moduli are sensitivity parameters.
 \paragraph{Step 1: local nutrient.} On the example model of this chapter
 (Figure~\ref{fig:ch5-local-nutrient}), the nutrient is held at the face
 $y=-1$~mm and consumed in the seed; its strength is the Thiele number~\cite{Thiele1939}
-$\Lambda^2=gL^2/d$ with $L=1$~mm, scanned because $d$ and $g$ of the example
+$\Lambda^2=g\ell^2/d$ with $\ell=1$~mm, scanned because $d$ and $g$ of the example
 input are not taken from the paper. Each point of the seed runs the point
 model with $c^*=c^*_0\,c$. Case~3 hardly depends on the nutrient level, the
 share $\phi_1/(\phi_1+\phi_2)$ staying at $0.63$ to $0.66$. In case~6 the

@@ -1,3 +1,7 @@
+% GENERATIONS (21 Oct): numbers marked QS below are quasi-static (0 = d lap c - ...; ANSYS u1_, Python without
+% _transc). They are the COMPARISON, not the main result. The main results are with dc/dt and da/dt (Python
+% _transc1 now, ANSYS u2_ after the trip). Replace every QS number in the main tables; keep QS only where the
+% text says 'quasi-static'. See results/2026-10-living/README.md and results/2026-10-3d/README_coupled_living.md.
 % Draft (21 Oct 2026) of the new results for the coupling of Section 4.6, to replace the paragraph "Two species"
 % and Figures fig:ch5-map, fig:ch5-spreading in ch4_ansys.tex. Source of the set-up: MEETING_2026-10-20.md.
 % ANSYS numbers: 8^3, runs u1_* (one inner USSFin step as in Chapter 4, A-27); [16^3] to fill from A-28.
@@ -25,7 +29,7 @@ Following the partner's suggestion, two examples use the same model with differe
 and species B in four small blocks at the corners, and both species mixed in the seed in equal amounts
 ($\phi_1=\phi_2=0.275$, the total of Fritsch et al.). The nutrient is held on the layer $y=-1$~mm, the
 antibiotic on all outer faces from $T^*=0.5$, with $\alpha^*_0=50$ and a weaker uptake than the nutrient
-($g_aL^2/d_a=0.25$ against $4$; an assumption). The front term uses a tenth of the converted Table~2 value
+($g_a\ell^2/d_a=0.25$ against $g\ell^2/d=1$ of Klempt et al.\ 2024; an assumption). The front term uses a tenth of the converted Table~2 value
 of $r$; with the full value the elements collapse within the first increments. A point starts its point model
 when $\phi_{3D}$ first exceeds $\phi_{\min}=0.1$. The papers do not say from which composition it starts
 (Section~\ref{sec:ch5-outlook-python}); here it starts as species B within $0.5625$~mm of the vertical edges
@@ -36,7 +40,7 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
 
 \begin{table}[htbp]
   \centering
-  \caption[The coupled examples]{%
+  \caption[The coupled examples]{% [QS: quasi-static numbers, to be replaced]
     The two examples in ANSYS ($16^3$) at $T^*=1$, means over the seed and over the corner blocks:
     biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$ (points not yet started count as $0$),
     nutrient $c$, growth $\alpha-1$ and von Mises stress.}
@@ -54,6 +58,33 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
     \bottomrule
   \end{tabular}
 \end{table}
+
+\paragraph{Where the two regions meet.}
+Figure~\ref{fig:ch5-contact} follows the separate example without antibiotic to $T^*=2$ (Python, $32^3$, Eq.~35
+with its time derivative). The regions of A and B grow until their fronts meet about $0.8$~mm from the centre of
+the seed along the diagonal, and the boundary stays there: its position on the diagonal is $0.795$~mm at
+$T^*=1$, $1.5$ and $2$, and the share of A drops from above $0.95$ to below $0.05$ within one cell. The
+composition is not carried with the biomass in this coupling: a point keeps the state of its point model, and a
+point the biofilm reaches starts from the state of its neighbours. Neither species can therefore invade the
+other; mixing is confined to the points that start between the two fronts. With the start rule of the ANSYS runs
+(species B near the edges, A elsewhere) the boundary has the shape set by the rule instead of the shape of the
+meeting fronts, at the same position on the diagonal. The same holds with the antibiotic: in the corner blocks the living
+volume fraction of B falls from $0.84$ at $T^*=0.5$ to $0.37$ at $T^*=2$, while the share of A there stays between
+$0.02$ and $0.03$ and the boundary stays at $0.796$~mm. A sharp boundary between colonies that meet is what
+experiments show as well; that it cannot move, even when one side dies, is a limit of this coupling.
+Displacing one species by the other would need the species to be transported in the field equations, as in a
+species-resolved continuum model \cite{Feng2021SymbioticBiofilm}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_contact_zone.pdf}
+  \caption[Where the regions of A and B meet]{%
+    Separate example without antibiotic, Python on $32^3$, to $T^*=2$: share of A on the mid-plane $z=0$ (grey
+    where $\phi_{3D}<0.1$, line $\phi_{3D}=0.5$) for points that start from the state of their neighbours (top)
+    by position as in the ANSYS runs, with the antibiotic from $T^*=0.5$ (third row) and its living volume
+    fraction (fourth row, green), and along the diagonal from the centre of the seed (bottom).}
+  \label{fig:ch5-contact}
+\end{figure}
 
 \paragraph{What the antibiotic does.}
 Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives. In the mixed seed the
@@ -87,7 +118,7 @@ the neighboured element method).
 
 \begin{table}[htbp]
   \centering
-  \caption[Python against ANSYS]{%
+  \caption[Python against ANSYS]{% [QS: quasi-static numbers, to be replaced]
     Seed at $T^*=1$: living volume fraction $\sum_i\bar\phi_i$ / nutrient $c$ / stress $\sigma_{vM}$ in
     $10^{-3}$~Pa, ANSYS on $8^3$ and $16^3$, Python on $16^3$ and $32^3$.}
   \label{tab:ch5-living-py}
@@ -112,7 +143,7 @@ Table~\ref{tab:ch5-living-sens} varies one choice at a time in the separate exam
 
 \begin{table}[htbp]
   \centering
-  \caption[Sensitivity of the coupled example]{%
+  \caption[Sensitivity of the coupled example]{% [QS: quasi-static numbers, to be replaced]
     Separate example with antibiotic, ANSYS $8^3$, seed at $T^*=1$: one choice changed at a time.}
   \label{tab:ch5-living-sens}
   \begin{tabular}{lccccc}
