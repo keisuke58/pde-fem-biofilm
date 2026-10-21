@@ -94,6 +94,10 @@ def main():
     ap.add_argument("--deltim", type=float, help="outer increment of the run (with --start-step), default the base's")
     ap.add_argument("--neigh", type=int, help="NEIGHBOR_CNT, the element's maximum number of neighbours (base: 30); "
                     "the search keeps the first ones found in element order (A-23, the symmetry check)")
+    ap.add_argument("--artdiff", type=int, metavar="N",
+                    help="stabilise the front term (addendum 27): MY_BETA1 = beta + r h / 4 with h = 2 mm / N (N elements "
+                         "per edge), i.e. the numerical diffusion v h / 2 of first-order upwinding at the largest front "
+                         "speed v = r c/(k + c) = r / 2; the equations are unchanged as h -> 0")
     ap.add_argument("--uniform", action="store_true",
                     help="phi = 1 in every element (BIOFILM1 = all), for the uniform-field check S3 (addendum 15); "
                          "use with --cons 0 --front 0 --l1 and no --ab, so c = 1 stays the solution")
@@ -150,6 +154,11 @@ def main():
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
     if a.neigh is not None:
         scal["NEIGHBOR_CNT"] = str(a.neigh)
+    if a.artdiff:
+        mb = re.search(r"^MY_BETA1\s*=\s*([\d.eE+-]+)", text, re.M)
+        beta0 = float(mb.group(1))
+        scal["MY_BETA1"] = repr(beta0 + r_front * (2.0 / a.artdiff) / 4.0)
+        print(f"artdiff: MY_BETA1 {beta0:g} -> {float(scal['MY_BETA1']):g} (h = {2.0 / a.artdiff:g} mm, r = {r_front:g})")
     for k, v in scal.items():
         text = set_scalar(text, k, v)
     nl = "\r\n" if "\r\n" in text else "\n"

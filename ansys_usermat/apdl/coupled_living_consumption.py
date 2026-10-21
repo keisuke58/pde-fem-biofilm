@@ -69,6 +69,7 @@ from fritsch2025_cases import CASES  # noqa: E402
 NF = int(sys.argv[sys.argv.index("--nf") + 1]) if "--nf" in sys.argv else 32
 FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv else 0.0
 FAST = "--fast" in sys.argv                # quarter domain x >= 0, z >= 0 (mirror symmetry) and AMG-preconditioned CG
+ARTDIFF = "--artdiff" in sys.argv          # as the ANSYS element (addendum 27): central front term + beta + r h / 4
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
@@ -199,7 +200,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_artdiff" if ARTDIFF else "") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -369,8 +370,19 @@ def upwind_adv(u, v):
     return out
 
 
+def front_central(phi, c):
+    """the front term with central differences for grad phi (the element's NEM gradient is of central type)"""
+    g = grad(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    sp_ = R_FRONT * c / (K_MONOD + c)
+    gp = grad(phi)
+    return -sum(sp_ * g[a] / nrm * gp[a] for a in range(3))
+
+
 def front(phi, c):
     """-r c/(k + c) n_c . grad phi (Klempt 2024 Eq. 34 as printed), upwinded"""
+    if ARTDIFF:
+        return front_central(phi, c)
     g = grad(c)
     nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
     sp_ = R_FRONT * c / (K_MONOD + c)
@@ -509,7 +521,7 @@ def run(example, antibiotic):
     c = nut.solve(phi, L, c_supply(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
-    dt = 0.15 * H * H / W.BETA
+    dt = 0.15 * H * H / (W.BETA + (R_FRONT * H / 4.0 if ARTDIFF else 0.0))
     if FRONT:
         dt = min(dt, 0.4 * H / (R_FRONT / (1 + K_MONOD)))
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
@@ -549,7 +561,7 @@ def run(example, antibiotic):
                 cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt)  # the front follows the nutrient
             def f(ph, al):
                 (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
-                d = W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                d = (W.BETA + (R_FRONT * H / 4.0 if ARTDIFF else 0.0)) * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                 if FRONT:
                     d = d + front(ph, cf)
                 if OBSTACLE:                    # no biofilm inside the obstacles
