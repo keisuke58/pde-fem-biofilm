@@ -14,7 +14,7 @@ biomass, verification in two implementations, and what the composition does to g
 | Oliver [surname] (IKM) | the element (NEM, AceGen), the coupling scheme agreed on 20 Oct, sketch | co-author? |
 | Felix Klempt (IKM) | the growth model (Klempt et al. 2024) and the point model (Klempt et al. 2026) | co-author? his unpublished two-species work stays out |
 | Dr. Meisam Soleimani (IKM) | supervision, model (Klempt 2024 co-author) | co-author |
-| Prof. Joachim? Junker (IKM) | head of the institute, Klempt 2024/2026 co-author | ask Meisam whether to include |
+| Prof. Junker (IKM) | head of the institute, Klempt 2024/2026 co-author | ask Meisam whether to include |
 | Assoc. Prof. Mayu Muramatsu (Keio) | Keio supervisor | ask her; matters for the Keio master (single-author rule of the report: a co-authored paper is cited, not used as the report basis) |
 
 Open: the Keio 課題研究報告 says a report "based on a submitted or published single-author paper" must state it; a
