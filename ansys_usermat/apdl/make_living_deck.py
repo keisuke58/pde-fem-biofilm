@@ -111,6 +111,10 @@ def main():
                     help="dc/dt in both fields (addendum 28, build F:\\biofilm_upf_living5): NUT_TRANSIENT = 1, "
                          "MY_DIFF1 = MY_DIFF2 = D and both consumptions times D, so g/d stays as given by --cons/--cons-ab "
                          "(the quasi-static solution depends on g/d only); D = 1e8 is Klempt 2024 Table 2")
+    ap.add_argument("--nut1-init-all", action="store_true",
+                    help="NUT1_INIT_ALL = 1 (A-38, build F:\\biofilm_upf_living6): the nutrient starts at c = 1 in every "
+                         "element; otherwise only on the supply elements and 0 elsewhere, so the first increments "
+                         "see c = 0 (no front term, no consumption)")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -176,6 +180,8 @@ def main():
            f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {a.t_ab if a.ab else 0.0}{nl}")
     if a.transient_c:
         new += f"! addendum 28: dc/dt in both fields (build living5){nl}NUT_TRANSIENT = 1{nl}"
+    if a.nut1_init_all:
+        new += f"! A-38: the nutrient starts at c = 1 in every element (build living6){nl}NUT1_INIT_ALL = 1{nl}"
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)

@@ -71,6 +71,13 @@ FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv 
 FAST = "--fast" in sys.argv                # quarter domain x >= 0, z >= 0 (mirror symmetry) and AMG-preconditioned CG
 ARTDIFF = "--artdiff" in sys.argv          # as the ANSYS element (addendum 27): central front term + beta + r h / 4
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
+# --wall-grad W: the normal component of the gradient in the wall cells: onesided (np.gradient), mirror (zero-flux
+# ghost, (u1 - u0) / 2h) or zero. A-38: with the one-sided value the central front term of --artdiff treats the wall
+# as a front, and the corner blocks stay at phi = 1.1 (ANSYS: 0.54 at T* = 0.025); default zero with --artdiff (the
+# ANSYS element agrees best), onesided otherwise (the upwind forms already take no difference into a wall)
+WALL_GRAD = (sys.argv[sys.argv.index("--wall-grad") + 1] if "--wall-grad" in sys.argv
+             else "zero" if ARTDIFF else "onesided")
+assert WALL_GRAD in ("onesided", "mirror", "zero"), WALL_GRAD
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
 def _opt(name, default, cast=float):
@@ -201,7 +208,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + ("_artdiff" if ARTDIFF else "") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_artdiff" if ARTDIFF else "") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -312,8 +319,18 @@ def grad(u):
         return out
     if FAST:                                 # mirror layer on the symmetry planes x = 0, z = 0
         up = np.concatenate([u[:1], u], 0); up = np.concatenate([up[:, :, :1], up], 2)
-        return [np.gradient(up, H, axis=a)[1:, :, 1:] for a in range(3)]
-    return [np.gradient(u, H, axis=a) for a in range(3)]
+        return [_wall(np.gradient(up, H, axis=a)[1:, :, 1:], a) for a in range(3)]
+    return [_wall(np.gradient(u, H, axis=a), a) for a in range(3)]
+
+
+def _wall(g, a):
+    """--wall-grad: the normal component in the wall cells (not on the symmetry planes of --fast)"""
+    if WALL_GRAD == "onesided":
+        return g
+    for j in ((-1,) if (FAST and a in (0, 2)) else (0, -1)):
+        e = [slice(None)] * 3; e[a] = j
+        g[tuple(e)] *= 0.5 if WALL_GRAD == "mirror" else 0.0
+    return g
 
 
 def lap_obst(u, out):
