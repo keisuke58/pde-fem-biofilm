@@ -39,10 +39,12 @@ Only living biomass consumes nutrient. In Eq.~35 of Klempt et al.\ 2024 the cons
 written $g\phi$ with $\phi=\phi_{3D}$; the implementation uses $g\phi_{3D}c$, and the printed form is a misprint.
 In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
 $K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
+The time derivative of Eq.~35 is kept: with $d=1$~mm$^2/T^*$ the nutrient and the antibiotic need a time of
+order $0.1$ to $0.4\,T^*$ to adjust on the $2$~mm cube, not short against $T^*=1$ (an assumption with its own sensitivity, [..]).
 Throughout, $\phi_{3D}$ denotes the field of Klempt et al.\ 2024 and $\phi_i$ the point model. I scale
 the consumption by the living biomass at the Gauss point,
 \begin{equation}
-0=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad
+\dot c=d\,\nabla^2c-g\,\phi_{3D}\Bigl(\sum_{i=1}^N\bar\phi_i\Bigr)c,\qquad
 \bar\phi_i=\phi_i\psi_i,
 \label{eq:ch5-consumption}
 \end{equation}
@@ -51,7 +53,7 @@ A dead biofilm consumes nothing; the void $\phi_0$ has no living fraction and is
 The point model normalises its volume, $\sum_i\phi_i+\phi_0=1$, so $\bar\phi_i\in[0,1]$ is
 the living volume fraction of species $i$ at the point, and $\phi_{3D}\sum_i\bar\phi_i\le\phi_{3D}$ is
 the living volume fraction in the field. The antibiotic is
-taken up in the same way, $0=d_a\nabla^2a-g_a\phi_{3D}\bigl(\sum_i\bar\phi_i\bigr)a$. The growth law~\eqref{eq:ch5-eq36} is
+taken up in the same way, $\dot a=d_a\nabla^2a-g_a\phi_{3D}\bigl(\sum_i\bar\phi_i\bigr)a$. The growth law~\eqref{eq:ch5-eq36} is
 unchanged: the inflation $\alpha$ measures how much biomass has been produced, whether alive or
 dead. The spreading of $\phi_{3D}$ follows Eq.~34 with its front term, which depends on $c$; this
 is the path by which the point model reaches the growth and the stress. $\sum_i\bar\phi_i$ is taken from the

@@ -265,8 +265,8 @@ def main_agreed(thesis=False):
     x, _ = PX["macro"]
     eqs(ax, x + 0.018, 0.70, [
         r"$\dot\phi_{3D} = \beta\,\Delta\phi_{3D} + k_\alpha\alpha\, +$ front$(c)$",
-        r"$0 = d\,\Delta c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
-        r"$0 = d_a\Delta a - g_a\phi_{3D}\Sigma_i\bar\phi_i\,a$",
+        r"$\dot c = d\,\Delta c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
+        r"$\dot a = d_a\Delta a - g_a\phi_{3D}\Sigma_i\bar\phi_i\,a$",
     ], size=12.0, gap=0.058)
     ax.text(x + 0.018, 0.51, "nutrient $c$, antibiotic $a$\n(second nutrient field)", fontsize=10.5 * FS,
             color=PANEL["macro"][1], va="center", linespacing=1.25, zorder=4)
