@@ -136,6 +136,45 @@ N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
 H = W.L / NF
+# --obstacle columns: four rigid bars after Klempt et al. 2024, Sect. 4.3 and Fig. 9 (growth against rigid obstacles):
+# no biofilm and no nutrient inside, zero flux through their faces, frictionless contact with the biofilm in the
+# mechanics (wp3_stress_reference.solve_fields, obstacles=...). Positions read off the schematic (an assumption): two
+# bars along x beside the seed (y in [-0.125, 0.125] mm, |z| in [0.5, 0.75] mm) and two along z below and above it
+# (x in [-0.125, 0.125] mm, |y| in [0.5, 0.75] mm, the lower one between the seed and the nutrient wall y = -1 mm);
+# square 0.25 mm sections tangent to the seed, aligned to the 16^3 and 32^3 grids.
+OBSTACLE = _opt("--obstacle", None, str)
+
+
+def obstacle_boxes(kind):
+    if kind != "columns":
+        raise SystemExit(f"unknown obstacle {kind}")
+    B = []
+    for lo, hi in ((-0.75, -0.5), (0.5, 0.75)):
+        B.append(((-1.0, -0.125, lo), (1.0, 0.125, hi)))      # along x, beside the seed
+        B.append(((-0.125, lo, -1.0), (0.125, hi, 1.0)))      # along z, below / above the seed
+    return B
+
+
+def box_mask(n, boxes):
+    """cells of the n^3 grid of the 2 mm cube whose centres lie in one of the boxes"""
+    xc = -1 + (np.arange(n) + 0.5) * (2.0 / n)
+    X_, Y_, Z_ = np.meshgrid(xc, xc, xc, indexing="ij")
+    m = np.zeros((n,) * 3, bool)
+    for lo, hi in boxes:
+        m |= (X_ > lo[0]) & (X_ < hi[0]) & (Y_ > lo[1]) & (Y_ < hi[1]) & (Z_ > lo[2]) & (Z_ < hi[2])
+    return m
+
+
+BOXES = obstacle_boxes(OBSTACLE) if OBSTACLE else None
+OBST = box_mask(NF, BOXES) if OBSTACLE else None
+if OBSTACLE:
+    _open = ~OBST
+    NB = {}                                    # NB[a, s]: the neighbour in direction s along axis a is open fluid
+    for _a in range(3):
+        for _s in (1, -1):
+            _m = np.roll(_open, -_s, _a) & _open
+            _e = [slice(None)] * 3; _e[_a] = -1 if _s == 1 else 0; _m[tuple(_e)] = False
+            NB[_a, _s] = _m
 RES = HERE / "results" / ("2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
 RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
@@ -148,7 +187,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + (f"_{ONLY}" if ONLY else ""))
+       + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -246,16 +285,37 @@ def living(G):
 
 
 def grad(u):
-    """central differences, one-sided at the walls"""
+    """central differences, one-sided at the walls (and at obstacle faces)"""
+    if OBSTACLE:
+        out = []
+        for a in range(3):
+            mp, mm = NB[a, 1], NB[a, -1]
+            fw = np.where(mp, (np.roll(u, -1, a) - u) / H, 0.0); bw = np.where(mm, (u - np.roll(u, 1, a)) / H, 0.0)
+            out.append((fw + bw) / np.maximum(mp.astype(float) + mm, 1.0))
+        return out
     return [np.gradient(u, H, axis=a) for a in range(3)]
+
+
+def lap_obst(u, out):
+    """7-point Laplacian with zero flux through the walls and the obstacle faces"""
+    out[...] = 0.0
+    for a in range(3):
+        for s_ in (1, -1):
+            out += np.where(NB[a, s_], np.roll(u, -s_, a) - u, 0.0)
+    out /= H * H
+    out[OBST] = 0.0
+    return out
 
 
 def upwind_adv(u, v):
     out = np.zeros_like(u)
     for a in range(3):
         fw = (np.roll(u, -1, a) - u) / H; bw = (u - np.roll(u, 1, a)) / H
-        e = [slice(None)] * 3; e[a] = -1; fw[tuple(e)] = 0.0
-        e[a] = 0; bw[tuple(e)] = 0.0
+        if OBSTACLE:
+            fw = np.where(NB[a, 1], fw, 0.0); bw = np.where(NB[a, -1], bw, 0.0)
+        else:
+            e = [slice(None)] * 3; e[a] = -1; fw[tuple(e)] = 0.0
+            e[a] = 0; bw[tuple(e)] = 0.0
         out += np.maximum(v[a], 0) * bw + np.minimum(v[a], 0) * fw
     return out
 
@@ -285,6 +345,18 @@ class Reaction:
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             diag[tuple(sl)] += 2.0
+        if OBSTACLE:                          # links only between open cells; obstacle rows u = 0
+            o = (~OBST).ravel()
+            keep = [o[r] & o[c_] for r, c_ in zip(rows, cols)]
+            rows = [r[k] for r, k in zip(rows, keep)]; cols = [c_[k] for c_, k in zip(cols, keep)]
+            diag = np.zeros(n3)
+            for r in rows:
+                np.add.at(diag, r, 1.0)
+            diag = diag.reshape((NF,) * 3)
+            for ax_, j in faces:
+                sl = [slice(None)] * 3; sl[ax_] = j
+                diag[tuple(sl)] += 2.0
+            diag[OBST] = 1.0
         self.A0 = sp.csr_matrix((-np.ones(sum(r.size for r in rows)) / H ** 2,
                                  (np.concatenate(rows), np.concatenate(cols))), shape=(n3, n3))
         self.d0 = diag.ravel() / H ** 2
@@ -292,6 +364,8 @@ class Reaction:
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             b[tuple(sl)] += 2.0 / H ** 2
+        if OBSTACLE:
+            b[OBST] = 0.0
         self.b, self.q = b.ravel(), q
 
     def solve(self, phi, L, value=1.0, u_prev=None, dtau=None):
@@ -355,6 +429,8 @@ def run(example, antibiotic):
     if ANSYS_BC:
         nut.fixed = Y < -0.75
         ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
+        if OBSTACLE:
+            nut.fixed = nut.fixed & ~OBST; ab.fixed = ab.fixed & ~OBST
     L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
     c = nut.solve(phi, L, c_supply(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
@@ -398,10 +474,13 @@ def run(example, antibiotic):
             if FRONT:
                 cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt)  # the front follows the nutrient
             def f(ph, al):
-                W.laplacian(ph, H, lap)
+                (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
                 d = W.BETA * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                 if FRONT:
                     d = d + front(ph, cf)
+                if OBSTACLE:                    # no biofilm inside the obstacles
+                    d = np.where(OBST, 0.0, d)
+                    return d, np.where(OBST, 0.0, W.K_ALPHA * ph)
                 return d, W.K_ALPHA * ph
             k1 = f(phi, alpha); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
             k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1]); k4 = f(phi + dt * k3[0], alpha + dt * k3[1])
@@ -473,7 +552,10 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    vm, p = S.solve_fields(NM, W.block_mean(phi, NM), W.block_mean(alpha - 1, NM))
+    vm, p = S.solve_fields(NM, W.block_mean(phi, NM), W.block_mean(alpha - 1, NM), obstacles=BOXES)
+    if OBSTACLE:
+        snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=OBST.astype(np.int8))
+        hist["contact"] = getattr(S, "LAST_CONTACT", None)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
     return hist, snaps
 
