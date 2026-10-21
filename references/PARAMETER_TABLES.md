@@ -122,9 +122,10 @@ theta* = [1, 0.1, 1, 1, 2]. Four-species case II: `fritsch_4sp_M1..M3` in the sa
 | value | used | source |
 |---|---|---|
 | beta, d, g, k_alpha, k, r, E, nu | Table 2 of Klempt 2024, converted (table above) | paper |
-| A, b, eta, start phi, c*_0 = 100, alpha*_0 = 10, s = 0.1 | Fritsch case I (= Klempt 2026 Table 1 style) | paper |
-| antibiotic from T* = 0.5 | **correction (21 Oct): Klempt 2026 case 4 inserts it after one third** ("t > 500" of 1500 steps); 0.5 kept for now, 1/3 is the paper value: **open decision** (sensitivity --tab 0.25/0.75 queued; case-3 runs: from the start) | paper (1/3) |
+| A, b, eta, start phi, c*_0 = 100, s = 0.1 | Fritsch case I (= Klempt 2026 Table 1 style) | paper |
+| **alpha*_0 = 100** (decided 21 Oct late, the user) | Klempt 2026 Table 2 case 4 (antibiotic inserted after one third at 100), consistent with the onset; Fritsch case I's 10 lies below the threshold (sweep 1..300 at 16^3: the effect switches on between 30 and 100) | paper |
+| antibiotic from **T* = 1/3** (decided 21 Oct, the user) | Klempt 2026 case 4 inserts it after one third ("t > 500" of 1500 steps); 0.5 (earlier runs) as sensitivity | paper |
 | antibiotic diffusion and uptake | same as the nutrient | Oliver (20 Oct): the second nutrient field, same equation |
 | antibiotic source (all outer faces), nutrient source (layer y = -1 mm) | set-up of the examples | Oliver's sketch ("defined sources") |
-| phi_min = 0.1 (start of a point model) | assumption, sensitivity 0.01 | no paper value |
+| **phi_min = 0.001** (start of a point model; decided 21 Oct: the converged value) | 0.1 / 0.03 / 0.01 / 0.003 / 0.001 change the seed values by at most 0.018 (c), 0.003 to 0.001 by 0.001 | no paper value; converged |
 | mixed start with equal amounts | Oliver (20 Oct) | meeting |

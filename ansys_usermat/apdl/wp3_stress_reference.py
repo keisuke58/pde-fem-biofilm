@@ -28,6 +28,7 @@ import sys
 import time
 from pathlib import Path
 
+import os
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
@@ -36,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import mesh_study_seed as S  # noqa: E402
 
-E_BIO, NU, FLOOR = 10.0, 0.49, 1e-3
+E_BIO, NU, FLOOR = 10.0, 0.49, float(os.environ.get("VOID_FLOOR", 1e-3))   # void floor f (env VOID_FLOOR for its sensitivity)
 
 
 def solve_fields(n, phi, am1, nu=NU, force_cg=False):

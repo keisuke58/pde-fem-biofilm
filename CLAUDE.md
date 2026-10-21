@@ -366,6 +366,11 @@ this machine's specific workflow.
   `thesis/README.md`.
 
 - **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`.
+  - **Model frozen (the user, 21 Oct 2026):** the equations below (Klempt 2024 Eqs. 34-36 with dc/dt and g phi c,
+    the point model of Klempt 2026 as published, the agreed coupling) are not changed any more. Only constants (d, g,
+    r, beta, k_alpha, alpha*_0, phi_min, antibiotic onset), inputs (examples, start shares, sources, constant or sine
+    supply, point-model case) and numerics (mesh, time step, neighbours) vary. Fixes that make an implementation solve
+    these equations correctly are allowed; changing an equation is not.
   - Point model used as published, unchanged, with its own constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D,
     no phi_cap; ANSYS mode 8 is the base). In documents never call it a "black box" (the user): "used as published".
   - c* and the antibiotic alpha* from 3D fields (the element's second nutrient field carries the antibiotic),
@@ -375,7 +380,8 @@ this machine's specific workflow.
     Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
   - Eq. 34 with its front term switched on; Eq. 36 unchanged. **Paper values only (the user, 21 Oct evening):** r, d, g
     of Klempt 2024 Table 2 converted (r = 10 mm/T*, g l^2/d = 1), alpha*_0 = 10 (Fritsch case I), antibiotic with the
-    nutrient's diffusion and uptake; see the last table of `references/PARAMETER_TABLES.md`. r/10, alpha*_0 = 50,
+    nutrient's diffusion and uptake (alpha*_0 = 100 replaces 10, below); see the last table of `references/PARAMETER_TABLES.md`. Antibiotic from T* = 1/3 at alpha*_0 = 100
+    (Klempt 2026 case 4), phi_min = 0.001 (converged), void floor f = 1e-3 (0.13 % from f -> 0) (the user, 21 Oct late). r/10, alpha*_0 = 50,
     g_a = 0.25 and g l^2/d = 4 are superseded.
   - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
   - Write phi_3D in every field equation, phi_i for the point model.
@@ -391,8 +397,9 @@ this machine's specific workflow.
     cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
     < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
-  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: lv8_/v2_/v2s_/sens_ and v2f_/fsens_
-    invalid, u1_ quasi-static comparison, u2_ main) and `results/2026-10-3d/README_coupled_living.md` (Python: `_transc1` main).
+  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: u3_ = paper values, main) and
+    `results/2026-10-3d/README_coupled_living.md` (Python: `_front1 ... _a10_gab1_gc1` = paper values, main); case 3 of
+    Klempt 2026 Table 2 apart in `results/2026-10-3d-case3/`. Paper outline (co-authored): `papers/coupling_paper/OUTLINE.md`.
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
   four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
