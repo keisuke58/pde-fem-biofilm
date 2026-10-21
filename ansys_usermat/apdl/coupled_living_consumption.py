@@ -68,6 +68,7 @@ from fritsch2025_cases import CASES  # noqa: E402
 
 NF = int(sys.argv[sys.argv.index("--nf") + 1]) if "--nf" in sys.argv else 32
 FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv else 0.0
+FAST = "--fast" in sys.argv                # quarter domain x >= 0, z >= 0 (mirror symmetry) and AMG-preconditioned CG
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
@@ -137,6 +138,16 @@ N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
 H = W.L / NF
+SHAPE = (NF // 2, NF, NF // 2) if FAST else (NF,) * 3
+QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None)) if FAST else (slice(None),) * 3   # full -> computed
+
+
+def unfold(u):
+    """quarter field (x >= 0, z >= 0) -> full cube by mirroring; full fields pass through"""
+    if not FAST or u.shape[0] == NF:
+        return u
+    u = np.concatenate([u[::-1], u], 0)
+    return np.concatenate([u[:, :, ::-1], u], 2)
 # --obstacle columns: four rigid bars after Klempt et al. 2024, Sect. 4.3 and Fig. 9 (growth against rigid obstacles):
 # no biofilm and no nutrient inside, zero flux through their faces, frictionless contact with the biofilm in the
 # mechanics (wp3_stress_reference.solve_fields, obstacles=...). Positions read off the schematic (an assumption): two
@@ -167,7 +178,7 @@ def box_mask(n, boxes):
 
 
 BOXES = obstacle_boxes(OBSTACLE) if OBSTACLE else None
-OBST = box_mask(NF, BOXES) if OBSTACLE else None
+OBST = box_mask(NF, BOXES)[QS] if OBSTACLE else None
 if OBSTACLE:
     _open = ~OBST
     NB = {}                                    # NB[a, s]: the neighbour in direction s along axis a is open fluid
@@ -188,7 +199,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -292,8 +303,14 @@ def grad(u):
         for a in range(3):
             mp, mm = NB[a, 1], NB[a, -1]
             fw = np.where(mp, (np.roll(u, -1, a) - u) / H, 0.0); bw = np.where(mm, (u - np.roll(u, 1, a)) / H, 0.0)
+            if FAST and a in (0, 2):             # mirror cell on the symmetry plane: a neighbour with difference 0
+                mm = mm.copy(); e = [slice(None)] * 3; e[a] = 0
+                mm[tuple(e)] = ~OBST[tuple(e)]
             out.append((fw + bw) / np.maximum(mp.astype(float) + mm, 1.0))
         return out
+    if FAST:                                 # mirror layer on the symmetry planes x = 0, z = 0
+        up = np.concatenate([u[:1], u], 0); up = np.concatenate([up[:, :, :1], up], 2)
+        return [np.gradient(up, H, axis=a)[1:, :, 1:] for a in range(3)]
     return [np.gradient(u, H, axis=a) for a in range(3)]
 
 
@@ -314,7 +331,7 @@ def _nb(a, s_):
     """neighbour in direction s_ along axis a exists and is open (walls, obstacles)"""
     if OBSTACLE:
         return NB[a, s_]
-    m = np.ones((NF,) * 3, bool)
+    m = np.ones(SHAPE, bool)
     e = [slice(None)] * 3; e[a] = -1 if s_ == 1 else 0; m[tuple(e)] = False
     return m
 
@@ -365,15 +382,16 @@ class Reaction:
     """0 = lap u - q phi L u, u = value on the face y = side (ghost cell), zero flux elsewhere."""
 
     def __init__(self, q, side):
-        n3 = NF ** 3
-        idx = np.arange(n3).reshape((NF,) * 3)
-        rows, cols, diag = [], [], np.zeros((NF,) * 3)
+        n3 = int(np.prod(SHAPE))
+        idx = np.arange(n3).reshape(SHAPE)
+        rows, cols, diag = [], [], np.zeros(SHAPE)
         for ax in range(3):
             for sgn in (1, -1):
-                ok = np.ones((NF,) * 3, bool)
+                ok = np.ones(SHAPE, bool)
                 e = [slice(None)] * 3; e[ax] = -1 if sgn == 1 else 0; ok[tuple(e)] = False
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
-        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)]
+        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
+                                                                 if not (FAST and a in (0, 2) and e == 0)]
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             diag[tuple(sl)] += 2.0
@@ -384,7 +402,7 @@ class Reaction:
             diag = np.zeros(n3)
             for r in rows:
                 np.add.at(diag, r, 1.0)
-            diag = diag.reshape((NF,) * 3)
+            diag = diag.reshape(SHAPE)
             for ax_, j in faces:
                 sl = [slice(None)] * 3; sl[ax_] = j
                 diag[tuple(sl)] += 2.0
@@ -392,7 +410,7 @@ class Reaction:
         self.A0 = sp.csr_matrix((-np.ones(sum(r.size for r in rows)) / H ** 2,
                                  (np.concatenate(rows), np.concatenate(cols))), shape=(n3, n3))
         self.d0 = diag.ravel() / H ** 2
-        b = np.zeros((NF,) * 3)
+        b = np.zeros(SHAPE)
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             b[tuple(sl)] += 2.0 / H ** 2
@@ -402,7 +420,7 @@ class Reaction:
 
     def solve(self, phi, L, value=1.0, u_prev=None, dtau=None):
         if value == 0.0:
-            return np.zeros((NF,) * 3)
+            return np.zeros(SHAPE)
         m = 0.0 if (TRANSIENT_D is None or u_prev is None) else 1.0 / (TRANSIENT_D * dtau)
         A = (self.A0 + sp.diags(self.d0 + m + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
         b = self.b.copy() + (m * u_prev.ravel() / value if m else 0.0)
@@ -411,7 +429,30 @@ class Reaction:
             D = sp.diags((~f).astype(float))
             A = (D @ A + sp.diags(f.astype(float))).tocsr()
             b = np.where(f, 1.0, b)
-        return (value * spla.spsolve(A.tocsc(), b)).reshape((NF,) * 3)
+        if FAST:
+            return (value * self._amg(A, b)).reshape(SHAPE)
+        return (value * spla.spsolve(A.tocsc(), b)).reshape(SHAPE)
+
+    def _amg(self, A, b):
+        """CG on the unknown cells (symmetric), preconditioned by an AMG hierarchy that is rebuilt every 25 solves;
+        the matrix changes only on the diagonal between solves. Warm start from the previous solution."""
+        import pyamg
+        f = getattr(self, "fixed", None)
+        f = np.zeros(A.shape[0], bool) if f is None else f.ravel()
+        fr = ~f
+        x = np.where(f, 1.0, 0.0)
+        Aff = A[fr][:, fr].tocsr()
+        rhs = b[fr] - A[fr][:, f] @ x[f] if f.any() else b[fr]
+        self._n = getattr(self, "_n", 0) + 1
+        if getattr(self, "_ml", None) is None or self._n % 25 == 1:
+            self._ml = pyamg.smoothed_aggregation_solver(Aff, symmetry="symmetric")
+        x0 = getattr(self, "_last", None)
+        sol, info = spla.cg(Aff, rhs, x0=x0, rtol=1e-12, maxiter=500, M=self._ml.aspreconditioner())
+        if info != 0:                              # fall back to the direct solve
+            sol = spla.spsolve(Aff.tocsc(), rhs)
+        self._last = sol
+        x[fr] = sol
+        return x
 
 
 def c_supply(T):
@@ -441,9 +482,10 @@ def run(example, antibiotic):
     if V2:                                        # four small corner blocks at the seed's height
         zmax = np.abs(Z[seed]).max() + 1e-9
         edges = edges & (np.abs(Z) <= zmax)
+    seed, edges, X, Y, Z = seed[QS], edges[QS], X[QS], Y[QS], Z[QS]
     phi = (seed | (edges if example == "separate" else False)).astype(float)
     alpha = np.ones_like(phi)
-    G = np.zeros((NF, NF, NF, 12))
+    G = np.zeros(SHAPE + (12,))
     tot = sum(CASE["phi_init"])
     GROUP_B = [i for i in range(N_SP) if i not in GROUP_A]
     if MIX_SHARE is not None:
@@ -463,7 +505,7 @@ def run(example, antibiotic):
         ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
         if OBSTACLE:
             nut.fixed = nut.fixed & ~OBST; ab.fixed = ab.fixed & ~OBST
-    L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
+    L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
     c = nut.solve(phi, L, c_supply(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
@@ -472,7 +514,7 @@ def run(example, antibiotic):
         dt = min(dt, 0.4 * H / (R_FRONT / (1 + K_MONOD)))
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
     hist = dict(t=[0.0], living_seed=[float(L[seed].mean())], share_a_seed=[], share_a_edges=[], living_edges=[],
-                c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum())])
+                c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum()) * (4 if FAST else 1)])
 
     def shares(m):
         ph = G[m][:, :N_SP]
@@ -535,7 +577,7 @@ def run(example, antibiotic):
             Gf[idx] = np.asarray(STEP(jnp.asarray(Gf[idx]), jnp.asarray(c.ravel()[idx]),
                                       jnp.asarray(c_new.ravel()[idx]), jnp.asarray(a.ravel()[idx]),
                                       jnp.asarray(a_new.ravel()[idx])))
-        G = Gf.reshape((NF,) * 3 + (12,))
+        G = Gf.reshape(SHAPE + (12,))
         c, a = c_new, a_new
         # (4) newly colonised cells inherit the neighbours' state
         new = (phi >= PHI_MIN) & ~on
@@ -556,19 +598,20 @@ def run(example, antibiotic):
             G[fill] = gs
             on = on | fill
         # (5) living biomass for the next step
-        L = np.where(on, living(G.reshape(-1, 12)).reshape((NF,) * 3), 0.0)
+        L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
         hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
         hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
         hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
-        hist["colonised"].append(int(on.sum()))
+        hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
-            snaps[round(T1, 3)] = dict(phi=phi.copy(), c=c.copy(), a=a.copy(), L=L.copy(), shareA=shA)
+            snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
+                                       L=unfold(L).copy(), shareA=unfold(shA).copy())
         if time.time() - t_ck > CKPT_SEC:
             tmp = ckpt.with_suffix(".tmp.npz")
             np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G,
@@ -584,9 +627,9 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    vm, p = S.solve_fields(NM, W.block_mean(phi, NM), W.block_mean(alpha - 1, NM), obstacles=BOXES)
+    vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES)
     if OBSTACLE:
-        snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=OBST.astype(np.int8))
+        snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
     return hist, snaps

@@ -22,6 +22,10 @@ Abaqus run is possible here but nothing has been run here yet.
   scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
   only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
   user is away. Back up Oliver's element patches and `F:\felix_private\` before the end of December.
+  **Reachable from the phone (confirmed 21 Oct 2026, during the trip):** the VS Code tunnel of IKMHIWI03 opens in
+  the phone's browser (vscode.dev, signed in with the user's account) when the mobile signal is good; with a weak
+  signal it does not load. The tunnel URL is kept out of this public repository. Use it to look at logs or start a
+  detached chain (`run_chain.ps1`); long work still goes through the detached scripts, not the browser session.
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
