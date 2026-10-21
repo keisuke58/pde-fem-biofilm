@@ -75,6 +75,7 @@ def _opt(name, default, cast=float):
 
 
 NM, T_END = 16, 1.0
+T_END = float(sys.argv[sys.argv.index("--tend") + 1]) if "--tend" in sys.argv else T_END
 DT_C = _opt("--dtc", 0.025)                 # outer (coupling) step; halved to test the one-step lag
 PHI_MIN = _opt("--phi-min", 0.01)
 ONLY = _opt("--only", None, str)            # run only this example, e.g. separate_ab
@@ -88,6 +89,12 @@ V2 = "--v2" in sys.argv
 if V2 and not CHECK:
     LAM_A2 = 0.25
 ALPHA0 = 50.0 if V2 else None
+# sensitivities (as the ANSYS fsens_/u1_ runs): --alpha0 A (alpha*_0 of the point model), --gab G (antibiotic uptake
+# g_a L^2 / d_a; the ANSYS "uptake x16" run is 4)
+if "--alpha0" in sys.argv:
+    ALPHA0 = float(sys.argv[sys.argv.index("--alpha0") + 1])
+if "--gab" in sys.argv:
+    LAM_A2 = float(sys.argv[sys.argv.index("--gab") + 1])
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
 # with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
 FORTRAN = "--fortran" in sys.argv
@@ -112,11 +119,20 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
        + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "")
-       + ("_mixeq" if MIX_EQUAL else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
+       + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
+       + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
-    _cst = FN.init(ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt"))
+    _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
+    if "--alpha0" in sys.argv:                  # the same file with alpha*_0 replaced (second line: c*_0 alpha*_0)
+        _l = _eco.read_text().splitlines()
+        _l[1] = f"{_l[1].split()[0]} {ALPHA0:g}"
+        _eco = ROOT / "abaqus_composition" / f"eco_fritsch_2sp_a{ALPHA0:g}.txt"
+        _eco.write_text("\n".join(_l) + "\n")
+    _cst = FN.init(_eco)
     assert _cst["nact"] == 2 and _cst["c_star"] == 100.0
+    assert ALPHA0 is None or _cst["alpha_star"] == ALPHA0
 
 
 # ---------------------------------------------------------------- point model (black box)
