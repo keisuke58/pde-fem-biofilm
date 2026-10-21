@@ -40,11 +40,11 @@
 \begin{frame}{The loop at one Gauss point}
 \centering
 \begin{tikzpicture}
-\node[box=4.4cm,fill=gray!12] (f) at (0,0) {\textbf{3D field} (Klempt et al.\ 2024)\\ $\phi_{3D}$, $\alpha$, nutrient $c$,\\
-  antibiotic $a$ (second nutrient field)};
+\node[box=4.4cm,fill=gray!12] (f) at (0,0) {\textbf{3D field} (Klempt et al.\ 2024)\\ $\phi_{3D}$, growth $\alpha$, nutrient $c$,\\
+  antibiotic $a$ (2nd nutrient field)};
 \node[box=4.4cm,fill=c3!15,draw=c3] (p) at (9.2,0) {\textbf{Point model} (Klempt et al.\ 2026)\\
   $\phi_i$, $\psi_i$, $\phi_0$, used as published};
-\draw[arr] ([yshift=4mm]f.east) -- node[above,font=\footnotesize]{$c^*(t)$, $\alpha^*(t)$, linear in time}
+\draw[arr] ([yshift=4mm]f.east) -- node[above,font=\footnotesize,align=center]{$c^*=c^*_0\,c$, $\alpha^*=\alpha^*_0\,a$\\ linear in time}
   ([yshift=4mm]p.west);
 \draw[arr] ([yshift=-4mm]p.west) -- node[below,font=\footnotesize]{living biomass $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$}
   ([yshift=-4mm]f.east);
@@ -57,13 +57,14 @@
 % --------------------------------------------------------
 \begin{frame}{Equations}
 \begin{align*}
-c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad \alpha^*\ \text{likewise}\\
+c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad
+\alpha^*(t)=\alpha^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}a_n+\tfrac{t-t_n}{\Delta t}a_{n+1}\Bigr]\\
 \dot c&=d\,\nabla^2c-g\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,c,\qquad \bar\phi_i=\phi_i\psi_i\\
 \dot a&=d_a\nabla^2a-g_a\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,a\\
 \dot\phi_{3D}&=\beta\nabla^2\phi_{3D}+k_\alpha\alpha-\|\nabla\phi_{3D}\|\,\tfrac{r\,c}{k+c}\,\mathbf n_{\nabla\phi_{3D}}\cdot\mathbf n_{\nabla c},
 \qquad \dot\alpha=k_\alpha\phi_{3D}
 \end{align*}
-\small $g\phi$ in Eq.\ 35 of the paper is a misprint; $g\phi_{3D}c$ is used (Monod form $f(c)=c/(K_c+c)\to c/K_c$ for $K_c\gg c$). $\phi_{3D}$: field, $\phi_i$: point model.
+\small $g\phi$ in Eq.\ 35 of the paper is a misprint; $g\phi_{3D}c$ is used (Monod form $f(c)=c/(K_c+c)\to c/K_c$ for $K_c\gg c$). $\phi_{3D}$: field, $\phi_i$: point model. Antibiotic: $a$ (field), $\alpha^*$ (point model); growth: $\alpha$ (Eq.\ 36), not passed to the point model.
 \end{frame}
 
 % --------------------------------------------------------
@@ -72,7 +73,7 @@ c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}
 \begin{tikzpicture}[font=\footnotesize, scale=0.9, transform shape]
 \node[box=3.6cm,fill=gray!12] (g) at (0,0) {\textbf{element (NEM)}\\ $\phi_{3D}$, $c$, $a$ solved at the\\ Gauss points (and surface points)};
 \node[box=3.2cm,fill=c3!15,draw=c3] (m) at (4.6,0) {\textbf{material routine}\\ reads its own point:\\ pair $(c_n, c_{n+1})$, $(a_n, a_{n+1})$};
-\node[box=3.0cm,fill=c3!15,draw=c3] (p) at (8.8,0) {\textbf{point model}\\ $c^*(t)$, $\alpha^*(t)$\\ linear over the inner steps};
+\node[box=3.0cm,fill=c3!15,draw=c3] (p) at (8.8,0) {\textbf{point model}\\ $c^*(t)$ from $c$, $\alpha^*(t)$ from $a$\\ linear over the inner steps};
 \draw[arr] (g) -- (m); \draw[arr] (m) -- (p);
 \end{tikzpicture}\\[10pt]
 \begin{itemize}\setlength{\itemsep}{4pt}
@@ -152,7 +153,7 @@ $c$, $a$ & nutrient and antibiotic fields (the element's first and second nutrie
 $d$, $g$, $d_a$, $g_a$ & diffusion and consumption of nutrient and antibiotic\\
 $\beta$, $k_\alpha$, $r$, $k$ & diffusion of $\phi$, growth rate, front growth and Monod constant (Eq.\ 34, 36)\\
 $\phi_i$, $\psi_i$, $\phi_0$ & volume fraction and living fraction of species $i$, auxiliary void (Klempt et al.\ 2026)\\
-$c^*$, $\alpha^*$, $b_i$ & nutrient and antibiotic of the point model, antibiotic sensitivity\\
+$c^*$, $\alpha^*$, $b_i$ & point-model nutrient $c^*_0c$, antibiotic $\alpha^*_0a$ (not the growth $\alpha$); sensitivity\\
 $\bar\phi_i$ & living volume fraction of species $i$, $\phi_i\psi_i$ (Klempt et al.\ 2026)\\
 $T^*$, $s$ & normalised time; point-model time per unit $T^*$\\
 \bottomrule
