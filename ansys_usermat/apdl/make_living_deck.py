@@ -107,6 +107,10 @@ def main():
                          "(addendum 21); the antibiotic still starts at T* = 0.5")
     ap.add_argument("--t-ab", type=float, default=0.5,
                     help="with --ab: T* at which the antibiotic source starts (NUT2_TSTART, default 0.5; addendum 22)")
+    ap.add_argument("--transient-c", type=float, metavar="D",
+                    help="dc/dt in both fields (addendum 28, build F:\\biofilm_upf_living5): NUT_TRANSIENT = 1, "
+                         "MY_DIFF1 = MY_DIFF2 = D and both consumptions times D, so g/d stays as given by --cons/--cons-ab "
+                         "(the quasi-static solution depends on g/d only); D = 1e8 is Klempt 2024 Table 2")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -154,6 +158,11 @@ def main():
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
     if a.neigh is not None:
         scal["NEIGHBOR_CNT"] = str(a.neigh)
+    if a.transient_c:
+        d = a.transient_c
+        scal["MY_DIFF1"] = scal["MY_DIFF2"] = repr(d)
+        for k in ("CONSUMPTION11", "CONSUMPTION21"):
+            scal[k] = repr(float(scal[k]) * d)
     if a.artdiff:
         mb = re.search(r"^MY_BETA1\s*=\s*([\d.eE+-]+)", text, re.M)
         beta0 = float(mb.group(1))
@@ -165,6 +174,8 @@ def main():
     m = re.search(r"^PENALTY1\s*=.*$", text, re.M)
     new = (f"{nl}! pde-fem-biofilm 20 Oct 2026 (A-19): living share, front term, antibiotic{nl}"
            f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {a.t_ab if a.ab else 0.0}{nl}")
+    if a.transient_c:
+        new += f"! addendum 28: dc/dt in both fields (build living5){nl}NUT_TRANSIENT = 1{nl}"
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
@@ -191,7 +202,8 @@ def main():
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
             f"g_a {scal['CONSUMPTION21']}, phi_min {props[29]:g}, start step {a.start_step:g}, "
             f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}, "
-            f"end T* {a.tend if a.tend is not None else 'base'}; BIOFILM1 {len(bio1)} elements, "
+            f"end T* {a.tend if a.tend is not None else 'base'}, "
+            f"{f'dc/dt with d = {a.transient_c:g}' if a.transient_c else 'quasi-static c'}; BIOFILM1 {len(bio1)} elements, "
             f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
     post = "post_fields_living.mac" if a.tend is None or a.tend == 1 else f"post_fields_living_t{a.tend:g}.mac"
     text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,{post}{nl}FINISH{nl}"
