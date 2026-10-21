@@ -298,7 +298,7 @@ def main_agreed(thesis=False):
 
     y1, y2 = 0.60, 0.53
     arrow(ax, (PX["macro"][0] + PX["macro"][1], y1), (PX["micro"][0], y1))
-    ax.text(0.3325, y1 + 0.015, r"$c^*$" "\n" r"$\alpha^*$", ha="center", va="bottom", fontsize=12 * FS, color=INK,
+    ax.text(0.3325, y1 + 0.015, r"$c^*_0c$" "\n" r"$\alpha^*_0a$", ha="center", va="bottom", fontsize=11 * FS, color=INK,
             linespacing=1.15)
     arrow(ax, (PX["micro"][0], y2), (PX["macro"][0] + PX["macro"][1], y2), color=PANEL["micro"][1])
     ax.text(0.3325, y2 - 0.02, r"$\Sigma_i\bar\phi_i$", ha="center", va="top", fontsize=12.5 * FS,
@@ -317,7 +317,7 @@ def main_agreed(thesis=False):
         ax.text(0.5, 0.012,
                 r"$\bar\phi_i=\phi_i\psi_i$: only living biomass consumes.   Assumed, not from a paper: "
                 r"$c^*,\alpha^*$ linear in time, $\Sigma_i\bar\phi_i$ one step late, start values of new points, "
-                r"$\phi_{min}$ = 0.01.   $s$ from the data window.",
+                r"$\phi_{min}$ = 0.001 (converged).   $s$ from the data window.",
                 ha="center", va="bottom", fontsize=10.2 * FS, color=MUTED)
     out = OUT.with_name("fig_coupling_schematic_agreed" + ("_thesis" if thesis else "") + ".png")
     fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
