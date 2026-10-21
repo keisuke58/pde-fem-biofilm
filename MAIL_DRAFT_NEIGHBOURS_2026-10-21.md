@@ -51,7 +51,9 @@ Where A and B meet (your open question): the regions grow until the fronts meet 
 place (position on the diagonal 0.795 mm at T* = 1, 1.5 and 2; the share of A changes from above 0.95 to below
 0.05 within one cell). The composition is not transported with the biomass in this coupling, so neither species
 invades the other; points reached between the fronts start mixed. Displacement would need the species in the field
-equations. [figure: fig_contact_zone]
+equations. The same with the antibiotic: B in the corners dies (living fraction 0.84 -> 0.37 from T* = 0.5 to 2),
+but A does not move into that space (share of A there 0.02-0.03, boundary still at 0.796 mm). A sharp boundary
+is what experiments show; that it cannot move is a limit of the coupling. [figure: fig_contact_zone]
 
 4. Two things I noticed in the element (no change to the code for these runs)
 - Neighbour selection: GetNhgb enlarges its radius until there are enough points and then takes exactly

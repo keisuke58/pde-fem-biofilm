@@ -7,6 +7,8 @@ Two start rules for points the biofilm reaches:
   neighbours : the phi-weighted mean state of the colonised neighbours (composition carried with the biofilm),
   position   : species B within 0.5625 mm of the vertical edges, A elsewhere (the rule of the ANSYS runs).
 (a) share of A on the mid-plane z = 0 at T* = 0.5, 1, 1.5, 2, grey where phi_3D < 0.1, contour phi_3D = 0.5;
+(a') for the run with antibiotic also the living volume fraction (green), which falls in the B regions while
+     the share of A there stays small: A does not take over the space of the dead B;
 (b) share of A along the diagonal of the mid-plane from the seed centre to a corner; the contact position
     (share 0.5) and the width of the mixed zone (share between 0.1 and 0.9) are printed and saved.
 
@@ -68,22 +70,26 @@ def main():
     import matplotlib.pyplot as plt
     have = [(lab, key, sp, load(key, sp)) for lab, key, sp in RUNS]
     have = [h for h in have if h[3] is not None]
+    rows = [(lab, key, sp, d, "shareA") for lab, key, sp, d in have]
+    rows += [(lab + ": living", key, sp, d, "L") for lab, key, sp, d in have if key.endswith("_ab")]
     if not have:
         raise SystemExit("no runs yet")
-    fig = plt.figure(figsize=(6.3, 1.7 * len(have) + 2.0))
-    gs = fig.add_gridspec(len(have) + 1, len(TIMES), height_ratios=[1] * len(have) + [1.1])
+    fig = plt.figure(figsize=(6.3, 1.7 * len(rows) + 2.0))
+    gs = fig.add_gridspec(len(rows) + 1, len(TIMES), height_ratios=[1] * len(rows) + [1.1])
     out = {}
-    for r, (lab, key, sp, d) in enumerate(have):
+    for r, (lab, key, sp, d, fld) in enumerate(rows):
         n = d["phi_1.0"].shape[0]
         e = np.linspace(-1, 1, n + 1); xc = 0.5 * (e[1:] + e[:-1])
         out[lab] = {}
         for c, T in enumerate(TIMES):
             a = fig.add_subplot(gs[r, c])
-            ph, sh = d[f"phi_{T}"], d[f"shareA_{T}"]
+            ph, sh = d[f"phi_{T}"], d[f"{fld}_{T}"]
             m = np.where(mid(ph) >= 0.1, mid(sh), np.nan)
             a.set_facecolor("0.85")
-            im = a.pcolormesh(e, e, np.ma.masked_invalid(m).T, cmap="coolwarm_r", vmin=0, vmax=1, shading="flat",
-                              rasterized=True)
+            im_ = a.pcolormesh(e, e, np.ma.masked_invalid(m).T, cmap="coolwarm_r" if fld == "shareA" else "Greens",
+                               vmin=0, vmax=1, shading="flat", rasterized=True)
+            if fld == "shareA":
+                im = im_
             a.contour(xc, xc, mid(ph).T, levels=[0.5], colors="k", linewidths=0.5)
             a.set_aspect("equal"); a.set_xticks([]); a.set_yticks([]); a.grid(False)
             if r == 0:
@@ -91,11 +97,14 @@ def main():
             if c == 0:
                 a.set_ylabel(lab, fontsize=7)
             s = np.sqrt(2) * xc[n // 2:]
-            pos, width = contact(diag(m), s)
-            out[lab][T] = dict(contact_mm=None if np.isnan(pos) else float(pos), mixed_width_mm=float(width))
+            if fld == "shareA":
+                pos, width = contact(diag(m), s)
+                out[lab][T] = dict(contact_mm=None if np.isnan(pos) else float(pos), mixed_width_mm=float(width))
+            else:
+                out[lab][T] = dict(diag_living=[None if not np.isfinite(v) else float(v) for v in diag(m)])
     cb = fig.colorbar(im, ax=fig.axes, fraction=0.02, pad=0.01)
     cb.set_label("share of A", fontsize=7); cb.ax.tick_params(labelsize=6)
-    ax = fig.add_subplot(gs[len(have), :])
+    ax = fig.add_subplot(gs[len(rows), :])
     styles = ["-", "--", ":"]
     for (lab, key, sp, d), ls in zip(have, styles):
         n = d["phi_1.0"].shape[0]
@@ -109,7 +118,8 @@ def main():
     fig.savefig(ROOT / "assets" / "fig_contact_zone.pdf"); fig.savefig(ROOT / "assets" / "fig_contact_zone.png", dpi=300)
     (HERE / "results/2026-10-3d/contact_zone.json").write_text(json.dumps(out, indent=1) + "\n")
     for lab, v in out.items():
-        print(lab, {T: (x["contact_mm"] and round(x["contact_mm"], 3), round(x["mixed_width_mm"], 3)) for T, x in v.items()})
+        if "living" not in lab:
+            print(lab, {T: (x["contact_mm"] and round(x["contact_mm"], 3), round(x["mixed_width_mm"], 3)) for T, x in v.items()})
 
 
 if __name__ == "__main__":

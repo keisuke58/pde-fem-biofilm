@@ -64,8 +64,12 @@ composition is not carried with the biomass in this coupling: a point keeps the 
 point the biofilm reaches starts from the state of its neighbours. Neither species can therefore invade the
 other; mixing is confined to the points that start between the two fronts. With the start rule of the ANSYS runs
 (species B near the edges, A elsewhere) the boundary has the shape set by the rule instead of the shape of the
-meeting fronts, at the same position on the diagonal. Displacing one species by the other would need the species
-to be transported in the field equations, as in a species-resolved continuum model.
+meeting fronts, at the same position on the diagonal. The same holds with the antibiotic: in the corner blocks the living
+volume fraction of B falls from $0.84$ at $T^*=0.5$ to $0.37$ at $T^*=2$, while the share of A there stays between
+$0.02$ and $0.03$ and the boundary stays at $0.796$~mm. A sharp boundary between colonies that meet is what
+experiments show as well; that it cannot move, even when one side dies, is a limit of this coupling.
+Displacing one species by the other would need the species to be transported in the field equations, as in a
+species-resolved continuum model \cite{Feng2021TwoSpecies} [check key].
 
 \begin{figure}[htbp]
   \centering
@@ -73,7 +77,8 @@ to be transported in the field equations, as in a species-resolved continuum mod
   \caption[Where the regions of A and B meet]{%
     Separate example without antibiotic, Python on $32^3$, to $T^*=2$: share of A on the mid-plane $z=0$ (grey
     where $\phi_{3D}<0.1$, line $\phi_{3D}=0.5$) for points that start from the state of their neighbours (top)
-    and by position as in the ANSYS runs (middle), and along the diagonal from the centre of the seed (bottom).}
+    by position as in the ANSYS runs, with the antibiotic from $T^*=0.5$ (third row) and its living volume
+    fraction (fourth row, green), and along the diagonal from the centre of the seed (bottom).}
   \label{fig:ch5-contact}
 \end{figure}
 
