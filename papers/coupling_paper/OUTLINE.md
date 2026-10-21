@@ -81,3 +81,8 @@ Felix's confidential two-species theory and code are not used; only the publishe
 | until Dec 2027 | review and revision; aim: accepted before the Keio final presentation (Dec 2027) |
 Option: a short PAMM paper from the GAMM annual meeting in spring 2027 as an earlier citable step. Do not let the
 submission slip past June: a major revision can take more than six months.
+
+## Scope and authorship notes (the user, 21 Oct 2026)
+- Scope: the LUH coupling work only; the Keio continuation (tooth geometry, Abaqus) is not part of this paper for now.
+- Assoc. Prof. Muramatsu as co-author: raise it with her at the meeting of 2 Nov 2026, then with Meisam after the
+  thesis is submitted (Jan-Feb 2027); all authors must agree.
