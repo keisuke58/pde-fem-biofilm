@@ -380,7 +380,8 @@ this machine's specific workflow.
     Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
   - Eq. 34 with its front term switched on; Eq. 36 unchanged. **Paper values only (the user, 21 Oct evening):** r, d, g
     of Klempt 2024 Table 2 converted (r = 10 mm/T*, g l^2/d = 1), alpha*_0 = 10 (Fritsch case I), antibiotic with the
-    nutrient's diffusion and uptake; see the last table of `references/PARAMETER_TABLES.md`. r/10, alpha*_0 = 50,
+    nutrient's diffusion and uptake; see the last table of `references/PARAMETER_TABLES.md`. Antibiotic from T* = 1/3 (Klempt 2026
+    case 4), phi_min = 0.001 (converged) (the user, 21 Oct late). r/10, alpha*_0 = 50,
     g_a = 0.25 and g l^2/d = 4 are superseded.
   - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
   - Write phi_3D in every field equation, phi_i for the point model.
