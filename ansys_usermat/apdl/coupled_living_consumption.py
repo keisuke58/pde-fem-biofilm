@@ -99,6 +99,7 @@ if "--gab" in sys.argv:
 # (same total as Fritsch's; 0.5 = --mix-equal); --tab T: antibiotic from T* = T (default 0.5)
 if "--gc" in sys.argv:
     LAM_C2 = float(sys.argv[sys.argv.index("--gc") + 1])
+SNAP_EVERY = float(sys.argv[sys.argv.index("--snap-every") + 1]) if "--snap-every" in sys.argv else None
 MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
 # --fortran: the point model of the ANSYS runs itself (ecology_native.f through ctypes, ecology_native_ctypes.py),
 # with the same point-model file as ANSYS; otherwise the JAX version (agrees to 1e-16, 21 Oct)
@@ -127,7 +128,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps")
        + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -384,7 +385,8 @@ def run(example, antibiotic):
         hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()))
-        if abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9:
+        if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
+                or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
             snaps[round(T1, 3)] = dict(phi=phi.copy(), c=c.copy(), a=a.copy(), L=L.copy(), shareA=shA)
