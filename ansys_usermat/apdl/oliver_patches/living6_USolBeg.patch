@@ -1,0 +1,18 @@
+diff --git "a/F:\\biofilm_upf_living5\\USolBeg_P21-V21_Conection_Test.F" "b/F:\\biofilm_upf_living6\\USolBeg_P21-V21_Conection_Test.F"
+index 121b39d..32b087e 100644
+--- "a/F:\\biofilm_upf_living5\\USolBeg_P21-V21_Conection_Test.F"
++++ "b/F:\\biofilm_upf_living6\\USolBeg_P21-V21_Conection_Test.F"
+@@ -1164,4 +1164,13 @@ c **********  a user subroutine called before solution  **********
+       allocate(Vdp_nut1(nTot));    Vdp_nut1 = 0.0D0
+       allocate(Vdp_nut2(nTot));    Vdp_nut2 = 0.0D0
++!     pde-fem-biofilm 21 Oct 2026 (A-38): NUT1_INIT_ALL = 1 starts the
++!     nutrient at MY_NUTSTART1 in every element (c(0) = 1), not only on
++!     the supply elements; the antibiotic still starts at 0
++      Sdp1 = 0.0D0
++      C_ParName='NUT1_INIT_ALL'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .NE. 0) Sdp1 = 0.0D0
++      PRINT *, "IKM: NUT1_INIT_ALL =", Sdp1
++      IF (Sdp1 .GT. 0.5D0) Vdp_nut1 = sGdp_Nut1start
+       
+       !Get the GP List of nutrient 1 BC

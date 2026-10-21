@@ -115,6 +115,14 @@ def main():
                     help="NUT1_INIT_ALL = 1 (A-38, build F:\\biofilm_upf_living6): the nutrient starts at c = 1 in every "
                          "element; otherwise only on the supply elements and 0 elsewhere, so the first increments "
                          "see c = 0 (no front term, no consumption)")
+    ap.add_argument("--front-dump", type=float, metavar="T",
+                    help="FRONT_DUMP = T (A-39, build living6): USSFin writes the terms of the phi update of every point "
+                         "(phi, grad phi, grad c, c, lap phi, Ori, Growth, penalty) to front_dump.txt while the run time "
+                         "is below T; for short 8^3 runs only")
+    ap.add_argument("--surf-nearest", action="store_true",
+                    help="SURF_NEAREST = 1 (A-39, build living6): each surface point takes phi of its nearest "
+                         "integration points (zero normal gradient) instead of the inverse-square mean of all its "
+                         "integration-point neighbours, which let phi leak through the walls")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -182,6 +190,10 @@ def main():
         new += f"! addendum 28: dc/dt in both fields (build living5){nl}NUT_TRANSIENT = 1{nl}"
     if a.nut1_init_all:
         new += f"! A-38: the nutrient starts at c = 1 in every element (build living6){nl}NUT1_INIT_ALL = 1{nl}"
+    if a.surf_nearest:
+        new += f"! A-39: surface points take phi of their nearest integration points (build living6){nl}SURF_NEAREST = 1{nl}"
+    if a.front_dump:
+        new += f"! A-39: dump the terms of the phi update (build living6){nl}FRONT_DUMP = {a.front_dump!r}{nl}"
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
