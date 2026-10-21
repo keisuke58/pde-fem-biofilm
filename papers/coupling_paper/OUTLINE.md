@@ -84,5 +84,5 @@ submission slip past June: a major revision can take more than six months.
 
 ## Scope and authorship notes (the user, 21 Oct 2026)
 - Scope: the LUH coupling work only; the Keio continuation (tooth geometry, Abaqus) is not part of this paper for now.
-- Assoc. Prof. Muramatsu as co-author: raise it with her at the meeting of 2 Nov 2026, then with Meisam after the
-  thesis is submitted (Jan-Feb 2027); all authors must agree.
+- **Assoc. Prof. Muramatsu is to be a co-author (the user, 21 Oct 2026).** Ask her consent at the meeting of
+  2 Nov 2026 and tell Meisam when authorship is agreed (Jan-Feb 2027); all authors must agree.
