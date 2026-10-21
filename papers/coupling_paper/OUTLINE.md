@@ -68,3 +68,16 @@ Felix's confidential two-species theory and code are not used; only the publishe
 - Agree authorship and target with Meisam (and Oliver, Felix) after the thesis is submitted (14 Dec) or earlier.
 - Finish the ANSYS `u3_` runs and the Python sweeps.
 - Decide the antibiotic onset (Klempt 2026 case 4: one third) and phi_min.
+
+## Timeline (the user, 21 Oct 2026: submit around June 2027, with margin)
+| when | what |
+|---|---|
+| until 14 Dec 2026 | thesis submitted (the coupling results as in the thesis) |
+| 16 Dec 2026 | colloquium |
+| Jan-Feb 2027 | agree authors and journal with Meisam, Oliver, Felix |
+| 12 Mar 2027 | Keio 課題研究報告 (thesis content, separate from the paper) |
+| Mar-May 2027 | write; ANSYS u3_ runs and missing Python runs |
+| **June 2027** | **submit** (BMMB first choice) |
+| until Dec 2027 | review and revision; aim: accepted before the Keio final presentation (Dec 2027) |
+Option: a short PAMM paper from the GAMM annual meeting in spring 2027 as an earlier citable step. Do not let the
+submission slip past June: a major revision can take more than six months.
