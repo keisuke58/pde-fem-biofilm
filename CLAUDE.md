@@ -26,6 +26,10 @@ Abaqus run is possible here but nothing has been run here yet.
   the phone's browser (vscode.dev, signed in with the user's account) when the mobile signal is good; with a weak
   signal it does not load. The tunnel URL is kept out of this public repository. Use it to look at logs or start a
   detached chain (`run_chain.ps1`); long work still goes through the detached scripts, not the browser session.
+  **Claude from the phone (Remote Control, 21 Oct 2026):** `.\scripts\start_remote_control.ps1` starts
+  `claude remote-control` in its own PowerShell window (repository `C:\Users\nishioka\git\pde-fem-biofilm`), so it
+  survives a closed tunnel tab; the session appears in the Claude Code app (permission mode auto). A session started in
+  the tunnel terminal itself dropped after a few minutes ("computer unreachable").
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
