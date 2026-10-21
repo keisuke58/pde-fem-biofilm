@@ -101,6 +101,8 @@ def main():
                     help="end time T* of the run (with --start-step; default the base's, 1); fields are then written at "
                          "T*/4, T*/2, 3T*/4, T* (post_fields_living_t<T*>.mac, e.g. _t2 for 2). Deck values only "
                          "(addendum 21); the antibiotic still starts at T* = 0.5")
+    ap.add_argument("--t-ab", type=float, default=0.5,
+                    help="with --ab: T* at which the antibiotic source starts (NUT2_TSTART, default 0.5; addendum 22)")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -153,7 +155,7 @@ def main():
     nl = "\r\n" if "\r\n" in text else "\n"
     m = re.search(r"^PENALTY1\s*=.*$", text, re.M)
     new = (f"{nl}! pde-fem-biofilm 20 Oct 2026 (A-19): living share, front term, antibiotic{nl}"
-           f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {0.5 if a.ab else 0.0}{nl}")
+           f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {a.t_ab if a.ab else 0.0}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
@@ -176,7 +178,7 @@ def main():
         text = (text[:m.end()] + f"{nl}! start step done: the run itself{nl}deltim,{dt!r},{dt!r},{dt!r}{nl}"
                 f"time,{t_end + s!r}{nl}solve" + text[m.end():])
     head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}{'uniform, ' if a.uniform else ''}"
-            f"layout {a.layout}, antibiotic {a.ab}, "
+            f"layout {a.layout}, antibiotic {a.ab}{f' from T* {a.t_ab:g}' if a.ab else ''}, "
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
             f"g_a {scal['CONSUMPTION21']}, phi_min {props[29]:g}, start step {a.start_step:g}, "
             f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}, "
