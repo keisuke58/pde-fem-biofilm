@@ -366,6 +366,11 @@ this machine's specific workflow.
   `thesis/README.md`.
 
 - **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`.
+  - **Model frozen (the user, 21 Oct 2026):** the equations below (Klempt 2024 Eqs. 34-36 with dc/dt and g phi c,
+    the point model of Klempt 2026 as published, the agreed coupling) are not changed any more. Only constants (d, g,
+    r, beta, k_alpha, alpha*_0, phi_min, antibiotic onset), inputs (examples, start shares, sources, constant or sine
+    supply, point-model case) and numerics (mesh, time step, neighbours) vary. Fixes that make an implementation solve
+    these equations correctly are allowed; changing an equation is not.
   - Point model used as published, unchanged, with its own constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D,
     no phi_cap; ANSYS mode 8 is the base). In documents never call it a "black box" (the user): "used as published".
   - c* and the antibiotic alpha* from 3D fields (the element's second nutrient field carries the antibiotic),
