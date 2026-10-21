@@ -91,6 +91,9 @@ def main():
     ap.add_argument("--deltim", type=float, help="outer increment of the run (with --start-step), default the base's")
     ap.add_argument("--neigh", type=int, help="NEIGHBOR_CNT, the element's maximum number of neighbours (base: 30); "
                     "the search keeps the first ones found in element order (A-23, the symmetry check)")
+    ap.add_argument("--uniform", action="store_true",
+                    help="phi = 1 in every element (BIOFILM1 = all), for the uniform-field check S3 (addendum 15); "
+                         "use with --cons 0 --front 0 --l1 and no --ab, so c = 1 stays the solution")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -106,6 +109,8 @@ def main():
     else:
         top = {e for e, c in cen.items() if c[1] > 1.0 - h}
     bio1 = seed | cols if a.layout == "sep" else seed
+    if a.uniform:
+        bio1 = set(elems)
 
     th = case_theta()
     props = {28: 11, 29: 0.1 if a.v2 else 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2,
@@ -161,7 +166,8 @@ def main():
             sys.exit("STOP: final solve not found once")
         text = (text[:m.end()] + f"{nl}! start step done: the run itself{nl}deltim,{dt!r},{dt!r},{dt!r}{nl}"
                 f"time,{t_end + s!r}{nl}solve" + text[m.end():])
-    head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}layout {a.layout}, antibiotic {a.ab}, "
+    head = (f"! make_living_deck.py: {'v2, ' if a.v2 else ''}{'uniform, ' if a.uniform else ''}"
+            f"layout {a.layout}, antibiotic {a.ab}, "
             f"front r = {r_front:g} mm/T*, L = 1 {a.l1}, old consumption {a.old_cons}, g = {a.cons:g}, "
             f"g_a {scal['CONSUMPTION21']}, phi_min {props[29]:g}, start step {a.start_step:g}, "
             f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}; BIOFILM1 {len(bio1)} elements, "
