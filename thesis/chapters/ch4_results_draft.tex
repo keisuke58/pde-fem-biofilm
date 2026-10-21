@@ -3,6 +3,10 @@
 % ANSYS numbers: 8^3, the fixed build (A-22/A-23, runs v2f_*, fsens_*); [16^3] to fill from A-23/A-24.
 % Python: coupled_living_consumption.py --v2 --phi-min 0.1 --front 0.1 --fortran --ansys-bc --start-position.
 % Not in the build yet.
+% 21 Oct, A-25: every ANSYS number below (v2f_*, fsens_*) comes from runs in which phi advanced (outer/inner) = 10
+% times too fast (inner USSFin step 0.0025). They are to be replaced by the u1_ runs (one inner step, as in Chapter 4).
+% The "outer increment halved" row and its paragraph are this error, not a time-step convergence issue; the
+% replay, hand-over and constraint checks stay valid. The Python numbers are not affected.
 
 \paragraph{The coupled point model against the point model alone.}
 With uniform fields, $c=1$ everywhere and the antibiotic $a=1$ from the start, every point model in the
