@@ -41,7 +41,7 @@ Computations: eta_c = 1e-10 ("steady state for the nutrients"). Time step: 10^3 
 | g | 10^8 1/T* | 10^8 1/T* | via the Thiele number below |
 | Thiele number g L^2/d, L = cube edge | 4 | 4 | |
 | Thiele number with the half edge (l = 1 mm here, 10 um there) | 1 | **1** | **1** since 21 Oct evening (the user: as the paper); earlier runs used 4 (Oliver's example deck), superseded |
-| r | 100 | 10 mm/T* (as a speed) | r/10 = 1 mm/T* (assumption, sensitivity 0..1) |
+| r | 100 | 10 mm/T* (as a speed) | **10 mm/T* since 21 Oct evening (paper values only)**; r/10 earlier, superseded |
 | k_alpha | 10^-3 1/T* | 10^-3 1/T* | 10^-3 |
 | E, nu | 10 Pa, 0.49 | same | same |
 
@@ -116,3 +116,15 @@ theta* = [1, 0.1, 1, 1, 2]. Four-species case II: `fritsch_4sp_M1..M3` in the sa
 | Monod constants | k11, k21, k22, kl | 0.878, 0.878, 0.0878, 1 | kg/m^3 | Rath et al. 2017, estimated |
 
 (Further rows of their Table 1 continue in the text extraction after line 600.)
+
+## What the coupled examples use (21 Oct 2026 evening, the user: "paper values only")
+
+| value | used | source |
+|---|---|---|
+| beta, d, g, k_alpha, k, r, E, nu | Table 2 of Klempt 2024, converted (table above) | paper |
+| A, b, eta, start phi, c*_0 = 100, alpha*_0 = 10, s = 0.1 | Fritsch case I (= Klempt 2026 Table 1 style) | paper |
+| antibiotic from T* = 0.5 | half of the period, as Klempt 2026 Table 2 case 4 | paper |
+| antibiotic diffusion and uptake | same as the nutrient | Oliver (20 Oct): the second nutrient field, same equation |
+| antibiotic source (all outer faces), nutrient source (layer y = -1 mm) | set-up of the examples | Oliver's sketch ("defined sources") |
+| phi_min = 0.1 (start of a point model) | assumption, sensitivity 0.01 | no paper value |
+| mixed start with equal amounts | Oliver (20 Oct) | meeting |

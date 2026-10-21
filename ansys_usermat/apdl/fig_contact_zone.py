@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / "ansys_usermat"))
 import figstyle  # noqa: E402
 
 FD = ROOT / "figdata"
-TAG = "_front0.1_phimin0.1_v2_fortran_ansysbc{sp}_tend2_gc1_snaps_{key}"   # g l^2/d = 1 (Klempt 2024 Table 2), quasi-static (d of Table 2)
+TAG = "_front1_phimin0.1_v2_fortran_ansysbc{sp}_tend2_a10_gab1_gc1_snaps_{key}"   # paper values only (21 Oct): Table 2 r, d, g; alpha*_0 = 10
 RUNS = [("neighbours", "separate", ""), ("position", "separate", "_startpos"), ("neighbours, antibiotic", "separate_ab", "")]
 TIMES = (0.5, 1.0, 1.5, 2.0)
 

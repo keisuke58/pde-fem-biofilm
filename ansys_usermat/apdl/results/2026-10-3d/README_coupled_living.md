@@ -1,7 +1,10 @@
 # Python runs of the agreed coupling (`coupled_living_consumption*.json`): which results to use
 
-**Current main results (21 Oct, evening): names with `_gc1`** (nutrient uptake g l^2/d = 1, Klempt 2024 Table 2 converted),
-quasi-static. Everything without `_gc1` used g l^2/d = 4 (Oliver's example deck) and is superseded.
+**Current main results (21 Oct, evening, the user: "paper values only"): names with `_front1` ... `_a10_gab1_gc1`**:
+front term r of Klempt 2024 Table 2 (10 mm/T*), d and g of Table 2 (quasi-static, g l^2/d = 1), alpha*_0 = 10
+(Fritsch case I, Klempt 2026 Table 1), antibiotic with the same diffusion and uptake as the nutrient (Oliver: the
+same equation as c), antibiotic from T* = 0.5 (Klempt 2026 Table 2, case 4). phi_min = 0.1 has no paper value.
+Everything else (r/10, alpha*_0 = 50, g_a = 0.25, g = 4) is superseded; `_gc1` with `_front0.1` was an intermediate step.
 
 Earlier note: quasi-static (no `_transc`) or `_transc1e+08`
 which agree to < 0.005: d of Klempt 2024 Table 2 converted to the 2 mm cube is 1e8 mm^2/T*, so the time derivative

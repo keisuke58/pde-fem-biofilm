@@ -373,7 +373,10 @@ this machine's specific workflow.
   - Eq. 35 consumption by the living biomass: g phi_3D (sum_i phibar_i) c, phibar_i = phi_i psi_i (Klempt 2026
     notation; a volume fraction of the normalised point volume, not divided by sum phi_i). Same for the antibiotic.
     Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
-  - Eq. 34 with its front term switched on (r: Table 2 converted and r/10); Eq. 36 unchanged.
+  - Eq. 34 with its front term switched on; Eq. 36 unchanged. **Paper values only (the user, 21 Oct evening):** r, d, g
+    of Klempt 2024 Table 2 converted (r = 10 mm/T*, g l^2/d = 1), alpha*_0 = 10 (Fritsch case I), antibiotic with the
+    nutrient's diffusion and uptake; see the last table of `references/PARAMETER_TABLES.md`. r/10, alpha*_0 = 50,
+    g_a = 0.25 and g l^2/d = 4 are superseded.
   - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
   - Write phi_3D in every field equation, phi_i for the point model.
   - The living volume fraction is written $\sum_i\bar\phi_i$ ($\bar\phi_i=\phi_i\psi_i$) in every document and figure,
