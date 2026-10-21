@@ -58,7 +58,8 @@ Abaqus run is possible here but nothing has been run here yet.
   element) and Feng et al. 2021 (Bull. Math. Biol., two-species oral biofilm,
   spreading driven by the summed species growth), and Klempt et al. 2026 (Arch. Appl. Mech.,
   the point model, `Klempt2026_multispecies_interaction_AAM.pdf`), each with
-  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`. **Parameter tables of all these papers,
+  with the conversion to the 2 mm cube: `references/PARAMETER_TABLES.md`** (look there first for any parameter value).
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
