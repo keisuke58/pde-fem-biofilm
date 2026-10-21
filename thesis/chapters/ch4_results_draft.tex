@@ -37,58 +37,77 @@ Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
 \begin{table}[htbp]
   \centering
   \caption[The coupled examples]{%
-    The two examples in ANSYS ($8^3$ [$16^3$]) at $T^*=1$, means over the seed and over the corner blocks:
-    biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$, nutrient $c$, growth $\alpha-1$ and
-    von Mises stress.}
+    The two examples in ANSYS ($16^3$) at $T^*=1$, means over the seed and over the corner blocks:
+    biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$ (points not yet started count as $0$),
+    nutrient $c$, growth $\alpha-1$ and von Mises stress.}
   \label{tab:ch5-living}
   \begin{tabular}{llccccc}
     \toprule
     & & $\phi_{3D}$ & $\sum_i\bar\phi_i$ & $c$ & $\alpha-1$ & $\sigma_{vM}$ [Pa]\\
     \midrule
-    separate, antibiotic & seed & 0.902 & 0.768 & 0.514 & $9.43\cdot10^{-4}$ & $1.19\cdot10^{-3}$\\
-    & corners & 0.368 & 0.295 & & & $1.57\cdot10^{-4}$\\
-    separate & seed & 0.881 & 0.962 & 0.427 & $9.39\cdot10^{-4}$ & $1.12\cdot10^{-3}$\\
-    & corners & 0.361 & 0.715 & & & $1.50\cdot10^{-4}$\\
-    mixed, antibiotic & seed & 0.972 & 0.190 & 0.843 & $9.75\cdot10^{-4}$ & $1.26\cdot10^{-3}$\\
-    mixed & seed & 0.937 & 0.954 & 0.435 & $9.69\cdot10^{-4}$ & $1.13\cdot10^{-3}$\\
+    separate, antibiotic & seed & 0.868 & 0.810 & 0.528 & $8.93\cdot10^{-4}$ & $1.21\cdot10^{-3}$\\
+    & corners & 0.342 & 0.328 & 0.753 & $3.72\cdot10^{-4}$ & $2.83\cdot10^{-4}$\\
+    separate & seed & 0.846 & 0.962 & 0.448 & $8.89\cdot10^{-4}$ & $1.16\cdot10^{-3}$\\
+    & corners & 0.336 & 0.748 & 0.665 & $3.71\cdot10^{-4}$ & $2.79\cdot10^{-4}$\\
+    mixed, antibiotic & seed & 0.944 & 0.226 & 0.836 & $9.27\cdot10^{-4}$ & $1.27\cdot10^{-3}$\\
+    mixed & seed & 0.906 & 0.955 & 0.456 & $9.20\cdot10^{-4}$ & $1.18\cdot10^{-3}$\\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{What the antibiotic does.}
 Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives. In the mixed seed the
-living volume fraction falls to $0.19$ and the nutrient, no longer consumed, rises from $0.43$ to $0.84$.
-In the corner blocks of species B it falls from $0.72$ to $0.30$. Whether a species survives depends on the
+living volume fraction falls to $0.23$ and the nutrient, no longer consumed, rises from $0.46$ to $0.84$.
+In the corner blocks of species B it falls from $0.75$ to $0.33$. Whether a species survives depends on the
 balance in its equation for $\psi_i$ between the nutrient term $c^*\phi_i\sum_jA_{ij}\phi_j\psi_j$ and the
 antibiotic term $\alpha^*b_i\psi_i$: with $c^*=100\,c$ and $\alpha^*b_1=\alpha^*_0$, species A gains where
 $c>\alpha^*_0/100$. In the separate seed ($c\approx0.5$) the living volume fraction at $T^*=1$ follows
-$\alpha^*_0$: $0.94$, $0.90$, $0.77$ and $0.59$ for $\alpha^*_0=10$, $40$, $50$ and $60$. The nutrient field
+$\alpha^*_0$: $0.94$, $0.90$, $0.77$ and $0.59$ for $\alpha^*_0=10$, $40$, $50$ and $60$ ($8^3$ [$16^3$: ..]). The nutrient field
 thus decides where the antibiotic acts, which a point model with a constant $c^*$ cannot show.
 
 The mixed example also depends on the start: with the start of Fritsch et al.\ ($\phi_1=0.25$,
-$\phi_2=0.30$) the living volume fraction in the seed ends at $0.050$, with equal amounts at $0.19$ (ANSYS;
-Python $0.050$ and $0.21$). As in case~6 of Section~\ref{sec:ch5-outlook-python}, the start share decides
+$\phi_2=0.30$) the living volume fraction in the seed ends at $0.051$, with equal amounts at $0.23$ (ANSYS
+$16^3$; Python $0.050$ and $0.21$). As in case~6 of Section~\ref{sec:ch5-outlook-python}, the start share decides
 which species prevails.
 
 The growth $\alpha-1$ and the stress change little with the antibiotic: in the mixed seed the stress is
-$1.13\cdot10^{-3}$~Pa without and $1.26\cdot10^{-3}$~Pa with it ($+11\,\%$), through the nutrient left by the
-dead biomass and the front term; $\alpha-1$ changes by $0.7\,\%$. Eq.~36 is unchanged, so the biofilm expands
+$1.18\cdot10^{-3}$~Pa without and $1.27\cdot10^{-3}$~Pa with it ($+8\,\%$), through the nutrient left by the
+dead biomass and the front term; $\alpha-1$ changes by $0.8\,\%$. Eq.~36 is unchanged, so the biofilm expands
 with $\phi_{3D}$ whether it is alive or dead, and the point model reaches the stress only through the
 consumption, the nutrient field and the front term of Eq.~34.
 
 \paragraph{Python against ANSYS.}
 The Python version with the boundary conditions of the ANSYS deck (the nutrient and the antibiotic held on
-whole element layers), the same start rule and the same Fortran point model gives at $T^*=1$ in the separate
-seed a living volume fraction of $0.845$ and $c=0.546$ on $8^3$ and $0.830$ and $0.543$ on $32^3$ (ANSYS
-$8^3$: $0.768$ and $0.514$), in the mixed seed with antibiotic $0.165$ and $0.865$ on $8^3$, $0.207$ and
-$0.851$ on $32^3$ (ANSYS $0.190$ and $0.843$). The seed stress is $1.08\cdot10^{-3}$~Pa in Python on $32^3$
-and $1.19\cdot10^{-3}$~Pa in ANSYS on $8^3$. The two implementations discretise the fields differently
-(finite volumes against the neighboured element method) and agree to within about $10\,\%$ [16^3: ..].
+whole element layers), the same start rule and the same Fortran point model gives the seed values of
+Table~\ref{tab:ch5-living-py}. With the mesh refined from $8^3$ to $16^3$ the ANSYS values move towards the
+Python values, which change by less than $0.02$ between $16^3$ and $32^3$. The living volume fraction and the
+nutrient agree to within $0.02$ on $16^3$, the share of A to within $0.02$; the seed stress is
+$12\,\%$ higher in ANSYS. The two implementations discretise the fields differently (finite volumes against
+the neighboured element method).
+
+\begin{table}[htbp]
+  \centering
+  \caption[Python against ANSYS]{%
+    Seed at $T^*=1$: living volume fraction $\sum_i\bar\phi_i$ / nutrient $c$ / stress $\sigma_{vM}$ in
+    $10^{-3}$~Pa, ANSYS on $8^3$ and $16^3$, Python on $16^3$ and $32^3$.}
+  \label{tab:ch5-living-py}
+  \begin{tabular}{lcccc}
+    \toprule
+    & ANSYS $8^3$ & ANSYS $16^3$ & Python $16^3$ & Python $32^3$\\
+    \midrule
+    separate, antibiotic & 0.768 / 0.513 / 1.19 & 0.810 / 0.528 / 1.21 & 0.829 / 0.542 / 0.99 & 0.830 / 0.543 / 1.08\\
+    separate & 0.962 / 0.427 / 1.12 & 0.962 / 0.448 / 1.16 & 0.963 / 0.463 / 0.95 & 0.963 / 0.462 / 1.02\\
+    mixed, antibiotic & 0.190 / 0.843 / 1.26 & 0.226 / 0.836 / 1.27 & 0.194 / 0.855 / 1.13 & 0.207 / 0.851 / 1.18\\
+    mixed & 0.954 / 0.435 / 1.13 & 0.955 / 0.456 / 1.18 & 0.955 / 0.470 / 1.04 & 0.956 / 0.471 / 1.09\\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \paragraph{Convergence and sensitivity.}
 Halving the outer increment twice ($0.025$, $0.0125$, $0.00625$) changes the seed stress by $0.55$ and
 $0.31\,\%$ (first order; the error at $0.025$ is about $0.9\,\%$) and the living volume fraction of the
-corner blocks by $3.5\,\%$; the Python version changes by less than $0.5\,\%$.
+corner blocks by $3.5\,\%$ ($8^3$); on $16^3$ halving it changes the seed stress by $0.25\,\%$. The Python
+version changes by less than $0.5\,\%$.
 Table~\ref{tab:ch5-living-sens} varies one choice at a time in the separate example with antibiotic.
 
 \begin{table}[htbp]
@@ -124,4 +143,8 @@ radius until it holds enough points and then takes a fixed number of them in ele
 distance shell is cut by the numbering at every point. A rebuild of the operator in Python on the same mesh
 shows that this rule alone produces an asymmetry of this size; taking more neighbours or the nearest ones
 reduces it, and the mean of $\phi_{3D}$ in the seed changes by $0.5\,\%$ between these choices. All runs keep
-the element's setting [one $16^3$ run with $120$ neighbours changes the main numbers by ..].
+the element's setting. With $120$ neighbours the mixed example with antibiotic on $16^3$ changes its seed
+living volume fraction from $0.226$ to $0.224$ and its seed stress by $+4.8\,\%$. Small asymmetries of
+$\phi_{3D}$ ($0.04$ at most on $16^3$) grow in the point model where it lies near the threshold of its
+outcome: the living volume fraction and the share of A differ by up to $0.3$ between mirrored elements at the
+edge of the biofilm, while the stress differs by less than $2\,\%$.
