@@ -1,17 +1,28 @@
 # ANSYS runs of the coupling agreed with Oliver (20 Oct 2026): which results to use
 
-Generations, oldest first. **Use only the current generation in the thesis, the slides and mails.** Never put
-numbers of different generations in one table without saying which is which.
+Generations, oldest first. **Use only the current generation (`u7_`) in the thesis, the slides and mails.** Never put
+numbers of different generations in one table without saying which is which. The confirmed facts behind this table:
+`../../CONFIRMED_2026-10-22.ja.md` (updated 22 Oct 2026).
 
-| prefix | what | status |
-|---|---|---|
-| `lv8_`, `trace_*` (A-19) | first runs | **do not use**: L frozen at its first value (A-22) |
-| `v2_`, `v2s_`, `sens_`, `i8*` | v2 set-up | **do not use**: L frozen (A-22) |
-| `v2f_`, `fsens_`, `fthr_`, `sym_*`, `dbg_*` | L fixed | **do not use for results**: phi advanced 10x too fast (inner USSFin step 0.0025, A-25). `sym_*` stay valid only as the neighbour/symmetry test (A-24) |
-| `u1_` (A-27..A-31) | one inner step (`--dt-ussfin 0.1`), quasi-static c and a | **main ANSYS results** (21 Oct, later: with d of Klempt 2024 Table 2, 1e8 mm^2/T* on the 2 mm cube, the time derivative changes the results by < 0.005, Python) |
-| `u3_` (addendum 25, after the trip) | paper values only: front r of Table 2 (`--front 1`), CONSUMPTION11 = CONSUMPTION21 = 1, alpha*_0 = 10 (eco_fritsch_2sp.txt) | **the main ANSYS results** once they exist; u1_ (g = 4) becomes superseded |
-| `u2_` (addendum 23, optional) | `NUT_TRANSIENT = 1` | only as a check with D = 1e8 (should equal u1_), or for a slow-diffusion sensitivity |
+| prefix | build (`F:\`) | what | status |
+|---|---|---|---|
+| `lv8_`, `trace_*`, `tsens_` (A-19) | living | first runs | **do not use**: L frozen at its first value (A-22) |
+| `v2_`, `v2s_`, `sens_`, `i8*` | living | v2 set-up | **do not use**: L frozen (A-22) |
+| `v2f_`, `fsens_`, `fthr_`, `v2t_`, `dbg_*` | living4 | L fixed | **do not use**: phi advanced 10x too fast (inner USSFin step 0.0025, A-25) |
+| `sym_*`, `symt_*` | living4 | neighbour / symmetry test | test only (A-24), not results |
+| `u1_` (A-27..A-31) | living4 | one inner step, quasi-static c, values before the paper-value decision | **superseded** |
+| `u3_` (A-32) | living4 | paper front r, no stabilisation | **do not use**: elements distort at 8^3 and 16^3 |
+| `u3a_`, `u3a5_`, `u3t_` (A-33..A-39) | living4/5 | artificial diffusion r h/4 at 8^3 (quasi-static / dc/dt), incl. the time-step series | 8^3 checks only; phi leaks through the walls |
+| `u4_` (A-35 16^3, A-36 24^3) | living5 | production set-up of 21 Oct (dc/dt, d = 1e8, --artdiff, increment 0.00125) | **superseded**: phi leaks through the walls (surface points, A-39). `u4_16_*` stay only as the surface-point sensitivity; `u4_24_*` stopped |
+| `u6_`, `u6t_`, `u6d_` (A-38, A-39) | living6 | NUT1_INIT_ALL (c(0) = 1 everywhere), front dump | 8^3 checks; same as `u3a_` (leak) |
+| `u6s_`, `u5_` (A-39, A-40) | living6 | + SURF_NEAREST (leak / 4) | intermediate; `u5_16_sep_ab` is addendum 30's u4s_16_sep_ab |
+| `u7c_`, `u7n_` (A-42) | living7 | + LAP_FILE (conservative Laplacian) at 8^3; `u7n_` = short NEM-dump runs (no results) | 8^3 check of the current set-up |
+| **`u7_`** (A-41 24^3, A-43 16^3) | **living7** | SURF_NEAREST + LAP_FILE, dc/dt d = 1e8, --artdiff N, increment 0.00125 | **current main ANSYS results** |
 
-Figures made from these runs: `assets/anim_u1_16_*.gif`, `assets/frames_u1_16_*.pdf` (quasi-static u1_, comparison only;
-remake from u2_), `assets/fig_coupled_examples.pdf` (Python, quasi-static, before the start rule: do not use).
-`assets/fig_contact_zone.pdf` is from the time-derivative Python runs (`_transc1`): current.
+Deck options of `u7_`: `--front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001
+--artdiff N --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`, with `lap_cons.txt` of the
+same mesh in the work directory (`../../checks_a38_a39/build_lap_cons_a42.py` from the `nem_dump.txt` of a `--nem-dump` run).
+
+Figures made from these runs: `assets/anim_u1_16_*.gif`, `assets/frames_u1_16_*.pdf` (u1_, superseded: remake from u7_),
+`assets/fig_coupled_examples.pdf` (Python, quasi-static, before the start rule: do not use).
+`assets/fig_contact_zone.pdf` is from the time-derivative Python runs (`_transc1`).

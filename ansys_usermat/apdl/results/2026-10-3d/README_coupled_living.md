@@ -1,26 +1,32 @@
 # Python runs of the agreed coupling (`coupled_living_consumption*.json`): which results to use
 
-**Current main results (21 Oct, latest): `_front1_phimin0.001_..._a100_gab1_gc1_tab0.333333`** (alpha*_0 = 100, Klempt 2026
-case 4); with `_a10` the step before. Before that: `_front1_phimin0.001_..._a10_gab1_gc1_tab0.333333` (antibiotic from T* = 1/3,
-phi_min = 0.001 converged); the same without `_tab0.333333` and with `_phimin0.1` were the step before (antibiotic 0.5).
-Earlier: names with `_front1` ... `_a10_gab1_gc1`:
-front term r of Klempt 2024 Table 2 (10 mm/T*), d and g of Table 2 (quasi-static, g l^2/d = 1), alpha*_0 = 10
-(Fritsch case I, Klempt 2026 Table 1), antibiotic with the same diffusion and uptake as the nutrient (Oliver: the
-same equation as c), antibiotic from T* = 0.5 (Klempt 2026 Table 2, case 4). phi_min = 0.1 has no paper value.
-Everything else (r/10, alpha*_0 = 50, g_a = 0.25, g = 4) is superseded; `_gc1` with `_front0.1` was an intermediate step.
+Updated 22 Oct 2026; the confirmed facts behind it: `../../CONFIRMED_2026-10-22.ja.md`.
 
-Earlier note: quasi-static (no `_transc`) or `_transc1e+08`
-which agree to < 0.005: d of Klempt 2024 Table 2 converted to the 2 mm cube is 1e8 mm^2/T*, so the time derivative
-of Eq. 35 does not matter. `_transc1`, `_transc0.3`, `_transc3` (d = 1, 0.3, 3 mm^2/T*, Oliver's example deck value
-and around it) are a **slow-diffusion sensitivity** only. Never mix them in one table without saying which is which.
+**Current main results: `_front1_phimin0.001_v2_fortran_ansysbc_startpos[_mixeq]_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast`**
+at 128^3 (64^3 as the mesh check): paper values (front r of Klempt 2024 Table 2, d and g of Table 2, g l^2/d = 1,
+alpha*_0 = 100 of Klempt 2026 case 4, antibiotic from T* = 1/3 with the nutrient's diffusion and uptake, phi_min = 0.001),
+second-order upwind front term, wall gradient by the mirror (zero-flux) rule.
+
+**Superseded on 22 Oct:** `_tvd_fast` and `_tvd` without `_wg`: the gradient of c (direction of the front) was one-sided
+in the wall cells (stress changes 10 % at 16^3, 7 % at 32^3). `_artdiff` without `_wg`: the central front term used a
+one-sided phi gradient in the wall cells, so wall blocks stayed at phi = 1.1 (A-38): **wrong, do not use**.
 
 | tag | meaning |
 |---|---|
-| `_transc1` (`_transc0.3`, `_transc3`) | with dc/dt, da/dt, d = 1 (0.3, 3) mm^2/T* -> **main** (d sensitivity) |
-| no `_transc` | quasi-static -> comparison with the quasi-static ANSYS runs `u1_` |
-| `_ansysbc` | boundary conditions of the ANSYS decks (layers held) -> use for comparisons with ANSYS |
+| `_tvd` | second-order upwind (MUSCL, minmod) front term: **main** |
+| `_artdiff` | as the ANSYS element: central front term + beta + r h/4; **only for comparisons with ANSYS** (at the ANSYS mesh, `--dtc` = the ANSYS increment, e.g. `_dtc0.005` at 8^3, `_dtc0.00125` at 16^3/24^3) |
+| `_wgmirror`, `_wgzero` | normal component of the gradient in the wall cells: mirror (zero-flux ghost, main) or zero (the `--artdiff` default; the closer one to ANSYS at 8^3). No `_wg` = one-sided (wrong) |
+| `_arth0.25` | `--artdiff-h`: r h/4 with the ANSYS element size at a finer Python grid (cloud test, 22 Oct) |
+| `_fast` | quarter domain with mirror symmetry and AMG-CG (same results) |
+| `_fortran` | the point model of the ANSYS runs through ctypes; without it the JAX version (agrees to 1e-16; IKMHIWI03 runs have no `_fortran`) |
+| `_transc1e+08` / no `_transc` | dc/dt with d = 1e8 mm^2/T* / quasi-static: agree to < 1e-4 |
+| `_transc1`, `_transc0.3`, `_transc3` | d = 1, 0.3, 3 mm^2/T* (Oliver's example deck value and around it): **slow-diffusion sensitivity only** |
+| `_ansysbc` | boundary conditions of the ANSYS decks (layers held): use for comparisons with ANSYS |
 | `_startpos` | new points start by position (the ANSYS rule); without it: from the neighbours' state |
 | `_mixeq` | mixed start with equal amounts (the agreed example); without it in a mixed run: Fritsch's start (0.25, 0.30) |
-| `_nf16`, `_nf48` | mesh (default 32^3) |
-| `_v2` | the v2 set-up (B in corner blocks, phi_min 0.1, antibiotic on all outer faces, alpha*_0 = 50) |
-| files without `_v2` or with `_fortran` missing | earlier development runs (before 20 Oct evening): do not use |
+| `_nf8` ... `_nf128` | mesh (default 32^3) |
+| `_v2` | the v2 set-up (B in corner blocks, antibiotic on all outer faces) |
+| `_a10`, no `_tab`, `_phimin0.1`, `_front0.1`, `_gc` other than 1 | earlier steps (alpha*_0 = 10, antibiotic from 0.5, phi_min 0.1, r/10, g l^2/d = 4): superseded |
+| files without `_v2` | development runs before 20 Oct evening: do not use |
+
+Never put numbers of different rows of this table in one comparison without saying which is which.

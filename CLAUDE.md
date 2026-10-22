@@ -153,6 +153,11 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   initialisation); fixed in `F:\biofilm_upf_living4`. All earlier living runs (`lv8_`, `v2_`, `v2s_`, `sens_`) used a
   frozen L and are not to be used; the fixed runs are `v2f_*`, `fsens_*`. Hand-off for another PC:
   `HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
+  **22 Oct (A-38..A-42): current build `F:\biofilm_upf_living7`** (living5 + NUT1_INIT_ALL, FRONT_DUMP, SURF_NEAREST,
+  NEM_DUMP, LAP_FILE; patches in `ansys_usermat/apdl/oliver_patches/`). Before it, phi leaked through the walls (surface
+  points took an inverse-square mean, and the NEM Laplacian's column sums are not zero), so all `u4_` and older living
+  runs are superseded; main runs are `u7_` with `--surf-nearest --lap-file` and a `lap_cons.txt` of the same mesh.
+  **Read `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` first** (confirmed facts, what not to use, the builds).
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -407,8 +412,9 @@ this machine's specific workflow.
     cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
     < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
-  - **Result generations** (do not mix): `results/2026-10-living/README.md` (ANSYS: u3_ = paper values, main) and
-    `results/2026-10-3d/README_coupled_living.md` (Python: `_front1 ... _a10_gab1_gc1` = paper values, main); case 3 of
+  - **Result generations** (do not mix; updated 22 Oct): `results/2026-10-living/README.md` (ANSYS: `u7_` = main) and
+    `results/2026-10-3d/README_coupled_living.md` (Python: `..._a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast` = main;
+    `_artdiff` only for comparisons with ANSYS, never without `_wg`); summary `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md`; case 3 of
     Klempt 2026 Table 2 apart in `results/2026-10-3d-case3/`. Paper outline (co-authored): `papers/coupling_paper/OUTLINE.md`.
 - **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
   3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
