@@ -1,4 +1,4 @@
-# IKMHIWI03 の状況（自動、2026-10-22 14:17）
+# IKMHIWI03 の状況（自動、2026-10-22 15:18）
 
 1 時間ごとに `F:\biofilm_upf_living7\auto_status\status.ps1` が書く（7 日間）。変わったときだけ push。確定事項は `CONFIRMED_2026-10-22.ja.md`。ここ 24 時間に動いた本だけ載せる。
 
@@ -14,11 +14,11 @@
 
 | 本 | フォルダ | T\* | 終わりの T\* | 状態 | 出力の更新 |
 |---|---|---|---|---|---|
-| u8_16_sep | biofilm_upf_living8_16b | 0.7425 | 1.0025 | 走行中 | 10-22 14:17 |
-| u8_16_mixeq_ab | biofilm_upf_living8_16c | 0.5687 | 1.0025 | 走行中 | 10-22 14:17 |
-| u8_16_sep_ab | biofilm_upf_living8_16a | 0.7288 | 1.0025 | 走行中 | 10-22 14:17 |
-| u8_24_sep_ab | biofilm_upf_living8_24a | 0.0550 | 1.0025 | 走行中 | 10-22 14:17 |
-| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.0612 | 1.0025 | 走行中 | 10-22 14:17 |
+| u8_16_sep_ab | biofilm_upf_living8_16a | 1.0000 | 1.0025 | 走行中 | 10-22 15:17 |
+| u8_16_mixeq_ab | biofilm_upf_living8_16c | 0.8612 | 1.0025 | 走行中 | 10-22 15:17 |
+| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.0950 | 1.0025 | 走行中 | 10-22 15:16 |
+| u8_24_sep_ab | biofilm_upf_living8_24a | 0.0788 | 1.0025 | 途中で終わり（T\* = 0.079、デッキの終わり 1.0025） | 10-22 15:03 |
+| u8_16_sep | biofilm_upf_living8_16b | 0.8375 | 1.0025 | 走行中 | 10-22 14:39 |
 | u8n_24_sep_ab | biofilm_upf_living8_24n | 0.0075 | 0.0075 | 終わり | 10-22 12:10 |
 | u8c_8_mixeq_ab_dt0005 | biofilm_upf_living8_8n | 1.0025 | 1.0025 | 終わり | 10-22 12:09 |
 | u8c_8_sep_ab_dt0005 | biofilm_upf_living8_8n | 1.0025 | 1.0025 | 終わり | 10-22 12:06 |
