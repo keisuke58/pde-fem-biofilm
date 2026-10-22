@@ -21,7 +21,8 @@ Abaqus run is possible here but nothing has been run here yet.
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
   scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
   only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
-  user is away. Back up Oliver's element patches and `F:\felix_private\` before the end of December.
+  user is away. Back up what is not in git before the end of December: `BACKUP_PLAN_2026-12.ja.md` and
+  `scripts/backup_untracked_ikmhiwi03.ps1` (dry run by default; `-Go` writes the zips; the Felix and element zips are private).
   **Reachable from the phone (confirmed 21 Oct 2026, during the trip):** the VS Code tunnel of IKMHIWI03 opens in
   the phone's browser (vscode.dev, signed in with the user's account) when the mobile signal is good; with a weak
   signal it does not load. The tunnel URL is kept out of this public repository. Use it to look at logs or start a
