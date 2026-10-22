@@ -38,11 +38,12 @@ ap.add_argument("--dt", type=float, default=0.005)
 ap.add_argument("--tend", type=float, default=1.0)
 ap.add_argument("--t-ab", type=float, default=0.333333)
 ap.add_argument("--no-ab", action="store_true")
+ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
 a = ap.parse_args()
 
 n = a.n
 h = 2.0 / n
-r_front, K_monod, s_link = 10.0, 1.0, 0.1
+r_front, K_monod, s_link = 10.0 * a.front, 1.0, 0.1
 beta = W.BETA + r_front * h / 4.0
 n_sub = max(1, math.ceil(s_link * a.dt / 1e-4 - 1e-9))
 tot = 0.55                                   # Fritsch et al. 2025 case I start, 0.25 + 0.30
@@ -113,7 +114,9 @@ ninc = int(round(a.tend / a.dt))
 out += [f"*STEP, NAME=GROW, INC={ninc + 10}, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT",
         f"{a.dt:.10g}, {a.tend:.10g}", *CTRL,
         "*BOUNDARY, OP=NEW", "CORNER0, 1, 3, 0.0", "CORNER1, 2, 3, 0.0", "CORNER2, 3, 3, 0.0", "SUPPLY, 12, 12, 1.0",
-        "*BOUNDARY, OP=NEW, AMPLITUDE=ABON", "SHELL, 13, 13, 1.0", "*END STEP"]
+        "*BOUNDARY, OP=NEW, AMPLITUDE=ABON", "SHELL, 13, 13, 1.0",
+        # results come from the Gauss-point file; the .odb only at the end (by default every increment: 270 MB at 16^3)
+        f"*OUTPUT, FIELD, FREQUENCY={ninc}", "*NODE OUTPUT", "U, NT", "*END STEP"]
 Path(a.out).write_text("\n".join(out) + "\n")
 print(f"wrote {a.out}: {n}^3, {a.layout}, dt {a.dt}, {ninc} increments, n_sub {n_sub}, beta {beta:g}, "
       f"seed {int(seed.sum())} cells, blocks {int(blocks.sum()) if a.layout == 'sep' else 0}")

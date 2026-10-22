@@ -132,6 +132,7 @@ START_POSITION = "--start-position" in sys.argv
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
 MIX_EQUAL = "--mix-equal" in sys.argv
+INIT_NODAL = "--init-nodal" in sys.argv   # A-46: the initial phi of the Abaqus element (nodal averages), see run()
 T_AB = -1.0 if CHECK else (float(sys.argv[sys.argv.index("--tab") + 1]) if "--tab" in sys.argv else 0.5)
 CASE = CASES["fritsch_2sp"]
 # --case k26c3: Klempt et al. 2026, Table 2, case 3 (four species): A = 1/2 [[1,5,5,5],[5,1,3,3],[5,3,1,2],[5,3,2,1]],
@@ -209,7 +210,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -529,6 +530,22 @@ def run(example, antibiotic):
         G[edges] = group_state(tot, GROUP_B)
     else:
         G[seed] = start_state(*MIX_START)
+    if INIT_NODAL:
+        # A-46: start from the field a Galerkin element (Abaqus, abaqus_living) can hold: node = mean of its cells,
+        # cell = mean of its 8 nodes (same total); the newly covered cells start by position, as the start rule
+        pn = np.pad(phi, 1)
+        nodal = sum(pn[i:i + NF + 1, j:j + NF + 1, k:k + NF + 1] for i in (0, 1) for j in (0, 1) for k in (0, 1))
+        cnt = sum(np.pad(np.ones_like(phi), 1)[i:i + NF + 1, j:j + NF + 1, k:k + NF + 1]
+                  for i in (0, 1) for j in (0, 1) for k in (0, 1))
+        nodal = nodal / cnt
+        phi = sum(nodal[i:i + NF, j:j + NF, k:k + NF] for i in (0, 1) for j in (0, 1) for k in (0, 1)) / 8.0
+        newc = (phi >= PHI_MIN) & (G[..., :N_SP].sum(-1) == 0)
+        if example == "separate":
+            isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
+            G[newc & isb] = group_state(tot, GROUP_B)
+            G[newc & ~isb] = group_state(tot, GROUP_A)
+        else:
+            G[newc] = start_state(*MIX_START)
     on = phi >= PHI_MIN
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
