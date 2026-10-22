@@ -17,7 +17,8 @@ param(
     [string]$After = '',
     [switch]$Push,
     [switch]$Worker,
-    [string]$Branch = ''
+    [string]$Branch = '',
+    [int]$Np = 1          # > 1: shared-memory parallel (-smp -np N), A-44; DMP hangs with the partner's element
 )
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $env:Path = "C:\Users\nishioka\git\cmd;C:\Users\nishioka\git\mingw64\bin;" + $env:Path
@@ -32,6 +33,7 @@ if (-not $Worker) {
            '-Name', $Name, '-WorkDir', "`"$WorkDir`"", '-Runs', "`"$runArg`"", '-Branch', $br)
     if ($After) { $a += @('-After', "`"$After`"") }
     if ($Push) { $a += '-Push' }
+    if ($Np -gt 1) { $a += @('-Np', $Np) }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
         CommandLine = "powershell.exe $($a -join ' ')"; CurrentDirectory = $repo }
     if ($r.ReturnValue -ne 0) { throw "could not start (Win32_Process.Create returned $($r.ReturnValue))" }
@@ -70,8 +72,9 @@ foreach ($spec in $Runs) {
     $t0 = Get-Date
     L "START $job ($mesh^3: $opts; point model $eco)"
     # as run_calibrated.ps1: a hidden window and a poll (-NoNewWindow -Wait exits at once in the detached process)
-    $p = Start-Process $exe -WorkingDirectory $WorkDir -ArgumentList '-b', '-np', '1', '-j', $job, '-custom',
-        '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt" -PassThru -WindowStyle Hidden
+    $par = if ($Np -gt 1) { @('-smp', '-np', "$Np") } else { @('-np', '1') }
+    $p = Start-Process $exe -WorkingDirectory $WorkDir -ArgumentList (@('-b') + $par + @('-j', $job, '-custom',
+        '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt")) -PassThru -WindowStyle Hidden
     $null = $p.Handle
     $limit = @{ '8' = 60; '16' = 600; '24' = 2400 }[$mesh]
     while (-not $p.HasExited) {

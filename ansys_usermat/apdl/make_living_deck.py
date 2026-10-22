@@ -195,16 +195,11 @@ def main():
            f"LIVING_CONS = {0 if a.old_cons else 1}{nl}FRONT_GRAD = 1{nl}NUT2_TSTART = {a.t_ab if a.ab else 0.0}{nl}")
     if a.transient_c:
         new += f"! addendum 28: dc/dt in both fields (build living5){nl}NUT_TRANSIENT = 1{nl}"
-    if a.nut1_init_all:
-        new += f"! A-38: the nutrient starts at c = 1 in every element (build living6){nl}NUT1_INIT_ALL = 1{nl}"
-    if a.surf_nearest:
-        new += f"! A-39: surface points take phi of their nearest integration points (build living6){nl}SURF_NEAREST = 1{nl}"
-    if a.lap_file:
-        new += f"! A-42: conservative phi Laplacian from lap_cons.txt (build living7){nl}LAP_FILE = 1{nl}"
-    if a.nem_dump:
-        new += f"! A-42: write the NEM operator once (build living7){nl}NEM_DUMP = 1{nl}"
-    if a.front_dump:
-        new +=f"! A-39: dump the terms of the phi update (build living6){nl}FRONT_DUMP = {a.front_dump!r}{nl}"
+    # A-38..A-42 switches (builds living6, living7), always written: USSFin reads them with parevl, which leaves its
+    # output variable unchanged for a parameter that is not defined (A-44: a dump ran in decks without --front-dump)
+    new += (f"! A-38..A-42: nutrient start everywhere, surface points, conservative Laplacian, dumps (builds living6/7){nl}"
+            f"NUT1_INIT_ALL = {int(a.nut1_init_all)}{nl}SURF_NEAREST = {int(a.surf_nearest)}{nl}"
+            f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)

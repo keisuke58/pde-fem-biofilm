@@ -24,14 +24,19 @@
 | 14 | 残りの差は離散化の違い（ANSYS：8³ 要素 × 8 積分点 = 16³ 点の MLS、30 近傍；Python：マスの 7 点差分）。格子を細かくして比べる | A-42 §1 |
 | 15 | 16³ では Python の壁の扱い（0 か鏡映か）は `--artdiff` の結果にほとんど効かない（α−1 6.32 対 6.27e−4） | A-40 前の手元計算 |
 | 16 | Python の本番（`--fast --tvd`）は壁の勾配を鏡映にした（クラウドの判断、16³ で応力 10 %、32³ で 7 % 変わる） | 追記 30、クラウドの 22 日の報告 |
+| 17 | NEM の近傍は 30 点を**要素の番号順**で打ち切る（A-24）。8³ では内部がほぼ対称（非対称 4e−4）だが、**16³ と 24³ では内部まで非対称**（0.10、0.20）、列の和は最大 720、2800。対称部分の保存形は内部の精度を崩す（r² のラプラシアン 4.8〜7.1、4.2〜7.9） | A-44 |
+| 18 | **距離順の近傍**（`F:\biofilm_upf_living4_sorted` の GetNhgb）で 16³ の内部の非対称は 1e−15、保存形でも内部 6.0000：本番はこれ（ビルド living8） | A-44 |
+| 19 | 番号順の近傍の 24³（u4_24_sep_ab）は T\* ≈ 0.19 で USSFin の収束失敗で止まった | A-44 |
+| 20 | 新しいスイッチを parevl で読むとき、デッキにないと前の値が残る：`make_living_deck.py` はいつも全部（0 か 1）を書く。結果への影響なし（書き出しが余計に走っただけ） | A-44 |
+| 21 | 共有メモリ並列（`-smp -np 4`）は 8³ で φ、c、α が 1 桁目まで同じ、ただし遅い（6.8 分 対 3.7 分）。24³ の速さは測定中 | A-44 |
 
 ## 2. 本番の設定（22 日から）
 
-- **ANSYS**：ビルド `F:\biofilm_upf_living7`（living5 ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE；
+- **ANSYS**：ビルド `F:\biofilm_upf_living8`（living7 ＋ 距離順の近傍；living7 = living5 ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE；
   差分は `oliver_patches/living6_USolBeg.patch`、`living7_Ussfin.patch`）。デッキ：
   `make_living_deck.py --front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001 --artdiff N
   --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`（＋例ごとの `--layout`、`--ab --t-ab 0.333333`、`--eco`）。
-  作業フォルダに**同じ格子の** `lap_cons.txt`（`checks_a38_a39/build_lap_cons_a42.py`、短い `--nem-dump` の本から）。名前の頭 `u7_`。
+  作業フォルダに**同じ格子・同じビルドの** `lap_cons.txt`（`checks_a38_a39/build_lap_cons_a42.py`、短い `--nem-dump` の本から；内部の r² が 6 になっているか `lap_cons_check_a44.py` で確かめる）。名前の頭 `u8_`（A-45）。
 - **Python**：本番は `--fast --tvd --wall-grad mirror`（タグ `_tvd_wgmirror_fast`、128³）。ANSYS との照合は
   `--artdiff --dtc <ANSYS の増分>`、壁は `--wall-grad zero`（`--artdiff` の既定）または `mirror` を明記。
 
@@ -39,7 +44,8 @@
 
 | もの | なぜ | 代わり |
 |---|---|---|
-| ANSYS `u4_`（A-35 の 16³、A-36 の 24³） | 表面点から φ が漏れる | `u7_`（16³ は A-43、24³ は A-41）。`u4_16` は「表面点の感度」としてだけ |
+| ANSYS `u4_`（A-35 の 16³、A-36 の 24³） | 表面点から φ が漏れる、番号順の近傍 | `u8_`（A-45）。`u4_16` は「表面点の感度」としてだけ |
+| ANSYS `u7_`、`u7c_`、`u7n_`、`u5_` | 番号順の近傍（16³ 以上で内部が非対称）。`u7_16`、`u7_24` は回していない | `u8_` |
 | ANSYS `u3a_`、`u3a5_`、`u3t_`、`u6_`、`u6t_` | 8³ の照合用、漏れあり | 照合の経過としてだけ |
 | ANSYS `u6s_`、`u5_` | SURF_NEAREST だけ（列の和が残る） | `u7_`（`u5_16_sep_ab` は追記 30 の u4s_ にあたる中間） |
 | ANSYS `u3_` | 安定化なしで 8³・16³ が壊れる（A-32） | — |
@@ -53,7 +59,7 @@
 
 ## 4. まだ確かめていないこと
 
-- 16³ と 24³ で両方の修正後に ANSYS と Python がどこまで合うか（A-43、A-41、自動）。
+- 16³ と 24³ で全部の修正後に ANSYS と Python がどこまで合うか（A-45、自動）。A-41、A-43 は止めた（番号順の近傍だったため）。
 - 漏れのもとの列の和が SURF_NEAREST で ±22 残る理由（辺と角の表面点か、NEM の近傍の非対称）。保存形にすれば効かない。
 - オリバーへの連絡（表面点の扱いと保存形のラプラシアン）。まだ送っていない。
 
@@ -64,7 +70,8 @@
 | `biofilm_upf_living4` | 生きている割合を毎回読む修正（A-22） | `u1_`、`u3_`、`u3a_` |
 | `biofilm_upf_living5`（＋`5s`） | ＋ NUT_TRANSIENT（dc/dt） | `u4_`、`u3t_` |
 | `biofilm_upf_living6`（＋`6s`） | ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST | `u6*`、`u5_` |
-| **`biofilm_upf_living7`**（＋`7s`、`7_16a〜e`、`7_16n`） | ＋ NEM_DUMP、LAP_FILE | **`u7_`（本番）**、`u7c_`、`u7n_` |
+| `biofilm_upf_living7`（＋`7s`、`7p`、`7q`、`7_16n`） | ＋ NEM_DUMP、LAP_FILE | `u7c_`、`u7n_`、並列の時間比べ `u7p*` |
+| **`biofilm_upf_living8`**（＋`8_8n`、`8_16n`、`8_16a〜e`、`8_24n`、`8_24a/b`） | ＋ 距離順の近傍（NEM_UserData） | **`u8_`（本番）** |
 
 スイッチはどれも既定 0（従来どおり）。新しいフォルダを作るときは `.f/.F/.inc/.h/.mod/.obj/.lrf/.def/.manifest/.dll/.mac`、`ANSYS.exe`、
 `eco_*.txt`、`base_*.dat` だけ写す（living6 には 7 GB の `comp_trace.csv` がある）。

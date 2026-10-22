@@ -1,6 +1,6 @@
 # ANSYS runs of the coupling agreed with Oliver (20 Oct 2026): which results to use
 
-Generations, oldest first. **Use only the current generation (`u7_`) in the thesis, the slides and mails.** Never put
+Generations, oldest first. **Use only the current generation (`u8_`) in the thesis, the slides and mails.** Never put
 numbers of different generations in one table without saying which is which. The confirmed facts behind this table:
 `../../CONFIRMED_2026-10-22.ja.md` (updated 22 Oct 2026).
 
@@ -16,10 +16,10 @@ numbers of different generations in one table without saying which is which. The
 | `u4_` (A-35 16^3, A-36 24^3) | living5 | production set-up of 21 Oct (dc/dt, d = 1e8, --artdiff, increment 0.00125) | **superseded**: phi leaks through the walls (surface points, A-39). `u4_16_*` stay only as the surface-point sensitivity; `u4_24_*` stopped |
 | `u6_`, `u6t_`, `u6d_` (A-38, A-39) | living6 | NUT1_INIT_ALL (c(0) = 1 everywhere), front dump | 8^3 checks; same as `u3a_` (leak) |
 | `u6s_`, `u5_` (A-39, A-40) | living6 | + SURF_NEAREST (leak / 4) | intermediate; `u5_16_sep_ab` is addendum 30's u4s_16_sep_ab |
-| `u7c_`, `u7n_` (A-42) | living7 | + LAP_FILE (conservative Laplacian) at 8^3; `u7n_` = short NEM-dump runs (no results) | 8^3 check of the current set-up |
-| **`u7_`** (A-41 24^3, A-43 16^3) | **living7** | SURF_NEAREST + LAP_FILE, dc/dt d = 1e8, --artdiff N, increment 0.00125 | **current main ANSYS results** |
+| `u7c_`, `u7n_`, `u7p*` (A-42, A-44) | living7 | + LAP_FILE (conservative Laplacian) at 8^3; `u7n_` = short NEM-dump runs, `u7p*` = timing tests (no results) | superseded: neighbours by element order (asymmetric inside at 16^3 and 24^3, A-44); `u7_` was never run |
+| **`u8_`** (A-45) | **living8** | living7 + NEM neighbours by distance; SURF_NEAREST + LAP_FILE, dc/dt d = 1e8, --artdiff N, increment 0.00125 (`u8c_` = 8^3 check, `u8n_` = dumps) | **current main ANSYS results** |
 
-Deck options of `u7_`: `--front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001
+Deck options of `u8_`: `--front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001
 --artdiff N --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`, with `lap_cons.txt` of the
 same mesh in the work directory (`../../checks_a38_a39/build_lap_cons_a42.py` from the `nem_dump.txt` of a `--nem-dump` run).
 
