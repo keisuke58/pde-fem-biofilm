@@ -1,12 +1,12 @@
-# IKMHIWI03 の状況（自動、2026-10-22 16:18）
+# IKMHIWI03 の状況（自動、2026-10-22 17:18）
 
 1 時間ごとに `F:\biofilm_upf_living7\auto_status\status.ps1` が書く（7 日間）。変わったときだけ push。確定事項は `CONFIRMED_2026-10-22.ja.md`。ここ 24 時間に動いた本だけ載せる。
 
 ## 要確認
 
 - u4_24_mixeq_ab（biofilm_upf_living5s）が T\* = 0.201 で止まっている（終わりの記録なし）
-- u8_16_sep（biofilm_upf_living8_16b）の出力が 1.7 時間更新されていない
-- u8_16_mixeq（biofilm_upf_living8_16d）の出力が 4.8 時間更新されていない
+- u8_16_sep（biofilm_upf_living8_16b）の出力が 2.7 時間更新されていない
+- u8_16_mixeq（biofilm_upf_living8_16d）の出力が 5.8 時間更新されていない
 - u8_16_mix_ab（biofilm_upf_living8_16e）：ライセンスが取れなかった（同時に回せるのは 5 本前後）
 - u7p4_24_sep_ab_t（biofilm_upf_living7p）が T\* = 0.018 で止まっている（終わりの記録なし）
 - u7p1_24_sep_ab_t（biofilm_upf_living7q）が T\* = 0.013 で止まっている（終わりの記録なし）
@@ -15,8 +15,8 @@
 
 | 本 | フォルダ | T\* | 終わりの T\* | 状態 | 出力の更新 |
 |---|---|---|---|---|---|
-| u8_16_mixeq | biofilm_upf_living8_16c | 0.1913 | 1.0025 | 走行中 | 10-22 16:18 |
-| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.1475 | 1.0025 | 走行中 | 10-22 16:17 |
+| u8_16_mixeq | biofilm_upf_living8_16c | 0.6525 | 1.0025 | 走行中 | 10-22 17:18 |
+| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.2100 | 1.0025 | 走行中 | 10-22 17:17 |
 | u8f0_16_sep_ab | biofilm_upf_living8_16a | 1.0025 | 1.0025 | 終わり | 10-22 15:58 |
 | u8_16_mixeq_ab | biofilm_upf_living8_16c | 1.0025 | 1.0025 | 終わり | 10-22 15:39 |
 | u8_16_sep_ab | biofilm_upf_living8_16a | 1.0025 | 1.0025 | 終わり | 10-22 15:18 |
@@ -56,8 +56,6 @@
 | u3t_8_sep_ab_dt0005 | biofilm_upf_living5 | 1.0025 | 1.0025 | 終わり | 10-21 17:28 |
 | u3a5_8_sep_ab_dt0005 | biofilm_upf_living5 | 1.0025 | 1.0025 | 終わり | 10-21 17:26 |
 | u3a_8_sep_ab_dt00025 | biofilm_upf_living5 | 1.0025 | 1.0025 | 終わり | 10-21 17:19 |
-| u3a5_8_sep_ab_dt001 | biofilm_upf_living5 | 0.1725 | 1.0025 | 途中で終わり（T\* = 0.172、デッキの終わり 1.0025） | 10-21 17:10 |
-| u3t_8_sep_ab_dt001 | biofilm_upf_living5 | 0.1625 | 1.0025 | 途中で終わり（T\* = 0.163、デッキの終わり 1.0025） | 10-21 17:09 |
 
 ## 自動処理（最後の行）
 
