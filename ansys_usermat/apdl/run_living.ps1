@@ -60,6 +60,9 @@ foreach ($spec in $Runs) {
     # --eco FILE (a file name in WorkDir): this run's point-model file instead of eco_fritsch_living.txt
     $eco = 'eco_fritsch_living.txt'
     if ($opts -match '--eco\s+(\S+)') { $eco = $Matches[1]; $opts = ($opts -replace '--eco\s+\S+', '').Trim() }
+    # --trace-elems a,b (build living8t and later, A-53): the traces only for these elements
+    $env:BIOFILM_TRACE_ELEMS = ''
+    if ($opts -match '--trace-elems\s+(\S+)') { $env:BIOFILM_TRACE_ELEMS = $Matches[1]; $opts = ($opts -replace '--trace-elems\s+\S+', '').Trim() }
     $base = Join-Path $WorkDir "base_w${mesh}_c6_g1_s015.dat"
     $deck = Join-Path $WorkDir "$job.dat"
     $o = & $py ansys_usermat\apdl\make_living_deck.py $base $deck @($opts -split ' ' | Where-Object { $_ }) 2>&1

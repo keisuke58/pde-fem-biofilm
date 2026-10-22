@@ -40,9 +40,13 @@ ap.add_argument("--t-ab", type=float, default=0.333333)
 ap.add_argument("--no-ab", action="store_true")
 ap.add_argument("--obstacle", choices=["columns"], help="the four rigid bars of coupled_living_consumption.py --obstacle columns (Klempt 2024 Sect. 4.3): their elements are left out (no biofilm, no nutrient, zero flux through their faces); the mechanics has no contact yet (A-47)")
 ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
+ap.add_argument("--quarter", action="store_true", help="A-53: only x > 0, z > 0 (the examples are symmetric in x and z, as the Python --fast); "
+                "symmetry u_x = 0 on x = 0, u_z = 0 on z = 0 and u_y = 0 at (0, -1, 0) instead of the corner constraints")
 ap.add_argument("--mms", action="store_true", help="manufactured solution (A-50, mms.py): point model off (L = 1), k_alpha = 0, "
                 "phi and c start from the solution, c = 1 on y = -1 only, no antibiotic; PROPS(19) = 1")
 a = ap.parse_args()
+if a.quarter and (a.obstacle or a.mms):
+    sys.exit("--quarter only without --obstacle and --mms")
 
 n = a.n
 h = 2.0 / n
@@ -80,7 +84,7 @@ elems = []
 for k in range(n):
     for j in range(n):
         for i in range(n):
-            if not obst[i, j, k]:
+            if not obst[i, j, k] and (not a.quarter or (X[i, j, k] > 0 and Z[i, j, k] > 0)):
                 elems.append(((i, j, k), [nid(i + di, j + dj, k + dk) for di, dj, dk in off]))
 phi_node = np.zeros((n + 1,) * 3); cnt = np.zeros((n + 1,) * 3)
 for (i, j, k), _ in elems:
@@ -124,7 +128,11 @@ supply = [nid(*p) for p in allN if xn[p[1]] <= (-1.0 if a.mms else -0.75) + eps]
 shell = [nid(*p) for p in allN if max(abs(xn[p[0]]), abs(xn[p[1]]), abs(xn[p[2]])) >= 0.75 - eps]
 out += nset("ALLN", [nid(*p) for p in allN]) + nset("SUPPLY", supply) + nset("SHELL", shell)
 c0, c1, c2 = nid(0, 0, 0), nid(n, 0, 0), nid(0, n, 0)          # (-1,-1,-1), (1,-1,-1), (-1,1,-1)
-out += [f"*NSET, NSET=CORNER0", f"{c0}", f"*NSET, NSET=CORNER1", f"{c1}", f"*NSET, NSET=CORNER2", f"{c2}"]
+if not a.quarter:
+    out += [f"*NSET, NSET=CORNER0", f"{c0}", f"*NSET, NSET=CORNER1", f"{c1}", f"*NSET, NSET=CORNER2", f"{c2}"]
+else:
+    out += nset("SYMX", [nid(*p) for p in allN if abs(xn[p[0]]) < eps]) + nset("SYMZ", [nid(*p) for p in allN if abs(xn[p[2]]) < eps])
+    out += ["*NSET, NSET=YFIX", f"{nid(n // 2, 0, n // 2)}"]
 # frictionless contact with the rigid obstacles (as wp3_stress_reference.solve_fields with obstacles): every box face
 # that is not on the cube boundary is a rigid quad (R3D4, normal out of the obstacle) and the mesh nodes on that face a
 # node-based surface; hard, frictionless contact. With obstacles the contact holds the body (no corner constraints).
@@ -192,7 +200,7 @@ out += ["*END STEP"]
 ninc = int(round(a.tend / a.dt))
 out += [f"*STEP, NAME=GROW, INC={ninc + 10}, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT",
         f"{a.dt:.10g}, {a.tend:.10g}", *CTRL,
-        "*BOUNDARY, OP=NEW", *(["RPALL, ENCASTRE"] if contact else ["CORNER0, 1, 3, 0.0", "CORNER1, 2, 3, 0.0", "CORNER2, 3, 3, 0.0"]),
+        "*BOUNDARY, OP=NEW", *(["RPALL, ENCASTRE"] if contact else ["SYMX, 1, 1, 0.0", "SYMZ, 3, 3, 0.0", "YFIX, 2, 2, 0.0"] if a.quarter else ["CORNER0, 1, 3, 0.0", "CORNER1, 2, 3, 0.0", "CORNER2, 3, 3, 0.0"]),
         "SUPPLY, 12, 12, 1.0",
         "*BOUNDARY, OP=NEW, AMPLITUDE=ABON", "SHELL, 13, 13, 1.0",
         # results come from the Gauss-point file; the .odb only at the end (by default every increment: 270 MB at 16^3)
