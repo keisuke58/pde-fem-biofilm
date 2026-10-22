@@ -71,7 +71,7 @@ all is undecided, and settling it is not this study's job.
 ## 2026-09-03 — absolute-SEQV convergence check (single condition, α=0.01)
 
 Not the ratio-between-conditions study above (still blocked on per-condition
-alpha, see `RUN_PREP.md`) — this is the "not in scope" absolute-stress check,
+alpha, see `archive/RUN_PREP.md`) — this is the "not in scope" absolute-stress check,
 done anyway because it's cheap and honest to know before anything downstream
 leans on this deck's numbers. `make_mesh_levels.py t_growth_cylinder_shell.dat
 --levels 2`, run on `F:\biofilm_upf\ANSYS.exe` (the plain `usermat_biofilm.f`

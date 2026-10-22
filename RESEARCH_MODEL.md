@@ -183,7 +183,7 @@ structure reproduced; largest single miss *F. nucleatum* (10.5 pp).
 **This warning is not hypothetical** — a real tooth-scale Abaqus probe
 2026-09-02 mixed the two lineages first, then was split into clean
 `growth-only` / `stiffness-only` cases once the conflation was noticed. See
-[`ROADMAP_2026.md`](ROADMAP_2026.md) §5b for the split results and an
+[`archive/ROADMAP_2026.md`](archive/ROADMAP_2026.md) §5b for the split results and an
 unrelated but real finding from the same runs: on a mesh where biofilm
 carries its true Pa-scale modulus, a force-controlled load on an
 unsupported face is ill-posed regardless of magnitude — displacement

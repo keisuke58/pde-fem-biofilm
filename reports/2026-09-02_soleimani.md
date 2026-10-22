@@ -1,7 +1,7 @@
 # Progress update — 2 September 2026
 
 First of the fortnightly updates set out in
-[`ROADMAP_2026.md`](../ROADMAP_2026.md) §4. Kept to one page by design; the
+[`archive/ROADMAP_2026.md`](../ROADMAP_2026.md) §4. Kept to one page by design; the
 links go to the evidence rather than reproducing it.
 
 ---

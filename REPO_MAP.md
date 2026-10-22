@@ -73,9 +73,9 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 
 | Path | What it is |
 |---|---|
-| `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
+| `archive/ROADMAP_2026.md` ([日本語](archive/ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
-| `QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
+| `archive/QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
 | `MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
 | `EML_REQUEST_VOLUME.ja.md` | Draft request to the EML session (15 Oct 2026, Japanese): add the measured biofilm volume to the likelihood so that the point model calibrates its own growth and scheme (c) needs no external kappa |
 | `KEIO_PLAN.ja.md` | Plan for the Keio continuation (Japanese): what Felix Klempt's and Meisam Soleimani's mails of 5-6 Oct 2026 settled, the tools in hand (ANSYS, Abaqus, Fortran point model), the Klempt 2024 reproduction in Abaqus, and the work packages in order |
@@ -106,7 +106,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/apdl/make_layered_material.py` | Turns a depth-resolved α(x) field into ANSYS layered materials, and reports what the binning costs against the field — the ANSYS route takes α per material, so a spatial field has to be discretised |
 | `RESEARCH_IDEAS.ja.md` | Research ideas after the thesis (10 Oct 2026), mapped to the Keio papers: a symmetric neighbour choice for the NEM stencil, the short-run stability artefact, implicit NEM against Galerkin, the calibrated five-species point model in the element, posterior propagation to stresses, measured stiffness and geometry |
 | `QUIZ_COLLOQUIUM.ja.md` | Question bank for colloquium practice (Japanese, short answers) and a log of what was asked |
-| `STATUS_2026-10.ja.md` | Status note (15 Oct 2026, Japanese): dates up to the colloquium, decisions of 14-15 Oct, what scheme (c) showed, what is waited for and what is still open |
+| `archive/STATUS_2026-10.ja.md` | Status note (15 Oct 2026, Japanese): dates up to the colloquium, decisions of 14-15 Oct, what scheme (c) showed, what is waited for and what is still open |
 | `p3/` | Working note of the Keio continuation (P3): `unified_model.tex`, the two-level model from one variational principle (derivation, discretisation, verification, results, assumptions and open points), built with pdflatex |
 | `uq/` | Keio continuation, uncertainty of growth and stress over the final posterior of thesis ch. 3 (`data/posterior_final/`, EML export): `posterior_growth_band.py` (point model only), `p3_posterior.py` (P3 element with posterior particles) |
 | `figdata/` | Cached data of the thesis figures that need a simulation (`.npz`), so they can be redrawn without a rerun |
@@ -135,7 +135,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 
 `README.md`, [`DOCS.md`](DOCS.md) (full index),
 [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md)
-(read first for what is verified vs assumed), `PLAN_NEXT.md`, `methods_supplement_fem.md`.
+(read first for what is verified vs assumed), `archive/PLAN_NEXT.md`, `methods_supplement_fem.md`.
 Historical notes live under [`archive/`](archive/); the root scripts, reports and results of the first half of 2026 that nothing uses any more were moved to [`archive/legacy_2026H1/`](archive/legacy_2026H1/) on 19 Oct 2026.
 
 ## The coupling agreed with Oliver (20 Oct 2026)

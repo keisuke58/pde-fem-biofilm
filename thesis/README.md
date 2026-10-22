@@ -116,4 +116,4 @@ Reading plan while away in November (about one hour a day):
 3. ch4 results, assumptions and sensitivity (s, phi_cap, d); **20 Oct: Ch. 4 is being rewritten for the coupling agreed
    with Oliver, `thesis/CH4_REWRITE_PLAN.md`;**
 4. ch3 calibration and ch6;
-5. `QA_1005.md` and new questions, answered aloud.
+5. `archive/QA_1005.md` and new questions, answered aloud.

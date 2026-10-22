@@ -1,6 +1,6 @@
 # WP2：恒常圧の成長則（IKMHIWI03、2026年10月7日）
 
-依頼：`IKMHIWI03_TO_SUBMISSION.ja.md` §5。試作と結果：`keio_wp2/README.ja.md` 第4〜7段。
+依頼：`archive/IKMHIWI03_TO_SUBMISSION.ja.md` §5。試作と結果：`keio_wp2/README.ja.md` 第4〜7段。
 
     α̇ = k_α φ max(0, 1 − p/p_h)，p = −tr σ / 3（圧縮が正）
     p_h = P_h E k_α T*（E 基準）または P_h E(φ² + f) k_α T*（局所剛性），T* = 1

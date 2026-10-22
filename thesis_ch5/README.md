@@ -7,7 +7,7 @@ of the thesis (`../thesis/`). `_build_check.tex` builds it on its own.
 pinned in place. It is not draft prose; the point is that writing becomes
 filling in sentences rather than hunting for numbers and file paths.
 
-Scope is fixed by [`ROADMAP_2026.md`](../ROADMAP_2026.md) §1: **Ch5 is the
+Scope is fixed by [`archive/ROADMAP_2026.md`](../ROADMAP_2026.md) §1: **Ch5 is the
 ANSYS material-law contribution**, and the JAXFEM material is held back for
 Keio.
 

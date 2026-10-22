@@ -1,6 +1,6 @@
 # Pipeline & risk metric (T2.1 + T2.3)
 
-Implements two items from [PLAN_NEXT.md](PLAN_NEXT.md):
+Implements two items from [archive/PLAN_NEXT.md](archive/PLAN_NEXT.md):
 
 - **T2.1** — a single, config-driven entry point (`pipeline.py`) that unifies the
   previously separate `run_posterior_pipeline.py` and `run_end_to_end_pipeline.py`

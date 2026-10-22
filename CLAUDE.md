@@ -152,7 +152,7 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   `make_living_deck.py`, runs `run_living.ps1` (-np 1). **21 Oct (A-22):** the living share was read only once in USSFin (inside its
   initialisation); fixed in `F:\biofilm_upf_living4`. All earlier living runs (`lv8_`, `v2_`, `v2s_`, `sens_`) used a
   frozen L and are not to be used; the fixed runs are `v2f_*`, `fsens_*`. Hand-off for another PC:
-  `HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
+  `archive/HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
   **22 Oct (A-38..A-45): current build `F:\biofilm_upf_living8`** (living5 + NUT1_INIT_ALL, FRONT_DUMP, SURF_NEAREST,
   NEM_DUMP, LAP_FILE = living7, plus NEM neighbours by distance; patches in `ansys_usermat/apdl/oliver_patches/`). Before it, phi leaked through the walls (surface
   points took an inverse-square mean, and the NEM Laplacian's column sums are not zero), so all `u4_` and older living
@@ -407,7 +407,7 @@ this machine's specific workflow.
   - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
     ANSYS: `ansys_usermat/apdl/archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
     thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
-    `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
+    `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `archive/TODO_2026-10-20.ja.md`.
   - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
   - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
     printed; 21 Oct: had been dropped everywhere). **d from Klempt 2024 Table 2** (the user): 1e10 um^2/T* on the 20 um

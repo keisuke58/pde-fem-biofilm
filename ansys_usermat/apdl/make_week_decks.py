@@ -10,7 +10,7 @@ runs use the Klempt 2024 stiffness (E = 10 Pa, nu = 0.49), so their stresses can
 be put next to the one-species runs. The set covers the open choices, so the
 results are there whichever way they are decided:
   - one species at beta = 0.02 for ch4: the partner's growth variable,
-    nu = 0.499, the example stiffness (cloud review, CLOUD_REVIEW_1005_ANSWERS.md);
+    nu = 0.499, the example stiffness (cloud review, archive/CLOUD_REVIEW_1005_ANSWERS.md);
   - two species, 8^3: consumption x clock s, T* = 2, phi_cap, start value,
     start value of late points (prop(35)), beta;
   - two species, 16^3: the consumption series and the main sensitivities;

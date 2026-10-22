@@ -6,7 +6,7 @@ them:
 
 - **scope as set by the supervisor** → [`THESIS_ASSIGNMENT.md`](THESIS_ASSIGNMENT.md) (roles, deliverables, open questions)
 - rigor audit → [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md) (read first)
-- roadmap → [`PLAN_NEXT.md`](PLAN_NEXT.md) · research ladder → [`research_goals_1_2.md`](research_goals_1_2.md)
+- roadmap → [`archive/PLAN_NEXT.md`](archive/PLAN_NEXT.md) · research ladder → [`research_goals_1_2.md`](research_goals_1_2.md)
 - methods → [`methods_supplement_fem.md`](methods_supplement_fem.md) · code map → [`REPO_MAP.md`](REPO_MAP.md) · doc index → [`DOCS.md`](DOCS.md)
 
 ---
@@ -196,7 +196,7 @@ limit) found and fixed along the way.
 ## 4. 今後の方針 — go-forward (systematised)
 
 **Dates and the week-by-week schedule now live in
-[`ROADMAP_2026.md`](ROADMAP_2026.md) ([日本語](ROADMAP_2026.ja.md))**:
+[`archive/ROADMAP_2026.md`](archive/ROADMAP_2026.md) ([日本語](archive/ROADMAP_2026.ja.md))**:
 submission November 2026, defence December 2026, and the decision that **Ch5
 is the ANSYS material-law contribution** while the JAXFEM material is held
 back for Keio. The T1/T3 split below is what that decision follows from.
@@ -215,7 +215,7 @@ back for Keio. The T1/T3 split below is what that decision follows from.
   C shim → single-element smoke test → JAX model), viscoelastic/phase-field/
   multiscale extensions. The IKM↔Keio bridge.
 
-Do **not** interleave T1/T2/T3 on one branch. See `PLAN_NEXT.md` §1 for sequencing.
+Do **not** interleave T1/T2/T3 on one branch. See `archive/PLAN_NEXT.md` §1 for sequencing.
 
 ---
 

@@ -38,7 +38,7 @@ Nothing else in the file refers to this repository.
 ## Merging against the chapter that is already there
 
 Since the existing chapter 5 was written around JAXFEM and that material is
-being held back for Keio ([`ROADMAP_2026.md`](../ROADMAP_2026.md) §1), expect
+being held back for Keio ([`archive/ROADMAP_2026.md`](../ROADMAP_2026.md) §1), expect
 to **replace rather than interleave** in most sections. Two places need a real
 decision rather than a paste:
 
