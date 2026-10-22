@@ -130,6 +130,15 @@ def main():
                     help="LAP_FILE = 1 (A-42, build living7): the phi Laplacian from lap_cons.txt in the work directory "
                          "(checks_a38_a39/build_lap_cons_a42.py from nem_dump.txt of the same mesh): the NEM Laplacian "
                          "made conservative; use with --surf-nearest")
+    ap.add_argument("--surf-fix-off", action="store_true",
+                    help="SURF_FIX_OFF = 1 (A-49, build F:\\biofilm_upf_living9f): no surface-point update, the surface "
+                         "points keep phi = 0 as in the partner's and Felix's original element")
+    ap.add_argument("--klempt24", choices=("fig7_high", "fig7_low", "fig4_edge"),
+                    help="Klempt et al. 2024 test case (A-49): one species, Table 2 values scaled to the 2 mm cube "
+                         "(JAXFEM/klempt2024_cases.deck_values), consumption g phi (zero order, as printed and as Felix's "
+                         "element), seed and nutrient as the paper (fig7: disk of diameter 0.5 mm in the second element "
+                         "layer above the nutrient face y = -1; fig4: ball of radius 0.5 mm, c = 1 on the edge column "
+                         "x, y > 1 - h); use with --layout mix --front 1 --l1 and no --ab")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -147,6 +156,14 @@ def main():
     bio1 = seed | cols if a.layout == "sep" else seed
     if a.uniform:
         bio1 = set(elems)
+    nut1 = None
+    if a.klempt24:
+        if a.klempt24.startswith("fig7"):
+            bio1 = {e for e, c in cen.items() if -1.0 + h < c[1] < -1.0 + 2 * h and c[0] ** 2 + c[2] ** 2 <= 0.25 ** 2}
+        else:
+            bio1 = {e for e, c in cen.items() if c[0] ** 2 + c[1] ** 2 + c[2] ** 2 <= 0.5 ** 2}
+            nut1 = {e for e, c in cen.items() if c[0] > 1.0 - h and c[1] > 1.0 - h}
+        a.old_cons = True
 
     th = case_theta()
     props = {28: 11, 29: 0.1 if a.v2 else 0.01, 31: 0.1, 37: 2, 56: 1 if a.layout == "sep" else 2,
@@ -177,6 +194,16 @@ def main():
             "MY_USSFIN_DT_MIN": repr(a.dt_ussfin), "MY_USSFIN_DT_MAX": repr(a.dt_ussfin)}
     if a.neigh is not None:
         scal["NEIGHBOR_CNT"] = str(a.neigh)
+    if a.klempt24:
+        sys.path.insert(0, str(HERE.parents[1] / "JAXFEM"))
+        from klempt2024_cases import deck_values
+        dv = deck_values(a.klempt24)
+        for k in ("MY_BETA1", "MAX_GROWTH11", "HALF_VELO11", "K_LOCAL1", "MY_DIFF1", "CONSUMPTION11"):
+            scal[k] = repr(float(dv[k]))
+        scal["ORI_WEIGHT11"] = "1"
+        a.cons = float(dv["CONSUMPTION11"])             # for the deck's header line
+        print(f"klempt24 {a.klempt24}: " + ", ".join(f"{k} {scal[k]}" for k in ("MY_BETA1", "MAX_GROWTH11", "CONSUMPTION11"))
+              + f"; seed {len(bio1)} elements" + (f", nutrient column {len(nut1)} elements" if nut1 else ""))
     if a.transient_c:
         d = a.transient_c
         scal["MY_DIFF1"] = scal["MY_DIFF2"] = repr(d)
@@ -199,9 +226,12 @@ def main():
     # output variable unchanged for a parameter that is not defined (A-44: a dump ran in decks without --front-dump)
     new += (f"! A-38..A-42: nutrient start everywhere, surface points, conservative Laplacian, dumps (builds living6/7){nl}"
             f"NUT1_INIT_ALL = {int(a.nut1_init_all)}{nl}SURF_NEAREST = {int(a.surf_nearest)}{nl}"
-            f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}")
+            f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}"
+            f"SURF_FIX_OFF = {int(a.surf_fix_off)}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
+    if nut1 is not None:
+        text = replace_cmblock(text, "NUTRIENT1", nut1)
     text = replace_cmblock(text, "NUTRIENT2", top)
     if a.start_step > 0:
         s = a.start_step
