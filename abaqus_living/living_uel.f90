@@ -36,6 +36,10 @@ module living_uel_mod
   double precision, allocatable, save :: out_rec(:,:,:)
   integer, save :: out_nel = 0
   double precision, parameter :: EPSG = 1d-6
+  ! A-50, manufactured solution (mms.py, mms_src.f90): PROPS(19) = 1 switches the point model off (L = 1) and adds the
+  ! sources S_phi, S_c at the end of the increment (step time mms_t)
+  logical, save :: mms_on = .false.
+  double precision, save :: mms_t = 0d0
 contains
 
   subroutine shape(r, s, t, N, dNr)
@@ -120,7 +124,9 @@ contains
       do k = 1, NN
         ph = ph + N(k) * Un(NDN*(k-1)+4); c = c + N(k) * Un(NDN*(k-1)+5); a = a + N(k) * Un(NDN*(k-1)+6)
       end do
-      if (sv(14, q) > 0.5d0 .and. dt > 1d-6) then
+      if (mms_on) then
+        sv(14, q) = 0d0
+      else if (sv(14, q) > 0.5d0 .and. dt > 1d-6) then
         call biofilm_ecology_hook_lin(sv(1:12, q), eco_theta, props(12) * dt, nint(props(13)), &
                                       sv(15, q), c, sv(16, q), a, gnew, pint, ok)
         if (.not. ok) return
@@ -141,7 +147,7 @@ contains
     logical, intent(in) :: want_k
     double precision :: N(8), dN(3, 8), w, x(3), ph, phn, c, cn, a, gph(3), gc(3), gcn(3), ga(3), v(3)
     double precision :: al, pen, dpen, phc, dphc, L, E, dE, D0(6, 6), lam, mu, eps(6), sm(6), B(6, 24), Bv(3, 8)
-    double precision :: vol, m(6), dsig(6), nrm, sp, dt_
+    double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm
     double precision :: Ebio, nu, f, beta, ka, P, rr, Km, qc, qa
     integer :: q, i, j, ii, jj, d
     Ebio = props(1); nu = props(2); f = props(3); beta = props(4); ka = props(5); P = props(6)
@@ -183,16 +189,21 @@ contains
       if (ph > 0d0 .and. ph < 1d0) dphc = 1d0
       L = 0d0
       if (sv(14, q) > 0.5d0) L = living(sv(1:12, q))
+      sphi = 0d0; sc = 0d0
+      if (mms_on) then
+        L = 1d0
+        call mms_eval(x(1), x(2), x(3), mms_t, beta, rr, Km, qc, sphi, sc, phim, cm)
+      end if
       ! phase
       do i = 1, NN
         ii = NDN*(i-1)+4
-        R(ii) = R(ii) + w * (N(i) * ((ph - phn) / dt_ - ka * al + pen + dot_product(v, gph)) &
+        R(ii) = R(ii) + w * (N(i) * ((ph - phn) / dt_ - ka * al + pen + dot_product(v, gph) - sphi) &
                              + beta * dot_product(dN(:, i), gph))
       end do
       ! nutrient and antibiotic
       do i = 1, NN
         ii = NDN*(i-1)+5
-        R(ii) = R(ii) + w * (dot_product(dN(:, i), gc) + N(i) * qc * phc * L * c)
+        R(ii) = R(ii) + w * (dot_product(dN(:, i), gc) + N(i) * qc * phc * L * c - N(i) * sc)
         ii = NDN*(i-1)+6
         R(ii) = R(ii) + w * (dot_product(dN(:, i), ga) + N(i) * qa * phc * L * a)
       end do
@@ -336,6 +347,9 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
   logical :: ok, wk
   if (.not. eco_inited) call eco_native_init()
+  mms_on = .false.
+  if (NPROPS >= 19) mms_on = (PROPS(19) > 0.5d0)
+  mms_t = TIME(1) + DTIME
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   ! the state variables are those of the start of the increment at every iteration: the point model is advanced

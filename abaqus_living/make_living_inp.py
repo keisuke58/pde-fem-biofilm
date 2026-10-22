@@ -40,6 +40,8 @@ ap.add_argument("--t-ab", type=float, default=0.333333)
 ap.add_argument("--no-ab", action="store_true")
 ap.add_argument("--obstacle", choices=["columns"], help="the four rigid bars of coupled_living_consumption.py --obstacle columns (Klempt 2024 Sect. 4.3): their elements are left out (no biofilm, no nutrient, zero flux through their faces); the mechanics has no contact yet (A-47)")
 ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
+ap.add_argument("--mms", action="store_true", help="manufactured solution (A-50, mms.py): point model off (L = 1), k_alpha = 0, "
+                "phi and c start from the solution, c = 1 on y = -1 only, no antibiotic; PROPS(19) = 1")
 a = ap.parse_args()
 
 n = a.n
@@ -50,6 +52,10 @@ n_sub = max(1, math.ceil(s_link * a.dt / 1e-4 - 1e-9))
 tot = 0.55                                   # Fritsch et al. 2025 case I start, 0.25 + 0.30
 props = [10.0, 0.49, 1e-3, beta, W.K_ALPHA, W.PENALTY, r_front, K_monod, 1.0, 1.0, 0.001, s_link, n_sub,
          1 if a.layout == "sep" else 2, 0.5625, tot, tot / 2, tot / 2]
+if a.mms:
+    props[4] = 0.0
+    props.append(1.0)
+    a.no_ab = True
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)
 cells8 = W.seed_cells_8(ROOT / "ansys_usermat/apdl/results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
@@ -82,6 +88,12 @@ for (i, j, k), _ in elems:
         phi_node[i + di, j + dj, k + dk] += phi_cell[i, j, k]; cnt[i + di, j + dj, k + dk] += 1
 used = cnt > 0
 phi_node = np.where(used, phi_node / np.maximum(cnt, 1), 0.0)
+c_node = np.ones_like(phi_node)
+if a.mms:
+    sys.path.insert(0, str(HERE))
+    import mms as M
+    XN, YN, ZN = np.meshgrid(xn, xn, xn, indexing="ij")
+    phi_node = M.phi_m(XN, YN, ZN, 0.0); c_node = M.c_m(XN, YN, ZN, 0.0)
 
 out = ["*HEADING", f"agreed coupling (living share), user element living_uel, {n}^3, {a.layout}", "*NODE"]
 for k in range(n + 1):
@@ -89,7 +101,7 @@ for k in range(n + 1):
         for i in range(n + 1):
             if used[i, j, k]:
                 out.append(f"{nid(i, j, k)}, {xn[i]:.10g}, {xn[j]:.10g}, {xn[k]:.10g}")
-out += ["*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12, 13",
+out += [f"*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES={len(props)}, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12, 13",
         "*ELEMENT, TYPE=U1, ELSET=ALLE"]
 out += [f"{e + 1}, " + ", ".join(map(str, nodes)) for e, (_, nodes) in enumerate(elems)]
 vals = [f"{v:.12g}" for v in props]
@@ -108,7 +120,7 @@ def nset(name, ids):
 
 eps = 1e-9
 allN = [(i, j, k) for k in range(n + 1) for j in range(n + 1) for i in range(n + 1) if used[i, j, k]]
-supply = [nid(*p) for p in allN if xn[p[1]] <= -0.75 + eps]
+supply = [nid(*p) for p in allN if xn[p[1]] <= (-1.0 if a.mms else -0.75) + eps]
 shell = [nid(*p) for p in allN if max(abs(xn[p[0]]), abs(xn[p[1]]), abs(xn[p[2]])) >= 0.75 - eps]
 out += nset("ALLN", [nid(*p) for p in allN]) + nset("SUPPLY", supply) + nset("SHELL", shell)
 c0, c1, c2 = nid(0, 0, 0), nid(n, 0, 0), nid(0, n, 0)          # (-1,-1,-1), (1,-1,-1), (-1,1,-1)
@@ -171,9 +183,11 @@ if BOXES:
     CTRL = ["*CONTROLS, ANALYSIS=DISCONTINUOUS"] + CTRL
 t0 = 1e-8
 out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL,
-        "*BOUNDARY", "ALLN, 1, 3, 0.0", "ALLN, 12, 12, 1.0", "ALLN, 13, 13, 0.0"] + (["RPALL, ENCASTRE"] if contact else [])
+        "*BOUNDARY", "ALLN, 1, 3, 0.0", "ALLN, 13, 13, 0.0"] + ([] if a.mms else ["ALLN, 12, 12, 1.0"]) + (["RPALL, ENCASTRE"] if contact else [])
 for p in allN:
     out.append(f"{nid(*p)}, 11, 11, {phi_node[p]:.12g}")
+    if a.mms:
+        out.append(f"{nid(*p)}, 12, 12, {c_node[p]:.12g}")
 out += ["*END STEP"]
 ninc = int(round(a.tend / a.dt))
 out += [f"*STEP, NAME=GROW, INC={ninc + 10}, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT",

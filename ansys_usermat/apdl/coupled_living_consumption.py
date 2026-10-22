@@ -74,10 +74,11 @@ ART_H = float(sys.argv[sys.argv.index("--artdiff-h") + 1]) if "--artdiff-h" in s
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 # --wall-grad W: the normal component of the gradient in the wall cells: onesided (np.gradient), mirror (zero-flux
 # ghost, (u1 - u0) / 2h) or zero. A-38: with the one-sided value the central front term of --artdiff treats the wall
-# as a front, and the corner blocks stay at phi = 1.1 (ANSYS: 0.54 at T* = 0.025); default zero with --artdiff (the
-# ANSYS element agrees best), onesided otherwise (the upwind forms already take no difference into a wall)
-WALL_GRAD = (sys.argv[sys.argv.index("--wall-grad") + 1] if "--wall-grad" in sys.argv
-             else "zero" if ARTDIFF else "onesided")
+# as a front, and the corner blocks stay at phi = 1.1 (ANSYS: 0.54 at T* = 0.025). Until A-50 the default was zero
+# with --artdiff and onesided otherwise; it applies to obstacle faces too (A-49).
+# A-50: the manufactured solution decides it: mirror converges at second order with the smallest error (phi L2 at 32^3
+# 2.0e-4), zero 4.0e-4, one-sided 3.5e-4 with a first-order maximum at the walls -> mirror is the default
+WALL_GRAD = sys.argv[sys.argv.index("--wall-grad") + 1] if "--wall-grad" in sys.argv else "mirror"
 assert WALL_GRAD in ("onesided", "mirror", "zero"), WALL_GRAD
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
@@ -133,6 +134,10 @@ START_POSITION = "--start-position" in sys.argv
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
 MIX_EQUAL = "--mix-equal" in sys.argv
 INIT_NODAL = "--init-nodal" in sys.argv   # A-46: the initial phi of the Abaqus element (nodal averages), see run()
+# --mms (A-50): manufactured solution of abaqus_living/mms.py for the phi-c part: point model off (L = 1), k_alpha = 0,
+# phi starts from the solution, sources S_phi, S_c (JAX) added; prints the L2 errors at T_END. Use with --tend, --front 1,
+# --artdiff, no --ansys-bc, no --fast, no --obstacle.
+MMS = "--mms" in sys.argv
 T_AB = -1.0 if CHECK else (float(sys.argv[sys.argv.index("--tab") + 1]) if "--tab" in sys.argv else 0.5)
 CASE = CASES["fritsch_2sp"]
 # --case k26c3: Klempt et al. 2026, Table 2, case 3 (four species): A = 1/2 [[1,5,5,5],[5,1,3,3],[5,3,1,2],[5,3,2,1]],
@@ -210,7 +215,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -455,12 +460,14 @@ class Reaction:
             b[OBST] = 0.0
         self.b, self.q = b.ravel(), q
 
-    def solve(self, phi, L, value=1.0, u_prev=None, dtau=None):
+    def solve(self, phi, L, value=1.0, u_prev=None, dtau=None, src=None):
         if value == 0.0:
             return np.zeros(SHAPE)
         m = 0.0 if (TRANSIENT_D is None or u_prev is None) else 1.0 / (TRANSIENT_D * dtau)
         A = (self.A0 + sp.diags(self.d0 + m + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
         b = self.b.copy() + (m * u_prev.ravel() / value if m else 0.0)
+        if src is not None:                       # MMS source S (A-50): -lap u + q phi L u = S
+            b = b + src.ravel() / value
         if getattr(self, "fixed", None) is not None:      # cells held at the value (the ANSYS element layers)
             f = self.fixed.ravel()
             D = sp.diags((~f).astype(float))
@@ -553,6 +560,12 @@ def run(example, antibiotic):
             G[newc & ~isb] = group_state(tot, GROUP_A)
         else:
             G[newc] = start_state(*MIX_START)
+    if MMS:
+        sys.path.insert(0, str(ROOT / "abaqus_living"))
+        import mms as MM
+        beta_eff = W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)
+        S_phi, S_c = MM.sources_jax(beta_eff, R_FRONT, K_MONOD, LAM_C2)
+        phi = MM.phi_m(X, Y, Z, 0.0)
     on = phi >= PHI_MIN
     nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
@@ -561,7 +574,10 @@ def run(example, antibiotic):
         if OBSTACLE:
             nut.fixed = nut.fixed & ~OBST; ab.fixed = ab.fixed & ~OBST
     L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
-    c = nut.solve(phi, L, c_supply(0.0))
+    if MMS:
+        L = np.ones_like(phi)
+    src_c = (lambda tt: S_c(X, Y, Z, tt)) if MMS else (lambda tt: None)
+    c = nut.solve(phi, L, c_supply(0.0), src=src_c(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
     dt = 0.15 * H * H / (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0))
@@ -599,28 +615,43 @@ def run(example, antibiotic):
         T1 = (k + 1) * DT_C
         # (1) macro phi, alpha
         cf = c
-        for _ in range(per):
+        ka = 0.0 if MMS else W.K_ALPHA
+        for i_in in range(per):
+            tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
             if FRONT:
-                cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt)  # the front follows the nutrient
-            def f(ph, al):
+                cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt, src=src_c(tk))  # the front follows the nutrient
+            def f(ph, al, tt):
                 (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
-                d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                 if FRONT:
                     d = d + front(ph, cf)
+                if MMS:
+                    d = d + S_phi(X, Y, Z, tt)
                 if OBSTACLE:                    # no biofilm inside the obstacles
                     d = np.where(OBST, 0.0, d)
-                    return d, np.where(OBST, 0.0, W.K_ALPHA * ph)
-                return d, W.K_ALPHA * ph
-            k1 = f(phi, alpha); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
-            k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1]); k4 = f(phi + dt * k3[0], alpha + dt * k3[1])
+                    return d, np.where(OBST, 0.0, ka * ph)
+                return d, ka * ph
+            k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
+            k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
+            k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
             alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
         # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
         if TRANSIENT_D is not None and FRONT:
             c_new = cf                        # already advanced over the outer step in the inner steps
         else:
-            c_new = nut.solve(phi, L, c_supply(T1), u_prev=c, dtau=DT_C)
+            c_new = nut.solve(phi, L, c_supply(T1), u_prev=c, dtau=DT_C, src=src_c(T1))
         a_new = ab.solve(phi, L, 1.0 if (antibiotic and T1 > T_AB + 1e-12) else 0.0, u_prev=a, dtau=DT_C)
+        if MMS:                                   # no point model, no colonisation in the manufactured solution
+            c, a = c_new, a_new
+            if k == int(round(T_END / DT_C)) - 1:
+                ep = phi - MM.phi_m(X, Y, Z, T1); ec = c - MM.c_m(X, Y, Z, T1)
+                hist["mms"] = dict(T=T1, h=H, l2_phi=float(np.sqrt((ep ** 2).mean())), max_phi=float(np.abs(ep).max()),
+                                   l2_c=float(np.sqrt((ec ** 2).mean())), max_c=float(np.abs(ec).max()))
+                print(f"MMS {NF}^3, T* {T1:g}: L2 error phi {hist['mms']['l2_phi']:.3e} (max {hist['mms']['max_phi']:.3e}), "
+                      f"c {hist['mms']['l2_c']:.3e} (max {hist['mms']['max_c']:.3e})", flush=True)
+            hist["t"].append(T1)
+            continue
         # (3) point models of the colonised cells
         idx = np.flatnonzero(on.ravel())
         Gf = G.reshape(-1, 12)
