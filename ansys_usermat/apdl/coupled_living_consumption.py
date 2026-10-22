@@ -538,12 +538,14 @@ def run(example, antibiotic):
     if INIT_NODAL:
         # A-46: start from the field a Galerkin element (Abaqus, abaqus_living) can hold: node = mean of its cells,
         # cell = mean of its 8 nodes (same total); the newly covered cells start by position, as the start rule
-        pn = np.pad(phi, 1)
+        # obstacle cells are not elements of the Galerkin mesh: they count neither in a node's mean nor get phi (A-49)
+        wo = (~unfold(OBST)).astype(float) if OBSTACLE else np.ones_like(phi)
+        pn = np.pad(phi * wo, 1)
         nodal = sum(pn[i:i + NF + 1, j:j + NF + 1, k:k + NF + 1] for i in (0, 1) for j in (0, 1) for k in (0, 1))
-        cnt = sum(np.pad(np.ones_like(phi), 1)[i:i + NF + 1, j:j + NF + 1, k:k + NF + 1]
+        cnt = sum(np.pad(wo, 1)[i:i + NF + 1, j:j + NF + 1, k:k + NF + 1]
                   for i in (0, 1) for j in (0, 1) for k in (0, 1))
-        nodal = nodal / cnt
-        phi = sum(nodal[i:i + NF, j:j + NF, k:k + NF] for i in (0, 1) for j in (0, 1) for k in (0, 1)) / 8.0
+        nodal = nodal / np.maximum(cnt, 1.0)
+        phi = wo * sum(nodal[i:i + NF, j:j + NF, k:k + NF] for i in (0, 1) for j in (0, 1) for k in (0, 1)) / 8.0
         newc = (phi >= PHI_MIN) & (G[..., :N_SP].sum(-1) == 0)
         if example == "separate":
             isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
