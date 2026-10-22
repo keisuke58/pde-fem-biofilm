@@ -540,7 +540,7 @@ def run(example, antibiotic):
     c = nut.solve(phi, L, c_supply(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
-    dt = 0.15 * H * H / (W.BETA + (R_FRONT * (ART_H or H) / 4.0 if ARTDIFF else 0.0))
+    dt = 0.15 * H * H / (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0))
     if FRONT:
         dt = min(dt, 0.4 * H / (R_FRONT / (1 + K_MONOD)))
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
@@ -580,7 +580,7 @@ def run(example, antibiotic):
                 cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt)  # the front follows the nutrient
             def f(ph, al):
                 (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
-                d = (W.BETA + (R_FRONT * (ART_H or H) / 4.0 if ARTDIFF else 0.0)) * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                 if FRONT:
                     d = d + front(ph, cf)
                 if OBSTACLE:                    # no biofilm inside the obstacles
