@@ -1,4 +1,4 @@
-# IKMHIWI03 の状況（自動、2026-10-22 12:16）
+# IKMHIWI03 の状況（自動、2026-10-22 13:17）
 
 1 時間ごとに `F:\biofilm_upf_living7\auto_status\status.ps1` が書く（7 日間）。変わったときだけ push。確定事項は `CONFIRMED_2026-10-22.ja.md`。ここ 24 時間に動いた本だけ載せる。
 
@@ -14,11 +14,11 @@
 
 | 本 | フォルダ | T\* | 終わりの T\* | 状態 | 出力の更新 |
 |---|---|---|---|---|---|
-| u8_16_sep | biofilm_upf_living8_16b | 0.2075 | 1.0025 | 走行中 | 10-22 12:16 |
-| u8_16_sep_ab | biofilm_upf_living8_16a | 0.2013 | 1.0025 | 走行中 | 10-22 12:16 |
-| u8_16_mixeq_ab | biofilm_upf_living8_16c | 0.0350 | 1.0025 | 走行中 | 10-22 12:16 |
-| u8_24_sep_ab | biofilm_upf_living8_24a | 0.0000 | 1.0025 | 走行中 | 10-22 12:14 |
-| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.0000 | 1.0025 | 走行中 | 10-22 12:14 |
+| u8_16_sep | biofilm_upf_living8_16b | 0.4537 | 1.0025 | 走行中 | 10-22 13:17 |
+| u8_16_sep_ab | biofilm_upf_living8_16a | 0.4437 | 1.0025 | 走行中 | 10-22 13:17 |
+| u8_16_mixeq_ab | biofilm_upf_living8_16c | 0.2775 | 1.0025 | 走行中 | 10-22 13:17 |
+| u8_24_sep_ab | biofilm_upf_living8_24a | 0.0112 | 1.0025 | 走行中 | 10-22 13:16 |
+| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.0125 | 1.0025 | 走行中 | 10-22 13:16 |
 | u8n_24_sep_ab | biofilm_upf_living8_24n | 0.0075 | 0.0075 | 終わり | 10-22 12:10 |
 | u8c_8_mixeq_ab_dt0005 | biofilm_upf_living8_8n | 1.0025 | 1.0025 | 終わり | 10-22 12:09 |
 | u8c_8_sep_ab_dt0005 | biofilm_upf_living8_8n | 1.0025 | 1.0025 | 終わり | 10-22 12:06 |
@@ -59,4 +59,4 @@
 ## 自動処理（最後の行）
 
 - A-40：`2026-10-22 11:41:21 end`
-- A-45：`2026-10-22 12:12:38   run_living started, PID 5600; log F:\biofilm_upf_living8_24b\_living_a4524b.log`
+- A-45：`2026-10-22 13:02:39   python 24 sep: ValueError: cannot reshape array of size 13824 into shape (16,1,16,1,16,1)`
