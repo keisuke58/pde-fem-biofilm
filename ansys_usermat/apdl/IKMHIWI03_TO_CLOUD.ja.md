@@ -2444,3 +2444,52 @@ mixeq_ab（u6s_8_mixeq_ab_dt0005）：種 Σφ̄ 0.038（Python 0.038）、c 0.9
 | u4_16_mix_ab | 0.0371 | 0.9858 | 0.5195 | 4.7959e-04 | 5.0939e-05 | 0.3960 | 0.037 / 0.986 / 0.522 / 0.000469 / 4.01e-05 / 0.353 |
 
 - 全時刻の場は `results/2026-10-living/fields_<本>.json`。この節は自動で書いた（ユーザーは旅行中）。
+
+## A-42. ANSYS の φ の更新を NEM の行列から再現（8 桁で一致）。漏れの正体は**列の和**、保存形にして 0 に（ビルド living7）
+
+### 1. 再現（ユーザーの「完全一致は無理か」への答えの片方）
+
+`NEM_DUMP = 1`（`make_living_deck.py --nem-dump`、living7）で USSFin が最初の呼び出しに NEM の演算子（全 4482 点の近傍、dx、dy、dz、Lap、
+平均 31 近傍）と点の座標を `nem_dump.txt` に書く。これと `FRONT_DUMP` の φ から、表面点を SURF_NEAREST の規則で消して
+L_eff = L_GG + L_GS S を作り、ANSYS と同じ 1 歩を Python で計算した（`checks_a38_a39/nem_replay_a42.py`）：
+
+| 呼び出し | 0 | 1 | 2 | 6 |
+|---|---|---|---|---|
+| ラプラシアン：max \|再現 − ANSYS\| ／ max \|Δφ\| | 5.0e−7 / 191 | 5.4e−7 / 150 | 2.5e−7 / 59 | 2.3e−7 / 29 |
+| ∇φ の x 成分：max \|再現 − ANSYS\| | 5e−9 | 8e−9 | 8e−9 | 9e−9 |
+| φ の更新の残り（k_local Bioloc の項） | +1.00e−3 | +1.00e−3 | +1.00e−3 | +1.00e−3 |
+
+書き出しの桁（8 桁）まで一致。**ANSYS は φ の式をこの演算子でそのとおり解いている。** Python との残りの差は離散化の違い
+（ANSYS は 8³ 要素 × 8 積分点 = 16³ 点の MLS、30 近傍；Python は 8³ のマスの 7 点差分）で、格子を細かくして比べるもの。
+
+### 2. 漏れの正体
+
+L_eff の行の和は 0（定数を正しく扱う）、**列の和**が 0 でない：等しい重みの積分点で Σ_i (L_eff φ)_i = Σ_j (列の和)_j φ_j。
+列の和は壁ぎわの点で正、内部で負（どちらの表面点の規則でも合計は ±101）。大きさは従来の表面点 ±113、SURF_NEAREST ±22。
+拡散だけ（β = 0.645、T\* = 0.25、分離例の初期状態）で平均 φ は従来 −4.7 % / +1.5 %、SURF_NEAREST −1.4 % / +0.6 % 動く（零流束なら一定）。
+
+### 3. 対策：保存形のラプラシアン（`LAP_FILE = 1`、`--lap-file`）
+
+L_eff の対称部分をとり、対角を行の和から決める（行も列も和 0）。内部の精度はそのまま（r² のラプラシアン 5.996〜6.007、正しくは 6）。
+`checks_a38_a39/build_lap_cons_a42.py <dir>` が同じ格子の `nem_dump.txt` から `lap_cons.txt` を作り、USSFin が最初の呼び出しで読んで
+φ のラプラシアンに使う（点の数が合わなければ無視）。勾配は NEM のまま（SURF_NEAREST）。実行中の値を `check_lap_file_a42.py` で確かめた：
+書き出したラプラシアン = lap_cons × φ（2e−7）、**全点の和 0.000**（従来 −161、SURF_NEAREST −38）。
+
+| 8³、T\* = 1、増分 0.005、ċ | 分離例 φ 平均 | 種 Σφ̄ | 種 α−1 | 混合例 Σφ̄ | 混合例 α−1 |
+|---|---|---|---|---|---|
+| SURF_NEAREST（u6s_） | 0.301 | 0.262 | 3.32e−4 | 0.038 | 2.97e−4 |
+| **SURF_NEAREST ＋ 保存形（u7c_）** | 0.322 | 0.253 | 3.46e−4 | 0.038 | 2.92e−4 |
+| Python 壁 zero、dtc 0.005 | 0.288 | 0.247 | 3.27e−4 | 0.038 | 3.09e−4 |
+| Python 壁 mirror、dtc 0.005 | 0.365 | 0.218 | 3.80e−4 | | |
+
+ANSYS は質量を保つようになり、Python の 2 つの壁の扱いの間に入る（α−1：zero +6 %、mirror −9 %）。ここから先は離散化の差。
+
+### 4. 追記 30 への対応（自動で走っている）
+
+- `u5_16_sep_ab`（SURF_NEAREST のみ、living6）が追記 30 の u4s_16_sep_ab にあたる。結果は A-40（自動）。
+- 残りの 16³ は**両方の修正**（SURF_NEAREST ＋ 保存形）で回す：`u7_16_{sep_ab,sep,mixeq_ab,mixeq,mix_ab}`（living7_16a〜e、16³ の
+  `lap_cons.txt` は短い書き出し本 u7n_16 から）。報告は A-43（自動、追記 30 の Python の表と並べる）。
+- 24³：A-40 で SURF_NEAREST が効くと出たら、従来の u4_24_（A-36、T\* ≈ 0.2）を止めて `u7_24_sep_ab`、`u7_24_mixeq_ab`（両方の修正、
+  living7 / living7s）。報告は A-41（自動、約 33 時間後）。
+- 変更：`oliver_patches/living7_Ussfin.patch`（living5 からの全部：FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE）、
+  `make_living_deck.py --nem-dump / --lap-file`、`checks_a38_a39/{nem_replay,nem_diffusion,build_lap_cons,check_lap_file}_a42.py`。

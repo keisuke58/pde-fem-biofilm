@@ -123,6 +123,13 @@ def main():
                     help="SURF_NEAREST = 1 (A-39, build living6): each surface point takes phi of its nearest "
                          "integration points (zero normal gradient) instead of the inverse-square mean of all its "
                          "integration-point neighbours, which let phi leak through the walls")
+    ap.add_argument("--nem-dump", action="store_true",
+                    help="NEM_DUMP = 1 (A-42, build F:\\biofilm_upf_living7): USSFin writes the NEM operator (neighbours, "
+                         "dx, dy, dz, Lap of every point) and the point coordinates to nem_dump.txt at its first call")
+    ap.add_argument("--lap-file", action="store_true",
+                    help="LAP_FILE = 1 (A-42, build living7): the phi Laplacian from lap_cons.txt in the work directory "
+                         "(checks_a38_a39/build_lap_cons_a42.py from nem_dump.txt of the same mesh): the NEM Laplacian "
+                         "made conservative; use with --surf-nearest")
     a = ap.parse_args()
 
     nodes, elems = read_mesh(a.base)
@@ -192,8 +199,12 @@ def main():
         new += f"! A-38: the nutrient starts at c = 1 in every element (build living6){nl}NUT1_INIT_ALL = 1{nl}"
     if a.surf_nearest:
         new += f"! A-39: surface points take phi of their nearest integration points (build living6){nl}SURF_NEAREST = 1{nl}"
+    if a.lap_file:
+        new += f"! A-42: conservative phi Laplacian from lap_cons.txt (build living7){nl}LAP_FILE = 1{nl}"
+    if a.nem_dump:
+        new += f"! A-42: write the NEM operator once (build living7){nl}NEM_DUMP = 1{nl}"
     if a.front_dump:
-        new += f"! A-39: dump the terms of the phi update (build living6){nl}FRONT_DUMP = {a.front_dump!r}{nl}"
+        new +=f"! A-39: dump the terms of the phi update (build living6){nl}FRONT_DUMP = {a.front_dump!r}{nl}"
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     text = replace_cmblock(text, "NUTRIENT2", top)
