@@ -158,11 +158,17 @@ if contact:
         out += nset(f"S{tag}", [int(s) for s in slave.split()])
         out += [f"*SURFACE, NAME=SS{tag}, TYPE=NODE", f"S{tag}, 1.0", f"*SURFACE, NAME=MS{tag}", f"R{tag}, SPOS",
                 f"*CONTACT PAIR, INTERACTION=FRICLESS, TYPE=NODE TO SURFACE", f"SS{tag}, MS{tag}"]
-    out += ["*SURFACE INTERACTION, NAME=FRICLESS", "*FRICTION", "0.0", "*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD"]
+    # linear penalty instead of hard contact (A-49: the hard contact chattered at T* = 0.17 on 16^3 and the fixed increment
+    # could not be cut back); stiffness about 100 E_bio / h, so the penetration is about 1 % of the growth displacement
+    kpen = 100.0 * props[0] / h
+    out += ["*SURFACE INTERACTION, NAME=FRICLESS", "*FRICTION", "0.0", "*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=LINEAR",
+            f"{kpen:.6g}"]
     out += nset("RPALL", [int(c[len("__ELEM__"):].split("__REF__")[1].split("__")[0]) for c in contact if c.startswith("__ELEM__")])
 t_ab = 10.0 if a.no_ab else a.t_ab
 out += ["*AMPLITUDE, NAME=ABON, TIME=STEP TIME", f"0.0, 0.0, {t_ab - 1e-9:.10g}, 0.0, {t_ab:.10g}, 1.0, 100.0, 1.0"]
 CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8", "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
+if BOXES:
+    CTRL = ["*CONTROLS, ANALYSIS=DISCONTINUOUS"] + CTRL
 t0 = 1e-8
 out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL,
         "*BOUNDARY", "ALLN, 1, 3, 0.0", "ALLN, 12, 12, 1.0", "ALLN, 13, 13, 0.0"] + (["RPALL, ENCASTRE"] if contact else [])
