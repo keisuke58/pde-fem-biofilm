@@ -19,7 +19,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-RES = HERE / "results" / "2026-10-living"
+RES = HERE / "results" / "2026-10-living" / "archive"   # the v2f_/fsens_ generations it summarises were archived (22 Oct)
 ECO = ROOT / "abaqus_composition" / "eco_fritsch_2sp_a50.txt"
 COLS = ("phi", "L", "shareA", "nut", "ab", "alpha", "seqv")
 

@@ -6,9 +6,9 @@ numbers of different generations in one table without saying which is which. The
 
 | prefix | build (`F:\`) | what | status |
 |---|---|---|---|
-| `lv8_`, `trace_*`, `tsens_` (A-19) | living | first runs | **do not use**: L frozen at its first value (A-22) |
-| `v2_`, `v2s_`, `sens_`, `i8*` | living | v2 set-up | **do not use**: L frozen (A-22) |
-| `v2f_`, `fsens_`, `fthr_`, `v2t_`, `dbg_*` | living4 | L fixed | **do not use**: phi advanced 10x too fast (inner USSFin step 0.0025, A-25) |
+| `lv8_`, `trace_*`, `tsens_` (A-19) | living | first runs | **do not use**: L frozen at its first value (A-22); moved to `archive/` |
+| `v2_`, `v2s_`, `sens_`, `i8*` | living | v2 set-up | **do not use**: L frozen (A-22); in `archive/` |
+| `v2f_`, `fsens_`, `fthr_`, `v2t_`, `dbg_*` | living4 | L fixed | **do not use**: phi advanced 10x too fast (inner USSFin step 0.0025, A-25); in `archive/` |
 | `sym_*`, `symt_*` | living4 | neighbour / symmetry test | test only (A-24), not results |
 | `u1_` (A-27..A-31) | living4 | one inner step, quasi-static c, values before the paper-value decision | **superseded** |
 | `u3_` (A-32) | living4 | paper front r, no stabilisation | **do not use**: elements distort at 8^3 and 16^3 |

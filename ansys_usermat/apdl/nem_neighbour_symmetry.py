@@ -118,7 +118,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--deck", default=str(HERE / "ds_oliver_wired_n5trial_inter34only_baseline_at0p0006.dat"))
     ap.add_argument("--radius", type=float, nargs="+", default=[0.187, 0.25, 0.3])
-    ap.add_argument("--seed-from", default=str(HERE / "results/2026-10-living/fields_v2f_8_mix_ab.json"))
+    ap.add_argument("--seed-from", default=str(HERE / "results/2026-10-living/archive/fields_v2f_8_mix_ab.json"))
     a = ap.parse_args()
     eids, cen, gp, gp_elem, surf = build_points(a.deck)
     seed = set(json.loads(Path(a.seed_from).read_text())["seed"])

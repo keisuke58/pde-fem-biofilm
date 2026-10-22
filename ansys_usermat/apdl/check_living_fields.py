@@ -29,6 +29,8 @@ TOL_SYM, TOL_HAND, TOL_L = 1e-6, 1e-12, 1e-12
 
 
 def load(res, run):
+    if not (res / f"fields_{run}.json").exists():         # superseded generations are in results/.../archive (22 Oct)
+        res = res / "archive"
     f = json.loads((res / f"fields_{run}.json").read_text())
     p = res / f"{run}_pm.json"
     return f, (json.loads(p.read_text()) if p.exists() else None)
@@ -133,7 +135,9 @@ def main():
     for run in a.runs:
         if run.endswith("_ab"):
             base = run[:-3]
-            if not (res / f"fields_{base}.json").exists():
+            if not (res / f"fields_{base}.json").exists() and (res / "archive" / f"fields_{base}.json").exists():
+            res = res / "archive"
+        if not (res / f"fields_{base}.json").exists():
                 continue
             f1, f0 = loaded[run], json.loads((res / f"fields_{base}.json").read_text())
             t = np.array(f1["t"])

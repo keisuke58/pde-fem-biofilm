@@ -20,7 +20,7 @@ for p in (ROOT / "ansys_usermat", ROOT / "ansys_usermat/coupling", ROOT):
 import figstyle  # noqa: E402
 
 JOB = sys.argv[1] if len(sys.argv) > 1 else "lv8_sep"
-RES = HERE / "results" / "2026-10-living"
+RES = HERE / "results" / "2026-10-living" / "archive"   # lv8_ and trace_ files archived (22 Oct)
 
 
 def main():

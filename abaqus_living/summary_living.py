@@ -29,8 +29,8 @@ seed = W.seed_mask(n, cells8)
 h = 2.0 / n
 rows = []
 for t, A in blocks:
-    el = A[:, 0].astype(int) - 1
-    i, j, k = el % n, (el // n) % n, el // (n * n)
+    # the cell of each Gauss point from its position (element numbers skip the obstacle cells of --obstacle decks)
+    i, j, k = (np.clip(np.floor((A[:, c] + 1.0) / h).astype(int), 0, n - 1) for c in (2, 3, 4))
     s = seed[i, j, k]
     m = {"t": t, "phi_mean": float(A[:, 5].mean()), "phi_max": float(A[:, 5].max()),
          "seed_phi": float(A[s, 5].mean()), "seed_living": float(A[s, 9].mean()), "seed_c": float(A[s, 6].mean()),

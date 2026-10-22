@@ -317,7 +317,12 @@ def grad(u):
             if FAST and a in (0, 2):             # mirror cell on the symmetry plane: a neighbour with difference 0
                 mm = mm.copy(); e = [slice(None)] * 3; e[a] = 0
                 mm[tuple(e)] = ~OBST[tuple(e)]
-            out.append((fw + bw) / np.maximum(mp.astype(float) + mm, 1.0))
+            if WALL_GRAD == "onesided":
+                out.append((fw + bw) / np.maximum(mp.astype(float) + mm, 1.0))
+            elif WALL_GRAD == "mirror":                # zero-flux ghost at a wall or obstacle face: (u1 - u0) / 2h
+                out.append(0.5 * (fw + bw))
+            else:                                      # zero normal component next to a wall or obstacle face
+                out.append(np.where(mp & mm, 0.5 * (fw + bw), 0.0))
         return out
     if FAST:                                 # mirror layer on the symmetry planes x = 0, z = 0
         up = np.concatenate([u[:1], u], 0); up = np.concatenate([up[:, :, :1], up], 2)
