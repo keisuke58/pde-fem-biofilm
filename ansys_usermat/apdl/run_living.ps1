@@ -77,6 +77,7 @@ foreach ($spec in $Runs) {
         '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt")) -PassThru -WindowStyle Hidden
     $null = $p.Handle
     $limit = @{ '8' = 60; '16' = 600; '24' = 2400 }[$mesh]
+    if ($opts -match '--deltim\s+([0-9.eE+-]+)') { $limit *= [Math]::Max(1.0, 0.00125 / [double]$Matches[1]) }   # smaller increments run longer
     while (-not $p.HasExited) {
         Start-Sleep 20
         if (((Get-Date) - $t0).TotalMinutes -gt $limit) {
