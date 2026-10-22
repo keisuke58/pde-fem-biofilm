@@ -2493,3 +2493,15 @@ ANSYS は質量を保つようになり、Python の 2 つの壁の扱いの間�
   living7 / living7s）。報告は A-41（自動、約 33 時間後）。
 - 変更：`oliver_patches/living7_Ussfin.patch`（living5 からの全部：FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE）、
   `make_living_deck.py --nem-dump / --lap-file`、`checks_a38_a39/{nem_replay,nem_diffusion,build_lap_cons,check_lap_file}_a42.py`。
+
+## A-40. 16³ の分離例を SURF_NEAREST で（u5_16_sep_ab、living6、ċ あり、--artdiff 16、増分 0.00125）。**自動で書いた報告**
+
+| 本 | φ 平均 T\* = 0.25 | 0.5 | 0.75 | 1 | 種 Σφ̄ | 種 α−1 | 種 vM [Pa] |
+|---|---|---|---|---|---|---|---|
+| ANSYS 従来の表面点（A-35） | 0.382 | 0.503 | 0.542 | 0.547 | 0.217 | 5.306e-04 | 1.015e-04 |
+| **ANSYS SURF_NEAREST** | 0.404 | 0.559 | 0.604 | 0.605 | 0.206 | 5.694e-04 | 1.254e-04 |
+| Python 壁 zero、dtc 0.00125 | | | | | 0.158 | 6.322e-04 | 1.802e-04 |
+| Python 壁 mirror、dtc 0.00125 | | | | | 0.159 | 6.272e-04 | 1.731e-04 |
+
+- Python は手元（JAX の点モデル）で回した 16³、`results/2026-10-3d/…_artdiff_wg{zero,mirror}_separate_ab.json`。16³ では Python の壁の扱いはほとんど効かない（α−1 6.32e−4 対 6.27e−4）。
+- この節は自動で書いた（ユーザーは旅行中）。
