@@ -133,6 +133,10 @@ def main():
     ap.add_argument("--surf-fix-off", action="store_true",
                     help="SURF_FIX_OFF = 1 (A-49, build F:\\biofilm_upf_living9f): no surface-point update, the surface "
                          "points keep phi = 0 as in the partner's and Felix's original element")
+    ap.add_argument("--quarter", action="store_true",
+                    help="A-55: a quarter base deck (make_quarter_base.py, x > 0, z > 0): u_x = 0 on x = 0, u_z = 0 on z = 0, "
+                         "u_y = 0 at (0, -1, 0) instead of the corner constraints; needs a NEM dump and lap_cons.txt of the "
+                         "quarter mesh")
     ap.add_argument("--klempt24", choices=("fig7_high", "fig7_low", "fig4_edge"),
                     help="Klempt et al. 2024 test case (A-49): one species, Table 2 values scaled to the 2 mm cube "
                          "(JAXFEM/klempt2024_cases.deck_values), consumption g phi (zero order, as printed and as Felix's "
@@ -145,7 +149,7 @@ def main():
     cen = centroids(nodes, elems)
     comps = read_components(a.base)
     seed = set(comps["BIOFILM1"])
-    h = 2.0 / round(len(elems) ** (1 / 3))
+    h = 2.0 / round((len(elems) * (4 if a.quarter else 1)) ** (1 / 3))
     cols = {e for e, c in cen.items() if abs(c[0]) > 0.75 and abs(c[1]) > 0.75}
     if a.v2:
         zmax = max(abs(cen[e][2]) for e in seed) + 1e-9
@@ -154,6 +158,9 @@ def main():
     else:
         top = {e for e, c in cen.items() if c[1] > 1.0 - h}
     bio1 = seed | cols if a.layout == "sep" else seed
+    if a.quarter:
+        keep = {e for e, c in cen.items() if c[0] > 0 and c[2] > 0}
+        bio1, top = bio1 & keep, top & keep
     if a.uniform:
         bio1 = set(elems)
     nut1 = None
@@ -233,6 +240,16 @@ def main():
     if nut1 is not None:
         text = replace_cmblock(text, "NUTRIENT1", nut1)
     text = replace_cmblock(text, "NUTRIENT2", top)
+    if a.quarter:
+        if a.klempt24 or a.uniform:
+            sys.exit("STOP: --quarter only for the separate and mixed examples")
+        rc = re.compile(r"^d,_CM3166U,ux,0\.\r?\nd,_CM3166U,uy,0\.\r?\nd,_CM3166U,uz,0\.\r?\n(?:/com[^\r\n]*\r?\n)?"
+                        r"d,_CM3168U,uy,0\.\r?\nd,_CM3168U,uz,0\.\r?\n(?:/com[^\r\n]*\r?\n)?d,_CM3170U,uz,0\.[ \t]*$", re.M | re.I)
+        if len(rc.findall(text)) != 1:
+            sys.exit("STOP: corner constraints not found once")
+        sym = (f"! A-55 quarter: symmetry planes{nl}nsel,s,loc,x,-1e-6,1e-6{nl}d,all,ux,0.{nl}nsel,s,loc,z,-1e-6,1e-6{nl}d,all,uz,0.{nl}"
+               f"nsel,s,loc,x,-1e-6,1e-6{nl}nsel,r,loc,z,-1e-6,1e-6{nl}nsel,r,loc,y,-1.000001,-0.999999{nl}d,all,uy,0.{nl}allsel")
+        text = rc.sub(lambda _: sym, text)
     if a.start_step > 0:
         s = a.start_step
         rx = re.compile(r"^deltim,([^,\s!]+)[^\r\n]*\r?\ntime,([^\s!]+)[^\r\n]*$", re.M | re.I)
@@ -258,7 +275,7 @@ def main():
             f"outer dt {a.deltim if a.deltim is not None else 'base'}, USSFin dt {a.dt_ussfin:g}, "
             f"end T* {a.tend if a.tend is not None else 'base'}, "
             f"{f'dc/dt with d = {a.transient_c:g}' if a.transient_c else 'quasi-static c'}; BIOFILM1 {len(bio1)} elements, "
-            f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{nl}")
+            f"NUTRIENT2 ({'all outer faces' if a.v2 else 'y = +1 layer'}) {len(top)} elements{', quarter' if a.quarter else ''}{nl}")
     post = "post_fields_living.mac" if a.tend is None or a.tend == 1 else f"post_fields_living_t{a.tend:g}.mac"
     text = head + text.rstrip() + f"{nl}FINISH{nl}*USE,{post}{nl}FINISH{nl}"
     Path(a.out).write_text(text, encoding="latin-1", newline="")

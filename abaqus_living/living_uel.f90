@@ -40,6 +40,9 @@ module living_uel_mod
   ! sources S_phi, S_c at the end of the increment (step time mms_t)
   logical, save :: mms_on = .false.
   double precision, save :: mms_t = 0d0
+  ! A-54, SUPG (Brooks and Hughes 1982) for the front term instead of the added diffusion r h/4: PROPS(20) = 1 adds
+  ! tau (v . grad N) times the strong residual of the phi equation (consistent, so no O(h) term); beta = beta_0 then
+  logical, save :: supg_on = .false.
 contains
 
   subroutine shape(r, s, t, N, dNr)
@@ -147,7 +150,7 @@ contains
     logical, intent(in) :: want_k
     double precision :: N(8), dN(3, 8), w, x(3), ph, phn, c, cn, a, gph(3), gc(3), gcn(3), ga(3), v(3)
     double precision :: al, pen, dpen, phc, dphc, L, E, dE, D0(6, 6), lam, mu, eps(6), sm(6), B(6, 24), Bv(3, 8)
-    double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm
+    double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm, tau, vm, hs, pe, res, vdn(8)
     double precision :: Ebio, nu, f, beta, ka, P, rr, Km, qc, qa
     integer :: q, i, j, ii, jj, d
     Ebio = props(1); nu = props(2); f = props(3); beta = props(4); ka = props(5); P = props(6)
@@ -195,10 +198,25 @@ contains
         call mms_eval(x(1), x(2), x(3), mms_t, beta, rr, Km, qc, sphi, sc, phim, cm)
       end if
       ! phase
+      tau = 0d0
+      do i = 1, NN
+        vdn(i) = dot_product(v, dN(:, i))
+      end do
+      vm = sqrt(sum(v**2))
+      if (supg_on .and. vm > 1d-12) then
+        hs = 2d0 * vm / sum(abs(vdn))                    ! element length along v (Tezduyar)
+        pe = vm * hs / (2d0 * beta)
+        if (pe > 1d-3) then
+          tau = hs / (2d0 * vm) * (1d0 / tanh(pe) - 1d0 / pe)
+        else
+          tau = hs / (2d0 * vm) * pe / 3d0
+        end if
+      end if
+      ! strong residual of the phi equation (the Laplacian of the trilinear field is dropped, as usual)
+      res = (ph - phn) / dt_ - ka * al + pen + dot_product(v, gph) - sphi
       do i = 1, NN
         ii = NDN*(i-1)+4
-        R(ii) = R(ii) + w * (N(i) * ((ph - phn) / dt_ - ka * al + pen + dot_product(v, gph) - sphi) &
-                             + beta * dot_product(dN(:, i), gph))
+        R(ii) = R(ii) + w * (N(i) * res + beta * dot_product(dN(:, i), gph) + tau * vdn(i) * res)
       end do
       ! nutrient and antibiotic
       do i = 1, NN
@@ -242,7 +260,8 @@ contains
           ! phase rows
           ii = NDN*(i-1)+4; jj = NDN*(j-1)+4
           K(ii, jj) = K(ii, jj) + w * (N(i) * N(j) * (1d0 / dt_ - ka * ka * dt + dpen) &
-                                       + N(i) * dot_product(v, dN(:, j)) + beta * dot_product(dN(:, i), dN(:, j)))
+                                       + N(i) * dot_product(v, dN(:, j)) + beta * dot_product(dN(:, i), dN(:, j)) &
+                                       + tau * vdn(i) * (N(j) * (1d0 / dt_ - ka * ka * dt + dpen) + vdn(j)))
           ! nutrient rows
           ii = NDN*(i-1)+5
           K(ii, NDN*(j-1)+5) = K(ii, NDN*(j-1)+5) + w * (dot_product(dN(:, i), dN(:, j)) + N(i) * N(j) * qc * phc * L)
@@ -349,6 +368,8 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   if (.not. eco_inited) call eco_native_init()
   mms_on = .false.
   if (NPROPS >= 19) mms_on = (PROPS(19) > 0.5d0)
+  supg_on = .false.
+  if (NPROPS >= 20) supg_on = (PROPS(20) > 0.5d0)
   mms_t = TIME(1) + DTIME
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])

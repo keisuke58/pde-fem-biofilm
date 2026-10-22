@@ -40,6 +40,7 @@ ap.add_argument("--t-ab", type=float, default=0.333333)
 ap.add_argument("--no-ab", action="store_true")
 ap.add_argument("--obstacle", choices=["columns"], help="the four rigid bars of coupled_living_consumption.py --obstacle columns (Klempt 2024 Sect. 4.3): their elements are left out (no biofilm, no nutrient, zero flux through their faces); the mechanics has no contact yet (A-47)")
 ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
+ap.add_argument("--supg", action="store_true", help="A-54: SUPG for the front term (PROPS(20) = 1) instead of the added diffusion r h/4 (beta = beta_0)")
 ap.add_argument("--quarter", action="store_true", help="A-53: only x > 0, z > 0 (the examples are symmetric in x and z, as the Python --fast); "
                 "symmetry u_x = 0 on x = 0, u_z = 0 on z = 0 and u_y = 0 at (0, -1, 0) instead of the corner constraints")
 ap.add_argument("--mms", action="store_true", help="manufactured solution (A-50, mms.py): point model off (L = 1), k_alpha = 0, "
@@ -51,7 +52,7 @@ if a.quarter and (a.obstacle or a.mms):
 n = a.n
 h = 2.0 / n
 r_front, K_monod, s_link = 10.0 * a.front, 1.0, 0.1
-beta = W.BETA + r_front * h / 4.0
+beta = W.BETA + (0.0 if a.supg else r_front * h / 4.0)
 n_sub = max(1, math.ceil(s_link * a.dt / 1e-4 - 1e-9))
 tot = 0.55                                   # Fritsch et al. 2025 case I start, 0.25 + 0.30
 props = [10.0, 0.49, 1e-3, beta, W.K_ALPHA, W.PENALTY, r_front, K_monod, 1.0, 1.0, 0.001, s_link, n_sub,
@@ -59,6 +60,8 @@ props = [10.0, 0.49, 1e-3, beta, W.K_ALPHA, W.PENALTY, r_front, K_monod, 1.0, 1.
 if a.mms:
     props[4] = 0.0
     props.append(1.0)
+if a.supg:
+    props += [0.0] * (19 - len(props)) + [1.0]
     a.no_ab = True
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)

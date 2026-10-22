@@ -1,7 +1,7 @@
 ! test_tangent.f90 -- the closed-form tangent of living_uel.f90 against central differences of its residual, for one
 ! distorted element with random fields, started Gauss points and phi inside (0, 1) (A-46).
 !   gfortran -cpp -ffixed-form -ffixed-line-length-132 -c living_uel_abaqus.for
-!   gfortran -ffree-line-length-none test_tangent.f90 living_uel_abaqus.o -o test_tangent && ./test_tangent
+!   gfortran -ffree-line-length-none test_tangent.f90 living_uel_abaqus.o -o test_tangent && ./test_tangent [supg]
 program test_tangent
   use living_uel_mod
   implicit none
@@ -29,6 +29,7 @@ program test_tangent
   sv(13, :) = 1d-4 * sv(13, :)
   props = [10d0, 0.49d0, 1d-3, 0.645d0, 1d-3, 5d0, 10d0, 1d0, 1d0, 1d0, 1d-3, 0.1d0, 5d0, 1d0, 0.5625d0, 0.55d0, &
            0.275d0, 0.275d0]
+  supg_on = (command_argument_count() > 0)           ! any argument: with SUPG (A-54)
   call element(U, Un, coords, sv, props, 0.005d0, R, K, .true., sig)
   do j = 1, NDOF
     h = 1d-6 * max(1d0, abs(U(j)))

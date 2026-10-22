@@ -1,4 +1,4 @@
-﻿<#
+<#
 run_living.ps1 -- the coupling with the living share (A-19, 20 Oct 2026) in ANSYS: make the decks
 (make_living_deck.py), run them one after another with the build in F:\biofilm_upf_living (usermat prop(28) = 11,
 USSFin with LIVING_CONS / FRONT_GRAD / NUT2_TSTART), collect the fields and the point-model trace
@@ -79,7 +79,7 @@ foreach ($spec in $Runs) {
     $p = Start-Process $exe -WorkingDirectory $WorkDir -ArgumentList (@('-b') + $par + @('-j', $job, '-custom',
         '.\ANSYS.exe', '-i', "$job.dat", '-o', "out_$job.txt")) -PassThru -WindowStyle Hidden
     $null = $p.Handle
-    $limit = @{ '8' = 60; '16' = 600; '24' = 2400 }[$mesh]
+    $limit = @{ '8' = 60; '16' = 600; '24' = 2400; '32' = 6000 }[($mesh -replace '\D', '')]   # 16q: quarter base deck (A-55)
     if ($opts -match '--deltim\s+([0-9.eE+-]+)') { $limit *= [Math]::Max(1.0, 0.00125 / [double]$Matches[1]) }   # smaller increments run longer
     while (-not $p.HasExited) {
         Start-Sleep 20
