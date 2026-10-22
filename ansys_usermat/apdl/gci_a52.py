@@ -2,10 +2,10 @@
 separate example with antibiotic (front 1, alpha*_0 = 100, antibiotic from T* = 1/3) at T* = 1, for each implementation
 on its own meshes, then the comparison of the implementations within their numerical uncertainty (ASME V&V 20 style).
 
-  Python (finite volumes, beta + r h/4 as ANSYS, wall gradient mirror, increment 0.00125): 8, 16, 24, 32
-  Python (TVD front term, no added diffusion; reference without stabilisation):               16, 32, 64
-  Abaqus (Galerkin hex8 element, beta + r h/4, increment 0.00125):                            8, 16, 24, 32
-  ANSYS (Oliver's element, living8 build, beta + r h/4):                                      8, 16 (two grids, Fs = 3)
+  Python (finite volumes, beta + r h/4 as ANSYS, wall gradient mirror, increment 0.00125): 8 .. 96
+  Python (TVD front term, no added diffusion; reference without stabilisation):               16, 32, 64, 128
+  Abaqus (Galerkin hex8 element, beta + r h/4, increment 0.00125):                            8, 16, 24, 32, 48 (quarter)
+  ANSYS (Oliver's element, living8 build, beta + r h/4):                                      8, 16, 24 (24: increment 0.0005)
 
 The stabilisation r h/4 vanishes with h, so all series approach the same continuum solution (first order expected
 with r h/4, second order for the TVD series). Quantities: seed means of alpha - 1 and von Mises (Pa).
@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parent
 PY = HERE / "results/2026-10-3d"
 AB = HERE.parent.parent / "abaqus_living"
 AN = HERE / "results/2026-10-living"
-OUT = Path(sys.argv[sys.argv.index("--out") + 1]) if "--out" in sys.argv else AN / "gci_a52"
+OUT = Path(sys.argv[sys.argv.index("--out") + 1]).resolve() if "--out" in sys.argv else AN / "gci_a52"
 Q = ("seed_am1", "seed_vm_Pa")
 
 
@@ -58,14 +58,15 @@ def an_val(run):
 
 
 SERIES = {
-    "Python (r h/4)": {n: py_val(f"*nf{n}_front1_dtc0.00125_*fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json")
-                       for n in (8, 16, 24)}
-                      | {32: py_val("coupled_living_consumption_front1_dtc0.00125_*fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json")},
-    "Python (TVD)": {16: py_val("*nf16_front1_phimin*fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
-                     32: py_val("coupled_living_consumption_front1_phimin*fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
-                     64: py_val("*nf64_front1_phimin*fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json")},
-    "Abaqus": {8: ab_val("lv8_sep_ab"), 16: ab_val("lv16_sep_ab_dt000125"), 24: ab_val("lv24_sep_ab"), 32: ab_val("lv32_sep_ab")},
-    "ANSYS": {8: an_val("u8c_8_sep_ab_dt0005"), 16: an_val("u8_16_sep_ab")},
+    "Python (r h/4)": {n: py_val(f"*nf{n}_front1_dtc0.00125_*ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json")
+                       for n in (8, 16, 24, 48, 64, 96)}
+                      | {32: py_val("coupled_living_consumption_front1_dtc0.00125_*ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json")},
+    "Python (TVD)": {16: py_val("*nf16_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
+                     32: py_val("coupled_living_consumption_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
+                     64: py_val("*nf64_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
+                     128: py_val("*nf128_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json")},
+    "Abaqus": {8: ab_val("lv8_sep_ab"), 16: ab_val("lv16_sep_ab_dt000125"), 24: ab_val("lv24_sep_ab"), 32: ab_val("lv32_sep_ab"), 48: ab_val("lv48q_sep_ab")},
+    "ANSYS": {8: an_val("u8c_8_sep_ab_dt0005"), 16: an_val("u8_16_sep_ab"), 24: an_val("u8_24_sep_ab_dt0005")},
 }
 
 
@@ -107,9 +108,9 @@ for code, ser in SERIES.items():
                 g = gci3(n1, n2, n3, ser[n1][q], ser[n2][q], ser[n3][q])
                 if g:
                     out.append(g)
-        elif len(have) == 2:
-            n2, n1 = have
-            out.append(gci2(n1, n2, ser[n1][q], ser[n2][q], 1.0))   # r h/4 is first order
+        if len(have) >= 2:   # always also the finest pair with p = 1 (r h/4 is first order), Fs = 3
+            n2, n1 = have[-2:]
+            out.append(gci2(n1, n2, ser[n1][q], ser[n2][q], 1.0))
         res[code][q] = out
 
 lines = ["# A-52 GCI（自動）", "",
@@ -126,8 +127,11 @@ for q in Q:
     # comparison of the finest values within their bands: |E| against u = sqrt(U_A^2 + U_B^2), U = GCI * |f1|
     best = {}
     for code, r in res.items():
-        if r[q]:
-            g = r[q][-1]; n1 = g["grids"][0]; f1 = r["values"][n1][q]
+        # the finest triple if it is in the asymptotic range (monotone, 0.5 <= p <= 3), else the finest pair, Fs = 3
+        tri = [g for g in r[q] if len(g["grids"]) == 3]
+        g = tri[-1] if tri and not tri[-1]["oscillatory"] and 0.5 <= tri[-1]["p"] <= 3.0 else (r[q][-1] if r[q] else None)
+        if g:
+            n1 = g["grids"][0]; f1 = r["values"][n1][q]
             best[code] = (n1, f1, g["gci"] * abs(f1), g["f_ext"])
     lines += [f"比べ方：最も細かい格子の値 f1 ± U（U = GCI·|f1|）。|E| ≤ u = √(U_A² + U_B²) なら数値の誤差の幅の中で一致。", "",
               "| A | B | f1 A | f1 B | E/f1 B | u/f1 B | |E|/u | 外挿値の差 |", "|---|---|---|---|---|---|---|---|"]
