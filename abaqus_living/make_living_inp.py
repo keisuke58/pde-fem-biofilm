@@ -38,6 +38,7 @@ ap.add_argument("--dt", type=float, default=0.005)
 ap.add_argument("--tend", type=float, default=1.0)
 ap.add_argument("--t-ab", type=float, default=0.333333)
 ap.add_argument("--no-ab", action="store_true")
+ap.add_argument("--obstacle", choices=["columns"], help="the four rigid bars of coupled_living_consumption.py --obstacle columns (Klempt 2024 Sect. 4.3): their elements are left out (no biofilm, no nutrient, zero flux through their faces); the mechanics has no contact yet (A-47)")
 ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
 a = ap.parse_args()
 
@@ -57,6 +58,14 @@ ax = -1 + (np.arange(n) + 0.5) * h
 X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
 blocks = (np.abs(X) > 0.75) & (np.abs(Y) > 0.75) & (np.abs(Z) <= np.abs(Z[seed]).max() + 1e-9)
 phi_cell = (seed | (blocks if a.layout == "sep" else False)).astype(float)
+obst = np.zeros_like(seed)
+BOXES = ((((-1.0, -0.125, -0.75), (1.0, 0.125, -0.5)), ((-1.0, -0.125, 0.5), (1.0, 0.125, 0.75)),
+          ((-0.125, -0.75, -1.0), (0.125, -0.5, 1.0)), ((-0.125, 0.5, -1.0), (0.125, 0.75, 1.0)))
+         if a.obstacle else ())
+if a.obstacle:
+    for lo, hi in BOXES:
+        obst |= (X > lo[0]) & (X < hi[0]) & (Y > lo[1]) & (Y < hi[1]) & (Z > lo[2]) & (Z < hi[2])
+    phi_cell[obst] = 0.0
 
 xn = -1 + np.arange(n + 1) * h
 nid = lambda i, j, k: 1 + i + (n + 1) * (j + (n + 1) * k)  # noqa: E731
@@ -65,18 +74,21 @@ elems = []
 for k in range(n):
     for j in range(n):
         for i in range(n):
-            elems.append(((i, j, k), [nid(i + di, j + dj, k + dk) for di, dj, dk in off]))
+            if not obst[i, j, k]:
+                elems.append(((i, j, k), [nid(i + di, j + dj, k + dk) for di, dj, dk in off]))
 phi_node = np.zeros((n + 1,) * 3); cnt = np.zeros((n + 1,) * 3)
 for (i, j, k), _ in elems:
     for di, dj, dk in off:
         phi_node[i + di, j + dj, k + dk] += phi_cell[i, j, k]; cnt[i + di, j + dj, k + dk] += 1
-phi_node /= cnt
+used = cnt > 0
+phi_node = np.where(used, phi_node / np.maximum(cnt, 1), 0.0)
 
 out = ["*HEADING", f"agreed coupling (living share), user element living_uel, {n}^3, {a.layout}", "*NODE"]
 for k in range(n + 1):
     for j in range(n + 1):
         for i in range(n + 1):
-            out.append(f"{nid(i, j, k)}, {xn[i]:.10g}, {xn[j]:.10g}, {xn[k]:.10g}")
+            if used[i, j, k]:
+                out.append(f"{nid(i, j, k)}, {xn[i]:.10g}, {xn[j]:.10g}, {xn[k]:.10g}")
 out += ["*USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128", "1, 2, 3, 11, 12, 13",
         "*ELEMENT, TYPE=U1, ELSET=ALLE"]
 out += [f"{e + 1}, " + ", ".join(map(str, nodes)) for e, (_, nodes) in enumerate(elems)]
@@ -95,25 +107,73 @@ def nset(name, ids):
 
 
 eps = 1e-9
-allN = [(i, j, k) for k in range(n + 1) for j in range(n + 1) for i in range(n + 1)]
+allN = [(i, j, k) for k in range(n + 1) for j in range(n + 1) for i in range(n + 1) if used[i, j, k]]
 supply = [nid(*p) for p in allN if xn[p[1]] <= -0.75 + eps]
 shell = [nid(*p) for p in allN if max(abs(xn[p[0]]), abs(xn[p[1]]), abs(xn[p[2]])) >= 0.75 - eps]
 out += nset("ALLN", [nid(*p) for p in allN]) + nset("SUPPLY", supply) + nset("SHELL", shell)
 c0, c1, c2 = nid(0, 0, 0), nid(n, 0, 0), nid(0, n, 0)          # (-1,-1,-1), (1,-1,-1), (-1,1,-1)
 out += [f"*NSET, NSET=CORNER0", f"{c0}", f"*NSET, NSET=CORNER1", f"{c1}", f"*NSET, NSET=CORNER2", f"{c2}"]
+# frictionless contact with the rigid obstacles (as wp3_stress_reference.solve_fields with obstacles): every box face
+# that is not on the cube boundary is a rigid quad (R3D4, normal out of the obstacle) and the mesh nodes on that face a
+# node-based surface; hard, frictionless contact. With obstacles the contact holds the body (no corner constraints).
+contact, nr = [], 900000
+for b, (lo, hi) in enumerate(BOXES):
+    for ax in range(3):
+        bb, cc = (ax + 1) % 3, (ax + 2) % 3
+        for face, sgn in ((lo[ax], -1.0), (hi[ax], 1.0)):
+            if abs(abs(face) - 1.0) < eps:
+                continue
+            on = [nid(*p) for p in allN if abs(xn[p[ax]] - face) < eps
+                  and lo[bb] - eps <= xn[p[bb]] <= hi[bb] + eps and lo[cc] - eps <= xn[p[cc]] <= hi[cc] + eps]
+            if not on:
+                continue
+            tag = f"B{b}A{ax}{'P' if sgn > 0 else 'M'}"
+            pad = h / 2
+            corners = [(lo[bb] - pad, lo[cc] - pad), (hi[bb] + pad, lo[cc] - pad), (hi[bb] + pad, hi[cc] + pad),
+                       (lo[bb] - pad, hi[cc] + pad)]
+            if sgn < 0:
+                corners = corners[::-1]
+            ids = []
+            for u, v in corners:
+                x3 = [0.0, 0.0, 0.0]; x3[ax] = face; x3[bb] = u; x3[cc] = v
+                nr += 1; ids.append(nr)
+                contact.append(f"{nr}, {x3[0]:.10g}, {x3[1]:.10g}, {x3[2]:.10g}")
+            nr += 1; ref = nr
+            x3 = [0.0, 0.0, 0.0]; x3[ax] = face
+            contact.append(f"{ref}, {x3[0]:.10g}, {x3[1]:.10g}, {x3[2]:.10g}")
+            contact.append(f"__ELEM__{tag}__{ids[0]}, {ids[1]}, {ids[2]}, {ids[3]}__REF__{ref}__SLAVE__" + " ".join(map(str, on)))
+if contact:
+    nodes_c = [c for c in contact if not c.startswith("__ELEM__")]
+    out += ["*NODE"] + nodes_c
+    ne = 950000
+    for c in contact:
+        if not c.startswith("__ELEM__"):
+            continue
+        tag, rest = c[len("__ELEM__"):].split("__", 1)
+        quad, rest = rest.split("__REF__")
+        ref, slave = rest.split("__SLAVE__")
+        ne += 1
+        out += [f"*ELEMENT, TYPE=R3D4, ELSET=R{tag}", f"{ne}, {quad}", f"*NSET, NSET=RP{tag}", ref,
+                f"*RIGID BODY, REF NODE=RP{tag}, ELSET=R{tag}"]
+        out += nset(f"S{tag}", [int(s) for s in slave.split()])
+        out += [f"*SURFACE, NAME=SS{tag}, TYPE=NODE", f"S{tag}, 1.0", f"*SURFACE, NAME=MS{tag}", f"R{tag}, SPOS",
+                f"*CONTACT PAIR, INTERACTION=FRICLESS, TYPE=NODE TO SURFACE", f"SS{tag}, MS{tag}"]
+    out += ["*SURFACE INTERACTION, NAME=FRICLESS", "*FRICTION", "0.0", "*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD"]
+    out += nset("RPALL", [int(c[len("__ELEM__"):].split("__REF__")[1].split("__")[0]) for c in contact if c.startswith("__ELEM__")])
 t_ab = 10.0 if a.no_ab else a.t_ab
 out += ["*AMPLITUDE, NAME=ABON, TIME=STEP TIME", f"0.0, 0.0, {t_ab - 1e-9:.10g}, 0.0, {t_ab:.10g}, 1.0, 100.0, 1.0"]
 CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8", "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
 t0 = 1e-8
 out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL,
-        "*BOUNDARY", "ALLN, 1, 3, 0.0", "ALLN, 12, 12, 1.0", "ALLN, 13, 13, 0.0"]
+        "*BOUNDARY", "ALLN, 1, 3, 0.0", "ALLN, 12, 12, 1.0", "ALLN, 13, 13, 0.0"] + (["RPALL, ENCASTRE"] if contact else [])
 for p in allN:
     out.append(f"{nid(*p)}, 11, 11, {phi_node[p]:.12g}")
 out += ["*END STEP"]
 ninc = int(round(a.tend / a.dt))
 out += [f"*STEP, NAME=GROW, INC={ninc + 10}, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT",
         f"{a.dt:.10g}, {a.tend:.10g}", *CTRL,
-        "*BOUNDARY, OP=NEW", "CORNER0, 1, 3, 0.0", "CORNER1, 2, 3, 0.0", "CORNER2, 3, 3, 0.0", "SUPPLY, 12, 12, 1.0",
+        "*BOUNDARY, OP=NEW", *(["RPALL, ENCASTRE"] if contact else ["CORNER0, 1, 3, 0.0", "CORNER1, 2, 3, 0.0", "CORNER2, 3, 3, 0.0"]),
+        "SUPPLY, 12, 12, 1.0",
         "*BOUNDARY, OP=NEW, AMPLITUDE=ABON", "SHELL, 13, 13, 1.0",
         # results come from the Gauss-point file; the .odb only at the end (by default every increment: 270 MB at 16^3)
         f"*OUTPUT, FIELD, FREQUENCY={ninc}", "*NODE OUTPUT", "U, NT", "*END STEP"]
