@@ -2631,3 +2631,13 @@ Python `--mms`、Abaqus `make_living_inp.py --mms`（`PROPS(19) = 1`）、刻み
 鏡映 1.98e−4、zero 3.99e−4、片側 3.51e−4（最大誤差は片側が 1 次でしか減らない：6.4e−3）→ **Python の `--wall-grad` の既定を鏡映にした**
 （名前の `_wgmirror` はそのまま）。MMS の出力は名前に `_mms` が付く。ANSYS の MMS は要素に項を足す手間が要るのでまだ。
 
+## A-51. 力学の照合：同じ場なら応力は一致（柱なし 1.1 %、柱あり 0.5 %）
+
+Abaqus の最後の積分点記録（φ、α−1）を要素ごとに平均し、Python の応力ソルバー（`wp3_stress_reference.solve_fields`）に渡して種の平均 von Mises を比べた（`abaqus_living/mech_crosscheck.py`）。
+
+| 場 | Abaqus | Python（Abaqus の場） | 差 |
+|---|---|---|---|
+| 柱なし（lv16_sep_ab_dt000125） | 1.5233e−4 | 1.5064e−4 | 1.1 % |
+| 柱あり・接触（lv16_sep_ab_obstc2、`--obstacle`） | 1.9989e−3 | 1.9889e−3 | 0.5 % |
+
+力学（要素、接触、拘束）は二つの実装で合う。実装の間の応力の差（柱なし +21 %、柱あり +44 %）は成長の場（α−1 で 5〜7 %）の違いが応力で増幅されたもの。応力は同じ場で比べるか、格子を細かくして比べる。
