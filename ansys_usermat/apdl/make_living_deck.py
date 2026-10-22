@@ -1,5 +1,5 @@
 """make_living_deck.py -- run decks for the coupling agreed with the partner on 20 Oct 2026 (A-19,
-MEETING_2026-10-20.md, CLOUD_TO_IKMHIWI03_2026-10-20.ja.md): the point model as a black box at every Gauss point
+MEETING_2026-10-20.md, archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md): the point model as a black box at every Gauss point
 (usermat prop(28) = 11), consumption by the living biomass g phi L c in the element (LIVING_CONS = 1), the
 front term of Klempt 2024 Eq. 34 with |grad phi| (FRONT_GRAD = 1), the second nutrient field as the antibiotic
 (source on the face y = +1 mm from T* = NUT2_TSTART on). Same set-up as the Python version
@@ -16,7 +16,7 @@ coupled_living_consumption.py.
                  cube), k = 1; 0 switches the front term off (ORI_WEIGHT11 = 0)
   --l1         : L = 1 (prop(57) = 1): the consumption without the living share, for check 2
   --cons G     : g for both fields (default 4: Thiele number g L^2/d = 4 with L = 1 mm, d = 1 mm^2/T*)
-  --v2         : example setting v2 (CLOUD_TO_IKMHIWI03_2026-10-20.ja.md, addendum 2; coupled_living_consumption.py
+  --v2         : example setting v2 (archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md, addendum 2; coupled_living_consumption.py
                  --v2): phi_min = 0.1, species B in four small corner blocks (|x|, |y| > 0.75 mm and |z| within the
                  seed's height), antibiotic uptake g_a = 0.25 (Lambda_a^2 = 0.25) and a = 1 on the elements of all
                  outer faces from T* = 0.5. alpha*_0 = 50 comes from the point-model file (eco_fritsch_2sp_a50.txt).

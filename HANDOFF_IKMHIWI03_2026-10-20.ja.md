@@ -12,7 +12,7 @@
    - 円柱の図 4.4 のデータ：`results/cylinder_alpha_sweep.json`（max u_r は α − 1 = 0.2 で 3.56e−2）。
    - 16³ CH、40 時刻の場（アニメーション用）：`results/2026-10-cal5/fields_w16_CH_g1_s015_final_d1_dense.json`。
      旧 MAP の 16³ と α − 1・vM・φ・c が全桁一致。
-2. **オリバーと決めた結合の ANSYS 実装**（`CLOUD_TO_IKMHIWI03_2026-10-20.ja.md`）：A-19 を参照。
+2. **オリバーと決めた結合の ANSYS 実装**（`ansys_usermat/apdl/archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md`）：A-19 を参照。
    - 点モデルはブラックボックス（usermat モード 11）、c\* と α\* は場から時間で線形補間、
      消費 g φ L c（L = Σφ_i ψ_i）、前線項 |∇φ|、2 つめの栄養の場を抗菌薬に。
    - 8³ の確認 6 本は完了・push 済み（`results/2026-10-living/`）。

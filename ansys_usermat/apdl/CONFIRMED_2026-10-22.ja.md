@@ -1,6 +1,6 @@
 # 確定事項（2026-10-22、生きている割合の結合、ANSYS と Python の照合）
 
-まずここを読む。根拠は `IKMHIWI03_TO_CLOUD.ja.md` の A-xx と `CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` の追記 xx。
+まずここを読む。根拠は `IKMHIWI03_TO_CLOUD.ja.md` の A-xx と `archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` の追記 xx。
 結果のどれを使うかは `results/2026-10-living/README.md`（ANSYS）と `results/2026-10-3d/README_coupled_living.md`（Python）。
 モデルの式は 10 月 21 日に凍結（CLAUDE.md）。下はすべて**数値解法と実装**の話で、式は変えていない。
 

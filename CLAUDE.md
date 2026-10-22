@@ -158,7 +158,8 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   points took an inverse-square mean, and the NEM Laplacian's column sums are not zero), so all `u4_` and older living
   runs are superseded; main runs are `u8_` with `--surf-nearest --lap-file` and a `lap_cons.txt` of the same mesh and build
   (neighbours by element order made the 16^3/24^3 stencils asymmetric inside, A-44).
-  **Read `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` first** (confirmed facts, what not to use, the builds).
+  **Read `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` first** (confirmed facts, what not to use, the builds), then the current
+  instructions `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03.ja.md`; the old instruction files (13-22 Oct, addenda 1-30) are in `ansys_usermat/apdl/archive/`.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -404,7 +405,7 @@ this machine's specific workflow.
   - The living volume fraction is written $\sum_i\bar\phi_i$ ($\bar\phi_i=\phi_i\psi_i$) in every document and figure,
     never "L" (the user, 21 Oct). "L" stays only as a variable name in code and in the IKMHIWI03/cloud working notes.
   - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
-    ANSYS: `CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
+    ANSYS: `ansys_usermat/apdl/archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
     thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
     `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `TODO_2026-10-20.ja.md`.
   - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
