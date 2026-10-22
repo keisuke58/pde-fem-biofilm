@@ -28,7 +28,7 @@
 | 18 | **距離順の近傍**（`F:\biofilm_upf_living4_sorted` の GetNhgb）で 16³ の内部の非対称は 1e−15、保存形でも内部 6.0000：本番はこれ（ビルド living8） | A-44 |
 | 19 | 番号順の近傍の 24³（u4_24_sep_ab）は T\* ≈ 0.19 で USSFin の収束失敗で止まった | A-44 |
 | 20 | 新しいスイッチを parevl で読むとき、デッキにないと前の値が残る：`make_living_deck.py` はいつも全部（0 か 1）を書く。結果への影響なし（書き出しが余計に走っただけ） | A-44 |
-| 21 | 共有メモリ並列（`-smp -np 4`）は 8³ で φ、c、α が 1 桁目まで同じ、ただし遅い（6.8 分 対 3.7 分）。24³ の比較はライセンスのため打ち切り（下の 22） | A-44 |
+| 21 | 共有メモリ並列（`-smp -np 4`）は**使わない**：8³ で φ、c、α は同じだが生きている割合の出力が 2.7e−3 違い、時間も長い（189 対 145 秒、A-44 では 6.8 対 3.7 分） | A-44、A-53 |
 | 22 | **ANSYS は同時に 5 本前後まで**（大学の共用ライセンス）。それを超えると .err に「The capability SOLUTION was either not ordered」で数秒で止まる（22 日 11:28、5 本が落ちた）。-smp -np 4 は並列のライセンスも使うので、本数を並べる方が得 | A-44 |
 | 23 | **Python の 16³ のずれ（α−1 +12〜16 %）は初期値の表し方**：ガラーキン要素は節点の値なので種の初期の φ が 16³ で 0.762、8³ で 0.598（マス・積分点は 1）。Python を同じ初期の場（`--init-nodal`）から始めると、前線なしで Abaqus と 1.5 %、前線ありで 3 つの実装（Python、Abaqus、ANSYS）の α−1 が 5 % 以内 | A-46 |
 | 24 | Abaqus のユーザー要素（`abaqus_living/`、ガラーキン）が第 3 の実装。接線は差分と 1e−10、16³ は約 60 分（ANSYS 3 時間）。修論には入れない | A-46 |
@@ -36,16 +36,27 @@
 | 26 | **製造解（MMS）で Python（有限体積）と Abaqus（有限要素）が 2 次で収束**（φ と c の式、前線項込み；32³ の φ の L2 誤差 2.0e−4 と 2.9e−4）。足す項は JAX と sympy で作り 1e−14 で一致 | A-50 |
 | 27 | Python の壁（と障害物の面）の勾配は**鏡映が正しい**（MMS で最小誤差の 2 次；片側は壁で 1 次）。既定を鏡映にした | A-49、A-50 |
 | 28 | **力学は合う**：Abaqus の最後の場（積分点の φ、α−1）を Python の応力の解き方に渡すと、種の vM が柱なし 1.523 対 1.506e−4（1.1 %）、柱あり（Abaqus はペナルティ接触、Python は厳密な摩擦なし接触）1.999 対 1.989e−3（0.5 %）。実装の間の応力の差（柱なし 21 %、柱あり 44 %）は成長の場の違いが応力で増幅されたもの（α−1 の差は 5〜7 %）。応力は同じ場で比べるか、格子を細かくして比べる | A-51 |
+| 29 | **格子の収束は遅い**（r h/4 の安定化は 1 次）：種の α−1 は Python 16/24/32³ で 6.27/7.26/7.72e−4（p = 1.2、32³ の GCI 18 %）、Abaqus 16/24³ で 5.79/7.03e−4。Abaqus と Python の差は 16³ 8.4 %、24³ 3.2 % と縮む。8³ は漸近範囲の外。比べるときは GCI（`gci_a52.py`）の誤差の幅つきで | A-52 |
+| 30 | 時間刻み：Abaqus 16³ で 0.005 と 0.00125 の差は von Mises 8 %、α−1 3 %。0.00125 にも数 % の時間の誤差が残る見込み（上の 9 は ANSYS 8³ の α−1 の話） | A-53 |
+| 31 | ビルド **living8t** は living8 と場が完全に同じ（8³ で差 0）、記録を `--trace-elems` の要素だけにでき、comp_trace は 389 MB → 1.6 MB | A-53 |
+| 32 | Abaqus の 4 分の 1 の領域（`--quarter`）は全領域と 6e−5 以内、時間は約 4 分の 1 | A-53 |
+| 33 | Python：Fortran 版の点モデル（`--fortran`）と Python 版は 1e−14、`--fast` と全領域は 1e−13 で同じ。`--tend` は点モデルの時間の対応も変えるので、途中で止めた本を通しの本と比べない | A-52 |
+| 34 | ANSYS の 4 分の 1 の領域は**使えない**：対称面の隣で保存形の NEM ラプラシアンが r² に 2.6〜11.4（正しくは 6）を返す。種は中心（対称面のすぐ横）にある | A-55 |
+| 35 | Klempt 2024 4.2 high は直した版（living8、16³）でも**再現しない**：φ の最大が T\* = 0.1 で 1.5、0.23 で 55 と増え続け、要素がつぶれて止まる（フェリックス版と同じ止まり方）。NEM の副作用ではなく、このデッキの値か φ の上限の扱いが原因の候補 | k24c、A-49 |
 
 ## 2. 本番の設定（22 日から）
 
-- **ANSYS**：ビルド `F:\biofilm_upf_living8`（living7 ＋ 距離順の近傍；living7 = living5 ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE；
+- **ANSYS**：ビルド `F:\biofilm_upf_living8t`（living8 ＋ 記録の要素の絞り込み、場は living8 と同じ；`--trace-elems a,b` は前の同じ格子の
+  `*_pm.json` の `picked`、16³ の本では必ず付ける）。living8 は `F:\biofilm_upf_living8`（living7 ＋ 距離順の近傍；living7 = living5 ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST、NEM_DUMP、LAP_FILE；
   差分は `oliver_patches/living6_USolBeg.patch`、`living7_Ussfin.patch`）。デッキ：
   `make_living_deck.py --front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001 --artdiff N
   --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`（＋例ごとの `--layout`、`--ab --t-ab 0.333333`、`--eco`）。
   作業フォルダに**同じ格子・同じビルドの** `lap_cons.txt`（`checks_a38_a39/build_lap_cons_a42.py`、短い `--nem-dump` の本から；内部の r² が 6 になっているか `lap_cons_check_a44.py` で確かめる）。名前の頭 `u8_`（A-45）。
+  24³ は刻み 0.0005、1 本で 9.3 GB 使うので同時に 1 本まで。並列（-smp）と 4 分の 1 の領域は使わない。
 - **Python**：本番は `--fast --tvd --wall-grad mirror`（タグ `_tvd_wgmirror_fast`、128³）。ANSYS との照合は
-  `--artdiff --dtc <ANSYS の増分>`、壁は `--wall-grad zero`（`--artdiff` の既定）または `mirror` を明記。
+  `--artdiff --dtc <ANSYS の増分> --wall-grad mirror`（既定も鏡映）。IKMHIWI03 では `--fortran` で速い（`libecology_native.so` は `-static` で作る）。
+- **Abaqus**：`abaqus_living/make_living_inp.py --quarter`（分けた例・混合例）。`--supg` は製造解の確認待ち（A-54）。
+  直接法は 48³ の 4 分の 1 で 5.5 GB、全領域の 32³ で 7.4 GB：大きいのは同時に 1 本。
 
 ## 3. 使わないもの（間違えやすい順）
 
@@ -63,16 +74,21 @@
 | Python `_tvd_fast`（`_wg` なし） | 栄養の向きの勾配が壁で片側差分 | `_tvd_wgmirror_fast` |
 | 「Python は種を 1 近くに保つ」（追記 29 の文） | 誤り：Python も種は痩せる。1.1 は壁の角の塊（片側差分のせい） | A-37、A-38 |
 | 「違いは時間刻み」（クラウドの仮説） | 否定：0.4〜3 % | A-39 §1 |
+| ANSYS `u8_24_sep_ab`、`u8_24_mixeq_ab`（刻み 0.00125） | 安定の境目：分けた例は T\* = 0.079 で止まり、混合例はメモリ不足のため 0.3 で止めた | `u8_24_sep_ab_dt0005`（living8_24c） |
+| ANSYS `-smp -np 4` の本（`x8tp4_`、`x16t4_`、`u7p*`） | 出力が逐次と一致しない、遅い | 逐次（-np 1） |
+| ANSYS 4 分の 1（`make_quarter_base.py`、`q8n_`） | 対称面の隣のラプラシアンが不正確 | 全領域 |
+| Abaqus `lv32_sep_ab`（全領域） | メモリ不足のあと進まなくなり T\* = 0.49 で止めた | `lv32q_sep_ab` |
+| 試験の本 `x8t_`、`x8tf_`、`x16t1_`、`mms8s`（22 日夜の 1 本目） | 確認用、またはメモリ不足で止めた | — |
 
 ## 4. まだ確かめていないこと
 
 **順番（ユーザー、22 日）：** 下の 3 つ（障害物の差、Klempt 2024 4.2 の 2 本、格子の収束）が片付いてから、最後に迷路（4.4 節、形は `abaqus_living/maze_k24.txt`）。
 
 - 障害物の柱（16³、同じ初期の場）：**解決（22 日）**。12 % の差は Python の柱の面での勾配の扱い（`--wall-grad`）：zero 4.83、鏡映 5.06、片側 5.78e−4、Abaqus 5.40e−4。零流束に合う鏡映で −6 %（柱なし −5 % と同じ）。照合も鏡映にそろえる。`--init-nodal` は障害物のマスを平均から外すよう直した（効果 1 %）。応力は Abaqus の接触ありの本（ペナルティ接触で回し直し中）の後。
-- Klempt 2024 4.2 high：フェリックス版と同じ扱い（living9f：番号順の近傍、表面点 0、安定化なし、16³、刻み 1e−3）は**再現しない**（22 日）：平均 φ 0.003 のまま、1 点で φ が 19 まで暴れて T\* = 0.2 で要素がつぶれる（論文は T\* = 0.2 で 1）。「論文の図は NEM の副作用込み」の仮説は支持されない。直した版（living8）は予約済み。`n- ANSYS の 24³：刻み 0.00125 は陽解法の安定の境目（β = 0.228、積分点の間隔 0.042 mm）で、分離例は T\* = 0.08 で USSFin の収束失敗。回すには 0.0005（80 時間超）。格子の収束は Abaqus（陰的）と Python で、ANSYS は 16³ まで。
-- 格子の収束：Abaqus 24³・32³、Python・ANSYS 24³。
-
-- 16³ と 24³ で全部の修正後に ANSYS と Python がどこまで合うか（A-45、自動）。A-41、A-43 は止めた（番号順の近傍だったため）。
+- Klempt 2024 4.2 high：フェリックス版と同じ扱い（living9f）も直した版（living8、k24c）も**再現しない**（上の 35）。φ が 1 を超えて増え続ける原因（デッキの値、罰則、φ の上限）を Python の再現（`JAXFEM/klempt2024_*`）と項ごとに比べるのが次。
+- **格子の収束（A-52、自動で集計）**：Python は 8〜96³ と TVD 16〜64³ が済み。Abaqus 32³・48³（4 分の 1）が走行中、ANSYS 24³（刻み 0.0005）は 25 日ごろ。時間の誤差の幅（刻みを半分にした本）も足す。
+- **SUPG（A-54）**：製造解で 2 次になれば、Abaqus の 4 分の 1 の 16〜48³ を r h/4 の代わりに（`F:\abaqus_work\auto_q\supg.ps1`）。
+- 16³ と 24³ で全部の修正後に ANSYS と Python がどこまで合うか（A-45、自動；u8_16_sep は入れ直し中）。A-41、A-43 は止めた（番号順の近傍だったため）。
 - 漏れのもとの列の和が SURF_NEAREST で ±22 残る理由（辺と角の表面点か、NEM の近傍の非対称）。保存形にすれば効かない。
 - オリバーへの連絡（表面点の扱いと保存形のラプラシアン）。まだ送っていない。
 
@@ -84,7 +100,9 @@
 | `biofilm_upf_living5`（＋`5s`） | ＋ NUT_TRANSIENT（dc/dt） | `u4_`、`u3t_` |
 | `biofilm_upf_living6`（＋`6s`） | ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST | `u6*`、`u5_` |
 | `biofilm_upf_living7`（＋`7s`、`7p`、`7q`、`7_16n`） | ＋ NEM_DUMP、LAP_FILE | `u7c_`、`u7n_`、並列の時間比べ `u7p*` |
-| **`biofilm_upf_living8`**（＋`8_8n`、`8_16n`、`8_16a〜e`、`8_24n`、`8_24a/b`） | ＋ 距離順の近傍（NEM_UserData） | **`u8_`（本番）** |
+| `biofilm_upf_living8`（＋`8_8n`、`8_16n`、`8_16a〜f`、`8_24n`、`8_24a〜c`、`8_k24`） | ＋ 距離順の近傍（NEM_UserData） | `u8_` |
+| **`biofilm_upf_living8t`**（＋`8t_8`、`8t_16`、`8q_8`） | ＋ 記録の要素の絞り込み（`trace_elems.f`、`oliver_patches/living8t_*`） | **これからの `u8_`**（場は living8 と同じ） |
+| `biofilm_upf_living9f` | フェリックス版に近い扱い（SURF_FIX_OFF） | Klempt 4.2 の試験だけ |
 
 スイッチはどれも既定 0（従来どおり）。新しいフォルダを作るときは `.f/.F/.inc/.h/.mod/.obj/.lrf/.def/.manifest/.dll/.mac`、`ANSYS.exe`、
 `eco_*.txt`、`base_*.dat` だけ写す（living6 には 7 GB の `comp_trace.csv` がある）。

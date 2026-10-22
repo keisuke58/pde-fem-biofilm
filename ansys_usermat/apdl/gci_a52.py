@@ -65,7 +65,7 @@ SERIES = {
                      32: py_val("coupled_living_consumption_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
                      64: py_val("*nf64_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"),
                      128: py_val("*nf128_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json")},
-    "Abaqus": {8: ab_val("lv8_sep_ab"), 16: ab_val("lv16_sep_ab_dt000125"), 24: ab_val("lv24_sep_ab"), 32: ab_val("lv32_sep_ab"), 48: ab_val("lv48q_sep_ab")},
+    "Abaqus": {8: ab_val("lv8_sep_ab"), 16: ab_val("lv16_sep_ab_dt000125"), 24: ab_val("lv24_sep_ab"), 32: ab_val("lv32_sep_ab") or ab_val("lv32q_sep_ab"), 48: ab_val("lv48q_sep_ab")},
     "ANSYS": {8: an_val("u8c_8_sep_ab_dt0005"), 16: an_val("u8_16_sep_ab"), 24: an_val("u8_24_sep_ab_dt0005")},
 }
 
