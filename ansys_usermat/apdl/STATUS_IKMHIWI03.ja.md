@@ -1,11 +1,12 @@
-# IKMHIWI03 の状況（自動、2026-10-22 15:18）
+# IKMHIWI03 の状況（自動、2026-10-22 16:18）
 
 1 時間ごとに `F:\biofilm_upf_living7\auto_status\status.ps1` が書く（7 日間）。変わったときだけ push。確定事項は `CONFIRMED_2026-10-22.ja.md`。ここ 24 時間に動いた本だけ載せる。
 
 ## 要確認
 
 - u4_24_mixeq_ab（biofilm_upf_living5s）が T\* = 0.201 で止まっている（終わりの記録なし）
-- u8_16_mixeq（biofilm_upf_living8_16d）：ライセンスが取れなかった（同時に回せるのは 5 本前後）
+- u8_16_sep（biofilm_upf_living8_16b）の出力が 1.7 時間更新されていない
+- u8_16_mixeq（biofilm_upf_living8_16d）の出力が 4.8 時間更新されていない
 - u8_16_mix_ab（biofilm_upf_living8_16e）：ライセンスが取れなかった（同時に回せるのは 5 本前後）
 - u7p4_24_sep_ab_t（biofilm_upf_living7p）が T\* = 0.018 で止まっている（終わりの記録なし）
 - u7p1_24_sep_ab_t（biofilm_upf_living7q）が T\* = 0.013 で止まっている（終わりの記録なし）
@@ -14,9 +15,11 @@
 
 | 本 | フォルダ | T\* | 終わりの T\* | 状態 | 出力の更新 |
 |---|---|---|---|---|---|
-| u8_16_sep_ab | biofilm_upf_living8_16a | 1.0000 | 1.0025 | 走行中 | 10-22 15:17 |
-| u8_16_mixeq_ab | biofilm_upf_living8_16c | 0.8612 | 1.0025 | 走行中 | 10-22 15:17 |
-| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.0950 | 1.0025 | 走行中 | 10-22 15:16 |
+| u8_16_mixeq | biofilm_upf_living8_16c | 0.1913 | 1.0025 | 走行中 | 10-22 16:18 |
+| u8_24_mixeq_ab | biofilm_upf_living8_24b | 0.1475 | 1.0025 | 走行中 | 10-22 16:17 |
+| u8f0_16_sep_ab | biofilm_upf_living8_16a | 1.0025 | 1.0025 | 終わり | 10-22 15:58 |
+| u8_16_mixeq_ab | biofilm_upf_living8_16c | 1.0025 | 1.0025 | 終わり | 10-22 15:39 |
+| u8_16_sep_ab | biofilm_upf_living8_16a | 1.0025 | 1.0025 | 終わり | 10-22 15:18 |
 | u8_24_sep_ab | biofilm_upf_living8_24a | 0.0788 | 1.0025 | 途中で終わり（T\* = 0.079、デッキの終わり 1.0025） | 10-22 15:03 |
 | u8_16_sep | biofilm_upf_living8_16b | 0.8375 | 1.0025 | 走行中 | 10-22 14:39 |
 | u8n_24_sep_ab | biofilm_upf_living8_24n | 0.0075 | 0.0075 | 終わり | 10-22 12:10 |
@@ -25,7 +28,7 @@
 | u7p4_24_sep_ab_t | biofilm_upf_living7p | 0.0175 | 0.0325 | 止まっている | 10-22 12:02 |
 | u7p1_24_sep_ab_t | biofilm_upf_living7q | 0.0125 | 0.0325 | 止まっている | 10-22 12:01 |
 | u8_16_mix_ab | biofilm_upf_living8_16e | 0.0000 | 1.0025 | ライセンスが取れず始まらなかった | 10-22 11:29 |
-| u8_16_mixeq | biofilm_upf_living8_16d | 0.0000 | 1.0025 | ライセンスが取れず始まらなかった | 10-22 11:29 |
+| u8_16_mixeq | biofilm_upf_living8_16d | 0.0000 | 1.0025 | 走行中 | 10-22 11:29 |
 | u8n_8_sep_ab | biofilm_upf_living8_8n | 0.0150 | 0.015 | 終わり | 10-22 11:26 |
 | u4_24_mixeq_ab | biofilm_upf_living5s | 0.2013 | 1.0025 | 止まっている | 10-22 11:24 |
 | u8n_16_sep_ab | biofilm_upf_living8_16n | 0.0075 | 0.0075 | 終わり | 10-22 11:20 |
@@ -59,4 +62,4 @@
 ## 自動処理（最後の行）
 
 - A-40：`2026-10-22 11:41:21 end`
-- A-45：`2026-10-22 13:24:35   python 24 mixeq: ValueError: cannot reshape array of size 13824 into shape (16,1,16,1,16,1)`
+- A-45：`2026-10-22 15:50:47   ended: F:\biofilm_upf_living8_16a\_living_a45a.log`
