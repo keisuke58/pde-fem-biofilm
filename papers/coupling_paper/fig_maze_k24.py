@@ -1,6 +1,6 @@
 """fig_maze_k24.py -- the maze of Klempt et al. 2024 (Sect. 4.4, Fig. 11, read off the figure: abaqus_living/maze_k24.txt)
-with the agreed coupling, ansys_usermat/apdl/maze_coupled_2d.py --maze-file ... --tend 20 [--ab]: phi_3D at four times,
-without (top) and with the antibiotic (bottom, a = 1 at the entrance from T* = 20/3). Walls white, nutrient source
+with the agreed coupling, ansys_usermat/apdl/maze_coupled_2d.py --maze-file ... --tend 60 [--ab]: phi_3D at four times,
+without (top) and with the antibiotic (bottom, a = 1 at the entrance from T* = 20). Walls white, nutrient source
 outlined in red.
 
     python papers/coupling_paper/fig_maze_k24.py [--h 2] -> papers/coupling_paper/fig_maze_k24_h<h>.pdf
@@ -20,10 +20,10 @@ import figstyle  # noqa: E402
 
 figstyle.apply()
 H = float(sys.argv[sys.argv.index("--h") + 1]) if "--h" in sys.argv else 2.0
-TIMES = (4.0, 8.0, 12.0, 20.0)
+TIMES = (12.0, 24.0, 36.0, 60.0)
 fig, axs = plt.subplots(2, 4, figsize=(6.3, 3.45), constrained_layout=True)
 for row, ab in enumerate(("", "_ab")):
-    z = np.load(ROOT / "figdata" / f"maze_h{H:g}_tend20{ab}_k24fig.npz")
+    z = np.load(ROOT / "figdata" / f"maze_h{H:g}_tend60{ab}_k24fig.npz")
     op, nut = z["open"], z["nut"]
     for col, t in enumerate(TIMES):
         ax = axs[row, col]
