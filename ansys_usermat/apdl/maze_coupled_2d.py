@@ -54,7 +54,8 @@ ALPHA0 = 100.0
 T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}")
+MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "")
 
 
 # ---------------------------------------------------------------- maze
@@ -91,6 +92,21 @@ def make_maze(seed=SEED, period=40.0):
         nx = nb[rng.integers(len(nb))]
         links.add(frozenset((cur, nx))); seen.add(nx); stack.append(nx)
     return K, nsec, links, period
+
+
+def from_figure(path):
+    """masks from maze_from_figure.py (0 wall or outside, 1 path, 2 initial biofilm, 3 nutrient source; 4 um cells),
+    each cell split into (4/H)^2 cells; the antibiotic is held on the initial biofilm cells (the entrance)"""
+    m = np.loadtxt(path, dtype=str, comments="#")
+    m = np.array([[int(ch) for ch in row] for row in m])
+    u = int(round(4.0 / H))
+    if abs(u * H - 4.0) > 1e-9:
+        sys.exit("--maze-file needs H = 4 / integer")
+    m = np.kron(m, np.ones((u, u), int))
+    n = m.shape[0]
+    xc = -n * H / 2 + (np.arange(n) + 0.5) * H
+    X, Y = np.meshgrid(xc, xc, indexing="ij")
+    return X, Y, m > 0, m == 3, m == 2, m == 2
 
 
 def rasterise(K, nsec, links, period):
@@ -204,8 +220,12 @@ def main():
     cst = FN.init(eco)
     assert cst["nact"] == 2 and cst["c_star"] == 100.0 and cst["alpha_star"] == ALPHA0
     n_sub = max(1, math.ceil(S_LINK * DT_C / 1e-4 - 1e-9))
-    K, nsec, links, period = make_maze()
-    X, Y, open_, nut, colony, ab_src = rasterise(K, nsec, links, period)
+    if MAZE_FILE:
+        K, nsec = 0, []
+        X, Y, open_, nut, colony, ab_src = from_figure(MAZE_FILE)
+    else:
+        K, nsec, links, period = make_maze()
+        X, Y, open_, nut, colony, ab_src = rasterise(K, nsec, links, period)
     O = Ops(open_)
     shp = open_.shape
     phi = np.where(colony, 1.0, 0.0)
