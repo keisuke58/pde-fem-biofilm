@@ -71,6 +71,11 @@ FRONT = float(sys.argv[sys.argv.index("--front") + 1]) if "--front" in sys.argv 
 FAST = "--fast" in sys.argv                # quarter domain x >= 0, z >= 0 (mirror symmetry) and AMG-preconditioned CG
 ARTDIFF = "--artdiff" in sys.argv
 ART_H = float(sys.argv[sys.argv.index("--artdiff-h") + 1]) if "--artdiff-h" in sys.argv else None          # element size of the ANSYS mesh for r h / 4 (its Gauss points are h/2 apart)          # as the ANSYS element (addendum 27): central front term + beta + r h / 4
+LW = "--lw" in sys.argv                    # A-59: the scheme planned for ANSYS: explicit Euler, central gradients, no added
+                                          # diffusion, plus the Lax-Wendroff term (dt/2) v . grad(v . grad phi) of the front
+SENSOR_POW = float(sys.argv[sys.argv.index("--sensor-pow") + 1]) if "--sensor-pow" in sys.argv else 1.0
+SENSOR = "--sensor" in sys.argv            # A-59: added diffusion r h/4 switched by s = |sum_j (u_j - u_i)| / sum_j |u_j - u_i|
+                                          # (1 at extrema and kinks, O(h) where smooth: O(h^2) there), face value max(s_i, s_j)
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 # --wall-grad W: the normal component of the gradient in the wall cells: onesided (np.gradient), mirror (zero-flux
 # ghost, (u1 - u0) / 2h) or zero. A-38: with the one-sided value the central front term of --artdiff treats the wall
@@ -215,7 +220,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
-       + ("_tvd" if TVD else "") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -407,6 +412,27 @@ def front_central(phi, c):
     sp_ = R_FRONT * c / (K_MONOD + c)
     gp = grad(phi)
     return -sum(sp_ * g[a] / nrm * gp[a] for a in range(3))
+
+
+def lap_sensor(u):
+    """div(s grad u) on the 7-point stencil, s the extremum sensor, face value max(s_i, s_j); zero flux at the walls"""
+    ds = []
+    for a in range(3):
+        for s_ in (1, -1):
+            d = np.roll(u, -s_, a) - u
+            e = [slice(None)] * 3; e[a] = -1 if s_ == 1 else 0; d[tuple(e)] = 0.0
+            ds.append((a, s_, d))
+    s = (np.abs(sum(d for *_, d in ds)) / (sum(np.abs(d) for *_, d in ds) + 1e-12)) ** SENSOR_POW
+    return sum(np.maximum(s, np.roll(s, -s_, a)) * d for a, s_, d in ds) / (H * H)
+
+
+def front_lw(phi, c, dt_):
+    """central front term plus the Lax-Wendroff correction (dt/2) v . grad(v . grad phi), v = r c/(K + c) n_c (A-59)"""
+    g = grad(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    v = [R_FRONT * c / (K_MONOD + c) * x / nrm for x in g]
+    w = sum(v[a] * gp for a, gp in enumerate(grad(phi)))
+    return -w + 0.5 * dt_ * sum(v[a] * gw for a, gw in enumerate(grad(w)))
 
 
 def front(phi, c):
@@ -624,13 +650,19 @@ def run(example, antibiotic):
                 (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
                 d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                 if FRONT:
-                    d = d + front(ph, cf)
+                    d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
+                    if SENSOR:
+                        d = d + R_FRONT * H / 4.0 * lap_sensor(ph)
                 if MMS:
                     d = d + S_phi(X, Y, Z, tt)
                 if OBSTACLE:                    # no biofilm inside the obstacles
                     d = np.where(OBST, 0.0, d)
                     return d, np.where(OBST, 0.0, ka * ph)
                 return d, ka * ph
+            if LW:                                      # explicit Euler, as the element
+                k1 = f(phi, alpha, tk)
+                phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
+                continue
             k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
             k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
             k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)

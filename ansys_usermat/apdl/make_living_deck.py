@@ -133,6 +133,11 @@ def main():
     ap.add_argument("--surf-fix-off", action="store_true",
                     help="SURF_FIX_OFF = 1 (A-49, build F:\\biofilm_upf_living9f): no surface-point update, the surface "
                          "points keep phi = 0 as in the partner's and Felix's original element")
+    ap.add_argument("--lw-sensor", type=float, default=None, metavar="BETA_ART",
+                    help="A-59 (build living10): Lax-Wendroff term of the front plus the added diffusion BETA_ART switched by "
+                         "the extremum sensor (power --sensor-pow), in place of --artdiff; BETA_ART = r h/8 (h the element size, "
+                         "so r times the point spacing / 4); needs --lap-file")
+    ap.add_argument("--sensor-pow", type=float, default=2.0)
     ap.add_argument("--quarter", action="store_true",
                     help="A-55: a quarter base deck (make_quarter_base.py, x > 0, z > 0): u_x = 0 on x = 0, u_z = 0 on z = 0, "
                          "u_y = 0 at (0, -1, 0) instead of the corner constraints; needs a NEM dump and lap_cons.txt of the "
@@ -234,7 +239,9 @@ def main():
     new += (f"! A-38..A-42: nutrient start everywhere, surface points, conservative Laplacian, dumps (builds living6/7){nl}"
             f"NUT1_INIT_ALL = {int(a.nut1_init_all)}{nl}SURF_NEAREST = {int(a.surf_nearest)}{nl}"
             f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}"
-            f"SURF_FIX_OFF = {int(a.surf_fix_off)}{nl}")
+            f"SURF_FIX_OFF = {int(a.surf_fix_off)}{nl}"
+            f"! A-59 (build living10){nl}LW_SENSOR = {int(a.lw_sensor is not None)}{nl}BETA_ART = {(a.lw_sensor or 0.0)!r}{nl}"
+            f"SENSOR_POW = {a.sensor_pow!r}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     if nut1 is not None:
