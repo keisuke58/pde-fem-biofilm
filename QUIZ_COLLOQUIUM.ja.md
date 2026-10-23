@@ -104,6 +104,13 @@
 | F32 | Where does the antibiotic come from? | The element solves a second nutrient for a second species, which I do not use. I use that field for the antibiotic, with the same diffusion and uptake by the living biomass. The calibration data contain no antibiotic, so I show it with synthetic data. ／ 要素の、使っていない 2 つめの栄養の場を抗菌薬に使う。拡散と生きた菌による取り込みは同じ形。較正データに抗菌薬はないので合成データで示す |
 | F33 | How did you check the coupled point model in ANSYS? | I recomputed every step in Python from the same start state and the same inputs; they agree to 2e-12 in every step, once the Newton iteration is converged (up to 50 iterations at the first step). ／ 同じ初期状態と入力で全ステップを Python で計算し直し、Newton を収束させれば（最初のステップは最大 50 回）全ステップ 2e−12 で一致 |
 
+| F34 | How do you compare three implementations that do not match exactly? | By a grid convergence index: each code is refined on its own meshes, extrapolated, and given an error band; the codes agree if their difference lies inside the bands. ／ 格子収束指標で。各コードを自分の格子で細かくして外挿し、誤差の幅を付ける。差が幅の中なら一致 |
+| F35 | Did the growth and the stress converge equally well? | No. The growth variable converges in every scheme; the stress does not with the constant added diffusion, because it smears the seed edge. Second-order schemes settle from 32³ on. ／ いいえ。成長量はどの方式でも収束するが、一定の人工拡散では応力が収束しない（種の縁をならすから）。2 次の方式は 32³ から落ち着く |
+| F36 | Why does the front term need a stabilisation? | It is an advection with a cell Peclet number of about 30, so a central scheme oscillates; I use upwinding in Python, SUPG in the Galerkin element, and a sensor-switched diffusion with a Lax-Wendroff term in the explicit element. ／ 移流項で格子ペクレ数が約 30 なので中心差分は振動する。Python は風上差分、ガラーキン要素は SUPG、陽的な要素は極値の検出で切り替える拡散と Lax–Wendroff の項 |
+| F37 | How large is the time-step error? | About one percent at the step I use; the mesh error is much larger, so the mesh is what matters. ／ 使っている刻みで約 1 %。格子の誤差の方がずっと大きい |
+| F38 | How did you check the code itself, not only the mesh? | With manufactured solutions: a known field plugged into the equations gives source terms, and the codes converge to it at second order. ／ 製造解で。既知の場を式に入れて源の項を作り、コードがそれに 2 次で収束する |
+| F39 | What does the maze show? | The same qualitative behaviour as the paper: the biofilm spreads from the entrance, fills dead ends, and reaches the nutrient in the centre; an antibiotic at the entrance lowers the living fraction but not the front. ／ 論文と同じ振る舞い。入口から広がり、行き止まりにも入り、中心の栄養に届く。入口の抗菌薬は生きている割合を下げるが前線は変えない |
+| F40 | Do ANSYS and Python solve the same equations? | Yes: with the same added diffusion they agree to one percent in growth and five in stress; the earlier gap was the amount of added diffusion, not the equations. ／ はい。足す拡散を同じにすると成長 1 %、応力 5 % で一致。前のずれは足した拡散の量の違い |
 ## G. 覚えておく基本の数値（10月13日）
 
 | # | 何の値 | 値（EN ／ JA） |
