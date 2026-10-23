@@ -5,6 +5,7 @@ on its own meshes, then the comparison of the implementations within their numer
   Python (finite volumes, beta + r h/4 as ANSYS, wall gradient mirror, increment 0.00125): 8 .. 96
   Python (TVD front term, no added diffusion; reference without stabilisation):               16, 32, 64, 128
   Abaqus (Galerkin hex8 element, beta + r h/4, increment 0.00125):                            8, 16, 24, 32, 48 (quarter)
+  Python (LW + sensor, explicit as the element, A-59): 16 .. 64; Abaqus SUPG (quarter): 16 .. 48; ANSYS living10: 16, 24
   ANSYS (Oliver's element, living8 build, beta + r h/4):                                      8, 16, 24 (24: increment 0.0005)
 
 The stabilisation r h/4 vanishes with h, so all series approach the same continuum solution (first order expected
@@ -67,6 +68,12 @@ SERIES = {
                      128: py_val("*nf128_front1_phimin*ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json")},
     "Abaqus": {8: ab_val("lv8_sep_ab"), 16: ab_val("lv16_sep_ab_dt000125"), 24: ab_val("lv24_sep_ab"), 32: ab_val("lv32_sep_ab") or ab_val("lv32q_sep_ab"), 48: ab_val("lv48q_sep_ab")},
     "ANSYS": {8: an_val("u8c_8_sep_ab_dt0005"), 16: an_val("u8_16_sep_ab"), 24: an_val("u8_24_sep_ab_dt0005")},
+    # A-57..A-59: the second-order leaning schemes
+    "Python (LW + sensor)": {n: py_val(f"*nf{n}_front1_dtc0.00125_*ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json")
+                             for n in (16, 24, 48, 64)}
+                            | {32: py_val("coupled_living_consumption_front1_dtc0.00125_*ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json")},
+    "Abaqus (SUPG)": {n: ab_val(f"lv{n}qs2_sep_ab") for n in (16, 24, 32, 48)},
+    "ANSYS (living10)": {16: an_val("lw16_16_sep_ab"), 24: an_val("lw24_24_sep_ab")},
 }
 
 
