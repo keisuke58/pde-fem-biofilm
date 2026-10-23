@@ -42,8 +42,12 @@
 | 32 | Abaqus の 4 分の 1 の領域（`--quarter`）は全領域と 6e−5 以内、時間は約 4 分の 1 | A-53 |
 | 33 | Python：Fortran 版の点モデル（`--fortran`）と Python 版は 1e−14、`--fast` と全領域は 1e−13 で同じ。`--tend` は点モデルの時間の対応も変えるので、途中で止めた本を通しの本と比べない | A-52 |
 | 34 | ANSYS の 4 分の 1 の領域は**使えない**：対称面の隣で保存形の NEM ラプラシアンが r² に 2.6〜11.4（正しくは 6）を返す。種は中心（対称面のすぐ横）にある | A-55 |
-| 35 | Klempt 2024 4.2 high は直した版（living8、16³）でも**再現しない**：φ の最大が T\* = 0.1 で 1.5、0.23 で 55 と増え続け、要素がつぶれて止まる（フェリックス版と同じ止まり方）。NEM の副作用ではなく、このデッキの値か φ の上限の扱いが原因の候補 | k24c、A-49 |
+| 35 | Klempt 2024 4.2 high は直した版（living8、16³）でも**再現しない**：φ の最大が T\* = 0.1 で 1.5、0.23 で 55 と増え続け、要素がつぶれて止まる（フェリックス版と同じ止まり方）。NEM の副作用ではない。原因は格子のペクレ数（下の 39） | k24c、A-49 |
 | 36 | **応力は r h/4 では格子で収束しない**（A-52 途中、T\* = 1、種の平均）：α−1 は実装どうし誤差の幅の中で合う（Abaqus 48³ 8.10e−4、外挿 8.77e−4、GCI 10 %；Python r h/4 96³ 8.68e−4；TVD 64³ 9.17e−4、外挿 9.8e−4）。von Mises は r h/4 だと 96³ でも増え続け（Python 16/32/64/96³：1.73/3.40/4.80/5.45e−4、Abaqus 48³ 4.62e−4、次数 0.1〜0.6）、2 次の TVD は 16/32/64³ で 6.51/5.90/5.98e−4 とすぐ落ち着く。**r h/4 の 16³（ANSYS の本番の格子）の応力は収束した値の 4 分の 1 程度**：応力の結論は TVD（Python 本番）か SUPG の値で言う | A-52、A-57 |
+| 37 | **ANSYS の実装は Python と同じ式を解いている**：足す拡散を同じ β にすると（ANSYS 16³ の点の間隔は h/2 なので r h/8 = 0.176、Python 32³ の r h/4 と同じ）種の α−1 7.63 対 7.72e−4（−1 %）、von Mises 3.23 対 3.40e−4（−5 %）。これまでの ANSYS と Python のずれの大半は足していた拡散の量の違い | A-58 |
+| 38 | **Abaqus の SUPG は格子で早く収束する**（抗菌薬あり、4 分の 1）：16/24³ で α−1 8.55/8.77e−4、von Mises 6.17/6.25e−4（Python TVD 64³ は 9.17e−4、5.98e−4）。拡散を足さない 2 次の方式どうしで応力が 6.0〜6.25e−4 にそろう。SUPG の製造解は次数 1.5 弱（y = +1 の壁ぎわの層、時間の床ではない） | A-54b、A-57 |
+| 39 | Klempt 2024 4.2 が再現しないのはペクレ数（格子で約 31）：安定化なしは振動（φ が 55）、r h/4 は種が拡散で消える（k24d、T\* = 0.3 まで）。論文の格子でもペクレ数は約 25 なので、論文には書かれていない安定化があったはず | A-56 |
+| 40 | **ANSYS の新しい φ の更新（living10、`--lw-sensor`）**：前線の Lax–Wendroff の項 ＋ 極値の検出で切り替える拡散（2 乗）、壁ぎわ（表面点を近傍に持つ点）は全部の拡散。切ると living8 と同じ（差 1e−17）。8³ で安定（壁ぎわの切り替えを入れた 1 本目は辺と角で暴れた）。Python の同じ方式は 16/32/64³ で von Mises 4.2/5.9/6.3e−4（TVD 6.5/5.9/6.0）。ANSYS 16³ を確認中 | A-59 |
 
 ## 2. 本番の設定（22 日から）
 
@@ -54,9 +58,12 @@
   --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`（＋例ごとの `--layout`、`--ab --t-ab 0.333333`、`--eco`）。
   作業フォルダに**同じ格子・同じビルドの** `lap_cons.txt`（`checks_a38_a39/build_lap_cons_a42.py`、短い `--nem-dump` の本から；内部の r² が 6 になっているか `lap_cons_check_a44.py` で確かめる）。名前の頭 `u8_`（A-45）。
   24³ は刻み 0.0005、1 本で 9.3 GB 使うので同時に 1 本まで。並列（-smp）と 4 分の 1 の領域は使わない。
+  **応力を言うときは** `--artdiff` の r h/4（応力が収束値の 4 分の 1）ではなく、`--artdiff 2N`（点の間隔で決めた r h/8、上の 37）か、
+  16³ の確認が済めば living10 の `--lw-sensor <r h/8> --sensor-pow 2`（`--artdiff` は付けない）。
 - **Python**：本番は `--fast --tvd --wall-grad mirror`（タグ `_tvd_wgmirror_fast`、128³）。ANSYS との照合は
   `--artdiff --dtc <ANSYS の増分> --wall-grad mirror`（既定も鏡映）。IKMHIWI03 では `--fortran` で速い（`libecology_native.so` は `-static` で作る）。
-- **Abaqus**：`abaqus_living/make_living_inp.py --quarter`（分けた例・混合例）。`--supg` は製造解の確認待ち（A-54）。
+- **Python の陽解法版**：`--lw --sensor --sensor-pow 2`（ANSYS の living10 と同じ考え方、照合用）。
+- **Abaqus**：`abaqus_living/make_living_inp.py --quarter --supg`（分けた例・混合例；本番は SUPG、`--supg` なしは r h/4 で照合用）。
   直接法は 48³ の 4 分の 1 で 5.5 GB、全領域の 32³ で 7.4 GB：大きいのは同時に 1 本。
 
 ## 3. 使わないもの（間違えやすい順）
@@ -79,19 +86,24 @@
 | ANSYS `-smp -np 4` の本（`x8tp4_`、`x16t4_`、`u7p*`） | 出力が逐次と一致しない、遅い | 逐次（-np 1） |
 | ANSYS 4 分の 1（`make_quarter_base.py`、`q8n_`） | 対称面の隣のラプラシアンが不正確 | 全領域 |
 | Abaqus `lv32_sep_ab`（全領域） | メモリ不足のあと進まなくなり T\* = 0.49 で止めた | `lv32q_sep_ab` |
-| 試験の本 `x8t_`、`x8tf_`、`x16t1_`、`mms8s`（22 日夜の 1 本目） | 確認用、またはメモリ不足で止めた | — |
+| 試験の本 `x8t_`、`x8tf_`、`x16t1_`、`mms8s`（22 日夜の 1 本目）、`x10a_`、`lw8p0_` | 確認用、またはメモリ不足で止めた | — |
+| Abaqus `lv16qs_`、`lv24qs_`、`lv32qs_`（`2` なし） | 抗菌薬が入っていない（`make_living_inp.py` の編集の誤り、A-57） | `lv*qs2_sep_ab` |
+| ANSYS `lw8_8_sep_ab`（living10 の 1 本目） | 壁ぎわの切り替えで辺と角が暴れた | `lw8w_8_sep_ab` |
+| ANSYS r h/4（`--artdiff N`）の応力の値 | 収束値の約 4 分の 1（上の 36）。α−1 と照合には使える | 上の 2. の「応力を言うとき」 |
+| Python `_lw_`（`_sensor` なし） | φ が −0.74〜1.88 に振動 | `_lw_sensor2_` |
 
 ## 4. まだ確かめていないこと
 
 **順番（ユーザー、22 日）：** 下の 3 つ（障害物の差、Klempt 2024 4.2 の 2 本、格子の収束）が片付いてから、最後に迷路（4.4 節、形は `abaqus_living/maze_k24.txt`）。
 
 - 障害物の柱（16³、同じ初期の場）：**解決（22 日）**。12 % の差は Python の柱の面での勾配の扱い（`--wall-grad`）：zero 4.83、鏡映 5.06、片側 5.78e−4、Abaqus 5.40e−4。零流束に合う鏡映で −6 %（柱なし −5 % と同じ）。照合も鏡映にそろえる。`--init-nodal` は障害物のマスを平均から外すよう直した（効果 1 %）。応力は Abaqus の接触ありの本（ペナルティ接触で回し直し中）の後。
-- Klempt 2024 4.2 high：フェリックス版と同じ扱い（living9f）も直した版（living8、k24c）も**再現しない**（上の 35）。φ が 1 を超えて増え続ける原因（デッキの値、罰則、φ の上限）を Python の再現（`JAXFEM/klempt2024_*`）と項ごとに比べるのが次。
-- **格子の収束（A-52、自動で集計）**：Python は 8〜96³ と TVD 16〜64³ が済み。Abaqus 32³・48³（4 分の 1）が走行中、ANSYS 24³（刻み 0.0005）は 25 日ごろ。時間の誤差の幅（刻みを半分にした本）も足す。
-- **SUPG（A-54）**：製造解で 2 次になれば、Abaqus の 4 分の 1 の 16〜48³ を r h/4 の代わりに（`F:\abaqus_work\auto_q\supg.ps1`）。
-- 16³ と 24³ で全部の修正後に ANSYS と Python がどこまで合うか（A-45、自動；u8_16_sep は入れ直し中）。A-41、A-43 は止めた（番号順の近傍だったため）。
+- **ANSYS living10 の 16³（`lw16_16_sep_ab`、living10_16）**：Python 32³ の同じ方式（α−1 8.80e−4、von Mises 5.86e−4）と合えば、ANSYS の本番を living10 に切り替え、A-45 の例を回し直す。
+- **格子の収束（A-52、自動で集計）**：Python 8〜96³、TVD 16〜64³、Abaqus r h/4 16〜48³ は済み（上の 36）。ANSYS 24³（r h/4、刻み 0.0005）は 24 日ごろ。Abaqus SUPG 32³・48³（`F:\abaqus_work\auto_q\supg4.ps1`）と Python TVD 128³ が走行中。時間の誤差（上の 30）は約 1 %。
+- Klempt 2024 4.2：living10（または SUPG）で回し直す（上の 39）。
+- 16³ と 24³ で全部の修正後に ANSYS と Python がどこまで合うか（A-45：済み、`u8_16_sep` も入れ直して済み）。A-41、A-43 は止めた（番号順の近傍だったため）。
 - 漏れのもとの列の和が SURF_NEAREST で ±22 残る理由（辺と角の表面点か、NEM の近傍の非対称）。保存形にすれば効かない。
 - オリバーへの連絡（表面点の扱いと保存形のラプラシアン）。まだ送っていない。
+- **修論の数字の確認**：第 4 章などで ANSYS の応力（r h/4 の 16³）を引いている所があれば、上の 36 の注意（収束値の約 4 分の 1）を書くか、点の間隔の r h/8 か living10 の値に置き換える。α−1 と構成比は影響が小さい。
 
 ## 5. ビルドの一覧（IKMHIWI03、`F:\`）
 
@@ -102,7 +114,8 @@
 | `biofilm_upf_living6`（＋`6s`） | ＋ NUT1_INIT_ALL、FRONT_DUMP、SURF_NEAREST | `u6*`、`u5_` |
 | `biofilm_upf_living7`（＋`7s`、`7p`、`7q`、`7_16n`） | ＋ NEM_DUMP、LAP_FILE | `u7c_`、`u7n_`、並列の時間比べ `u7p*` |
 | `biofilm_upf_living8`（＋`8_8n`、`8_16n`、`8_16a〜f`、`8_24n`、`8_24a〜c`、`8_k24`） | ＋ 距離順の近傍（NEM_UserData） | `u8_` |
-| **`biofilm_upf_living8t`**（＋`8t_8`、`8t_16`、`8q_8`） | ＋ 記録の要素の絞り込み（`trace_elems.f`、`oliver_patches/living8t_*`） | **これからの `u8_`**（場は living8 と同じ） |
+| **`biofilm_upf_living8t`**（＋`8t_8`、`8t_16`、`8t_16b`、`8t_k24`、`8q_8`） | ＋ 記録の要素の絞り込み（`trace_elems.f`、`oliver_patches/living8t_*`） | **これからの `u8_`**（場は living8 と同じ）、`u8h_` |
+| `biofilm_upf_living10`（＋`10_8`、`10_16`） | ＋ LW_SENSOR、BETA_ART、SENSOR_POW（`oliver_patches/living10_Ussfin_lw_sensor.patch`）。切れば living8t と同じ | `lw*_`（16³ の確認待ち） |
 | `biofilm_upf_living9f` | フェリックス版に近い扱い（SURF_FIX_OFF） | Klempt 4.2 の試験だけ |
 
 スイッチはどれも既定 0（従来どおり）。新しいフォルダを作るときは `.f/.F/.inc/.h/.mod/.obj/.lrf/.def/.manifest/.dll/.mac`、`ANSYS.exe`、

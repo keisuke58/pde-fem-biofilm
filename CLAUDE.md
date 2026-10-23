@@ -154,7 +154,7 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   initialisation); fixed in `F:\biofilm_upf_living4`. All earlier living runs (`lv8_`, `v2_`, `v2s_`, `sens_`) used a
   frozen L and are not to be used; the fixed runs are `v2f_*`, `fsens_*`. Hand-off for another PC:
   `archive/HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
-  **23 Oct (A-53): current build `F:\biofilm_upf_living8t`** (living8 plus `--trace-elems`, fields identical; no `-smp`, no quarter domain in ANSYS). **22 Oct (A-38..A-45): build `F:\biofilm_upf_living8`** (living5 + NUT1_INIT_ALL, FRONT_DUMP, SURF_NEAREST,
+  **23 Oct (A-53): current build `F:\biofilm_upf_living8t`** (living8 plus `--trace-elems`, fields identical; no `-smp`, no quarter domain in ANSYS). **Stresses with `--artdiff` (r h/4) are about a quarter of the converged value at 16^3 (A-57)**: for stresses use `--artdiff 2N` (r h/8 from the point spacing, A-58) or build `F:\biofilm_upf_living10` with `--lw-sensor` (A-59, 16^3 check pending). **22 Oct (A-38..A-45): build `F:\biofilm_upf_living8`** (living5 + NUT1_INIT_ALL, FRONT_DUMP, SURF_NEAREST,
   NEM_DUMP, LAP_FILE = living7, plus NEM neighbours by distance; patches in `ansys_usermat/apdl/oliver_patches/`). Before it, phi leaked through the walls (surface
   points took an inverse-square mean, and the NEM Laplacian's column sums are not zero), so all `u4_` and older living
   runs are superseded; main runs are `u8_` with `--surf-nearest --lap-file` and a `lap_cons.txt` of the same mesh and build
