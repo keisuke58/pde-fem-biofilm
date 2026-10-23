@@ -60,9 +60,9 @@ props = [10.0, 0.49, 1e-3, beta, W.K_ALPHA, W.PENALTY, r_front, K_monod, 1.0, 1.
 if a.mms:
     props[4] = 0.0
     props.append(1.0)
+    a.no_ab = True
 if a.supg:
     props += [0.0] * (19 - len(props)) + [1.0]
-    a.no_ab = True
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)
 cells8 = W.seed_cells_8(ROOT / "ansys_usermat/apdl/results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
