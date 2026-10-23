@@ -138,6 +138,7 @@ def main():
                          "the extremum sensor (power --sensor-pow), in place of --artdiff; BETA_ART = r h/8 (h the element size, "
                          "so r times the point spacing / 4); needs --lap-file")
     ap.add_argument("--front-upwind", action="store_true", help="A-64 (build living11): one-sided MLS gradients of phi in the front term (grad_upw.txt of build_grad_upw_a64.py)")
+    ap.add_argument("--mms", action="store_true", help="A-65 (build living12): manufactured solution of abaqus_living/mms.py (MMS_SRC = 1): growth off, phi_min 2 (point model never starts), no antibiotic, quasi-static c")
     ap.add_argument("--sensor-pow", type=float, default=2.0)
     ap.add_argument("--wall-sens", type=float, default=1.0, help="A-63: lower bound of the sensor at points whose stencil reaches the boundary (1 = full added diffusion)")
     ap.add_argument("--quarter", action="store_true",
@@ -186,6 +187,8 @@ def main():
         props[60] = 1
     if a.phi_min is not None:
         props[29] = a.phi_min
+    if a.mms:
+        props[29] = 2.0
     if (a.deltim is not None or a.tend is not None) and a.start_step <= 0:
         sys.exit("STOP: --deltim and --tend only with --start-step")
     props.update({7 + i: v for i, v in enumerate(th, start=1)})
@@ -218,6 +221,8 @@ def main():
         a.cons = float(dv["CONSUMPTION11"])             # for the deck's header line
         print(f"klempt24 {a.klempt24}: " + ", ".join(f"{k} {scal[k]}" for k in ("MY_BETA1", "MAX_GROWTH11", "CONSUMPTION11"))
               + f"; seed {len(bio1)} elements" + (f", nutrient column {len(nut1)} elements" if nut1 else ""))
+    if a.mms:
+        scal["K_LOCAL1"] = "0"
     if a.transient_c:
         d = a.transient_c
         scal["MY_DIFF1"] = scal["MY_DIFF2"] = repr(d)
@@ -243,7 +248,7 @@ def main():
             f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}"
             f"SURF_FIX_OFF = {int(a.surf_fix_off)}{nl}"
             f"! A-59 (build living10){nl}LW_SENSOR = {int(a.lw_sensor is not None)}{nl}BETA_ART = {(a.lw_sensor or 0.0)!r}{nl}"
-            f"SENSOR_POW = {a.sensor_pow!r}{nl}WALL_SENS = {a.wall_sens!r}{nl}FRONT_UPWIND = {int(a.front_upwind)}{nl}")
+            f"SENSOR_POW = {a.sensor_pow!r}{nl}WALL_SENS = {a.wall_sens!r}{nl}FRONT_UPWIND = {int(a.front_upwind)}{nl}MMS_SRC = {int(a.mms)}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     if nut1 is not None:
