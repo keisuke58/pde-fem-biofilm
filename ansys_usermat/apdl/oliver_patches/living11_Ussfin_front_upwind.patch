@@ -1,0 +1,99 @@
+﻿diff --git a/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living11/Ussfin_P21-V21_Conection_Test.F
+index 752ee0a..f0ba223 100644
+--- a/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F
++++ b/F:/biofilm_upf_living11/Ussfin_P21-V21_Conection_Test.F
+@@ -355,6 +355,17 @@ c **********  a user subroutine called after a substep  **********
+       DOUBLE PRECISION Sdp_LwA, Sdp_LwB, Sdp_LwAdd
+       DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LwW(:), vLdp_LwV(:,:)
+       DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LwS(:)
++!     pde-fem-biofilm 23 Oct 2026 (A-64): FRONT_UPWIND = 1 takes the
++!     gradient of phi in the front term from one-sided (upwind) MLS
++!     operators of grad_upw.txt (build_grad_upw_a64.py from the NEM
++!     dump), the side opposite to the sign of n_c for each axis
++      DOUBLE PRECISION Sdp_FrontUpw, Sdp_FU, Sdp_FUsp, Sdp_FUn(3)
++      DOUBLE PRECISION Sdp_FUg
++      LOGICAL, SAVE :: lL_UpwFile = .FALSE., lL_UpwRead = .FALSE.
++      INTEGER, SAVE :: Si_UpNnz(6)
++      INTEGER, ALLOCATABLE, SAVE :: vLi_UpRow(:,:), vLi_UpCol(:,:)
++      DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_UpVal(:,:)
++      INTEGER Si_UpK, Si_UpI, Si_UpN, Si_UpSide
+       INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+ 
+@@ -1413,6 +1424,34 @@ c **********  a user subroutine called after a substep  **********
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+       IF (Si_Kerr .EQ. 0) Sdp_BetaArt = Sdp1
+       Sdp_SensPow = 2.0D0
++      Sdp_FrontUpw = 0.0D0
++      C_ParName='FRONT_UPWIND'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_FrontUpw = Sdp1
++      IF (Sdp_FrontUpw .GT. 0.5D0 .AND. .NOT. lL_UpwRead) THEN
++        lL_UpwRead = .TRUE.
++        OPEN(81, FILE='grad_upw.txt', STATUS='OLD')
++        READ(81,*) Si_UpN
++        READ(81,*) (Si_UpNnz(Si_UpK), Si_UpK = 1, 6)
++        IF (Si_UpN .NE. nGP) THEN
++          PRINT *, 'IKM: grad_upw.txt is for', Si_UpN, 'points, not',
++     &      nGP, ' -- FRONT_UPWIND ignored'
++          CLOSE(81)
++        ELSE
++          ALLOCATE(vLi_UpRow(nGP+1, 6), vLi_UpCol(MAXVAL(Si_UpNnz), 6))
++          ALLOCATE(vLdp_UpVal(MAXVAL(Si_UpNnz), 6))
++          DO Si_UpK = 1, 6
++            READ(81,*) (vLi_UpRow(Si_UpI, Si_UpK), Si_UpI = 1, nGP + 1)
++            DO Si_UpI = 1, Si_UpNnz(Si_UpK)
++              READ(81,*) vLi_UpCol(Si_UpI, Si_UpK),
++     &                   vLdp_UpVal(Si_UpI, Si_UpK)
++            END DO
++          END DO
++          CLOSE(81)
++          lL_UpwFile = .TRUE.
++          PRINT *, 'IKM: FRONT_UPWIND read, nnz', Si_UpNnz
++        END IF
++      END IF
+       Sdp_WallSens = 1.0D0
+       C_ParName='WALL_SENS'
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+@@ -1687,6 +1726,8 @@ c **********  a user subroutine called after a substep  **********
+ !$OMP& SHARED(lL_LapFile, vLi_LcRow, vLi_LcCol, vLdp_LcVal)
+ !$OMP& SHARED(Sdp_LwSens, Sdp_BetaArt, vLdp_LwW, vLdp_LwV, vLdp_LwS)
+ !$OMP& PRIVATE(Sdp_LwGx, Sdp_LwGy, Sdp_LwGz, Sdp_LwA, Sdp_LwAdd)
++!$OMP& SHARED(Sdp_FrontUpw, lL_UpwFile, vLi_UpRow, vLi_UpCol, vLdp_UpVal)
++!$OMP& PRIVATE(Sdp_FU, Sdp_FUsp, Sdp_FUn, Sdp_FUg, Si_UpK, Si_UpSide)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+ !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
+ !$OMP& SHARED(sGdp_Reflection, sGdp_Heat_Expo,vGdp_Refl_Limits)
+@@ -2540,8 +2581,31 @@ c **********  a user subroutine called after a substep  **********
+         END DO
+         Sdp_LwAdd = Sdp_LwAdd + Sdp_BetaArt * Sdp_LwA
+       END IF
++!     A-64: the front term with one-sided gradients of phi
++      Sdp_FU = OriBio1 * GrowthBio1
++      IF (Sdp_FrontUpw .GT. 0.5D0 .AND. lL_UpwFile) THEN
++        Sdp_FUsp = sGdp_OriWeight11 * sGdp_MaxGrowth11
++     &    * vGdp_Nut1_n(ID) / (sGdp_HalfVelo11 + vGdp_Nut1_n(ID))
++        Sdp_FUn(1) = Sdp_GradXNut1 / MAX(Sdp_NormNut1, 1.0D-14)
++        Sdp_FUn(2) = Sdp_GradYNut1 / MAX(Sdp_NormNut1, 1.0D-14)
++        Sdp_FUn(3) = Sdp_GradZNut1 / MAX(Sdp_NormNut1, 1.0D-14)
++        Sdp_FU = 0.0D0
++        DO Si_UpK = 1, 3
++          IF (ABS(Sdp_FUn(Si_UpK)) .LT. 1.0D-30) CYCLE
++!         v_a > 0: the backward (minus) side; v_a < 0: the plus side
++          Si_UpSide = 2 * Si_UpK - 1
++          IF (Sdp_FUn(Si_UpK) .LT. 0.0D0) Si_UpSide = 2 * Si_UpK
++          Sdp_FUg = 0.0D0
++          DO jj = vLi_UpRow(ID, Si_UpSide), vLi_UpRow(ID+1, Si_UpSide) - 1
++            Sdp_FUg = Sdp_FUg + vLdp_UpVal(jj, Si_UpSide)
++     &        * vGdp_Bio1_n1(vLi_UpCol(jj, Si_UpSide))
++          END DO
++          Sdp_FU = Sdp_FU + Sdp_FUn(Si_UpK) * Sdp_FUg
++        END DO
++        Sdp_FU = Sdp_FUsp * Sdp_FU
++      END IF
+       vGdp_Bio1_n(ID)    = sGdp_dTime * (
+-     & - OriBio1 * GrowthBio1
++     & - Sdp_FU
+      & + sGdp_KLocal1 * vGdp_Bioloc1_n(ID)
+      & + sGdp_Beta1 * Sdp_LapBio1
+      & + PenForce1 + Sdp_LwAdd

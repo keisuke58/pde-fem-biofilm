@@ -1,5 +1,5 @@
 ﻿diff --git a/F:/biofilm_upf_living8t/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F
-index 3defc5a..f722c47 100644
+index 3defc5a..752ee0a 100644
 --- a/F:/biofilm_upf_living8t/Ussfin_P21-V21_Conection_Test.F
 +++ b/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F
 @@ -343,6 +343,18 @@ c **********  a user subroutine called after a substep  **********
@@ -12,7 +12,7 @@ index 3defc5a..f722c47 100644
 +!     switched by the extremum sensor s = (|sum_j L_ij (phi_j - phi_i)|
 +!     / sum_j |L_ij (phi_j - phi_i)|)**SENSOR_POW, face value
 +!     max(s_i, s_j), with L of lap_cons.txt (needs LAP_FILE = 1)
-+      DOUBLE PRECISION Sdp_LwSens, Sdp_BetaArt, Sdp_SensPow
++      DOUBLE PRECISION Sdp_LwSens, Sdp_BetaArt, Sdp_SensPow, Sdp_WallSens
 +      DOUBLE PRECISION Sdp_LwGx, Sdp_LwGy, Sdp_LwGz
 +      DOUBLE PRECISION Sdp_LwCx, Sdp_LwCy, Sdp_LwCz, Sdp_LwSp
 +      DOUBLE PRECISION Sdp_LwA, Sdp_LwB, Sdp_LwAdd
@@ -21,7 +21,7 @@ index 3defc5a..f722c47 100644
        INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
        INTEGER SFI, SFJ, SFK
  
-@@ -1392,6 +1404,18 @@ c **********  a user subroutine called after a substep  **********
+@@ -1392,6 +1404,22 @@ c **********  a user subroutine called after a substep  **********
        C_ParName='NEM_DUMP'
        CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
        IF (Si_Kerr .EQ. 0) Sdp_NemDump = Sdp1
@@ -34,13 +34,17 @@ index 3defc5a..f722c47 100644
 +      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
 +      IF (Si_Kerr .EQ. 0) Sdp_BetaArt = Sdp1
 +      Sdp_SensPow = 2.0D0
++      Sdp_WallSens = 1.0D0
++      C_ParName='WALL_SENS'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_WallSens = Sdp1
 +      C_ParName='SENSOR_POW'
 +      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
 +      IF (Si_Kerr .EQ. 0) Sdp_SensPow = Sdp1
        IF (.NOT. lL_LapRead) THEN
          lL_LapRead = .TRUE.
          Sdp1 = 0.0D0
-@@ -1530,6 +1554,82 @@ c **********  a user subroutine called after a substep  **********
+@@ -1530,6 +1558,84 @@ c **********  a user subroutine called after a substep  **********
            vGdp_Bio2_n1(SFI) = SFB2 / SFWS
          END IF
        END DO
@@ -87,10 +91,12 @@ index 3defc5a..f722c47 100644
 +          END DO
 +          vLdp_LwS(SFI) = (ABS(Sdp_LwA) / (Sdp_LwB + 1.0D-12))
 +     &      ** Sdp_SensPow
-+!         next to a wall (a surface point in the stencil) the full added
-+!         diffusion: the switched form is unstable at the edges (A-59)
++!         next to a wall (a surface point in the stencil) at least
++!         WALL_SENS of the added diffusion (1 = full; the switched form
++!         alone is unstable at the edges, A-59)
 +          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
-+            IF (vGi_ColID_T(SFJ) .GT. nGP) vLdp_LwS(SFI) = 1.0D0
++            IF (vGi_ColID_T(SFJ) .GT. nGP)
++     &        vLdp_LwS(SFI) = MAX(vLdp_LwS(SFI), Sdp_WallSens)
 +          END DO
 +        END DO
 +        DO SFI = nGP + 1, nTot
@@ -123,7 +129,7 @@ index 3defc5a..f722c47 100644
  !$OMP PARALLEL DEFAULT(NONE)  !This means all variables must be explicitly defined
  !$OMP& PRIVATE(ID, ii, jj, base9, base6, Row_S, Row_E, idx2)
  !$OMP& PRIVATE(mLdp_F_n, mLdp_F_n1, mLdp_F_dt, mLdp_F_i, mLdp_F_i1)
-@@ -1579,6 +1679,8 @@ c **********  a user subroutine called after a substep  **********
+@@ -1579,6 +1685,8 @@ c **********  a user subroutine called after a substep  **********
  !$OMP& SHARED(nGP, sGdp_dTime, Sdp_tt_Ref, Sdp_dt,Sdp_Time)
  !$OMP& SHARED(Sdp_FrontDump)
  !$OMP& SHARED(lL_LapFile, vLi_LcRow, vLi_LcCol, vLdp_LcVal)
@@ -132,7 +138,7 @@ index 3defc5a..f722c47 100644
  !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
  !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
  !$OMP& SHARED(sGdp_Reflection, sGdp_Heat_Expo,vGdp_Refl_Limits)
-@@ -2409,11 +2511,34 @@ c **********  a user subroutine called after a substep  **********
+@@ -2409,11 +2517,34 @@ c **********  a user subroutine called after a substep  **********
  
  !-----------------------------------------------------------------------
        !Biofilm / lokales Biofilm Update (explizit, TEST)
