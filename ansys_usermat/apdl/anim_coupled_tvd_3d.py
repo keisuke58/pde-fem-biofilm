@@ -44,7 +44,7 @@ PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"(a) share of species A", r"$
           ("L", "living", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$")]
-START = {"separate_ab": r"Separate start: species A in the centre seed, species B in four small blocks at the vertical edges "
+START = {"separate_ab": r"Separate start: species A in the centre seed, species B in four small blocks at the edges along $z$ "
                         r"($|x|, |y| > 0.75$ mm). " + (r"New biofilm takes the composition of its neighbours." if INHERIT
                         else r"New biofilm starts as B where $|x|, |y| > 0.56$ mm, else as A (rule of the ANSYS runs)."),
          "mixed_ab": r"Mixed start: species A and B in equal amounts together in the centre seed. "
@@ -55,7 +55,7 @@ CAPTION = "\n".join([
     r"of Klempt et al. 2026 (Fritsch et al. 2025, Case I, true parameters) at every point; 2 mm cube, $64^3$ finite "
     r"volumes, TVD front term.",
     START,
-    r"(a) Share of species A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, "
+    r"(a) Share of species A (point-model species 1; B is species 2; blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, "
     r"$\bar\phi_i=\phi_i\psi_i$, both shown where the biofilm $\phi_{3D} > 0.5$.",
     r"(c) Nutrient $c$, held at 1 in the bottom layer $y < -0.75$ mm and consumed by the living biomass. "
     r"(d) Antibiotic $a$, held at 1 on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$). "

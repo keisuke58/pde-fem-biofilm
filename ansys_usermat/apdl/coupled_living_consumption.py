@@ -750,7 +750,7 @@ def run(example, antibiotic):
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
-            shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # group A (species 1, 2 of 4)
+            shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
         if time.time() - t_ck > CKPT_SEC:
