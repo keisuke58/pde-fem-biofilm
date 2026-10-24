@@ -149,3 +149,34 @@ Rudolf et al. 2025 が比べたのも拡散）。前線の項は WP3 の必須�
 - **慶應で最初にすること：** fifa で `uel_column` と `uel_seed8` を回し、上の値と比べる（Linux の ifort で同じになるか）。
 
 一つの原理のモデルを論文にするかは、Felix と Meisam に相談してから決める（Felix の未発表の 2 菌種の仕事と重なるため）。
+
+## 8. 結合モデルの Abaqus 要素（abaqus_living、2026年10月24日）
+
+慶應のサーバーでも Claude を SSH ＋リモートコントロールで使える（ユーザー、10月24日）。IKMHIWI03 の続きの Abaqus は
+ここで回す。要素は `abaqus_living/living_uel.f90`（ガラーキン、前線の項は SUPG、新しい点のルール layout 2/3）。
+検証はすべて IKMHIWI03 で済んでいる（製造解、Python との GCI、迷路、`ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md`
+A-46〜A-78）。
+
+1. **ソース**：`python3 abaqus_living/make_abaqus_source.py` が固定形式の `abaqus_living/living_uel_abaqus.for` を書く
+   （git にもある。`living_uel.f90` を変えたら作り直す）。点モデルは `ansys_usermat/coupling/ecology_native.f` が中に入る。
+2. **環境変数**：`BIOFILM_ECO_CASE=<repo>/abaqus_living/eco_u3_a100.txt`（2 種、Fritsch case I、α\*_0 = 100）、
+   `BIOFILM_UEL_GP=<作業ディレクトリ>/living_gp.txt`（ガウス点の記録）、`BIOFILM_UEL_EVERY=400`（記録の間隔、増分）。
+   **CPU は 1 つ**（layout 3 と記録は module の配列を共有する。threads でも安全とは確かめていない）。
+3. **最初の確かめ**（コンパイラの違い）：
+   ```
+   python3 abaqus_living/make_living_inp.py 16 sep lv16qs2_sep_ab.inp --quarter --supg --dt 0.00125
+   abaqus job=lv16qs2_sep_ab user=abaqus_living/living_uel_abaqus.for cpus=1 interactive
+   python3 abaqus_living/summary_living.py $BIOFILM_UEL_GP 16 --json lv16qs2_sep_ab_summary_fifa.json
+   ```
+   IKMHIWI03 の値（`abaqus_living/lv16qs2_sep_ab_summary.json`、T\* = 1）：種の Σφ̄ 0.1494、c 0.9137、a 0.9851、
+   α−1 8.554e−4、von Mises 6.168e−4 Pa。丸めの程度（1e−6 相対）を超えて違えば先に進まない。
+   （`--quarter --supg --dt 0.00125` が IKMHIWI03 のデッキと同じかは、`diff` で `abaqus_living/lv16qs2_sep_ab.inp` と比べる。）
+4. **次の計算**：4 種（Klempt 2026 Table 2 case 4、抗菌薬で耐性の種 4 が残る例）。点モデルのファイルは
+   `abaqus_composition/eco_klempt2026_t2c4_a100.txt`（行列 A は**式 19 の 1/2 なし**：論文の図はこれでしか再現しない、A-77）。
+   Python の参照値（64³、TVD）：分けた例 Σφ̄ 0.762、種 1・2 の割合 0.193、α−1 9.66e−4、vM 6.22e−4 Pa（A-78 に GCI）。
+   要素は eco_nact = 4 をそのまま扱う（Python と同じ Fortran の点モデル）。layout 1（分けた例）は種 2 を角に置くので、
+   4 種では「種 1・2 が中央、種 3・4 が角」にする変更が要る（`start_state`、Python の `GROUP_A`）。
+5. **迷路**：`make_maze_inp.py --tend 60 --supg [--ab] [--inherit]`、比べるのは `maze_compare_a67.py`
+   （Python の結果は `ansys_usermat/apdl/results/2026-10-maze/`）。layout 3（受け継ぐ）は 1 増分ごとに全ガウス点を
+   見るので、layout 2 の約 5 倍遅い。
+6. **結果の置き場**：要約の JSON だけ git に入れ（`living_gp.txt` は大きい）、`keio/*` のブランチに push する。
