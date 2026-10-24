@@ -122,6 +122,10 @@ if "--gc" in sys.argv:
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
 AB_TOP = "--ab-top" in sys.argv
 C_SINE = "--c-sine" in sys.argv
+# A-71: time course of the held antibiotic value a_b(T*) after T_AB, the same dose (integral of a_b over [T_AB, T_END]) as
+# the constant a_b = 1: const; pulse = 2 for the first half of each period, 0 for the second; sine = 1 + sin(2 pi (T - T_AB) / P)
+AB_SCHED = sys.argv[sys.argv.index("--ab-schedule") + 1] if "--ab-schedule" in sys.argv else "const"
+AB_PERIOD = float(sys.argv[sys.argv.index("--ab-period") + 1]) if "--ab-period" in sys.argv else 2.0 / 9.0
 CKPT_SEC = float(os.environ.get("CKPT_SEC", 120.0))   # checkpoint interval (seconds)
 SNAP_EVERY = float(sys.argv[sys.argv.index("--snap-every") + 1]) if "--snap-every" in sys.argv else None
 MIX_SHARE = float(sys.argv[sys.argv.index("--mix-share") + 1]) if "--mix-share" in sys.argv else None
@@ -220,7 +224,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
-       + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "")
+       + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -532,6 +536,18 @@ def c_supply(T):
     return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else 1.0
 
 
+def ab_value(T):
+    """held antibiotic value at T* (0 before T_AB), --ab-schedule"""
+    if T <= T_AB + 1e-12:
+        return 0.0
+    s = (T - T_AB) / AB_PERIOD
+    if AB_SCHED == "pulse":
+        return 2.0 if (s - math.floor(s)) < 0.5 - 1e-12 else 0.0
+    if AB_SCHED == "sine":
+        return 1.0 + math.sin(2.0 * math.pi * s)
+    return 1.0
+
+
 def neighbours_mean(G, w):
     """phi-weighted mean of the 6-neighbour states (w = weight per cell, 0 where not colonised)."""
     num = np.zeros_like(G); den = np.zeros(G.shape[:3])
@@ -674,7 +690,7 @@ def run(example, antibiotic):
             c_new = cf                        # already advanced over the outer step in the inner steps
         else:
             c_new = nut.solve(phi, L, c_supply(T1), u_prev=c, dtau=DT_C, src=src_c(T1))
-        a_new = ab.solve(phi, L, 1.0 if (antibiotic and T1 > T_AB + 1e-12) else 0.0, u_prev=a, dtau=DT_C)
+        a_new = ab.solve(phi, L, ab_value(T1) if antibiotic else 0.0, u_prev=a, dtau=DT_C)
         if MMS:                                   # no point model, no colonisation in the manufactured solution
             c, a = c_new, a_new
             if k == int(round(T_END / DT_C)) - 1:
