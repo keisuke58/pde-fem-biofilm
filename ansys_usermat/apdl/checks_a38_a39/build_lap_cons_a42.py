@@ -2,7 +2,7 @@
 the NEM Laplacian of the integration points with the surface points eliminated by the SURF_NEAREST rule, made
 conservative (symmetric part, diagonal = -(sum of the off-diagonal row)), so rows and columns sum to zero.
 
-  python build_lap_cons_a42.py <dir with nem_dump.txt>        -> <dir>\\lap_cons.txt
+  python build_lap_cons_a42.py <dir with nem_dump.txt> [--surf-fit]   -> <dir>\\lap_cons.txt
 
 Format: nGP nnz / row pointers (1-based, nGP + 1 values, 10 per line) / one "column value" pair per entry."""
 import sys
@@ -18,8 +18,16 @@ with open(d / "nem_dump.txt") as f:
     rows = np.loadtxt(f, max_rows=nnz, usecols=(0, 1, 5))
 r, c = rows[:, 0].astype(int) - 1, rows[:, 1].astype(int) - 1
 LAP = sp.csr_matrix((rows[:, 2], (r, c)), shape=(nTot, nTot))
+# A-69: --surf-fit takes the surface rows of the dump (the element's constrained value fit, SURF_FIT) as S
+SURF_FIT = "--surf-fit" in sys.argv
 S = sp.lil_matrix((nTot - nGP, nGP))
 for i in range(nGP, nTot):
+    if SURF_FIT:
+        sl = slice(LAP.indptr[i], LAP.indptr[i + 1])
+        for j, v in zip(LAP.indices[sl], LAP.data[sl]):
+            if j < nGP:
+                S[i - nGP, j] = v
+        continue
     js = np.array([j for j in LAP.indices[LAP.indptr[i]:LAP.indptr[i + 1]] if j < nGP])
     d2 = ((pos[js] - pos[i]) ** 2).sum(1)
     w = (d2 <= d2.min() * 1.0001).astype(float)

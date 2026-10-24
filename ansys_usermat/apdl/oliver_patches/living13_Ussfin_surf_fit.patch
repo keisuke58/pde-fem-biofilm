@@ -1,0 +1,53 @@
+﻿diff --git a/F:/biofilm_upf_living12/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living13/Ussfin_P21-V21_Conection_Test.F
+index 8be2152..76e6aa6 100644
+--- a/F:/biofilm_upf_living12/Ussfin_P21-V21_Conection_Test.F
++++ b/F:/biofilm_upf_living13/Ussfin_P21-V21_Conection_Test.F
+@@ -373,6 +373,12 @@ c **********  a user subroutine called after a substep  **********
+       DOUBLE PRECISION Sdp_MmsSrc, Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc
+       DOUBLE PRECISION Sdp_MmsPhim, Sdp_MmsCm, Sdp_MmsQ, Sdp_MmsR
+       DOUBLE PRECISION Sdp_Nut1Val
++!     A-69: SURF_FIT = 1 gives each Neumann surface point the phi of
++!     the element's own constrained fit (the row of vGdp_Lap_T of that
++!     point: the value of a linear fit with zero gradient through the
++!     faces), instead of the nearest-point mean of SURF_NEAREST
++      DOUBLE PRECISION Sdp_SurfFit, SFB1F, SFB2F
++      LOGICAL SFFIT
+       LOGICAL, SAVE :: lL_MmsInit = .FALSE.
+       INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+@@ -1416,6 +1422,10 @@ c **********  a user subroutine called after a substep  **********
+       IF (Si_Kerr .EQ. 0) Sdp_FrontDump = Sdp1
+       IF (sGdp_Time .GE. Sdp_FrontDump) Sdp_FrontDump = 0.0D0
+       Sdp_SurfNearest = 0.0D0
++      Sdp_SurfFit = 0.0D0
++      C_ParName='SURF_FIT'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_SurfFit = Sdp1
+       C_ParName='SURF_NEAREST'
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+       IF (Si_Kerr .EQ. 0) Sdp_SurfNearest = Sdp1
+@@ -1619,7 +1629,23 @@ c **********  a user subroutine called after a substep  **********
+           SFB1 = SFB1 + SFW * vGdp_Bio1_n1(SFK)
+           SFB2 = SFB2 + SFW * vGdp_Bio2_n1(SFK)
+         END DO
+-        IF (SFWS .GT. 0.0D0) THEN
++        SFFIT = .FALSE.
++        IF (Sdp_SurfFit .GT. 0.5D0) THEN
++          IF (vGi_BC_Type_T(SFI - nGP) .NE. 1) THEN
++            SFB1F = 0.0D0
++            SFB2F = 0.0D0
++            DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++              SFK = vGi_ColID_T(SFJ)
++              IF (SFK .GT. nGP) CYCLE
++              SFB1F = SFB1F + vGdp_Lap_T(SFJ) * vGdp_Bio1_n1(SFK)
++              SFB2F = SFB2F + vGdp_Lap_T(SFJ) * vGdp_Bio2_n1(SFK)
++            END DO
++            vGdp_Bio1_n1(SFI) = SFB1F
++            vGdp_Bio2_n1(SFI) = SFB2F
++            SFFIT = .TRUE.
++          END IF
++        END IF
++        IF (SFWS .GT. 0.0D0 .AND. .NOT. SFFIT) THEN
+           vGdp_Bio1_n1(SFI) = SFB1 / SFWS
+           vGdp_Bio2_n1(SFI) = SFB2 / SFWS
+         END IF

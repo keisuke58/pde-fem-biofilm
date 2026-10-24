@@ -1,0 +1,72 @@
+﻿diff --git a/F:/biofilm_upf_living12/NEM_UserData_P21_V05.F b/F:/biofilm_upf_living13/NEM_UserData_P21_V05.F
+index 22b8b85..a0381df 100644
+--- a/F:/biofilm_upf_living12/NEM_UserData_P21_V05.F
++++ b/F:/biofilm_upf_living13/NEM_UserData_P21_V05.F
+@@ -600,6 +600,13 @@ c     a tie across the cap: leave out every point at that distance
+      &,mResult4Node(4,sGi_NeighCnt+1)
+      &,mAtransNode(4,sGi_NeighCnt+1),mDNode(4,sGi_NeighCnt+1)
+      &,vLdp_Normals(3)
++!     pde-fem-biofilm 24 Oct 2026 (A-69): FACE_NORMALS = 1 replaces the
++!     single constraint along the point's normal by one zero-gradient
++!     constraint per face the point lies on (an edge: two, a corner:
++!     three; faces from the non-zero components of the normal, box
++!     geometry), each with the weight FACE_WEIGHT (default 1 as before)
++      DOUBLE PRECISION sLdp_FaceNormals, sLdp_FaceWeight, sLdp_SurfBeta
++      INTEGER Si_FaceA
+ 
+             !Define all Characters
+       CHARACTER(256) :: cParName    !parameter Name from the APDL
+@@ -615,6 +622,20 @@ c     a tie across the cap: leave out every point at that distance
+       cParName='WMAT_THRESHOLD'
+       CALL parevl(cParName,0,0,0,dp1(1),chValue,Si_Kerr)
+       sLdp_WMatThres = dp1(1)
++      sLdp_FaceNormals = 0.0D0
++      cParName='FACE_NORMALS'
++      CALL parevl(cParName,0,0,0,dp1(1),chValue,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) sLdp_FaceNormals = dp1(1)
++      sLdp_FaceWeight = 1.0D0
++      cParName='FACE_WEIGHT'
++      CALL parevl(cParName,0,0,0,dp1(1),chValue,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) sLdp_FaceWeight = dp1(1)
++!     A-69: SURF_BETA = the weight scale of the surface-point fits (the
++!     interior BETA_STAR 0.2 leaves only the nearest points with weight)
++      sLdp_SurfBeta = sLdp_BetaStar
++      cParName='SURF_BETA'
++      CALL parevl(cParName,0,0,0,dp1(1),chValue,Si_Kerr)
++      IF (Si_Kerr .EQ. 0 .AND. dp1(1) .GT. 0.0D0) sLdp_SurfBeta = dp1(1)
+ 
+        HALF=0.5D0
+  
+@@ -772,7 +793,7 @@ c     a tie across the cap: leave out every point at that distance
+        !      mW(ii,ii)= 1
+        mWNode(ii,ii)=EXP(-0.5D0*((4.0D0*SQRT((vdxNode(ii)**2.0D0)
+      & +(vdyNode(ii)**2.0D0)+(vdzNode(ii)**2.0D0)))
+-     & /sLdp_BetaStar)**2.0D0)
++     & /sLdp_SurfBeta)**2.0D0)
+              !Check if the value is smaller than 1.0D-8
+              IF(mWNode(ii,ii) .LE. sLdp_WMatThres)THEN
+                    mWNode(ii,ii)=0.0D0
+@@ -780,10 +801,23 @@ c     a tie across the cap: leave out every point at that distance
+              !mWNode(ii,ii)= 1
+        ENDDO
+        mWNode(sGi_NeighCnt+1,sGi_NeighCnt+1)=1.0D0!1.0D5!10.0D8
++       IF (sLdp_FaceNormals .GT. 0.5D0) THEN
++!        A-69: no constraint row along the averaged normal; the face
++!        constraints are added to the normal equations below
++         mANode(sGi_NeighCnt+1,1:3) = 0.0D0
++         mWNode(sGi_NeighCnt+1,sGi_NeighCnt+1) = 0.0D0
++       END IF
+  
+        mAtransNode=TRANSPOSE(mANode)
+        mResult1Node=MATMUL(mAtransNode,mWNode)
+        mResult2Node=MATMUL(mResult1Node,mANode)
++       IF (sLdp_FaceNormals .GT. 0.5D0) THEN
++         DO Si_FaceA = 1, 3
++           IF (ABS(vLdp_Normals(Si_FaceA)) .GT. 0.3D0)
++     &       mResult2Node(Si_FaceA,Si_FaceA) =
++     &         mResult2Node(Si_FaceA,Si_FaceA) + sLdp_FaceWeight
++         END DO
++       END IF
+        mResult3Node=mResult2Node
+        CALL InversGauss(mResult3Node,4)
+        mResult4Node=MATMUL(mResult3Node,mAtransNode)

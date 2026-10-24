@@ -1,0 +1,170 @@
+﻿diff --git a/F:/biofilm_upf_living13/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living14/Ussfin_P21-V21_Conection_Test.F
+index 76e6aa6..b6201f8 100644
+--- a/F:/biofilm_upf_living13/Ussfin_P21-V21_Conection_Test.F
++++ b/F:/biofilm_upf_living14/Ussfin_P21-V21_Conection_Test.F
+@@ -379,6 +379,20 @@ c **********  a user subroutine called after a substep  **********
+ !     faces), instead of the nearest-point mean of SURF_NEAREST
+       DOUBLE PRECISION Sdp_SurfFit, SFB1F, SFB2F
+       LOGICAL SFFIT
++!     pde-fem-biofilm 24 Oct 2026 (A-70): MIRROR_FILE = 1 reads
++!     mirror_ops.txt (lap, dx, dy, dz at the integration points, only
++!     integration-point columns, zero flux by mirrored neighbours) and
++!     uses them for the gradients of phi and c in the front term and
++!     for the Laplacian of c and a in the PARDISO systems (rows of the
++!     integration points; the surface columns of those rows are 0)
++      DOUBLE PRECISION Sdp_MirrorFile
++      LOGICAL, SAVE :: lL_Mirror = .FALSE., lL_MirrorRead = .FALSE.
++      INTEGER, SAVE :: Si_MrNnz(4)
++      INTEGER, ALLOCATABLE, SAVE :: vLi_MrRow(:,:), vLi_MrCol(:,:)
++      INTEGER, ALLOCATABLE, SAVE :: vLi_MrPos(:)
++      DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_MrVal(:,:)
++      INTEGER Si_MrK, Si_MrI, Si_MrN, Si_MrJ
++      DOUBLE PRECISION Sdp_MrG(3), Sdp_MrC(3)
+       LOGICAL, SAVE :: lL_MmsInit = .FALSE.
+       INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+@@ -1489,6 +1503,53 @@ c **********  a user subroutine called after a substep  **********
+         PRINT *, 'IKM: MMS_SRC: phi started from phi_m, q, r =',
+      &    Sdp_MmsQ, Sdp_MmsR
+       END IF
++      Sdp_MirrorFile = 0.0D0
++      C_ParName='MIRROR_FILE'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_MirrorFile = Sdp1
++      IF (Sdp_MirrorFile .GT. 0.5D0 .AND. .NOT. lL_MirrorRead) THEN
++        lL_MirrorRead = .TRUE.
++        OPEN(82, FILE='mirror_ops.txt', STATUS='OLD')
++        READ(82,*) Si_MrN
++        IF (Si_MrN .NE. nGP) THEN
++          PRINT *, 'IKM: mirror_ops.txt is for', Si_MrN, 'points, not',
++     &      nGP, ' -- MIRROR_FILE ignored'
++          CLOSE(82)
++        ELSE
++          ALLOCATE(vLi_MrRow(nGP+1, 4))
++          DO Si_MrK = 1, 4
++            READ(82,*) Si_MrNnz(Si_MrK)
++            IF (Si_MrK .EQ. 1) THEN
++              ALLOCATE(vLi_MrCol(Si_MrNnz(1), 4), vLdp_MrVal(Si_MrNnz(1), 4))
++              ALLOCATE(vLi_MrPos(Si_MrNnz(1)))
++            END IF
++            READ(82,*) (vLi_MrRow(Si_MrI, Si_MrK), Si_MrI = 1, nGP + 1)
++            DO Si_MrI = 1, Si_MrNnz(Si_MrK)
++              READ(82,*) vLi_MrCol(Si_MrI, Si_MrK), vLdp_MrVal(Si_MrI, Si_MrK)
++            END DO
++          END DO
++          CLOSE(82)
++!         the position of each Laplacian entry in the NEM pattern
++          vLi_MrPos(:) = 0
++          DO Si_MrI = 1, nGP
++            DO Si_MrK = vLi_MrRow(Si_MrI, 1), vLi_MrRow(Si_MrI+1, 1) - 1
++              DO Si_MrJ = vGi_RowPtr_T(Si_MrI), vGi_RowPtr_T(Si_MrI+1) - 1
++                IF (vGi_ColID_T(Si_MrJ) .EQ. vLi_MrCol(Si_MrK, 1))
++     &            vLi_MrPos(Si_MrK) = Si_MrJ
++              END DO
++              IF (vLi_MrPos(Si_MrK) .EQ. 0) THEN
++                PRINT *, 'IKM: mirror entry outside the NEM pattern',
++     &            Si_MrI, vLi_MrCol(Si_MrK, 1), ' -- MIRROR_FILE ignored'
++                Si_MrN = -1
++              END IF
++            END DO
++          END DO
++          IF (Si_MrN .EQ. nGP) THEN
++            lL_Mirror = .TRUE.
++            PRINT *, 'IKM: MIRROR_FILE read, nnz', Si_MrNnz
++          END IF
++        END IF
++      END IF
+       Sdp_WallSens = 1.0D0
+       C_ParName='WALL_SENS'
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+@@ -1781,6 +1842,8 @@ c **********  a user subroutine called after a substep  **********
+ !$OMP& PRIVATE(Sdp_LwGx, Sdp_LwGy, Sdp_LwGz, Sdp_LwA, Sdp_LwAdd)
+ !$OMP& SHARED(Sdp_FrontUpw, lL_UpwFile, vLi_UpRow, vLi_UpCol, vLdp_UpVal)
+ !$OMP& PRIVATE(Sdp_FU, Sdp_FUsp, Sdp_FUn, Sdp_FUg, Si_UpK, Si_UpSide)
++!$OMP& SHARED(lL_Mirror, vLi_MrRow, vLi_MrCol, vLdp_MrVal, vLi_MrPos)
++!$OMP& PRIVATE(Sdp_MrG, Sdp_MrC, Si_MrK, Si_MrI)
+ !$OMP& SHARED(Sdp_MmsSrc, Sdp_MmsQ, Sdp_MmsR, vGdp_PosX_0, vGdp_PosY_0, vGdp_PosZ_0)
+ !$OMP& PRIVATE(Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc, Sdp_MmsPhim, Sdp_MmsCm)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+@@ -2225,6 +2288,18 @@ c **********  a user subroutine called after a substep  **********
+       Sdp_GradXBio1 = Vdp3(1)
+       Sdp_GradYBio1 = Vdp3(2)
+       Sdp_GradZBio1 = Vdp3(3)
++      IF (lL_Mirror) THEN
++        Sdp_MrG(:) = 0.0D0
++        DO Si_MrI = 1, 3
++          DO Si_MrK = vLi_MrRow(ID, Si_MrI+1), vLi_MrRow(ID+1, Si_MrI+1) - 1
++            Sdp_MrG(Si_MrI) = Sdp_MrG(Si_MrI) + vLdp_MrVal(Si_MrK, Si_MrI+1)
++     &        * vGdp_Bio1_n1(vLi_MrCol(Si_MrK, Si_MrI+1))
++          END DO
++        END DO
++        Sdp_GradXBio1 = Sdp_MrG(1)
++        Sdp_GradYBio1 = Sdp_MrG(2)
++        Sdp_GradZBio1 = Sdp_MrG(3)
++      END IF
+       
+ 
+ !Berechnung Gradient Bio 2
+@@ -2306,6 +2381,18 @@ c **********  a user subroutine called after a substep  **********
+       Sdp_GradXNut1 = Vdp3(1)
+       Sdp_GradYNut1 = Vdp3(2)
+       Sdp_GradZNut1 = Vdp3(3)
++      IF (lL_Mirror) THEN
++        Sdp_MrC(:) = 0.0D0
++        DO Si_MrI = 1, 3
++          DO Si_MrK = vLi_MrRow(ID, Si_MrI+1), vLi_MrRow(ID+1, Si_MrI+1) - 1
++            Sdp_MrC(Si_MrI) = Sdp_MrC(Si_MrI) + vLdp_MrVal(Si_MrK, Si_MrI+1)
++     &        * vGdp_Nut1_n1(vLi_MrCol(Si_MrK, Si_MrI+1))
++          END DO
++        END DO
++        Sdp_GradXNut1 = Sdp_MrC(1)
++        Sdp_GradYNut1 = Sdp_MrC(2)
++        Sdp_GradZNut1 = Sdp_MrC(3)
++      END IF
+ 
+ !Berechnung Gradient Nutrient 2
+       Vdp3(:)=0.0D0
+@@ -2959,6 +3046,8 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+ !$OMP& SHARED(vGdp_M_Nut1, vGdp_RHS_Nut1)
+ !$OMP& SHARED(Sdp_MmsSrc, Sdp_MmsQ, Sdp_MmsR, vGdp_PosX_0, vGdp_PosY_0, vGdp_PosZ_0)
+ !$OMP& SHARED(sGdp_Beta1, sGdp_HalfVelo11, sGdp_MaxGrowth11, sGdp_OriWeight11, sGdp_Time, sGdp_dTime, Sdp_tt)
++!$OMP& SHARED(lL_Mirror, vLi_MrRow, vLi_MrCol, vLdp_MrVal, vLi_MrPos)
++!$OMP& PRIVATE(Si_MrK)
+ !$OMP& PRIVATE(Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc, Sdp_MmsPhim, Sdp_MmsCm)
+ !$OMP& SHARED(vGdp_M_Nut2, vGdp_RHS_Nut2)
+ !$OMP& SHARED(vGdp_Bio1_n1, vGdp_Bio2_n1)
+@@ -3105,6 +3194,16 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+      &                                    vGdp_Lap_T(Row_S:Row_E)
+             vGdp_M_Nut2(Row_S:Row_E) = sGdp_Diff2*
+      &                                    vGdp_Lap_T(Row_S:Row_E)
++            IF (lL_Mirror .AND. ii .LE. nGP) THEN
++              vGdp_M_Nut1(Row_S:Row_E) = 0.0D0
++              vGdp_M_Nut2(Row_S:Row_E) = 0.0D0
++              DO Si_MrK = vLi_MrRow(ii, 1), vLi_MrRow(ii+1, 1) - 1
++                vGdp_M_Nut1(vLi_MrPos(Si_MrK)) = sGdp_Diff1
++     &            * vLdp_MrVal(Si_MrK, 1)
++                vGdp_M_Nut2(vLi_MrPos(Si_MrK)) = sGdp_Diff2
++     &            * vLdp_MrVal(Si_MrK, 1)
++              END DO
++            END IF
+      
+             vGdp_RHS_Nut1(ii) = sGdp_Consumption11*vGdp_Bio1_n(ii)
+      &                        + sGdp_Consumption12*vGdp_Bio2_n(ii)
+@@ -3124,7 +3223,7 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+               vGdp_RHS_Nut1(ii) = 0.0D0
+               IF (Sdp_MmsSrc .GT. 0.5D0) THEN
+                 Sdp1 = MIN(MAX(vGdp_Bio1_n(ii), 0.0D0), 1.0D0)
+-                Sdp_MmsT = sGdp_Time - sGdp_dTime + Sdp_tt + Sdp_dt
++                Sdp_MmsT = sGdp_Time
+                 CALL mms_eval(vGdp_PosX_0(ii), vGdp_PosY_0(ii),
+      &            vGdp_PosZ_0(ii), Sdp_MmsT, sGdp_Beta1, Sdp_MmsR,
+      &            sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,
+@@ -3383,7 +3482,7 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+       IDHelp = Vi_Nut1GP_List(ii)
+       Sdp_Nut1Val = sGdp_Nut1start
+       IF (Sdp_MmsSrc .GT. 0.5D0) THEN
+-        Sdp_MmsT = sGdp_Time - sGdp_dTime + Sdp_tt + Sdp_dt
++        Sdp_MmsT = sGdp_Time
+         CALL mms_eval(vGdp_PosX_0(IDHelp), vGdp_PosY_0(IDHelp),
+      &    vGdp_PosZ_0(IDHelp), Sdp_MmsT, sGdp_Beta1, Sdp_MmsR,
+      &    sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,

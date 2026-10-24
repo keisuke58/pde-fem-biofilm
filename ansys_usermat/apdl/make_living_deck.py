@@ -139,6 +139,11 @@ def main():
                          "so r times the point spacing / 4); needs --lap-file")
     ap.add_argument("--front-upwind", action="store_true", help="A-64 (build living11): one-sided MLS gradients of phi in the front term (grad_upw.txt of build_grad_upw_a64.py)")
     ap.add_argument("--mms", action="store_true", help="A-65 (build living12): manufactured solution of abaqus_living/mms.py (MMS_SRC = 1): growth off, phi_min 2 (point model never starts), no antibiotic, quasi-static c")
+    ap.add_argument("--face-normals", action="store_true", help="A-69 (build living13): one zero-gradient constraint per face at the surface points (edges two, corners three)")
+    ap.add_argument("--face-weight", type=float, default=1.0)
+    ap.add_argument("--mirror", action="store_true", help="A-70 (build living14): MLS operators with mirrored neighbours (mirror_ops.txt of build_mirror_ops_a70.py) for the gradients and the nutrient Laplacian; phi Laplacian from lap_cons.txt of the same script")
+    ap.add_argument("--surf-beta", type=float, default=0.0, help="A-69: weight scale of the surface-point fits (0 = BETA_STAR)")
+    ap.add_argument("--surf-fit", action="store_true", help="A-69: phi at the surface points from the element's constrained fit (needs lap_cons.txt built with --surf-fit)")
     ap.add_argument("--sensor-pow", type=float, default=2.0)
     ap.add_argument("--wall-sens", type=float, default=1.0, help="A-63: lower bound of the sensor at points whose stencil reaches the boundary (1 = full added diffusion)")
     ap.add_argument("--quarter", action="store_true",
@@ -250,7 +255,8 @@ def main():
             f"LAP_FILE = {int(a.lap_file)}{nl}NEM_DUMP = {int(a.nem_dump)}{nl}FRONT_DUMP = {(a.front_dump or 0.0)!r}{nl}"
             f"SURF_FIX_OFF = {int(a.surf_fix_off)}{nl}"
             f"! A-59 (build living10){nl}LW_SENSOR = {int(a.lw_sensor is not None)}{nl}BETA_ART = {(a.lw_sensor or 0.0)!r}{nl}"
-            f"SENSOR_POW = {a.sensor_pow!r}{nl}WALL_SENS = {a.wall_sens!r}{nl}FRONT_UPWIND = {int(a.front_upwind)}{nl}MMS_SRC = {int(a.mms)}{nl}")
+            f"SENSOR_POW = {a.sensor_pow!r}{nl}WALL_SENS = {a.wall_sens!r}{nl}FRONT_UPWIND = {int(a.front_upwind)}{nl}MMS_SRC = {int(a.mms)}{nl}"
+            f"FACE_NORMALS = {int(a.face_normals)}{nl}FACE_WEIGHT = {a.face_weight!r}{nl}SURF_FIT = {int(a.surf_fit)}{nl}SURF_BETA = {a.surf_beta!r}{nl}MIRROR_FILE = {int(a.mirror)}{nl}")
     text = text[:m.end()] + new + text[m.end():]
     text = replace_cmblock(text, "BIOFILM1", bio1)
     if nut1 is not None:
