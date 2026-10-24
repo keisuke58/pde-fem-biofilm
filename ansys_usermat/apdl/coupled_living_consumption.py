@@ -150,15 +150,21 @@ INIT_NODAL = "--init-nodal" in sys.argv   # A-46: the initial phi of the Abaqus 
 MMS = "--mms" in sys.argv
 T_AB = -1.0 if CHECK else (float(sys.argv[sys.argv.index("--tab") + 1]) if "--tab" in sys.argv else 0.5)
 CASE = CASES["fritsch_2sp"]
-# --case k26c3: Klempt et al. 2026, Table 2, case 3 (four species): A = 1/2 [[1,5,5,5],[5,1,3,3],[5,3,1,2],[5,3,2,1]],
+# --case k26c3: Klempt et al. 2026, Table 2, case 3 (four species): A = [[1,5,5,5],[5,1,3,3],[5,3,1,2],[5,3,2,1]] (below),
 # eta = (0.8, 1, 1.5, 2), b = (0.4, 0.3, 0.2, 0.1), start phi = 0.02 each, c* = 50 + 50 sin(500 t) (use --c-sine),
 # alpha* = 10 from the start (use --tab 0), dt = 1e-4, 1500 steps (the four-species runs; antibiotic of case 4 after
 # one third = step 500). In the examples species 1, 2 play "A" (seed) and 3, 4 play "B" (corners).
-K26C3 = "--case" in sys.argv and sys.argv[sys.argv.index("--case") + 1] == "k26c3"
+# --case k26c4: Table 2, case 4 (the four-species antibiotic case): b = (10, 2, 1, 0.01), c* = 100, alpha* = 100 from
+# step 500 (use --alpha0 100 --tab 0.333333).
+# A without the printed 1/2 of Eq. 19 (24 Oct 2026): the paper's four-species figures are reproduced only with the
+# integer matrix (JAXFEM/klempt2026_cases.py, A_FIGURE_SCALE_4SP; 0D check: case 4 phibar_end 0/0.001/0.001/0.929 vs
+# the figure's ~0/0/0/0.93, with the 1/2 0.457 and case 3 does not grow). Runs before 24 Oct used the 1/2.
+K26C3 = "--case" in sys.argv and sys.argv[sys.argv.index("--case") + 1] in ("k26c3", "k26c4")
+K26C4 = "--case" in sys.argv and sys.argv[sys.argv.index("--case") + 1] == "k26c4"
 if K26C3:
-    CASE = dict(n=4, A=[[0.5, 2.5, 2.5, 2.5], [2.5, 0.5, 1.5, 1.5], [2.5, 1.5, 0.5, 1.0], [2.5, 1.5, 1.0, 0.5]],
-                b=[0.4, 0.3, 0.2, 0.1], eta=[0.8, 1.0, 1.5, 2.0], phi_init=[0.02] * 4, c_star=100.0,
-                alpha_star=10.0, dt=1.0e-4, steps=1500)
+    CASE = dict(n=4, A=[[1.0, 5.0, 5.0, 5.0], [5.0, 1.0, 3.0, 3.0], [5.0, 3.0, 1.0, 2.0], [5.0, 3.0, 2.0, 1.0]],
+                b=[10.0, 2.0, 1.0, 0.01] if K26C4 else [0.4, 0.3, 0.2, 0.1], eta=[0.8, 1.0, 1.5, 2.0],
+                phi_init=[0.02] * 4, c_star=100.0, alpha_star=10.0, dt=1.0e-4, steps=1500)
 N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
@@ -224,7 +230,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else "_snaps") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
-       + ("_k26c3" if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
+       + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -233,7 +239,7 @@ if FORTRAN:
         _A, _b = CASE["A"], CASE["b"]
         _th = [_A[0][0], _A[0][1], _A[1][1], _b[0], _b[1], _A[2][2], _A[2][3], _A[3][3], _b[2], _b[3],
                _A[0][2], _A[0][3], _A[1][2], _A[1][3], 0, 0, 0, 0, 0, 0]
-        _eco = ROOT / "abaqus_composition" / "eco_klempt2026_t2c3.txt"
+        _eco = ROOT / "abaqus_composition" / ("eco_klempt2026_t2c4.txt" if K26C4 else "eco_klempt2026_t2c3A1.txt")
         _eco.write_text("4\n100.0 10.0\n" + " ".join(f"{v:g}" for v in CASE["eta"] + [1.0]) + "\n"
                         + " ".join(f"{v:g}" for v in _th) + "\nphi_init 0.02 0.02 0.02 0.02 0.0\nnewton 50 1e-20\n")
     if "--alpha0" in sys.argv:                  # the same file with alpha*_0 replaced (second line: c*_0 alpha*_0)

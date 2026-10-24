@@ -16,3 +16,7 @@ Check: with c = a = 1 everywhere the seed point model equals the point model alo
 step 0.004) and 1.7e-14 (2 species); the reference uses a converged Newton (6 fixed iterations are not converged for
 four species: 5.6e-6). Assumption: t in sin(500 t) is the point-model time in units of Time (dt = 1e-4), as the
 paper's text states the step size in Time; the paper's "t > 500" of case 4 counts steps.
+
+**24 Oct 2026 (A-77):** the four-species matrix A is used without the printed 1/2 of Eq. 19 (only then are the
+paper's Figs. 10 and 11 reproduced, 0D check `checks_a38_a39/k26_point_check_a77.py`). Files with `_k26c3_` (no `A1`)
+used the 1/2 and are superseded; current: `_k26c3A1_` (case 3) and `_k26c4_` (case 4, the antibiotic case).
