@@ -58,7 +58,7 @@ T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
 MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "")
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("" if "--snaps" not in sys.argv else "_snaps")
 
 
 # ---------------------------------------------------------------- maze
@@ -255,7 +255,7 @@ def main():
     snaps, hist = {}, dict(t=[0.0], colonised=[int(on.sum())], reach_um=[], living_mean=[], c_mean=[])
     path_r = np.hypot(X, Y)
     nsteps = int(round(T_END / DT_C))
-    every = max(1, nsteps // 10)
+    every = max(1, nsteps // _opt("--snaps", 10, int))   # --snaps N: N snapshots (videos)
     t0 = time.time()
     print(f"maze: {K} rings, sectors {nsec}, grid {shp}, open cells {int(open_.sum())}, dt {dt:.2e} x {per}",
           flush=True)
