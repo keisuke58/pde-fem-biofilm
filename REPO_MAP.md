@@ -150,3 +150,14 @@ Historical notes live under [`archive/`](archive/); the root scripts, reports an
 | `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex` | Chapter 4 rewrite |
 | `slides_coupling_1020.tex` | key-point slides |
 | `references/Klempt2026_multispecies_interaction_AAM.pdf` | the point model paper (published, CC BY 4.0) |
+| [`abaqus_living/`](abaqus_living/) | the coupling as an Abaqus user element (`living_uel.f90`: Galerkin, SUPG, inherit rule layout 3), deck generators (cube, maze), manufactured solution, run summaries; the Keio continuation |
+| `papers/coupling_paper/` | the coupling paper: outline, Sec. 3 verification draft, figures (convergence, maze) |
+
+## Working notes of IKMHIWI03 (Oct 2026)
+
+| file | what |
+|---|---|
+| `BACKUP_PLAN_2026-12.ja.md` | what to back up from IKMHIWI03 before the end of December (`scripts/backup_untracked_ikmhiwi03.ps1`) |
+| `DAILY_REPORT_TRIP.ja.md` | daily reports written while the user was travelling (21-24 Oct) |
+| `MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` | draft mail about the neighbour choice of the element (not sent) |
+| `speaker_notes_3d_demo.md` | speaker notes for the 3D demonstration videos |
