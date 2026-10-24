@@ -3012,3 +3012,4 @@ A-66：`make_living_deck.py --lw-sensor auto`（r h/8 を格子から）、`veri
 - 実装：Python `coupled_living_consumption.py --inherit-living`（`living_start`、テスト `tests/test_inherit_living_rule.py`）、迷路 `maze_coupled_2d.py --inherit-living`、Abaqus `living_uel.f90` の PROPS(21)（0 位置・初期状態、1 隣の状態、2 隣の生きている組成）、`make_living_inp.py --rule start|inherit|living`、`make_maze_inp.py --inherit-living`（layout 4）。Abaqus 8³ の試し：中央の A の割合 0.95、角 0.05 のまま広がる。
 - ψ の扱いはほとんど効かない：迷路の最後の生きている量 0.347（状態ごと）/ 0.346（生きている組成）、立方体の分けた例の種 0.153 / 0.152。効くのは組成を受け継ぐかどうか（位置のルールなら迷路 0.036）。
 - **修論の表（A-75）は新しいルールで出し直す**：`F:\auto_night\night3.ps1`（64³ の 5 例、分けた例・混合例の 32³ と 128³）。ANSYS の本番（u8_）は位置のルールのまま（ANSYS は方程式の確認に使うので問題ない）。本文には「新しく届いた点は隣の生きている組成を受け継ぐ（仮定）。位置で決める場合との差は立方体で数 %、迷路では抗菌薬の後の回復の有無を決める」と書く。
+- **A-74 訂正**：「layout 2 の約 5 倍の時間」は誤り。迷路 T\* = 60 は layout 2 で 3.1/3.4 時間、受け継ぐ版で 3.2/4.6 時間（後者は他の計算と重なった）。受け継ぎの処理の費用は小さい。
