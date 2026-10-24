@@ -42,7 +42,9 @@ def grid(T):
         g.cell_data[k] = v.ravel(order="F")
     cc = g.cell_centers().points
     # shown: the biofilm phi_3D > 0.5 outside the front octant x > 0, y > 0, z > 0 (cut away so the inside shows)
-    g.cell_data["show"] = ((g.cell_data["phi"] > 0.5) & ~((cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0))).astype(float)
+    octant = (cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0)
+    g.cell_data["show"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
+    g.cell_data["cube"] = (~octant).astype(float)
     return g
 
 
@@ -56,7 +58,7 @@ title = {"separate_ab": "separate start: A in the centre seed, B in the four edg
 for T in times:
     g = grid(T)
     # a new plotter per frame: Plotter.clear() also removes the lights (flat, unshaded surfaces)
-    pl = pv.Plotter(shape=(1, 3), off_screen=True, window_size=(1920, 672), border=False)
+    pl = pv.Plotter(shape=(1, 4), off_screen=True, window_size=(2560, 672), border=False)
     # the biofilm with the front octant cut away (grid())
     bio = g.threshold(0.5, scalars="show")
     for col, (field, label, cmap) in enumerate((("shareA", "share of A", "coolwarm_r"),
@@ -68,16 +70,20 @@ for T in times:
         pl.camera_position = cam
         pl.add_text(("(a) biofilm (phi > 0.5), front octant cut away" if col == 0
                      else "(b) living volume fraction"), font_size=11, position="upper_left")
-    pl.subplot(0, 2)
-    pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
-    pl.add_mesh(g.cell_data_to_point_data().slice(normal="z", origin=(0, 0, 0)), scalars="c", cmap="Blues", clim=(0.4, 1), **LIT,
-                scalar_bar_args=BAR("nutrient c (z = 0)", 0.05, 0.4))
-    pl.add_mesh(g.cell_data_to_point_data().slice(normal="x", origin=(0, 0, 0)), scalars="a", cmap="Reds", clim=(0, 1), **LIT,
-                scalar_bar_args=BAR("antibiotic a (x = 0)", 0.55, 0.4))
-    pl.camera_position = cam
-    pl.add_text(f"(c) T* = {T:.3f}", font_size=11, position="upper_left")
+    # (c), (d): nutrient and antibiotic in the whole cube, the same front octant cut away
+    cube = g.threshold(0.5, scalars="cube")
+    for col, (field, label, cmap, clim, txt) in enumerate((
+            ("c", "nutrient c", "Blues", (0.4, 1), "(c) nutrient c (supplied from y = -1)"),
+            ("a", "antibiotic a", "Reds", (0, 1), "(d) antibiotic a (from the outer shell)"))):
+        pl.subplot(0, 2 + col)
+        pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
+        pl.add_mesh(cube, scalars=field, cmap=cmap, clim=clim, **LIT, scalar_bar_args=BAR(label, 0.2, 0.6))
+        pl.camera_position = cam
+        pl.add_text(txt, font_size=11, position="upper_left")
     pl.subplot(0, 0)
     pl.add_text(title, font_size=9, position="lower_left")
+    pl.subplot(0, 3)
+    pl.add_text(f"T* = {T:.3f}", font_size=12, position="upper_right")
     img = pl.screenshot(return_img=True)
     for _ in range(9 if T == times[-1] else 1):
         movie.append_data(img)
