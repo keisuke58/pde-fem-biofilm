@@ -178,8 +178,8 @@ A-46〜A-78）。
    IKMHIWI03 の 8³ の試し（T\* = 0.1）で、A 群の割合が中央・角とも約 0.66 に寄るのは Python の 16³ と同じ（点モデルが
    抗菌薬の前に共存へ向かう）。
 5. **迷路**：`make_maze_inp.py --tend 60 --supg [--ab] [--inherit]`、比べるのは `maze_compare_a67.py`
-   （Python の結果は `ansys_usermat/apdl/results/2026-10-maze/`）。layout 3（受け継ぐ）は 1 増分ごとに全ガウス点を
-   見るので、layout 2 の約 5 倍遅い。
+   （Python の結果は `ansys_usermat/apdl/results/2026-10-maze/`）。layout 3/4（受け継ぐ）は増分ごとに全ガウス点を
+   見るが、時間はほぼ同じ（IKMHIWI03 で T\* = 60 の迷路が layout 2 で約 3 時間、受け継ぐ版で 3〜4.5 時間）。
 6. **結果の置き場**：要約の JSON だけ git に入れ（`living_gp.txt` は大きい）、`keio/*` のブランチに push する。
 
 ## 9. Abaqus のライセンス（研究室からの連絡、2026年10月25日に追記）
