@@ -133,7 +133,7 @@ def main():
     ap.add_argument("--surf-fix-off", action="store_true",
                     help="SURF_FIX_OFF = 1 (A-49, build F:\\biofilm_upf_living9f): no surface-point update, the surface "
                          "points keep phi = 0 as in the partner's and Felix's original element")
-    ap.add_argument("--lw-sensor", type=float, default=None, metavar="BETA_ART",
+    ap.add_argument("--lw-sensor", type=str, default=None, metavar="BETA_ART",
                     help="A-59 (build living10): Lax-Wendroff term of the front plus the added diffusion BETA_ART switched by "
                          "the extremum sensor (power --sensor-pow), in place of --artdiff; BETA_ART = r h/8 (h the element size, "
                          "so r times the point spacing / 4); needs --lap-file")
@@ -202,6 +202,8 @@ def main():
     tmp.unlink()
 
     r_front = a.front * R_TABLE2
+    if a.lw_sensor is not None:                      # A-66: "auto" = r h / 8 (r times the Gauss-point spacing / 4)
+        a.lw_sensor = r_front * h / 8.0 if a.lw_sensor == "auto" else float(a.lw_sensor)
     scal = {"MY_BIOSTART1": "1.0", "MY_BIOSTART2": "0.0", "MY_NUTSTART1": "1.0",
             "MY_NUTSTART2": "1.0" if a.ab else "0.0", "MY_DIFF1": "1", "MY_DIFF2": "1",
             "CONSUMPTION11": repr(a.cons), "CONSUMPTION12": "0",
