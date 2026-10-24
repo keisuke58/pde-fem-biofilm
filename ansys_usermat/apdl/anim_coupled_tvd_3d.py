@@ -53,8 +53,33 @@ import imageio.v2 as imageio  # noqa: E402
 
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 cam = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
-title = {"separate_ab": "separate start: A in the centre seed, B in the four edges along z; c supplied from y = -1",
-         "mixed_ab": "mixed start: A and B together in the centre seed; c supplied from y = -1"}[CASE]
+title = {"separate_ab": "Separate start: species A in the centre seed, species B in the four edges along z (|x|, |y| > 0.56 mm)",
+         "mixed_ab": "Mixed start: species A and B in equal amounts together in the centre seed"}[CASE]
+CAPTION = [
+    "Coupled growth model: Klempt et al. 2024, Eqs. 34-36 (front term on, r = 10 mm/T*), with the point model of Klempt et al. 2026 "
+    "(Fritsch et al. 2025, Case I, true parameters) at every point; 2 mm cube, 64^3 finite volumes, TVD front term.",
+    title + ".",
+    "(a) Share of species A, φ_A / (φ_A + φ_B): blue = A, red = B.   (b) Living volume fraction, Σ φ̄_i with φ̄_i = φ_i ψ_i.   "
+    "Both drawn where the biofilm φ_3D > 0.5.",
+    "(c) Nutrient c, held at 1 in the bottom layer y < -0.75 mm and consumed by the living biomass.   "
+    "(d) Antibiotic a, held at 1 on the outer shell from T* = 1/3 (α*_0 = 100).   One octant (x, y, z > 0) is removed to show the inside.",
+]
+from PIL import Image, ImageDraw, ImageFont  # noqa: E402
+
+FONT = ImageFont.truetype("times.ttf", 22)
+
+
+def caption(img):
+    """the frame with a caption band of four lines below it"""
+    band = 128
+    im = Image.new("RGB", (img.shape[1], img.shape[0] + band), "white")
+    im.paste(Image.fromarray(img), (0, 0))
+    d = ImageDraw.Draw(im)
+    for i, line in enumerate(CAPTION):
+        d.text((16, img.shape[0] + 6 + 30 * i), line, fill="black", font=FONT)
+    return np.asarray(im)
+
+
 for T in times:
     g = grid(T)
     # a new plotter per frame: Plotter.clear() also removes the lights (flat, unshaded surfaces)
@@ -68,7 +93,7 @@ for T in times:
         if bio.n_cells:
             pl.add_mesh(bio, scalars=field, cmap=cmap, clim=(0, 1), **LIT, scalar_bar_args=BAR(label, 0.2, 0.6))
         pl.camera_position = cam
-        pl.add_text(("(a) biofilm (phi > 0.5), one octant removed for the view" if col == 0
+        pl.add_text(("(a) share of species A" if col == 0
                      else "(b) living volume fraction"), font_size=11, position="upper_left")
     # (c), (d): nutrient and antibiotic in the whole cube, the same front octant cut away
     cube = g.threshold(0.5, scalars="cube")
@@ -80,11 +105,10 @@ for T in times:
         pl.add_mesh(cube, scalars=field, cmap=cmap, clim=clim, **LIT, scalar_bar_args=BAR(label, 0.2, 0.6))
         pl.camera_position = cam
         pl.add_text(txt, font_size=11, position="upper_left")
-    pl.subplot(0, 0)
-    pl.add_text(title, font_size=9, position="lower_left")
+
     pl.subplot(0, 3)
     pl.add_text(f"T* = {T:.3f}", font_size=12, position="upper_right")
-    img = pl.screenshot(return_img=True)
+    img = caption(pl.screenshot(return_img=True))
     for _ in range(9 if T == times[-1] else 1):
         movie.append_data(img)
     if T == times[-1]:
