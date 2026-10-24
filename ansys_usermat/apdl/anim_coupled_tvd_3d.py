@@ -28,9 +28,13 @@ CASE = sys.argv[1]
 # inherit: newly colonised points take the phi-weighted mean state of their colonised neighbours (A spreads from the
 # seed, B from the edge blocks); default: the start state by position, as in the ANSYS runs (A-19)
 INHERIT = "inherit" in sys.argv[2:]
+# obst: the four rigid columns of Klempt 2024 Sect. 4.3 (coupled_living_consumption.py --obstacle columns), drawn grey
+OBST = "obst" in sys.argv[2:]
+BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
+        [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
 TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc{'' if INHERIT else '_startpos'}{MIX}_a100_gab1_gc1_tab0.333333"
-       "_snaps_tvd_wgmirror_fast")
+       "_snaps_tvd_wgmirror_fast" + ("_obstcolumns" if OBST else ""))
 Z = np.load(ROOT / "figdata" / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 n = Z[f"phi_{times[0]}"].shape[0]
@@ -59,7 +63,8 @@ CAPTION = "\n".join([
     r"$\bar\phi_i=\phi_i\psi_i$, both shown where the biofilm $\phi_{3D} > 0.5$.",
     r"(c) Nutrient $c$, held at 1 in the bottom layer $y < -0.75$ mm and consumed by the living biomass. "
     r"(d) Antibiotic $a$, held at 1 on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$). "
-    r"One octant ($x, y, z > 0$) is removed to show the inside.",
+    r"One octant ($x, y, z > 0$) is removed to show the inside."
+    + ("\n" + r"Grey: four rigid columns (Klempt et al. 2024, Sect. 4.3), no biofilm and no flux in them." if OBST else ""),
     r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $K = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
     r"$d = 10^8$ mm$^2$/$T^*$ for $c$ and $a$, $g\,l^2/d = 1$ for $c$ and $a$, "
     r"$\phi_{\min} = 10^{-3}$, $\alpha^*_0 = 100$ from $T^* = 1/3$.",
@@ -74,7 +79,11 @@ def grid(T):
     cc = g.cell_centers().points
     octant = (cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0)
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
-    g.cell_data["cube"] = (~octant).astype(float)
+    solid = np.zeros(len(cc), bool)
+    if OBST:
+        for lo, hi in BOXES:
+            solid |= np.all((cc > np.array(lo)) & (cc < np.array(hi)), axis=1)
+    g.cell_data["cube"] = (~octant & ~solid).astype(float)
     g.cell_data["living"] = (g.cell_data["bio"] * (g.cell_data["L"] > 0.01)).astype(float)
     g.cell_data["ab"] = (g.cell_data["cube"] * (g.cell_data["a"] > 0.01)).astype(float)
     return g
@@ -85,6 +94,9 @@ def view(mesh, field, cmap, clim):
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
     if mesh.n_cells:
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
+    if OBST:
+        for lo, hi in BOXES:
+            pl.add_mesh(pv.Box((lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])), color=(0.55, 0.55, 0.55), **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.98)
     img = pl.screenshot(return_img=True)
@@ -95,7 +107,7 @@ def view(mesh, field, cmap, clim):
 fig = plt.figure(figsize=(16, 6.2), dpi=160)                  # 2560 x 992 px (multiples of 16)
 ax_img = [fig.add_axes([0.005 + 0.25 * k, 0.385, 0.24, 0.56]) for k in range(4)]
 ax_bar = [fig.add_axes([0.04 + 0.25 * k, 0.355, 0.17, 0.019]) for k in range(4)]
-out = ROOT / "assets" / f"anim_coupled_tvd_{CASE}{'_inherit' if INHERIT else ''}.mp4"
+out = ROOT / "assets" / f"anim_coupled_tvd_{CASE}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
     g = grid(T)
