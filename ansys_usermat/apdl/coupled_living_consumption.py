@@ -141,6 +141,8 @@ ANSYS_BC = "--ansys-bc" in sys.argv
 # Without it they inherit the phi-weighted mean state of their colonised neighbours (psi included).
 START_POSITION = "--start-position" in sys.argv
 INHERIT_LIVING = "--inherit-living" in sys.argv     # see living_start()
+LIMITER = sys.argv[sys.argv.index("--limiter") + 1] if "--limiter" in sys.argv else "minmod"   # TVD slope limiter (A-83)
+BUDGET = "--budget" in sys.argv                      # volume integrals of the terms of Eq. 34 over the run (A-83)
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
 MIX_EQUAL = "--mix-equal" in sys.argv
@@ -225,14 +227,14 @@ RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + ("_budget" if BUDGET else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_tvd" if TVD else "") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -391,7 +393,11 @@ def upwind_adv_tvd(u, v):
         mp, mm = _nb(a, 1), _nb(a, -1)
         up_, um_ = np.roll(u, -1, a), np.roll(u, 1, a)
         dp = np.where(mp, up_ - u, 0.0); dm = np.where(mm, u - um_, 0.0)
-        sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.abs(dp), np.abs(dm)), 0.0)
+        if LIMITER == "mc":                   # monotonized central (van Leer 1977): less clipping than minmod
+            sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * np.abs(dp), 2 * np.abs(dm)),
+                                                                  0.5 * np.abs(dp + dm)), 0.0)
+        else:
+            sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.abs(dp), np.abs(dm)), 0.0)
         # v > 0: (u_{i+1/2}^- - u_{i-1/2}^-) / H, faces from the left cells
         fr = u + 0.5 * sl; fl = np.roll(u + 0.5 * sl, 1, a)
         dP = np.where(mm, (fr - fl) / H, 0.0)
@@ -702,6 +708,15 @@ def run(example, antibiotic):
                     d = np.where(OBST, 0.0, d)
                     return d, np.where(OBST, 0.0, ka * ph)
                 return d, ka * ph
+            if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
+                lap_b = np.empty_like(phi)
+                (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
+                vol = H ** 3 * (4 if FAST else 1)
+                bud = hist.setdefault("budget", dict(front=0.0, penalty=0.0, growth=0.0, diffusion=0.0))
+                bud["front"] += dt * vol * float((front_lw(phi, cf, dt) if LW else front(phi, cf)).sum()) if FRONT else 0.0
+                bud["penalty"] -= dt * vol * float((W.PENALTY * (np.maximum(phi - 1, 0) + np.minimum(phi, 0))).sum())
+                bud["growth"] += dt * vol * float((ka * alpha).sum())
+                bud["diffusion"] += dt * vol * float((W.BETA * lap_b).sum())
             if LW:                                      # explicit Euler, as the element
                 k1 = f(phi, alpha, tk)
                 phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
@@ -805,6 +820,9 @@ def run(example, antibiotic):
         snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
+    if BUDGET:
+        hist["budget"]["phi_total_end"] = float(phi.sum()) * H ** 3 * (4 if FAST else 1)
+        print("budget of phi_3D [mm^3]:", {k_: round(v_, 5) for k_, v_ in hist["budget"].items()}, flush=True)
     return hist, snaps
 
 

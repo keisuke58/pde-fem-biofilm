@@ -58,7 +58,33 @@ module living_uel_mod
   integer, save :: rule_mode = 0
   double precision, save :: phi_min_s = 1d-3, h_el = 0d0
   logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
+  ! Thread-parallel Abaqus (cpus > 1, mp_mode threads; 25 Oct 2026): the elements run UEL at the same time, and
+  ! keep_record grows and writes the shared arrays out_rec, gp_g (and h_el), so it is under Abaqus mutex 1 (initialised
+  ! in UEXTERNALDB, LOP 0).  inh_g, inh_ok, any_started are written only in UEXTERNALDB (LOP 2, serial) and read in UEL.
+  ! The gfortran builds (test_tangent.f90) have no Abaqus library: without ABQ_FORTRAN (defined by Abaqus's
+  ! compile_fortran) the three wrappers are empty.
+#ifdef ABQ_FORTRAN
+#include <SMAAspUserSubroutines.hdr>
+#endif
 contains
+
+  subroutine shared_init()
+#ifdef ABQ_FORTRAN
+    call MutexInit(1)
+#endif
+  end subroutine shared_init
+
+  subroutine shared_lock()
+#ifdef ABQ_FORTRAN
+    call MutexLock(1)
+#endif
+  end subroutine shared_lock
+
+  subroutine shared_unlock()
+#ifdef ABQ_FORTRAN
+    call MutexUnlock(1)
+#endif
+  end subroutine shared_unlock
 
   subroutine shape(r, s, t, N, dNr)
     double precision, intent(in) :: r, s, t
@@ -343,6 +369,8 @@ contains
     double precision, allocatable :: tmp(:,:,:)
     double precision :: N(8), dN(3, 8), w, x(3), ph, c, a, p, s(6), vm, sh
     integer :: q, i, nnew
+    ! the whole record under the mutex: another element may be growing (move_alloc) the arrays this one writes
+    call shared_lock()
     if (jel > out_nel) then
       nnew = max(jel, 2 * out_nel, 64)
       allocate(tmp(NREC, NGP, nnew)); tmp = -1d30
@@ -373,6 +401,7 @@ contains
       end if
       out_rec(:, q, jel) = [x(1), x(2), x(3), ph, c, a, sv(13, q), living(sv(1:12, q)) * sv(14, q), vm, p, sh, sv(14, q)]
     end do
+    call shared_unlock()
   end subroutine keep_record
 
   subroutine living_share(g)
@@ -518,20 +547,29 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
                       DTIME, PARAMS(*), ADLMAG(MDLOAD, *), PREDEF(2, NPREDF, NNODE), DDLMAG(MDLOAD, *), &
                       PNEWDT, PERIOD
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
-  logical :: ok, wk
-  if (.not. eco_inited) call eco_native_init()
-  mms_on = .false.
-  if (NPROPS >= 19) mms_on = (PROPS(19) > 0.5d0)
-  supg_on = .false.
-  if (NPROPS >= 20) supg_on = (PROPS(20) > 0.5d0)
-  mms_t = TIME(1) + DTIME
-  layout_mode = nint(PROPS(14)); phi_min_s = PROPS(11)
-  rule_mode = 0
-  if (layout_mode == 3) rule_mode = 1
-  if (layout_mode == 4) rule_mode = 2
+  logical :: ok, wk, lmms, lsupg
+  integer :: lay, rule
+  if (.not. eco_inited) call eco_native_init()     ! never reached in Abaqus: UEXTERNALDB LOP 0 runs first, serial
+  ! the module switches from PROPS: every element finds the same values (one property set), so with threads they are
+  ! stored only when they differ (the first call) and read afterwards; mms_t changes each increment and is written
+  ! by every element (the same value, before its own use; an aligned 8-byte store)
+  lmms = .false.
+  if (NPROPS >= 19) lmms = (PROPS(19) > 0.5d0)
+  lsupg = .false.
+  if (NPROPS >= 20) lsupg = (PROPS(20) > 0.5d0)
+  lay = nint(PROPS(14))
+  rule = 0
+  if (lay == 3) rule = 1
+  if (lay == 4) rule = 2
   if (NPROPS >= 21) then
-    if (PROPS(21) > 0.5d0) rule_mode = nint(PROPS(21))
+    if (PROPS(21) > 0.5d0) rule = nint(PROPS(21))
   end if
+  if (mms_on .neqv. lmms) mms_on = lmms
+  if (supg_on .neqv. lsupg) supg_on = lsupg
+  if (lmms) mms_t = TIME(1) + DTIME
+  if (layout_mode /= lay) layout_mode = lay
+  if (phi_min_s /= PROPS(11)) phi_min_s = PROPS(11)
+  if (rule_mode /= rule) rule_mode = rule
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   ! the state variables are those of the start of the increment at every iteration: the point model is advanced
@@ -561,6 +599,7 @@ subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
   double precision :: TIME(2), DTIME
   character(len=32) :: s
   if (LOP == 0) then
+    call shared_init()                                  ! mutex 1 of keep_record, before any element call
     if (.not. eco_inited) call eco_native_init()
   else if (LOP == 2) then
     every = 40
