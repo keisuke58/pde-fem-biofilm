@@ -49,10 +49,12 @@ def measures(path):
     return out
 
 
+# --py fresh: the Python run with the Abaqus rule for newly reached cells (maze_coupled_2d.py --fresh-start)
+SUF = "_fresh" if "fresh" in sys.argv[3:] else ""
 res = {}
 for p, ab in zip(sys.argv[1:3], (False, True)):
     A = measures(p)
-    P = json.load(open(RES / f"maze_h4_tend60{'_ab' if ab else ''}_k24fig.json"))["hist"]
+    P = json.load(open(RES / f"maze_h4_tend60{'_ab' if ab else ''}_k24fig{SUF}.json"))["hist"]
     tp = np.array(P["t"][1:])
     rows = []
     for t in sorted(A):
@@ -68,5 +70,5 @@ for p, ab in zip(sys.argv[1:3], (False, True)):
         print(f"  {r['t']:5.1f}  {r['abaqus']['colonised']:6d} / {r['python']['colonised']:6d}   "
               f"{'-' if ra is None else f'{ra:6.1f}'} / {'-' if rp is None else f'{rp:6.1f}'}   "
               f"{r['abaqus']['living_mean']:.3f} / {r['python']['living_mean']:.3f}")
-(RES / "maze_abaqus_vs_python_a67.json").write_text(json.dumps(res, indent=1))
-print("wrote", RES / "maze_abaqus_vs_python_a67.json")
+(RES / f"maze_abaqus_vs_python{SUF}_a67.json").write_text(json.dumps(res, indent=1))
+print("wrote", RES / f"maze_abaqus_vs_python{SUF}_a67.json")

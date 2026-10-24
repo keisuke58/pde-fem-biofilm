@@ -45,6 +45,9 @@ def _opt(name, default, cast=float):
 H = _opt("--h", 2.5)                  # cell size [um]
 T_END = _opt("--tend", 1.0)
 AB = "--ab" in sys.argv
+# --fresh-start: newly reached cells start from the colony's start state, as the Abaqus element (make_maze_inp.py);
+# default: the phi-weighted mean state of their colonised neighbours
+FRESH = "--fresh-start" in sys.argv
 SEED = _opt("--seed", 1, int)
 # Klempt 2024 Table 6 (maze), the rest Table 2
 D_NUT, BETA, K_ALPHA, R_FRONT, K_MONOD, G_CONS = 1e13, 10.0, 1e-6, 200.0, 1.0, 1e8
@@ -55,7 +58,7 @@ T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
 MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "")
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "")
 
 
 # ---------------------------------------------------------------- maze
@@ -276,18 +279,24 @@ def main():
         G = Gf.reshape(shp + (12,))
         c, a = c_new, a_new
         new = (phi >= PHI_MIN) & ~on & open_
-        if new.any():                          # neighbours' phi-weighted mean state (as the cube examples)
-            w = np.where(on, phi, 0.0)
-            num = np.zeros_like(G); den = np.zeros(shp)
+        if new.any() and FRESH:                # --fresh-start: the colony's start state (the Abaqus element, layout 2)
+            G[new] = start_state(*START)
+            on = on | new
+        while new.any() and not FRESH:         # neighbours' phi-weighted mean state (as the cube examples), layer by
+            w = np.where(on, phi, 0.0)         # layer until every new cell connected to the colony has a state (the
+            num = np.zeros_like(G); den = np.zeros(shp)   # front can move more than one cell per step, 24 Oct)
             for (ax, s), m in O.NB.items():
                 wn = np.where(m, np.roll(w, -s, ax), 0.0)
                 num += wn[..., None] * np.roll(G, -s, ax); den += wn
             fill = new & (den > 0)
+            if not fill.any():
+                break
             gs = num[fill] / den[fill][:, None]
             gs[:, :2] = np.clip(gs[:, :2], 1e-10, None)
             gs[:, 5] = 1.0 - gs[:, :2].sum(1)
             G[fill] = gs
             on = on | fill
+            new = (phi >= PHI_MIN) & ~on & open_
         Lv = np.where(on, living(G.reshape(-1, 12)).reshape(shp), 0.0)
         hist["t"].append(T1); hist["colonised"].append(int(on.sum()))
         hist["reach_um"].append(float(path_r[phi >= 0.5].min()) if (phi >= 0.5).any() else None)

@@ -8,9 +8,9 @@
     "living_mean": 0.9156741262438394
    },
    "python": {
-    "colonised": 1273,
+    "colonised": 1266,
     "reach_um": 102.17631819555841,
-    "living_mean": 0.9470647109740581
+    "living_mean": 0.9470632926754841
    }
   },
   {
@@ -21,9 +21,9 @@
     "living_mean": 0.9255585672909091
    },
    "python": {
-    "colonised": 1784,
+    "colonised": 1755,
     "reach_um": 70.71067811865476,
-    "living_mean": 0.9398931022262259
+    "living_mean": 0.9400069569130716
    }
   },
   {
@@ -34,9 +34,9 @@
     "living_mean": 0.9298293820362672
    },
    "python": {
-    "colonised": 2776,
+    "colonised": 2758,
     "reach_um": 70.71067811865476,
-    "living_mean": 0.9403338729492007
+    "living_mean": 0.9404322665285637
    }
   },
   {
@@ -47,9 +47,9 @@
     "living_mean": 0.9318841579769649
    },
    "python": {
-    "colonised": 3564,
+    "colonised": 3547,
     "reach_um": 70.9365914038728,
-    "living_mean": 0.9373337050346648
+    "living_mean": 0.9374144657156717
    }
   },
   {
@@ -60,9 +60,9 @@
     "living_mean": 0.9266504415214175
    },
    "python": {
-    "colonised": 4227,
+    "colonised": 4212,
     "reach_um": 70.9365914038728,
-    "living_mean": 0.9339266141325916
+    "living_mean": 0.9340486892069254
    }
   },
   {
@@ -73,9 +73,9 @@
     "living_mean": 0.9214013714460314
    },
    "python": {
-    "colonised": 4293,
+    "colonised": 4276,
     "reach_um": 73.59347797189639,
-    "living_mean": 0.9269337824892391
+    "living_mean": 0.9270944845033138
    }
   },
   {
@@ -86,9 +86,9 @@
     "living_mean": 0.9201129064680461
    },
    "python": {
-    "colonised": 4362,
+    "colonised": 4348,
     "reach_um": 74.02702209328699,
-    "living_mean": 0.922806725776218
+    "living_mean": 0.9229189505785497
    }
   },
   {
@@ -99,9 +99,9 @@
     "living_mean": 0.9202253279166279
    },
    "python": {
-    "colonised": 4423,
+    "colonised": 4410,
     "reach_um": 74.02702209328699,
-    "living_mean": 0.9206768460995864
+    "living_mean": 0.920746299605434
    }
   },
   {
@@ -112,9 +112,9 @@
     "living_mean": 0.920791645182463
    },
    "python": {
-    "colonised": 4476,
-    "reach_um": 43.9089968002003,
-    "living_mean": 0.9197417518700053
+    "colonised": 4463,
+    "reach_um": 43.174066289845804,
+    "living_mean": 0.9197946816475863
    }
   },
   {
@@ -125,9 +125,9 @@
     "living_mean": 0.9216641595729189
    },
    "python": {
-    "colonised": 4521,
+    "colonised": 4512,
     "reach_um": 42.04759208325728,
-    "living_mean": 0.9195294854493065
+    "living_mean": 0.9195707156584546
    }
   }
  ],
@@ -140,9 +140,9 @@
     "living_mean": 0.9156741262438394
    },
    "python": {
-    "colonised": 1273,
+    "colonised": 1266,
     "reach_um": 102.17631819555841,
-    "living_mean": 0.9470647109740581
+    "living_mean": 0.9470632926754841
    }
   },
   {
@@ -153,9 +153,9 @@
     "living_mean": 0.9255585672909091
    },
    "python": {
-    "colonised": 1784,
+    "colonised": 1755,
     "reach_um": 70.71067811865476,
-    "living_mean": 0.9398931022262259
+    "living_mean": 0.9400069569130716
    }
   },
   {
@@ -166,9 +166,9 @@
     "living_mean": 0.9298293820362672
    },
    "python": {
-    "colonised": 2776,
+    "colonised": 2758,
     "reach_um": 70.71067811865476,
-    "living_mean": 0.9403338729492007
+    "living_mean": 0.9404322665285637
    }
   },
   {
@@ -179,9 +179,9 @@
     "living_mean": 0.06926734561603123
    },
    "python": {
-    "colonised": 3703,
+    "colonised": 3688,
     "reach_um": 70.71067811865476,
-    "living_mean": 0.12267176100274411
+    "living_mean": 0.12086976641236433
    }
   },
   {
@@ -192,9 +192,9 @@
     "living_mean": 0.06540736762922651
    },
    "python": {
-    "colonised": 4280,
+    "colonised": 4276,
     "reach_um": 70.9365914038728,
-    "living_mean": 0.2667453289327243
+    "living_mean": 0.26660144969342103
    }
   },
   {
@@ -205,9 +205,9 @@
     "living_mean": 0.06428540342500001
    },
    "python": {
-    "colonised": 4357,
+    "colonised": 4352,
     "reach_um": 51.92301994298868,
-    "living_mean": 0.31741672577275876
+    "living_mean": 0.31772742870813203
    }
   },
   {
@@ -218,9 +218,9 @@
     "living_mean": 0.0641957515732049
    },
    "python": {
-    "colonised": 4431,
+    "colonised": 4426,
     "reach_um": 42.04759208325728,
-    "living_mean": 0.32627760299777275
+    "living_mean": 0.3265983310289866
    }
   },
   {
@@ -231,9 +231,9 @@
     "living_mean": 0.06409117697300785
    },
    "python": {
-    "colonised": 4488,
+    "colonised": 4484,
     "reach_um": 42.04759208325728,
-    "living_mean": 0.3345030815283572
+    "living_mean": 0.3347663579184292
    }
   },
   {
@@ -244,9 +244,9 @@
     "living_mean": 0.06573848077859082
    },
    "python": {
-    "colonised": 4541,
+    "colonised": 4538,
     "reach_um": 86.02325267042627,
-    "living_mean": 0.3412959157239804
+    "living_mean": 0.34169284687099094
    }
   },
   {
@@ -257,9 +257,9 @@
     "living_mean": 0.06689969494819466
    },
    "python": {
-    "colonised": 4591,
+    "colonised": 4587,
     "reach_um": 132.5745073534124,
-    "living_mean": 0.34654928322717526
+    "living_mean": 0.3468142138492539
    }
   }
  ]
