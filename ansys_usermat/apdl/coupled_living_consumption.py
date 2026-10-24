@@ -76,6 +76,7 @@ LW = "--lw" in sys.argv                    # A-59: the scheme planned for ANSYS:
 SENSOR_POW = float(sys.argv[sys.argv.index("--sensor-pow") + 1]) if "--sensor-pow" in sys.argv else 1.0
 SENSOR = "--sensor" in sys.argv            # A-59: added diffusion r h/4 switched by s = |sum_j (u_j - u_i)| / sum_j |u_j - u_i|
                                           # (1 at extrema and kinks, O(h) where smooth: O(h^2) there), face value max(s_i, s_j)
+FRONT_EPS2 = float(os.environ.get("FRONT_EPS2", "1e-6"))   # regularisation of |grad c| in the front direction (A-65 test)
 TVD = "--tvd" in sys.argv                  # second-order upwind (MUSCL, minmod) for the front term instead of first order
 # --wall-grad W: the normal component of the gradient in the wall cells: onesided (np.gradient), mirror (zero-flux
 # ghost, (u1 - u0) / 2h) or zero. A-38: with the one-sided value the central front term of --artdiff treats the wall
@@ -408,7 +409,7 @@ def upwind_adv(u, v):
 def front_central(phi, c):
     """the front term with central differences for grad phi (the element's NEM gradient is of central type)"""
     g = grad(c)
-    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
     sp_ = R_FRONT * c / (K_MONOD + c)
     gp = grad(phi)
     return -sum(sp_ * g[a] / nrm * gp[a] for a in range(3))
@@ -429,7 +430,7 @@ def lap_sensor(u):
 def front_lw(phi, c, dt_):
     """central front term plus the Lax-Wendroff correction (dt/2) v . grad(v . grad phi), v = r c/(K + c) n_c (A-59)"""
     g = grad(c)
-    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
     v = [R_FRONT * c / (K_MONOD + c) * x / nrm for x in g]
     w = sum(v[a] * gp for a, gp in enumerate(grad(phi)))
     return -w + 0.5 * dt_ * sum(v[a] * gw for a, gw in enumerate(grad(w)))
@@ -440,7 +441,7 @@ def front(phi, c):
     if ARTDIFF:
         return front_central(phi, c)
     g = grad(c)
-    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + 1e-6)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
     sp_ = R_FRONT * c / (K_MONOD + c)
     return -upwind_adv(phi, [sp_ * x / nrm for x in g])
 
