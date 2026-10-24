@@ -725,13 +725,19 @@ def run(example, antibiotic):
                 G[new] = start_state(*MIX_START)
             on = on | new
         elif new.any():
-            num, den = neighbours_mean(G, np.where(on, phi, 0.0))
-            fill = new & (den > 0)
-            gs = num[fill] / den[fill][:, None]
-            gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
-            gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)               # the point model's own constraint
-            G[fill] = gs
-            on = on | fill
+            # layer by layer from the colonised cells until every new cell connected to them has a state (the front
+            # can move several cells in one outer step; one layer per step left cells without a point model, 24 Oct)
+            while True:
+                new = (phi >= PHI_MIN) & ~on
+                num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                fill = new & (den > 0)
+                if not fill.any():
+                    break
+                gs = num[fill] / den[fill][:, None]
+                gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+                gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)               # the point model's own constraint
+                G[fill] = gs
+                on = on | fill
         # (5) living biomass for the next step
         L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
         hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
@@ -744,7 +750,7 @@ def run(example, antibiotic):
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
-            shA = np.where(on, ph[..., 0] / np.maximum(ph.sum(-1), 1e-30), np.nan)
+            shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # group A (species 1, 2 of 4)
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
         if time.time() - t_ck > CKPT_SEC:

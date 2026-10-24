@@ -25,9 +25,12 @@ import figstyle  # noqa: E402
 
 figstyle.apply()
 CASE = sys.argv[1]
+# inherit: newly colonised points take the phi-weighted mean state of their colonised neighbours (A spreads from the
+# seed, B from the edge blocks); default: the start state by position, as in the ANSYS runs (A-19)
+INHERIT = "inherit" in sys.argv[2:]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
-TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc_startpos{MIX}_a100_gab1_gc1_tab0.333333_snaps"
-       "_tvd_wgmirror_fast")
+TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc{'' if INHERIT else '_startpos'}{MIX}_a100_gab1_gc1_tab0.333333"
+       "_snaps_tvd_wgmirror_fast")
 Z = np.load(ROOT / "figdata" / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 n = Z[f"phi_{times[0]}"].shape[0]
@@ -35,13 +38,18 @@ h = 2.0 / n
 LIT = dict(ambient=0.45, diffuse=0.6, specular=0.0)   # light shading, colours close to the colour bar
 CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
 # field, mesh ("bio": phi_3D > 0.5, "cube": all), colour map, range, title, colour-bar label
+# mesh: "bio" = phi_3D > 0.5, "living" = bio and sum phibar > 0.01, "cube" = all, "ab" = a > 0.01 (values near 0
+# are left out, i.e. transparent)
 PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"(a) share of species A", r"$\phi_A/(\phi_A+\phi_B)$"),
-          ("L", "bio", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
+          ("L", "living", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
-          ("a", "cube", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$")]
-START = {"separate_ab": r"Separate start: species A in the centre seed, species B in the four edges along $z$ "
-                        r"($|x|, |y| > 0.56$ mm).",
-         "mixed_ab": r"Mixed start: species A and B in equal amounts together in the centre seed."}[CASE]
+          ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$")]
+START = {"separate_ab": r"Separate start: species A in the centre seed, species B in four small blocks at the vertical edges "
+                        r"($|x|, |y| > 0.75$ mm). " + (r"New biofilm takes the composition of its neighbours." if INHERIT
+                        else r"New biofilm starts as B where $|x|, |y| > 0.56$ mm, else as A (rule of the ANSYS runs)."),
+         "mixed_ab": r"Mixed start: species A and B in equal amounts together in the centre seed. "
+                     + (r"New biofilm takes the composition of its neighbours." if INHERIT
+                        else r"New biofilm starts from the mixed start state (rule of the ANSYS runs).")}[CASE]
 CAPTION = "\n".join([
     r"Coupled growth model: Klempt et al. 2024, Eqs. 34$-$36, front term on ($r = 10$ mm/$T^*$), with the point model "
     r"of Klempt et al. 2026 (Fritsch et al. 2025, Case I, true parameters) at every point; 2 mm cube, $64^3$ finite "
@@ -51,7 +59,12 @@ CAPTION = "\n".join([
     r"$\bar\phi_i=\phi_i\psi_i$, both shown where the biofilm $\phi_{3D} > 0.5$.",
     r"(c) Nutrient $c$, held at 1 in the bottom layer $y < -0.75$ mm and consumed by the living biomass. "
     r"(d) Antibiotic $a$, held at 1 on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$). "
-    r"One octant ($x, y, z > 0$) is removed to show the inside."])
+    r"One octant ($x, y, z > 0$) is removed to show the inside.",
+    r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $K = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
+    r"$d = 10^8$ mm$^2$/$T^*$ for $c$ and $a$, $g\,l^2/d = 1$ for $c$ and $a$, "
+    r"$\phi_{\min} = 10^{-3}$, $\alpha^*_0 = 100$ from $T^* = 1/3$.",
+    r"Sources: $\beta, r, k_\alpha, d, g$ from Klempt et al. 2024, Table 2, converted to the 2 mm cube; $\alpha^*_0$ and the onset "
+    r"from Klempt et al. 2026, case 4. $T^* = 1$ is the duration of the point model's data (Fritsch et al. 2025)."])
 
 
 def grid(T):
@@ -62,6 +75,8 @@ def grid(T):
     octant = (cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0)
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
     g.cell_data["cube"] = (~octant).astype(float)
+    g.cell_data["living"] = (g.cell_data["bio"] * (g.cell_data["L"] > 0.01)).astype(float)
+    g.cell_data["ab"] = (g.cell_data["cube"] * (g.cell_data["a"] > 0.01)).astype(float)
     return g
 
 
@@ -71,20 +86,20 @@ def view(mesh, field, cmap, clim):
     if mesh.n_cells:
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     pl.camera_position = CAM
-    pl.camera.zoom(1.15)
+    pl.camera.zoom(0.98)
     img = pl.screenshot(return_img=True)
     pl.close()
     return img
 
 
-fig = plt.figure(figsize=(16, 5.6), dpi=160)                  # 2560 x 896 px (multiples of 16)
-ax_img = [fig.add_axes([0.005 + 0.25 * k, 0.315, 0.24, 0.62]) for k in range(4)]
-ax_bar = [fig.add_axes([0.04 + 0.25 * k, 0.285, 0.17, 0.022]) for k in range(4)]
-out = ROOT / "assets" / f"anim_coupled_tvd_{CASE}.mp4"
+fig = plt.figure(figsize=(16, 6.2), dpi=160)                  # 2560 x 992 px (multiples of 16)
+ax_img = [fig.add_axes([0.005 + 0.25 * k, 0.385, 0.24, 0.56]) for k in range(4)]
+ax_bar = [fig.add_axes([0.04 + 0.25 * k, 0.355, 0.17, 0.019]) for k in range(4)]
+out = ROOT / "assets" / f"anim_coupled_tvd_{CASE}{'_inherit' if INHERIT else ''}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
     g = grid(T)
-    meshes = {"bio": g.threshold(0.5, scalars="bio"), "cube": g.threshold(0.5, scalars="cube")}
+    meshes = {m: g.threshold(0.5, scalars=m) for m in ("bio", "living", "cube", "ab")}
     for k, (field, mesh, cmap, clim, title, label) in enumerate(PANELS):
         ax, cb = ax_img[k], ax_bar[k]
         ax.clear(); cb.clear()
@@ -99,7 +114,7 @@ for T in times:
     for t in list(fig.texts):
         t.remove()
     fig.text(0.995, 0.965, rf"$T^* = {T:.3f}$", ha="right", va="top", fontsize=15)
-    fig.text(0.01, 0.175, CAPTION, ha="left", va="top", fontsize=11.5, linespacing=1.5)
+    fig.text(0.01, 0.255, CAPTION, ha="left", va="top", fontsize=11.5, linespacing=1.5)
     fig.canvas.draw()
     img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
     for _ in range(9 if T == times[-1] else 1):
