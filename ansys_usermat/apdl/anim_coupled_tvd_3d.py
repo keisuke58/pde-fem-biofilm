@@ -68,7 +68,7 @@ for T in times:
         if bio.n_cells:
             pl.add_mesh(bio, scalars=field, cmap=cmap, clim=(0, 1), **LIT, scalar_bar_args=BAR(label, 0.2, 0.6))
         pl.camera_position = cam
-        pl.add_text(("(a) biofilm (phi > 0.5), front octant cut away" if col == 0
+        pl.add_text(("(a) biofilm (phi > 0.5), one octant removed for the view" if col == 0
                      else "(b) living volume fraction"), font_size=11, position="upper_left")
     # (c), (d): nutrient and antibiotic in the whole cube, the same front octant cut away
     cube = g.threshold(0.5, scalars="cube")
