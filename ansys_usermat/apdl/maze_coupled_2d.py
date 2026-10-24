@@ -48,6 +48,7 @@ AB = "--ab" in sys.argv
 # --fresh-start: newly reached cells start from the colony's start state, as the Abaqus element (make_maze_inp.py);
 # default: the phi-weighted mean state of their colonised neighbours
 FRESH = "--fresh-start" in sys.argv
+LIVING = "--inherit-living" in sys.argv   # inherit the living composition with a fresh psi (25 Oct)
 SEED = _opt("--seed", 1, int)
 # Klempt 2024 Table 6 (maze), the rest Table 2
 D_NUT, BETA, K_ALPHA, R_FRONT, K_MONOD, G_CONS = 1e13, 10.0, 1e-6, 200.0, 1.0, 1e8
@@ -58,7 +59,7 @@ T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
 MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("" if "--snaps" not in sys.argv else "_snaps")
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("_inhliv" if LIVING else "") + ("" if "--snaps" not in sys.argv else "_snaps")
 
 
 # ---------------------------------------------------------------- maze
@@ -292,6 +293,14 @@ def main():
             if not fill.any():
                 break
             gs = num[fill] / den[fill][:, None]
+            if LIVING:                         # --inherit-living: the neighbours' amount, shared as their living biomass,
+                ph = np.clip(gs[:, :2], 0.0, None)       # psi of the start state (what arrives by growth is alive)
+                lv = ph * gs[:, 6:8]
+                tot, sl = ph.sum(1, keepdims=True), lv.sum(1, keepdims=True)
+                share = np.where(sl > 1e-12, lv / np.maximum(sl, 1e-30), ph / np.maximum(tot, 1e-30))
+                gs = np.zeros_like(gs)
+                gs[:, :2] = tot * share
+                gs[:, 6:11] = 0.999
             gs[:, :2] = np.clip(gs[:, :2], 1e-10, None)
             gs[:, 5] = 1.0 - gs[:, :2].sum(1)
             G[fill] = gs

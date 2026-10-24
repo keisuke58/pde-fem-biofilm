@@ -30,7 +30,8 @@ ap.add_argument("--tend", type=float, default=20.0)
 ap.add_argument("--ab", action="store_true")
 ap.add_argument("--t-ab", type=float, default=None)
 ap.add_argument("--supg", action="store_true")
-ap.add_argument("--inherit", action="store_true")   # A-74: newly reached points take their neighbours' state (layout 3)
+ap.add_argument("--inherit", action="store_true")
+ap.add_argument("--inherit-living", action="store_true")   # A-82: the living composition, fresh psi (layout 4)   # A-74: newly reached points take their neighbours' state (layout 3)
 a = ap.parse_args()
 
 m = np.loadtxt(a.mask, dtype=str, comments="#")
@@ -42,7 +43,7 @@ beta0, r_front, K, q, ka, s_link = 1e-5, 0.2, 1.0, 10.0, 1e-6, 0.1
 n_sub = max(1, math.ceil(s_link * a.dt / 1e-4 - 1e-9))
 beta = beta0 + (0.0 if a.supg else r_front * h / 4.0)
 tot = 0.55
-props = [10.0, 0.49, 1e-3, beta, ka, 5.0, r_front, K, q, q, 0.001, s_link, n_sub, 3 if a.inherit else 2, 0.0, tot, 0.25, 0.30]
+props = [10.0, 0.49, 1e-3, beta, ka, 5.0, r_front, K, q, q, 0.001, s_link, n_sub, 4 if a.inherit_living else (3 if a.inherit else 2), 0.0, tot, 0.25, 0.30]
 if a.supg:
     props += [0.0, 1.0]
 

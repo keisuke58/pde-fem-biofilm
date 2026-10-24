@@ -556,7 +556,8 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
 !         ANSYS mode 11 and the Python reference); a point starts when phi_n >= phi_min, from the start state of its
 !         position (separate: species B where |x| and |y| > x_split, A elsewhere; mixed: the mixed start).
 ! PROPS (NPROPS = 18): E_bio, nu, f_void, beta, k_alpha, penalty, r, K, q_c, q_a, phi_min, s, n_sub, layout (1 separate,
-!   2 mixed, 3 mixed start, then inherited from the neighbours: A-74), x_split, total start amount,
+!   2 mixed, 3 mixed start, then inherited from the neighbours: A-74; 4 as 3 with the living composition and a fresh
+!   psi: A-82), x_split, total start amount,
 !   mixed start of species 1 and 2
 
       module living_uel_mod
@@ -582,6 +583,9 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
         double precision, allocatable, save :: gp_g(:,:,:), inh_g(:,:,:)
         logical, allocatable, save :: inh_ok(:,:)
         integer, save :: layout_mode = 0
+! rule for newly reached points (A-82): 0 start state (layout 1 by position, 2 mixed), 1 the neighbours' state,
+! 2 the neighbours' living composition with a fresh psi; PROPS(21), or layout 3 / 4 (= mixed start with rule 1 / 2)
+        integer, save :: rule_mode = 0
         double precision, save :: phi_min_s = 1d-3, h_el = 0d0
         logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
       contains
@@ -686,7 +690,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
               if (.not. ok) return
               sv(1:12, q) = gnew
             else if (sv(14, q) < 0.5d0 .and. ph >= props(11)) then
-              if (nint(props(14)) == 3 .and. kstep >= 2 .and. any_started) then
+              if (rule_mode >= 1 .and. kstep >= 2 .and. any_started) then
 ! layout 3: the state inherited at the end of the last increment (none yet: wait, as the Python fill)
                 if (allocated(inh_ok)) then
                   if (jel <= size(inh_ok, 2)) then
@@ -901,6 +905,25 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
           end do
         end subroutine keep_record
 
+        subroutine living_share(g)
+! layout 4 (25 Oct): the inherited amount shared among the species as their living biomass phi_i psi_i (growth
+! spreads the biofilm, what arrives is alive), psi of the start state and gamma = 0; without living biomass the
+! shares of phi_i (as coupled_living_consumption.py living_start)
+          double precision, intent(inout) :: g(12)
+          double precision :: tot, lv(5), sl
+          integer :: m
+          m = eco_nact
+          tot = sum(g(1:m))
+          lv = 0d0
+          lv(1:m) = g(1:m) * g(7:6 + m)
+          sl = sum(lv(1:m))
+          if (sl > 1d-12) then
+            g(1:m) = tot * lv(1:m) / sl
+          end if
+          g(7:11) = 0.999d0
+          g(12) = 0d0
+        end subroutine living_share
+
         subroutine inherit_fill()
 ! layout 3: Gauss points with phi >= phi_min that have not started take the phi-weighted mean state of their
 ! started (or already filled) neighbours; repeated until nothing changes.  Neighbours: the six nearest Gauss points
@@ -978,6 +1001,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
                 if (wsum <= 0d0) cycle
                 g = g / wsum
                 g(1:5) = max(g(1:5), 0d0)
+                if (rule_mode == 2) call living_share(g)
                 g(1:eco_nact) = max(g(1:eco_nact), 1d-10)
                 g(6) = 1d0 - sum(g(1:5))                       ! the point model's own constraint
                 inh_g(:, q, e) = g; inh_ok(q, e) = .true.
@@ -1032,6 +1056,12 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
         if (NPROPS >= 20) supg_on = (PROPS(20) > 0.5d0)
         mms_t = TIME(1) + DTIME
         layout_mode = nint(PROPS(14)); phi_min_s = PROPS(11)
+        rule_mode = 0
+        if (layout_mode == 3) rule_mode = 1
+        if (layout_mode == 4) rule_mode = 2
+        if (NPROPS >= 21) then
+          if (PROPS(21) > 0.5d0) rule_mode = nint(PROPS(21))
+        end if
         Un = U(1:NDOF) - DU(1:NDOF, 1)
         sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
 ! the state variables are those of the start of the increment at every iteration: the point model is advanced
@@ -1067,7 +1097,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
           call get_environment_variable('BIOFILM_UEL_EVERY', s, status=st)
           if (st == 0) read(s, *) every
           if (KSTEP >= 2 .and. mod(KINC, every) == 0) call write_records(KSTEP, KINC, TIME(2))
-          if (layout_mode == 3) call inherit_fill()
+          if (rule_mode >= 1) call inherit_fill()
         else if (LOP == 3) then
           call write_records(KSTEP, KINC, TIME(2))
         end if

@@ -140,6 +140,7 @@ ANSYS_BC = "--ansys-bc" in sys.argv
 # runs (A-19): in "separate" species B where |x| and |y| > 0.5625 mm, species A elsewhere; in "mixed" the mixed start.
 # Without it they inherit the phi-weighted mean state of their colonised neighbours (psi included).
 START_POSITION = "--start-position" in sys.argv
+INHERIT_LIVING = "--inherit-living" in sys.argv     # see living_start()
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
 MIX_EQUAL = "--mix-equal" in sys.argv
@@ -224,7 +225,7 @@ RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -554,6 +555,25 @@ def ab_value(T):
     return 1.0
 
 
+# --inherit-living (25 Oct): a newly reached point takes the amount of its neighbours, shared among the species as
+# their LIVING biomass phibar_i = phi_i psi_i (growth spreads the biofilm: what arrives is alive), with psi of the start
+# state (0.999) and gamma = 0; without living neighbours the shares of phi_i. Default inheritance takes the neighbours'
+# whole state, dead cells included (flag INHERIT_LIVING with the other options above).
+
+
+def living_start(gs):
+    ph = np.clip(gs[:, :N_SP], 0.0, None)
+    lv = ph * gs[:, 6:6 + N_SP]
+    tot = ph.sum(1, keepdims=True)
+    sl = lv.sum(1, keepdims=True)
+    share = np.where(sl > 1e-12, lv / np.maximum(sl, 1e-30), ph / np.maximum(tot, 1e-30))
+    out = np.zeros_like(gs)
+    out[:, :N_SP] = tot * share
+    out[:, 6:11] = 0.999
+    out[:, 11] = 0.0
+    return out
+
+
 def neighbours_mean(G, w):
     """phi-weighted mean of the 6-neighbour states (w = weight per cell, 0 where not colonised)."""
     num = np.zeros_like(G); den = np.zeros(G.shape[:3])
@@ -740,6 +760,8 @@ def run(example, antibiotic):
                 if not fill.any():
                     break
                 gs = num[fill] / den[fill][:, None]
+                if INHERIT_LIVING:
+                    gs = living_start(gs)
                 gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
                 gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)               # the point model's own constraint
                 G[fill] = gs

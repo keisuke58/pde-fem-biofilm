@@ -41,6 +41,9 @@ ap.add_argument("--no-ab", action="store_true")
 ap.add_argument("--obstacle", choices=["columns"], help="the four rigid bars of coupled_living_consumption.py --obstacle columns (Klempt 2024 Sect. 4.3): their elements are left out (no biofilm, no nutrient, zero flux through their faces); the mechanics has no contact yet (A-47)")
 ap.add_argument("--front", type=float, default=1.0, help="front term factor (0: off, beta = 0.02; as the Python --front)")
 ap.add_argument("--four", action="store_true", help="A-79: four species, Klempt et al. 2026 Table 2 (case 3 or 4 by BIOFILM_ECO_CASE): start 0.02 each (total 0.08), s = 0.15 (1500 steps of 1e-4 in T* = 1); separate: species 1, 2 in the seed, 3, 4 in the corners (Python GROUP_A)")
+ap.add_argument("--rule", choices=["start", "inherit", "living"], default="start",
+                help="A-82: newly reached points take the start state by position (the ANSYS runs), the neighbours' "
+                     "state, or the neighbours' living composition with a fresh psi (PROPS(21) = 0, 1, 2)")
 ap.add_argument("--supg", action="store_true", help="A-54: SUPG for the front term (PROPS(20) = 1) instead of the added diffusion r h/4 (beta = beta_0)")
 ap.add_argument("--quarter", action="store_true", help="A-53: only x > 0, z > 0 (the examples are symmetric in x and z, as the Python --fast); "
                 "symmetry u_x = 0 on x = 0, u_z = 0 on z = 0 and u_y = 0 at (0, -1, 0) instead of the corner constraints")
@@ -64,6 +67,8 @@ if a.mms:
     a.no_ab = True
 if a.supg:
     props += [0.0] * (19 - len(props)) + [1.0]
+if a.rule != "start":
+    props += [0.0] * (20 - len(props)) + [{"inherit": 1.0, "living": 2.0}[a.rule]]
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)
 cells8 = W.seed_cells_8(ROOT / "ansys_usermat/apdl/results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
