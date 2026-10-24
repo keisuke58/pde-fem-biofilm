@@ -174,8 +174,9 @@ A-46〜A-78）。
 4. **次の計算**：4 種（Klempt 2026 Table 2 case 4、抗菌薬で耐性の種 4 が残る例）。点モデルのファイルは
    `abaqus_composition/eco_klempt2026_t2c4_a100.txt`（行列 A は**式 19 の 1/2 なし**：論文の図はこれでしか再現しない、A-77）。
    Python の参照値（64³、TVD）：分けた例 Σφ̄ 0.762、種 1・2 の割合 0.193、α−1 9.66e−4、vM 6.22e−4 Pa（A-78 に GCI）。
-   要素は eco_nact = 4 をそのまま扱う（Python と同じ Fortran の点モデル）。layout 1（分けた例）は種 2 を角に置くので、
-   4 種では「種 1・2 が中央、種 3・4 が角」にする変更が要る（`start_state`、Python の `GROUP_A`）。
+   4 種は `make_living_inp.py ... --four`（始めの量 0.02 ずつ、s = 0.15、分けた例は種 1・2 が中央、種 3・4 が角、A-79）。
+   IKMHIWI03 の 8³ の試し（T\* = 0.1）で、A 群の割合が中央・角とも約 0.66 に寄るのは Python の 16³ と同じ（点モデルが
+   抗菌薬の前に共存へ向かう）。
 5. **迷路**：`make_maze_inp.py --tend 60 --supg [--ab] [--inherit]`、比べるのは `maze_compare_a67.py`
    （Python の結果は `ansys_usermat/apdl/results/2026-10-maze/`）。layout 3（受け継ぐ）は 1 増分ごとに全ガウス点を
    見るので、layout 2 の約 5 倍遅い。

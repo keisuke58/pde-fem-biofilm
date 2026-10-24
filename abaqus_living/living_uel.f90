@@ -106,11 +106,20 @@ contains
     g = 0d0
     if (nint(props(14)) == 1) then
       g(1:n) = 1d-6
-      if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
+      if (n == 4) then
+        ! four species (A-79, as the Python GROUP_A): species 1, 2 play A (seed), 3, 4 play B (corners)
+        if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
+          g(3:4) = (tot - 2d-6) / 2d0
+        else
+          g(1:2) = (tot - 2d-6) / 2d0
+        end if
+      else if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
         g(2) = tot - 1d-6 * (n - 1)
       else
         g(1) = tot - 1d-6 * (n - 1)
       end if
+    else if (n == 4) then
+      g(1:4) = tot / 4d0                        ! the start of Klempt 2026 Table 2: 0.02 each
     else
       g(1) = props(17); g(2) = props(18)
     end if
@@ -351,7 +360,13 @@ contains
       s = sig(:, q); s(1:3) = s(1:3) - p
       vm = sqrt(1.5d0 * (sum(s(1:3)**2) + 2d0 * sum(s(4:6)**2)))
       sh = 0d0
-      if (sum(sv(1:eco_nact, q)) > 0d0) sh = sv(1, q) / sum(sv(1:eco_nact, q))
+      if (sum(sv(1:eco_nact, q)) > 0d0) then
+        if (eco_nact == 4) then                 ! share of group A (species 1, 2)
+          sh = sum(sv(1:2, q)) / sum(sv(1:eco_nact, q))
+        else
+          sh = sv(1, q) / sum(sv(1:eco_nact, q))
+        end if
+      end if
       out_rec(:, q, jel) = [x(1), x(2), x(3), ph, c, a, sv(13, q), living(sv(1:12, q)) * sv(14, q), vm, p, sh, sv(14, q)]
     end do
   end subroutine keep_record
