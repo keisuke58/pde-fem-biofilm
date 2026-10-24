@@ -26,7 +26,8 @@
 !         ANSYS mode 11 and the Python reference); a point starts when phi_n >= phi_min, from the start state of its
 !         position (separate: species B where |x| and |y| > x_split, A elsewhere; mixed: the mixed start).
 ! PROPS (NPROPS = 18): E_bio, nu, f_void, beta, k_alpha, penalty, r, K, q_c, q_a, phi_min, s, n_sub, layout (1 separate,
-!   2 mixed), x_split, total start amount, mixed start of species 1 and 2
+!   2 mixed, 3 mixed start, then inherited from the neighbours: A-74), x_split, total start amount,
+!   mixed start of species 1 and 2
 
 module living_uel_mod
   use biofilm_py_bridge
@@ -43,6 +44,16 @@ module living_uel_mod
   ! A-54, SUPG (Brooks and Hughes 1982) for the front term instead of the added diffusion r h/4: PROPS(20) = 1 adds
   ! tau (v . grad N) times the strong residual of the phi equation (consistent, so no O(h) term); beta = beta_0 then
   logical, save :: supg_on = .false.
+  ! A-74, layout 3 (PROPS(14) = 3): a Gauss point reached in step 2 takes the phi-weighted mean state of its started
+  ! neighbours (the six nearest Gauss points on the regular grid), as the Python codes (coupled_living_consumption.py,
+  ! maze_coupled_2d.py); while no point has started yet (the colony), the mixed start state.  The element does not know its neighbours, so the
+  ! end of each increment (UEXTERNALDB, LOP 2) collects every Gauss point (keep_record), fills layer by layer until
+  ! every reached point connected to started ones has a state (inherit), and the next increment's advance takes it.
+  double precision, allocatable, save :: gp_g(:,:,:), inh_g(:,:,:)
+  logical, allocatable, save :: inh_ok(:,:)
+  integer, save :: layout_mode = 0
+  double precision, save :: phi_min_s = 1d-3, h_el = 0d0
+  logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
 contains
 
   subroutine shape(r, s, t, N, dNr)
@@ -113,11 +124,12 @@ contains
     living = sum(g(1:eco_nact) * g(7:6 + eco_nact))
   end function living
 
-  subroutine advance(Un, coords, sv, props, dt, ok)
+  subroutine advance(Un, coords, sv, props, dt, ok, jel, kstep)
     ! point model at the start of the increment: advance the started points, start the new ones
     double precision, intent(in) :: Un(NDOF), coords(3, NN), props(*), dt
     double precision, intent(inout) :: sv(NSV, NGP)
     logical, intent(out) :: ok
+    integer, intent(in) :: jel, kstep
     double precision :: N(8), dN(3, 8), w, x(3), ph, c, a, gnew(12), pint
     integer :: q, k
     ok = .true.
@@ -135,8 +147,20 @@ contains
         if (.not. ok) return
         sv(1:12, q) = gnew
       else if (sv(14, q) < 0.5d0 .and. ph >= props(11)) then
-        call start_state(props, x, sv(1:12, q))
-        sv(14, q) = 1d0
+        if (nint(props(14)) == 3 .and. kstep >= 2 .and. any_started) then
+          ! layout 3: the state inherited at the end of the last increment (none yet: wait, as the Python fill)
+          if (allocated(inh_ok)) then
+            if (jel <= size(inh_ok, 2)) then
+              if (inh_ok(q, jel)) then
+                sv(1:12, q) = inh_g(:, q, jel)
+                sv(14, q) = 1d0
+              end if
+            end if
+          end if
+        else
+          call start_state(props, x, sv(1:12, q))
+          sv(14, q) = 1d0
+        end if
       end if
       sv(15, q) = c; sv(16, q) = a
     end do
@@ -310,8 +334,13 @@ contains
       nnew = max(jel, 2 * out_nel, 64)
       allocate(tmp(NREC, NGP, nnew)); tmp = -1d30
       if (out_nel > 0) tmp(:, :, 1:out_nel) = out_rec
-      call move_alloc(tmp, out_rec); out_nel = nnew
+      call move_alloc(tmp, out_rec)
+      allocate(tmp(12, NGP, nnew)); tmp = 0d0
+      if (out_nel > 0) tmp(:, :, 1:out_nel) = gp_g
+      call move_alloc(tmp, gp_g); out_nel = nnew
     end if
+    if (h_el <= 0d0) h_el = maxval(coords(1, :)) - minval(coords(1, :))
+    gp_g(:, :, jel) = sv(1:12, :)
     do q = 1, NGP
       call gauss(coords, q, N, dN, w, x)
       ph = 0d0; c = 0d0; a = 0d0
@@ -326,6 +355,92 @@ contains
       out_rec(:, q, jel) = [x(1), x(2), x(3), ph, c, a, sv(13, q), living(sv(1:12, q)) * sv(14, q), vm, p, sh, sv(14, q)]
     end do
   end subroutine keep_record
+
+  subroutine inherit_fill()
+    ! layout 3: Gauss points with phi >= phi_min that have not started take the phi-weighted mean state of their
+    ! started (or already filled) neighbours; repeated until nothing changes.  Neighbours: the six nearest Gauss points
+    ! on the regular grid, found by the lattice index of each point (element index times 2 plus the side of the
+    ! element centre, per axis; the Gauss points sit at +-h/(2 sqrt 3) from the centre)
+    integer, allocatable :: lat(:,:,:), ke(:,:,:)
+    double precision :: lo(3), wsum, g(12), w
+    integer :: e, q, d, k(3), n(3), kk(3), s, changed, m, ne, qn
+    logical, allocatable :: done(:,:), done0(:,:)
+    if (out_nel == 0 .or. h_el <= 0d0) return
+    any_started = any(out_rec(12, :, 1:out_nel) > 0.5d0 .and. out_rec(1, :, 1:out_nel) > -1d29)
+    lo = 1d30
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        lo = min(lo, out_rec(1:3, q, e))
+      end do
+    end do
+    lo = lo - (0.5d0 - 0.5d0 / sqrt(3d0)) * h_el            ! the lowest node
+    allocate(ke(3, NGP, out_nel)); ke = -1
+    n = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        do d = 1, 3
+          m = floor((out_rec(d, q, e) - lo(d)) / h_el)
+          k(d) = 2 * m + merge(1, 0, out_rec(d, q, e) - lo(d) > (m + 0.5d0) * h_el)
+        end do
+        ke(:, q, e) = k
+        n = max(n, k + 1)
+      end do
+    end do
+    allocate(lat(0:n(1)-1, 0:n(2)-1, 0:n(3)-1)); lat = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        k = ke(:, q, e)
+        lat(k(1), k(2), k(3)) = NGP * (e - 1) + q
+      end do
+    end do
+    if (allocated(inh_ok)) deallocate(inh_ok, inh_g)
+    allocate(inh_ok(NGP, out_nel), inh_g(12, NGP, out_nel), done(NGP, out_nel), done0(NGP, out_nel))
+    inh_ok = .false.; inh_g = 0d0
+    do e = 1, out_nel
+      do q = 1, NGP
+        done(q, e) = (out_rec(1, 1, e) > -1d29) .and. (out_rec(12, q, e) > 0.5d0)
+      end do
+    end do
+    changed = 1
+    do while (changed > 0)                                ! one layer per sweep (from the points done before it)
+      changed = 0
+      done0 = done
+      do e = 1, out_nel
+        if (out_rec(1, 1, e) < -1d29) cycle
+        do q = 1, NGP
+          if (done(q, e) .or. out_rec(4, q, e) < phi_min_s) cycle
+          wsum = 0d0; g = 0d0
+          do d = 1, 3
+            do s = -1, 1, 2
+              kk = ke(:, q, e); kk(d) = kk(d) + s
+              if (any(kk < 0) .or. any(kk >= n)) cycle
+              m = lat(kk(1), kk(2), kk(3))
+              if (m == 0) cycle
+              ne = (m - 1) / NGP + 1; qn = m - NGP * (ne - 1)
+              if (.not. done0(qn, ne)) cycle
+              w = max(out_rec(4, qn, ne), 0d0)
+              if (out_rec(12, qn, ne) > 0.5d0) then
+                g = g + w * gp_g(:, qn, ne)
+              else
+                g = g + w * inh_g(:, qn, ne)
+              end if
+              wsum = wsum + w
+            end do
+          end do
+          if (wsum <= 0d0) cycle
+          g = g / wsum
+          g(1:5) = max(g(1:5), 0d0)
+          g(1:eco_nact) = max(g(1:eco_nact), 1d-10)
+          g(6) = 1d0 - sum(g(1:5))                       ! the point model's own constraint
+          inh_g(:, q, e) = g; inh_ok(q, e) = .true.
+          done(q, e) = .true.; changed = changed + 1
+        end do
+      end do
+    end do
+  end subroutine inherit_fill
 
   subroutine write_records(kstep, kinc, ttot)
     integer, intent(in) :: kstep, kinc
@@ -371,12 +486,13 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   supg_on = .false.
   if (NPROPS >= 20) supg_on = (PROPS(20) > 0.5d0)
   mms_t = TIME(1) + DTIME
+  layout_mode = nint(PROPS(14)); phi_min_s = PROPS(11)
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   ! the state variables are those of the start of the increment at every iteration: the point model is advanced
   ! from them on every call (the same result each iteration) and the end-of-increment values are written back
   if (DTIME > 0d0) then
-    call advance(Un, COORDS, sv, PROPS, DTIME, ok)
+    call advance(Un, COORDS, sv, PROPS, DTIME, ok, JELEM, KSTEP)
     if (.not. ok) then
       PNEWDT = 0.5d0
       return
@@ -406,6 +522,7 @@ subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
     call get_environment_variable('BIOFILM_UEL_EVERY', s, status=st)
     if (st == 0) read(s, *) every
     if (KSTEP >= 2 .and. mod(KINC, every) == 0) call write_records(KSTEP, KINC, TIME(2))
+    if (layout_mode == 3) call inherit_fill()
   else if (LOP == 3) then
     call write_records(KSTEP, KINC, TIME(2))
   end if
