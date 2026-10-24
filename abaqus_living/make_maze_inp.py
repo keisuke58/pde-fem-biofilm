@@ -113,7 +113,7 @@ out += nset("ALLN", used) + nset("SUPPLY", supply) + nset("COLONY", colony) + ns
 t_ab = a.t_ab if a.t_ab is not None else a.tend / 3.0
 if not a.ab:
     t_ab = 10.0 * a.tend
-out += ["*AMPLITUDE, NAME=ABON, TIME=STEP TIME", f"0.0, 0.0, {t_ab - 1e-9:.10g}, 0.0, {t_ab:.10g}, 1.0, {100 * a.tend:.10g}, 1.0"]
+out += ["*AMPLITUDE, NAME=ABON, TIME=STEP TIME", f"0.0, 0.0, {t_ab - 1e-6:.12g}, 0.0, {t_ab:.12g}, 1.0, {100 * a.tend:.12g}, 1.0"]
 CTRL = ["*CONTROLS, PARAMETERS=FIELD, FIELD=GLOBAL", "1e-8, 1e-8", "*CONTROLS, PARAMETERS=TIME INCREMENTATION", "20, 30"]
 t0 = 1e-8
 out += ["*STEP, NAME=INIT, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT", f"{t0:g}, {t0:g}", *CTRL,
