@@ -525,8 +525,9 @@ on their $20~\mu$m cube, converted like $\beta$ to $d=10^8$~mm$^2/T^*$ on the $2
 about $4\cdot10^{-8}\,T^*$, so the fields are solved quasi-steadily; with the time derivative and this $d$ the seed values
 change by less than $0.005$ (Python). The consumption follows the same table: $g=10^8\,T^{*-1}$, so that $g\ell^2/d=1$ with the half edge
 $\ell=1$~mm. The antibiotic, carried by the element's second nutrient field, has the same diffusivity and uptake as the nutrient. Only a diffusion
-slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$ the living volume fraction of the mixed
-seed with antibiotic would be $0.65$ instead of $0.20$.
+slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$, the value of the element's example
+input, the antibiotic reaches the seed more slowly and kills markedly less of it (in an earlier set-up with
+$\alpha^*_0=50$, a living volume fraction of $0.65$ instead of $0.20$ in the mixed seed).
 I scale it by the living volume
 fraction of the point model,
 \begin{equation}
@@ -604,7 +605,7 @@ iteration.
 \label{sec:ch5-results}
 
 % Source: figs_1005.py; ONE_SPECIES_COUPLING.md, re-run with Table 2 values.
-All runs use ANSYS 2022~R2 on the framework's example model ($8^3=512$ elements)
+The one-species runs use ANSYS 2022~R2 on the framework's example model ($8^3=512$ elements)
 or refinements of it, one process, and the growth parameters of Klempt et al.\ 2024,
 Table~2: $k_\alpha=10^{-3}\,T^{*-1}$, one species, the second field started at zero.
 The model is a 2~mm cube instead of the paper's 20~$\mu$m one. For the
@@ -622,7 +623,9 @@ runs end at $T^*=1.1$ and the two-species runs at $T^*=1$, both with
 $\Delta t=0.025$; halving the step changes the mean stress in the seed by
 about $1\,\%$. The
 two checks against exact solutions below use the example input and
-$\Delta t=0.1$, because they need a region without gradients.
+$\Delta t=0.1$, because they need a region without gradients. The two-species
+examples of Section~\ref{sec:ch5-two-species} differ: they use the constants of the
+papers, the front term and the agreed coupling, and their set-up is given there.
 
 \paragraph{Exact solution inside ANSYS.} Where the field has no gradients,
 \eqref{eq:ch5-field} reduces to $\dot\phi=k_\alpha\alpha$,
@@ -1004,7 +1007,7 @@ same growth, stress and nutrient field to all digits and shares within $0.02$.
   \includegraphics[width=\linewidth]{\ansysfigdir fig_thesis_cal5.pdf}
   \caption[Calibrated five-species model in the element]{%
     The five-species point model calibrated in Chapter~\ref{ch:heine}
-    (commensal flow condition, MAP) in the element with the one-way coupling of
+    (commensal flow condition, MAP) in the element with the earlier one-way coupling of
     this chapter, $8^3$, at a Gauss point of the seed: (a) shares
     $\phi_i/\sum_j\phi_j$, (b) living volume fractions $\phi_i\psi_i$ and their
     sum. Start from the calibrated Day-1 state.}
@@ -1128,7 +1131,9 @@ present scheme when the species are made equal.
 \label{sec:ch5-outlook-python}
 
 I computed the first three steps in Python, outside ANSYS, to see which of them
-change the results. The papers give no growth rates or moduli per species.
+change the results. These computations predate the agreed coupling of
+Section~\ref{sec:ch5-composition}: they use the earlier one-way scheme, in which the
+composition is scaled to the amount of the field, and cases~3 and~6 of Klempt et al.\ 2026. The papers give no growth rates or moduli per species.
 The rates are estimated from the dissipation parameters $\eta_i$ under a stated
 assumption; the moduli are sensitivity parameters.
 
