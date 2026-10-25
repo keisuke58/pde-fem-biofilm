@@ -169,6 +169,27 @@
 | I5 | Does this affect the stress results? | No. The finite element runs of Chapters 4 and 5 use the CH posterior, which passes at the final stage. ／ 影響しない。第 4・5 章の有限要素の計算は CH の結果を使っていて、CH は最後の段階まで基準を満たしている |
 | I6 | Which DH results can I trust? | The entries reported as identified: eight in DH, for example the self-limitation of Vei and Fn. ／ 同定できたと書いた成分（DH では 8 つ。例えば Vei と Fn の自己抑制） |
 
+## J. 合意した連成：2 菌種と抗菌薬（10月25日、日本語と英語）
+
+要点：点モデル（Klempt et al. 2026）を論文どおり各点で動かす。場から $c^*=c^*_0c$、$\alpha^*=\alpha^*_0a$ を渡し、生きている量 $\sum_i\bar\phi_i$ だけが栄養と抗菌薬を消費する（$\dot c=d\nabla^2c-g\,\phi_{3D}\sum_i\bar\phi_i\,c$）。応力へは一方向。
+
+| # | 予想される質問 | 答え（EN ／ JA） |
+|---|---|---|
+| J1 | How are the two models coupled? | At every integration point the point model receives c* = c*_0 c and alpha* = alpha*_0 a from the fields, and only its living volume fraction consumes the nutrient and the antibiotic. ／ 各積分点で点モデルが場から c* と α* を受け取り、生きている体積分率だけが栄養と抗菌薬を消費する |
+| J2 | Is the coupling two-way? | Between the fields and the point model, yes. The mechanics is coupled one way: the stress does not act back on growth, as in Klempt et al. 2024, who neglect that term. ／ 場と点モデルの間は双方向。力学へは一方向（Klempt 2024 も応力から成長への項 φμ(I:C_e−3) を落としている） |
+| J3 | Did you change the point model? | No. It is used as published, with its own constraint and time integration. ／ 変えていない。論文どおり、自分の拘束条件と時間積分で使っている |
+| J4 | How did you check the implementation? | Every step of the point model inside ANSYS equals the point model run on its own to about 1e-12, and ANSYS and an independent Python code agree within 1 to 5 percent on 8^3. ／ ANSYS 内の点モデルの各ステップは単体の点モデルと 1e−12 程度で一致。ANSYS と独立な Python コードは 8^3 で 1〜5 % 一致 |
+| J5 | What does the antibiotic do? | It lowers the living fraction of the seed from 0.97 to 0.15 when the species start apart and from 0.96 to 0.04 when they start mixed; the more sensitive species B goes first. ／ シードの生きている量を、分けて置くと 0.97→0.15、混ぜて置くと 0.96→0.04 に下げる。感受性の高い B が先に減る |
+| J6 | Why does the growth hardly change with the antibiotic? | The growth law dalpha/dt = k_alpha phi_3D depends on phi_3D, and the antibiotic lowers the living fraction psi_i, not phi_3D. ／ 成長則 α̇ = k_α φ_3D は φ_3D だけで決まり、抗菌薬が下げるのは生存率 ψ_i で φ_3D ではないから |
+| J7 | Why does the nutrient decide where the antibiotic acts? | The point model compares c* with alpha* b_i: where the nutrient is high, A survives; where it is low, A dies as well. ／ 点モデルは c* と α* b_i を比べる。栄養が多い所では A が生き残り、少ない所では A も死ぬ |
+| J8 | Why is the stress harder to converge than the growth? | The term -r c/(k+c) n_c . grad phi_3D of Eq. 34 moves a sharp edge; its cell Peclet number is about 31 on 16^3. The stress depends on how sharp that edge is, so it needs a second-order scheme and fine grids. ／ 式 34 の項 −r c/(k+c) n_c·∇φ_3D が鋭い縁を動かし、セルのペクレ数は 16^3 で約 31。応力は縁の鋭さで決まるので、2 次の差分と細かい格子が要る |
+| J9 | What are the grid convergence numbers? | At the small time step, the growth has a GCI of 1.5 and 3.3 percent; the seed stress extrapolates to 6.7e-4 Pa with 8 percent in the separate example and 4.0e-4 Pa with 26 percent in the mixed one. ／ 小さい時間刻みで、成長の GCI は 1.5 % と 3.3 %。応力は分けて置く例で 6.7e−4 Pa（8 %）、混ぜて置く例で 4.0e−4 Pa（26 %） |
+| J10 | Why is the stress of the mixed seed lower? | Its edge is less sharp, because the front carries intermediate values of phi_3D. ／ 縁が鋭くない。前線が中間の φ_3D を運ぶから |
+| J11 | What happens at points the biofilm reaches later? | They take the living composition of their colonised neighbours and start alive. The papers do not fix this; it is an assumption, and I compared it with the start state. ／ 定着済みの隣の生きている組成を受け継ぎ、生きた状態で始まる。論文では決まっていないので仮定とし、初期状態から始める場合と比べた |
+| J12 | What is the main limitation of the coupling? | The front speed r c/(k+c) depends on the nutrient only, so dead biofilm keeps spreading after the antibiotic. Tying it to the living biomass would change the model and is outlook. ／ 前線の速さ r c/(k+c) が栄養だけで決まるので、抗菌薬の後も死んだバイオフィルムが広がる。生きている量に結びつけるのはモデルの変更なので今後の課題 |
+| J13 | Why synthetic data and not your calibrated five species? | To test the coupling with known true parameters first (Fritsch et al. 2025, case I). The calibrated runs stay in Chapter 4 as they are. ／ まず真の値が分かっている合成データ（Fritsch et al. 2025, case I）で連成を確かめるため。較正した結果は第 4 章にそのまま残している |
+| J14 | What would you do next at Keio? | Add the stress feedback of Eq. 30, the term -phi mu (I:C_e - 3), and run the calibrated five species in the element. ／ 式 30 の応力からの項 −φμ(I:C_e−3) を入れ、較正した 5 菌種を要素で動かす |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
