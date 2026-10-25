@@ -2,6 +2,11 @@
 
 Updated 22 Oct 2026; the confirmed facts behind it: `../../CONFIRMED_2026-10-22.ja.md`.
 
+**Update 25 Oct 2026 (thesis numbers):** new points inherit the neighbours' living composition (`_inhliv`, replaces
+`_startpos`, A-82). Thesis Ch. 4 uses `_inhliv` at 64^3 with the outer step 0.025 for the example table and the grid
+series `_dtc0.0025` (`*_front1_dtc0.0025_*inhliv*`, no prefix = 32^3, `nf64_`, `nf128_`; `nf192_` mixed_ab running)
+for growth and stress (A-89; `../../CLOUD_TO_IKMHIWI03.ja.md` §2). The 22 Oct main line below is kept for history.
+
 **Current main results: `_front1_phimin0.001_v2_fortran_ansysbc_startpos[_mixeq]_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast`**
 at 128^3 (64^3 as the mesh check): paper values (front r of Klempt 2024 Table 2, d and g of Table 2, g l^2/d = 1,
 alpha*_0 = 100 of Klempt 2026 case 4, antibiotic from T* = 1/3 with the nutrient's diffusion and uptake, phi_min = 0.001),
