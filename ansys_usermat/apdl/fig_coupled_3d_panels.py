@@ -72,21 +72,24 @@ def render(mesh, field, cmap, clim):
     if mesh.n_cells:
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     pl.camera_position = CAM
-    pl.camera.zoom(1.05)
+    pl.camera.zoom(0.9)   # the whole cube in view, the front corner included
     img = pl.screenshot(return_img=True)
     pl.close()
-    return img
+    rows = np.where((img < 250).any(axis=(1, 2)))[0]
+    cols = np.where((img < 250).any(axis=(0, 2)))[0]
+    p = 6
+    return img[max(rows[0] - p, 0):rows[-1] + p, max(cols[0] - p, 0):cols[-1] + p]
 
 
 fig = plt.figure(figsize=(6.3, 3.05))
-W, H0 = 0.198, 0.40
+W, H0 = 0.198, 0.375
 for i, T in enumerate(T_SHOW):
     M = meshes(T)
     for k, (field, mesh, cmap, clim, label) in enumerate(PANELS):
         ax = fig.add_axes([0.01 + W * k, 0.555 - 0.415 * i, W - 0.004, H0])
         ax.imshow(render(M[mesh], field, cmap, clim), interpolation="none")
         ax.set_axis_off()
-        ax.text(0.02, 0.98, f"({'abcde'[k]}{i + 1})", transform=ax.transAxes, va="top", fontsize=8)
+        ax.text(0.0, 1.0, f"({'abcde'[k]}{i + 1})", transform=ax.transAxes, va="bottom", fontsize=8)
         if k == 0:
             ax.text(-0.02, 0.5, rf"$T^* = {T:.3f}$" if i == 0 else rf"$T^* = {T:.0f}$", transform=ax.transAxes,
                     rotation=90, va="center", ha="right", fontsize=8)
