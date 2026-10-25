@@ -77,7 +77,7 @@ def _obstacle_constraints(n, idx, conn, boxes):
 LAST_TRE = None
 
 
-def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
+def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None, efac=None):
     """Hex8 solve on the n^3 mesh with element-wise phi and alpha - 1 (arrays n x n x n).
     Returns von Mises and mean stress per element (Pa) in the array layout of phi.
     obstacles: list of boxes ((x0, y0, z0), (x1, y1, z1)) in mm, rigid, frictionless unilateral contact (active set);
@@ -90,6 +90,8 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
     conn = np.stack([idx[i:i + n, j:j + n, k:k + n].ravel() for i, j, k in off], 1)
     dofs = np.concatenate([3 * conn[:, [a]] + np.arange(3) for a in range(8)], 1)
     Ee = E_BIO * (np.clip(phi.ravel(), 0.0, 1.0) ** 2 + FLOOR)
+    if efac is not None:                       # --stiff-species: composition-weighted factor per element
+        Ee = Ee * np.asarray(efac, float).ravel()
     if obstacles is not None:
         obst, held, cont = _obstacle_constraints(n, idx, conn, obstacles)
         Ee = np.where(obst.ravel(), 0.0, Ee)

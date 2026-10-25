@@ -152,6 +152,14 @@ LIMITER = sys.argv[sys.argv.index("--limiter") + 1] if "--limiter" in sys.argv e
 # I : C_e - 3 = 2 tr(eps_e) for small strains, from the stress mesh (NM^3) at the start of each outer step (lag of
 # one outer step).
 MECH_K = _opt("--mech-feedback", 0.0)
+# --front-living (Keio continuation, changes Eq. 34; not in the thesis): the front speed r c/(k + c) is multiplied by
+# the living volume fraction sum_i phibar_i, taken as the largest value of the cell and its six neighbours, so that a
+# front of dead biofilm does not advance (thesis limitation: dead biofilm keeps spreading after the antibiotic).
+FRONT_LIVING = "--front-living" in sys.argv
+# --stiff-species m1,m2,... (Keio continuation; not in the thesis): E = E(phi_3D) * sum_i w_i m_i with the shares
+# w_i = phi_i / sum_j phi_j of the point model (dead cells included); m_i are relative moduli (no data: sensitivity).
+STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") if x]
+LIV = None                                     # living volume fraction seen by the front (--front-living)
 BUDGET = "--budget" in sys.argv                      # volume integrals of the terms of Eq. 34 over the run (A-83)
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
@@ -185,6 +193,13 @@ H = W.L / NF
 NM = NM if NF % NM == 0 else NF              # stress mesh 16^3 when it divides the field grid, else the field grid (8^3, 24^3)
 SHAPE = (NF // 2, NF, NF // 2) if FAST else (NF,) * 3
 QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None)) if FAST else (slice(None),) * 3   # full -> computed
+
+
+def efac_nm(G):
+    """stiffness factor on the stress mesh (--stiff-species), None when off"""
+    if not STIFF_SPECIES:
+        return None
+    return W.block_mean(unfold(stiffness_factor(G, STIFF_SPECIES)), NM)
 
 
 def unfold(u):
@@ -244,7 +259,8 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("_frontliv" if FRONT_LIVING else "")
+       + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
@@ -466,6 +482,27 @@ def front_lw(phi, c, dt_):
     return -w + 0.5 * dt_ * sum(v[a] * gw for a, gw in enumerate(grad(w)))
 
 
+def living_speed(L):
+    """--front-living: largest living volume fraction of the cell and its six neighbours (edge values at the walls)"""
+    p_ = np.pad(L, 1, mode="edge")
+    out = L.copy()
+    for ax in range(3):
+        for sh in (0, 2):
+            sl = [slice(1, -1)] * 3
+            sl[ax] = slice(sh, sh + L.shape[ax])
+            out = np.maximum(out, p_[tuple(sl)])
+    return out
+
+
+def stiffness_factor(G, mods):
+    """--stiff-species: sum_i w_i m_i with w_i = phi_i / sum_j phi_j of the point model; 1 where it has not started"""
+    n = len(mods)
+    ph = G[..., :n]
+    tot = ph.sum(-1)
+    w = ph / np.maximum(tot, 1e-30)[..., None]
+    return np.where(tot > 0, (w * np.asarray(mods)).sum(-1), 1.0)
+
+
 def front(phi, c):
     """-r c/(k + c) n_c . grad phi (Klempt 2024 Eq. 34 as printed), upwinded"""
     if ARTDIFF:
@@ -473,6 +510,8 @@ def front(phi, c):
     g = grad(c)
     nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
     sp_ = R_FRONT * c / (K_MONOD + c)
+    if FRONT_LIVING and LIV is not None:
+        sp_ = sp_ * living_speed(LIV)
     return -upwind_adv(phi, [sp_ * x / nrm for x in g])
 
 
@@ -715,8 +754,11 @@ def run(example, antibiotic):
                 phi, alpha, c, a, G, on, L0 = (v.copy() for v in save)
                 L = 0.5 * (L0 + np.where(on, L_end, 0.0))
             # (1) macro phi, alpha
+            if FRONT_LIVING:
+                globals()["LIV"] = np.where(on, L, 0.0)
             if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
-                S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES)
+                S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
+                               efac=efac_nm(G))
                 f_ = NF // NM
                 ice = 2.0 * np.repeat(np.repeat(np.repeat(np.nan_to_num(S.LAST_TRE), f_, 0), f_, 1), f_, 2)[QS]
                 hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
@@ -838,7 +880,7 @@ def run(example, antibiotic):
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)
                 vm_s, _ = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
-                                         obstacles=BOXES)
+                                         obstacles=BOXES, efac=efac_nm(G))
                 snaps[round(T1, 3)]["vm16"] = vm_s
         if time.time() - t_ck > CKPT_SEC:
             tmp = ckpt.with_suffix(".tmp.npz")
@@ -855,7 +897,8 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES)
+    vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
+                           efac=efac_nm(G))
     # the end state of alpha and of the stress mesh (A-86: a 192^3 run gave a seed von Mises 60x too large)
     snaps.setdefault(round(T_END, 3), {}).update(alpha=unfold(alpha).copy(), vm16=vm, p16=p)
     if OBSTACLE:
