@@ -1,5 +1,7 @@
 # Draft (not sent): results of the agreed coupling, to Oliver
 
+> Superseded by `MAIL_DRAFT_OLIVER_2026-11-04.md` (25 Oct 2026).
+
 Plan (the user, 21 Oct 2026): send as a report of the results, about two weeks after the meeting (around 4 Nov),
 not as a list of questions. Update every number from the latest runs before sending (A-28..A-31 on IKMHIWI03, the
 Python queue in the cloud). Attach: the schematic (`coupling_schematic.py --agreed`), the table of the two examples,
