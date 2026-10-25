@@ -96,6 +96,9 @@ NM, T_END = 16, 1.0   # stress mesh (NM = NF below 16^3, see after --nf)
 T_END = float(sys.argv[sys.argv.index("--tend") + 1]) if "--tend" in sys.argv else T_END
 DT_C = _opt("--dtc", 0.025)                 # outer (coupling) step; halved to test the one-step lag
 PHI_MIN = _opt("--phi-min", 0.01)
+PER_MULT = _opt("--per-mult", 1, int)       # A-89: more inner (phi, alpha, front nutrient) steps per outer step
+PICARD = _opt("--picard", 1, int)           # A-89: passes per outer step (2: trapezoid in the living fraction)
+INNER_ACT = "--inner-act" in sys.argv       # A-89: newly reached cells consume (neighbours' living fraction) at once
 ONLY = _opt("--only", None, str)            # run only this example, e.g. separate_ab
 CHECK = "--check" in sys.argv               # c = 1 and a = 1 everywhere from the start: the seed point model must
                                             # equal Fritsch Case I run alone (klempt2026_reproduction)
@@ -225,7 +228,9 @@ if OBSTACLE:
 RES = HERE / "results" / ("2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
 RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
-       + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
+       + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PER_MULT == 1 else f"_per{PER_MULT}")
+       + ("" if PICARD == 1 else f"_pic{PICARD}") + ("_iact" if INNER_ACT else "")
+       + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
        + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + ("_budget" if BUDGET else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
@@ -658,7 +663,11 @@ def run(example, antibiotic):
     dt = 0.15 * H * H / (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0))
     if FRONT:
         dt = min(dt, 0.4 * H / (R_FRONT / (1 + K_MONOD)))
-    per = int(np.ceil(DT_C / dt)); dt = DT_C / per
+        # A-89: both limits together (RK4, diffusion number 0.15 and Courant 0.39 at 192^3 blew up in the first step);
+        # 12 D + 2 Co <= 2.2; no change on 32^3 to 128^3
+        beta_e = W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)
+        dt = min(dt, 2.2 / (12 * beta_e / H ** 2 + 2 * R_FRONT / (1 + K_MONOD) / H))
+    per = int(np.ceil(DT_C / dt)) * PER_MULT; dt = DT_C / per
     hist = dict(t=[0.0], living_seed=[float(L[seed].mean())], share_a_seed=[], share_a_edges=[], living_edges=[],
                 c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum()) * (4 if FAST else 1)])
 
@@ -688,101 +697,117 @@ def run(example, antibiotic):
     t_ck = time.time()
     for k in range(k0, int(round(T_END / DT_C))):
         T1 = (k + 1) * DT_C
-        # (1) macro phi, alpha
-        cf = c
-        ka = 0.0 if MMS else W.K_ALPHA
-        for i_in in range(per):
-            tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
-            if FRONT:
-                cf = nut.solve(phi, L, c_supply(T1), u_prev=cf, dtau=dt, src=src_c(tk))  # the front follows the nutrient
-            def f(ph, al, tt):
-                (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
-                d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+        # --picard N (A-89): solve the outer step N times; from the second pass on, the fields use the mean of the
+        # living fraction at the start and at the end of the step (trapezoid) instead of the start value alone
+        if PICARD > 1:
+            save = (phi.copy(), alpha.copy(), c.copy(), a.copy(), G.copy(), on.copy(), L.copy())
+        for ip in range(PICARD):
+            if ip > 0:
+                L_end = L
+                phi, alpha, c, a, G, on, L0 = (v.copy() for v in save)
+                L = 0.5 * (L0 + np.where(on, L_end, 0.0))
+            # (1) macro phi, alpha
+            cf = c
+            Lf = L
+            ka = 0.0 if MMS else W.K_ALPHA
+            for i_in in range(per):
+                tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
+                if INNER_ACT:                           # A-89: reached cells consume from the inner step on
+                    nw = (phi >= PHI_MIN) & ~on
+                    num, den = neighbours_mean(L[..., None], np.where(on, phi, 0.0))
+                    Lf = np.where(nw & (den > 0), num[..., 0] / np.maximum(den, 1e-30), L)
                 if FRONT:
-                    d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
-                    if SENSOR:
-                        d = d + R_FRONT * H / 4.0 * lap_sensor(ph)
-                if MMS:
-                    d = d + S_phi(X, Y, Z, tt)
-                if OBSTACLE:                    # no biofilm inside the obstacles
-                    d = np.where(OBST, 0.0, d)
-                    return d, np.where(OBST, 0.0, ka * ph)
-                return d, ka * ph
-            if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
-                lap_b = np.empty_like(phi)
-                (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
-                vol = H ** 3 * (4 if FAST else 1)
-                bud = hist.setdefault("budget", dict(front=0.0, penalty=0.0, growth=0.0, diffusion=0.0))
-                bud["front"] += dt * vol * float((front_lw(phi, cf, dt) if LW else front(phi, cf)).sum()) if FRONT else 0.0
-                bud["penalty"] -= dt * vol * float((W.PENALTY * (np.maximum(phi - 1, 0) + np.minimum(phi, 0))).sum())
-                bud["growth"] += dt * vol * float((ka * alpha).sum())
-                bud["diffusion"] += dt * vol * float((W.BETA * lap_b).sum())
-            if LW:                                      # explicit Euler, as the element
-                k1 = f(phi, alpha, tk)
-                phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
-                continue
-            k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
-            k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
-            k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)
-            phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
-            alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
-        # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
-        if TRANSIENT_D is not None and FRONT:
-            c_new = cf                        # already advanced over the outer step in the inner steps
-        else:
-            c_new = nut.solve(phi, L, c_supply(T1), u_prev=c, dtau=DT_C, src=src_c(T1))
-        a_new = ab.solve(phi, L, ab_value(T1) if antibiotic else 0.0, u_prev=a, dtau=DT_C)
-        if MMS:                                   # no point model, no colonisation in the manufactured solution
-            c, a = c_new, a_new
-            if k == int(round(T_END / DT_C)) - 1:
-                ep = phi - MM.phi_m(X, Y, Z, T1); ec = c - MM.c_m(X, Y, Z, T1)
-                hist["mms"] = dict(T=T1, h=H, l2_phi=float(np.sqrt((ep ** 2).mean())), max_phi=float(np.abs(ep).max()),
-                                   l2_c=float(np.sqrt((ec ** 2).mean())), max_c=float(np.abs(ec).max()))
-                print(f"MMS {NF}^3, T* {T1:g}: L2 error phi {hist['mms']['l2_phi']:.3e} (max {hist['mms']['max_phi']:.3e}), "
-                      f"c {hist['mms']['l2_c']:.3e} (max {hist['mms']['max_c']:.3e})", flush=True)
-            hist["t"].append(T1)
-            continue
-        # (3) point models of the colonised cells
-        idx = np.flatnonzero(on.ravel())
-        Gf = G.reshape(-1, 12)
-        if FORTRAN:
-            Gf[idx], okf = FN.step_lin(Gf[idx], S_LINK * DT_C, N_SUB, c.ravel()[idx], c_new.ravel()[idx],
-                                       a.ravel()[idx], a_new.ravel()[idx])
-            assert okf.all(), "Fortran point model failed"
-        else:
-            Gf[idx] = np.asarray(STEP(jnp.asarray(Gf[idx]), jnp.asarray(c.ravel()[idx]),
-                                      jnp.asarray(c_new.ravel()[idx]), jnp.asarray(a.ravel()[idx]),
-                                      jnp.asarray(a_new.ravel()[idx])))
-        G = Gf.reshape(SHAPE + (12,))
-        c, a = c_new, a_new
-        # (4) newly colonised cells inherit the neighbours' state
-        new = (phi >= PHI_MIN) & ~on
-        if new.any() and START_POSITION:
-            if example == "separate":
-                isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
-                G[new & isb] = group_state(tot, GROUP_B)
-                G[new & ~isb] = group_state(tot, GROUP_A)
+                    cf = nut.solve(phi, Lf, c_supply(T1), u_prev=cf, dtau=dt, src=src_c(tk))  # the front follows the nutrient
+                def f(ph, al, tt):
+                    (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
+                    d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                    if FRONT:
+                        d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
+                        if SENSOR:
+                            d = d + R_FRONT * H / 4.0 * lap_sensor(ph)
+                    if MMS:
+                        d = d + S_phi(X, Y, Z, tt)
+                    if OBSTACLE:                    # no biofilm inside the obstacles
+                        d = np.where(OBST, 0.0, d)
+                        return d, np.where(OBST, 0.0, ka * ph)
+                    return d, ka * ph
+                if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
+                    lap_b = np.empty_like(phi)
+                    (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
+                    vol = H ** 3 * (4 if FAST else 1)
+                    bud = hist.setdefault("budget", dict(front=0.0, penalty=0.0, growth=0.0, diffusion=0.0))
+                    bud["front"] += dt * vol * float((front_lw(phi, cf, dt) if LW else front(phi, cf)).sum()) if FRONT else 0.0
+                    bud["penalty"] -= dt * vol * float((W.PENALTY * (np.maximum(phi - 1, 0) + np.minimum(phi, 0))).sum())
+                    bud["growth"] += dt * vol * float((ka * alpha).sum())
+                    bud["diffusion"] += dt * vol * float((W.BETA * lap_b).sum())
+                if LW:                                      # explicit Euler, as the element
+                    k1 = f(phi, alpha, tk)
+                    phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
+                    continue
+                k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
+                k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
+                k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)
+                phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+                alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+            # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
+            if TRANSIENT_D is not None and FRONT:
+                c_new = cf                        # already advanced over the outer step in the inner steps
             else:
-                G[new] = start_state(*MIX_START)
-            on = on | new
-        elif new.any():
-            # layer by layer from the colonised cells until every new cell connected to them has a state (the front
-            # can move several cells in one outer step; one layer per step left cells without a point model, 24 Oct)
-            while True:
-                new = (phi >= PHI_MIN) & ~on
-                num, den = neighbours_mean(G, np.where(on, phi, 0.0))
-                fill = new & (den > 0)
-                if not fill.any():
-                    break
-                gs = num[fill] / den[fill][:, None]
-                if INHERIT_LIVING:
-                    gs = living_start(gs)
-                gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
-                gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)               # the point model's own constraint
-                G[fill] = gs
-                on = on | fill
-        # (5) living biomass for the next step
-        L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
+                c_new = nut.solve(phi, Lf, c_supply(T1), u_prev=c, dtau=DT_C, src=src_c(T1))
+            a_new = ab.solve(phi, Lf, ab_value(T1) if antibiotic else 0.0, u_prev=a, dtau=DT_C)
+            if MMS:                                   # no point model, no colonisation in the manufactured solution
+                c, a = c_new, a_new
+                if k == int(round(T_END / DT_C)) - 1:
+                    ep = phi - MM.phi_m(X, Y, Z, T1); ec = c - MM.c_m(X, Y, Z, T1)
+                    hist["mms"] = dict(T=T1, h=H, l2_phi=float(np.sqrt((ep ** 2).mean())), max_phi=float(np.abs(ep).max()),
+                                       l2_c=float(np.sqrt((ec ** 2).mean())), max_c=float(np.abs(ec).max()))
+                    print(f"MMS {NF}^3, T* {T1:g}: L2 error phi {hist['mms']['l2_phi']:.3e} (max {hist['mms']['max_phi']:.3e}), "
+                          f"c {hist['mms']['l2_c']:.3e} (max {hist['mms']['max_c']:.3e})", flush=True)
+                hist["t"].append(T1)
+                break
+            # (3) point models of the colonised cells
+            idx = np.flatnonzero(on.ravel())
+            Gf = G.reshape(-1, 12)
+            if FORTRAN:
+                Gf[idx], okf = FN.step_lin(Gf[idx], S_LINK * DT_C, N_SUB, c.ravel()[idx], c_new.ravel()[idx],
+                                           a.ravel()[idx], a_new.ravel()[idx])
+                assert okf.all(), "Fortran point model failed"
+            else:
+                Gf[idx] = np.asarray(STEP(jnp.asarray(Gf[idx]), jnp.asarray(c.ravel()[idx]),
+                                          jnp.asarray(c_new.ravel()[idx]), jnp.asarray(a.ravel()[idx]),
+                                          jnp.asarray(a_new.ravel()[idx])))
+            G = Gf.reshape(SHAPE + (12,))
+            c, a = c_new, a_new
+            # (4) newly colonised cells inherit the neighbours' state
+            new = (phi >= PHI_MIN) & ~on
+            if new.any() and START_POSITION:
+                if example == "separate":
+                    isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
+                    G[new & isb] = group_state(tot, GROUP_B)
+                    G[new & ~isb] = group_state(tot, GROUP_A)
+                else:
+                    G[new] = start_state(*MIX_START)
+                on = on | new
+            elif new.any():
+                # layer by layer from the colonised cells until every new cell connected to them has a state (the front
+                # can move several cells in one outer step; one layer per step left cells without a point model, 24 Oct)
+                while True:
+                    new = (phi >= PHI_MIN) & ~on
+                    num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                    fill = new & (den > 0)
+                    if not fill.any():
+                        break
+                    gs = num[fill] / den[fill][:, None]
+                    if INHERIT_LIVING:
+                        gs = living_start(gs)
+                    gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+                    gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)               # the point model's own constraint
+                    G[fill] = gs
+                    on = on | fill
+            # (5) living biomass for the next step
+            L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
+        if MMS:
+            continue
         hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
