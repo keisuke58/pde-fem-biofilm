@@ -3,7 +3,7 @@
 Draft text for Section 3 of `OUTLINE.md`. Numbers from `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` (A-46 to A-75) and
 `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` (items 23-40). Example throughout: the separate example with antibiotic
 (two species of Fritsch et al. 2025 case I, front term on, alpha*_0 = 100 from T* = 1/3), seed means at T* = 1 unless
-stated. Values in [..] wait for the last runs (ANSYS 24^3 with the upwind gradients). Wording is neutral ("this work"); the
+stated. Wording is neutral ("this work"); the
 author list is open.
 
 ## 3.1 Three implementations
@@ -62,7 +62,7 @@ The point model is the same compiled routine in all three, so differences come f
   | Abaqus, SUPG | 8.55 | 8.77 | 8.94 | 9.11 | | 9.45 (4.6 %) |
   | ANSYS, constant r h/4 | 5.73 | 6.99 | | | | 9.5 (two grids, order 1 assumed) |
   | ANSYS, LW + sensor | 8.19 | unstable | | | | |
-  | ANSYS, upwind MLS gradients | 8.01 | [..] | | | | 8^3: 6.38 |
+  | ANSYS, upwind MLS gradients | 8.01 | 8.36 | | | | 8^3: 6.38; 8.7 (4.8 %) |
 
   Seed von Mises [1e-4 Pa]:
 
@@ -75,7 +75,7 @@ The point model is the same compiled routine in all three, so differences come f
   | Abaqus, SUPG | 6.17 | 6.25 | 6.27 | 6.22 | | GCI 1.2 % at 48^3 |
   | ANSYS, constant r h/4 | 1.33 | 2.52 | | | | not in the asymptotic range |
   | ANSYS, LW + sensor | 4.20 | unstable | | | | at the corners of the supply face |
-  | ANSYS, upwind MLS gradients | 4.56 | [..] | | | | 8^3: 2.14 |
+  | ANSYS, upwind MLS gradients | 4.56 | 5.15 | | | | 8^3: 2.14; extrapolated 5.8 (16.5 %) |
 
   The growth variable converges for every scheme (the implementations agree within their GCI bands). The stress does
   not converge with a constant added diffusion: r h/4 smears the seed edge over a few cells, and the stress, which is
@@ -110,7 +110,7 @@ mesh.
 
 - Stresses are quoted from the second-order schemes (Python TVD, Abaqus SUPG) with their GCI; the element's values
   are given with their mesh error (16^3 and 24^3); the LW + sensor form is unstable on 24^3, the upwind MLS gradients
-  are stable on 16^3 [24^3 pending].
+  are stable on 16^3 and 24^3 and extrapolate to 5.8e-4 Pa (GCI 16.5 %), within the band of the second-order schemes.
 - The growth variable and the composition (sum_i phibar_i, the shares) are insensitive to the stabilisation at the
   level of the GCI and can be quoted from any of the three codes.
 - The case 4.2 of Klempt et al. (2024) ("biofilm on nutrients", high consumption) has a cell Peclet number of about 31
