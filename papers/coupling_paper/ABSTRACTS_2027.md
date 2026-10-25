@@ -89,4 +89,7 @@ Checked on IKMHIWI03 (25 Oct 2026) against the runs of 24-25 Oct:
   their neighbours) decides whether the biofilm recovers after the antibiotic (maze: 0.35 against 0.04), the same
   in Python and in a third, Galerkin implementation (Abaqus user element, SUPG); and the stress of the mixed example
   converges slowly (front with a nearly discontinuous edge).
+- A-89 (25 Oct): the coupling step matters for the stress. At Delta T* = 0.025 the seed stress is about 6 % low
+  (separate) and 18 % high (mixed) against Delta T* -> 0; the grid series are being redone at 0.0025. Recheck "about
+  6 x 10^-4 Pa" and the mixed-example sentence ("still changes between 64^3 and 128^3") against them.
 - The Abaqus element may appear in the paper and the abstracts (it is only kept out of the LUH thesis).

@@ -48,6 +48,29 @@ The point model is the same compiled routine in all three, so differences come f
 - **Time step.** Abaqus, 16^3, Delta t = 0.005, 0.00125, 0.000625: observed order 1.1; at Delta t = 0.00125 the error
   against the extrapolated value is 0.8 % in alpha - 1 and 2.2 % in von Mises. All mesh studies use 0.00125
   (ANSYS 24^3 with the constant stabilisation: 0.0005, its explicit stability limit).
+- **Coupling step (Python).** The point model and sum_i phibar_i are updated once per outer step Delta T*; within it
+  phi, alpha and the front nutrient take explicit RK4 steps. With newly reached points inheriting the living
+  composition, 64^3 (A-89; Delta T* chosen so that the point model keeps its own step of 1e-4):
+
+  | Delta T* | 0.025 | 0.02 | 0.01 | 0.005 | 0.0025 |
+  |---|---|---|---|---|---|
+  | separate, von Mises [1e-4 Pa] | 5.68 | 5.68 | 5.82 | 5.94 | 6.00 |
+  | mixed, von Mises [1e-4 Pa] | 3.23 | 3.20 | 3.09 | 2.90 | 2.82 |
+  | separate, alpha - 1 [1e-4] | 8.95 | 8.93 | 8.93 | 8.93 | 8.93 |
+  | mixed, alpha - 1 [1e-4] | 8.30 | 8.29 | 8.21 | 8.09 | 8.04 |
+
+  The stress converges at about first order from Delta T* = 0.005 on (extrapolated 6.07 and 2.74e-4 Pa); at 0.025 it
+  is 6 % low in the separate and 18 % high in the mixed example. The inner RK4 step, a trapezoidal update of
+  sum_i phibar_i over the step and letting newly reached points consume at once each change the stress by less than
+  1 %. The sensitivity comes from the front speed: after the antibiotic onset sum_i phibar_i is small, grad c is weak
+  and the front direction grad c/|grad c| responds to small changes of the consumption (with the regularisation
+  |grad c|^2 + 1e-4 instead of + 1e-6 the mixed stress changes by 30 %, with 1e-8 by less than 0.1 %). The mesh
+  studies of the coupled examples are therefore repeated at Delta T* = 0.0025.
+- **Stability.** The explicit inner step is limited by the diffusion number (0.15) and the Courant number of the front
+  (0.4). On 192^3 both limits are close at the same time and the RK4 step diverged in the first outer step (phi up
+  to 7e8 before the penalty and the diffusion brought it back, alpha - 1 left at +-16); the combined condition
+  12 D + 2 Co <= 2.2 removes this and leaves the step on 32^3 to 128^3 unchanged. No run on 32^3 to 128^3 left [0, 1]
+  by more than 2e-4.
 - **Mesh.** Grid convergence index after Celik et al. (2008), Fs = 1.25 for three grids in the asymptotic range,
   Fs = 3 for two grids. h = 2 mm / n.
 
@@ -125,7 +148,8 @@ mesh.
   in both codes). This rule is a modelling assumption and is stated with each example.
 
 ## To finish
-- ANSYS 24^3 with the upwind gradients (running); the maze in Abaqus with the inherit rule (running).
+- The grid series of the separate and mixed examples at Delta T* = 0.0025 (32^3, 64^3, 128^3; running on IKMHIWI03,
+  A-89); replace the GCI of the coupled examples with them.
 - Decide which code carries which figure (proposal: maps from Python TVD at 64^3 or 128^3, the element for the
   verification table only).
 - Figure 2 of the outline (verification): the two tables above as a two-panel plot (alpha - 1 and von Mises against
