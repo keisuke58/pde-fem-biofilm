@@ -79,15 +79,13 @@ Klempt et al.\ (2026) at each Gauss point, which returns $\sum_i\bar\phi_i$ for 
 % --------------------------------------------------------
 \begin{frame}{Separate example with antibiotic}
 \centering
-\movie[width=0.72\linewidth,height=0.279\linewidth,poster,showcontrols,externalviewer]{%
-  \includegraphics[width=0.72\linewidth]{assets/anim_coupled_tvd_separate_ab_inherit_end.png}}%
-  {assets/anim_coupled_tvd_separate_ab_inherit.mp4}
-\captionof{figure}{Separate start, $T^*=1$: (a) $\phi_1/(\phi_1+\phi_2)$, (b) $\sum_i\bar\phi_i$, (c) $c$, (d) $a$.
-Python, $64^3$.}
-\begin{itemize}\small
+\includegraphics[width=0.74\linewidth]{assets/fig_coupled_3d_panels_separate_ab.pdf}
+\captionof{figure}{Separate start, $T^*=0.325$ (top) and $T^*=1$ (bottom): (a) $\phi_1/(\phi_1+\phi_2)$,
+(b) $\sum_i\bar\phi_i$, (c) $c$, (d) $a$, (e) von Mises stress. Python, $64^3$, one octant removed.}
+\begin{itemize}\footnotesize
   \item A (point-model species 1) in the seed, B (species 2) in four blocks at the $z$ edges; nutrient from the
         bottom, antibiotic from all outer faces from $T^*=1/3$ ($\alpha^*_0=100$)
-  \item Newly reached cells take the composition of the biofilm they grow from; the antibiotic kills B and,
+  \item Newly reached points take the living composition of their neighbours; the antibiotic kills B and,
         where the nutrient is low, A
 \end{itemize}
 \end{frame}
@@ -109,26 +107,31 @@ Python, $64^3$.}
 % --------------------------------------------------------
 \begin{frame}{Five examples on the finest grid}
 \centering\small
-\captionof{table}{Seed means at $T^*=1$ (Python, $128^3$, TVD front term).}
+\captionof{table}{Seed means at $T^*=1$ (Python, $64^3$, TVD front term, outer step 0.025).}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
 Example & $\sum_i\bar\phi_i$ & $\phi_1/(\phi_1+\phi_2)$ & $c$ & $\alpha-1$ & von Mises [Pa]\\
 \midrule
-Separate                          & 0.965 & 0.978 & 0.539 & $9.32\times10^{-4}$ & $6.18\times10^{-4}$\\
-Separate, antibiotic              & 0.147 & 0.951 & 0.910 & $9.33\times10^{-4}$ & $6.05\times10^{-4}$\\
-Mixed, equal amounts              & 0.960 & 0.848 & 0.578 & $9.07\times10^{-4}$ & $4.87\times10^{-4}$\\
-Mixed, equal amounts, antibiotic  & 0.038 & 0.613 & 0.970 & $9.05\times10^{-4}$ & $4.26\times10^{-4}$\\
-Mixed (0.25, 0.30), antibiotic    & 0.037 & 0.511 & 0.971 & $9.04\times10^{-4}$ & $4.29\times10^{-4}$\\
+Separate                          & 0.965 & 0.978 & 0.536 & $9.06\times10^{-4}$ & $6.56\times10^{-4}$\\
+Separate, antibiotic              & 0.152 & 0.951 & 0.911 & $8.95\times10^{-4}$ & $5.68\times10^{-4}$\\
+Mixed, equal amounts              & 0.961 & 0.859 & 0.608 & $8.33\times10^{-4}$ & $3.50\times10^{-4}$\\
+Mixed, equal amounts, antibiotic  & 0.038 & 0.610 & 0.973 & $8.30\times10^{-4}$ & $3.23\times10^{-4}$\\
+Mixed (0.25, 0.30), antibiotic    & 0.037 & 0.510 & 0.973 & $8.30\times10^{-4}$ & $3.22\times10^{-4}$\\
+\midrule
+\multicolumn{6}{l}{\scriptsize Grid series $32^3/64^3/128^3$ at outer step 0.0025 with antibiotic: $128^3$ value, extrapolated
+($\alpha-1$ and stress in $10^{-4}$), GCI}\\
+Separate & 0.157 & 0.952 & & 9.11; 9.22 (1.5\,\%) & 6.28; 6.70 (8.3\,\%)\\
+Mixed, equal amounts & 0.038 & 0.606 & & 8.32; 8.54 (3.3\,\%) & 3.30; 3.99 (26\,\%)\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 
 \vspace{2pt}{\scriptsize Constants: Klempt et al.\ (2024), Table 2, converted; Fritsch et al.\ (2025), case I;
 $\alpha^*_0=100$ from $T^*=1/3$ (Klempt et al.\ 2026, case 4).}
-\begin{itemize}\small
-  \item The antibiotic lowers the living fraction of the seed from 0.965 to 0.147 (separate) and from 0.960 to
-        0.038 (mixed)
-  \item $\alpha-1$ hardly changes between examples (Eq.\ 36 is unchanged): the composition reaches the stress
-        through $c$ and the front term
+\begin{itemize}\footnotesize
+  \item The antibiotic lowers the living fraction of the seed from 0.965 to 0.152 (separate) and from 0.961 to
+        0.038 (mixed); the composition changes by less than 3\,\% with grid and time step
+  \item The stress needs a small outer step: 0.025 gives about 6\,\% less than the limit (separate example)
 \end{itemize}
 \end{frame}
 
@@ -143,9 +146,9 @@ element stops after two increments; a smaller time step does not help.
 \begin{block}{Constant added diffusion $r h/4$}
 First order. Stable in the element, but the stress on $16^3$ is about a quarter of the converged value.
 \end{block}
-\begin{block}{Lax--Wendroff term with an extremum sensor}
-Used in the element: second order away from extrema, $\phi_{3D}$ stays in $[0,1]$; on $16^3$ it matches Python with
-the same form.
+\begin{block}{Lax--Wendroff term with an extremum sensor; upwind gradients}
+Second order away from extrema. In the element the Lax--Wendroff form matches Python on $16^3$ but is unstable on
+$24^3$; upwind MLS gradients are stable on $8^3$ to $24^3$.
 \end{block}
 \begin{block}{TVD upwinding (MUSCL, minmod)}
 Used in Python for the main results; converged from $64^3$ on.
@@ -154,35 +157,38 @@ Used in Python for the main results; converged from $64^3$ on.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Growth converges for every scheme, stress only for second-order ones}
+\begin{frame}{Grid convergence: the stress needs a second-order front term}
 \centering
-\pgfplotsset{every axis/.style={width=0.49\linewidth,height=0.52\textheight,xmode=log,log basis x=2,
-  xtick={16,24,32,48,64,128},xticklabels={$16^3$,$24^3$,$32^3$,$48^3$,$64^3$,$128^3$},
+\pgfplotsset{every axis/.style={width=0.49\linewidth,height=0.55\textheight,xmode=log,log basis x=2,
+  xtick={8,16,32,64,128},xticklabels={$8^3$,$16^3$,$32^3$,$64^3$,$128^3$},
   tick label style={font=\scriptsize},label style={font=\small},title style={font=\small},grid=major,
   grid style={gray!25},mark size=1.8pt}}
 \begin{tikzpicture}
-\begin{axis}[title={seed $\alpha-1$ [$10^{-4}$]},ymin=5,ymax=10]
+\begin{axis}[title={seed $\alpha-1$ [$10^{-4}$]},ymin=3,ymax=10,legend pos=south east,
+  legend style={font=\tiny,inner sep=1pt,row sep=-2pt}]
 \addplot[tvd,thick,mark=*] coordinates {(16,8.25)(32,8.82)(64,9.17)(128,9.33)};
 \addplot[lw,thick,mark=*] coordinates {(16,7.95)(24,8.52)(32,8.80)(48,9.08)(64,9.21)};
 \addplot[ad,thick,mark=*] coordinates {(16,6.27)(24,7.26)(32,7.72)(48,8.20)(64,8.43)};
 \addplot[warn,only marks,mark=square*] coordinates {(16,8.19)};
-\addplot[c3,only marks,mark=square*] coordinates {(16,5.73)};
+\addplot[c3,thick,dashed,mark=square*] coordinates {(16,5.73)(24,6.99)};
+\addplot[black,thick,dashed,mark=triangle*] coordinates {(8,6.38)(16,8.01)(24,8.36)};
+\legend{Python TVD,Python LW+sensor,Python $rh/4$,element LW+sensor,element $rh/4$,element upwind}
 \end{axis}
 \end{tikzpicture}\hfill
 \begin{tikzpicture}
-\begin{axis}[title={seed von Mises [$10^{-4}$\,Pa]},ymin=0,ymax=7,legend pos=south east,
-  legend style={font=\scriptsize}]
+\begin{axis}[title={seed von Mises [$10^{-4}$\,Pa]},ymin=0,ymax=7]
 \addplot[tvd,thick,mark=*] coordinates {(16,6.51)(32,5.90)(64,5.98)(128,6.05)};
 \addplot[lw,thick,mark=*] coordinates {(16,4.20)(24,5.31)(32,5.85)(48,6.28)(64,6.26)};
 \addplot[ad,thick,mark=*] coordinates {(16,1.73)(24,2.78)(32,3.40)(48,4.29)(64,4.80)};
 \addplot[warn,only marks,mark=square*] coordinates {(16,4.20)};
-\addplot[c3,only marks,mark=square*] coordinates {(16,1.33)};
-\legend{Python TVD,Python LW+sensor,Python $rh/4$,element LW+sensor,element $rh/4$}
+\addplot[c3,thick,dashed,mark=square*] coordinates {(16,1.33)(24,2.52)};
+\addplot[black,thick,dashed,mark=triangle*] coordinates {(8,2.14)(16,4.56)(24,5.15)};
 \end{axis}
 \end{tikzpicture}
 
 \captionof{figure}{Seed means of the separate example with antibiotic at $T^*=1$ against the grid ($h=2$\,mm$/n$).
-Element: your element with the agreed coupling (ANSYS), $16^3$ so far.}
+Element: your element with the agreed coupling (ANSYS). With upwind gradients its stress extrapolates to
+$5.8\times10^{-4}$\,Pa (GCI 16.5\,\%), within the band of the second-order schemes.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -244,21 +250,53 @@ $T^*=60$; with the antibiotic it stays about 130\,\textmu m away.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Questions and next steps}
+\begin{frame}{Which composition does new biofilm get?}
 \begin{columns}[T]
 \column{0.5\textwidth}
+\begin{figure}
+\includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{assets/anim_maze_rules_end_crop.png}
+\caption{Maze at $T^*=60$ with antibiotic: $\sum_i\bar\phi_i$ (top) and $a$ (bottom). (a) New points take the
+living composition of their neighbours, (b) new points take the start state.}
+\end{figure}
+\column{0.43\textwidth}\small
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item With the neighbours' living composition the biofilm recovers behind the antibiotic: living volume fraction
+        0.35 at the end, against 0.04 when new points start from the start state
+  \item In the cube examples the two rules differ by a few percent
+  \item I use the neighbours' living composition as the base case: the biofilm spreads because the living cells
+        grow
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Questions and next steps}
+\footnotesize
+\begin{columns}[T]
+\column{0.52\textwidth}
 \textbf{Questions for you}
-\begin{enumerate}\small\setlength{\itemsep}{4pt}
+\begin{enumerate}\setlength{\itemsep}{0pt}
   \item How was the front term stabilised in the runs of Klempt 2024? The cell P\'eclet number is about 25 on the
         paper's mesh.
   \item Can I keep the three element fixes (nearest Gauss point at the surface, conservative Laplacian, neighbours
         by distance)?
   \item Is a stabilised front term acceptable in the thesis, stated as a numerical treatment of Eq.\ 34?
 \end{enumerate}
-\column{0.46\textwidth}
+\textbf{Questions for Felix}
+\begin{itemize}\setlength{\itemsep}{0pt}
+  \item The factor 1/2 in Eq.\ 19 of Klempt et al.\ (2026)
+  \item The $+\gamma$ term in Eq.\ 17
+  \item The stabilisation used in Sect.\ 4.2 of Klempt et al.\ (2024)
+  \item Which composition new biofilm should take
+\end{itemize}
+\column{0.44\textwidth}
+\textbf{Limitation}
+\begin{itemize}
+  \item The front speed of Eq.\ 34 depends on the nutrient only, not on the living biomass: after the antibiotic,
+        dead biofilm still spreads (two thirds of the newly reached cells in the maze)
+\end{itemize}
 \textbf{Next steps}
-\begin{itemize}\small\setlength{\itemsep}{4pt}
-  \item Element runs on $24^3$ with the Lax--Wendroff form for the convergence table
+\begin{itemize}\setlength{\itemsep}{2pt}
   \item Thesis finished by 4 November with the results up to then
   \item Thesis PDF by 14 December, colloquium on 16 December
   \item A joint paper on the coupling and its verification
@@ -266,6 +304,7 @@ $T^*=60$; with the antibiotic it stays about 130\,\textmu m away.
 \end{columns}
 \end{frame}
 
+% --------------------------------------------------------
 \begin{frame}{References}
 \footnotesize
 \begin{thebibliography}{9}
