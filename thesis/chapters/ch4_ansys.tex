@@ -867,8 +867,8 @@ it with a second-order upwind scheme (MUSCL with the minmod limiter) and mirror 
 The stress is solved on a $16^3$ hexahedral mesh with the element's integration; solving the same
 $64^3$ field on $32^3$ and $64^3$ elements changes the seed von Mises stress by $0.2\,\%$.
 
-\paragraph{Composition.} Table~\ref{tab:ch5-two-species} gives the seed means at $T^*=1$ and
-Figure~\ref{fig:ch5-3d} the separate example with antibiotic. Without antibiotic the living volume
+\paragraph{Composition.} Table~\ref{tab:ch5-two-species} gives the seed means at $T^*=1$, and
+Figures~\ref{fig:ch5-3d} and~\ref{fig:ch5-3d-mixed} the separate and the mixed example with antibiotic. Without antibiotic the living volume
 fraction of the seed stays near $0.96$; the antibiotic lowers it to $0.15$ when the species start
 separately and to $0.04$ when they start mixed. Species~B, the more sensitive one, is removed first; where
 the nutrient is low, A dies as well, because the point model compares $c^*=c^*_0c$ with $\alpha^*b_i$.
@@ -901,7 +901,16 @@ steps used.
     Separate example with antibiotic at $T^*=0.325$ (top) and $T^*=1$ (bottom), Python, $64^3$, one octant
     removed: (a)~share $\phi_1/(\phi_1+\phi_2)$, (b)~living volume fraction $\sum_i\bar\phi_i$,
     (c)~nutrient $c$, (d)~antibiotic $a$, (e)~von Mises stress.}
-  \label{fig:ch5-3d}
+    \label{fig:ch5-3d}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_coupled_3d_panels_mixed_ab.pdf}
+  \caption[Mixed example with antibiotic in 3D]{%
+    Mixed example (equal amounts) with antibiotic, panels as in Figure~\ref{fig:ch5-3d}. Both species start in
+    the seed; the living volume fraction falls almost everywhere after the antibiotic.}
+  \label{fig:ch5-3d-mixed}
 \end{figure}
 
 \paragraph{Growth and stress.} The growth $\alpha-1$ hardly depends on the composition: Eq.~36 is

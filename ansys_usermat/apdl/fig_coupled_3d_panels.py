@@ -37,7 +37,7 @@ nm = Z[f"vm16_{times[0]}"].shape[0]
 VMAX = float(2 * np.ceil(1e4 * max(np.percentile(Z[f"vm16_{T}"], 99.5) for T in T_SHOW) / 2))
 LIT = dict(ambient=0.45, diffuse=0.6, specular=0.0)
 CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
-PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"$\phi_A/(\phi_A+\phi_B)$"),
+PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"$\phi_1/(\phi_1+\phi_2)$"),
           ("L", "living", "Greens", (0, 1), r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"$a$"),
