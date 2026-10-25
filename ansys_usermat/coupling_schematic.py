@@ -14,7 +14,7 @@
         -> assets/fig_coupling_schematic_agreed.png (or _agreed_thesis.png): the coupling agreed with Oliver on
            20 Oct 2026 (MEETING_2026-10-20.md): point model as published at every Gauss point, nutrient and
            antibiotic fields in, living biomass sum phibar_i out into the consumption; front term on. Inset: Fritsch et al. 2025
-           case I (synthetic) with an antibiotic from T* = 0.5, computed.
+           case I (synthetic) with an antibiotic alpha* = 100 from T* = 1/3 (Klempt et al. 2026, case 4), computed.
     python ansys_usermat/coupling_schematic.py --live
         -> assets/fig_coupling_schematic_live.png: growth from the living biomass
            (scheme c), five calibrated species, inset from the CH run.
@@ -184,7 +184,7 @@ def live_inset(fig, rect):
 
 
 def agreed_inset(fig, rect):
-    """Fritsch et al. 2025 case I (two species, true parameters), c* = 100, antibiotic alpha* = 10 from T* = 0.5,
+    """Fritsch et al. 2025 case I (two species, true parameters), c* = 100, antibiotic alpha* = 100 from T* = 1/3,
     1000 steps of 1e-4 = T* 0..1: phi_i stacked and the living biomass sum phi_i psi_i."""
     sys.path.insert(0, str(HERE / "coupling")); sys.path.insert(0, str(HERE.parent / "JAXFEM"))
     import jax
@@ -202,7 +202,7 @@ def agreed_inset(fig, rect):
              EtaPhi=jnp.asarray(c["eta"] + [1.0] * 3), c=100.0)
     P = jax.tree_util.tree_map(jnp.asarray, P)
     n = c["steps"]
-    al = jnp.where(jnp.arange(n) >= n // 2, 10.0, 0.0)
+    al = jnp.where(jnp.arange(n) >= n // 3, 100.0, 0.0)
 
     def body(g, a):
         q = dict(P); q["alpha"] = a
@@ -217,9 +217,9 @@ def agreed_inset(fig, rect):
     ax = fig.add_axes(rect)
     ax.stackplot(t, phi.T, colors=(SP1, SP2), alpha=0.9, lw=0)
     ax.plot(t, L, color=INK, lw=2.0)
-    ax.axvline(0.5, color=KEIO, lw=1.0, ls=(0, (3, 2)))
-    ax.text(0.53, 0.06, "antibiotic", fontsize=9.5 * FS, color=KEIO, ha="left")
-    ax.text(0.30, 0.74, r"living $\Sigma_i\bar\phi_i$ (line)", fontsize=9.5 * FS, color="white", ha="left",
+    ax.axvline(1 / 3, color=KEIO, lw=1.0, ls=(0, (3, 2)))
+    ax.text(0.36, 0.98, "antibiotic", fontsize=9.5 * FS, color=KEIO, ha="left", va="top")
+    ax.text(0.45, 0.16, r"living $\Sigma_i\bar\phi_i$ (line)", fontsize=9.5 * FS, color="white", ha="left",
             va="center")
     ax.set(xlim=(0, 1), ylim=(0, 1.08), xticks=[0, 0.5, 1], yticks=[0, 0.5, 1])
     ax.grid(False)
@@ -252,51 +252,64 @@ def stress_sketch(ax, cx, cy, h):
 FS = 1.0   # font scale; the thesis prints the figure at text width, so its text is enlarged
 
 
+def _trim_white(path, pad=12):
+    """crop the white margins of a saved PNG (the axes span the whole figure, so bbox_inches="tight" keeps them)"""
+    from PIL import Image, ImageChops
+    im = Image.open(path).convert("RGB")
+    box = ImageChops.difference(im, Image.new("RGB", im.size, "white")).getbbox()
+    if box:
+        l, t, r, b = box
+        im.crop((max(l - pad, 0), max(t - pad, 0), min(r + pad, im.width), min(b + pad, im.height))).save(path)
+
+
 def main_agreed(thesis=False):
-    """The coupling agreed with Oliver, 20 Oct 2026."""
-    global FS
+    """The coupling agreed with Oliver, 20 Oct 2026. Compact layout (25 Oct: less empty space): the output line is
+    part of the footnote, the panels sit lower and the empty top is cropped."""
+    global FS, Y0
     FS = 1.6 if thesis else 1.0
     figstyle.apply(12)
+    y0_old, Y0 = Y0, 0.085
+    D = Y0 - y0_old                      # shift of every element against the earlier layout
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set(xlim=(0, 1), ylim=(0, 1)); ax.axis("off"); ax.set_aspect("auto")
 
     panel(ax, "macro", "1", "Macro: 3D fields", "Klempt et al. 2024 (Ch. 2, 4)")
     x, _ = PX["macro"]
-    eqs(ax, x + 0.018, 0.70, [
-        r"$\dot\phi_{3D} = \beta\,\Delta\phi_{3D} + k_\alpha\alpha\, +$ front$(c)$",
-        r"$\dot c = d\,\Delta c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
-        r"$\dot a = d_a\Delta a - g_a\phi_{3D}\Sigma_i\bar\phi_i\,a$",
+    eqs(ax, x + 0.018, 0.70 + D, [
+        r"$\dot\phi_{3D} = \beta\,\nabla^2\phi_{3D} + k_\alpha\alpha - r\frac{c}{k+c}\,\mathbf{n}_c\cdot\nabla\phi_{3D}$",
+        r"$\dot c = d\,\nabla^2 c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
+        r"$\dot a = d\,\nabla^2 a - g\,\phi_{3D}\Sigma_i\bar\phi_i\,a$",
     ], size=12.0, gap=0.058)
-    ax.text(x + 0.018, 0.51, "nutrient $c$, antibiotic $a$\n(second nutrient field)", fontsize=10.5 * FS,
+    ax.text(x + 0.018, 0.51 + D, "nutrient $c$, antibiotic $a$\n(second nutrient field)", fontsize=10.5 * FS,
             color=PANEL["macro"][1], va="center", linespacing=1.25, zorder=4)
-    cube_inset(fig, [x + 0.005, 0.205, 0.17, 0.25])
-    ax.text(x + 0.19, 0.30, "2 mm cube\nseed (dark)", fontsize=10 * FS, color=MUTED, va="center",
+    cube_inset(fig, [x + 0.01, Y0 + 0.01, 0.19, 0.29])
+    ax.text(x + 0.20, Y0 + 0.12, "2 mm cube\nseed (dark)", fontsize=10 * FS, color=MUTED, va="center",
             linespacing=1.3, zorder=4)
 
     panel(ax, "micro", "2", "Micro: point model", "Klempt et al. 2026, used as published")
     x, w = PX["micro"]
-    hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
-    ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK, va="center",
+    hot = element_with_gauss_points(ax, x + 0.03, 0.50 + D, 0.075)
+    ax.text(x + 0.165, 0.665 + D, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK, va="center",
             linespacing=1.25, zorder=4)
-    ax.text(x + 0.16, 0.565, "own constraint\n" r"$\Sigma_i\phi_i+\phi_0=1$", fontsize=11 * FS,
+    ax.text(x + 0.16, 0.565 + D, "own constraint\n" r"$\Sigma_i\phi_i+\phi_0=1$", fontsize=11 * FS,
             color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
-    arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1], lw=1.3,
+    arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43 + D), color=PANEL["micro"][1], lw=1.3,
           conn="arc3,rad=0.25")
-    agreed_inset(fig, [x + 0.075, 0.255, 0.20, 0.175])
+    agreed_inset(fig, [x + 0.075, Y0 + 0.06, 0.20, 0.17])
 
     panel(ax, "mech", "3", "Growth and stress", "ANSYS user material (Ch. 4)")
     x, w = PX["mech"]
-    eqs(ax, x + 0.025, 0.695, [
+    eqs(ax, x + 0.025, 0.695 + D, [
         r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
         r"$E(\phi_{3D}) = (\phi_{3D}^2 + f)\,E_{bio}$",
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
     ])
-    stress_sketch(ax, x + 0.085, 0.375, 0.026)
-    ax.text(x + 0.17, 0.375, "the seed grows,\nits neighbours\nhold it back\n(sketch)", fontsize=10.5 * FS,
+    stress_sketch(ax, x + 0.09, Y0 + 0.18, 0.029)
+    ax.text(x + 0.19, Y0 + 0.18, "the seed grows,\nits neighbours\nhold it back\n(sketch)", fontsize=10.5 * FS,
             color=MUTED, va="center", linespacing=1.3, zorder=4)
 
-    y1, y2 = 0.60, 0.53
+    y1, y2 = 0.60 + D, 0.53 + D
     arrow(ax, (PX["macro"][0] + PX["macro"][1], y1), (PX["micro"][0], y1))
     ax.text(0.3325, y1 + 0.015, r"$c^*_0c$" "\n" r"$\alpha^*_0a$", ha="center", va="bottom", fontsize=11 * FS, color=INK,
             linespacing=1.15)
@@ -305,22 +318,22 @@ def main_agreed(thesis=False):
             color=PANEL["micro"][1])
     xa = PX["macro"][0] + PX["macro"][1] / 2
     xc = PX["mech"][0] + PX["mech"][1] / 2
-    ax.plot([xa, xa, xc], [Y0 + H, 0.945, 0.945], color=INK, lw=1.8, zorder=5, solid_capstyle="round")
-    arrow(ax, (xc, 0.945), (xc, Y0 + H + 0.004))
-    ax.text(0.5, 0.958, r"$\phi_{3D}$ (spreading follows the nutrient): growth by Eq. 36", ha="center",
+    ytop = Y0 + H + 0.07
+    ax.plot([xa, xa, xc], [Y0 + H, ytop, ytop], color=INK, lw=1.8, zorder=5, solid_capstyle="round")
+    arrow(ax, (xc, ytop), (xc, Y0 + H + 0.004))
+    ax.text(0.5, ytop + 0.013, r"$\phi_{3D}$ (spreading follows the nutrient): growth by Eq. 36", ha="center",
             va="bottom", fontsize=12.5 * FS, color=INK)
-    xm = PX["micro"][0] + PX["micro"][1] * 0.72
-    arrow(ax, (xm, Y0), (xm, 0.105))
-    ax.text(xm, 0.085, r"output: $\phi_i$, $\psi_i$ at each Gauss point (no $\mathbf{x}$ in the point model; together a field)", ha="center",
-            va="top", fontsize=12.5 * FS, color=INK)
     if not thesis:
-        ax.text(0.5, 0.012,
-                r"$\bar\phi_i=\phi_i\psi_i$: only living biomass consumes.   Assumed, not from a paper: "
-                r"$c^*,\alpha^*$ linear in time, $\Sigma_i\bar\phi_i$ one step late, start values of new points, "
-                r"$\phi_{min}$ = 0.001 (converged).   $s$ from the data window.",
-                ha="center", va="bottom", fontsize=10.2 * FS, color=MUTED)
+        ax.text(0.5, Y0 - 0.02,
+                r"Output: $\phi_i$, $\psi_i$ at each Gauss point.   $\bar\phi_i=\phi_i\psi_i$: only living biomass consumes.   "
+                r"Assumed, not from a paper: $c^*,\alpha^*$ linear in time, $\Sigma_i\bar\phi_i$ one step late," "\n"
+                r"new points take the neighbours' living composition, $\phi_{min}$ = 0.001 (converged).   "
+                r"$s$ from the data window.",
+                ha="center", va="top", fontsize=10.2 * FS, color=MUTED, linespacing=1.3)
     out = OUT.with_name("fig_coupling_schematic_agreed" + ("_thesis" if thesis else "") + ".png")
-    fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
+    fig.savefig(out, dpi=220, bbox_inches="tight", pad_inches=0.05, facecolor="white")
+    _trim_white(out)
+    Y0 = y0_old
     print("wrote", out)
 
 
