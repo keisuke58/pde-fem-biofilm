@@ -918,25 +918,35 @@ unchanged, and the antibiotic lowers the living fraction but not $\phi_{3D}$. Th
 the stress through the nutrient and the front term \fterm{}, and the mixed seed carries about half the stress of
 the separate one because its edge is less sharp. Table~\ref{tab:ch5-gci} gives the grid series with the
 three-grid index of Celik et al.~\cite{Celik2008GCI} (safety factor $1.25$) at an outer time step of
-$0.0025$. The growth converges with a GCI of $1.5$ and $3.3\,\%$. The seed stress converges more slowly,
-with an observed order of about $0.75$, because it is set by the jump of $\alpha$ across the edge of
-the seed, which the front sharpens: GCI $8\,\%$ in the separate and $26\,\%$ in the mixed example. In the
-mixed example the front carries intermediate values of $\phi_{3D}$ at a nearly discontinuous edge.
+$0.0025$. The growth converges with a GCI of $0.7$ to $3.3\,\%$ in all examples. The seed stress is set
+by the jump of $\alpha$ across the edge of the seed, which the front sharpens. In the separate example it
+converges, with a GCI of $0.7\,\%$ without and $8\,\%$ with the antibiotic. In the mixed examples it converges
+slowly, with an observed order of about $0.75$ and a GCI of $26$ to $29\,\%$; with the start fractions of
+Fritsch et al.\ the $128^3$ grid is not yet in the asymptotic range. There the front carries intermediate values
+of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the seed still rises with the grid
+($0.60$, $0.69$, $0.73$).
 
 \begin{table}[htbp]
   \centering
-  \caption[Grid convergence of growth and stress]{Seed means at $T^*=1$ with antibiotic, outer time step
-    $0.0025$: grid series, observed order $p$, extrapolated value and GCI.}
+  \caption[Grid convergence of growth and stress]{Seed means at $T^*=1$, outer time step $0.0025$: grid
+    series, observed order $p$, extrapolated value and GCI. Mixed: equal amounts unless the start fractions
+    $(\phi_1,\phi_2)$ are given; --: not yet in the asymptotic range.}
   \label{tab:ch5-gci}
   \small
   \begin{tabular}{llcccccc}
     \toprule
     example & quantity & $32^3$ & $64^3$ & $128^3$ & $p$ & extrapolated & GCI \\
     \midrule
-    separate & $\alpha-1$ [$10^{-4}$] & $8.453$ & $8.931$ & $9.112$ & $1.4$ & $9.22$ & $1.5\,\%$ \\
-    separate & von Mises [$10^{-4}$~Pa] & $5.523$ & $6.000$ & $6.284$ & $0.75$ & $6.70$ & $8.3\,\%$ \\
-    mixed & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.32$ & $1.2$ & $8.54$ & $3.3\,\%$ \\
-    mixed & von Mises [$10^{-4}$~Pa] & $2.00$ & $2.82$ & $3.30$ & $0.76$ & $3.99$ & $26\,\%$ \\
+    separate, antibiotic & $\alpha-1$ [$10^{-4}$] & $8.453$ & $8.931$ & $9.112$ & $1.4$ & $9.22$ & $1.5\,\%$ \\
+    separate, antibiotic & von Mises [$10^{-4}$~Pa] & $5.523$ & $6.000$ & $6.284$ & $0.75$ & $6.70$ & $8.3\,\%$ \\
+    separate & $\alpha-1$ [$10^{-4}$] & $8.729$ & $9.014$ & $9.110$ & $1.6$ & $9.16$ & $0.7\,\%$ \\
+    separate & von Mises [$10^{-4}$~Pa] & $7.440$ & $6.730$ & $6.585$ & $2.3$ & $6.55$ & $0.7\,\%$ \\
+    mixed, antibiotic & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.32$ & $1.2$ & $8.54$ & $3.3\,\%$ \\
+    mixed, antibiotic & von Mises [$10^{-4}$~Pa] & $2.00$ & $2.82$ & $3.30$ & $0.76$ & $3.99$ & $26\,\%$ \\
+    mixed & $\alpha-1$ [$10^{-4}$] & $7.46$ & $8.08$ & $8.35$ & $1.2$ & $8.56$ & $3.1\,\%$ \\
+    mixed & von Mises [$10^{-4}$~Pa] & $2.13$ & $3.08$ & $3.65$ & $0.74$ & $4.50$ & $29\,\%$ \\
+    mixed $(0.25,0.30)$, antibiotic & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.31$ & $1.2$ & $8.51$ & $3.1\,\%$ \\
+    mixed $(0.25,0.30)$, antibiotic & von Mises [$10^{-4}$~Pa] & $2.01$ & $2.96$ & $4.01$ & -- & -- & -- \\
     \bottomrule
   \end{tabular}
 \end{table}
