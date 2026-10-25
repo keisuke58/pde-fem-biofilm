@@ -76,7 +76,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `archive/ROADMAP_2026.md` ([日本語](archive/ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
 | `archive/QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
-| `MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
+| `archive/MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
 | `EML_REQUEST_VOLUME.ja.md` | Draft request to the EML session (15 Oct 2026, Japanese): add the measured biofilm volume to the likelihood so that the point model calibrates its own growth and scheme (c) needs no external kappa |
 | `KEIO_PLAN.ja.md` | Plan for the Keio continuation (Japanese): what Felix Klempt's and Meisam Soleimani's mails of 5-6 Oct 2026 settled, the tools in hand (ANSYS, Abaqus, Fortran point model), the Klempt 2024 reproduction in Abaqus, and the work packages in order |
 | `KEIO_SERVER_HANDOFF.ja.md` | Hand-off to the Keio Linux server (Japanese, 7 Oct 2026): how to run the Keio work packages with Abaqus there, and which steps were only checked on IKMHIWI03 |
@@ -86,7 +86,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `scripts/setup_keio_server.sh` | One-time setup of a clone on the Keio Linux server (fifa): git identity and hooks, checks for Python, numpy/scipy and the Abaqus command |
 | `references/` | Klempt et al. 2024 (BMMB), Soleimani et al. 2023 (Sci. Rep., co-aggregation) and Feng et al. 2021 (Bull. Math. Biol., Streptococcus–Veillonella), all CC BY 4.0: PDFs and searchable text extractions; licence in `THIRD_PARTY.md`. NEM papers (Rudolf 2025, Vogel 2020, Junker 2022, von Zabiensky 2026; open access) with the reading guide `references/NEM_PAPERS.md`, which also summarises the three that are not open access |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
-| `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
+| `archive/COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
 | `thesis/` | **The thesis itself** (from 3 Oct 2026; copied from LUH_summer_2026). `main.tex`, `chapters/`, structure in `thesis/README.md`; the ANSYS chapter is `chapters/ch4_ansys.tex` |
 | `data/HEINE_DATA_NOT_IN_GIT.md` | Why the measured data of Heine et al. are not in git (on request only) and where scripts expect a local copy |
 | `thesis/admin/` | LUH examination rules for the thesis (MPO 2024, grading: the colloquium is pass/fail, only the thesis is graded), copied from luh_summer_2026; index in `thesis/admin/README.md` |
@@ -159,5 +159,5 @@ Historical notes live under [`archive/`](archive/); the root scripts, reports an
 |---|---|
 | `BACKUP_PLAN_2026-12.ja.md` | what to back up from IKMHIWI03 before the end of December (`scripts/backup_untracked_ikmhiwi03.ps1`) |
 | `DAILY_REPORT_TRIP.ja.md` | daily reports written while the user was travelling (21-24 Oct) |
-| `MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` | draft mail about the neighbour choice of the element (not sent) |
+| `archive/MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` | draft mail about the neighbour choice of the element (not sent) |
 | `speaker_notes_3d_demo.md` | speaker notes for the 3D demonstration videos |

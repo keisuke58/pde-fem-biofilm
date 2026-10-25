@@ -1,6 +1,6 @@
 # Draft (not sent): results of the agreed coupling, to Oliver (to send around 4 Nov 2026)
 
-Replaces `MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` (numbers of that draft are superseded). Plan (the user, 21 Oct): a
+Replaces `archive/MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` (numbers of that draft are superseded). Plan (the user, 21 Oct): a
 report of the results, not a list of questions. Recheck every number against the final thesis Ch. 4 (4 Nov) and the
 grid series at the small step (IKMHIWI03 day7-day9). Attach: the progress deck `slides_progress_1024.pdf` (or the
 pptx) and the schematic. No internal run names in the mail. Oliver's address: to fill in (not in the repository).
