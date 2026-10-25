@@ -74,3 +74,19 @@ Check before sending:
 - the examples use the synthetic case I of Fritsch et al. (2025), not the calibrated five-species model; say so in
   the talk;
 - the implant–abutment sentence is a motivation, not a result.
+
+Checked on IKMHIWI03 (25 Oct 2026) against the runs of 24-25 Oct:
+- "three-grid GCI below 10 %" for the separate example: holds, but only just (9.8 % with the position rule, 8.4 % with
+  the inherit rule; 128^3: 6.05e-4 and 5.90e-4 Pa). Safer: "converges to about 6 x 10^-4 Pa (three-grid GCI about
+  10 %)". The ANSYS element with upwind gradients extrapolates to 5.8e-4 Pa (8^3/16^3/24^3, GCI 16.5 %), inside that
+  band; this can be said for the element.
+- "composition changes by less than 1 % between 16^3 and 128^3": true for the shares (0.949 to 0.951); the living
+  fraction of the seed changes by about 10 % (0.133 to 0.147). Write "the shares of the species change by less than
+  1 %", or add the living fraction separately.
+- "Where the nutrient is high, the antibiotic acts less ..." (ESB): not checked by a run here; either show it (seed
+  living fraction against the local c) or drop the sentence.
+- New since the drafts, worth a sentence: the rule for newly reached points (they inherit the living composition of
+  their neighbours) decides whether the biofilm recovers after the antibiotic (maze: 0.35 against 0.04), the same
+  in Python and in a third, Galerkin implementation (Abaqus user element, SUPG); and the stress of the mixed example
+  converges slowly (front with a nearly discontinuous edge).
+- The Abaqus element may appear in the paper and the abstracts (it is only kept out of the LUH thesis).
