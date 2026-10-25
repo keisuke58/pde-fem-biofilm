@@ -146,6 +146,12 @@ ANSYS_BC = "--ansys-bc" in sys.argv
 START_POSITION = "--start-position" in sys.argv
 INHERIT_LIVING = "--inherit-living" in sys.argv     # see living_start()
 LIMITER = sys.argv[sys.argv.index("--limiter") + 1] if "--limiter" in sys.argv else "minmod"   # TVD slope limiter (A-83)
+# --mech-feedback K (Keio continuation, not in the thesis; the thesis model is frozen): the mechanical term of
+# Klempt et al. 2024, Eq. 30, phi mu (I : C_e - 3), that their Eq. 34 drops, divided by eta_phi:
+# dphi/dt = ... - K phi (I : C_e - 3), K = mu / eta_phi [1/T*] (not given by the paper, a sensitivity parameter).
+# I : C_e - 3 = 2 tr(eps_e) for small strains, from the stress mesh (NM^3) at the start of each outer step (lag of
+# one outer step).
+MECH_K = _opt("--mech-feedback", 0.0)
 BUDGET = "--budget" in sys.argv                      # volume integrals of the terms of Eq. 34 over the run (A-83)
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
 # the file's total; without it the file's start (Fritsch case I: 0.25, 0.30)
@@ -238,7 +244,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
@@ -709,6 +715,11 @@ def run(example, antibiotic):
                 phi, alpha, c, a, G, on, L0 = (v.copy() for v in save)
                 L = 0.5 * (L0 + np.where(on, L_end, 0.0))
             # (1) macro phi, alpha
+            if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
+                S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES)
+                f_ = NF // NM
+                ice = 2.0 * np.repeat(np.repeat(np.repeat(np.nan_to_num(S.LAST_TRE), f_, 0), f_, 1), f_, 2)[QS]
+                hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
             cf = c
             Lf = L
             ka = 0.0 if MMS else W.K_ALPHA
@@ -723,6 +734,8 @@ def run(example, antibiotic):
                 def f(ph, al, tt):
                     (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
                     d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                    if MECH_K:
+                        d = d - MECH_K * ph * ice
                     if FRONT:
                         d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
                         if SENSOR:
