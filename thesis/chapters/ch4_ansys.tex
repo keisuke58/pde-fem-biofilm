@@ -881,6 +881,7 @@ steps used.
     outer time step $0.025$; growth and stress converged values in Table~\ref{tab:ch5-gci}.}
   \label{tab:ch5-two-species}
   \small
+  \setlength{\tabcolsep}{4pt}
   \begin{tabular}{lccccc}
     \toprule
     example & $\sum_i\bar\phi_i$ & $\phi_1/(\phi_1+\phi_2)$ & $c$ & $\alpha-1$ & von Mises [Pa] \\
@@ -930,23 +931,24 @@ of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in th
   \centering
   \caption[Grid convergence of growth and stress]{Seed means at $T^*=1$, outer time step $0.0025$: grid
     series, observed order $p$, extrapolated value and GCI. Mixed: equal amounts unless the start fractions
-    $(\phi_1,\phi_2)$ are given; --: not yet in the asymptotic range.}
+    $(\phi_1,\phi_2)$ are given; antib.: with antibiotic; --: not yet in the asymptotic range.}
   \label{tab:ch5-gci}
   \small
+  \setlength{\tabcolsep}{3.5pt}
   \begin{tabular}{llcccccc}
     \toprule
     example & quantity & $32^3$ & $64^3$ & $128^3$ & $p$ & extrapolated & GCI \\
     \midrule
-    separate, antibiotic & $\alpha-1$ [$10^{-4}$] & $8.453$ & $8.931$ & $9.112$ & $1.4$ & $9.22$ & $1.5\,\%$ \\
-    separate, antibiotic & von Mises [$10^{-4}$~Pa] & $5.523$ & $6.000$ & $6.284$ & $0.75$ & $6.70$ & $8.3\,\%$ \\
+    separate, antib. & $\alpha-1$ [$10^{-4}$] & $8.453$ & $8.931$ & $9.112$ & $1.4$ & $9.22$ & $1.5\,\%$ \\
+    separate, antib. & von Mises [$10^{-4}$~Pa] & $5.523$ & $6.000$ & $6.284$ & $0.75$ & $6.70$ & $8.3\,\%$ \\
     separate & $\alpha-1$ [$10^{-4}$] & $8.729$ & $9.014$ & $9.110$ & $1.6$ & $9.16$ & $0.7\,\%$ \\
     separate & von Mises [$10^{-4}$~Pa] & $7.440$ & $6.730$ & $6.585$ & $2.3$ & $6.55$ & $0.7\,\%$ \\
-    mixed, antibiotic & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.32$ & $1.2$ & $8.54$ & $3.3\,\%$ \\
-    mixed, antibiotic & von Mises [$10^{-4}$~Pa] & $2.00$ & $2.82$ & $3.30$ & $0.76$ & $3.99$ & $26\,\%$ \\
+    mixed, antib. & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.32$ & $1.2$ & $8.54$ & $3.3\,\%$ \\
+    mixed, antib. & von Mises [$10^{-4}$~Pa] & $2.00$ & $2.82$ & $3.30$ & $0.76$ & $3.99$ & $26\,\%$ \\
     mixed & $\alpha-1$ [$10^{-4}$] & $7.46$ & $8.08$ & $8.35$ & $1.2$ & $8.56$ & $3.1\,\%$ \\
     mixed & von Mises [$10^{-4}$~Pa] & $2.13$ & $3.08$ & $3.65$ & $0.74$ & $4.50$ & $29\,\%$ \\
-    mixed $(0.25,0.30)$, antibiotic & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.31$ & $1.2$ & $8.51$ & $3.1\,\%$ \\
-    mixed $(0.25,0.30)$, antibiotic & von Mises [$10^{-4}$~Pa] & $2.01$ & $2.96$ & $4.01$ & -- & -- & -- \\
+    mixed $(0.25,0.30)$, antib. & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.31$ & $1.2$ & $8.51$ & $3.1\,\%$ \\
+    mixed $(0.25,0.30)$, antib. & von Mises [$10^{-4}$~Pa] & $2.01$ & $2.96$ & $4.01$ & -- & -- & -- \\
     \bottomrule
   \end{tabular}
 \end{table}
