@@ -937,8 +937,7 @@ separate example. The antibiotic acts on the composition and the living biomass,
 the neighbours' living composition, the seed values of the cube examples differ by a few percent (living
 volume fraction $0.147$ against $0.152$ in the separate example with antibiotic). In the maze of Klempt et
 al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule decides whether it
-recovers: at $T^*=60$ the living volume fraction is $0.35$ with the neighbours' composition and $0.04$ with
-the start state.
+recovers (Section~\ref{sec:ch5-geometry}).
 
 \paragraph{The element.} The ANSYS element solves the same equations with its own discretisation
 (Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it, without
@@ -951,6 +950,58 @@ is $2.14$, $4.56$ and $5.15\times10^{-4}$~Pa on $8^3$, $16^3$ and $24^3$, extrap
 $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$). This lies within the band of the second-order schemes in Python. The
 element runs the point model in every increment of $0.00125$, so its outer-step error is small. I take
 the values of this section from the Python code, which reaches finer grids.
+
+% Source: coupled_living_consumption.py --obstacle columns (32^3, 25 Oct, results/2026-10-3d/*obstcolumns*dtc0.0025*inhliv*),
+% fig_obstacle_columns_3d.py; maze: maze_coupled_2d.py, results/2026-10-maze/maze_h4_tend60*_k24fig*.json, fig_maze_k24.py.
+\subsection{Geometry: rigid bars and a maze}
+\label{sec:ch5-geometry}
+
+Klempt et al.\ 2024 also grow the biofilm against rigid obstacles (their Section~4.3) and through a maze
+(Section~4.4). I repeated both with the coupled model of this chapter in the Python code, without antibiotic
+unless stated.
+
+\paragraph{Rigid bars.} Four bars after Fig.~9 of the paper, with positions read off the sketch: two along
+$x$ and two along $z$, each $0.25$~mm square, between $0.5$ and $0.75$~mm from the centre. They hold no
+biofilm and no nutrient, and the biofilm slides along them without friction. All other settings are those of
+Section~\ref{sec:ch5-two-species} ($32^3$, outer step $0.0025$). The biofilm grows around the bars and closes
+behind them, and by $T^*=0.2$ it fills the cube between them (Figure~\ref{fig:ch5-bars}). The composition of
+the seed hardly changes. The bars restrain the swelling: the seed von Mises stress is $7.1\times10^{-3}$~Pa
+against $7.4\times10^{-4}$~Pa without bars in the separate example, about ten times higher, and
+$9.5\times10^{-4}$ against $2.1\times10^{-4}$~Pa in the mixed one. The growth $\alpha-1$ of the seed is $9$ and
+$21\,\%$ lower. These are values on one grid; on $32^3$ the
+stress without bars lies $14\,\%$ above its extrapolated value (Table~\ref{tab:ch5-gci}), small against the
+factor caused by the bars.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_obstacle_columns_3d.pdf}
+  \caption[Growth against rigid bars]{Growth against four rigid bars (dark grey), after Fig.~9 of Klempt et
+    al.\ 2024, Python, $32^3$, no antibiotic. (a)~Set-up: start biomass (red) and nutrient supply on the face
+    $y=-1$~mm (green). (b)--(d)~Surface $\phi_{3D}=0.5$ (separate example) and $0.2$ (mixed example, which
+    starts at $\phi_{3D}=0.55$) at $T^*=0.05$, $0.1$ and $0.2$.}
+  \label{fig:ch5-bars}
+\end{figure}
+
+\paragraph{Maze.} The maze of Fig.~11 of the paper, read off the figure ($560~\mu$m across), in two dimensions
+with $4~\mu$m cells, the constants of Table~6 of the paper ($\beta=10~\mu$m$^2/T^*$, $r=200~\mu$m$/T^*$,
+$k_\alpha=10^{-6}\,T^{*-1}$), the nutrient held in the centre, the colony of both species at the entrance and
+the point model of the two-species examples. With the antibiotic, $a=1$ is held at the entrance from
+$T^*=20$. The model is two-dimensional, so it gives no stress. The biofilm follows the corridors, also into
+dead ends, and approaches the centre (Figure~\ref{fig:ch5-maze}); at $T^*=60$ the nearest point with
+$\phi_{3D}\ge0.5$ is $42~\mu$m from the centre without antibiotic and $133~\mu$m with it. The living volume
+fraction of the colonised region is $0.92$ without antibiotic. With the antibiotic it falls to $0.12$ at
+$T^*=24$ and recovers to $0.35$ at $T^*=60$, because the biofilm keeps spreading and the newly reached points
+take the living composition of their neighbours. With the start state for new points it stays at $0.04$.
+In this geometry the rule for new points decides whether the biofilm recovers.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_maze_k24_h4.pdf}
+  \caption[Growth through the maze]{The maze of Klempt et al.\ 2024, Fig.~11, with the coupled model (Python,
+    two dimensions, $4~\mu$m cells): $\phi_{3D}$ at $T^*=12$, $24$, $36$ and $60$, (a)~without and (b)~with the
+    antibiotic at the entrance from $T^*=20$. Walls white, nutrient source outlined in red.}
+  \label{fig:ch5-maze}
+\end{figure}
 
 \subsection{The calibrated five-species model in the element}
 \label{sec:ch5-five}

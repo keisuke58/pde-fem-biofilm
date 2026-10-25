@@ -23,9 +23,10 @@ import figstyle  # noqa: E402
 import pyvista as pv  # noqa: E402
 
 pv.OFF_SCREEN = True
-TAG = "_nf16_front1_phimin0.001_v2_fortran_ansysbc_a100_gab1_gc1_tab0.333333_snaps_obstcolumns_{ex}"
-TIMES = (0.05, 0.15, 0.3)
-LEVEL = 0.5
+# main settings (25 Oct): 32^3, outer step 0.0025, TVD, mirror walls, new points inherit the living composition
+TAG = "_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv{mix}_a100_gab1_gc1_tab0.333333_snaps_tvd_wgmirror_fast_obstcolumns_{ex}"
+TIMES = (0.05, 0.1, 0.2)
+LEVEL = {"separate": 0.5, "mixed": 0.2}   # the mixed seed starts at phi_3D = 0.55 and stays below 0.5
 BARS = []
 for lo, hi in ((-0.75, -0.5), (0.5, 0.75)):
     BARS.append((-1.0, 1.0, -0.125, 0.125, lo, hi))        # along x
@@ -67,8 +68,8 @@ def main():
     figstyle.apply(size=8)
     rows = []
     for ex in ("separate", "mixed"):
-        d = np.load(ROOT / "figdata" / f"coupled_living_{ex}{TAG.format(ex=ex)}.npz")
-        n = d["phi_0.05"].shape[0]
+        d = np.load(ROOT / "figdata" / f"coupled_living_{ex}{TAG.format(ex=ex, mix='_mixeq' if ex == 'mixed' else '')}.npz")
+        n = d[f"phi_{TIMES[0]}"].shape[0]
         xc = -1 + (np.arange(n) + 0.5) * 2 / n
         X, Y, Z = np.meshgrid(xc, xc, xc, indexing="ij")
         import wp3_reference as W
@@ -86,14 +87,14 @@ def main():
         for T in TIMES:
             u = d[f"phi_{T}"]
 
-            def surf(pl, u=u):
+            def surf(pl, u=u, lev=LEVEL[ex]):
                 # one layer of zeros outside the cube closes the surface on the walls, as in Klempt et al. Fig. 10
                 up = np.pad(u, 1)
                 n2 = up.shape[0]
                 g = pv.ImageData(dimensions=(n2 + 1,) * 3, spacing=(2.0 / n,) * 3, origin=(-1 - 2.0 / n,) * 3)
                 g.cell_data["u"] = up.ravel(order="F")
                 g = g.cell_data_to_point_data()
-                s = g.contour([LEVEL], scalars="u").smooth(n_iter=30)
+                s = g.contour([lev], scalars="u").smooth(n_iter=30)
                 pl.add_mesh(s, color="#e8a33d", smooth_shading=True, specular=0.2)
             imgs.append(render(f"{ex}_{T}", surf))
         rows.append((ex, imgs))
@@ -107,7 +108,7 @@ def main():
             a.axis("off")
             if r == 0:
                 a.set_title(titles[c], fontsize=8)
-        axs[r, 0].text(-0.08, 0.5, ex, rotation=90, va="center", ha="center", transform=axs[r, 0].transAxes,
+        axs[r, 0].text(-0.08, 0.5, f"{ex}, $\\phi_{{3D}}={LEVEL[ex]:g}$", rotation=90, va="center", ha="center", transform=axs[r, 0].transAxes,
                        fontsize=8)
     out = ROOT / "assets" / "fig_obstacle_columns_3d"
     fig.savefig(out.with_suffix(".png"), dpi=400, bbox_inches="tight")
