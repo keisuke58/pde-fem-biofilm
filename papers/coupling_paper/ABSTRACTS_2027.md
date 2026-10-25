@@ -30,8 +30,9 @@ Comparing the two implementations exposed four implementation issues in the elem
 non-conservative discrete Laplacian and the treatment of surface points; after the corrections both codes agree
 within 1 to 5 %. The front term of the growth equation is advection-dominated, with a cell Péclet number of about
 31 on a 16³ mesh. A first-order artificial diffusion keeps the solution stable but gives about a quarter of the
-converged seed stress on that mesh; second-order schemes (Lax–Wendroff with an extremum sensor, TVD) converge to
-about 6 × 10⁻⁴ Pa from 32³ on. The composition of the biofilm changes by less than 1 % between 16³ and 128³.
+converged seed stress on that mesh; with second-order schemes (Lax–Wendroff with an extremum sensor, TVD) the seed
+stress of the separate example converges to about 6 × 10⁻⁴ Pa (three-grid GCI below 10 %), while in the mixed
+example it still changes between 64³ and 128³. The composition of the biofilm changes by less than 1 % between 16³ and 128³.
 
 Examples with two species and an antibiotic show how the composition and the living fraction follow the nutrient
 field, and examples with rigid obstacles and a maze geometry reproduce the growth patterns of the original model.
@@ -59,7 +60,7 @@ one third of the simulated time, lowers the living fraction of the seed from 0.9
 separately and from 0.96 to 0.04 when they start mixed. Where the nutrient is high, the antibiotic acts less,
 since the point model compares the local nutrient with the antibiotic threshold. The growth variable and the seed
 stress depend only weakly on the composition, because composition reaches the mechanics through the nutrient field
-and the spreading of the biofilm. Stresses converge only with second-order schemes for the front term; a
+and the spreading of the biofilm. Stresses need second-order schemes for the front term and converge more slowly when the species start mixed; a
 first-order scheme underestimates them by a factor of about four on a 16³ mesh.
 
 Examples with rigid obstacles and a maze show growth around and through confined geometries, relevant for
@@ -68,7 +69,8 @@ biofilms in the gaps of implant–abutment connections.
 ---
 
 Check before sending:
-- the 0.97/0.15 and 0.96/0.04 values (Table 1 of the progress deck, Python 128³, TVD) against the final Ch. 4;
+- the 0.97/0.15 and 0.96/0.04 values against the final Ch. 4 (A-85 base case, new points inherit the living
+  composition: 0.965/0.152 and 0.961/0.038, unchanged at two digits);
 - the examples use the synthetic case I of Fritsch et al. (2025), not the calibrated five-species model; say so in
   the talk;
 - the implant–abutment sentence is a motivation, not a result.
