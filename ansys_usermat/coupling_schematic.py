@@ -265,10 +265,13 @@ def _trim_white(path, pad=12):
 def main_agreed(thesis=False):
     """The coupling agreed with Oliver, 20 Oct 2026. Compact layout (25 Oct: less empty space): the output line is
     part of the footnote, the panels sit lower and the empty top is cropped."""
-    global FS, Y0
+    global FS, Y0, PX
     FS = 1.6 if thesis else 1.0
     figstyle.apply(12)
     y0_old, Y0 = Y0, 0.085
+    px_old = PX                          # wider gap between the fields and the point model: the coupling
+    PX = {"macro": (0.005, 0.285), "micro": (0.405, 0.285), "mech": (0.715, 0.28)}
+    xg = (PX["macro"][0] + PX["macro"][1] + PX["micro"][0]) / 2      # middle of the gap
     D = Y0 - y0_old                      # shift of every element against the earlier layout
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
@@ -309,13 +312,16 @@ def main_agreed(thesis=False):
     ax.text(x + 0.19, Y0 + 0.18, "the seed grows,\nits neighbours\nhold it back\n(sketch)", fontsize=10.5 * FS,
             color=MUTED, va="center", linespacing=1.3, zorder=4)
 
-    y1, y2 = 0.60 + D, 0.53 + D
-    arrow(ax, (PX["macro"][0] + PX["macro"][1], y1), (PX["micro"][0], y1))
-    ax.text(0.3325, y1 + 0.015, r"$c^*_0c$" "\n" r"$\alpha^*_0a$", ha="center", va="bottom", fontsize=11 * FS, color=INK,
-            linespacing=1.15)
-    arrow(ax, (PX["micro"][0], y2), (PX["macro"][0] + PX["macro"][1], y2), color=PANEL["micro"][1])
-    ax.text(0.3325, y2 - 0.02, r"$\Sigma_i\bar\phi_i$", ha="center", va="top", fontsize=12.5 * FS,
-            color=PANEL["micro"][1])
+    y1, y2 = 0.62 + D, 0.47 + D
+    xr = PX["macro"][0] + PX["macro"][1]
+    arrow(ax, (xr, y1), (PX["micro"][0], y1), lw=3.0)
+    ax.text(xg, y1 + 0.02, r"$c^*=c^*_0\,c$" "\n" r"$\alpha^*=\alpha^*_0\,a$", ha="center", va="bottom",
+            fontsize=13.5 * FS, color=INK, linespacing=1.2)
+    arrow(ax, (PX["micro"][0], y2), (xr, y2), color=PANEL["micro"][1], lw=3.0)
+    ax.text(xg, y2 - 0.025, r"$\Sigma_i\bar\phi_i$" "\n" "(consumption)", ha="center", va="top", fontsize=13.5 * FS,
+            color=PANEL["micro"][1], linespacing=1.2)
+    ax.text(xg, (y1 + y2) / 2, "two-way\ncoupling", ha="center", va="center", fontsize=11 * FS, color=MUTED,
+            style="italic", linespacing=1.15)
     xa = PX["macro"][0] + PX["macro"][1] / 2
     xc = PX["mech"][0] + PX["mech"][1] / 2
     ytop = Y0 + H + 0.07
@@ -333,7 +339,7 @@ def main_agreed(thesis=False):
     out = OUT.with_name("fig_coupling_schematic_agreed" + ("_thesis" if thesis else "") + ".png")
     fig.savefig(out, dpi=220, bbox_inches="tight", pad_inches=0.05, facecolor="white")
     _trim_white(out)
-    Y0 = y0_old
+    Y0, PX = y0_old, px_old
     print("wrote", out)
 
 
