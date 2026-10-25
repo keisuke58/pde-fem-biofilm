@@ -9,7 +9,8 @@ mathtext). A demonstration, not a thesis figure.
         -> assets/anim_coupled_tvd_<case>[_inherit][_obst][_k26c4][_pulse]_5panel.mp4 and _end.png
   inherit: newly colonised points take the phi-weighted mean state of their colonised neighbours (default: the start
            state by position, the rule of the ANSYS runs); obst: the four rigid columns of Klempt 2024 Sect. 4.3;
-  k26c4:   the four species of Klempt 2026 Table 2, case 4; pulse: the antibiotic in pulses of the same dose (A-71).
+  k26c4:   the four species of Klempt 2026 Table 2, case 4; pulse: the antibiotic in pulses of the same dose (A-71);
+  fine:    coupling step 0.0025 and stress on 32^3 (A-90; run with --dtc 0.0025 --nm 32).
 """
 import sys
 from pathlib import Path
@@ -35,8 +36,9 @@ INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' l
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
-TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
-       f"_snapsvm{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
+FINE = "fine" in OPT              # A-90: coupling step 0.0025 (A-89) and the stress on a 32^3 mesh
+TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
+       f"_snapsvm{'_nm32' if FINE else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
        f"{'_obstcolumns' if OBST else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
@@ -70,7 +72,8 @@ AB = (r"in pulses: $a = 2$ for the first half of each period $2/9$, 0 for the se
       if PULSE else r"held at 1")
 CAPTION = "\n".join([
     r"Coupled growth model: Klempt et al. 2024, Eqs. 34$-$36, front term on ($r = 10$ mm/$T^*$), with the point model of "
-    r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term.",
+    r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term"
+    + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
     r"Point model: " + MODEL + ". " + START,
     r"(a) Share of group A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the bottom layer $y < -0.75$ mm, "
@@ -80,7 +83,9 @@ CAPTION = "\n".join([
     r"(e) Stress. Growth: $\mathbf{F}_g = \alpha\mathbf{I}$, $\dot\alpha = k_\alpha\phi_{3D}$ (Eq. 36), small strain: eigenstrain "
     r"$(\alpha - 1)\mathbf{I}$. Constitutive law: $\sigma = E(\phi_{3D})\,\mathbb{C}(\nu) : (\varepsilon - (\alpha - 1)\mathbf{I})$, "
     r"$E(\phi_{3D}) = 10$ Pa $(\phi_{3D}^2 + 10^{-3})$, $\nu = 0.49$. Equilibrium: $\nabla\cdot\sigma = \mathbf{0}$, free cube "
-    r"(rigid-body motion constrained), $16^3$ hexahedra. Shown: $\sigma_\mathrm{vM} = (\frac{3}{2}\,s : s)^{1/2}$."
+    r"(rigid-body motion constrained), $" + str(nm) + r"^3$ hexahedra. Shown: $\sigma_\mathrm{vM} = (\frac{3}{2}\,s : s)^{1/2}$."
+    + ("\n" + r"Growth follows all biomass $\phi_{3D}$, dead included, so the stress keeps rising after the antibiotic."
+       if FINE else "")
     + (r" Grey: four rigid columns (Klempt et al. 2024, Sect. 4.3), no biofilm and no flux in them." if OBST else ""),
     r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $K = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
     r"$d = 10^8$ mm$^2$/$T^*$ and $g\,l^2/d = 1$ for $c$ and $a$, $\phi_{\min} = 10^{-3}$ (Klempt et al. 2024, Table 2, "
@@ -132,7 +137,7 @@ W = 0.2
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
 ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}_5panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}_5panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
