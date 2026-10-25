@@ -67,8 +67,9 @@ def meshes(T):
 
 
 def render(mesh, field, cmap, clim):
-    pl = pv.Plotter(off_screen=True, window_size=(800, 760))
-    pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey", line_width=2)
+    pl = pv.Plotter(off_screen=True, window_size=(1600, 1520))
+    pl.enable_anti_aliasing("ssaa")
+    pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey", line_width=3)
     if mesh.n_cells:
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     pl.camera_position = CAM
@@ -77,7 +78,7 @@ def render(mesh, field, cmap, clim):
     pl.close()
     rows = np.where((img < 250).any(axis=(1, 2)))[0]
     cols = np.where((img < 250).any(axis=(0, 2)))[0]
-    p = 6
+    p = 12
     return img[max(rows[0] - p, 0):rows[-1] + p, max(cols[0] - p, 0):cols[-1] + p]
 
 
@@ -87,7 +88,7 @@ for i, T in enumerate(T_SHOW):
     M = meshes(T)
     for k, (field, mesh, cmap, clim, label) in enumerate(PANELS):
         ax = fig.add_axes([0.01 + W * k, 0.555 - 0.415 * i, W - 0.004, H0])
-        ax.imshow(render(M[mesh], field, cmap, clim), interpolation="none")
+        ax.imshow(render(M[mesh], field, cmap, clim), interpolation="none")   # PDF keeps the full render
         ax.set_axis_off()
         ax.text(0.0, 1.0, f"({'abcde'[k]}{i + 1})", transform=ax.transAxes, va="bottom", fontsize=8)
         if k == 0:
@@ -103,5 +104,5 @@ for i, T in enumerate(T_SHOW):
             cb.set_xlabel(label, fontsize=8, labelpad=1)
 out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}{'_startpos' if RULE == 'startpos' else ''}.pdf"   # the base case keeps the plain name
 fig.savefig(out, dpi=400)
-fig.savefig(out.with_suffix(".png"), dpi=200)
+fig.savefig(out.with_suffix(".png"), dpi=400)
 print("wrote", out, "times", T_SHOW, "stress range 0 ..", VMAX)
