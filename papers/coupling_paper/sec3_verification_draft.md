@@ -148,8 +148,10 @@ mesh.
   in both codes). This rule is a modelling assumption and is stated with each example.
 
 ## To finish
-- The grid series of the separate and mixed examples at Delta T* = 0.0025 (32^3, 64^3, 128^3; running on IKMHIWI03,
-  A-89); replace the GCI of the coupled examples with them.
+- Grid series at Delta T* = 0.0025 (32^3, 64^3, 128^3) are in for all examples (IKMHIWI03 A-89 with antibiotic;
+  cloud 25 Oct without antibiotic and the Fritsch start fractions); table in thesis Ch. 4 (`tab:ch5-gci`).
+  Mixed with the Fritsch fractions and antibiotic: stress 2.01 / 2.96 / 4.01e-4 Pa, not yet asymptotic; a fourth grid
+  (192^3, step limit 12 D + 2 Co <= 2.2) would settle it.
 - Decide which code carries which figure (proposal: maps from Python TVD at 64^3 or 128^3, the element for the
   verification table only).
 - Figure 2 of the outline (verification): the two tables above as a two-panel plot (alpha - 1 and von Mises against

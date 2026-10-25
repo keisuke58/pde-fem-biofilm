@@ -52,7 +52,9 @@ fraction is 0.35 with the neighbours' composition and 0.04 with the start state.
 - The mixed seed carries about half the stress of the separate one: its edge is less sharp because the front carries
   intermediate values of phi_3D.
 - Stress needs a second-order treatment of the front term (Section 3); the extrapolated seed stress is about
-  6.7e-4 Pa (separate, GCI 8 %) and 4.0e-4 Pa (mixed, GCI 26 %) at the small outer step.
+  6.7e-4 Pa (separate, GCI 8 %; 6.55e-4 Pa and 0.7 % without antibiotic) and 4.0e-4 Pa (mixed, GCI 26 %; 4.5e-4 Pa
+  and 29 % without antibiotic) at the small outer step. With the Fritsch start fractions the mixed stress is not yet
+  in the asymptotic range on 128^3; the growth converges in every example (GCI 0.7 to 3.3 %).
 - Limitation: the front speed of Eq. 34 depends on the nutrient only, so dead biofilm keeps spreading after the
   antibiotic (two thirds of the cells reached after the antibiotic in the maze border only dead biofilm). Tying the
   front speed to the living biomass changes the stress strongly (16^3: +51 % separate, about 4 times mixed;
@@ -69,7 +71,7 @@ fraction is 0.35 with the neighbours' composition and 0.04 with the start state.
 
 ## Still to add
 
-- Grid series at the small step for all five examples (cloud runs at 128^3 in progress).
+- Grid series at the small step: done (thesis Ch. 4); 192^3 for the mixed example with the Fritsch fractions.
 - 4.3 of the outline (start share decides the winner) and 4.4 (where the regions meet): re-run with the inherit
   rule before using the earlier numbers.
 - Klempt 2026 case 3 inputs (sine nutrient), two and four species (`results/2026-10-3d-case3/`).
