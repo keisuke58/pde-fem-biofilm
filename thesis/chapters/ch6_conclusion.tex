@@ -37,13 +37,13 @@ ring of tension reported by Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
 The point model of Klempt et al.\ 2026 runs, unchanged, at every Gauss point. It
 receives the nutrient and an antibiotic from fields of the element, and its living
 biomass sets the consumption of both, so that the composition reaches the spreading
-of the biofilm through the nutrient and the front term. With uniform fields the
+of the biofilm through the nutrient and the front term \fterm{}. With uniform fields the
 coupled point model reproduces the point model alone to round-off. In two-species
 examples with synthetic data an antibiotic lowers the living volume fraction of the
 seed from $0.97$ to $0.15$ when the species start separately and to $0.04$ when they
 start mixed, while the growth changes by less than $2\,\%$. The growth converges on
 refined grids with a GCI below $4\,\%$; the seed stress needs a second-order
-treatment of the front term and converges more slowly, with a GCI of $8\,\%$ in the
+treatment of the front term \fterm{} and converges more slowly, with a GCI of $8\,\%$ in the
 separate and $26\,\%$ in the mixed example. The ANSYS element solves the same
 equations and agrees within these bands.
 
@@ -124,7 +124,7 @@ problem the growth field converges at about second order against a
 finite-volume reference solution, and the stress, with its jump in stiffness
 at the surface of the seed, at about first order; on $24^3$ the seed stress
 lies $2\,\%$ from its converged value.
-The front term of Eq.~34 is advection dominated, with a cell P\'eclet number
+The front term \fterm{} of Eq.~34 is advection dominated, with a cell P\'eclet number
 of about $31$ on $16^3$. A constant added diffusion keeps it stable but gives a
 quarter of the converged seed stress on that mesh, so the stress needs a
 second-order scheme; the once-per-step update of the point model adds a
@@ -151,7 +151,7 @@ for in-vivo data is open.
         through the nutrient; it does not act on the stiffness, and the stress
         does not act back on growth, following Klempt et al.\ 2024, who drop the
         mechanical term in the growth equation.
-  \item \emph{Front term.} The front term needs a second-order upwind
+  \item \emph{Front term \fterm{}.} The front term \fterm{} needs a second-order upwind
         treatment, and the seed stress converges slowly when the species start
         mixed. Its speed depends on the nutrient only, so dead biofilm keeps
         spreading after an antibiotic. The stiffness counts dead biomass as well.
@@ -203,7 +203,7 @@ in order of how well the literature supports them.
         multispecies biofilm models, in which only the active biomass grows and
         inactive cells only occupy volume~\cite{WannerGujer1986}; it lets lysis
         or an antibiotic in the point model lower the growth.
-  \item \emph{The front term in the element.} A second-order stabilisation
+  \item \emph{The front term \fterm{} in the element.} A second-order stabilisation
         that stays stable on fine meshes would let the element give the converged
         stress directly; upwind gradients are a first step.
   \item \emph{Composition-dependent spreading.} The point model now sees the
