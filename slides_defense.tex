@@ -43,6 +43,7 @@
 \small Supervisors: Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler\\[4pt]}
 \date{16 December 2026}
 
+\newcommand{\fterm}{\ensuremath{-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla \phi}}
 \begin{document}
 \maketitle
 
@@ -86,7 +87,7 @@ fields, and only living biomass consumes them.}
 \textbf{Growth field} (Klempt et al.\ 2024)
 \[
 \begin{aligned}
-&\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha\;(-\text{front term})\\
+&\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha\fterm\\
 &\dot c=d\,\nabla^2c-g\,\phi\,\textstyle\sum_i\bar\phi_i\,c,\qquad \dot\alpha=k_\alpha\phi\\
 &\mathbf F=\mathbf F_e\mathbf F_g,\quad \mathbf F_g=\alpha\mathbf I,\quad \alpha(0)=1
 \end{aligned}
@@ -281,7 +282,7 @@ von Mises stress; $64^3$, one octant removed
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: grid convergence and the front term}
+\begin{frame}{Part 3: grid convergence and the front term \fterm{}}
 \begin{columns}[T]
 \begin{column}{0.56\textwidth}
 \small Seed means with antibiotic, $T^*=1$; extrapolated value and GCI (three grids)\\[4pt]
@@ -295,19 +296,19 @@ mixed & $\alpha-1$ & $8.54\times10^{-4}$ & $3.3\,\%$\\
 mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
 \bottomrule
 \end{tabular}\\[6pt]
-\footnotesize Python, $32^3$/$64^3$/$128^3$, second-order upwind front term
+\footnotesize Python, $32^3$/$64^3$/$128^3$, second-order upwind front term \fterm{}
 \end{column}
 \begin{column}{0.42\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{3pt}
-  \item Front term: cell P\'eclet number $\approx31$ on $16^3$; a central gradient oscillates
+  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a central gradient oscillates
   \item Constant added diffusion: a quarter of the converged stress on $16^3$
   \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
   \item Composition changes by less than $3\,\%$ with grid and time step
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Growth and composition converge; the stress needs a second-order front term and converges more slowly.}
+\takeaway{Growth and composition converge; the stress needs a second-order front term \fterm{} and converges more slowly.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -317,7 +318,7 @@ mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
         oral biofilm was available
     \item \textbf{Mechanics one way}: the stress does not act back on growth (as in Klempt et al.\ 2024),
         and the composition does not act on the stiffness
-  \item \textbf{Front term}: its speed depends on the nutrient only, so dead biofilm keeps spreading
+  \item \textbf{Front term \fterm{}}: its speed depends on the nutrient only, so dead biofilm keeps spreading
         after the antibiotic; the stiffness counts dead biomass
   \item \textbf{Assumptions}: start values of newly reached points, $\phi_{\min}$, the conversion
         of $\beta$; each reported with its sensitivity
@@ -343,7 +344,7 @@ mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
 \begin{itemize}\setlength{\itemsep}{8pt}
   \item Five calibrated species in the finite element model
     \item Stress into growth (Eq.~30 of Klempt et al.\ 2024), composition into stiffness
-  \item A second-order front term in the element; explicit against implicit field update
+  \item A second-order front term \fterm{} in the element; explicit against implicit field update
   \item Posterior uncertainty carried to the stress
 \end{itemize}
 \end{column}
@@ -466,7 +467,7 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
         $\mathbf F_g=\alpha\mathbf I$, stress and tangent
     \item Where $\phi_{3D}\ge\phi_{\min}$: advance the point model by $s\,\Delta t$ ($s=0.1$) with $c^*=c^*_0c$ and
         $\alpha^*=\alpha^*_0a$, linear in time; store $\phi_i,\psi_i$ and $\sum_i\bar\phi_i$
-  \item The element advances $\phi_{3D}$ (Eq.~34 with the front term), $c$ and $a$, consumed by
+  \item The element advances $\phi_{3D}$ (Eq.~34 with the front term \fterm{}), $c$ and $a$, consumed by
         $g\,\phi_{3D}(\sum_i\bar\phi_i)$
 \end{enumerate}
 \end{frame}
@@ -586,7 +587,7 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
         smaller changes the result
   \item \textbf{Stress mesh}: $16^3$ against $64^3$ elements, $0.2\,\%$
 \end{itemize}
-\takeaway{The composition is robust; the stress depends on the time step and on how the front term is discretised.}
+\takeaway{The composition is robust; the stress depends on the time step and on how the front term \fterm{} is discretised.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -693,7 +694,7 @@ $\beta=0.1$, $8^3$ & $+6.7\,\%$ & $-30\,\%$ & $0.5\,\%$\\
 \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{fig_klempt2024_fig3_blend.png}\\[2pt]
 \small\raggedright
 Python reproduction with the parameters of Table~2; consumption $g\phi c$ as in the
-authors' implementation (printed: $g\phi$), front term with an isotropic share.
+authors' implementation (printed: $g\phi$), front term \fterm{} with an isotropic share.
 \takeaway{Case~4.1 is reproduced with stated departures from the printed equations (thesis, Appendix~C).}
 \end{frame}
 

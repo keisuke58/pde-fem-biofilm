@@ -87,7 +87,7 @@
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{検証：格子収束と前線の項}
+\begin{frame}{検証：格子収束と前線の項 $-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$}
 \begin{columns}[T]
 \column{0.55\textwidth}
 \small シードの平均，抗菌薬あり，$T^*=1$（Python，$32^3/64^3/128^3$）\\[4pt]
@@ -104,7 +104,7 @@
 \column{0.43\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{4pt}
-  \item 前線の項はセルのペクレ数が約31（$16^3$）．一定の人工拡散では応力が4分の1になります．
+  \item 前線の項 $-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ はセルのペクレ数が約31（$16^3$）．一定の人工拡散では応力が4分の1になります．
   \item 2次の風上差分なら成長と組成は数\,\%で収束し，応力は遅く収束します．
   \item IKM の要素（ANSYS）も同じ式を解き，この幅に入ります．
 \end{itemize}

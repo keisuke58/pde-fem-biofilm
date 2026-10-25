@@ -188,7 +188,7 @@ slowly: about eight percent in the separate and twenty-six percent in the mixed 
 term, whose cell Peclet number is about thirty on the sixteen-cube mesh; a constant added diffusion gives only a
 quarter of the converged stress there. The IKM element with upwind gradients lies inside the band.
 \JA 成長と組成は格子を細かくすると数 \% で収束します。応力は遅く、分けた例で 8 \%、混ぜた例で 26 \%。
-原因は前線の項で、$16^3$ でセルのペクレ数が約 30 あります。一定の人工拡散では収束値の 4 分の 1 しか出ません。
+原因は前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ で、$16^3$ でセルのペクレ数が約 30 あります。一定の人工拡散では収束値の 4 分の 1 しか出ません。
 IKM の要素は upwind の勾配でこの幅に入ります。
 
 \slide{Limitations}{18:00}
@@ -199,7 +199,7 @@ dead biofilm keeps spreading after the antibiotic. Some values are assumptions, 
 calibrated five species have run in the element only with an earlier one-way coupling. And a symmetric matrix
 cannot describe directed interactions.
 \JA 主な限界です。検証はしたが妥当性確認はしていない（応力の測定値がない）。力学は片方向で、応力は成長に
-戻らず、組成は硬さに効かない。前線の速さは栄養だけで決まるので、抗菌薬の後も死んだバイオフィルムが広がる。
+戻らず、組成は硬さに効かない。前線の速さ $r\,c/(k+c)$ は栄養だけで決まるので、抗菌薬の後も死んだバイオフィルムが広がる。
 いくつかの値は仮定で、それぞれ感度を示した。較正した5菌種は、前の片方向の連成でしか要素に入れていない。
 対称な行列は向きのある相互作用を表せない。
 \hint{限界はこちらから先に言う。聞かれる前に言えば強い。}
@@ -214,7 +214,7 @@ front term in the element, and the uncertainty carried to the stress.
 Thank you.
 \JA まとめ：点モデルを較正し pH を予測できた。Klempt 2024 の成長則を IKM 要素に入れて
 検証した。各 Gauss 点で点モデルを動かし、栄養と抗菌薬で場とつなぎ、細かい格子で確かめた。慶應では、
-5菌種を要素に、応力から成長への戻り、要素での2次の前線の項、不確かさを応力まで、を続けます。ありがとうございました。
+5菌種を要素に、応力から成長への戻り、要素での前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ の2次の扱い、不確かさを応力まで、を続けます。ありがとうございました。
 
 \slide{References}{---}
 \EN (Only if asked. Leave this slide up during the questions.)
@@ -286,8 +286,8 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \hint{誰の誤りかは言わない。何が起きていて、どう直したかだけ。}
 
 \slide{Backup 11: reproduction of Klempt et al.\ 2024}{Q}
-\EN Test case 4.1 is reproduced with the parameters of Table~2, with stated departures from the printed equations: the consumption $g\phi c$ and the front term.
-\JA test case 4.1 は Table~2 の値で再現できました。ただし印刷された式とは違う点があり、消費項 $g\phi c$ と前線の項について修論に明記しています。
+\EN Test case 4.1 is reproduced with the parameters of Table~2, with stated departures from the printed equations: the consumption $g\phi c$ and the front term $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$.
+\JA test case 4.1 は Table~2 の値で再現できました。ただし印刷された式とは違う点があり、消費項 $g\phi c$ と前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ について修論に明記しています。
 
 \slide{Backup 12: solution loop of the element framework}{Q}
 \EN The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced by the element after each substep.

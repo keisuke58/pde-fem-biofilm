@@ -48,6 +48,7 @@
 \institute[IKM, LUH]{Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover}
 \date{October 2026}
 
+\newcommand{\fterm}{\ensuremath{-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla \phi_{3D}}}
 \begin{document}
 \maketitle
 
@@ -59,7 +60,7 @@
         A Python version solves the same equations.
   \item Composition is robust: $\sum_i\bar\phi_i$, the shares and $c$ agree between the two codes and change by
         less than 1\,\% from $16^3$ to $128^3$.
-  \item The front term of Eq.\ 34 needs care: at the paper's $r$ the cell P\'eclet number is about
+  \item The front term \fterm{} of Eq.\ 34 needs care: at the paper's $r$ the cell P\'eclet number is about
         \textbf{31} on $16^3$, so a central gradient oscillates.
   \item With a second-order scheme the seed von Mises stress converges to \textbf{$6.2\times10^{-4}$\,Pa}
         (separate example, from $32^3$ on).
@@ -107,7 +108,7 @@ Python, $64^3$.}
 % --------------------------------------------------------
 \begin{frame}{Five examples on the finest grid}
 \centering\small
-\captionof{table}{Seed means at $T^*=1$ (Python, $64^3$, TVD front term, outer step 0.025).}
+\captionof{table}{Seed means at $T^*=1$ (Python, $64^3$, TVD front term \fterm{}, outer step 0.025).}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lccccc}
 \toprule
@@ -136,7 +137,7 @@ $\alpha^*_0=100$ from $T^*=1/3$ (Klempt et al.\ 2026, case 4).}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{The front term is an advection}
+\begin{frame}{The front term \fterm{} is an advection}
 \begin{columns}[T]
 \column{0.38\textwidth}
 \[\mathrm{Pe}=\frac{r\,h}{2\beta}\approx 31\]
@@ -157,7 +158,7 @@ Used in Python for the main results; converged from $64^3$ on.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Grid convergence: the stress needs a second-order front term}
+\begin{frame}{Grid convergence: the stress needs a second-order front term \fterm{}}
 \centering
 \pgfplotsset{every axis/.style={width=0.49\linewidth,height=0.55\textheight,xmode=log,log basis x=2,
   xtick={8,16,32,64,128},xticklabels={$8^3$,$16^3$,$32^3$,$64^3$,$128^3$},
@@ -211,7 +212,7 @@ The rows sum to zero, the columns do not, so the operator does not conserve $\ph
 conservative form removes the rest of the leak.
 \end{block}
 \begin{block}{Python wall gradient}
-My Python version took a one-sided gradient in the wall cells for the front term; corrected to the zero-flux mirror.
+My Python version took a one-sided gradient in the wall cells for the front term \fterm{}; corrected to the zero-flux mirror.
 After both corrections the codes agree on $8^3$ within 1 to 5\,\%.
 \end{block}
 \end{columns}
@@ -276,11 +277,11 @@ living composition of their neighbours, (b) new points take the start state.}
 \column{0.52\textwidth}
 \textbf{Questions for you}
 \begin{enumerate}\setlength{\itemsep}{0pt}
-  \item How was the front term stabilised in the runs of Klempt 2024? The cell P\'eclet number is about 25 on the
+  \item How was the front term \fterm{} stabilised in the runs of Klempt 2024? The cell P\'eclet number is about 25 on the
         paper's mesh.
   \item Can I keep the three element fixes (nearest Gauss point at the surface, conservative Laplacian, neighbours
         by distance)?
-  \item Is a stabilised front term acceptable in the thesis, stated as a numerical treatment of Eq.\ 34?
+  \item Is a stabilised front term \fterm{} acceptable in the thesis, stated as a numerical treatment of Eq.\ 34?
 \end{enumerate}
 \textbf{Questions for Felix}
 \begin{itemize}\setlength{\itemsep}{0pt}
@@ -341,7 +342,7 @@ T^*,\ s & normalised time; point-model time per unit $T^*$ ($s=0.1$)\\
 \small
 \begin{align*}
 \dot\phi_{3D}&=\beta\nabla^2\phi_{3D}+k_\alpha\alpha-r\,\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}
-  &&\text{(Eq.\ 34 with the front term)}\\
+  &&\text{(Eq.\ 34 with the front term \fterm{})}\\
 \dot c&=d\nabla^2c-g\,\phi_{3D}\textstyle\sum_i\bar\phi_i\,c,\qquad
 \dot a=d\nabla^2a-g\,\phi_{3D}\textstyle\sum_i\bar\phi_i\,a &&\text{(Eq.\ 35; $g\phi$ printed is a misprint)}\\
 \dot\alpha&=k_\alpha\,\phi_{3D} &&\text{(Eq.\ 36, unchanged)}
