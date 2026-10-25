@@ -3021,3 +3021,26 @@ A-66：`make_living_deck.py --lw-sensor auto`（r h/8 を格子から）、`veri
 - **死んだ前線**：迷路で抗菌薬の後に新しく届いたマスの 2/3 は、隣が死んだバイオフィルムだけ（隣の生きている量 < 0.05）。Eq. 34 の前線の速さは生きている量によらないため（式の性質）。修論には限界として 1 文、展望（前線の速さを生きている量に結びつける、Keio）に 1 文。式は変えない（ユーザー）。
 - **剛性**：E(φ_3D) は死んだ菌も含む（式どおり）。仮定として 1 文。
 - **Abaqus の並列**：`living_uel.f90` の共有の配列を Abaqus の mutex で守った（Fable のサブエージェントが実装、確認：8³、cpus=1 と cpus=2 threads で全ガウス点がビット一致、変更前のコードとも一致；tangent テストも通る）。
+
+## A-84（25 日 2 時）：修論の全例の格子収束（Python TVD、32³/64³/128³、位置のルール）
+
+`checks_a38_a39/gci_examples_a84.py`（三格子の GCI、Celik 2008、Fs 1.25）。
+
+| example | quantity | 32^3 | 64^3 | 128^3 | order | extrapolated | GCI |
+|---|---|---|---|---|---|---|---|
+| separate, antibiotic | alpha-1 | 8.816e-04 | 9.171e-04 | 9.328e-04 | 1.18 | 9.450e-04 | 1.6 % |
+| separate, antibiotic | vM [Pa] | 5.902e-04 | 5.982e-04 | 6.051e-04 | 0.20 | 6.527e-04 | 9.8 % |
+| separate, no antibiotic | alpha-1 | 8.908e-04 | 9.183e-04 | 9.316e-04 | 1.05 | 9.441e-04 | 1.7 % |
+| separate, no antibiotic | vM [Pa] | 6.881e-04 | 6.289e-04 | 6.176e-04 | 2.39 | 6.149e-04 | 0.5 % |
+| mixed (equal), antibiotic | alpha-1 | 7.904e-04 | 8.652e-04 | 9.046e-04 | 0.93 | 9.483e-04 | 6.0 % |
+| mixed (equal), antibiotic | vM [Pa] | 2.451e-04 | 3.536e-04 | 4.264e-04 | 0.57 | 5.752e-04 | 43.6 % |
+| mixed (equal), no antibiotic | alpha-1 | 7.941e-04 | 8.685e-04 | 9.072e-04 | 0.94 | 9.490e-04 | 5.8 % |
+| mixed (equal), no antibiotic | vM [Pa] | 2.681e-04 | 3.980e-04 | 4.865e-04 | 0.55 | 6.767e-04 | 48.9 % |
+| four species case 4, separate | alpha-1 | 9.376e-04 | 9.656e-04 | 9.767e-04 | 1.32 | 9.842e-04 | 1.0 % |
+| four species case 4, separate | vM [Pa] | 6.099e-04 | 6.224e-04 | 6.302e-04 | 0.67 | 6.434e-04 | 2.6 % |
+| four species case 4, mixed | alpha-1 | 8.809e-04 | 9.771e-04 | 9.945e-04 | 2.47 | 9.983e-04 | 0.5 % |
+| four species case 4, mixed | vM [Pa] | 3.938e-04 | 5.882e-04 | 6.122e-04 | 3.02 | 6.156e-04 | 0.7 % |
+
+- **A-75 の訂正**：分けた例・抗菌薬ありの vM の GCI は、三格子では 9.8 %（観測された次数 0.2、値は 5.90 / 5.98 / 6.05e−4 とゆっくり増える）。A-75 の「3.5 %」は二格子・次数 1 を仮定した値。修論には「128³ で 6.05e−4 Pa、外挿 6.5e−4、GCI 約 10 %」と書く。α−1 は GCI 1.6 %。
+- 分けた例・抗菌薬なしは vM も収束（GCI 0.5 %）。2 種の混合例は vM が GCI 44〜49 %（A-83）。4 種（case 4）は分けた例・混合例とも vM が GCI 3 % 以下（混合でも組成が早く共存に寄るため、前線の φ の縁が鋭くならない）。
+- 新しいルール（受け継ぐ）での同じ表は `F:\auto_night\night3.ps1` が終わってから `gci_examples_a84.py inhliv` で出す。
