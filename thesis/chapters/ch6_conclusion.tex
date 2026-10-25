@@ -140,6 +140,9 @@ for in-vivo data is open.
         treatment, and the seed stress converges slowly when the species start
         mixed. Its speed depends on the nutrient only, so dead biofilm keeps
         spreading after an antibiotic. The stiffness counts dead biomass as well.
+  \item \emph{No transport of the composition.} The point model has no space; the
+        composition moves with the biofilm only through the start values of newly
+        reached points, which take the living composition of their neighbours.
   \item \emph{Assumptions.} The interpolation of the nutrient and the antibiotic
         in time, the start values of points the biofilm reaches later and the
         threshold for starting the point model are not given by the papers. All
@@ -176,10 +179,9 @@ in order of how well the literature supports them.
         Chapter~\ref{ch:heine} and the bridge from ANSYS to Python already
         exist; with the scheme of Chapter~\ref{ch:ansys} the field stays a
         single variable, so only the state of the point model and its
-        parameters need to be widened. With the point model calibrated for CH
-        in the element (Section~\ref{sec:ch5-five}), the stress does not
-        depend on the composition as long as the field sets the amount of
-        biofilm. When
+        parameters need to be widened. In the one-way run of the point model
+        calibrated for CH in the element (Section~\ref{sec:ch5-five}), the
+        stress does not depend on the composition. When
         $\alpha$ grows instead with the living biomass
         $\sum_i\phi_i\psi_i$ of the point model, at a rate chosen (not taken
         from a paper) so that the mean growth of the seed at $T^*=1$ equals
@@ -193,12 +195,11 @@ in order of how well the literature supports them.
         stress directly; upwind gradients are a first step.
   \item \emph{Composition-dependent spreading.} The point model now sees the
         local nutrient and antibiotic, and its living biomass sets their
-        consumption. Letting the spreading of the field depend on the
-        composition would close the loop further. First computations in Python
-        (Section~\ref{sec:ch5-outlook-python}) show that both change the
-        result: with a local nutrient the composition varies across the seed
-        (now also in ANSYS), and with species-dependent spreading the amount of biofilm at $T^*=1$
-        changes by up to $8\,\%$.
+        consumption. Letting the speed of the front depend on the composition or
+        on the living biomass would close the loop further, and would stop dead
+        biofilm from spreading after an antibiotic. In the earlier one-way
+        computations (Section~\ref{sec:ch5-outlook-python}) species-dependent
+        spreading changes the amount of biofilm at $T^*=1$ by up to $8\,\%$.
   \item \emph{Composition into stiffness and stress into growth.} Species-specific
         stiffness and stress-dependent growth would let the composition reach
         the stress directly and the stress act back. Both need parameters that
