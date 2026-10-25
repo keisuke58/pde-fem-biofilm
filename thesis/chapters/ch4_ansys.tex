@@ -33,26 +33,11 @@
 
 % Source: THESIS_ASSIGNMENT.md §1; scope decision 2026-10-01. Shortened 3 Oct
 % 2026: the objectives are in chapter 1, the model equations in chapter 2.
-This chapter brings the point model of Chapter~\ref{ch:heine} into the
-biofilm element developed at IKM for the partner project, which solves the
-field model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
-(Section~\ref{sec:theory_field}) in ANSYS. It covers one and two species, for
-which the papers give numbers to check against, and contains the second and
-third contributions of the thesis (Section~\ref{sec:intro_structure}):
-\begin{itemize}
-\item a growth law, $\mathbf F=\mathbf F_e\mathbf F_g$ with
-      $\mathbf F_g=\alpha\mathbf I$, implemented as an ANSYS user material
-      and verified against closed forms (\S\ref{sec:ch5-model}--\ref{sec:ch5-verification}),
-      and coupled to the element's biofilm field through the growth equation
-      at every Gauss point (\S\ref{sec:ch5-coupling});
-\item the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}
-      (Section~\ref{sec:theory_point}), unchanged, at every Gauss point: the nutrient
-      and an antibiotic come from fields of the element, and its living biomass sets
-      their consumption (\S\ref{sec:ch5-composition}).
-\end{itemize}
-The same coupling also carries the five-species model calibrated in
-Chapter~\ref{ch:heine}; this is shown once, as a link between the two chapters
-(\S\ref{sec:ch5-five}), without a published case to check against.
+This chapter contains the second and third contributions of the thesis (Section~\ref{sec:intro_structure}):
+the growth law $\mathbf F_g=\alpha\mathbf I$ as an ANSYS user material, verified and coupled to the biofilm
+field of the IKM element (\S\ref{sec:ch5-model}--\ref{sec:ch5-coupling}), and the point model of Klempt et
+al.~\cite{Klempt2026ContinuumBacterialGrowth} at every Gauss point (\S\ref{sec:ch5-composition}). The
+calibrated five-species model of Chapter~\ref{ch:heine} is shown once in the element (\S\ref{sec:ch5-five}).
 
 %-----------------------------------------------------------------------
 \section{The constitutive model}

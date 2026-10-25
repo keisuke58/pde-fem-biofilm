@@ -112,25 +112,10 @@ of $10$~kPa gives stresses of order $0.1$~Pa. A statement about the magnitude
 in an oral biofilm needs that stiffness together with a measured stress, which
 this work does not have.
 
-\paragraph{The numerical scheme.} The field of the element is advanced
-explicitly. The condition stated by Rudolf et al.~\cite{Rudolf2025NEM} is the
-one-dimensional one; on the lattice of the Gauss points the stability
-limit of the NEM stencil follows from a Bloch analysis
-(Appendix~\ref{app:stability}) and depends on the mesh through the fixed width
-of the weight and on which equidistant neighbours enter the fit, from
-$0.06$ on $8^3$ to $0.12$ to $0.16$ on $16^3$ and $24^3$, which runs to
-$T^*=5$ confirm. The update is first order in time. For the seed
-problem the growth field converges at about second order against a
-finite-volume reference solution, and the stress, with its jump in stiffness
-at the surface of the seed, at about first order; on $24^3$ the seed stress
-lies $2\,\%$ from its converged value.
-The front term \fterm{} of Eq.~34 is advection dominated, with a cell P\'eclet number
-of about $31$ on $16^3$. A constant added diffusion keeps it stable but gives a
-quarter of the converged seed stress on that mesh, so the stress needs a
-second-order scheme; the once-per-step update of the point model adds a
-time-step error of about $6\,\%$ in the stress at an outer step of $0.025$. An
-implicit treatment of the field would remove the step limit; whether it is
-also more accurate for the same cost is the comparison planned at Keio.
+\paragraph{The numerical scheme.} The field of the element is advanced explicitly, with a stability limit that
+depends on the mesh (Appendix~\ref{app:stability}). The front term \fterm{} is advection dominated, so the
+stress needs a second-order scheme (Section~\ref{sec:ch5-two-species}). An implicit treatment of the field would
+remove the step limit; whether it is also more accurate for the same cost is the comparison planned at Keio.
 
 \paragraph{Symmetric interactions.} The variational derivation makes the
 interaction matrix symmetric. A symmetric matrix cannot describe one species
