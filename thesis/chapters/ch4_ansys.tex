@@ -290,7 +290,7 @@ al.~\cite{Klempt2024DiffusionDrivenGrowth}, Eq.~34 and 36:
 \end{equation}
 with diffusion, a local source, and a front term \fterm{} that moves the biofilm
 boundary up the nutrient gradient. The element computes $\phi$ at its
-Gauss points; I leave it unchanged. Its Laplacian and the gradients of
+Gauss points; I leave its equations unchanged. Its Laplacian and the gradients of
 $\phi$ and $c$ are approximated from the values at the neighbouring
 Gauss points, by a second-order Taylor expansion fitted in the weighted
 least-squares sense, the Neighbored Element Method
@@ -492,8 +492,7 @@ about $4\cdot10^{-8}\,T^*$, so the fields are solved quasi-steadily; with the ti
 change by less than $0.005$ (Python). The consumption follows the same table: $g=10^8\,T^{*-1}$, so that $g\ell^2/d=1$ with the half edge
 $\ell=1$~mm. The antibiotic, carried by the element's second nutrient field, has the same diffusivity and uptake as the nutrient. Only a diffusion
 slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$, the value of the element's example
-input, the antibiotic reaches the seed more slowly and kills markedly less of it (in an earlier set-up with
-$\alpha^*_0=50$, a living volume fraction of $0.65$ instead of $0.20$ in the mixed seed).
+input, the antibiotic reaches the seed more slowly and kills markedly less of it.
 I scale it by the living volume
 fraction of the point model,
 \begin{equation}
@@ -533,8 +532,8 @@ points, so the composition moves with the biofilm only through this rule.
 \paragraph{Assumptions.} The coupling rests on choices that neither paper fixes, each with its
 sensitivity in Section~\ref{sec:ch5-results}: the linear interpolation of $c^*$ and $\alpha^*$ in time;
 $\sum_i\bar\phi_i$ taken from the previous increment; the start values of newly reached points; the
-threshold $\phi_{\min}$; and, for the examples, the uptake of the antibiotic. The time link is no longer
-one of them.
+threshold $\phi_{\min}$; and, for the examples, the uptake of the antibiotic. The time link follows from
+the data (above).
 
 \paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one increment of the coupled
 run. ANSYS solves the equilibrium $\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method;
@@ -808,7 +807,6 @@ Python study above.
 
 % Source: ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md A-71, A-82, A-84, A-85, A-87, A-89 (Python TVD,
 % coupled_living_consumption.py --fast --tvd --wall-grad mirror --inherit-living); ANSYS: A-68, sec3 draft.
-% TO UPDATE when the grid series at outer step 0.0025 of all five examples is in (IKMHIWI03 day7-day9).
 \subsection{Two species with nutrient and antibiotic}
 \label{sec:ch5-two-species}
 
@@ -826,8 +824,8 @@ nutrient is held on the face $y=-1$~mm, the antibiotic on all outer faces. The f
 on in every run.
 
 These runs use a finite-volume code in Python that solves the same equations as the element, with the
-point model of the ANSYS runs; the coupled point model agrees with the point model alone to
-$2\times10^{-14}$ in the replay check above. The front term \fterm{} is advection dominated: its cell P\'eclet
+point model of the ANSYS runs; with uniform fields the coupled point model agrees with the point model
+alone to $2\times10^{-14}$. The front term \fterm{} is advection dominated: its cell P\'eclet
 number $r h/(2\beta)$ is about $31$ on the $16^3$ mesh, and a central gradient oscillates. I discretise
 it with a second-order upwind scheme (MUSCL with the minmod limiter) and mirror the fields at the walls.
 The stress is solved on a $16^3$ hexahedral mesh with the element's integration; solving the same
@@ -943,7 +941,10 @@ recovers: at $T^*=60$ the living volume fraction is $0.35$ with the neighbours' 
 the start state.
 
 \paragraph{The element.} The ANSYS element solves the same equations with its own discretisation
-(Section~\ref{sec:ch5-coupling}). Its growth agrees with the Python values within $4\,\%$ after
+(Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it, without
+changing its equations: the surface points take the value of the nearest Gauss point instead of a
+distance-weighted mean, the Laplacian is used in a conservative form, and the neighbours of the fit are
+chosen by distance instead of by element number. Before, $\phi$ leaked through the walls of the cube. Its growth agrees with the Python values within $4\,\%$ after
 extrapolation. Its stress depends on how the front term \fterm{} is stabilised: with a constant added diffusion
 $r h/4$ the seed stress on $16^3$ is about a quarter of the converged value, and with upwind gradients it
 is $2.14$, $4.56$ and $5.15\times10^{-4}$~Pa on $8^3$, $16^3$ and $24^3$, extrapolated
@@ -1053,9 +1054,11 @@ the implementation of this chapter.
 \label{sec:ch5-outlook}
 \label{sec:ch5-outlook-python}
 
-The steps beyond the coupling of this chapter (composition into the spreading and the stiffness, stress into
-growth) are listed in Section~\ref{sec:concl_outlook}. Before the coupling was agreed, I computed the first of
-them in Python, outside ANSYS, to see which change the results. These computations use the earlier one-way
+Before the coupling of Section~\ref{sec:ch5-composition} was agreed, I computed four steps towards a
+fuller coupling, mostly in Python, to see which of them change the results: the local nutrient in the point
+model, the composition in the spreading and in the stiffness, and the stress in the growth. The first is now
+part of the coupling; the others are listed in the outlook (Section~\ref{sec:concl_outlook}). These
+computations use the earlier one-way
 scheme, in which the composition is scaled to the amount of the field, and cases~3 and~6 of Klempt et
 al.\ 2026. The papers give no growth rates or moduli per species; the rates are estimated from the
 dissipation parameters $\eta_i$ under a stated assumption, and the moduli are sensitivity parameters.
