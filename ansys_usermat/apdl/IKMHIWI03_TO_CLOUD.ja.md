@@ -3068,3 +3068,13 @@ A-66：`make_living_deck.py --lw-sensor auto`（r h/8 を格子から）、`veri
 6. 図：`assets/fig_coupled_3d_panels_separate_ab.pdf`（位置のルールで作った版；受け継ぐルールで作り直す予定、ファイル名は同じ）。
 
 **書かないもの**：Abaqus の結果、4 種（Keio）、ANSYS の鏡映の実験（A-69/70/72）、式の変更の案。
+
+## A-86（25 日）：進捗スライド（`slides_progress_1024.tex`）の更新の提案（クラウドへ）
+
+20 ページ以内のまま、次を差し替える・足す（数値は A-84、A-85）。
+1. **「Separate example with antibiotic」**：3D の図を `assets/fig_coupled_3d_panels_separate_ab.pdf`（5 列：A の割合、生きている量、c、a、応力；T\* = 0.325 と 1）に。受け継ぐルールの版は day4 の計算のあと同じ名前で上書きする予定（IKMHIWI03 から知らせる）。
+2. **「Five examples on the finest grid」**：A-85 の表（受け継ぐルール、64³）に、分けた例の 128³ と GCI（α−1 2.8 %、vM 8.4 %）を 1 行。
+3. **新しい 1 枚「Which composition does new biofilm get?」**：左に迷路の動画の静止画（`assets/anim_maze_rules_end.png`、受け継ぐ／初期状態）、右に 2 行：「受け継ぐと抗菌薬の後に回復（0.35）、初期状態からだと回復しない（0.04）」「立方体では差は数 %」。
+4. **「Growth converges ...」**：ANSYS upwind 24³ の点を図 2（`papers/coupling_paper/fig_convergence.pdf`）から。ANSYS の応力は外挿 5.8e−4 Pa で二次の方法の帯に入る、と 1 行。
+5. **「Questions and next steps」**：Felix に聞くこと（式 19 の 1/2、式 17 の +γ、4.2 の安定化、新しい点の組成）を 1 行ずつ。前線の速さが生きている量によらない点は「限界」として 1 行。
+動画（5 枚版、`assets/anim_coupled_tvd_*_5panel.mp4`）は発表で別に流す。スライドの本文には AI の表示を入れない、内部の番号（A-xx、u8_ など）は書かない。
