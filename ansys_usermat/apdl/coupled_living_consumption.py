@@ -884,6 +884,8 @@ def run(example, antibiotic):
                 snaps[round(T1, 3)]["vm16"] = vm_s
         if time.time() - t_ck > CKPT_SEC:
             tmp = ckpt.with_suffix(".tmp.npz")
+            if os.environ.get("CKPT_INPLACE") and ckpt.exists():   # little disk: drop the old one first
+                ckpt.unlink()
             np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G,
                      hist=json.dumps(hist, default=float),
                      **{f"snap|{T}|{f}": v for T, dd in snaps.items() for f, v in dd.items()})
