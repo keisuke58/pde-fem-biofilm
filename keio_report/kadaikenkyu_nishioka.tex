@@ -532,16 +532,20 @@ $\phi$ の Laplacian と勾配は，近くの積分点の値から 2 次の Tayl
 $\alpha_{n+1}=\alpha_n+k_\alpha\phi\,\Delta t$ を積分し，
 $\mathbf F_g=\alpha\mathbf I$，$\mathbf F_e=\mathbf F\mathbf F_g^{-1}$ から
 応力と接線剛性を返す．
-2 菌種では，同じ Gauss 点で点モデル\cite{klempt2026}を動かし，
-場が量 $\phi$ を，点モデルが組成 $\phi_1/(\phi_1+\phi_2)$ を決める（図\,\ref{fig:coupling}）．
+さらに，同じ Gauss 点で点モデル\cite{klempt2026}を論文どおりに動かし，
+場との間を次のように結んだ（図\,\ref{fig:coupling}）．
+点モデルは栄養 $c$ と抗菌薬 $a$ の場から $c^*=c^*_0c$，$\alpha^*=\alpha^*_0a$ を受け取り，
+生きている量 $\sum_i\bar\phi_i$（$\bar\phi_i=\phi_i\psi_i$）を返す．
+栄養と抗菌薬は生きている菌だけが消費する（$\dot c=d\nabla^2c-g\,\phi\sum_i\bar\phi_i\,c$）．
+成長の式は変えないので，組成は栄養と前線の項を通して成長と応力に届く．
+新しくバイオフィルムになった点は，隣の生きている組成を受け継ぐ（仮定）．
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.80\textwidth]{fig_coupling_schematic.png}
+    \includegraphics[width=0.80\textwidth]{fig_coupling_schematic_agreed.png}
   \caption{\textbf{連成の構成．}
-    (1) 成長の場（Klempt 2024）が量 $\phi$ を決め，
-    (2) 各 Gauss 点の点モデル（Klempt 2026）が組成を決め，
-    (3) 成長と応力は量だけを使う（一方向の連成）．}
+    場（Klempt 2024）が栄養と抗菌薬を点モデル（Klempt 2026）に渡し，
+    点モデルの生きている量がその消費を決める．成長と応力は場の量 $\phi$ から求める．}
   \label{fig:coupling}
 \end{figure*}
 
@@ -577,30 +581,35 @@ $8^3$，$16^3$，$24^3$ の要素で 3\% 以内に一致した．
   \end{center}
 \end{table}
 
-\subsection{2 菌種の組成}
+\subsection{2 菌種と抗菌薬}
 
-2 菌種の組成は，結合時間 $s$，時間 $T^*$，局所の栄養 $c_{\rm rel}$ の積
-$s\,T^*c_{\rm rel}$ だけで決まった（図\,\ref{fig:clock}）．
-栄養が点モデルの時計の役割をする．
-一方の菌種が勝つ場合（Klempt 2026 のケース 6）は，
-$s\,T^*c\approx0.03$ から $0.08$ の間で入れ替わりが起こり，
-結果は初期の割合が約 0.51 を境に分かれる（双安定）．
+合成データ（Fritsch ら 2025 の case~I）と論文の定数で，2 菌種の例を計算した．
+抗菌薬は $T^*=1/3$ から外側の面に与えた（$\alpha^*_0=100$）．
+種の生きている量は，菌種を分けて置くと $0.97$ から $0.15$ に，
+混ぜて置くと $0.04$ に下がった（図\,\ref{fig:3d}）．
+成長 $\alpha-1$ はほとんど変わらない．抗菌薬は生きている割合を下げるが，バイオフィルムの量 $\phi$ は下げないためである．
 
-\begin{figure}[tb]
+前線の項はセルのペクレ数が約 31（$16^3$）の移流で，中心差分では振動する．
+2 次の風上差分（TVD）を用いると，成長は $32^3$--$128^3$ で GCI 3\% 以内に収束した．
+種の応力は遅く，外挿値は分けた例で $6.7\times10^{-4}$\,Pa（GCI 8\%），混ぜた例で
+$4.0\times10^{-4}$\,Pa（GCI 26\%）である．
+ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入った．
+
+\begin{figure*}[tb]
   \centering
-  \includegraphics[width=\linewidth]{fig_composition_clock.png}
-  \caption{\textbf{組成の「時計」．} ANSYS の全シード要素の終状態の割合を
-    $s\,T^*c_{\rm rel}$ に対して描くと，1 本の曲線に乗る（線は Python の点モデル）．}
-  \label{fig:clock}
-\end{figure}
+  \includegraphics[width=0.85\textwidth]{fig_coupled_3d_panels_separate_ab.png}
+  \caption{\textbf{分けて置いた例，抗菌薬あり}（$64^3$，上 $T^*=0.325$，下 $T^*=1$）．
+    A の割合，生きている量 $\sum_i\bar\phi_i$，栄養 $c$，抗菌薬 $a$，von Mises 応力．}
+  \label{fig:3d}
+\end{figure*}
 
 \subsection{較正した 5 菌種の組み込み}
 
 連成は菌種の数をパラメータとして持つので，3 章で較正した 5 菌種の点モデルを，
 ルーチンを変えずに要素に入れられる．共生・流れ条件（CH）の MAP（$c^*=25$，$\alpha^*=0$）を用い，
-2 菌種と同じ設定（$8^3$，式 (36)，$\phi_{\rm cap}=0.9$，$s=0.15$，$\Delta t=0.025$，$T^*=1$）で，
+合意した連成より前の一方向の連成（$8^3$，式 (36)，$\phi_{\rm cap}=0.9$，$s=0.15$，$\Delta t=0.025$，$T^*=1$）で，
 点モデルは較正した Day~1 の状態から始めた．
-連成は一方向なので，成長と応力は組成によらず，シードの $\alpha-1$ の平均は 2 菌種と全桁同じ
+この連成では成長と応力は組成によらず，シードの $\alpha-1$ の平均は
 $6.752\times10^{-4}$ である．
 シードの Gauss 点では，\textit{So} が最大の割合を保ちつつ $0.74$ から $0.54$ に下がり，
 \textit{Vei}（$0.15$），\textit{An}（$0.13$），\textit{Pg}（$0.08$）が増える（図\,\ref{fig:five}）．
@@ -634,7 +643,8 @@ DH では \textit{Fn}--\textit{Pg} と \textit{Vei}--\textit{Pg} の正の成分
 
 \subsection{限界と慶應での展開}
 
-連成は一方向であり，組成も応力も場に戻らない．
+場と点モデルの間は双方向だが，力学は一方向であり，応力は成長に戻らず，組成は硬さに効かない．
+前線の速さは栄養だけで決まるので，抗菌薬の後も死んだバイオフィルムが広がる．
 また検証（verification）は行ったが，実験との比較（validation）は行っていない．
 $\beta$ は換算した仮定の値であり，応力の大きさは弾性率に比例する．
 
@@ -655,9 +665,9 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
         データが決める成分を示した．
   \item 成長の運動学 $\mathbf F_g=\alpha\mathbf I$ を ANSYS の材料ルーチンとして実装し，
         閉じた形の解と厳密解で検証して，バイオフィルムの有限要素に組み込んだ．
-  \item 2 菌種について，場が量を，点モデルが組成を決める連成を行い，
-        組成が $s\,T^*c_{\rm rel}$ だけで決まること，ケース 6 が双安定であることを示した．
-  \item 換算した $\beta=0.02$\,mm$^2/T^*$ で，シードの応力は $8^3$--$24^3$ で 3\% 以内に収束した．
+    \item 点モデルを各 Gauss 点で論文どおりに動かし，栄養と抗菌薬で場と結んだ．
+        抗菌薬は種の生きている量を $0.97$ から $0.15$（混ぜた例で $0.04$）に下げ，成長はほとんど変えない．
+  \item 成長と組成は格子で数\% 以内に収束し，応力は 2 次の前線の扱いで GCI 8--26\% で求まった．
   \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}
 
