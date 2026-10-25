@@ -31,10 +31,11 @@ figstyle.apply()
 CASE = sys.argv[1]
 OPT = set(sys.argv[2:])
 INHERIT, OBST, K26C4, PULSE = ("inherit" in OPT), ("obst" in OPT), ("k26c4" in OPT), ("pulse" in OPT)
+INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' living composition, fresh psi (A-82)
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
-TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc{'' if INHERIT else '_startpos'}{MIX}_a100_gab1_gc1_tab0.333333"
+TAG = (f"_nf64_front1_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
        f"_snapsvm{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
        f"{'_obstcolumns' if OBST else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
@@ -58,7 +59,8 @@ if CASE.startswith("separate"):
     START = rf"Separate start: group A in the centre seed, group B in {B_WHERE}. "
 else:
     START = r"Mixed start: all species in equal amounts together in the centre seed. "
-START += (r"New biofilm takes the composition of its neighbours." if INHERIT else
+START += (r"New biofilm takes the living composition of its neighbours and starts alive." if INHLIV else
+          r"New biofilm takes the composition of its neighbours." if INHERIT else
           (r"New biofilm starts as B where $|x|, |y| > 0.56$ mm, else as A (rule of the ANSYS runs)."
            if CASE.startswith("separate") else r"New biofilm starts from the mixed start state (rule of the ANSYS runs)."))
 MODEL = (r"Klempt et al. 2026, Table 2, case 4 (four species; group A = species 1, 2, group B = species 3, 4; antibiotic "
@@ -129,7 +131,7 @@ fig = plt.figure(figsize=(20, 6.8), dpi=160)                  # 3200 x 1088 px (
 W = 0.2
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
 ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
-name = (f"anim_coupled_tvd_{CASE}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
+name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
         f"{'_pulse' if PULSE else ''}_5panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)

@@ -4,7 +4,7 @@
 (e) von Mises stress (16^3). One octant removed. Printed width 16 cm, Times (figstyle), renderings at 400 dpi; no title
 (the caption carries it).
 
-    python ansys_usermat/apdl/fig_coupled_3d_panels.py [separate_ab|mixed_ab]
+    python ansys_usermat/apdl/fig_coupled_3d_panels.py [separate_ab|mixed_ab] [inhliv|startpos]
         -> assets/fig_coupled_3d_panels_<case>.pdf / .png
 """
 import sys
@@ -24,8 +24,11 @@ import figstyle  # noqa: E402
 
 figstyle.apply()
 CASE = sys.argv[1] if len(sys.argv) > 1 else "separate_ab"
+# rule for newly reached points: startpos (by position, the A-75 runs) or inhliv (the neighbours' living composition,
+# the base case from 25 Oct, A-82)
+RULE = sys.argv[2] if len(sys.argv) > 2 else "inhliv"
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
-Z = np.load(ROOT / "figdata" / (f"coupled_living_{CASE}_nf64_front1_phimin0.001_v2_fortran_ansysbc_startpos{MIX}_a100"
+Z = np.load(ROOT / "figdata" / (f"coupled_living_{CASE}_nf64_front1_phimin0.001_v2_fortran_ansysbc_{RULE}{MIX}_a100"
                                  f"_gab1_gc1_tab0.333333_snapsvm_tvd_wgmirror_fast_{CASE}.npz"))
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 T_SHOW = [min(times, key=lambda t: abs(t - 1 / 3)), times[-1]]
@@ -95,7 +98,7 @@ for i, T in enumerate(T_SHOW):
             c.ax.set_xticklabels([f"{v:g}" for v in np.linspace(clim[0], clim[1], 3)])
             c.ax.tick_params(labelsize=7.5, length=2, pad=1)
             cb.set_xlabel(label, fontsize=8, labelpad=1)
-out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}.pdf"
+out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}{'_startpos' if RULE == 'startpos' else ''}.pdf"   # the base case keeps the plain name
 fig.savefig(out, dpi=400)
 fig.savefig(out.with_suffix(".png"), dpi=200)
 print("wrote", out, "times", T_SHOW, "stress range 0 ..", VMAX)
