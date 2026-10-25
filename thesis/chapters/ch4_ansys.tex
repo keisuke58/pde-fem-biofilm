@@ -419,7 +419,7 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.
       calls, so the solver converges the first substep on a zero residual. The
       output written for that substep is not an equilibrium state and is
       excluded from every result below.
-\item \emph{The front term is switched off, and differs from the paper.}
+\item \emph{The front term was switched off, and differs from the paper.}
       An input-reading slip sets the orientation weight of species~1 to zero
       (the weights of both species are read into the same variable, and the
       last one read is zero), so the front-growth term
@@ -446,7 +446,10 @@ end value, and that $\alpha$ follows~\eqref{eq:ch5-eq36} exactly.
       not depend on this term (the gradient-free region has no front, and
       both ways of computing $\alpha$ see the same field); how far the
       biofilm spreads does, which is why the example model shows no
-      spreading.
+      spreading. For the two-species examples of
+      Section~\ref{sec:ch5-two-species} the term is on, with the slip fixed, the
+      paper's $\|\nabla\phi\|$, the direction regularised as in the authors'
+      implementation and a stabilised discretisation.
 \end{enumerate}
 
 %-----------------------------------------------------------------------
@@ -973,7 +976,9 @@ $\phi_{\rm cap}=0.9$, $s=0.15$ and $\Delta t=0.025$ up to $T^*=1$. The
 point model starts from the calibrated Day-1 state of the condition
 (\textit{S.~oralis} $0.76$, \textit{V.~dispar} $0.11$, \textit{F.~nucleatum}
 $0.10$, \textit{A.~naeslundii} $0.02$, \textit{P.~gingivalis} $0.001$, living
-fractions $0.999$). The coupling is one-way, so the growth and the stress do
+fractions $0.999$). This run predates the agreed coupling of
+Section~\ref{sec:ch5-composition}: the coupling is one-way, without front term and
+antibiotic, so the growth and the stress do
 not depend on the composition: the seed mean of $\alpha-1$ is
 $6.752\times10^{-4}$, the same to all printed digits as in the two-species
 runs and as in a run started from equal shares, and with the stiffness of
@@ -1101,8 +1106,8 @@ them; the first is now part of the coupling, the others remain open.
       front factor and the consumption depend on the species
       \cite{Klempt2023NumericalComparison}; $R_s=\sum_i\phi_iR_{s,i}/\sum_j\phi_j$ and
       $g=\sum_i\phi_i g_i/\sum_j\phi_j$ would let the composition shape where the biofilm
-      grows. This needs a working front term
-      (\S\ref{sec:ch5-coupling}, property~4).
+      grows. The front term is now on in the two-species examples
+      (Section~\ref{sec:ch5-two-species}).
 \item \emph{Composition into the stiffness.} $E=\sum_i\phi_iE_i/\sum_j\phi_j$ would let the
       composition reach the stress directly, but species-specific moduli are
       not available \cite{Bol2013BiofilmMechanicalCharacterisation}.
@@ -1111,10 +1116,9 @@ them; the first is now part of the coupling, the others remain open.
       \cite{Soleimani2020AnisotropicGrowth} would close the loop from the
       mechanics back to the field.
 \end{enumerate}
-Step~1, which already runs in the element
-(\S\ref{sec:ch5-outlook-python}), and step~2 are the natural first goal of
-the continuation at Keio; each
-must reduce to the one-way scheme when the species are made equal.
+Step~1 is now part of the coupling (Section~\ref{sec:ch5-composition}). Step~2
+is the natural first goal of the continuation at Keio; it must reduce to the
+present scheme when the species are made equal.
 
 % Added 4 Oct 2026: ansys_usermat/composition_local_nutrient.py,
 % two_way_step2.py, two_way_step3.py; ROADMAP_TWO_WAY.md.
