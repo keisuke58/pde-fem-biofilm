@@ -228,10 +228,11 @@ this machine's specific workflow.
   questions with their answers right away, in English and Japanese (EN: a
   sentence that can be said aloud; JA: the same meaning), starting from the
   basics. Use and extend section F of `QUIZ_COLLOQUIUM.ja.md`; new ones go there.
-- **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
-  Keio master's (final presentation December 2027, graduation March 2028;
-  papers should be published before the presentation), papers and a job, not a doctorate or a
-  DFG proposal for him.
+- **A job first; a PhD in Germany only as a fallback** (the user, 26 Oct 2026; replaces "no PhD, never" of
+  6 Oct). Plans and strategy aim at the Keio master's (final presentation December 2027, graduation March 2028;
+  papers should be published before the presentation), papers and a job. If the job search (ends March 2027)
+  does not succeed, he would look for a funded PhD position in Germany (e.g. at IKM) from summer/autumn 2027.
+  Do not plan a doctorate or a DFG proposal for him unless he asks.
 - **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
   2026-10-06). His element is an earlier version of Felix Klempt's
   implementation (same NEM and AceGen files); Felix's is the later version
