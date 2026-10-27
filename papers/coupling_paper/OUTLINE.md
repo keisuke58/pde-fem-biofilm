@@ -3,6 +3,10 @@
 Status: skeleton only. Numbers in [..] come from the "paper values only" runs (`references/PARAMETER_TABLES.md`, last
 table; Python `results/2026-10-3d/README_coupled_living.md`, ANSYS `u3_` after the trip). Co-authored (the user, 21 Oct).
 
+**27 Oct 2026 (the user): this paper and P3 of `KEIO_PLAN.ja.md` are the same paper.** Results are released step by
+step: this paper covers the coupling, the structure of the coupled equations, the verification and the examples (cube,
+bars, maze, molar crown); the homeostatic-pressure growth law and the cervical stress go to a follow-up paper.
+
 ## Working title
 Coupling a published multi-species biofilm point model to a continuum growth model: consumption by the living
 biomass, verification in two implementations, and what the composition does to growth and stress
