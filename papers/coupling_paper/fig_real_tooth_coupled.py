@@ -116,17 +116,17 @@ for field, cmap, clim, _ in PANELS:
             pl.add_mesh(m, scalars="v", cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     images.append(render(add))
 
-fig = plt.figure(figsize=(6.3, 4.6))
-W, H0 = 0.325, 0.40
+fig = plt.figure(figsize=(6.3, 4.9))
+W, H0 = 0.325, 0.37
 for k, img in enumerate(images):
     i, j = divmod(k, 3)
-    ax = fig.add_axes([0.012 + W * j, 0.575 - 0.47 * i, W - 0.012, H0])
+    ax = fig.add_axes([0.012 + W * j, 0.60 - 0.50 * i, W - 0.012, H0])
     ax.imshow(img, interpolation="none")
     ax.set_axis_off()
     ax.text(0.0, 1.0, f"({'abcdef'[k]})", transform=ax.transAxes, va="bottom", fontsize=8)
     if k >= 1:
         field, cmap, clim, label = PANELS[k - 1]
-        cb = fig.add_axes([0.05 + W * j, 0.575 - 0.47 * i - 0.04, W - 0.09, 0.018])
+        cb = fig.add_axes([0.05 + W * j, 0.60 - 0.50 * i - 0.045, W - 0.09, 0.018])
         c = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(*clim)), cax=cb, orientation="horizontal")
         c.set_ticks(np.linspace(clim[0], clim[1], 3))
         c.ax.set_xticklabels([f"{v:g}" for v in np.linspace(clim[0], clim[1], 3)])

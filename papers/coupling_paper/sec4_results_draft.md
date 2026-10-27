@@ -85,15 +85,19 @@ CC BY-NC-SA). The crown (6.7 x 6.8 x 5.5 mm) stands with its cervical base on th
 rigid for the fields (no biofilm, no nutrient inside, zero flux through its surface) and for the stress (u = 0).
 Nutrient and, from T* = 1/3, antibiotic are held at 1 on the five faces around the crown (the saliva side); the
 bottom face is zero flux (the root side). The biofilm starts as a cervical ring 0.25 mm thick and 1 mm high, species
-A on the half x < 0 and B on x > 0. These choices are assumptions of this work. Grid 40^3 (h = 0.25 mm, the
-rings one cell thick; 80^3 running), outer step 0.025, film = cells with phi_3D > 0.5, stress on the field grid
-with the film surface free (elements with phi_3D <= 0.05 dropped).
+A on the half x < 0 and B on x > 0. These choices are assumptions of this work. Grid 80^3 (h = 0.125 mm; 40^3 for
+comparison), outer step 0.025, film = cells with phi_3D > 0.5, stress on the field grid with the film surface free
+(elements with phi_3D <= 0.05 dropped), 17 min per run.
 
 With the paper's front speed the biofilm spreads along the bottom face and outwards and reaches the side faces by
-T* = 1 (every open cell is reached; the film holds 275 mm^3 at 40^3). The composition is carried with it: the A and
-B halves stay separate (film mean share 0.51, 0.957 in the A ring, 0.05 in the B ring). The antibiotic enters with
-the nutrient (a = c in the film, 0.74 on average, 0.25 at the ring) and acts first on B: the living fraction of the
-B ring falls from 0.72 at the onset to 0.12 at T* = 1, that of the A ring from 0.81 to 0.57; the film mean is 0.36.
-Growth and stress are small (film mean alpha - 1 4.1e-4, von Mises 2.8 mPa, 95th percentile 9.9 mPa, largest values
-in the corners between the film, the crown and the bottom face). The example demonstrates the coupling on a real
+T* = 1 (every open cell is reached; the film holds 298 mm^3). The composition is carried with it: the A and B halves
+stay separate (film mean share 0.50; 0.956 in the A ring, 0.051 in the B ring). The antibiotic enters with the
+nutrient (a = c in the film, 0.73 on average, 0.24 at the ring, lowest value 0.14) and acts first on B: the living
+fraction of the B ring falls from 0.71 at the onset to 0.13 at T* = 1, that of the A ring from 0.81 to 0.57; the
+film mean is 0.37 (0.95 without antibiotic, where the ring reaches c = 0.13 and keeps 0.86 and 0.82 alive). Growth
+and stress hardly depend on the antibiotic (film mean alpha - 1 4.3e-4 with and without; von Mises 3.0 and 3.2 mPa,
+95th percentile 9.7 and 10.5 mPa, largest values in the corners between the film, the crown and the bottom face).
+Between 40^3 and 80^3 the film means change by 3 % (living fraction 0.360 to 0.370, share 0.513 to 0.501, c 0.736
+to 0.730, alpha - 1 4.1e-4 to 4.3e-4) and the film stress by 7 % (2.79 to 2.99 mPa; 2.80 mPa on the 80^3 field with
+0.25 mm elements, so the difference is mostly the stress mesh). The example demonstrates the coupling on a real
 surface; the stress of the cervical region with a growth law is not treated here.
