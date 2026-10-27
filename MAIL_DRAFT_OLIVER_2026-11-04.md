@@ -43,7 +43,8 @@ independent check, in a finite-volume code in Python.
 
 - The antibiotic removes B first; whether A survives depends on the local nutrient, since the point model compares
   c* with alpha* b_i.
-- Growth and stress hardly change with the antibiotic: it lowers the living fraction but not phi_3D.
+- Growth hardly changes with the antibiotic (about 1 %), since it lowers the living fraction but not phi_3D; the
+  seed stress changes by about 10 %, through the nutrient and the front.
 - In the maze of the 2024 paper the biofilm recovers after the antibiotic when new points take the neighbours'
   living composition (living fraction 0.35 at the end) and does not when they start from the start state (0.04).
 - The front speed of Eq. 34 does not depend on the living biomass, so dead biofilm keeps spreading after the
