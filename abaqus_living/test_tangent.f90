@@ -12,29 +12,32 @@ program test_tangent
   double precision :: U(NDOF), Un(NDOF), coords(3, NN), sv(NSV, NGP), sv2(NSV, NGP), props(18), R(NDOF), K(NDOF, NDOF)
   double precision :: Rp(NDOF), Rm(NDOF), Kfd(NDOF, NDOF), Kd(NDOF, NDOF), K0(NDOF, NDOF), sig(6, NGP), h, err, sc
   double precision :: N(8), dN(3, 8), w, x(3), ph, geff(NGP), pref0, dt, hu
-  integer :: i, j, q, na
+  integer :: i, j, q, na, nseed
+  integer, allocatable :: seed(:)
   character(len=16) :: arg
   double precision, parameter :: xr(8) = [-1d0, 1d0, 1d0, -1d0, -1d0, 1d0, 1d0, -1d0]
   double precision, parameter :: xs(8) = [-1d0, -1d0, 1d0, 1d0, -1d0, -1d0, 1d0, 1d0]
   double precision, parameter :: xt(8) = [-1d0, -1d0, -1d0, -1d0, 1d0, 1d0, 1d0, 1d0]
   eco_nact = 2
   dt = 0.005d0
-  call random_seed()
+  ! fixed seed: the same element and fields in every run (27 Oct: without it the gate modes sometimes had g = 0 or 1 at
+  ! every Gauss point, and the pytest that counts the active points was flaky)
+  call random_seed(size=nseed); allocate(seed(nseed)); seed = 20261027; call random_seed(put=seed)
   do i = 1, NN
     call random_number(coords(:, i))
     coords(:, i) = 0.125d0 * [xr(i), xs(i), xt(i)] + 0.02d0 * (coords(:, i) - 0.5d0)
   end do
   call random_number(U); call random_number(Un)
   do i = 1, NN
-    U(NDN*(i-1)+1:NDN*(i-1)+3) = 1d-4 * (U(NDN*(i-1)+1:NDN*(i-1)+3) - 0.5d0)
+    U(NDN*(i-1)+1:NDN*(i-1)+3) = 1d-5 * (U(NDN*(i-1)+1:NDN*(i-1)+3) - 0.5d0)
     Un(NDN*(i-1)+1:NDN*(i-1)+3) = 1d-5 * (Un(NDN*(i-1)+1:NDN*(i-1)+3) - 0.5d0)
     U(NDN*(i-1)+4) = 0.2d0 + 0.6d0 * U(NDN*(i-1)+4)
-    Un(NDN*(i-1)+4) = 0.2d0 + 0.6d0 * Un(NDN*(i-1)+4)
+    Un(NDN*(i-1)+4) = U(NDN*(i-1)+4) + 0.02d0 * (Un(NDN*(i-1)+4) - 0.5d0)   ! phi_n near phi (form 1: p_h from phi_n)
     U(NDN*(i-1)+5) = 0.8d0 + 0.2d0 * U(NDN*(i-1)+5); Un(NDN*(i-1)+5) = 0.8d0 + 0.2d0 * Un(NDN*(i-1)+5)
   end do
   call random_number(sv)
   sv(14, :) = 1d0
-  sv(13, :) = 1d-4 * (0.3d0 + 0.4d0 * sv(13, :))       ! p_n of about 0.005-0.012 Pa at the Gauss points (E = 10 Pa)
+  sv(13, :) = 1d-4 * (0.3d0 + 0.3d0 * sv(13, :))       ! p of 3 E' Kb xi, about 0.001-0.02 Pa (E = 10 Pa): 0 < g < 1 below
   props = [10d0, 0.49d0, 1d-3, 0.645d0, 1d-3, 5d0, 10d0, 1d0, 1d0, 1d0, 1d-3, 0.1d0, 5d0, 1d0, 0.5625d0, 0.55d0, &
            0.275d0, 0.275d0]
   supg_on = .false.; gate_pref = 0d0; gate_form = 0; gate_implicit = .false.
