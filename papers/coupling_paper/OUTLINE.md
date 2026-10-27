@@ -3,9 +3,10 @@
 Status: skeleton only. Numbers in [..] come from the "paper values only" runs (`references/PARAMETER_TABLES.md`, last
 table; Python `results/2026-10-3d/README_coupled_living.md`, ANSYS `u3_` after the trip). Co-authored (the user, 21 Oct).
 
-**27 Oct 2026 (the user): this paper and P3 of `KEIO_PLAN.ja.md` are the same paper.** Results are released step by
-step: this paper covers the coupling, the structure of the coupled equations, the verification and the examples (cube,
-bars, maze, molar crown); the homeostatic-pressure growth law and the cervical stress go to a follow-up paper.
+**27 Oct 2026 (the user): this paper and P3 of `KEIO_PLAN.ja.md` become one paper** (graduation March 2028, so no
+split): the coupling, the structure of the coupled equations, the verification, the examples (cube, bars, maze, molar
+crown), plus the homeostatic-pressure growth law and the stress on real tooth/implant geometry. Aim: accepted before
+the Keio final presentation (December 2027).
 
 ## Working title
 Coupling a published multi-species biofilm point model to a continuum growth model: consumption by the living
