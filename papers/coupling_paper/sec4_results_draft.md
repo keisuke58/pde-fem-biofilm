@@ -34,8 +34,9 @@ outer faces from T* = 1/3. Front term on.
 ## 4.3 Antibiotic over time
 
 With the same total dose given constantly, in pulses or as a sine from T* = 1/3 (64^3, A-71), alpha - 1 and the seed
-stress change by less than 1.5 %, while the living fraction follows the dose: in the pauses of the pulsed dose the
-separate seed recovers from 0.16 to 0.28; the sine gives a lower minimum (0.106) and a higher end value than the
+stress change by less than 1 % (alpha - 1 by 0.1 %, von Mises by 0.8 %), while the living fraction follows the dose:
+in the pauses of the pulsed dose the separate seed recovers from 0.17 to 0.30 (end value 0.298 against 0.152 with the
+constant dose); the sine gives a lower minimum (0.110) and a higher end value (0.186) than the
 constant dose. How the dose is given acts on composition and living biomass, hardly on the mechanics.
 
 ## 4.4 Which composition does new biofilm get?
