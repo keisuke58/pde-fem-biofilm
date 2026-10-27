@@ -241,6 +241,8 @@ this machine's specific workflow.
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
   this user is cost-conscious about agent/token usage.
+  **Large implementations may go to a subagent on the Fable model** (the user, 27 Oct 2026), with a self-contained
+  brief; small edits, documents and replies stay in the main session.
 - **Never add a `Co-Authored-By: Claude` (or similar AI-attribution) trailer
   to commit messages, and don't otherwise mark commits as AI-assisted.**
   Commits should read as the user's own work (git identity is already set
