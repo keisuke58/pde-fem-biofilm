@@ -29,7 +29,7 @@ Target journal: Biomechanics and Modeling in Mechanobiology (Springer).
 
 ## Build
 
-    pdflatex main && bibtex main && pdflatex main && pdflatex main
+    pdflatex coupling_paper && bibtex coupling_paper && pdflatex coupling_paper && pdflatex coupling_paper
 
 Offline, pdflatex + bibtex, no latexmk needed. The Springer Nature class `sn-jnl.cls` is not installed here, so the
 draft uses `article` (11 pt since 27 Oct evening, A4, single column, `natbib` author-year, `lineno`); the template is applied at
