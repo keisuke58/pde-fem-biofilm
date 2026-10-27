@@ -205,7 +205,12 @@ if K26C3:
 N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
-H = W.L / NF
+# --box B (27 Oct, the tooth example): edge of the cubic domain in mm; default the 2 mm cube of the examples. All
+# constants stay in mm (beta, r, g/d of the 2 mm conversion), only the grid spacing changes with the box.
+BOX = _opt("--box", W.L)
+TOOTH_SEED, TOOTH_SEED_H = _opt("--tooth-seed", 0.25), _opt("--tooth-seed-h", 1.0)   # the tooth example's ring, mm
+AMG = "--amg" in sys.argv                   # AMG-preconditioned CG for the fields on the full domain (as --fast without the symmetry)
+H = BOX / NF
 NM = NM if NF % NM == 0 else NF              # stress mesh 16^3 when it divides the field grid, else the field grid (8^3, 24^3)
 SHAPE = (NF // 2, NF, NF // 2) if FAST else (NF,) * 3
 QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None)) if FAST else (slice(None),) * 3   # full -> computed
@@ -231,9 +236,31 @@ def unfold(u):
 # (x in [-0.125, 0.125] mm, |y| in [0.5, 0.75] mm, the lower one between the seed and the nutrient wall y = -1 mm);
 # square 0.25 mm sections tangent to the seed, aligned to the 16^3 and 32^3 grids.
 OBSTACLE = _opt("--obstacle", None, str)
+# --obstacle stl (27 Oct): the clinical molar crown tier2b_real/_crown_real_watertight.stl (derived from Open-Full-Jaw,
+# Gholamalizadeh et al. 2022, CC BY-NC-SA; THIRD_PARTY.md) as a rigid voxel body: the cells whose centres lie inside
+# the surface (signed distance, pyvista). The crown is centred in x and y and stands with its capped cervical base on
+# the bottom face z = -BOX/2 (the root side; zero flux there). The same machinery as the columns (no biofilm, no
+# nutrient inside, zero flux through its faces); the stress is solved with real_tooth_submodel (rigid tooth).
+STL_PATH = ROOT / "tier2b_real" / "_crown_real_watertight.stl"
+SDF = None
+
+
+def tooth_sdf(n):
+    """signed distance of the n^3 cell centres to the crown surface (negative inside), crown placed as above"""
+    import pyvista as pv
+    m = pv.read(STL_PATH).triangulate().clean()
+    P = np.asarray(m.points)
+    lo, hi = P.min(0), P.max(0)
+    m.points = P - np.array([0.5 * (lo[0] + hi[0]), 0.5 * (lo[1] + hi[1]), lo[2] + BOX / 2])
+    h = BOX / n
+    g = pv.ImageData(dimensions=(n,) * 3, spacing=(h,) * 3, origin=(-BOX / 2 + 0.5 * h,) * 3)
+    d = np.asarray(g.compute_implicit_distance(m)["implicit_distance"])
+    return d.reshape((n,) * 3, order="F").astype(np.float64)
 
 
 def obstacle_boxes(kind):
+    if kind == "stl":
+        return None
     if kind != "columns":
         raise SystemExit(f"unknown obstacle {kind}")
     B = []
@@ -245,7 +272,7 @@ def obstacle_boxes(kind):
 
 def box_mask(n, boxes):
     """cells of the n^3 grid of the 2 mm cube whose centres lie in one of the boxes"""
-    xc = -1 + (np.arange(n) + 0.5) * (2.0 / n)
+    xc = -BOX / 2 + (np.arange(n) + 0.5) * (BOX / n)
     X_, Y_, Z_ = np.meshgrid(xc, xc, xc, indexing="ij")
     m = np.zeros((n,) * 3, bool)
     for lo, hi in boxes:
@@ -254,7 +281,11 @@ def box_mask(n, boxes):
 
 
 BOXES = obstacle_boxes(OBSTACLE) if OBSTACLE else None
-OBST = box_mask(NF, BOXES)[QS] if OBSTACLE else None
+if OBSTACLE == "stl":
+    SDF = tooth_sdf(NF)
+    OBST = (SDF < 0)[QS]
+else:
+    OBST = box_mask(NF, BOXES)[QS] if OBSTACLE else None
 if OBSTACLE:
     _open = ~OBST
     NB = {}                                    # NB[a, s]: the neighbour in direction s along axis a is open fluid
@@ -280,7 +311,8 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -562,8 +594,11 @@ class Reaction:
                 ok = np.ones(SHAPE, bool)
                 e = [slice(None)] * 3; e[ax] = -1 if sgn == 1 else 0; ok[tuple(e)] = False
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
-        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
-                                                                 if not (FAST and a in (0, 2) and e == 0)]
+        if side == "five":                    # the tooth example: all outer faces except the bottom z = -BOX/2
+            faces = [(a, e) for a in range(3) for e in (0, -1) if not (a == 2 and e == 0)]
+        else:
+            faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
+                                                                     if not (FAST and a in (0, 2) and e == 0)]
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             diag[tuple(sl)] += 2.0
@@ -603,7 +638,7 @@ class Reaction:
             D = sp.diags((~f).astype(float))
             A = (D @ A + sp.diags(f.astype(float))).tocsr()
             b = np.where(f, 1.0, b)
-        if FAST:
+        if FAST or AMG:
             return (value * self._amg(A, b)).reshape(SHAPE)
         return (value * spla.spsolve(A.tocsc(), b)).reshape(SHAPE)
 
@@ -681,14 +716,22 @@ def neighbours_mean(G, w):
 def run(example, antibiotic):
     cells8 = W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
     seed = W.seed_mask(NF, cells8)
-    ax = -1 + (np.arange(NF) + 0.5) * H
+    ax = -BOX / 2 + (np.arange(NF) + 0.5) * H
     X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
     edges = (np.abs(X) > 0.75) & (np.abs(Y) > 0.75)
     if V2:                                        # four small corner blocks at the seed's height
         zmax = np.abs(Z[seed]).max() + 1e-9
         edges = edges & (np.abs(Z) <= zmax)
+    if example == "tooth":
+        # the tooth example (--obstacle stl): a cervical ring of biofilm, TOOTH_SEED mm thick on the crown surface and
+        # TOOTH_SEED_H mm high from the cervical base; species A on the half x < 0, species B on the half x > 0
+        # ("seed" = the A half, "edges" = the B half in the histories). Assumptions of this work.
+        assert OBSTACLE == "stl", "the tooth example needs --obstacle stl"
+        ring = (SDF >= 0) & (SDF < TOOTH_SEED) & (Z < -BOX / 2 + TOOTH_SEED_H)
+        seed, edges = ring & (X < 0), ring & (X > 0)
+    sep = example in ("separate", "tooth")
     seed, edges, X, Y, Z = seed[QS], edges[QS], X[QS], Y[QS], Z[QS]
-    phi = (seed | (edges if example == "separate" else False)).astype(float)
+    phi = (seed | (edges if sep else False)).astype(float)
     alpha = np.ones_like(phi)
     G = np.zeros(SHAPE + (12,))
     tot = sum(CASE["phi_init"])
@@ -698,7 +741,7 @@ def run(example, antibiotic):
                           for i in range(N_SP))
     else:
         MIX_START = tuple([tot / N_SP] * N_SP) if MIX_EQUAL else tuple(CASE["phi_init"])
-    if example == "separate":
+    if sep:
         G[seed] = group_state(tot, GROUP_A)
         G[edges] = group_state(tot, GROUP_B)
     else:
@@ -728,7 +771,10 @@ def run(example, antibiotic):
         S_phi, S_c = MM.sources_jax(beta_eff, R_FRONT, K_MONOD, LAM_C2)
         phi = MM.phi_m(X, Y, Z, 0.0)
     on = phi >= PHI_MIN
-    nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
+    if example == "tooth":                        # saliva side: nutrient and antibiotic on the five faces around the crown
+        nut, ab = Reaction(LAM_C2, "five"), Reaction(LAM_A2, "five")
+    else:
+        nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
         nut.fixed = Y < -0.75
         ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
@@ -755,8 +801,8 @@ def run(example, antibiotic):
     def shares(m):
         ph = G[m][:, :N_SP]
         return float((ph[:, GROUP_A].sum(1) / ph.sum(1)).mean())
-    hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
-    hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
+    hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if sep else np.nan)
+    hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
     snaps = {}
     t0 = time.time()
     # checkpoint (a cloud container stops when idle): the state is saved every CKPT_SEC seconds and a rerun with the
@@ -909,8 +955,8 @@ def run(example, antibiotic):
         hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
-        hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
-        hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
+        hist["share_a_edges"].append(shares(edges) if sep else np.nan)
+        hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
@@ -919,6 +965,8 @@ def run(example, antibiotic):
             shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
+            if example == "tooth":               # alpha at every snapshot for the film stress (real_tooth_coupled.py)
+                snaps[round(T1, 3)]["alpha"] = unfold(alpha).copy()
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)
                 vm_s, _ = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
                                          obstacles=BOXES, efac=efac_nm(G))
@@ -940,13 +988,20 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
-                           efac=efac_nm(G))
+    if example == "tooth":                      # the film stress is solved by real_tooth_coupled.py (rigid crown)
+        vm = p = np.full((NM,) * 3, np.nan)
+    else:
+        vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
+                               efac=efac_nm(G))
     # the end state of alpha and of the stress mesh (A-86: a 192^3 run gave a seed von Mises 60x too large)
     snaps.setdefault(round(T_END, 3), {}).update(alpha=unfold(alpha).copy(), vm16=vm, p16=p)
     if OBSTACLE:
         snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
+    if example == "tooth":
+        snaps[round(T_END, 3)].update(sdf=SDF.copy(), seed=unfold(seed).astype(np.int8), edges=unfold(edges).astype(np.int8))
+        hist["tooth"] = dict(box_mm=BOX, h_mm=H, seed_thickness_mm=TOOTH_SEED, seed_height_mm=TOOTH_SEED_H,
+                             tooth_cells=int(OBST.sum()), open_cells=int((~OBST).sum()))
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
     if HOMEO:                                   # pressure (compression positive) and gate of the end state
         hist["seed_p_Pa"] = float(-np.nan_to_num(p)[seed16].mean())

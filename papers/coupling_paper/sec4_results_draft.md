@@ -76,3 +76,24 @@ fraction is 0.35 with the neighbours' composition and 0.04 with the start state.
 - 4.3 of the outline (start share decides the winner) and 4.4 (where the regions meet): re-run with the inherit
   rule before using the earlier numbers.
 - Klempt 2026 case 3 inputs (sine nutrient), two and four species (`results/2026-10-3d-case3/`).
+
+## 4.7 A clinical molar crown
+
+To show the coupling on a real geometry, the same model and constants (Section 4.1, all in mm) are run around a
+clinical molar crown (Open-Full-Jaw dataset, Gholamalizadeh et al. 2022; the derived surface in the repository,
+CC BY-NC-SA). The crown (6.7 x 6.8 x 5.5 mm) stands with its cervical base on the bottom face of a 10 mm box and is
+rigid for the fields (no biofilm, no nutrient inside, zero flux through its surface) and for the stress (u = 0).
+Nutrient and, from T* = 1/3, antibiotic are held at 1 on the five faces around the crown (the saliva side); the
+bottom face is zero flux (the root side). The biofilm starts as a cervical ring 0.25 mm thick and 1 mm high, species
+A on the half x < 0 and B on x > 0. These choices are assumptions of this work. Grid 40^3 (h = 0.25 mm, the
+rings one cell thick; 80^3 running), outer step 0.025, film = cells with phi_3D > 0.5, stress on the field grid
+with the film surface free (elements with phi_3D <= 0.05 dropped).
+
+With the paper's front speed the biofilm spreads along the bottom face and outwards and reaches the side faces by
+T* = 1 (every open cell is reached; the film holds 275 mm^3 at 40^3). The composition is carried with it: the A and
+B halves stay separate (film mean share 0.51, 0.957 in the A ring, 0.05 in the B ring). The antibiotic enters with
+the nutrient (a = c in the film, 0.74 on average, 0.25 at the ring) and acts first on B: the living fraction of the
+B ring falls from 0.72 at the onset to 0.12 at T* = 1, that of the A ring from 0.81 to 0.57; the film mean is 0.36.
+Growth and stress are small (film mean alpha - 1 4.1e-4, von Mises 2.8 mPa, 95th percentile 9.9 mPa, largest values
+in the corners between the film, the crown and the bottom face). The example demonstrates the coupling on a real
+surface; the stress of the cervical region with a growth law is not treated here.
