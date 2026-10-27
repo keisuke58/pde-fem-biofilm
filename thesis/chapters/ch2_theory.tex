@@ -132,8 +132,9 @@ $g\,\phi$, so that the nutrient equation in the form used for the implementation
   \dot c-d\,\nabla_X^2 c+g\,\phi\,c=0.
   \label{eq:theory_c_impl}
 \end{equation}
-The numbers in Chapter~\ref{ch:ansys} are computed with the printed form~\eqref{eq:theory_c}
-unless stated otherwise. Time is
+The one-species runs of Chapter~\ref{ch:ansys} use the printed form~\eqref{eq:theory_c}; the
+two-species examples use~\eqref{eq:theory_c_impl}, with the consumption scaled by the living volume
+fraction of the point model. Time is
 normalised and written in units of $T^*$. The parameters of Table~2 of the paper are listed in
 Table~\ref{tab:theory_klempt2024}.
 
@@ -329,7 +330,7 @@ not act back on growth. I combine the two models as follows:
         $\psi_i$;
   \item only its living biomass, $\sum_i\phi_i\psi_i$, consumes the nutrient and
         takes up the antibiotic, and the nutrient steers the spreading of
-        $\phi_{3D}$ through the front term.
+        $\phi_{3D}$ through the front term \fterm{}.
 \end{itemize}
 How the two times are linked is given in Chapter~\ref{ch:ansys}. The stress does
 not act back, and the composition does not act on the stiffness; these

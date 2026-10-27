@@ -17,7 +17,8 @@ from pathlib import Path
 import numpy as np
 import scipy.sparse as sp
 
-BETA_STAR, WTHRES = 0.2, 1e-8
+BETA_STAR = float(sys.argv[sys.argv.index("--beta-star") + 1]) if "--beta-star" in sys.argv else 0.2   # weight scale (the element: 0.2 mm)
+WTHRES = 1e-8
 d = Path(sys.argv[1])
 with open(d / "nem_dump.txt") as f:
     nGP, nTot, nnz = (int(x) for x in f.readline().split())

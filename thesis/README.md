@@ -58,10 +58,8 @@ Soleimani and Dr.-Ing. H. Geisler. The form itself (personal data) is not in
 the repository.
 
 Open:
-- the registered subtitle names "Spatial Stratification" (the FISH work, now out
-  of scope); the spatial part of the thesis is now the FEM coupling. Ask whether
-  the subtitle can be changed, or describe the spatial composition of chapter 4
-  in those terms;
+- the registered subtitle names "Spatial Stratification": **kept as registered** (the user, 26 Oct 2026); the
+  spatial composition of chapter 4 is what it refers to;
 - the old ch4 and ch5 files (`chapters/ch4_dieckow.tex`, `chapters/ch5_integration.tex`, `chapters/appendix_unused.tex`) are no longer input and can be deleted once nothing more is taken from them.
 - ch3 numbers: the TMCMC results may still change (4 Oct 2026). Once they are
   final, check every number in the ch3 text against its table or figure (on

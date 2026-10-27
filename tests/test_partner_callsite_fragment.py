@@ -52,11 +52,42 @@ C     homeostatic law, prop(49) > 0, which these tests leave off)
 C     the host's time at the start of the increment (read only by
 C     prop(54) > 0, alpha* from a start time, which these tests leave off)
       DOUBLE PRECISION Time
+C     the host's fields and userdata pool used by mode 11 (the living
+C     coupling, A-19): nutrient and antibiotic, point coordinates, the
+C     pool offset of the living share and its setter (mocked below)
+      DOUBLE PRECISION Sdp_nut1_n, Sdp_nut2_n, coords(3)
+      INTEGER ID, Si_Kerr, ofs_dp_Living, SetVals
+      EXTERNAL SetVals
       INCLUDE 'phi_mode_decl.inc'
       stress = 0.0D0
       Time = 0.0D0
+      Sdp_nut1_n = 1.0D0
+      Sdp_nut2_n = 0.0D0
+      coords = 0.0D0
+      ID = elemId
+      ofs_dp_Living = 0
       Sbio_GrowthConst = prop(5)
       INCLUDE 'phi_mode_exec.inc'
+      END
+
+      INTEGER FUNCTION SetVals(i, n, v)
+      IMPLICIT NONE
+      INTEGER i, n
+      DOUBLE PRECISION v(n)
+      SetVals = 0
+      END
+
+C     mode 11 calls the point model with c and alpha* interpolated in
+C     time (ecology_native.f, the living builds); the server bridge
+C     linked here has no such entry and these tests never use mode 11
+      SUBROUTINE BIOFILM_ECOLOGY_HOOK_LIN(g, theta, dt, n_sub, c0, c1,
+     &                                    a0, a1, g_new, phi_int, ok)
+      IMPLICIT NONE
+      DOUBLE PRECISION g(12), theta(20), dt, c0, c1, a0, a1
+      DOUBLE PRECISION g_new(12), phi_int
+      INTEGER n_sub
+      LOGICAL ok
+      STOP 'mode 11 is not mocked'
       END
 
       PROGRAM DRIVE

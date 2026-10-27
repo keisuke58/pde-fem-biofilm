@@ -218,6 +218,9 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **"Front term" in replies (the user, 25 Oct 2026):** never write 前線項 / front term alone in a reply; always
+  write the formula, e.g. the term $-r\,\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ of Eq. 34
+  ($\mathbf n_c=\nabla c/|\nabla c|$). Same for other named terms: give the expression, not only the name.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
@@ -225,10 +228,11 @@ this machine's specific workflow.
   questions with their answers right away, in English and Japanese (EN: a
   sentence that can be said aloud; JA: the same meaning), starting from the
   basics. Use and extend section F of `QUIZ_COLLOQUIUM.ja.md`; new ones go there.
-- **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
-  Keio master's (final presentation December 2027, graduation March 2028;
-  papers should be published before the presentation), papers and a job, not a doctorate or a
-  DFG proposal for him.
+- **A job first; a PhD in Germany only as a fallback** (the user, 26 Oct 2026; replaces "no PhD, never" of
+  6 Oct). Plans and strategy aim at the Keio master's (final presentation December 2027, graduation March 2028;
+  papers should be published before the presentation), papers and a job. If the job search (ends March 2027)
+  does not succeed, he would look for a funded PhD position in Germany (e.g. at IKM) from summer/autumn 2027.
+  Do not plan a doctorate or a DFG proposal for him unless he asks.
 - **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
   2026-10-06). His element is an earlier version of Felix Klempt's
   implementation (same NEM and AceGen files); Felix's is the later version
@@ -378,7 +382,7 @@ this machine's specific workflow.
   (his mail); the committee is the usual IKM members.
 - **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
-  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **13 Nov is the internal deadline**
+  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
   (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
   Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
   `thesis/README.md`.

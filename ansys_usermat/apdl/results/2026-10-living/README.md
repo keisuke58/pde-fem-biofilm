@@ -17,7 +17,17 @@ numbers of different generations in one table without saying which is which. The
 | `u6_`, `u6t_`, `u6d_` (A-38, A-39) | living6 | NUT1_INIT_ALL (c(0) = 1 everywhere), front dump | 8^3 checks; same as `u3a_` (leak) |
 | `u6s_`, `u5_` (A-39, A-40) | living6 | + SURF_NEAREST (leak / 4) | intermediate; `u5_16_sep_ab` is addendum 30's u4s_16_sep_ab |
 | `u7c_`, `u7n_`, `u7p*` (A-42, A-44) | living7 | + LAP_FILE (conservative Laplacian) at 8^3; `u7n_` = short NEM-dump runs, `u7p*` = timing tests (no results) | superseded: neighbours by element order (asymmetric inside at 16^3 and 24^3, A-44); `u7_` was never run |
-| **`u8_`** (A-45) | **living8** | living7 + NEM neighbours by distance; SURF_NEAREST + LAP_FILE, dc/dt d = 1e8, --artdiff N, increment 0.00125 (`u8c_` = 8^3 check, `u8n_` = dumps) | **current main ANSYS results** |
+| **`u8_`** (A-45) | **living8** | living7 + NEM neighbours by distance; SURF_NEAREST + LAP_FILE, dc/dt d = 1e8, --artdiff N, increment 0.00125 (`u8c_` = 8^3 check, `u8n_` = dumps) | **current main ANSYS results** (front term stabilised by r h/4: stresses low, A-57) |
+| `lw16_`, `lw24_` (A-59, A-62) | living10 | u8 + Lax-Wendroff front + sensor-switched added diffusion (r h/8) | 16^3 = second ANSYS result for the stress; 24^3 unstable (corners) |
+| `up8_`, `up16_` (A-64) | living11 | u8 + upwind MLS gradients in the front term | stable on 16^3; 24^3 (`up24_`) running |
+| `rt*`, `mr*`, `mt*`, `mb16`, `mh16`, `mms*b` (A-65, A-70) | living12-14 | manufactured solution (MMS_SRC): raw element, mirrored neighbours (`mt`/`mb`/`mh`: beta* 0.2 / 0.1 / half time step) | verification only |
+| `mu8_` (A-72) | living14 | mirrored neighbours + upwind in the real example | 8^3 only; 16^3 unstable at a corner (not exported) |
+| `gci_a52.*` | | grid convergence index of all codes | current |
+
+Moved to `archive/` (24 Oct 2026): every generation before `u8_` (`u1_` to `u7*`, `sym*`), the Klempt 2024 Sect. 4.2
+attempts (`k24*`, not reproduced), the face-constraint tests of A-69 (`f*m*`), the wall-sensor tests (`lw8p0`,
+`lw8w*`, A-63) and `x10a`. `checks_a38_a39/summary_a38.py` and the default runs of `anim_living_fields.py` read
+some of them: pass the `archive/` path.
 
 Deck options of `u8_`: `--front 1 --v2 --start-step 0.0025 --dt-ussfin 0.1 --cons 1 --cons-ab 1 --phi-min 0.001
 --artdiff N --deltim 0.00125 --transient-c 1e8 --nut1-init-all --surf-nearest --lap-file`, with `lap_cons.txt` of the

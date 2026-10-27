@@ -212,5 +212,29 @@ check("conclusion: 0.7 % above FV reference", "0.7", ref["nem_error"]["24"]["dt-
 check("ch2 table: mu = E/(2(1+nu)) [Pa]", "3.3557", 10 / (2 * 1.49))
 check("speed-up end to end 21600/147", "147", 21600 / 147, tol=0.5)
 
+# 11. two-species examples (Section "Two species with nutrient and antibiotic", Table tab:ch5-two-species) -----
+# Python TVD, 64^3, outer step 0.025, inherit rule; seed means at T* = 1. Each printed value must appear in the table
+# row and agree with the result file.
+D3 = RES / "2026-10-3d"
+_tab = c4[c4.index("label{tab:ch5-two-species}"):c4.index("end{tabular}", c4.index("label{tab:ch5-two-species}"))]
+for label, rowname, f, key in (
+        ("separate", "separate &", "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate", "separate"),
+        ("separate, antibiotic", "separate, antibiotic &", "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab", "separate_ab"),
+        ("mixed, equal amounts", "mixed, equal amounts &", "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed", "mixed"),
+        ("mixed, equal amounts, antibiotic", "mixed, equal amounts, antibiotic &", "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed_ab", "mixed_ab"),
+        ("mixed (0.25, 0.30), antibiotic", "mixed $(0.25, 0.30)$, antibiotic &", "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed_ab", "mixed_ab")):
+    fp = D3 / f"coupled_living_consumption_{f}.json"
+    if not fp.exists():
+        flag(f"two species, {label}: result file", False, f"missing {fp.name}"); continue
+    h = json.loads(fp.read_text())["runs"][key]
+    line = next((l for l in _tab.splitlines() if l.strip().startswith(rowname)), None)
+    if line is None:
+        flag(f"two species, {label}: table row", False, "row not found"); continue
+    cells = [x.strip() for x in line.split("&")[1:]]
+    cells[-1] = cells[-1].replace("\\\\", "").strip()
+    for name, cell, val in zip(("living", "share A", "c", "alpha-1", "vM [Pa]"), cells,
+                               (h["living_seed"][-1], h["share_a_seed"][-1], h["c_seed"][-1], h["seed_am1"], h["seed_vm_Pa"])):
+        check(f"two species, {label}: {name}", cell, val)
+
 print(f"\n{fails} FAIL")
 sys.exit(1 if fails else 0)

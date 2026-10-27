@@ -74,12 +74,15 @@ def _obstacle_constraints(n, idx, conn, boxes):
     return obst, held, sorted(cont.items())
 
 
-def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
+LAST_TRE = None
+
+
+def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None, efac=None):
     """Hex8 solve on the n^3 mesh with element-wise phi and alpha - 1 (arrays n x n x n).
     Returns von Mises and mean stress per element (Pa) in the array layout of phi.
     obstacles: list of boxes ((x0, y0, z0), (x1, y1, z1)) in mm, rigid, frictionless unilateral contact (active set);
     they replace the corner constraints. Obstacle elements get NaN stresses."""
-    global LAST_CONTACT
+    global LAST_CONTACT, LAST_TRE
     h = 2.0 / n
     Ke0, fe0, B0, D, m = S.element_matrices(h, nu, False)
     idx = np.arange((n + 1) ** 3).reshape(n + 1, n + 1, n + 1)
@@ -87,6 +90,8 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
     conn = np.stack([idx[i:i + n, j:j + n, k:k + n].ravel() for i, j, k in off], 1)
     dofs = np.concatenate([3 * conn[:, [a]] + np.arange(3) for a in range(8)], 1)
     Ee = E_BIO * (np.clip(phi.ravel(), 0.0, 1.0) ** 2 + FLOOR)
+    if efac is not None:                       # --stiff-species: composition-weighted factor per element
+        Ee = Ee * np.asarray(efac, float).ravel()
     if obstacles is not None:
         obst, held, cont = _obstacle_constraints(n, idx, conn, obstacles)
         Ee = np.where(obst.ravel(), 0.0, Ee)
@@ -116,6 +121,7 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
         LAST_CONTACT = dict(iterations=it + 1, contact_dofs=int(len(cdof)), in_contact=int(active.sum()),
                             held_dofs=int(len(held)))
         eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
+        LAST_TRE = eps[:, :3].sum(1).reshape(phi.shape)       # trace of the elastic strain (--mech-feedback)
         sig = Ee[:, None] * (eps @ D.T)
         p = sig[:, :3].mean(1)
         s = sig[:, :3] - p[:, None]
@@ -143,6 +149,7 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None):
         print(f"    cg: {it[0]} iterations, info {info}, relative residual {res:.1e}", flush=True)
         u[free] = x
     eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
+    LAST_TRE = eps[:, :3].sum(1).reshape(phi.shape)           # trace of the elastic strain (--mech-feedback)
     sig = Ee[:, None] * (eps @ D.T)
     p = sig[:, :3].mean(1)
     s = sig[:, :3] - p[:, None]

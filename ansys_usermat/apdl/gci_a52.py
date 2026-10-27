@@ -74,7 +74,7 @@ SERIES = {
                             | {32: py_val("coupled_living_consumption_front1_dtc0.00125_*ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json")},
     "Abaqus (SUPG)": {n: ab_val(f"lv{n}qs2_sep_ab") for n in (16, 24, 32, 48)},
     "ANSYS (living10)": {16: an_val("lw16_16_sep_ab"), 24: an_val("lw24_24_sep_ab")},
-    "ANSYS (upwind)": {8: an_val("up8_8_sep_ab"), 16: an_val("up16_16_sep_ab")},
+    "ANSYS (upwind)": {8: an_val("up8_8_sep_ab"), 16: an_val("up16_16_sep_ab"), 24: an_val("up24_24_sep_ab")},
 }
 
 

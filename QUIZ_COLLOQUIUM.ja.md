@@ -111,6 +111,11 @@
 | F38 | How did you check the code itself, not only the mesh? | With manufactured solutions: a known field plugged into the equations gives source terms, and the codes converge to it at second order. ／ 製造解で。既知の場を式に入れて源の項を作り、コードがそれに 2 次で収束する |
 | F39 | What does the maze show? | The same qualitative behaviour as the paper: the biofilm spreads from the entrance, fills dead ends, and reaches the nutrient in the centre; an antibiotic at the entrance lowers the living fraction but not the front. ／ 論文と同じ振る舞い。入口から広がり、行き止まりにも入り、中心の栄養に届く。入口の抗菌薬は生きている割合を下げるが前線は変えない |
 | F40 | Do ANSYS and Python solve the same equations? | Yes: with the same added diffusion they agree to one percent in growth and five in stress; the earlier gap was the amount of added diffusion, not the equations. ／ はい。足す拡散を同じにすると成長 1 %、応力 5 % で一致。前のずれは足した拡散の量の違い |
+| F41 | What composition does a newly reached point get? | The living composition of its neighbours, with fresh cells: the biofilm spreads by growth, so what arrives is alive. It is an assumption; whether the biofilm recovers after the antibiotic depends on it. ／ 隣の生きている菌の組成を、新しく生きた状態で受け継ぐ（広がるのは増える菌だから）。仮定であり、抗菌薬の後に回復するかはこれで決まる |
+| F42 | Does the front stop when all cells behind it are dead? | No. In Eq. 34 the front speed depends on the nutrient only, not on the living fraction, so dead biofilm still spreads. I kept the published equation and state it as a limitation. ／ 止まらない。Eq. 34 の前線の速さは栄養だけで決まり、生きている量によらない。式は論文どおりにして、限界として書いた |
+| F43 | Do dead cells contribute to the stiffness? | In the model, yes: the stiffness follows the total amount of biofilm (Klempt et al. 2024, Eq. 20), and the living fraction enters only the consumption. It is an assumption; it is plausible over short times because much of the stiffness comes from the matrix, which stays when cells die, but antibiotics may change it over longer times. ／ モデルではそう。剛性はバイオフィルムの全量で決まり（Klempt 2024 Eq. 20）、生きている量は消費にだけ入る。仮定であり、硬さの多くは菌が死んでも残るマトリックスによるので短い時間では妥当だが、長い時間では抗菌薬で変わりうる |
+| F44 | Why does the stress of the mixed example converge more slowly? | Its front carries intermediate amounts of biofilm with a nearly discontinuous edge, so upwind schemes converge at about first order there; the growth variable converges within six percent, the stress needs extrapolation. ／ 混合例の前線は中間の量を不連続に近い縁で運ぶので、風上の方式はそこで一次程度でしか収束しない。成長量は 6 % 以内、応力は外挿が要る |
+| F45 | Why is the four-species matrix used without the factor one half? | Only the integer matrix reproduces the paper's own four-species figures; with the printed factor the species do not grow within the plotted time. ／ 整数の行列でしか論文の 4 種の図が再現しない。印刷された 1/2 を付けると、図の時間内に種が増えない |
 ## G. 覚えておく基本の数値（10月13日）
 
 | # | 何の値 | 値（EN ／ JA） |
@@ -163,6 +168,29 @@
 | I4 | Would more particles or a longer run fix it? | More particles would sample both modes better, but they cannot decide between them. That needs more measurements in the late phase. ／ 粒子を増やせば両方のモードをよく拾えるが、どちらかには決められない。決めるには後半の測定点がもっと必要 |
 | I5 | Does this affect the stress results? | No. The finite element runs of Chapters 4 and 5 use the CH posterior, which passes at the final stage. ／ 影響しない。第 4・5 章の有限要素の計算は CH の結果を使っていて、CH は最後の段階まで基準を満たしている |
 | I6 | Which DH results can I trust? | The entries reported as identified: eight in DH, for example the self-limitation of Vei and Fn. ／ 同定できたと書いた成分（DH では 8 つ。例えば Vei と Fn の自己抑制） |
+
+## J. 合意した連成：2 菌種と抗菌薬（10月25日、日本語と英語）
+
+要点：点モデル（Klempt et al. 2026）を論文どおり各点で動かす。場から $c^*=c^*_0c$、$\alpha^*=\alpha^*_0a$ を渡し、生きている量 $\sum_i\bar\phi_i$ だけが栄養と抗菌薬を消費する（$\dot c=d\nabla^2c-g\,\phi_{3D}\sum_i\bar\phi_i\,c$）。応力へは一方向。
+
+| # | 予想される質問 | 答え（EN ／ JA） |
+|---|---|---|
+| J1 | How are the two models coupled? | At every integration point the point model receives c* = c*_0 c and alpha* = alpha*_0 a from the fields, and only its living volume fraction consumes the nutrient and the antibiotic. ／ 各積分点で点モデルが場から c* と α* を受け取り、生きている体積分率だけが栄養と抗菌薬を消費する |
+| J2 | Is the coupling two-way? | Between the fields and the point model, yes. The mechanics is coupled one way: the stress does not act back on growth, as in Klempt et al. 2024, who neglect that term. ／ 場と点モデルの間は双方向。力学へは一方向（Klempt 2024 も応力から成長への項 φμ(I:C_e−3) を落としている） |
+| J3 | Did you change the point model? | No. It is used as published, with its own constraint and time integration. ／ 変えていない。論文どおり、自分の拘束条件と時間積分で使っている |
+| J4 | How did you check the implementation? | Every step of the point model inside ANSYS equals the point model run on its own to about 1e-12, and ANSYS and an independent Python code agree within 1 to 5 percent on 8^3. ／ ANSYS 内の点モデルの各ステップは単体の点モデルと 1e−12 程度で一致。ANSYS と独立な Python コードは 8^3 で 1〜5 % 一致 |
+| J5 | What does the antibiotic do? | It lowers the living fraction of the seed from 0.97 to 0.15 when the species start apart and from 0.96 to 0.04 when they start mixed; the more sensitive species B goes first. ／ シードの生きている量を、分けて置くと 0.97→0.15、混ぜて置くと 0.96→0.04 に下げる。感受性の高い B が先に減る |
+| J6 | Why does the growth hardly change with the antibiotic? | The growth law dalpha/dt = k_alpha phi_3D depends on phi_3D, and the antibiotic lowers the living fraction psi_i, not phi_3D. ／ 成長則 α̇ = k_α φ_3D は φ_3D だけで決まり、抗菌薬が下げるのは生存率 ψ_i で φ_3D ではないから |
+| J7 | Why does the nutrient decide where the antibiotic acts? | The point model compares c* with alpha* b_i: where the nutrient is high, A survives; where it is low, A dies as well. ／ 点モデルは c* と α* b_i を比べる。栄養が多い所では A が生き残り、少ない所では A も死ぬ |
+| J8 | Why is the stress harder to converge than the growth? | The term -r c/(k+c) n_c . grad phi_3D of Eq. 34 moves a sharp edge; its cell Peclet number is about 31 on 16^3. The stress depends on how sharp that edge is, so it needs a second-order scheme and fine grids. ／ 式 34 の項 −r c/(k+c) n_c·∇φ_3D が鋭い縁を動かし、セルのペクレ数は 16^3 で約 31。応力は縁の鋭さで決まるので、2 次の差分と細かい格子が要る |
+| J9 | What are the grid convergence numbers? | At the small time step, the growth has a GCI of 1.5 and 3.3 percent; the seed stress extrapolates to 6.7e-4 Pa with 8 percent in the separate example and 4.0e-4 Pa with 26 percent in the mixed one. ／ 小さい時間刻みで、成長の GCI は 1.5 % と 3.3 %。応力は分けて置く例で 6.7e−4 Pa（8 %）、混ぜて置く例で 4.0e−4 Pa（26 %） |
+| J9b | Why does the mixed stress converge so slowly? | Its edge is nearly discontinuous and the largest phi_3D in the seed still rises with the grid, from 0.60 to 0.73. The growth converges in every example within 0.7 to 3.3 percent; without the antibiotic the separate stress has a GCI of 0.7 percent. ／ 縁がほぼ不連続で、シード内の φ_3D の最大値が格子とともにまだ上がる（0.60→0.73）。成長は全例で 0.7〜3.3 %。抗菌薬なしの分けて置く例の応力は GCI 0.7 % |
+| J9c | What is the GCI? | The grid convergence index of Celik et al. 2008, the standard procedure in computational fluid dynamics: from three grids it estimates the order and the extrapolated value, and gives the relative error band of the finest grid. ／ Celik ら 2008 の格子収束指数。流体計算の標準。3 つの格子から次数と外挿値を出し、最も細かい格子の誤差の幅を示す |
+| J10 | Why is the stress of the mixed seed lower? | Its edge is less sharp, because the front carries intermediate values of phi_3D. ／ 縁が鋭くない。前線が中間の φ_3D を運ぶから |
+| J11 | What happens at points the biofilm reaches later? | They take the living composition of their colonised neighbours and start alive. The papers do not fix this; it is an assumption, and I compared it with the start state. ／ 定着済みの隣の生きている組成を受け継ぎ、生きた状態で始まる。論文では決まっていないので仮定とし、初期状態から始める場合と比べた |
+| J12 | What is the main limitation of the coupling? | The front speed r c/(k+c) depends on the nutrient only, so dead biofilm keeps spreading after the antibiotic. Tying it to the living biomass would change the model and is outlook. ／ 前線の速さ r c/(k+c) が栄養だけで決まるので、抗菌薬の後も死んだバイオフィルムが広がる。生きている量に結びつけるのはモデルの変更なので今後の課題 |
+| J13 | Why synthetic data and not your calibrated five species? | To test the coupling with known true parameters first (Fritsch et al. 2025, case I). The calibrated runs stay in Chapter 4 as they are. ／ まず真の値が分かっている合成データ（Fritsch et al. 2025, case I）で連成を確かめるため。較正した結果は第 4 章にそのまま残している |
+| J14 | What would you do next at Keio? | Add the stress feedback of Eq. 30, the term -phi mu (I:C_e - 3), and run the calibrated five species in the element. ／ 式 30 の応力からの項 −φμ(I:C_e−3) を入れ、較正した 5 菌種を要素で動かす |
 
 ## 記録
 

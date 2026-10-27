@@ -26,7 +26,9 @@
 !         ANSYS mode 11 and the Python reference); a point starts when phi_n >= phi_min, from the start state of its
 !         position (separate: species B where |x| and |y| > x_split, A elsewhere; mixed: the mixed start).
 ! PROPS (NPROPS = 18): E_bio, nu, f_void, beta, k_alpha, penalty, r, K, q_c, q_a, phi_min, s, n_sub, layout (1 separate,
-!   2 mixed), x_split, total start amount, mixed start of species 1 and 2
+!   2 mixed, 3 mixed start, then inherited from the neighbours: A-74; 4 as 3 with the living composition and a fresh
+!   psi: A-82), x_split, total start amount,
+!   mixed start of species 1 and 2
 
 module living_uel_mod
   use biofilm_py_bridge
@@ -43,7 +45,46 @@ module living_uel_mod
   ! A-54, SUPG (Brooks and Hughes 1982) for the front term instead of the added diffusion r h/4: PROPS(20) = 1 adds
   ! tau (v . grad N) times the strong residual of the phi equation (consistent, so no O(h) term); beta = beta_0 then
   logical, save :: supg_on = .false.
+  ! A-74, layout 3 (PROPS(14) = 3): a Gauss point reached in step 2 takes the phi-weighted mean state of its started
+  ! neighbours (the six nearest Gauss points on the regular grid), as the Python codes (coupled_living_consumption.py,
+  ! maze_coupled_2d.py); while no point has started yet (the colony), the mixed start state.  The element does not know its neighbours, so the
+  ! end of each increment (UEXTERNALDB, LOP 2) collects every Gauss point (keep_record), fills layer by layer until
+  ! every reached point connected to started ones has a state (inherit), and the next increment's advance takes it.
+  double precision, allocatable, save :: gp_g(:,:,:), inh_g(:,:,:)
+  logical, allocatable, save :: inh_ok(:,:)
+  integer, save :: layout_mode = 0
+  ! rule for newly reached points (A-82): 0 start state (layout 1 by position, 2 mixed), 1 the neighbours' state,
+  ! 2 the neighbours' living composition with a fresh psi; PROPS(21), or layout 3 / 4 (= mixed start with rule 1 / 2)
+  integer, save :: rule_mode = 0
+  double precision, save :: phi_min_s = 1d-3, h_el = 0d0
+  logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
+  ! Thread-parallel Abaqus (cpus > 1, mp_mode threads; 25 Oct 2026): the elements run UEL at the same time, and
+  ! keep_record grows and writes the shared arrays out_rec, gp_g (and h_el), so it is under Abaqus mutex 1 (initialised
+  ! in UEXTERNALDB, LOP 0).  inh_g, inh_ok, any_started are written only in UEXTERNALDB (LOP 2, serial) and read in UEL.
+  ! The gfortran builds (test_tangent.f90) have no Abaqus library: without ABQ_FORTRAN (defined by Abaqus's
+  ! compile_fortran) the three wrappers are empty.
+#ifdef ABQ_FORTRAN
+#include <SMAAspUserSubroutines.hdr>
+#endif
 contains
+
+  subroutine shared_init()
+#ifdef ABQ_FORTRAN
+    call MutexInit(1)
+#endif
+  end subroutine shared_init
+
+  subroutine shared_lock()
+#ifdef ABQ_FORTRAN
+    call MutexLock(1)
+#endif
+  end subroutine shared_lock
+
+  subroutine shared_unlock()
+#ifdef ABQ_FORTRAN
+    call MutexUnlock(1)
+#endif
+  end subroutine shared_unlock
 
   subroutine shape(r, s, t, N, dNr)
     double precision, intent(in) :: r, s, t
@@ -95,11 +136,20 @@ contains
     g = 0d0
     if (nint(props(14)) == 1) then
       g(1:n) = 1d-6
-      if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
+      if (n == 4) then
+        ! four species (A-79, as the Python GROUP_A): species 1, 2 play A (seed), 3, 4 play B (corners)
+        if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
+          g(3:4) = (tot - 2d-6) / 2d0
+        else
+          g(1:2) = (tot - 2d-6) / 2d0
+        end if
+      else if (abs(x(1)) > props(15) .and. abs(x(2)) > props(15)) then
         g(2) = tot - 1d-6 * (n - 1)
       else
         g(1) = tot - 1d-6 * (n - 1)
       end if
+    else if (n == 4) then
+      g(1:4) = tot / 4d0                        ! the start of Klempt 2026 Table 2: 0.02 each
     else
       g(1) = props(17); g(2) = props(18)
     end if
@@ -113,11 +163,12 @@ contains
     living = sum(g(1:eco_nact) * g(7:6 + eco_nact))
   end function living
 
-  subroutine advance(Un, coords, sv, props, dt, ok)
+  subroutine advance(Un, coords, sv, props, dt, ok, jel, kstep)
     ! point model at the start of the increment: advance the started points, start the new ones
     double precision, intent(in) :: Un(NDOF), coords(3, NN), props(*), dt
     double precision, intent(inout) :: sv(NSV, NGP)
     logical, intent(out) :: ok
+    integer, intent(in) :: jel, kstep
     double precision :: N(8), dN(3, 8), w, x(3), ph, c, a, gnew(12), pint
     integer :: q, k
     ok = .true.
@@ -135,8 +186,20 @@ contains
         if (.not. ok) return
         sv(1:12, q) = gnew
       else if (sv(14, q) < 0.5d0 .and. ph >= props(11)) then
-        call start_state(props, x, sv(1:12, q))
-        sv(14, q) = 1d0
+        if (rule_mode >= 1 .and. kstep >= 2 .and. any_started) then
+          ! layout 3: the state inherited at the end of the last increment (none yet: wait, as the Python fill)
+          if (allocated(inh_ok)) then
+            if (jel <= size(inh_ok, 2)) then
+              if (inh_ok(q, jel)) then
+                sv(1:12, q) = inh_g(:, q, jel)
+                sv(14, q) = 1d0
+              end if
+            end if
+          end if
+        else
+          call start_state(props, x, sv(1:12, q))
+          sv(14, q) = 1d0
+        end if
       end if
       sv(15, q) = c; sv(16, q) = a
     end do
@@ -306,12 +369,19 @@ contains
     double precision, allocatable :: tmp(:,:,:)
     double precision :: N(8), dN(3, 8), w, x(3), ph, c, a, p, s(6), vm, sh
     integer :: q, i, nnew
+    ! the whole record under the mutex: another element may be growing (move_alloc) the arrays this one writes
+    call shared_lock()
     if (jel > out_nel) then
       nnew = max(jel, 2 * out_nel, 64)
       allocate(tmp(NREC, NGP, nnew)); tmp = -1d30
       if (out_nel > 0) tmp(:, :, 1:out_nel) = out_rec
-      call move_alloc(tmp, out_rec); out_nel = nnew
+      call move_alloc(tmp, out_rec)
+      allocate(tmp(12, NGP, nnew)); tmp = 0d0
+      if (out_nel > 0) tmp(:, :, 1:out_nel) = gp_g
+      call move_alloc(tmp, gp_g); out_nel = nnew
     end if
+    if (h_el <= 0d0) h_el = maxval(coords(1, :)) - minval(coords(1, :))
+    gp_g(:, :, jel) = sv(1:12, :)
     do q = 1, NGP
       call gauss(coords, q, N, dN, w, x)
       ph = 0d0; c = 0d0; a = 0d0
@@ -322,10 +392,123 @@ contains
       s = sig(:, q); s(1:3) = s(1:3) - p
       vm = sqrt(1.5d0 * (sum(s(1:3)**2) + 2d0 * sum(s(4:6)**2)))
       sh = 0d0
-      if (sum(sv(1:eco_nact, q)) > 0d0) sh = sv(1, q) / sum(sv(1:eco_nact, q))
+      if (sum(sv(1:eco_nact, q)) > 0d0) then
+        if (eco_nact == 4) then                 ! share of group A (species 1, 2)
+          sh = sum(sv(1:2, q)) / sum(sv(1:eco_nact, q))
+        else
+          sh = sv(1, q) / sum(sv(1:eco_nact, q))
+        end if
+      end if
       out_rec(:, q, jel) = [x(1), x(2), x(3), ph, c, a, sv(13, q), living(sv(1:12, q)) * sv(14, q), vm, p, sh, sv(14, q)]
     end do
+    call shared_unlock()
   end subroutine keep_record
+
+  subroutine living_share(g)
+    ! layout 4 (25 Oct): the inherited amount shared among the species as their living biomass phi_i psi_i (growth
+    ! spreads the biofilm, what arrives is alive), psi of the start state and gamma = 0; without living biomass the
+    ! shares of phi_i (as coupled_living_consumption.py living_start)
+    double precision, intent(inout) :: g(12)
+    double precision :: tot, lv(5), sl
+    integer :: m
+    m = eco_nact
+    tot = sum(g(1:m))
+    lv = 0d0
+    lv(1:m) = g(1:m) * g(7:6 + m)
+    sl = sum(lv(1:m))
+    if (sl > 1d-12) then
+      g(1:m) = tot * lv(1:m) / sl
+    end if
+    g(7:11) = 0.999d0
+    g(12) = 0d0
+  end subroutine living_share
+
+  subroutine inherit_fill()
+    ! layout 3: Gauss points with phi >= phi_min that have not started take the phi-weighted mean state of their
+    ! started (or already filled) neighbours; repeated until nothing changes.  Neighbours: the six nearest Gauss points
+    ! on the regular grid, found by the lattice index of each point (element index times 2 plus the side of the
+    ! element centre, per axis; the Gauss points sit at +-h/(2 sqrt 3) from the centre)
+    integer, allocatable :: lat(:,:,:), ke(:,:,:)
+    double precision :: lo(3), wsum, g(12), w
+    integer :: e, q, d, k(3), n(3), kk(3), s, changed, m, ne, qn
+    logical, allocatable :: done(:,:), done0(:,:)
+    if (out_nel == 0 .or. h_el <= 0d0) return
+    any_started = any(out_rec(12, :, 1:out_nel) > 0.5d0 .and. out_rec(1, :, 1:out_nel) > -1d29)
+    lo = 1d30
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        lo = min(lo, out_rec(1:3, q, e))
+      end do
+    end do
+    lo = lo - (0.5d0 - 0.5d0 / sqrt(3d0)) * h_el            ! the lowest node
+    allocate(ke(3, NGP, out_nel)); ke = -1
+    n = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        do d = 1, 3
+          m = floor((out_rec(d, q, e) - lo(d)) / h_el)
+          k(d) = 2 * m + merge(1, 0, out_rec(d, q, e) - lo(d) > (m + 0.5d0) * h_el)
+        end do
+        ke(:, q, e) = k
+        n = max(n, k + 1)
+      end do
+    end do
+    allocate(lat(0:n(1)-1, 0:n(2)-1, 0:n(3)-1)); lat = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        k = ke(:, q, e)
+        lat(k(1), k(2), k(3)) = NGP * (e - 1) + q
+      end do
+    end do
+    if (allocated(inh_ok)) deallocate(inh_ok, inh_g)
+    allocate(inh_ok(NGP, out_nel), inh_g(12, NGP, out_nel), done(NGP, out_nel), done0(NGP, out_nel))
+    inh_ok = .false.; inh_g = 0d0
+    do e = 1, out_nel
+      do q = 1, NGP
+        done(q, e) = (out_rec(1, 1, e) > -1d29) .and. (out_rec(12, q, e) > 0.5d0)
+      end do
+    end do
+    changed = 1
+    do while (changed > 0)                                ! one layer per sweep (from the points done before it)
+      changed = 0
+      done0 = done
+      do e = 1, out_nel
+        if (out_rec(1, 1, e) < -1d29) cycle
+        do q = 1, NGP
+          if (done(q, e) .or. out_rec(4, q, e) < phi_min_s) cycle
+          wsum = 0d0; g = 0d0
+          do d = 1, 3
+            do s = -1, 1, 2
+              kk = ke(:, q, e); kk(d) = kk(d) + s
+              if (any(kk < 0) .or. any(kk >= n)) cycle
+              m = lat(kk(1), kk(2), kk(3))
+              if (m == 0) cycle
+              ne = (m - 1) / NGP + 1; qn = m - NGP * (ne - 1)
+              if (.not. done0(qn, ne)) cycle
+              w = max(out_rec(4, qn, ne), 0d0)
+              if (out_rec(12, qn, ne) > 0.5d0) then
+                g = g + w * gp_g(:, qn, ne)
+              else
+                g = g + w * inh_g(:, qn, ne)
+              end if
+              wsum = wsum + w
+            end do
+          end do
+          if (wsum <= 0d0) cycle
+          g = g / wsum
+          g(1:5) = max(g(1:5), 0d0)
+          if (rule_mode == 2) call living_share(g)
+          g(1:eco_nact) = max(g(1:eco_nact), 1d-10)
+          g(6) = 1d0 - sum(g(1:5))                       ! the point model's own constraint
+          inh_g(:, q, e) = g; inh_ok(q, e) = .true.
+          done(q, e) = .true.; changed = changed + 1
+        end do
+      end do
+    end do
+  end subroutine inherit_fill
 
   subroutine write_records(kstep, kinc, ttot)
     integer, intent(in) :: kstep, kinc
@@ -364,19 +547,35 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
                       DTIME, PARAMS(*), ADLMAG(MDLOAD, *), PREDEF(2, NPREDF, NNODE), DDLMAG(MDLOAD, *), &
                       PNEWDT, PERIOD
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
-  logical :: ok, wk
-  if (.not. eco_inited) call eco_native_init()
-  mms_on = .false.
-  if (NPROPS >= 19) mms_on = (PROPS(19) > 0.5d0)
-  supg_on = .false.
-  if (NPROPS >= 20) supg_on = (PROPS(20) > 0.5d0)
-  mms_t = TIME(1) + DTIME
+  logical :: ok, wk, lmms, lsupg
+  integer :: lay, rule
+  if (.not. eco_inited) call eco_native_init()     ! never reached in Abaqus: UEXTERNALDB LOP 0 runs first, serial
+  ! the module switches from PROPS: every element finds the same values (one property set), so with threads they are
+  ! stored only when they differ (the first call) and read afterwards; mms_t changes each increment and is written
+  ! by every element (the same value, before its own use; an aligned 8-byte store)
+  lmms = .false.
+  if (NPROPS >= 19) lmms = (PROPS(19) > 0.5d0)
+  lsupg = .false.
+  if (NPROPS >= 20) lsupg = (PROPS(20) > 0.5d0)
+  lay = nint(PROPS(14))
+  rule = 0
+  if (lay == 3) rule = 1
+  if (lay == 4) rule = 2
+  if (NPROPS >= 21) then
+    if (PROPS(21) > 0.5d0) rule = nint(PROPS(21))
+  end if
+  if (mms_on .neqv. lmms) mms_on = lmms
+  if (supg_on .neqv. lsupg) supg_on = lsupg
+  if (lmms) mms_t = TIME(1) + DTIME
+  if (layout_mode /= lay) layout_mode = lay
+  if (phi_min_s /= PROPS(11)) phi_min_s = PROPS(11)
+  if (rule_mode /= rule) rule_mode = rule
   Un = U(1:NDOF) - DU(1:NDOF, 1)
   sv = reshape(SVARS(1:NSV*NGP), [NSV, NGP])
   ! the state variables are those of the start of the increment at every iteration: the point model is advanced
   ! from them on every call (the same result each iteration) and the end-of-increment values are written back
   if (DTIME > 0d0) then
-    call advance(Un, COORDS, sv, PROPS, DTIME, ok)
+    call advance(Un, COORDS, sv, PROPS, DTIME, ok, JELEM, KSTEP)
     if (.not. ok) then
       PNEWDT = 0.5d0
       return
@@ -400,12 +599,14 @@ subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
   double precision :: TIME(2), DTIME
   character(len=32) :: s
   if (LOP == 0) then
+    call shared_init()                                  ! mutex 1 of keep_record, before any element call
     if (.not. eco_inited) call eco_native_init()
   else if (LOP == 2) then
     every = 40
     call get_environment_variable('BIOFILM_UEL_EVERY', s, status=st)
     if (st == 0) read(s, *) every
     if (KSTEP >= 2 .and. mod(KINC, every) == 0) call write_records(KSTEP, KINC, TIME(2))
+    if (rule_mode >= 1) call inherit_fill()
   else if (LOP == 3) then
     call write_records(KSTEP, KINC, TIME(2))
   end if

@@ -43,6 +43,7 @@
 \small Supervisors: Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler\\[4pt]}
 \date{16 December 2026}
 
+\newcommand{\fterm}{\ensuremath{-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla \phi}}
 \begin{document}
 \maketitle
 
@@ -86,8 +87,8 @@ fields, and only living biomass consumes them.}
 \textbf{Growth field} (Klempt et al.\ 2024)
 \[
 \begin{aligned}
-&\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha\;(-\text{front term})\\
-&\dot c=d\,\nabla^2c-g\,\phi\,c,\qquad \dot\alpha=k_\alpha\phi\\
+&\dot\phi=\beta\nabla^2\phi+k_\alpha\alpha\fterm\\
+&\dot c=d\,\nabla^2c-g\,\phi\,\textstyle\sum_i\bar\phi_i\,c,\qquad \dot\alpha=k_\alpha\phi\\
 &\mathbf F=\mathbf F_e\mathbf F_g,\quad \mathbf F_g=\alpha\mathbf I,\quad \alpha(0)=1
 \end{aligned}
 \]
@@ -258,46 +259,56 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: species composition at the Gauss points}
+\begin{frame}{Part 3: two species with nutrient and antibiotic}
 \begin{columns}[c]
-\begin{column}{0.56\textwidth}
+\begin{column}{0.6\textwidth}
 \centering
-\includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{fig_composition_map.png}\\[2pt]
-\raggedright\footnotesize Case~6: final share of species~1 against its start share and the local nutrient level
+\includegraphics[width=\linewidth,height=0.56\textheight,keepaspectratio]{fig_coupled_3d_panels_separate_ab.pdf}\\[2pt]
+\raggedright\scriptsize Separate start, $T^*=0.325$ (top) and $1$ (bottom): share of A, $\sum_i\bar\phi_i$, $c$, $a$,
+von Mises stress; $64^3$, one octant removed
 \end{column}
-\begin{column}{0.42\textwidth}
+\begin{column}{0.38\textwidth}
 \small
-\begin{itemize}\setlength{\itemsep}{4pt}
-  \item Two species, cases of Klempt et al.\ 2026; every call from ANSYS to the
-        point model reproduced in Python bit for bit
-  \item Share $\phi_1/(\phi_1+\phi_2)$ in the seed at $T^*=1$:
-        case~3 $0.667$, case~6 $0.021$
-  \item \textcolor{warn}{Assumptions} (not in the papers), with sensitivity:
-        time link $s=0.15$ (point model advances $s\,\Delta t$ per substep),
-        cap $\phi_{\rm cap}=0.9$, threshold $\phi_{\min}=0.01$
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item Synthetic data (Fritsch et al.\ 2025, case~I), all constants from the papers; antibiotic from $T^*=1/3$,
+        $\alpha^*_0=100$
+  \item Living fraction of the seed: separate $0.97\to0.15$, mixed $0.96\to0.04$
+  \item Growth $\alpha-1$ changes by less than $2\,\%$: the antibiotic lowers the living fraction, not $\phi_{3D}$
+  \item New points take the living composition of their neighbours (\textcolor{warn}{assumption})
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{The coupled simulation retains the qualitative outcomes of the reference cases: coexistence (case~3) and competitive exclusion (case~6).}
+\takeaway{The antibiotic acts on the composition and the living biomass; the stress follows the nutrient and the front.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: spatial heterogeneity under nutrient limitation}
-\begin{columns}[c]
-\begin{column}{0.64\textwidth}
-\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{fig_composition_local_nutrient_thesis.png}
+\begin{frame}{Part 3: grid convergence and the front term \fterm{}}
+\begin{columns}[T]
+\begin{column}{0.56\textwidth}
+\small Seed means with antibiotic, $T^*=1$; extrapolated value and GCI (three grids)\\[4pt]
+\begin{tabular}{@{}llcc@{}}
+\toprule
+example & quantity & extrapolated & GCI\\
+\midrule
+separate & $\alpha-1$ & $9.22\times10^{-4}$ & $1.5\,\%$\\
+separate & von Mises & $6.7\times10^{-4}$~Pa & $8\,\%$\\
+mixed & $\alpha-1$ & $8.54\times10^{-4}$ & $3.3\,\%$\\
+mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize Python, $32^3$/$64^3$/$128^3$, second-order upwind front term \fterm{}
 \end{column}
-\begin{column}{0.34\textwidth}
-\begin{itemize}
-  \item Nutrient held at one face, consumed in the seed
-  \item Strength: Thiele number $\Lambda^2=gL^2/d$, with $L=1$~mm the distance to the nutrient face
-  \item Case~6, $\Lambda=4$: share $0.03$ near the nutrient, $0.44$ inside
-  \item Case~3 hardly changes ($0.63$--$0.66$)
+\begin{column}{0.42\textwidth}
+\small
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a central gradient oscillates
+  \item Constant added diffusion: a quarter of the converged stress on $16^3$
+  \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
+  \item Composition changes by less than $3\,\%$ with grid and time step
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Nutrient limitation alone produces a spatially heterogeneous composition, which is absent for a constant $c^*$.}
+\takeaway{Growth and composition converge; the stress needs a second-order front term \fterm{} and converges more slowly.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -305,14 +316,14 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \begin{itemize}\setlength{\itemsep}{7pt}
   \item \textbf{Verification, not validation}: no measured stress of a growing
         oral biofilm was available
-  \item \textbf{No stress feedback}: the composition reaches the spreading only through the
-        nutrient; the stress does not act back (as in Klempt et al.\ 2024)
-  \item \textbf{Inactive front term}: no growth towards the nutrient in ANSYS; the front term of
-        the element is inactive
-  \item \textbf{Assumptions}: the time link $s$, $\phi_{\rm cap}$, the
-        conversion of $\beta$; each reported with its sensitivity
-  \item \textbf{Calibrated parameters in the FE model}: one first run (CH) only; Part~3
-        uses two published cases
+    \item \textbf{Mechanics one way}: the stress does not act back on growth (as in Klempt et al.\ 2024),
+        and the composition does not act on the stiffness
+  \item \textbf{Front term \fterm{}}: its speed depends on the nutrient only, so dead biofilm keeps spreading
+        after the antibiotic; the stiffness counts dead biomass
+  \item \textbf{Assumptions}: start values of newly reached points, $\phi_{\min}$, the conversion
+        of $\beta$; each reported with its sensitivity
+  \item \textbf{Calibrated parameters in the FE model}: one earlier one-way run (CH) only; Part~3
+        uses synthetic data
   \item \textbf{Symmetric $\mathbf A$}: no directed effects; only part of $\mathbf A$
         is determined; different strains in the commensal and dysbiotic data
 \end{itemize}
@@ -326,14 +337,14 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \textbf{Contributions}\\[5pt]
 \cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; which interactions the data determine}\\[6pt]
 \cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
-\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} two species at every Gauss point, qualitative outcomes of the reference cases retained}
+\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} the point model at every Gauss point, coupled through nutrient and antibiotic; verified on refined grids}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{Outlook (continuation at Keio University)}\\[6pt]
 \begin{itemize}\setlength{\itemsep}{8pt}
   \item Five calibrated species in the finite element model
-  \item Composition into stiffness, stress into growth (two-way)
-  \item A working front term; explicit against implicit field update
+    \item Stress into growth (Eq.~30 of Klempt et al.\ 2024), composition into stiffness
+  \item A second-order front term \fterm{} in the element; explicit against implicit field update
   \item Posterior uncertainty carried to the stress
 \end{itemize}
 \end{column}
@@ -454,9 +465,10 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
   \item The element updates its field $\phi$
   \item At each Gauss point: $\alpha_{n+1}=\alpha_n+k_\alpha\phi\,\Delta t$,
         $\mathbf F_g=\alpha\mathbf I$, stress and tangent
-  \item Two species, where $\phi_{3D}\ge\phi_{\min}$: scale the point model to
-        $\min(\phi_{3D},\phi_{\rm cap})$, advance it by $s\,\Delta t$, store
-        $\phi_i,\psi_i$ as state variables
+    \item Where $\phi_{3D}\ge\phi_{\min}$: advance the point model by $s\,\Delta t$ ($s=0.1$) with $c^*=c^*_0c$ and
+        $\alpha^*=\alpha^*_0a$, linear in time; store $\phi_i,\psi_i$ and $\sum_i\bar\phi_i$
+  \item The element advances $\phi_{3D}$ (Eq.~34 with the front term \fterm{}), $c$ and $a$, consumed by
+        $g\,\phi_{3D}(\sum_i\bar\phi_i)$
 \end{enumerate}
 \end{frame}
 
@@ -562,35 +574,20 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 5: sensitivity to the two coupling assumptions}
-\begin{columns}[T]
-\begin{column}{0.55\textwidth}
-\small Share of species 1, $\phi_1/(\phi_1+\phi_2)$, at $T^*=1$\\[4pt]
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-& $s=0.05$ & $s=0.15$ & $s=0.5$ & $s=1$\\
-\midrule
-case 3, front & 0.638 & 0.672 & 0.701 & 0.744\\
-case 6, front & 0.230 & 0.014 & 0.014 & 0.014\\
-\midrule
-& $\phi_{\rm cap}=0.85$ & $0.9$ & $0.95$ &\\
-\midrule
-case 3, seed & 0.668 & 0.667 & 0.664 &\\
-case 6, seed & 0.023 & 0.021 & 0.014 &\\
-\bottomrule
-\end{tabular}
-\end{column}
-\begin{column}{0.42\textwidth}
+\begin{frame}{Backup 5: sensitivity of the coupled examples}
 \small
-\begin{itemize}
-  \item $s$: the point model advances $s\,\Delta t$ per substep; no paper links the
-        time of Klempt et al.\ 2026 to $T^*$; $s=0.15$ maps its horizon onto $T^*=1$
-  \item In case~6 the winner emerges for $s\gtrsim0.15$ and does not change for larger $s$
-  \item $\phi_{\rm cap}$ hardly matters
+\begin{itemize}\setlength{\itemsep}{5pt}
+  \item \textbf{Time step} (outer step $0.025\to0.0025$): composition and $\alpha-1$ within $3$ and $0.3\,\%$;
+        stress $-6\,\%$ (separate) and $+15\,\%$ (mixed) at $0.025$, so the stress is taken at the small step
+  \item \textbf{Start values of new points}: neighbours' living composition against the seed composition, a few
+        percent in the cube; in the maze of Klempt et al.\ 2024 recovery after the antibiotic ($0.35$) or not ($0.04$)
+  \item \textbf{Antibiotic over time} (constant, pulses, sine, same dose): growth and stress within $1.5\,\%$,
+        the living fraction follows the dose
+  \item \textbf{Nutrient diffusivity}: $d$ of Table~2 makes the fields quasi-steady; only a value eight orders
+        smaller changes the result
+  \item \textbf{Stress mesh}: $16^3$ against $64^3$ elements, $0.2\,\%$
 \end{itemize}
-\end{column}
-\end{columns}
-\takeaway{The outcome type is robust to both assumptions; the share in case~3 depends on $s$ by a few hundredths.}
+\takeaway{The composition is robust; the stress depends on the time step and on how the front term \fterm{} is discretised.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -697,7 +694,7 @@ $\beta=0.1$, $8^3$ & $+6.7\,\%$ & $-30\,\%$ & $0.5\,\%$\\
 \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{fig_klempt2024_fig3_blend.png}\\[2pt]
 \small\raggedright
 Python reproduction with the parameters of Table~2; consumption $g\phi c$ as in the
-authors' implementation (printed: $g\phi$), front term with an isotropic share.
+authors' implementation (printed: $g\phi$), front term \fterm{} with an isotropic share.
 \takeaway{Case~4.1 is reproduced with stated departures from the printed equations (thesis, Appendix~C).}
 \end{frame}
 

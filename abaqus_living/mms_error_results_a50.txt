@@ -1,0 +1,8 @@
+﻿F:\abaqus_work\mms8\living_gp.txt: 8^3, T* 0.05: L2 error phi 3.260e-03 (max 9.012e-03), c 2.678e-03 (max 8.516e-03)
+F:\abaqus_work\mms8s2\living_gp.txt: 8^3, T* 0.05: L2 error phi 5.631e-03 (max 1.747e-02), c 2.737e-03 (max 8.830e-03)
+F:\abaqus_work\mms16\living_gp.txt: 16^3, T* 0.05: L2 error phi 1.023e-03 (max 3.208e-03), c 6.688e-04 (max 2.269e-03)
+F:\abaqus_work\mms16s\living_gp.txt: 16^3, T* 0.05: L2 error phi 1.727e-03 (max 2.025e-02), c 6.913e-04 (max 2.502e-03)
+F:\abaqus_work\mms16h\living_gp.txt: 16^3, T* 0.05: L2 error phi 1.024e-03 (max 3.213e-03), c 6.737e-04 (max 2.296e-03)
+F:\abaqus_work\mms32\living_gp.txt: 32^3, T* 0.05: L2 error phi 2.899e-04 (max 1.215e-03), c 1.616e-04 (max 5.398e-04)
+F:\abaqus_work\mms32s\living_gp.txt: 32^3, T* 0.05: L2 error phi 6.259e-04 (max 1.303e-02), c 1.692e-04 (max 6.563e-04)
+F:\abaqus_work\mms32sh\living_gp.txt: 32^3, T* 0.05: L2 error phi 6.247e-04 (max 1.303e-02), c 1.748e-04 (max 6.832e-04)

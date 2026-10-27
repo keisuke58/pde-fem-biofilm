@@ -1,9 +1,9 @@
-# Section 3 draft: implementations and verification (IKMHIWI03, 23 Oct 2026)
+# Section 3 draft: implementations and verification (IKMHIWI03, 23-24 Oct 2026)
 
-Draft text for Section 3 of `OUTLINE.md`. Numbers from `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` (A-46 to A-59) and
+Draft text for Section 3 of `OUTLINE.md`. Numbers from `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` (A-46 to A-75) and
 `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` (items 23-40). Example throughout: the separate example with antibiotic
 (two species of Fritsch et al. 2025 case I, front term on, alpha*_0 = 100 from T* = 1/3), seed means at T* = 1 unless
-stated. Values in [..] wait for the last runs (the final GCI table, A-60). Wording is neutral ("this work"); the
+stated. Wording is neutral ("this work"); the
 author list is open.
 
 ## 3.1 Three implementations
@@ -32,6 +32,13 @@ The point model is the same compiled routine in all three, so differences come f
   grad c/|grad c| changes over a few cells; halving the time step does not change it.
 - **Tangent.** The analytic tangent of the Abaqus element agrees with central differences to 5e-11, with and
   without the streamline term.
+- **The element next to the walls.** With a manufactured solution the element does not converge from 8^3 to 16^3
+  (phi error 2.2e-3 to 1.8e-3, c 8.2e-3 to 1.2e-2): the MLS stencils of the Gauss points next to a face include the
+  surface points and are ill-conditioned (error of the Laplacian of the manufactured c: 0.88 on 8^3, 65 on 16^3, against
+  |lap c| = 3.5). Rebuilding these stencils with the neighbours mirrored across the faces (zero flux built in) makes
+  the operators consistent up to the walls, and with the weight width proportional to h the element converges (phi
+  9.5e-4 to 3.4e-4, order 1.5; c 9.0e-4 to 2.2e-4, order 2.0). In the coupled example the mirrored operators run on
+  8^3 but become unstable at a corner of the 16^3 mesh after the antibiotic onset; they are not used for the results.
 - **Mechanics alone.** The last growth field of an Abaqus run, solved by the Python mechanics, gives the seed von
   Mises stress to 1.1 % (no obstacles) and 0.5 % (obstacles with frictionless contact). Differences in the stress
   between implementations therefore come from the growth field, not from the mechanics.
@@ -41,6 +48,29 @@ The point model is the same compiled routine in all three, so differences come f
 - **Time step.** Abaqus, 16^3, Delta t = 0.005, 0.00125, 0.000625: observed order 1.1; at Delta t = 0.00125 the error
   against the extrapolated value is 0.8 % in alpha - 1 and 2.2 % in von Mises. All mesh studies use 0.00125
   (ANSYS 24^3 with the constant stabilisation: 0.0005, its explicit stability limit).
+- **Coupling step (Python).** The point model and sum_i phibar_i are updated once per outer step Delta T*; within it
+  phi, alpha and the front nutrient take explicit RK4 steps. With newly reached points inheriting the living
+  composition, 64^3 (A-89; Delta T* chosen so that the point model keeps its own step of 1e-4):
+
+  | Delta T* | 0.025 | 0.02 | 0.01 | 0.005 | 0.0025 |
+  |---|---|---|---|---|---|
+  | separate, von Mises [1e-4 Pa] | 5.68 | 5.68 | 5.82 | 5.94 | 6.00 |
+  | mixed, von Mises [1e-4 Pa] | 3.23 | 3.20 | 3.09 | 2.90 | 2.82 |
+  | separate, alpha - 1 [1e-4] | 8.95 | 8.93 | 8.93 | 8.93 | 8.93 |
+  | mixed, alpha - 1 [1e-4] | 8.30 | 8.29 | 8.21 | 8.09 | 8.04 |
+
+  The stress converges at about first order from Delta T* = 0.005 on (extrapolated 6.07 and 2.74e-4 Pa); at 0.025 it
+  is 6 % low in the separate and 18 % high in the mixed example. The inner RK4 step, a trapezoidal update of
+  sum_i phibar_i over the step and letting newly reached points consume at once each change the stress by less than
+  1 %. The sensitivity comes from the front speed: after the antibiotic onset sum_i phibar_i is small, grad c is weak
+  and the front direction grad c/|grad c| responds to small changes of the consumption (with the regularisation
+  |grad c|^2 + 1e-4 instead of + 1e-6 the mixed stress changes by 30 %, with 1e-8 by less than 0.1 %). The mesh
+  studies of the coupled examples are therefore repeated at Delta T* = 0.0025.
+- **Stability.** The explicit inner step is limited by the diffusion number (0.15) and the Courant number of the front
+  (0.4). On 192^3 both limits are close at the same time and the RK4 step diverged in the first outer step (phi up
+  to 7e8 before the penalty and the diffusion brought it back, alpha - 1 left at +-16); the combined condition
+  12 D + 2 Co <= 2.2 removes this and leaves the step on 32^3 to 128^3 unchanged. No run on 32^3 to 128^3 left [0, 1]
+  by more than 2e-4.
 - **Mesh.** Grid convergence index after Celik et al. (2008), Fs = 1.25 for three grids in the asymptotic range,
   Fs = 3 for two grids. h = 2 mm / n.
 
@@ -52,9 +82,10 @@ The point model is the same compiled routine in all three, so differences come f
   | Python, TVD | 8.25 | | 8.82 | | 9.17 | 9.8 (8.1 %), 128^3: 9.33 |
   | Python, LW + sensor | 7.95 | 8.52 | 8.80 | 9.08 | 9.21 | 9.5 (3.8 %) |
   | Abaqus, constant r h/4 | 5.79 | 7.03 | 7.60 | 8.10 | | 8.8 (10 %) |
-  | Abaqus, SUPG | 8.55 | 8.77 | 8.94 | [..] | | [..] |
-  | ANSYS, constant r h/4 | 5.73 | [..] | | | | |
-  | ANSYS, LW + sensor | 8.19 | [..] | | | | |
+  | Abaqus, SUPG | 8.55 | 8.77 | 8.94 | 9.11 | | 9.45 (4.6 %) |
+  | ANSYS, constant r h/4 | 5.73 | 6.99 | | | | 9.5 (two grids, order 1 assumed) |
+  | ANSYS, LW + sensor | 8.19 | unstable | | | | |
+  | ANSYS, upwind MLS gradients | 8.01 | 8.36 | | | | 8^3: 6.38; 8.7 (4.8 %) |
 
   Seed von Mises [1e-4 Pa]:
 
@@ -64,9 +95,10 @@ The point model is the same compiled routine in all three, so differences come f
   | Python, TVD | 6.51 | | 5.90 | | 5.98 | settled from 32^3 |
   | Python, LW + sensor | 4.20 | 5.31 | 5.85 | 6.28 | 6.26 | settled from 48^3 |
   | Abaqus, constant r h/4 | 1.52 | 2.89 | 3.75 | 4.62 | | not in the asymptotic range |
-  | Abaqus, SUPG | 6.17 | 6.25 | 6.27 | [..] | | GCI 0.5 % at 32^3 |
-  | ANSYS, constant r h/4 | 1.33 | [..] | | | | |
-  | ANSYS, LW + sensor | 4.20 | [..] | | | | |
+  | Abaqus, SUPG | 6.17 | 6.25 | 6.27 | 6.22 | | GCI 1.2 % at 48^3 |
+  | ANSYS, constant r h/4 | 1.33 | 2.52 | | | | not in the asymptotic range |
+  | ANSYS, LW + sensor | 4.20 | unstable | | | | at the corners of the supply face |
+  | ANSYS, upwind MLS gradients | 4.56 | 5.15 | | | | 8^3: 2.14; extrapolated 5.8 (16.5 %) |
 
   The growth variable converges for every scheme (the implementations agree within their GCI bands). The stress does
   not converge with a constant added diffusion: r h/4 smears the seed edge over a few cells, and the stress, which is
@@ -100,7 +132,8 @@ mesh.
 ## 3.5 Where this leaves the examples
 
 - Stresses are quoted from the second-order schemes (Python TVD, Abaqus SUPG) with their GCI; the element's values
-  with the LW + sensor form are given with their mesh error [24^3 pending].
+  are given with their mesh error (16^3 and 24^3); the LW + sensor form is unstable on 24^3, the upwind MLS gradients
+  are stable on 16^3 and 24^3 and extrapolate to 5.8e-4 Pa (GCI 16.5 %), within the band of the second-order schemes.
 - The growth variable and the composition (sum_i phibar_i, the shares) are insensitive to the stabilisation at the
   level of the GCI and can be quoted from any of the three codes.
 - The case 4.2 of Klempt et al. (2024) ("biofilm on nutrients", high consumption) has a cell Peclet number of about 31
@@ -108,8 +141,17 @@ mesh.
   oscillates (no stabilisation) or the thin seed at the wall diffuses away (r h/4, and the LW + sensor form, which uses
   the full added diffusion next to walls). Not reproduced; not used.
 
+- The maze of Klempt et al. (2024, Sect. 4.4) in Python and in the Abaqus element (4 um cells, T* = 60): without the
+  antibiotic the colonised area agrees within 3 to 5 % and the living fraction within 0.006. With the antibiotic the
+  result depends on the rule for newly reached points: when they take the state of their neighbours the biofilm
+  recovers (living fraction 0.12 to 0.35 in Python), when they start from the start state it does not (0.04 to 0.07
+  in both codes). This rule is a modelling assumption and is stated with each example.
+
 ## To finish
-- Final GCI table (A-60): ANSYS 24^3 with r h/4 and with LW + sensor, Abaqus SUPG 48^3.
+- Grid series at Delta T* = 0.0025 (32^3, 64^3, 128^3) are in for all examples (IKMHIWI03 A-89 with antibiotic;
+  cloud 25 Oct without antibiotic and the Fritsch start fractions); table in thesis Ch. 4 (`tab:ch5-gci`).
+  Mixed with the Fritsch fractions and antibiotic: stress 2.01 / 2.96 / 4.01e-4 Pa, not yet asymptotic; a fourth grid
+  (192^3, step limit 12 D + 2 Co <= 2.2) would settle it.
 - Decide which code carries which figure (proposal: maps from Python TVD at 64^3 or 128^3, the element for the
   verification table only).
 - Figure 2 of the outline (verification): the two tables above as a two-panel plot (alpha - 1 and von Mises against

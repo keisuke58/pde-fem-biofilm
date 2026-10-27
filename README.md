@@ -19,7 +19,7 @@ October 2026) and of its continuation at Keio University (Muramatsu lab,
 |---|---|---|
 | **The thesis** (LaTeX, 75 pages) | [`thesis/`](thesis/README.md) | content frozen 12 Oct 2026, submission 20 Oct 2026 |
 | Species interactions from in-vitro data: TMCMC on the five-species data of Heine et al. (2025) | `thesis/chapters/ch3_heine.tex`, [`JAXFEM/`](JAXFEM/README.md) | thesis chapter 3 |
-| Klempt 2024 growth law in the partner's ANSYS user element (NEM), one and two species, composition from the Klempt et al. (2026) point model | [`ansys_usermat/`](ansys_usermat/), [`COUPLING_STATUS.md`](COUPLING_STATUS.md) | thesis chapter 4, verified on ANSYS 2022 R2 |
+| Klempt 2024 growth law in the partner's ANSYS user element (NEM), one and two species, composition from the Klempt et al. (2026) point model | [`ansys_usermat/`](ansys_usermat/), [`archive/COUPLING_STATUS.md`](archive/COUPLING_STATUS.md) | thesis chapter 4, verified on ANSYS 2022 R2 |
 | The same model in Abaqus (UMAT, UMATHT, UEL, point model in Fortran) | [`abaqus_composition/`](abaqus_composition/README.md) | Keio continuation; identical on Windows and Linux |
 | Reproduction of the Klempt 2024 test cases | [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | case 4.1 reproduced with consumption g φ c |
 | Stress-dependent growth (homeostatic pressure), implant collar and tooth crown | [`keio_wp2/`](keio_wp2/README.ja.md) | Keio WP2: Python prototype and 12 Abaqus runs agree |
@@ -81,7 +81,7 @@ private mirror (`mmc-research-group/nishioka-biofilm-fem`, branch `main`).
 | [`thesis/README.md`](thesis/README.md) | Structure of the thesis and the submission timeline |
 | [`REPO_MAP.md`](REPO_MAP.md) | Categorised guide to the whole tree |
 | [`KEIO_PLAN.ja.md`](KEIO_PLAN.ja.md) | Keio continuation: goals and deadlines (§0), paper targets (§1), work packages (§3) |
-| [`COUPLING_STATUS.md`](COUPLING_STATUS.md) | One page: what is done in the coupling and what is not |
+| [`archive/COUPLING_STATUS.md`](archive/COUPLING_STATUS.md) | One page: what is done in the coupling and what is not |
 | [`KLEMPT2024_REPRODUCTION.md`](KLEMPT2024_REPRODUCTION.md) | What reproduces from Klempt 2024 and with which departures |
 | [`ansys_usermat/apdl/FRONT_TERM_FIX.md`](ansys_usermat/apdl/FRONT_TERM_FIX.md) | Findings in the partner element (surface points, front term) |
 | [`CLAIMS_AND_EVIDENCE.md`](CLAIMS_AND_EVIDENCE.md) | Which numbers can be quoted, and what changed under them |

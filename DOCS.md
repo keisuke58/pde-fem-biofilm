@@ -25,7 +25,7 @@ consolidated document first; the others are the underlying investigations.
 | Doc | What |
 |---|---|
 | [VERIFICATION_SENSITIVITY_LIMITATIONS.md](VERIFICATION_SENSITIVITY_LIMITATIONS.md) | **Consolidated** Verification / Sensitivity / Limitations — read first |
-| [rigor_audit_growth_2026-06-26.md](rigor_audit_growth_2026-06-26.md) | Growth kinematics & numerics audit |
+| [archive/rigor_audit_growth_2026-06-26.md](archive/rigor_audit_growth_2026-06-26.md) | Growth kinematics & numerics audit |
 | [DS_composition_fix.md](DS_composition_fix.md) | Dysbiotic-static composition copy-bug (σ_DS ~8× too high) — fix status |
 | [clsm_composition_findings.md](clsm_composition_findings.md) | Composition provenance; raw-CLSM recomputation of σ_CH/σ_DH |
 | [espec_sensitivity_findings.md](espec_sensitivity_findings.md) | `E_SPEC` sensitivity of σ_CH/σ_DH (3.7–12×) |

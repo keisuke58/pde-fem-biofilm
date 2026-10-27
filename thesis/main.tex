@@ -85,6 +85,8 @@
 \newcommand{\calP}{\mathcal{P}}
 
 % ══════════════════════════════════════════════════════════════════════════════
+% the front term of Klempt et al. 2024, Eq. 34, written out wherever it is named (the user, 25 Oct 2026)
+\newcommand{\fterm}{\ensuremath{-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}}}
 \begin{document}
 
 % ── Title page ───────────────────────────────────────────────────────────────
@@ -113,11 +115,11 @@
     \textbf{Zweitprüfer:}     & Dr.-Ing.\ Matthias Wangenheim (IDS) \\
     \textbf{Betreuer:}        & Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler \\
     \textbf{Institut:}        & Institut für Kontinuumsmechanik (IKM) \\
-    \textbf{Abgabedatum:}     & Oktober 2026 \\
+    \textbf{Abgabedatum:}     & Dezember 2026 \\
   \end{tabular}
 
   \vfill
-  {\small Hannover, Oktober 2026}
+  {\small Hannover, Dezember 2026}
 \end{titlepage}
 
 % ── Front matter ─────────────────────────────────────────────────────────────
@@ -153,7 +155,11 @@ nutrient and an antibiotic from fields of the element, interpolated in time, and
 only its living biomass consumes them; through the nutrient the composition
 reaches the spreading of the biofilm. With uniform fields the coupled point model
 reproduces the point model alone to round-off. The antibiotic is shown with
-synthetic data, since the calibration data contain none.
+synthetic data, since the calibration data contain none: it lowers the living
+volume fraction of a two-species seed from $0.97$ to $0.15$, or to $0.04$ when the
+species start mixed, while the growth changes little. The growth converges on
+refined grids within a few percent; the stress needs a second-order treatment
+of the front term \fterm{} and converges with a GCI of $1$ to $29\,\%$.
 
 The coupling has been verified, but not yet validated against measurements. A
 coupling in which the composition acts on the stiffness is left to the
