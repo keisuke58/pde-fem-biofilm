@@ -2,6 +2,7 @@
 n^3 cube [-1, 1]^3 mm of the ANSYS decks and the Python reference, with their examples:
 
     python make_living_inp.py n layout out.inp [--dt 0.005] [--tend 1] [--t-ab 0.333333] [--no-ab]
+                              [--p-h-e 0.05 [--gate-form 0|1|2] [--implicit-gate]]   (homeostatic law, PROPS(22:23))
         layout: sep (seed species A, the four corner blocks species B) or mixeq (seed only, equal start shares)
 
 Set-up as coupled_living_consumption.py --v2 --ansys-bc --start-position --front 1 --phi-min 0.001 --alpha0 100
@@ -47,6 +48,10 @@ ap.add_argument("--rule", choices=["start", "inherit", "living"], default="start
 ap.add_argument("--supg", action="store_true", help="A-54: SUPG for the front term (PROPS(20) = 1) instead of the added diffusion r h/4 (beta = beta_0)")
 ap.add_argument("--quarter", action="store_true", help="A-53: only x > 0, z > 0 (the examples are symmetric in x and z, as the Python --fast); "
                 "symmetry u_x = 0 on x = 0, u_z = 0 on z = 0 and u_y = 0 at (0, -1, 0) instead of the corner constraints")
+ap.add_argument("--p-h-e", type=float, default=0.0, help="homeostatic-pressure growth law (27 Oct 2026, Keio extension, off by default): p_h / E_bio; "
+                "PROPS(22) = p_h = this times E_bio, PROPS(23) = form (living_uel.f90 header)")
+ap.add_argument("--gate-form", type=int, choices=[0, 1, 2], default=0, help="0 p_h = p_ref, 1 p_h = p_ref (phi_n^2 + f), 2 g = 1/(1 + p/p_ref)")
+ap.add_argument("--implicit-gate", action="store_true", help="p of the end of the increment (PROPS(23) = form + 10) instead of the start")
 ap.add_argument("--mms", action="store_true", help="manufactured solution (A-50, mms.py): point model off (L = 1), k_alpha = 0, "
                 "phi and c start from the solution, c = 1 on y = -1 only, no antibiotic; PROPS(19) = 1")
 a = ap.parse_args()
@@ -69,6 +74,8 @@ if a.supg:
     props += [0.0] * (19 - len(props)) + [1.0]
 if a.rule != "start":
     props += [0.0] * (20 - len(props)) + [{"inherit": 1.0, "living": 2.0}[a.rule]]
+if a.p_h_e > 0:
+    props += [0.0] * (21 - len(props)) + [a.p_h_e * props[0], float(a.gate_form + (10 if a.implicit_gate else 0))]
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)
 cells8 = W.seed_cells_8(ROOT / "ansys_usermat/apdl/results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
@@ -216,4 +223,5 @@ out += [f"*STEP, NAME=GROW, INC={ninc + 10}, AMPLITUDE=STEP", "*COUPLED TEMPERAT
         f"*OUTPUT, FIELD, FREQUENCY={ninc}", "*NODE OUTPUT", "U, NT", "*END STEP"]
 Path(a.out).write_text("\n".join(out) + "\n")
 print(f"wrote {a.out}: {n}^3, {a.layout}, dt {a.dt}, {ninc} increments, n_sub {n_sub}, beta {beta:g}, "
-      f"seed {int(seed.sum())} cells, blocks {int(blocks.sum()) if a.layout == 'sep' else 0}")
+      f"seed {int(seed.sum())} cells, blocks {int(blocks.sum()) if a.layout == 'sep' else 0}"
+      + (f", homeostatic law p_h {props[21]:g} Pa form {props[22]:g}" if a.p_h_e > 0 else ""))
