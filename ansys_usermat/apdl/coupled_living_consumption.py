@@ -159,6 +159,22 @@ FRONT_LIVING = "--front-living" in sys.argv
 # --stiff-species m1,m2,... (Keio continuation; not in the thesis): E = E(phi_3D) * sum_i w_i m_i with the shares
 # w_i = phi_i / sum_j phi_j of the point model (dead cells included); m_i are relative moduli (no data: sensitivity).
 STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") if x]
+# --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
+# (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
+#     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
+# with (--gate-form) 0: g = min(1, max(0, 1 - p/p_h)), p_h = P E_bio; 1: p_h = P E_bio (phi^2 + f), phi of the cell;
+# 2: g = 1/(1 + max(p, 0)/p_ref), p_ref = P E_bio (the ANSYS cal5gp form, no homeostatic value). P = p_h/E_bio.
+# Explicit gate as in the elements: p is taken from the stress solve at the START of each outer step (the state
+# alpha_n, phi_n, so the gate lags by one outer step and is constant over its inner RK4 steps; p can overshoot p_h by at
+# most one outer step of growth). The stress is solved on the stress mesh NM^3 (block means of phi and alpha - 1, as
+# the final stress of every run); every cell takes the pressure of the stress element that contains it (piecewise
+# constant prolongation, the right inverse of block_mean: block_mean(prolong(p)) = p, so the growth gated in the cells
+# is averaged back into the same element at the next solve). At NF = NM the two coincide. Obstacle elements (NaN)
+# get p = 0. The pressure of the start of the run is solved as well (alpha = 1: p = 0, g = 1).
+HOMEO = _opt("--homeostatic", 0.0)            # p_h / E_bio; 0 = off
+GATE_FORM = _opt("--gate-form", 0, int)
+assert GATE_FORM in (0, 1, 2), GATE_FORM
+GATE = None                                    # g per cell of the current outer step (None when off)
 LIV = None                                     # living volume fraction seen by the front (--front-living)
 BUDGET = "--budget" in sys.argv                      # volume integrals of the terms of Eq. 34 over the run (A-83)
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
@@ -261,6 +277,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("_frontliv" if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
+       + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
@@ -501,6 +518,23 @@ def stiffness_factor(G, mods):
     tot = ph.sum(-1)
     w = ph / np.maximum(tot, 1e-30)[..., None]
     return np.where(tot > 0, (w * np.asarray(mods)).sum(-1), 1.0)
+
+
+def gate_fn(p, phi, p_ref, form, floor=1e-3):
+    """--homeostatic: g(p) of the elements (living_uel.f90 / unified_uel.f90), p = -tr(sigma)/3 compression positive,
+    p_ref = p_h/E_bio * E_bio [Pa]; form 0: p_h = p_ref, 1: p_h = p_ref (phi^2 + f), 2: 1/(1 + max(p, 0)/p_ref)"""
+    p = np.asarray(p, float)
+    if form == 2:
+        return 1.0 / (1.0 + np.maximum(p, 0.0) / p_ref)
+    ph = p_ref * (np.clip(np.asarray(phi, float), 0.0, 1.0) ** 2 + floor) if form == 1 else p_ref
+    return np.minimum(1.0, np.maximum(0.0, 1.0 - p / ph))
+
+
+def prolong(u, n):
+    """m^3 element field -> n^3 cell field (n % m == 0): every cell takes the value of the element that contains it;
+    the right inverse of wp3_reference.block_mean"""
+    f = n // u.shape[0]
+    return np.repeat(np.repeat(np.repeat(u, f, 0), f, 1), f, 2)
 
 
 def front(phi, c):
@@ -756,12 +790,18 @@ def run(example, antibiotic):
             # (1) macro phi, alpha
             if FRONT_LIVING:
                 globals()["LIV"] = np.where(on, L, 0.0)
+            if MECH_K or HOMEO:                         # stress of the start of the outer step (one solve for both)
+                _, p_nm = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
+                                         obstacles=BOXES, efac=efac_nm(G))
             if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
-                S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
-                               efac=efac_nm(G))
-                f_ = NF // NM
-                ice = 2.0 * np.repeat(np.repeat(np.repeat(np.nan_to_num(S.LAST_TRE), f_, 0), f_, 1), f_, 2)[QS]
+                ice = 2.0 * prolong(np.nan_to_num(S.LAST_TRE), NF)[QS]
                 hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
+            if HOMEO:                                   # --homeostatic: explicit gate from p of the start of the step
+                p_cell = -prolong(np.nan_to_num(p_nm), NF)[QS]        # compression positive, per cell
+                globals()["GATE"] = gate_fn(p_cell, phi, HOMEO * S.E_BIO, GATE_FORM, S.FLOOR)
+                hist.setdefault("p_seed_Pa", []).append(float(p_cell[seed].mean()))
+                hist.setdefault("gate_seed", []).append(float(GATE[seed].mean()))
+                hist.setdefault("gate_min", []).append(float(GATE.min()))
             cf = c
             Lf = L
             ka = 0.0 if MMS else W.K_ALPHA
@@ -784,10 +824,11 @@ def run(example, antibiotic):
                             d = d + R_FRONT * H / 4.0 * lap_sensor(ph)
                     if MMS:
                         d = d + S_phi(X, Y, Z, tt)
+                    da = ka * ph if GATE is None else ka * ph * GATE      # --homeostatic: Eq. 36 gated
                     if OBSTACLE:                    # no biofilm inside the obstacles
                         d = np.where(OBST, 0.0, d)
-                        return d, np.where(OBST, 0.0, ka * ph)
-                    return d, ka * ph
+                        return d, np.where(OBST, 0.0, da)
+                    return d, da
                 if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
                     lap_b = np.empty_like(phi)
                     (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
@@ -907,6 +948,11 @@ def run(example, antibiotic):
         snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
+    if HOMEO:                                   # pressure (compression positive) and gate of the end state
+        hist["seed_p_Pa"] = float(-np.nan_to_num(p)[seed16].mean())
+        g_end = gate_fn(-prolong(np.nan_to_num(p), NF)[QS], phi, HOMEO * S.E_BIO, GATE_FORM, S.FLOOR)
+        hist["seed_gate_end"] = float(g_end[seed].mean()); hist["gate_min_end"] = float(g_end.min())
+        hist["homeostatic"] = dict(p_h_over_E=HOMEO, p_ref_Pa=HOMEO * S.E_BIO, form=GATE_FORM, stress_mesh=NM)
     if BUDGET:
         hist["budget"]["phi_total_end"] = float(phi.sum()) * H ** 3 * (4 if FAST else 1)
         print("budget of phi_3D [mm^3]:", {k_: round(v_, 5) for k_, v_ in hist["budget"].items()}, flush=True)
