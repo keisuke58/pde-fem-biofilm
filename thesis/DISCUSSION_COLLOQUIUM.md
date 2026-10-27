@@ -299,9 +299,9 @@ the living fraction recovers from $0.17$ to $0.30$ while growth and stress chang
 - *Why B goes first* **[quick check, nuance]**: with $b=(1,2)$ and $\eta=(1,2)$ the antibiotic term
   $\alpha^*b_i/(\eta_i\phi_i^2)$ is the same for both species at equal $\phi_i$, but B's nutrient term
   $c^*A_{22}/\eta_2$ is half of A's, so B's balance tips earlier; and once A takes the share of the mixed
-  seed (0.86 without antibiotic), $\phi_2$ is the smaller fraction and $1/\phi_2^2$ the larger. The thesis
-  says "the more sensitive one"; in the talk say "B is twice as sensitive and, with its larger
-  viscosity, recovers at half the rate, so its balance tips first".
+  seed (0.86 without antibiotic), $\phi_2$ is the smaller fraction and $1/\phi_2^2$ the larger. In the talk
+  say "the antibiotic term is the same for both; B's nutrient term is half of A's, so its balance tips
+  first" (thesis and paper corrected 27 Oct).
 - *Why the nutrient rises*: Eq. 35 consumes with $\kappa=\phi_{3D}\sum_i\bar\phi_i$. With $d=10^8$
   mm$^2/T^*$ the field is quasi-steady, $\nabla^2c=(\Lambda^2/\ell^2)\kappa\,c$ with the Thiele modulus
   $\Lambda^2=g\ell^2/d=1$, depletion length $\ell/(\Lambda\sqrt\kappa)$: 1 mm for living biofilm,
@@ -529,7 +529,7 @@ identified CH entries).
 | bars | $7.1\times10^{-3}$ vs $7.4\times10^{-4}$ Pa; mixed $9.5$ vs $2.1\times10^{-4}$ Pa | §4.7.2 |
 | Ch. 3 | 5/6/9/8 of 15; DH stage (iii), $a_{22}$ 0.79 sd; pH DH $R^2=0.71$ | Ch. 3 |
 
-## Points to check in the thesis text (found while writing this; not changed here)
+## Points to check in the thesis text (all three corrected on 27 Oct in the thesis, the paper and QUIZ J5)
 
 1. Caption of Figure `fig:ch5-bars` (ch4_ansys.tex, "mixed example, which starts at $\phi_{3D}=0.55$")
    and the same wording in the paper draft (caption of the geometry figure and §4.5 "when they start mixed

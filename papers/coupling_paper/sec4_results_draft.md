@@ -25,7 +25,7 @@ outer faces from T* = 1/3. Front term on.
 (64^3, outer step 0.025; growth and stress converged values in Section 3.)
 
 - The antibiotic lowers the living volume fraction of the seed from 0.965 to 0.152 when the species start separately
-  and from 0.961 to 0.038 when they start mixed. B, the more sensitive species (b_2 = 2), is removed first.
+  and from 0.961 to 0.038 when they start mixed. B is removed first: its nutrient term c* A_22/eta_2 is half of A's, while the antibiotic term per viscosity, alpha* b_i/eta_i, is the same for both.
 - **The nutrient field decides where the antibiotic acts.** The point model compares c* = c*_0 c with alpha* b_i:
   where the nutrient is high, A survives the antibiotic; where it is low, A dies as well. When the biomass dies the
   nutrient is no longer consumed and rises in the seed (0.54 to 0.91 in the separate example).
