@@ -21,7 +21,7 @@ uptake g phi_3D (sum_i phibar_i) c of both. The main findings are:
    the converged seed stress; a second-order upwind treatment is needed. With it, the growth converges with a grid
    convergence index of 0.7 to 3.3 % in all examples, the seed stress with 0.7 to 8 % when the species start apart and
    26 to 29 % when they start mixed.
-3. **What the composition changes.** An antibiotic removes most of the living biomass (from 0.97 to 0.15 of the seed
+3. **What the composition changes.** An antibiotic removes most of the living biomass (from 0.96 to 0.15 of the seed
    when the species start apart, from 0.96 to 0.04 when they start mixed), while the growth changes by about 1 % and the converged seed stress by less than its numerical uncertainty (6.55
    against 6.70e-4 Pa extrapolated when the species start apart, GCI 8 %; on one grid the difference reaches 10 %
    because the two cases converge from opposite sides).
