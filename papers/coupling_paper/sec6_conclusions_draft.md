@@ -22,9 +22,9 @@ uptake g phi_3D (sum_i phibar_i) c of both. The main findings are:
    convergence index of 0.7 to 3.3 % in all examples, the seed stress with 0.7 to 8 % when the species start apart and
    26 to 29 % when they start mixed.
 3. **What the composition changes.** An antibiotic removes most of the living biomass (from 0.97 to 0.15 of the seed
-   when the species start apart, from 0.96 to 0.04 when they start mixed), while the growth changes by about 1 % and the seed stress by about 10 % (6.7 against 6.0e-4 Pa on 64^3 when the
-   species start apart): the antibiotic lowers the consumption, more nutrient reaches the front, and the edge of the
-   seed changes.
+   when the species start apart, from 0.96 to 0.04 when they start mixed), while the growth changes by about 1 % and the converged seed stress by less than its numerical uncertainty (6.55
+   against 6.70e-4 Pa extrapolated when the species start apart, GCI 8 %; on one grid the difference reaches 10 %
+   because the two cases converge from opposite sides).
    The local nutrient decides where the antibiotic acts, because the point model weighs c* against alpha* b_i.
 4. **What the coupling needs beyond the papers.** The composition of biofilm that reaches a new point is not fixed by
    either model. Taking the living composition of the neighbours or the start state gives the same cube results within
