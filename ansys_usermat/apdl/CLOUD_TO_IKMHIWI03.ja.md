@@ -59,7 +59,14 @@
    `callsite/phi_mode_exec.inc` が CM_DT = s ΔT\* = 0.15 × 0.025 = 3.75e−3 を PM_DTMAX = 1e−4 で切り、NSUB = 38（刻み 9.9e−5）。
    較正の刻み（1e−4）と同じなので、修論の数値はそのまま。回し直しは不要。
 3. ANSYS の新しい本番は**要らない**（修論は u8_ と upwind の結果で足りる）。ライセンスと時間は空けておく。
-4. 論文用（急がない、11 月以降）：ANSYS upwind の 32³ が回るか（時間とメモリの見積もりだけ）、Abaqus SUPG の 32³ / 48³（受け継ぐルール）。
+4. 論文用（連成論文と P3 は 1 本、`papers/coupling_paper/manuscript/coupling_paper.tex`；11 月以降、上から）：
+   - **圧力で止まる成長則の Abaqus 本体での計算**（2 つの実装の比較）：`abaqus_living/` の要素（PROPS(22) = p_h、PROPS(23) = 形、
+     README「Homeostatic-pressure growth law」）。`make_living_inp.py 16 sep ... --p-h-e 1e-4`（と 2e-4、成長則なし）、分けた例・
+     抗菌薬あり、外側の増分は 0.00625 以下（Python では 0.025 だと効果を約 2 割大きく見積もる）。Python の同じ設定
+     （`coupled_living_consumption.py --homeostatic 1e-4 --dtc 0.00625`、16³/32³）と種の平均の α−1・vM を比べる。
+     注意：p_h/E = 0.02〜0.1 では種の圧力（約 1e−4 E）より大きく、成長則は効かない。
+   - **混ぜた例（Fritsch の割合・抗菌薬あり）の 192³**（上の §4 の 1、修論にも入る）。
+   - ANSYS upwind の 32³ が回るか（時間とメモリの見積もりだけ）、Abaqus SUPG の 32³ / 48³（受け継ぐルール）。
 5. バックアップ（12 月末まで）：`BACKUP_PLAN_2026-12.ja.md` と `scripts/backup_untracked_ikmhiwi03.ps1`。Oliver の要素のパッチと `F:\felix_private\` の置き場所はユーザーに聞く。**Felix の物はクラウドや git に上げない。**
 
 ## 5. やらないこと
