@@ -31,7 +31,7 @@ one-sided phi gradient in the wall cells, so wall blocks stayed at phi = 1.1 (A-
 | `_mixeq` | mixed start with equal amounts (the agreed example); without it in a mixed run: Fritsch's start (0.25, 0.30) |
 | `_nf8` ... `_nf128` | mesh (default 32^3) |
 | `_v2` | the v2 set-up (B in corner blocks, antibiotic on all outer faces) |
-| `_a10`, no `_tab`, `_phimin0.1`, `_front0.1`, `_gc` other than 1 | earlier steps (alpha*_0 = 10, antibiotic from 0.5, phi_min 0.1, r/10, g l^2/d = 4): superseded |
+| `_a10`, no `_tab`, `_phimin0.1`, `_front0.1`, `_gc` other than 1 | earlier steps (alpha*_0 = 10, antibiotic from 0.5, phi_min 0.1, r/10, g l^2/d = 4): superseded. Exception (27 Oct): `_nf64_front0.1_phimin0.001_v2_fortran_ansysbc_inhliv[_mixeq]_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast` = the paper's slower-front sensitivity (r = 1 mm/T*, all else the main setting), Section 4.6 of the coupling paper |
 | `_homeo<P>[f1|f2]` | Keio continuation, not in the thesis (27 Oct): the homeostatic-pressure growth law `--homeostatic P` (P = p_h/E_bio; Eq. 36 times g = min(1, max(0, 1 - p/p_h)), p = -tr(sigma)/3 of the cell from the stress solve of the start of the outer step, stress mesh 16^3, explicit gate as in the elements), `f1`/`f2` = `--gate-form 1|2` (p_h (phi^2 + f); the hyperbolic ANSYS cal5gp form). The seed pressure is ~1e-4 E_bio, so P >= 0.02 leaves g > 0.99; the law acts at P ~ 1e-4. `KEIO_PLAN.ja.md` §10 |
 | files without `_v2` | development runs before 20 Oct evening: do not use |
 

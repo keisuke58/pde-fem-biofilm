@@ -27,6 +27,29 @@ Target journal: Biomechanics and Modeling in Mechanobiology (Springer).
   the 2x2 layout; CC BY-NC-SA licence of the dataset in the data availability statement.
 - 11 pt instead of 12 pt to keep 20 pages with the added content (the template is applied at submission anyway).
 
+## Revised 27 Oct 2026 (night): review points
+
+- Main message reframed as a result with a consequence (abstract, first contribution of the Introduction, lead of
+  Section 2.4, new Discussion paragraph "What a composition-dependent mechanics needs", first item of the Conclusions):
+  in the coupled equations the composition reaches growth and stress only through the nutrient and the front speed,
+  so a model with composition-dependent mechanics needs growth or front speed tied to the living biomass or to the
+  species, or a species-dependent stiffness; the estimates (growth from the living biomass 40 to 65 %, front speed
+  51 % to fourfold, stiffness 9 to 89 %) are collected there and marked as estimates or 16^3 tests.
+- Novelty sharpened in the Introduction: first coupling of a variational multi-species point model to a continuum
+  growth model with stress, without changing either model; the derived structure; three independent implementations
+  with verification; the start state of new points as an open modelling choice with its effect.
+- New Discussion paragraph "Comparison with experimental scales" (plaque thickness 14.9 / 49.3 um after 1 / 7 days,
+  Al-Ahmad et al. 2007; S. mutans modulus 0.28 kPa, Rmaile et al. 2013; growth arrest at about 10 kPa or below, Chu et
+  al. 2018; 6 to 16 kPa, Helmlinger et al. 1997; all from `../../../p3/uel/LITERATURE_P3_checked.md`, DOIs checked
+  against Crossref); no validation claimed, what a validation would need is stated. Four entries added to `refs.bib`.
+- New Section 4.6 "A slower front" with Table 3: the four cube examples at r = 1 mm/T* (one tenth of the paper's
+  speed; `coupled_living_consumption.py --front 0.1`, 64^3, outer step 0.025, JSONs
+  `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf64_front0.1_phimin0.001_v2_fortran_ansysbc_inhliv*_tvd_wgmirror_fast_*.json`,
+  colonised fraction from the `figdata/*.npz` fields, phi_3D >= 0.5). One sentence in Section 4.8 (the film around the
+  crown is a consequence of the paper's front speed).
+- To stay at 20 pages: the antibiotic-schedule figure (`fig_ab_schedule.pdf`) moved to the supplementary list (the
+  numbers stay in Section 4.3), Appendix B.3 shortened, several figures narrower, float parameters relaxed, `\bibsep` 2 pt.
+
 ## Build
 
     pdflatex coupling_paper && bibtex coupling_paper && pdflatex coupling_paper && pdflatex coupling_paper
@@ -41,7 +64,7 @@ exist yet is replaced by a box with its file name (`\figorbox`).
 - Author list, affiliations, contributions, funding, acknowledgements; corresponding author.
 - Section 4.7 (clinical molar crown): run, numbers and the figure `../fig_real_tooth_coupled.pdf` are being produced
   separately; the dataset licence (CC BY-NC-SA) goes into the data availability statement.
-- Fourth grid (192^3) for the mixed example with the start fractions of Fritsch et al. (Table 3, Figure 4).
+- Fourth grid (192^3, computed on another machine) for the mixed example with the start fractions of Fritsch et al. (Table 3, Figure 4).
 - Data availability: which parts of the element code may be published; release (DOI) of the repository.
 - Springer Nature template at submission.
 - Supplementary material (time-step series of the elements, stability analysis, sensitivities, maze animation) is
