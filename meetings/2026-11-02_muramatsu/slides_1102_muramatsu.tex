@@ -35,6 +35,7 @@
 \begin{enumerate}\setlength{\itemsep}{6pt}
   \item 修士論文の状況と日程
   \item 第4章の新しい結果（オリバーと合意した連成）
+  \item 慶應での研究計画（本命の論文）
 \end{enumerate}
 \column{0.48\textwidth}
 \textbf{ご相談}
@@ -120,7 +121,7 @@
   \item 2027年7月25〜29日，パサデナ（ロサンゼルス近郊）
   \item 抄録 2026年11月16日〜2027年1月15日
   \item 学生の旅費の助成 2027年1月1日〜3月31日
-  \item 内容：バイオフィルムの連成と検証（IKM と共著，Soleimani 先生に許可をいただく予定）
+  \item 内容：バイオフィルムの連成と検証（IKM と共著．10月26日に Soleimani 先生へ許可を伺うメールを送付，返事待ち）
 \end{itemize}
 \column{0.46\textwidth}
 \textbf{SQAI-NCTS}（台湾，8月）
@@ -140,6 +141,7 @@
 % --------------------------------------------------------
 \begin{frame}{ご相談2：4月からの RA}
 \begin{itemize}\setlength{\itemsep}{6pt}
+  \item IKM の HiWi は 2027年3月末まで延長になりました（Junker 先生）．
   \item 2027年4月から週20時間ほど，RA としてお手伝いできればと思います．
   \item JAXA，量子機械学習，CFRP の NEDO の件に限らず，研究室のほかのプロジェクトでも構いません．
   \item できること：FEM（ANSYS のユーザー要素，Abaqus），JAX での高速化，ベイズ推定（TMCMC），GNN，論文の図と英語の校正．
@@ -169,6 +171,36 @@
   \item テーマはバイオフィルムの続きでよいか．
   \item 候補：応力から成長への戻り（Klempt 2024 の Eq.~30 が落とした項），5菌種を要素へ，Abaqus での実装．
   \item 帰国後の環境：研究室の席，PC と GPU，Abaqus のライセンス．
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{慶應での研究計画：本命の論文（2027年9月投稿）}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\small
+\textbf{内容}：圧力で成長が止まる成長則
+\[
+\dot\alpha=k_\alpha\phi\,\max\bigl(0,\,1-p/p_h\bigr)
+\]
+を持つバイオフィルムの連続体モデルを，較正した組成と一緒にインプラント・歯の形で解く（Abaqus のユーザー要素）．
+\vspace{4pt}
+
+\textbf{できていること}
+\begin{itemize}\footnotesize
+  \item 成長則の検証（自由成長・全拘束，接線は差分と $4\times10^{-10}$）
+  \item 扇形のメッシュ収束（3 段）
+  \item 歯頸線：成長則なしでは歯頸線に応力が集中（比 1.37），$p_h<p_0$ なら集中が消える（比 0.67）
+\end{itemize}
+\textbf{残り}：Abaqus 本体での確認，文献・実験との比較，DS・DH の組成
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{fig_cervical.pdf}\\
+{\scriptsize 歯頸線の帯の応力（コアとの比，3 段のメッシュ）}
+\vspace{4pt}
+\begin{itemize}\footnotesize
+  \item \textbf{伺いたいこと}：比べられる実験（研究室の測定，共同研究先），投稿先（BMMB，JMBBM など）
 \end{itemize}
 \end{columns}
 \end{frame}
