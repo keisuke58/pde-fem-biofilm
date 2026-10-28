@@ -33,7 +33,7 @@ if ($Install) {
     $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
         -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 5)
     Register-ScheduledTask -TaskName $task -Action $act -Trigger $trg -Settings $set -Force | Out-Null
-    Write-Host "scheduled task $task: starts at every logon of $env:USERNAME"
+    Write-Host "scheduled task ${task}: starts at every logon of $env:USERNAME"
 }
 $running = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
     Where-Object { $_.CommandLine -like "*start_remote_control.ps1*-Loop*" }
