@@ -811,15 +811,16 @@ def run(example, antibiotic):
     ckpt.parent.mkdir(parents=True, exist_ok=True)
     k0 = 0
     if ckpt.exists():
-        z = np.load(ckpt, allow_pickle=False)
-        phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
-        hist = json.loads(str(z["hist"]))
-        snaps = {}
-        for name in z.files:
-            if name.startswith("snap|"):
-                _, T, f = name.split("|")
-                snaps.setdefault(float(T), {})[f] = z[name].copy()
-        k0 = int(z["k_done"]) + 1
+        # closed after reading: on Windows an open file cannot be replaced by the next checkpoint (WinError 5)
+        with np.load(ckpt, allow_pickle=False) as z:
+            phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
+            hist = json.loads(str(z["hist"]))
+            snaps = {}
+            for name in z.files:
+                if name.startswith("snap|"):
+                    _, T, f = name.split("|")
+                    snaps.setdefault(float(T), {})[f] = z[name].copy()
+            k0 = int(z["k_done"]) + 1
         print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
     t_ck = time.time()
     for k in range(k0, int(round(T_END / DT_C))):
