@@ -246,16 +246,16 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
 \begin{columns}[T]
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Time step $\Delta t$ [$T^*$]}{first order; $\Delta t=0.025$ gives an error of about $1\,\%$}
+\factbox{p2}{Time step $\Delta t$ [$T^*$]}{error about $1\,\%$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ against a reference solution: $4.1$ / $1.3$ / $0.7\,\%$ on $8^3$ / $16^3$ / $24^3$; seed stress on $24^3$: $2\,\%$}
+\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ measured against a reference: $0.7\,\%$ on $24^3$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Stability}{NEM limit derived (Bloch): $0.06$ on $8^3$, $0.12$--$0.16$ on $16^3$, $24^3$; confirmed by runs; Rudolf et al.\ 2025: 1-D value $0.5$}
+\factbox{p2}{Stability}{limit of the element derived and confirmed; all runs below it (Appendix~D)}
 \end{column}
 \end{columns}
-\takeaway{The error of the growth field is measured against a reference solution, the seed stress is $2\,\%$ from its converged value, and every run lies within the derived stability limit.}
+\takeaway{The errors are measured, not estimated, and every run lies within the derived stability limit.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -272,43 +272,61 @@ von Mises stress; $64^3$, one octant removed
 \begin{itemize}\setlength{\itemsep}{3pt}
   \item Synthetic data (Fritsch et al.\ 2025, case~I), all constants from the papers; antibiotic from $T^*=1/3$,
         $\alpha^*_0=100$
-  \item Living fraction of the seed: separate $0.97\to0.15$, mixed $0.96\to0.04$
-  \item Growth $\alpha-1$ changes by less than $2\,\%$: the antibiotic lowers the living fraction, not $\phi_{3D}$
+  \item Living fraction of the seed: separate $0.96\to0.15$, mixed $0.96\to0.04$
+  \item Growth changes by less than $2\,\%$ and the converged seed stress by about $2\,\%$: the antibiotic lowers the
+        living fraction, not $\phi_{3D}$
   \item New points take the living composition of their neighbours (\textcolor{warn}{assumption})
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{The antibiotic acts on the composition and the living biomass; the stress follows the nutrient and the front.}
+\takeaway{The composition reaches growth and stress only through the nutrient and the front speed $r\,c/(k+c)$.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: grid convergence and the front term \fterm{}}
+\begin{frame}{Part 3: the front term sets the accuracy of the stress}
 \begin{columns}[T]
 \begin{column}{0.56\textwidth}
-\small Seed means with antibiotic, $T^*=1$; extrapolated value and GCI (three grids)\\[4pt]
-\begin{tabular}{@{}llcc@{}}
-\toprule
-example & quantity & extrapolated & GCI\\
-\midrule
-separate & $\alpha-1$ & $9.22\times10^{-4}$ & $1.5\,\%$\\
-separate & von Mises & $6.7\times10^{-4}$~Pa & $8\,\%$\\
-mixed & $\alpha-1$ & $8.54\times10^{-4}$ & $3.3\,\%$\\
-mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
-\bottomrule
-\end{tabular}\\[6pt]
-\footnotesize Python, $32^3$/$64^3$/$128^3$, second-order upwind front term \fterm{}
+\centering
+\includegraphics[width=\linewidth]{papers/coupling_paper/fig_grid_examples.pdf}\\[2pt]
+\raggedright\scriptsize Seed means at $T^*=1$ against the cell size, all examples, outer step $0.0025$;
+open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ with antibiotic)
 \end{column}
 \begin{column}{0.42\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{3pt}
-  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a central gradient oscillates
-  \item Constant added diffusion: a quarter of the converged stress on $16^3$
+  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a constant added diffusion gives a quarter of
+        the converged stress, a second-order upwind scheme is needed
+  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$, mixed stress $19$ to $41\,\%$
   \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
-  \item Composition changes by less than $3\,\%$ with grid and time step
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Growth and composition converge; the stress needs a second-order front term \fterm{} and converges more slowly.}
+\takeaway{The stress needs a second-order treatment of the front term; with it the grid error is known.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Part 3: rigid bars and a maze}
+\begin{columns}[c]
+\begin{column}{0.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{fig_obstacle_columns_3d.pdf}\\[1pt]
+\raggedright\scriptsize Four rigid bars after Klempt et al.\ 2024, Fig.~9; surface $\phi_{3D}$ at $T^*=0.05$ to $0.2$
+\end{column}
+\begin{column}{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{papers/coupling_paper/fig_maze_rules.pdf}\\[1pt]
+\raggedright\scriptsize Maze of Klempt et al.\ 2024, Fig.~11, antibiotic from $T^*=20$: new points take the
+neighbours' state (a) or the start state (b); living fraction over time (c)
+\end{column}
+\end{columns}
+\vspace{2pt}
+\small
+\begin{itemize}\setlength{\itemsep}{1pt}
+  \item Bars restrain the swelling: seed von Mises about ten times higher ($32^3$, separate start)
+  \item Maze: the rule for new points decides recovery after the antibiotic, $0.35$ against $0.04$
+        (\textcolor{warn}{assumption})
+\end{itemize}
+\takeaway{Geometry changes the stress; the start state of new points decides whether the biofilm recovers.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -337,7 +355,7 @@ mixed & von Mises & $4.0\times10^{-4}$~Pa & $26\,\%$\\
 \textbf{Contributions}\\[5pt]
 \cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; which interactions the data determine}\\[6pt]
 \cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
-\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} the point model at every Gauss point, coupled through nutrient and antibiotic; verified on refined grids}
+\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} the point model at every Gauss point, coupled through nutrient and antibiotic; it reaches the stress only through the nutrient and the front speed}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{Outlook (continuation at Keio University)}\\[6pt]
@@ -581,8 +599,8 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
         stress $-6\,\%$ (separate) and $+15\,\%$ (mixed) at $0.025$, so the stress is taken at the small step
   \item \textbf{Start values of new points}: neighbours' living composition against the seed composition, a few
         percent in the cube; in the maze of Klempt et al.\ 2024 recovery after the antibiotic ($0.35$) or not ($0.04$)
-  \item \textbf{Antibiotic over time} (constant, pulses, sine, same dose): growth and stress within $1.5\,\%$,
-        the living fraction follows the dose
+  \item \textbf{Antibiotic over time} (constant, pulses, sine, same dose): growth $0.1\,\%$, stress $0.8\,\%$;
+        the living fraction follows the dose (pulsed: recovers $0.17\to0.30$)
   \item \textbf{Nutrient diffusivity}: $d$ of Table~2 makes the fields quasi-steady; only a value eight orders
         smaller changes the result
   \item \textbf{Stress mesh}: $16^3$ against $64^3$ elements, $0.2\,\%$

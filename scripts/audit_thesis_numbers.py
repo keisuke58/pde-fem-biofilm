@@ -236,5 +236,178 @@ for label, rowname, f, key in (
                                (h["living_seed"][-1], h["share_a_seed"][-1], h["c_seed"][-1], h["seed_am1"], h["seed_vm_Pa"])):
         check(f"two species, {label}: {name}", cell, val)
 
+
+# 12. grid table tab:ch5-gci: grid values from the result files (cloud, outer step 0.0025) or from report A-89
+#     (IKMHIWI03, 32^3-128^3 of the two series with antibiotic and equal start amounts; their 192^3 JSONs are here,
+#     A-92/A-94); p, extrapolated value and GCI recomputed with Celik et al. 2008 (Fs = 1.25): without antibiotic from
+#     32^3/64^3/128^3 (r = 2), with antibiotic from 64^3/128^3/192^3 (r = 2 and 1.5, iterative).
+def gci(f3, f2, f1, r21=2.0, r32=2.0):
+    """f3, f2, f1 = coarse, medium, fine. Returns (p, extrapolated, GCI_fine [%]) or None if not monotone/converging."""
+    e32, e21 = f2 - f3, f1 - f2
+    if e32 * e21 <= 0:
+        return None
+    pp = 1.0
+    for _ in range(200):
+        pp = abs(math.log(abs(e32 / e21)) + math.log((r21 ** pp - 1) / (r32 ** pp - 1))) / math.log(r21)
+    if pp < 0.3:
+        return None
+    ext = f1 + e21 / (r21 ** pp - 1)
+    return pp, ext, 1.25 * abs(e21 / f1) / (r21 ** pp - 1) * 100
+
+A89 = (APDL / "IKMHIWI03_TO_CLOUD.ja.md").read_text(encoding="utf-8").replace("−", "-")
+A89 = A89[A89.index("## A-89"):]
+def a89_row(start):
+    line = next(l for l in A89.splitlines() if l.strip().startswith("| " + start))
+    return [float(x) for x in re.findall(r"(\d+\.\d+)", line.split("|", 2)[2])]
+def series(f, key, grids=("", "nf64_", "nf128_")):
+    return [json.loads((D3 / f"coupled_living_consumption_{n}{f}.json").read_text())["runs"][key] for n in grids]
+_g = c4[c4.index("label{tab:ch5-gci}"):c4.index("end{tabular}", c4.index("label{tab:ch5-gci}"))]
+def gci_row(start):
+    line = next(l for l in _g.splitlines() if l.strip().startswith(start))
+    cells = [x.strip().replace("\\\\", "").replace("\\,\\%", "").replace("$", "") for x in line.split("&")[2:]]
+    return cells
+F = "front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_{}a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_{}"
+sep = series(F.format("", "separate"), "separate")
+mix = series(F.format("mixeq_", "mixed"), "mixed")
+mix2 = series(F.format("", "mixed_ab"), "mixed_ab", ("", "nf64_", "nf128_", "nf192_"))
+s192 = series(F.format("", "separate_ab"), "separate_ab", ("nf192_",))[0]
+m192 = series(F.format("mixeq_", "mixed_ab"), "mixed_ab", ("nf192_",))[0]
+ab_sep = {"am1": a89_row("分離例 α-1")[:3] + [s192["seed_am1"] * 1e4], "vm": a89_row("分離例 vM")[:3] + [s192["seed_vm_Pa"] * 1e4]}
+ab_mix = {"am1": a89_row("混合例 α-1")[:3] + [m192["seed_am1"] * 1e4], "vm": a89_row("混合例 vM")[:3] + [m192["seed_vm_Pa"] * 1e4]}
+for row, lab, vals in (
+        ("separate, antib. & $\\alpha-1$", "GCI separate+ab alpha-1", ab_sep["am1"]),
+        ("separate, antib. & von Mises", "GCI separate+ab vM", ab_sep["vm"]),
+        ("separate & $\\alpha-1$", "GCI separate alpha-1", [h["seed_am1"] * 1e4 for h in sep]),
+        ("separate & von Mises", "GCI separate vM", [h["seed_vm_Pa"] * 1e4 for h in sep]),
+        ("mixed, antib. & $\\alpha-1$", "GCI mixed+ab alpha-1", ab_mix["am1"]),
+        ("mixed, antib. & von Mises", "GCI mixed+ab vM", ab_mix["vm"]),
+        ("mixed & $\\alpha-1$", "GCI mixed alpha-1", [h["seed_am1"] * 1e4 for h in mix]),
+        ("mixed & von Mises", "GCI mixed vM", [h["seed_vm_Pa"] * 1e4 for h in mix]),
+        ("mixed $(0.25,0.30)$, antib. & $\\alpha-1$", "GCI mixed(0.25,0.30)+ab alpha-1", [h["seed_am1"] * 1e4 for h in mix2]),
+        ("mixed $(0.25,0.30)$, antib. & von Mises", "GCI mixed(0.25,0.30)+ab vM", [h["seed_vm_Pa"] * 1e4 for h in mix2])):
+    cells = gci_row(row)
+    four = len(vals) == 4
+    for n, cell, v in zip(("32", "64", "128", "192"), cells[:4], vals):
+        check(f"{lab} {n}^3", cell, v)
+    if not four:
+        flag(f"{lab}: 192^3 cell empty", cells[3] == "", cells[3])
+    use, rr = (vals[1:], (1.5, 2.0)) if four else (vals, (2.0, 2.0))
+    ucells = cells[1:4] if four else cells[:3]
+    g = gci(*use, *rr)
+    # the A-89 values are rounded (3 or 4 significant digits) while p, extrapolated value and GCI were computed from
+    # the unrounded values: allow the spread over +-half a unit of the printed grid values
+    halves = [0.5 * 10.0 ** -len(cell.split(".")[1]) if "." in cell else 0.5 for cell in ucells]
+    import itertools
+    sp = [gci(*[v + sgn * hh for v, sgn, hh in zip(use, sg, halves)], *rr) for sg in itertools.product((-1, 1), repeat=3)]
+    sp = [x for x in sp if x is not None]
+    for i, (name, cell) in enumerate(zip(("p", "extrapolated", "GCI [%]"), cells[4:7])):
+        lo, hi = min(x[i] for x in sp), max(x[i] for x in sp)
+        v, half = printed(cell)
+        flag(f"{lab} {name}", lo - half <= v <= hi + half, f"tex {cell}, from the printed grid values {g[i]:.4g} (range {lo:.4g} to {hi:.4g})")
+flag("ch4 text: GCI ranges match the table", all(x in c4 for x in (
+    "GCI of $0.5$ to $4.3\\,\\%$ in all", "$0.7\\,\\%$ without and $1.4\\,\\%$ with", "$19$ to $41\\,\\%$",
+    "from $6.55$ to $6.42\\times10^{-4}$~Pa, by $2\\,\\%$")), "text matches the table")
+check("antibiotic lowers the separate extrapolated stress [%]", "2",
+      (1 - gci(*ab_sep["vm"][1:], 1.5, 2.0)[1] / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep])[1]) * 100)
+for n, h, t in zip(("32", "64", "128", "192"), mix2, ("0.60", "0.69", "0.73", "0.75")):
+    check(f"mixed (0.25,0.30)+ab: largest phi_3D in the domain, {n}^3", t, h["phi_max"][-1])
+
+# 13. rigid bars (Python, 32^3, outer step 0.0025) -----------------------------------------------------------
+bars_s = json.loads((D3 / "coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snaps_tvd_wgmirror_fast_obstcolumns_separate.json").read_text())["runs"]["separate"]
+bars_m = json.loads((D3 / "coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_snaps_tvd_wgmirror_fast_obstcolumns_mixed.json").read_text())["runs"]["mixed"]
+check("bars: seed vM separate with bars", "7.1\\times10^{-3}", bars_s["seed_vm_Pa"])
+check("bars: seed vM separate without bars (32^3)", "7.4\\times10^{-4}", sep[0]["seed_vm_Pa"])
+check("bars: seed vM mixed with bars", "9.5\\times10^{-4}", bars_m["seed_vm_Pa"])
+check("bars: seed vM mixed without bars (32^3)", "2.1\\times10^{-4}", mix[0]["seed_vm_Pa"])
+check("bars: 'about ten times'", "10", bars_s["seed_vm_Pa"] / sep[0]["seed_vm_Pa"], tol=1.0)
+check("bars: alpha-1 lower, separate [%]", "9", (1 - bars_s["seed_am1"] / sep[0]["seed_am1"]) * 100)
+check("bars: alpha-1 lower, mixed [%]", "21", (1 - bars_m["seed_am1"] / mix[0]["seed_am1"]) * 100)
+check("bars: 32^3 stress 14 % above the extrapolated value", "14", (sep[0]["seed_vm_Pa"] * 1e4 / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep])[1] - 1) * 100)
+
+# 14. maze (Python, 2D, 4 um cells) -------------------------------------------------------------------------
+MZ = RES / "2026-10-maze"
+def maze(n):
+    d = json.loads((MZ / f"{n}.json").read_text())
+    h = d["hist"]
+    return d["setting"], np.array(h["t"][:len(h["living_mean"])]), np.array(h["living_mean"]), np.array(h["reach_um"])
+st_m, t_m, lv, rc = maze("maze_h4_tend60_k24fig")
+flag("maze: Table 6 constants (beta 10, r 200, k_alpha 1e-6)", (st_m["beta"], st_m["r"], st_m["k_alpha"]) == (10.0, 200.0, 1e-6), str((st_m["beta"], st_m["r"], st_m["k_alpha"])))
+check("maze: nearest point to the centre at T*=60, no antibiotic [um]", "42", rc[-1])
+check("maze: living fraction, no antibiotic", "0.92", lv[-1])
+st_a, t_a, lva, rca = maze("maze_h4_tend60_ab_k24fig")
+flag("maze: antibiotic from T*=20", st_a["T_ab"] == 20.0, str(st_a["T_ab"]))
+check("maze: nearest point at T*=60, antibiotic [um]", "133", rca[-1])
+check("maze: living fraction at T*=24, antibiotic", "0.12", lva[np.argmin(abs(t_a - 24))])
+check("maze: living fraction at T*=60, antibiotic", "0.35", lva[-1])
+check("maze: living fraction at T*=60, start state for new points", "0.04", maze("maze_h4_tend60_ab_k24fig_fresh")[2][-1])
+
+# 15. antibiotic schedules (64^3, outer step 0.025, same total dose) ------------------------------------------
+base = "nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_"
+cst = json.loads((D3 / f"coupled_living_consumption_{base}tvd_wgmirror_fast_separate_ab.json").read_text())["runs"]["separate_ab"]
+for name in ("abpulse0.2222", "absine0.2222"):
+    h = json.loads((D3 / f"coupled_living_consumption_{base}{name}_tvd_wgmirror_fast_separate_ab.json").read_text())["runs"]["separate_ab"]
+    flag(f"antibiotic {name}: alpha-1 and vM within 1 % of the constant dose",
+         abs(h["seed_am1"] / cst["seed_am1"] - 1) < 0.01 and abs(h["seed_vm_Pa"] / cst["seed_vm_Pa"] - 1) < 0.01,
+         f"alpha-1 {h['seed_am1'] / cst['seed_am1'] - 1:+.2%}, vM {h['seed_vm_Pa'] / cst['seed_vm_Pa'] - 1:+.2%}")
+    if name.startswith("abpulse"):
+        t, l, a = np.array(h["t"]), np.array(h["living_seed"]), np.array(h["a_seed"])
+        i0 = np.argmin(l)
+        check("pulsed dose: lowest living fraction", "0.17", l[i0])
+        check("pulsed dose: living fraction at T*=1", "0.30", l[-1])
+        check("pulsed dose: recovered value within the last pause", "0.34", l[i0:][(a[i0:] == 0)].max())
+
+# 16. time step paragraph (A-89: 64^3, separate with antibiotic, outer steps 0.02 .. 0.0025) ------------------
+ts = {}
+for line in A89.splitlines():
+    m = re.match(r"\|\s*(0\.0\d+)\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)e-4\s*\|\s*([\d.]+)e-4\s*\|", line.strip())
+    if m:
+        ts[float(m.group(1))] = tuple(float(m.group(i)) for i in (2, 3, 4))
+flag("A-89 time-step table found (0.02, 0.01, 0.005, 0.0025)", sorted(ts) == [0.0025, 0.005, 0.01, 0.02], str(sorted(ts)))
+ext_vm = ts[0.0025][2] + (ts[0.0025][2] - ts[0.005][2]) / (2 ** (math.log((ts[0.005][2] - ts[0.01][2]) / (ts[0.0025][2] - ts[0.005][2])) / math.log(2)) - 1)
+check("time step: first-order limit of the separate+ab vM on 64^3 [1e-4 Pa]", "6.07", ext_vm)
+sep_ab_64 = json.loads((D3 / f"coupled_living_consumption_{base}tvd_wgmirror_fast_separate_ab.json").read_text())["runs"]["separate_ab"]
+check("time step: 0.025 about 6 % below the limit (separate+ab)", "6", (1 - sep_ab_64["seed_vm_Pa"] * 1e4 / ext_vm) * 100, tol=0.6, note="%")
+mix_ab_64 = json.loads((D3 / f"coupled_living_consumption_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed_ab.json").read_text())["runs"]["mixed_ab"]
+check("time step: mixed+ab 0.025 about 15 % above 0.0025 (3.23 vs 2.82)", "15", (mix_ab_64["seed_vm_Pa"] * 1e4 / ab_mix["vm"][1] - 1) * 100, tol=0.6, note="%")
+sep_64 = json.loads((D3 / f"coupled_living_consumption_{base}tvd_wgmirror_fast_separate.json").read_text())["runs"]["separate"]
+mix_64 = json.loads((D3 / "coupled_living_consumption_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed.json").read_text())["runs"]["mixed"]
+check("time step: without antibiotic, separate 2.5 %", "2.5", abs(sep[1]["seed_vm_Pa"] / sep_64["seed_vm_Pa"] - 1) * 100, tol=0.1, note="%")
+check("time step: without antibiotic, mixed 12 %", "12", abs(mix[1]["seed_vm_Pa"] / mix_64["seed_vm_Pa"] - 1) * 100, tol=0.6, note="%")
+# composition and alpha-1 between outer steps 0.02 and 0.0025 (A-89 and the files): the text must cover the largest change
+comp_change = max(abs(ts[0.0025][0] / ts[0.02][0] - 1), abs(ab_mix["vm"][1] * 0 + mix[1]["share_a_seed"][-1] / mix_64["share_a_seed"][-1] - 1),
+                  abs(mix[1]["c_seed"][-1] / mix_64["c_seed"][-1] - 1)) * 100
+am1_change_sep = abs(ts[0.0025][1] / ts[0.02][1] - 1) * 100
+am1_change_mix = abs(mix[1]["seed_am1"] / mix_64["seed_am1"] - 1) * 100
+c4w = re.sub(r"\s+", " ", c4)
+flag("ch4 text: composition change between outer steps 'less than 4 %'", "composition changes by less than $4\\,\\%$" in c4w and comp_change < 4,
+     f"largest change {comp_change:.1f} %")
+flag("ch4 text: alpha-1 change 'less than 0.3 % (separate) and 3 % (mixed)'",
+     "$0.3\\,\\%$ in the separate and $3\\,\\%$ in the mixed example" in c4w and am1_change_sep < 0.3 and am1_change_mix < 3.05,
+     f"separate {am1_change_sep:.2f} %, mixed {am1_change_mix:.1f} %")
+flag("ch4 text: 'less than 4 %' between grids and time steps (living fraction, shares, nutrient)",
+     "change by less than $4\\,\\%$ between the grids and the time steps" in c4w
+     and abs(a89_row("分離例 α-1")[0] * 0 + 0.1572 / sep_ab_64["living_seed"][-1] - 1) < 0.04, "separate+ab living fraction 0.1515 (0.025) vs 0.1572 (128^3, 0.0025)")
+
+# 17. two-species composition across abstract / ch4 / ch6 ----------------------------------------------------
+for lab, t, v in (("separate", "0.96", sep_64["living_seed"][-1]), ("mixed", "0.96", mix_64["living_seed"][-1]),
+                  ("separate+ab", "0.15", sep_ab_64["living_seed"][-1]), ("mixed+ab", "0.04", mix_ab_64["living_seed"][-1])):
+    check(f"living volume fraction of the seed, {lab} (64^3, 0.025)", t, v)
+for n, t in (("abstract", abstract), ("ch6", c6)):
+    flag(f"{n}: living fraction 'from $0.96$ to $0.15$' (not 0.97)", "from $0.96$ to $0.15$" in t and "0.97" not in t, "")
+check("ch6: growth changes by less than 2 % with the antibiotic", "2", max(abs(sep_ab_64["seed_am1"] / sep_64["seed_am1"] - 1),
+      abs(mix_ab_64["seed_am1"] / mix_64["seed_am1"] - 1)) * 100, tol=1.0, note="% (upper bound)")
+flag("ch5-five: one-way two-species run has the same seed alpha-1 (6.752e-4)", abs(seed_stats("2026-10-05_ansys/ds_c6_all_b002.json")["alpha_seed"] - 6.752e-4) < 0.5e-7,
+     f"{seed_stats('2026-10-05_ansys/ds_c6_all_b002.json')['alpha_seed']:.4e}")
+
+# 18. constants and conversions (Klempt 2024 Table 2 -> 2 mm cube) ----------------------------------------------
+check("Peclet r h/(2 beta) on 16^3", "31", 10 * (2 / 16) / (2 * 0.02), tol=0.5)
+check("diffusion length sqrt(beta T*) [mm]", "0.14", math.sqrt(0.02))
+check("nutrient relaxation time L^2/d [T*]", "4\\times10^{-8}", 2.0**2 / 1e8)
+check("g l^2/d with l = 1 mm", "1", 1e8 * 1.0 / 1e8)
+check("beta: 2 um^2/T* x 100^2 -> mm^2/T*", "0.02", 2 * 1e4 * 1e-6)
+check("d: 1e10 um^2/T* x 100^2 -> mm^2/T*", "1\\times10^{8}", 1e10 * 1e4 * 1e-6, tol=1)
+check("r: 100 um/T* x 100 -> mm/T*", "10", 100 * 100 * 1e-3)
+check("r: maze: 200 um/T*", "200", maze("maze_h4_tend60_k24fig")[0]["r"], tol=0)
+
 print(f"\n{fails} FAIL")
 sys.exit(1 if fails else 0)

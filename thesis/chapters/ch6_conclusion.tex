@@ -40,12 +40,13 @@ biomass sets the consumption of both, so that the composition reaches the spread
 of the biofilm through the nutrient and the front term \fterm{}. With uniform fields the
 coupled point model reproduces the point model alone to round-off. In two-species
 examples with synthetic data an antibiotic lowers the living volume fraction of the
-seed from $0.97$ to $0.15$ when the species start separately and to $0.04$ when they
+seed from $0.96$ to $0.15$ when the species start separately and to $0.04$ when they
 start mixed, while the growth changes by less than $2\,\%$. The growth converges on
-refined grids with a GCI below $4\,\%$; the seed stress needs a second-order
-treatment of the front term \fterm{} and converges more slowly, with a GCI of $8\,\%$ in the
-separate ($0.7\,\%$ without antibiotic) and $26$ to $29\,\%$ in the mixed example. The ANSYS element solves the same
-equations and agrees within these bands.
+refined grids with a GCI below $5\,\%$; the seed stress needs a second-order
+treatment of the front term \fterm{} and converges more slowly, with a GCI of $1.4\,\%$ in the
+separate ($0.7\,\%$ without antibiotic) and $19$ to $41\,\%$ in the mixed examples. The ANSYS element solves the same
+equations; its growth agrees with these values within $4\,\%$, and its extrapolated seed stress lies
+within the band of the Python schemes.
 
 Together these steps connect a calibrated description of what a biofilm
 consists of with a finite element description of how it grows and what
@@ -158,8 +159,8 @@ for in-vivo data is open.
         is about $18\,\%$ lower. Peaks at the corners of the seed are mesh
         dependent. On $24^3$ elements the growth $\alpha-1$ of
         the seed is $0.7\,\%$ above a finite-volume reference solution of the same
-        problem, and the error of the seed stress is estimated at about $2\,\%$
-        from three meshes. With the published parameters the stresses
+        problem, and the seed stress lies about $2\,\%$ below a finer solution of
+        the same mechanics on up to $48^3$ elements. With the published parameters the stresses
         are of order $10^{-4}$~Pa.
   \item \emph{Data.} The calibration rests on five species under four
         conditions in vitro and ten patients in vivo. The commensal and

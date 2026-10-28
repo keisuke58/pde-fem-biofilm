@@ -156,9 +156,32 @@ MECH_K = _opt("--mech-feedback", 0.0)
 # the living volume fraction sum_i phibar_i, taken as the largest value of the cell and its six neighbours, so that a
 # front of dead biofilm does not advance (thesis limitation: dead biofilm keeps spreading after the antibiotic).
 FRONT_LIVING = "--front-living" in sys.argv
+# --front-living-ell ELL [mm] (28 Oct 2026, A-95): the largest living fraction within a ball of radius ELL instead of the
+# cell and its six neighbours, so that the reach is a length of the model and not the grid spacing (with the six
+# neighbours the effect fell from 4.2 to 1.4 times the seed stress between 16^3 and 64^3, A-93). ELL = h gives exactly
+# the six neighbours (the diagonal ones are sqrt(2) h away). ELL >= h is required (else unstarted cells never move).
+# Mirror images at the symmetry planes of --fast (and at the walls, where they add nothing to a maximum).
+FRONT_ELL = _opt("--front-living-ell", 0.0)
+FRONT_LIVING = FRONT_LIVING or FRONT_ELL > 0
 # --stiff-species m1,m2,... (Keio continuation; not in the thesis): E = E(phi_3D) * sum_i w_i m_i with the shares
 # w_i = phi_i / sum_j phi_j of the point model (dead cells included); m_i are relative moduli (no data: sensitivity).
 STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") if x]
+# --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
+# (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
+#     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
+# with (--gate-form) 0: g = min(1, max(0, 1 - p/p_h)), p_h = P E_bio; 1: p_h = P E_bio (phi^2 + f), phi of the cell;
+# 2: g = 1/(1 + max(p, 0)/p_ref), p_ref = P E_bio (the ANSYS cal5gp form, no homeostatic value). P = p_h/E_bio.
+# Explicit gate as in the elements: p is taken from the stress solve at the START of each outer step (the state
+# alpha_n, phi_n, so the gate lags by one outer step and is constant over its inner RK4 steps; p can overshoot p_h by at
+# most one outer step of growth). The stress is solved on the stress mesh NM^3 (block means of phi and alpha - 1, as
+# the final stress of every run); every cell takes the pressure of the stress element that contains it (piecewise
+# constant prolongation, the right inverse of block_mean: block_mean(prolong(p)) = p, so the growth gated in the cells
+# is averaged back into the same element at the next solve). At NF = NM the two coincide. Obstacle elements (NaN)
+# get p = 0. The pressure of the start of the run is solved as well (alpha = 1: p = 0, g = 1).
+HOMEO = _opt("--homeostatic", 0.0)            # p_h / E_bio; 0 = off
+GATE_FORM = _opt("--gate-form", 0, int)
+assert GATE_FORM in (0, 1, 2), GATE_FORM
+GATE = None                                    # g per cell of the current outer step (None when off)
 LIV = None                                     # living volume fraction seen by the front (--front-living)
 BUDGET = "--budget" in sys.argv                      # volume integrals of the terms of Eq. 34 over the run (A-83)
 # --mix-equal: the mixed start with equal amounts of A and B (Oliver, 20 Oct: phi_A = phi_B at the start), keeping
@@ -189,7 +212,12 @@ if K26C3:
 N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
-H = W.L / NF
+# --box B (27 Oct, the tooth example): edge of the cubic domain in mm; default the 2 mm cube of the examples. All
+# constants stay in mm (beta, r, g/d of the 2 mm conversion), only the grid spacing changes with the box.
+BOX = _opt("--box", W.L)
+TOOTH_SEED, TOOTH_SEED_H = _opt("--tooth-seed", 0.25), _opt("--tooth-seed-h", 1.0)   # the tooth example's ring, mm
+AMG = "--amg" in sys.argv                   # AMG-preconditioned CG for the fields on the full domain (as --fast without the symmetry)
+H = BOX / NF
 NM = NM if NF % NM == 0 else NF              # stress mesh 16^3 when it divides the field grid, else the field grid (8^3, 24^3)
 SHAPE = (NF // 2, NF, NF // 2) if FAST else (NF,) * 3
 QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None)) if FAST else (slice(None),) * 3   # full -> computed
@@ -215,9 +243,31 @@ def unfold(u):
 # (x in [-0.125, 0.125] mm, |y| in [0.5, 0.75] mm, the lower one between the seed and the nutrient wall y = -1 mm);
 # square 0.25 mm sections tangent to the seed, aligned to the 16^3 and 32^3 grids.
 OBSTACLE = _opt("--obstacle", None, str)
+# --obstacle stl (27 Oct): the clinical molar crown tier2b_real/_crown_real_watertight.stl (derived from Open-Full-Jaw,
+# Gholamalizadeh et al. 2022, CC BY-NC-SA; THIRD_PARTY.md) as a rigid voxel body: the cells whose centres lie inside
+# the surface (signed distance, pyvista). The crown is centred in x and y and stands with its capped cervical base on
+# the bottom face z = -BOX/2 (the root side; zero flux there). The same machinery as the columns (no biofilm, no
+# nutrient inside, zero flux through its faces); the stress is solved with real_tooth_submodel (rigid tooth).
+STL_PATH = ROOT / "tier2b_real" / "_crown_real_watertight.stl"
+SDF = None
+
+
+def tooth_sdf(n):
+    """signed distance of the n^3 cell centres to the crown surface (negative inside), crown placed as above"""
+    import pyvista as pv
+    m = pv.read(STL_PATH).triangulate().clean()
+    P = np.asarray(m.points)
+    lo, hi = P.min(0), P.max(0)
+    m.points = P - np.array([0.5 * (lo[0] + hi[0]), 0.5 * (lo[1] + hi[1]), lo[2] + BOX / 2])
+    h = BOX / n
+    g = pv.ImageData(dimensions=(n,) * 3, spacing=(h,) * 3, origin=(-BOX / 2 + 0.5 * h,) * 3)
+    d = np.asarray(g.compute_implicit_distance(m)["implicit_distance"])
+    return d.reshape((n,) * 3, order="F").astype(np.float64)
 
 
 def obstacle_boxes(kind):
+    if kind == "stl":
+        return None
     if kind != "columns":
         raise SystemExit(f"unknown obstacle {kind}")
     B = []
@@ -229,7 +279,7 @@ def obstacle_boxes(kind):
 
 def box_mask(n, boxes):
     """cells of the n^3 grid of the 2 mm cube whose centres lie in one of the boxes"""
-    xc = -1 + (np.arange(n) + 0.5) * (2.0 / n)
+    xc = -BOX / 2 + (np.arange(n) + 0.5) * (BOX / n)
     X_, Y_, Z_ = np.meshgrid(xc, xc, xc, indexing="ij")
     m = np.zeros((n,) * 3, bool)
     for lo, hi in boxes:
@@ -238,7 +288,11 @@ def box_mask(n, boxes):
 
 
 BOXES = obstacle_boxes(OBSTACLE) if OBSTACLE else None
-OBST = box_mask(NF, BOXES)[QS] if OBSTACLE else None
+if OBSTACLE == "stl":
+    SDF = tooth_sdf(NF)
+    OBST = (SDF < 0)[QS]
+else:
+    OBST = box_mask(NF, BOXES)[QS] if OBSTACLE else None
 if OBSTACLE:
     _open = ~OBST
     NB = {}                                    # NB[a, s]: the neighbour in direction s along axis a is open fluid
@@ -259,11 +313,13 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("_frontliv" if FRONT_LIVING else "")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
+       + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "") + (f"_{ONLY}" if ONLY else ""))
+       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
     _eco = ROOT / "abaqus_composition" / ("eco_fritsch_2sp_a50.txt" if V2 else "eco_fritsch_2sp.txt")
@@ -483,7 +539,15 @@ def front_lw(phi, c, dt_):
 
 
 def living_speed(L):
-    """--front-living: largest living volume fraction of the cell and its six neighbours (edge values at the walls)"""
+    """--front-living: largest living volume fraction of the cell and its six neighbours (edge values at the walls);
+    with --front-living-ell, within a ball of radius FRONT_ELL"""
+    if FRONT_ELL:
+        from scipy.ndimage import maximum_filter
+        assert FRONT_ELL >= H * (1 - 1e-9), f"--front-living-ell {FRONT_ELL} is below the cell size {H}"
+        m = int(np.floor(FRONT_ELL / H + 1e-9))
+        o = np.arange(-m, m + 1)
+        fp = (o[:, None, None] ** 2 + o[None, :, None] ** 2 + o[None, None, :] ** 2) * H * H <= FRONT_ELL ** 2 * (1 + 1e-9)
+        return maximum_filter(L, footprint=fp, mode="reflect")
     p_ = np.pad(L, 1, mode="edge")
     out = L.copy()
     for ax in range(3):
@@ -501,6 +565,23 @@ def stiffness_factor(G, mods):
     tot = ph.sum(-1)
     w = ph / np.maximum(tot, 1e-30)[..., None]
     return np.where(tot > 0, (w * np.asarray(mods)).sum(-1), 1.0)
+
+
+def gate_fn(p, phi, p_ref, form, floor=1e-3):
+    """--homeostatic: g(p) of the elements (living_uel.f90 / unified_uel.f90), p = -tr(sigma)/3 compression positive,
+    p_ref = p_h/E_bio * E_bio [Pa]; form 0: p_h = p_ref, 1: p_h = p_ref (phi^2 + f), 2: 1/(1 + max(p, 0)/p_ref)"""
+    p = np.asarray(p, float)
+    if form == 2:
+        return 1.0 / (1.0 + np.maximum(p, 0.0) / p_ref)
+    ph = p_ref * (np.clip(np.asarray(phi, float), 0.0, 1.0) ** 2 + floor) if form == 1 else p_ref
+    return np.minimum(1.0, np.maximum(0.0, 1.0 - p / ph))
+
+
+def prolong(u, n):
+    """m^3 element field -> n^3 cell field (n % m == 0): every cell takes the value of the element that contains it;
+    the right inverse of wp3_reference.block_mean"""
+    f = n // u.shape[0]
+    return np.repeat(np.repeat(np.repeat(u, f, 0), f, 1), f, 2)
 
 
 def front(phi, c):
@@ -528,8 +609,11 @@ class Reaction:
                 ok = np.ones(SHAPE, bool)
                 e = [slice(None)] * 3; e[ax] = -1 if sgn == 1 else 0; ok[tuple(e)] = False
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
-        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
-                                                                 if not (FAST and a in (0, 2) and e == 0)]
+        if side == "five":                    # the tooth example: all outer faces except the bottom z = -BOX/2
+            faces = [(a, e) for a in range(3) for e in (0, -1) if not (a == 2 and e == 0)]
+        else:
+            faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
+                                                                     if not (FAST and a in (0, 2) and e == 0)]
         for ax_, j in faces:
             sl = [slice(None)] * 3; sl[ax_] = j
             diag[tuple(sl)] += 2.0
@@ -569,7 +653,7 @@ class Reaction:
             D = sp.diags((~f).astype(float))
             A = (D @ A + sp.diags(f.astype(float))).tocsr()
             b = np.where(f, 1.0, b)
-        if FAST:
+        if FAST or AMG:
             return (value * self._amg(A, b)).reshape(SHAPE)
         return (value * spla.spsolve(A.tocsc(), b)).reshape(SHAPE)
 
@@ -647,14 +731,22 @@ def neighbours_mean(G, w):
 def run(example, antibiotic):
     cells8 = W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
     seed = W.seed_mask(NF, cells8)
-    ax = -1 + (np.arange(NF) + 0.5) * H
+    ax = -BOX / 2 + (np.arange(NF) + 0.5) * H
     X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
     edges = (np.abs(X) > 0.75) & (np.abs(Y) > 0.75)
     if V2:                                        # four small corner blocks at the seed's height
         zmax = np.abs(Z[seed]).max() + 1e-9
         edges = edges & (np.abs(Z) <= zmax)
+    if example == "tooth":
+        # the tooth example (--obstacle stl): a cervical ring of biofilm, TOOTH_SEED mm thick on the crown surface and
+        # TOOTH_SEED_H mm high from the cervical base; species A on the half x < 0, species B on the half x > 0
+        # ("seed" = the A half, "edges" = the B half in the histories). Assumptions of this work.
+        assert OBSTACLE == "stl", "the tooth example needs --obstacle stl"
+        ring = (SDF >= 0) & (SDF < TOOTH_SEED) & (Z < -BOX / 2 + TOOTH_SEED_H)
+        seed, edges = ring & (X < 0), ring & (X > 0)
+    sep = example in ("separate", "tooth")
     seed, edges, X, Y, Z = seed[QS], edges[QS], X[QS], Y[QS], Z[QS]
-    phi = (seed | (edges if example == "separate" else False)).astype(float)
+    phi = (seed | (edges if sep else False)).astype(float)
     alpha = np.ones_like(phi)
     G = np.zeros(SHAPE + (12,))
     tot = sum(CASE["phi_init"])
@@ -664,7 +756,7 @@ def run(example, antibiotic):
                           for i in range(N_SP))
     else:
         MIX_START = tuple([tot / N_SP] * N_SP) if MIX_EQUAL else tuple(CASE["phi_init"])
-    if example == "separate":
+    if sep:
         G[seed] = group_state(tot, GROUP_A)
         G[edges] = group_state(tot, GROUP_B)
     else:
@@ -694,7 +786,10 @@ def run(example, antibiotic):
         S_phi, S_c = MM.sources_jax(beta_eff, R_FRONT, K_MONOD, LAM_C2)
         phi = MM.phi_m(X, Y, Z, 0.0)
     on = phi >= PHI_MIN
-    nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
+    if example == "tooth":                        # saliva side: nutrient and antibiotic on the five faces around the crown
+        nut, ab = Reaction(LAM_C2, "five"), Reaction(LAM_A2, "five")
+    else:
+        nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
         nut.fixed = Y < -0.75
         ab.fixed = ((np.abs(X) > 0.75) | (np.abs(Y) > 0.75) | (np.abs(Z) > 0.75)) if (V2 and not AB_TOP) else (Y > 0.75)
@@ -721,8 +816,8 @@ def run(example, antibiotic):
     def shares(m):
         ph = G[m][:, :N_SP]
         return float((ph[:, GROUP_A].sum(1) / ph.sum(1)).mean())
-    hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
-    hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
+    hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if sep else np.nan)
+    hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
     snaps = {}
     t0 = time.time()
     # checkpoint (a cloud container stops when idle): the state is saved every CKPT_SEC seconds and a rerun with the
@@ -731,15 +826,16 @@ def run(example, antibiotic):
     ckpt.parent.mkdir(parents=True, exist_ok=True)
     k0 = 0
     if ckpt.exists():
-        z = np.load(ckpt, allow_pickle=False)
-        phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
-        hist = json.loads(str(z["hist"]))
-        snaps = {}
-        for name in z.files:
-            if name.startswith("snap|"):
-                _, T, f = name.split("|")
-                snaps.setdefault(float(T), {})[f] = z[name].copy()
-        k0 = int(z["k_done"]) + 1
+        # closed after reading: on Windows an open file cannot be replaced by the next checkpoint (WinError 5)
+        with np.load(ckpt, allow_pickle=False) as z:
+            phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
+            hist = json.loads(str(z["hist"]))
+            snaps = {}
+            for name in z.files:
+                if name.startswith("snap|"):
+                    _, T, f = name.split("|")
+                    snaps.setdefault(float(T), {})[f] = z[name].copy()
+            k0 = int(z["k_done"]) + 1
         print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
     t_ck = time.time()
     for k in range(k0, int(round(T_END / DT_C))):
@@ -756,12 +852,18 @@ def run(example, antibiotic):
             # (1) macro phi, alpha
             if FRONT_LIVING:
                 globals()["LIV"] = np.where(on, L, 0.0)
+            if MECH_K or HOMEO:                         # stress of the start of the outer step (one solve for both)
+                _, p_nm = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
+                                         obstacles=BOXES, efac=efac_nm(G))
             if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
-                S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
-                               efac=efac_nm(G))
-                f_ = NF // NM
-                ice = 2.0 * np.repeat(np.repeat(np.repeat(np.nan_to_num(S.LAST_TRE), f_, 0), f_, 1), f_, 2)[QS]
+                ice = 2.0 * prolong(np.nan_to_num(S.LAST_TRE), NF)[QS]
                 hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
+            if HOMEO:                                   # --homeostatic: explicit gate from p of the start of the step
+                p_cell = -prolong(np.nan_to_num(p_nm), NF)[QS]        # compression positive, per cell
+                globals()["GATE"] = gate_fn(p_cell, phi, HOMEO * S.E_BIO, GATE_FORM, S.FLOOR)
+                hist.setdefault("p_seed_Pa", []).append(float(p_cell[seed].mean()))
+                hist.setdefault("gate_seed", []).append(float(GATE[seed].mean()))
+                hist.setdefault("gate_min", []).append(float(GATE.min()))
             cf = c
             Lf = L
             ka = 0.0 if MMS else W.K_ALPHA
@@ -784,10 +886,11 @@ def run(example, antibiotic):
                             d = d + R_FRONT * H / 4.0 * lap_sensor(ph)
                     if MMS:
                         d = d + S_phi(X, Y, Z, tt)
+                    da = ka * ph if GATE is None else ka * ph * GATE      # --homeostatic: Eq. 36 gated
                     if OBSTACLE:                    # no biofilm inside the obstacles
                         d = np.where(OBST, 0.0, d)
-                        return d, np.where(OBST, 0.0, ka * ph)
-                    return d, ka * ph
+                        return d, np.where(OBST, 0.0, da)
+                    return d, da
                 if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
                     lap_b = np.empty_like(phi)
                     (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
@@ -868,8 +971,8 @@ def run(example, antibiotic):
         hist.setdefault("phi_max", []).append(float(phi.max())); hist.setdefault("phi_min", []).append(float(phi.min()))
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
-        hist["share_a_edges"].append(shares(edges) if example == "separate" else np.nan)
-        hist["living_edges"].append(float(L[edges].mean()) if example == "separate" else np.nan)
+        hist["share_a_edges"].append(shares(edges) if sep else np.nan)
+        hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
@@ -878,6 +981,8 @@ def run(example, antibiotic):
             shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
+            if example == "tooth":               # alpha at every snapshot for the film stress (real_tooth_coupled.py)
+                snaps[round(T1, 3)]["alpha"] = unfold(alpha).copy()
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)
                 vm_s, _ = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
                                          obstacles=BOXES, efac=efac_nm(G))
@@ -899,14 +1004,26 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
-                           efac=efac_nm(G))
+    if example == "tooth":                      # the film stress is solved by real_tooth_coupled.py (rigid crown)
+        vm = p = np.full((NM,) * 3, np.nan)
+    else:
+        vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
+                               efac=efac_nm(G))
     # the end state of alpha and of the stress mesh (A-86: a 192^3 run gave a seed von Mises 60x too large)
     snaps.setdefault(round(T_END, 3), {}).update(alpha=unfold(alpha).copy(), vm16=vm, p16=p)
     if OBSTACLE:
         snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
+    if example == "tooth":
+        snaps[round(T_END, 3)].update(sdf=SDF.copy(), seed=unfold(seed).astype(np.int8), edges=unfold(edges).astype(np.int8))
+        hist["tooth"] = dict(box_mm=BOX, h_mm=H, seed_thickness_mm=TOOTH_SEED, seed_height_mm=TOOTH_SEED_H,
+                             tooth_cells=int(OBST.sum()), open_cells=int((~OBST).sum()))
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
+    if HOMEO:                                   # pressure (compression positive) and gate of the end state
+        hist["seed_p_Pa"] = float(-np.nan_to_num(p)[seed16].mean())
+        g_end = gate_fn(-prolong(np.nan_to_num(p), NF)[QS], phi, HOMEO * S.E_BIO, GATE_FORM, S.FLOOR)
+        hist["seed_gate_end"] = float(g_end[seed].mean()); hist["gate_min_end"] = float(g_end.min())
+        hist["homeostatic"] = dict(p_h_over_E=HOMEO, p_ref_Pa=HOMEO * S.E_BIO, form=GATE_FORM, stress_mesh=NM)
     if BUDGET:
         hist["budget"]["phi_total_end"] = float(phi.sum()) * H ** 3 * (4 if FAST else 1)
         print("budget of phi_3D [mm^3]:", {k_: round(v_, 5) for k_, v_ in hist["budget"].items()}, flush=True)

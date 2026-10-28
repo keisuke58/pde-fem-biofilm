@@ -28,9 +28,10 @@ independent check, in a finite-volume code in Python.
 2. Checks
 - Every traced step of the point model in ANSYS equals the point model run on its own to 1.8e-12.
 - Python and the element agree on 8^3 within 1 to 5 % once the changes below are in.
-- Growth converges on refined grids (GCI 1.5 to 3 %). The seed stress needs a second-order treatment of the front
-  term and converges more slowly: about 6.7e-4 Pa in the separate example (GCI 8 %), 4.0e-4 Pa in the mixed one
-  (GCI 26 %). Your element with upwind gradients extrapolates to 5.8e-4 Pa (GCI 16.5 %), inside that band.
+- Growth converges on refined grids up to 192^3 (GCI 0.5 to 4.3 %). The seed stress needs a second-order treatment
+  of the front term and converges more slowly: about 6.4e-4 Pa in the separate example (GCI 1.4 %), 4.7e-4 Pa in the
+  mixed one (GCI 41 %). Your element with upwind gradients extrapolates to 5.8e-4 Pa (GCI 16.5 %); its band contains
+  the Python value.
 
 3. The examples you suggested (seed means at T* = 1)
 
@@ -43,7 +44,9 @@ independent check, in a finite-volume code in Python.
 
 - The antibiotic removes B first; whether A survives depends on the local nutrient, since the point model compares
   c* with alpha* b_i.
-- Growth and stress hardly change with the antibiotic: it lowers the living fraction but not phi_3D.
+- Growth hardly changes with the antibiotic (about 1 %), since it lowers the living fraction but not phi_3D; the
+  converged seed stress changes by about 2 %, close to its grid uncertainty (6.55 against 6.42e-4 Pa extrapolated),
+  although on one grid the two cases differ by up to 10 %.
 - In the maze of the 2024 paper the biofilm recovers after the antibiotic when new points take the neighbours'
   living composition (living fraction 0.35 at the end) and does not when they start from the start state (0.04).
 - The front speed of Eq. 34 does not depend on the living biomass, so dead biofilm keeps spreading after the

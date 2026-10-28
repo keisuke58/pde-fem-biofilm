@@ -66,7 +66,7 @@ verified against closed-form solutions, and coupled to the biofilm element of
 the Institute of Continuum Mechanics (Leibniz University Hannover). Third, the point model runs, unchanged, at every Gauss point; it receives the
 nutrient and an antibiotic from fields of the element, and only its living
 biomass consumes them. In two-species examples with synthetic data the
-antibiotic lowers the living fraction of the seed from 0.97 to 0.15, or to 0.04
+antibiotic lowers the living fraction of the seed from 0.96 to 0.15, or to 0.04
 when the species start mixed, while the growth changes little. Growth and
 composition converge on refined grids; the stress needs a second-order
 treatment of the front term. The mechanics is coupled one way, and the results
@@ -440,14 +440,14 @@ $8^3$，$16^3$，$24^3$ の要素で 3\% 以内に一致した．
 
 合成データ（Fritsch ら 2025 の case~I）と論文の定数で，2 菌種の例を計算した．
 抗菌薬は $T^*=1/3$ から外側の面に与えた（$\alpha^*_0=100$）．
-種の生きている量は，菌種を分けて置くと $0.97$ から $0.15$ に，
+種の生きている量は，菌種を分けて置くと $0.96$ から $0.15$ に，
 混ぜて置くと $0.04$ に下がった（図\,\ref{fig:3d}）．
 成長 $\alpha-1$ はほとんど変わらない．抗菌薬は生きている割合を下げるが，バイオフィルムの量 $\phi$ は下げないためである．
 
 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ はセルのペクレ数が約 31（$16^3$）の移流で，中心差分では振動する．
-2 次の風上差分（TVD）を用いると，成長は $32^3$--$128^3$ で GCI 3\% 以内に収束した．
-種の応力は遅く，外挿値は分けた例で $6.7\times10^{-4}$\,Pa（GCI 8\%），混ぜた例で
-$4.0\times10^{-4}$\,Pa（GCI 26\%）である．
+2 次の風上差分（TVD）を用いると，成長は $32^3$--$192^3$ で GCI 5\% 以内に収束した．
+種の応力は遅く，外挿値は分けた例で $6.4\times10^{-4}$\,Pa（GCI 1.4\%），混ぜた例で
+$4.7\times10^{-4}$\,Pa（GCI 41\%）である．
 ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入った．
 
 \begin{figure*}[tb]
@@ -522,7 +522,7 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
   \item 成長の運動学 $\mathbf F_g=\alpha\mathbf I$ を ANSYS の材料ルーチンとして実装し，
         閉じた形の解と厳密解で検証して，バイオフィルムの有限要素に組み込んだ．
     \item 点モデルを各 Gauss 点で論文どおりに動かし，栄養と抗菌薬で場と結んだ．
-        抗菌薬は種の生きている量を $0.97$ から $0.15$（混ぜた例で $0.04$）に下げ，成長はほとんど変えない．
+        抗菌薬は種の生きている量を $0.96$ から $0.15$（混ぜた例で $0.04$）に下げ，成長はほとんど変えない．
   \item 成長と組成は格子で数\% 以内に収束し，応力は 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の 2 次の扱いで GCI 8--26\% で求まった．
   \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}

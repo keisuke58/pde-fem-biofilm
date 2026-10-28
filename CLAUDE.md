@@ -37,6 +37,12 @@ Abaqus run is possible here but nothing has been run here yet.
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
   `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
+  **Remote Control works on the Keio servers fifa and copaam (the user, 29 Oct 2026); for now instructions go to fifa only**: `bash scripts/claude_remote.sh`
+  (tmux); the sessions appear in the Claude Code app, so the user can instruct them from the phone during the trip.
+  **Start it inside the repository clone, not in `~/rc-workspace`** (29 Oct: it first ran there, outside git, so it could
+  not read the instruction files or push): `tmux kill-session -t claude-rc; cd ~/pde-fem-biofilm && git pull origin master
+  && bash scripts/claude_remote.sh`. A server without a clone: `git clone https://github.com/keisuke58/pde-fem-biofilm.git
+  ~/pde-fem-biofilm && cd ~/pde-fem-biofilm && bash scripts/setup_keio_server.sh` first (git identity and hooks).
 - **A Claude Code cloud session**: see the git-identity note under "Working
   style"; no ANSYS or Abaqus.
 - **Where things are pushed (8 Oct 2026):** `origin` = this public repository;
@@ -241,6 +247,8 @@ this machine's specific workflow.
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
   this user is cost-conscious about agent/token usage.
+  **Large implementations may go to a subagent on the Fable model** (the user, 27 Oct 2026), with a self-contained
+  brief; small edits, documents and replies stay in the main session.
 - **Never add a `Co-Authored-By: Claude` (or similar AI-attribution) trailer
   to commit messages, and don't otherwise mark commits as AI-assisted.**
   Commits should read as the user's own work (git identity is already set
@@ -340,6 +348,13 @@ this machine's specific workflow.
   Chapter 3 (final, extracted PDF) is scheduled by the user in Slack for
   Fri 23 Oct; Japanese message with ，． punctuation. Next online meeting
   2 Nov 9:00.
+  **RA at Keio (Slack DM, 26-28 Oct 2026):** the user asked for paid RA work (JAXA, quantum ML, CFRP/NEDO or
+  other lab projects) after returning in January; offered up to about 20 h/week. Her answer (28 Oct): start in
+  January, she checks the procedure (NEDO/JST); hours and tasks follow from her. She also mentioned DC1/PhD; the
+  user answered that he plans a job after the master's.
+  **Conferences (the user, 28 Oct 2026):** USNCCM19 (Pasadena, 25-29 Jul 2027; abstract by 15 Jan 2027) is the one he
+  wants; he prefers it over domestic conferences. Keio spring courses 2027: take report-graded ones so a July exam
+  period does not clash with the trip.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
@@ -382,7 +397,10 @@ this machine's specific workflow.
   (his mail); the committee is the usual IKM members.
 - **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
-  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
+  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (27 Oct: **no more new results at all** after the existing ones are in the slides and the speaker notes; the time goes into discussing the results and checking them for rigour) (28 Oct: the 192^3 runs with antibiotic are in; **the last addition is 192^3 without antibiotic, if done by 3 Nov morning; after that the thesis results are fixed**) **The thesis PDF stays at 90 pages or fewer, all included (the user, 28 Oct; 86 now): check `pdfinfo thesis/main.pdf` after every change.** **Submission moved earlier (the user, 28 Oct): send the PDF to Meisam during the New York trip (13-20 Nov), after the read-through of 3-4 Nov** (the user, 28 Oct; first said early November), so the 6-week grading starts early (grade about late December to early January instead of late January to February); no separate question beforehand (the user): ask in the same mail that sends the PDF whether the grading starts from it and anything else is needed. Printed copies still in December. **Travel 3 Nov - 10 Dec 2026 (the user's itinerary of 29 Oct):** Portugal 3-10 Nov, New York/Boston 11-18 Nov,
+  Berlin 19-21 Nov, Greece 21-28 Nov, Hannover 28 Nov - 2 Dec, Egypt 3-10 Dec; back in Hannover 10 Dec. He works on the
+  thesis, research and job search during the trip too (the user), so the read-through can be done on the road; colloquium rehearsal in Hannover
+  28 Nov - 2 Dec and 10-15 Dec; IKMHIWI03 backup (`-Go`) in 28 Nov - 2 Dec or after 10 Dec. (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
   (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
   Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
   `thesis/README.md`.
