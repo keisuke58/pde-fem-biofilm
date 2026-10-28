@@ -39,6 +39,10 @@ Abaqus run is possible here but nothing has been run here yet.
   `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
   **Remote Control works on the Keio servers fifa and copaam (the user, 29 Oct 2026)**: `bash scripts/claude_remote.sh`
   (tmux); the sessions appear in the Claude Code app, so the user can instruct them from the phone during the trip.
+  **Start it inside the repository clone, not in `~/rc-workspace`** (29 Oct: it first ran there, outside git, so it could
+  not read the instruction files or push): `tmux kill-session -t claude-rc; cd ~/pde-fem-biofilm && git pull origin master
+  && bash scripts/claude_remote.sh`. A server without a clone: `git clone https://github.com/keisuke58/pde-fem-biofilm.git
+  ~/pde-fem-biofilm && cd ~/pde-fem-biofilm && bash scripts/setup_keio_server.sh` first (git identity and hooks).
 - **A Claude Code cloud session**: see the git-identity note under "Working
   style"; no ANSYS or Abaqus.
 - **Where things are pushed (8 Oct 2026):** `origin` = this public repository;
