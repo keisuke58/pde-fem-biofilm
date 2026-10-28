@@ -37,7 +37,7 @@ Abaqus run is possible here but nothing has been run here yet.
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
   `KEIO_PLAN.ja.md` §0. The Windows sections below do not apply there.
-  **Remote Control works on the Keio servers fifa and copaam (the user, 29 Oct 2026)**: `bash scripts/claude_remote.sh`
+  **Remote Control works on the Keio servers fifa and copaam (the user, 29 Oct 2026); for now instructions go to fifa only**: `bash scripts/claude_remote.sh`
   (tmux); the sessions appear in the Claude Code app, so the user can instruct them from the phone during the trip.
   **Start it inside the repository clone, not in `~/rc-workspace`** (29 Oct: it first ran there, outside git, so it could
   not read the instruction files or push): `tmux kill-session -t claude-rc; cd ~/pde-fem-biofilm && git pull origin master
