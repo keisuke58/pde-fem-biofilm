@@ -629,3 +629,9 @@ Deck: `make_implant_uel_inp.py abaqus_in --nr 6 --nt 18 --nz 24 --seed-layers 3 
 "5 cutbacks did not converge", the increment number and the last 30 lines of stderr go here.
 
 **Not done.** Homeostatic-pressure Abaqus check (2x6x8, p_h/E = 0.05) and the Lean/Mathlib check.
+
+**Finished (29 Oct).** 8x24x32 fixed seed (`--seed-layers 4`, Python emulation), bulge 0 and 1:
+seed alpha - 1 0.04127 / 0.03979, seed vM/E 0.02904 / 0.02608, interior vM/E 0.02553 / 0.02254,
+max vM/E 0.3840 / 0.3645. The seed has 4 layers here and 3 in the 6x18x24 runs, so the two
+meshes are not compared directly; a 6x18x24 run with 4 layers is needed for the convergence check.
+Files: `p3/uel/results/implant_8x24x32_sl4.json`, `implant_8x24x32_b1_sl4.json`.
