@@ -118,7 +118,8 @@ def extra_bc(outer, bottom):
 
 
 def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_layers=1, name="", p_ref=0.0, p_form=0,
-         outer="free", bottom="free", nut="top", gate_implicit=False):
+         outer="free", bottom="free", nut="top", gate_implicit=False, ninc=None):
+    NI = NINC if ninc is None else ninc
     P = element_props(nu, p_ref, p_form, gate_implicit)
     S = sets(nodes, ijk)
     NUT = "TOP" if nut == "top" else "OUTER"
@@ -145,10 +146,10 @@ def deck(path, nodes, elems, layer, ijk, nu=0.49, md=True, finite=True, seed_lay
     out += [f"{i + 1}, 11, 11, {p:.10g}" for i, p in enumerate(phi)]
     out += ["*END STEP"]
     # GROW: automatic incrementation as emulate_abaqus.march: DELTMX (never reached, phi and c are in [0, 1]) switches
-    # it on, the data line gives dt0 = DTMAX = T/NINC and DTMIN = T/NINC/4^5; the controls allow 30 iterations (I_C)
+    # it on, the data line gives dt0 = DTMAX = T/NI and DTMIN = T/NI/4^5 (NI = --ninc, default NINC); the controls allow 30 iterations (I_C)
     # and 5 cutbacks (I_A) per increment; the cutback factor 0.25 and the growth factor 1.5 are Abaqus's defaults
     out += ["*STEP, NAME=GROW, INC=1000, AMPLITUDE=STEP", "*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX=10",
-            f"{T / NINC:.10g}, {T:.10g}, {T / NINC / 4 ** 5:.6g}, {T / NINC:.10g}", *CTRL_AUTO,
+            f"{T / NI:.10g}, {T:.10g}, {T / NI / 4 ** 5:.6g}, {T / NI:.10g}", *CTRL_AUTO,
             "*BOUNDARY, OP=NEW", "INNER, 1, 3, 0.0", "SYMX, 1, 1, 0.0", "SYMY, 2, 2, 0.0", *extra_bc(outer, bottom),
             f"{NUT}, 12, 12, 1.0", "*END STEP"]
     Path(path).write_text("\n".join(out) + "\n")
@@ -265,7 +266,7 @@ if __name__ == "__main__":
         print({k: (v if k != "incrementation" else {kk: vv for kk, vv in v.items() if kk != "log"}) for k, v in r.items() if k != "elements"})
     else:
         od = Path(a.outdir); od.mkdir(parents=True, exist_ok=True)
-        deck(od / f"uel_implant{tag}.inp", nodes, elems, layer, ijk, name=tag, **kw)
+        deck(od / f"uel_implant{tag}.inp", nodes, elems, layer, ijk, name=tag, ninc=a.ninc, **kw)
         eco_file(od / "uel_eco.txt")
         (od / f"uel_implant{tag}.json").write_text(json.dumps({"seed": (np.where(layer < a.seed_layers)[0] + 1).tolist()}))
         print(f"wrote {od / f'uel_implant{tag}.inp'}: {len(elems)} elements, {len(nodes)} nodes")
