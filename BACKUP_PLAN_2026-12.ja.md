@@ -8,7 +8,7 @@ IKMHIWI03 は 2026 年 12 月末まで（CLAUDE.md）。git に入っていな�
 
 ```
 .\scripts\backup_untracked_ikmhiwi03.ps1            # 下見：zip ごとのファイル数と大きさ
-.\scripts\backup_untracked_ikmhiwi03.ps1 -Go -Rst   # F:\backup_2026-12 に zip を書く（-Rst：本番 u8_ の .rst も）
+.\scripts\backup_untracked_ikmhiwi03.ps1 -Go -Rst -Figdata   # F:\backup_2026-12 に zip を書く（-Rst：本番 u8_ の .rst も、-Figdata：Python の場の npz も）
 ```
 
 最後の計算が終わってから（12 月中旬）、`-Go` で作り、ユーザーが移す。下見の大きさ（22 日、圧縮前）：
@@ -18,7 +18,11 @@ IKMHIWI03 は 2026 年 12 月末まで（CLAUDE.md）。git に入っていな�
 | `private_felix.zip` | `F:\felix_private` そのまま（フェリックスのコードと博士論文の章） | 約 4.0 GB | **非公開のみ**（フェリックスの依頼、CLAUDE.md） |
 | `private_element.zip` | 各ビルドのオリバーの要素のソース（.f .F .inc .h）、`F:\oliver_element_patches*` | 約 32 MB | **非公開のみ** |
 | `work_text.zip` | 各作業フォルダのデッキ（.dat）、スクリプト、マクロ、点モデルの設定、保存形ラプラシアン（作った所のものだけ）、実行と連鎖の記録、自動処理（auto_*）、小さい JSON；Abaqus の living_gp.txt、.sta、.msg、.dat、.inp；10 月 20 日のバックアップ | 約 4 GB（テキストなので圧縮で 1 GB 前後の見込み） | どこでも（秘密なし。ただし公開しない方がよい） |
-| `rst_main.zip`（任意） | 本番 u8_ の .rst | 約 4 GB（24³ が終われば増える） | どこでも |
+| `python_fields.zip`（任意、`-Figdata`） | Python の 3D の場 `figdata\*.npz`（図と動画の元、192³ は作り直しに数時間；`figdata\ckpt` は入れない） | 約 3.9 GB（28 日、210 件） | どこでも |
+| `rst_main.zip`（任意） | 本番 u8_ の .rst | **約 169 GB（28 日、9 件）**：大きすぎるので、要る run だけに絞るかはユーザーと決める | どこでも |
+
+28 日の下見：`work_text.zip` は約 8.2 GB（行列の書き出し `grad_upw.txt`、`mirror_ops.txt` などで大きくなった）。
+`F:\auto_*`（Python の計算のスクリプトとログ、`F:\auto_night` など）も `work_text.zip` に入れるようにした。
 
 入れないもの（作り直せる、または一時ファイル）：本番以外の .rst / .odb、comp_trace.csv、phi_trace.csv、front_dump、
 nem_dump、20 MB を超える out_*.txt、ソルバーの一時ファイル（.esav .full .emat .r00* .nr* .page .osav .stt .mdl ...）。
