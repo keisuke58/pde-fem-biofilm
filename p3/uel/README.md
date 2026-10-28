@@ -898,3 +898,67 @@ grows to alpha - 1 = 0.40 in the seed without the gate, so the kinematics matter
   but the ratio still moves from 0.52 to 0.72, because the gate reads the pressure, which differs.
 - The conclusion holds in both: ratio above 1 without the gate, below 1 with it. Numbers at this level of growth need
   finite strain; the cube demonstrations (alpha - 1 about 1e-3) do not.
+
+## The calibrated five species in all four conditions (WP5, 27 Oct 2026, `calibrated_four_conditions.py`)
+
+The final MAPs of Chapter 3 inside the element, for CS, CH, DS and DH (until now only CH, with the superseded CH
+MAP of 10 Oct). The MAPs are the files `docs/revision/generated/final_theta_MAP/<C>.json` and the `phi_init_state`
+of `phi_init.json` of Tmcmc202601 at `origin/claude/gate-off-map-check` cc54224 (CS 6f29d80, CH baa0a37, DS 3692d0f,
+DH c0ef006; phi_init 3692d0f), copied with their source commits into `results/calibrated_maps.json`
+(`--import-maps <clone>`): CS, CH and DS are the polished stage (iv) MAPs of the measured-data, two-channel runs, DH
+the stage (iii) MAP (the stage (iv) runs of DH split). The case file is written by `write_eco_cfg.py --theta-json`
+(c* = 25, alpha* = 0 from `ecology_constants.py`, eta = 1, b = 0 as in the MAP files), `--phi-init` = the Day-1
+state as the calibration starts from it (`make_initial_state`: scaled up to a sum of 0.999999 when below it, left
+as it is above it, so CH (sum 1.001) and DH (1.0004) start with phi_0 < 0, which the integrator's first clip moves
+to 1e-10; `run_calibrated.ps1` passes the same values), `newton 12 1e-20` = the calibration's own Newton control.
+
+Time grid. The earlier CH seed runs advanced the point model in 60 increments of T/60 (T = 0.2375 = Day 1 to Day 21,
+t = 0.2375 d / 21) without inner steps, 40 times the calibration's step: the first step from the Day-1 state is
+stiff in psi (Pg's psi falls from 0.999 to about 1e-9 within 3e-4) and the two grids give different trajectories
+(for CH, Fn's share at Day 21 0.85 against 0.05). The runs here use 95 increments with 25 inner steps (`n_sub`,
+PROPS(14)), i.e. the calibration's step 1e-4 (2375 steps), and the point model sees c* (c_ref = 0) as in the
+calibration; each condition runs in its own process (the case file is read once per process).
+
+(a) Uniform check: one element, phi = 0.9 and c prescribed, against the calibration's own integrator
+(`hamilton_ode_jax_paper.newton_step` of the Tmcmc202601 clone, 12 Newton iterations to |Q|^2 < 1e-20 with
+clip_state), restarted from the element's state at the start of every increment and taken over the same 25 inner
+steps. In the first increment the calibration's Newton does not converge (5-8 inner steps with |Q|^2 >= 1e-20;
+the clipped psi of Pg makes the Jacobian singular, condition number 1e28 and more, and the residual reaches 1e26),
+so its iterate there is not reproducible between two implementations; on every other increment the element takes
+the calibration's step:
+
+| condition | run (MAP) | max per increment, converged increments | first increment | cumulative from Day 1 | vs six fixed iterations (server) | vs a converged Newton | time-step error, 1e-4 vs 2.5e-5 |
+|---|---|---|---|---|---|---|---|
+| CS | CS_ult_2c_raw_seed42 | 1.7e-15 (pass) | 1.7e-15 | 7.2e-16 | 1.5e-2 | 1.0e-3 | 9.4e-3 |
+| CH | CH_ult_2c_raw_a33w_seed7 (polished) | 4.4e-16 (pass) | 2.6e-4 | 1.3e-3 | 3.7e-3 | 3.0e-3 | 2.2e-3 |
+| DS | DS_ult_2c_raw_seed42 | 4.4e-16 (pass) | 4.4e-16 | 1.6e-13 | 6.1e-2 | 3.7e-2 | 2.7e-2 |
+| DH | DH_p2_2c_raw_seed42 (stage iii) | 6.7e-16 (pass) | 3.3e-5 | 2.9e-5 | 1.6e-3 | 1.1e-3 | 7.9e-4 |
+
+Differences are the largest absolute difference over phi_i, phi_0, psi_i at Day 21 (the 8 Gauss points are
+identical). The WP5 criterion (1e-6) holds for all four conditions on the converged increments. The cumulative
+difference (the point model run alone from Day 1 against the element, both with the same control) is 1.3e-3 for CH
+and 2.9e-5 for DH, the same size as the difference between the calibration's control and a Newton solved to
+convergence (last two columns but one) and as the time-step error of the calibration's own step: the trajectory of
+the first 1e-3 after Day 1 is defined only to that level by the calibration itself. The CH file of
+`make_column_inp.eco_file` (`newton 60 1e-26`) differs from the calibration's control by 5.6e-4 at Day 21 for the
+same reason.
+
+(b) The 8^3 seed (finite strain, nu = 0.49, mean dilatation, L0 = 2, D = 0.2, lam = 0, init rule 1 for the newly
+colonised Gauss points, 95 increments, 150-175 s each). Seed means (the 128 Gauss points of the 16 elements with
+mean nodal phi > 0.5 at the start) at Day 21:
+
+| condition | shares phi_i / sum_j phi_j: So / An / Vei / Fn / Pg | living phi_i psi_i | sum of the living | alpha - 1 | vM/E mean / max |
+|---|---|---|---|---|---|
+| CS | 0.420 / 0.279 / 0.258 / 0.022 / 0.022 | 0.398 / 0.264 / 0.243 / 0.002 / 0.001 | 0.907 | 0.0522 | 1.29e-2 / 4.72e-2 |
+| CH | 0.503 / 0.240 / 0.178 / 0.041 / 0.039 | 0.141 / 0.212 / 0.154 / 0.002 / 0.002 | 0.510 | 0.0292 | 7.35e-3 / 2.58e-2 |
+| DS | 0.053 / 0.091 / 0.576 / 0.166 / 0.115 | 0.002 / 0.057 / 0.171 / 0.088 / 0.092 | 0.409 | 0.0276 | 6.96e-3 / 2.46e-2 |
+| DH | 0.030 / 0.260 / 0.394 / 0.221 / 0.095 | 0.001 / 0.238 / 0.045 / 0.203 / 0.086 | 0.574 | 0.0299 | 7.50e-3 / 2.63e-2 |
+
+With c_ref = 0 every Gauss point sees c*, so the composition depends only on the age of the point and the seed's
+composition is the point model's (shares equal to three digits in every condition; the 196 late-started points
+copy a neighbour under rule 1 and end at the same composition). The growth and the stress differ between the
+conditions through the living biomass only: CS (living 0.91) grows 1.8 times the others. The compositions sit on
+the calibrated trajectories of Chapter 3; what the field adds is the growth and the stress, and, with c_ref > 0,
+the nutrient dependence (not run here). Figure `results/calibrated_four_conditions.pdf` (shares over time per
+condition, the point model alone dashed), results `results/calibrated_<C>.json` (uniform check, seed history per
+increment) and `results/calibrated_four_conditions.json`. No change to the element or to the existing scripts.

@@ -834,15 +834,16 @@ $64^3$ field on $32^3$ and $64^3$ elements changes the seed von Mises stress by 
 \paragraph{Composition.} Table~\ref{tab:ch5-two-species} gives the seed means at $T^*=1$, and
 Figures~\ref{fig:ch5-3d} and~\ref{fig:ch5-3d-mixed} the separate and the mixed example with antibiotic. Without antibiotic the living volume
 fraction of the seed stays near $0.96$; the antibiotic lowers it to $0.15$ when the species start
-separately and to $0.04$ when they start mixed. Species~B, the more sensitive one, is removed first; where
+separately and to $0.04$ when they start mixed. Species~B is removed first: its nutrient term $c^*A_{22}/\eta_2$ is half that of A, while the
+antibiotic term per viscosity, $\alpha^*b_i/\eta_i$, is the same for both. Where
 the nutrient is low, A dies as well, because the point model compares $c^*=c^*_0c$ with $\alpha^*b_i$.
-Living volume fraction, shares and nutrient change by less than $3\,\%$ between the grids and the time
+Living volume fraction, shares and nutrient change by less than $4\,\%$ between the grids and the time
 steps used.
 
 \begin{table}[htbp]
   \centering
   \caption[Two species with nutrient and antibiotic]{Seed means at $T^*=1$, Python, $64^3$ cells,
-    outer time step $0.025$; growth and stress converged values in Table~\ref{tab:ch5-gci}.}
+    outer time step $0.025$; grid series, extrapolated values and GCI of growth and stress in Table~\ref{tab:ch5-gci}.}
   \label{tab:ch5-two-species}
   \small
   \setlength{\tabcolsep}{4pt}
@@ -888,7 +889,7 @@ by the jump of $\alpha$ across the edge of the seed, which the front sharpens. I
 converges, with a GCI of $0.7\,\%$ without and $8\,\%$ with the antibiotic. In the mixed examples it converges
 slowly, with an observed order of about $0.75$ and a GCI of $26$ to $29\,\%$; with the start fractions of
 Fritsch et al.\ the $128^3$ grid is not yet in the asymptotic range. There the front carries intermediate values
-of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the seed still rises with the grid
+of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the domain still rises with the grid
 ($0.60$, $0.69$, $0.73$).
 
 \begin{table}[htbp]
@@ -918,8 +919,9 @@ of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in th
 \end{table}
 
 \paragraph{Time step.} The point model advances once per outer step of the field. The composition
-and $\alpha-1$ change by less than $3$ and $0.3\,\%$ between outer steps of $0.02$ and $0.0025$ (with an
-integer number of inner steps). The stress does not: in the separate example the step $0.025$ of
+changes by less than $4\,\%$ between outer steps of $0.02$ and $0.0025$ (with an integer number of inner
+steps), and $\alpha-1$ by less than $0.3\,\%$ in the separate and $3\,\%$ in the mixed example. The stress
+does not: in the separate example the step $0.025$ of
 Table~\ref{tab:ch5-two-species} gives about $6\,\%$ less than the limit, which first-order
 extrapolation puts at about $6.07\times10^{-4}$~Pa on $64^3$; in the mixed example it gives about
 $15\,\%$ more ($3.23$ against $2.82\times10^{-4}$~Pa at $0.0025$). The inner steps of the point model,
@@ -929,9 +931,9 @@ changes the stress by $2.5\,\%$ (separate) and $12\,\%$ (mixed). I therefore tak
 stress from the grid series at the small step.
 
 \paragraph{Antibiotic over time.} With the same total dose given constantly, in pulses or as a sine
-from $T^*=1/3$, $\alpha-1$ and the stress change by less than $1.5\,\%$, while the living volume
-fraction follows the dose: in the pauses of the pulsed dose it recovers from $0.16$ to $0.28$ in the
-separate example. The antibiotic acts on the composition and the living biomass, not on the mechanics.
+from $T^*=1/3$, $\alpha-1$ and the stress change by less than $1\,\%$ ($64^3$), while the living volume
+fraction follows the dose: in the last pause of the pulsed dose it recovers from $0.17$ to $0.34$ in the
+separate example, and the next pulse brings it to $0.30$ at $T^*=1$. How the dose is given acts on the composition and the living biomass, hardly on the mechanics.
 
 \paragraph{Start values of newly reached points.} With the start values of the nearer seed instead of
 the neighbours' living composition, the seed values of the cube examples differ by a few percent (living
@@ -945,7 +947,7 @@ changing its equations: the surface points take the value of the nearest Gauss p
 distance-weighted mean, the Laplacian is used in a conservative form, and the neighbours of the fit are
 chosen by distance instead of by element number. Before, $\phi$ leaked through the walls of the cube. Its growth agrees with the Python values within $4\,\%$ after
 extrapolation. Its stress depends on how the front term \fterm{} is stabilised: with a constant added diffusion
-$r h/4$ the seed stress on $16^3$ is about a quarter of the converged value, and with upwind gradients it
+$r h/4$ the seed stress on $16^3$ is about a quarter of the extrapolated Python value, and with upwind gradients it
 is $2.14$, $4.56$ and $5.15\times10^{-4}$~Pa on $8^3$, $16^3$ and $24^3$, extrapolated
 $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$). This lies within the band of the second-order schemes in Python. The
 element runs the point model in every increment of $0.00125$, so its outer-step error is small. I take
@@ -977,8 +979,8 @@ factor caused by the bars.
   \includegraphics[width=\linewidth]{\ansysfigdir fig_obstacle_columns_3d.pdf}
   \caption[Growth against rigid bars]{Growth against four rigid bars (dark grey), after Fig.~9 of Klempt et
     al.\ 2024, Python, $32^3$, no antibiotic. (a)~Set-up: start biomass (red) and nutrient supply on the face
-    $y=-1$~mm (green). (b)--(d)~Surface $\phi_{3D}=0.5$ (separate example) and $0.2$ (mixed example, which
-    starts at $\phi_{3D}=0.55$) at $T^*=0.05$, $0.1$ and $0.2$.}
+    $y=-1$~mm (green). (b)--(d)~Surface $\phi_{3D}=0.5$ (separate example) and $0.2$ (mixed example, whose front
+    carries lower values of $\phi_{3D}$) at $T^*=0.05$, $0.1$ and $0.2$.}
   \label{fig:ch5-bars}
 \end{figure}
 
@@ -1012,9 +1014,11 @@ The coupling of Section~\ref{sec:ch5-composition} takes the number of species
 as a parameter, so the point model calibrated in Chapter~\ref{ch:heine} can be
 run in the element without changes to the routine. I used the MAP of the
 commensal flow condition (CH) from the calibration to the measured data, with
-$c^*=25$ and $\alpha^*=0$, and otherwise the setting of the two-species runs:
-the same $8^3$ model, the growth law~\eqref{eq:ch5-eq36} driven by the field,
-$\phi_{\rm cap}=0.9$, $s=0.15$ and $\Delta t=0.025$ up to $T^*=1$. The
+$c^*=25$ and $\alpha^*=0$, and otherwise the setting of the earlier one-way
+computations (Section~\ref{sec:ch5-outlook-python}): the same $8^3$ model, the
+growth law~\eqref{eq:ch5-eq36} driven by the field, the point model scaled to
+the field amount $\phi_{3D}$ up to a cap of $0.9$, $s=0.15$ and $\Delta t=0.025$
+up to $T^*=1$. The
 point model starts from the calibrated Day-1 state of the condition
 (\textit{S.~oralis} $0.76$, \textit{V.~dispar} $0.11$, \textit{F.~nucleatum}
 $0.10$, \textit{A.~naeslundii} $0.02$, \textit{P.~gingivalis} $0.001$, living
@@ -1022,8 +1026,8 @@ fractions $0.999$). This run predates the agreed coupling of
 Section~\ref{sec:ch5-composition}: the coupling is one-way, without front term \fterm{} and
 antibiotic, so the growth and the stress do
 not depend on the composition: the seed mean of $\alpha-1$ is
-$6.752\times10^{-4}$, the same to all printed digits as in the two-species
-runs and as in a run started from equal shares, and with the stiffness of
+$6.752\times10^{-4}$, the same to all printed digits as in the one-way
+two-species runs of that section and as in a run started from equal shares, and with the stiffness of
 Klempt et al.\ 2024 ($E=10$~Pa, $\nu=0.49$) the seed mean of the von Mises
 stress is $4.68\times10^{-4}$~Pa.
 

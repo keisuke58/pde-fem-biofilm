@@ -241,6 +241,8 @@ this machine's specific workflow.
   line-ending noise even incidentally.
 - Prefer direct edits over spawning subagents for small, well-scoped tasks —
   this user is cost-conscious about agent/token usage.
+  **Large implementations may go to a subagent on the Fable model** (the user, 27 Oct 2026), with a self-contained
+  brief; small edits, documents and replies stay in the main session.
 - **Never add a `Co-Authored-By: Claude` (or similar AI-attribution) trailer
   to commit messages, and don't otherwise mark commits as AI-assisted.**
   Commits should read as the user's own work (git identity is already set
@@ -340,6 +342,10 @@ this machine's specific workflow.
   Chapter 3 (final, extracted PDF) is scheduled by the user in Slack for
   Fri 23 Oct; Japanese message with ，． punctuation. Next online meeting
   2 Nov 9:00.
+  **RA at Keio (Slack DM, 26-28 Oct 2026):** the user asked for paid RA work (JAXA, quantum ML, CFRP/NEDO or
+  other lab projects) after returning in January; offered up to about 20 h/week. Her answer (28 Oct): start in
+  January, she checks the procedure (NEDO/JST); hours and tasks follow from her. She also mentioned DC1/PhD; the
+  user answered that he plans a job after the master's.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
@@ -382,7 +388,7 @@ this machine's specific workflow.
   (his mail); the committee is the usual IKM members.
 - **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
   24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
-  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
+  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (27 Oct: **no more new results at all** after the existing ones are in the slides and the speaker notes; the time goes into discussing the results and checking them for rigour) (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
   (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
   Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
   `thesis/README.md`.

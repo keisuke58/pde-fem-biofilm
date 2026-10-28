@@ -56,7 +56,7 @@ The coupling was implemented in two independent codes, a user element in ANSYS a
 which agree within a few percent after four implementation issues were found and corrected.
 
 In a seed of two species with nutrient supplied from one side, the antibiotic, applied from the outer faces after
-one third of the simulated time, lowers the living fraction of the seed from 0.97 to 0.15 when the species start
+one third of the simulated time, lowers the living fraction of the seed from 0.96 to 0.15 when the species start
 separately and from 0.96 to 0.04 when they start mixed. Where the nutrient is high, the antibiotic acts less,
 since the point model compares the local nutrient with the antibiotic threshold. The growth variable and the seed
 stress depend only weakly on the composition, because composition reaches the mechanics through the nutrient field
@@ -69,7 +69,7 @@ biofilms in the gaps of implant–abutment connections.
 ---
 
 Check before sending:
-- the 0.97/0.15 and 0.96/0.04 values against the final Ch. 4 (A-85 base case, new points inherit the living
+- the 0.96/0.15 and 0.96/0.04 values against the final Ch. 4 (A-85 base case, new points inherit the living
   composition: 0.965/0.152 and 0.961/0.038, unchanged at two digits);
 - the examples use the synthetic case I of Fritsch et al. (2025), not the calibrated five-species model; say so in
   the talk;

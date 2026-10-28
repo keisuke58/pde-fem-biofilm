@@ -173,25 +173,36 @@ All runs in the thesis are below it.
 \slide{Part 3: two species with nutrient and antibiotic}{15:00}
 \EN The third part puts the point model at every Gauss point. It receives the nutrient and an antibiotic from
 the fields, and only its living biomass consumes them. With synthetic data and the constants of the papers, the
-antibiotic lowers the living fraction of the seed from 0.97 to 0.15 when the species start separately, and to
+antibiotic lowers the living fraction of the seed from 0.96 to 0.15 when the species start separately, and to
 0.04 when they start mixed. The growth hardly changes, because the antibiotic lowers the living fraction, not the
 amount of biofilm. A point that the biofilm reaches later takes the living composition of its neighbours; this
 is my assumption.
 \JA 第3部では、各 Gauss 点で点モデルを動かします。栄養と抗菌薬を場から受け取り、生きている菌だけが
-それを消費します。論文の定数と合成データで、抗菌薬は種の生きている割合を、分けて置くと 0.97 から 0.15、
+それを消費します。論文の定数と合成データで、抗菌薬は種の生きている割合を、分けて置くと 0.96 から 0.15、
 混ぜて置くと 0.04 まで下げます。成長はほとんど変わりません。抗菌薬は生きている割合を下げますが、
 バイオフィルムの量は下げないからです。新しく届いた点は隣の生きている組成を受け継ぐ、というのは私の仮定です。
 
 \slide{Part 3: grid convergence and the front term}{16:30}
-\EN Growth and composition converge on refined grids, with a GCI of a few percent. The stress converges more
-slowly: about eight percent in the separate and twenty-six percent in the mixed example. The reason is the front
+\EN Growth and composition converge on refined grids: the growth with a GCI below three and a half percent in all
+examples. The stress converges more slowly: below one percent without and eight percent with the antibiotic in the
+separate example, and about twenty-seven percent in the mixed one. The reason is the front
 term, whose cell Peclet number is about thirty on the sixteen-cube mesh; a constant added diffusion gives only a
 quarter of the converged stress there. The IKM element with upwind gradients lies inside the band.
-\JA 成長と組成は格子を細かくすると数 \% で収束します。応力は遅く、分けた例で 8 \%、混ぜた例で 26 \%。
+\JA 成長と組成は格子を細かくすると収束し、成長の GCI は全例で 3.5 \% 未満です。応力は遅く、分けた例で
+抗菌薬なし 1 \% 未満・ありで 8 \%、混ぜた例で約 27 \%。
 原因は前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ で、$16^3$ でセルのペクレ数が約 30 あります。一定の人工拡散では収束値の 4 分の 1 しか出ません。
 IKM の要素は upwind の勾配でこの幅に入ります。
 
-\slide{Limitations}{18:00}
+\slide{Part 3: rigid bars and a maze}{17:45}
+\EN Two geometries from the 2024 paper. Four rigid bars restrain the swelling: the biofilm grows around them, and the
+seed stress is about ten times higher. In the maze, the biofilm follows the corridors. After the antibiotic it
+recovers only if newly reached points take the living composition of their neighbours: 0.35 against 0.04. The papers
+leave this rule open, so I state it as an assumption.
+\JA 2024 年の論文の2つの形です。4本の硬い柱は膨張を抑え、バイオフィルムは柱を回り込み、種の応力は約 10 倍に
+なります。迷路ではバイオフィルムが通路に沿って広がります。抗菌薬の後に回復するのは、新しく届いた点が隣の生きて
+いる組成を受け継ぐときだけです（0.35 対 0.04）。論文はこのルールを決めていないので、仮定として示します。
+
+\slide{Limitations}{18:45}
 \EN The main limitations. This is verification, not validation: no measured
 stress of a growing oral biofilm was available. The mechanics is coupled one way: the stress does not act back
 on growth, and the composition does not act on the stiffness. The front speed depends on the nutrient only, so
@@ -204,7 +215,7 @@ cannot describe directed interactions.
 対称な行列は向きのある相互作用を表せない。
 \hint{限界はこちらから先に言う。聞かれる前に言えば強い。}
 
-\slide{Conclusions and outlook}{19:30}
+\slide{Conclusions and outlook}{20:00}
 \EN To conclude: I calibrated a point model on in-vitro data, and it predicts
 the pH out of sample; I brought the growth law of Klempt et al.\ 2024 into
 the IKM element and verified it; and I put the point model at every Gauss
@@ -260,7 +271,7 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \JA 識別できるかは、独立な実行の一致と、境界に事後分布がたまっていないかで判断しています。幅だけでは判断しません。
 
 \slide{Backup 5: sensitivity of the coupled examples}{Q}
-\EN The composition is robust to the time step, the start values and the antibiotic schedule. The stress is not: at the larger step it is six percent low in the separate example, so I take it from the small step.
+\EN The composition is robust to the time step, the start values and the antibiotic schedule; the schedule changes the growth by 0.1 and the stress by 0.8 percent. The stress is not: at the larger step it is six percent low in the separate example, so I take it from the small step.
 \JA 組成は時間刻み、初期値のルール、抗菌薬の与え方に強い。応力は違い、大きい刻みでは分けた例で 6 \% 低いので、小さい刻みの値を使います。
 
 \slide{Backup 6: sensitivity to $\beta$}{Q}

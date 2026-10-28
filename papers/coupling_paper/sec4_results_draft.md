@@ -25,7 +25,7 @@ outer faces from T* = 1/3. Front term on.
 (64^3, outer step 0.025; growth and stress converged values in Section 3.)
 
 - The antibiotic lowers the living volume fraction of the seed from 0.965 to 0.152 when the species start separately
-  and from 0.961 to 0.038 when they start mixed. B, the more sensitive species (b_2 = 2), is removed first.
+  and from 0.961 to 0.038 when they start mixed. B is removed first: its nutrient term c* A_22/eta_2 is half of A's, while the antibiotic term per viscosity, alpha* b_i/eta_i, is the same for both.
 - **The nutrient field decides where the antibiotic acts.** The point model compares c* = c*_0 c with alpha* b_i:
   where the nutrient is high, A survives the antibiotic; where it is low, A dies as well. When the biomass dies the
   nutrient is no longer consumed and rises in the seed (0.54 to 0.91 in the separate example).
@@ -34,9 +34,10 @@ outer faces from T* = 1/3. Front term on.
 ## 4.3 Antibiotic over time
 
 With the same total dose given constantly, in pulses or as a sine from T* = 1/3 (64^3, A-71), alpha - 1 and the seed
-stress change by less than 1.5 %, while the living fraction follows the dose: in the pauses of the pulsed dose the
-separate seed recovers from 0.16 to 0.28; the sine gives a lower minimum (0.106) and a higher end value than the
-constant dose. The antibiotic acts on composition and living biomass, not on the mechanics.
+stress change by less than 1 % (alpha - 1 by 0.1 %, von Mises by 0.8 %), while the living fraction follows the dose:
+in the pauses of the pulsed dose the separate seed recovers from 0.17 to 0.30 (end value 0.298 against 0.152 with the
+constant dose); the sine gives a lower minimum (0.110) and a higher end value (0.186) than the
+constant dose. How the dose is given acts on composition and living biomass, hardly on the mechanics.
 
 ## 4.4 Which composition does new biofilm get?
 
@@ -75,3 +76,28 @@ fraction is 0.35 with the neighbours' composition and 0.04 with the start state.
 - 4.3 of the outline (start share decides the winner) and 4.4 (where the regions meet): re-run with the inherit
   rule before using the earlier numbers.
 - Klempt 2026 case 3 inputs (sine nutrient), two and four species (`results/2026-10-3d-case3/`).
+
+## 4.7 A clinical molar crown
+
+To show the coupling on a real geometry, the same model and constants (Section 4.1, all in mm) are run around a
+clinical molar crown (Open-Full-Jaw dataset, Gholamalizadeh et al. 2022; the derived surface in the repository,
+CC BY-NC-SA). The crown (6.7 x 6.8 x 5.5 mm) stands with its cervical base on the bottom face of a 10 mm box and is
+rigid for the fields (no biofilm, no nutrient inside, zero flux through its surface) and for the stress (u = 0).
+Nutrient and, from T* = 1/3, antibiotic are held at 1 on the five faces around the crown (the saliva side); the
+bottom face is zero flux (the root side). The biofilm starts as a cervical ring 0.25 mm thick and 1 mm high, species
+A on the half x < 0 and B on x > 0. These choices are assumptions of this work. Grid 80^3 (h = 0.125 mm; 40^3 for
+comparison), outer step 0.025, film = cells with phi_3D > 0.5, stress on the field grid with the film surface free
+(elements with phi_3D <= 0.05 dropped), 17 min per run.
+
+With the paper's front speed the biofilm spreads along the bottom face and outwards and reaches the side faces by
+T* = 1 (every open cell is reached; the film holds 298 mm^3). The composition is carried with it: the A and B halves
+stay separate (film mean share 0.50; 0.956 in the A ring, 0.051 in the B ring). The antibiotic enters with the
+nutrient (a = c in the film, 0.73 on average, 0.24 at the ring, lowest value 0.14) and acts first on B: the living
+fraction of the B ring falls from 0.71 at the onset to 0.13 at T* = 1, that of the A ring from 0.81 to 0.57; the
+film mean is 0.37 (0.95 without antibiotic, where the ring reaches c = 0.13 and keeps 0.86 and 0.82 alive). Growth
+and stress hardly depend on the antibiotic (film mean alpha - 1 4.3e-4 with and without; von Mises 3.0 and 3.2 mPa,
+95th percentile 9.7 and 10.5 mPa, largest values in the corners between the film, the crown and the bottom face).
+Between 40^3 and 80^3 the film means change by 3 % (living fraction 0.360 to 0.370, share 0.513 to 0.501, c 0.736
+to 0.730, alpha - 1 4.1e-4 to 4.3e-4) and the film stress by 7 % (2.79 to 2.99 mPa; 2.80 mPa on the 80^3 field with
+0.25 mm elements, so the difference is mostly the stress mesh). The example demonstrates the coupling on a real
+surface; the stress of the cervical region with a growth law is not treated here.
