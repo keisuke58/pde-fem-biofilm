@@ -346,6 +346,8 @@ this machine's specific workflow.
   other lab projects) after returning in January; offered up to about 20 h/week. Her answer (28 Oct): start in
   January, she checks the procedure (NEDO/JST); hours and tasks follow from her. She also mentioned DC1/PhD; the
   user answered that he plans a job after the master's.
+  **Conferences (the user, 28 Oct 2026):** USNCCM19 (Pasadena, 25-29 Jul 2027; abstract by 15 Jan 2027) is the one he
+  wants; he prefers it over domestic conferences.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
