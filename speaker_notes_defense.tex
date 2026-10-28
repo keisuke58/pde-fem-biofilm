@@ -126,11 +126,14 @@ stress, and constrained growth gives the predicted pressure.
 \EN This is the example model: a two-millimetre cube with a seed of biofilm
 in the middle, refined up to $24^3$ elements. The element's own field for
 $\phi$ is unchanged. What I added is the growth law at every Gauss point:
-$\phi$ gives $\alpha$, $\alpha$ gives $\mathbf F_g$, and that gives the stress.
+the element passes only $\phi$, I integrate $\alpha$ from it, $\alpha$ gives $\mathbf F_g$, and that
+gives the stress. I do not take the element's own $\alpha$, because it is the mean over its two species
+fields and halves the growth with one species.
 The diffusion coefficient $\beta$ is Table~2 of the paper converted to this
 cube; this conversion is an assumption, and I report its sensitivity.
 \JA 例題は 2 mm の立方体で、中央にシードがあります。$24^3$ まで細かくしました。
-要素の $\phi$ の場はそのままで、私が足したのは各 Gauss 点の成長則です。
+要素の $\phi$ の場はそのままで、私が足したのは各 Gauss 点の成長則です。要素から受け取るのは $\phi$ だけで、
+$\alpha$ は私が積分します。要素自身の $\alpha$ は 2 つの種の場の平均で、1 種では成長が半分になるので使いません。
 $\beta$ は論文の Table~2 をこの立方体に換算した値で、仮定なので感度も示しています。
 
 \slide{Part 2: verification against an exact solution}{10:30}
