@@ -127,3 +127,10 @@ outlook matches "+5 and -8 %" of Section 4.7.
   Not changed.
 - Ch. 6 now says the element's growth agrees "within 4 %" (as Ch. 4); if the user prefers the earlier,
   shorter sentence, the wording is in this file's section 3.
+
+## Update 28 Oct (192^3)
+
+The 192^3 runs of the three antibiotic examples (A-92, A-94) are in `tab:ch5-gci`: GCI from 64^3/128^3/192^3. The
+numbers above (8.3 %, 26 to 29 %, 1 to 29 %, the "--" row) are superseded: growth 0.5 to 4.3 %, separate stress 0.7 and
+1.4 %, mixed 19 to 41 %, abstract 1 to 41 %. The antibiotic lowers the separate extrapolated stress by 2 % (6.55 to
+6.42e-4 Pa), about the two bands together. Audit: 0 FAIL.

@@ -53,9 +53,9 @@ fraction is 0.35 with the neighbours' composition and 0.04 with the start state.
 - The mixed seed carries about half the stress of the separate one: its edge is less sharp because the front carries
   intermediate values of phi_3D.
 - Stress needs a second-order treatment of the front term (Section 3); the extrapolated seed stress is about
-  6.7e-4 Pa (separate, GCI 8 %; 6.55e-4 Pa and 0.7 % without antibiotic) and 4.0e-4 Pa (mixed, GCI 26 %; 4.5e-4 Pa
-  and 29 % without antibiotic) at the small outer step. With the Fritsch start fractions the mixed stress is not yet
-  in the asymptotic range on 128^3; the growth converges in every example (GCI 0.7 to 3.3 %).
+  6.42e-4 Pa (separate, GCI 1.4 % from 64^3/128^3/192^3; 6.55e-4 Pa and 0.7 % without antibiotic) and 4.7e-4 Pa
+  (mixed, GCI 41 %; 4.5e-4 Pa and 29 % without antibiotic) at the small outer step; with the Fritsch start fractions
+  5.0e-4 Pa (GCI 19 %). The growth converges in every example (GCI 0.5 to 4.3 %).
 - Limitation: the front speed of Eq. 34 depends on the nutrient only, so dead biofilm keeps spreading after the
   antibiotic (two thirds of the cells reached after the antibiotic in the maze border only dead biofilm). Tying the
   front speed to the living biomass changes the stress strongly (16^3: +51 % separate, about 4 times mixed;

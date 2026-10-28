@@ -19,12 +19,12 @@ uptake g phi_3D (sum_i phibar_i) c of both. The main findings are:
 2. **The advection term sets the accuracy of the stress.** The term -r c/(k+c) n_c . grad phi_3D of the growth equation
    has a cell Peclet number of about 31 on a 16^3 grid. A constant added diffusion keeps it stable but gives a quarter of
    the converged seed stress; a second-order upwind treatment is needed. With it, the growth converges with a grid
-   convergence index of 0.7 to 3.3 % in all examples, the seed stress with 0.7 to 8 % when the species start apart and
-   26 to 29 % when they start mixed.
+   convergence index of 0.5 to 4.3 % in all examples, the seed stress with 0.7 to 1.4 % when the species start apart and
+   19 to 41 % when they start mixed (grids up to 192^3).
 3. **What the composition changes.** An antibiotic removes most of the living biomass (from 0.96 to 0.15 of the seed
-   when the species start apart, from 0.96 to 0.04 when they start mixed), while the growth changes by about 1 % and the converged seed stress by less than its numerical uncertainty (6.55
-   against 6.70e-4 Pa extrapolated when the species start apart, GCI 8 %; on one grid the difference reaches 10 %
-   because the two cases converge from opposite sides).
+   when the species start apart, from 0.96 to 0.04 when they start mixed), while the growth changes by about 1 % and the converged seed stress by about 2 %, close to its numerical uncertainty
+   (6.55 against 6.42e-4 Pa extrapolated when the species start apart, GCI 0.7 and 1.4 %; on one grid the difference
+   reaches 10 % because the two cases converge from opposite sides).
    The local nutrient decides where the antibiotic acts, because the point model weighs c* against alpha* b_i.
 4. **What the coupling needs beyond the papers.** The composition of biofilm that reaches a new point is not fixed by
    either model. Taking the living composition of the neighbours or the start state gives the same cube results within
