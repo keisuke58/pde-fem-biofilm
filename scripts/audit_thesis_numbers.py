@@ -238,66 +238,79 @@ for label, rowname, f, key in (
 
 
 # 12. grid table tab:ch5-gci: grid values from the result files (cloud, outer step 0.0025) or from report A-89
-#     (IKMHIWI03, the two series with antibiotic and equal start amounts); p, extrapolated value and GCI recomputed
-#     with the three-grid procedure of Celik et al. 2008 (r = 2, Fs = 1.25).
-def gci(f3, f2, f1):
-    """f3, f2, f1 = coarse, medium, fine. Returns (p, extrapolated, GCI_fine [%]) or None if not monotone."""
+#     (IKMHIWI03, 32^3-128^3 of the two series with antibiotic and equal start amounts; their 192^3 JSONs are here,
+#     A-92/A-94); p, extrapolated value and GCI recomputed with Celik et al. 2008 (Fs = 1.25): without antibiotic from
+#     32^3/64^3/128^3 (r = 2), with antibiotic from 64^3/128^3/192^3 (r = 2 and 1.5, iterative).
+def gci(f3, f2, f1, r21=2.0, r32=2.0):
+    """f3, f2, f1 = coarse, medium, fine. Returns (p, extrapolated, GCI_fine [%]) or None if not monotone/converging."""
     e32, e21 = f2 - f3, f1 - f2
-    if e32 * e21 <= 0 or abs(e21) >= abs(e32):
+    if e32 * e21 <= 0:
         return None
-    pp = math.log(abs(e32 / e21)) / math.log(2.0)
-    ext = f1 + e21 / (2 ** pp - 1)
-    return pp, ext, 1.25 * abs(e21 / f1) / (2 ** pp - 1) * 100
+    pp = 1.0
+    for _ in range(200):
+        pp = abs(math.log(abs(e32 / e21)) + math.log((r21 ** pp - 1) / (r32 ** pp - 1))) / math.log(r21)
+    if pp < 0.3:
+        return None
+    ext = f1 + e21 / (r21 ** pp - 1)
+    return pp, ext, 1.25 * abs(e21 / f1) / (r21 ** pp - 1) * 100
 
 A89 = (APDL / "IKMHIWI03_TO_CLOUD.ja.md").read_text(encoding="utf-8").replace("−", "-")
 A89 = A89[A89.index("## A-89"):]
 def a89_row(start):
     line = next(l for l in A89.splitlines() if l.strip().startswith("| " + start))
     return [float(x) for x in re.findall(r"(\d+\.\d+)", line.split("|", 2)[2])]
-def series(f, key):
-    return [json.loads((D3 / f"coupled_living_consumption_{n}{f}.json").read_text())["runs"][key] for n in ("", "nf64_", "nf128_")]
+def series(f, key, grids=("", "nf64_", "nf128_")):
+    return [json.loads((D3 / f"coupled_living_consumption_{n}{f}.json").read_text())["runs"][key] for n in grids]
 _g = c4[c4.index("label{tab:ch5-gci}"):c4.index("end{tabular}", c4.index("label{tab:ch5-gci}"))]
 def gci_row(start):
     line = next(l for l in _g.splitlines() if l.strip().startswith(start))
     cells = [x.strip().replace("\\\\", "").replace("\\,\\%", "").replace("$", "") for x in line.split("&")[2:]]
     return cells
-ab_sep = {"am1": a89_row("分離例 α-1"), "vm": a89_row("分離例 vM")}
-ab_mix = {"am1": a89_row("混合例 α-1"), "vm": a89_row("混合例 vM")}
-sep = series("front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate", "separate")
-mix = series("front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed", "mixed")
-mix2 = series("front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed_ab", "mixed_ab")
+F = "front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_{}a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_{}"
+sep = series(F.format("", "separate"), "separate")
+mix = series(F.format("mixeq_", "mixed"), "mixed")
+mix2 = series(F.format("", "mixed_ab"), "mixed_ab", ("", "nf64_", "nf128_", "nf192_"))
+s192 = series(F.format("", "separate_ab"), "separate_ab", ("nf192_",))[0]
+m192 = series(F.format("mixeq_", "mixed_ab"), "mixed_ab", ("nf192_",))[0]
+ab_sep = {"am1": a89_row("分離例 α-1")[:3] + [s192["seed_am1"] * 1e4], "vm": a89_row("分離例 vM")[:3] + [s192["seed_vm_Pa"] * 1e4]}
+ab_mix = {"am1": a89_row("混合例 α-1")[:3] + [m192["seed_am1"] * 1e4], "vm": a89_row("混合例 vM")[:3] + [m192["seed_vm_Pa"] * 1e4]}
 for row, lab, vals in (
-        ("separate, antib. & $\\alpha-1$", "GCI separate+ab alpha-1", ab_sep["am1"][:3]),
-        ("separate, antib. & von Mises", "GCI separate+ab vM", ab_sep["vm"][:3]),
+        ("separate, antib. & $\\alpha-1$", "GCI separate+ab alpha-1", ab_sep["am1"]),
+        ("separate, antib. & von Mises", "GCI separate+ab vM", ab_sep["vm"]),
         ("separate & $\\alpha-1$", "GCI separate alpha-1", [h["seed_am1"] * 1e4 for h in sep]),
         ("separate & von Mises", "GCI separate vM", [h["seed_vm_Pa"] * 1e4 for h in sep]),
-        ("mixed, antib. & $\\alpha-1$", "GCI mixed+ab alpha-1", ab_mix["am1"][:3]),
-        ("mixed, antib. & von Mises", "GCI mixed+ab vM", ab_mix["vm"][:3]),
+        ("mixed, antib. & $\\alpha-1$", "GCI mixed+ab alpha-1", ab_mix["am1"]),
+        ("mixed, antib. & von Mises", "GCI mixed+ab vM", ab_mix["vm"]),
         ("mixed & $\\alpha-1$", "GCI mixed alpha-1", [h["seed_am1"] * 1e4 for h in mix]),
         ("mixed & von Mises", "GCI mixed vM", [h["seed_vm_Pa"] * 1e4 for h in mix]),
         ("mixed $(0.25,0.30)$, antib. & $\\alpha-1$", "GCI mixed(0.25,0.30)+ab alpha-1", [h["seed_am1"] * 1e4 for h in mix2]),
         ("mixed $(0.25,0.30)$, antib. & von Mises", "GCI mixed(0.25,0.30)+ab vM", [h["seed_vm_Pa"] * 1e4 for h in mix2])):
     cells = gci_row(row)
-    for n, cell, v in zip(("32", "64", "128"), cells[:3], vals):
+    four = len(vals) == 4
+    for n, cell, v in zip(("32", "64", "128", "192"), cells[:4], vals):
         check(f"{lab} {n}^3", cell, v)
-    g = gci(*vals)
-    if cells[3] == "--":
-        flag(f"{lab}: not in the asymptotic range", g is None, f"grid values {vals}")
-        continue
-    # the A-89 rows give the grid values rounded (3 or 4 significant digits) while p, extrapolated value and GCI were
-    # computed from the unrounded values: allow the spread over +-half a unit of the printed grid values
-    halves = [0.5 * 10.0 ** -len(cell.split(".")[1]) if "." in cell else 0.5 for cell in cells[:3]]
+    if not four:
+        flag(f"{lab}: 192^3 cell empty", cells[3] == "", cells[3])
+    use, rr = (vals[1:], (1.5, 2.0)) if four else (vals, (2.0, 2.0))
+    ucells = cells[1:4] if four else cells[:3]
+    g = gci(*use, *rr)
+    # the A-89 values are rounded (3 or 4 significant digits) while p, extrapolated value and GCI were computed from
+    # the unrounded values: allow the spread over +-half a unit of the printed grid values
+    halves = [0.5 * 10.0 ** -len(cell.split(".")[1]) if "." in cell else 0.5 for cell in ucells]
     import itertools
-    sp = [gci(*[v + sgn * hh for v, sgn, hh in zip(vals, sg, halves)]) for sg in itertools.product((-1, 1), repeat=3)]
+    sp = [gci(*[v + sgn * hh for v, sgn, hh in zip(use, sg, halves)], *rr) for sg in itertools.product((-1, 1), repeat=3)]
     sp = [x for x in sp if x is not None]
-    for i, (name, cell) in enumerate(zip(("p", "extrapolated", "GCI [%]"), cells[3:6])):
+    for i, (name, cell) in enumerate(zip(("p", "extrapolated", "GCI [%]"), cells[4:7])):
         lo, hi = min(x[i] for x in sp), max(x[i] for x in sp)
         v, half = printed(cell)
         flag(f"{lab} {name}", lo - half <= v <= hi + half, f"tex {cell}, from the printed grid values {g[i]:.4g} (range {lo:.4g} to {hi:.4g})")
-flag("ch4 text: growth GCI 0.7 to 3.3 % in all examples", "GCI of $0.7$ to $3.3\\,\\%$ in all examples" in c4
-     and all(x in c4 for x in ("$0.7\\,\\%$ without and $8\\,\\%$ with", "$26$ to $29\\,\\%$")), "text matches the table")
-for n, h, t in zip(("32", "64", "128"), mix2, ("0.60", "0.69", "0.73")):
-    check(f"mixed (0.25,0.30)+ab: largest phi_3D in the seed, {n}^3", t, h["phi_max"][-1])
+flag("ch4 text: GCI ranges match the table", all(x in c4 for x in (
+    "GCI of $0.5$ to $4.3\\,\\%$ in all", "$0.7\\,\\%$ without and $1.4\\,\\%$ with", "$19$ to $41\\,\\%$",
+    "from $6.55$ to $6.42\\times10^{-4}$~Pa, by $2\\,\\%$")), "text matches the table")
+check("antibiotic lowers the separate extrapolated stress [%]", "2",
+      (1 - gci(*ab_sep["vm"][1:], 1.5, 2.0)[1] / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep])[1]) * 100)
+for n, h, t in zip(("32", "64", "128", "192"), mix2, ("0.60", "0.69", "0.73", "0.75")):
+    check(f"mixed (0.25,0.30)+ab: largest phi_3D in the domain, {n}^3", t, h["phi_max"][-1])
 
 # 13. rigid bars (Python, 32^3, outer step 0.0025) -----------------------------------------------------------
 bars_s = json.loads((D3 / "coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snaps_tvd_wgmirror_fast_obstcolumns_separate.json").read_text())["runs"]["separate"]

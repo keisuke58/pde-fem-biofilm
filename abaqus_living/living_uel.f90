@@ -30,7 +30,18 @@
 !   psi: A-82), x_split, total start amount,
 !   mixed start of species 1 and 2
 ! Optional PROPS (absent or 0: off): 19 manufactured solution (mms), 20 SUPG, 21 rule for newly reached points,
-!   22, 23 homeostatic-pressure growth law p_ref and form (below; a Keio extension, not part of the thesis model)
+!   22, 23 homeostatic-pressure growth law p_ref and form (below; a Keio extension, not part of the thesis model),
+!   24 front speed times the living amount (below; a Keio extension, not part of the thesis model)
+!
+! Front speed times the living amount (28 Oct 2026; coupled_living_consumption.py --front-living, KEIO_PLAN.ja.md
+! section 10): PROPS(24) = 1 multiplies the front speed r c/(K + c) of Eq. 34 by sum_i phibar_i, taken as the largest
+! value of the Gauss point and its six nearest Gauss points on the regular grid (0 where a point has not started), so
+! that a front of dead biofilm does not advance.  The value is that of the end of the last increment (UEXTERNALDB,
+! LOP 2, front_living_fill, with the lattice of inherit_fill), i.e. the start of this one, as the Python reference
+! (living fraction of the start of the outer step, the cell and its six neighbours).  It is constant within the
+! increment, so the tangent keeps its form.  Difference to the Python stencil: Gauss points sit h/sqrt(3) and
+! h (1 - 1/sqrt(3)) apart (the cells of the Python code h), so the max reaches 0.42 h to 0.58 h instead of h.
+! Before the first record (the 1e-8 start step) the factor is 1.
 !
 ! Homeostatic-pressure growth law (27 Oct 2026; the law of p3/uel/unified_uel.f90 PROPS(19:20), same convention,
 ! here PROPS(22:23) because 19-21 are taken): Eq. 36 becomes
@@ -78,6 +89,9 @@ module living_uel_mod
   double precision, save :: gate_pref = 0d0
   integer, save :: gate_form = 0
   logical, save :: gate_implicit = .false.
+  ! front speed times the living amount (header): PROPS(24); liv_front(q, e) is written only in UEXTERNALDB (serial)
+  logical, save :: front_liv_on = .false.
+  double precision, allocatable, save :: liv_front(:,:)
   double precision, save :: phi_min_s = 1d-3, h_el = 0d0
   logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
   ! Thread-parallel Abaqus (cpus > 1, mp_mode threads; 25 Oct 2026): the elements run UEL at the same time, and
@@ -300,12 +314,14 @@ contains
     end do
   end subroutine advance
 
-  subroutine element(U, Un, coords, sv, props, dt, R, K, want_k, sig)
-    ! residual R(U) and tangent K = dR/dU with the point-model state sv held (already advanced)
+  subroutine element(U, Un, coords, sv, props, dt, R, K, want_k, sig, fl)
+    ! residual R(U) and tangent K = dR/dU with the point-model state sv held (already advanced); fl (optional): the
+    ! factor of the front speed per Gauss point (PROPS(24), header)
     double precision, intent(in) :: U(NDOF), Un(NDOF), coords(3, NN), props(*), dt
     double precision, intent(inout) :: sv(NSV, NGP)
     double precision, intent(out) :: R(NDOF), K(NDOF, NDOF), sig(6, NGP)
     logical, intent(in) :: want_k
+    double precision, intent(in), optional :: fl(NGP)
     double precision :: N(8), dN(3, 8), w, x(3), ph, phn, c, cn, a, gph(3), gc(3), gcn(3), ga(3), v(3)
     double precision :: al, pen, dpen, phc, dphc, L, E, dE, D0(6, 6), lam, mu, eps(6), sm(6), B(6, 24), Bv(3, 8)
     double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm, tau, vm, hs, pe, res, vdn(8)
@@ -341,6 +357,7 @@ contains
       end do
       nrm = sqrt(sum(gcn**2) + EPSG)
       sp = rr * cn / (Km + cn)
+      if (present(fl)) sp = sp * fl(q)                 ! PROPS(24): times the living amount (header)
       v = sp * gcn / nrm
       pen = P * (max(ph - 1d0, 0d0) + min(ph, 0d0))
       dpen = 0d0
@@ -605,40 +622,12 @@ contains
     ! on the regular grid, found by the lattice index of each point (element index times 2 plus the side of the
     ! element centre, per axis; the Gauss points sit at +-h/(2 sqrt 3) from the centre)
     integer, allocatable :: lat(:,:,:), ke(:,:,:)
-    double precision :: lo(3), wsum, g(12), w
-    integer :: e, q, d, k(3), n(3), kk(3), s, changed, m, ne, qn
+    double precision :: wsum, g(12), w
+    integer :: e, q, d, n(3), kk(3), s, changed, m, ne, qn
     logical, allocatable :: done(:,:), done0(:,:)
     if (out_nel == 0 .or. h_el <= 0d0) return
     any_started = any(out_rec(12, :, 1:out_nel) > 0.5d0 .and. out_rec(1, :, 1:out_nel) > -1d29)
-    lo = 1d30
-    do e = 1, out_nel
-      if (out_rec(1, 1, e) < -1d29) cycle
-      do q = 1, NGP
-        lo = min(lo, out_rec(1:3, q, e))
-      end do
-    end do
-    lo = lo - (0.5d0 - 0.5d0 / sqrt(3d0)) * h_el            ! the lowest node
-    allocate(ke(3, NGP, out_nel)); ke = -1
-    n = 0
-    do e = 1, out_nel
-      if (out_rec(1, 1, e) < -1d29) cycle
-      do q = 1, NGP
-        do d = 1, 3
-          m = floor((out_rec(d, q, e) - lo(d)) / h_el)
-          k(d) = 2 * m + merge(1, 0, out_rec(d, q, e) - lo(d) > (m + 0.5d0) * h_el)
-        end do
-        ke(:, q, e) = k
-        n = max(n, k + 1)
-      end do
-    end do
-    allocate(lat(0:n(1)-1, 0:n(2)-1, 0:n(3)-1)); lat = 0
-    do e = 1, out_nel
-      if (out_rec(1, 1, e) < -1d29) cycle
-      do q = 1, NGP
-        k = ke(:, q, e)
-        lat(k(1), k(2), k(3)) = NGP * (e - 1) + q
-      end do
-    end do
+    call gp_lattice(ke, lat, n)
     if (allocated(inh_ok)) deallocate(inh_ok, inh_g)
     allocate(inh_ok(NGP, out_nel), inh_g(12, NGP, out_nel), done(NGP, out_nel), done0(NGP, out_nel))
     inh_ok = .false.; inh_g = 0d0
@@ -686,6 +675,73 @@ contains
     end do
   end subroutine inherit_fill
 
+  subroutine gp_lattice(ke, lat, n)
+    ! the lattice index of every recorded Gauss point (element index times 2 plus the side of the element centre, per
+    ! axis; the Gauss points sit at +-h/(2 sqrt 3) from the centre): ke(:, q, e), and lat(k) = NGP (e - 1) + q (0: none)
+    integer, allocatable, intent(out) :: ke(:,:,:), lat(:,:,:)
+    integer, intent(out) :: n(3)
+    double precision :: lo(3)
+    integer :: e, q, d, k(3), m
+    lo = 1d30
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        lo = min(lo, out_rec(1:3, q, e))
+      end do
+    end do
+    lo = lo - (0.5d0 - 0.5d0 / sqrt(3d0)) * h_el            ! the lowest node
+    allocate(ke(3, NGP, out_nel)); ke = -1
+    n = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        do d = 1, 3
+          m = floor((out_rec(d, q, e) - lo(d)) / h_el)
+          k(d) = 2 * m + merge(1, 0, out_rec(d, q, e) - lo(d) > (m + 0.5d0) * h_el)
+        end do
+        ke(:, q, e) = k
+        n = max(n, k + 1)
+      end do
+    end do
+    allocate(lat(0:n(1)-1, 0:n(2)-1, 0:n(3)-1)); lat = 0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        k = ke(:, q, e)
+        lat(k(1), k(2), k(3)) = NGP * (e - 1) + q
+      end do
+    end do
+  end subroutine gp_lattice
+
+  subroutine front_living_fill()
+    ! PROPS(24) (header): liv_front(q, e) = the largest living amount (sum_i phibar_i, 0 where not started) of the Gauss
+    ! point and its six nearest Gauss points on the regular grid, from the records of the increment that just ended
+    integer, allocatable :: lat(:,:,:), ke(:,:,:)
+    double precision :: lv
+    integer :: e, q, d, s, n(3), kk(3), m, ne, qn
+    if (out_nel == 0 .or. h_el <= 0d0) return
+    call gp_lattice(ke, lat, n)
+    if (allocated(liv_front)) deallocate(liv_front)
+    allocate(liv_front(NGP, out_nel)); liv_front = 1d0
+    do e = 1, out_nel
+      if (out_rec(1, 1, e) < -1d29) cycle
+      do q = 1, NGP
+        lv = out_rec(8, q, e)
+        do d = 1, 3
+          do s = -1, 1, 2
+            kk = ke(:, q, e); kk(d) = kk(d) + s
+            if (any(kk < 0) .or. any(kk >= n)) cycle
+            m = lat(kk(1), kk(2), kk(3))
+            if (m == 0) cycle
+            ne = (m - 1) / NGP + 1; qn = m - NGP * (ne - 1)
+            lv = max(lv, out_rec(8, qn, ne))
+          end do
+        end do
+        liv_front(q, e) = lv
+      end do
+    end do
+  end subroutine front_living_fill
+
   subroutine write_records(kstep, kinc, ttot)
     integer, intent(in) :: kstep, kinc
     double precision, intent(in) :: ttot
@@ -708,7 +764,7 @@ contains
 end module living_uel_mod
 
 ! ---- Abaqus entry point ---------------------------------------------------------------------------
-! *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128   (PROPERTIES up to 23, header)
+! *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128   (PROPERTIES up to 24, header)
 ! 1, 2, 3, 11, 12, 13
 subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, COORDS, MCRD, NNODE, &
                U, DU, V, A, JTYPE, TIME, DTIME, KSTEP, KINC, JELEM, PARAMS, NDLOAD, JDLTYP, ADLMAG, &
@@ -723,7 +779,7 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
                       DTIME, PARAMS(*), ADLMAG(MDLOAD, *), PREDEF(2, NPREDF, NNODE), DDLMAG(MDLOAD, *), &
                       PNEWDT, PERIOD
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
-  logical :: ok, wk, lmms, lsupg, limp
+  logical :: ok, wk, lmms, lsupg, limp, lfl
   integer :: lay, rule, iform
   double precision :: pref
   if (.not. eco_inited) call eco_native_init()     ! never reached in Abaqus: UEXTERNALDB LOP 0 runs first, serial
@@ -751,6 +807,9 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   if (gate_pref /= pref) gate_pref = pref
   if (gate_form /= iform) gate_form = iform
   if (gate_implicit .neqv. limp) gate_implicit = limp
+  lfl = .false.
+  if (NPROPS >= 24) lfl = (PROPS(24) > 0.5d0)
+  if (front_liv_on .neqv. lfl) front_liv_on = lfl
   if (mms_on .neqv. lmms) mms_on = lmms
   if (supg_on .neqv. lsupg) supg_on = lsupg
   if (lmms) mms_t = TIME(1) + DTIME
@@ -769,7 +828,14 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
     end if
   end if
   wk = (LFLAGS(3) == 1 .or. LFLAGS(3) == 2)
-  call element(U, Un, COORDS, sv, PROPS, DTIME, R, K, wk, sig)
+  ! PROPS(24): the factor of the end of the last increment (none yet, in the 1e-8 start step: factor 1)
+  lfl = .false.
+  if (front_liv_on .and. allocated(liv_front)) lfl = (JELEM <= size(liv_front, 2))
+  if (lfl) then
+    call element(U, Un, COORDS, sv, PROPS, DTIME, R, K, wk, sig, liv_front(:, JELEM))
+  else
+    call element(U, Un, COORDS, sv, PROPS, DTIME, R, K, wk, sig)
+  end if
   RHS(1:NDOF, 1) = -R
   if (wk) AMATRX = K
   if (DTIME > 0d0) call alpha_store(U, Un, COORDS, sv, PROPS, DTIME)
@@ -794,6 +860,7 @@ subroutine UEXTERNALDB(LOP, LRESTART, TIME, DTIME, KSTEP, KINC)
     if (st == 0) read(s, *) every
     if (KSTEP >= 2 .and. mod(KINC, every) == 0) call write_records(KSTEP, KINC, TIME(2))
     if (rule_mode >= 1) call inherit_fill()
+    if (front_liv_on) call front_living_fill()
   else if (LOP == 3) then
     call write_records(KSTEP, KINC, TIME(2))
   end if

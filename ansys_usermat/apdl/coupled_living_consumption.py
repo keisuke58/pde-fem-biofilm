@@ -156,6 +156,13 @@ MECH_K = _opt("--mech-feedback", 0.0)
 # the living volume fraction sum_i phibar_i, taken as the largest value of the cell and its six neighbours, so that a
 # front of dead biofilm does not advance (thesis limitation: dead biofilm keeps spreading after the antibiotic).
 FRONT_LIVING = "--front-living" in sys.argv
+# --front-living-ell ELL [mm] (28 Oct 2026, A-95): the largest living fraction within a ball of radius ELL instead of the
+# cell and its six neighbours, so that the reach is a length of the model and not the grid spacing (with the six
+# neighbours the effect fell from 4.2 to 1.4 times the seed stress between 16^3 and 64^3, A-93). ELL = h gives exactly
+# the six neighbours (the diagonal ones are sqrt(2) h away). ELL >= h is required (else unstarted cells never move).
+# Mirror images at the symmetry planes of --fast (and at the walls, where they add nothing to a maximum).
+FRONT_ELL = _opt("--front-living-ell", 0.0)
+FRONT_LIVING = FRONT_LIVING or FRONT_ELL > 0
 # --stiff-species m1,m2,... (Keio continuation; not in the thesis): E = E(phi_3D) * sum_i w_i m_i with the shares
 # w_i = phi_i / sum_j phi_j of the point model (dead cells included); m_i are relative moduli (no data: sensitivity).
 STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") if x]
@@ -306,7 +313,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + ("_frontliv" if FRONT_LIVING else "")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
@@ -532,7 +539,15 @@ def front_lw(phi, c, dt_):
 
 
 def living_speed(L):
-    """--front-living: largest living volume fraction of the cell and its six neighbours (edge values at the walls)"""
+    """--front-living: largest living volume fraction of the cell and its six neighbours (edge values at the walls);
+    with --front-living-ell, within a ball of radius FRONT_ELL"""
+    if FRONT_ELL:
+        from scipy.ndimage import maximum_filter
+        assert FRONT_ELL >= H * (1 - 1e-9), f"--front-living-ell {FRONT_ELL} is below the cell size {H}"
+        m = int(np.floor(FRONT_ELL / H + 1e-9))
+        o = np.arange(-m, m + 1)
+        fp = (o[:, None, None] ** 2 + o[None, :, None] ** 2 + o[None, None, :] ** 2) * H * H <= FRONT_ELL ** 2 * (1 + 1e-9)
+        return maximum_filter(L, footprint=fp, mode="reflect")
     p_ = np.pad(L, 1, mode="edge")
     out = L.copy()
     for ax in range(3):
@@ -811,15 +826,16 @@ def run(example, antibiotic):
     ckpt.parent.mkdir(parents=True, exist_ok=True)
     k0 = 0
     if ckpt.exists():
-        z = np.load(ckpt, allow_pickle=False)
-        phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
-        hist = json.loads(str(z["hist"]))
-        snaps = {}
-        for name in z.files:
-            if name.startswith("snap|"):
-                _, T, f = name.split("|")
-                snaps.setdefault(float(T), {})[f] = z[name].copy()
-        k0 = int(z["k_done"]) + 1
+        # closed after reading: on Windows an open file cannot be replaced by the next checkpoint (WinError 5)
+        with np.load(ckpt, allow_pickle=False) as z:
+            phi, alpha, c, a, L, on, G = (z[n].copy() for n in ("phi", "alpha", "c", "a", "L", "on", "G"))
+            hist = json.loads(str(z["hist"]))
+            snaps = {}
+            for name in z.files:
+                if name.startswith("snap|"):
+                    _, T, f = name.split("|")
+                    snaps.setdefault(float(T), {})[f] = z[name].copy()
+            k0 = int(z["k_done"]) + 1
         print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
     t_ck = time.time()
     for k in range(k0, int(round(T_END / DT_C))):
