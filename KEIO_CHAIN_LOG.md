@@ -733,5 +733,6 @@ All four jobs ran 60 increments, 1 attempt each, no cutback, and wrote no "UEL n
 Files: `p3/uel/results/abaqus_fifa/uel_implant2x6x8_ph0.05{,_gi,_of,_gi_of}.sta` and `..._gp.txt.gz`.
 Step 4 of the 16 Oct instructions (6x18x24 emulation with the gate, about 35 min each) was not run.
 
-**Lean / Mathlib (16 Oct night): not done.** Installing elan with `curl ... elan-init.sh | sh`, as step 0 says, was
-refused by the permission settings of the Claude session on fifa. This needs the user's decision. `df -h /home`: 82 T free.
+**Lean / Mathlib (16 Oct night): skipped.** Installing elan with `curl ... elan-init.sh | sh`, as step 0 says, was
+refused by the permission settings of the Claude session on fifa. The user decided (29 Oct) to skip the Lean / Mathlib
+check on fifa: nothing was installed and `keio/lean-check` was not created.
