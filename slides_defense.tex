@@ -246,16 +246,16 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
 \begin{columns}[T]
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Time step $\Delta t$ [$T^*$]}{first order; $\Delta t=0.025$ gives an error of about $1\,\%$}
+\factbox{p2}{Time step $\Delta t$ [$T^*$]}{error about $1\,\%$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ against a reference solution: $4.1$ / $1.3$ / $0.7\,\%$ on $8^3$ / $16^3$ / $24^3$; seed stress on $24^3$: $2\,\%$}
+\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ measured against a reference: $0.7\,\%$ on $24^3$}
 \end{column}
 \begin{column}{0.32\textwidth}
-\factbox{p2}{Stability}{NEM limit derived (Bloch): $0.06$ on $8^3$, $0.12$--$0.16$ on $16^3$, $24^3$; confirmed by runs; Rudolf et al.\ 2025: 1-D value $0.5$}
+\factbox{p2}{Stability}{limit of the element derived and confirmed; all runs below it (Appendix~D)}
 \end{column}
 \end{columns}
-\takeaway{The error of the growth field is measured against a reference solution, the seed stress is $2\,\%$ from its converged value, and every run lies within the derived stability limit.}
+\takeaway{The errors are measured, not estimated, and every run lies within the derived stability limit.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -273,16 +273,17 @@ von Mises stress; $64^3$, one octant removed
   \item Synthetic data (Fritsch et al.\ 2025, case~I), all constants from the papers; antibiotic from $T^*=1/3$,
         $\alpha^*_0=100$
   \item Living fraction of the seed: separate $0.96\to0.15$, mixed $0.96\to0.04$
-  \item Growth $\alpha-1$ changes by less than $2\,\%$: the antibiotic lowers the living fraction, not $\phi_{3D}$
+  \item Growth changes by less than $2\,\%$ and the converged seed stress by about $2\,\%$: the antibiotic lowers the
+        living fraction, not $\phi_{3D}$
   \item New points take the living composition of their neighbours (\textcolor{warn}{assumption})
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{The antibiotic acts on the composition and the living biomass; the stress follows the nutrient and the front.}
+\takeaway{The composition reaches growth and stress only through the nutrient and the front speed $r\,c/(k+c)$.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: grid convergence and the front term \fterm{}}
+\begin{frame}{Part 3: the front term sets the accuracy of the stress}
 \begin{columns}[T]
 \begin{column}{0.56\textwidth}
 \centering
@@ -293,15 +294,14 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 \begin{column}{0.42\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{3pt}
-  \item Growth: GCI $0.5$ to $4.3\,\%$ in all examples
-  \item Stress: GCI $0.7$ / $1.4\,\%$ separate (without / with antibiotic), $19$ to $41\,\%$ mixed
-  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; constant added diffusion gives a quarter of
-        the converged stress
+  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a constant added diffusion gives a quarter of
+        the converged stress, a second-order upwind scheme is needed
+  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$, mixed stress $19$ to $41\,\%$
   \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
 \end{itemize}
 \end{column}
 \end{columns}
-\takeaway{Growth and composition converge; the stress needs a second-order front term \fterm{} and converges more slowly.}
+\takeaway{The stress needs a second-order treatment of the front term; with it the grid error is known.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -355,7 +355,7 @@ neighbours' state (a) or the start state (b); living fraction over time (c)
 \textbf{Contributions}\\[5pt]
 \cbox{p1}{1.4cm}{\textbf{\color{p1}1 Calibration:} five species, four conditions; which interactions the data determine}\\[6pt]
 \cbox{p2}{1.4cm}{\textbf{\color{p2}2 Growth law:} Klempt et al.\ 2024 in the IKM element, verified to $3\times10^{-11}$}\\[6pt]
-\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} the point model at every Gauss point, coupled through nutrient and antibiotic; verified on refined grids}
+\cbox{p3}{1.4cm}{\textbf{\color{p3}3 Composition:} the point model at every Gauss point, coupled through nutrient and antibiotic; it reaches the stress only through the nutrient and the front speed}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{Outlook (continuation at Keio University)}\\[6pt]
