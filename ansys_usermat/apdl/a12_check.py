@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""a12_check.py -- A-12 (CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md): the CH MAP replaced by
+"""a12_check.py -- A-12 (archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md): the CH MAP replaced by
 the raw-data one (Tmcmc202601 6e18e0b).
 
     python ansys_usermat/apdl/a12_check.py [--results DIR]

@@ -1,6 +1,6 @@
 <#
 run_scheme_c_chain.ps1 -- a list of run_calibrated.ps1 runs (scheme (c) and its
-reference (a), CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md) one after another, in a
+reference (a), archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md) one after another, in a
 process detached from the session (WMI Win32_Process.Create, as run_chain.ps1),
 so a session restart does not stop it. Each run pushes its JSON when it ends.
 

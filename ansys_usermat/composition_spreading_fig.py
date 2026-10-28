@@ -32,6 +32,7 @@ import figstyle  # noqa: E402
 
 OUT = HERE.parent / "assets" / "fig_composition_spreading.png"
 TIMES = [1, 3, 6, 10]                       # coupling steps: T* = 0.1, 0.3, 0.6, 1.0
+CACHE = HERE.parent / "figdata" / "composition_spreading.npz"   # field and shares at TIMES (no rerun to redraw)
 
 
 def run(snaps, case):
@@ -56,19 +57,36 @@ def run(snaps, case):
     return out
 
 
+def compute():
+    """field phi and shares chi at the coupling steps TIMES (full grid), cached in CACHE"""
+    if CACHE.exists() and "--recompute" not in sys.argv:
+        d = np.load(CACHE)
+        snaps = {k: d[f"phi_{k}"] for k in TIMES}
+        chis = {name: {k: d[f"chi_{c}_{k}"] for k in TIMES} for c, name in T.CASES.items()}
+        return snaps, chis
+    all_snaps = T.macro_snapshots()
+    chis_all = {name: run(all_snaps, case) for case, name in T.CASES.items()}
+    snaps = {k: np.asarray(all_snaps[k]) for k in TIMES}
+    chis = {name: {k: chis_all[name][k] for k in TIMES} for name in chis_all}
+    CACHE.parent.mkdir(exist_ok=True)
+    np.savez_compressed(CACHE, **{f"phi_{k}": snaps[k].astype(np.float32) for k in TIMES},
+                        **{f"chi_{c}_{k}": chis[name][k].astype(np.float32)
+                           for c, name in T.CASES.items() for k in TIMES})
+    return snaps, chis
+
+
 def main():
-    figstyle.apply(size=12)
-    snaps = T.macro_snapshots()
-    chis = {name: run(snaps, case) for case, name in T.CASES.items()}
+    figstyle.apply(size=8.5)                   # drawn at the thesis text width (6.3 in)
+    snaps, chis = compute()
     kz = T.K.N // 2
     cmap, norm = figstyle.klempt_cmap()          # the paper's contour colours
     ext = (0, T.K.L, 0, T.K.L)
-    fig, ax = plt.subplots(3, len(TIMES), figsize=(13, 9.6))
+    fig, ax = plt.subplots(3, len(TIMES), figsize=(6.3, 5.0))
     for c, k in enumerate(TIMES):
         phi = snaps[k][:, :, kz].T
         im0 = ax[0, c].imshow(phi, origin="lower", extent=ext, cmap=cmap, norm=norm,
                               interpolation="bilinear")
-        ax[0, c].set_title(rf"$T^* = {k * T.DT:.1f}$")
+        ax[0, c].set_title(rf"$T^* = {k * T.DT:.1f}$", fontsize=9)
         for r, name in enumerate(chis, start=1):
             chi = chis[name][k][:, :, kz].T
             chi = np.where(phi >= 0.05, chi, np.nan)     # show composition where there is biofilm
@@ -78,24 +96,21 @@ def main():
         for r in range(3):
             a = ax[r, c]
             a.grid(False)
-            figstyle.element_grid(a, np.arange(0, 21), np.arange(0, 21), alpha=0.2)
-            a.plot([T.K.L], [T.K.L], marker="s", ms=9, color="white", mec="black", clip_on=False)
+            figstyle.element_grid(a, np.arange(0, 21), np.arange(0, 21), alpha=0.15)
+            a.plot([T.K.L], [T.K.L], marker="s", ms=5, color="white", mec="black", clip_on=False)
             a.set_xticks([0, 10, 20]); a.set_yticks([0, 10, 20])
             if c:
                 a.set_yticklabels([])
             if r < 2:
                 a.set_xticklabels([])
-    ax[0, 0].set_ylabel("amount $\\phi$\n$y$ [$\\mu$m]")
-    ax[1, 0].set_ylabel("case 3 (coexistence)\n$y$ [$\\mu$m]")
-    ax[2, 0].set_ylabel("case 6 (one species wins)\n$y$ [$\\mu$m]")
+    ax[0, 0].set_ylabel("(a) amount $\\phi$\n$y$ [$\\mu$m]")
+    ax[1, 0].set_ylabel("(b) case 3\n$y$ [$\\mu$m]")
+    ax[2, 0].set_ylabel("(c) case 6\n$y$ [$\\mu$m]")
     for a in ax[2]:
         a.set_xlabel(r"$x$ [$\mu$m]")
-    fig.colorbar(im0, ax=ax[0, :], label=r"$\phi$", shrink=0.9, pad=0.015)
-    fig.colorbar(im, ax=ax[1:, :], label=r"$\phi_1/(\phi_1+\phi_2)$", shrink=0.9, pad=0.015)
-    fig.suptitle("Composition along a spreading front (Python); Klempt et al. 2024 test case 4.1 field, "
-                 "Klempt et al. 2026 cases 3 and 6;\nmid-plane $z = 10\\ \\mu$m, nutrient on the edge "
-                 "at the top right (white square), grey: no biofilm ($\\phi < 0.05$)", fontsize=12)
-    fig.savefig(OUT, dpi=200)
+    fig.colorbar(im0, ax=ax[0, :], label=r"$\phi$", shrink=0.9, pad=0.02)
+    fig.colorbar(im, ax=ax[1:, :], label=r"$\phi_1/(\phi_1+\phi_2)$", shrink=0.9, pad=0.02)
+    fig.savefig(OUT, dpi=250); fig.savefig(OUT.with_suffix(".pdf"))
     print("wrote", OUT)
     for name, d in chis.items():
         w = np.where(snaps[10] >= T.PHI_MIN, snaps[10], 0.0)

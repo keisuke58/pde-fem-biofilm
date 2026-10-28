@@ -58,7 +58,7 @@ not something an unconditionally stable scheme does. Pinned by
 
 **Deliberately left alone:**
 
-- `rigor_audit_growth_2026-06-26.md` — a dated audit record. Editing what a
+- `archive/rigor_audit_growth_2026-06-26.md` — a dated audit record. Editing what a
   past audit said would be rewriting history; this note is the correction.
 - Everything about the **φ/c diffusion solve** (`tooth_pde3d.py`,
   `fem_2d_extension.py`, `fem_report.tex`, `JAXFEM/`). Those genuinely are

@@ -1,0 +1,54 @@
+% Build: lualatex meeting_1020_onepage_ja.tex
+% 20 日（19 日から延期）の Oliver との会議：話す順番の 1 枚（meeting_1019_summary_ja.tex の最後のページから）。
+% 英語版 meeting_1019_summary.tex と同じ内容・同じ図。
+% ビルド: lualatex meeting_1019_summary_ja.tex （2回）
+\documentclass[11pt,a4paper]{article}
+\usepackage{luatexja}
+\usepackage[margin=1.7cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{tabularx,booktabs}
+\graphicspath{{assets/}}
+\setlist{nosep,leftmargin=*}
+\pagestyle{empty}
+\begin{document}
+\section*{10 月 20 日（火）17:15、Oliver（Teams）：話す順番（20 分、自分用）}
+{\small 元：\texttt{meeting\_1019\_summary\_ja}（図と詳しい説明）。スライドは \texttt{slides\_1020.pdf}（30 ページ）。}
+
+\medskip
+\begin{tabularx}{\linewidth}{@{}l l X X@{}}
+\toprule
+分 & 内容 & 言うこと（英語） & 意味\\
+\midrule
+0--2 & 今の状況 & ``The thesis is written; I plan to submit on 13 November. The point model is the Hamilton point model, calibrated by TMCMC, not machine learning.'' & 修論は書き終わった。点モデルは機械学習ではない。\\
+2 分 & 新しい 1 枚（p.~7） & ``The point model now also runs in Fortran inside the material call: no Python server, same results to $10^{-12}$, four times faster.'' & 点モデルを Fortran で書いた版。サーバーなし、結果は同じ、4 倍速い。\\
+2--5 & 1 と 2：二つの空隙 & ``The field and the point model each have their own void. I implemented two ways to match them.'' & 場と点モデルはそれぞれ空隙を持つ。そろえ方を 2 通り作った。\\
+5--10 & 3：方式 (c) と抗菌薬 & ``If growth follows the living biomass, an antibiotic lowers the growth and the stress; with my thesis coupling, the stress stays exactly the same.'' & 生きている量で成長させると、抗菌薬で成長と応力が下がる。修論の方式では応力はまったく同じ。\\
+10--12 & $T^*=0.5$ から & ``As in Fritsch et al., Fig.~18, the antibiotic is switched on at half time; an antibiotic on the anaerobes lowers the stress most.'' & Fritsch の Fig.~18 と同じく途中から。嫌気性菌に効く薬が一番効く。\\
+12--14 & 比較の表と提案 & ``I propose (a) for the thesis, (b) as a comparison, and (c), which keeps the point model of (b), as the extension.'' & 修論は (a)、(b) は比較、(c) は (b) の点モデルを使う発展。\\
+14--17 & 決めたいこと & ``Do you agree to state $\phi_0 = 1-\phi_{3D}$ as an assumption in the thesis, while (c) keeps it auxiliary?'' & 修論では $\phi_0$ を場の空隙とする仮定、(c) は補助の変数、でよいか。\\
+17--20 & 実験（紹介だけ）と質問 & ``These experiments are only ideas; experiment 1 would decide between (a) and (c).'' & 実験はアイデアだけ。1 で (a) と (c) を決められる。\\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\noindent\textbf{最初に聞く 1 問：} 決めたいこと（$\phi_0$ の意味）。修論の第 4 章の書き方に直接かかわるので、
+提出（11 月 13 日）の前に答えが要る。実験の話は短く、紹介だけでよい。
+
+\vspace{4pt}
+\noindent\textbf{時間が余れば（1 分、画面共有）：} 3D 動画 \texttt{assets/anim\_law\_3d.mp4}（角のシード、圧力で成長を止める則のあり・なし）、
+\texttt{anim\_cervical\_f4\_3d.mp4}（歯冠形のカラー、Fritsch らの合成 4 菌種）。``Not part of the thesis: where growing biofilm meets a
+fixed surface the stress concentrates, and a pressure limit on growth removes it.'' 実験データは使っていないと一言。
+
+\vspace{4pt}
+\noindent\textbf{聞かれそうなことと答え：}
+\begin{itemize}
+\item \emph{$\kappa$ はどう決めた？} 平均の成長が Eq.~36 と同じになるように（今の較正で $8.14\times10^{-3}$、前の較正で $8.82\times10^{-3}$）。体積に合わせると約 2.8 だが、
+  その値ではシードの外の空の要素がつぶれて $T^*\approx0.35$ で止まる。直す計算を回している。
+\item \emph{抗菌薬の値は？} 強さ $\alpha^*$ と感受性 $b_i$ は仮定。較正した $\theta$ の $b$ は全部 0 だった。
+\item \emph{なぜ (a) では応力が変わらない？} (a) の成長は場の $\phi$ だけで決まり、$\psi$ を見ないから。
+\item \emph{両方向の結合は？} 応力で組成を変える試験は要素で回った。ただし形と値は仮定。文献の「成長を止める圧力」は
+  0.1〜1 MPa の桁で、今のモデルの応力（$E=10$~Pa で $10^{-4}$~Pa）より桁で大きい。
+\end{itemize}
+\end{document}

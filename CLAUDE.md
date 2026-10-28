@@ -19,7 +19,20 @@ Abaqus run is possible here but nothing has been run here yet.
 ## Which machine is this?
 
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
-  scripts and Portable Git applies. Available until mid-December 2026.
+  scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
+  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
+  user is away. Back up what is not in git before the end of December: `BACKUP_PLAN_2026-12.ja.md` and
+  `scripts/backup_untracked_ikmhiwi03.ps1` (dry run by default; `-Go` writes the zips; the Felix and element zips are private).
+  **Reachable from the phone (confirmed 21 Oct 2026, during the trip):** the VS Code tunnel of IKMHIWI03 opens in
+  the phone's browser (vscode.dev, signed in with the user's account) when the mobile signal is good; with a weak
+  signal it does not load. The tunnel URL is kept out of this public repository. Use it to look at logs or start a
+  detached chain (`run_chain.ps1`); long work still goes through the detached scripts, not the browser session.
+  **Claude from the phone (Remote Control, 21 Oct 2026):** `.\scripts\start_remote_control.ps1` starts
+  `claude remote-control` in its own PowerShell window (repository `C:\Users\nishioka\git\pde-fem-biofilm`), so it
+  survives a closed tunnel tab, and restarts it whenever it exits (log `F:\remote_control.log`); `-Install` adds a
+  scheduled task that starts it at every logon (after a reboot), `-Uninstall` removes it. The session appears in the
+  Claude Code app (permission mode auto). A session started in
+  the tunnel terminal itself dropped after a few minutes ("computer unreachable").
 - **The Keio Linux server (fifa)**: Abaqus and Python only, no ANSYS (for about
   half a year). After cloning, run `bash scripts/setup_keio_server.sh` (git
   identity, hooks, checks), then read `KEIO_SERVER_HANDOFF.ja.md` and
@@ -54,8 +67,10 @@ Abaqus run is possible here but nothing has been run here yet.
 - `references/` — Klempt et al. 2024 (BMMB), the paper this work follows, and
   Soleimani et al. 2023 (Sci. Rep., two-species co-aggregation in an ANSYS user
   element) and Feng et al. 2021 (Bull. Math. Biol., two-species oral biofilm,
-  spreading driven by the summed species growth), each with
-  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`.
+  spreading driven by the summed species growth), and Klempt et al. 2026 (Arch. Appl. Mech.,
+  the point model, `Klempt2026_multispecies_interaction_AAM.pdf`), each with
+  a searchable text extraction. Licence and credit in `THIRD_PARTY.md`. **Parameter tables of all these papers,
+  with the conversion to the 2 mm cube: `references/PARAMETER_TABLES.md`** (look there first for any parameter value).
 - `ecology_constants.py` — the one place the Hamilton ecology model's c*
   (25, the TMCMC calibration value) and Hill gate (off) are set. Every path
   (0D / ANSYS bridge `ecology_jax`, 1D and 2D PDEs) imports it; never
@@ -131,6 +146,21 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   its `.rst` (a `/POST1` + `FILE,<job>,rst` deck with the three
   `post_*.mac`); resume a set with `-From n`; delete a killed run's
   leftover `<job>.lock` or ANSYS exits at once without a `.err`.
+- **Coupling agreed with Oliver (20 Oct 2026):** `F:\biofilm_upf_living` = the cal5d1
+  sources plus usermat mode 11 (point model as a black box, c* and alpha* interpolated)
+  and Oliver's USSFin/USolBeg with LIVING_CONS / FRONT_GRAD / NUT2_TSTART (changes
+  described in `IKMHIWI03_TO_CLOUD.ja.md` A-19, never committed). Decks
+  `make_living_deck.py`, runs `run_living.ps1` (-np 1). **21 Oct (A-22):** the living share was read only once in USSFin (inside its
+  initialisation); fixed in `F:\biofilm_upf_living4`. All earlier living runs (`lv8_`, `v2_`, `v2s_`, `sens_`) used a
+  frozen L and are not to be used; the fixed runs are `v2f_*`, `fsens_*`. Hand-off for another PC:
+  `archive/HANDOFF_IKMHIWI03_2026-10-20.ja.md`.
+  **23 Oct (A-53): current build `F:\biofilm_upf_living8t`** (living8 plus `--trace-elems`, fields identical; no `-smp`, no quarter domain in ANSYS). **Stresses with `--artdiff` (r h/4) are about a quarter of the converged value at 16^3 (A-57)**: for stresses use `--artdiff 2N` (r h/8 from the point spacing, A-58) or build `F:\biofilm_upf_living10` with `--lw-sensor` (A-59, 16^3 check pending). **22 Oct (A-38..A-45): build `F:\biofilm_upf_living8`** (living5 + NUT1_INIT_ALL, FRONT_DUMP, SURF_NEAREST,
+  NEM_DUMP, LAP_FILE = living7, plus NEM neighbours by distance; patches in `ansys_usermat/apdl/oliver_patches/`). Before it, phi leaked through the walls (surface
+  points took an inverse-square mean, and the NEM Laplacian's column sums are not zero), so all `u4_` and older living
+  runs are superseded; main runs are `u8_` with `--surf-nearest --lap-file` and a `lap_cons.txt` of the same mesh and build
+  (neighbours by element order made the 16^3/24^3 stencils asymmetric inside, A-44).
+  **Read `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md` first** (confirmed facts, what not to use, the builds), then the current
+  instructions `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03.ja.md`; the old instruction files (13-22 Oct, addenda 1-30) are in `ansys_usermat/apdl/archive/`.
 - **Intel Fortran (ifort) / Visual Studio: confirmed working** through
   `link_v222.ps1` (ifort 2025.3 + VS 18, 2026-09-02/09-29). A bare
   `where ifort` still finds nothing — the script sets up the environment
@@ -188,6 +218,9 @@ this machine's specific workflow.
 - **Always reply to the user in Japanese, and keep replies short**
   (decided 2026-10-02). Documents keep their own language (thesis and decks
   in English unless asked otherwise).
+- **"Front term" in replies (the user, 25 Oct 2026):** never write 前線項 / front term alone in a reply; always
+  write the formula, e.g. the term $-r\,\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ of Eq. 34
+  ($\mathbf n_c=\nabla c/|\nabla c|$). Same for other named terms: give the expression, not only the name.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
@@ -195,10 +228,11 @@ this machine's specific workflow.
   questions with their answers right away, in English and Japanese (EN: a
   sentence that can be said aloud; JA: the same meaning), starting from the
   basics. Use and extend section F of `QUIZ_COLLOQUIUM.ja.md`; new ones go there.
-- **No PhD** (the user, 6 Oct 2026: never). Plans and strategy aim at the
-  Keio master's (final presentation December 2027, graduation March 2028;
-  papers should be published before the presentation), papers and a job, not a doctorate or a
-  DFG proposal for him.
+- **A job first; a PhD in Germany only as a fallback** (the user, 26 Oct 2026; replaces "no PhD, never" of
+  6 Oct). Plans and strategy aim at the Keio master's (final presentation December 2027, graduation March 2028;
+  papers should be published before the presentation), papers and a job. If the job search (ends March 2027)
+  does not succeed, he would look for a funded PhD position in Germany (e.g. at IKM) from summer/autumn 2027.
+  Do not plan a doctorate or a DFG proposal for him unless he asks.
 - **In replies, call the partner "Oliver" (オリバー), not 相方** (asked
   2026-10-06). His element is an earlier version of Felix Klempt's
   implementation (same NEM and AceGen files); Felix's is the later version
@@ -288,19 +322,24 @@ this machine's specific workflow.
   likelihood). Ch. 3 now uses the archived EML runs (Tmcmc202601,
   `claude/gate-off-map-check`): four stages, three seeds, criteria (a)-(e),
   identifiability, pH only as a check (not in the likelihood). The R^2 = 0.78
-  claim is gone from abstract and conclusion. DS and DH are from stage (iii) and
-  provisional; when their final stage passes, update numbers and figures
-  (`thesis/figures/eml_*.pdf`) from the EML repo. Chapters 4 and 5 already use
-  the final CH MAP. Build with pdflatex + bibtex (no latexmk in the cloud).
-  **13 Oct:** the EML analysis moved to the measured (raw) data of N. Heine
-  with a two-channel likelihood (viable and total composition, live fraction).
-  The Ch. 3 methods now describe that; the results still show the earlier
-  digitised runs, flagged in the text, until the raw runs pass. No raw data
-  tables in the thesis (available on request only). If the raw CH MAP differs,
-  rerun the 8^3 five-species run of Ch. 4.
+  claim is gone from abstract and conclusion. Build with pdflatex + bibtex (no
+  latexmk in the cloud). **13 Oct:** the EML analysis moved to the measured
+  (raw) data of N. Heine with a two-channel likelihood (viable and total
+  composition, live fraction). No raw data tables in the thesis (available on
+  request only).
+  **Final (19 Oct 2026):** Ch. 3 shows the final raw-data runs, cross-checked
+  with the EML session: CS, CH, DS at stage (iv), DH at stage (iii) (its stage
+  (iv) splits; stated as a limitation). Nothing in Ch. 3 is provisional any
+  more. Ch. 4's five-species run was rerun on IKMHIWI03 with the final CH MAP
+  (`w8_CH_g1_s015_final_d1`, 19 Oct); the equal-shares run is marked as from
+  the preliminary MAP. Section 3.6 has the two Dieckow LOO figures; Joshi dropped.
 - **Mayu Muramatsu (Keio) is an associate professor (准教授)**: "Assoc. Prof.
   Muramatsu" / 村松准教授 (村松先生). Address: muramatsu@mech.keio.ac.jp (lab
   contact page). Not part of the December colloquium.
+  **16 Oct 2026:** the user gave her Chapters 1 and 2 of the LUH thesis.
+  Chapter 3 (final, extracted PDF) is scheduled by the user in Slack for
+  Fri 23 Oct; Japanese message with ，． punctuation. Next online meeting
+  2 Nov 9:00.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
@@ -339,7 +378,55 @@ this machine's specific workflow.
   **Confirmed 13 Oct (Wunnenberg):** in person, IKM Room 320, 16 Dec 13:00;
   talk 20 min, then 10-20 min questions (30-40 min total). The office handles
   the assessments.
+  **19 Oct:** Dr. Wangenheim (second examiner) will not attend the colloquium
+  (his mail); the committee is the usual IKM members.
+- **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
+  24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
+  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct). Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
+  (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
+  Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
+  `thesis/README.md`.
 
+- **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`.
+  - **Model frozen (the user, 21 Oct 2026):** the equations below (Klempt 2024 Eqs. 34-36 with dc/dt and g phi c,
+    the point model of Klempt 2026 as published, the agreed coupling) are not changed any more. Only constants (d, g,
+    r, beta, k_alpha, alpha*_0, phi_min, antibiotic onset), inputs (examples, start shares, sources, constant or sine
+    supply, point-model case) and numerics (mesh, time step, neighbours) vary. Fixes that make an implementation solve
+    these equations correctly are allowed; changing an equation is not.
+  - Point model used as published, unchanged, with its own constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D,
+    no phi_cap; ANSYS mode 8 is the base). In documents never call it a "black box" (the user): "used as published".
+  - c* and the antibiotic alpha* from 3D fields (the element's second nutrient field carries the antibiotic),
+    linearly interpolated in time over the inner steps.
+  - Eq. 35 consumption by the living biomass: g phi_3D (sum_i phibar_i) c, phibar_i = phi_i psi_i (Klempt 2026
+    notation; a volume fraction of the normalised point volume, not divided by sum phi_i). Same for the antibiotic.
+    Printed g phi (Eq. 35/24) is a confirmed misprint; write g phi c in the thesis.
+  - Eq. 34 with its front term switched on; Eq. 36 unchanged. **Paper values only (the user, 21 Oct evening):** r, d, g
+    of Klempt 2024 Table 2 converted (r = 10 mm/T*, g l^2/d = 1), alpha*_0 = 10 (Fritsch case I), antibiotic with the
+    nutrient's diffusion and uptake (alpha*_0 = 100 replaces 10, below); see the last table of `references/PARAMETER_TABLES.md`. Antibiotic from T* = 1/3 at alpha*_0 = 100
+    (Klempt 2026 case 4), phi_min = 0.001 (converged), void floor f = 1e-3 (0.13 % from f -> 0) (the user, 21 Oct late). r/10, alpha*_0 = 50,
+    g_a = 0.25 and g l^2/d = 4 are superseded.
+  - Time: T* = 1 = duration of the point model's data, so s follows (synthetic Fritsch case I: s = 0.1).
+  - Write phi_3D in every field equation, phi_i for the point model.
+  - The living volume fraction is written $\sum_i\bar\phi_i$ ($\bar\phi_i=\phi_i\psi_i$) in every document and figure,
+    never "L" (the user, 21 Oct). "L" stays only as a variable name in code and in the IKMHIWI03/cloud working notes.
+  - Python: `ansys_usermat/apdl/coupled_living_consumption.py` (replay check vs the point model alone: 2e-14);
+    ANSYS: `ansys_usermat/apdl/archive/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` (A-19), checked with `check_living_trace.py`;
+    thesis: `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex`; schematic
+    `coupling_schematic.py --agreed [--thesis]`; key-point slides `slides_coupling_1020.tex`; to-do `archive/TODO_2026-10-20.ja.md`.
+  - Replaces coupling (a) and the growth-from-living-biomass idea (c) in the thesis.
+  - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
+    printed; 21 Oct: had been dropped everywhere). **d from Klempt 2024 Table 2** (the user): 1e10 um^2/T* on the 20 um
+    cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
+    < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
+    term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
+  - **Result generations** (do not mix; updated 22 Oct): `results/2026-10-living/README.md` (ANSYS: `u8_` = main) and
+    `results/2026-10-3d/README_coupled_living.md` (Python: `..._a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast` = main;
+    `_artdiff` only for comparisons with ANSYS, never without `_wg`); summary `ansys_usermat/apdl/CONFIRMED_2026-10-22.ja.md`; case 3 of
+    Klempt 2026 Table 2 apart in `results/2026-10-3d-case3/`. Paper outline (co-authored): `papers/coupling_paper/OUTLINE.md`.
+- **Synthetic data first (20 Oct 2026, user's decision):** for new development (coupling, time link, nutrient,
+  3D demonstrations) the calibrated five-species model is set aside; use synthetic data, by default the
+  four-species case of Fritsch et al. 2025 with its true parameters (`JAXFEM/fritsch2025_cases.py`,
+  `fritsch_4sp_M3`). The thesis Chapters 3 and 4 keep their calibrated results as they are.
 - **Scheme (c), growth from the living biomass (15 Oct 2026, user's decision):** never
   in the thesis body, whatever the meeting with Oliver decides. The thesis keeps only
   the existing Outlook paragraph (Ch. 6, with Wanner and Gujer 1986); the antibiotic
@@ -454,6 +541,13 @@ examiners). Check each one before the document is handed over.
   calls `figstyle.apply()` from `ansys_usermat/figstyle.py` (Times New Roman,
   Liberation Serif where it is not installed, STIX mathematics). New figure
   scripts use it too; do not set fonts per script.
+  **Thesis figures (19 Oct 2026, all checked):** every figure of the thesis is
+  in Times (matplotlib: Times New Roman / Liberation Serif via `figstyle`;
+  the EML figures of Ch. 3: Nimbus Roman; TikZ: `mathptmx`). Draw at the
+  printed width (text width 6.3 in = 16 cm) so text prints at 7.5 pt or more,
+  save as vector PDF (3D renderings as PNG at 400 dpi), no title in the figure
+  (the caption carries it), panel letters (a), (b) matching the caption.
+  The body text stays Latin Modern; only the figures are Times.
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or

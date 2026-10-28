@@ -69,27 +69,27 @@ def fig_exact():
     dx, dy = np.array(dx), np.array(dy)
     tt = np.linspace(0, t[-1], 200)
 
-    fig, ax = plt.subplots(1, 3, figsize=(14, 3.8))
-    ax[0].plot(tt, np.sinh(K * tt), "k-", label=r"exact $\sinh(k_\alpha t)$")
-    ax[0].plot(t, dx, "k:", lw=1.5, label="exact solution of the explicit update")
-    ax[0].plot(t, bio, "o", color="C0", label="ANSYS")
-    ax[0].set(xlabel=r"time $T^*$", ylabel=r"$\phi$", title=r"biofilm fraction $\phi$")
-    ax[1].plot(tt, np.cosh(K * tt) - 1, "k-", label=r"exact $\cosh(k_\alpha t)-1$")
-    ax[1].plot(t, dy - 1, "k:", lw=1.5, label="exact solution of the explicit update")
-    ax[1].plot(t, loc - 1, "o", color="C1", label="ANSYS")
-    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha - 1$", title=r"growth $\alpha - 1$")
-    for a in ax[:2]:
-        a.legend(loc="upper left", fontsize=9)
-        a.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-    eb, el = np.abs(bio - dx), np.abs(loc - dy)
-    ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", label=r"$\phi$")
-    ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", label=r"$\alpha - 1$")
-    ax[2].set(xlabel=r"time $T^*$", ylabel="|ANSYS - discrete exact|",
-              title="error vs. the update's exact solution")
-    ax[2].legend(fontsize=10)
-    fig.suptitle(rf"An element outside the seed, Klempt 2024 Eq. 34/36, $k_\alpha$ = {K:g} (Table 2), "
-                 rf"$\Delta t$ = {DT:g}", y=1.03)
-    fig.savefig(OUT / "fig1005_exact.png")
+    with plt.rc_context({"font.size": 8.5, "axes.labelsize": 8.5, "axes.titlesize": 9, "xtick.labelsize": 7.5,
+                         "ytick.labelsize": 7.5, "legend.fontsize": 7.5}):   # drawn at the thesis text width
+        fig, ax = plt.subplots(1, 3, figsize=(6.3, 2.3))
+        ax[0].plot(tt, np.sinh(K * tt), "k-", lw=1.0, label="exact")
+        ax[0].plot(t, dx, "k:", lw=1.2, label="exact, discrete update")
+        ax[0].plot(t, bio, "o", ms=3, color="C0", label="ANSYS")
+        ax[0].set(xlabel=r"$T^*$", ylabel=r"$\phi$", title=r"(a) $\phi$")
+        ax[1].plot(tt, np.cosh(K * tt) - 1, "k-", lw=1.0)
+        ax[1].plot(t, dy - 1, "k:", lw=1.2)
+        ax[1].plot(t, loc - 1, "o", ms=3, color="C1")
+        ax[1].set(xlabel=r"$T^*$", ylabel=r"$\alpha - 1$", title=r"(b) $\alpha - 1$")
+        ax[0].legend(loc="lower right", handlelength=1.4)
+        for a in ax[:2]:
+            a.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        eb, el = np.abs(bio - dx), np.abs(loc - dy)
+        ax[2].semilogy(t[1:], np.maximum(eb[1:], 1e-18), "o-", ms=3, lw=1.0, label=r"$\phi$")
+        ax[2].semilogy(t[1:], np.maximum(el[1:], 1e-18), "s-", ms=3, lw=1.0, label=r"$\alpha - 1$")
+        ax[2].set(xlabel=r"$T^*$", ylabel="difference", title="(c) ANSYS $-$ discrete")
+        ax[2].legend()
+        fig.tight_layout(w_pad=0.8)
+        fig.savefig(OUT / "fig1005_exact.png", dpi=250); fig.savefig(OUT / "fig1005_exact.pdf")
     plt.close(fig)
     return float(eb.max()), float(el.max())
 
@@ -121,7 +121,7 @@ def fig_whole():
               title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
     ax[0].legend(fontsize=10)
     fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
-    fig.savefig(OUT / "fig1005_whole_model.png")
+    fig.savefig(OUT / "fig1005_whole_model.png"); fig.savefig(OUT / "fig1005_whole_model.pdf")
     plt.close(fig)
     return cos, ratio, float(q1.max()), float(q2.max())
 

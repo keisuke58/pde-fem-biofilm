@@ -1,0 +1,163 @@
+% The coupling agreed with Oliver on 20 Oct 2026: key points only (MEETING_2026-10-20.md).
+% Build: pdflatex slides_coupling_1020.tex (twice). Rules: CLAUDE.md "Slides, notes and other documents".
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\definecolor{c3}{RGB}{30,80,160}
+\definecolor{warn}{RGB}{200,30,30}
+\tikzset{box/.style={draw,rounded corners,align=center,font=\footnotesize,minimum height=1.0cm,text width=#1},
+  box/.default=3.6cm, arr/.style={-{Latex[length=2mm]},thick}}
+\setbeamercolor{frametitle}{bg=c3, fg=white}
+\setbeamertemplate{navigation symbols}{}
+
+\title{Coupling the Point Model to the Growth Field}
+\subtitle{Key points of the meeting of 20 October 2026}
+\author[Keisuke Nishioka]{Keisuke Nishioka}
+\institute[IKM, LUH]{\small Institute of Continuum Mechanics (IKM), Leibniz Universit\"at Hannover}
+\date{20 October 2026}
+
+\begin{document}
+\maketitle
+
+% --------------------------------------------------------
+\begin{frame}{What changes}
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item Point model (Klempt et al.\ 2026) used as published
+  \item No scaling to the field ($\phi_0=1-\phi_{3D}$ dropped)
+  \item Field $\to$ point model: $c^*$, $\alpha^*$ from 3D fields
+  \item Point model $\to$ field: only living biomass consumes
+  \item Eq.\ 34 with front term, Eq.\ 36 unchanged
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{The loop at one Gauss point}
+\centering
+\begin{tikzpicture}
+\node[box=4.4cm,fill=gray!12] (f) at (0,0) {\textbf{3D field} (Klempt et al.\ 2024)\\ $\phi_{3D}$, growth $\alpha$, nutrient $c$,\\
+  antibiotic $a$ (2nd nutrient field)};
+\node[box=4.4cm,fill=c3!15,draw=c3] (p) at (9.2,0) {\textbf{Point model} (Klempt et al.\ 2026)\\
+  $\phi_i$, $\psi_i$, $\phi_0$, used as published};
+\draw[arr] ([yshift=4mm]f.east) -- node[above,font=\footnotesize,align=center]{$c^*=c^*_0\,c$, $\alpha^*=\alpha^*_0\,a$\\ linear in time}
+  ([yshift=4mm]p.west);
+\draw[arr] ([yshift=-4mm]p.west) -- node[below,font=\footnotesize]{living biomass $\sum_i\bar\phi_i=\sum_i\phi_i\psi_i$}
+  ([yshift=-4mm]f.east);
+\node[align=center,font=\small,text width=13cm] at (4.6,-2.4) {
+  $\sum_i\bar\phi_i$ scales the consumption of $c$ and $a$ $\;\to\;$ $c$ enters the front term of Eq.\ 34 $\;\to\;$
+  spreading of $\phi_{3D}$ $\;\to\;$ growth $\alpha$ (Eq.\ 36) $\;\to\;$ stress};
+\end{tikzpicture}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Equations}
+\begin{align*}
+c^*(t)&=c^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}c_n+\tfrac{t-t_n}{\Delta t}c_{n+1}\Bigr],\quad
+\alpha^*(t)=\alpha^*_0\Bigl[\tfrac{t_{n+1}-t}{\Delta t}a_n+\tfrac{t-t_n}{\Delta t}a_{n+1}\Bigr]\\
+\dot c&=d\,\nabla^2c-g\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,c,\qquad \bar\phi_i=\phi_i\psi_i\\
+\dot a&=d_a\nabla^2a-g_a\,\phi_{3D}\,\textstyle\sum_i\bar\phi_i\,a\\
+\dot\phi_{3D}&=\beta\nabla^2\phi_{3D}+k_\alpha\alpha-\|\nabla\phi_{3D}\|\,\tfrac{r\,c}{k+c}\,\mathbf n_{\nabla\phi_{3D}}\cdot\mathbf n_{\nabla c},
+\qquad \dot\alpha=k_\alpha\phi_{3D}
+\end{align*}
+\small $g\phi$ in Eq.\ 35 of the paper is a misprint; $g\phi_{3D}c$ is used (Monod form $f(c)=c/(K_c+c)\to c/K_c$ for $K_c\gg c$). $\phi_{3D}$: field, $\phi_i$: point model. Antibiotic: $a$ (field), $\alpha^*$ (point model); growth: $\alpha$ (Eq.\ 36), not passed to the point model.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Nutrient and antibiotic at the Gauss points}
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.9, transform shape]
+\node[box=3.6cm,fill=gray!12] (g) at (0,0) {\textbf{element (NEM)}\\ $\phi_{3D}$, $c$, $a$ solved at the\\ Gauss points (and surface points)};
+\node[box=3.2cm,fill=c3!15,draw=c3] (m) at (4.6,0) {\textbf{material routine}\\ reads its own point:\\ pair $(c_n, c_{n+1})$, $(a_n, a_{n+1})$};
+\node[box=3.0cm,fill=c3!15,draw=c3] (p) at (8.8,0) {\textbf{point model}\\ $c^*(t)$ from $c$, $\alpha^*(t)$ from $a$\\ linear over the inner steps};
+\draw[arr] (g) -- (m); \draw[arr] (m) -- (p);
+\end{tikzpicture}\\[10pt]
+\begin{itemize}\setlength{\itemsep}{4pt}
+  \item No interpolation from nodes: the fields live at the integration points
+  \item The antibiotic in the second nutrient field takes the same path
+  \item One increment behind: the fields are solved after the material routine
+  \item A short first load step solves the fields before the point model starts
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{First ANSYS run: what is checked}
+\centering
+\includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{assets/fig_living_trace_check.png}\\[2pt]
+\raggedright\small
+\begin{itemize}\setlength{\itemsep}{2pt}
+  \item (a) $c_{n+1}$ of one increment is $c_n$ of the next: the pair is passed on without a jump
+  \item (b) point model in ANSYS = Python with the same inputs: $2\times10^{-12}$ or better in every step
+        (four runs, with and without antibiotic)
+  \item The first step needs up to 38 Newton iterations from the start state; with a tolerance-controlled
+        Newton (up to 50) both codes agree there too
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Time: one clock for both models}
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item $T^*=1$ = duration of the point model's data
+  \item $s$ follows from it, not fitted (synthetic: $s=0.1$)
+  \item Check (synthetic): error $7\times10^{-7}$; with scaling $0.019$
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Examples and checks}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\textbf{Examples} (synthetic, two species)
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item A centre, B edges
+  \item A and B mixed
+  \item with / without antibiotic
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Checks}
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item equals point model alone
+  \item ANSYS = Python
+  \item $0\le\phi\le1$
+  \item $\phi_{\min}$, step, mesh
+\end{itemize}
+\end{column}
+\end{columns}
+\vspace{8pt}
+\centering\textcolor{warn}{\small Results to follow}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Assumptions and open points}
+\begin{itemize}\setlength{\itemsep}{8pt}
+  \item \textcolor{warn}{Assumptions}: linear interpolation, $\sum_i\bar\phi_i$ one step late, start values of new points, $\phi_{\min}$
+  \item No transport of species between points
+  \item Front term needs upwinding
+  \item Antibiotic: synthetic data only ($b=0$ in the calibration)
+\end{itemize}
+\end{frame}
+
+% --------------------------------------------------------
+\appendix
+\begin{frame}{Appendix: notation}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+$\phi_{3D}$, $\alpha$ & biofilm phase field ($\phi$ of Klempt et al.\ 2024) and growth ($\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$), Klempt et al.\ 2024\\
+$c$, $a$ & nutrient and antibiotic fields (the element's first and second nutrient)\\
+$d$, $g$, $d_a$, $g_a$ & diffusion and consumption of nutrient and antibiotic\\
+$\beta$, $k_\alpha$, $r$, $k$ & diffusion of $\phi$, growth rate, front growth and Monod constant (Eq.\ 34, 36)\\
+$\phi_i$, $\psi_i$, $\phi_0$ & volume fraction and living fraction of species $i$, auxiliary void (Klempt et al.\ 2026)\\
+$c^*$, $\alpha^*$, $b_i$ & point-model nutrient $c^*_0c$, antibiotic $\alpha^*_0a$ (not the growth $\alpha$); sensitivity\\
+$\bar\phi_i$ & living volume fraction of species $i$, $\phi_i\psi_i$ (Klempt et al.\ 2026)\\
+$T^*$, $s$ & normalised time; point-model time per unit $T^*$\\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\end{document}

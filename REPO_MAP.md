@@ -73,10 +73,10 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 
 | Path | What it is |
 |---|---|
-| `ROADMAP_2026.md` ([日本語](ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
+| `archive/ROADMAP_2026.md` ([日本語](archive/ROADMAP_2026.ja.md)) | Submission Nov 2026, defence Dec. The Tier A/B split, the cadence with the supervisors, week by week |
 | `ROADMAP_TWO_WAY.md` | From the thesis's one-way coupling (field → point model) to a two-way one: four steps ordered by literature support, the first two proposed for Keio |
-| `QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
-| `MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
+| `archive/QA_1005.md` | Likely questions and short answers (English, with Japanese notes) for the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu |
+| `archive/MEETING_2026-10-05.md` | Summary of the 5 Oct 2026 meeting with Dr. Soleimani and Assoc. Prof. Muramatsu: journal suggestions, the two-way nutrient exchange the supervisor expects, submission format, contacts after the return to Japan, to-do list |
 | `EML_REQUEST_VOLUME.ja.md` | Draft request to the EML session (15 Oct 2026, Japanese): add the measured biofilm volume to the likelihood so that the point model calibrates its own growth and scheme (c) needs no external kappa |
 | `KEIO_PLAN.ja.md` | Plan for the Keio continuation (Japanese): what Felix Klempt's and Meisam Soleimani's mails of 5-6 Oct 2026 settled, the tools in hand (ANSYS, Abaqus, Fortran point model), the Klempt 2024 reproduction in Abaqus, and the work packages in order |
 | `KEIO_SERVER_HANDOFF.ja.md` | Hand-off to the Keio Linux server (Japanese, 7 Oct 2026): how to run the Keio work packages with Abaqus there, and which steps were only checked on IKMHIWI03 |
@@ -86,7 +86,7 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `scripts/setup_keio_server.sh` | One-time setup of a clone on the Keio Linux server (fifa): git identity and hooks, checks for Python, numpy/scipy and the Abaqus command |
 | `references/` | Klempt et al. 2024 (BMMB), Soleimani et al. 2023 (Sci. Rep., co-aggregation) and Feng et al. 2021 (Bull. Math. Biol., Streptococcus–Veillonella), all CC BY 4.0: PDFs and searchable text extractions; licence in `THIRD_PARTY.md`. NEM papers (Rudolf 2025, Vogel 2020, Junker 2022, von Zabiensky 2026; open access) with the reading guide `references/NEM_PAPERS.md`, which also summarises the three that are not open access |
 | `PAPER_CHECK_KLEMPT2024.md` | Chapter 5 and the decks checked against Klempt et al. 2024: notation now as in the papers, contradictions found and fixed, what is still open (neighbours in tension?) and the Monday IKMHIWI03 commands |
-| `COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
+| `archive/COUPLING_STATUS.md` | One page: what is done and what is not, for one and for two species (ANSYS model, checks, open items, more species) |
 | `thesis/` | **The thesis itself** (from 3 Oct 2026; copied from LUH_summer_2026). `main.tex`, `chapters/`, structure in `thesis/README.md`; the ANSYS chapter is `chapters/ch4_ansys.tex` |
 | `data/HEINE_DATA_NOT_IN_GIT.md` | Why the measured data of Heine et al. are not in git (on request only) and where scripts expect a local copy |
 | `thesis/admin/` | LUH examination rules for the thesis (MPO 2024, grading: the colloquium is pass/fail, only the thesis is graded), copied from luh_summer_2026; index in `thesis/admin/README.md` |
@@ -106,8 +106,10 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `ansys_usermat/apdl/make_layered_material.py` | Turns a depth-resolved α(x) field into ANSYS layered materials, and reports what the binning costs against the field — the ANSYS route takes α per material, so a spatial field has to be discretised |
 | `RESEARCH_IDEAS.ja.md` | Research ideas after the thesis (10 Oct 2026), mapped to the Keio papers: a symmetric neighbour choice for the NEM stencil, the short-run stability artefact, implicit NEM against Galerkin, the calibrated five-species point model in the element, posterior propagation to stresses, measured stiffness and geometry |
 | `QUIZ_COLLOQUIUM.ja.md` | Question bank for colloquium practice (Japanese, short answers) and a log of what was asked |
-| `STATUS_2026-10.ja.md` | Status note (15 Oct 2026, Japanese): dates up to the colloquium, decisions of 14-15 Oct, what scheme (c) showed, what is waited for and what is still open |
+| `archive/STATUS_2026-10.ja.md` | Status note (15 Oct 2026, Japanese): dates up to the colloquium, decisions of 14-15 Oct, what scheme (c) showed, what is waited for and what is still open |
 | `p3/` | Working note of the Keio continuation (P3): `unified_model.tex`, the two-level model from one variational principle (derivation, discretisation, verification, results, assumptions and open points), built with pdflatex |
+| `uq/` | Keio continuation, uncertainty of growth and stress over the final posterior of thesis ch. 3 (`data/posterior_final/`, EML export): `posterior_growth_band.py` (point model only), `p3_posterior.py` (P3 element with posterior particles) |
+| `figdata/` | Cached data of the thesis figures that need a simulation (`.npz`), so they can be redrawn without a rerun |
 | `UNIFIED_MODEL_CONCEPT.ja.md` | Concept of one spatial multispecies model from one extended Hamilton principle (15 Oct 2026, Japanese): energy and equations from Klempt et al. 2024 and 2026, which coupling choices disappear, the 1D prototype `JAXFEM/unified_1d.py` and its first results |
 | `P3_STEP3_FEM_PLAN.ja.md` | Plan for step 3 of the unified model (15 Oct 2026, Japanese): a 3D finite-element implementation in Abaqus (UEL with u, phi, c; composition and growth at the integration points), the verification order against the Python results, and what follows |
 | `P3_OUTLINE.ja.md` | Outline of the P3 paper (15 Oct 2026, Japanese): growth from the living biomass, sections with the material in hand and what is missing, order of work and open decisions |
@@ -127,10 +129,35 @@ require `jax[cpu]` (not pinned in `requirements.txt`).
 | `umat_tangent_test/` | Single-element UMAT tangent and eigenstrain cross-check harnesses, including the dual-UMAT growth comparison in `xcheck_eigenstrain/XCHECK_RESULTS.md` |
 | `ANSYS_ENVIRONMENT.md` | Full hardware, licence and product inventory for the IKMHIWI03 ANSYS machine |
 | [`runs/`](runs/) | Per-run validation logs / env configs (provenance) |
+| `travel/` | Personal travel planning notes (trip memo, hotel research); not part of the research |
 
 ## Documentation
 
 `README.md`, [`DOCS.md`](DOCS.md) (full index),
 [`VERIFICATION_SENSITIVITY_LIMITATIONS.md`](VERIFICATION_SENSITIVITY_LIMITATIONS.md)
-(read first for what is verified vs assumed), `PLAN_NEXT.md`, `methods_supplement_fem.md`.
-Historical notes live under [`archive/`](archive/).
+(read first for what is verified vs assumed), `archive/PLAN_NEXT.md`, `methods_supplement_fem.md`.
+Historical notes live under [`archive/`](archive/); the root scripts, reports and results of the first half of 2026 that nothing uses any more were moved to [`archive/legacy_2026H1/`](archive/legacy_2026H1/) on 19 Oct 2026.
+
+## The coupling agreed with Oliver (20 Oct 2026)
+
+| file | what |
+|---|---|
+| `MEETING_2026-10-20.md` | the meeting and the decisions after it |
+| `ansys_usermat/apdl/coupled_living_consumption.py` | Python version on the seed problem, synthetic two-species data |
+| `ansys_usermat/apdl/check_living_trace.py` | replay check of an ANSYS trace against the Python point model |
+| `ansys_usermat/apdl/CLOUD_TO_IKMHIWI03_2026-10-20.ja.md` | ANSYS implementation instructions (A-19) |
+| `ansys_usermat/coupling_schematic.py --agreed` | the schematic (`assets/fig_coupling_schematic_agreed*.png`) |
+| `thesis/CH4_REWRITE_PLAN.md`, `thesis/chapters/ch4_coupling_draft.tex` | Chapter 4 rewrite |
+| `slides_coupling_1020.tex` | key-point slides |
+| `references/Klempt2026_multispecies_interaction_AAM.pdf` | the point model paper (published, CC BY 4.0) |
+| [`abaqus_living/`](abaqus_living/) | the coupling as an Abaqus user element (`living_uel.f90`: Galerkin, SUPG, inherit rule layout 3), deck generators (cube, maze), manufactured solution, run summaries; the Keio continuation |
+| `papers/coupling_paper/` | the coupling paper: outline, Sec. 3 verification draft, figures (convergence, maze) |
+
+## Working notes of IKMHIWI03 (Oct 2026)
+
+| file | what |
+|---|---|
+| `BACKUP_PLAN_2026-12.ja.md` | what to back up from IKMHIWI03 before the end of December (`scripts/backup_untracked_ikmhiwi03.ps1`) |
+| `DAILY_REPORT_TRIP.ja.md` | daily reports written while the user was travelling (21-24 Oct) |
+| `archive/MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` | draft mail about the neighbour choice of the element (not sent) |
+| `speaker_notes_3d_demo.md` | speaker notes for the 3D demonstration videos |

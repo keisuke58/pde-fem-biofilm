@@ -1,0 +1,411 @@
+diff --git "a/F:\\biofilm_upf_living4\\NEM_UserData_P21_V05.F" "b/F:\\biofilm_upf_living8\\NEM_UserData_P21_V05.F"
+index a783a19..22b8b85 100644
+--- "a/F:\\biofilm_upf_living4\\NEM_UserData_P21_V05.F"
++++ "b/F:\\biofilm_upf_living8\\NEM_UserData_P21_V05.F"
+@@ -436,8 +436,14 @@ c ---- NEM-Offsets setzen & Arena allozieren
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-c *** SUBROUTINE GetNhgb(sID,sRowStart,sLdp_Radius,sGi_ElemCnt,sGi_GpPerElem,sGi_NodeCnt) ****
+-
+-      SUBROUTINE GetNhgb(sID,sRowStart,vdx,vdy,vdz,elemId, vLi_ColID) !Erhandler Code 51XX
+-      IMPLICIT NONE      
++c *** GetNhgb, test build "sorted" (addendum 15, 21 Oct 2026) *******
++c     Neighbours by distance, not by element order: the distances to
++c     all points (Gauss points and surface nodes) are measured, the
++c     nearest sGi_NeighCnt are taken, and if the points at the cap
++c     have the same distance (a tie across the cap), that whole tie
++c     group is left out. The free slots keep valid point IDs from the
++c     tie group but get an offset of 1e3, so their weight in CalcDMat
++c     is exactly 0 and so is their coefficient.
++      SUBROUTINE GetNhgb(sID,sRowStart,vdx,vdy,vdz,elemId, vLi_ColID)
++      IMPLICIT NONE
+       INTERFACE
+         FUNCTION GetVals (iloc,sz,outdata)
+@@ -446,18 +452,6 @@ c *** SUBROUTINE GetNhgb(sID,sRowStart,sLdp_Radius,sGi_ElemCnt,sGi_GpPerElem,sGi
+           double precision outdata(*)
+         END FUNCTION
+-        FUNCTION SetTMP (iloc,sz,indata)
+-!DEC$     ATTRIBUTES DLLIMPORT :: SetTMP
+-          INTEGER :: SetTMP, iloc, sz
+-          double precision indata(*)
+-        END FUNCTION
+-        FUNCTION GetTMP (iloc,sz,outdata)
+-!DEC$     ATTRIBUTES DLLIMPORT :: GetTMP
+-          INTEGER :: GetTMP, iloc, sz
+-          double precision outdata(*)
+-        END FUNCTION
+       END INTERFACE
+ 
+-      
+-!#include "impcom.inc"
+ #include "usercm.inc"
+ #include "syspar.inc"
+@@ -466,300 +460,82 @@ c *** SUBROUTINE GetNhgb(sID,sRowStart,sLdp_Radius,sGi_ElemCnt,sGi_GpPerElem,sGi
+ !DEC$ ATTRIBUTES DLLIMPORT :: /usercm/
+ 
+- 
+-       EXTERNAL erhandler,elmget
+-       LOGICAL :: SurfaceNode
+- 
+-       INTEGER
+-     &     qq, rr, pp, ss,elemId,ll,sIDLok,ii,jj,
+-     & sRowStart,sID,sNeighCntLive,sExtNeighCntLive,sIntPtOne,
+-     & vExtNeighList(10000),sID_help,szTot
+-     &,vElmdata(30),vLBoundaryNodeCopy(sGi_NodeCnt)
+-     &,vLi_ColID(sGi_NeighCnt+1),Si_Kerr,sLi_BCPtsCnt
+-     &, nTot
+-
+-       INTEGER ::vNodesLocal(sGi_NodesPerElem), vTest(30)
+-     &,   Vi_MapNodetoID(sGi_NodeCnt)
+- 
+-       DOUBLE PRECISION
+-     &       dx, dy, dz,sLdp_Radius,
+-     &      vdx_help(10000), vdy_help(10000), vdz_help(10000),
+-     &      vdx(sGi_NeighCnt), vdy(sGi_NeighCnt), vdz(sGi_NeighCnt),
+-     &      vDPerr(3),dp1(1),dp3_0(3),dp3(3),Sdp1
+-
+-      DOUBLE PRECISION, allocatable :: dpBC(:),dpCols(:)
++      INTEGER :: sID, sRowStart, elemId
++      INTEGER :: vLi_ColID(sGi_NeighCnt+1)
++      DOUBLE PRECISION :: vdx(sGi_NeighCnt), vdy(sGi_NeighCnt)
++     &, vdz(sGi_NeighCnt)
+ 
+-            !Define all Characters
+-      CHARACTER(256) :: cParName    !parameter Name from the APDL
+-      CHARACTER(250) :: cCherr(2)     !Character Value for the Error
+-     &,chValue   !Character Value for the APDL 
++      INTEGER :: nTot, ii, kk, nK, nSel, Si_Kerr, minIdx
++      DOUBLE PRECISION :: x0, y0, z0, dmin, dcap, tol
++      DOUBLE PRECISION, ALLOCATABLE :: px(:), py(:), pz(:), dd(:)
++      INTEGER, ALLOCATABLE :: ord(:)
++      LOGICAL, ALLOCATABLE :: used(:)
+ 
+       nTot = sGi_ElemCnt*sGi_GpPerElem + sGi_NodeSufCnt
++      ALLOCATE(px(nTot), py(nTot), pz(nTot), dd(nTot), used(nTot))
++      ALLOCATE(ord(sGi_NeighCnt+1))
++      Si_Kerr = GetVals(ofs_dp_PosX_n0, nTot, px)
++      Si_Kerr = GetVals(ofs_dp_PosY_n0, nTot, py)
++      Si_Kerr = GetVals(ofs_dp_PosZ_n0, nTot, pz)
++      x0 = px(sID)
++      y0 = py(sID)
++      z0 = pz(sID)
++      DO ii = 1, nTot
++            dd(ii) = SQRT((px(ii)-x0)**2 + (py(ii)-y0)**2
++     &             + (pz(ii)-z0)**2)
++            used(ii) = .FALSE.
++      ENDDO
++      used(sID) = .TRUE.
++
++c     the nearest sGi_NeighCnt+1 points, in distance order
++      nK = MIN(sGi_NeighCnt+1, nTot-1)
++      ord(:) = 0
++      DO kk = 1, nK
++            dmin = 1.0D30
++            minIdx = 0
++            DO ii = 1, nTot
++                  IF (.NOT. used(ii) .AND. dd(ii) .LT. dmin) THEN
++                        dmin = dd(ii)
++                        minIdx = ii
++                  ENDIF
++            ENDDO
++            used(minIdx) = .TRUE.
++            ord(kk) = minIdx
++      ENDDO
+ 
+-            !Global search radius
+-      cParName='SEARCH_RADIUS'
+-      CALL parevl(cParName,0,0,0,dp1(1),chValue,Si_Kerr)
+-      IF(dp1(1).LE.0.0D0)THEN
+-            !Wenn Search Radius negativ, dann wird der gesch?tzte Radius verwendet
+-            sLdp_Radius = sGdp_SearchRadius_Estimate
+-      ELSE
+-            sLdp_Radius = dp1(1)
+-      ENDIF
+-
+-      vLi_ColID(:)=0
+-
+-      IF(sID .GT. sGi_ElemCnt*sGi_GpPerElem)THEN
+-      SurfaceNode=.TRUE.
+-      ELSE
+-      SurfaceNode=.FALSE.
++c     a tie across the cap: leave out every point at that distance
++      nSel = MIN(sGi_NeighCnt, nK)
++      IF (nK .EQ. sGi_NeighCnt+1) THEN
++            dcap = dd(ord(sGi_NeighCnt))
++            tol = 1.0D-9*dcap
++            IF (dd(ord(sGi_NeighCnt+1)) - dcap .LE. tol) THEN
++                  nSel = 0
++                  DO kk = 1, sGi_NeighCnt
++                        IF (dd(ord(kk)) .LT. dcap - tol) nSel = kk
++                  ENDDO
++            ENDIF
+       ENDIF
+ 
+-      !vLi_ColID: Vektor der Immer die ID des Mutter-IntPt mit Nachfolgend allen Nachbar-IDs hat f?r alle Int Pts
++      vLi_ColID(:) = 0
+       vLi_ColID(1) = sID
+-       
+-       
+-       !Copy the identicator Vektor that every node is only once in a search
+-      allocate(dpBC(sGi_NodeCnt))
+-      dpBC(:)=0.0d0
+-      Si_Kerr=GetTMP(ofs_i_BCNode_Tmp,sGi_NodeCnt, dpBC)
+-      vLBoundaryNodeCopy(:)=NINT(dpBC(:))
+-
+-      dpBC(:)=0.0d0
+-      Si_Kerr=GetTMP(ofs_i_MapNodetoID_Tmp,sGi_NodeCnt,dpBC)
+-      Vi_MapNodetoID(:)=0
+-      Vi_MapNodetoID(:)=INT(dpBC(:))
+-      deallocate(dpBC) 
+-
+-      sLi_BCPtsCnt=0
+-
+-      szTot = sGi_ElemCnt*sGi_GpPerElem + sGi_NodeSufCnt
+-
+-      dp3_0(:)=0.0d0
+-      Si_Kerr=GetVals(ofs_dp_PosX_n0 + sID-1 ,1, dp3_0(1))
+-      Si_Kerr=GetVals(ofs_dp_PosY_n0 + sID-1 ,1, dp3_0(2))
+-      Si_Kerr=GetVals(ofs_dp_PosZ_n0 + sID-1 ,1, dp3_0(3))
+-
+-      IF(sID == sGi_DebugID .AND. sGi_DebugKeyNEM .EQ. 4)THEN
+-            PRINT *, "getnhgb:  sID: ",sID
+-            PRINT *, "getnhgb:  sLdp_Radius: ",sLdp_Radius
+-            PRINT *, "getnhgb:  dp3_0: ",dp3_0(1),dp3_0(2),dp3_0(3)
+-      ENDIF
+-      !Zaehl und Hilfsvariablen
+-       sNeighCntLive = 0 !Zaehler, wie viele Nachbarn aktuell gefunden worden sind
+-       sExtNeighCntLive = 0 !Zaehler, wie viele Nachbarn in der Expanded List aktuell sind
+-       vExtNeighList(:) = 0 !Erweiterte Nachbarliste - Knoten, die nah dran sind
+-      !Elemente die weit weg liegen wird nur ein GP angeschaut und dann die restlichen GP des ELements nicht mehr (sie liegen ja weit weg)
+-       DO qq=1, sGi_ElemCnt !Loop ?ber die ersten IntPts jeden Elements
+-             sIntPtOne = (qq-1)*sGi_GpPerElem+1
+-             Sdp1=0.0d0
+-
+-      !St?ndiger Funktionsaufruf ist ineffizient aber erspart viel Speicherplatz
+-            ! und gro?e Arrays
+-      dp3(:)=0.0d0
+-      Si_Kerr=GetVals(ofs_dp_PosX_n0 + sIntPtOne-1 ,1, dp3(1))
+-      Si_Kerr=GetVals(ofs_dp_PosY_n0 + sIntPtOne-1 ,1, dp3(2))
+-      Si_Kerr=GetVals(ofs_dp_PosZ_n0 + sIntPtOne-1 ,1, dp3(3))
+-
+-      Sdp1=SQRT((dp3(1)-dp3_0(1))**2
+-     & +(dp3(2)-dp3_0(2))**2
+-     & +(dp3(3)-dp3_0(3))**2)
+-
+-      !Falls der erste Int Pt n?her als der vierfache Radius ist,
+-       !werden alle Int Pts vom Element auf den Abstand untersucht
+-             IF (Sdp1.LT.sLdp_Radius*5.0D0)THEN
+-                  DO, rr=1,sGi_GpPerElem
+-                        sID_help = (sIntPtOne-1)+rr
+-
+-      Si_Kerr=GetVals(ofs_dp_PosX_n0 + sID_help-1 ,1, dp3(1))
+-      Si_Kerr=GetVals(ofs_dp_PosY_n0 + sID_help-1 ,1, dp3(2))
+-      Si_Kerr=GetVals(ofs_dp_PosZ_n0 + sID_help-1 ,1, dp3(3))
+-
+-                        dx=dp3(1)-dp3_0(1)
+-                        dy=dp3(2)-dp3_0(2)
+-                        dz=dp3(3)-dp3_0(3)
+-
+-                        Sdp1=SQRT(dx*dx + dy*dy + dz*dz)
++      DO kk = 1, sGi_NeighCnt
++            vLi_ColID(1+kk) = ord(kk)
++            IF (kk .LE. nSel) THEN
++                  vdx(kk) = px(ord(kk)) - x0
++                  vdy(kk) = py(ord(kk)) - y0
++                  vdz(kk) = pz(ord(kk)) - z0
++            ELSE
++                  vdx(kk) = 1.0D3
++                  vdy(kk) = 0.0D0
++                  vdz(kk) = 0.0D0
++            ENDIF
++      ENDDO
+ 
+-                  
+-      IF(sID == sGi_DebugID .AND. sGi_DebugKeyNEM .EQ. 4)THEN
+-            PRINT *, "getnhgb:  sID_help: ",sID_help
+-            PRINT *, "getnhgb:  Sdp1: ",Sdp1
++      IF (sID .EQ. 1 .OR. sID .EQ. nTot) THEN
++            PRINT *, "IKM sorted GetNhgb: sID ", sID, " kept ", nSel
++     &      , " of ", sGi_NeighCnt
+       ENDIF
+-                              !DEBUG
+-                        IF(Sdp1.LT.sLdp_Radius !Distanz Mutter zu Int Pt kleiner als Radius
+-     &                   .AND. sNeighCntLive .LT. sGi_NeighCnt      !Es sind weniger als die maximal gewollten Nachbarn gefunden
+-     &                   .AND. sID_help .NE. sID)THEN            !Der Int Pt ist ungleich Mutter
+-
+-                              sNeighCntLive = sNeighCntLive+1
+-                              vdx(sNeighCntLive) = dx
+-                              vdy(sNeighCntLive) = dy
+-                              vdz(sNeighCntLive) = dz               
+-                              vLi_ColID(1+sNeighCntLive)=sID_help
+-
+-                        ELSEIF(sID_help.NE.sID)THEN !Falls die Distanz gr??er als der Radius ist(aber kleiner als 4*radius) -> extended List
+-                              sExtNeighCntLive=sExtNeighCntLive+1                       
+-                              vExtNeighList(sExtNeighCntLive)=sID_help
+-                              vdx_help(sExtNeighCntLive) = dx
+-                              vdy_help(sExtNeighCntLive) = dy
+-                              vdz_help(sExtNeighCntLive) = dz
+-                        ENDIF
+-                  ENDDO
+-                   ! Loop ?ber zugeh?rige Surface Nodes
+-                  CALL elmget(qq,vElmdata(1),vNodesLocal(1))
+-                  DO, rr=1,sGi_NodesPerElem
+-                  IF(vLBoundaryNodeCopy(vNodesLocal(rr)).EQ.1) THEN
+-                        sID_help = Vi_MapNodetoID(vNodesLocal(rr))
+-
+-      Si_Kerr=GetVals(ofs_dp_PosX_n0 + sID_help-1 ,1, dp3(1))
+-      Si_Kerr=GetVals(ofs_dp_PosY_n0 + sID_help-1 ,1, dp3(2))
+-      Si_Kerr=GetVals(ofs_dp_PosZ_n0 + sID_help-1 ,1, dp3(3))
+-
+-                        dx=dp3(1)-dp3_0(1)
+-                        dy=dp3(2)-dp3_0(2)
+-                        dz=dp3(3)-dp3_0(3)
+-                        Sdp1=SQRT(dx*dx + dy*dy + dz*dz)
+-
+-                        vLBoundaryNodeCopy(vNodesLocal(rr))=0 !Sicherstellen das der Knoten nur einmal in der Suche ist
+-                        IF(Sdp1.LT.sLdp_Radius !Distanz Mutter zu Int Pt kleiner als Radius
+-     &                  .AND. sNeighCntLive .LT. sGi_NeighCnt
+-     &                  .AND. sID_help .NE. sID)THEN  !Es sind weniger als die maximal gewollten Nachbarn gefunden
+-                              sNeighCntLive = sNeighCntLive+1
+-                              vdx(sNeighCntLive) = dx
+-                              vdy(sNeighCntLive) = dy
+-                              vdz(sNeighCntLive) = dz
+-                              vLi_ColID(1+sNeighCntLive)=sID_help
+-                              sLi_BCPtsCnt=sLi_BCPtsCnt+1     !Counts how many Boundary Points influence the Gaussian Point
+-                         ELSEIF(sID_help.NE.sID)THEN !Falls die Distanz gr??er als der Radius ist(aber kleiner als 4*radius) -> extended List
+-                               sExtNeighCntLive=sExtNeighCntLive+1
+-                               vExtNeighList(sExtNeighCntLive)=sID_help
+-                               vdx_help(sExtNeighCntLive) = dx
+-                               vdy_help(sExtNeighCntLive) = dy
+-                               vdz_help(sExtNeighCntLive) = dz
+-                         ENDIF
+-                   ENDIF
+-                   ENDDO             
+-             ENDIF
+-       ENDDO    
+- 
+-       IF((sID .EQ. sGi_DebugID .AND. sGi_DebugKeyNEM .EQ. 4).OR. 
+-     & (sGi_DebugKeyNEM .EQ. 100))THEN
+-       WRITE(*,*)"DEBUG getnhgb before search extended list sID: ",sID
+-     & ,"sNeighCntLive: ",sNeighCntLive
+-     & ,"sExtNeighCntLive: ",sExtNeighCntLive
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vExtNeighList: ",vExtNeighList(1:sExtNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdx: ",vdx(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdy: ",vdy(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdz: ",vdz(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vLi_ColID:",vLi_ColID(:)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-       ENDIF 
+- 
+-       rr=0
+-       DO pp=1,1000
+-       IF(sNeighCntLive.LT.sGi_NeighCnt)THEN !Falls nicht genug Nachbarn gefunden worden sind
+-             sLdp_Radius = sLdp_Radius*1.10d0
+-            DO ss=1,sExtNeighCntLive !Loop ?ber die Extended List mit L?nge vExtNeighCntLive
+-                  sID_help = vExtNeighList(ss)
+-                  IF(sID_help .NE. 0)THEN
+-
+-
+-      Si_Kerr=GetVals(ofs_dp_PosX_n0 + sID_help-1 ,1, dp3(1))
+-      Si_Kerr=GetVals(ofs_dp_PosY_n0 + sID_help-1 ,1, dp3(2))
+-      Si_Kerr=GetVals(ofs_dp_PosZ_n0 + sID_help-1 ,1, dp3(3))
+-
+-                  dx=dp3(1)-dp3_0(1)
+-                  dy=dp3(2)-dp3_0(2)
+-                  dz=dp3(3)-dp3_0(3)
+-                  Sdp1=SQRT(dx*dx + dy*dy + dz*dz)
+-                  IF(Sdp1.LT.sLdp_Radius!Falls abstand kleiner als neuer Radius
+-     &                  .AND. sNeighCntLive.LT.sGi_NeighCnt)THEN
+-                        sNeighCntLive=sNeighCntLive+1 !neuer Nachbar gefunden
+-                        vdx(sNeighCntLive)=vdx_help(ss)
+-                        vdy(sNeighCntLive)=vdy_help(ss)
+-                        vdz(sNeighCntLive)=vdz_help(ss)
+-                        vLi_ColID(1+sNeighCntLive)=sID_help
+-                        vExtNeighList(ss)=0
+-                        IF(sID_Help .GT. sGi_ElemCnt*sGi_GpPerElem)THEN 
+-                  !If a BC Point is found, then increase the count of the Boundary Points
+-                        !that influence the Gaussian Point
+-                              sLi_BCPtsCnt=sLi_BCPtsCnt+1
+-                        ENDIF
+-                   ENDIF
+-                ENDIF
+-             ENDDO
+-             rr=rr+1 !Check ob auch mindestens eine Radius vergr??erung vorgenommen wurde
+-       ELSEIF(sNeighCntLive.LT.sGi_NodeCnt.AND.pp.EQ.1000)THEN
+-             vDPerr(1) = pp
+-             vDPerr(2) = sGi_NodeCnt
+-             vDPerr(3) = sLdp_Radius
+-             CALL erhandler ('usermat', 5101, 3,
+-     & 'ERROR IKM: there are more than %i iterations 
+-     &to find %i Neighbors. The max. search radius is %g',vDPerr(1),' ')
+-       ELSE
+-
+-             EXIT
+-       ENDIF
+-       ENDDO
+- 
+-       IF((sID .EQ. sGi_DebugID .AND. sGi_DebugKeyNEM .EQ. 4)
+-     &  .OR. sGi_DebugKeyNEM .EQ. 100)THEN
+-        WRITE(*,*)"DEBUG getnhgb after search extended list sID: ",sID
+-     & ,"sNeighCntLive: ",sNeighCntLive
+-     & ,"sExtNeighCntLive: ",sExtNeighCntLive
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vExtNeighList: ",vExtNeighList(1:sExtNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdx: ",vdx(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdy: ",vdy(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vdz: ",vdz(1:sNeighCntLive)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "vLi_ColID:",vLi_ColID(:)
+-     &,"**************************************************" 
+-     &,"**************************************************" 
+-     &, "Refinment of the search radius: ",rr
+-     &,"sLdp_Radius: ",sLdp_Radius
+-        ENDIF 
+-  
+- 
+-       ! Error if no refinement of the search radius
+-       IF(rr.EQ.0 .AND. sID .LE. sGi_ElemCnt*sGi_GpPerElem)THEN
+-             vDPerr(1) = sLdp_Radius
+-             vDPerr(2) = sID
+-             vDPerr(3) = sID
+-             CALL erhandler ('usermat', 5102, 4,
+-     & 'ERROR IKM: There was no refinement of the search radius .
+-     & which indictaes that the search initial radius is too big.
+-     & Try to reduce the initial search radius. 
+-     & The search radius is %g by sID %i',vDPerr(1),' ')
+-      ELSEIF(rr.EQ.0 .AND. sID .GT. sGi_ElemCnt*sGi_GpPerElem)THEN
+-             vDPerr(1) = sLdp_Radius
+-             vDPerr(2) = sID
+-      Si_Kerr=GetTMP(ofs_i_MapIDtoNode_Tmp+(sID-1),1, dp1(1))
+-             vDPerr(3) = dp1(1)
+-             CALL erhandler ('usermat', 5103, 4,
+-     & 'ERROR IKM: There was no refinement of the search radius.
+-     & which indicates that the search initial radius is too small.
+-     & Try to increase the initial search radius. 
+-     & The search radius is %g by sID %i for node %i',vDPerr(1),' ')
+-       ENDIF
+ 
+-       END SUBROUTINE GetNhgb
++      DEALLOCATE(px, py, pz, dd, used, ord)
++      END SUBROUTINE GetNhgb
+ !
+ 

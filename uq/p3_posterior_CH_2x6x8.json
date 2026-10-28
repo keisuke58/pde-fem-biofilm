@@ -1,0 +1,98 @@
+[
+ {
+  "particle": "q5",
+  "I_live": 0.46569426060361246,
+  "p_ref": 0.0,
+  "core_alpha_minus_1": 0.19709371666666667,
+  "seed_alpha_minus_1": 0.19578788117479004,
+  "core_vM_over_E": 0.1140371,
+  "band_vM_over_E": 0.1396551,
+  "ratio": 1.2246461897049294,
+  "seed_max_p_over_E": 0.1625982,
+  "cutbacks": 0
+ },
+ {
+  "particle": "q5",
+  "I_live": 0.46569426060361246,
+  "p_ref": 0.05,
+  "core_alpha_minus_1": 0.10866398333333334,
+  "seed_alpha_minus_1": 0.1034142719897539,
+  "core_vM_over_E": 0.057167368333333336,
+  "band_vM_over_E": 0.03612119,
+  "ratio": 0.6318497956628578,
+  "seed_max_p_over_E": 0.04787437,
+  "cutbacks": 0
+ },
+ {
+  "particle": "q50",
+  "I_live": 0.5183423100197121,
+  "p_ref": 0.0,
+  "core_alpha_minus_1": 0.23639066666666667,
+  "seed_alpha_minus_1": 0.23488445088375967,
+  "core_vM_over_E": 0.14153303333333334,
+  "band_vM_over_E": 0.1726439,
+  "ratio": 1.2198134663968905,
+  "seed_max_p_over_E": 0.2041334,
+  "cutbacks": 0
+ },
+ {
+  "particle": "q50",
+  "I_live": 0.5183423100197121,
+  "p_ref": 0.05,
+  "core_alpha_minus_1": 0.11886403333333334,
+  "seed_alpha_minus_1": 0.11259846615600415,
+  "core_vM_over_E": 0.062699775,
+  "band_vM_over_E": 0.03558207,
+  "ratio": 0.5674991656668624,
+  "seed_max_p_over_E": 0.05008051,
+  "cutbacks": 0
+ },
+ {
+  "particle": "q95",
+  "I_live": 0.5612481369330272,
+  "p_ref": 0.0,
+  "core_alpha_minus_1": 0.2513361333333333,
+  "seed_alpha_minus_1": 0.24969218910560972,
+  "core_vM_over_E": 0.1524928,
+  "band_vM_over_E": 0.1854834,
+  "ratio": 1.2163420174591848,
+  "seed_max_p_over_E": 0.2207367,
+  "cutbacks": 0
+ },
+ {
+  "particle": "q95",
+  "I_live": 0.5612481369330272,
+  "p_ref": 0.05,
+  "core_alpha_minus_1": 0.12197541666666667,
+  "seed_alpha_minus_1": 0.11537321397334539,
+  "core_vM_over_E": 0.064382655,
+  "band_vM_over_E": 0.03519332,
+  "ratio": 0.5466273486236316,
+  "seed_max_p_over_E": 0.05075673,
+  "cutbacks": 0
+ },
+ {
+  "particle": "MAP",
+  "I_live": 0.5043173680954659,
+  "p_ref": 0.0,
+  "core_alpha_minus_1": 0.3919562333333333,
+  "seed_alpha_minus_1": 0.38976848508122003,
+  "core_vM_over_E": 0.27004564999999997,
+  "band_vM_over_E": 0.3159582,
+  "ratio": 1.17001773589021,
+  "seed_max_p_over_E": 0.4412706,
+  "cutbacks": 0
+ },
+ {
+  "particle": "MAP",
+  "I_live": 0.5043173680954659,
+  "p_ref": 0.05,
+  "core_alpha_minus_1": 0.14670476666666668,
+  "seed_alpha_minus_1": 0.1374303072491556,
+  "core_vM_over_E": 0.07786954666666666,
+  "band_vM_over_E": 0.03315879,
+  "ratio": 0.4258248753128309,
+  "seed_max_p_over_E": 0.05887287,
+  "cutbacks": 0
+ }
+]

@@ -100,28 +100,34 @@ def ansys_points(c="c6"):
 
 
 def fig_clock():
-    fig, axs = plt.subplots(1, 2, figsize=(11, 4.4), sharex=True)
-    for ax, c, case, ttl in ((axs[0], "c6", "2sp_case6", "case 6 (one species wins)"),
-                             (axs[1], "c3", "2sp_case3", "case 3 (coexistence)")):
-        pts = ansys_points(c)
-        for i, g in enumerate(sorted(set(pts[:, 0]))):
-            q = pts[pts[:, 0] == g]
-            for t_end, mk in ((1.0, "o"), (2.0, "^")):
-                r = q[q[:, 2] == t_end]
-                if len(r):
-                    ax.plot(r[:, 1] * r[:, 2] * r[:, 3], r[:, 4], mk, ms=3.5, color=f"C{i}", alpha=0.7,
-                            label=f"consumption {g:g}" + (", $T^*=2$" if t_end == 2 else ""))
-        svals = np.geomspace(0.01, 1.0, 13)            # T* = 1, as the ANSYS runs
-        for crel, ls in ((1.0, "-"), (0.4, "--")):
-            h = [packed([0.5], [crel], sv, 1.0, case=case)[0] for sv in svals]
-            ax.plot(svals * crel, h, ls, color="k", lw=1.2,
-                    label=f"packed point, Python, $T^*=1$, $c_{{rel}}={crel:g}$")
-        ax.set_xlabel(r"effective time $s\,T^*\,c_{\rm rel}$"); ax.set_xscale("log")
-        ax.set_title(ttl, fontsize=11); ax.legend(fontsize=7, frameon=False, ncol=2)
-        print(f"{c}: {len(pts)} seed elements")
-    axs[0].set_ylabel(r"$\phi_1/(\phi_1+\phi_2)$ at the end")
-    out = ROOT / "assets" / "fig_composition_clock.png"
-    fig.tight_layout(); fig.savefig(out, dpi=200); print("wrote", out)
+    with plt.rc_context({"font.size": 8.5, "axes.labelsize": 8.5, "axes.titlesize": 9, "xtick.labelsize": 7.5,
+                         "ytick.labelsize": 7.5}):     # drawn at the thesis text width (6.3 in)
+        fig, axs = plt.subplots(1, 2, figsize=(6.3, 3.3), sharex=True, sharey=True)
+        for ax, c, case, ttl in ((axs[0], "c6", "2sp_case6", "(a) case 6 (one species wins)"),
+                                 (axs[1], "c3", "2sp_case3", "(b) case 3 (coexistence)")):
+            pts = ansys_points(c)
+            for i, g in enumerate(sorted(set(pts[:, 0]))):
+                q = pts[pts[:, 0] == g]
+                for t_end, mk in ((1.0, "o"), (2.0, "^")):
+                    r = q[q[:, 2] == t_end]
+                    if len(r):
+                        ax.plot(r[:, 1] * r[:, 2] * r[:, 3], r[:, 4], mk, ms=2.5, color=f"C{i}", alpha=0.7,
+                                label=f"ANSYS, consumption {g:g}" + (", $T^*=2$" if t_end == 2 else ""))
+            svals = np.geomspace(0.01, 1.0, 13)            # T* = 1, as the ANSYS runs
+            for crel, ls in ((1.0, "-"), (0.4, "--")):
+                h = [packed([0.5], [crel], sv, 1.0, case=case)[0] for sv in svals]
+                ax.plot(svals * crel, h, ls, color="k", lw=1.0,
+                        label=f"packed point, $c_{{rel}}={crel:g}$")
+            ax.set_xlabel(r"effective time $s\,T^*\,c_{\rm rel}$"); ax.set_xscale("log")
+            ax.set_title(ttl)
+            print(f"{c}: {len(pts)} seed elements")
+        axs[0].set_ylabel(r"$\phi_1/(\phi_1+\phi_2)$ at the end")
+        h, l = axs[0].get_legend_handles_labels()
+        fig.legend(h, l, fontsize=7.5, frameon=False, loc="lower center", ncol=3, handletextpad=0.3,
+                   columnspacing=1.0, markerscale=1.6)
+        fig.tight_layout(rect=(0, 0.21, 1, 1), w_pad=1.0)
+        out = ROOT / "assets" / "fig_composition_clock.png"
+        fig.savefig(out, dpi=250); fig.savefig(out.with_suffix(".pdf")); print("wrote", out)
 
 
 def fig_map():
@@ -137,7 +143,7 @@ def fig_map():
     ax[0].set_ylabel(r"start share $\phi_1/(\phi_1+\phi_2)$")
     fig.colorbar(im, ax=ax, label=r"$\phi_1/(\phi_1+\phi_2)$ at $T^*=1$")
     out = ROOT / "assets" / "fig_composition_map.png"
-    fig.savefig(out, dpi=200, bbox_inches="tight"); print("wrote", out)
+    fig.savefig(out, dpi=200, bbox_inches="tight"); fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight"); print("wrote", out)
 
 
 if __name__ == "__main__":

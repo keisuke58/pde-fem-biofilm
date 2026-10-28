@@ -87,9 +87,9 @@ def plot(substeps, out):
     import matplotlib.pyplot as plt
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import figstyle
-    figstyle.apply(11)
+    figstyle.apply(8.5)          # drawn at the thesis text width (6.3 in)
 
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(10.4, 4.3),
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(6.3, 2.8),
                                    gridspec_kw={"width_ratios": [1.45, 1]})
 
     cmap = plt.get_cmap("viridis")
@@ -99,23 +99,22 @@ def plot(substeps, out):
         res = [r[0] for r in s["rec"]]
         x = list(range(len(res)))          # 0 = start of substep
         col = cmap(0.08 + 0.78 * k / max(n - 1, 1))
-        axL.semilogy(x, res, marker="o", ms=4.5, lw=1.4, color=col,
+        axL.semilogy(x, res, marker="o", ms=3, lw=1.0, color=col,
                      label=f"substep {s['n']}")
         if s["rec"][-1][2]:
-            axL.plot(x[-1], res[-1], marker="o", ms=11, mfc="none",
-                     mec="#1e8449", mew=1.6, zorder=5)
+            axL.plot(x[-1], res[-1], marker="o", ms=7, mfc="none",
+                     mec="#1e8449", mew=1.1, zorder=5)
 
     axL.axhline(crit, ls="--", lw=1.3, color="#c0392b")
-    axL.text(0.99, crit * 1.25, "ANSYS convergence criterion",
+    axL.text(0.99, crit * 1.25, "criterion",
              transform=axL.get_yaxis_transform(), ha="right", va="bottom",
-             fontsize=8.5, color="#c0392b")
-    axL.set_xlabel("equilibrium iteration within the substep")
+             fontsize=7.5, color="#c0392b")
+    axL.set_xlabel("iteration within the substep")
     axL.set_ylabel("force residual")
-    axL.set_title("Residual falls to the criterion in every substep",
-                  fontsize=10.5)
+    axL.set_title("(a) force residual", fontsize=9)
     axL.set_xticks(range(max(len(s["rec"]) for s in substeps)))
-    axL.grid(alpha=0.25, which="both")
-    axL.legend(fontsize=8, frameon=False, loc="lower right", ncol=2)
+    axL.grid(alpha=0.25, which="major")
+    axL.legend(fontsize=7.5, frameon=False, loc="lower right", ncol=2, handlelength=1.2, columnspacing=0.8)
     axL.set_ylim(top=crit * 6)
 
     inc = [s["inc"] for s in substeps]
@@ -123,29 +122,21 @@ def plot(substeps, out):
     axR.bar(ns, inc, width=0.62, color="#5b7fa6", edgecolor="white", lw=1.2)
     for s in substeps:
         axR.text(s["n"], s["inc"] * 1.02, f"{len(s['rec']) - 1}",
-                 ha="center", va="bottom", fontsize=8, color="0.3")
+                 ha="center", va="bottom", fontsize=7.5, color="0.3")
     axR.set_xlabel("substep")
-    axR.set_ylabel("time increment applied")
-    axR.set_title("AUTOTS grew the increment; it never bisected", fontsize=10.5)
+    axR.set_ylabel("time increment")
+    axR.set_title("(b) increment and iterations", fontsize=9)
     # The final increment is short because the load step ends at TIME=5, not
     # because the solver backed off -- say so, or the last bar reads as a
     # cut-back, which is the one thing this panel exists to rule out.
-    axR.text(ns[-1], inc[-1] * 1.45, "short only because\nthe load step ends",
-             ha="center", va="bottom", fontsize=8, color="0.35")
     axR.set_xticks(ns)
     axR.set_ylim(0, max(inc) * 1.3)
     axR.grid(alpha=0.25, axis="y")
-    axR.text(0.03, 0.95,
-             "numbers above the bars are equilibrium\n"
-             "iterations needed for that substep",
-             transform=axR.transAxes, fontsize=8, va="top", color="0.35")
 
     cum = substeps[-1]["cum_iter"]
-    fig.suptitle(f"Newton convergence, 12240 elements, delivered routine "
-                 f": load step finished in {len(substeps)} substeps, "
-                 f"{cum} cumulative iterations", fontsize=11)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.savefig(out, dpi=200)
+    fig.tight_layout(w_pad=1.5)
+    fig.savefig(out, dpi=250); fig.savefig(Path(out).with_suffix(".pdf"))   # PDF: vector, used by the thesis
+    print(f"{len(substeps)} substeps, {cum} cumulative iterations")
     print(f"wrote {out}")
 
 

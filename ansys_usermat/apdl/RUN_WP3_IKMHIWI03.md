@@ -2,7 +2,7 @@
 
 慶應の数値面の論文（`KEIO_PLAN.ja.md` WP3：NEM と Galerkin の比較）のうち、オリバーの要素
 （NEM、φ は陽解法）で回す分。Galerkin 側は Abaqus（`abaqus_composition/`、UMATHT、陰解法）。
-依頼：`IKMHIWI03_TO_SUBMISSION.ja.md` §4。
+依頼：`archive/IKMHIWI03_TO_SUBMISSION.ja.md` §4。
 
 ## 共通
 
@@ -94,7 +94,7 @@ upwind の分だけ遅くなるかもしれないので、1.2 倍の余裕をみ
 
 ## 旅行中（10月21〜30日）に回す列：案（10月8日）
 
-依頼（`IKMHIWI03_TO_SUBMISSION.ja.md` 冒頭）：WP3 の残りと WP2 の ANSYS 版。前線の項（B）は入れない。
+依頼（`archive/IKMHIWI03_TO_SUBMISSION.ja.md` 冒頭）：WP3 の残りと WP2 の ANSYS 版。前線の項（B）は入れない。
 12日以降に登録する。すべて表面を直した exe。**Δt の決め方（クラウドの依頼、9日）：** 結果に使う
 実行は付録 D の安定限界（8³ 0.062、16³ 0.139、24³ 0.162）の 8 割以下、λ = βΔt/h² ≤ 0.05 / 0.11 / 0.13。
 E1 だけは限界を挟むために意図的に超える。

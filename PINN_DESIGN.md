@@ -1,7 +1,7 @@
 # A PINN for the biofilm field — design, for Keio
 
 Written 2026-09-01. **Scoped deliberately as a plan, not an implementation**:
-per [`ROADMAP_2026.md`](ROADMAP_2026.md), the weeks to November belong to the
+per [`archive/ROADMAP_2026.md`](archive/ROADMAP_2026.md), the weeks to November belong to the
 ANSYS contribution, and this lands in the JAXFEM material that is being held
 back for the continuation at Keio. Nothing here is started.
 

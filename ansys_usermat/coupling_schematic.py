@@ -10,6 +10,11 @@
         -> assets/fig_coupling_schematic_keio.png: both arrows back to the
            field drawn as the Keio continuation (composition -> field, and
            stress -> growth), without the footnote on the two schemes.
+    python ansys_usermat/coupling_schematic.py --agreed [--thesis]
+        -> assets/fig_coupling_schematic_agreed.png (or _agreed_thesis.png): the coupling agreed with Oliver on
+           20 Oct 2026 (MEETING_2026-10-20.md): point model as published at every Gauss point, nutrient and
+           antibiotic fields in, living biomass sum phibar_i out into the consumption; front term on. Inset: Fritsch et al. 2025
+           case I (synthetic) with an antibiotic alpha* = 100 from T* = 1/3 (Klempt et al. 2026, case 4), computed.
     python ansys_usermat/coupling_schematic.py --live
         -> assets/fig_coupling_schematic_live.png: growth from the living biomass
            (scheme c), five calibrated species, inset from the CH run.
@@ -133,13 +138,13 @@ def chi_inset(fig, rect):
     c1 = np.array([0.5] + [g[0] / (g[0] + g[1]) for g in st])
     ax = fig.add_axes(rect)
     ax.stackplot(t, c1, 1 - c1, colors=(SP1, SP2), alpha=0.9, lw=0)
-    ax.set(xlim=(0, 1), ylim=(0, 1), xticks=[0, 0.5, 1], yticks=[0, 0.5, 1])
+    ax.set(xlim=(0, 1), ylim=(0, 1), xticks=[0, 0.5, 1], yticks=[0, 0.5, 1], xticklabels=["", "0.5", "1"], yticklabels=["0", "0.5", "1"])
     ax.grid(False)
     for s in ("top", "right"):
         ax.spines[s].set_visible(True)
     ax.set_xlabel(r"time $T^*$", fontsize=10 * FS, labelpad=1)
     ax.set_ylabel("share", fontsize=10 * FS, labelpad=1)
-    ax.tick_params(labelsize=8.5 * FS, length=2, pad=1.5)
+    ax.tick_params(labelsize=10 * FS, length=2, pad=1.5)
     ax.text(0.5, 0.27, "species 1", ha="center", va="center", fontsize=10 * FS, color="white")
     ax.text(0.5, 0.80, "species 2", ha="center", va="center", fontsize=10 * FS, color="white")
     return ax
@@ -171,10 +176,58 @@ def live_inset(fig, rect):
         ax.spines[sp].set_visible(True)
     ax.set_xlabel(r"time $T^*$", fontsize=10 * FS, labelpad=1)
     ax.set_ylabel(r"$\phi_i$", fontsize=10 * FS, labelpad=1)
-    ax.tick_params(labelsize=8.5 * FS, length=2, pad=1.5)
+    ax.tick_params(labelsize=10 * FS, length=2, pad=1.5)
     j = int(0.9 * (len(t) - 1)); cum = np.concatenate([[0], np.cumsum(phi[j])])
     for i, lab in ((0, "So"), (1, "An"), (2, "Vei")):
         ax.text(0.86, (cum[i] + cum[i + 1]) / 2, lab, fontsize=9 * FS, color="white", va="center")
+    return ax
+
+
+def agreed_inset(fig, rect):
+    """Fritsch et al. 2025 case I (two species, true parameters), c* = 100, antibiotic alpha* = 100 from T* = 1/3,
+    1000 steps of 1e-4 = T* 0..1: phi_i stacked and the living biomass sum phi_i psi_i."""
+    sys.path.insert(0, str(HERE / "coupling")); sys.path.insert(0, str(HERE.parent / "JAXFEM"))
+    import jax
+    import jax.numpy as jnp
+    jax.config.update("jax_enable_x64", True)
+    import ecology_jax as eco
+    from fritsch2025_cases import CASES
+    c = CASES["fritsch_2sp"]
+    th = [0.0] * 20
+    th[0], th[1], th[2], th[3], th[4] = c["A"][0][0], c["A"][0][1], c["A"][1][1], c["b"][0], c["b"][1]
+    th[14] = th[15] = 1.0
+    A, B = eco.theta_to_matrices(jnp.asarray(th, dtype=jnp.float64))
+    P = eco.default_hparams(c["dt"])
+    P.update(A=A, b_diag=B, active_mask=eco.active_mask(2), Eta=jnp.asarray(c["eta"] + [1.0] * 3),
+             EtaPhi=jnp.asarray(c["eta"] + [1.0] * 3), c=100.0)
+    P = jax.tree_util.tree_map(jnp.asarray, P)
+    n = c["steps"]
+    al = jnp.where(jnp.arange(n) >= n // 3, 100.0, 0.0)
+
+    def body(g, a):
+        q = dict(P); q["alpha"] = a
+        g = eco.newton_step(g, q)
+        return g, g
+    g0 = np.zeros(12); g0[0], g0[1] = c["phi_init"]; g0[5] = 1 - sum(c["phi_init"]); g0[6:11] = 0.999
+    _, tr = jax.lax.scan(body, jnp.asarray(g0), al)
+    tr = np.vstack([g0, np.asarray(tr)])
+    t = np.linspace(0, 1, n + 1)
+    phi, psi = tr[:, :2], tr[:, 6:8]
+    L = (phi * psi).sum(1)
+    ax = fig.add_axes(rect)
+    ax.stackplot(t, phi.T, colors=(SP1, SP2), alpha=0.9, lw=0)
+    ax.plot(t, L, color=INK, lw=2.0)
+    ax.axvline(1 / 3, color=KEIO, lw=1.0, ls=(0, (3, 2)))
+    ax.text(0.36, 0.98, "antibiotic", fontsize=9.5 * FS, color=KEIO, ha="left", va="top")
+    ax.text(0.45, 0.16, r"living $\Sigma_i\bar\phi_i$ (line)", fontsize=9.5 * FS, color="white", ha="left",
+            va="center")
+    ax.set(xlim=(0, 1), ylim=(0, 1.08), xticks=[0, 0.5, 1], yticks=[0, 0.5, 1])
+    ax.grid(False)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(True)
+    ax.set_xlabel(r"time $T^*$", fontsize=10 * FS, labelpad=1)
+    ax.set_ylabel(r"$\phi_i$", fontsize=10 * FS, labelpad=1)
+    ax.tick_params(labelsize=10 * FS, length=2, pad=1.5)
     return ax
 
 
@@ -199,9 +252,100 @@ def stress_sketch(ax, cx, cy, h):
 FS = 1.0   # font scale; the thesis prints the figure at text width, so its text is enlarged
 
 
+def _trim_white(path, pad=12):
+    """crop the white margins of a saved PNG (the axes span the whole figure, so bbox_inches="tight" keeps them)"""
+    from PIL import Image, ImageChops
+    im = Image.open(path).convert("RGB")
+    box = ImageChops.difference(im, Image.new("RGB", im.size, "white")).getbbox()
+    if box:
+        l, t, r, b = box
+        im.crop((max(l - pad, 0), max(t - pad, 0), min(r + pad, im.width), min(b + pad, im.height))).save(path)
+
+
+def main_agreed(thesis=False):
+    """The coupling agreed with Oliver, 20 Oct 2026. Compact layout (25 Oct: less empty space): the output line is
+    part of the footnote, the panels sit lower and the empty top is cropped."""
+    global FS, Y0, PX
+    FS = 1.6 if thesis else 1.0
+    figstyle.apply(12)
+    y0_old, Y0 = Y0, 0.085
+    px_old = PX                          # wider gap between the fields and the point model: the coupling
+    PX = {"macro": (0.005, 0.285), "micro": (0.405, 0.285), "mech": (0.715, 0.28)}
+    xg = (PX["macro"][0] + PX["macro"][1] + PX["micro"][0]) / 2      # middle of the gap
+    D = Y0 - y0_old                      # shift of every element against the earlier layout
+    fig = plt.figure(figsize=(14, 6.4))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set(xlim=(0, 1), ylim=(0, 1)); ax.axis("off"); ax.set_aspect("auto")
+
+    panel(ax, "macro", "1", "Macro: 3D fields", "Klempt et al. 2024 (Ch. 2, 4)")
+    x, _ = PX["macro"]
+    eqs(ax, x + 0.018, 0.70 + D, [
+        r"$\dot\phi_{3D} = \beta\,\nabla^2\phi_{3D} + k_\alpha\alpha - r\frac{c}{k+c}\,\mathbf{n}_c\cdot\nabla\phi_{3D}$",
+        r"$\dot c = d\,\nabla^2 c - g\,\phi_{3D}\Sigma_i\bar\phi_i\,c$",
+        r"$\dot a = d\,\nabla^2 a - g\,\phi_{3D}\Sigma_i\bar\phi_i\,a$",
+    ], size=12.0, gap=0.058)
+    ax.text(x + 0.018, 0.51 + D, "nutrient $c$, antibiotic $a$\n(second nutrient field)", fontsize=10.5 * FS,
+            color=PANEL["macro"][1], va="center", linespacing=1.25, zorder=4)
+    cube_inset(fig, [x + 0.01, Y0 + 0.01, 0.19, 0.29])
+    ax.text(x + 0.20, Y0 + 0.12, "2 mm cube\nseed (dark)", fontsize=10 * FS, color=MUTED, va="center",
+            linespacing=1.3, zorder=4)
+
+    panel(ax, "micro", "2", "Micro: point model", "Klempt et al. 2026, used as published")
+    x, w = PX["micro"]
+    hot = element_with_gauss_points(ax, x + 0.03, 0.50 + D, 0.075)
+    ax.text(x + 0.165, 0.665 + D, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK, va="center",
+            linespacing=1.25, zorder=4)
+    ax.text(x + 0.16, 0.565 + D, "own constraint\n" r"$\Sigma_i\phi_i+\phi_0=1$", fontsize=11 * FS,
+            color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
+    arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43 + D), color=PANEL["micro"][1], lw=1.3,
+          conn="arc3,rad=0.25")
+    agreed_inset(fig, [x + 0.075, Y0 + 0.06, 0.20, 0.17])
+
+    panel(ax, "mech", "3", "Growth and stress", "ANSYS user material (Ch. 4)")
+    x, w = PX["mech"]
+    eqs(ax, x + 0.025, 0.695 + D, [
+        r"$\dot\alpha = k_\alpha\,\phi_{3D}$,   $\mathbf{F}_g = \alpha\,\mathbf{I}$",
+        r"$E(\phi_{3D}) = (\phi_{3D}^2 + f)\,E_{bio}$",
+        r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
+    ])
+    stress_sketch(ax, x + 0.09, Y0 + 0.18, 0.029)
+    ax.text(x + 0.19, Y0 + 0.18, "the seed grows,\nits neighbours\nhold it back\n(sketch)", fontsize=10.5 * FS,
+            color=MUTED, va="center", linespacing=1.3, zorder=4)
+
+    y1, y2 = 0.62 + D, 0.47 + D
+    xr = PX["macro"][0] + PX["macro"][1]
+    arrow(ax, (xr, y1), (PX["micro"][0], y1), lw=3.0)
+    ax.text(xg, y1 + 0.02, r"$c^*=c^*_0\,c$" "\n" r"$\alpha^*=\alpha^*_0\,a$", ha="center", va="bottom",
+            fontsize=13.5 * FS, color=INK, linespacing=1.2)
+    arrow(ax, (PX["micro"][0], y2), (xr, y2), color=PANEL["micro"][1], lw=3.0)
+    ax.text(xg, y2 - 0.025, r"$\Sigma_i\bar\phi_i$" "\n" "(consumption)", ha="center", va="top", fontsize=13.5 * FS,
+            color=PANEL["micro"][1], linespacing=1.2)
+    ax.text(xg, (y1 + y2) / 2, "two-way\ncoupling", ha="center", va="center", fontsize=11 * FS, color=MUTED,
+            style="italic", linespacing=1.15)
+    xa = PX["macro"][0] + PX["macro"][1] / 2
+    xc = PX["mech"][0] + PX["mech"][1] / 2
+    ytop = Y0 + H + 0.07
+    ax.plot([xa, xa, xc], [Y0 + H, ytop, ytop], color=INK, lw=1.8, zorder=5, solid_capstyle="round")
+    arrow(ax, (xc, ytop), (xc, Y0 + H + 0.004))
+    ax.text(0.5, ytop + 0.013, r"$\phi_{3D}$ (spreading follows the nutrient): growth by Eq. 36", ha="center",
+            va="bottom", fontsize=12.5 * FS, color=INK)
+    if not thesis:
+        ax.text(0.5, Y0 - 0.02,
+                r"Output: $\phi_i$, $\psi_i$ at each Gauss point.   $\bar\phi_i=\phi_i\psi_i$: only living biomass consumes.   "
+                r"Assumed, not from a paper: $c^*,\alpha^*$ linear in time, $\Sigma_i\bar\phi_i$ one step late," "\n"
+                r"new points take the neighbours' living composition, $\phi_{min}$ = 0.001 (converged).   "
+                r"$s$ from the data window.",
+                ha="center", va="top", fontsize=10.2 * FS, color=MUTED, linespacing=1.3)
+    out = OUT.with_name("fig_coupling_schematic_agreed" + ("_thesis" if thesis else "") + ".png")
+    fig.savefig(out, dpi=220, bbox_inches="tight", pad_inches=0.05, facecolor="white")
+    _trim_white(out)
+    Y0, PX = y0_old, px_old
+    print("wrote", out)
+
+
 def main(keio=False, thesis=False, live=False):
     global FS
-    FS = 1.4 if thesis else 1.0
+    FS = 1.6 if thesis else 1.0
     figstyle.apply(12)
     fig = plt.figure(figsize=(14, 6.4))
     ax = fig.add_axes([0, 0, 1, 1])
@@ -211,7 +355,7 @@ def main(keio=False, thesis=False, live=False):
 
     # (1) macro --------------------------------------------------------------
     panel(ax, "macro", "1", "Macro: 3D growth field",
-          "Klempt et al. 2024, IKM element (Ch. 2, 4)" if thesis else "Klempt et al. 2024, partner's element")
+          "Klempt et al. 2024 (Ch. 2, 4)" if thesis else "Klempt et al. 2024, partner's element")
     x, _ = PX["macro"]
     eqs(ax, x + 0.025, 0.695, [
         r"$\dot\phi = \beta\,\Delta\phi + k_\alpha\,\alpha$" if thesis
@@ -221,19 +365,20 @@ def main(keio=False, thesis=False, live=False):
     ax.text(x + 0.025, 0.575, r"gives the amount $\phi_{3D}(\mathbf{x},t)$",
             fontsize=12.5 * FS, color=PANEL["macro"][1], weight="bold", va="center", zorder=4)
     cube_inset(fig, [x + 0.005, 0.205, 0.20, 0.35])
-    ax.text(x + 0.215, 0.315, "2 mm cube\n512 elements\nseed (dark)", fontsize=10.5 * FS,
+    ax.text(x + (0.205 if thesis else 0.215), 0.315, "2 mm cube\n512 elements\nseed (dark)", fontsize=(10 if thesis else 10.5) * FS,
             color=MUTED, va="center", linespacing=1.3, zorder=4)
 
     # (2) micro --------------------------------------------------------------
     panel(ax, "micro", "2", "Micro: point model",
-          "Klempt et al. 2026 (Ch. 2), calibrated in Ch. 3" if thesis
+          "Klempt et al. 2026 (Ch. 2, 3)" if thesis
           else ("Klempt et al. 2026, five species calibrated (CH)" if live else "Klempt et al. 2026, Table 1 cases"))
     x, w = PX["micro"]
     hot = element_with_gauss_points(ax, x + 0.03, 0.50, 0.075)
-    ax.text(x + 0.165, 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK,
+    ax.text(x + 0.165, 0.68 if thesis else 0.665, "one copy at every\nGauss point", fontsize=11.5 * FS, color=INK,
             va="center", linespacing=1.25, zorder=4)
-    ax.text(x + 0.16, 0.585, (r"runs on its own, as in (b):" "\n" r"gives $\phi_i$ and $\psi_i$") if live
-            else (r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$"),
+    ax.text(x + 0.16, 0.545 if thesis else 0.585, (r"runs on its own, as in (b):" "\n" r"gives $\phi_i$ and $\psi_i$") if live
+            else ((r"decides only the" "\n" r"composition" "\n" r"$\phi_i\,/\,(\phi_1 + \phi_2)$") if thesis
+                  else (r"decides only the" "\n" r"composition $\phi_i\,/\,(\phi_1 + \phi_2)$")),
             fontsize=11 * FS, color=PANEL["micro"][1], va="center", linespacing=1.35, zorder=4)
     arrow(ax, (hot[0] + 0.004, hot[1] - 0.012), (x + 0.11, 0.43), color=PANEL["micro"][1],
           lw=1.3, conn="arc3,rad=0.25")
@@ -251,8 +396,9 @@ def main(keio=False, thesis=False, live=False):
         r"$E_{bio}$ = 10 Pa,  $\nu$ = 0.49",
     ])
     stress_sketch(ax, x + 0.085, 0.375, 0.026)
-    ax.text(x + 0.17, 0.375, "the seed grows,\nits neighbours\nhold it back:\nseed in compression,\n"
-            "neighbours sheared\n(sketch)", fontsize=10.5 * FS, color=MUTED, va="center", linespacing=1.3,
+    ax.text(x + 0.17, 0.375, ("the seed grows,\nits neighbours\nhold it back:\nseed compressed,\nneighbours\nsheared (sketch)"
+            if thesis else "the seed grows,\nits neighbours\nhold it back:\nseed in compression,\n"
+            "neighbours sheared\n(sketch)"), fontsize=10.5 * FS, color=MUTED, va="center", linespacing=1.3,
             zorder=4)
 
     # connections ------------------------------------------------------------
@@ -307,9 +453,7 @@ def main(keio=False, thesis=False, live=False):
         print("wrote", out)
         return
 
-    if thesis:
-        ax.text(0.5, 0.012, r"Assumed, not from a paper: $s$ = 0.15, $\phi_{cap}$ = 0.9, $\phi_{min}$ = 0.01.",
-                ha="center", va="bottom", fontsize=10.5 * FS, color=MUTED)
+    if thesis:   # the assumed values (s, phi_cap, phi_min) are stated in the caption
         out = OUT.with_name("fig_coupling_schematic_thesis.png")
         fig.savefig(out, dpi=220, bbox_inches="tight", facecolor="white")
         print("wrote", out)
@@ -327,4 +471,7 @@ def main(keio=False, thesis=False, live=False):
 
 
 if __name__ == "__main__":
-    main(keio="--keio" in sys.argv, thesis="--thesis" in sys.argv, live="--live" in sys.argv)
+    if "--agreed" in sys.argv:
+        main_agreed(thesis="--thesis" in sys.argv)
+    else:
+        main(keio="--keio" in sys.argv, thesis="--thesis" in sys.argv, live="--live" in sys.argv)

@@ -20,6 +20,8 @@ y = -1 mm), without ANSYS:
 
     python ansys_usermat/composition_local_nutrient.py --n 32 --dt 0.025
         -> assets/fig_composition_local_nutrient.png
+    python ansys_usermat/composition_local_nutrient.py --thesis --n 32 --dt 0.025 [--recompute]
+        -> assets/fig_composition_local_nutrient_thesis.png (section data cached in figdata/)
 
 Result (4 Oct 2026), share phi_1/(phi_1+phi_2) in the seed, converged
 (32^3 grid, coupling step 0.025; the figure is made with these settings):
@@ -183,36 +185,56 @@ def main(argv=None):
 THESIS_OUT = HERE.parent / "assets" / "fig_composition_local_nutrient_thesis.png"
 
 
+THESIS_CACHE = HERE.parent / "figdata" / "composition_local_nutrient_thesis.npz"   # section data, no rerun to redraw
+
+
 def thesis_figure(lams=(2.0, 3.0, 4.0)):
     """Thesis version: nutrient c and the case-6 share on the section through the
-    seed, for three Thiele numbers. No title (the caption carries it)."""
-    figstyle.apply(size=11)
-    S, D = grid_masks()
-    cmap, norm = figstyle.klempt_cmap()
+    seed, for three Thiele numbers. No title (the caption carries it). Drawn at the
+    thesis text width (6.3 in); the section data are cached in THESIS_CACHE."""
+    figstyle.apply(size=8.5)
     kx = N // 2 - 1
+    if THESIS_CACHE.exists() and "--recompute" not in sys.argv:
+        d = np.load(THESIS_CACHE)
+        secs = {lam: (d[f"c_{lam:g}"], d[f"sh_{lam:g}"]) for lam in lams}
+        seed_sec = d["seed"]; n = int(d["n"])
+    else:
+        S, D = grid_masks()
+        secs = {}
+        for lam in lams:
+            c = nutrient(S, D, lam)
+            sh = np.full((N,) * 3, np.nan)
+            sh[S] = shares("2sp_case6", c[S])
+            secs[lam] = (c[kx], sh[kx])
+            print(f"Lambda = {lam}: case 6 share {np.nanmin(sh):.3f} .. {np.nanmax(sh):.3f}")
+        seed_sec = S[kx].astype(float); n = N
+        THESIS_CACHE.parent.mkdir(exist_ok=True)
+        np.savez_compressed(THESIS_CACHE, n=n, seed=seed_sec,
+                            **{f"c_{lam:g}": secs[lam][0] for lam in lams},
+                            **{f"sh_{lam:g}": secs[lam][1] for lam in lams})
+    h = 2.0 / n
+    cmap, norm = figstyle.klempt_cmap()
     ext = (-1, 1, -1, 1)
-    fig, ax = plt.subplots(2, len(lams), figsize=(10, 6.6))
-    fig.subplots_adjust(left=0.08, right=0.86, bottom=0.09, top=0.94, wspace=0.08, hspace=0.12)
-    g = np.linspace(-1 + H / 2, 1 - H / 2, N)
+    fig, ax = plt.subplots(2, len(lams), figsize=(6.3, 4.0))
+    fig.subplots_adjust(left=0.09, right=0.83, bottom=0.11, top=0.93, wspace=0.08, hspace=0.12)
+    g = np.linspace(-1 + h / 2, 1 - h / 2, n)
     for col, lam in enumerate(lams):
-        c = nutrient(S, D, lam)
-        sh = np.full((N,) * 3, np.nan)
-        sh[S] = shares("2sp_case6", c[S])
-        imc = ax[0, col].imshow(c[kx], origin="lower", extent=ext, cmap=cmap, norm=norm)
-        ims = ax[1, col].imshow(sh[kx], origin="lower", extent=ext, cmap=cmap, norm=norm)
+        csec, shsec = secs[lam]
+        imc = ax[0, col].imshow(csec, origin="lower", extent=ext, cmap=cmap, norm=norm)
+        ims = ax[1, col].imshow(shsec, origin="lower", extent=ext, cmap=cmap, norm=norm)
         ax[1, col].set_facecolor("#d9dde2")
-        ax[0, col].contour(g, g, S[kx].astype(float), [0.5], colors="white", linewidths=1.0)
-        ax[0, col].set_title(rf"$\Lambda={lam:g}$")
+        ax[0, col].contour(g, g, seed_sec, [0.5], colors="white", linewidths=0.8)
+        ax[0, col].set_title(rf"$\Lambda={lam:g}$", fontsize=9)
         for r in range(2):
             a = ax[r, col]; a.grid(False)
             a.set_xticks([-1, 0, 1]); a.set_yticks([-1, 0, 1])
             if col: a.set_yticklabels([])
             if r == 0: a.set_xticklabels([])
         ax[1, col].set_xlabel(r"$z$ [mm]")
-    ax[0, 0].set_ylabel("$y$ [mm]"); ax[1, 0].set_ylabel("$y$ [mm]")
-    c1 = fig.add_axes([0.88, 0.54, 0.015, 0.40]); fig.colorbar(imc, cax=c1, label="nutrient $c$ [-]")
-    c2 = fig.add_axes([0.88, 0.09, 0.015, 0.40]); fig.colorbar(ims, cax=c2, label=r"$\phi_1/(\phi_1+\phi_2)$, case 6")
-    fig.savefig(THESIS_OUT, dpi=300)
+    ax[0, 0].set_ylabel("(a) nutrient\n$y$ [mm]"); ax[1, 0].set_ylabel("(b) case 6\n$y$ [mm]")
+    c1 = fig.add_axes([0.85, 0.53, 0.018, 0.40]); fig.colorbar(imc, cax=c1, label="nutrient $c$")
+    c2 = fig.add_axes([0.85, 0.11, 0.018, 0.40]); fig.colorbar(ims, cax=c2, label=r"$\phi_1/(\phi_1+\phi_2)$")
+    fig.savefig(THESIS_OUT, dpi=300); fig.savefig(THESIS_OUT.with_suffix(".pdf"))
     print("wrote", THESIS_OUT)
 
 

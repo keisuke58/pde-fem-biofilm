@@ -71,7 +71,7 @@ the inference and serves as a check (Section~\ref{sec:heine_validation}).
 
 The forward model is the coupled $\bphi$--$\bpsi$ system of
 Section~\ref{sec:theory_hamilton}, integrated by implicit Euler with Newton's
-method ($2{,}500$ steps over the $21$ days) with a logarithmic barrier that keeps
+method ($2{,}500$ steps over the $21$ days) with a barrier term that diverges at $0$ and $1$ and keeps
 $\phi_i$ and $\psi_i$ inside $(0,1)$. Only the product $c^*a_{ij}$ enters, so
 $c^*=25$ fixes the scale (Section~\ref{sec:theory_replicator}); the assays
 contain no antibiotic, so $\alpha^*=0$.
@@ -210,13 +210,15 @@ with three seeds. General gradient-based samplers (HMC/NUTS) were not used.
     \quad Per step & $2{,}400$\,s & $14$\,s & $170\times$\\
     \quad Total    & $21{,}600$\,s & $147$\,s & $147\times$\\
     \midrule
-    \multicolumn{4}{@{}l}{\textit{Runs of this chapter (one seed, GPU):}}\\
-    \quad Stage (i), $N_p=2{,}000$--$3{,}000$ & & $3.9$--$6.4$\,h & \\
-    \quad Final stage, $N_p=5{,}000$--$18{,}000$ & & $7.7$--$17.6$\,h & \\
+    \multicolumn{4}{@{}l}{\textit{Final stage of this chapter (one seed, GPU):}}\\
+    \quad CS, CH, $N_p=5{,}000$ & & $7.1$--$8.7$\,h & \\
+    \quad DS, $N_p=18{,}000$ & & $17.1$--$18.9$\,h & \\
+    \quad DH (stage iii), $N_p=20{,}000$ & & $21.1$--$22.7$\,h & \\
     \bottomrule
   \end{tabular}
   \caption[Computational cost]{Computational cost. The matched benchmark
-  isolates the GPU speedup; the run times are wall-clock times per seed.}
+  isolates the GPU speedup; the run times are wall-clock times per seed,
+  with $n_{\mathrm{mut}}=150$ ($120$ in DH).}
   \label{tab:heine_timing}
 \end{table}
 
@@ -244,37 +246,36 @@ gives the evidence estimates, which are read only as indications.
 \subsection{Fit and convergence}
 \label{sec:heine_fit}
 
-\textit{The numbers and figures of this section are from the runs on values
-read off the published figures, with the viable composition and the live
-fraction only. The runs with the measured data and the likelihood of
-Eq.~\eqref{eq:heine_lik} are in progress and will replace them.}
-
-Stages (ii)--(iv) of CS and CH and stages (ii)--(iii) of DS meet the criteria
-(a)--(e) with three seeds each. The DH stage-(iii) group meets (a)--(d), but its
-seed spread of the medians reaches $0.64$ posterior standard deviations (criterion
-(e): $0.5$); a larger run was still in progress when this thesis was written, so
-the DS and DH numbers below are from stage~(iii) and provisional. Of the
-exploratory stage-(i) groups, CS and CH do not meet (c) ($4.4$ and $3.8$ moves per
-free parameter) and DS does not meet (e). At the final stage the composition is
-reproduced with an RMSE of $0.172$--$0.179$ in CS, $0.076$--$0.078$ in CH,
-$0.020$--$0.028$ in DS and $0.081$--$0.083$ in DH (range over the three seeds;
-Figure~\ref{fig:heine_fits}, Table~\ref{tab:heine_rmse}). Accepting a stage often
+% Numbers: thesis/HANDOFF_EML_2026-10-19.md and thesis/EML_numbers_2026-10-19.md (final EML runs, 19 Oct 2026).
+Stages (ii)--(iv) of CS and CH and stages (iii)--(iv) of DS meet the criteria
+(a)--(e) with three seeds each; DS stage~(ii) fails (d), because one seed found a
+higher mode (spread of the maximum log-likelihood $1.70$). In DH, stage~(iii) meets them, but at stage~(iv) the seeds settle in
+different posterior modes: criterion~(e) fails, with the medians of $a_{22}$
+differing by $0.79$ posterior standard deviations. The DH results are therefore
+taken from stage~(iii), and this split is discussed as a limitation in
+Section~\ref{sec:heine_discussion}. At the final stage the MAP reproduces the
+viable composition with an RMSE of $0.087$ (CS), $0.059$ (CH), $0.058$ (DS) and
+$0.073$ (DH), the total-count composition with $0.039$, $0.078$, $0.080$ and
+$0.159$, and the community live fraction with $0.23$, $0.12$, $0.09$ and $0.07$
+(Figure~\ref{fig:heine_fits}, Table~\ref{tab:heine_rmse}). Accepting a stage often
 needed more than one attempt: posterior mass accumulated at a bound of the
 initial box in every condition and was released by widening that bound, and the
-dysbiotic conditions needed $18{,}000$ (DS) and $14{,}000$ (DH) particles in
-stage~(iii). Without the criteria, several of these runs would have been read as
-converged.
+dysbiotic conditions needed more particles. Without the criteria, several of
+these runs would have been read as converged.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{eml_fit.pdf}
   \caption[Posterior predictive fits]{Species fractions over $21$ days in the
   four conditions (columns) for the five taxa (rows). Lines: MAP of the final
-  stage, volume fraction $\phi_i$ (solid) and living fraction $\bar\phi_i$
-  (dashed; not constrained species by species); bands: central $50\,\%$ and
-  $80\,\%$ posterior predictive intervals pooled over three seeds; dots and
-  boxes: median and interquartile range of the replicates. The RMSE of the MAP
-  is given above each column. DS and DH from stage~(iii).}
+  stage, viable composition $\phi_i\psi_i/\sum_j\phi_j\psi_j$ (solid) and
+  total-count composition $\phi_i/\sum_j\phi_j$ (dotted); bands: central
+  $50\,\%$ and $80\,\%$ posterior predictive intervals of the viable composition,
+  pooled over three seeds; filled dots: median of the viable data; open dots:
+  median of the total-count data; boxes: viable replicates (interquartile range).
+  The RMSE of the viable composition is given above each column for the best
+  particle; the refined MAP of Table~\ref{tab:heine_rmse} is slightly lower.
+  DH from stage~(iii).}
   \label{fig:heine_fits}
 \end{figure}
 
@@ -282,35 +283,41 @@ converged.
   \centering\small
   \begin{tabular}{@{}lcccccc@{}}
     \toprule
-    & \multicolumn{3}{c}{Stage (i), composition} & \multicolumn{3}{c}{Final stage, with live fraction}\\
-    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
-    \textbf{Cond.} & RMSE & $\max\ln\mathcal{L}$ & $\ln\hat Z$ & RMSE & $\max\ln\mathcal{L}$ & $\ln\hat Z$\\
+    & & \multicolumn{3}{c}{RMSE of the MAP} & & \\
+    \cmidrule(lr){3-5}
+    \textbf{Cond.} & Stage & viable & total count & live fraction & $\ln\mathcal{L}$ (MAP) & $\ln\hat Z$\\
     \midrule
-    CS & $0.114$ & $-5.7$ & $-12.9$ & $0.179$ & $-15.8$ & $-25.9$\\
-    CH & $0.071$ & $-3.2$ & $-6.7$  & $0.076$ & $-8.6$  & $-18.2$\\
-    DS & $0.016$ & $-0.6$ & $-16.7$ & $0.027$ & $-6.5$  & $-31.0$\\
-    DH & $0.054$ & $-3.2$ & $-17.7$ & $0.083$ & $-14.6$ & $-40.3$\\
+    CS & (iv)  & $0.087$ & $0.039$ & $0.23$ & $-32.3$ & $-43.6$ to $-43.8$\\
+    CH & (iv)  & $0.059$ & $0.078$ & $0.12$ & $-25.9$ & $-40.5$ to $-41.2$\\
+    DS & (iv)  & $0.058$ & $0.080$ & $0.09$ & $-96.3$ & $-113.6$ to $-114.3$\\
+    DH & (iii) & $0.073$ & $0.159$ & $0.07$ & $-51.4$ & $-80.7$ to $-81.8$\\
     \bottomrule
   \end{tabular}
-  \caption[Fit metrics per condition]{Fit metrics of the MAP for one seed per
-  group. The final stage is (iv) for CS and CH and (iii) for DS and DH
-  (provisional). $\ln\hat Z$ is not compared across conditions, because the
+  \caption[Fit metrics per condition]{Fit at the final stage. The MAP is the
+  best particle refined by a local optimisation (for DH the best particle);
+  $\ln\mathcal{L}$ without the constant term; $\ln\hat Z$: range over the three
+  seeds. Neither is compared across conditions, because the weights and the
   prior boxes differ; $\ln\hat Z\le\max\ln\mathcal{L}$ holds in every run.}
   \label{tab:heine_rmse}
 \end{table}
 
-The composition error rises from stage~(i) to the final stage in every condition,
-because the final stage also fits the live fraction. The fit is poorest in CS,
-almost entirely in \textit{So} and \textit{Vei} (per-species errors $0.31$ and
-$0.24$, all others below $0.05$), where the \textit{So} fraction rises from $0.18$
-to $0.70$ between day~$1$ and day~$3$. The model can follow this rise: a
-deterministic minimisation of the composition error alone, started from the MAP
-with every entry in $[-15,20]$, reaches $0.075$, but only with a live fraction
-near $0.97$, against the measured $0.65$--$0.77$. In CS the composition and the
-live/dead staining cannot both be matched, and the posterior settles on a
-compromise; I report it rather than re-weight the channels for this condition.
-The pointwise posterior median of CS has an error of $0.125$; the MAP, nearly the
-same in all three seeds, sits where the live fraction is matched best.
+The fit is poorest in CS, in the live fraction ($0.23$). In this condition the
+composition and the live fraction cannot both be matched: raising the weight
+$\lambda_\psi$ of the live fraction makes the composition worse, and even a fit to
+the composition alone does not bring the error of the viable composition below
+$0.078$. This is a limit of the model for CS, not of the sampler, and I report the
+compromise rather than re-weight the channels for this condition
+(Figure~\ref{fig:heine_cs_tradeoff}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{eml_cs_tradeoff.pdf}
+  \caption[Composition and live fraction in CS]{CS: error of the composition
+  against the error of the live fraction for different weights $\lambda_\psi$ of
+  the live fraction (labels). A better live fraction costs composition, and the
+  composition error does not fall below about $0.08$.}
+  \label{fig:heine_cs_tradeoff}
+\end{figure}
 
 \subsection{What the data determine}
 \label{sec:heine_rewiring}
@@ -321,48 +328,50 @@ marginal posteriors. An entry is identified when its posterior standard
 deviation is below $0.8$ times that of a uniform distribution on the final box;
 otherwise it is determined in sign only (s.o.) when its $90\,\%$ interval
 excludes zero, and not identified (n.i.) when it does not. The number of
-identified entries is $4$, $6$, $8$ and $9$ in CS, CH, DS and DH. As an
-independent check, the number of directions in which the likelihood itself is
-narrow at the MAP (from the Fisher information) is $4$, $4$, $8$ and $5$.
+identified entries is $5$, $6$, $9$ and $8$ in CS, CH, DS and DH. Some entries
+are bounded on one side only: $a_{33}$ in CS lies below $-5.3$, and in DS $a_{44}$
+and $a_{13}$ have only an upper and $a_{25}$ only a lower bound.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{eml_ident.pdf}
   \caption[What the data determine]{What the data determine, at the final
-  stage with three seeds pooled. (a)~Upper triangle of $\mathbf{A}$ in the four
-  conditions. Coloured with value: identified; colour and number give the
+  stage with three seeds pooled; one block per condition. (a)~Left in each
+  block: upper triangle of $\mathbf{A}$. Coloured with value: identified; colour and number give the
   posterior median; hatched: sign only ($90\,\%$ interval excludes zero); grey:
-  not identified. (b)~The same entries as a network: red, $a_{ij}>0$; blue,
-  $a_{ij}<0$; line width proportional to the absolute median; dashed, sign only;
-  rings, identified self-interactions. DS and DH from stage~(iii).}
+  not identified. (b)~Right in each block: the same entries as a network: red, $a_{ij}>0$
+  (cooperative); blue, $a_{ij}<0$ (competitive); line width proportional to the
+  absolute median; dashed, sign only; rings, identified self-interactions. DH
+  from stage~(iii).}
   \label{fig:heine_ident}
 \end{figure}
 
-In the commensal conditions only a few entries are identified: four in CS
-($a_{11}$, $a_{22}$, $a_{33}$, $a_{13}$) and six in CH ($a_{11}$, $a_{12}$,
+In the commensal conditions only a few entries are identified: five in CS
+($a_{11}$, $a_{22}$, $a_{33}$, $a_{13}$, $a_{23}$) and six in CH ($a_{11}$, $a_{12}$,
 $a_{22}$, $a_{33}$, $a_{13}$, $a_{23}$), all among the early colonisers
-\textit{So}, \textit{An} and \textit{Vei}. Where both conditions identify an
-entry, the sign agrees: the self-interaction of \textit{So} is negative ($a_{11}$,
-$90\,\%$ intervals $[-4.9,-1.2]$ in CS and $[-2.5,-0.5]$ in CH) and the
-\textit{So}--\textit{Vei} coefficient is positive ($a_{13}$, $[+2.8,+9.2]$ and
-$[+0.01,+1.4]$), in line with the lactate cross-feeding between streptococci and
+\textit{So}, \textit{An} and \textit{Vei}; $a_{12}$ in CS is determined in sign
+only. Where both conditions determine the sign of an entry, it agrees: the
+self-interactions of \textit{So} and \textit{Vei} are negative ($a_{11}$,
+$90\,\%$ intervals $[-7.0,-1.7]$ in CS and $[-1.4,-0.4]$ in CH; $a_{33}$,
+$[-14.6,-5.3]$ and $[-5.8,-0.6]$), and the \textit{So}--\textit{Vei} coefficient
+is positive ($a_{13}$, $[+4.7,+11.3]$ and $[+0.3,+2.4]$), in line with the lactate
+cross-feeding between streptococci and
 \textit{Veillonella}~\cite{Kolenbrander2010OralMultispecies}, although $a_{13}$ is
-an effective coefficient and not a measurement of that mechanism. Two further
-entries of CH, $a_{14}$ and $a_{15}$, are determined in sign only, and every other
-entry involving \textit{Fn} or \textit{Pg} spreads over its whole box. This is
+an effective coefficient and not a measurement of that mechanism. Every entry
+involving \textit{Fn} or \textit{Pg} spreads over its whole box. This is
 expected: \textit{Fn} and \textit{Pg} stay below $1\,\%$ of the commensal
 communities from day~$3$ on, so the data carry little information on their
 interactions.
 
 In the dysbiotic conditions, where \textit{Fn} and \textit{Pg} reach
 $10$--$27\,\%$ of the community, more entries are identified, now including
-interactions of the late colonisers. The \textit{Vei}--\textit{Pg} coefficient
-$a_{35}$ is identified in both, with opposite signs: positive under static
-cultivation (DS, $[+0.3,+2.4]$) and negative in the flow reactor (DH,
-$[-13.4,-1.7]$). The \textit{An}--\textit{Fn} coefficient $a_{24}$ is positive
-in DH ($[+2.7,+7.1]$). A sign change between cultivation modes is a statement
-about the effective model under different nutrient and flow conditions, not
-about the pairwise mechanism. The commensal--dysbiotic comparison mixes the
+interactions of the late colonisers: nine in DS and eight in DH. The
+self-interaction of \textit{Fn} is negative in both ($a_{44}$), and the
+\textit{An}--\textit{Fn} coefficient is positive in DH ($a_{24}$,
+$[+1.3,+8.8]$). The \textit{Vei}--\textit{Pg} coefficient $a_{35}$ is negative
+in DH ($[-20.9,-0.6]$) and close to zero in DS ($[-0.34,+0.24]$). The
+\textit{So}--\textit{Vei} coefficient, positive in both commensal conditions, is
+negative in DS ($a_{13}$, $[-4.9,-2.4]$). The commensal--dysbiotic comparison mixes the
 ecological state with the strain differences and the cultivation; the DS--DH
 contrast compares the same strains, although the two conditions also differ in
 the live-fraction weight and in their prior boxes.
@@ -374,28 +383,29 @@ the live-fraction weight and in their prior boxes.
     \toprule
     Entry & CS & CH & DS & DH\\
     \midrule
-    $a_{11}$ & $-3.58$ [$-4.9$, $-1.2$] & $-0.99$ [$-2.5$, $-0.5$] & n.i. & n.i.\\
-    $a_{12}$ & n.i. & $-0.44$ [$-3.5$, $+0.6$] & n.i. & n.i.\\
-    $a_{22}$ & $+0.68$ [$-0.7$, $+2.2$] & $-0.13$ [$-0.9$, $+1.5$] & n.i. & $-2.98$ [$-4.7$, $-0.7$]\\
-    $a_{33}$ & $-6.76$ [$-13.4$, $-2.5$] & $-0.53$ [$-1.0$, $+0.2$] & $-0.63$ [$-1.5$, $-0.3$] & $-1.28$ [$-2.8$, $-0.7$]\\
-    $a_{34}$ & n.i. & n.i. & $-2.25$ [$-12.3$, $+0.5$] & $-1.29$ [$-4.4$, $+3.7$]\\
-    $a_{44}$ & n.i. & n.i. & n.i. & $-6.88$ [$-9.7$, $-2.4$]\\
-    $a_{13}$ & $+5.74$ [$+2.8$, $+9.2$] & $+0.61$ [$+0.0$, $+1.4$] & $-0.16$ [$-0.9$, $+0.7$] & $-1.00$ [$-2.7$, $+1.1$]\\
-    $a_{14}$ & n.i. & s.o.\ [$-4.8$, $-0.2$] & n.i. & n.i.\\
-    $a_{23}$ & n.i. & $+0.98$ [$-0.1$, $+2.0$] & $-1.84$ [$-4.5$, $-0.1$] & $+1.18$ [$-2.1$, $+2.9$]\\
-    $a_{24}$ & n.i. & n.i. & n.i. & $+5.10$ [$+2.7$, $+7.1$]\\
-    $a_{55}$ & n.i. & n.i. & $-2.09$ [$-4.7$, $-0.3$] & n.i.\\
-    $a_{15}$ & n.i. & s.o.\ [$-4.8$, $-0.3$] & $-1.45$ [$-4.3$, $+0.5$] & n.i.\\
-    $a_{25}$ & n.i. & n.i. & n.i. & n.i.\\
-    $a_{35}$ & n.i. & n.i. & $+1.04$ [$+0.3$, $+2.4$] & $-6.55$ [$-13.4$, $-1.7$]\\
-    $a_{45}$ & n.i. & n.i. & $+2.81$ [$-1.3$, $+15.1$] & $+1.21$ [$-1.9$, $+7.5$]\\
+    $a_{11}$ & $-4.20$ [$-7.0$, $-1.7$] & $-0.72$ [$-1.4$, $-0.4$] & n.i. & n.i.\\
+    $a_{12}$ & s.o.\ [$+0.0$, $+1.9$] & $-0.31$ [$-0.8$, $+0.1$] & n.i. & n.i.\\
+    $a_{22}$ & $+1.44$ [$+0.5$, $+2.4$] & $-0.42$ [$-0.9$, $+0.5$] & n.i. & $-2.23$ [$-6.4$, $+0.2$]\\
+    $a_{33}$ & $-11.07$ [$-14.6$, $-5.3$] & $-2.50$ [$-5.8$, $-0.6$] & $-0.64$ [$-0.9$, $-0.4$] & $-0.46$ [$-0.6$, $-0.4$]\\
+    $a_{34}$ & n.i. & n.i. & $+1.45$ [$+0.9$, $+1.9$] & $-0.51$ [$-1.3$, $+0.2$]\\
+    $a_{44}$ & n.i. & n.i. & $-4.29$ [$-4.9$, $-2.8$] & $-5.77$ [$-9.6$, $-0.2$]\\
+    $a_{13}$ & $+8.45$ [$+4.7$, $+11.3$] & $+0.96$ [$+0.3$, $+2.4$] & $-4.22$ [$-4.9$, $-2.4$] & n.i.\\
+    $a_{14}$ & n.i. & n.i. & n.i. & n.i.\\
+    $a_{23}$ & $-0.12$ [$-1.4$, $+1.7$] & $+1.64$ [$+0.4$, $+2.7$] & $-1.29$ [$-2.0$, $-0.5$] & $+0.39$ [$-0.1$, $+1.0$]\\
+    $a_{24}$ & n.i. & n.i. & n.i. & $+4.98$ [$+1.3$, $+8.8$]\\
+    $a_{55}$ & n.i. & n.i. & $-1.08$ [$-3.7$, $+0.2$] & n.i.\\
+    $a_{15}$ & n.i. & n.i. & n.i. & n.i.\\
+    $a_{25}$ & n.i. & n.i. & $+2.11$ [$+1.1$, $+2.5$] & n.i.\\
+    $a_{35}$ & n.i. & n.i. & $-0.06$ [$-0.3$, $+0.2$] & $-5.72$ [$-20.9$, $-0.6$]\\
+    $a_{45}$ & n.i. & n.i. & $+0.63$ [$-0.3$, $+2.1$] & $+3.11$ [$-2.4$, $+9.2$]\\
+    \midrule
+    identified / s.o. / n.i. & $5/1/9$ & $6/0/9$ & $9/0/6$ & $8/0/7$\\
     \bottomrule
   \end{tabular}
   \caption[Classification of the interaction entries]{Posterior median and
-  $90\,\%$ interval of the identified entries at the final stage, three seeds
+  $90\,\%$ interval of the identified and sign-only entries at the final stage, three seeds
   pooled; s.o.: sign only; n.i.: not identified. Species $1$--$5$: \textit{So},
-  \textit{An}, \textit{Vei}, \textit{Fn}, \textit{Pg}. DS and DH from stage~(iii),
-  provisional.}
+  \textit{An}, \textit{Vei}, \textit{Fn}, \textit{Pg}. DH from stage~(iii).}
   \label{tab:heine_ident}
 \end{table}
 
@@ -403,8 +413,9 @@ the live-fraction weight and in their prior boxes.
   \centering
   \includegraphics[width=\textwidth]{eml_posteriors.pdf}
   \caption[Marginal posteriors]{Marginal posteriors of the $15$ entries at the
-  final stage, drawn by their position in the prior box. DS and DH from
-  stage~(iii).}
+  final stage, three seeds pooled, drawn by their position in the prior box
+  (thick: $50\,\%$, thin: $90\,\%$ interval; dot: median; tick: $a_{ij}=0$; grey:
+  not identified). DH from stage~(iii).}
   \label{fig:heine_posteriors}
 \end{figure}
 
@@ -419,8 +430,16 @@ the identified entries and scatter in the others.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{eml_seed_maps.pdf}
-  \caption[MAP of every seed]{Species fractions computed with the MAP of each of
-  the three seeds in the four conditions at the final stage, with the data.}
+  \caption[MAP of every seed]{Viable species fractions computed with the best
+  particle of each of the three seeds at the final stage (coloured lines), the
+  $10$--$90\,\%$ band (grey) and median (dashed) of the posterior prediction
+  pooled over the seeds, and the measured viable composition (dots: median;
+  boxes: interquartile range of the replicates; day~$1$ is the initial
+  condition). The maximum log-likelihoods of the three seeds lie within $0.6$ of
+  each other ($-32.9$ to $-33.1$ in CS, $-26.5$ to $-27.1$ in CH, $-96.8$ to
+  $-96.9$ in DS, $-51.4$ to $-51.8$ in DH), and their composition RMSEs are
+  $0.090$--$0.093$, $0.060$--$0.066$, $0.057$ and $0.073$--$0.076$. DH from
+  stage~(iii).}
   \label{fig:heine_seedmaps}
 \end{figure}
 
@@ -428,19 +447,38 @@ the identified entries and scatter in the others.
 \label{sec:heine_fnpg}
 
 The coefficient $a_{45}$ links the bridging organism \textit{Fn} to the pathogen
-\textit{Pg}. Comparing the full model with a model in which $a_{45}=0$, both
-inferred at stage~(i), gives $\ln B=+0.10$ (CS), $+0.05$ (CH), $-2.67$ (DS) and
-$+1.94$ (DH). Because not all stage-(i) groups meet the criteria, these values are
-indications. The uniform prior penalises the full model by the log-width of the
-$a_{45}$ box, so $\ln B$ is read only within a condition: in DS, where the box is
-$[-15,20]$, the penalty alone is $\ln 35\approx3.6$. With the composition alone,
-$a_{45}$ in DH is positive in all seeds ($90\,\%$ interval about $[+0.5,+5.5]$)
-within a box that allows only small negative values. Once the live fraction
-enters, on a box widened to $[-5,20]$, the median stays positive in both
-dysbiotic conditions ($+2.8$ in DS, $+1.2$ in DH) but the $90\,\%$ intervals
-include zero: $a_{45}$ is constrained but not determined in sign. The composition
-data thus favour a positive \textit{Fn}--\textit{Pg} coefficient in DH, and the
-live fraction neither confirms nor contradicts it.
+\textit{Pg}. Comparing the full model with a model in which $a_{45}=0$ gives
+$\ln B=-0.06$ (CS), $+0.03$ (CH), $+7.5$ (DS) and $+2.1$ (DH). In the commensal
+conditions the data cannot tell the two models apart; in the dysbiotic
+conditions they favour a non-zero $a_{45}$. The uniform prior penalises the full
+model by the log-width of the $a_{45}$ box, so $\ln B$ is read only within a
+condition. At the final stage $a_{45}$ is identified in both dysbiotic
+conditions, but its $90\,\%$ intervals include zero ($[-0.3,+2.1]$ in DS,
+$[-2.4,+9.2]$ in DH): the coefficient is constrained by the data, but its sign is
+not determined.
+
+\subsection{Recovery test}
+\label{sec:heine_recovery}
+
+To test the classification, I generated synthetic data with known coefficients
+at the measured time points and repeated the inference. The classification of
+the $15$ entries as identified or not was recovered for $14$ (CS), $15$ (CH), $14$
+(DS) and $15$ (DH) entries. The intervals are less reliable than the
+classification: in CH the true value lies inside the $90\,\%$ interval for only
+$2$ of the $6$ identified entries. The posterior intervals of this chapter are
+therefore read as a lower bound on the uncertainty
+(Figure~\ref{fig:heine_recovery}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{eml_recovery.pdf}
+  \caption[Recovery test on synthetic data]{Recovery test: posterior of each
+  entry for synthetic data generated with known coefficients (vertical bar: true
+  value; thick and thin: $50\,\%$ and $90\,\%$ interval), drawn by the position in
+  the prior box. Below each panel: number of entries whose true value lies
+  inside the $90\,\%$ interval.}
+  \label{fig:heine_recovery}
+\end{figure}
 
 %==============================================================================
 \section{Checks Against Data Not Used in the Inference}
@@ -450,26 +488,27 @@ live fraction neither confirms nor contradicts it.
 The pH measured in the flow reactor was not used in the inference
 (Figure~\ref{fig:heine_ph}b,c). A linear regression of the measured pH on the
 measured species fractions (intercept and four fractions, \textit{Vei} as
-reference; $R^2=0.93$ over $90$ time points in CH and DH) is fitted once on the
-measured data and then applied, unchanged, to the posterior predictive
+reference) is fitted once on the measured data, the continuous pH records of CH
+and DH (mean of five reactors, about $14{,}000$ values per condition) with the
+composition interpolated between the sampling days ($R^2=0.88$), and then
+applied, unchanged, to the posterior predictive
 composition, so the check tests the predicted composition, not a model of pH. In
-DH the pH predicted in this way follows the measured rise from about $6.3$ to
-$7.0$ ($R^2=0.63$, RMSE $0.12$, provisional). In CH it is offset upwards by about
-$0.13$, because the model keeps \textit{Fn} and \textit{Pg} near $4$--$5\,\%$ where
-the data show below $1\,\%$, likely a consequence of down-weighting rare species,
-and these two taxa carry the largest regression coefficients.
+DH the pH predicted in this way follows the measured rise from $6.4$ to $7.0$
+($R^2=0.71$, RMSE $0.097$; $85\,\%$ of the measured values lie inside the $90\,\%$
+band). In CH it matches the level of the measured pH (RMSE $0.082$) but not its
+variation ($R^2<0$; $44\,\%$ inside the band).
 
-The calibrated model can also be used in silico: removing \textit{Fn} from the
-dysbiotic flow-reactor community abolishes the late increase of \textit{Pg}
-(Figure~\ref{fig:heine_ph}a). The day-21/day-15 ratio of \textit{Pg} falls from
-$2.9$ ($90\,\%$ interval $[2.3,3.6]$; measured $2.74$) to $1.1$ ($[0.3,1.8]$), and
-only $2$--$7\,\%$ of the posterior samples keep a ratio of $1.5$ or more. Setting
-only $a_{45}=0$ removes the increase in most but not all samples ($17$--$52\,\%$
-keep it, depending on the seed). The prediction therefore rests mainly, though
-not only, on the \textit{Fn}--\textit{Pg} coefficient, and it can be tested
-directly by a co-culture without \textit{Fn}. Under static cultivation the model
-shows no comparable late increase (ratio $1.1$), so the knockout is not
-informative there.
+The calibrated model can also be used in silico. Removing \textit{Fn} from the
+dysbiotic flow-reactor community reduces the late increase of \textit{Pg} to about
+a quarter: the ratio of the \textit{Pg} fraction on day~$21$ to day~$15$ falls
+from about $12$ to $3.0$ (Figure~\ref{fig:heine_ph}a). Setting only $a_{45}=0$
+removes most of the increase, so the prediction rests mainly on the
+\textit{Fn}--\textit{Pg} coefficient, and it can be tested directly by a
+co-culture without \textit{Fn}. The size of the increase itself is not determined
+by the data: the MAPs of the three seeds give ratios of $9.6$ to $18.0$ (measured
+$14.9$), and the $90\,\%$ interval spans $0.6$ to $32$. Under static cultivation
+the model gives a smaller late increase than measured ($1.4$--$1.5$ against
+$2.5$); without \textit{Fn} the ratio is $1.0$, and $a_{45}=0$ leaves it unchanged.
 
 \begin{figure}[htbp]
   \centering
@@ -500,13 +539,17 @@ necessary: several runs that looked converged did not meet them.
 
 \paragraph{Limitations.}
 The likelihood treats the five fractions as independent although they sum to
-one, so the posterior intervals may be somewhat too narrow. The community live
+one, so the posterior intervals are too narrow (Section~\ref{sec:heine_recovery}). The community live
 fraction does not determine the species-specific viabilities $\psi_i$ (in the
 model they span $0.03$--$0.96$), so the living fractions of individual species
 are not predictions of the calibrated model. The interaction coefficients are
-effective quantities of this model and data set. The commensal--dysbiotic
-comparison is confounded by the strain differences. The DS and DH results are
-from stage~(iii) and provisional. The calibration covers a material point; the
+effective quantities of this model and data set, and the recovery test shows
+that their intervals understate the uncertainty. The commensal--dysbiotic
+comparison is confounded by the strain differences. In CS the model cannot match
+the composition and the live fraction at the same time. In DH the final stage
+split across seeds into different posterior modes, so DH is reported from
+stage~(iii), and the size of the late \textit{Pg} increase is not determined by
+the data. The calibration covers a material point; the
 spatial structure and the mechanics are not part of the inference. Because the
 likelihood uses fractions only, the absolute amount of biomass is a prediction of
 the model, and its posterior spread has to be carried into the coupling with the
@@ -552,7 +595,9 @@ $\bA$ shared by all patients and a growth vector $\bb^{(p)}$ per patient. It is
 tested by leave-one-patient-out cross-validation: $\bA$ is fitted on nine
 patients and frozen, the held-out patient's $\bb^{(p)}$ is fitted from the
 first week only, and the second and third weeks are predicted.
-Table~\ref{tab:heine_signprior} lists the prediction errors.
+Table~\ref{tab:heine_signprior} lists the prediction errors, and
+Figures~\ref{fig:heine_loo_patients} and~\ref{fig:heine_loo_scatter} show the
+predictions of the best model.
 
 \begin{table}[htbp]
   \centering\small
@@ -576,6 +621,28 @@ Table~\ref{tab:heine_signprior} lists the prediction errors.
   \label{tab:heine_signprior}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{dieckow_loo_patients.pdf}
+  \caption[Leave-one-patient-out prediction per patient]{Leave-one-patient-out
+  prediction for the ten patients with the best model of
+  Table~\ref{tab:heine_signprior} (gLV with the eHOMD and pFBA sign prior). Bars:
+  observed guild fractions in weeks~$1$ to $3$ (light to dark); markers: weeks~$2$
+  and $3$ predicted with $\bA$ fitted on the other nine patients and the
+  patient's growth vector fitted on week~$1$ only. RMSE per patient.}
+  \label{fig:heine_loo_patients}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.55\textwidth]{dieckow_loo_scatter.pdf}
+  \caption[Predicted against observed guild fractions]{Predicted against observed
+  guild fractions of Figure~\ref{fig:heine_loo_patients}, all patients, guilds and
+  both predicted weeks ($200$ values). The pooled RMSE ($0.052$) is slightly above
+  the mean of the per-patient values ($0.049$).}
+  \label{fig:heine_loo_scatter}
+\end{figure}
+
 \paragraph{Results.}
 \begin{itemize}
   \item The sign prior improves the symmetric model step by step, from
@@ -591,10 +658,6 @@ Table~\ref{tab:heine_signprior} lists the prediction errors.
         cross-feeding signs predicted by AGORA2 ($78.6\,\%$, against $37.7\,\%$
         under a permutation null, $p=4\times10^{-4}$); the asymmetric gLV
         shows no such agreement ($p=0.96$).
-  \item On $127$ independent peri-implant samples of Joshi et
-        al.~\cite{joshi2025}, a dysbiosis ratio of the guilds ordered by the
-        model separates peri-implantitis from health and mucositis
-        (Kruskal--Wallis $p<10^{-4}$; Spearman $\rho=0.46$ with severity).
 \end{itemize}
 
 \paragraph{Limits.} With $10$ patients the gain of the community-FBA layer over

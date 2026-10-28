@@ -1,0 +1,15 @@
+% Thesis print version of flow_vv_thesis (19 Oct 2026): 12 pt base and every font one step larger,
+% so the text prints at 7.5 pt or more at text width. Build: pdflatex flow_vv_thesis_print.tex
+\documentclass[tikz,border=3pt,12pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usepackage{mathptmx}
+\usepackage{bm}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
+\let\origsmall\small \let\orignormalsize\normalsize \let\origfootnotesize\footnotesize
+\renewcommand{\scriptsize}{\origfootnotesize}
+\renewcommand{\footnotesize}{\origsmall}
+\renewcommand{\small}{\orignormalsize}
+\begin{document}
+\input{flow_vv_thesis.tex}
+\end{document}

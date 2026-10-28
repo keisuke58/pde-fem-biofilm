@@ -93,8 +93,13 @@ $jobDir = Join-Path $WorkDir $jobName
 New-Item -ItemType Directory -Path $jobDir -Force | Out-Null
 Copy-Item $inpPath $jobDir -Force
 $envFile = Join-Path $jobDir 'abaqus_v6.env'
-if ($LibsDll) {
-    @("compile_fortran += ['/libs:dll', '/threads']") | Set-Content $envFile -Encoding ascii
+# cpus > 1: thread parallel (mp_mode=THREADS; the living user element keeps its shared arrays under an Abaqus
+# mutex, 25 Oct 2026), not MPI, so the user subroutines share one process
+$envLines = @()
+if ($LibsDll) { $envLines += "compile_fortran += ['/libs:dll', '/threads']" }
+if ($Cpus -gt 1) { $envLines += "mp_mode=THREADS" }
+if ($envLines.Count -gt 0) {
+    $envLines | Set-Content $envFile -Encoding ascii
 } elseif (Test-Path $envFile) {
     Remove-Item $envFile -Force
 }

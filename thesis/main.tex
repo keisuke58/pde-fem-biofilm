@@ -85,6 +85,8 @@
 \newcommand{\calP}{\mathcal{P}}
 
 % ══════════════════════════════════════════════════════════════════════════════
+% the front term of Klempt et al. 2024, Eq. 34, written out wherever it is named (the user, 25 Oct 2026)
+\newcommand{\fterm}{\ensuremath{-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}}}
 \begin{document}
 
 % ── Title page ───────────────────────────────────────────────────────────────
@@ -113,11 +115,11 @@
     \textbf{Zweitprüfer:}     & Dr.-Ing.\ Matthias Wangenheim (IDS) \\
     \textbf{Betreuer:}        & Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler \\
     \textbf{Institut:}        & Institut für Kontinuumsmechanik (IKM) \\
-    \textbf{Abgabedatum:}     & Oktober 2026 \\
+    \textbf{Abgabedatum:}     & Dezember 2026 \\
   \end{tabular}
 
   \vfill
-  {\small Hannover, Oktober 2026}
+  {\small Hannover, Dezember 2026}
 \end{titlepage}
 
 % ── Front matter ─────────────────────────────────────────────────────────────
@@ -148,14 +150,19 @@ and coupled to the element's biofilm field through the growth equation at
 every Gauss point. Inside ANSYS the coupled run follows the exact solution of
 a gradient-free region to $3\times10^{-11}$ in $\alpha$.
 
-Third, for two species the point model runs at every Gauss point: the field
-sets the amount of biofilm, the point model its composition. Every call from
-ANSYS to the point model is reproduced in Python bit for bit, and the published
-outcomes, coexistence and the survival of one species, are kept.
+Third, the point model runs, unchanged, at every Gauss point. It receives the
+nutrient and an antibiotic from fields of the element, interpolated in time, and
+only its living biomass consumes them; through the nutrient the composition
+reaches the spreading of the biofilm. With uniform fields the coupled point model
+reproduces the point model alone to round-off. The antibiotic is shown with
+synthetic data, since the calibration data contain none: it lowers the living
+volume fraction of a two-species seed from $0.97$ to $0.15$, or to $0.04$ when the
+species start mixed, while the growth changes little. The growth converges on
+refined grids within a few percent; the stress needs a second-order treatment
+of the front term \fterm{} and converges with a GCI of $1$ to $29\,\%$.
 
-The coupling is one-way; it has been verified, but not yet validated against
-measurements. More species and a
-coupling in which the composition acts on growth and stiffness are left to the
+The coupling has been verified, but not yet validated against measurements. A
+coupling in which the composition acts on the stiffness is left to the
 continuation of this work.
 
 % English-only thesis: German Zusammenfassung disabled (draft kept below).
@@ -259,13 +266,15 @@ $c^*$, $\alpha^*$ & nutrient and antibiotic level\\
 $\eta_i$, $\eta_{\phi,i}$ & dissipation parameters\\
 $\gamma$ & Lagrange multiplier of $\sum_{l=0}^{n}\phi_l=1$\\
 $\Psi$, $\Delta$, $C$ & free energy, dissipation function, constraint function\\
-$K_p$ & coefficient of the logarithmic barrier\\
+$K_p$ & coefficient of the barrier term\\
 \end{tabular}
 
 \medskip\noindent\textbf{Coupling (Chapter~\ref{ch:ansys})}\\[2pt]
 \begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
-$s$ & time link: the point model advances $s\,\Delta t$ per substep\\
-$\phi_{\rm cap}$, $\phi_{\min}$ & cap on the amount handed to the point model, threshold for starting it\\
+$s$ & time link: the point model advances $s\,\Delta t$ per substep, fixed by the duration of the data\\
+$\phi_{\min}$ & threshold of $\phi_{3D}$ for starting the point model at a Gauss point\\
+$\bar\phi_i$ & living volume fraction of species $i$ in the point model, $\phi_i\psi_i$\\
+$a$, $\alpha^*$ & antibiotic field (the element's second nutrient) and its value in the point model\\
 $n_{\rm sub}$ & point-model steps per substep\\
 $c^*_0$, $c_{\rm ref}$ & nutrient level of the point model at the reference concentration $c_{\rm ref}$\\
 \end{tabular}

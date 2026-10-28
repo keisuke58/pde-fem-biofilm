@@ -1,0 +1,219 @@
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md. Numbers as in
+% chapters 3 and 4.
+
+The task of this thesis was to bring a point model of a multi-species biofilm
+into an existing finite element framework, so that its composition, its growth
+and the resulting stresses can be computed in space. Three contributions serve
+this task.
+
+\paragraph{A calibrated point model (Chapter~\ref{ch:heine}).}
+The 15 interaction coefficients of a five-species point model were estimated
+with TMCMC from the in-vitro time courses of Heine et al.\ under four
+conditions. Compiled with JAX, the forward model runs about 150 times faster
+on the GPU than on the CPU, which makes posteriors with up to $20{,}000$ particles routine. Every stage was
+repeated with three seeds and checked against convergence criteria; CS, CH and DS
+meet them at every final stage; in DH the last stage split across seeds, and DH
+is reported from the stage before. The data
+determine $5$, $6$, $9$ and $8$ of the $15$ entries in the four conditions, and the
+pH, which was not used in the inference, serves as a check. With a metabolic sign prior, the same type of model
+also predicts sparse in-vivo data of ten patients out of sample.
+
+\paragraph{A growth law in the finite element framework (Chapter~\ref{ch:ansys}).}
+The growth kinematics $\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, of Klempt et
+al.\ 2024 was implemented as an ANSYS user material and verified against
+closed-form solutions. It was coupled to the biofilm field of the IKM element
+through the growth equation $\dot\alpha=k_\alpha\phi$ at every Gauss point.
+Inside ANSYS, the coupled run follows the exact solution of a gradient-free
+region to $3\times10^{-11}$ in $\alpha$. With the published parameters the
+growth in the seeded element reaches $\alpha-1=8.9\times10^{-4}$ at $T^*=1.1$
+and the seeded region is compressed; a finer model of the same problem
+predicts, on average, tension in the surrounding material, consistent with the
+ring of tension reported by Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}.
+
+\paragraph{The composition at every Gauss point (Chapter~\ref{ch:ansys}).}
+For two species, the point model of Klempt et al.\ 2026 runs at every Gauss
+point alongside the field: the field sets the amount, the point model the
+composition. Every call from ANSYS to the point model is reproduced in Python
+bit for bit, and the coupled run keeps the type of outcome of the published
+cases: coexistence in case~3 and one surviving species in case~6.
+
+Together these steps connect a calibrated description of what a biofilm
+consists of with a finite element description of how it grows and what
+stresses it carries, for one and two species.
+
+\section{Discussion}
+\label{sec:concl_discussion}
+
+\paragraph{Where the species live.} Table~\ref{tab:concl_models} places this
+work among the continuum models it builds on. Feng et
+al.~\cite{Feng2021SymbioticBiofilm} and Soleimani et
+al.~\cite{Soleimani2023CoAggregation} give every species its own field and
+compute no growth stresses; Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}
+compute these stresses with a single biofilm variable. This work keeps the
+single field for the amount of biofilm and its stresses, and adds the
+composition as a local state at each Gauss point.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Continuum models of biofilm growth compared]{Continuum models of
+    biofilm growth that this work builds on or compares with.}
+  \label{tab:concl_models}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.2\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.1\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}@{}}
+    \toprule
+    model & species & space & growth stress & composition\\
+    \midrule
+    Feng et al.\ 2021~\cite{Feng2021SymbioticBiofilm} & two fields & FEM, common velocity & no & from the species fields\\
+    Soleimani et al.\ 2023~\cite{Soleimani2023CoAggregation} & two fields, co-aggregation & ANSYS user element & no & from the species fields\\
+    Klempt et al.\ 2024~\cite{Klempt2024DiffusionDrivenGrowth} & one field & ANSYS user element & yes & none\\
+    Klempt et al.\ 2026~\cite{Klempt2026ContinuumBacterialGrowth} & $n$ fractions at a point & none & no & point model\\
+    this work & one field and a point model per Gauss point & ANSYS, IKM element & yes (no feedback) & point model, nutrient and antibiotic fields\\
+    \bottomrule
+  \end{tabular}
+\end{table} The number of transported fields therefore does not grow with the
+number of species; the species enter as a local state at each Gauss point, and
+the point model, calibrated on its own, enters unchanged. The
+price is that the species cannot move relative to each other: the
+composition varies in space only through the local nutrient and, in the Python
+study, through the share-weighted front rate. Segregation of species by
+different spreading is outside what this scheme can show.
+
+\paragraph{Calibrated and chosen parameters.} The interaction coefficients of
+Chapter~\ref{ch:heine} come from measured time courses; the pH, which did not enter the inference, follows
+the measured rise in DH through a regression on the predicted fractions
+($R^2=0.71$)
+(Section~\ref{sec:heine_validation}). The coupled examples of Chapter~\ref{ch:ansys} use the two-species
+cases of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, chosen there
+to show coexistence and the survival of one species. The calibrated
+five-species point model also runs in the element with the same coupling
+(Section~\ref{sec:ch5-five}).
+
+\paragraph{What the stresses mean.} With the stiffness of Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth} the stresses are of order
+$10^{-4}$~Pa and scale with the stiffness. What carries over is their pattern:
+the seeded region is compressed and the surrounding material is under tension,
+as in the comparison of growth models by Klempt et
+al.~\cite{Klempt2023NumericalComparison} and in the ring of tension of the 2024
+paper. Measured stiffnesses of oral biofilms lie in the kPa range, for example
+$0.6$ to $41$~kPa by atomic force microscopy, depending on the sucrose
+supply~\cite{Pattem2018}; as the stresses scale linearly with $E$, a stiffness
+of $10$~kPa gives stresses of order $0.1$~Pa. A statement about the magnitude
+in an oral biofilm needs that stiffness together with a measured stress, which
+this work does not have.
+
+\paragraph{The numerical scheme.} The field of the element is advanced
+explicitly. The condition stated by Rudolf et al.~\cite{Rudolf2025NEM} is the
+one-dimensional one; on the lattice of the Gauss points the stability
+limit of the NEM stencil follows from a Bloch analysis
+(Appendix~\ref{app:stability}) and depends on the mesh through the fixed width
+of the weight and on which equidistant neighbours enter the fit, from
+$0.06$ on $8^3$ to $0.12$ to $0.16$ on $16^3$ and $24^3$, which runs to
+$T^*=5$ confirm. The update is first order in time. For the seed
+problem the growth field converges at about second order against a
+finite-volume reference solution, and the stress, with its jump in stiffness
+at the surface of the seed, at about first order; on $24^3$ the seed stress
+lies $2\,\%$ from its converged value.
+An implicit treatment of the field would remove the step limit; whether it is
+also more accurate for the same cost is the comparison planned at Keio.
+
+\paragraph{Symmetric interactions.} The variational derivation makes the
+interaction matrix symmetric. A symmetric matrix cannot describe one species
+feeding another without the reverse, which the metabolic literature reports for
+several of the pairs. In this work the symmetric model reproduces the
+in-vitro time courses and the rise of the pH in DH; whether a directed term is needed
+for in-vivo data is open.
+
+\section{Limitations}
+\label{sec:concl_limitations}
+
+\begin{itemize}
+  \item \emph{Verification only.} The finite element results are
+        verified against closed forms and against the published models. No
+        measured stress of a growing oral biofilm was available to validate
+        them.
+  \item \emph{No stress feedback.} The composition reaches the spreading only
+        through the nutrient; it does not act on the stiffness, and the stress
+        does not act back on growth, following Klempt et al.\ 2024, who drop the
+        mechanical term in the growth equation.
+  \item \emph{Front term.} The front term of the element was inactive in the
+        earlier runs; with it switched on, its large cell P\'eclet number needs
+        an upwind treatment, and its strength $r$ converted from Klempt et al.\ 2024
+        fills the domain quickly, so a tenth of it is used.
+  \item \emph{Assumptions.} The interpolation of the nutrient and the antibiotic
+        in time, the start values of points the biofilm reaches later and the
+        threshold for starting the point model are not given by the papers. All
+        are reported with their sensitivity.
+  \item \emph{The source model.} The test cases of Klempt et al.\ 2024 are
+        reproduced only with stated departures from the printed equations
+        (Appendix~\ref{app:klempt2024}), and the paper gives two forms of the
+        law for $\alpha$. I follow its Eq.~36.
+  \item \emph{Mesh and magnitude.} For a seed with a sharp edge, the example
+        model's $8^3$ mesh overestimates the averaged stresses of the seed by a
+        factor of 1.5 to 1.75. With $\beta=2$~$\mu$m$^2/T^*$ the seed mean stress
+        on $8^3$ agrees with $16^3$ within $1\,\%$, and the seed von Mises stress
+        is about $18\,\%$ lower. Peaks at the corners of the seed are mesh
+        dependent. On $24^3$ elements the growth $\alpha-1$ of
+        the seed is $0.7\,\%$ above a finite-volume reference solution of the same
+        problem, and the error of the seed stress is estimated at about $2\,\%$
+        from three meshes. With the published parameters the stresses
+        are of order $10^{-4}$~Pa.
+  \item \emph{Data.} The calibration rests on five species under four
+        conditions in vitro and ten patients in vivo. The commensal and
+        dysbiotic consortia used different \textit{P.~gingivalis} strains, so
+        part of the difference between the inferred matrices reflects the
+        strains. The symmetric interaction matrix cannot represent directed
+        effects.
+\end{itemize}
+
+\section{Outlook}
+\label{sec:concl_outlook}
+
+The work continues at Keio University. The steps follow from the limitations,
+in order of how well the literature supports them.
+\begin{enumerate}
+  \item \emph{More species.} The five-species point model calibrated in
+        Chapter~\ref{ch:heine} and the bridge from ANSYS to Python already
+        exist; with the scheme of Chapter~\ref{ch:ansys} the field stays a
+        single variable, so only the state of the point model and its
+        parameters need to be widened. With the point model calibrated for CH
+        in the element (Section~\ref{sec:ch5-five}), the stress does not
+        depend on the composition as long as the field sets the amount of
+        biofilm. When
+        $\alpha$ grows instead with the living biomass
+        $\sum_i\phi_i\psi_i$ of the point model, at a rate chosen (not taken
+        from a paper) so that the mean growth of the seed at $T^*=1$ equals
+        that of Eq.~36 of Klempt et al.\ 2024, the mean von Mises stress of the
+        seed is $7\,\%$ lower. Growth from the living biomass follows classical
+        multispecies biofilm models, in which only the active biomass grows and
+        inactive cells only occupy volume~\cite{WannerGujer1986}; it lets lysis
+        or an antibiotic in the point model lower the growth.
+  \item \emph{A working front term.} Once the element spreads the biofilm, the
+        composition can vary in space in ANSYS as it does in the Python
+        demonstration. Where the nutrient is uniform the direction of the
+        front term is undefined; the authors' implementation regularises it
+        as $\nabla c/(\|\nabla c\|+\varepsilon)$, which the element can adopt.
+  \item \emph{Local nutrient and composition-dependent spreading.} Replacing
+        the constant nutrient level $c^*$ of the point model by the local
+        nutrient of the field, and letting the growth and consumption of the
+        field depend on the composition, would close the loop between the two
+        models. First computations in Python
+        (Section~\ref{sec:ch5-outlook-python}) show that both change the
+        result: with a local nutrient the composition varies across the seed
+        (now also in ANSYS), and with species-dependent spreading the amount of biofilm at $T^*=1$
+        changes by up to $8\,\%$.
+  \item \emph{Composition into stiffness and stress into growth.} Species-specific
+        stiffness and stress-dependent growth would let the composition reach
+        the stress directly and the stress act back. Both need parameters that
+        are not yet available.
+  \item \emph{Uncertainty into the stress.} The posterior of
+        Chapter~\ref{ch:heine} could be carried through the element to the
+        stress; time-separated stochastic mechanics~\cite{GeislerJunker2025TSM}
+        does this at a much lower cost than Monte Carlo sampling.
+  \item \emph{A test of the inferred network.} The calibrated matrices predict
+        that removing \textit{F.~nucleatum} from the dysbiotic flow-reactor
+        consortium reduces the late increase of \textit{P.~gingivalis} to
+        about a quarter; a co-culture without it would test this.
+\end{enumerate}

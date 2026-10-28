@@ -279,7 +279,7 @@ def draw(cases, fig_path, shells=None):
            xticks=[8, 16, 24], ylim=(0.03, 0.24))
     ax.legend(frameon=False, fontsize=8, loc="lower right")
     fig.tight_layout()
-    fig.savefig(fig_path, dpi=200)
+    fig.savefig(fig_path, dpi=200); fig.savefig(Path(fig_path).with_suffix(".pdf"))   # PDF: vector, used by the thesis
     print("wrote", fig_path)
 
 

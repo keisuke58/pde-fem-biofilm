@@ -1,0 +1,132 @@
+﻿diff --git a/F:/biofilm_upf_living11/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living12/Ussfin_P21-V21_Conection_Test.F
+index f0ba223..8be2152 100644
+--- a/F:/biofilm_upf_living11/Ussfin_P21-V21_Conection_Test.F
++++ b/F:/biofilm_upf_living12/Ussfin_P21-V21_Conection_Test.F
+@@ -366,6 +366,14 @@ c **********  a user subroutine called after a substep  **********
+       INTEGER, ALLOCATABLE, SAVE :: vLi_UpRow(:,:), vLi_UpCol(:,:)
+       DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_UpVal(:,:)
+       INTEGER Si_UpK, Si_UpI, Si_UpN, Si_UpSide
++!     pde-fem-biofilm 23 Oct 2026 (A-65): MMS_SRC = 1, the manufactured
++!     solution of abaqus_living/mms.py (mms_eval of mms_src.f90): sources
++!     in the phi and nutrient equations, phi started from phi_m, the
++!     supply points held at c_m(t), living fraction 1, growth off in deck
++      DOUBLE PRECISION Sdp_MmsSrc, Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc
++      DOUBLE PRECISION Sdp_MmsPhim, Sdp_MmsCm, Sdp_MmsQ, Sdp_MmsR
++      DOUBLE PRECISION Sdp_Nut1Val
++      LOGICAL, SAVE :: lL_MmsInit = .FALSE.
+       INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+ 
+@@ -1452,6 +1460,25 @@ c **********  a user subroutine called after a substep  **********
+           PRINT *, 'IKM: FRONT_UPWIND read, nnz', Si_UpNnz
+         END IF
+       END IF
++      Sdp_MmsSrc = 0.0D0
++      C_ParName='MMS_SRC'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_MmsSrc = Sdp1
++      Sdp_MmsQ = sGdp_Consumption11 / sGdp_Diff1
++      Sdp_MmsR = sGdp_OriWeight11 * sGdp_MaxGrowth11
++      IF (Sdp_MmsSrc .GT. 0.5D0 .AND. .NOT. lL_MmsInit) THEN
++        lL_MmsInit = .TRUE.
++        DO SFI = 1, nTot
++          CALL mms_eval(vGdp_PosX_0(SFI), vGdp_PosY_0(SFI),
++     &      vGdp_PosZ_0(SFI), 0.0D0, sGdp_Beta1, Sdp_MmsR,
++     &      sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,
++     &      Sdp_MmsPhim, Sdp_MmsCm)
++          vGdp_Bio1_n1(SFI) = Sdp_MmsPhim
++          vGdp_Bio1_n(SFI) = Sdp_MmsPhim
++        END DO
++        PRINT *, 'IKM: MMS_SRC: phi started from phi_m, q, r =',
++     &    Sdp_MmsQ, Sdp_MmsR
++      END IF
+       Sdp_WallSens = 1.0D0
+       C_ParName='WALL_SENS'
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+@@ -1728,6 +1755,8 @@ c **********  a user subroutine called after a substep  **********
+ !$OMP& PRIVATE(Sdp_LwGx, Sdp_LwGy, Sdp_LwGz, Sdp_LwA, Sdp_LwAdd)
+ !$OMP& SHARED(Sdp_FrontUpw, lL_UpwFile, vLi_UpRow, vLi_UpCol, vLdp_UpVal)
+ !$OMP& PRIVATE(Sdp_FU, Sdp_FUsp, Sdp_FUn, Sdp_FUg, Si_UpK, Si_UpSide)
++!$OMP& SHARED(Sdp_MmsSrc, Sdp_MmsQ, Sdp_MmsR, vGdp_PosX_0, vGdp_PosY_0, vGdp_PosZ_0)
++!$OMP& PRIVATE(Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc, Sdp_MmsPhim, Sdp_MmsCm)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+ !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
+ !$OMP& SHARED(sGdp_Reflection, sGdp_Heat_Expo,vGdp_Refl_Limits)
+@@ -2604,8 +2633,16 @@ c **********  a user subroutine called after a substep  **********
+         END DO
+         Sdp_FU = Sdp_FUsp * Sdp_FU
+       END IF
++      Sdp_MmsSphi = 0.0D0
++      IF (Sdp_MmsSrc .GT. 0.5D0) THEN
++        Sdp_MmsT = sGdp_Time - sGdp_dTime + Sdp_tt
++        CALL mms_eval(vGdp_PosX_0(ID), vGdp_PosY_0(ID),
++     &    vGdp_PosZ_0(ID), Sdp_MmsT, sGdp_Beta1, Sdp_MmsR,
++     &    sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,
++     &    Sdp_MmsPhim, Sdp_MmsCm)
++      END IF
+       vGdp_Bio1_n(ID)    = sGdp_dTime * (
+-     & - Sdp_FU
++     & - Sdp_FU + Sdp_MmsSphi
+      & + sGdp_KLocal1 * vGdp_Bioloc1_n(ID)
+      & + sGdp_Beta1 * Sdp_LapBio1
+      & + PenForce1 + Sdp_LwAdd
+@@ -2894,6 +2931,9 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+ !$OMP& SHARED(sGdp_NutTransient, sGi_Ldstep)
+ !$OMP& SHARED(vGdp_Nut1_n1, vGdp_Nut2_n1)
+ !$OMP& SHARED(vGdp_M_Nut1, vGdp_RHS_Nut1)
++!$OMP& SHARED(Sdp_MmsSrc, Sdp_MmsQ, Sdp_MmsR, vGdp_PosX_0, vGdp_PosY_0, vGdp_PosZ_0)
++!$OMP& SHARED(sGdp_Beta1, sGdp_HalfVelo11, sGdp_MaxGrowth11, sGdp_OriWeight11, sGdp_Time, sGdp_dTime, Sdp_tt)
++!$OMP& PRIVATE(Sdp_MmsT, Sdp_MmsSphi, Sdp_MmsSc, Sdp_MmsPhim, Sdp_MmsCm)
+ !$OMP& SHARED(vGdp_M_Nut2, vGdp_RHS_Nut2)
+ !$OMP& SHARED(vGdp_Bio1_n1, vGdp_Bio2_n1)
+ !$OMP& SHARED(vGdp_Bioloc1_n1, vGdp_Bioloc2_n1)
+@@ -3056,6 +3096,15 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+               Sdp1 = MIN(MAX(vGdp_Bio1_n(ii) + vGdp_Bio2_n(ii),
+      &               0.0D0), 1.0D0) * vGdp_Living(ii)
+               vGdp_RHS_Nut1(ii) = 0.0D0
++              IF (Sdp_MmsSrc .GT. 0.5D0) THEN
++                Sdp1 = MIN(MAX(vGdp_Bio1_n(ii), 0.0D0), 1.0D0)
++                Sdp_MmsT = sGdp_Time - sGdp_dTime + Sdp_tt + Sdp_dt
++                CALL mms_eval(vGdp_PosX_0(ii), vGdp_PosY_0(ii),
++     &            vGdp_PosZ_0(ii), Sdp_MmsT, sGdp_Beta1, Sdp_MmsR,
++     &            sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,
++     &            Sdp_MmsPhim, Sdp_MmsCm)
++                vGdp_RHS_Nut1(ii) = -sGdp_Diff1 * Sdp_MmsSc
++              END IF
+               vGdp_RHS_Nut2(ii) = 0.0D0
+               vGdp_M_Nut1(idx) = vGdp_M_Nut1(idx)
+      &                         - sGdp_Consumption11 * Sdp1
+@@ -3306,6 +3355,15 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+ !-----------------------------------------------------------------
+       DO ii = 1, sGi_Nut1_ElemCnt*sGi_GpPerElem
+       IDHelp = Vi_Nut1GP_List(ii)
++      Sdp_Nut1Val = sGdp_Nut1start
++      IF (Sdp_MmsSrc .GT. 0.5D0) THEN
++        Sdp_MmsT = sGdp_Time - sGdp_dTime + Sdp_tt + Sdp_dt
++        CALL mms_eval(vGdp_PosX_0(IDHelp), vGdp_PosY_0(IDHelp),
++     &    vGdp_PosZ_0(IDHelp), Sdp_MmsT, sGdp_Beta1, Sdp_MmsR,
++     &    sGdp_HalfVelo11, Sdp_MmsQ, Sdp_MmsSphi, Sdp_MmsSc,
++     &    Sdp_MmsPhim, Sdp_MmsCm)
++        Sdp_Nut1Val = Sdp_MmsCm
++      END IF
+       Row_S = vGi_RowPtr_T(IDHelp)
+       Row_E = vGi_RowPtr_T(IDHelp+1) - 1
+ 
+@@ -3320,7 +3378,7 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+             IF (vGi_ColID_T(jj) .EQ. IDHelp) THEN
+                   vGdp_RHS_Nut1(NeighID) =
+      &                  vGdp_RHS_Nut1(NeighID)
+-     &                  - vGdp_M_Nut1(jj)*sGdp_Nut1start
++     &                  - vGdp_M_Nut1(jj)*Sdp_Nut1Val
+                   vGdp_M_Nut1(jj) = 0.0D0
+             ENDIF
+             ENDDO
+@@ -3330,7 +3388,7 @@ C     === NEU: Harmonische Interpolation fuer thermische Isolation ===
+       ! Schritt 2: eigene Zeile von IDHelp auf Identitaet setzen
+       DO pp = Row_S, Row_E
+       IF (vGi_ColID_T(pp).EQ.IDHelp) THEN
+-            vGdp_RHS_Nut1(IDHelp) = sGdp_Nut1start
++            vGdp_RHS_Nut1(IDHelp) = Sdp_Nut1Val
+             vGdp_M_Nut1(pp) = 1.0D0
+       ELSE
+             vGdp_M_Nut1(pp) = 0.0D0

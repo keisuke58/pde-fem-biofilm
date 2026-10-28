@@ -1,0 +1,181 @@
+% GENERATIONS (21 Oct): numbers marked QS below are quasi-static (0 = d lap c - ...; ANSYS u1_, Python without
+% _transc). They are the COMPARISON, not the main result. The main results are with dc/dt and da/dt (Python
+% _transc1 now, ANSYS u2_ after the trip). Replace every QS number in the main tables; keep QS only where the
+% text says 'quasi-static'. See results/2026-10-living/README.md and results/2026-10-3d/README_coupled_living.md.
+% Draft (21 Oct 2026) of the new results for the coupling of Section 4.6, to replace the paragraph "Two species"
+% and Figures fig:ch5-map, fig:ch5-spreading in ch4_ansys.tex. Source of the set-up: MEETING_2026-10-20.md.
+% ANSYS numbers: 8^3, runs u1_* (one inner USSFin step as in Chapter 4, A-27); [16^3] to fill from A-28.
+% The earlier v2f_/fsens_ runs had phi advancing ten times too fast (A-25) and are not used.
+% Python: coupled_living_consumption.py --v2 --phi-min 0.1 --front 0.1 --fortran --ansys-bc --start-position.
+% Not in the build yet.
+
+\paragraph{The coupled point model against the point model alone.}
+With uniform fields, $c=1$ everywhere and the antibiotic $a=1$ from the start, every point model in the
+coupled run must follow the point model alone. Fritsch et al.'s synthetic case~I
+\cite{Fritsch2025BayesianMicrofilms} run this way agrees with the point model alone to $2\times10^{-14}$
+(Python, with the Fortran point model of the ANSYS runs and with an independent implementation in JAX,
+which agree with each other to $2\times10^{-16}$). In ANSYS every step of the traced Gauss points is
+recomputed from its start state and its inputs $(c_n,c_{n+1},a_n,a_{n+1})$; they agree to
+$1.8\times10^{-12}$ in every step, once Newton's method is iterated to its tolerance: the first step from
+the start state needs up to 38 iterations, a fixed budget of 6 or 12 leaves it unconverged. The constraint
+$\sum_i\phi_i+\phi_0=1$ of the point model holds to $2\times10^{-16}$ at every traced step.
+The hand-over was checked separately, because the replay above sees only the point model: the living volume
+fraction that the field equations use equals the one the point model returned in the same increment, at every
+increment (difference $0$), and the start state of each step is the end state of the step before.
+
+\paragraph{Two examples.}
+Following the partner's suggestion, two examples use the same model with different start values
+(synthetic data, case~I of Fritsch et al., two species, $b=(1,2)$): species A in the seed of this chapter
+and species B in four small blocks at the corners, and both species mixed in the seed in equal amounts
+($\phi_1=\phi_2=0.275$, the total of Fritsch et al.). The nutrient is held on the layer $y=-1$~mm, the
+antibiotic on all outer faces from $T^*=0.5$, with $\alpha^*_0=50$ and a weaker uptake than the nutrient
+($g_a\ell^2/d_a=0.25$ against $g\ell^2/d=1$ of Klempt et al.\ 2024; an assumption). The front term uses a tenth of the converted Table~2 value
+of $r$; with the full value the elements collapse within the first increments. A point starts its point model
+when $\phi_{3D}$ first exceeds $\phi_{\min}=0.1$. The papers do not say from which composition it starts
+(Section~\ref{sec:ch5-outlook-python}); here it starts as species B within $0.5625$~mm of the vertical edges
+and as species A elsewhere in the first example, and from the mixed start in the second. This is an
+assumption: it fixes where the two regions meet. Starting instead from the mean state of the colonised
+neighbours changes the living volume fraction of the seed by $0.025$ (Python).
+Table~\ref{tab:ch5-living} gives the seed and the corner blocks at $T^*=1$.
+
+\begin{table}[htbp]
+  \centering
+  \caption[The coupled examples]{% [QS: quasi-static numbers, to be replaced]
+    The two examples in ANSYS ($16^3$) at $T^*=1$, means over the seed and over the corner blocks:
+    biofilm $\phi_{3D}$, living volume fraction $\sum_i\bar\phi_i$ (points not yet started count as $0$),
+    nutrient $c$, growth $\alpha-1$ and von Mises stress.}
+  \label{tab:ch5-living}
+  \begin{tabular}{llccccc}
+    \toprule
+    & & $\phi_{3D}$ & $\sum_i\bar\phi_i$ & $c$ & $\alpha-1$ & $\sigma_{vM}$ [Pa]\\
+    \midrule
+    separate, antibiotic & seed & 0.868 & 0.810 & 0.528 & $8.93\cdot10^{-4}$ & $1.21\cdot10^{-3}$\\
+    & corners & 0.342 & 0.328 & 0.753 & $3.72\cdot10^{-4}$ & $2.83\cdot10^{-4}$\\
+    separate & seed & 0.846 & 0.962 & 0.448 & $8.89\cdot10^{-4}$ & $1.16\cdot10^{-3}$\\
+    & corners & 0.336 & 0.748 & 0.665 & $3.71\cdot10^{-4}$ & $2.79\cdot10^{-4}$\\
+    mixed, antibiotic & seed & 0.944 & 0.226 & 0.836 & $9.27\cdot10^{-4}$ & $1.27\cdot10^{-3}$\\
+    mixed & seed & 0.906 & 0.955 & 0.456 & $9.20\cdot10^{-4}$ & $1.18\cdot10^{-3}$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Where the two regions meet.}
+Figure~\ref{fig:ch5-contact} follows the separate example without antibiotic to $T^*=2$ (Python, $32^3$, Eq.~35
+with its time derivative). The regions of A and B grow until their fronts meet about $0.8$~mm from the centre of
+the seed along the diagonal, and the boundary stays there: its position on the diagonal is $0.795$~mm at
+$T^*=1$, $1.5$ and $2$, and the share of A drops from above $0.95$ to below $0.05$ within one cell. The
+composition is not carried with the biomass in this coupling: a point keeps the state of its point model, and a
+point the biofilm reaches starts from the state of its neighbours. Neither species can therefore invade the
+other; mixing is confined to the points that start between the two fronts. With the start rule of the ANSYS runs
+(species B near the edges, A elsewhere) the boundary has the shape set by the rule instead of the shape of the
+meeting fronts, at the same position on the diagonal. The same holds with the antibiotic: in the corner blocks the living
+volume fraction of B falls from $0.84$ at $T^*=0.5$ to $0.37$ at $T^*=2$, while the share of A there stays between
+$0.02$ and $0.03$ and the boundary stays at $0.796$~mm. A sharp boundary between colonies that meet is what
+experiments show as well; that it cannot move, even when one side dies, is a limit of this coupling.
+Displacing one species by the other would need the species to be transported in the field equations, as in a
+species-resolved continuum model \cite{Feng2021SymbioticBiofilm}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_contact_zone.pdf}
+  \caption[Where the regions of A and B meet]{%
+    Separate example without antibiotic, Python on $32^3$, to $T^*=2$: share of A on the mid-plane $z=0$ (grey
+    where $\phi_{3D}<0.1$, line $\phi_{3D}=0.5$) for points that start from the state of their neighbours (top)
+    by position as in the ANSYS runs, with the antibiotic from $T^*=0.5$ (third row) and its living volume
+    fraction (fourth row, green), and along the diagonal from the centre of the seed (bottom).}
+  \label{fig:ch5-contact}
+\end{figure}
+
+\paragraph{What the antibiotic does.}
+Species B, the more sensitive one ($b_2=2$), dies wherever the antibiotic arrives. In the mixed seed the
+living volume fraction falls to $0.23$ and the nutrient, no longer consumed, rises from $0.46$ to $0.84$.
+In the corner blocks of species B it falls from $0.75$ to $0.33$. Whether a species survives depends on the
+balance in its equation for $\psi_i$ between the nutrient term $c^*\phi_i\sum_jA_{ij}\phi_j\psi_j$ and the
+antibiotic term $\alpha^*b_i\psi_i$: with $c^*=100\,c$ and $\alpha^*b_1=\alpha^*_0$, species A gains where
+$c>\alpha^*_0/100$. In the separate seed ($c\approx0.5$) the living volume fraction at $T^*=1$ follows
+$\alpha^*_0$: $0.94$, $0.90$, $0.77$ and $0.59$ for $\alpha^*_0=10$, $40$, $50$ and $60$ ($8^3$ [$16^3$: ..]). The nutrient field
+thus decides where the antibiotic acts, which a point model with a constant $c^*$ cannot show.
+
+The mixed example also depends on the start: with the start of Fritsch et al.\ ($\phi_1=0.25$,
+$\phi_2=0.30$) the living volume fraction in the seed ends at $0.051$, with equal amounts at $0.23$ (ANSYS
+$16^3$; Python $0.050$ and $0.21$). As in case~6 of Section~\ref{sec:ch5-outlook-python}, the start share decides
+which species prevails.
+
+The growth $\alpha-1$ and the stress change little with the antibiotic: in the mixed seed the stress is
+$1.18\cdot10^{-3}$~Pa without and $1.27\cdot10^{-3}$~Pa with it ($+8\,\%$), through the nutrient left by the
+dead biomass and the front term; $\alpha-1$ changes by $0.8\,\%$. Eq.~36 is unchanged, so the biofilm expands
+with $\phi_{3D}$ whether it is alive or dead, and the point model reaches the stress only through the
+consumption, the nutrient field and the front term of Eq.~34.
+
+\paragraph{Python against ANSYS.}
+The Python version with the boundary conditions of the ANSYS deck (the nutrient and the antibiotic held on
+whole element layers), the same start rule and the same Fortran point model gives the seed values of
+Table~\ref{tab:ch5-living-py}. With the mesh refined from $8^3$ to $16^3$ the ANSYS values move towards the
+Python values, which change by less than $0.02$ between $16^3$ and $32^3$. The living volume fraction and the
+nutrient agree to within $0.02$ on $16^3$, the share of A to within $0.02$; the seed stress is
+$12\,\%$ higher in ANSYS. The two implementations discretise the fields differently (finite volumes against
+the neighboured element method).
+
+\begin{table}[htbp]
+  \centering
+  \caption[Python against ANSYS]{% [QS: quasi-static numbers, to be replaced]
+    Seed at $T^*=1$: living volume fraction $\sum_i\bar\phi_i$ / nutrient $c$ / stress $\sigma_{vM}$ in
+    $10^{-3}$~Pa, ANSYS on $8^3$ and $16^3$, Python on $16^3$ and $32^3$.}
+  \label{tab:ch5-living-py}
+  \begin{tabular}{lcccc}
+    \toprule
+    & ANSYS $8^3$ & ANSYS $16^3$ & Python $16^3$ & Python $32^3$\\
+    \midrule
+    separate, antibiotic & 0.768 / 0.513 / 1.19 & 0.810 / 0.528 / 1.21 & 0.829 / 0.542 / 0.99 & 0.830 / 0.543 / 1.08\\
+    separate & 0.962 / 0.427 / 1.12 & 0.962 / 0.448 / 1.16 & 0.963 / 0.463 / 0.95 & 0.963 / 0.462 / 1.02\\
+    mixed, antibiotic & 0.190 / 0.843 / 1.26 & 0.226 / 0.836 / 1.27 & 0.194 / 0.855 / 1.13 & 0.207 / 0.851 / 1.18\\
+    mixed & 0.954 / 0.435 / 1.13 & 0.955 / 0.456 / 1.18 & 0.955 / 0.470 / 1.04 & 0.956 / 0.471 / 1.09\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Convergence and sensitivity.}
+Halving the outer increment twice ($0.025$, $0.0125$, $0.00625$) changes the seed stress by $0.55$ and
+$0.31\,\%$ (first order; the error at $0.025$ is about $0.9\,\%$) and the living volume fraction of the
+corner blocks by $3.5\,\%$ ($8^3$); on $16^3$ halving it changes the seed stress by $0.25\,\%$. The Python
+version changes by less than $0.5\,\%$.
+Table~\ref{tab:ch5-living-sens} varies one choice at a time in the separate example with antibiotic.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Sensitivity of the coupled example]{% [QS: quasi-static numbers, to be replaced]
+    Separate example with antibiotic, ANSYS $8^3$, seed at $T^*=1$: one choice changed at a time.}
+  \label{tab:ch5-living-sens}
+  \begin{tabular}{lccccc}
+    \toprule
+    & $\phi_{3D}$ & $\sum_i\bar\phi_i$ & $c$ & $\alpha-1$ & $\sigma_{vM}$ [Pa]\\
+    \midrule
+    reference & 0.902 & 0.768 & 0.514 & $9.43\cdot10^{-4}$ & $1.19\cdot10^{-3}$\\
+    $\phi_{\min}=0.01$ & 0.876 & 0.735 & 0.501 & $9.32\cdot10^{-4}$ & $1.15\cdot10^{-3}$\\
+    antibiotic uptake $\times16$ & 0.903 & 0.917 & 0.486 & $9.43\cdot10^{-4}$ & $1.20\cdot10^{-3}$\\
+    $\alpha^*_0=10$ & 0.882 & 0.943 & 0.433 & $9.40\cdot10^{-4}$ & $1.13\cdot10^{-3}$\\
+    $\alpha^*_0=40$ & 0.896 & 0.902 & 0.473 & $9.42\cdot10^{-4}$ & $1.17\cdot10^{-3}$\\
+    $\alpha^*_0=60$ & 0.907 & 0.585 & 0.571 & $9.44\cdot10^{-4}$ & $1.21\cdot10^{-3}$\\
+    outer increment $0.0125$ & 0.902 & 0.771 & 0.515 & $9.41\cdot10^{-4}$ & $1.20\cdot10^{-3}$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The choices of the point model ($\phi_{\min}$, $\alpha^*_0$, the antibiotic uptake) move the living volume
+fraction by up to $0.18$ but the stress by at most $5\,\%$.
+
+\paragraph{Limitations of the discretisation.}
+On $8^3$ the field $\phi_{3D}$ leaves $[0,1]$ slightly at the edge of the seed early in the run ($-0.027$ and
+$1.013$ at $T^*=0.25$, inside the bounds from $T^*=0.75$ on; not on $16^3$): the operator of the element is not
+monotone on the coarse mesh. The examples are mirror-symmetric in $x$ and $z$, the results are not: with only
+the diffusion of $\phi_{3D}$, $\phi_{3D}$ differs by up to $0.0085$ between mirrored elements on $8^3$, and in
+the runs of Section~[..] on $16^3$ by up to $0.9\,\%$ in $x$. The neighbour search of the element enlarges its
+radius until it holds enough points and then takes a fixed number of them in element order, so the last
+distance shell is cut by the numbering at every point. A rebuild of the operator in Python on the same mesh
+shows that this rule alone produces an asymmetry of this size; taking more neighbours or the nearest ones
+reduces it, and the mean of $\phi_{3D}$ in the seed changes by $0.5\,\%$ between these choices. All runs keep
+the element's setting. With $120$ neighbours the mixed example with antibiotic on $16^3$ changes its seed
+living volume fraction from $0.226$ to $0.224$ and its seed stress by $+4.8\,\%$. Small asymmetries of
+$\phi_{3D}$ ($0.04$ at most on $16^3$) grow in the point model where it lies near the threshold of its
+outcome: the living volume fraction and the share of A differ by up to $0.3$ between mirrored elements at the
+edge of the biofilm, while the stress differs by less than $2\,\%$.

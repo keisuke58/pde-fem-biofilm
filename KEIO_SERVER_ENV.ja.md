@@ -114,7 +114,7 @@ python3 abaqus_composition/summarize_implant.py \
 | `--felix` | 消費ではなく**前線項**の実装差（第一著者の現行実装：正のところだけ加算、φ<1 で (1−φ) 倍） |
 | `--pen` | φ を [0, 1] に抑える剛性ペナルティ。`--pen 0` で上限なし |
 
-`KEIO_PLAN.ja.md` §3 の「4.1 は gφc でしか論文に合わない」（RMS φ 0.066 / c 0.025）は
+`KEIO_PLAN.ja.md` §7 の「4.1 は gφc でしか論文に合わない」（RMS φ 0.066 / c 0.025）は
 `results_1006/fx41_fo_p0.txt` = `--first-order --pen 0`、`--felix` なし。
 `--felix` を付けた `ff41_fo` は RMS φ 0.252 で、同じ gφc でも一致しない。
 

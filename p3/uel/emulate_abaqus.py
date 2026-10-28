@@ -43,24 +43,92 @@ def uel(U, DU, coords, svars, props, dt, kinc, ttot=0.0, finite=True, md=False, 
     return -rhs[:, 0], amat, sv, pnewdt.value
 
 
-def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10, finite=True, md=False, cur=False):
-    """one Abaqus increment: Newton on the free dofs, every element called with the start-of-increment SVARS"""
+def increment(U0, U, fixed, nodes, elems, SV, props, dt, kinc, ttot=0.0, tol=1e-10, finite=True, md=False, cur=False,
+              maxit=30, line_search=True, hist=None):
+    """one Abaqus increment: Newton on the free dofs, every element called with the start-of-increment SVARS.
+    line_search: when a full Newton step raises the residual by more than half, or the element returns NaN
+    (an inverted element), the step is halved, up to 6 times (Abaqus: *CONTROLS, PARAMETERS=LINE SEARCH). The
+    converged state is the same; without it the Newton of the implant sector with a seed of three element
+    layers (6x18x24, 16 Oct 2026) diverged in the first growth increment at the stiff-soft corner of the top face.
+    hist: a list; every iteration appends (iteration, largest residual, step factor, residual per dof kind u/phi/c).
+    Raises RuntimeError when the residual is not finite or maxit is reached (NoConvergence); U is not changed."""
     EDS = [np.array([NDN * n + d for n in el for d in range(NDN)]) for el in elems]
-    for it in range(30):
+    free = np.where(~fixed)[0]
+    kind = free % NDN
+    Up, dU, s, rp, cuts = None, None, 1.0, None, 0
+    for it in range(maxit):
         R = np.zeros(len(U)); rows, cols, vals = [], [], []; SVn = []
         for e, el in enumerate(elems):
             ed = EDS[e]
             Re, Ke, sv, pn = uel(F(U[ed]), F((U[ed] - U0[ed])[:, None]), F(nodes[el].T), SV[e], props, dt, kinc, ttot, finite, md, e + 1, cur)
-            assert pn == 1.0, "UEL asked for a smaller increment"
+            if pn < 1.0:
+                raise NoConvergence(f"increment {kinc}: element {e + 1} asked for a smaller increment (PNEWDT {pn:g})")
             R[ed] += Re; rows.append(np.repeat(ed, NDOF)); cols.append(np.tile(ed, NDOF)); vals.append(Ke.ravel())
             SVn.append(sv)
-        free = np.where(~fixed)[0]
         r = np.abs(R[free]).max() if free.size else 0.0
+        if hist is not None:
+            Rf = np.abs(R[free])
+            hist.append((it, float(r), s, tuple(float(Rf[m].max()) if m.any() else 0.0 for m in (kind < 3, kind == 3, kind == 4))))
+        if line_search and dU is not None and cuts < 6 and (not np.isfinite(r) or r > 1.5 * rp):
+            s *= 0.5; cuts += 1
+            print(f"  increment {kinc}, iteration {it}: residual {r:.2e} after {rp:.2e}, step halved to {s:g}", file=sys.stderr, flush=True)
+            U = Up.copy(); U[free] += s * dU
+            continue
+        if not np.isfinite(r):
+            raise NoConvergence(f"increment {kinc}: residual not finite")
         if r < tol:
             return U, SVn, it
         K = sp.csr_matrix((np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))), shape=(len(U), len(U)))
-        U = U.copy(); U[free] += spla.spsolve(K[free][:, free].tocsc(), -R[free])
-    raise RuntimeError("no convergence")
+        dU = spla.spsolve(K[free][:, free].tocsc(), -R[free])
+        Up, rp, s, cuts = U, r, 1.0, 0
+        U = U.copy(); U[free] += dU
+    raise NoConvergence(f"increment {kinc}: no convergence in {maxit} iterations")
+
+
+class NoConvergence(RuntimeError):
+    """Newton failed in an increment (not finite, or maxit reached); the caller may cut the increment back"""
+
+
+def march(U, fixed, nodes, elems, SV, props, T, ninc, t0=0.0, kinc0=1, cutback=0.25, growth=1.5, max_cutbacks=5,
+          easy=4, log=None, **kw):
+    """a step of length T with Abaqus's automatic time incrementation (the GROW step of the implant and seed decks):
+    dt starts at T/ninc, which is also the largest increment (DTMAX of the data line); when an increment fails
+    (NoConvergence from `increment`: residual not finite, maxit reached, or PNEWDT < 1) it is retried from the same
+    start state with cutback * dt, up to max_cutbacks times in one increment (Abaqus D_f = 0.25, I_A = 5), then
+    RuntimeError; after two consecutive increments converged in at most `easy` iterations (I_G = 4) dt grows by
+    `growth` (D_D = 1.5), never above T/ninc; the last increment ends at T. Without a failure the increments are the
+    ninc fixed ones of the plain loop (same results). kw go to `increment` (finite, md, cur, tol, maxit).
+    log: a list of (increment, time at its start, dt, iterations or 'cut') per attempt.
+    Returns U, SV, info: increments, attempts, cutbacks, iterations, smallest dt."""
+    dtmax = T / ninc
+    dt, t, kinc, easy_run = dtmax, 0.0, kinc0, 0
+    info = dict(increments=0, attempts=0, cutbacks=0, iterations=0, dt_min=dtmax)
+    while t < T - 1e-12 * T:
+        if T - t <= dt * (1 + 1e-9):
+            dt = T - t
+        cuts = 0
+        while True:
+            info["attempts"] += 1
+            try:
+                Un, SVn, it = increment(U.copy(), U, fixed, nodes, elems, SV, props, dt, kinc, ttot=t0 + t, **kw)
+                break
+            except NoConvergence as err:
+                cuts += 1; info["cutbacks"] += 1
+                if log is not None:
+                    log.append((kinc, t, dt, "cut"))
+                print(f"  {err}; increment {kinc} retried with dt {dt * cutback:.3e}", file=sys.stderr, flush=True)
+                if cuts > max_cutbacks:
+                    raise RuntimeError(f"increment {kinc}: {max_cutbacks} cutbacks did not converge (dt {dt:.3e})") from err
+                dt *= cutback; easy_run = 0
+        if log is not None:
+            log.append((kinc, t, dt, it))
+        U, SV = Un, SVn
+        t += dt; kinc += 1
+        info["increments"] += 1; info["iterations"] += it; info["dt_min"] = min(info["dt_min"], dt)
+        easy_run = easy_run + 1 if it <= easy else 0
+        if easy_run >= 2 and dt < dtmax:
+            dt = min(dt * growth, dtmax)
+    return U, SV, info
 
 
 def seed(n, antibiotic=False, finite=True, nu=0.3, md=False, L0=2.0, lam=0.0, psiref=0.0, cur=False, Y=1.0):

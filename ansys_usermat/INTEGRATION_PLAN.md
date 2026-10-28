@@ -139,7 +139,7 @@ and testable here; only step 4 depends on someone else's schedule. **With the
 November date, that makes step 1 more important than it looks above.** A
 working local v222 build lets us produce results with the wrapper without step
 4 landing at all, so it is the move that takes Oliver's calendar off the
-critical path — see `ROADMAP_2026.md` §3.
+critical path — see `archive/ROADMAP_2026.md` §3.
 
 ## Later, not now
 

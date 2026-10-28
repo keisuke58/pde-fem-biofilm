@@ -127,7 +127,7 @@ def fig_stability():
     ax.legend(loc="upper left", frameon=False, fontsize=8, ncol=5, columnspacing=1.0, handletextpad=0.3)
     fig.tight_layout()
     out = ASSETS / "fig_wp3_stability.png"
-    fig.savefig(out, dpi=200)
+    fig.savefig(out, dpi=200); fig.savefig(Path(out).with_suffix(".pdf"))
     plt.close(fig)
     return out, rows
 
@@ -183,7 +183,7 @@ def fig_convergence():
         a.invert_xaxis()
     fig.tight_layout()
     out = ASSETS / "fig_wp3_convergence.png"
-    fig.savefig(out, dpi=200)
+    fig.savefig(out, dpi=200); fig.savefig(Path(out).with_suffix(".pdf"))
     plt.close(fig)
     return out
 

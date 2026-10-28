@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""scheme_c_table.py -- the report table of CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md
+"""scheme_c_table.py -- the report table of archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md
 for scheme (c) (growth from the point model's living amount) and its reference.
 
     python ansys_usermat/apdl/scheme_c_table.py REF RUN [RUN ...]

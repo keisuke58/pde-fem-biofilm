@@ -506,7 +506,7 @@ not that the biofilm physics is on display in this particular smoke test.
 The zero-stress smoke test above only proves the *pool* links and runs; it
 says nothing about `BIOFILM_GROWTH_VISCO_V01` itself, since that routine
 was never in the call path. Closing that gap — completing
-[`ROADMAP_2026.md`](../../ROADMAP_2026.md) Week 1's stated done-condition
+[`../../archive/ROADMAP_2026.md`](../../ROADMAP_2026.md) Week 1's stated done-condition
 ("a working local v222 build lets us run our own ANSYS jobs with the
 wrapper") — without touching any of Oliver's files:
 
@@ -547,7 +547,7 @@ v222 solve — not just the gfortran unit tests
 
 ### Same day, beyond the single element — real multi-element geometry matches too
 
-[`ROADMAP_2026.md`](../../ROADMAP_2026.md) §5's Week 4–5 target is "real
+[`../../archive/ROADMAP_2026.md`](../../ROADMAP_2026.md) §5's Week 4–5 target is "real
 geometry runs — coupon, then tooth/implant... von Mises fields out." Rather
 than building a new geometry from scratch, the already-characterised
 two-layer curved-shell case

@@ -28,6 +28,7 @@ import sys
 import time
 from pathlib import Path
 
+import os
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
@@ -36,12 +37,52 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import mesh_study_seed as S  # noqa: E402
 
-E_BIO, NU, FLOOR = 10.0, 0.49, 1e-3
+E_BIO, NU, FLOOR = 10.0, 0.49, float(os.environ.get("VOID_FLOOR", 1e-3))   # void floor f (env VOID_FLOOR for its sensitivity)
 
 
-def solve_fields(n, phi, am1, nu=NU, force_cg=False):
+LAST_CONTACT = None
+
+
+def _obstacle_constraints(n, idx, conn, boxes):
+    """Rigid obstacles (axis-aligned boxes, Klempt et al. 2024, Sect. 4.3): their elements are removed, nodes that
+    belong to no remaining element are held, and a node on an obstacle face gets a frictionless contact condition in
+    the face normal (u.n <= 0 into the obstacle). Returns (element mask, held dofs, [(dof, sign)] contact dofs, where
+    sign * u >= 0 keeps the node out of the obstacle)."""
+    h = 2.0 / n
+    xc = -1 + (np.arange(n) + 0.5) * h
+    X_, Y_, Z_ = np.meshgrid(xc, xc, xc, indexing="ij")
+    obst = np.zeros((n,) * 3, bool)
+    for lo, hi in boxes:
+        obst |= (X_ > lo[0]) & (X_ < hi[0]) & (Y_ > lo[1]) & (Y_ < hi[1]) & (Z_ > lo[2]) & (Z_ < hi[2])
+    solid_node = np.zeros((n + 1) ** 3, bool)
+    solid_node[conn[~obst.ravel()].ravel()] = True
+    held = np.flatnonzero(~solid_node)
+    held = np.concatenate([3 * held + d for d in range(3)])
+    xn = -1 + np.arange(n + 1) * h
+    P = np.stack(np.meshgrid(xn, xn, xn, indexing="ij"), -1).reshape(-1, 3)
+    eps = 1e-9
+    cont = {}
+    for lo, hi in boxes:
+        lo, hi = np.array(lo), np.array(hi)
+        on = np.all((P >= lo - eps) & (P <= hi + eps), 1) & solid_node
+        for a in range(3):
+            for face, sign in ((lo[a], -1.0), (hi[a], 1.0)):
+                if abs(abs(face) - 1.0) < eps:       # the box ends at the cube boundary: no contact face there
+                    continue
+                for i in np.flatnonzero(on & (np.abs(P[:, a] - face) < eps)):
+                    cont[3 * i + a] = sign
+    return obst, held, sorted(cont.items())
+
+
+LAST_TRE = None
+
+
+def solve_fields(n, phi, am1, nu=NU, force_cg=False, obstacles=None, efac=None):
     """Hex8 solve on the n^3 mesh with element-wise phi and alpha - 1 (arrays n x n x n).
-    Returns von Mises and mean stress per element (Pa) in the array layout of phi."""
+    Returns von Mises and mean stress per element (Pa) in the array layout of phi.
+    obstacles: list of boxes ((x0, y0, z0), (x1, y1, z1)) in mm, rigid, frictionless unilateral contact (active set);
+    they replace the corner constraints. Obstacle elements get NaN stresses."""
+    global LAST_CONTACT, LAST_TRE
     h = 2.0 / n
     Ke0, fe0, B0, D, m = S.element_matrices(h, nu, False)
     idx = np.arange((n + 1) ** 3).reshape(n + 1, n + 1, n + 1)
@@ -49,6 +90,11 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False):
     conn = np.stack([idx[i:i + n, j:j + n, k:k + n].ravel() for i, j, k in off], 1)
     dofs = np.concatenate([3 * conn[:, [a]] + np.arange(3) for a in range(8)], 1)
     Ee = E_BIO * (np.clip(phi.ravel(), 0.0, 1.0) ** 2 + FLOOR)
+    if efac is not None:                       # --stiff-species: composition-weighted factor per element
+        Ee = Ee * np.asarray(efac, float).ravel()
+    if obstacles is not None:
+        obst, held, cont = _obstacle_constraints(n, idx, conn, obstacles)
+        Ee = np.where(obst.ravel(), 0.0, Ee)
     eps0 = am1.ravel()
     rows = np.repeat(dofs, 24, 1).ravel()
     cols = np.tile(dofs, (1, 24)).ravel()
@@ -57,6 +103,31 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False):
     F = np.zeros(ndof)
     np.add.at(F, dofs.ravel(), (fe0[None] * (Ee * eps0)[:, None]).ravel())
     node = lambda p: idx[tuple(int(round((c + 1) / h)) for c in p)]
+    if obstacles is not None:
+        u = np.zeros(ndof)
+        cdof = np.array([c for c, _ in cont]); csgn = np.array([s_ for _, s_ in cont])
+        active = np.ones(len(cdof), bool)
+        for it in range(50):
+            fix = np.concatenate([held, cdof[active]])
+            free = np.setdiff1d(np.arange(ndof), fix)
+            u[:] = 0.0
+            u[free] = spla.spsolve(K[free][:, free].tocsc(), F[free])
+            R = K @ u - F                                     # reaction of the obstacle on the node
+            pull = active & (csgn * R[cdof] < -1e-12 * np.abs(F).max())   # obstacle would have to pull: release
+            pen = ~active & (csgn * u[cdof] < -1e-14)                     # released node moved into the obstacle
+            if not pull.any() and not pen.any():
+                break
+            active = (active & ~pull) | pen
+        LAST_CONTACT = dict(iterations=it + 1, contact_dofs=int(len(cdof)), in_contact=int(active.sum()),
+                            held_dofs=int(len(held)))
+        eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
+        LAST_TRE = eps[:, :3].sum(1).reshape(phi.shape)       # trace of the elastic strain (--mech-feedback)
+        sig = Ee[:, None] * (eps @ D.T)
+        p = sig[:, :3].mean(1)
+        s = sig[:, :3] - p[:, None]
+        vm = np.sqrt(1.5 * ((s ** 2).sum(1) + 2 * (sig[:, 3:] ** 2).sum(1)))
+        vm[obst.ravel()] = np.nan; p[obst.ravel()] = np.nan
+        return vm.reshape(phi.shape), p.reshape(phi.shape)
     fix = [3 * node(S.CORNERS[0]) + d for d in (0, 1, 2)] + [3 * node(S.CORNERS[1]) + d for d in (1, 2)] \
         + [3 * node(S.CORNERS[2]) + 2]
     free = np.setdiff1d(np.arange(ndof), fix)
@@ -78,6 +149,7 @@ def solve_fields(n, phi, am1, nu=NU, force_cg=False):
         print(f"    cg: {it[0]} iterations, info {info}, relative residual {res:.1e}", flush=True)
         u[free] = x
     eps = (B0 @ u[dofs].T).T - eps0[:, None] * m
+    LAST_TRE = eps[:, :3].sum(1).reshape(phi.shape)           # trace of the elastic strain (--mech-feedback)
     sig = Ee[:, None] * (eps @ D.T)
     p = sig[:, :3].mean(1)
     s = sig[:, :3] - p[:, None]

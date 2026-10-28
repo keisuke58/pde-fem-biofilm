@@ -25,7 +25,7 @@ consolidated document first; the others are the underlying investigations.
 | Doc | What |
 |---|---|
 | [VERIFICATION_SENSITIVITY_LIMITATIONS.md](VERIFICATION_SENSITIVITY_LIMITATIONS.md) | **Consolidated** Verification / Sensitivity / Limitations — read first |
-| [rigor_audit_growth_2026-06-26.md](rigor_audit_growth_2026-06-26.md) | Growth kinematics & numerics audit |
+| [archive/rigor_audit_growth_2026-06-26.md](archive/rigor_audit_growth_2026-06-26.md) | Growth kinematics & numerics audit |
 | [DS_composition_fix.md](DS_composition_fix.md) | Dysbiotic-static composition copy-bug (σ_DS ~8× too high) — fix status |
 | [clsm_composition_findings.md](clsm_composition_findings.md) | Composition provenance; raw-CLSM recomputation of σ_CH/σ_DH |
 | [espec_sensitivity_findings.md](espec_sensitivity_findings.md) | `E_SPEC` sensitivity of σ_CH/σ_DH (3.7–12×) |
@@ -36,7 +36,7 @@ consolidated document first; the others are the underlying investigations.
 
 | Doc | What |
 |---|---|
-| [PLAN_NEXT.md](PLAN_NEXT.md) | **Consolidated next-steps roadmap (2026-07-02)** — T1 thesis / T2 first paper / T3 continuation, prioritized |
+| [archive/PLAN_NEXT.md](archive/PLAN_NEXT.md) | **Consolidated next-steps roadmap (2026-07-02)** — T1 thesis / T2 first paper / T3 continuation, prioritized |
 | [PIPELINE.md](PIPELINE.md) | Config-driven pipeline entry point (T2.1) + `P[σ>threshold]` risk metric (T2.3); isolated-checkout audit notes |
 | [klempt2024_gap_analysis.md](klempt2024_gap_analysis.md) | Klempt et al. (2024) gap analysis & response |
 | [BENCHMARK_PLAN.md](BENCHMARK_PLAN.md) | Klempt 2024 → 5-species benchmark roadmap |

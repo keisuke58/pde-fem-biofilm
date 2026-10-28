@@ -1,0 +1,348 @@
+\documentclass[12pt, a4paper, twoside]{report}
+
+% ── Encoding & fonts ────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ── Page layout ─────────────────────────────────────────────────────────────
+\usepackage[
+  a4paper,
+  top=25mm, bottom=25mm,
+  inner=30mm, outer=20mm,
+  headheight=15pt
+]{geometry}
+\usepackage{setspace}
+\setstretch{1.2}   % slightly tighter than \onehalfspacing
+
+% ── Math ────────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}
+
+% ── Graphics & tables ───────────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ── Colours & hyperlinks ─────────────────────────────────────────────────────
+\usepackage{xcolor}
+\usepackage[hidelinks, pdfencoding=auto]{hyperref}
+\usepackage[protrusion=true, expansion=true]{microtype}  % reduces overfull boxes
+\setlength{\emergencystretch}{2em}                        % absorb residual overfull
+
+% Heading sizes — moderate the report-class defaults (chapter \Huge, section \Large,
+% subsection \large felt oversized). titlesec shrinks them one notch each.
+\usepackage{titlesec}
+% compact heading scale (body 12pt): chapter 16, section 12.5, subsection 12.
+\titleformat{\chapter}[hang]
+  {\normalfont\fontsize{16}{19}\bfseries}{\thechapter\quad}{0pt}{}
+\titlespacing*{\chapter}{0pt}{6pt}{14pt}
+\titleformat{\section}{\normalfont\fontsize{12}{14}\bfseries}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6ex plus .6ex}{0.8ex}
+\titleformat{\subsection}{\normalfont\fontsize{11}{13}\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .5ex}{0.6ex}
+\titleformat{\subsubsection}{\normalfont\fontsize{11}{13}\itshape}{\thesubsubsection}{0.5em}{}
+
+% ── Bibliography ─────────────────────────────────────────────────────────────
+\usepackage[numbers, sort&compress]{natbib}
+\bibliographystyle{unsrtnat}
+\renewcommand{\bibfont}{\raggedright}  % long titles and DOIs: no overfull lines
+
+% ── Headers ─────────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+
+% ── Misc ─────────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% ── Math shortcuts ───────────────────────────────────────────────────────────
+\newcommand{\bphi}{\boldsymbol{\phi}}
+\newcommand{\bpsi}{\boldsymbol{\psi}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bsigma}{\boldsymbol{\sigma}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\yobs}{\mathbf{y}_{\mathrm{obs}}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calP}{\mathcal{P}}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title page ───────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Large Leibniz Universität Hannover\\[4pt]
+         Fakultät für Maschinenbau\\[4pt]
+         Institut für Kontinuumsmechanik}\\[2cm]
+
+  \rule{\textwidth}{1.5pt}\\[0.4cm]
+  % Title exactly as registered with the Pruefungsamt (form of 18.08.2026).
+  % Do not change without a new registration.
+  {\LARGE\bfseries Hamilton-Principle Models of Oral Biofilm Dysbiosis}\\[8pt]
+  {\large\bfseries GPU-Accelerated Inference, Metabolic Priors,\\[2pt]
+   and Spatial Stratification}\\[0.4cm]
+  \rule{\textwidth}{1.5pt}\\[1.5cm]
+
+  {\large\bfseries Masterarbeit}\\[0.5cm]
+  {\large im Studiengang Maschinenbau (Double Degree, LUH/Keio)}\\[2cm]
+
+  \begin{tabular}{ll}
+    \textbf{Verfasser:}       & Keisuke Nishioka \\
+    \textbf{Matrikelnummer:}  & 10081049 \\
+    \textbf{Erstprüfer:}      & Prof.\ Dr.-Ing.\ habil.\ Philipp Junker (IKM) \\
+    \textbf{Zweitprüfer:}     & Dr.-Ing.\ Matthias Wangenheim (IDS) \\
+    \textbf{Betreuer:}        & Dr.-Ing.\ Meisam Soleimani, Dr.-Ing.\ Hendrik Geisler \\
+    \textbf{Institut:}        & Institut für Kontinuumsmechanik (IKM) \\
+    \textbf{Abgabedatum:}     & Oktober 2026 \\
+  \end{tabular}
+
+  \vfill
+  {\small Hannover, Oktober 2026}
+\end{titlepage}
+
+% ── Front matter ─────────────────────────────────────────────────────────────
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+% Rewritten 3 Oct 2026 for the structure in thesis/README.md.
+A point model of a multi-species biofilm describes how the composition at one
+material point evolves in time, but has no space. A continuum growth model
+describes where a biofilm grows and what stresses it carries, but does not
+distinguish species. This thesis brings the point model into an existing finite
+element framework, the biofilm element of the Institut für Kontinuumsmechanik
+in ANSYS, so that composition, growth and stress can be computed together. Both
+models follow from the extended Hamilton principle: the growth field of Klempt
+et al.\ (2024) and the multi-species point model of Klempt et al.\ (2026).
+
+First, the 15 interaction coefficients of a five-species point model are
+estimated with transitional Markov chain Monte Carlo from in-vitro time courses
+under four conditions. Compiled with JAX, the forward model runs about 150 times
+faster on the GPU than on the CPU; every stage is repeated with three seeds, and
+the result states which of the 15 coefficients the data determine. A metabolic sign prior
+carries the same type of model to sparse in-vivo data.
+
+Second, the growth kinematics $\bF=\bF_e\bF_g$ with $\bF_g=\alpha\bI$ is
+implemented as an ANSYS user material, verified against closed-form solutions,
+and coupled to the element's biofilm field through the growth equation at
+every Gauss point. Inside ANSYS the coupled run follows the exact solution of
+a gradient-free region to $3\times10^{-11}$ in $\alpha$.
+
+Third, the point model runs, unchanged, at every Gauss point. It receives the
+nutrient and an antibiotic from fields of the element, interpolated in time, and
+only its living biomass consumes them; through the nutrient the composition
+reaches the spreading of the biofilm. With uniform fields the coupled point model
+reproduces the point model alone to round-off. The antibiotic is shown with
+synthetic data, since the calibration data contain none.
+
+The coupling has been verified, but not yet validated against measurements. A
+coupling in which the composition acts on the stiffness is left to the
+continuation of this work.
+
+% English-only thesis: German Zusammenfassung disabled (draft kept below).
+% Re-enable (remove \iffalse...\fi) only if the Pruefungsordnung requires a German summary.
+\iffalse
+\newpage
+\chapter*{Zusammenfassung}
+\addcontentsline{toc}{chapter}{Zusammenfassung}
+% DRAFT, 3 Oct 2026: Übersetzung der englischen Kurzfassung; vor Abgabe Korrektur lesen.
+Ein Punktmodell eines Mehrspezies-Biofilms beschreibt die zeitliche Entwicklung
+der Zusammensetzung an einem Materialpunkt, aber nicht den Raum. Ein
+kontinuumsmechanisches Wachstumsmodell beschreibt, wo ein Biofilm wächst und
+welche Spannungen er trägt, unterscheidet aber keine Spezies. In dieser Arbeit
+wird das Punktmodell in ein bestehendes Finite-Elemente-Framework, das
+Biofilm-Element des Instituts für Kontinuumsmechanik in ANSYS, eingebunden,
+sodass Zusammensetzung, Wachstum und Spannung gemeinsam berechnet werden.
+
+Erstens werden die 15 Interaktionskoeffizienten eines Fünf-Spezies-Punktmodells
+mit Transitional Markov Chain Monte Carlo aus In-vitro-Zeitreihen unter vier
+Bedingungen geschätzt; das Ergebnis gibt an, welche der 15 Koeffizienten die
+Daten bestimmen. Zweitens wird die Wachstumskinematik
+$\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, als ANSYS-Materialroutine implementiert,
+gegen geschlossene Lösungen verifiziert und an jedem Gaußpunkt an das
+Biofilmfeld des Elements gekoppelt. Drittens läuft für zwei Spezies das
+Punktmodell an jedem Gaußpunkt: das Feld bestimmt die Menge, das Punktmodell die
+Zusammensetzung. Die Kopplung ist einseitig und verifiziert, nicht validiert.
+\fi % end disabled German Zusammenfassung
+
+\newpage
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+% DRAFT, rewritten 3 Oct 2026: finalise wording (and any funding statement)
+% before submission. People as on the registration form of 18.08.2026 plus
+% those who contributed to the work.
+I thank Prof.\ Dr.-Ing.\ habil.\ Philipp Junker (Institut für
+Kontinuumsmechanik, IKM) for the opportunity to do this thesis at the institute
+and for the continuum-mechanical framework it builds on, and Dr.-Ing.\ Matthias
+Wangenheim (IDS) for acting as second examiner. I thank my supervisors,
+Dr.-Ing.\ Meisam Soleimani and Dr.-Ing.\ Hendrik Geisler, for their guidance
+throughout the work and for many discussions on the Hamilton biofilm models.
+
+I am grateful to Felix Klempt, whose growth model and finite element
+implementation this work follows, and who answered my questions about it, and
+to Oliver Höchel, who provided the version of that implementation used here and
+showed me how to compile, link and run user routines in ANSYS.
+
+Part of this work was carried out during a research internship at the Lower
+Saxony Centre for Biomedical Engineering, Implant Research and Development
+(NIFE) and the Hannover Medical School (MHH). I thank Dr.\ Szymon~P.\
+Szafra\'{n}ski for hosting and guiding the internship and for the metabolic and
+microbiological insight behind the in-vivo analysis, and Nils Heine,
+Dr.\ Katharina Doll-Nikutta, Dr.\ Rumjhum Mukherjee and Prof.\ Meike Stiesch
+for the experimental data and their interpretation.
+
+I also thank Assoc.\ Prof.\ Mayu Muramatsu (Keio University) for the
+support within the double-degree programme and for the discussions on
+continuing this work at Keio.
+
+I gratefully acknowledge financial support from the JASSO (Japan Student Services
+Organization) Student Exchange Support Program (Scholarship for Short-Term Study
+Abroad) and the Yoshiaki Ishii Human Resource Development Scholarship of Keio
+University, which together supported this double-degree research stay in Hannover.
+% No SIIRI funding statement in the thesis (decided 4 Oct 2026).
+
+Finally, I thank my family and friends for their support throughout this work.
+
+\newpage
+\tableofcontents
+\listoffigures
+\listoftables
+
+\chapter*{List of Symbols}
+\addcontentsline{toc}{chapter}{List of Symbols}
+Units are those of the models; $T^*$ is the normalised time of Klempt et
+al.\ 2024, and lengths in Chapter~\ref{ch:ansys} are in mm.
+
+\medskip\noindent\textbf{Growth field and mechanics (Klempt et al.\ 2024, Chapter~\ref{ch:ansys})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\mathbf F$, $\mathbf F_e$, $\mathbf F_g$ & deformation gradient, its elastic and growth parts, $\mathbf F=\mathbf F_e\mathbf F_g$\\
+$\alpha$ & isotropic growth, $\mathbf F_g=\alpha\mathbf I$, $\alpha(0)=1$; the growth is $\alpha-1$\\
+$\phi$, $\phi_{3D}$ & biofilm state variable of the field (amount of biofilm), $\phi\in[0,1]$\\
+$c$ & nutrient concentration of the field\\
+$\beta$ & diffusion coefficient of $\phi$ [mm$^2/T^*$]\\
+$k_\alpha$ & growth rate [$1/T^*$]\\
+$d$, $g$ & nutrient diffusivity [mm$^2/T^*$] and consumption rate [$1/T^*$]\\
+$r$, $k$ & front growth parameter and half-velocity constant\\
+$E$, $\nu$, $\mu$ & Young's modulus, Poisson's ratio, shear modulus\\
+$E(\phi)$, $f$ & stiffness weighted by $\phi^2$, small floor for the void\\
+$C_{10}$, $C_{01}$, $D_1$ & Mooney--Rivlin constants\\
+$J_e$, $\mathbf b_e$, $\bar I_1$, $\bar I_2$ & $\det\mathbf F_e$, left Cauchy--Green tensor of $\mathbf F_e$, its isochoric invariants\\
+$\Lambda$ & Thiele number, $\Lambda^2=gL^2/d$\\
+\end{tabular}
+
+\medskip\noindent\textbf{Point model (Klempt et al.\ 2026, Chapters~\ref{ch:theory} and~\ref{ch:heine})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\phi_i$, $\phi_0$ & volume fraction of species $i$, void fraction\\
+$\psi_i$, $\bar\phi_i$ & viability of species $i$, living fraction $\bar\phi_i=\phi_i\psi_i$\\
+$\mathbf A$, $A_{ij}$ & symmetric interaction matrix\\
+$\mathbf B$, $b_i$ & antibiotic sensitivity\\
+$c^*$, $\alpha^*$ & nutrient and antibiotic level\\
+$\eta_i$, $\eta_{\phi,i}$ & dissipation parameters\\
+$\gamma$ & Lagrange multiplier of $\sum_{l=0}^{n}\phi_l=1$\\
+$\Psi$, $\Delta$, $C$ & free energy, dissipation function, constraint function\\
+$K_p$ & coefficient of the barrier term\\
+\end{tabular}
+
+\medskip\noindent\textbf{Coupling (Chapter~\ref{ch:ansys})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$s$ & time link: the point model advances $s\,\Delta t$ per substep, fixed by the duration of the data\\
+$\phi_{\min}$ & threshold of $\phi_{3D}$ for starting the point model at a Gauss point\\
+$\bar\phi_i$ & living volume fraction of species $i$ in the point model, $\phi_i\psi_i$\\
+$a$, $\alpha^*$ & antibiotic field (the element's second nutrient) and its value in the point model\\
+$n_{\rm sub}$ & point-model steps per substep\\
+$c^*_0$, $c_{\rm ref}$ & nutrient level of the point model at the reference concentration $c_{\rm ref}$\\
+\end{tabular}
+
+\medskip\noindent\textbf{Calibration (Chapter~\ref{ch:heine})}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$\btheta$, $n_\theta$ & parameter vector, number of parameters ($15$)\\
+$\tau_j$ & tempering exponent of stage $j$\\
+$c_v$ & target coefficient of variation of the weights\\
+$N_p$, $K$ & number of samples, mutation steps per stage\\
+$s_p$ & proposal scale\\
+$\mathbf S$, $\lambda_S$ & sign prior from metabolic models, weight of its penalty\\
+\end{tabular}
+
+\medskip\noindent\textbf{Numerics}\\[2pt]
+\begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
+$h$, $\Delta t$ & element size, time step\\
+$\lambda$ & $\beta\Delta t/h^2$, the stability measure of the explicit field update\\
+$\lambda_{\max}$, $\rho$ & stability limit of $\lambda$; spectral radius of the discrete Laplacian\\
+$N$, $\beta^*$ & number of neighbours and width [$\mu$m] of the weight of the NEM fit\\
+\end{tabular}
+
+\newpage
+\pagenumbering{arabic}
+
+% ── Chapters ─────────────────────────────────────────────────────────────────
+\providecommand{\ansysfigdir}{../assets/}
+\input{chapters/ch1_introduction}
+\input{chapters/ch2_theory}
+\input{chapters/ch3_heine}
+% Structure of 3 Oct 2026 (thesis/README.md): the old ch4 (Dieckow, internship
+% work) is to be condensed into one section of ch3; the old ch5 (spatial PDE,
+% FISH, Abaqus-era stresses) is out of scope. Both stay in chapters/ until
+% their material has been moved.
+% \input{chapters/ch4_dieckow}
+% \input{chapters/ch5_integration}
+\providecommand{\ansysfigdir}{../assets/}
+\input{chapters_um/ch4_ansys}
+\input{chapters_um/ch6_conclusion}
+
+% ── Bibliography ─────────────────────────────────────────────────────────────
+\bibliography{references}
+
+% ── Appendix ─────────────────────────────────────────────────────────────────
+\appendix
+\input{chapters/appendix}
+\input{chapters_um/appendix_klempt2024}
+\input{chapters_um/appendix_stability}
+
+% ── Declaration ──────────────────────────────────────────────────────────────
+\newpage
+\chapter*{Selbstständigkeitserklärung}
+\addcontentsline{toc}{chapter}{Selbstständigkeitserklärung}
+
+% Wording follows § 15 (5) a)-d) of the Prüfungsordnung Master Maschinenbau
+% (version in force since 01.10.2024), with the last sentence of the LUH
+% variant 2 on AI tools (decided 6 Oct 2026).
+Hiermit versichere ich, dass ich die vorliegende Masterarbeit selbstständig
+verfasst und keine anderen als die angegebenen Quellen und Hilfsmittel benutzt
+habe. Dies schließt die Verwendung von elektronischen Medien sowie text- oder
+anderen inhaltsgenerierenden IT-Werkzeugen wie ChatGPT ein. Alle Stellen der
+Arbeit, die wörtlich oder sinngemäß aus anderen Quellen übernommen wurden, sind
+als solche kenntlich gemacht. Die Arbeit hat in gleicher oder ähnlicher Form
+noch keiner Prüfungsbehörde vorgelegen.
+
+\medskip\noindent\textbf{Use of AI tools.} I used an AI assistant (Claude,
+Anthropic) for programming support and for drafting and language editing of
+parts of the text. All results, the choice of methods and the interpretation
+are my own; I checked every passage and take full responsibility for the
+content.
+
+\vspace{2cm}
+\noindent
+Hannover, \underline{\hspace{4cm}} \hfill
+Unterschrift: \underline{\hspace{5cm}}
+
+\end{document}

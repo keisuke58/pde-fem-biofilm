@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""a10_check.py -- A-10 (CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md): growth from the point
+"""a10_check.py -- A-10 (archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md): growth from the point
 model's own increase (prop(28) = 10, no kappa) in the element.
 
     python ansys_usermat/apdl/a10_check.py JOB [--ref REF] [--results DIR]

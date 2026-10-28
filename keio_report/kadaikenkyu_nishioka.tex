@@ -63,12 +63,14 @@ seeds, and the result states which of the 15 coefficients the data determine.
 Second, the growth kinematics $\mathbf F=\mathbf F_e\mathbf F_g$
 with $\mathbf F_g=\alpha\mathbf I$ is implemented as an ANSYS user material,
 verified against closed-form solutions, and coupled to the biofilm element of
-the Institute of Continuum Mechanics (Leibniz University Hannover). Third, for
-two species the point model runs at every Gauss point: the field sets the
-amount of biofilm, the point model its composition. The calibrated
-five-species model runs in the element with the same coupling. The stresses
-converge under mesh refinement for the converted diffusion coefficient. The
-coupling is one-way and verified, not validated.
+the Institute of Continuum Mechanics (Leibniz University Hannover). Third, the point model runs, unchanged, at every Gauss point; it receives the
+nutrient and an antibiotic from fields of the element, and only its living
+biomass consumes them. In two-species examples with synthetic data the
+antibiotic lowers the living fraction of the seed from 0.97 to 0.15, or to 0.04
+when the species start mixed, while the growth changes little. Growth and
+composition converge on refined grids; the stress needs a second-order
+treatment of the front term. The mechanics is coupled one way, and the results
+are verified, not validated.
 }
 
 \keywords{
@@ -126,17 +128,17 @@ Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
 実験データから TMCMC\cite{ching2007} で推定し，
 次に成長の運動学を，ハノーファー大学（LUH）連続体力学研究所で開発された
 バイオフィルムの ANSYS 有限要素に組み込み，
-最後に 2 菌種について点モデルを各 Gauss 点で動かして組成を求めた．
+最後に点モデルを各 Gauss 点で動かし，栄養と抗菌薬の場と結んだ．
 
 \subsection{研究目的と論文構成}
 
 本報告の目的は以下の 3 点である：
 \begin{enumerate}
   \item 5 菌種の点モデルの相互作用 15 成分を，
-        2 段階 GPU-TMCMC で 4 条件の実験データから推定する（第 3--5 節）
+        GPU-TMCMC で 4 条件の実測データから推定し，データが決める成分を示す（第 3--5 節）
   \item 成長の運動学 $\mathbf F_g=\alpha\mathbf I$ を ANSYS の材料ルーチンとして実装・検証し，
         バイオフィルムの有限要素に組み込む（第 6 節）
-  \item 2 菌種について，場が量を，点モデルが組成を決める連成を行う（第 6 節）
+    \item 点モデルを各 Gauss 点で動かし，栄養と抗菌薬で場と結ぶ（第 6 節）
 \end{enumerate}
 本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 10 月提出）の内容に基づく．
 
@@ -167,7 +169,7 @@ Klempt ら\cite{klempt2024}は Hamilton 原理に基づく
 と定義した（$\mu$: せん断弾性率，$\bar\beta$: 界面正則化，$\bar k_\alpha$: 成長連成係数）．
 Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）は
 \begin{equation}
-  \dot\phi = \beta\nabla^2\phi + k_\alpha\alpha + (\text{前線項}),\quad
+  \dot\phi = \beta\nabla^2\phi + k_\alpha\alpha - r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi,\quad
   0 = d\nabla^2 c - g\phi,\quad
   \dot\alpha = k_\alpha\phi
   \label{eq:klempt34}
@@ -179,7 +181,7 @@ Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）
   \label{eq:cauchy}
 \end{equation}
 と表される\cite{klempt2024}．
-前線項はバイオフィルムの境界を栄養の勾配の方向へ動かす．
+前線項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$（$\mathbf n_c=\nabla c/|\nabla c|$）はバイオフィルムの境界を栄養の勾配の方向へ動かす．
 Klempt ら\cite{klempt2026}は同じ原理から下節の多菌種の点モデルを導出した．
 本研究では成長の式（式\,\eqref{eq:klempt34} の第 3 式）を ANSYS の材料ルーチンに実装する（§6）．
 
@@ -282,238 +284,91 @@ $A_{ij}<0$ は抑制（競合）を意味する．
 
 
 %%=================================================================
-% TODO (15 Oct 2026): sections 3-5 still describe the earlier two-phase runs (digitised data, pH R^2).
-% Rewrite them in December from the final thesis Ch. 3 (four stages, three seeds, criteria (a)-(e),
-% identifiability, raw data with the two-channel likelihood; pH only as a check), once the raw runs pass.
-\section{GPU 加速 TMCMC によるパラメータ推定}
+\section{GPU 加速 TMCMC による相互作用の推定}
 %%=================================================================
 
-\subsection{実験観測データ（Heine 2025\cite{heine2025}）}
+\subsection{実験データと尤度}
 
-TMCMC の観測データは Heine ら\cite{heine2025}の
-\textit{in vitro} バイオフィルム実験に基づく（表\,\ref{tab:conditions}）．
-観測は Day 1/3/6/10/15/21 の 6 時点，各条件 $N\geq8$ 反復であり，
-Day\,1 を初期条件として固定し，Day\,3--21 の 5 時点を尤度評価に使用する．
-CLSM で取得した菌種別体積分率 $\phi_i^{\rm obs}$ を目的変数とし，
-各時点・菌種の不均一分散 $\sigma_{ik}=\mathrm{IQR}/1.35$ を
-異分散 Gaussian 尤度\eqref{eq:likelihood}として組み込んだ．
-これにより，観測数が少ない Fn/Pg（共生条件で $\sigma_i\approx0.005$）は
-大きく制約され，観測ばらつきが大きい So/Vei（$\sigma_i\approx0.2$）は
-緩く制約される，物理的に整合した重み付けが実現される\cite{heine2025}．
+Heine ら\cite{heine2025}の \textit{in vitro} 実験（共生・疾患型 $\times$ 静置・流れの 4 条件，
+Day 1/3/6/10/15/21）の実測データを用いた．
+生きている菌の組成 $y^{\rm v}_{ik}$ と全菌の組成 $y^{\rm t}_{ik}$ の 2 つのチャネルを，
+点モデルの $\hat y^{\rm v}_{ik}=\phi_i\psi_i/\sum_j\phi_j\psi_j$ と
+$\hat y^{\rm t}_{ik}=\phi_i/\sum_j\phi_j$ に，重み付きのガウス尤度で当てはめ，
+群集の生存率 $\ell_k$ も別の項として加えた．
+標準偏差は反復のばらつき（四分位範囲 $/1.35$，下限 $0.05$）から決めた．
+pH は尤度に入れず，後で確認にだけ用いた（第 5 節）．
+未知数は対称な相互作用行列 $\mathbf A$ の 15 成分である．
 
-\begin{table}[tb]
-  \begin{center}
-    \caption{実験条件（Heine 2025）}
-    \vspace{2mm}
-    \begin{tabular}{cll}\hline
-      条件 & 菌種構成 & 培養形式 \\\hline
-      CS & 共生菌 & 静置 \\
-      CH & 共生菌 & 流動 (HOBIC) \\
-      DS & 疾患型 & 静置 \\
-      DH & 疾患型 & 流動 (HOBIC) \\\hline
-    \end{tabular}
-    \label{tab:conditions}
-  \end{center}
-\end{table}
+\subsection{4 段階の推定と受け入れ基準}
 
-\subsection{尤度と事前分布}
-
-Gaussian 尤度は
-\begin{equation}
-  p(\mathcal{D}|\btheta)=
-  \prod_{k=1}^{N_t}\prod_{i=0}^{4}
-  \frac{1}{\sqrt{2\pi}\,\sigma_{ik}}
-  \exp\!\left(-\frac{(\phi_i(t_k;\btheta)-\phi_i^{\rm obs}(t_k))^2}{2\sigma_{ik}^2}\right)
-  \label{eq:likelihood}
-\end{equation}
-と定義する．事前分布は独立一様分布
-\begin{equation}
-  p(\btheta) = \prod_{k=0}^{14}\frac{1}{u_k-l_k}\,\mathbf{1}_{[l_k,u_k]}(\theta_k)
-  \label{eq:prior}
-\end{equation}
-であり，初期範囲 $[l_k,u_k]\approx[-1,1]$ を Phase\,1a の事後分位点で縮小する
-（iteratively narrowed prior 法）．
+事前分布は各成分の箱上の一様分布とし，同じデータで 4 段階に推定した：
+(i) $\psi_i$ をデータから固定し組成の 2 項で，(ii) 箱を (i) の事後平均 $\pm4$ 標準偏差に狭めて，
+(iii) $\psi_i$ を発展させ全項で元の箱に戻して，(iv) 箱を再び狭めて．
+各段を 3 つの独立なシードで回し，(a) 対数尤度の再計算との一致，(b) 焼き戻しが $\beta=1$ に達する，
+(c) 粒子が十分動く，(d) 最大対数尤度のシード間の差が 1 以下，(e) 事後中央値のシード間の差が
+事後標準偏差の半分以下，の 5 つを満たした段だけを採用した．
+事後標準偏差が箱の一様分布の 0.8 倍以上の成分は「識別できない」とした．
 
 \subsection{数値実装：Newton 法と JAX 並列化}\label{ssec:newton}
 
-各時間ステップ $\Delta t=10^{-4}$（$N_t=2{,}500$ ステップ，$t_{\max}=0.25$，
-実験 21 日に対応）で implicit Euler を適用する．
+各時間ステップ $\Delta t=10^{-4}$ で implicit Euler を適用し，
 状態ベクトル $\mathbf{x}=(\phi_1,\ldots,\phi_5,\phi_0,\psi_1,\ldots,\psi_5,\gamma)^\top$
-$\in\mathbb{R}^{12}$ に対する残差
-\begin{equation}
-  \mathbf{R}(\mathbf{x}^{n+1}) = \mathbf{0}
-  \label{eq:residual}
-\end{equation}
-を Newton 法（Jacobian 解析的評価）で反復解する．
-対数バリア $\Psi_{\rm bar}=-K_p\ln(\phi_i(1-\phi_i))$（$K_p=\eta_i\times10^{-4}$）を
-加えて $\phi_i,\psi_i\in(0,1)$ のボックス制約を維持する\cite{klempt2026}．
-
-JAX 実装では \texttt{jax.jit} で Newton ソルバを単一 XLA カーネルにコンパイルし，
-$N_p$ 粒子を \texttt{jax.vmap} で GPU 上に並列展開する．DH 条件・$N_p=500$・9 ステージで，CPU（12 コア）の 21600\,s が GPU では 147\,s となった（約 200 倍）．
-この設計により，CPU では $N_p/12$ シリアルバッチを要した計算が
-GPU では 1 バッチで完了する．
-
-
-
-%%=================================================================
-\section{2 段階 GPU-TMCMC アルゴリズム}
-%%=================================================================
-
-\subsection{アルゴリズム概要}
-
-15 次元パラメータ空間における事後多峰性を回避するため，
-表\,\ref{tab:phases} に示す 2 段階推定戦略を採用した\cite{klempt2026}．
-Phase\,1 では生存率 $\psi_i$ を Heine 実測の膜完全性データから固定し，
-Jacobian 次元を $2n+2=12$ から $n+2=7$ に半減させて
-$\mathbf{A}$ を高速に同定する．
-Phase\,2 では $\psi_i$ を解放し，
-Phase\,1 事後分布を $\mathbf{A}$ の情報事前分布として利用することで，
-$\mathbf{A}$--$\psi_i$ 結合事後分布を取得する．
-
-\begin{table}[tb]
-  \begin{center}
-    \caption{2 段階推定戦略}
-    \vspace{2mm}
-    \begin{tabular}{cll}\hline
-      Phase & $\psi_i$ の扱い & 事前分布（$N_p$）\\\hline
-      1a & 実験値固定 & 広 ($[-1,1]$)（1k） \\
-      1b & 実験値固定 & 縮小・1a 事後（1k） \\
-      2  & 自由変数 & 1b 事後・情報事前（10k）\\\hline
-    \end{tabular}
-    \label{tab:phases}
-  \end{center}
-\end{table}
-
-\subsection{TMCMC の逐次焼き戻し}
-
-TMCMC\cite{ching2007,wu2018}は事前分布 $p(\btheta)$ から
-事後分布 $p(\btheta|\mathcal{D})$ へ，中間分布列
-\begin{equation}
-  p_m(\btheta)\propto p(\mathcal{D}|\btheta)^{\beta_m}\,p(\btheta),
-  \quad 0=\beta_0<\beta_1<\cdots<\beta_M=1
-  \label{eq:tempered}
-\end{equation}
-を段階的に構築する逐次 Monte Carlo 法である．
-各ステージの逆温度 $\beta_{m+1}$ は，
-重み $w_j^{(m)}=p(\mathcal{D}|\btheta_j^{(m)})^{\beta_{m+1}-\beta_m}$ の
-変動係数
-\begin{equation}
-  \mathrm{CoV}[\{w_j^{(m)}\}] = \delta_{\rm target}
-  \label{eq:cov_target}
-\end{equation}
-を満たすよう二分探索で決定する．
-MH 変異の提案分布は加重共分散
-\begin{equation}
-  \hat{\boldsymbol{\Sigma}}^{(m)}
-  = \sum_{j}\bar{w}_j^{(m)}
-  (\btheta_j^{(m)}-\bar{\btheta}^{(m)})
-  (\btheta_j^{(m)}-\bar{\btheta}^{(m)})^\top
-  \label{eq:wcov}
-\end{equation}
-を用いた $\mathcal{N}(\btheta_j,\gamma^2\hat{\boldsymbol{\Sigma}}^{(m)})$ とし，
-受理率が 5\% 未満なら $\gamma\leftarrow\gamma/2$，
-40\% 超なら $\gamma\leftarrow1.5\gamma$ と適応調整する．
-
-\subsection{アルゴリズム全体フロー}
-
-アルゴリズム全体を Algorithm\,\ref{alg:tmcmc} に示す．
-
-\begin{algorithm}[tb]
-\caption{2段階 GPU 加速 TMCMC}
-\label{alg:tmcmc}
-\begin{algorithmic}[1]
-\REQUIRE 観測 $\mathcal{D}$，$\psi_i^{\rm exp}(t_k)$，$N_p$，GPU
-\ENSURE $\hat{\btheta}^{\rm MAP}$，事後サンプル，$\ln\hat{Z}$
-\STATE \textbf{Phase\,1a}: $\psi_i\leftarrow\psi_i^{\rm exp}$，$[l_k,u_k]=[-1,1]$
-\STATE $\{\btheta_j\}_{j=1}^{N_p}\sim p_0(\btheta)$；$\beta_0\leftarrow0$
-\WHILE{$\beta_m<1$}
-  \STATE bisection: $\mathrm{CoV}[\{w_j\}]=\delta_{\rm target}$
-        $\to\beta_{m+1}$
-  \STATE $w_j\leftarrow p(\mathcal{D}|\btheta_j)^{\beta_{m+1}-\beta_m}$
-  \STATE 系統的リサンプリング $\propto w_j$
-  \STATE $\hat{\boldsymbol{\Sigma}}^{(m)}$ を推定（式\,\eqref{eq:wcov}）
-  \FOR{$k=1$ \TO $K$}
-    \STATE \texttt{vmap}：全 $N_p$ ODE を GPU 並列積分
-    \STATE MH 受理・棄却；$\gamma$ を適応調整
-  \ENDFOR
-\ENDWHILE
-\STATE 1a 事後 $q_{0.01}$/$q_{0.99}$ から事前幅を縮小
-\STATE \textbf{Phase\,1b}: 狭事前で再実行
-      $\to\hat{\btheta}^{\rm MAP}_{\rm fix\text{-}\psi}$，$\ln\hat{Z}_1$
-\STATE \textbf{Phase\,2}: $\psi_i$ 解放；$\btheta$ 事前 $\leftarrow$ 1b 事後
-\STATE 拡張尤度：$\ln\mathcal{L}\mathrel{+}=
-  -\sum_{k,i}(\psi_i-\psi_i^{\rm exp})^2/(2\sigma_\psi^2)$
-\STATE lines 3--11 を $N_p=10{,}000$ で繰り返す
-\RETURN $\hat{\btheta}^{\rm MAP}$，$\hat{\bpsi}^{\rm MAP}$，$\ln\hat{Z}_2$
-\end{algorithmic}
-\end{algorithm}
+の残差 $\mathbf{R}(\mathbf{x}^{n+1})=\mathbf{0}$ を Newton 法で解く．
+JAX で Newton ソルバを単一の XLA カーネルにコンパイルし，全粒子を \texttt{jax.vmap} で
+GPU 上に並列に評価した．同じ設定（DH，$N_p=500$，9 段）で，1 段あたり CPU（12 コア）の
+$2{,}400$\,s が GPU では 14\,s（170 倍），全体で 21{,}600\,s が 147\,s（147 倍）となり，
+各段を 3 シードで繰り返すことが現実的になった．
 
 %%=================================================================
 \section{推定結果}
 %%=================================================================
 
-\subsection{事後予測フィット}
+\subsection{フィットと収束}
 
-図\,\ref{fig:fitting} に 4 条件すべての
-事後予測を Heine の実測値と重ねて示す．
-共生条件では \textit{So}/\textit{An} の増殖が再現され，
-\textit{Pg} は固定せずに推定からほぼゼロとなった（CS）．
-流れのある CH では \textit{So} が優勢となる様子が再現された．
-疾患型では，DS の病原菌の遷移と，DH の \textit{Vei}/\textit{Pg} の非線形な増幅
-（後期のサージ）が捉えられた\cite{heine2025}．
-信用区間は CS から DH にかけて広がる．
+CS，CH，DS は最終段 (iv) で基準 (a)--(e) を満たした．DH は (iii) で満たしたが，
+(iv) でシードが異なる事後のモードに分かれたため，(iii) の結果を用いる．
+最終段の MAP は，生きている菌の組成を RMSE $0.087$（CS），$0.059$（CH），$0.058$（DS），
+$0.073$（DH）で再現した（図\,\ref{fig:fit}）．
+CS では組成と生存率を同時には合わせられず，生存率の誤差が $0.23$ と最も大きい．
+これは重みを変えても組成の誤差が約 0.08 より下がらないことから，モデルの限界と判断した．
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.72\textwidth]{heine_fits_4cond.pdf}
-  \caption{\textbf{事後予測（4 条件 $\times$ 5 菌種，Phase\,2）．}
-    列: CS/CH/DS/DH，行: So/An/Vei/Fn/Pg．実線: MAP，破線: 生存分率，
-    帯: 50\%/80\% 信用区間，丸と箱: 実験の中央値と四分位範囲（$N=8$）．}
-  \label{fig:fitting}
+  \includegraphics[width=0.85\textwidth]{eml_fit.pdf}
+  \caption{\textbf{事後予測（4 条件 $\times$ 5 菌種）．} 線：最終段の MAP（実線：生きている菌の組成，
+    点線：全菌の組成），帯：事後予測区間，点と箱：実測．DH は段 (iii)．}
+  \label{fig:fit}
 \end{figure*}
 
-\subsection{相互作用行列 MAP 推定}
+\subsection{データが決める相互作用}
 
-図\,\ref{fig:heatmap} に 4 条件の MAP 相互作用行列 $\mathbf{A}$ を示す．
+識別できた成分は CS，CH，DS，DH で 5，6，9，8 個であった（図\,\ref{fig:ident}）．
+共生条件では初期定着菌（\textit{So}，\textit{An}，\textit{Vei}）の間の成分だけが識別され，
+\textit{So}--\textit{Vei} の係数 $a_{13}$ は両条件で正（乳酸の交差給餌と整合）であった．
+\textit{Fn} と \textit{Pg} は共生条件で 1\% 未満にとどまるため，それらの成分はデータで決まらない．
+疾患型条件では \textit{Fn} と \textit{Pg} が 10--27\% に達し，後期定着菌の成分も識別された
+（\textit{Fn} の自己相互作用 $a_{44}$ は負，DH で \textit{An}--\textit{Fn} の $a_{24}$ は正）．
+\textit{Fn}--\textit{Pg} の係数 $a_{45}$ は疾患型の両条件で識別されたが，90\% 区間は 0 を含み，
+符号は決まらない．
+既知の係数で作った合成データで推定をやり直すと，識別の分類は 15 成分のうち 14--15 成分で再現された．
 
-共生条件（CS/CH）では \textit{So}--\textit{An} と \textit{So}--\textit{Vei} のブロックが主で，
-\textit{Fn} と \textit{Pg} の行はほぼゼロとなった．
-疾患型への移行で \textit{Vei}--\textit{Pg} と \textit{Fn}--\textit{Pg} の正の成分が強く現れた（§7.2）．
-
-\begin{figure}[tb]
+\begin{figure*}[tb]
   \centering
-  \includegraphics[width=\linewidth]{heine_heatmap_A_4cond.pdf}
-  \caption{\textbf{MAP 相互作用行列 $\mathbf{A}$（4条件）．}
-    赤: 協調（$A_{ij}>0$），青: 競合（$A_{ij}<0$）．
-    CS/CH では Fn・Pg 行が事前制約なしにゼロへ収束する．}
-  \label{fig:heatmap}
-\end{figure}
+  \includegraphics[width=0.85\textwidth]{eml_ident.pdf}
+  \caption{\textbf{データが決める成分}（最終段，3 シードを合わせた）．色と数字：識別できた成分の事後中央値，
+    斜線：符号のみ，灰色：識別できない．右：同じ成分のネットワーク（赤：協力，青：競合）．}
+  \label{fig:ident}
+\end{figure*}
 
-\subsection{定量評価と pH による検証}
+%%=================================================================
+\section{推定に使っていないデータでの確認}
+%%=================================================================
 
-表\,\ref{tab:rmse} に Phase\,2（$\psi$ 自由，$N_p=10{,}000$）の RMSE を示す．
-Phase\,1 からの増加は 0.03 以下であり，$\psi$ を解放しても相互作用の構造は保たれた．
-DS が最もよく合い（RMSE 0.033），DH でも \textit{Pg} の $R^2=0.90$ を保った．
-
-\begin{table}[tb]
-  \begin{center}
-    \caption{2 段階推定の RMSE（菌種平均）}
-    \vspace{2mm}
-    \begin{tabular}{ccc}\hline
-      条件 & Phase\,1 & Phase\,2 \\\hline
-      CS & 0.119 & 0.119 \\
-      CH & 0.071 & 0.104 \\
-      DS & 0.020 & 0.033 \\
-      DH & 0.067 & 0.087 \\\hline
-    \end{tabular}
-    \label{tab:rmse}
-  \end{center}
-\end{table}
-
-推定に使っていない HOBIC 条件の pH の時系列で，推定した $\mathbf A$ を検証した．
-菌種の分率から pH を求める線形モデル（係数は交差検証で選んだ）を，
-ODE が予測した分率に当てはめると，$R^2=0.778$（RMSE 0.126 pH 単位）となった．
-$\mathbf A$ が群集の pH を決める要因を捉えていることを示す．
+流れ条件の pH は推定に使っていない．実測の組成と pH から一度だけ当てはめた線形回帰を，
+事後予測の組成にそのまま適用すると，DH では pH の実測の上昇（6.4 から 7.0）を
+$R^2=0.71$（RMSE 0.097）で追った．CH では水準は合うが変動は追えない．
+また，DH の群集から \textit{Fn} を取り除くと，\textit{Pg} の後期の増加（Day 21/Day 15 の比）は
+約 12 から 3.0 に下がった．この予測は主に $a_{45}$ に基づき，\textit{Fn} を除いた共培養で直接確かめられる．
 
 %%=================================================================
 \section{バイオフィルム有限要素への組み込み\label{sec:fem_coupling}}
@@ -532,16 +387,20 @@ $\phi$ の Laplacian と勾配は，近くの積分点の値から 2 次の Tayl
 $\alpha_{n+1}=\alpha_n+k_\alpha\phi\,\Delta t$ を積分し，
 $\mathbf F_g=\alpha\mathbf I$，$\mathbf F_e=\mathbf F\mathbf F_g^{-1}$ から
 応力と接線剛性を返す．
-2 菌種では，同じ Gauss 点で点モデル\cite{klempt2026}を動かし，
-場が量 $\phi$ を，点モデルが組成 $\phi_1/(\phi_1+\phi_2)$ を決める（図\,\ref{fig:coupling}）．
+さらに，同じ Gauss 点で点モデル\cite{klempt2026}を論文どおりに動かし，
+場との間を次のように結んだ（図\,\ref{fig:coupling}）．
+点モデルは栄養 $c$ と抗菌薬 $a$ の場から $c^*=c^*_0c$，$\alpha^*=\alpha^*_0a$ を受け取り，
+生きている量 $\sum_i\bar\phi_i$（$\bar\phi_i=\phi_i\psi_i$）を返す．
+栄養と抗菌薬は生きている菌だけが消費する（$\dot c=d\nabla^2c-g\,\phi\sum_i\bar\phi_i\,c$）．
+成長の式は変えないので，組成は栄養と前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ を通して成長と応力に届く．
+新しくバイオフィルムになった点は，隣の生きている組成を受け継ぐ（仮定）．
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.80\textwidth]{fig_coupling_schematic.png}
+    \includegraphics[width=0.80\textwidth]{fig_coupling_schematic_agreed.png}
   \caption{\textbf{連成の構成．}
-    (1) 成長の場（Klempt 2024）が量 $\phi$ を決め，
-    (2) 各 Gauss 点の点モデル（Klempt 2026）が組成を決め，
-    (3) 成長と応力は量だけを使う（一方向の連成）．}
+    場（Klempt 2024）が栄養と抗菌薬を点モデル（Klempt 2026）に渡し，
+    点モデルの生きている量がその消費を決める．成長と応力は場の量 $\phi$ から求める．}
   \label{fig:coupling}
 \end{figure*}
 
@@ -577,30 +436,35 @@ $8^3$，$16^3$，$24^3$ の要素で 3\% 以内に一致した．
   \end{center}
 \end{table}
 
-\subsection{2 菌種の組成}
+\subsection{2 菌種と抗菌薬}
 
-2 菌種の組成は，結合時間 $s$，時間 $T^*$，局所の栄養 $c_{\rm rel}$ の積
-$s\,T^*c_{\rm rel}$ だけで決まった（図\,\ref{fig:clock}）．
-栄養が点モデルの時計の役割をする．
-一方の菌種が勝つ場合（Klempt 2026 のケース 6）は，
-$s\,T^*c\approx0.03$ から $0.08$ の間で入れ替わりが起こり，
-結果は初期の割合が約 0.51 を境に分かれる（双安定）．
+合成データ（Fritsch ら 2025 の case~I）と論文の定数で，2 菌種の例を計算した．
+抗菌薬は $T^*=1/3$ から外側の面に与えた（$\alpha^*_0=100$）．
+種の生きている量は，菌種を分けて置くと $0.97$ から $0.15$ に，
+混ぜて置くと $0.04$ に下がった（図\,\ref{fig:3d}）．
+成長 $\alpha-1$ はほとんど変わらない．抗菌薬は生きている割合を下げるが，バイオフィルムの量 $\phi$ は下げないためである．
 
-\begin{figure}[tb]
+前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ はセルのペクレ数が約 31（$16^3$）の移流で，中心差分では振動する．
+2 次の風上差分（TVD）を用いると，成長は $32^3$--$128^3$ で GCI 3\% 以内に収束した．
+種の応力は遅く，外挿値は分けた例で $6.7\times10^{-4}$\,Pa（GCI 8\%），混ぜた例で
+$4.0\times10^{-4}$\,Pa（GCI 26\%）である．
+ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入った．
+
+\begin{figure*}[tb]
   \centering
-  \includegraphics[width=\linewidth]{fig_composition_clock.png}
-  \caption{\textbf{組成の「時計」．} ANSYS の全シード要素の終状態の割合を
-    $s\,T^*c_{\rm rel}$ に対して描くと，1 本の曲線に乗る（線は Python の点モデル）．}
-  \label{fig:clock}
-\end{figure}
+  \includegraphics[width=0.85\textwidth]{fig_coupled_3d_panels_separate_ab.png}
+  \caption{\textbf{分けて置いた例，抗菌薬あり}（$64^3$，上 $T^*=0.325$，下 $T^*=1$）．
+    A の割合，生きている量 $\sum_i\bar\phi_i$，栄養 $c$，抗菌薬 $a$，von Mises 応力．}
+  \label{fig:3d}
+\end{figure*}
 
 \subsection{較正した 5 菌種の組み込み}
 
 連成は菌種の数をパラメータとして持つので，3 章で較正した 5 菌種の点モデルを，
 ルーチンを変えずに要素に入れられる．共生・流れ条件（CH）の MAP（$c^*=25$，$\alpha^*=0$）を用い，
-2 菌種と同じ設定（$8^3$，式 (36)，$\phi_{\rm cap}=0.9$，$s=0.15$，$\Delta t=0.025$，$T^*=1$）で，
+合意した連成より前の一方向の連成（$8^3$，式 (36)，$\phi_{\rm cap}=0.9$，$s=0.15$，$\Delta t=0.025$，$T^*=1$）で，
 点モデルは較正した Day~1 の状態から始めた．
-連成は一方向なので，成長と応力は組成によらず，シードの $\alpha-1$ の平均は 2 菌種と全桁同じ
+この連成では成長と応力は組成によらず，シードの $\alpha-1$ の平均は
 $6.752\times10^{-4}$ である．
 シードの Gauss 点では，\textit{So} が最大の割合を保ちつつ $0.74$ から $0.54$ に下がり，
 \textit{Vei}（$0.15$），\textit{An}（$0.13$），\textit{Pg}（$0.08$）が増える（図\,\ref{fig:five}）．
@@ -626,15 +490,17 @@ $\mathbf{A}$ の対称性は自由エネルギーの二次形式から自動的�
 
 \subsection{Dysbiotic 条件での相互作用の変化}
 
-DH では \textit{Fn}--\textit{Pg} と \textit{Vei}--\textit{Pg} の正の成分が強く現れた
-（$\hat a_{45}=5.63$，$\hat a_{55}=3.43$，DS ではそれぞれ 2.20，0.30）．
-共生条件ではこれらの成分は事後分布でゼロに集中し，固定しなくても推定から現れた．
+疾患型の条件では後期定着菌の成分が識別され，DH では \textit{Vei}--\textit{Pg} の $a_{35}$ が負，
+\textit{An}--\textit{Fn} の $a_{24}$ が正となった．
+共生条件で正だった \textit{So}--\textit{Vei} の $a_{13}$ は DS では負である．
+ただし共生と疾患型の比較には，生態の状態，菌株，培養の違いが混ざる．
 \textit{Pg} の株の違い（共生条件 DSM\,20709，疾患型条件 W83）は，
 本モデルでは \textit{Pg} に関わる成分の違いとして吸収される．
 
 \subsection{限界と慶應での展開}
 
-連成は一方向であり，組成も応力も場に戻らない．
+場と点モデルの間は双方向だが，力学は一方向であり，応力は成長に戻らず，組成は硬さに効かない．
+前線の速さ $r\,c/(k+c)$ は栄養だけで決まるので，抗菌薬の後も死んだバイオフィルムが広がる．
 また検証（verification）は行ったが，実験との比較（validation）は行っていない．
 $\beta$ は換算した仮定の値であり，応力の大きさは弾性率に比例する．
 
@@ -655,9 +521,9 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
         データが決める成分を示した．
   \item 成長の運動学 $\mathbf F_g=\alpha\mathbf I$ を ANSYS の材料ルーチンとして実装し，
         閉じた形の解と厳密解で検証して，バイオフィルムの有限要素に組み込んだ．
-  \item 2 菌種について，場が量を，点モデルが組成を決める連成を行い，
-        組成が $s\,T^*c_{\rm rel}$ だけで決まること，ケース 6 が双安定であることを示した．
-  \item 換算した $\beta=0.02$\,mm$^2/T^*$ で，シードの応力は $8^3$--$24^3$ で 3\% 以内に収束した．
+    \item 点モデルを各 Gauss 点で論文どおりに動かし，栄養と抗菌薬で場と結んだ．
+        抗菌薬は種の生きている量を $0.97$ から $0.15$（混ぜた例で $0.04$）に下げ，成長はほとんど変えない．
+  \item 成長と組成は格子で数\% 以内に収束し，応力は 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の 2 次の扱いで GCI 8--26\% で求まった．
   \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}
 

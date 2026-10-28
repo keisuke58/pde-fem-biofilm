@@ -33,21 +33,22 @@ OUT = HERE.parents[1] / "assets" / "fig_element_beta002.png"
 
 
 def main():
-    figstyle.apply(size=10)
-    fig, ax = plt.subplots(1, 2, figsize=(11, 4.0))
-    for name, f, ls in RUNS:
-        e = {k: np.asarray(v, float) for k, v in json.load(open(f))["elem_stress"].items()}
+    figstyle.apply(size=8.5)     # drawn at the thesis text width (6.3 in); line style = run, see the caption
+    fig, ax = plt.subplots(1, 2, figsize=(6.3, 2.5))
+    for k, (name, f, ls) in enumerate(RUNS):
+        e = {k2: np.asarray(v, float) for k2, v in json.load(open(f))["elem_stress"].items()}
         t = e["time"][1:]
-        ax[0].plot(t, e["seqv"][1:] * 1e6, "C0" + ls, label=f"seeded element, {name}")
-        ax[0].plot(t, e["seqv_nbr_max"][1:] * 1e6, "C3" + ls, label=f"largest neighbour, {name}")
-        ax[1].plot(t, e["alpha"][1:], "C2" + ls, label=name)
+        ax[0].plot(t, e["seqv"][1:] * 1e6, "C0" + ls, lw=1.1, label="seed element" if k == 0 else None)
+        ax[0].plot(t, e["seqv_nbr_max"][1:] * 1e6, "C3" + ls, lw=1.1, label="largest neighbour" if k == 0 else None)
+        ax[1].plot(t, e["alpha"][1:], "C2" + ls, lw=1.1, label=("Eq. 36 in the material routine" if k == 0
+                                                             else "element's own growth variable"))
         print(f"{name}: T* {t[-1]:.2f}, vM {e['seqv'][-1] * 1e6:.3e} Pa, neighbour max "
               f"{e['seqv_nbr_max'][-1] * 1e6:.3e} Pa, alpha-1 {e['alpha'][-1]:.4e}")
-    ax[0].set(xlabel=r"time $T^*$", ylabel="von Mises [Pa]")
-    ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[0].legend(fontsize=8, frameon=False)
-    ax[1].set(xlabel=r"time $T^*$", ylabel=r"$\alpha-1$")
-    ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[1].legend(fontsize=8, frameon=False)
-    fig.tight_layout(); fig.savefig(OUT, dpi=300); print("wrote", OUT)
+    ax[0].set(xlabel=r"$T^*$", ylabel="von Mises [Pa]", title="(a) von Mises stress")
+    ax[0].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[0].legend(fontsize=7.5, frameon=False)
+    ax[1].set(xlabel=r"$T^*$", ylabel=r"$\alpha-1$", title=r"(b) growth of the seed element")
+    ax[1].ticklabel_format(axis="y", style="sci", scilimits=(0, 0)); ax[1].legend(fontsize=7.5, frameon=False)
+    fig.tight_layout(w_pad=1.5); fig.savefig(OUT, dpi=300); fig.savefig(OUT.with_suffix(".pdf")); print("wrote", OUT)
 
 
 if __name__ == "__main__":

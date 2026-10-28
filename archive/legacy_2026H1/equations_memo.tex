@@ -1,0 +1,56 @@
+\documentclass[10pt,a4paper]{ltjsarticle}
+\usepackage{luatexja}
+\usepackage[margin=18mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\newcommand{\eq}[2]{\par\vspace{4pt}\textbf{#1}\par\[#2\]}
+\begin{document}
+{\Large\bfseries Equations to memorise: biofilm growth model}\par
+{\small Klempt et al.\ 2024 (field, equation numbers as printed) and Klempt et al.\ 2026 (point model).}
+
+\eq{1. Kinematics (Klempt 2024, Sec.\ 2)}{\mathbf F=\mathbf F_e\,\mathbf F_g,\qquad \mathbf F_g=\alpha\,\mathbf I}
+Growth is isotropic: volume changes by $\alpha^3$. Only $\mathbf F_e$ carries stress.
+
+\eq{2. Energy (Klempt 2024, Eq.\ 20 with the thesis form)}{W=\alpha^3(\phi^2+f)\Big[\tfrac{\mu}{2}\big(J_e^{-2/3}\operatorname{tr}\mathbf C_e-3\big)+\tfrac{K}{2}(J_e-1)^2\Big]}
+$E\propto\phi^2$; $f$ is a small void stiffness; $\mu=3.3557$\,Pa for $E=10$\,Pa, $\nu=0.49$.
+
+\eq{3. Phase, Eq.\ 34 (as printed)}{\dot\phi-\beta\nabla^2\phi-k_\alpha\,\alpha+\|\nabla\phi\|\,r\,\frac{c}{k+c}\,\mathbf n_\phi\!\cdot\!\mathbf n_c=0}
+Diffusion of $\phi$ with $\beta$; the last term is the front term (the thesis uses this form with $\beta$, not the $h^*_\phi$ of the paper's Remark~1).
+
+\eq{4. Nutrient (Klempt 2024, Eq.\ 35; consumption as Meisam confirmed)}{\dot c-d\,\nabla^2 c+g\,\phi\,c=0}
+$d$ is diffusivity, $g$ the consumption factor. Meisam confirmed $g\phi c$ (6 Oct 2026). Note: the paper's text (Eq.\ 24) prints $g^*_c=\bar g\,\phi$ without $c$; the difference is to be stated in the thesis.
+
+\eq{5. Growth, Eq.\ 36 (as printed)}{\dot\alpha-k_\alpha\,\phi=0\quad\Longleftrightarrow\quad \dot\alpha=k_\alpha\,\phi}
+Growth is faster where there is more biofilm.
+
+\eq{6. Point model (Klempt et al.\ 2026)}{\text{shares }\frac{\phi_i}{\sum_j\phi_j}\text{ change through }A_{ij},\ c^*,\ \phi_0,\ \text{and the nutrient}}
+Two species: the share $\phi_1/(\phi_1+\phi_2)$ is the composition at a point; the field $\phi$ sets the amount.
+
+\vspace{4pt}
+{\bfseries Memo items (not equations, but asked):}
+\begin{itemize}
+\item One-way coupling: composition does not act on stress or growth (thesis). Two-way is future work at Keio.
+\item Time link $s$: the point model advances $s\,\Delta t$ per step (assumption; $s=0.15$ in the thesis).
+\item Cap $\phi_{\rm cap}=0.9$ on the amount given to the point model (assumption).
+\item Scheme (c), growth from the living biomass (not in the thesis body; Keio): $\dot\alpha/\alpha=\kappa\,\phi_{3D}\sum_i\phi_i\psi_i$, $\kappa$ fixed by the mean growth of Eq.\ 36.
+\end{itemize}
+\textbf{Values:} $E=10$\,Pa, $\nu=0.49$; $k_\alpha=10^{-3}$; $\beta=0.02$\,mm$^2$/$T^*$ (converted, assumed); $c^*=25$ (calibration) and $100$ (paper cases).
+
+\textbf{How to remember:} 1--2 stress from growth; 5 growth; 3 spreading; 4 nutrient; 6 composition.
+
+\vspace{6pt}
+{\bfseries 日本語の説明}\par
+\begin{itemize}
+\item 式 1：変形 $\mathbf F$ を、弾性の部分 $\mathbf F_e$ と成長の部分 $\mathbf F_g=\alpha\mathbf I$ に分けます。成長は等方なので、体積は $\alpha^3$ 倍になります。応力を生むのは $\mathbf F_e$ だけです。
+\item 式 2：弾性エネルギー。剛性は $\phi^2$ に比例します（$E\propto\phi^2$）。$f$ は空の部分の小さな剛性、$J_e$ は弾性の体積比です。周りに拘束された成長だけが応力を残します。
+\item 式 3：φ の式（論文の表記どおり）。$\beta$ は拡散、最後の項は前線の項です。
+\item 式 4：栄養の式。$d$ は拡散係数、$g\phi c$ は菌による消費です。論文の式 (24) は $g\phi$ と書いていますが、Meisam が $g\phi c$ を確認しています。
+\item 式 5：成長の式（式 36）。菌が多いところほど速く大きくなります。
+\item 式 6：点モデル（Klempt 2026）。同じ場所でも、相互作用で菌種の割合が変わります。
+\item 一方向の連成：組成は応力や成長に戻りません（修論）。双方向は慶應での展開です。
+\item 時間のつなぎ $s$、キャップ $\phi_{\rm cap}$：論文が与えていない仮定です。
+\item 方式 (c)：生きたバイオマスによる成長。慶應の展望で、修論の本文には入れていません。
+\end{itemize}
+\end{document}

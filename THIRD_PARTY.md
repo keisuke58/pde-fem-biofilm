@@ -36,6 +36,20 @@ numerical examples are reproduced in `JAXFEM/klempt2026_reproduction.py`.
 
 ---
 
+
+## `references/Klempt2026_multispecies_interaction_AAM.pdf` — Klempt et al. (2026), the point model
+
+> **A continuum multi-species bacterial growth model with a novel interaction scheme**
+> Felix Klempt, Hendrik Geisler, Meisam Soleimani, Philipp Junker
+> *Archive of Applied Mechanics* (2026) **96**:164
+> doi:[10.1007/s00419-026-03160-y](https://doi.org/10.1007/s00419-026-03160-y)
+> © The Author(s) 2026
+
+**Licence: [Creative Commons Attribution 4.0 International (CC BY 4.0)](http://creativecommons.org/licenses/by/4.0/)**
+— Open Access funding enabled and organized by Projekt DEAL. The PDF is the published version, bundled verbatim,
+renamed on 2026-10-20 from the publisher's file name (`s00419-026-03160-y.pdf`). The `.txt` next to it is a plain-text
+extraction (`pdftotext -layout`), a change of format only. The arXiv preprint (2509.01274) is not bundled: its arXiv
+licence does not permit redistribution. The cases of this paper are transcribed in `JAXFEM/klempt2026_cases.py`.
 ## `references/Soleimani2023_coaggregation_SciRep.pdf` — Soleimani et al. (2023), two-species co-aggregation model in an ANSYS user element
 
 > **Numerical and experimental investigation of multi-species bacterial co-aggregation**
@@ -86,7 +100,7 @@ credited, the licence is linked, and any changes are indicated. **The PDF is
 bundled verbatim; no changes have been made to it.**
 `references/Rudolf2025_NEM_efficiency_FEAD.txt` is a plain-text extraction
 (`pdftotext -layout`), a change of format only, under the same licence and
-credit. Added 2026-10-06. Reading notes: `KEIO_PLAN.ja.md` §4d.
+credit. Added 2026-10-06. Reading notes: `KEIO_PLAN.ja.md` §8.
 
 ## `references/Vogel2020_adaptive_gradient_damage_IJNME.pdf` — Vogel and Junker (2020), adaptive reference for the gradient-enhanced damage model
 

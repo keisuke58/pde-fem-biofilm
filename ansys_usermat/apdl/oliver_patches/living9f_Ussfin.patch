@@ -1,0 +1,182 @@
+diff --git "a/F:\\biofilm_upf_living5\\Ussfin_P21-V21_Conection_Test.F" "b/F:\\biofilm_upf_living9f\\Ussfin_P21-V21_Conection_Test.F"
+index c4604ff..97e090d 100644
+--- "a/F:\\biofilm_upf_living5\\Ussfin_P21-V21_Conection_Test.F"
++++ "b/F:\\biofilm_upf_living9f\\Ussfin_P21-V21_Conection_Test.F"
+@@ -184,4 +184,5 @@ c **********  a user subroutine called after a substep  **********
+      &, Sdp3          !Temporary double variable
+      &, Sdp_Time       !Current physical time
++     &, Sdp_FrontDump  !pde-fem-biofilm A-39: dump the front term while time < this (0 = off)
+      &, Sdp_tt         !Accumulated time within substep
+      &, Sdp_tt_Ref     !Reference time for the current substep
+@@ -338,4 +339,10 @@ c **********  a user subroutine called after a substep  **********
+ !     SURFACE FIX (2026-10-07): phi at the surface points
+       DOUBLE PRECISION SFX, SFY, SFZ, SFW, SFWS, SFB1, SFB2
++      DOUBLE PRECISION SFD2MIN, Sdp_SurfNearest, Sdp_NemDump, Sdp_SurfOff
++      LOGICAL, SAVE :: lL_NemDumped = .FALSE.
++      LOGICAL, SAVE :: lL_LapFile = .FALSE., lL_LapRead = .FALSE.
++      INTEGER, ALLOCATABLE, SAVE :: vLi_LcRow(:), vLi_LcCol(:)
++      DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LcVal(:)
++      INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+ 
+@@ -1370,5 +1377,50 @@ c **********  a user subroutine called after a substep  **********
+       Si_SuccessStreak = 0
+       Si_Cnt_PARDISO22 = 0
+-      sGi_Time_Step_Refactor = 0 
++      sGi_Time_Step_Refactor = 0
++!     pde-fem-biofilm 22 Oct 2026 (A-39): FRONT_DUMP = T writes the terms
++!     of the phi update to front_dump.txt while the run time is below T
++      Sdp_FrontDump = 0.0D0
++      C_ParName='FRONT_DUMP'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_FrontDump = Sdp1
++      IF (sGdp_Time .GE. Sdp_FrontDump) Sdp_FrontDump = 0.0D0
++      Sdp_SurfNearest = 0.0D0
++      C_ParName='SURF_NEAREST'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_SurfNearest = Sdp1
++      Sdp1 = 0.0D0
++      Sdp_SurfOff = 0.0D0
++      C_ParName='SURF_FIX_OFF'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_SurfOff = Sdp1
++      Sdp_NemDump = 0.0D0
++      C_ParName='NEM_DUMP'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_NemDump = Sdp1
++      IF (.NOT. lL_LapRead) THEN
++        lL_LapRead = .TRUE.
++        Sdp1 = 0.0D0
++        C_ParName='LAP_FILE'
++        CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++        IF (Si_Kerr .EQ. 0 .AND. Sdp1 .GT. 0.5D0) THEN
++          OPEN(79, FILE='lap_cons.txt', STATUS='OLD')
++          READ(79,*) Si_LcN, Si_LcNnz
++          IF (Si_LcN .NE. nGP) THEN
++            PRINT *, "IKM: lap_cons.txt is for", Si_LcN, "points, not",
++     &        nGP, " -- LAP_FILE ignored"
++            CLOSE(79)
++          ELSE
++            ALLOCATE(vLi_LcRow(nGP+1), vLi_LcCol(Si_LcNnz))
++            ALLOCATE(vLdp_LcVal(Si_LcNnz))
++            READ(79,*) (vLi_LcRow(Si_LcI), Si_LcI = 1, nGP + 1)
++            DO Si_LcI = 1, Si_LcNnz
++              READ(79,*) vLi_LcCol(Si_LcI), vLdp_LcVal(Si_LcI)
++            END DO
++            CLOSE(79)
++            lL_LapFile = .TRUE.
++            PRINT *, "IKM: LAP_FILE read,", Si_LcNnz, " entries"
++          END IF
++        END IF
++      END IF
+        
+ 
+@@ -1416,4 +1468,25 @@ c **********  a user subroutine called after a substep  **********
+ !-----------------------------------------------------------------------
+ 
++!     pde-fem-biofilm 22 Oct 2026 (A-42): NEM_DUMP = 1 writes the NEM
++!     operator (rows of all points, neighbours, dx, dy, dz, Lap) and the
++!     point coordinates to nem_dump.txt once, at the first call
++      IF (Sdp_NemDump .GT. 0.5D0 .AND. .NOT. lL_NemDumped) THEN
++        OPEN(78, FILE='nem_dump.txt', STATUS='REPLACE')
++        WRITE(78,'(3I10)') nGP, nTot, vGi_RowPtr_T(nTot+1) - 1
++        DO SFI = 1, nTot
++          WRITE(78,'(I10,3ES24.16)') SFI, vGdp_PosX_0(SFI),
++     &      vGdp_PosY_0(SFI), vGdp_PosZ_0(SFI)
++        END DO
++        DO SFI = 1, nTot
++          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++            WRITE(78,'(2I10,4ES24.16)') SFI, vGi_ColID_T(SFJ),
++     &        vGdp_dx_T(SFJ), vGdp_dy_T(SFJ), vGdp_dz_T(SFJ),
++     &        vGdp_Lap_T(SFJ)
++          END DO
++        END DO
++        CLOSE(78)
++        lL_NemDumped = .TRUE.
++      END IF
++
+ !     SURFACE FIX (2026-10-07, F:\biofilm_upf_nativefix): phi at the
+ !     surface points. The NEM stencils of the integration points next to
+@@ -1422,8 +1495,28 @@ c **********  a user subroutine called after a substep  **********
+ !     no flux). Each surface point takes the inverse-square-distance mean
+ !     of its integration-point neighbours before every substep.
++!     pde-fem-biofilm 22 Oct 2026 (A-39): SURF_NEAREST = 1 gives each
++!     surface point the mean of its nearest integration points only (zero
++!     normal gradient). The inverse-square mean pulls in points further
++!     inside, so a wall next to phi = 1 looks lower and the NEM Laplacian
++!     loses phi through the walls (sum over all points < 0).
++!     pde-fem-biofilm 22 Oct 2026 (A-49): SURF_FIX_OFF = 1 skips the
++!     surface-point update, as the partner's and Felix's original element:
++!     the surface points keep phi = 0 (for the Klempt 2024 4.2 comparison)
++      IF (Sdp_SurfOff .LT. 0.5D0) THEN
+       DO SFI = nGP + 1, nTot
+         SFWS = 0.0D0
+         SFB1 = 0.0D0
+         SFB2 = 0.0D0
++        SFD2MIN = 1.0D30
++        IF (Sdp_SurfNearest .GT. 0.5D0) THEN
++        DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++          SFK = vGi_ColID_T(SFJ)
++          IF (SFK .GT. nGP) CYCLE
++          SFX = vGdp_PosX_0(SFK) - vGdp_PosX_0(SFI)
++          SFY = vGdp_PosY_0(SFK) - vGdp_PosY_0(SFI)
++          SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
++          SFD2MIN = MIN(SFD2MIN, SFX*SFX + SFY*SFY + SFZ*SFZ)
++        END DO
++        END IF
+         DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
+           SFK = vGi_ColID_T(SFJ)
+@@ -1433,4 +1526,9 @@ c **********  a user subroutine called after a substep  **********
+           SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
+           SFW = 1.0D0 / MAX(SFX*SFX + SFY*SFY + SFZ*SFZ, 1.0D-30)
++          IF (Sdp_SurfNearest .GT. 0.5D0) THEN
++            SFW = 0.0D0
++            IF (SFX*SFX + SFY*SFY + SFZ*SFZ .LE. SFD2MIN*1.0001D0)
++     &        SFW = 1.0D0
++          END IF
+           SFWS = SFWS + SFW
+           SFB1 = SFB1 + SFW * vGdp_Bio1_n1(SFK)
+@@ -1442,4 +1540,5 @@ c **********  a user subroutine called after a substep  **********
+         END IF
+       END DO
++      END IF
+ !$OMP PARALLEL DEFAULT(NONE)  !This means all variables must be explicitly defined
+ !$OMP& PRIVATE(ID, ii, jj, base9, base6, Row_S, Row_E, idx2)
+@@ -1489,4 +1588,6 @@ c **********  a user subroutine called after a substep  **********
+ ! --- SHARED VARIABLES (Inputs & Globals) ---
+ !$OMP& SHARED(nGP, sGdp_dTime, Sdp_tt_Ref, Sdp_dt,Sdp_Time)
++!$OMP& SHARED(Sdp_FrontDump)
++!$OMP& SHARED(lL_LapFile, vLi_LcRow, vLi_LcCol, vLdp_LcVal)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+ !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
+@@ -2048,4 +2149,14 @@ c **********  a user subroutine called after a substep  **********
+       ENDDO
+       Sdp_LapBio1 = Vdp3(1)
++!     pde-fem-biofilm 22 Oct 2026 (A-42): LAP_FILE = 1 takes the phi
++!     Laplacian from lap_cons.txt (the NEM Laplacian with the surface
++!     points eliminated, made conservative: zero row and column sums)
++      IF (lL_LapFile) THEN
++        Sdp_LapBio1 = 0.0D0
++        DO jj = vLi_LcRow(ID), vLi_LcRow(ID+1) - 1
++          Sdp_LapBio1 = Sdp_LapBio1
++     &      + vLdp_LcVal(jj) * vGdp_Bio1_n1(vLi_LcCol(jj))
++        END DO
++      END IF
+       Sdp_LapBio2 = Vdp3(2)
+       Sdp_LapBio3 = Vdp3(3)
+@@ -2315,4 +2426,15 @@ c **********  a user subroutine called after a substep  **********
+      & + PenForce1
+      & ) + vGdp_Bio1_n1(ID)
++      IF (Sdp_FrontDump .GT. 0.0D0) THEN
++!$OMP CRITICAL (FRONTDUMP)
++      OPEN(77, FILE='front_dump.txt', POSITION='APPEND')
++      WRITE(77,'(I8,15ES16.8)') ID, Sdp_Time, vGdp_Bio1_n1(ID),
++     &  Sdp_GradXBio1, Sdp_GradYBio1, Sdp_GradZBio1,
++     &  Sdp_GradXNut1, Sdp_GradYNut1, Sdp_GradZNut1,
++     &  vGdp_Nut1_n(ID), Sdp_LapBio1, OriBio1, GrowthBio1,
++     &  PenForce1, sGdp_dTime, vGdp_Bio1_n(ID)
++      CLOSE(77)
++!$OMP END CRITICAL (FRONTDUMP)
++      ENDIF
+ 
+       vGdp_Bio2_n(ID)    = sGdp_dTime * (

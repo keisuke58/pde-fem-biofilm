@@ -170,3 +170,13 @@ p3/uel/*.so
 p3/uel/test_uel_wrapper
 p3/uel/unified_uel_abaqus.for
 p3/uel/abaqus_in/
+
+# Lean build output
+.lake/
+!data/heine_volume/*.csv
+
+# 事後分布の粒子と点モデルの軌道（EML 側から、モデルの出力だけ・生データなし、2026-10-19）
+!data/posterior_final/*.npz
+
+ansys_usermat/coupling/libecology_native.so
+ansys_usermat/coupling/_build_ecology_native/

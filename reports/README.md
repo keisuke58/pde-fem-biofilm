@@ -1,7 +1,7 @@
 # Progress reports
 
 Fortnightly written updates to M. Soleimani, and milestone notes to Oliver, per
-the cadence in [`ROADMAP_2026.md`](../ROADMAP_2026.md) §4. Kept here so that
+the cadence in [`archive/ROADMAP_2026.md`](../ROADMAP_2026.md) §4. Kept here so that
 what was reported, and when, is on the record alongside the work it describes.
 
 | Date | To | Subject |

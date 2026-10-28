@@ -24,6 +24,10 @@ thesis results (CLAUDE.md).
 
 ## Rules
 
+- **Figures (19 Oct 2026): all in Times**, drawn at the printed width (16 cm) with text of 7.5 pt or more, vector PDF
+  (3D renderings PNG at 400 dpi), no title inside the figure, panel letters as in the caption. Body text Latin Modern.
+  Figure scripts call `figstyle.apply()`; data of figures that need a simulation are cached in `figdata/`.
+
 The document rules of `../CLAUDE.md` apply (first person singular, notation
 as in the papers, no AI-sounding wording, units, figures in Times New Roman).
 
@@ -54,17 +58,15 @@ Soleimani and Dr.-Ing. H. Geisler. The form itself (personal data) is not in
 the repository.
 
 Open:
-- the registered subtitle names "Spatial Stratification" (the FISH work, now out
-  of scope); the spatial part of the thesis is now the FEM coupling. Ask whether
-  the subtitle can be changed, or describe the spatial composition of chapter 4
-  in those terms;
+- the registered subtitle names "Spatial Stratification": **kept as registered** (the user, 26 Oct 2026); the
+  spatial composition of chapter 4 is what it refers to;
 - the old ch4 and ch5 files (`chapters/ch4_dieckow.tex`, `chapters/ch5_integration.tex`, `chapters/appendix_unused.tex`) are no longer input and can be deleted once nothing more is taken from them.
 - ch3 numbers: the TMCMC results may still change (4 Oct 2026). Once they are
   final, check every number in the ch3 text against its table or figure (on
   4 Oct one pair of gLV entries had mixed CS and CH values, and the posterior
   was mislabelled NUTS; both fixed).
 
-## Timeline to submission and colloquium (decided 4 Oct, revised 6 Oct)
+## Timeline to submission and colloquium (decided 4 Oct, revised 6 Oct and 19 Oct)
 
 | when | what |
 |---|---|
@@ -72,16 +74,44 @@ Open:
 | 6-11 Oct | away; cloud: ch4 updated with the 5 Oct results, read-through |
 | **12 Oct** | **content frozen** (decided 6 Oct): ch4 with the week runs that have arrived by then, ch3 TMCMC as it is; afterwards only format and typos. **Nearly complete draft to Dr. Soleimani** (format check), PDF renamed `Nishioka_MasterThesis_draft_2026-10-12.pdf` |
 | 16 Oct | his comments on the format |
-| 19 Oct | last changes, printing, binding |
-| **13 Nov** | **submission** (moved from 20 Oct on 13 Oct): two printed copies to Dr. Soleimani, plus the electronic version (PO § 15 (4)) |
+| 19 Oct | ch3 replaced by the final EML results; figures redrawn at text width (ch1, ch4); ch3 to Assoc. Prof. Muramatsu (Slack, scheduled) |
 | 21-30 Oct | away (leaves Hannover 21 Oct about 15:00) |
-| 2 Nov | meeting with Assoc. Prof. Muramatsu (`slides_1102_nem_ja.tex`) |
-| 3-10 Nov, 20-28 Nov | away: read the submitted thesis chapter by chapter, Q&A practice |
-| 16 Dec, 13:00 | colloquium (proposed by the IKM office on 8 Oct and accepted; waiting for Dr. Wangenheim and the room) |
+| 31 Oct - 2 Nov | in Hannover: read-through of the PDF (a test print only if the university print service is easy to reach); meeting with Assoc. Prof. Muramatsu on 2 Nov (`slides_1102_nem_ja.tex`) |
+| 3-10 Nov | away |
+| **13 Nov** | **internal deadline** (decided 20 Oct): the thesis is finished and ready to submit; sent to Dr. Soleimani only if I judge it complete (then as the submission version, not a draft) |
+| 20-28 Nov | away: read the finished thesis chapter by chapter, Q&A practice |
+| 10-11 Dec | in Hannover: last check; **print two copies** at the university on Fri 11 Dec (with the Stundenzettel; Timo asked 20 Oct) |
+| **Mon 14 Dec** | **PDF and the two printed copies to Dr. Soleimani** (deadline 15 Dec, 13:00, his mail of 20 Oct; decided 20 Oct) |
+| 16 Dec, 13:00 | colloquium, IKM room 320, in person; talk 20 min, questions 10-20 min (confirmed 13 Oct). Dr. Wangenheim (second examiner) wrote on 19 Oct that his attendance is not required |
+
+Dr. Soleimani's answer (20 Oct): printing, ask Timo (Timo Rabing, IKM, rabing@ikm.uni-hannover.de); students usually print
+at the university, which is cheap. Schedule: the PDF may be submitted up to 24 hours before the colloquium (so by 15 Dec,
+13:00), the printed copies afterwards. Mail to Timo sent 20 Oct (where, how, binding, lead time; two copies, ~90 pages, colour,
+printing in December). Plan: PDF ready around 13 Nov anyway; print in Hannover on 14-15 Dec and hand the copies over at the
+colloquium (fallback 17-18 Dec, before the Christmas closures). Reply sent 20 Oct: asked whether the PDF counts as the
+formal submission or the examination office / Prof. Junker must be told, and again for comments on the draft.
+**Answer (20 Oct, 18:39):** "you only need to send a PDF to me. that's it". The PDF to Dr. Soleimani is the whole
+submission; no examination office, no separate notice to Prof. Junker.
+
+Open with Dr. Soleimani (19 Oct):
+- his comments on the 9 Oct draft (asked for by 15 Oct) have not arrived;
+- mail of 19 Oct asks how to print (copy shop or the IKM printer; sides, colour, binding), the form of the electronic
+  version, and whether handing in on Fri 13 Nov is fine;
+- follow-up: when he answers the printing mail, ask in the same reply whether he had time to look at the draft
+  ("Any comments on the format before the final print would be very welcome"); if nothing has come by about 26 Oct,
+  send one reminder that covers both. Do not send him a newer draft unless he asks (decided 9 Oct).
+
+Colloquium practice during the trips (decided 19 Oct):
+- Adriatic, 21-27 Oct: a little quiz between buses (before submission, so light);
+- Portugal, 3-10 Nov: quiz (`QUIZ_COLLOQUIUM.ja.md`) and the reading plan below;
+- Greece, 21-28 Nov: full run-through of the talk, Q&A in English;
+- Egypt, 3-9 Dec: only the questions that went wrong;
+- Hannover, 10-15 Dec: two or three full rehearsals aloud.
 
 Reading plan while away in November (about one hour a day):
 1. ch1 and ch2 (model and notation) with the variables and equations sheet;
 2. ch4 verification and coupling, redoing the closed-form stress by hand;
-3. ch4 results, assumptions and sensitivity (s, phi_cap, d);
+3. ch4 results, assumptions and sensitivity (s, phi_cap, d); **20 Oct: Ch. 4 is being rewritten for the coupling agreed
+   with Oliver, `thesis/CH4_REWRITE_PLAN.md`;**
 4. ch3 calibration and ch6;
-5. `QA_1005.md` and new questions, answered aloud.
+5. `archive/QA_1005.md` and new questions, answered aloud.

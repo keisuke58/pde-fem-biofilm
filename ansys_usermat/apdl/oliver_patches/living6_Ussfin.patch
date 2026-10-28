@@ -1,0 +1,91 @@
+diff --git "a/F:\\biofilm_upf_living5\\Ussfin_P21-V21_Conection_Test.F" "b/F:\\biofilm_upf_living6\\Ussfin_P21-V21_Conection_Test.F"
+index c4604ff..43a55aa 100644
+--- "a/F:\\biofilm_upf_living5\\Ussfin_P21-V21_Conection_Test.F"
++++ "b/F:\\biofilm_upf_living6\\Ussfin_P21-V21_Conection_Test.F"
+@@ -184,4 +184,5 @@ c **********  a user subroutine called after a substep  **********
+      &, Sdp3          !Temporary double variable
+      &, Sdp_Time       !Current physical time
++     &, Sdp_FrontDump  !pde-fem-biofilm A-39: dump the front term while time < this (0 = off)
+      &, Sdp_tt         !Accumulated time within substep
+      &, Sdp_tt_Ref     !Reference time for the current substep
+@@ -338,4 +339,5 @@ c **********  a user subroutine called after a substep  **********
+ !     SURFACE FIX (2026-10-07): phi at the surface points
+       DOUBLE PRECISION SFX, SFY, SFZ, SFW, SFWS, SFB1, SFB2
++      DOUBLE PRECISION SFD2MIN, Sdp_SurfNearest
+       INTEGER SFI, SFJ, SFK
+ 
+@@ -1370,5 +1372,16 @@ c **********  a user subroutine called after a substep  **********
+       Si_SuccessStreak = 0
+       Si_Cnt_PARDISO22 = 0
+-      sGi_Time_Step_Refactor = 0 
++      sGi_Time_Step_Refactor = 0
++!     pde-fem-biofilm 22 Oct 2026 (A-39): FRONT_DUMP = T writes the terms
++!     of the phi update to front_dump.txt while the run time is below T
++      Sdp_FrontDump = 0.0D0
++      C_ParName='FRONT_DUMP'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_FrontDump = Sdp1
++      IF (sGdp_Time .GE. Sdp_FrontDump) Sdp_FrontDump = 0.0D0
++      Sdp_SurfNearest = 0.0D0
++      C_ParName='SURF_NEAREST'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_SurfNearest = Sdp1
+        
+ 
+@@ -1422,8 +1435,24 @@ c **********  a user subroutine called after a substep  **********
+ !     no flux). Each surface point takes the inverse-square-distance mean
+ !     of its integration-point neighbours before every substep.
++!     pde-fem-biofilm 22 Oct 2026 (A-39): SURF_NEAREST = 1 gives each
++!     surface point the mean of its nearest integration points only (zero
++!     normal gradient). The inverse-square mean pulls in points further
++!     inside, so a wall next to phi = 1 looks lower and the NEM Laplacian
++!     loses phi through the walls (sum over all points < 0).
+       DO SFI = nGP + 1, nTot
+         SFWS = 0.0D0
+         SFB1 = 0.0D0
+         SFB2 = 0.0D0
++        SFD2MIN = 1.0D30
++        IF (Sdp_SurfNearest .GT. 0.5D0) THEN
++        DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++          SFK = vGi_ColID_T(SFJ)
++          IF (SFK .GT. nGP) CYCLE
++          SFX = vGdp_PosX_0(SFK) - vGdp_PosX_0(SFI)
++          SFY = vGdp_PosY_0(SFK) - vGdp_PosY_0(SFI)
++          SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
++          SFD2MIN = MIN(SFD2MIN, SFX*SFX + SFY*SFY + SFZ*SFZ)
++        END DO
++        END IF
+         DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
+           SFK = vGi_ColID_T(SFJ)
+@@ -1433,4 +1462,9 @@ c **********  a user subroutine called after a substep  **********
+           SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
+           SFW = 1.0D0 / MAX(SFX*SFX + SFY*SFY + SFZ*SFZ, 1.0D-30)
++          IF (Sdp_SurfNearest .GT. 0.5D0) THEN
++            SFW = 0.0D0
++            IF (SFX*SFX + SFY*SFY + SFZ*SFZ .LE. SFD2MIN*1.0001D0)
++     &        SFW = 1.0D0
++          END IF
+           SFWS = SFWS + SFW
+           SFB1 = SFB1 + SFW * vGdp_Bio1_n1(SFK)
+@@ -1489,4 +1523,5 @@ c **********  a user subroutine called after a substep  **********
+ ! --- SHARED VARIABLES (Inputs & Globals) ---
+ !$OMP& SHARED(nGP, sGdp_dTime, Sdp_tt_Ref, Sdp_dt,Sdp_Time)
++!$OMP& SHARED(Sdp_FrontDump)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+ !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
+@@ -2315,4 +2350,15 @@ c **********  a user subroutine called after a substep  **********
+      & + PenForce1
+      & ) + vGdp_Bio1_n1(ID)
++      IF (Sdp_FrontDump .GT. 0.0D0) THEN
++!$OMP CRITICAL (FRONTDUMP)
++      OPEN(77, FILE='front_dump.txt', POSITION='APPEND')
++      WRITE(77,'(I8,15ES16.8)') ID, Sdp_Time, vGdp_Bio1_n1(ID),
++     &  Sdp_GradXBio1, Sdp_GradYBio1, Sdp_GradZBio1,
++     &  Sdp_GradXNut1, Sdp_GradYNut1, Sdp_GradZNut1,
++     &  vGdp_Nut1_n(ID), Sdp_LapBio1, OriBio1, GrowthBio1,
++     &  PenForce1, sGdp_dTime, vGdp_Bio1_n(ID)
++      CLOSE(77)
++!$OMP END CRITICAL (FRONTDUMP)
++      ENDIF
+ 
+       vGdp_Bio2_n(ID)    = sGdp_dTime * (

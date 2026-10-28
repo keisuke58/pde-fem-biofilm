@@ -1,0 +1,266 @@
+{
+ "no_antibiotic": [
+  {
+   "t": 6.0,
+   "abaqus": {
+    "colonised": 1264,
+    "reach_um": 80.89535326742678,
+    "living_mean": 0.9156741262438394
+   },
+   "python": {
+    "colonised": 1279,
+    "reach_um": 98.18350166906862,
+    "living_mean": 0.915873833801509
+   }
+  },
+  {
+   "t": 12.0,
+   "abaqus": {
+    "colonised": 1804,
+    "reach_um": 66.51924729346688,
+    "living_mean": 0.9255585672909091
+   },
+   "python": {
+    "colonised": 1781,
+    "reach_um": 70.71067811865476,
+    "living_mean": 0.9287115526326875
+   }
+  },
+  {
+   "t": 18.0,
+   "abaqus": {
+    "colonised": 2781,
+    "reach_um": 66.51924729346688,
+    "living_mean": 0.9298293820362672
+   },
+   "python": {
+    "colonised": 2778,
+    "reach_um": 70.71067811865476,
+    "living_mean": 0.9313668809537019
+   }
+  },
+  {
+   "t": 24.0,
+   "abaqus": {
+    "colonised": 3770,
+    "reach_um": 68.03194373593482,
+    "living_mean": 0.9318841579769649
+   },
+   "python": {
+    "colonised": 3561,
+    "reach_um": 70.9365914038728,
+    "living_mean": 0.933565772206702
+   }
+  },
+  {
+   "t": 30.0,
+   "abaqus": {
+    "colonised": 4059,
+    "reach_um": 69.50951486299843,
+    "living_mean": 0.9266504415214175
+   },
+   "python": {
+    "colonised": 4220,
+    "reach_um": 70.9365914038728,
+    "living_mean": 0.9331087330714849
+   }
+  },
+  {
+   "t": 36.0,
+   "abaqus": {
+    "colonised": 4150,
+    "reach_um": 71.18362005749215,
+    "living_mean": 0.9214013714460314
+   },
+   "python": {
+    "colonised": 4282,
+    "reach_um": 73.59347797189639,
+    "living_mean": 0.9265059899657172
+   }
+  },
+  {
+   "t": 42.0,
+   "abaqus": {
+    "colonised": 4232,
+    "reach_um": 43.35301378784871,
+    "living_mean": 0.9201129064680461
+   },
+   "python": {
+    "colonised": 4351,
+    "reach_um": 74.02702209328699,
+    "living_mean": 0.9218635355857681
+   }
+  },
+  {
+   "t": 48.0,
+   "abaqus": {
+    "colonised": 4307,
+    "reach_um": 41.02894491075052,
+    "living_mean": 0.9202253279166279
+   },
+   "python": {
+    "colonised": 4409,
+    "reach_um": 74.02702209328699,
+    "living_mean": 0.9197064184187229
+   }
+  },
+  {
+   "t": 54.0,
+   "abaqus": {
+    "colonised": 4371,
+    "reach_um": 39.723532225739945,
+    "living_mean": 0.920791645182463
+   },
+   "python": {
+    "colonised": 4459,
+    "reach_um": 43.174066289845804,
+    "living_mean": 0.9192735090635562
+   }
+  },
+  {
+   "t": 60.0,
+   "abaqus": {
+    "colonised": 4434,
+    "reach_um": 39.723532225739945,
+    "living_mean": 0.9216641595729189
+   },
+   "python": {
+    "colonised": 4504,
+    "reach_um": 42.04759208325728,
+    "living_mean": 0.9191257323976203
+   }
+  }
+ ],
+ "antibiotic": [
+  {
+   "t": 6.0,
+   "abaqus": {
+    "colonised": 1264,
+    "reach_um": 80.89535326742678,
+    "living_mean": 0.9156741262438394
+   },
+   "python": {
+    "colonised": 1279,
+    "reach_um": 98.18350166906862,
+    "living_mean": 0.915873833801509
+   }
+  },
+  {
+   "t": 12.0,
+   "abaqus": {
+    "colonised": 1804,
+    "reach_um": 66.51924729346688,
+    "living_mean": 0.9255585672909091
+   },
+   "python": {
+    "colonised": 1781,
+    "reach_um": 70.71067811865476,
+    "living_mean": 0.9287115526326875
+   }
+  },
+  {
+   "t": 18.0,
+   "abaqus": {
+    "colonised": 2781,
+    "reach_um": 66.51924729346688,
+    "living_mean": 0.9298293820362672
+   },
+   "python": {
+    "colonised": 2778,
+    "reach_um": 70.71067811865476,
+    "living_mean": 0.9313668809537019
+   }
+  },
+  {
+   "t": 24.0,
+   "abaqus": {
+    "colonised": 3817,
+    "reach_um": 64.97370985629034,
+    "living_mean": 0.06926734561603123
+   },
+   "python": {
+    "colonised": 3705,
+    "reach_um": 70.71067811865476,
+    "living_mean": 0.03918978688273202
+   }
+  },
+  {
+   "t": 30.0,
+   "abaqus": {
+    "colonised": 4075,
+    "reach_um": 62.58813907194717,
+    "living_mean": 0.06540736762922651
+   },
+   "python": {
+    "colonised": 4228,
+    "reach_um": 70.9365914038728,
+    "living_mean": 0.036505185122709866
+   }
+  },
+  {
+   "t": 36.0,
+   "abaqus": {
+    "colonised": 4189,
+    "reach_um": 41.02894491075052,
+    "living_mean": 0.06428540342500001
+   },
+   "python": {
+    "colonised": 4344,
+    "reach_um": 42.04759208325728,
+    "living_mean": 0.03642130678884389
+   }
+  },
+  {
+   "t": 42.0,
+   "abaqus": {
+    "colonised": 4284,
+    "reach_um": 39.723532225739945,
+    "living_mean": 0.0641957515732049
+   },
+   "python": {
+    "colonised": 4423,
+    "reach_um": 40.496913462633174,
+    "living_mean": 0.03604748909407663
+   }
+  },
+  {
+   "t": 48.0,
+   "abaqus": {
+    "colonised": 4362,
+    "reach_um": 37.53530488073063,
+    "living_mean": 0.06409117697300785
+   },
+   "python": {
+    "colonised": 4489,
+    "reach_um": 42.04759208325728,
+    "living_mean": 0.036021356987526225
+   }
+  },
+  {
+   "t": 54.0,
+   "abaqus": {
+    "colonised": 4423,
+    "reach_um": 35.38163145601685,
+    "living_mean": 0.06573848077859082
+   },
+   "python": {
+    "colonised": 4542,
+    "reach_um": 42.04759208325728,
+    "living_mean": 0.03609983614057206
+   }
+  },
+  {
+   "t": 60.0,
+   "abaqus": {
+    "colonised": 4479,
+    "reach_um": 34.510842940870056,
+    "living_mean": 0.06689969494819466
+   },
+   "python": {
+    "colonised": 4598,
+    "reach_um": 186.9545399288287,
+    "living_mean": 0.03619607578169327
+   }
+  }
+ ]
+}

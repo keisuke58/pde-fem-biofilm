@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""a7_table.py -- the A-7 report (CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md):
+"""a7_table.py -- the A-7 report (archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md):
 compression slows the (c) growth, g = 1/(1 + max(p,0)/p_ref).
 
     python ansys_usermat/apdl/a7_table.py [--results DIR]

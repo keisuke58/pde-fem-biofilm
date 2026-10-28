@@ -1,0 +1,93 @@
+{
+ "geometry": {
+  "source": "Diaz, Ferro Sanchez, Campo (2024), Mendeley Data v1, doi:10.17632/xjsx7nfhj8.1, Teeth/STL/D46.stl (lower right first molar), CC BY 4.0",
+  "file": "assets/geometry/mendeley_xjsx7nfhj8_D46.stl",
+  "crown_top_z_mm": 5.5,
+  "tooth_cells_in_cube": 184601,
+  "tooth_volume_in_cube_mm3": 854.634259259259
+ },
+ "settings": {
+  "L_mm": 16.0,
+  "field_cells": 96,
+  "stress_elements": 32,
+  "h_field_mm": 0.16666666666666666,
+  "h_stress_mm": 0.5,
+  "beta_mm2_per_Tstar": 0.08,
+  "beta_thesis_2mm_cube": 0.02,
+  "beta_scale": 4.0,
+  "k_alpha": 0.001,
+  "penalty": 5.0,
+  "T_end": 1.1,
+  "frames": 66,
+  "stress_every": 3,
+  "E_bio_Pa": 10.0,
+  "E_tooth_Pa": 10000.0,
+  "floor": 0.001,
+  "nu": 0.49,
+  "seed": {
+   "thickness_mm": 0.5,
+   "cells_thick": 3.0,
+   "z_mm": [
+    -3.0,
+    -1.0
+   ],
+   "half_angle_deg": 60.0,
+   "flank": "-x"
+  }
+ },
+ "seed": {
+  "cells": 2954,
+  "volume_mm3": 13.675925925925922,
+  "phi_mean_end": 0.5417510635076379,
+  "am1_mean_end": 0.0007568872209005285,
+  "am1_max_end": 0.0010137557983398438
+ },
+ "film": {
+  "phi_volume_mm3_start": 13.675925925925922,
+  "phi_volume_mm3_end": 17.240218908698466,
+  "cells_phi_gt_0p5_end": 1857,
+  "cells_phi_gt_0p05_end": 10111
+ },
+ "von_mises": {
+  "max_Pa": 0.0059995693154633045,
+  "max_location_mm": [
+   -3.75,
+   4.75,
+   -2.25
+  ],
+  "p95_Pa": 0.005245047155767679,
+  "film_elements": 130,
+  "max_pressure_Pa": 0.01652953401207924,
+  "amg_iterations": [
+   0,
+   65,
+   62,
+   60,
+   59,
+   59,
+   57,
+   57,
+   56,
+   56,
+   55,
+   55,
+   54,
+   54,
+   54,
+   54,
+   53,
+   53,
+   53,
+   53,
+   52,
+   52,
+   52
+  ]
+ },
+ "wall_s": {
+  "sdf": 10.420436143875122,
+  "field": 16.39242196083069,
+  "stress": 655.4382576942444,
+  "render": 59.52382230758667
+ }
+}

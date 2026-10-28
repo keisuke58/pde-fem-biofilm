@@ -1,0 +1,752 @@
+{
+ "Python (r h/4)": {
+  "values": {
+   "8": {
+    "seed_am1": 0.0003769873530836687,
+    "seed_vm_Pa": 3.427017974506217e-05,
+    "file": "coupled_living_consumption_nf8_front1_dtc0.00125_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "16": {
+    "seed_am1": 0.0006272259348489434,
+    "seed_vm_Pa": 0.00017312298961987704,
+    "file": "coupled_living_consumption_nf16_front1_dtc0.00125_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "24": {
+    "seed_am1": 0.000725811982249503,
+    "seed_vm_Pa": 0.00027821419463776277,
+    "file": "coupled_living_consumption_nf24_front1_dtc0.00125_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "32": {
+    "seed_am1": 0.0007717981291099,
+    "seed_vm_Pa": 0.0003397368788730323,
+    "file": "coupled_living_consumption_front1_dtc0.00125_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "48": {
+    "seed_am1": 0.0008200473647491388,
+    "seed_vm_Pa": 0.00042908497100111685,
+    "file": "coupled_living_consumption_nf48_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "64": {
+    "seed_am1": 0.0008428324414379519,
+    "seed_vm_Pa": 0.00047996800986772735,
+    "file": "coupled_living_consumption_nf64_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   },
+   "96": {
+    "seed_am1": 0.0008683378282504979,
+    "seed_vm_Pa": 0.0005450574620291858,
+    "file": "coupled_living_consumption_nf96_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_artdiff_wgmirror_fast_separate_ab.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 0.707622126529742,
+    "f_ext": 0.001022478752019475,
+    "gci": 0.5109222102715136,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.1961609511471805,
+    "f_ext": 0.0008837575162327665,
+    "gci": 0.1813288068798298,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 0.8588198460907975,
+    "f_ext": 0.0009358790879208019,
+    "gci": 0.1765625501508337,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.1614255681479095,
+    "f_ext": 0.0009002671640598094,
+    "gci": 0.08518111044092658,
+    "oscillatory": false,
+    "grids": [
+     64,
+     48,
+     32
+    ]
+   },
+   {
+    "p": 0.6691705091116322,
+    "f_ext": 0.0009501640992766576,
+    "gci": 0.11779152704745867,
+    "oscillatory": false,
+    "grids": [
+     96,
+     64,
+     48
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009193486018755897,
+    "gci": 0.17623592557703138,
+    "oscillatory": null,
+    "grids": [
+     96,
+     64
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 1.0386952742461153,
+    "f_ext": 0.00047887716654779064,
+    "gci": 0.9015669211778209,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 0.5517125010181857,
+    "f_ext": 0.0006974120255880235,
+    "gci": 1.316000591036302,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 0.06447829209257973,
+    "f_ext": 0.003802182284223899,
+    "gci": 9.826425828178225,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 0.6304018194457006,
+    "f_ext": 0.0007358660641658592,
+    "gci": 0.6664455990740241,
+    "oscillatory": false,
+    "grids": [
+     64,
+     48,
+     32
+    ]
+   },
+   {
+    "p": 0.28049916516845264,
+    "f_ext": 0.0010854318875609568,
+    "gci": 1.239260222949751,
+    "oscillatory": false,
+    "grids": [
+     96,
+     64,
+     48
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006752363663521027,
+    "gci": 0.7165055800077074,
+    "oscillatory": null,
+    "grids": [
+     96,
+     64
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "Python (TVD)": {
+  "values": {
+   "16": {
+    "seed_am1": 0.0008249649136505589,
+    "seed_vm_Pa": 0.0006507250786726352,
+    "file": "coupled_living_consumption_nf16_front1_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"
+   },
+   "32": {
+    "seed_am1": 0.0008816343882084789,
+    "seed_vm_Pa": 0.0005901736676337873,
+    "file": "coupled_living_consumption_front1_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"
+   },
+   "64": {
+    "seed_am1": 0.0009171404775212116,
+    "seed_vm_Pa": 0.0005981614686269373,
+    "file": "coupled_living_consumption_nf64_front1_phimin0.001_v2_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"
+   },
+   "128": {
+    "seed_am1": 0.0009327604362366943,
+    "seed_vm_Pa": 0.0006051290581895127,
+    "file": "coupled_living_consumption_nf128_front1_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_separate_ab.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 0.6745053569878856,
+    "f_ext": 0.000976709509775654,
+    "gci": 0.0811885334287091,
+    "oscillatory": false,
+    "grids": [
+     64,
+     32,
+     16
+    ]
+   },
+   {
+    "p": 1.1846758284314314,
+    "f_ext": 0.0009450294449852903,
+    "gci": 0.016441800423719226,
+    "oscillatory": false,
+    "grids": [
+     128,
+     64,
+     32
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009483803949521769,
+    "gci": 0.05023784706768698,
+    "oscillatory": null,
+    "grids": [
+     128,
+     64
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 2.922290284396766,
+    "f_ext": 0.000599375330548725,
+    "gci": 0.0025366518604375823,
+    "oscillatory": true,
+    "grids": [
+     64,
+     32,
+     16
+    ]
+   },
+   {
+    "p": 0.1971387480519576,
+    "f_ext": 0.0006527145908130432,
+    "gci": 0.09829624767545787,
+    "oscillatory": false,
+    "grids": [
+     128,
+     64,
+     32
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006120966477520881,
+    "gci": 0.0345426622715247,
+    "oscillatory": null,
+    "grids": [
+     128,
+     64
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "Abaqus": {
+  "values": {
+   "8": {
+    "seed_am1": 0.00026876254771875,
+    "seed_vm_Pa": 1.25441026484375e-05,
+    "file": "lv8_sep_ab_summary.json"
+   },
+   "16": {
+    "seed_am1": 0.0005785926527724609,
+    "seed_vm_Pa": 0.0001523265377171875,
+    "file": "lv16_sep_ab_dt000125_summary.json"
+   },
+   "24": {
+    "seed_am1": 0.0007033824652625869,
+    "seed_vm_Pa": 0.00028932506178709486,
+    "file": "lv24_sep_ab_summary.json"
+   },
+   "32": {
+    "seed_am1": 0.0007604067536774901,
+    "seed_vm_Pa": 0.0003750664220440429,
+    "file": "lv32q_sep_ab_summary.json"
+   },
+   "48": {
+    "seed_am1": 0.0008104042019933448,
+    "seed_vm_Pa": 0.00046158857229094334,
+    "file": "lv48q_sep_ab_summary.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 0.6686828290731995,
+    "f_ext": 0.001104065981470107,
+    "gci": 0.7120655120005317,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.254110929732004,
+    "f_ext": 0.0008916614112267589,
+    "gci": 0.21576389365706747,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 1.3884974146328561,
+    "f_ext": 0.0008765462649023265,
+    "gci": 0.10202017515810717,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009103990986250544,
+    "gci": 0.37016675031701235,
+    "oscillatory": null,
+    "grids": [
+     48,
+     32
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 2.212891120958097,
+    "f_ext": 0.0003836215371378311,
+    "gci": 0.40739849310101445,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 0.3607126228995256,
+    "f_ext": 0.0011591961125554278,
+    "gci": 2.613302752609866,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 0.9733290518653082,
+    "f_ext": 0.0006404027833784062,
+    "gci": 0.4842359132722272,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006346328727847442,
+    "gci": 1.1246658445308921,
+    "oscillatory": null,
+    "grids": [
+     48,
+     32
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "ANSYS": {
+  "values": {
+   "8": {
+    "seed_am1": 0.00034879739375000003,
+    "seed_vm_Pa": 2.437020028125e-05,
+    "file": "fields_u8c_8_sep_ab_dt0005.json"
+   },
+   "16": {
+    "seed_am1": 0.000572682957421875,
+    "seed_vm_Pa": 0.0001328413656640625,
+    "file": "fields_u8_16_sep_ab.json"
+   },
+   "24": {
+    "seed_am1": 0.0006986069771990741,
+    "seed_vm_Pa": 0.00025238823100694446,
+    "file": "fields_u8_24_sep_ab_dt0005.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 0.07132962707140177,
+    "f_ext": 0.004989915507756563,
+    "gci": 7.678331076370432,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009504550167534721,
+    "gci": 1.0815009630914347,
+    "oscillatory": null,
+    "grids": [
+     24,
+     16
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 2.80021479943461,
+    "f_ext": 0.00030898153701525724,
+    "gci": 0.2802889509869598,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0004914819616927083,
+    "gci": 2.841975591316521,
+    "oscillatory": null,
+    "grids": [
+     24,
+     16
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "Python (LW + sensor)": {
+  "values": {
+   "16": {
+    "seed_am1": 0.0007951759314632628,
+    "seed_vm_Pa": 0.0004194595045221679,
+    "file": "coupled_living_consumption_nf16_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json"
+   },
+   "24": {
+    "seed_am1": 0.000852137617051788,
+    "seed_vm_Pa": 0.0005311760392262182,
+    "file": "coupled_living_consumption_nf24_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json"
+   },
+   "32": {
+    "seed_am1": 0.0008797437421363633,
+    "seed_vm_Pa": 0.0005854557264730247,
+    "file": "coupled_living_consumption_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json"
+   },
+   "48": {
+    "seed_am1": 0.0009080883517424995,
+    "seed_vm_Pa": 0.0006277380446233864,
+    "file": "coupled_living_consumption_nf48_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json"
+   },
+   "64": {
+    "seed_am1": 0.0009208447836710764,
+    "seed_vm_Pa": 0.0006257475881456786,
+    "file": "coupled_living_consumption_nf64_front1_dtc0.00125_phimin0.001_v2_fortran_ansysbc_startpos_a100_gab1_gc1_tab0.333333_lw_sensor2_wgmirror_fast_separate_ab.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 1.0882070551706964,
+    "f_ext": 0.000954841936127556,
+    "gci": 0.10670464362841728,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 0.9223687732861482,
+    "f_ext": 0.0009705874601739054,
+    "gci": 0.08603115037137977,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.2970388189112987,
+    "f_ext": 0.0009490494989881358,
+    "gci": 0.03828646778642924,
+    "oscillatory": false,
+    "grids": [
+     64,
+     48,
+     32
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009591140794568071,
+    "gci": 0.12467669838937875,
+    "oscillatory": null,
+    "grids": [
+     64,
+     48
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 1.081068273930888,
+    "f_ext": 0.0007342509200083046,
+    "gci": 0.3176909602363752,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 1.7404696573038199,
+    "f_ext": 0.0006689784928771722,
+    "gci": 0.0821211343788478,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 7.686520891858854,
+    "f_ext": 0.0006255026794082648,
+    "gci": 0.0004892322840180653,
+    "oscillatory": true,
+    "grids": [
+     64,
+     48,
+     32
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006197762187125551,
+    "gci": 0.02862832975905947,
+    "oscillatory": null,
+    "grids": [
+     64,
+     48
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "Abaqus (SUPG)": {
+  "values": {
+   "16": {
+    "seed_am1": 0.0008553798907910157,
+    "seed_vm_Pa": 0.0006167768191250001,
+    "file": "lv16qs2_sep_ab_summary.json"
+   },
+   "24": {
+    "seed_am1": 0.0008769002038987269,
+    "seed_vm_Pa": 0.0006248139065226853,
+    "file": "lv24qs2_sep_ab_summary.json"
+   },
+   "32": {
+    "seed_am1": 0.0008940704235346679,
+    "seed_vm_Pa": 0.0006273291572126709,
+    "file": "lv32qs2_sep_ab_summary.json"
+   },
+   "48": {
+    "seed_am1": 0.0009111910972120948,
+    "seed_vm_Pa": 0.0006220073932112992,
+    "file": "lv48qs2_sep_ab_summary.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 0.5169204178979678,
+    "f_ext": 0.001001160092343773,
+    "gci": 0.14972208283343474,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 1.0085050199848604,
+    "f_ext": 0.0009450812300994974,
+    "gci": 0.04649152767061371,
+    "oscillatory": false,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009454324445669487,
+    "gci": 0.11273600277577202,
+    "oscillatory": null,
+    "grids": [
+     48,
+     32
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 2.3099305879068948,
+    "f_ext": 0.0006299948367004927,
+    "gci": 0.0053115646251522585,
+    "oscillatory": false,
+    "grids": [
+     32,
+     24,
+     16
+    ]
+   },
+   {
+    "p": 1.5616262168612915,
+    "f_ext": 0.0006159845742573654,
+    "gci": 0.012103591974283333,
+    "oscillatory": true,
+    "grids": [
+     48,
+     32,
+     24
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006113638652085558,
+    "gci": 0.05133473389018567,
+    "oscillatory": null,
+    "grids": [
+     48,
+     32
+    ],
+    "assumed_p": true
+   }
+  ]
+ },
+ "ANSYS (living10)": {
+  "values": {
+   "16": {
+    "seed_am1": 0.0008193217027343751,
+    "seed_vm_Pa": 0.0004199897290234375,
+    "file": "fields_lw16_16_sep_ab.json"
+   }
+  },
+  "seed_am1": [],
+  "seed_vm_Pa": []
+ },
+ "ANSYS (upwind)": {
+  "values": {
+   "8": {
+    "seed_am1": 0.0006380760906249999,
+    "seed_vm_Pa": 0.00021437542187500001,
+    "file": "fields_up8_8_sep_ab.json"
+   },
+   "16": {
+    "seed_am1": 0.000801328721484375,
+    "seed_vm_Pa": 0.000455758265546875,
+    "file": "fields_up16_16_sep_ab.json"
+   },
+   "24": {
+    "seed_am1": 0.00083554498125,
+    "seed_vm_Pa": 0.0005145841159027777,
+    "file": "fields_up24_24_sep_ab.json"
+   }
+  },
+  "seed_am1": [
+   {
+    "p": 1.7927667713999602,
+    "f_ext": 0.0008675626856594435,
+    "gci": 0.04789943259778785,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0009039775007812498,
+    "gci": 0.245704974837643,
+    "oscillatory": null,
+    "grids": [
+     24,
+     16
+    ],
+    "assumed_p": true
+   }
+  ],
+  "seed_vm_Pa": [
+   {
+    "p": 1.5380013187303005,
+    "f_ext": 0.000582540348462242,
+    "gci": 0.16507561752135308,
+    "oscillatory": false,
+    "grids": [
+     24,
+     16,
+     8
+    ]
+   },
+   {
+    "p": 1.0,
+    "f_ext": 0.0006322358166145832,
+    "gci": 0.6859036088127161,
+    "oscillatory": null,
+    "grids": [
+     24,
+     16
+    ],
+    "assumed_p": true
+   }
+  ]
+ }
+}

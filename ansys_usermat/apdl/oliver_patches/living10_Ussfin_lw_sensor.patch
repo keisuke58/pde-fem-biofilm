@@ -1,0 +1,176 @@
+﻿diff --git a/F:/biofilm_upf_living8t/Ussfin_P21-V21_Conection_Test.F b/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F
+index 3defc5a..752ee0a 100644
+--- a/F:/biofilm_upf_living8t/Ussfin_P21-V21_Conection_Test.F
++++ b/F:/biofilm_upf_living10/Ussfin_P21-V21_Conection_Test.F
+@@ -343,6 +343,18 @@ c **********  a user subroutine called after a substep  **********
+       LOGICAL, SAVE :: lL_LapFile = .FALSE., lL_LapRead = .FALSE.
+       INTEGER, ALLOCATABLE, SAVE :: vLi_LcRow(:), vLi_LcCol(:)
+       DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LcVal(:)
++!     pde-fem-biofilm 23 Oct 2026 (A-59): LW_SENSOR = 1 adds to the phi
++!     update the Lax-Wendroff term (dt/2) v . grad(v . grad phi) of the
++!     front term (v = r c/(K + c) n_c) and the added diffusion BETA_ART
++!     switched by the extremum sensor s = (|sum_j L_ij (phi_j - phi_i)|
++!     / sum_j |L_ij (phi_j - phi_i)|)**SENSOR_POW, face value
++!     max(s_i, s_j), with L of lap_cons.txt (needs LAP_FILE = 1)
++      DOUBLE PRECISION Sdp_LwSens, Sdp_BetaArt, Sdp_SensPow, Sdp_WallSens
++      DOUBLE PRECISION Sdp_LwGx, Sdp_LwGy, Sdp_LwGz
++      DOUBLE PRECISION Sdp_LwCx, Sdp_LwCy, Sdp_LwCz, Sdp_LwSp
++      DOUBLE PRECISION Sdp_LwA, Sdp_LwB, Sdp_LwAdd
++      DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LwW(:), vLdp_LwV(:,:)
++      DOUBLE PRECISION, ALLOCATABLE, SAVE :: vLdp_LwS(:)
+       INTEGER :: Si_LcN, Si_LcNnz, Si_LcI
+       INTEGER SFI, SFJ, SFK
+ 
+@@ -1392,6 +1404,22 @@ c **********  a user subroutine called after a substep  **********
+       C_ParName='NEM_DUMP'
+       CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
+       IF (Si_Kerr .EQ. 0) Sdp_NemDump = Sdp1
++      Sdp_LwSens = 0.0D0
++      C_ParName='LW_SENSOR'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_LwSens = Sdp1
++      Sdp_BetaArt = 0.0D0
++      C_ParName='BETA_ART'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_BetaArt = Sdp1
++      Sdp_SensPow = 2.0D0
++      Sdp_WallSens = 1.0D0
++      C_ParName='WALL_SENS'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_WallSens = Sdp1
++      C_ParName='SENSOR_POW'
++      CALL parevl(C_ParName,0,0,0,Sdp1,C_Value,Si_Kerr)
++      IF (Si_Kerr .EQ. 0) Sdp_SensPow = Sdp1
+       IF (.NOT. lL_LapRead) THEN
+         lL_LapRead = .TRUE.
+         Sdp1 = 0.0D0
+@@ -1530,6 +1558,84 @@ c **********  a user subroutine called after a substep  **********
+           vGdp_Bio2_n1(SFI) = SFB2 / SFWS
+         END IF
+       END DO
++!     A-59: w = v . grad phi, v and the sensor s at every integration
++!     point from the values of the start of this inner step; w at the
++!     surface points is that of their nearest integration points
++      IF (Sdp_LwSens .GT. 0.5D0 .AND. lL_LapFile) THEN
++        IF (.NOT. ALLOCATED(vLdp_LwW)) THEN
++          ALLOCATE(vLdp_LwW(nTot), vLdp_LwV(3, nGP), vLdp_LwS(nGP))
++        END IF
++        DO SFI = 1, nGP
++          Sdp_LwGx = 0.0D0
++          Sdp_LwGy = 0.0D0
++          Sdp_LwGz = 0.0D0
++          Sdp_LwCx = 0.0D0
++          Sdp_LwCy = 0.0D0
++          Sdp_LwCz = 0.0D0
++          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++            SFK = vGi_ColID_T(SFJ)
++            Sdp_LwGx = Sdp_LwGx + vGdp_dx_T(SFJ) * vGdp_Bio1_n1(SFK)
++            Sdp_LwGy = Sdp_LwGy + vGdp_dy_T(SFJ) * vGdp_Bio1_n1(SFK)
++            Sdp_LwGz = Sdp_LwGz + vGdp_dz_T(SFJ) * vGdp_Bio1_n1(SFK)
++            Sdp_LwCx = Sdp_LwCx + vGdp_dx_T(SFJ) * vGdp_Nut1_n1(SFK)
++            Sdp_LwCy = Sdp_LwCy + vGdp_dy_T(SFJ) * vGdp_Nut1_n1(SFK)
++            Sdp_LwCz = Sdp_LwCz + vGdp_dz_T(SFJ) * vGdp_Nut1_n1(SFK)
++          END DO
++          Sdp_LwSp = sGdp_OriWeight11 * sGdp_MaxGrowth11
++     &      * vGdp_Nut1_n(SFI) / (sGdp_HalfVelo11 + vGdp_Nut1_n(SFI))
++     &      / MAX(SQRT(Sdp_LwCx**2 + Sdp_LwCy**2 + Sdp_LwCz**2),
++     &            1.0D-14)
++          vLdp_LwV(1, SFI) = Sdp_LwSp * Sdp_LwCx
++          vLdp_LwV(2, SFI) = Sdp_LwSp * Sdp_LwCy
++          vLdp_LwV(3, SFI) = Sdp_LwSp * Sdp_LwCz
++          vLdp_LwW(SFI) = vLdp_LwV(1, SFI) * Sdp_LwGx
++     &      + vLdp_LwV(2, SFI) * Sdp_LwGy + vLdp_LwV(3, SFI) * Sdp_LwGz
++          Sdp_LwA = 0.0D0
++          Sdp_LwB = 0.0D0
++          DO SFJ = vLi_LcRow(SFI), vLi_LcRow(SFI+1) - 1
++            SFK = vLi_LcCol(SFJ)
++            SFW = vLdp_LcVal(SFJ)
++     &          * (vGdp_Bio1_n1(SFK) - vGdp_Bio1_n1(SFI))
++            Sdp_LwA = Sdp_LwA + SFW
++            Sdp_LwB = Sdp_LwB + ABS(SFW)
++          END DO
++          vLdp_LwS(SFI) = (ABS(Sdp_LwA) / (Sdp_LwB + 1.0D-12))
++     &      ** Sdp_SensPow
++!         next to a wall (a surface point in the stencil) at least
++!         WALL_SENS of the added diffusion (1 = full; the switched form
++!         alone is unstable at the edges, A-59)
++          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++            IF (vGi_ColID_T(SFJ) .GT. nGP)
++     &        vLdp_LwS(SFI) = MAX(vLdp_LwS(SFI), Sdp_WallSens)
++          END DO
++        END DO
++        DO SFI = nGP + 1, nTot
++          SFD2MIN = 1.0D30
++          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++            SFK = vGi_ColID_T(SFJ)
++            IF (SFK .GT. nGP) CYCLE
++            SFX = vGdp_PosX_0(SFK) - vGdp_PosX_0(SFI)
++            SFY = vGdp_PosY_0(SFK) - vGdp_PosY_0(SFI)
++            SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
++            SFD2MIN = MIN(SFD2MIN, SFX*SFX + SFY*SFY + SFZ*SFZ)
++          END DO
++          SFWS = 0.0D0
++          SFB1 = 0.0D0
++          DO SFJ = vGi_RowPtr_T(SFI), vGi_RowPtr_T(SFI+1) - 1
++            SFK = vGi_ColID_T(SFJ)
++            IF (SFK .GT. nGP) CYCLE
++            SFX = vGdp_PosX_0(SFK) - vGdp_PosX_0(SFI)
++            SFY = vGdp_PosY_0(SFK) - vGdp_PosY_0(SFI)
++            SFZ = vGdp_PosZ_0(SFK) - vGdp_PosZ_0(SFI)
++            IF (SFX*SFX + SFY*SFY + SFZ*SFZ .LE. SFD2MIN*1.0001D0) THEN
++              SFWS = SFWS + 1.0D0
++              SFB1 = SFB1 + vLdp_LwW(SFK)
++            END IF
++          END DO
++          vLdp_LwW(SFI) = 0.0D0
++          IF (SFWS .GT. 0.0D0) vLdp_LwW(SFI) = SFB1 / SFWS
++        END DO
++      END IF
+ !$OMP PARALLEL DEFAULT(NONE)  !This means all variables must be explicitly defined
+ !$OMP& PRIVATE(ID, ii, jj, base9, base6, Row_S, Row_E, idx2)
+ !$OMP& PRIVATE(mLdp_F_n, mLdp_F_n1, mLdp_F_dt, mLdp_F_i, mLdp_F_i1)
+@@ -1579,6 +1685,8 @@ c **********  a user subroutine called after a substep  **********
+ !$OMP& SHARED(nGP, sGdp_dTime, Sdp_tt_Ref, Sdp_dt,Sdp_Time)
+ !$OMP& SHARED(Sdp_FrontDump)
+ !$OMP& SHARED(lL_LapFile, vLi_LcRow, vLi_LcCol, vLdp_LcVal)
++!$OMP& SHARED(Sdp_LwSens, Sdp_BetaArt, vLdp_LwW, vLdp_LwV, vLdp_LwS)
++!$OMP& PRIVATE(Sdp_LwGx, Sdp_LwGy, Sdp_LwGz, Sdp_LwA, Sdp_LwAdd)
+ !$OMP& SHARED(vLdp_PosLaser, sGdp_LaserBeamRadius, sGdp_LaserDeepth)
+ !$OMP& SHARED(vGdp_InitialHq,sGi_Ldstep,sGdp_LayerRadius)
+ !$OMP& SHARED(sGdp_Reflection, sGdp_Heat_Expo,vGdp_Refl_Limits)
+@@ -2409,11 +2517,34 @@ c **********  a user subroutine called after a substep  **********
+ 
+ !-----------------------------------------------------------------------
+       !Biofilm / lokales Biofilm Update (explizit, TEST)
++!     A-59: Lax-Wendroff term and sensor-switched added diffusion
++      Sdp_LwAdd = 0.0D0
++      IF (Sdp_LwSens .GT. 0.5D0 .AND. lL_LapFile) THEN
++        Sdp_LwGx = 0.0D0
++        Sdp_LwGy = 0.0D0
++        Sdp_LwGz = 0.0D0
++        DO jj = vGi_RowPtr_T(ID), vGi_RowPtr_T(ID+1) - 1
++          idx2 = vGi_ColID_T(jj)
++          Sdp_LwGx = Sdp_LwGx + vGdp_dx_T(jj) * vLdp_LwW(idx2)
++          Sdp_LwGy = Sdp_LwGy + vGdp_dy_T(jj) * vLdp_LwW(idx2)
++          Sdp_LwGz = Sdp_LwGz + vGdp_dz_T(jj) * vLdp_LwW(idx2)
++        END DO
++        Sdp_LwAdd = 0.5D0 * sGdp_dTime * (vLdp_LwV(1, ID) * Sdp_LwGx
++     &    + vLdp_LwV(2, ID) * Sdp_LwGy + vLdp_LwV(3, ID) * Sdp_LwGz)
++        Sdp_LwA = 0.0D0
++        DO jj = vLi_LcRow(ID), vLi_LcRow(ID+1) - 1
++          idx2 = vLi_LcCol(jj)
++          Sdp_LwA = Sdp_LwA + vLdp_LcVal(jj)
++     &      * MAX(vLdp_LwS(ID), vLdp_LwS(idx2))
++     &      * (vGdp_Bio1_n1(idx2) - vGdp_Bio1_n1(ID))
++        END DO
++        Sdp_LwAdd = Sdp_LwAdd + Sdp_BetaArt * Sdp_LwA
++      END IF
+       vGdp_Bio1_n(ID)    = sGdp_dTime * (
+      & - OriBio1 * GrowthBio1
+      & + sGdp_KLocal1 * vGdp_Bioloc1_n(ID)
+      & + sGdp_Beta1 * Sdp_LapBio1
+-     & + PenForce1
++     & + PenForce1 + Sdp_LwAdd
+      & ) + vGdp_Bio1_n1(ID)
+       IF (Sdp_FrontDump .GT. 0.0D0) THEN
+ !$OMP CRITICAL (FRONTDUMP)

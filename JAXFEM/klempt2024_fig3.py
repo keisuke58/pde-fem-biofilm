@@ -113,22 +113,20 @@ def main(argv=None):
     ap.add_argument("--growth", default="abs", help='"abs" or e.g. "blend0.5" (diagnostic)')
     ap.add_argument("--out", default=str(OUT))
     a = ap.parse_args(argv)
-    figstyle.apply(size=11)
+    figstyle.apply(size=8.5)      # drawn at the thesis text width (6.3 in)
     F = fields(a.source, a.s, a.growth)
     P = paper_panels()
-    fig = plt.figure(figsize=(14, 7.2))
+    fig = plt.figure(figsize=(6.3, 3.5))
     for i, t in enumerate(TIMES):
         ax = fig.add_subplot(2, 4, i + 1, projection="3d")
         draw(ax, F[t])
-        ax.set_title(f"this work, {round(t * 100)} %", fontsize=11)
+        ax.set_title(f"this work, {round(t * 100)} %", fontsize=8)
         ax2 = fig.add_subplot(2, 4, i + 5)
         ax2.imshow(P[i]); ax2.set_axis_off()
-        ax2.set_title(f"paper, {round(t * 100)} %", fontsize=11)
-    fig.suptitle(r"Klempt et al. 2024, Fig. 3: isosurface $\phi = 0.8$ of test case 4.1. "
-                 f"This work: Python reproduction (Table 2, nutrient {a.source}, time scale {a.s:g}, growth {a.growth}); "
-                 "paper: Fig. 3 (CC BY 4.0)", fontsize=11.5)
-    fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.02, hspace=0.12)
-    fig.savefig(a.out, dpi=200)
+        ax2.set_title(f"paper, {round(t * 100)} %", fontsize=8)
+    print(f"nutrient {a.source}, time scale {a.s:g}, growth {a.growth}")   # in the caption, not the figure
+    fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.02, wspace=0.02, hspace=0.15)
+    fig.savefig(a.out, dpi=400)   # 3D isosurfaces: PNG at 400 dpi (a vector PDF would be very large)
     print("wrote", a.out)
 
 

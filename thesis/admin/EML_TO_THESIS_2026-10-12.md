@@ -1,0 +1,193 @@
+# EML 論文で直したこと → 修論に入れる（2026-10-12、クラウドから）
+
+修論の第 3 章（`chapters/ch3_heine.tex`、Heine の 5 種推定）は、**10 月はじめの BMB 原稿の時点の内容**のまま。
+その後、EML 論文（Extreme Mechanics Letters 特集号、Tmcmc202601 `docs/revision/EML_submission/`）で推定をやり直し、書き方も直した。
+修論もこれに合わせる。**数値は EML 原稿が正**（DS・DH は最終段 (iv) がまだ計算中で暫定）。
+
+- EML 原稿: `keisuke58/Tmcmc202601`、ブランチ `claude/gate-off-map-check`、`docs/revision/EML_submission/EML_manuscript_nishioka.tex`（本文）・`EML_supplementary.tex`（補足）
+- EML のタイトル（確定）: *Identifiability of species interactions in a living material: Bayesian calibration of an extended Hamilton principle multiphase model*
+- 共著者レビュー（9/25、Szymon・Rumjhum）への回答書: 同じフォルダの `response_to_coauthors.tex`。**修論でも同じ指摘を受けないように**、下の対応はそこからも来ている。
+
+---
+
+## 1. 枠組み・言い方（第 3 章の冒頭、第 1 章 §1.x「Identifying the interactions」、第 6 章）
+
+| 今の修論 | EML での形 | 理由 |
+|---|---|---|
+| "Bayesian identification of the species interaction matrix" / "full-discovery strategy"（ch3 l.4–5, l.90） | 相互作用は**モデルの実効パラメータ**。「データで何が決まり、何が決まらないか」を成分ごとに言う | 共著者レビュー（一般指摘・C1–C2）: 実験で相互作用を決めたように読める書き方を避ける |
+| 生物学的な解釈を「示した」 | 文献と**矛盾しない**、と書く。機構の証明とは書かない | C1–C2・C8 |
+| 相互作用の向き（Vei→Pg など、ch3 l.101–103 の表） | **対称行列なので向きはない**。Vei–Pg のように無向で書く。文献の向きは「解釈の参考」として別に示す | A4・C14 |
+| "physics-constrained" | 使わない（PINN と誤解される）。"Bayesian calibration of a model derived from the extended Hamilton principle" | タイトル決定時のユーザー判断 |
+
+## 2. 推定の段（ch3 §「Two-phase fix-ψ strategy」l.134–150、表 l.224–246、収束 l.263）
+
+**Phase 1 / Phase 2 の 2 段の書き方をやめて、4 段にする。**
+
+| EML | 中身 |
+|---|---|
+| (i) pilot | 組成だけ、広い箱 |
+| (ii) p1 | (i) の事後平均 ±4σ に狭めた箱 |
+| (iii) p2 | 生存率（viability）の通路を足し、**箱は (i) に戻す**。事後の質量が箱の端（外側 5% に 20% 以上、片側）にたまった成分は、その端を広げてやり直す |
+| (iv) ult | (iii) の事後 ±4σ |
+
+- **どの段も 3 seed で回し、判定 (a)–(e) を通ったものだけ使う**: (a) logL の再計算一致、(b) β=1 まで到達、(c) 粒子あたり・次元あたりの移動回数、(d) seed 間の max logL の幅 ≤ 1、(e) seed 間の中央値の差 ≤ 0.5 事後 sd（同定されない成分は外す・多峰は山ごと）。
+- 「fix-ψ は upper bound」「Phase 1 vs Phase 2 の MAP 比較で検証」の論法は消す。
+- 粒子数は条件・段で違う（N_p = 1000〜20000）。EML 補足の表 S10（段ごとのコスト）を使う。
+- **ゲート（Hill のゲート、K_hill）は使っていない**（K_hill = 0）。修論にゲートの記述があれば外す（修論の中での説明は可。共著者向けメールでは書かない約束）。
+
+## 3. 同定性（新しい節を足す。ch3 §Results の「Inferred interaction matrices」の前か中）
+
+- **分類の規則**: 事後 sd が「箱の一様分布の sd」の 0.8 倍未満 → **同定された**。そうでなく、90% 区間が 0 を含まない → **符号だけ決まる（s.o.）**。どちらでもない → **同定されない（n.i.）**。
+- **結果**: 15 成分のうち同定されたのは、CS 4・CH 6・DS 8・DH 9（DS・DH は暫定）。共生（commensal）の 2 条件は初期定着菌の間だけで、重なるところは符号が一致。
+- **独立な確認（Fisher 情報量）**: MAP での尤度の曲率で決まる方向の数は 4・4・8・5（同じ順）。事後の分類とおおむね合う。
+- EML の図 3（同定性マップ）・図 4（箱の中での位置で描いた周辺事後）・補足表 S6 をそのまま使える。
+- **合成データでの回収テスト**（補足に入れる予定、GPU で計算待ち）: 結果が出たら一文足す。
+
+## 4. 時間の対応・初期値（ch3 l.47 付近「Day 1 is consumed as the initial condition」）
+
+EML 本文の書き方に合わせる:
+- モデルの時刻は**接種からの時間**、t = s·d、s = 0.2375/21。
+- 1 日目の組成（最初の測定）を t = 0 の初期状態に使う。
+- HOBIC（流れの反応器）では、24 h 後に接種した培地を無菌の培地に替える（Heine et al. 2025）ので、成長の始まりを 1 日目と見ることもできる。
+- 1 日目から始めた場合（t = s(d−1)）との違いは、MAP の組成誤差で最大 0.008（再推定なし）。
+
+## 5. pH（ch3 l.49「held-out validation targets」、§heine_validation、l.304 の表「R² = 0.778 (held-out)」、ch6 l.86「R² = 0.78」）
+
+**「検証（validation）」ではなく「確認（check）」と書く。数値も差し替え。**
+- pH は推定に使っていない（λ_pH = 0）。
+- 実測の組成 → 実測の pH の線形回帰を**データだけで 1 回**決めて固定（切片＋So・An・Fn・Pg、Vei 基準）: pH = 6.367 − 0.095 So + 0.208 An + 0.695 Fn + 2.484 Pg、**R² = 0.93**（CH・DH の 90 点）。
+- それを事後予測の組成に当てる: **DH は R² = 0.63・RMSE 0.12（暫定）**。**CH は約 +0.13 ずれる**（モデルが Fn・Pg を 4–5% に保つのに、データは 1% 未満）。
+- 旧版の R² = 0.778 は使わない。
+
+## 6. 当てはまり（ch3 §Quantitative fit、表 tab:heine_rmse・tab:heine_r2）
+
+- RMSE は **最終段 (iv) の MAP の組成誤差**: CS 0.179、CH 0.076、DS・DH は暫定（EML 本文と補足の値）。
+- **CS の 0.179 は限界として書く**: 誤差はほぼ So と Vei（0.31・0.24、ほかは 0.05 未満）。So が 1 日目 0.18 → 3 日目 0.70 と急に増える。組成と生存率を同時には合わせられず、事後は妥協点に落ちる（チャネルの重みを条件ごとに変えて合わせることはしていない）。
+- MAE は載せない（A2）。R² の説明が逆になっていた箇所に注意（A3）。
+- 「ln Ẑ ≤ max ln L」を全 run で確認済み（A1）と一言。
+
+## 7. 消す・小さくするもの（EML で外したもの）
+
+- UMAP・相関の表・条件間の転移（cross-condition transfer、l.284–285、l.434–435）: EML では外した。**修論に残すなら「補助的」と明記**し、検証のようには書かない（C5・C9–C10）。
+- 「HMC/NUTS は GPU で失敗する」（l.164）: 主張しない。速度比は自分の実装の実測（約 150×）だけ（C11）。
+- gLV との比較表（l.277–313）の「pH prediction R² = 0.778 (held-out)」の行は、上の 5 に合わせて直す。
+
+## 8. 限界の節（ch3 の Discussion または ch6）
+
+EML の Discussion の限界をそのまま使える:
+- 独立なガウス誤差（組成データなので区間がやや狭いかもしれない、B4）。
+- 相互作用係数は実効量（代謝物の交換や pH などをまとめたもの）。
+- 共生・ディスバイオシスの比較は、菌株（Veillonella の種、Pg の株）と培養の違いも混ざる（C15）。静置 vs 流れの比較は同じ群集の中なので混ざらない。
+- 尤度は割合だけなので、バイオマスの絶対量はモデルの予測で、FEM との結合ではその事後のばらつきを伝える必要がある（第 4 章との接続）。
+
+## 9. 数値・図の入手先
+
+| もの | 場所（Tmcmc202601） |
+|---|---|
+| 最終 MAP（CS・CH 確定、DS・DH 待ち） | `docs/revision/generated/final_theta_MAP/` |
+| 全 run の粒子 | `docs/revision/generated/final_runs/` |
+| 図（暫定版） | `docs/revision/EML_submission/figures/provisional_2026-10-11/` |
+| 本文の数値 | `docs/revision/generated/paper_numbers.json` |
+
+**DS・DH は最終段が通ったら数値・図が変わる。** 修論に入れるのは、それを待ってからでもよい（章の構成と書き方だけ先に直す）。
+
+---
+
+## 10. 追加（2026-10-12 夜、EML の全面点検のあとの修正）
+
+EML 原稿を生物学・数値・記述の一貫性の 3 方向から点検し、全部直した（Tmcmc202601 `claude/gate-off-map-check`、commit 2fe679c・fdbdad7）。修論の第 3 章にも同じ直しを入れる。
+
+### 10.1 データの扱い（PMA）— ch3 のデータの節
+- 組成データは **生きた菌の割合**（PMA 処理後の qRT-PCR）。Heine et al. から受け取った**反復の中央値（各時点 8 個）**を使う。修論に「N = 9」とあれば 8 に直す。
+- 生きた菌の割合と全菌数の割合の差は小さい（中央値どうしの RMSE: CS 0.057、CH 0.042、DS 0.033、DH 0.072）。そこで「組成の通路では生存率は種によらない」と仮定し、モデルの φ を 5 種で正規化して比べる、と**前提として明記**する。
+- 生存率の通路のデータは**群集全体の生きた割合**（SYTO9/PI の画像から。種ごとではない）。モデルの種ごとの ψ_i は 0.03–0.96 に広がり、データでは決まらない → **種ごとの生きた割合はモデルの予測として書かない**（限界に入れる）。
+- 全菌数のデータとの比較は EML 補足の新しい節（`sec:S_total`、表 `tab:S_total`）にある。モデルはどちらのデータにも同じくらい近い。
+
+### 10.2 判定 (a)–(e) の現状 — ch3 の収束の節
+- 全部通った: CS・CH の段 (ii)–(iv)、DS の段 (ii)–(iii)。
+- **DH の段 (iii) は (e) を満たさない**（seed 間の中央値の差が a22 で 0.64 SD、基準は 0.5。a35・a45 も 0.5 超）。大きい run を計算中。「全段が合格」とは書かない。
+- 段 (i)（探索用）: CS・CH は (c) を満たさない（粒子あたりの移動回数 4.4・3.8）、DS は (e) を満たさない。→ 段 (i) で求めたベイズ因子は**目安**として書く。
+- 「seed 間の食い違いが全条件で出た」は誤り。**出たのはディスバイオシスの 2 条件だけ**。
+- CS・CH の段 (ii) は、残っていない段 (i) の run（mutation 120 回）から作った箱で始めた。残っている 80 回の run から作った箱との差は 0.17 以内（EML 補足に記載）。
+
+### 10.3 記号・事前分布の箱
+- 記号: **K = テンパリングの段数、n_mut = mutation の回数**（前は混ざっていた）。
+- 「符号の制約はない」は誤り。段 (i) の箱のいくつかは負の値を外すか狭くしている。全部、段 (iii) で広げた。箱の出どころは「**前のモデル版の推定**」と正直に書く。
+- 「同定された」は**最終段の箱**に対して判定する（分類のコードもそうなっている）。箱を狭めた段で判定すると見かけ上同定されやすい、と注記する。
+
+### 10.4 Fn–Pg の係数 a45
+- 組成だけ（段 (i)）では、DH の a45 は全 seed で正（90% 区間 約 [+0.5, +5.5]）。
+- 生存率を入れると（DH の箱は [−5, 20] に広げた）、中央値は正（DS +2.8、DH +1.2）だが、90% 区間は 0 を含む（[−1.3, +15.1]、[−1.9, +7.5]）→ **「決まっているが符号は決まらない」**と書く。
+- ベイズ因子 ln B = +0.10（CS）、+0.05（CH）、−2.67（DS）、+1.94（DH）は目安。一様事前分布の箱の幅によるペナルティ（DS は ln 35 ≈ 3.6）があるので、**条件の中でだけ**読む。CH の a45 = 0 は 1 seed のみ。
+
+### 10.5 生物学の記述 — ch3 の相互作用の表・図
+- Vei–Pg の pH を介した関係は**仮説**（図では破線と「pH?」）。
+- Fn–Pg は**共凝集（co-aggregation）**として書く。「ペプチドの受け渡し」は根拠がないので消す。
+- **An–Vei の共凝集の辺を追加**。
+- ディスバイオシスの条件で Fn と Pg が占める割合は **10–27%**。
+- 引用の直し: インプラントの記述 → heine2025influence、ディスバイオシス → Marsh、アバットメント上の初期バイオフィルム → Dieckow。
+- 「Pg が信号を担う」の文は消した。
+
+### 10.6 CS の当てはまりの限界
+- 組成の誤差だけを決定論的に最小化すると（MAP から開始、全成分 [−15, 20]、L-BFGS-B で 3 回やり直し）0.075 まで下がる。ただし、そのとき生きた割合は 0.97 になり、実測の 0.65–0.77 から外れる → 組成と生存率は同時に合わない（EML 補足 `sec:S_ceiling`）。
+- 事後の中央値（点ごと）の誤差は 0.125、MAP は 0.179。MAP は 3 seed でほぼ同じで、生存率を一番よく合わせる位置にある。
+
+### 10.7 図（EML の番号が変わった）
+- 図 1: パイプラインの図を作り直した（`figures/fig1_pipeline_v2`）。
+- 図 2: 色は**条件ごと**（CS 青・CH 緑・DS 黄・DH 橙）。共生とディスバイオシスの列の間を広げた（Veillonella の種と Pg の株が違うため）。
+- **図 3: 同定性 = 上三角の行列＋ネットワーク図**（`fig3_ident_matrix`）。線の太さ ∝ |中央値 a_ij|、破線は符号だけ決まる成分、輪は自己相互作用。§3 で書いた「図 3（同定性マップ）・図 4（周辺事後）」は、**周辺事後が補足の図に移った**ので読み替える。
+- 図 4: チェック（ノックアウト＋pH、`fig6_checks_v2`）。
+- 図の共通の見た目は `tools/eml_style.py` にまとめてある。修論の図もこれで描けば統一できる。
+
+### 10.8 申告・データ
+- EML には **AI の使用の申告**を入れた（文章の推敲と、解析・作図スクリプトの作成の補助に Claude を使用）。**修論の Eigenständigkeitserklärung（独立して書いたという宣誓）で AI の使用をどう書くか、LUH・学科の規定を確認する。**
+- コードと run の記録は Zenodo（doi:10.5281/zenodo.23320423、公開は投稿後）。Heine の実験データは再配布しない。
+
+### 10.9 質問への答え: 修論の Phase 2（10,000 粒子）で pH は尤度に入っていたか
+
+**答え: HOBIC（CH・DH）では入っていた可能性が高い。CS・DS は入っていない。ただし完全には確かめられない。**
+- 修論の Phase 2 の 10,000 粒子は `ultimate_10000p`（2026-04-19 実行）。そのスクリプト `data_5species/main/run_ultimate_10000p.sh`（Tmcmc202601、ba1c285）は、HOBIC のとき `--lambda-ch5 0.3` を付ける（「DH HOBIC gets pH channel (ch5) with low weight」）。
+- そのときの pH の式は `pH = 7.5 − 0.74·φ̄_So − 0.48·φ̄_Vd`。この係数は、もともと同じ pH データへの回帰から作ったもの（`evaluator.py` のコメント、R² = 0.71）。
+- その run の config・ログは残っていない。4/19 時点の git のコードには `--multichannel` が無いので、push されていない手元のコードで回った可能性もある（`docs/gate_off_map_reference.md`、`docs/handoff/2026-10-02a.md`）。
+- **修論の R² = 0.778 の図（`data_5species/docs/fig_ph_independent_validation.py`）は、ultimate_10000p ではなく 3/20 の別の run**（`jax_ode_nuts_{Commensal,Dysbiotic}_HOBIC_20260320_*`）の粒子を使っている。その run で pH が尤度に入っていたかも記録がない。
+- EML の run では pH は入っていない（全 run の `run_record.json` で λ5 = 0 を確認。pH を外したのは 2026-10-08、`docs/handoff/2026-10-08r.md`）。
+
+**→ 修論では「held-out」「independent validation」と書けない。** §5 のとおり、EML の数値と書き方に差し替える：
+- 回帰は実測だけで 1 回決めて固定（R² = 0.93）。
+- DH: R² = 0.63、RMSE 0.12（暫定）。CH は約 +0.13 ずれる。
+- 「validation」ではなく「check」と書く。
+- l.304 の表の「R² = 0.778 (held-out)」、l.569–597 の段落と図、ch6 の「R² = 0.78」も同様に直す。
+
+---
+
+## 11. 方針（2026-10-12 ユーザー判断）: 第 3 章は昔の結果を使わず、EML の結果に図も含めて差し替える
+
+今の第 3 章は 3〜4 月の run（`ultimate_10000p`、3/20 の別 run）の結果。設定が残っておらず、pH が尤度に入っていた可能性もある（§10.9）。**EML の run（設定・判定の記録がすべて残っている）に置き換える。**
+
+### 11.1 図・表の対応
+
+| 修論（ch3_heine.tex） | 差し替え先（Tmcmc202601 `docs/revision/EML_submission/`） |
+|---|---|
+| `heine_fits_4cond`（fig:heine_fits） | 図 2 `figures/provisional_2026-10-11/paper_fig2_v2.pdf`（**種ごとの生きた割合 φψ の破線は出さない**：データで決まらず、生きた菌の割合のデータとも合わない。2026-10-13） |
+| `heine_heatmap_A_4cond`（fig:heine_heatmap） | 図 3 `fig3_ident_matrix.pdf`（行列＋ネットワーク、同定性つき） |
+| `heine_posterior_violin`（fig:heine_violin） | 補足の周辺事後 `fig4_posteriors_v2.pdf` |
+| `heine_ph_validation`（fig:heine_ph） | 図 4 `fig6_checks_v2.pdf`（ノックアウト＋pH の check） |
+| `heine_phase1_vs_phase2`（fig:heine_phase） | **削除**（2 段の書き方をやめた）。代わりに段ごとの判定の表（補足の runs の表）と seed ごとの MAP の図（`seed_maps_4cond.pdf`） |
+| tab:heine_network | 補足 Table S1（Vei–Pg は仮説、An–Vei を追加、§10.5） |
+| tab:heine_timing | 補足の段ごとのコストの表（`supp/supp_S3_cost`） |
+| tab:heine_rmse・tab:heine_r2 | EML の RMSE（最終段の MAP）。R² の表は削除か付録 |
+| tab:heine_signprior | 補足の事前分布の箱の表（`supp/supp_S1_boxes`） |
+| UMAP 2 枚・tab:heine_pairwise・tab:heine_transfer・tab:heine_rewiring | 削除、または付録に「補助的」として（§7） |
+| gLV との比較（fig:heine_glv_fit・tab:glv_hamilton_comparison） | 残してよい。ただし pH の行は §5 のとおり直す。Hamilton 側の数値は EML の値に |
+
+- 図のスタイルは `tools/eml_style.py`、生成は `tools/make_paper_figures.py`・`tools/make_eml_figs56.py`・`tools/eml_figs_v2.py`。修論の幅（0.8\textwidth など）に合わせるなら、同じスクリプトで幅だけ変えて描き直す。
+- 第 1 章 §1.x・第 6 章の数値（R² = 0.78 など）も同時に直す。
+
+### 11.2 第 4・5 章（FEM）への波及
+- FEM に入れる相互作用行列・初期値も EML の最終 MAP に揃える: `docs/revision/generated/final_theta_MAP/`（phi_init.json は CS・CH 済み、DS・DH 待ち。PR #118 の `run_calibrated.ps1`）。
+- IKMHIWI03 での FEM の再計算は DS・DH の確定後。
+
+### 11.3 いつやるか
+- **今すぐ**: 章の構成・書き方（§1〜8、§10）と、CS・CH の図・数値。
+- **DS・DH の最終段が通ってから**: DS・DH の数値と図（同じスクリプトを回し直すだけ）、FEM の再計算。
+- 修論の提出は 2027 年 3 月ごろなので、EML 投稿を優先してよい。

@@ -481,6 +481,29 @@ C       one-sided, saturating front growth (first author's implementation)
       RETURN
       END
 
+C     mode 11 (ANSYS only) stores the living share in the userdata pool;
+C     no pool here
+      INTEGER FUNCTION SetVals(i, n, v)
+      IMPLICIT NONE
+      INTEGER i, n
+      DOUBLE PRECISION v(n)
+      SetVals = 0
+      RETURN
+      END
+
+C     mode 11 calls the interpolated point model (a module procedure of
+C     ecology_native.f in the native build); for the server bridge,
+C     which has none, this stub stops if mode 11 is ever used
+      SUBROUTINE BIOFILM_ECOLOGY_HOOK_LIN(g, theta, dt, n_sub, c0, c1,
+     1  a0, a1, g_new, phi_int, ok)
+      IMPLICIT NONE
+      DOUBLE PRECISION g(12), theta(20), dt, c0, c1, a0, a1
+      DOUBLE PRECISION g_new(12), phi_int
+      INTEGER n_sub
+      LOGICAL ok
+      STOP 'mode 11 needs the native point model'
+      END
+
 C=======================================================================
 C  BIOFILM_COMP_UMAT: the ANSYS call-site fragments in an Abaqus UMAT
 C=======================================================================
@@ -501,6 +524,12 @@ C     names the fragments expect from the partner's usermat
       DOUBLE PRECISION Sdp_bio1_n, Sdp_locbio1_n, Sdp_bio2_n
       DOUBLE PRECISION Sdp_locbio2_n, Sdp_sumLocal, Sbio_GrowthConst
       INTEGER keycut
+C     names of mode 11 (the living coupling, A-19; ANSYS only): host
+C     nutrient and antibiotic, coordinates, the userdata pool of the
+C     living share (SetVals, a no-op here)
+      DOUBLE PRECISION Sdp_nut1_n, Sdp_nut2_n, coords(3)
+      INTEGER ID, Si_Kerr, ofs_dp_Living, SetVals
+      EXTERNAL SetVals
 C     Abaqus side: nutrient, mechanics, Voigt map (ANSYS 23/13 -> 13/23)
       DOUBLE PRECISION AB_C, AB_SIG(6), AB_TAN(6,6), AB_W
       DOUBLE PRECISION AB_FV(3,3), AB_FV1(3,3)
@@ -526,6 +555,12 @@ C     --- host values: phi and c as UMAT found them --------------------
       IF (AB_C .GT. -1.0D29) ustatev(51) = AB_C
       Sbio_GrowthConst = ustatev(84)
       keycut = 0
+      Sdp_nut1_n = 1.0D0
+      IF (AB_CN .GT. -1.0D29) Sdp_nut1_n = AB_CN
+      Sdp_nut2_n = 0.0D0
+      coords = 0.0D0
+      ID = elemId
+      ofs_dp_Living = 0
       IF (.NOT. AB_OPENED) THEN
         CALL GETOUTDIR(AB_DIR, AB_LD)
         OPEN(195, FILE=AB_DIR(1:AB_LD)//'/age_trace.csv',

@@ -1,0 +1,134 @@
+{
+ "case": "corner_g10",
+ "model": {
+  "phi": "d phi/dt = beta lap(phi) + k_alpha alpha - penalty (max(phi-1,0) + min(phi,0))  [Eq. 34, no front term]",
+  "c": "0 = d lap(c) - g phi c, c = 1 on z = +1, zero flux on the other faces  [Eq. 35 quasi-static, g phi c]",
+  "alpha": "d alpha/dt = k_alpha phi c  [Eq. 36 with the factor c]",
+  "mechanics": "E = 10 Pa (phi^2 + 1e-3), nu = 0.49, eigenstrain (alpha - 1) I, hex8 B-bar, z = -1 clamped"
+ },
+ "parameters": {
+  "beta_mm2_per_T": 0.02,
+  "k_alpha_per_T": 0.001,
+  "penalty": 5.0,
+  "T_end": 1.1,
+  "g_over_d_per_mm2": 10.0,
+  "g_over_d_table2_converted_per_mm2": 1.0,
+  "g_factor_vs_table2": 10.0,
+  "penetration_depth_mm": 0.31622776601683794,
+  "E_Pa": 10.0,
+  "stiffness_floor": 0.001,
+  "nu": 0.49,
+  "field_grid": 48,
+  "stress_grid": 16,
+  "frames": 88,
+  "dt_T": 0.0125,
+  "rk4_steps_per_frame": 1
+ },
+ "stability": {
+  "phi_diffusion_number_beta_dt_over_h2": 0.14400000000000002,
+  "rk4_limit_7point": 0.23208333333333334,
+  "penalty_dt": 0.0625,
+  "c_explicit_diffusion_number_d_dt_over_h2": 720000000.0,
+  "c_explicit_dt_limit_T": 4.0292245370370364e-12,
+  "c_treatment": "quasi-static, conjugate gradients with Jacobi preconditioner, rtol 1e-10, once per RK4 step",
+  "c_reaction_number_q_h2": 0.017361111111111112,
+  "cg_iterations_max": 361,
+  "cg_relative_residual_max": 9.991130896262658e-11
+ },
+ "with_nutrient": {
+  "seed_mean_alpha_minus_1": 0.0002026503614034583,
+  "seed_max_alpha_minus_1": 0.00027081208126791926,
+  "seed_min_alpha_minus_1": 0.0001369636609322495,
+  "seed_mean_vm_Pa": 0.0008181589073501527,
+  "seed_max_vm_Pa": 0.00269717862829566,
+  "seed_p95_vm_Pa": 0.002521221060305834,
+  "seed_mean_p_Pa": 0.00041569554014131427,
+  "seed_max_p_Pa": 0.0016499334014952183,
+  "biofilm_c_min": 0.12200208008289337,
+  "biofilm_c_max": 0.3399486243724823,
+  "biofilm_c_mean": 0.2211270034313202,
+  "domain_c_mean": 0.6649637818336487,
+  "biofilm_cells_phi_gt_0.5_field_grid": 5834,
+  "max_vm_in_biofilm_Pa": 0.00269717862829566,
+  "max_vm_location_mm": [
+   -0.4375,
+   -0.4375,
+   -0.9375
+  ],
+  "seed_layer_z_mm": [
+   -0.9375,
+   -0.8125,
+   -0.6875,
+   -0.5625
+  ],
+  "seed_layer_mean_alpha_minus_1": [
+   0.00019438452809313107,
+   0.00020410343219939226,
+   0.00021530177219507027,
+   0.0001968117131262396
+  ],
+  "seed_layer_mean_vm_Pa": [
+   0.0021226913668215275,
+   0.0007164946873672307,
+   0.00026482055545784533,
+   0.00016862887423485518
+  ],
+  "seed_layer_mean_c": [
+   0.20599636132397725,
+   0.21946115859059823,
+   0.24702508588045557,
+   0.2888915129178376
+  ]
+ },
+ "without_nutrient_c_fixed_1": {
+  "seed_mean_alpha_minus_1": 0.000877090590382455,
+  "seed_max_alpha_minus_1": 0.0010940248914131964,
+  "seed_min_alpha_minus_1": 0.00037744799596516206,
+  "seed_mean_vm_Pa": 0.004425319842994213,
+  "seed_max_vm_Pa": 0.01650327630341053,
+  "seed_p95_vm_Pa": 0.015635931864380836,
+  "seed_mean_p_Pa": 0.0021503460593521595,
+  "seed_max_p_Pa": 0.009621464647352695,
+  "biofilm_c_min": 1.0,
+  "biofilm_c_max": 1.0,
+  "biofilm_c_mean": 1.0,
+  "domain_c_mean": 1.0,
+  "biofilm_cells_phi_gt_0.5_field_grid": 5834,
+  "max_vm_in_biofilm_Pa": 0.01650327630341053,
+  "max_vm_location_mm": [
+   -0.8125,
+   -0.8125,
+   -0.9375
+  ],
+  "seed_layer_z_mm": [
+   -0.9375,
+   -0.8125,
+   -0.6875,
+   -0.5625
+  ],
+  "seed_layer_mean_alpha_minus_1": [
+   0.0009778593110038654,
+   0.0009594277243599612,
+   0.0008889076687544864,
+   0.0006821676574115069
+  ],
+  "seed_layer_mean_vm_Pa": [
+   0.011677706614136696,
+   0.0033381441608071327,
+   0.0013490368146449327,
+   0.0013363903854042292
+  ],
+  "seed_layer_mean_c": [
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "ratio_with_over_without": {
+  "seed_mean_alpha_minus_1": 0.23104838157606122,
+  "seed_mean_vm_Pa": 0.1848813049401145,
+  "seed_max_vm_Pa": 0.16343291954327077,
+  "seed_mean_p_Pa": 0.193315647187761
+ }
+}

@@ -32,7 +32,7 @@ in place of ecology_constants.ALPHA_STAR (0). --b v1,..,v5: the sensitivities
 b_i, written into theta at the places the point model reads them (theta 4, 5,
 9, 10, 16, one-based); the calibrated MAP files have b = 0. The deck takes theta
 from this file, so deck and file stay equal. Both are assumptions of the run,
-not calibrated values (scheme (c), CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md A-1).
+not calibrated values (scheme (c), ansys_usermat/apdl/archive/CLOUD_TO_IKMHIWI03_2026-10-14_C.ja.md A-1).
 """
 import argparse
 import json

@@ -29,6 +29,8 @@ def apply(size=11):
         "axes.spines.right": False,
         "savefig.dpi": 200,
         "savefig.bbox": "tight",
+        "pdf.fonttype": 42,   # TrueType in PDF, no Type 3 fonts
+        "ps.fonttype": 42,
     })
 
 

@@ -1,0 +1,76 @@
+﻿diff --git a/F:/biofilm_upf_living8/Usermat_P21-V21_v222.F b/F:/biofilm_upf_living8t/Usermat_P21-V21_v222.F
+index 178cb20..3f15cfb 100644
+--- a/F:/biofilm_upf_living8/Usermat_P21-V21_v222.F
++++ b/F:/biofilm_upf_living8t/Usermat_P21-V21_v222.F
+@@ -293,6 +293,8 @@ C     and the 0.5 threshold dropped 15 of 32 seed points by T* = 1)
+       DOUBLE PRECISION CM_TRACE_PHI_MIN
+       PARAMETER (CM_TRACE_PHI_MIN = 1.0D-2)
+       LOGICAL TRACE_OPEN
++      LOGICAL BIOFILM_TRACE_WANT
++      EXTERNAL BIOFILM_TRACE_WANT
+       SAVE TRACE_OPEN
+       DATA TRACE_OPEN /.FALSE./
+ C     --- point-model mode (prop(28) = 4) -----------------------------
+@@ -1027,7 +1029,7 @@ C           loses the seed: phi 1 -> 0.1)
+           Si_Kerr = SetVals(ofs_dp_Living + (ID-1), 1, LV_V)
+           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+      &                                dTime, ALPHA_NEW)
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
+             IF (.NOT. CM_TRACE_OPEN) THEN
+@@ -1178,7 +1180,7 @@ C             (the step whose midpoint Time + dTime/2 reaches it).
+             ALPHA_NEW = ALPHA_N
+             keycut = 1
+           END IF
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
+             IF (.NOT. CM_TRACE_OPEN) THEN
+@@ -1275,7 +1277,7 @@ C             biofilm has arrived: start from the case's initial state
+           END IF
+           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+      &                                dTime, ALPHA_NEW)
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+             IF (.NOT. AG_TRACE_OPEN) THEN
+@@ -1531,7 +1533,7 @@ C         Not from a paper; d = 0 (default) is Eq. 36 unchanged.
+               END IF
+             END IF
+           END IF
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. CM_TRACE_PHI_MIN)) THEN
+             IF (.NOT. CM_TRACE_OPEN) THEN
+@@ -1638,7 +1640,7 @@ C         transport only
+           CALL SPLIT_PUT(SP_ID, SP_R(1), SP_R(2), ldstep, isubst)
+           CALL BIOFILM_ALPHA_FROM_PHI(ALPHA_N, PHI_USED, prop(7),
+      &                                dTime, ALPHA_NEW)
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+             IF (.NOT. SP_TRACE_OPEN) THEN
+@@ -1711,7 +1713,7 @@ C           hold the converged state and ask ANSYS to cut the step
+             ALPHA_NEW = ALPHA_N
+             keycut = 1
+           END IF
+-          IF (kDomIntPt .EQ. 1 .AND.
++          IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &        (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &         PHI_USED .GE. TRACE_PHI_MIN)) THEN
+             IF (.NOT. PM_TRACE_OPEN) THEN
+@@ -1761,7 +1763,7 @@ C       ustatev(95) = p, ustatev(96) = g.
+         ustatev(84)      = ALPHA_NEW
+ C       trace: integration point 1 of one element in TRACE_STRIDE,
+ C       and of every element where phi has reached TRACE_PHI_MIN
+-        IF (kDomIntPt .EQ. 1 .AND.
++        IF (kDomIntPt .EQ. 1 .AND. BIOFILM_TRACE_WANT(elemId) .AND.
+      &      (MOD(elemId, TRACE_STRIDE) .EQ. 1 .OR.
+      &       PHI_USED .GE. TRACE_PHI_MIN)) THEN
+           IF (.NOT. TRACE_OPEN) THEN
