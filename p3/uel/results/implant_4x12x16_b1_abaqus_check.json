@@ -1,0 +1,12 @@
+{
+ "tag": "4x12x16_b1",
+ "elements": 768,
+ "max_rel_alpha": 1.504142501668969e-07,
+ "max_rel_vM": 2.739569374886626e-07,
+ "seed_alpha_abaqus": 0.03301779077743801,
+ "seed_alpha_python": 0.03301779033495312,
+ "seed_vM_abaqus": 0.02383151411612674,
+ "seed_vM_python": 0.023831516849104162,
+ "max_vM_abaqus": 0.291195320225,
+ "max_vM_python": 0.2911954
+}

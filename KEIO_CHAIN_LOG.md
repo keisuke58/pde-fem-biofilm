@@ -571,3 +571,168 @@ Request: `CLOUD_TO_FIFA.ja.md`, entry of 15 Oct late night, item 1 (no computati
 - Frozen seed 24^3 (`p3/uel/results/seed_frozen_24.json`): vM mean over elements within 0.2 (3D) of (0.5, 0.5, 0) is 6.549e-3, ANSYS 24^3 6.536e-3 (+0.2 %). Seed (phi > 0.5, 420 elements): alpha - 1 8.70e-4, vM 5.093e-3, largest vM 1.345e-2 at (0.479, 0.646, 0.021).
 - Implant sector (`p3/uel/make_implant_uel_inp.py`, 2x6x8 elements, 90 degrees): Abaqus and the Python emulation agree to 4e-7 (alpha - 1) and 5e-7 (vM/E), also with `--bulge 1` (3.9e-7, 5.2e-7). Inner layer: alpha - 1 0.04634, vM/E 0.04775, largest vM/E 0.2728 at (r, theta, z) = (2.09, 67.5, 1.875). With `--bulge 1`: 0.04427, 0.04620, 0.2927 at (3.08, 67.5, 1.875).
 - Bug found and fixed in `unified_uel.f90`: the Gauss-point record (`uel_gp.txt`) was taken before `store_growth`, so its alpha - 1 was one increment behind (vM and pressure were not). Now taken after. The 8^3 seed in Abaqus still gives vM mean 0.01342, max 0.01577 (emulation 0.013419 / 0.015773).
+
+## 16 Oct 2026, fifa: Abaqus column and seed 8^3 (entry of 15 Oct, `KEIO_SERVER_HANDOFF.ja.md` section 7)
+
+Built with the corrected `unified_uel.f90` (Gauss-point record after the growth update). `abaqus job=... user=p3/uel/unified_uel_abaqus.for cpus=1 interactive`; linked and ran without error, no `/libs:dll` needed on Linux.
+- `uel_column` (20 elements): x = 0, NT11 0.77532, NT12 0.93565 (IKMHIWI03 0.7753, 0.9357).
+- `uel_seed8` (8^3, default options): elements with phi > 0.5: vM mean 0.01300, max 0.01637 (expected 0.01300 / 0.01637). alpha - 1 mean 0.03571.
+Output: `p3/uel/results/abaqus_fifa/` (`.sta` and the Gauss-point files, gzip).
+
+## 16 Oct 2026, fifa (overnight): implant sector mesh convergence, Abaqus checks, UEL seed 32^3
+```
+bulge 0
+mesh      elems  seed a-1   seed vM/E  int a-1    int vM/E   max vM/E  (r, theta, z)            layer row_from_top  max w/o edge rows
+2x6x8        96  0.04634   0.04775   0.01795   0.03544   0.2728   (2.094, 67.5, 1.875)    0     0   0.1285
+4x12x16     768  0.03523   0.02358   0.02176   0.01825   0.2375   (2.077, 71.2, 1.938)    0     0   0.1608
+6x18x24    2592  0.02962   0.01482   0.02137   0.01199   0.2004   (2.069, 77.5, 1.958)    0     0   0.1586
+bulge 1
+mesh      elems  seed a-1   seed vM/E  int a-1    int vM/E   max vM/E  (r, theta, z)            layer row_from_top  max w/o edge rows
+2x6x8        96  0.04427   0.04620   0.01490   0.03253   0.2927   (3.076, 67.5, 1.875)    0     0   0.1262
+4x12x16     768  0.03302   0.02383   0.01901   0.01782   0.2912   (3.072, 71.2, 1.938)    0     0   0.1809
+6x18x24    2592  0.02774   0.01599   0.01908   0.01262   0.2641   (3.067, 72.5, 1.958)    0     0   0.1956
+```
+Abaqus against the emulation (largest relative difference per element, alpha - 1 / vM), last increment:
+- 4x12x16 (768 elements): 1.8e-07 / 2.9e-07
+- 4x12x16_b1 (768 elements): 1.5e-07 / 2.7e-07
+UEL frozen seed 32^3: seed alpha - 1 8.8340e-04, seed vM 5.0865e-03, largest vM 1.4426e-02; vM mean within 0.2 of (0.5, 0.5, 0): 6.5117e-03 (544 elements); ANSYS 32^3: 6.5e-3
+
+---
+
+## 2026-10-28: UEL implant sector after the shape-gradient fix (CLOUD_TO_FIFA, 17 Oct)
+
+**Done.** Merged `origin/master` (to 27 Oct) into `keio/uel-implant`. Five files conflicted
+(`p3/uel/implant_convergence.py`, `results/implant_{4x12x16,4x12x16_b1,6x18x24,6x18x24_b1}.json`);
+I took the master versions, since the fifa results of 16 Oct were computed with the wrong shape
+gradient. Rebuilt `libunified_uel.so` and `unified_uel_abaqus.for`.
+
+**Abaqus 2x6x8 (bulge 0, free outer face): PASS.** Seed alpha - 1 0.04412878 in both, seed vM/E
+0.02501274 / 0.02501273, max vM/E 0.1061752 in both (element 85); largest element-wise difference
+4.1e-8 (alpha - 1) and 3.2e-8 (vM/E). Record: `results/abaqus_fifa/uel_implant2x6x8_gp.txt.gz`.
+
+**Abaqus 6x18x24, fixed seed (`--seed-layers 3`), bulge 1: FAIL, all NaN.** The job reports
+"completed successfully", but every Gauss-point record (7 blocks, increments 10..60) has NaN in
+phi, c, von Mises and pressure, and alpha - 1 = 0. `compare_implant_gp.py` gives
+"Abaqus nan" for the seed vM/E and the maximum.
+The `.sta` shows the first growth increment (dt = T/60 = 3.958e-3) accepted after 4 iterations, with
+no cutback; then 59 further increments of 1 iteration each, all at dt = 3.958e-3. The expected
+sequence was a cutback (attempt 2, dt 9.9e-4) and a return to 3.96e-3 by factors of 1.5. The `.msg`
+has 20357 warnings, all "system matrix has N negative eigenvalues" (5 to 73), which the
+coupled temperature-displacement step also gives in the 2x6x8 job. Not investigated further.
+Likely cause (not tested): the near-singular first-increment tangent that the emulation cuts
+back is not caught in Abaqus, and NaN enters the state variables at that increment.
+Files: `results/abaqus_fifa/uel_implant6x18x24_b1_sl3.sta`, `..._gp.txt.gz`.
+Deck: `make_implant_uel_inp.py abaqus_in --nr 6 --nt 18 --nz 24 --seed-layers 3 --bulge 1`.
+
+**Running, not finished.** 8x24x32 fixed seed, bulge 0 and 1 (Python emulation, nohup, started
+17:44 JST). At increment 3 both show residual halving in the line search. If one stops with
+"5 cutbacks did not converge", the increment number and the last 30 lines of stderr go here.
+
+**Not done.** Homeostatic-pressure Abaqus check (2x6x8, p_h/E = 0.05) and the Lean/Mathlib check.
+
+**Finished (29 Oct).** 8x24x32 fixed seed (`--seed-layers 4`, Python emulation), bulge 0 and 1:
+seed alpha - 1 0.04127 / 0.03979, seed vM/E 0.02904 / 0.02608, interior vM/E 0.02553 / 0.02254,
+max vM/E 0.3840 / 0.3645. The seed has 4 layers here and 3 in the 6x18x24 runs, so the two
+meshes are not compared directly; a 6x18x24 run with 4 layers is needed for the convergence check.
+Files: `p3/uel/results/implant_8x24x32_sl4.json`, `implant_8x24x32_b1_sl4.json`.
+
+## 2026-10-29: Abaqus 6x18x24 bulge 1, NaN found and guarded
+
+The NaN of 28 Oct came from the residual, not from the state: at the first attempt of increment 1
+(dt = 3.958e-3) 72 UEL elements returned a non-finite R (outer two radial layers, top three z rows,
+all theta; the seed layer at the top edge). Abaqus read the NaN residual as converged, so there was no
+cutback. `unified_uel.f90` now checks sv after `advance_composition` and R after `residual`; a non-finite
+value gives PNEWDT = 0.25 and a line "UEL non-finite ..." on stdout (element, time). The job then
+cut back (attempt 2, dt 9.896e-4) and ran 64 increments to the end, no NaN.
+Against the emulation (`compare_implant_gp.py`): seed alpha - 1 0.04467319 / 0.04469628, max vM/E
+0.3017095 / 0.3018817 (same element 2485); largest element-wise difference 1.9e-4 (alpha - 1), 1.7e-4
+(vM/E), tolerance 1e-5, so FAIL by the tolerance. The step sequences differ slightly (Abaqus three
+increments of 9.896e-4, emulation two), which is a time-discretisation difference, not shown to be the
+whole cause. Not done: why the Newton iterate of the first attempt becomes non-finite; a comparison
+with the same increment sequence (fixed dt = 9.896e-4 in both).
+Files: `results/abaqus_fifa/uel_implant6x18x24_b1_sl3.sta`, `..._gp.txt.gz`.
+
+## 2026-10-29 (morning): CLOUD_TO_FIFA 28 Oct, steps 1-3 (6x18x24, bulge 1 NaN isolation)
+
+Merged `origin/master` (to `c839bcc`) into `keio/uel-implant`, no conflicts. The UEL source in the repository is
+unchanged. Steps 1-3 were run with the UEL of `9776d59`, which is **before** the guard of `3ab9c00`, because with the
+guard the NaN no longer appears. The only change in that copy is the Gauss-point output, written at KINC <= 5 as well as
+every 10th increment. The source and decks are on fifa only, in `~/abaqus_work/nan_probe_20261029/`
+(`probe_unguarded.for`, `run_chain2.sh`). Each job was `abaqus job=... user=probe_unguarded.for cpus=1 interactive` with
+`BIOFILM_ECO_CASE` and `BIOFILM_UEL_GP` set.
+
+Two problems with the procedure, found on the way (not fixed, for the cloud):
+- **`make_implant_uel_inp.py --ninc n` does not reach the deck.** It changes only the `--run` emulation. The GROW data
+  line (line 151) always uses the global `NINC = 60`, so the deck of step 2 was the same as step 1's. For step 2 the data
+  line was set by hand in the copy of the deck: `0.0009895833333, 0.2375, 9.6639e-07, 0.0009895833333`, which is
+  dt0 = DTMAX = T/240 and DTMIN = T/240/4^5, as the generator writes them for T/60.
+- **Without `BIOFILM_UEL_GP`, `uel_gp.txt` is written to the solver's scratch directory and deleted with it.** This
+  happens on fifa because `abaqus_v6.env` sets `scratch`. The first runs of steps 1 and 2 lost their records this way
+  and were run again.
+
+**1. Where the NaN enters: GROW increment 1, attempt 1, equilibrium iteration 4.** dt = 3.958e-3. The `.sta` line is
+`2 1 1 0 4 4 0.00396 0.00396 0.003958`: 4 iterations, no cutback, then 59 increments of 1 iteration each. The `.msg`
+of increment 1:
+- iteration 1: largest scaled residual force 1.27e-2, correction to displacement -4.1e-2 (node 3197, DOF 3);
+  73 negative eigenvalues in the next matrix
+- iteration 2: residual 1.27e-3 (node 3181, DOF 2), correction 1.96e-2
+- iteration 3: residual 1.13e-2 (node 3098, DOF 3); **correction 0.297 (node 3233, DOF 3), increment of displacement
+  0.302 (node 3198, DOF 1)**
+- iteration 4: "AVERAGE HEAT FLUX NaN", "ALL FORCE RESIDUALS ARE ZERO", "ALL HEAT FLUX RESIDUALS ARE ZERO". Abaqus
+  takes this as converged.
+
+The first record after GROW starts (end of increment 1) already has every element non-finite: all 2592 elements, all
+8 Gauss points. phi, c, von Mises and pressure are NaN, and alpha - 1 = 0. So the record alone cannot narrow it down to
+an element. The 29 Oct guarded run localised it to the residual of 72 elements: the outer two radial layers and the top
+three z rows. Values just before, in the INIT record (step 1, increment 1), over all elements: phi 1e-4..0.9001,
+c 0.1..0.8098, alpha - 1 = 0 everywhere.
+Files: `p3/uel/results/abaqus_fifa/uel_implant6x18x24_b1_sl3_unguarded.sta`, `..._unguarded_gp.txt.gz`.
+
+**2. dt = T/240 (9.896e-4, data line set by hand, unguarded UEL): runs, no NaN.** 240 increments, 1 attempt each, no
+cutback. Against the emulation `results/implant_6x18x24_b1_sl3.json` (`compare_implant_gp.py`):
+
+| | Abaqus T/240 | emulation |
+| --- | --- | --- |
+| seed alpha - 1 | 0.0443474 | 0.04469628 |
+| seed vM/E | 0.04267654 | 0.04313718 |
+| max vM/E | 0.3002227 (element 2485) | 0.3018817 (element 2485) |
+
+The largest element-wise difference is 1.80e-3 (alpha - 1) and 1.94e-3 (vM/E): FAIL at tol 1e-5. The two do not use
+the same steps. The emulation cuts back once to 9.9e-4 and then grows dt by 1.5 back to T/60; Abaqus stays at T/240.
+The difference is therefore a time-step difference at least in part. An emulation `--run --ninc 240` was not run.
+Files: `p3/uel/results/abaqus_fifa/uel_implant6x18x24_b1_sl3_n240.sta`, `..._n240_gp.txt.gz`.
+
+**3. bulge 0, same 6x18x24, `--seed-layers 3`, no `--ninc` (T/60, unguarded UEL): PASS.** 60 increments, 1 attempt
+each, no NaN. Against `results/implant_6x18x24_sl3.json`: seed alpha - 1 0.04787072 in both, seed vM/E 0.0490564 in
+both, max vM/E 0.3236237 in both (element 2485). The largest element-wise difference is 5.08e-8 (alpha - 1) and
+5.04e-8 (vM/E).
+So with dt = T/60 the 6x18x24 mesh passes with bulge 0 and gives NaN with bulge 1: **the bulge matters, not the mesh**.
+With bulge 1 a smaller first step (T/240) avoids the NaN.
+Files: `p3/uel/results/abaqus_fifa/uel_implant6x18x24_sl3.sta`, `..._sl3_gp.txt.gz`.
+
+**4.** The 8x24x32 emulation was already finished and recorded above (29 Oct). **5.** (homeostatic-pressure Abaqus,
+Lean/Mathlib) not done.
+
+## 2026-10-29: CLOUD_TO_FIFA 28 Oct, step 5 (homeostatic-pressure Abaqus check, 16 Oct): PASS, 4 of 4
+
+The UEL is the one in the repository at `1f34cfb`, with the guard. `unified_uel_abaqus.for` was regenerated with
+`make_abaqus_source.py`; the file is identical to the committed one. The decks are 2x6x8, bulge 0, p_h/E = 0.05:
+`make_implant_uel_inp.py abaqus_in --p-ref 0.05 [--gate-implicit] [--outer fixed]`. The jobs were run as in the
+16 Oct instructions, with `BIOFILM_UEL_GP` set (script `p3/uel/abaqus_in/run_ph.sh`). Each job took about 25 s.
+
+All four jobs ran 60 increments, 1 attempt each, no cutback, and wrote no "UEL non-finite" line.
+`compare_implant_gp.py --tol 1e-6`:
+
+| job | seed alpha - 1 (Abaqus / Python) | seed vM/E | max vM/E (element 85) | largest difference alpha - 1 / vM/E | iterations per increment |
+| --- | --- | --- | --- | --- | --- |
+| `_ph0.05` (explicit, outer free) | 0.0277612 / 0.02776119 | 0.0151908 / 0.0151908 | 0.05699419 / 0.05699419 | 2.7e-8 / 4.9e-9 | 2: 51, 3: 8, 4: 1 |
+| `_ph0.05_gi` (implicit, outer free) | 0.02758512 / 0.02758512 | 0.01509242 / 0.01509242 | 0.05657986 / 0.05657986 | 2.0e-8 / 2.5e-9 | 2: 53, 3: 6, 4: 1 |
+| `_ph0.05_of` (explicit, outer fixed) | 0.008987526 / 0.008987525 | 0.00974648 / 0.00974648 | 0.04093257 / 0.04093258 | 2.3e-9 / 5.6e-9 | 2: 52, 3: 7, 4: 1 |
+| `_ph0.05_gi_of` (implicit, outer fixed) | 0.00888262 / 0.00888262 | 0.009664487 / 0.009664486 | 0.04059057 / 0.04059057 | 3.6e-9 / 4.1e-9 | 2: 57, 3: 3 |
+
+Files: `p3/uel/results/abaqus_fifa/uel_implant2x6x8_ph0.05{,_gi,_of,_gi_of}.sta` and `..._gp.txt.gz`.
+Step 4 of the 16 Oct instructions (6x18x24 emulation with the gate, about 35 min each) was not run.
+
+**Lean / Mathlib (16 Oct night): skipped.** Installing elan with `curl ... elan-init.sh | sh`, as step 0 says, was
+refused by the permission settings of the Claude session on fifa. The user decided (29 Oct) to skip the Lean / Mathlib
+check on fifa: nothing was installed and `keio/lean-check` was not created.
