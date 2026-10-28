@@ -42,7 +42,11 @@ $sets['work_text.zip'] = @($work | ForEach-Object { Get-ChildItem $_.FullName -R
 # to recompute); not the checkpoints in figdata\ckpt. The zip keeps the path below the repository.
 $repo = Split-Path $PSScriptRoot -Parent
 if ($Figdata) { $sets['python_fields.zip'] = @(Get-ChildItem (Join-Path $repo 'figdata') -File -Filter '*.npz') }
-if ($Rst) { $sets['rst_main.zip'] = @($work | ForEach-Object { Get-ChildItem $_.FullName -File -Filter 'u8_*.rst' }) }
+# (-Rst) only the .rst behind the thesis numbers (user, 28 Oct; all u8_ would be 169 GB): the upwind front on 8^3/16^3/24^3
+# (seed stress 2.14 / 4.56 / 5.15e-4 Pa, extrapolated 5.8e-4) and the constant added diffusion r h/4 on 16^3 (about a quarter)
+$rstThesis = 'biofilm_upf_living11_8\up8_8_sep_ab.rst', 'biofilm_upf_living11_16\up16_16_sep_ab.rst',
+             'biofilm_upf_living11_24\up24_24_sep_ab.rst', 'biofilm_upf_living8_16a\u8_16_sep_ab.rst'
+if ($Rst) { $sets['rst_main.zip'] = @($rstThesis | ForEach-Object { Get-Item (Join-Path 'F:\' $_) -ErrorAction SilentlyContinue }) }
 foreach ($k in $sets.Keys) {
     $fs = $sets[$k]
     "{0,-22} {1,6} files {2,9:N1} MB" -f $k, $fs.Count, (($fs | Measure-Object Length -Sum).Sum / 1MB)

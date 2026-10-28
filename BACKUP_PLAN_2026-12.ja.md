@@ -19,7 +19,7 @@ IKMHIWI03 は 2026 年 12 月末まで（CLAUDE.md）。git に入っていな�
 | `private_element.zip` | 各ビルドのオリバーの要素のソース（.f .F .inc .h）、`F:\oliver_element_patches*` | 約 32 MB | **非公開のみ** |
 | `work_text.zip` | 各作業フォルダのデッキ（.dat）、スクリプト、マクロ、点モデルの設定、保存形ラプラシアン（作った所のものだけ）、実行と連鎖の記録、自動処理（auto_*）、小さい JSON；Abaqus の living_gp.txt、.sta、.msg、.dat、.inp；10 月 20 日のバックアップ | 約 4 GB（テキストなので圧縮で 1 GB 前後の見込み） | どこでも（秘密なし。ただし公開しない方がよい） |
 | `python_fields.zip`（任意、`-Figdata`） | Python の 3D の場 `figdata\*.npz`（図と動画の元、192³ は作り直しに数時間；`figdata\ckpt` は入れない） | 約 3.9 GB（28 日、210 件） | どこでも |
-| `rst_main.zip`（任意） | 本番 u8_ の .rst | **約 169 GB（28 日、9 件）**：大きすぎるので、要る run だけに絞るかはユーザーと決める | どこでも |
+| `rst_main.zip`（任意、`-Rst`） | **修論の数値の元の 4 本だけ**（ユーザー、28 日）：風上の前線 `up8_8_sep_ab`、`up16_16_sep_ab`、`up24_24_sep_ab`（種の応力 2.14 / 4.56 / 5.15e−4 Pa）と一定の人工拡散 `u8_16_sep_ab`（約 1/4） | 約 57 GB（u8_ 全部なら 169 GB だった） | どこでも |
 
 28 日の下見：`work_text.zip` は約 8.2 GB（行列の書き出し `grad_upw.txt`、`mirror_ops.txt` などで大きくなった）。
 `F:\auto_*`（Python の計算のスクリプトとログ、`F:\auto_night` など）も `work_text.zip` に入れるようにした。
