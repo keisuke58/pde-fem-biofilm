@@ -712,3 +712,26 @@ Files: `p3/uel/results/abaqus_fifa/uel_implant6x18x24_sl3.sta`, `..._sl3_gp.txt.
 
 **4.** The 8x24x32 emulation was already finished and recorded above (29 Oct). **5.** (homeostatic-pressure Abaqus,
 Lean/Mathlib) not done.
+
+## 2026-10-29: CLOUD_TO_FIFA 28 Oct, step 5 (homeostatic-pressure Abaqus check, 16 Oct): PASS, 4 of 4
+
+The UEL is the one in the repository at `1f34cfb`, with the guard. `unified_uel_abaqus.for` was regenerated with
+`make_abaqus_source.py`; the file is identical to the committed one. The decks are 2x6x8, bulge 0, p_h/E = 0.05:
+`make_implant_uel_inp.py abaqus_in --p-ref 0.05 [--gate-implicit] [--outer fixed]`. The jobs were run as in the
+16 Oct instructions, with `BIOFILM_UEL_GP` set (script `p3/uel/abaqus_in/run_ph.sh`). Each job took about 25 s.
+
+All four jobs ran 60 increments, 1 attempt each, no cutback, and wrote no "UEL non-finite" line.
+`compare_implant_gp.py --tol 1e-6`:
+
+| job | seed alpha - 1 (Abaqus / Python) | seed vM/E | max vM/E (element 85) | largest difference alpha - 1 / vM/E | iterations per increment |
+| --- | --- | --- | --- | --- | --- |
+| `_ph0.05` (explicit, outer free) | 0.0277612 / 0.02776119 | 0.0151908 / 0.0151908 | 0.05699419 / 0.05699419 | 2.7e-8 / 4.9e-9 | 2: 51, 3: 8, 4: 1 |
+| `_ph0.05_gi` (implicit, outer free) | 0.02758512 / 0.02758512 | 0.01509242 / 0.01509242 | 0.05657986 / 0.05657986 | 2.0e-8 / 2.5e-9 | 2: 53, 3: 6, 4: 1 |
+| `_ph0.05_of` (explicit, outer fixed) | 0.008987526 / 0.008987525 | 0.00974648 / 0.00974648 | 0.04093257 / 0.04093258 | 2.3e-9 / 5.6e-9 | 2: 52, 3: 7, 4: 1 |
+| `_ph0.05_gi_of` (implicit, outer fixed) | 0.00888262 / 0.00888262 | 0.009664487 / 0.009664486 | 0.04059057 / 0.04059057 | 3.6e-9 / 4.1e-9 | 2: 57, 3: 3 |
+
+Files: `p3/uel/results/abaqus_fifa/uel_implant2x6x8_ph0.05{,_gi,_of,_gi_of}.sta` and `..._gp.txt.gz`.
+Step 4 of the 16 Oct instructions (6x18x24 emulation with the gate, about 35 min each) was not run.
+
+**Lean / Mathlib (16 Oct night): not done.** Installing elan with `curl ... elan-init.sh | sh`, as step 0 says, was
+refused by the permission settings of the Claude session on fifa. This needs the user's decision. `df -h /home`: 82 T free.
