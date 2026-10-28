@@ -183,13 +183,13 @@ is my assumption.
 バイオフィルムの量は下げないからです。新しく届いた点は隣の生きている組成を受け継ぐ、というのは私の仮定です。
 
 \slide{Part 3: grid convergence and the front term}{16:30}
-\EN Growth and composition converge on refined grids: the growth with a GCI below three and a half percent in all
-examples. The stress converges more slowly: below one percent without and eight percent with the antibiotic in the
-separate example, and about twenty-seven percent in the mixed one. The reason is the front
+\EN Growth and composition converge on refined grids: the growth with a GCI below four and a half percent in all
+examples, on grids up to one hundred and ninety-two cubed. The stress converges more slowly: below one and a half percent
+in the separate example, with and without the antibiotic, and twenty to forty percent in the mixed ones. The reason is the front
 term, whose cell Peclet number is about thirty on the sixteen-cube mesh; a constant added diffusion gives only a
 quarter of the converged stress there. The IKM element with upwind gradients lies inside the band.
-\JA 成長と組成は格子を細かくすると収束し、成長の GCI は全例で 3.5 \% 未満です。応力は遅く、分けた例で
-抗菌薬なし 1 \% 未満・ありで 8 \%、混ぜた例で約 27 \%。
+\JA 成長と組成は格子を細かくすると収束し、成長の GCI は全例で 4.5 \% 未満です（$192^3$ まで）。応力は遅く、分けた例で
+抗菌薬の有無によらず 1.5 \% 未満、混ぜた例で 20〜40 \%。
 原因は前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ で、$16^3$ でセルのペクレ数が約 30 あります。一定の人工拡散では収束値の 4 分の 1 しか出ません。
 IKM の要素は upwind の勾配でこの幅に入ります。
 
