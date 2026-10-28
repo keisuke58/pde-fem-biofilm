@@ -41,7 +41,7 @@
 \textbf{ご相談}
 \begin{enumerate}\setlength{\itemsep}{6pt}
   \item 来年の学会発表（USNCCM19，SQAI-NCTS）
-  \item 4月からの RA
+  \item RA（1月開始）の確認
   \item 課題研究報告と慶應での修士論文
 \end{enumerate}
 \end{columns}
@@ -91,22 +91,23 @@
 \begin{frame}{検証：格子収束と前線の項 $-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$}
 \begin{columns}[T]
 \column{0.55\textwidth}
-\small シードの平均，抗菌薬あり，$T^*=1$（Python，$32^3/64^3/128^3$）\\[4pt]
+\small シードの平均，抗菌薬あり，$T^*=1$（Python，$32^3$〜$192^3$，外挿は細かい3格子から）\\[4pt]
 \begin{tabular}{llcc}
 \toprule
 例 & 量 & 外挿値 & GCI \\
 \midrule
-分けて置く & $\alpha-1$ & $9.22\times10^{-4}$ & 1.5\,\% \\
-分けて置く & von Mises & $6.7\times10^{-4}$~Pa & 8\,\% \\
-混ぜて置く & $\alpha-1$ & $8.54\times10^{-4}$ & 3.3\,\% \\
-混ぜて置く & von Mises & $4.0\times10^{-4}$~Pa & 26\,\% \\
+分けて置く & $\alpha-1$ & $9.19\times10^{-4}$ & 0.5\,\% \\
+分けて置く & von Mises & $6.4\times10^{-4}$~Pa & 1.4\,\% \\
+混ぜて置く & $\alpha-1$ & $8.71\times10^{-4}$ & 4.3\,\% \\
+混ぜて置く & von Mises & $4.7\times10^{-4}$~Pa & 41\,\% \\
 \bottomrule
 \end{tabular}
 \column{0.43\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{4pt}
   \item 前線の項 $-r\tfrac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ はセルのペクレ数が約31（$16^3$）．一定の人工拡散では応力が4分の1になります．
-  \item 2次の風上差分なら成長と組成は数\,\%で収束し，応力は遅く収束します．
+  \item 2次の風上差分なら成長と組成は数\,\%で収束します．応力は分けて置く例で1.4\,\%，混ぜて置く例は遅く，幅付きで示します．
+  \item 抗菌薬は収束した応力を約2\,\%下げるだけで，格子で見分けられる限界と同程度です．
   \item IKM の要素（ANSYS）も同じ式を解き，この幅に入ります．
 \end{itemize}
 \end{columns}
@@ -139,13 +140,13 @@
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{ご相談2：4月からの RA}
+\begin{frame}{ご相談2：RA（1月開始）の確認}
 \begin{itemize}\setlength{\itemsep}{6pt}
+  \item RA の件，ご検討いただきありがとうございます．1月開始の方向で手続きをお願いしております．
+  \item 週20時間ほどまで可能です（修論と並行）．
   \item IKM の HiWi は 2027年3月末まで延長になりました（Junker 先生）．
-  \item 2027年4月から週20時間ほど，RA としてお手伝いできればと思います．
-  \item JAXA，量子機械学習，CFRP の NEDO の件に限らず，研究室のほかのプロジェクトでも構いません．
   \item できること：FEM（ANSYS のユーザー要素，Abaqus），JAX での高速化，ベイズ推定（TMCMC），GNN，論文の図と英語の校正．
-  \item 研究室で難しい場合は，共同研究先などで有給の仕事があればご紹介いただけると助かります．
+  \item 作業時間と業務内容は，決まりましたらご連絡いただければと思います．
   \item 就職活動は3月で終わる予定です．
 \end{itemize}
 \end{frame}
@@ -196,7 +197,7 @@
 \textbf{残り}：Abaqus 本体での確認，文献・実験との比較，DS・DH の組成
 \column{0.48\textwidth}
 \centering
-\includegraphics[width=\linewidth]{fig_cervical.pdf}\\
+\includegraphics[width=\linewidth]{fig_cervical.png}\\
 {\scriptsize 歯頸線の帯の応力（コアとの比，3 段のメッシュ）}
 \vspace{4pt}
 \begin{itemize}\footnotesize
