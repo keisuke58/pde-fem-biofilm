@@ -175,13 +175,15 @@ All runs in the thesis are below it.
 
 \slide{Part 3: two species with nutrient and antibiotic}{15:00}
 \EN The third part puts the point model at every Gauss point. It receives the nutrient and an antibiotic from
-the fields, and only its living biomass consumes them. With synthetic data and the constants of the papers, the
+the fields, $c^*=c^*_0c$ and $\alpha^*=\alpha^*_0a$, and only its living biomass consumes them: the uptake is
+$g\,\phi_{3D}\sum_i\bar\phi_i\,c$, and the same for $a$. This is the whole coupling; $\alpha$ still follows
+$\phi_{3D}$ as in Part 2. With synthetic data and the constants of the papers, the
 antibiotic lowers the living fraction of the seed from 0.96 to 0.15 when the species start separately, and to
 0.04 when they start mixed. The growth hardly changes, because the antibiotic lowers the living fraction, not the
 amount of biofilm. A point that the biofilm reaches later takes the living composition of its neighbours; this
 is my assumption.
-\JA 第3部では、各 Gauss 点で点モデルを動かします。栄養と抗菌薬を場から受け取り、生きている菌だけが
-それを消費します。論文の定数と合成データで、抗菌薬は種の生きている割合を、分けて置くと 0.96 から 0.15、
+\JA 第3部では、各 Gauss 点で点モデルを動かします。栄養と抗菌薬を場から受け取り（$c^*=c^*_0c$、$\alpha^*=\alpha^*_0a$）、
+生きている菌だけがそれを消費します（$g\,\phi_{3D}\sum_i\bar\phi_i\,c$、$a$ も同じ）。連成はこれだけで、$\alpha$ は第2部と同じく $\phi_{3D}$ から決まります。論文の定数と合成データで、抗菌薬は種の生きている割合を、分けて置くと 0.96 から 0.15、
 混ぜて置くと 0.04 まで下げます。成長はほとんど変わりません。抗菌薬は生きている割合を下げますが、
 バイオフィルムの量は下げないからです。新しく届いた点は隣の生きている組成を受け継ぐ、というのは私の仮定です。
 
