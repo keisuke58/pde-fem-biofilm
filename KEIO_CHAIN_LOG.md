@@ -596,3 +596,36 @@ Abaqus against the emulation (largest relative difference per element, alpha - 1
 - 4x12x16 (768 elements): 1.8e-07 / 2.9e-07
 - 4x12x16_b1 (768 elements): 1.5e-07 / 2.7e-07
 UEL frozen seed 32^3: seed alpha - 1 8.8340e-04, seed vM 5.0865e-03, largest vM 1.4426e-02; vM mean within 0.2 of (0.5, 0.5, 0): 6.5117e-03 (544 elements); ANSYS 32^3: 6.5e-3
+
+---
+
+## 2026-10-28: UEL implant sector after the shape-gradient fix (CLOUD_TO_FIFA, 17 Oct)
+
+**Done.** Merged `origin/master` (to 27 Oct) into `keio/uel-implant`. Five files conflicted
+(`p3/uel/implant_convergence.py`, `results/implant_{4x12x16,4x12x16_b1,6x18x24,6x18x24_b1}.json`);
+I took the master versions, since the fifa results of 16 Oct were computed with the wrong shape
+gradient. Rebuilt `libunified_uel.so` and `unified_uel_abaqus.for`.
+
+**Abaqus 2x6x8 (bulge 0, free outer face): PASS.** Seed alpha - 1 0.04412878 in both, seed vM/E
+0.02501274 / 0.02501273, max vM/E 0.1061752 in both (element 85); largest element-wise difference
+4.1e-8 (alpha - 1) and 3.2e-8 (vM/E). Record: `results/abaqus_fifa/uel_implant2x6x8_gp.txt.gz`.
+
+**Abaqus 6x18x24, fixed seed (`--seed-layers 3`), bulge 1: FAIL, all NaN.** The job reports
+"completed successfully", but every Gauss-point record (7 blocks, increments 10..60) has NaN in
+phi, c, von Mises and pressure, and alpha - 1 = 0. `compare_implant_gp.py` gives
+"Abaqus nan" for the seed vM/E and the maximum.
+The `.sta` shows the first growth increment (dt = T/60 = 3.958e-3) accepted after 4 iterations, with
+no cutback; then 59 further increments of 1 iteration each, all at dt = 3.958e-3. The expected
+sequence was a cutback (attempt 2, dt 9.9e-4) and a return to 3.96e-3 by factors of 1.5. The `.msg`
+has 20357 warnings, all "system matrix has N negative eigenvalues" (5 to 73), which the
+coupled temperature-displacement step also gives in the 2x6x8 job. Not investigated further.
+Likely cause (not tested): the near-singular first-increment tangent that the emulation cuts
+back is not caught in Abaqus, and NaN enters the state variables at that increment.
+Files: `results/abaqus_fifa/uel_implant6x18x24_b1_sl3.sta`, `..._gp.txt.gz`.
+Deck: `make_implant_uel_inp.py abaqus_in --nr 6 --nt 18 --nz 24 --seed-layers 3 --bulge 1`.
+
+**Running, not finished.** 8x24x32 fixed seed, bulge 0 and 1 (Python emulation, nohup, started
+17:44 JST). At increment 3 both show residual halving in the line search. If one stops with
+"5 cutbacks did not converge", the increment number and the last 30 lines of stderr go here.
+
+**Not done.** Homeostatic-pressure Abaqus check (2x6x8, p_h/E = 0.05) and the Lean/Mathlib check.
