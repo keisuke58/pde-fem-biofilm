@@ -342,6 +342,10 @@ this machine's specific workflow.
   Chapter 3 (final, extracted PDF) is scheduled by the user in Slack for
   Fri 23 Oct; Japanese message with ，． punctuation. Next online meeting
   2 Nov 9:00.
+  **RA at Keio (Slack DM, 26-28 Oct 2026):** the user asked for paid RA work (JAXA, quantum ML, CFRP/NEDO or
+  other lab projects) after returning in January; offered up to about 20 h/week. Her answer (28 Oct): start in
+  January, she checks the procedure (NEDO/JST); hours and tasks follow from her. She also mentioned DC1/PhD; the
+  user answered that he plans a job after the master's.
 - **Keita Ando (Keio) is an associate professor (准教授)**, Department of
   Mechanical Engineering: "安藤先生". Address kando@mech.keio.ac.jp (from the
   department's 2021 lab brochure; not yet confirmed in use). Contact for the
