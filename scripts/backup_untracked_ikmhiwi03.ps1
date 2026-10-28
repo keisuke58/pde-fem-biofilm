@@ -14,7 +14,7 @@ Zips (Zip64 through System.IO.Compression, so files over 2 GB are fine):
                         logs, automatic chains (auto_*), small JSON; Abaqus: living_gp.txt, .sta, .msg, .dat; the
                         20 Oct backup; the Python runs' scripts and logs in F:\auto_*
   python_fields.zip     (-Figdata) the Python 3D fields figdata\*.npz (not figdata\ckpt)
-  rst_main.zip         (-Rst) the .rst of the main runs (u8_*)
+  rst_main.zip         (-Rst) the .rst of the four ANSYS runs behind the thesis numbers (up8/up16/up24, u8_16_sep_ab)
 Left out on purpose (can be recomputed or are scratch): .rst/.odb except -Rst, comp_trace.csv, phi_trace.csv, front_dump,
 nem_dump, out_*.txt over 20 MB, solver scratch (.esav .full .emat .r00* .nr* .page .osav .stt .mdl .prt .SMABulk ...).
 #>
