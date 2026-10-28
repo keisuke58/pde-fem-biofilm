@@ -635,3 +635,19 @@ seed alpha - 1 0.04127 / 0.03979, seed vM/E 0.02904 / 0.02608, interior vM/E 0.0
 max vM/E 0.3840 / 0.3645. The seed has 4 layers here and 3 in the 6x18x24 runs, so the two
 meshes are not compared directly; a 6x18x24 run with 4 layers is needed for the convergence check.
 Files: `p3/uel/results/implant_8x24x32_sl4.json`, `implant_8x24x32_b1_sl4.json`.
+
+## 2026-10-29: Abaqus 6x18x24 bulge 1, NaN found and guarded
+
+The NaN of 28 Oct came from the residual, not from the state: at the first attempt of increment 1
+(dt = 3.958e-3) 72 UEL elements returned a non-finite R (outer two radial layers, top three z rows,
+all theta; the seed layer at the top edge). Abaqus read the NaN residual as converged, so there was no
+cutback. `unified_uel.f90` now checks sv after `advance_composition` and R after `residual`; a non-finite
+value gives PNEWDT = 0.25 and a line "UEL non-finite ..." on stdout (element, time). The job then
+cut back (attempt 2, dt 9.896e-4) and ran 64 increments to the end, no NaN.
+Against the emulation (`compare_implant_gp.py`): seed alpha - 1 0.04467319 / 0.04469628, max vM/E
+0.3017095 / 0.3018817 (same element 2485); largest element-wise difference 1.9e-4 (alpha - 1), 1.7e-4
+(vM/E), tolerance 1e-5, so FAIL by the tolerance. The step sequences differ slightly (Abaqus three
+increments of 9.896e-4, emulation two), which is a time-discretisation difference, not shown to be the
+whole cause. Not done: why the Newton iterate of the first attempt becomes non-finite; a comparison
+with the same increment sequence (fixed dt = 9.896e-4 in both).
+Files: `results/abaqus_fifa/uel_implant6x18x24_b1_sl3.sta`, `..._gp.txt.gz`.

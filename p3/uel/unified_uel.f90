@@ -1349,10 +1349,21 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
     end if
     ! the registry for rules 1 and 2 (the other elements read it in the next increment)
     if (init_rule >= 1) call reg_put(JELEM, TIME(2), COORDS, Un, sv)
+    if (.not. all(abs(sv) <= huge(1d0))) then
+      ! a NaN or Inf state: Abaqus would read a NaN residual as converged (6x18x24 bulge 1, 28 Oct), so cut back
+      write(*, '(a,i8,a,es12.4)') 'UEL non-finite state, element', JELEM, ' time', TIME(2)
+      PNEWDT = 0.25d0
+      return
+    end if
   end if
   call residual(U, Un, COORDS, sv, PROPS(1:16), max(DTIME, 1d-30), R)
   if (gate_failed) then
     PNEWDT = 0.5d0                         ! the local solve of the implicit gate did not converge
+    return
+  end if
+  if (.not. all(abs(R) <= huge(1d0))) then
+    write(*, '(a,i8,a,es12.4)') 'UEL non-finite residual, element', JELEM, ' time', TIME(2)
+    PNEWDT = 0.25d0
     return
   end if
   RHS(1:NDOF, 1) = -R
