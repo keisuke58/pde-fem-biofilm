@@ -166,6 +166,10 @@ FRONT_LIVING = FRONT_LIVING or FRONT_ELL > 0
 # --stiff-species m1,m2,... (Keio continuation; not in the thesis): E = E(phi_3D) * sum_i w_i m_i with the shares
 # w_i = phi_i / sum_j phi_j of the point model (dead cells included); m_i are relative moduli (no data: sensitivity).
 STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") if x]
+# --growth-living (29 Oct 2026, Keio continuation; changes Eq. 36, not in the thesis): only living biomass grows,
+# d alpha/dt = k_alpha phi_3D (sum_i phibar_i) as in Wanner and Gujer 1986; the living fraction is that of the step
+# (Lf, the same field as the consumption). Cells where the point model has not started have L = 0 and do not grow.
+GROWTH_LIVING = "--growth-living" in sys.argv
 # --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
 # (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
 #     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
@@ -309,7 +313,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
        + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + ("_budget" if BUDGET else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + ("_growliv" if GROWTH_LIVING else "") + ("_budget" if BUDGET else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -887,6 +891,8 @@ def run(example, antibiotic):
                     if MMS:
                         d = d + S_phi(X, Y, Z, tt)
                     da = ka * ph if GATE is None else ka * ph * GATE      # --homeostatic: Eq. 36 gated
+                    if GROWTH_LIVING:
+                        da = da * np.clip(Lf, 0.0, 1.0)
                     if OBSTACLE:                    # no biofilm inside the obstacles
                         d = np.where(OBST, 0.0, d)
                         return d, np.where(OBST, 0.0, da)
