@@ -435,7 +435,9 @@ this machine's specific workflow.
   - **Eq. 35 and the antibiotic field keep their time derivative** (dc/dt = ..., Oliver's sketch and Klempt 2024 as
     printed; 21 Oct: had been dropped everywhere). **d from Klempt 2024 Table 2** (the user): 1e10 um^2/T* on the 20 um
     cube = 1e8 mm^2/T* on the 2 mm cube, so the fields adjust in ~4e-8 T* and the quasi-static solution is exact to
-    < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. Before writing or changing any coupling equation, check it term by
+    < 0.005; d = 1 mm^2/T* (Oliver's example deck) is only a slow-diffusion sensitivity. **Eq. 35 with c-dot is the base (the user, 29 Oct, repeatedly): write it with c-dot in every document and figure; never
+    say the time derivative is dropped. New Python runs use `--transient-c 1e8` (backward Euler, same cost). The runs up to 29 Oct
+    used the limit; at 32^3, step 0.0025, the two agree within 0.1 % (seed living fraction, c, alpha - 1, von Mises).** Before writing or changing any coupling equation, check it term by
     term against the table "Equation check against Oliver's sketch" in `MEETING_2026-10-20.md` and update the table.
   - **Result generations** (do not mix; updated 22 Oct): `results/2026-10-living/README.md` (ANSYS: `u8_` = main) and
     `results/2026-10-3d/README_coupled_living.md` (Python: `..._a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast` = main;
