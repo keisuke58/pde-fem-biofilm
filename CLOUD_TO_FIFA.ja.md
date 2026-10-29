@@ -4,6 +4,28 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年10月29日 夕方（新しい依頼：生きている量で成長する則の格子列。慶應での続き、修論には入れない）
+
+`ansys_usermat/apdl/coupled_living_consumption.py` に `--growth-living`（既定は切）を足した：式 36 を dα/dt = k_α φ_3D Σφ̄ᵢ にする
+（生きている菌だけが成長する、Wanner & Gujer 1986 と同じ考え）。今の成長則との比較の格子列を fifa で回す。
+
+**準備**：`git pull origin master`。`pip install pyamg`（無ければ）。`--fortran` は `ecology_native.f` を ctypes で使う
+（`ansys_usermat/coupling/ecology_native_ctypes.py` が自分でビルドする。できなければ `--fortran` を外して、外したことを記録）。
+
+**共通のオプション**（修論の本番と同じ）：
+```
+P="--fast --tvd --wall-grad mirror --gc 1 --gab 1 --alpha0 100 --front 1 --tab 0.333333 --phi-min 0.001 --v2 --fortran --ansys-bc --inherit-living --dtc 0.0025"
+```
+**回すもの**（上から 1 本ずつ、nohup か tmux で切り離して）：`--growth-living` を付けて、4 つの例 × 3 格子
+- 例：`--only separate`、`--only separate_ab`、`--mix-equal --only mixed`、`--mix-equal --only mixed_ab`
+- 格子：`--nf 32`（指定なし）→ `--nf 64` → `--nf 128`（128³ は長いので最後。1 本の時間を記録）
+- 比べる相手（成長則なし）は既にある：32³〜128³ は `results/2026-10-3d/` の `..._front1_dtc0.0025_..._inhliv_...json` と
+  修論の表 `tab:ch5-gci`（抗菌薬ありの分離・混合（等量）の 32³〜128³ は A-89 の値）。
+
+**報告**（`KEIO_CHAIN_LOG.md`、結果の JSON は `results/2026-10-3d/` に `_growliv` 付きで、`keio/uel-implant` に push）：
+例ごと・格子ごとに、種の平均の Σφ̄ᵢ、c、α−1、vM と、成長則なしとの比（α−1 と vM）。3 格子がそろったら GCI（Celik 2008、Fs 1.25）。
+UEL・Abaqus の作業は止めてよい（終わっている）。
+
 ## 2026年10月29日（28 日の結果への返事。論文用、急がない）
 
 29 日の報告（NaN は bulge 1 の最初の増分の反復 4 で残差に入る、T/240 なら通る、bulge 0 は PASS、圧力で止まる成長則 4/4 PASS）を受けて。
