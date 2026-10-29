@@ -396,6 +396,9 @@ IKMHIWI03 では回せない）。
 
 ## 29 Oct 深夜：式 35 は ċ 付きが基本
 
-- **これからの Python の本は全部 `--transient-c 1e8` を付ける**（後退オイラー、計算時間は同じ）。走っている成長則 A/B の系列はそのまま（極限で照合済み、32³ で差 ≤ 0.1 %）。
+- **これからの Python の本は全部 `--transient-c 1e8` を付ける**（後退オイラー、計算時間は同じ）。
+- **成長則 A/B の系列（4 例 × 32³/64³/128³、`--growth-living` と `--growth-living-energy`）と 64³ の基準 2 本も `--transient-c 1e8` を付けて回し直す。**
+  今走っている極限の系列は止めずに最後まで（ċ との照合に使う）。空いている CPU とメモリがあればすぐ並べて、なければ続けて。
+  論文の表は ċ 付きの方を使う。JSON のタグは `_transc1e+08` が付く。報告では同じ格子の ċ と極限の差（生きている量、c、α−1、von Mises）を並べる。
 - Abaqus：`abaqus_living/make_living_inp.py` は既定で `--transient-c 1e8`（PROPS(25)）。`--transient-c 0` で前と同じ極限。
   `living_uel_abaqus.for` を作り直した（接線テスト 1e−10）。Abaqus で走らせるなら 16³ で ċ あり・なしの 1 組を先に。

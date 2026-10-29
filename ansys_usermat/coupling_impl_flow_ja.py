@@ -22,7 +22,7 @@ F = dict(state="#eef0f2", field="#e8eef7", nut="#e6f2ef", point="#fbeee5", start
 STEPS = [
     ("state", r"状態（時刻 $t_n$、セルごと）",
      r"場：$\phi_{3D}^n,\ \alpha^n,\ c^n,\ a^n$　　点モデル：$\mathbf{g}^n=(\phi_1,\phi_2,\phi_0,\psi_1,\psi_2,\gamma)$、開始フラグ"
-     "\n" r"生きている量 $L^n=\Sigma_i\,\phi_i\psi_i$（$\mathbf{g}^n$ から。始まっていないセルは $0$）",
+     "\n" r"生きている量 $(\Sigma_i\bar\phi_i)^n$，$\bar\phi_i=\phi_i\psi_i$（$\mathbf{g}^n$ から。始まっていないセルは $0$）",
      r"同じ量を Gauss 点の状態変数に持つ" "\n" r"（$\alpha-1$、$\mathbf{g}$ は usermat の ustatev）", 1.5),
     ("field", r"1. $\phi_{3D}$ と $\alpha$ を進める（RK4、内側の刻み $\Delta t/m$）",
      r"$\dot\phi_{3D}=\beta\nabla_h^2\phi_{3D}+k_\alpha\alpha-r\frac{c}{k+c}\,\mathbf{n}_c\cdot\nabla_h\phi_{3D}-\kappa_p\,[\phi_{3D}]_\pm$,"
@@ -32,10 +32,10 @@ STEPS = [
      r"USSFin（オリバーの要素）：陽的に更新" "\n" r"$\nabla^2$、$\nabla$ は NEM" "\n"
      r"（近傍 30 点の重み付き最小二乗）" "\n" r"前線の項は風上側の MLS 勾配" "\n" r"$\alpha$：usermat で Gauss 点ごとに積分", 2.3),
     ("nut", r"2. 栄養 $c^{n+1}$ と抗菌薬 $a^{n+1}$（式 35、$\dot c$ 付き）",
-     r"$\dot c=d\nabla^2c-g\,\phi_{3D}Lc$ を後退オイラーで：$\dfrac{c^{n+1}-c^n}{d\,\Delta t}=\nabla_h^2c^{n+1}-\dfrac{g}{d}\,\phi_{3D}^{n+1}L^n\,c^{n+1}$、供給面で $c=1$" "\n"
-     r"$a$ も同じ式（外の面で $a=1$、$T^*\geq1/3$）。AMG 前処理つき CG で解く。$L^n$ は 1 ステップ前の値" "\n"
+     r"$\dot c=d\nabla^2c-g\,\phi_{3D}\,(\Sigma_i\bar\phi_i)\,c$ を後退オイラーで：$\dfrac{c^{n+1}-c^n}{d\,\Delta t}=\nabla_h^2c^{n+1}-\dfrac{g}{d}\,\phi_{3D}^{n+1}(\Sigma_i\bar\phi_i)^n c^{n+1}$、供給面で $c=1$" "\n"
+     r"$a$ も同じ式（外の面で $a=1$、$T^*\geq1/3$）。AMG 前処理つき CG で解く。$(\Sigma_i\bar\phi_i)^n$ は 1 ステップ前の値" "\n"
      r"$d=10^8$ mm$^2/T^*$（--transient-c 1e8）。左辺 $\approx10^{-6}$；29 日までは左辺 0 の極限（差 $\leq0.1\,\%$）",
-     r"同じ式 35 を要素の" "\n" r"2 つの栄養の場で（NUT_TRANSIENT：$\dot c$ 付き）" "\n" r"（LIVING_CONS で消費に $L$ を掛ける）", 2.1),
+     r"同じ式 35 を要素の" "\n" r"2 つの栄養の場で、$\dot c$ 付き" "\n" r"（LIVING_CONS で消費に $\Sigma_i\bar\phi_i$ を掛ける）", 2.1),
     ("start", r"3. 新しく届いたセル（$\phi_{3D}^{n+1}\geq\phi_{\min}=10^{-3}$、未開始）",
      r"定着済みの隣の $\mathbf{g}$ を $\phi_{3D}$ の重みで平均し、量 $\phi_i$ を生きている量の比で配分、"
      r"$\psi_i=0.999$、$\gamma=0$" "\n"
@@ -47,7 +47,7 @@ STEPS = [
      r"Klempt et al. 2026 の式のまま（Fortran の ecology_native.f を ctypes で）→ $\mathbf{g}^{n+1}$",
      r"usermat が Gauss 点ごとに" "\n" r"同じ Fortran を呼ぶ" "\n" r"（eco_resjac、eco_solve）", 1.9),
     ("state", r"5. 生きている量の更新",
-     r"$L^{n+1}=\Sigma_i\,\phi_i^{n+1}\psi_i^{n+1}$（次のステップの手順 2 で使う）",
+     r"$(\Sigma_i\bar\phi_i)^{n+1}=\Sigma_i\,\phi_i^{n+1}\psi_i^{n+1}$（次のステップの手順 2 で使う）",
      r"同じ（状態変数から）", 0.95),
     ("mech", r"6. 応力（書き出す時刻だけ。成長には戻さない）",
      r"$\phi_{3D}$ と $\alpha-1$ を $16^3$ の六面体要素ごとにセル平均 → $\mathbf{F}_g=\alpha\mathbf{I}$、ネオフック、"
@@ -66,7 +66,7 @@ GLOSS = [
     ("RK4", r"4 段 4 次の陽的ルンゲ＝クッタ法。局所誤差 $O(\Delta t^5)$。拡散数 $\beta\Delta t/h^2$ とクーラン数 $|\mathbf{v}|\Delta t/h$ に安定の上限"),
     ("後退オイラー（式 35）", r"$\dot c$ を $(c^{n+1}-c^n)/\Delta t$ で置き、右辺を新しい時刻で評価する陰解法。どの $\Delta t$ でも安定で、1 ステップ 1 回の線形解。"
      "\n" r"拡散の時間 $\ell^2/d\approx10^{-8}T^*\ll\Delta t$ なので左辺は $10^{-6}$ 程度。左辺 0 の極限との差は $32^3$ で $\leq0.1\,\%$"),
-    ("1 ステップ遅れ", r"手順 2 で $L^{n+1}$ の代わりに $L^n$ を使う（陽的な結合）。誤差は $O(\Delta t)$。2 回反復しても差は刻みの誤差以下"),
+    ("1 ステップ遅れ", r"手順 2 で $(\Sigma_i\bar\phi_i)^{n+1}$ の代わりに $(\Sigma_i\bar\phi_i)^n$ を使う（陽的な結合）。誤差は $O(\Delta t)$。2 回反復しても差は刻みの誤差以下"),
     ("疎行列、CG、AMG", r"$-\nabla_h^2+q$ の行列は対称正定値で各行の非零は 7 個。CG：対称正定値の連立方程式のクリロフ部分空間の反復法。"
      "\n" r"AMG：行列から粗い階層を作る前処理で、反復回数を格子の大きさにほぼよらなくする"),
     ("陰的オイラー法", r"$(\mathbf{g}^{k+1}-\mathbf{g}^k)/\delta t=\mathbf{f}(\mathbf{g}^{k+1})$。1 次精度、A 安定（刻みを大きくしても発散しない）"),
