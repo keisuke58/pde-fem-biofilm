@@ -759,3 +759,12 @@ bulge 1 and 7.8e-5..8.7e-5 with bulge 0, so the top outer elements are up to abo
 
 Files: `p3/uel/results/implant_6x18x24_b1_sl3_n240.json`, `p3/uel/results/abaqus_fifa/uel_implant6x18x24_b1_sl3_n240.sta`
 and `..._gp.txt.gz` (this replaces the unguarded T/240 record of the morning, same name).
+
+## 2026-10-29 (evening, in progress): growth-living (B) and growth-living-energy (A), 4 cases x 32/64/128
+
+CLOUD_TO_FIFA 29 Oct evening. `pyamg` 5.3.0 was installed into the venv on fifa. `ecology_native_ctypes` built, so the
+runs keep `--fortran`. The options are the common P of the instructions (`--dtc 0.0025`). The runs go one at a time
+(nohup, `~/runs/growliv_20261029/run.sh`), in the order 32 B, 32 A, 64 B, 64 A, 128 B, 128 A.
+Interim push (29 Oct, 23:47 JST): the 32^3 runs (A and B) and the 64^3 B runs are done, about 40 s each at 32^3. The JSONs
+have `_dtc0.0025_` in the name; the 32^3 `_growliv` files of master have no dtc tag (outer step 0.025), so they are a
+different setting. The table, ratios and GCI follow when 128^3 is done.
