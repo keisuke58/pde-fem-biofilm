@@ -55,10 +55,33 @@ STEPS = [
      r"usermat：$\mathbf{F}_e=\mathbf{F}\mathbf{F}_g^{-1}$、" "\n" r"接線は $\mathbf{F}$ の摂動（$10^{-7}$）", 1.6),
 ]
 
+# glossary under the flow (plain Japanese)
+GLOSS = [
+    ("セル", "立方体を細かく刻んだ小さな箱。値はここに置く"),
+    ("ラプラシアン（7 点）", "まわりと比べてどれだけ高いか低いか。前後・左右・上下の 6 つと自分で計算。拡散に使う"),
+    ("鏡映（壁）", "壁の外に鏡に映した自分がいるとみなす。壁から何も出入りしない条件になる"),
+    ("風上（upwind）", "流れてくる側の値を使う計算。流れのある問題で安定する"),
+    ("TVD、MUSCL、minmod", "風上の計算を 2 次の精度に上げつつ、縁でガタガタしないようブレーキをかける仕組み"),
+    ("正則化 ε", "∇c ÷ |∇c| で 0 で割らないよう、分母に小さい数を足すこと"),
+    ("RK4", "1 歩進むときに途中の傾きを 4 回測って平均する、精度の高い進め方"),
+    ("準定常", "栄養は一瞬で行き渡るので、毎回「落ち着いた後の形」だけを計算する"),
+    ("1 ステップ遅れ", "栄養の消費に、1 つ前の時刻の生きている量を使うこと"),
+    ("疎行列、CG、AMG", "ほとんど 0 の大きな連立方程式を、少しずつ答えに近づけて解く（AMG は粗い格子で速める工夫）"),
+    ("陰的オイラー法", "進んだ先の値で式を立てる進め方。手間はかかるが大きく進めても壊れない"),
+    ("Newton 法、接線", "方程式の答えを接線をたどって探す方法。接線は「入力を少し変えたときの出力の変化」"),
+    ("ctypes", "Python から Fortran のプログラムを呼ぶ仕組み"),
+    ("Gauss 点、状態変数", "要素の中の計算点（1 要素に 8 個）と、そこで次の時刻へ持ち越す数値"),
+    ("NEM、MLS", "近くの点の値に曲面を当てはめて、傾きや曲がりを出す方法（オリバーの要素）"),
+    ("ネオフック", "ゴムのような材料のいちばん簡単なモデル"),
+    ("選択的低減積分", "ほとんど縮まない材料で、要素が固くなりすぎないようにする工夫"),
+    ("F の摂動", "変形を少しだけずらして答えの変化を測り、接線を数値で作ること"),
+]
+
 
 def main():
     W_L, W_R, X0, GAP = 12.4, 4.9, 0.1, 0.45
-    tot = sum(s[4] for s in STEPS) + 0.32 * (len(STEPS) - 1) + 0.9
+    GH = 0.42 * len(GLOSS) + 0.7
+    tot = sum(s[4] for s in STEPS) + 0.32 * (len(STEPS) - 1) + 0.9 + GH
     fig, ax = plt.subplots(figsize=(8.3, 8.3 * tot / (X0 + W_L + GAP + W_R + 0.1)))
     ax.set_xlim(0, X0 + W_L + GAP + W_R + 0.1); ax.set_ylim(0, tot); ax.axis("off")
     ax.text(X0 + W_L / 2, tot - 0.25, r"有限体積のコード（Python、外側の刻み $\Delta t=0.0025\,T^*$）", ha="center",
@@ -87,6 +110,15 @@ def main():
                                  mutation_scale=10, lw=1.0, color=C["point"], linestyle="--"))
     ax.text(xl, (centers[-2][0] + centers[0][0]) / 2, r" $n\to n+1$ ", rotation=90, ha="center", va="center",
             fontsize=7.5, color=C["point"], bbox=dict(fc="white", ec="none", pad=0.5))
+    # glossary
+    yg = centers[-1][0] - 0.35
+    ax.add_patch(FancyBboxPatch((X0, yg - GH + 0.2), W_L + GAP + W_R, GH - 0.2, boxstyle="round,pad=0.01,rounding_size=0.05",
+                                fc="white", ec="#999999", lw=0.8))
+    ax.text(X0 + 0.12, yg - 0.12, "用語", ha="left", va="top", fontsize=8.6, weight="bold", color="#333333")
+    for k, (term, mean) in enumerate(GLOSS):
+        yy = yg - 0.5 - 0.42 * k
+        ax.text(X0 + 0.2, yy, term, ha="left", va="top", fontsize=7.0, weight="bold", color="#333333")
+        ax.text(X0 + 3.9, yy, mean, ha="left", va="top", fontsize=7.0, color="#333333")
     out = ROOT / "assets" / "fig_coupling_impl_flow_ja"
     fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight")
     fig.savefig(out.with_suffix(".png"), dpi=300, bbox_inches="tight")
