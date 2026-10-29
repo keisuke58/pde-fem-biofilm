@@ -212,7 +212,7 @@ def main():
         yy -= 0.42 * nl + 0.12
     out = ROOT / "assets" / "fig_coupling_impl_flow_ja"
     fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(out.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    fig.savefig(out.with_suffix(".png"), dpi=600, bbox_inches="tight")
     print("wrote", out.with_suffix(".pdf"))
 
 
