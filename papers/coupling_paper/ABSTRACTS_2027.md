@@ -5,7 +5,7 @@ Muramatsu; `OUTLINE.md` for the author list). Numbers from `sec3_verification_dr
 October 2026; recheck them against the final thesis (4 Nov) before sending. Deadlines are expected in January 2027
 (USNCCM: mid-January in earlier editions; ESB: late January); confirm on the official sites.
 
-Authors (to agree): K. Nishioka, Oliver [surname], (F. Klempt), M. Muramatsu, M. Soleimani, (P. Junker).
+Authors (to agree): K. Nishioka, Oliver [surname], F. Klempt, M. Muramatsu, M. Soleimani, P. Junker.
 
 ---
 

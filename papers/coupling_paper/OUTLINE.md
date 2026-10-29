@@ -22,9 +22,8 @@ biomass, verification in two implementations, and what the composition does to g
 | Prof. Junker (IKM) | head of the institute, Klempt 2024/2026 co-author | ask Meisam whether to include |
 | Assoc. Prof. Mayu Muramatsu (Keio) | Keio supervisor | co-author (the user, 21 Oct); consent asked on 2 Nov; matters for the Keio master (single-author rule of the report: a co-authored paper is cited, not used as the report basis) |
 
-Proposed order (the user, 29 Oct; to agree with Meisam in Jan 2027): K. Nishioka, Oliver [surname], (F. Klempt), M. Muramatsu,
-M. Soleimani, P. Junker. Felix only if he wants to be (his published models are cited either way); Prof. Junker as head of
-the institute last, if Meisam agrees.
+Proposed authors (the user, 29 Oct: these six; to agree with Meisam in Jan 2027): K. Nishioka, Oliver [surname],
+F. Klempt, M. Muramatsu, M. Soleimani, P. Junker.
 
 Open: the Keio 課題研究報告 says a report "based on a submitted or published single-author paper" must state it; a
 co-authored paper is still fine to publish, but check with Assoc. Prof. Muramatsu how it counts for the Keio side.
