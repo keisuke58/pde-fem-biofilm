@@ -736,3 +736,26 @@ Step 4 of the 16 Oct instructions (6x18x24 emulation with the gate, about 35 min
 **Lean / Mathlib (16 Oct night): skipped.** Installing elan with `curl ... elan-init.sh | sh`, as step 0 says, was
 refused by the permission settings of the Claude session on fifa. The user decided (29 Oct) to skip the Lean / Mathlib
 check on fifa: nothing was installed and `keio/lean-check` was not created.
+
+## 2026-10-29: CLOUD_TO_FIFA 29 Oct, step 1 (same dt = T/240 in both): PASS
+
+Merged `origin/master` (with the `--ninc` fix of `make_implant_uel_inp.py`); the deck now has the GROW data line
+`0.0009895833333, 0.2375, 9.6639e-07, 0.0009895833333` by itself. The UEL is the guarded one in the repository.
+Deck and emulation: `make_implant_uel_inp.py [abaqus_in | --run] --nr 6 --nt 18 --nz 24 --seed-layers 3 --bulge 1 --ninc 240`
+(script `p3/uel/abaqus_in/run_n240.sh`).
+
+- Abaqus: 240 increments, 1 attempt each, no cutback, no "UEL non-finite" line, 12 min.
+- Emulation: 240 increments, no cutback, 3 Newton iterations each (720 in all), 1 h 42 min (6147 s).
+- `compare_implant_gp.py`: seed alpha - 1 0.0443474 in both, seed vM/E 0.04267654 in both, max vM/E 0.3002227 in
+  both (element 2485); largest element-wise difference 4.90e-8 (alpha - 1), 4.24e-8 (vM/E). **PASS** (tol 1e-5).
+
+So the FAIL of 28/29 Oct (1.8e-3) came only from the different increment sequences. Step 2 is not needed.
+
+Step 3 (recorded only, no conclusion): det J at the 8 Gauss points from the deck geometry. The elements are hardly
+distorted: the min/max ratio of det J per element is at least 0.971 with bulge 1 (median 0.983) and 0.9885 with bulge 0.
+The elements around the nodes of the jump in iteration 3 (3233, 3198, 3197; top outer edge, z = 2) have 0.992, so they
+are not the worst. Bulge 1 widens the outer radius at the top edge from 2.26 to 3.26: det J ranges 7.8e-5..1.24e-4 with
+bulge 1 and 7.8e-5..8.7e-5 with bulge 0, so the top outer elements are up to about 1.4 times larger.
+
+Files: `p3/uel/results/implant_6x18x24_b1_sl3_n240.json`, `p3/uel/results/abaqus_fifa/uel_implant6x18x24_b1_sl3_n240.sta`
+and `..._gp.txt.gz` (this replaces the unguarded T/240 record of the morning, same name).
