@@ -23,7 +23,7 @@ H = float(sys.argv[sys.argv.index("--h") + 1]) if "--h" in sys.argv else 2.0
 TIMES = (12.0, 24.0, 36.0, 60.0)
 fig, axs = plt.subplots(2, 4, figsize=(6.3, 3.45), constrained_layout=True)
 for row, ab in enumerate(("", "_ab")):
-    z = np.load(ROOT / "figdata" / f"maze_h{H:g}_tend60{ab}_k24fig.npz")
+    z = np.load(ROOT / "figdata" / f"maze_h{H:g}_tend60{ab}_k24fig_transc.npz")
     op, nut = z["open"], z["nut"]
     for col, t in enumerate(TIMES):
         ax = axs[row, col]

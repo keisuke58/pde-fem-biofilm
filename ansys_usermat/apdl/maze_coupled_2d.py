@@ -49,6 +49,7 @@ AB = "--ab" in sys.argv
 # default: the phi-weighted mean state of their colonised neighbours
 FRESH = "--fresh-start" in sys.argv
 LIVING = "--inherit-living" in sys.argv   # inherit the living composition with a fresh psi (25 Oct)
+TRANSIENT_C = "--transient-c" in sys.argv  # 29 Oct: Eq. 35 and the antibiotic field with dc/dt (backward Euler, d = D_NUT)
 SEED = _opt("--seed", 1, int)
 # Klempt 2024 Table 6 (maze), the rest Table 2
 D_NUT, BETA, K_ALPHA, R_FRONT, K_MONOD, G_CONS = 1e13, 10.0, 1e-6, 200.0, 1.0, 1e8
@@ -59,7 +60,7 @@ T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
 MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("_inhliv" if LIVING else "") + ("" if "--snaps" not in sys.argv else "_snaps")
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("_inhliv" if LIVING else "") + ("" if "--snaps" not in sys.argv else "_snaps") + ("_transc" if TRANSIENT_C else "")
 
 
 # ---------------------------------------------------------------- maze
@@ -195,16 +196,20 @@ class Ops:
             out += np.maximum(v[a], 0) * bw + np.minimum(v[a], 0) * fw
         return out
 
-    def solve(self, phi, Lv, fixed, value):
-        """0 = d lap u - g phi L u on the open cells, u = value on `fixed`, u = 0 in the walls (quasi-static)"""
-        if value == 0.0:
+    def solve(self, phi, Lv, fixed, value, prev=None, dt=None):
+        """(u - prev)/(d dt) = lap u - (g/d) phi L u on the open cells (backward Euler of Eq. 35; prev None: the limit
+        d dt -> infinity), u = value on `fixed`, u = 0 in the walls"""
+        if value == 0.0 and (prev is None or not np.any(prev)):
             return np.zeros(self.open.shape)
         q = (G_CONS / D_NUT) * H ** 2 * (np.clip(phi, 0, 1) * Lv)
-        A = (-self.L + sp.diags(q.ravel())).tolil() if False else (-self.L + sp.diags(q.ravel()))
+        m = 0.0 if prev is None else H ** 2 / (D_NUT * dt)
+        A = -self.L + sp.diags(q.ravel() + m)
         keep = (self.open & ~fixed).ravel().astype(float)
         A = (sp.diags(keep) @ A + sp.diags(1.0 - keep)).tocsc()
-        b = np.where(fixed.ravel(), 1.0, 0.0)
-        return value * spla.spsolve(A, b).reshape(self.open.shape)
+        b = np.where(fixed.ravel(), value, 0.0)
+        if prev is not None:
+            b = b + keep * m * prev.ravel()
+        return spla.spsolve(A, b).reshape(self.open.shape)
 
 
 def start_state(*phis):
@@ -263,14 +268,22 @@ def main():
     for k in range(nsteps):
         T1 = (k + 1) * DT_C
         cf = c
-        for _ in range(per):
-            cf = O.solve(phi, Lv, nut, 1.0)
+        for j in range(per):
+            if not TRANSIENT_C:
+                cf = O.solve(phi, Lv, nut, 1.0)
+            elif j > 0:                          # c of the inner time t_j from t_{j-1}; at j = 0 the end value c
+                cf = O.solve(phi, Lv, nut, 1.0, cf, dt)
             k1 = f(phi, alpha, cf); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], cf)
             k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], cf); k4 = f(phi + dt * k3[0], alpha + dt * k3[1], cf)
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
             alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
-        c_new = O.solve(phi, Lv, nut, 1.0)
-        a_new = O.solve(phi, Lv, ab_src, 1.0 if (AB and T1 > T_AB + 1e-12) else 0.0)
+        av = 1.0 if (AB and T1 > T_AB + 1e-12) else 0.0
+        if TRANSIENT_C:
+            c_new = O.solve(phi, Lv, nut, 1.0, cf, dt)
+            a_new = O.solve(phi, Lv, ab_src, av, a, DT_C)
+        else:
+            c_new = O.solve(phi, Lv, nut, 1.0)
+            a_new = O.solve(phi, Lv, ab_src, av)
         idx = np.flatnonzero(on.ravel())
         Gf = G.reshape(-1, 12)
         if idx.size:

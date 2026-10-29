@@ -24,7 +24,7 @@ import pyvista as pv  # noqa: E402
 
 pv.OFF_SCREEN = True
 # main settings (25 Oct): 32^3, outer step 0.0025, TVD, mirror walls, new points inherit the living composition
-TAG = "_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv{mix}_a100_gab1_gc1_tab0.333333_snaps_tvd_wgmirror_fast_obstcolumns_{ex}"
+TAG = "_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv{mix}_a100_gab1_gc1_tab0.333333_snaps_transc1e+08_tvd_wgmirror_fast_obstcolumns_{ex}"
 TIMES = (0.05, 0.1, 0.2)
 LEVEL = {"separate": 0.5, "mixed": 0.2}   # the mixed front carries lower phi_3D (domain maximum about 0.7 at T* = 1)
 BARS = []

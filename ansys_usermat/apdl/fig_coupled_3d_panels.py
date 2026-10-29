@@ -29,7 +29,7 @@ CASE = sys.argv[1] if len(sys.argv) > 1 else "separate_ab"
 RULE = sys.argv[2] if len(sys.argv) > 2 else "inhliv"
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
 Z = np.load(ROOT / "figdata" / (f"coupled_living_{CASE}_nf64_front1_phimin0.001_v2_fortran_ansysbc_{RULE}{MIX}_a100"
-                                 f"_gab1_gc1_tab0.333333_snapsvm_tvd_wgmirror_fast_{CASE}.npz"))
+                                 f"_gab1_gc1_tab0.333333_snapsvm_transc1e+08_tvd_wgmirror_fast_{CASE}.npz"))
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 T_SHOW = [min(times, key=lambda t: abs(t - 1 / 3)), times[-1]]
 n = Z[f"phi_{times[0]}"].shape[0]
