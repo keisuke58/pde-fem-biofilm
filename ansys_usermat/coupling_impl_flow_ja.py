@@ -57,30 +57,35 @@ STEPS = [
 
 # glossary under the flow (plain Japanese)
 GLOSS = [
-    ("セル", "立方体を細かく刻んだ小さな箱。値はここに置く"),
-    ("ラプラシアン（7 点）", "まわりと比べてどれだけ高いか低いか。前後・左右・上下の 6 つと自分で計算。拡散に使う"),
-    ("鏡映（壁）", "壁の外に鏡に映した自分がいるとみなす。壁から何も出入りしない条件になる"),
-    ("風上（upwind）", "流れてくる側の値を使う計算。流れのある問題で安定する"),
-    ("TVD、MUSCL、minmod", "風上の計算を 2 次の精度に上げつつ、縁でガタガタしないようブレーキをかける仕組み"),
-    ("正則化 ε", "∇c ÷ |∇c| で 0 で割らないよう、分母に小さい数を足すこと"),
-    ("RK4", "1 歩進むときに途中の傾きを 4 回測って平均する、精度の高い進め方"),
-    ("準定常", "栄養は一瞬で行き渡るので、毎回「落ち着いた後の形」だけを計算する"),
-    ("1 ステップ遅れ", "栄養の消費に、1 つ前の時刻の生きている量を使うこと"),
-    ("疎行列、CG、AMG", "ほとんど 0 の大きな連立方程式を、少しずつ答えに近づけて解く（AMG は粗い格子で速める工夫）"),
-    ("陰的オイラー法", "進んだ先の値で式を立てる進め方。手間はかかるが大きく進めても壊れない"),
-    ("Newton 法、接線", "方程式の答えを接線をたどって探す方法。接線は「入力を少し変えたときの出力の変化」"),
-    ("ctypes", "Python から Fortran のプログラムを呼ぶ仕組み"),
-    ("Gauss 点、状態変数", "要素の中の計算点（1 要素に 8 個）と、そこで次の時刻へ持ち越す数値"),
-    ("NEM、MLS", "近くの点の値に曲面を当てはめて、傾きや曲がりを出す方法（オリバーの要素）"),
-    ("ネオフック", "ゴムのような材料のいちばん簡単なモデル"),
-    ("選択的低減積分", "ほとんど縮まない材料で、要素が固くなりすぎないようにする工夫"),
-    ("F の摂動", "変形を少しだけずらして答えの変化を測り、接線を数値で作ること"),
+    ("ラプラシアン（7 点）", r"$\nabla_h^2u_i=(\sum_{j\in N(i)}u_j-6u_i)/h^2$（$N(i)$：6 つの隣）。2 次精度。拡散の項 $\beta\nabla^2\phi_{3D}$ の離散化"),
+    ("鏡映（壁）", r"壁の外の仮想セルに $u_{\rm ghost}=u_{\rm in}$（壁の内側のセルの値） を置く。壁で $\partial u/\partial n=0$（流束ゼロ）を 2 次精度で満たす"),
+    ("風上（upwind）", r"移流 $\mathbf{v}\cdot\nabla u$ のセル面の値を上流側から取る。1 次なら単調だが数値拡散 $\approx|\mathbf{v}|h/2$ を持つ"),
+    ("MUSCL、minmod、TVD", r"MUSCL：セル内を勾配で線形に再構成し面の値を 2 次精度で作る。minmod$(a,b)$：同符号なら絶対値の小さい方、"
+     "\n" r"異符号なら 0（極値で勾配を 0 にする）。これで全変動 $\sum_i|u_{i+1}-u_i|$ が増えない（TVD：新しい極値を作らない）"),
+    ("前線の向きの正則化", r"$\mathbf{n}_c=\nabla c/\sqrt{|\nabla c|^2+\varepsilon^2}$、$\varepsilon^2=10^{-6}$。$|\nabla c|\gg\varepsilon$ で単位ベクトル、$|\nabla c|\to0$ で連続に 0"),
+    ("RK4", r"4 段 4 次の陽的ルンゲ＝クッタ法。局所誤差 $O(\Delta t^5)$。拡散数 $\beta\Delta t/h^2$ とクーラン数 $|\mathbf{v}|\Delta t/h$ に安定の上限"),
+    ("準定常", r"式 35 の $\dot c$ を落とし $0=d\nabla^2c-g\phi_{3D}Lc$ を解く。拡散の時間 $\ell^2/d\approx10^{-8}T^*$ が成長の時間 $T^*$ より"
+     "\n" r"十分短いので、$\dot c$ を残した場合との差は $0.005$ 未満"),
+    ("1 ステップ遅れ", r"手順 2 で $L^{n+1}$ の代わりに $L^n$ を使う（陽的な結合）。誤差は $O(\Delta t)$。2 回反復しても差は刻みの誤差以下"),
+    ("疎行列、CG、AMG", r"$-\nabla_h^2+q$ の行列は対称正定値で各行の非零は 7 個。CG：対称正定値の連立方程式のクリロフ部分空間の反復法。"
+     "\n" r"AMG：行列から粗い階層を作る前処理で、反復回数を格子の大きさにほぼよらなくする"),
+    ("陰的オイラー法", r"$(\mathbf{g}^{k+1}-\mathbf{g}^k)/\delta t=\mathbf{f}(\mathbf{g}^{k+1})$。1 次精度、A 安定（刻みを大きくしても発散しない）"),
+    ("Newton 法、ヤコビアン", r"$\mathbf{Q}(\mathbf{g})=\mathbf{0}$ を $\mathbf{g}\leftarrow\mathbf{g}-\mathbf{J}^{-1}\mathbf{Q}$、$\mathbf{J}=\partial\mathbf{Q}/\partial\mathbf{g}$ で解く。解の近くで 2 次収束"),
+    ("ctypes", r"Python 標準の外部関数インターフェース。コンパイルした Fortran の共有ライブラリを"
+     "\n" r"倍精度の配列のまま呼ぶ（ANSYS と同じルーチン）"),
+    ("Gauss 点、状態変数", r"要素の積分に使う $2\times2\times2$ の Gauss–Legendre 点。状態変数：各点で増分をまたいで保存する内部変数（ustatev）"),
+    ("NEM、MLS", r"近傍 30 個の Gauss 点の値に 2 次の Taylor 展開（未知数 9 個）を、Gauss 型の重み（幅 $\beta^*=0.2$ mm）の"
+     "\n" r"最小二乗で当てはめ、その係数を $\nabla u$、$\nabla^2u$ とする（moving least squares）"),
+    ("ネオフック", r"$W=C_{10}(\bar I_1-3)+(J-1)^2/D_1$：等容の部分と体積の部分に分けた超弾性。$C_{10}=\mu/2$"),
+    (r"選択的低減積分（$\bar{\mathbf{B}}$ 法）", r"体積ひずみの項だけを要素で平均して積分し、$\nu\to0.5$ での体積ロッキング（剛性の過大評価）を避ける"),
+    (r"$\mathbf{F}$ の摂動", r"$F_{ij}$ を相対 $10^{-7}$ だけずらし、応力の変化の前進差分で接線剛性 $\partial\boldsymbol{\sigma}/\partial\boldsymbol{\varepsilon}$ を作る（Sun et al. 2008）"),
 ]
 
 
 def main():
     W_L, W_R, X0, GAP = 12.4, 4.9, 0.1, 0.45
-    GH = 0.42 * len(GLOSS) + 0.7
+    NL = [1 + m.count("\n") for _, m in GLOSS]
+    GH = 0.42 * sum(NL) + 0.12 * len(GLOSS) + 0.7
     tot = sum(s[4] for s in STEPS) + 0.32 * (len(STEPS) - 1) + 0.9 + GH
     fig, ax = plt.subplots(figsize=(8.3, 8.3 * tot / (X0 + W_L + GAP + W_R + 0.1)))
     ax.set_xlim(0, X0 + W_L + GAP + W_R + 0.1); ax.set_ylim(0, tot); ax.axis("off")
@@ -115,10 +120,11 @@ def main():
     ax.add_patch(FancyBboxPatch((X0, yg - GH + 0.2), W_L + GAP + W_R, GH - 0.2, boxstyle="round,pad=0.01,rounding_size=0.05",
                                 fc="white", ec="#999999", lw=0.8))
     ax.text(X0 + 0.12, yg - 0.12, "用語", ha="left", va="top", fontsize=8.6, weight="bold", color="#333333")
-    for k, (term, mean) in enumerate(GLOSS):
-        yy = yg - 0.5 - 0.42 * k
+    yy = yg - 0.5
+    for (term, mean), nl in zip(GLOSS, NL):
         ax.text(X0 + 0.2, yy, term, ha="left", va="top", fontsize=7.0, weight="bold", color="#333333")
-        ax.text(X0 + 3.9, yy, mean, ha="left", va="top", fontsize=7.0, color="#333333")
+        ax.text(X0 + 3.9, yy, mean, ha="left", va="top", fontsize=6.8, color="#333333", linespacing=1.5)
+        yy -= 0.42 * nl + 0.12
     out = ROOT / "assets" / "fig_coupling_impl_flow_ja"
     fig.savefig(out.with_suffix(".pdf"), bbox_inches="tight")
     fig.savefig(out.with_suffix(".png"), dpi=300, bbox_inches="tight")
