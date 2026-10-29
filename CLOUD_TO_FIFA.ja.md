@@ -393,3 +393,9 @@ IKMHIWI03 では回せない）。
    fig4_corner 一式を回し直して全桁一致を確かめてから。
 5. **hand-off §1 の古い記述：** どの文かを `KEIO_CHAIN_LOG.md` に書いておくこと。クラウドが直す。
 6. 実行中の **20261008b**（fig4_corner の残り 5 本）はそのまま続けてよい。終わったら結果を `keio/*` に push。
+
+## 29 Oct 深夜：式 35 は ċ 付きが基本
+
+- **これからの Python の本は全部 `--transient-c 1e8` を付ける**（後退オイラー、計算時間は同じ）。走っている成長則 A/B の系列はそのまま（極限で照合済み、32³ で差 ≤ 0.1 %）。
+- Abaqus：`abaqus_living/make_living_inp.py` は既定で `--transient-c 1e8`（PROPS(25)）。`--transient-c 0` で前と同じ極限。
+  `living_uel_abaqus.for` を作り直した（接線テスト 1e−10）。Abaqus で走らせるなら 16³ で ċ あり・なしの 1 組を先に。

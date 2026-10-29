@@ -16,7 +16,9 @@
 !         v = r c_n/(K + c_n) grad c_n / sqrt(|grad c_n|^2 + eps)   (the front term of Eq. 34, nutrient of the start
 !         of the increment), beta = beta_0 + r h / 4 (the stabilisation of the ANSYS runs, --artdiff), P the penalty
 !   alpha: alpha = alpha_n + dt k_alpha phi   (Eq. 36, at the Gauss point; alpha - 1 is stored)
-!   c   : int grad N . grad c + N q_c phi_c L c dV = 0   (Eq. 35 quasi-static, d of Klempt 2024 Table 2; q_c = g l^2/d),
+!   c   : int N (c - c_n)/(d dt) + grad N . grad c + N q_c phi_c L c dV = 0   (Eq. 35 with its time derivative, backward
+!         Euler; d of Klempt 2024 Table 2 in mm^2/T*, PROPS(25); PROPS(25) <= 0 or absent: the limit d -> infinity;
+!         q_c = g l^2/d),
 !         phi_c = min(max(phi, 0), 1), L = sum_i phi_i psi_i of the point model (start of the increment)
 !   a   : the same with q_a
 !   u   : int Bbar^T sigma dV = 0, sigma = E_bio (phi_c^2 + f) C(nu) : (eps_bar - (alpha - 1) I), small strain,
@@ -91,6 +93,9 @@ module living_uel_mod
   logical, save :: gate_implicit = .false.
   ! front speed times the living amount (header): PROPS(24); liv_front(q, e) is written only in UEXTERNALDB (serial)
   logical, save :: front_liv_on = .false.
+  ! Eq. 35 with its time derivative (29 Oct 2026): PROPS(25) = d in mm^2/T* adds N (c - c_n)/(d dt) to the nutrient and
+  ! antibiotic rows (backward Euler, as coupled_living_consumption.py --transient-c); <= 0 or absent: the limit
+  double precision, save :: cdot_d = 0d0
   double precision, allocatable, save :: liv_front(:,:)
   double precision, save :: phi_min_s = 1d-3, h_el = 0d0
   logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
@@ -322,7 +327,7 @@ contains
     double precision, intent(out) :: R(NDOF), K(NDOF, NDOF), sig(6, NGP)
     logical, intent(in) :: want_k
     double precision, intent(in), optional :: fl(NGP)
-    double precision :: N(8), dN(3, 8), w, x(3), ph, phn, c, cn, a, gph(3), gc(3), gcn(3), ga(3), v(3)
+    double precision :: N(8), dN(3, 8), w, x(3), ph, phn, c, cn, a, an, cdt, gph(3), gc(3), gcn(3), ga(3), v(3)
     double precision :: al, pen, dpen, phc, dphc, L, E, dE, D0(6, 6), lam, mu, eps(6), sm(6), B(6, 24), Bv(3, 8)
     double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm, tau, vm, hs, pe, res, vdn(8)
     double precision :: Ebio, nu, f, beta, ka, P, rr, Km, qc, qa
@@ -331,6 +336,8 @@ contains
     Ebio = props(1); nu = props(2); f = props(3); beta = props(4); ka = props(5); P = props(6)
     rr = props(7); Km = props(8); qc = props(9); qa = props(10)
     dt_ = max(dt, 1d-30)
+    cdt = 0d0
+    if (cdot_d > 0d0 .and. dt > 0d0 .and. .not. mms_on) cdt = 1d0 / (cdot_d * dt)
     R = 0d0; K = 0d0; sig = 0d0
     m = [1d0, 1d0, 1d0, 0d0, 0d0, 0d0]
     lam = nu / ((1 + nu) * (1 - 2 * nu)); mu = 0.5d0 / (1 + nu)
@@ -348,10 +355,11 @@ contains
     Bv = Bv / vol
     do q = 1, NGP
       call gauss(coords, q, N, dN, w, x)
-      ph = 0d0; phn = 0d0; c = 0d0; cn = 0d0; a = 0d0; gph = 0d0; gc = 0d0; gcn = 0d0; ga = 0d0
+      ph = 0d0; phn = 0d0; c = 0d0; cn = 0d0; a = 0d0; an = 0d0; gph = 0d0; gc = 0d0; gcn = 0d0; ga = 0d0
       do i = 1, NN
         ph = ph + N(i) * U(NDN*(i-1)+4); phn = phn + N(i) * Un(NDN*(i-1)+4)
         c = c + N(i) * U(NDN*(i-1)+5); cn = cn + N(i) * Un(NDN*(i-1)+5); a = a + N(i) * U(NDN*(i-1)+6)
+        an = an + N(i) * Un(NDN*(i-1)+6)
         gph = gph + dN(:, i) * U(NDN*(i-1)+4); gc = gc + dN(:, i) * U(NDN*(i-1)+5)
         gcn = gcn + dN(:, i) * Un(NDN*(i-1)+5); ga = ga + dN(:, i) * U(NDN*(i-1)+6)
       end do
@@ -438,9 +446,9 @@ contains
       ! nutrient and antibiotic
       do i = 1, NN
         ii = NDN*(i-1)+5
-        R(ii) = R(ii) + w * (dot_product(dN(:, i), gc) + N(i) * qc * phc * L * c - N(i) * sc)
+        R(ii) = R(ii) + w * (N(i) * cdt * (c - cn) + dot_product(dN(:, i), gc) + N(i) * qc * phc * L * c - N(i) * sc)
         ii = NDN*(i-1)+6
-        R(ii) = R(ii) + w * (dot_product(dN(:, i), ga) + N(i) * qa * phc * L * a)
+        R(ii) = R(ii) + w * (N(i) * cdt * (a - an) + dot_product(dN(:, i), ga) + N(i) * qa * phc * L * a)
       end do
       ! mechanics
       sm = matmul(D0, eps - (al - 1d0) * m)
@@ -478,10 +486,10 @@ contains
           end if
           ! nutrient rows
           ii = NDN*(i-1)+5
-          K(ii, NDN*(j-1)+5) = K(ii, NDN*(j-1)+5) + w * (dot_product(dN(:, i), dN(:, j)) + N(i) * N(j) * qc * phc * L)
+          K(ii, NDN*(j-1)+5) = K(ii, NDN*(j-1)+5) + w * (dot_product(dN(:, i), dN(:, j)) + N(i) * N(j) * (qc * phc * L + cdt))
           K(ii, jj) = K(ii, jj) + w * N(i) * N(j) * qc * dphc * L * c
           ii = NDN*(i-1)+6
-          K(ii, NDN*(j-1)+6) = K(ii, NDN*(j-1)+6) + w * (dot_product(dN(:, i), dN(:, j)) + N(i) * N(j) * qa * phc * L)
+          K(ii, NDN*(j-1)+6) = K(ii, NDN*(j-1)+6) + w * (dot_product(dN(:, i), dN(:, j)) + N(i) * N(j) * (qa * phc * L + cdt))
           K(ii, jj) = K(ii, jj) + w * N(i) * N(j) * qa * dphc * L * a
           ! mechanics rows
           do d = 1, 3
@@ -781,7 +789,7 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
   logical :: ok, wk, lmms, lsupg, limp, lfl
   integer :: lay, rule, iform
-  double precision :: pref
+  double precision :: pref, dcd
   if (.not. eco_inited) call eco_native_init()     ! never reached in Abaqus: UEXTERNALDB LOP 0 runs first, serial
   ! the module switches from PROPS: every element finds the same values (one property set), so with threads they are
   ! stored only when they differ (the first call) and read afterwards; mms_t changes each increment and is written
@@ -810,6 +818,9 @@ subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, 
   lfl = .false.
   if (NPROPS >= 24) lfl = (PROPS(24) > 0.5d0)
   if (front_liv_on .neqv. lfl) front_liv_on = lfl
+  dcd = 0d0
+  if (NPROPS >= 25) dcd = PROPS(25)
+  if (cdot_d /= dcd) cdot_d = dcd
   if (mms_on .neqv. lmms) mms_on = lmms
   if (supg_on .neqv. lsupg) supg_on = lsupg
   if (lmms) mms_t = TIME(1) + DTIME

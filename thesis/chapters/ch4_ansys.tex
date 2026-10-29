@@ -486,10 +486,11 @@ Only living biomass consumes nutrient. The consumption of Eq.~35 of Klempt et al
 $g\phi$; it is $g\phi_{3D}c$, and the printed form is a misprint.
 In general the uptake depends on the nutrient through a Monod-type factor $f(c)=c/(K_c+c)$; for
 $K_c\gg c$ this is $c/K_c$, and with $1/K_c$ absorbed in $g$ it is the linear form $g\phi_{3D}c$ used here.
-The time derivative of Eq.~35 is kept. With the diffusivity of Table~2 of Klempt et al.\ 2024, $d=10^{10}~\mu$m$^2/T^*$
+The time derivative of Eq.~35 is kept and integrated by the backward Euler method (in ANSYS the transient option of the
+element), one linear solve per step. With the diffusivity of Table~2 of Klempt et al.\ 2024, $d=10^{10}~\mu$m$^2/T^*$
 on their $20~\mu$m cube, converted like $\beta$ to $d=10^8$~mm$^2/T^*$ on the $2$~mm cube, the nutrient adjusts within
-about $4\cdot10^{-8}\,T^*$, so the fields are solved quasi-steadily; with the time derivative and this $d$ the seed values
-change by less than $0.005$ (Python). The consumption follows the same table: $g=10^8\,T^{*-1}$, so that $g\ell^2/d=1$ with the half edge
+about $4\cdot10^{-8}\,T^*$, far faster than the growth. The Python runs of this chapter use the limit $d\,\Delta t\to\infty$
+of the same step; with the term the seed values change by at most $0.1\,\%$. The consumption follows the same table: $g=10^8\,T^{*-1}$, so that $g\ell^2/d=1$ with the half edge
 $\ell=1$~mm. The antibiotic, carried by the element's second nutrient field, has the same diffusivity and uptake as the nutrient. Only a diffusion
 slower by about eight orders of magnitude would matter: with $d=1$~mm$^2/T^*$, the value of the element's example
 input, the antibiotic reaches the seed more slowly and kills markedly less of it.
