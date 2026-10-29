@@ -4,6 +4,18 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年10月29日 夜（追加：今の列が終わってから 2 本、論文の表 2 用）
+
+成長則なし（今の式）で、64³・外側の刻み 0.0025 の 2 本。論文の表 2（今は刻み 0.025）を差し替え、成長則の列の 64³ の比較相手にもなる
+（この 2 本だけクラウドにも master にもない。IKMHIWI03 にはあるが JSON がない）。
+```
+P="--fast --tvd --wall-grad mirror --gc 1 --gab 1 --alpha0 100 --front 1 --tab 0.333333 --phi-min 0.001 --v2 --fortran --ansys-bc --inherit-living --dtc 0.0025 --nf 64"
+python3 coupled_living_consumption.py $P --only separate_ab
+python3 coupled_living_consumption.py $P --mix-equal --only mixed_ab
+```
+確かめ：種の平均の α−1 と vM が修論の表 `tab:ch5-gci` の 64³（8.931 / 6.000、8.04 / 2.82 ×1e−4）と 0.1 % 以内で合うこと。
+JSON を `results/2026-10-3d/` に追加して push、`KEIO_CHAIN_LOG.md` に Σφ̄ᵢ、A の割合、c、α−1、vM を。
+
 ## 2026年10月29日 夕方（新しい依頼：生きている量で成長する則の格子列。慶應での続き、修論には入れない）
 
 `ansys_usermat/apdl/coupled_living_consumption.py` に `--growth-living`（既定は切）を足した：式 36 を dα/dt = k_α φ_3D Σφ̄ᵢ にする
