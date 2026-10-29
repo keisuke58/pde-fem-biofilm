@@ -170,6 +170,12 @@ STIFF_SPECIES = [float(x) for x in _opt("--stiff-species", "", str).split(",") i
 # d alpha/dt = k_alpha phi_3D (sum_i phibar_i) as in Wanner and Gujer 1986; the living fraction is that of the step
 # (Lf, the same field as the consumption). Cells where the point model has not started have L = 0 and do not grow.
 GROWTH_LIVING = "--growth-living" in sys.argv
+# --growth-living-energy (29 Oct 2026, variant A): the coupling energy -k_alpha alpha phi of Klempt 2024 Eq. 20 becomes
+# -k_alpha alpha phi sum_i phibar_i (sum_i phibar_i a given field of the point model, not varied). Its derivatives give
+# both d alpha/dt = k_alpha phi_3D sum_i phibar_i (Eq. 36) and the source k_alpha alpha sum_i phibar_i of Eq. 34.
+# --growth-living alone is variant B (viscosity eta_alpha / sum_i phibar_i): only Eq. 36 changes.
+GROWTH_ENERGY = "--growth-living-energy" in sys.argv
+GROWTH_LIVING = GROWTH_LIVING or GROWTH_ENERGY
 # --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
 # (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
 #     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
@@ -313,7 +319,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
        + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + ("_growliv" if GROWTH_LIVING else "") + ("_budget" if BUDGET else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -881,7 +887,7 @@ def run(example, antibiotic):
                     cf = nut.solve(phi, Lf, c_supply(T1), u_prev=cf, dtau=dt, src=src_c(tk))  # the front follows the nutrient
                 def f(ph, al, tt):
                     (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
-                    d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                    d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al * (np.clip(Lf, 0.0, 1.0) if GROWTH_ENERGY else 1.0) - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                     if MECH_K:
                         d = d - MECH_K * ph * ice
                     if FRONT:
