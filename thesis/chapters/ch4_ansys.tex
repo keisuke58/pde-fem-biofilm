@@ -829,7 +829,7 @@ point model of the ANSYS runs; with uniform fields the coupled point model agree
 alone to $2\times10^{-14}$. The front term \fterm{} is advection dominated: its cell P\'eclet
 number $r h/(2\beta)$ is about $31$ on the $16^3$ mesh, and a central gradient oscillates. I discretise
 it with a second-order upwind scheme (MUSCL with the minmod limiter) and mirror the fields at the walls.
-The stress is solved on a $16^3$ hexahedral mesh with the element's integration; solving the same
+The stress is solved on a $16^3$ hexahedral mesh with the element's integration, in small strain: $\boldsymbol\sigma=E_0(\phi_{3D}^2+f)\,\mathbb C(\nu):(\boldsymbol\varepsilon-(\alpha-1)\mathbf I)$, the linearisation of the neo-Hookean law of the element ($\alpha-1\sim10^{-3}$); solving the same
 $64^3$ field on $32^3$ and $64^3$ elements changes the seed von Mises stress by $0.2\,\%$.
 
 \paragraph{Composition.} Table~\ref{tab:ch5-two-species} gives the seed means at $T^*=1$, and
