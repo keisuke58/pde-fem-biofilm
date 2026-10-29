@@ -51,9 +51,10 @@ STEPS = [
      r"$(\Sigma_i\bar\phi_i)^{n+1}=\Sigma_i\,\phi_i^{n+1}\psi_i^{n+1}$（次のステップの手順 2 で使う）",
      r"同じ（状態変数から）", 0.95),
     ("mech", r"6. 応力（書き出す時刻だけ。成長には戻さない）",
-     r"$\phi_{3D}$ と $\alpha-1$ を $16^3$ の六面体要素ごとにセル平均 → $\mathbf{F}_g=\alpha\mathbf{I}$、ネオフック、"
-     r"$E=E_0(\phi_{3D}^2+f)$、$\nu=0.49$" "\n" r"選択的低減積分で静的につり合いを解く（$32^3$、$64^3$ の要素でも種の応力は $0.2\,\%$ 以内）",
-     r"usermat：$\mathbf{F}_e=\mathbf{F}\mathbf{F}_g^{-1}$、" "\n" r"接線は $\mathbf{F}$ の摂動（$10^{-7}$）", 1.6),
+     r"$\phi_{3D}$ と $\alpha-1$ を $16^3$ の六面体要素ごとにセル平均 → $\nabla\cdot\boldsymbol{\sigma}=\mathbf{0}$、"
+     r"$\boldsymbol{\sigma}=E_0(\phi_{3D}^2+f)\,\mathbb{C}(\nu):(\boldsymbol{\varepsilon}-(\alpha-1)\mathbf{I})$" "\n"
+     r"小ひずみ（$\alpha-1\sim10^{-3}$）、$\nu=0.49$、$\bar{\mathbf{B}}$ 法（$32^3$、$64^3$ の要素でも種の応力は $0.2\,\%$ 以内）",
+     r"usermat：$\mathbf{F}_e=\mathbf{F}\mathbf{F}_g^{-1}$、$\mathbf{F}_g=\alpha\mathbf{I}$、" "\n" r"ネオフック（線形化で左と一致）" "\n" r"接線は $\mathbf{F}$ の摂動（$10^{-7}$）", 1.6),
 ]
 
 # what each arrow carries (between consecutive boxes)
