@@ -456,7 +456,9 @@ digitised curves:
 w = 0.5 improves all three curves at once, brings the time scales closer
 (6 / 3 for 4.2 instead of 10 / 4-5; 1 for 4.1, i.e. Table 2's own T*), and
 changes the shapes towards the paper's (`assets/fig_klempt2024_fig3_blend.png`,
-`assets/fig_klempt2024_table4_blend.png`):
+`assets/fig_klempt2024_table4_blend.png`; made with
+`python JAXFEM/klempt2024_fig3.py --growth blend0.5 --s 1 --out assets/fig_klempt2024_fig3_blend.png` and
+`python JAXFEM/klempt2024_table4_fig.py --growth blend0.5 --s-high 6 --s-low 3 --out assets/fig_klempt2024_table4_blend.png`):
 - 4.1: a full egg towards the corner, smooth, no scattered patches; at 100 %
   the corner block and a large body, as in the paper.
 - 4.2 "high": the dome up to 4 % looks like the paper's; at 7 % it spreads to
