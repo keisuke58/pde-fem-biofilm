@@ -22,6 +22,11 @@ P="--fast --tvd --wall-grad mirror --gc 1 --gab 1 --alpha0 100 --front 1 --tab 0
 - 比べる相手（成長則なし）は既にある：32³〜128³ は `results/2026-10-3d/` の `..._front1_dtc0.0025_..._inhliv_...json` と
   修論の表 `tab:ch5-gci`（抗菌薬ありの分離・混合（等量）の 32³〜128³ は A-89 の値）。
 
+**追加（同じ日の夜）：案 A も同じ格子列で**。`--growth-living-energy`（エネルギーの結合項を −k_α α φ Σφ̄ᵢ にした形：式 36 と
+式 34 の生成項 k_α α の両方に Σφ̄ᵢ がかかる）。上の `--growth-living`（案 B、式 36 だけ）と同じ 4 例 × 32³/64³/128³ を、
+案 B の各格子が終わったら同じ格子で回す（順番：32³ の B → 32³ の A → 64³ の B → 64³ の A → 128³ の B → 128³ の A）。
+JSON は `_growlivE` 付き。
+
 **報告**（`KEIO_CHAIN_LOG.md`、結果の JSON は `results/2026-10-3d/` に `_growliv` 付きで、`keio/uel-implant` に push）：
 例ごと・格子ごとに、種の平均の Σφ̄ᵢ、c、α−1、vM と、成長則なしとの比（α−1 と vM）。3 格子がそろったら GCI（Celik 2008、Fs 1.25）。
 UEL・Abaqus の作業は止めてよい（終わっている）。
