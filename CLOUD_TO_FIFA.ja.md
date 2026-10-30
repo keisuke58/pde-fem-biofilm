@@ -402,3 +402,16 @@ IKMHIWI03 では回せない）。
   論文の表は ċ 付きの方を使う。JSON のタグは `_transc1e+08` が付く。報告では同じ格子の ċ と極限の差（生きている量、c、α−1、von Mises）を並べる。
 - Abaqus：`abaqus_living/make_living_inp.py` は既定で `--transient-c 1e8`（PROPS(25)）。`--transient-c 0` で前と同じ極限。
   `living_uel_abaqus.for` を作り直した（接線テスト 1e−10）。Abaqus で走らせるなら 16³ で ċ あり・なしの 1 組を先に。
+
+## 30 Oct 朝：混合の例の応力を 256³ で（論文用、急がないが成長則の系列の次）
+
+背景（クラウド、41d3b65 の後の診断）：混合の例・抗菌薬ありの von Mises は 32/64/128/192³ で 2.00/2.82/3.30/3.52e−4 Pa（次数 0.43、GCI 41 %）。
+前線の項を切ると 32³→64³ で 6.07→6.06e−4（収束）、ε² = 1e−8 は 1e−6 と同じ。原因は前線の項の縁の解像度：前線の速さ v = r c/(k+c) ≈ 4.9 mm/T*、
+β = 0.02 mm²/T* で縁の厚さ β/v ≈ 0.004 mm、セルのペクレ数 v h/(2β) は 192³ で 1.28、**256³ で 0.96（初めて 1 を下回る）**。
+
+**回すもの**（成長則 A/B の ċ 付きの系列が終わってから、1 本ずつ）：
+1. `--nf 256 --front 1 --dtc 0.0025 --phi-min 0.001 --v2 --fortran --ansys-bc --inherit-living --alpha0 100 --gab 1 --gc 1 --tab 0.333333
+   --tvd --wall-grad mirror --fast --transient-c 1e8 --mix-equal --only mixed_ab`
+2. 同じで `--mix-equal` を外す（Fritsch の割合）
+- 先に 1 本目の最初の 10 ステップでメモリと 1 ステップの時間を測り、`KEIO_CHAIN_LOG.md` に。192³ の約 3.2 倍の時間（IKMHIWI03 で 192³ は 7〜9 時間）と見込む。
+- 報告：種の平均の α−1、vM、Σφ̄、c（`KEIO_CHAIN_LOG.md`、JSON は `keio/*` に push）。
