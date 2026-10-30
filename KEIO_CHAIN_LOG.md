@@ -921,3 +921,19 @@ Reading (no conclusion beyond the numbers):
 - **GCI of alpha - 1** is 0.5-3.4 % (p 1.2-1.7).
 - **GCI of vM is large** for separate_ab (13-14 %, p 0.64) and for both mixed cases (33 %, p 0.7). There vM still rises by
   20-30 % per refinement, so it is not in the asymptotic range on 32/64/128. Only separate is converged (0.7 %, p 2.3).
+
+## 2026-10-30: 256^3 mixed example with antibiotic, dc/dt (CLOUD_TO_FIFA 30 Oct morning), running
+
+Options as in the instructions (`--nf 256 ... --transient-c 1e8 --only mixed_ab`), run 1 with `--mix-equal`, run 2 with the
+Fritsch shares. Run 1 started 30 Oct 16:33 JST (nohup).
+
+**First steps of run 1** (400 outer steps, dt 0.0025; read from the checkpoint `k_done`, which is written every 120 s):
+- step 0 done after 2 min 50 s, including setup
+- steps 0 to 8 took 1171 s, about **146 s per step**
+- RSS 3.8-4.7 GB, **peak 4.7 GB**
+- So one run takes about 16 h, alone on fifa. The instructions estimated 22-29 h, as 3.2 times IKMHIWI03's 192^3.
+
+**Run 2 started beside run 1** at 16:57 JST (the user, via the cloud: run both at once if >= 8 cores and >= 10 GB free).
+fifa had 12 cores and 43 GB available (free 10 GB). The chain script of run 1 was stopped so that it does not start run 2
+a second time; run 1 goes on as its own process. The two checkpoints have different names (`_mixeq`), so they do not clash.
+Logs: `~/runs/n256_20261030/` (`chain.log`, `mixeq_ab.out`, `fritsch_ab.out`, `monitor.log`).
