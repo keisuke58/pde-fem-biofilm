@@ -885,10 +885,10 @@ unchanged, and the antibiotic lowers the living fraction but not $\phi_{3D}$. Th
 the stress through the nutrient and the front term \fterm{}, and the mixed seed carries about half the stress of
 the separate one because its edge is less sharp. Table~\ref{tab:ch5-gci} gives the grid series with the
 three-grid index of Celik et al.~\cite{Celik2008GCI} (safety factor $1.25$) at an outer time step of
-$0.0025$; the runs with antibiotic go to $192^3$. The growth converges with a GCI of $0.5$ to $4.3\,\%$ in all
+$0.0025$; all series go to $192^3$. The growth converges with a GCI of $0.4$ to $4.3\,\%$ in all
 examples. The seed stress is set by the jump of $\alpha$ across the edge of the seed, which the front sharpens. In
-the separate example it converges, with a GCI of $0.7\,\%$ without and $1.4\,\%$ with the antibiotic; the
-antibiotic lowers the extrapolated stress from $6.55$ to $6.42\times10^{-4}$~Pa, by $2\,\%$, which is about the
+the separate example it converges, with a GCI of $0.1\,\%$ without and $1.4\,\%$ with the antibiotic; the
+antibiotic lowers the extrapolated stress from $6.57$ to $6.42\times10^{-4}$~Pa, by $2\,\%$, which is about the
 size of the two bands together. In the mixed examples it converges slowly, with an observed order of $0.4$ to
 $1.0$ and a GCI of $19$ to $41\,\%$, so I give the stress there only to within these bands. There the front
 carries intermediate values of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the
@@ -897,8 +897,8 @@ domain still rises with the grid ($0.60$, $0.69$, $0.73$, $0.75$), though by les
 \begin{table}[htbp]
   \centering
   \caption[Grid convergence of growth and stress]{Seed means at $T^*=1$, outer time step $0.0025$: grid
-    series, observed order $p$, extrapolated value (extrap.) and GCI. With antibiotic (antib.) from the three finest grids
-    $64^3$, $128^3$, $192^3$, without from $32^3$, $64^3$, $128^3$. Mixed: equal amounts unless the start
+    series, observed order $p$, extrapolated value (extrap.) and GCI from the three finest grids
+    $64^3$, $128^3$, $192^3$; antib.: with antibiotic. Mixed: equal amounts unless the start
     fractions $(\phi_1,\phi_2)$ are given.}
   \label{tab:ch5-gci}
   \small
@@ -909,12 +909,12 @@ domain still rises with the grid ($0.60$, $0.69$, $0.73$, $0.75$), though by les
     \midrule
     separate, antib. & $\alpha-1$ [$10^{-4}$] & $8.453$ & $8.931$ & $9.112$ & $9.152$ & $1.7$ & $9.19$ & $0.5\,\%$ \\
     separate, antib. & von Mises [$10^{-4}$~Pa] & $5.523$ & $6.000$ & $6.284$ & $6.349$ & $1.6$ & $6.42$ & $1.4\,\%$ \\
-    separate & $\alpha-1$ [$10^{-4}$] & $8.729$ & $9.014$ & $9.110$ & & $1.6$ & $9.16$ & $0.7\,\%$ \\
-    separate & von Mises [$10^{-4}$~Pa] & $7.440$ & $6.730$ & $6.585$ & & $2.3$ & $6.55$ & $0.7\,\%$ \\
+    separate & $\alpha-1$ [$10^{-4}$] & $8.729$ & $9.014$ & $9.110$ & $9.135$ & $1.5$ & $9.17$ & $0.4\,\%$ \\
+    separate & von Mises [$10^{-4}$~Pa] & $7.440$ & $6.730$ & $6.585$ & $6.571$ & $3.1$ & $6.57$ & $0.1\,\%$ \\
     mixed, antib. & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.32$ & $8.42$ & $0.77$ & $8.71$ & $4.3\,\%$ \\
     mixed, antib. & von Mises [$10^{-4}$~Pa] & $2.00$ & $2.82$ & $3.30$ & $3.52$ & $0.43$ & $4.68$ & $41\,\%$ \\
-    mixed & $\alpha-1$ [$10^{-4}$] & $7.46$ & $8.08$ & $8.35$ & & $1.2$ & $8.56$ & $3.1\,\%$ \\
-    mixed & von Mises [$10^{-4}$~Pa] & $2.13$ & $3.08$ & $3.65$ & & $0.74$ & $4.50$ & $29\,\%$ \\
+    mixed & $\alpha-1$ [$10^{-4}$] & $7.46$ & $8.08$ & $8.35$ & $8.45$ & $0.77$ & $8.74$ & $4.2\,\%$ \\
+    mixed & von Mises [$10^{-4}$~Pa] & $2.13$ & $3.08$ & $3.65$ & $3.89$ & $0.55$ & $4.86$ & $31\,\%$ \\
     mixed $(0.25,0.30)$, antib. & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.31$ & $8.40$ & $0.93$ & $8.61$ & $3.1\,\%$ \\
     mixed $(0.25,0.30)$, antib. & von Mises [$10^{-4}$~Pa] & $2.01$ & $2.96$ & $4.01$ & $4.35$ & $1.0$ & $5.01$ & $19\,\%$ \\
     \bottomrule

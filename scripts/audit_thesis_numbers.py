@@ -267,8 +267,8 @@ def gci_row(start):
     cells = [x.strip().replace("\\\\", "").replace("\\,\\%", "").replace("$", "") for x in line.split("&")[2:]]
     return cells
 F = "front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_{}a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_{}"
-sep = series(F.format("", "separate"), "separate")
-mix = series(F.format("mixeq_", "mixed"), "mixed")
+sep = series(F.format("", "separate"), "separate", ("", "nf64_", "nf128_", "nf192_"))   # 192^3: A-97
+mix = series(F.format("mixeq_", "mixed"), "mixed", ("", "nf64_", "nf128_", "nf192_"))
 mix2 = series(F.format("", "mixed_ab"), "mixed_ab", ("", "nf64_", "nf128_", "nf192_"))
 s192 = series(F.format("", "separate_ab"), "separate_ab", ("nf192_",))[0]
 m192 = series(F.format("mixeq_", "mixed_ab"), "mixed_ab", ("nf192_",))[0]
@@ -305,10 +305,10 @@ for row, lab, vals in (
         v, half = printed(cell)
         flag(f"{lab} {name}", lo - half <= v <= hi + half, f"tex {cell}, from the printed grid values {g[i]:.4g} (range {lo:.4g} to {hi:.4g})")
 flag("ch4 text: GCI ranges match the table", all(x in c4 for x in (
-    "GCI of $0.5$ to $4.3\\,\\%$ in all", "$0.7\\,\\%$ without and $1.4\\,\\%$ with", "$19$ to $41\\,\\%$",
-    "from $6.55$ to $6.42\\times10^{-4}$~Pa, by $2\\,\\%$")), "text matches the table")
+    "GCI of $0.4$ to $4.3\\,\\%$ in all", "$0.1\\,\\%$ without and $1.4\\,\\%$ with", "$19$ to $41\\,\\%$",
+    "from $6.57$ to $6.42\\times10^{-4}$~Pa, by $2\\,\\%$")), "text matches the table")
 check("antibiotic lowers the separate extrapolated stress [%]", "2",
-      (1 - gci(*ab_sep["vm"][1:], 1.5, 2.0)[1] / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep])[1]) * 100)
+      (1 - gci(*ab_sep["vm"][1:], 1.5, 2.0)[1] / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep][1:], 1.5, 2.0)[1]) * 100)
 for n, h, t in zip(("32", "64", "128", "192"), mix2, ("0.60", "0.69", "0.73", "0.75")):
     check(f"mixed (0.25,0.30)+ab: largest phi_3D in the domain, {n}^3", t, h["phi_max"][-1])
 
