@@ -768,3 +768,156 @@ runs keep `--fortran`. The options are the common P of the instructions (`--dtc 
 Interim push (29 Oct, 23:47 JST): the 32^3 runs (A and B) and the 64^3 B runs are done, about 40 s each at 32^3. The JSONs
 have `_dtc0.0025_` in the name; the 32^3 `_growliv` files of master have no dtc tag (outer step 0.025), so they are a
 different setting. The table, ratios and GCI follow when 128^3 is done.
+
+## 2026-10-30: growth-living B/A, 4 cases x 32/64/128, limit and dc/dt (CLOUD_TO_FIFA 29 Oct evening, night, late night)
+
+All 26 dc/dt runs (`--transient-c 1e8`) and all limit runs finished with exit 0. The options are the common P of
+29 Oct evening (`--dtc 0.0025`, `--fortran` built). Both series ran one at a time. The dc/dt chain ran beside the limit chain,
+because the runs use 1 core and about 1.1 GB.
+Wall time per run (limit / dc/dt): 32^3 38-47 s / 32-40 s; 64^3 269-355 s / 225-288 s; 128^3 54-66 min / 45-55 min.
+Scripts: `~/runs/growliv_20261029/run.sh`, `run_base64.sh`, `~/runs/transc_20261030/run.sh` (fifa only); table script
+`~/runs/analysis/growliv_table.py`.
+
+The 64^3 dc/dt baseline `mixed_ab` (`..._nf64_..._mixeq_..._transc1e+08_..._mixed_ab.json`) is also on master (cloud).
+The fifa run agrees with it to round-off: seed alpha - 1 relative difference 7e-15. The master file was kept and the
+fifa copy set aside.
+
+**64^3 limit baselines (29 Oct night) against `tab:ch5-gci`:** separate_ab alpha - 1 8.9310e-4, vM 5.9998e-4 (table
+8.931 / 6.000); mixed_ab 8.0402e-4 / 2.8151e-4 (table 8.04 / 2.82). Both agree within 0.1 % of the table's last digit.
+
+Quantities are seed means at the end: sum phibar_i (living), share A, c, alpha - 1, von Mises.
+"/ none" is the ratio to the no-growth-law run of the same grid and the same dc/dt setting. It is left out ("-") where that
+run is not in `results/2026-10-3d/`: limit 128^3 separate_ab and mixed_ab (they are in the thesis table and A-89, but not as
+JSON), and dc/dt separate / mixed at any grid.
+
+### limit (no dc/dt)
+| law | case | grid | sum phibar | share A | c | alpha-1 (1e-4) | vM/Pa (1e-4) | alpha-1 / none | vM / none |
+|---|---|---|---|---|---|---|---|---|---|
+| none | separate | 32^3 | 0.9645 | 0.9779 | 0.5293 | 8.7289 | 7.4404 | - | - |
+| none | separate | 64^3 | 0.9646 | 0.9780 | 0.5358 | 9.0140 | 6.7297 | - | - |
+| none | separate | 128^3 | 0.9647 | 0.9780 | 0.5394 | 9.1105 | 6.5853 | - | - |
+| none | separate_ab | 32^3 | 0.1556 | 0.9517 | 0.9149 | 8.4529 | 5.5229 | - | - |
+| none | separate_ab | 64^3 | 0.1562 | 0.9517 | 0.9133 | 8.9310 | 5.9998 | - | - |
+| none | mixed | 32^3 | 0.9622 | 0.8776 | 0.6424 | 7.4612 | 2.1290 | - | - |
+| none | mixed | 64^3 | 0.9613 | 0.8621 | 0.6194 | 8.0799 | 3.0794 | - | - |
+| none | mixed | 128^3 | 0.9610 | 0.8567 | 0.6099 | 8.3500 | 3.6493 | - | - |
+| none | mixed_ab | 32^3 | 0.0378 | 0.6078 | 0.9769 | 7.4215 | 1.9977 | - | - |
+| none | mixed_ab | 64^3 | 0.0378 | 0.6061 | 0.9743 | 8.0402 | 2.8151 | - | - |
+| B | separate | 32^3 | 0.9645 | 0.9779 | 0.5293 | 7.9614 | 6.9490 | 0.9121 | 0.9340 |
+| B | separate | 64^3 | 0.9646 | 0.9780 | 0.5358 | 8.2239 | 6.2574 | 0.9123 | 0.9298 |
+| B | separate | 128^3 | 0.9647 | 0.9780 | 0.5394 | 8.3124 | 6.1180 | 0.9124 | 0.9290 |
+| B | separate_ab | 32^3 | 0.1556 | 0.9517 | 0.9149 | 4.3510 | 4.4139 | 0.5147 | 0.7992 |
+| B | separate_ab | 64^3 | 0.1562 | 0.9517 | 0.9133 | 4.5950 | 4.9178 | 0.5145 | 0.8197 |
+| B | separate_ab | 128^3 | 0.1572 | 0.9518 | 0.9132 | 4.6848 | 5.2408 | - | - |
+| B | mixed | 32^3 | 0.9622 | 0.8776 | 0.6424 | 6.4120 | 1.8713 | 0.8594 | 0.8789 |
+| B | mixed | 64^3 | 0.9613 | 0.8621 | 0.6194 | 6.9899 | 2.7331 | 0.8651 | 0.8875 |
+| B | mixed | 128^3 | 0.9610 | 0.8567 | 0.6099 | 7.2428 | 3.2675 | 0.8674 | 0.8954 |
+| B | mixed_ab | 32^3 | 0.0378 | 0.6078 | 0.9769 | 2.7591 | 1.3172 | 0.3718 | 0.6594 |
+| B | mixed_ab | 64^3 | 0.0378 | 0.6061 | 0.9743 | 2.8388 | 1.9320 | 0.3531 | 0.6863 |
+| B | mixed_ab | 128^3 | 0.0378 | 0.6056 | 0.9732 | 2.8652 | 2.3120 | - | - |
+| A | separate | 32^3 | 0.9645 | 0.9779 | 0.5293 | 7.9610 | 6.9462 | 0.9120 | 0.9336 |
+| A | separate | 64^3 | 0.9646 | 0.9780 | 0.5359 | 8.2235 | 6.2567 | 0.9123 | 0.9297 |
+| A | separate | 128^3 | 0.9647 | 0.9780 | 0.5394 | 8.3120 | 6.1180 | 0.9124 | 0.9290 |
+| A | separate_ab | 32^3 | 0.1557 | 0.9517 | 0.9150 | 4.3514 | 4.4103 | 0.5148 | 0.7985 |
+| A | separate_ab | 64^3 | 0.1564 | 0.9517 | 0.9134 | 4.5955 | 4.9203 | 0.5146 | 0.8201 |
+| A | separate_ab | 128^3 | 0.1574 | 0.9518 | 0.9133 | 4.6855 | 5.2505 | - | - |
+| A | mixed | 32^3 | 0.9622 | 0.8776 | 0.6424 | 6.4110 | 1.8701 | 0.8592 | 0.8784 |
+| A | mixed | 64^3 | 0.9613 | 0.8622 | 0.6194 | 6.9895 | 2.7327 | 0.8651 | 0.8874 |
+| A | mixed | 128^3 | 0.9610 | 0.8568 | 0.6100 | 7.2411 | 3.2648 | 0.8672 | 0.8946 |
+| A | mixed_ab | 32^3 | 0.0378 | 0.6078 | 0.9769 | 2.7589 | 1.3140 | 0.3717 | 0.6578 |
+| A | mixed_ab | 64^3 | 0.0378 | 0.6061 | 0.9743 | 2.8386 | 1.9281 | 0.3530 | 0.6849 |
+| A | mixed_ab | 128^3 | 0.0378 | 0.6056 | 0.9732 | 2.8649 | 2.3072 | - | - |
+
+### dc/dt (--transient-c 1e8)
+| law | case | grid | sum phibar | share A | c | alpha-1 (1e-4) | vM/Pa (1e-4) | alpha-1 / none | vM / none |
+|---|---|---|---|---|---|---|---|---|---|
+| none | separate_ab | 32^3 | 0.1557 | 0.9517 | 0.9149 | 8.4552 | 5.5287 | - | - |
+| none | separate_ab | 64^3 | 0.1563 | 0.9517 | 0.9133 | 8.9327 | 6.0028 | - | - |
+| none | mixed_ab | 32^3 | 0.0378 | 0.6081 | 0.9769 | 7.4217 | 1.9978 | - | - |
+| none | mixed_ab | 64^3 | 0.0378 | 0.6065 | 0.9743 | 8.0406 | 2.8156 | - | - |
+| B | separate | 32^3 | 0.9645 | 0.9779 | 0.5293 | 7.9637 | 6.9465 | - | - |
+| B | separate | 64^3 | 0.9646 | 0.9780 | 0.5358 | 8.2263 | 6.2544 | - | - |
+| B | separate | 128^3 | 0.9647 | 0.9780 | 0.5394 | 8.3136 | 6.1167 | - | - |
+| B | separate_ab | 32^3 | 0.1557 | 0.9517 | 0.9149 | 4.3549 | 4.4213 | 0.5151 | 0.7997 |
+| B | separate_ab | 64^3 | 0.1563 | 0.9517 | 0.9133 | 4.5992 | 4.9226 | 0.5149 | 0.8200 |
+| B | separate_ab | 128^3 | 0.1573 | 0.9518 | 0.9132 | 4.6870 | 5.2416 | - | - |
+| B | mixed | 32^3 | 0.9623 | 0.8781 | 0.6424 | 6.4145 | 1.8723 | - | - |
+| B | mixed | 64^3 | 0.9613 | 0.8627 | 0.6194 | 6.9929 | 2.7348 | - | - |
+| B | mixed | 128^3 | 0.9610 | 0.8570 | 0.6099 | 7.2442 | 3.2682 | - | - |
+| B | mixed_ab | 32^3 | 0.0378 | 0.6081 | 0.9769 | 2.7617 | 1.3186 | 0.3721 | 0.6600 |
+| B | mixed_ab | 64^3 | 0.0378 | 0.6065 | 0.9743 | 2.8417 | 1.9343 | 0.3534 | 0.6870 |
+| B | mixed_ab | 128^3 | 0.0378 | 0.6058 | 0.9732 | 2.8667 | 2.3132 | - | - |
+| A | separate | 32^3 | 0.9645 | 0.9779 | 0.5293 | 7.9633 | 6.9437 | - | - |
+| A | separate | 64^3 | 0.9646 | 0.9780 | 0.5358 | 8.2259 | 6.2538 | - | - |
+| A | separate | 128^3 | 0.9647 | 0.9780 | 0.5394 | 8.3132 | 6.1167 | - | - |
+| A | separate_ab | 32^3 | 0.1558 | 0.9517 | 0.9149 | 4.3553 | 4.4173 | 0.5151 | 0.7990 |
+| A | separate_ab | 64^3 | 0.1566 | 0.9518 | 0.9134 | 4.5997 | 4.9249 | 0.5149 | 0.8204 |
+| A | separate_ab | 128^3 | 0.1575 | 0.9518 | 0.9133 | 4.6877 | 5.2512 | - | - |
+| A | mixed | 32^3 | 0.9623 | 0.8781 | 0.6424 | 6.4135 | 1.8712 | - | - |
+| A | mixed | 64^3 | 0.9613 | 0.8627 | 0.6194 | 6.9925 | 2.7343 | - | - |
+| A | mixed | 128^3 | 0.9610 | 0.8570 | 0.6100 | 7.2427 | 3.2657 | - | - |
+| A | mixed_ab | 32^3 | 0.0378 | 0.6081 | 0.9769 | 2.7615 | 1.3154 | 0.3721 | 0.6584 |
+| A | mixed_ab | 64^3 | 0.0378 | 0.6065 | 0.9743 | 2.8415 | 1.9304 | 0.3534 | 0.6856 |
+| A | mixed_ab | 128^3 | 0.0378 | 0.6058 | 0.9732 | 2.8664 | 2.3085 | - | - |
+
+### GCI (fine grid 128^3, Fs 1.25, r 2): order p and GCI %
+| dc/dt | law | case | alpha-1: p, GCI % | vM: p, GCI % |
+|---|---|---|---|---|
+| no | B | separate | 1.57, 0.677 | 2.31, 0.718 |
+| no | B | separate_ab | 1.44, 1.397 | 0.64, 13.748 |
+| no | B | mixed | 1.19, 3.393 | 0.69, 33.349 |
+| no | B | mixed_ab | 1.59, 0.570 | 0.69, 33.267 |
+| no | A | separate | 1.57, 0.677 | 2.31, 0.713 |
+| no | A | separate_ab | 1.44, 1.402 | 0.63, 14.428 |
+| no | A | mixed | 1.20, 3.341 | 0.70, 32.807 |
+| no | A | mixed_ab | 1.60, 0.564 | 0.70, 33.114 |
+| yes | B | separate | 1.59, 0.654 | 2.33, 0.699 |
+| yes | B | separate_ab | 1.48, 1.314 | 0.65, 13.327 |
+| yes | B | mixed | 1.20, 3.333 | 0.69, 33.063 |
+| yes | B | mixed_ab | 1.68, 0.496 | 0.70, 32.794 |
+| yes | A | separate | 1.59, 0.653 | 2.33, 0.694 |
+| yes | A | separate_ab | 1.48, 1.317 | 0.64, 13.968 |
+| yes | A | mixed | 1.21, 3.286 | 0.70, 32.584 |
+| yes | A | mixed_ab | 1.68, 0.491 | 0.70, 32.695 |
+
+### dc/dt minus limit, relative (same grid)
+| law | case | grid | sum phibar | c | alpha-1 | vM |
+|---|---|---|---|---|---|---|
+| B | separate | 32^3 | -1.66e-07 | -1.19e-05 | +2.86e-04 | -3.57e-04 |
+| B | separate | 64^3 | -2.98e-07 | -2.12e-05 | +2.99e-04 | -4.76e-04 |
+| B | separate | 128^3 | -1.48e-07 | -1.04e-05 | +1.51e-04 | -2.18e-04 |
+| B | separate_ab | 32^3 | +6.09e-04 | -8.44e-05 | +9.05e-04 | +1.67e-03 |
+| B | separate_ab | 64^3 | +7.91e-04 | -7.71e-05 | +9.20e-04 | +9.66e-04 |
+| B | separate_ab | 128^3 | +4.62e-04 | -3.37e-05 | +4.63e-04 | +1.69e-04 |
+| B | mixed | 32^3 | +1.38e-05 | +1.07e-05 | +3.89e-04 | +5.53e-04 |
+| B | mixed | 64^3 | +1.42e-05 | -1.06e-05 | +4.19e-04 | +6.04e-04 |
+| B | mixed | 128^3 | +7.57e-06 | +2.30e-06 | +2.00e-04 | +2.12e-04 |
+| B | mixed_ab | 32^3 | +1.03e-04 | -1.74e-06 | +9.45e-04 | +1.09e-03 |
+| B | mixed_ab | 64^3 | +1.12e-04 | -3.50e-06 | +1.02e-03 | +1.17e-03 |
+| B | mixed_ab | 128^3 | +5.80e-05 | -1.09e-06 | +5.27e-04 | +5.12e-04 |
+| A | separate | 32^3 | -1.75e-07 | -1.25e-05 | +2.86e-04 | -3.52e-04 |
+| A | separate | 64^3 | -2.97e-07 | -2.10e-05 | +3.00e-04 | -4.72e-04 |
+| A | separate | 128^3 | -1.52e-07 | -1.07e-05 | +1.51e-04 | -2.19e-04 |
+| A | separate_ab | 32^3 | +5.74e-04 | -8.43e-05 | +8.98e-04 | +1.60e-03 |
+| A | separate_ab | 64^3 | +7.75e-04 | -7.75e-05 | +9.17e-04 | +9.36e-04 |
+| A | separate_ab | 128^3 | +4.52e-04 | -3.31e-05 | +4.60e-04 | +1.24e-04 |
+| A | mixed | 32^3 | +1.38e-05 | +1.04e-05 | +3.90e-04 | +5.55e-04 |
+| A | mixed | 64^3 | +1.42e-05 | -1.12e-05 | +4.20e-04 | +6.07e-04 |
+| A | mixed | 128^3 | +7.28e-06 | -1.03e-05 | +2.19e-04 | +3.00e-04 |
+| A | mixed_ab | 32^3 | +1.03e-04 | -1.87e-06 | +9.45e-04 | +1.09e-03 |
+| A | mixed_ab | 64^3 | +1.12e-04 | -3.77e-06 | +1.02e-03 | +1.17e-03 |
+| A | mixed_ab | 128^3 | +5.79e-05 | -2.27e-06 | +5.30e-04 | +5.84e-04 |
+| none | separate_ab | 32^3 | +6.09e-04 | -8.44e-05 | +2.78e-04 | +1.04e-03 |
+| none | separate_ab | 64^3 | +7.91e-04 | -7.71e-05 | +1.88e-04 | +5.10e-04 |
+| none | mixed_ab | 32^3 | +1.03e-04 | -1.74e-06 | +2.16e-05 | +7.14e-05 |
+| none | mixed_ab | 64^3 | +1.12e-04 | -3.50e-06 | +4.28e-05 | +1.62e-04 |
+
+Reading (no conclusion beyond the numbers):
+- **A and B agree** within 0.2 % in alpha - 1 and 0.4 % in vM at every grid and case.
+- **dc/dt against the limit:** the largest relative difference is 1.7e-3 (vM, separate_ab, 32^3). At 128^3 every
+  difference is below 6e-4.
+- **Growth by the living amount** lowers alpha - 1 by about 9 % without antibiotic (separate 0.912, mixed 0.86-0.87). With
+  antibiotic it lowers alpha - 1 by 49 % (separate_ab, 0.515) and 65 % (mixed_ab, 0.35-0.37).
+- **GCI of alpha - 1** is 0.5-3.4 % (p 1.2-1.7).
+- **GCI of vM is large** for separate_ab (13-14 %, p 0.64) and for both mixed cases (33 %, p 0.7). There vM still rises by
+  20-30 % per refinement, so it is not in the asymptotic range on 32/64/128. Only separate is converged (0.7 %, p 2.3).
