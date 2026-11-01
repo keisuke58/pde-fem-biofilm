@@ -6,7 +6,8 @@ static ones (CS, DS). Grid search over the 32^3 layer runs of coupled_living_con
 
     python papers/coupling_paper/validation_joint/joint_fit.py run [--jobs 4]      # the missing runs
     python papers/coupling_paper/validation_joint/joint_fit.py fit --measured heine_volume_rel.json
-The measured values stay outside this repository; fit prints the ranking and writes ranking.json (model errors only).
+The measured values stay outside this repository; fit prints the ranking and writes ranking.json next to this
+script (ignored by git: the errors are derived from the measured data).
 """
 import itertools
 import json
