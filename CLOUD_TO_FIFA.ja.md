@@ -436,3 +436,14 @@ IKMHIWI03 では回せない）。
   - 前回と同じく約 16 時間、4.7 GB の見込み。ほかに走っているものがなければすぐ、あれば終わってから。
   - 比べる相手（極限、修論の `tab:ch5-gci`）：混合・抗菌薬なしの vM 2.13/3.08/3.65/3.89e−4 Pa（32/64/128/192³）。
   - 報告：種の平均の Σφ̄、A の割合、c、α−1、vM（`KEIO_CHAIN_LOG.md`）、128/192/256³ の GCI、抗菌薬あり（3.63e−4）との差。JSON は `keio/*` に push。
+
+## 1 Nov 夜：代理モデルの試し、128³ の 12 本（ユーザー、急がない。256³ の抗菌薬なしが先）
+
+- 背景：`papers/surrogate_pilot/PLAN.ja.md`（慶應の続き、修論には入れない）。分離・抗菌薬ありの例で α*₀ と gℓ²/d を変えた 16 点の
+  ガウス過程。64³ の応力の代理モデルは誤差約 1.4 % だが、64³ 自体が収束値より約 7 % 低い。クラウドで 4 点（p の 3, 4, 14, 15）を
+  128³ で回している。**残りの 12 点を fifa で 128³ に**：
+  `python3 papers/surrogate_pilot/run_pilot.py --tag g --nf 128 --reuse papers/surrogate_pilot/design_g_in.json --jobs N`
+  （N は 256³ の 1 本を除いて空いているコア数。1 本約 1 時間・約 1.1 GB の見込み。`--fortran` を使うので ecology_native_ctypes が要る）
+- 結果は `papers/surrogate_pilot/runs/g000〜g011_*.json` に出る（スクリプトが結果フォルダから移す）。`abaqus_composition/eco_fritsch_2sp_a*.*.txt`
+  は自動で作られるファイルで、.gitignore 済み。
+- 報告：12 本の JSON を `keio/*` に push し、`KEIO_CHAIN_LOG.md` に 1 本の時間とメモリ。比の解析はクラウドでする。
