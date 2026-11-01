@@ -50,6 +50,7 @@ def scene(pl, add):
     add(pl)
     pl.camera_position = [(3.6, 2.6, 4.6), (0, 0, 0), (0, 1, 0)]
     pl.camera.zoom(0.92)
+    pl.add_axes(line_width=5, color="black", xlabel="x", ylabel="y", zlabel="z", viewport=(0.0, 0.0, 0.28, 0.28))  # always show the axes (y up)
 
 
 def render(name, add):

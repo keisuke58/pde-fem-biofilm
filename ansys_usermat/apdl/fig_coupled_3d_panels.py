@@ -74,6 +74,7 @@ def render(mesh, field, cmap, clim):
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.9)   # the whole cube in view, the front corner included
+    pl.add_axes(line_width=5, color="black", xlabel="x", ylabel="y", zlabel="z", viewport=(0.0, 0.0, 0.28, 0.28))  # always show the axes (y up)
     img = pl.screenshot(return_img=True)
     pl.close()
     rows = np.where((img < 250).any(axis=(1, 2)))[0]

@@ -571,7 +571,8 @@ examiners). Check each one before the document is handed over.
 - **One orientation for every 3D view of the same example (the user, 1 Nov 2026: "今後気を付けて").** The cube examples are
   drawn with y up and the camera at (3.6, 2.6, 4.4) (pyvista `camera_position = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]`;
   matplotlib 3D: plot axes (z, x, y), elev 24.6, azim 39.3, see `ansys_usermat/apdl/fig_setup_separate_ab.py`), the octant
-  x, y, z > 0 removed to show the inside, and coordinate axes shown. Set-up figures, result figures and videos of one example
+  x, y, z > 0 removed to show the inside. **Every 3D figure and video carries coordinate axes** (the user, 1 Nov 2026: "必ず座標軸は追加しよう";
+  pyvista `pl.add_axes(...)` as in `fig_coupled_3d_panels.py`, matplotlib 3D with labelled axes). Set-up figures, result figures and videos of one example
   must match; check a new 3D figure against the existing ones before handing it over.
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
