@@ -18,6 +18,10 @@ import numpy as np
 import scipy.sparse as sp
 
 BETA_STAR = float(sys.argv[sys.argv.index("--beta-star") + 1]) if "--beta-star" in sys.argv else 0.2   # weight scale (the element: 0.2 mm)
+# --edge-factor E --corner-factor C (A-98, CLOUD_TO_IKMHIWI03 29 Oct item 1): wider weights where two faces (edge, beta* x E)
+# or three faces (corner, beta* x C) are mirrored; one face or none keeps beta*. Default 1 and 1: the A-70 operators.
+EDGE_F = float(sys.argv[sys.argv.index("--edge-factor") + 1]) if "--edge-factor" in sys.argv else 1.0
+CORNER_F = float(sys.argv[sys.argv.index("--corner-factor") + 1]) if "--corner-factor" in sys.argv else 1.0
 WTHRES = 1e-8
 d = Path(sys.argv[1])
 with open(d / "nem_dump.txt") as f:
@@ -58,7 +62,8 @@ for i in range(nGP):
     keep = np.linalg.norm(dx, axis=1) > 1e-12
     dx, J = dx[keep], J[keep]
     A = np.c_[0.5 * dx[:, 0] ** 2, 0.5 * dx[:, 1] ** 2, 0.5 * dx[:, 2] ** 2, dx[:, 0] * dx[:, 1], dx[:, 0] * dx[:, 2], dx[:, 1] * dx[:, 2], dx]
-    w = np.exp(-0.5 * (4 * np.linalg.norm(dx, axis=1) / BETA_STAR) ** 2)
+    bs = BETA_STAR * (CORNER_F if len(near) >= 3 else EDGE_F if len(near) == 2 else 1.0)
+    w = np.exp(-0.5 * (4 * np.linalg.norm(dx, axis=1) / bs) ** 2)
     w[w <= WTHRES] = 0.0
     D = np.linalg.solve(A.T @ (w[:, None] * A), A.T * w)          # 9 x m
     for k, row in (("lap", D[0] + D[1] + D[2]), ("dx", D[6]), ("dy", D[7]), ("dz", D[8])):
@@ -123,9 +128,23 @@ if "--check" in sys.argv:
         ptr, col, val = ops[k]
         return sp.csr_matrix((np.array(val), np.array(col) - 1, np.array(ptr) - 1), shape=(nGP, nGP))
     dist = np.minimum(pos[:nGP] + 1, 1 - pos[:nGP]).min(1)
+    nfaces = np.array([sum(abs(pos[i, a] - s) < radius for a, s in FACES) for i in range(nGP)])
+    print(f"beta* {BETA_STAR:g}, edge x{EDGE_F:g}, corner x{CORNER_F:g}; points by mirrored faces 0/1/2/3:",
+          " ".join(str((nfaces == m).sum()) for m in range(4)))
     for k, ex in (("lap", lap_ex), ("dy", dy_ex)):
         res = mat(k) @ cm - ex
         print(f"mirror {k}(c_m) error:", " ".join(f"[{a:.2f},{b:.2f}): {np.abs(res[(dist >= a) & (dist < b)]).max():.2e}"
                                                  for a, b in ((0, 0.1), (0.1, 0.2), (0.2, 0.4), (0.4, 9))))
+        print(f"  by mirrored faces 0/1/2/3 (max):", " ".join(f"{np.abs(res[nfaces == m]).max():.2e}" if (nfaces == m).any()
+                                                           else "-" for m in range(4)),
+              f"| L2 {np.sqrt((res ** 2).mean()):.2e}")
+    # the c gradient that sets the front direction n_c: error of the full gradient at the corner and edge points
+    gx = mat("dx") @ cm; gy = mat("dy") @ cm; gz = mat("dz") @ cm
+    h_ = 1e-6
+    gex = np.stack([(M.c_m(x + h_ * e[0], y + h_ * e[1], z + h_ * e[2], t) - M.c_m(x - h_ * e[0], y - h_ * e[1], z - h_ * e[2], t)) / (2 * h_)
+                    for e in np.eye(3)], 1)
+    ge = np.linalg.norm(np.stack([gx, gy, gz], 1) - gex, axis=1)
+    print("grad(c_m) error by mirrored faces 0/1/2/3 (max):", " ".join(f"{ge[nfaces == m].max():.2e}" if (nfaces == m).any()
+                                                                         else "-" for m in range(4)))
     L = mat("lap")
     print(f"row sums |max| {np.abs(L.sum(1)).max():.1e}, column sums |max| {np.abs(L.sum(0)).max():.1e}")
