@@ -74,7 +74,6 @@ def render(mesh, field, cmap, clim):
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.9)   # the whole cube in view, the front corner included
-    pl.add_axes(line_width=5, color="black", xlabel="x", ylabel="y", zlabel="z", viewport=(0.0, 0.0, 0.28, 0.28))  # always show the axes (y up)
     img = pl.screenshot(return_img=True)
     pl.close()
     rows = np.where((img < 250).any(axis=(1, 2)))[0]
@@ -83,7 +82,21 @@ def render(mesh, field, cmap, clim):
     return img[max(rows[0] - p, 0):rows[-1] + p, max(cols[0] - p, 0):cols[-1] + p]
 
 
-fig = plt.figure(figsize=(6.3, 3.05))
+def triad(ax):
+    """the coordinate axes as seen from the panels' camera (one per figure, below the panels; y up)"""
+    d = -np.asarray(CAM[0], float); d /= np.linalg.norm(d)            # viewing direction
+    r = np.cross(d, CAM[2]); r /= np.linalg.norm(r); u = np.cross(r, d)
+    for v, lab, col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"), ((0, 0, 1), "z", "#1c3faa")):
+        e = np.array(v, float); px, py = e @ r, e @ u
+        ax.annotate("", xy=(px, py), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=col, lw=1.0, mutation_scale=7))
+        ax.text(1.3 * px, 1.3 * py, f"${lab}$", color=col, fontsize=8, ha="center", va="center")
+    ax.set_xlim(-1.05, 1.05); ax.set_ylim(-0.6, 1.25); ax.set_aspect("equal"); ax.set_axis_off()
+
+
+KH = 3.45 / 3.05                                  # a strip below the colour bars for the axes
+fig = plt.figure(figsize=(6.3, 3.45))
+_add = fig.add_axes
+fig.add_axes = lambda r: _add([r[0], r[1] / KH + (1 - 1 / KH), r[2], r[3] / KH])
 W, H0 = 0.198, 0.375
 for i, T in enumerate(T_SHOW):
     M = meshes(T)
@@ -103,6 +116,7 @@ for i, T in enumerate(T_SHOW):
             c.ax.set_xticklabels([f"{v:g}" for v in np.linspace(clim[0], clim[1], 3)])
             c.ax.tick_params(labelsize=7.5, length=2, pad=1)
             cb.set_xlabel(label, fontsize=8, labelpad=1)
+triad(_add([0.0, 0.0, 0.1, 0.12]))
 out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}{'_startpos' if RULE == 'startpos' else ''}.pdf"   # the base case keeps the plain name
 fig.savefig(out, dpi=400)
 fig.savefig(out.with_suffix(".png"), dpi=400)

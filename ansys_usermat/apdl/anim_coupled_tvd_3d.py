@@ -131,9 +131,6 @@ def view(mesh, field, cmap, clim):
             pl.add_mesh(pv.Box((lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])), color=(0.55, 0.55, 0.55), **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.98)
-    # coordinate axes (orientation marker in the lower left corner; y points up, as in the set-up figure)
-    pl.add_axes(line_width=4, color="black", xlabel="x", ylabel="y", zlabel="z", labels_off=False,
-                viewport=(0.0, 0.0, 0.3, 0.3))
     img = pl.screenshot(return_img=True)
     pl.close()
     return img
@@ -142,6 +139,15 @@ def view(mesh, field, cmap, clim):
 fig = plt.figure(figsize=(20, 6.8), dpi=160)                  # 3200 x 1088 px (multiples of 16)
 W = 0.2
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
+# coordinate axes as seen from the panels' camera, once, in the free lower right corner (y up)
+_tx = fig.add_axes([0.905, 0.01, 0.09, 0.2])
+_d = -np.asarray(CAM[0], float); _d /= np.linalg.norm(_d)
+_r = np.cross(_d, CAM[2]); _r /= np.linalg.norm(_r); _u = np.cross(_r, _d)
+for _v, _lab, _col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"), ((0, 0, 1), "z", "#1c3faa")):
+    _e = np.array(_v, float)
+    _tx.annotate("", xy=(_e @ _r, _e @ _u), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=_col, lw=2, mutation_scale=16))
+    _tx.text(1.3 * (_e @ _r), 1.3 * (_e @ _u), f"${_lab}$", color=_col, fontsize=16, ha="center", va="center")
+_tx.set_xlim(-1.05, 1.05); _tx.set_ylim(-0.6, 1.25); _tx.set_aspect("equal"); _tx.set_axis_off()
 ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
         f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}_5panel")     # the earlier four-panel videos keep their names

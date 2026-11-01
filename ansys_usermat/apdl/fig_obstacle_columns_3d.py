@@ -50,7 +50,6 @@ def scene(pl, add):
     add(pl)
     pl.camera_position = [(3.6, 2.6, 4.6), (0, 0, 0), (0, 1, 0)]
     pl.camera.zoom(0.92)
-    pl.add_axes(line_width=5, color="black", xlabel="x", ylabel="y", zlabel="z", viewport=(0.0, 0.0, 0.28, 0.28))  # always show the axes (y up)
 
 
 def render(name, add):
@@ -111,6 +110,15 @@ def main():
                 a.set_title(titles[c], fontsize=8)
         axs[r, 0].text(-0.08, 0.5, f"{ex}, $\\phi_{{3D}}={LEVEL[ex]:g}$", rotation=90, va="center", ha="center", transform=axs[r, 0].transAxes,
                        fontsize=8)
+    # coordinate axes as seen from the camera, one per figure below the panels (y up)
+    ax = fig.add_axes([0.08, -0.07, 0.08, 0.12])
+    cam, up = np.array([3.6, 2.6, 4.6]), np.array([0.0, 1.0, 0.0])
+    dv = -cam / np.linalg.norm(cam); rv = np.cross(dv, up); rv /= np.linalg.norm(rv); uv = np.cross(rv, dv)
+    for v, lab, col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"), ((0, 0, 1), "z", "#1c3faa")):
+        e = np.array(v, float); px, py = e @ rv, e @ uv
+        ax.annotate("", xy=(px, py), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=col, lw=1.0, mutation_scale=7))
+        ax.text(1.3 * px, 1.3 * py, f"${lab}$", color=col, fontsize=8, ha="center", va="center")
+    ax.set_xlim(-1.05, 1.05); ax.set_ylim(-0.6, 1.25); ax.set_aspect("equal"); ax.set_axis_off()
     out = ROOT / "assets" / "fig_obstacle_columns_3d"
     fig.savefig(out.with_suffix(".png"), dpi=400, bbox_inches="tight")
     fig.savefig(out.with_suffix(".pdf"), dpi=400, bbox_inches="tight")
