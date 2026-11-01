@@ -24,13 +24,13 @@ box(0.5, 5.4, 5.6, 1.45, '順番', [
   '12 月まで修論とコロキウム → 1 月から慶應で小さく試す（32³ で 200 本なら 1 日）',
   '入力を 3 章の事後標本に替え，5 菌種の点モデルで → 連成論文の次の論文']);
 const im = R + 'assets/fig_surrogate_pilot.png'; const b = fs.readFileSync(im); const pw = b.readUInt32BE(16), ph = b.readUInt32BE(20);
-const w = 6.6, h = w * ph / pw;
-s.addText('試し（32³，分離・抗菌薬あり，16 本，約 10 分）', { x: 6.35, y: 1.2, w: 6.5, h: 0.35, fontFace: JP, fontSize: 15, bold: true, color: NAVY, isTextBox: true, margin: 0 });
-s.addImage({ path: im, x: 6.3, y: 1.65, w, h });
+const w = 6.75, h = w * ph / pw;
+s.addText('試し（分離・抗菌薬あり，44 本，約 40 分）', { x: 6.35, y: 1.2, w: 6.5, h: 0.35, fontFace: JP, fontSize: 15, bold: true, color: NAVY, isTextBox: true, margin: 0 });
+s.addImage({ path: im, x: 6.25, y: 1.65, w, h });
 s.addText([
-  { text: 'α*₀（10〜300）と gℓ²/d（0.5〜2）をラテン超方格で 16 本．(a) ガウス過程による生存体積分率と計算点，(b)(c) 1 つ抜きの予測（±2σ）．', options: { breakLine: true } },
-  { text: '生存体積分率は α*₀ ≈ 60〜100 で急に切り替わり，16 本では足りない（切り替わり付近に点を足す，ロジット変換）．32³ でも 64³ と 0.001 以内．', options: { breakLine: true } },
-  { text: 'わかったこと：32³ の応力は学習に使えない．抗菌薬による応力の差が 32³ では −26 %，収束値では −2 % で，ばらつきの大部分が格子の誤差．応力は 64³ 以上，または 32³ と 64³ の組み合わせ（multi-fidelity）で学習する．', options: { bold: true } }],
+  { text: 'α*₀（10〜300）と gℓ²/d（0.5〜2）を変えた計算．(a) 生存体積分率の代理モデル（黒：最初の 16 点，赤：切り替わり付近に足した 12 点），(b) 生存体積分率（32³）と (c) 応力（64³）の 1 つ抜きの予測（±2σ），(d) 同じ点の応力，32³ と 64³．', options: { breakLine: true } },
+  { text: '生存体積分率：点を足してロジット変換すると，1 つ抜きの誤差が 0.09 → 0.024．', options: { breakLine: true } },
+  { text: '応力：64³ の 16 本で誤差は平均約 1.4 %．32³ は 64³ から −8〜+12 % ずれ，向きも点ごとに違うので，応力は 64³ 以上で学習する．', options: { bold: true } }],
   { x: 6.35, y: 1.75 + h, w: 6.45, h: 6.85 - (1.75 + h), fontFace: JP, fontSize: 12, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 5 });
 s.addText('西岡 佳祐　｜　慶應での続き（修論には入れない）', { x: 0.5, y: 7.05, w: 10, h: 0.3, fontFace: JP, fontSize: 10, color: GREY, isTextBox: true, margin: 0 });
 pres.writeFile({ fileName: OUT + 'surrogate_slide.pptx' }).then(f => console.log('ok', f));

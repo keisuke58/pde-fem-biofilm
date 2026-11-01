@@ -180,3 +180,6 @@ p3/uel/abaqus_in/
 
 ansys_usermat/coupling/libecology_native.so
 ansys_usermat/coupling/_build_ecology_native/
+
+# point-model files written by coupled_living_consumption.py for non-integer alpha*_0 (surrogate pilot runs)
+abaqus_composition/eco_fritsch_2sp_a*.*.txt
