@@ -10,6 +10,7 @@ mathtext). A demonstration, not a thesis figure.
   inherit: newly colonised points take the phi-weighted mean state of their colonised neighbours (default: the start
            state by position, the rule of the ANSYS runs); obst: the four rigid columns of Klempt 2024 Sect. 4.3;
   k26c4:   the four species of Klempt 2026 Table 2, case 4; pulse: the antibiotic in pulses of the same dose (A-71);
+  transc:  the runs with dc/dt in Eq. 35 (--transient-c 1e8), as the thesis figures; use with inhliv.
   fine:    coupling step 0.0025 and stress on 32^3 (A-90; run with --dtc 0.0025 --nm 32).
 """
 import sys
@@ -36,9 +37,10 @@ INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' l
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
+TRANSC = "transc" in OPT          # Eq. 35 with dc/dt (--transient-c 1e8), the runs of the thesis figures (29 Oct)
 FINE = "fine" in OPT              # A-90: coupling step 0.0025 (A-89) and the stress on a 32^3 mesh
 TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
-       f"_snapsvm{'_nm32' if FINE else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
+       f"_snapsvm{'_nm32' if FINE else ''}{'_transc1e+08' if TRANSC else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
        f"{'_obstcolumns' if OBST else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
@@ -137,7 +139,7 @@ W = 0.2
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
 ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}_5panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}_5panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
