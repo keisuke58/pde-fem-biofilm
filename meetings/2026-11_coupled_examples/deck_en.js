@@ -90,8 +90,8 @@ for (const c of ['separate', 'mixed']) {
   const s = frame('4. Initial and boundary conditions: ' + c + ' start');
   const h = img(s, R + 'assets/fig_setup_' + c + '_ab.png', 0.75, 1.2, 11.8);
   cap(s, 'Fig. ' + (c === 'separate' ? 1 : 2) + '  ' + (c === 'separate'
-    ? 'Separate start: species A in the seed (32 elements of the 8³ deck), species B in four blocks along the vertical edges at the seed\'s height.'
-    : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed; no edge blocks.')
+    ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks along the vertical edges, each 0.25 × 0.25 × 1.0 mm (4 elements, z = −0.5 to 0.5 mm, the seed\'s height; 0.25 mm³ in all).'
+    : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed (32 elements of 0.25 mm, 0.5 mm³); no edge blocks.')
     + ' Nutrient held at c = 1 in the element layer on y = −1 mm, antibiotic held at a = 1 on the outer element shell from T* = 1/3, zero flux elsewhere; '
     + 'three corner nodes constrain the rigid-body motion, the cube swells freely. Drawn on the 8³ elements; the runs use the same regions on 64³ cells.', 1.2 + h + 0.1);
 }
