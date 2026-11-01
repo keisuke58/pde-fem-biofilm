@@ -195,6 +195,9 @@ LYSIS = float(sys.argv[sys.argv.index("--lysis") + 1]) if "--lysis" in sys.argv 
 # taken as a retreat of the front at the speed V (mm/T*): the front speed of Eq. 34 becomes r c/(k + c) - V. Inside the
 # biofilm grad phi = 0, so only the surface moves. Meant for the flow conditions (HOBIC: CH, DH) of the volume comparison.
 EROSION = float(sys.argv[sys.argv.index("--erosion") + 1]) if "--erosion" in sys.argv else 0.0
+# --erosion-tau TAU: the detachment fades, V(t) = V exp(-t/TAU) (loosely attached cells leave early); t in T*
+EROSION_TAU = float(sys.argv[sys.argv.index("--erosion-tau") + 1]) if "--erosion-tau" in sys.argv else 0.0
+EROS_NOW = EROSION                                # the speed of the current inner step
 DEAD = None
 # --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
 # (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
@@ -389,7 +392,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
        + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "") + (f"_lys{LYSIS:g}" if LYSIS else "") + (f"_ero{EROSION:g}" if EROSION else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "") + (f"_lys{LYSIS:g}" if LYSIS else "") + (f"_ero{EROSION:g}" if EROSION else "") + (f"tau{EROSION_TAU:g}" if EROSION and EROSION_TAU else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -695,7 +698,7 @@ def front(phi, c):
     if FRONT_LIVING and LIV is not None:
         sp_ = sp_ * living_speed(LIV)
     if EROSION:                                   # --erosion: detachment, a retreat of the surface at the speed V
-        sp_ = sp_ - EROSION
+        sp_ = sp_ - EROS_NOW
     return -upwind_adv(phi, [sp_ * x / nrm for x in g])
 
 
@@ -988,6 +991,8 @@ def run(example, antibiotic):
             ka = 0.0 if MMS else W.K_ALPHA
             for i_in in range(per):
                 tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
+                if EROSION and EROSION_TAU:             # --erosion-tau: fading detachment
+                    globals()["EROS_NOW"] = EROSION * np.exp(-tk / EROSION_TAU)
                 if INNER_ACT:                           # A-89: reached cells consume from the inner step on
                     nw = (phi >= PHI_MIN) & ~on
                     num, den = neighbours_mean(L[..., None], np.where(on, phi, 0.0))
