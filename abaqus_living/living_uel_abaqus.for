@@ -563,7 +563,22 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
 !   mixed start of species 1 and 2
 ! Optional PROPS (absent or 0: off): 19 manufactured solution (mms), 20 SUPG, 21 rule for newly reached points,
 !   22, 23 homeostatic-pressure growth law p_ref and form (below; a Keio extension, not part of the thesis model),
-!   24 front speed times the living amount (below; a Keio extension, not part of the thesis model)
+!   24 front speed times the living amount (below; a Keio extension, not part of the thesis model),
+!   25 d of Eq. 35 (its time derivative), 26 growth of the living biomass (below; a Keio extension, not part of the
+!   thesis model)
+!
+! Growth of the living biomass (1 Nov 2026; coupled_living_consumption.py --growth-living-energy, variant A of the
+! coupling paper Section 2.5): PROPS(26) = 1 multiplies the coupling energy -k_alpha alpha phi of Klempt 2024 Eq. 20 by
+! sum_i phibar_i (phibar_i = phi_i psi_i, the living volume fraction of the point model at the Gauss point), so
+!   Eq. 36 becomes  alpha_dot = k_alpha phi_3D sum_i phibar_i   (alpha = alpha_n + dt k_alpha phi sum_i phibar_i)
+!   Eq. 34's growth source becomes  + k_alpha alpha sum_i phibar_i   (instead of + k_alpha alpha).
+! sum_i phibar_i is the given field of the point model after its advance at the start of the increment (the same L as
+! the consumption, clipped to [0, 1]; 0 where the point model has not started, so dead or empty biofilm does not
+! grow), not varied: no derivative with respect to the unknowns, so the tangent keeps its form with k_alpha replaced
+! by k_alpha L in Eq. 34 and dt k_alpha by dt k_alpha L in Eq. 36.  Combined with the homeostatic gate (PROPS(22) > 0)
+! both factors apply to Eq. 36, alpha_dot = k_alpha phi g L, and Eq. 34's source is k_alpha alpha L (the gate does not
+! enter Eq. 34, as the Python reference); the implicit gate solves xi = xi_n + dt k_alpha phi L g(p).  With the
+! manufactured solution (PROPS(19)) L = 1 and the law changes nothing.  Absent or 0: every result unchanged.
 !
 ! Front speed times the living amount (28 Oct 2026; coupled_living_consumption.py --front-living, KEIO_PLAN.ja.md
 ! section 10): PROPS(24) = 1 multiplies the front speed r c/(K + c) of Eq. 34 by sum_i phibar_i, taken as the largest
@@ -626,6 +641,8 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
 ! Eq. 35 with its time derivative (29 Oct 2026): PROPS(25) = d in mm^2/T* adds N (c - c_n)/(d dt) to the nutrient and
 ! antibiotic rows (backward Euler, as coupled_living_consumption.py --transient-c); <= 0 or absent: the limit
         double precision, save :: cdot_d = 0d0
+! growth of the living biomass (header): PROPS(26) = 1; set in UEL or by a driver
+        logical, save :: growth_liv_on = .false.
         double precision, allocatable, save :: liv_front(:,:)
         double precision, save :: phi_min_s = 1d-3, h_el = 0d0
         logical, save :: any_started = .false.               ! some Gauss point has started (end of the last increment)
@@ -862,6 +879,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
           double precision :: vol, m(6), dsig(6), nrm, sp, dt_, sphi, sc, phim, cm, tau, vm, hs, pe, res, vdn(8)
           double precision :: Ebio, nu, f, beta, ka, P, rr, Km, qc, qa
           double precision :: g, dg, kal, dalp, Kb, epsn(6), phcn, En, pn, Ag, B3, p0, xi, dhdxi, dalu(3, 8), D0m(6)
+          double precision :: gl, kag
           integer :: q, i, j, ii, jj, d
           Ebio = props(1); nu = props(2); f = props(3); beta = props(4); ka = props(5); P = props(6)
           rr = props(7); Km = props(8); qc = props(9); qa = props(10)
@@ -912,8 +930,20 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
             end do
             E = Ebio * (phc**2 + f)
             dE = Ebio * 2d0 * phc * dphc
+! the living volume fraction of the point model (consumption; the growth of the living biomass when PROPS(26) = 1)
+            L = 0d0
+            if (sv(14, q) > 0.5d0) L = living(sv(1:12, q))
+            sphi = 0d0; sc = 0d0
+            if (mms_on) then
+              L = 1d0
+              call mms_eval(x(1), x(2), x(3), mms_t, beta, rr, Km, qc, sphi, sc, phim, cm)
+            end if
+! growth of the living biomass (header): gl = L, a given field (not differentiated); off: gl = 1 exactly
+            gl = 1d0
+            if (growth_liv_on) gl = min(max(L, 0d0), 1d0)
+            kag = ka * gl                                     ! the coefficient of alpha in Eq. 34
 ! growth over the increment (Eq. 36; the homeostatic law of the header when gate_pref > 0)
-            g = 1d0; dalp = 0d0; dalu = 0d0; kal = ka * ka * dt
+            g = 1d0; dalp = 0d0; dalu = 0d0; kal = ka * kag * dt * gl
             if (gate_pref > 0d0) then
               Kb = lam + 2d0 * mu / 3d0
               if (.not. gate_implicit) then
@@ -928,29 +958,22 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
                 end do
                 pn = -En * Kb * (sum(epsn(1:3)) - 3d0 * sv(13, q))
                 call gate_eval(pn, gate_ph(phn, f), g, dg)
-                kal = ka * ka * dt * g
+                kal = ka * ka * dt * g * gl * gl
               else
-                Ag = dt * ka * ph
+                Ag = dt * ka * ph * gl
                 B3 = 3d0 * E * Kb
                 p0 = -E * Kb * sum(eps(1:3))
                 call solve_xi(sv(13, q), Ag, p0, B3, gate_ph(phn, f), xi, g, dg)
                 dhdxi = 1d0 - Ag * dg * B3
-                dalp = (dt * ka * g + Ag * dg * (-dE * Kb * sum(eps(1:3)) + xi * 3d0 * dE * Kb)) / dhdxi
+                dalp = (dt * ka * g * gl + Ag * dg * (-dE * Kb * sum(eps(1:3)) + xi * 3d0 * dE * Kb)) / dhdxi
                 dalu = -Ag * dg * E * Kb * Bv / dhdxi
-                kal = ka * dalp
+                kal = kag * dalp
               end if
             end if
             if (gate_implicit .and. gate_pref > 0d0) then
               al = 1d0 + xi
             else
-              al = 1d0 + sv(13, q) + dt * ka * ph * g           ! alpha at the end of the increment
-            end if
-            L = 0d0
-            if (sv(14, q) > 0.5d0) L = living(sv(1:12, q))
-            sphi = 0d0; sc = 0d0
-            if (mms_on) then
-              L = 1d0
-              call mms_eval(x(1), x(2), x(3), mms_t, beta, rr, Km, qc, sphi, sc, phim, cm)
+              al = 1d0 + sv(13, q) + dt * ka * ph * g * gl      ! alpha at the end of the increment
             end if
 ! phase
             tau = 0d0
@@ -968,7 +991,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
               end if
             end if
 ! strong residual of the phi equation (the Laplacian of the trilinear field is dropped, as usual)
-            res = (ph - phn) / dt_ - ka * al + pen + dot_product(v, gph) - sphi
+            res = (ph - phn) / dt_ - kag * al + pen + dot_product(v, gph) - sphi
             do i = 1, NN
               ii = NDN*(i-1)+4
               R(ii) = R(ii) + w * (N(i) * res + beta * dot_product(dN(:, i), gph) + tau * vdn(i) * res)
@@ -993,7 +1016,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
             if (gate_implicit .and. gate_pref > 0d0) then
               dsig = dE * sm - E * dalp * matmul(D0, m)        ! d sigma / d phi, d alpha / d phi of the implicit gate
             else
-              dsig = dE * sm - E * dt * ka * g * matmul(D0, m)   ! d sigma / d phi
+              dsig = dE * sm - E * dt * ka * g * gl * matmul(D0, m)   ! d sigma / d phi
             end if
             D0m = matmul(D0, m)
             do i = 1, NN
@@ -1006,7 +1029,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
                 if (gate_implicit .and. gate_pref > 0d0) then
 ! implicit gate: alpha depends on the displacements through p (phase and mechanics rows)
                   do d = 1, 3
-                    K(ii, NDN*(j-1)+d) = K(ii, NDN*(j-1)+d) - w * ka * dalu(d, j) * (N(i) + tau * vdn(i))
+                    K(ii, NDN*(j-1)+d) = K(ii, NDN*(j-1)+d) - w * kag * dalu(d, j) * (N(i) + tau * vdn(i))
                     do jj = 1, 3
                       K(NDN*(i-1)+jj, NDN*(j-1)+d) = K(NDN*(i-1)+jj, NDN*(j-1)+d)
      &                  - w * E * dot_product(B(:, 3*(i-1)+jj), D0m) * dalu(d, j)
@@ -1042,7 +1065,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
           double precision, intent(in) :: U(NDOF), Un(NDOF), coords(3, NN), props(*), dt
           double precision, intent(inout) :: sv(NSV, NGP)
           double precision :: N(8), dN(3, 8), w, x(3), ph, phn, g, dg, Bv(3, 8), B(6, 24), eps(6), vol, Kb, lam, mu
-          double precision :: phc, E, A, B3, p0, xi
+          double precision :: phc, E, A, B3, p0, xi, L, gl
           integer :: q, i, d
           if (gate_pref > 0d0) then
             lam = props(2) / ((1 + props(2)) * (1 - 2 * props(2))); mu = 0.5d0 / (1 + props(2))
@@ -1061,6 +1084,14 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
               ph = ph + N(i) * U(NDN*(i-1)+4); phn = phn + N(i) * Un(NDN*(i-1)+4)
             end do
             g = 1d0
+! growth of the living biomass (header): the same factor as element()
+            gl = 1d0
+            if (growth_liv_on) then
+              L = 0d0
+              if (sv(14, q) > 0.5d0) L = living(sv(1:12, q))
+              if (mms_on) L = 1d0
+              gl = min(max(L, 0d0), 1d0)
+            end if
             if (gate_pref > 0d0) then
               call bmatrix(dN, Bv, B)
               if (.not. gate_implicit) then
@@ -1082,7 +1113,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
                     eps = eps + B(:, 3*(i-1)+d) * U(NDN*(i-1)+d)
                   end do
                 end do
-                A = dt * props(5) * ph
+                A = dt * props(5) * ph * gl
                 B3 = 3d0 * E * Kb
                 p0 = -E * Kb * sum(eps(1:3))
                 call solve_xi(sv(13, q), A, p0, B3, gate_ph(phn, props(3)), xi, g, dg)
@@ -1090,7 +1121,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
                 cycle
               end if
             end if
-            sv(13, q) = sv(13, q) + dt * props(5) * ph * g
+            sv(13, q) = sv(13, q) + dt * props(5) * ph * g * gl
           end do
         end subroutine alpha_store
 
@@ -1302,7 +1333,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
       end module living_uel_mod
 
 ! ---- Abaqus entry point ---------------------------------------------------------------------------
-! *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128   (PROPERTIES up to 24, header)
+! *USER ELEMENT, NODES=8, TYPE=U1, UNSYMM, PROPERTIES=18, COORDINATES=3, VARIABLES=128   (PROPERTIES up to 26, header)
 ! 1, 2, 3, 11, 12, 13
       subroutine UEL(RHS, AMATRX, SVARS, ENERGY, NDOFEL, NRHS, NSVARS, PROPS, NPROPS, COORDS, MCRD, NNODE,
      &               U, DU, V, A, JTYPE, TIME, DTIME, KSTEP, KINC, JELEM, PARAMS, NDLOAD, JDLTYP, ADLMAG,
@@ -1317,7 +1348,7 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
      &                      DTIME, PARAMS(*), ADLMAG(MDLOAD, *), PREDEF(2, NPREDF, NNODE), DDLMAG(MDLOAD, *),
      &                      PNEWDT, PERIOD
         double precision :: Un(NDOF), sv(NSV, NGP), R(NDOF), K(NDOF, NDOF), sig(6, NGP)
-        logical :: ok, wk, lmms, lsupg, limp, lfl
+        logical :: ok, wk, lmms, lsupg, limp, lfl, lgl
         integer :: lay, rule, iform
         double precision :: pref, dcd
         if (.not. eco_inited) call eco_native_init()     ! never reached in Abaqus: UEXTERNALDB LOP 0 runs first, serial
@@ -1351,6 +1382,10 @@ C         .false. sends the caller to its inline BIOFILM_STRESS_CORE
         dcd = 0d0
         if (NPROPS >= 25) dcd = PROPS(25)
         if (cdot_d /= dcd) cdot_d = dcd
+! growth of the living biomass (header): PROPS(26) = 1; absent or 0: off
+        lgl = .false.
+        if (NPROPS >= 26) lgl = (PROPS(26) > 0.5d0)
+        if (growth_liv_on .neqv. lgl) growth_liv_on = lgl
         if (mms_on .neqv. lmms) mms_on = lmms
         if (supg_on .neqv. lsupg) supg_on = lsupg
         if (lmms) mms_t = TIME(1) + DTIME

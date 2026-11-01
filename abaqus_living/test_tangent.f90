@@ -3,7 +3,9 @@
 !   gfortran -cpp -ffixed-form -ffixed-line-length-132 -c living_uel_abaqus.for
 !   gfortran -ffree-line-length-none test_tangent.f90 living_uel_abaqus.o -o test_tangent && ./test_tangent [supg] [gate|gate1|gate2|igate|igate1|igate2]
 ! Arguments (any order): supg = SUPG (A-54); h=<step of the displacement dofs> (default 1e-9, implicit gate 1e-7); gate, gate1, gate2 = the homeostatic-pressure law with the explicit gate,
-! forms 0, 1, 2, p_ref chosen so that 0 < g < 1 at the Gauss points; igate, igate1, igate2 = the implicit gate (27 Oct 2026).
+! forms 0, 1, 2, p_ref chosen so that 0 < g < 1 at the Gauss points; igate, igate1, igate2 = the implicit gate (27 Oct 2026);
+! gliv = growth of the living biomass (PROPS(26), 1 Nov 2026), with the point-model state scaled so that 0 < L < 1 at
+! every Gauss point (L printed); it combines with the gate arguments.
 ! With the law on, the effective gate g of every Gauss point ((alpha - alpha_n) / (dt k_alpha phi)) and the relative
 ! change of the tangent against the law switched off are printed, so a check sees that the gate was active.
 program test_tangent
@@ -11,7 +13,7 @@ program test_tangent
   implicit none
   double precision :: U(NDOF), Un(NDOF), coords(3, NN), sv(NSV, NGP), sv2(NSV, NGP), props(18), R(NDOF), K(NDOF, NDOF)
   double precision :: Rp(NDOF), Rm(NDOF), Kfd(NDOF, NDOF), Kd(NDOF, NDOF), K0(NDOF, NDOF), sig(6, NGP), h, err, sc
-  double precision :: N(8), dN(3, 8), w, x(3), ph, geff(NGP), pref0, dt, hu
+  double precision :: N(8), dN(3, 8), w, x(3), ph, geff(NGP), pref0, dt, hu, lgp(NGP)
   integer :: i, j, q, na, nseed
   integer, allocatable :: seed(:)
   character(len=16) :: arg
@@ -40,11 +42,12 @@ program test_tangent
   sv(13, :) = 1d-4 * (0.3d0 + 0.3d0 * sv(13, :))       ! p of 3 E' Kb xi, about 0.001-0.02 Pa (E = 10 Pa): 0 < g < 1 below
   props = [10d0, 0.49d0, 1d-3, 0.645d0, 1d-3, 5d0, 10d0, 1d0, 1d0, 1d0, 1d-3, 0.1d0, 5d0, 1d0, 0.5625d0, 0.55d0, &
            0.275d0, 0.275d0]
-  supg_on = .false.; gate_pref = 0d0; gate_form = 0; gate_implicit = .false.
+  supg_on = .false.; gate_pref = 0d0; gate_form = 0; gate_implicit = .false.; growth_liv_on = .false.
   hu = 1d-9                                             ! step of the displacement dofs
   do na = 1, command_argument_count()
     call get_command_argument(na, arg)
     if (arg == 'supg') supg_on = .true.
+    if (arg == 'gliv') growth_liv_on = .true.
     if (arg(1:4) == 'gate') gate_pref = 0.03d0
     if (arg(1:5) == 'igate') then
       gate_pref = 0.02d0; gate_implicit = .true.
@@ -55,6 +58,13 @@ program test_tangent
     if (arg == 'gate2' .or. arg == 'igate2') gate_form = 2
   end do
   if (gate_form == 1) gate_pref = gate_pref / 0.3d0    ! p_h = p_ref (phi_n^2 + f), phi_n about 0.2-0.8
+  if (growth_liv_on) then
+    sv(1:2, :) = 0.4d0 * sv(1:2, :)                     ! L = phi_1 psi_1 + phi_2 psi_2 < 0.8
+    do q = 1, NGP
+      lgp(q) = living(sv(1:12, q))
+    end do
+    print '(a,8f8.4)', 'L at the Gauss points:     ', lgp
+  end if
   call element(U, Un, coords, sv, props, dt, R, K, .true., sig)
   do j = 1, NDOF
     h = 1d-6 * max(1d0, abs(U(j)))
@@ -71,6 +81,13 @@ program test_tangent
     print '(a,i2,a,es10.3)', '  dof type ', i, ': max |K - K_fd| in its rows ', &
       maxval(abs(K(i:NDOF:NDN, :) - Kfd(i:NDOF:NDN, :))) / max(maxval(abs(K(i:NDOF:NDN, :))), 1d-300)
   end do
+  if (growth_liv_on) then
+    ! the tangent against the law off (the same fields)
+    growth_liv_on = .false.
+    call element(U, Un, coords, sv, props, dt, Rp, K0, .true., sig)
+    growth_liv_on = .true.
+    print '(a,es10.3)', 'tangent changed by the growth of the living biomass (relative): ', maxval(abs(K - K0)) / sc
+  end if
   if (gate_pref > 0d0) then
     ! the effective gate of every Gauss point, from the stored growth, and the tangent against the law off
     sv2 = sv
@@ -82,6 +99,7 @@ program test_tangent
         ph = ph + N(i) * U(NDN*(i-1)+4)
       end do
       geff(q) = (sv2(13, q) - sv(13, q)) / (dt * props(5) * ph)
+      if (growth_liv_on) geff(q) = geff(q) / lgp(q)        ! the stored growth is dt k_alpha phi g L
     end do
     pref0 = gate_pref; gate_pref = 0d0
     call element(U, Un, coords, sv, props, dt, Rp, K0, .true., sig)
