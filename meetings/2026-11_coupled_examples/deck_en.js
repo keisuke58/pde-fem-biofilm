@@ -88,12 +88,19 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 // 5, 6 set-up
 for (const c of ['separate', 'mixed']) {
   const s = frame('4. Initial and boundary conditions: ' + c + ' start');
-  const h = img(s, R + 'assets/fig_setup_' + c + '_ab.png', 0.75, 1.2, 11.8);
+  const h = img(s, R + 'assets/fig_setup_' + c + '_ab.png', 1.6, 1.08, 10.1);
+  const y0 = 1.08 + h + 0.05;
+  const c_ = (t, o = {}) => ({ text: t, options: Object.assign({ align: 'left', valign: 'middle' }, o) });
+  s.addTable([[H('field'), H('where it is held'), H('value'), H('from'), H('other walls')],
+    [c_('nutrient c', { bold: true }), c_('element layer on the face y = −1 mm (0.25 mm thick, 64 elements)'), c_('c = 1'), c_('T* = 0'), c_('zero flux')],
+    [c_('antibiotic a', { bold: true }), c_('outer element shell on all six faces (0.25 mm thick, 296 elements)'), c_('a = 1'), c_('T* = 1/3 (a = 0 before)'), c_('— (held on all)')],
+    [c_('displacement u', { bold: true }), c_('three corner nodes (▲: ux, uy, uz / uy, uz / uz)'), c_('0'), c_('—'), c_('free swelling')]],
+    { x: 0.55, y: y0, w: 12.23, colW: [1.6, 5.2, 0.95, 2.4, 2.08], fontFace: TM, fontSize: 12.5, color: INK, rowH: 0.33,
+      border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
   cap(s, 'Fig. ' + (c === 'separate' ? 1 : 2) + '  ' + (c === 'separate'
-    ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks along the vertical edges, each 0.25 × 0.25 × 1.0 mm (4 elements, z = −0.5 to 0.5 mm, the seed\'s height; 0.25 mm³ in all).'
-    : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed (32 elements of 0.25 mm, 0.5 mm³); no edge blocks.')
-    + ' Nutrient held at c = 1 in the element layer on y = −1 mm, antibiotic held at a = 1 on the outer element shell from T* = 1/3, zero flux elsewhere; '
-    + 'three corner nodes constrain the rigid-body motion, the cube swells freely. Drawn on the 8³ elements; the runs use the same regions on 64³ cells.', 1.2 + h + 0.1);
+    ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks of 0.25 × 0.25 × 1.0 mm along the vertical edges (z = −0.5 to 0.5 mm, 0.25 mm³ in all).'
+    : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed (32 elements of 0.25 mm, 0.5 mm³).')
+    + ' c and a diffuse inward from the held layers and are taken up by the living biomass (Eq. 35). Drawn on 8³ elements; the runs use 64³ cells.', y0 + 1.42);
 }
 
 // 7, 8 results
