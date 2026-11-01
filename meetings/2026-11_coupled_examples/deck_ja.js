@@ -81,7 +81,8 @@ function pngSize(p) { const b = fs.readFileSync(p); return [b.readUInt32BE(16), 
     '前線の項：2 次の風上（MUSCL＋minmod）',
     '時間：φ₃D, α は RK4，式 35 は後退オイラー（ċ 付き），点モデルは陰的オイラー＋Newton',
     '連成：ずらして解く．消費の Σᵢφ̄ᵢ は 1 ステップ遅れ',
-    '応力：16³ の六面体，B̄ 法，小ひずみ'],
+    '応力：16³ の六面体，B̄ 法，小ひずみ',
+    '計算時間（1 コア，400 ステップ）：64³ 約 5 分，128³ 約 1 時間，192³ 約 3.3 時間'],
     { x: 8.6, y: 1.8, w: 4.2, h: 5.0, fontSize: 13, paraSpaceAfter: 7 }); }
 
 // 5 setup
