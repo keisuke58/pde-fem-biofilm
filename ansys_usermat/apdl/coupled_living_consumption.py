@@ -186,6 +186,12 @@ GROWTH_LIVING = "--growth-living" in sys.argv
 # --growth-living alone is variant B (viscosity eta_alpha / sum_i phibar_i): only Eq. 36 changes.
 GROWTH_ENERGY = "--growth-living-energy" in sys.argv
 GROWTH_LIVING = GROWTH_LIVING or GROWTH_ENERGY
+# --lysis K (1 Nov 2026, Keio continuation, not the thesis model; an assumption of this work): dead biomass dissolves,
+#     d phi_3D/dt = ... - K phi_3D D,   D = sum_i phi_i (1 - psi_i), the dead volume fraction of the point model,
+# K in 1/T*, D of the start of the outer step (0 where no point model has started). For the comparison with the
+# measured biofilm volume (papers/coupling_paper/VALIDATION_PLAN.ja.md), where the volume falls after day 1 in CH and CS.
+LYSIS = float(sys.argv[sys.argv.index("--lysis") + 1]) if "--lysis" in sys.argv else 0.0
+DEAD = None
 # --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
 # (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
 #     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
@@ -379,7 +385,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
        + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "") + (f"_lys{LYSIS:g}" if LYSIS else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -971,6 +977,8 @@ def run(example, antibiotic):
                 hist.setdefault("gate_min", []).append(float(GATE.min()))
             cf = c
             Lf = L
+            if LYSIS:                                   # --lysis: dead volume fraction of the start of the step
+                globals()["DEAD"] = np.where(on, np.clip((G[..., :N_SP] * (1.0 - G[..., 6:6 + N_SP])).sum(-1), 0.0, 1.0), 0.0)
             ka = 0.0 if MMS else W.K_ALPHA
             for i_in in range(per):
                 tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
@@ -985,6 +993,8 @@ def run(example, antibiotic):
                     d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al * (np.clip(Lf, 0.0, 1.0) if GROWTH_ENERGY else 1.0) - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                     if MECH_K:
                         d = d - MECH_K * ph * ice
+                    if LYSIS:
+                        d = d - LYSIS * ph * DEAD
                     if FRONT:
                         d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
                         if SENSOR:
