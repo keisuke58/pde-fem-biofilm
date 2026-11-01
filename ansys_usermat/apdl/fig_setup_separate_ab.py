@@ -5,7 +5,8 @@ held on the element layer y < -0.75 mm, the antibiotic held on the outer element
 constrained corner nodes (rigid-body constraints of the stress solve). Shown on the 8^3 element grid of the deck; the
 runs use the same regions on 64^3 cells (coupled_living_consumption.py --v2 --ansys-bc).
 
-    python ansys_usermat/apdl/fig_setup_separate_ab.py   -> assets/fig_setup_separate_ab.png / .pdf
+    python ansys_usermat/apdl/fig_setup_separate_ab.py [mixed]   -> assets/fig_setup_{separate,mixed}_ab.png / .pdf
+"mixed": both species in the seed in equal amounts (phi_1 = phi_2 = 0.275), no edge blocks; the rest as above.
 """
 from __future__ import annotations
 
@@ -22,7 +23,9 @@ sys.path.insert(0, str(HERE.parent))
 import figstyle  # noqa: E402
 from model_setup_fig import DECK, read_deck, to_grid  # noqa: E402
 
-OUT = HERE.parents[1] / "assets" / "fig_setup_separate_ab.png"
+MIXED = len(sys.argv) > 1 and sys.argv[1] == "mixed"
+OUT = HERE.parents[1] / "assets" / ("fig_setup_mixed_ab.png" if MIXED else "fig_setup_separate_ab.png")
+SPAB = "#7048a8"                                       # both species in the seed (mixed example)
 SPA, SPB, NUTR, AB, MESH, INK, FIX = "#3b5bdb", "#c92a2a", "#3a9d5d", "#e8890c", "#9aa5b1", "#1f2933", "#7a1f1f"
 
 
@@ -51,19 +54,20 @@ def main():
     m = 0.5 * (c[:-1] + c[1:])
     XC, YC, ZC = np.meshgrid(m, m, m, indexing="ij")
     zmax = np.abs(ZC[seed]).max() + 1e-9
-    spb = (np.abs(XC) > 0.75) & (np.abs(YC) > 0.75) & (np.abs(ZC) <= zmax)
+    seedc = SPAB if MIXED else SPA
+    spb = np.zeros_like(seed) if MIXED else (np.abs(XC) > 0.75) & (np.abs(YC) > 0.75) & (np.abs(ZC) <= zmax)
     shell = (np.abs(XC) > 0.75) | (np.abs(YC) > 0.75) | (np.abs(ZC) > 0.75)
     front = XC > 0                                   # the half towards the viewer (x > 0), removed in (b) and (c)
 
     fig = plt.figure(figsize=(16.5, 5.9))
-    titles = ("(a) start: species A and B, supports",
+    titles = ("(a) start: A and B mixed in the seed, supports" if MIXED else "(a) start: species A and B, supports",
               "(b) nutrient: $c = 1$ held from $T^* = 0$",
               "(c) antibiotic: $a = 1$ held from $T^* = 1/3$")
     for p in range(3):
         ax = fig.add_subplot(1, 3, p + 1, projection="3d")
         if p == 0:
             ax.voxels(X, Y, Z, spb, facecolors=SPB + "dd", edgecolors="white", linewidth=0.3)
-            ax.voxels(X, Y, Z, seed, facecolors=SPA + "dd", edgecolors="white", linewidth=0.3)
+            ax.voxels(X, Y, Z, seed, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
             for (x, y, z), dofs in corners.items():
                 ax.scatter([x], [y], [z], s=70, marker="^", color=FIX, depthshade=False, zorder=10)
                 ax.text(x, y, z - 0.32, ", ".join(d.strip().lower() for d in dofs), fontsize=11, color=FIX,
@@ -71,13 +75,13 @@ def main():
         elif p == 1:
             ax.voxels(X, Y, Z, ~nut & ~front, facecolors="#ffffff10", edgecolors=MESH + "55", linewidth=0.2)
             ax.voxels(X, Y, Z, nut & ~front, facecolors=NUTR + "99", edgecolors=NUTR, linewidth=0.3)
-            ax.voxels(X, Y, Z, seed & ~front, facecolors=SPA + "dd", edgecolors="white", linewidth=0.3)
+            ax.voxels(X, Y, Z, seed & ~front, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
         else:
             ax.voxels(X, Y, Z, shell & ~front, facecolors=AB + "38", edgecolors=AB + "aa", linewidth=0.25)
-            ax.voxels(X, Y, Z, seed & ~front, facecolors=SPA + "dd", edgecolors="white", linewidth=0.3)
+            ax.voxels(X, Y, Z, seed & ~front, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
         frame(ax)
         ax.set_title(titles[p], fontsize=14, y=0.97)
-    handles = [plt.Rectangle((0, 0), 1, 1, fc=SPA), plt.Rectangle((0, 0), 1, 1, fc=SPB),
+    handles = [plt.Rectangle((0, 0), 1, 1, fc=seedc), plt.Rectangle((0, 0), 1, 1, fc=SPB),
                plt.Rectangle((0, 0), 1, 1, fc=NUTR, alpha=0.6), plt.Rectangle((0, 0), 1, 1, fc=AB, alpha=0.6),
                plt.Line2D([], [], marker="^", ls="", color=FIX)]
     labels = ["species A: seed, $\\phi_{3D} = 1$ at the start",
@@ -85,6 +89,9 @@ def main():
               "nutrient held: element layer on $y = -1$ mm",
               "antibiotic held: outer element shell",
               "constrained corner nodes (rigid-body supports)"]
+    if MIXED:                                         # no edge blocks: one seed entry instead of A and B
+        handles.pop(1)
+        labels[:2] = ["seed: $\\phi_{3D} = 1$, A and B in equal amounts ($\\phi_1 = \\phi_2 = 0.275$)"]
     fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=12, frameon=False)
     fig.text(0.5, 0.165, "(b), (c): half $x > 0$ removed.  Zero flux of $c$ and $a$ elsewhere; "
              "no other displacement constraints (free swelling).", ha="center", fontsize=12, color=INK)
