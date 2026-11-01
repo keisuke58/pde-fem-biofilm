@@ -961,3 +961,16 @@ The GCI is computed with Celik 2008 (Fs 1.25), with the iteration for unequal re
 So at 256^3, where the cell Peclet number is 0.96 by the instructions' estimate, the vM is still not in the asymptotic
 range, although the order rises toward 1 on the finest three grids. No lower-grid run of the Fritsch shares with dc/dt
 is in `results/2026-10-3d/`, so that run has no grid series. The JSONs are in `results/2026-10-3d/` (`_nf256_`).
+
+## 2026-11-02: surrogate pilot, the 12 remaining points at 128^3 (CLOUD_TO_FIFA 1 Nov night)
+
+Command: `python3 papers/surrogate_pilot/run_pilot.py --tag g --nf 128 --reuse papers/surrogate_pilot/design_g_in.json --jobs 11`.
+`--jobs 11` is 12 cores minus the 256^3 run that was running beside it. The run started 1 Nov 23:47 JST, ended 2 Nov 01:28 JST,
+exit 0; all 12 points report "done".
+- **Time per run** (from the finish times of the JSONs): 55-59 min for the 11 that ran together (12 processes on 12 cores).
+  The 12th started when the first one finished and took 46 min.
+- **Memory per run**: RSS about 1.1 GB, peak 1.23 GB (sampled once a minute).
+
+Files: `papers/surrogate_pilot/runs/g000..g011_*.json` and `papers/surrogate_pilot/design_g.json`, which the script wrote.
+The analysis of the ratios is left to the cloud.
+The 256^3 mixed run without antibiotic (1 Nov) is still running; its report follows.
