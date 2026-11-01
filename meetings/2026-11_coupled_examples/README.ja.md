@@ -7,7 +7,7 @@
   `assets/fig_coupled_3d_panels_*_ab.pdf`、動画は `ansys_usermat/apdl/anim_coupled_tvd_3d.py <case> inhliv transc`。
 
 ## 送る前に確かめること
-1. fifa の混合 256³ の結果が来ていれば、表 2（格子収束）と考察の 1 文（「256³ で確認中」）を更新する。GCI は 4 格子で出し直す。
+1. ~~fifa の混合 256³~~ 反映済み（1 Nov、表 2 の下の文と日本語版の考察。論文の付録 B.4 も）。
 2. 数字は修論 4 章の `tab:ch5-two-species` と `tab:ch5-gci` と同じか（`scripts/audit_thesis_numbers.py`）。
 3. CLAUDE.md の「指導教員向けの文書」の決まり：一人称 I、AI っぽい言い回しなし、内部のラベルなし、論文にない値は印つき（f、φ_min、配置）。
 4. メールは送る前にユーザーに確認する（このファイルでは送らない）。PPTX は 12 MB 前後なので、添付か Drive のリンクか決める。
