@@ -168,6 +168,7 @@ for (const c of ['separate', 'mixed']) {
 { const s = frame('10. Discussion');
   bullets(s, [
     'The composition reaches the stress only through the nutrient and the front speed r c/(k+c). The growth law, Eq. 36, counts all biomass, living or dead, so a large change of the living fraction leaves growth and stress almost unchanged.',
+    'The stress is set not by the amount of growth but by its mismatch in stiff biofilm, (φ₃D²+f)|∇α| (correlation 0.94 over 51 runs on 64³). α records when the front arrived, so a lower nutrient and a slower front leave a larger difference between the seed and its surroundings and a higher stress. The mixed seed carries less because the biofilm around it is softer (intermediate φ₃D).',
     'Species B is removed first: its nutrient term c*A₂₂/η₂ is half that of A, while the antibiotic term per viscosity, α*bᵢ/ηᵢ, is the same for both. Where the nutrient is low, A dies as well.',
     'In the mixed start both species meet the antibiotic in the seed, and the living volume fraction falls further (0.038 against 0.152).',
     'For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to discuss whether this is worth pursuing.'],
