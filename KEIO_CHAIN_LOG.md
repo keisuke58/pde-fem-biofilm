@@ -937,3 +937,27 @@ Fritsch shares. Run 1 started 30 Oct 16:33 JST (nohup).
 fifa had 12 cores and 43 GB available (free 10 GB). The chain script of run 1 was stopped so that it does not start run 2
 a second time; run 1 goes on as its own process. The two checkpoints have different names (`_mixeq`), so they do not clash.
 Logs: `~/runs/n256_20261030/` (`chain.log`, `mixeq_ab.out`, `fritsch_ab.out`, `monitor.log`).
+
+## 2026-10-31: 256^3 mixed example with antibiotic, dc/dt: done
+
+Both runs ran in parallel on fifa and ended with no error. Run 1 finished 31 Oct 08:29 JST (57276 s, 15.9 h); its exit code
+was not captured, because its chain script had been stopped (see 30 Oct), but the `.out` has the final line and `.err` is
+empty. Run 2 finished 31 Oct 09:46 JST (60521 s, 16.8 h) with exit 0.
+
+| shares | sum phibar | share A | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- |
+| equal (`--mix-equal`) | 0.0378 | 0.6055 | 0.9726 | 8.4728e-4 | 3.6327e-4 |
+| Fritsch | 0.0370 | 0.5065 | 0.9729 | 8.4486e-4 | 4.5012e-4 |
+
+The vM of the equal-share run still rises with the grid. With the cloud's 32/64/128/192^3 values (2.00/2.82/3.30/3.52e-4,
+CLOUD_TO_FIFA 30 Oct morning), the steps are +0.22e-4 (128 to 192) and +0.11e-4 (192 to 256).
+The GCI is computed with Celik 2008 (Fs 1.25), with the iteration for unequal refinement ratios:
+
+| grids | p | GCI | extrapolated vM |
+| --- | --- | --- | --- |
+| 64/128/256 | 0.53 | 25.9 % | 4.38e-4 |
+| 128/192/256 | 0.93 | 12.6 % | 4.00e-4 |
+
+So at 256^3, where the cell Peclet number is 0.96 by the instructions' estimate, the vM is still not in the asymptotic
+range, although the order rises toward 1 on the finest three grids. No lower-grid run of the Fritsch shares with dc/dt
+is in `results/2026-10-3d/`, so that run has no grid series. The JSONs are in `results/2026-10-3d/` (`_nf256_`).
