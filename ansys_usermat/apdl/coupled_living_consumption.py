@@ -136,6 +136,8 @@ if "--gc" in sys.argv:
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
 AB_TOP = "--ab-top" in sys.argv
 C_SINE = "--c-sine" in sys.argv
+# --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
+C_CONST = float(sys.argv[sys.argv.index("--c-const") + 1]) if "--c-const" in sys.argv else None
 # A-71: time course of the held antibiotic value a_b(T*) after T_AB, the same dose (integral of a_b over [T_AB, T_END]) as
 # the constant a_b = 1: const; pulse = 2 for the first half of each period, 0 for the second; sine = 1 + sin(2 pi (T - T_AB) / P)
 AB_SCHED = sys.argv[sys.argv.index("--ab-schedule") + 1] if "--ab-schedule" in sys.argv else "const"
@@ -381,7 +383,7 @@ if OBSTACLE:
             _e = [slice(None)] * 3; _e[_a] = -1 if _s == 1 else 0; _m[tuple(_e)] = False
             NB[_a, _s] = _m
 RES = HERE / "results" / ("2026-10-validation" if ECO_FILE else
-                          "2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
+                          "2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv or "--c-const" in sys.argv) else "2026-10-3d")
 RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not ECO_FILE else f"_eco{Path(ECO_FILE).stem.replace('eco_', '')}"
@@ -400,7 +402,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
-       + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
+       + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
@@ -788,7 +790,7 @@ class Reaction:
 def c_supply(T):
     """held nutrient value at T*: 1, or with --c-sine 0.5 + 0.5 sin(500 t), t = S_LINK T* the point-model time
     (Klempt et al. 2026, Table 2, case 3: c* = 50 + 50 sin(500 t) with c* = c*_0 c, c*_0 = 100)"""
-    return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else 1.0
+    return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else (1.0 if C_CONST is None else C_CONST)
 
 
 def ab_value(T):
