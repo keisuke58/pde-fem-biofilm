@@ -112,8 +112,14 @@ for (const c of ['separate', 'mixed']) {
   cap(s, 'Fig. ' + (5 + k) + '  The run of Fig. ' + (3 + k) + ' over time (40 frames, panels as there; the caption is part of the video). Click to play.', 1.3 + hh + 0.15);
 });
 
+// 11 time history
+{ const s = frame('7. Seed means over time');
+  const h = img(s, R + 'assets/fig_coupled_time_history.png', 0.9, 1.25, 11.5);
+  cap(s, 'Fig. 7  Means over the seed for both starts, with (dashed) and without (solid) antibiotic: (a) living volume fraction Σᵢφ̄ᵢ, '
+    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1.', 1.25 + h + 0.1); }
+
 // 10 seed means
-{ const s = frame('7. Seed means at T* = 1');
+{ const s = frame('8. Seed means at T* = 1');
   s.addText('Table 1  Means over the seed. Living fraction, share and nutrient on 64³ cells (outer step 0.025); growth and stress extrapolated from 64³/128³/192³ (outer step 0.0025), GCI in brackets.',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.55, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
   const rows = [
@@ -131,7 +137,7 @@ for (const c of ['separate', 'mixed']) {
     { x: 0.8, y: 5.45, w: 11.75, h: 1.2, fontFace: TM, fontSize: 17, color: INK, isTextBox: true, margin: 0, valign: 'middle' }); }
 
 // 11 grid convergence
-{ const s = frame('8. Grid convergence of growth and stress');
+{ const s = frame('9. Grid convergence of growth and stress');
   s.addText('Table 2  Seed means on 32³ to 192³ cells, observed order p, extrapolated value and GCI of the finest grid (Celik et al. 2008, three grids 64³/128³/192³).',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.55, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
   const g = [
@@ -151,7 +157,7 @@ for (const c of ['separate', 'mixed']) {
     { x: 0.55, y: 5.85, w: 12.23, h: 0.8, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 12 discussion
-{ const s = frame('9. Discussion');
+{ const s = frame('10. Discussion');
   bullets(s, [
     'The composition reaches the stress only through the nutrient and the front speed r c/(k+c). The growth law, Eq. 36, counts all biomass, living or dead, so a large change of the living fraction leaves growth and stress almost unchanged.',
     'Species B is removed first: its nutrient term c*A₂₂/η₂ is half that of A, while the antibiotic term per viscosity, α*bᵢ/ηᵢ, is the same for both. Where the nutrient is low, A dies as well.',
