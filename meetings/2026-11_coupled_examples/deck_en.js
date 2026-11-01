@@ -50,7 +50,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'I place the point model of Klempt et al. 2026 at every integration point and couple it to the biofilm field of Klempt et al. 2024 (Eqs. 34–36) through a nutrient and an antibiotic.',
     'Question: how much does a change of the composition, here caused by an antibiotic, change the growth and the stress?',
     'Domain: a 2 mm cube. Species: synthetic data of Fritsch et al. 2025, case I (two species, true parameters).',
-    'Two start configurations: separate (species A in the seed, B in four small blocks along the edges) and mixed (A and B in equal amounts in the seed).',
+    'Two start configurations: separate (species A in the seed, B in four small blocks along the edges parallel to z) and mixed (A and B in equal amounts in the seed).',
     'Each with and without antibiotic; reported are means over the seed. Growth and stress are extrapolated from 64³, 128³ and 192³ cells with the grid convergence index (GCI).'],
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
 
@@ -98,7 +98,7 @@ for (const c of ['separate', 'mixed']) {
     { x: 0.55, y: y0, w: 12.23, colW: [1.6, 5.2, 0.95, 2.4, 2.08], fontFace: TM, fontSize: 12.5, color: INK, rowH: 0.33,
       border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
   cap(s, 'Fig. ' + (c === 'separate' ? 1 : 2) + '  ' + (c === 'separate'
-    ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks of 0.25 × 0.25 × 1.0 mm along the vertical edges (z = −0.5 to 0.5 mm, 0.25 mm³ in all).'
+    ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks of 0.25 × 0.25 × 1.0 mm along the edges parallel to z (z = −0.5 to 0.5 mm, 0.25 mm³ in all).'
     : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed (32 elements of 0.25 mm, 0.5 mm³).')
     + ' c and a diffuse inward from the held layers and are taken up by the living biomass (Eq. 35). Drawn on 8³ elements; the runs use 64³ cells.', y0 + 1.42);
 }

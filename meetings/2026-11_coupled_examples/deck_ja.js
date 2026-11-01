@@ -48,7 +48,7 @@ function pngSize(p) { const b = fs.readFileSync(p); return [b.readUInt32BE(16), 
     '目的：点モデル（Klempt et al. 2026）を各積分点に置き，膜の場（Klempt et al. 2024，式 34–36）と栄養・抗菌薬の場を介して連成したとき，組成の変化が成長と応力に及ぼす影響を定量化する．',
     '対象：一辺 2 mm の立方体．菌は合成データ（Fritsch et al. 2025，case I，2 菌種，真のパラメータ）．',
     MIX ? '配置：菌 A と B を等量（φ₁ = φ₂ = 0.275）でシードに混ぜる（混合配置）．'
-        : '配置：菌 A をシードに，菌 B を縦の 4 辺に沿った小領域に置く（分離配置）．',
+        : '配置：菌 A をシードに，菌 B を z 方向の 4 辺に沿った小領域に置く（分離配置）．',
     '比較：同一条件で抗菌薬の有無を比べる．評価量はシード領域の平均（生存体積分率，組成，栄養，膨張 α − 1，von Mises 応力）．',
     '数値の信頼性：成長と応力は 64³/128³/192³ の 3 格子から外挿し，GCI（Celik et al. 2008）で離散化誤差を示す．'],
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
@@ -86,7 +86,7 @@ function pngSize(p) { const b = fs.readFileSync(p); return [b.readUInt32BE(16), 
     { x: 8.6, y: 1.8, w: 4.2, h: 5.0, fontSize: 13, paraSpaceAfter: 7 }); }
 
 // 5 setup
-{ const s = frame('4. 初期条件と境界条件'); s.addNotes('条件です。(a) 菌 A を中央のシードに、菌 B を縦の 4 辺の近くに置きます。三角は剛体の動きを止めるための支点で、それ以外は自由に膨らみます。(b) 栄養は手前の面の層で 1 に保ちます。(c) 抗菌薬は T* = 1/3 から外側の殻全体で 1 に保ちます。（約 1 分）');
+{ const s = frame('4. 初期条件と境界条件'); s.addNotes('条件です。(a) 菌 A を中央のシードに、菌 B を z 方向の 4 辺の近くに置きます。三角は剛体の動きを止めるための支点で、それ以外は自由に膨らみます。(b) 栄養は手前の面の層で 1 に保ちます。(c) 抗菌薬は T* = 1/3 から外側の殻全体で 1 に保ちます。（約 1 分）');
   const h = img(s, R + 'assets/fig_setup_' + (MIX ? 'mixed' : 'separate') + '_ab.png', 1.95, 1.08, 9.4);
   const T = (t) => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, align: 'center' } });
   const c_ = (t, o = {}) => ({ text: t, options: Object.assign({ align: 'left', valign: 'middle' }, o) });

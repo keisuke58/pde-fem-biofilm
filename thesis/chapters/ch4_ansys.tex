@@ -819,9 +819,11 @@ $g\ell^2/d=1$, $E=10$~Pa, $\nu=0.49$, void floor $f=10^{-3}$), and the antibioti
 al.\ 2026 ($\alpha^*_0=100$ from $T^*=1/3$), with the diffusion and uptake of the nutrient. The
 threshold is $\phi_{\min}=0.001$; it is not given by the papers and changes the results by less than
 $1\,\%$ below this value. In the separate example species~A fills the seed of this chapter and
-species~B four small blocks along the edges of the cube; in the mixed example both start in the seed,
-in equal amounts ($\phi_1=\phi_2=0.275$) or in the proportions of Fritsch et al.\ ($0.25$, $0.30$). The
-nutrient is held on the face $y=-1$~mm, the antibiotic on all outer faces. The front term \fterm{} of Eq.~34 is
+species~B four small blocks of $0.25\times0.25\times1.0$~mm along the four edges parallel to $z$, at the height of the
+seed; in the mixed example both start in the seed,
+in equal amounts ($\phi_1=\phi_2=0.275$) or in the proportions of Fritsch et al.\ ($0.25$, $0.30$). As in the
+element's input, the nutrient is held at $c=1$ in the layer of elements (0.25~mm) at the face $y=-1$~mm, and the
+antibiotic at $a=1$ in the outer layer of elements on all faces; elsewhere there is no flux. The front term \fterm{} of Eq.~34 is
 on in every run.
 
 These runs use a finite-volume code in Python that solves the same equations as the element, with the

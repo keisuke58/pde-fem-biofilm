@@ -131,6 +131,9 @@ def view(mesh, field, cmap, clim):
             pl.add_mesh(pv.Box((lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])), color=(0.55, 0.55, 0.55), **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.98)
+    # coordinate axes (orientation marker in the lower left corner; y points up, as in the set-up figure)
+    pl.add_axes(line_width=4, color="black", xlabel="x", ylabel="y", zlabel="z", labels_off=False,
+                viewport=(0.0, 0.0, 0.3, 0.3))
     img = pl.screenshot(return_img=True)
     pl.close()
     return img

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Set-up of the separate example with antibiotic (thesis Fig. ch5-3d), drawn like fig_model_setup.png: species A in
-the seed of the ANSYS deck, species B in four small blocks along the vertical edges at the seed's height, the nutrient
+the seed of the ANSYS deck, species B in four small blocks along the edges parallel to z at the seed's height, the nutrient
 held on the element layer y < -0.75 mm, the antibiotic held on the outer element shell from T* = 1/3, and the three
 constrained corner nodes (rigid-body constraints of the stress solve). Shown on the 8^3 element grid of the deck; the
 runs use the same regions on 64^3 cells (coupled_living_consumption.py --v2 --ansys-bc).
 
     python ansys_usermat/apdl/fig_setup_separate_ab.py [mixed]   -> assets/fig_setup_{separate,mixed}_ab.png / .pdf
 "mixed": both species in the seed in equal amounts (phi_1 = phi_2 = 0.275), no edge blocks; the rest as above.
+Orientation as the 3D results and the videos (fig_coupled_3d_panels.py, anim_coupled_tvd_3d.py): y points up, camera
+from (3.6, 2.6, 4.4), the octant x, y, z > 0 removed in (b) and (c). matplotlib keeps its third axis vertical, so the
+data are drawn with the plot axes (z, x, y), a cyclic permutation that keeps the handedness.
 """
 from __future__ import annotations
 
@@ -29,16 +32,20 @@ SPAB = "#7048a8"                                       # both species in the see
 SPA, SPB, NUTR, AB, MESH, INK, FIX = "#3b5bdb", "#c92a2a", "#3a9d5d", "#e8890c", "#9aa5b1", "#1f2933", "#7a1f1f"
 
 
+VIEW = dict(elev=float(np.degrees(np.arctan2(2.6, np.hypot(3.6, 4.4)))), azim=float(np.degrees(np.arctan2(3.6, 4.4))))
+P = lambda a: np.transpose(a, (2, 0, 1))         # data (x, y, z) -> plot axes (z, x, y): y vertical
+
+
 def frame(ax):
     for a in (-1, 1):
         for b in (-1, 1):
             ax.plot([-1, 1], [a, a], [b, b], color=INK, lw=0.8)
             ax.plot([a, a], [-1, 1], [b, b], color=INK, lw=0.8)
             ax.plot([a, a], [b, b], [-1, 1], color=INK, lw=0.8)
-    ax.set_xlabel("$x$ [mm]"); ax.set_ylabel("$y$ [mm]"); ax.set_zlabel("$z$ [mm]")
+    ax.set_xlabel("$z$ [mm]"); ax.set_ylabel("$x$ [mm]"); ax.set_zlabel("$y$ [mm]")
     ax.set_xticks([-1, 0, 1]); ax.set_yticks([-1, 0, 1]); ax.set_zticks([-1, 0, 1])
     ax.set_box_aspect((1, 1, 1))
-    ax.view_init(elev=13, azim=128)
+    ax.view_init(**VIEW)
     ax.grid(False)
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         axis.pane.fill = False
@@ -57,7 +64,9 @@ def main():
     seedc = SPAB if MIXED else SPA
     spb = np.zeros_like(seed) if MIXED else (np.abs(XC) > 0.75) & (np.abs(YC) > 0.75) & (np.abs(ZC) <= zmax)
     shell = (np.abs(XC) > 0.75) | (np.abs(YC) > 0.75) | (np.abs(ZC) > 0.75)
-    front = XC > 0                                   # the half towards the viewer (x > 0), removed in (b) and (c)
+    front = (XC > 0) & (YC > 0) & (ZC > 0)           # the octant towards the camera, removed in (b) and (c)
+    seed, nut, spb, shell, front = (P(v) for v in (seed, nut, spb, shell, front))
+    X, Y, Z = P(Z), P(X), P(Y)                       # plot coordinates
 
     fig = plt.figure(figsize=(16.5, 5.9))
     titles = ("(a) start: A and B mixed in the seed, supports" if MIXED else "(a) start: species A and B, supports",
@@ -65,13 +74,17 @@ def main():
               "(c) antibiotic: $a = 1$ held from $T^* = 1/3$")
     for p in range(3):
         ax = fig.add_subplot(1, 3, p + 1, projection="3d")
+        frame(ax)                                    # first, so that with computed_zorder off it lies behind the voxels
         if p == 0:
+            ax.computed_zorder = False               # supports drawn on top (the node at (-1, -1, -1) lies behind the seed)
             ax.voxels(X, Y, Z, spb, facecolors=SPB + "dd", edgecolors="white", linewidth=0.3)
             ax.voxels(X, Y, Z, seed, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
             for (x, y, z), dofs in corners.items():
+                x, y, z = z, x, y                    # plot coordinates
                 ax.scatter([x], [y], [z], s=70, marker="^", color=FIX, depthshade=False, zorder=10)
-                ax.text(x, y, z - 0.32, ", ".join(d.strip().lower() for d in dofs), fontsize=11, color=FIX,
-                        ha="center")
+                ax.text(x * 1.18, y * 1.18, z - 0.22, ", ".join(d.strip().lower() for d in dofs), fontsize=11,
+                        color=FIX, ha="center", zorder=11,
+                        bbox=dict(fc="white", ec="none", alpha=0.85, pad=1.0))
         elif p == 1:
             ax.voxels(X, Y, Z, ~nut & ~front, facecolors="#ffffff10", edgecolors=MESH + "55", linewidth=0.2)
             ax.voxels(X, Y, Z, nut & ~front, facecolors=NUTR + "99", edgecolors=NUTR, linewidth=0.3)
@@ -79,13 +92,12 @@ def main():
         else:
             ax.voxels(X, Y, Z, shell & ~front, facecolors=AB + "38", edgecolors=AB + "aa", linewidth=0.25)
             ax.voxels(X, Y, Z, seed & ~front, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
-        frame(ax)
         ax.set_title(titles[p], fontsize=14, y=0.97)
     handles = [plt.Rectangle((0, 0), 1, 1, fc=seedc), plt.Rectangle((0, 0), 1, 1, fc=SPB),
                plt.Rectangle((0, 0), 1, 1, fc=NUTR, alpha=0.6), plt.Rectangle((0, 0), 1, 1, fc=AB, alpha=0.6),
                plt.Line2D([], [], marker="^", ls="", color=FIX)]
     labels = ["species A: seed, $\\phi_{3D} = 1$ at the start",
-              "species B: four blocks along the vertical edges",
+              "species B: four blocks along the edges parallel to $z$",
               "nutrient held: element layer on $y = -1$ mm",
               "antibiotic held: outer element shell",
               "constrained corner nodes (rigid-body supports)"]
@@ -93,7 +105,7 @@ def main():
         handles.pop(1)
         labels[:2] = ["seed: $\\phi_{3D} = 1$, A and B in equal amounts ($\\phi_1 = \\phi_2 = 0.275$)"]
     fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=12, frameon=False)
-    fig.text(0.5, 0.165, "(b), (c): half $x > 0$ removed.  Zero flux of $c$ and $a$ elsewhere; "
+    fig.text(0.5, 0.165, "$y$ points up, as in the 3D results and the videos.  (b), (c): octant $x, y, z > 0$ removed.  Zero flux of $c$ and $a$ elsewhere; "
              "no other displacement constraints (free swelling).", ha="center", fontsize=12, color=INK)
     fig.subplots_adjust(left=0.0, right=1.0, top=0.93, bottom=0.2, wspace=-0.05)
     fig.savefig(OUT, dpi=300, bbox_inches="tight", pad_inches=0.05)
