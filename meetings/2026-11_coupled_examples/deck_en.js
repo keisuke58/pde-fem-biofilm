@@ -59,7 +59,9 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   const h = img(s, EQ + 'eqs.png', 1.2, 1.3, 10.6);
   cap(s, 'φ₃D: biofilm volume fraction; α: growth (F_g = α I, α(0) = 1); c: nutrient; a: antibiotic; φᵢ, ψᵢ: volume and living fraction of species i in the point model; '
     + 'Σᵢφ̄ᵢ: living volume fraction. Equation numbers of Klempt et al. 2024. The uptake in Eq. 35 is weighted by the living volume fraction (the coupling of this work); '
-    + 'the antibiotic follows the same equation. The point model is used as published.', 1.4 + h + 0.2); }
+    + 'the antibiotic follows the same equation. The point model is used as published (A, b, η of Fritsch 2025, case I). '
+    + 'Constants not shown: ℂ is the isotropic elasticity tensor (Poisson ratio ν); the point model runs only where φ₃D > φ_min and advances s ΔT* per field step ΔT*; '
+    + 'g is given as gℓ²/d with the half edge ℓ = 1 mm of the cube.', 1.4 + h + 0.2); }
 
 // 4 constants
 { const s = frame('3. Constants and numerics');

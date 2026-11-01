@@ -227,6 +227,7 @@ this machine's specific workflow.
 - **"Front term" in replies (the user, 25 Oct 2026):** never write 前線項 / front term alone in a reply; always
   write the formula, e.g. the term $-r\,\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ of Eq. 34
   ($\mathbf n_c=\nabla c/|\nabla c|$). Same for other named terms: give the expression, not only the name.
+- **「バイオフィルム」と書く（the user, 1 Nov 2026: 「必ずバイオフィルムと表現、今後」）:** in Japanese replies, slides and notes write バイオフィルム, never 膜 alone (膜 reads as a membrane). In English: biofilm.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
