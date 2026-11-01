@@ -102,7 +102,7 @@ function pngSize(p) { const b = fs.readFileSync(p); return [b.readUInt32BE(16), 
 
 // 6 result figure
 { const s = frame('5. 結果：組成・場・応力の分布'); s.addNotes('結果です。上が抗菌薬を入れる直前、下が最後です。(a) 青が A、赤が B で、B は辺から広がって外側を覆います。(b) 生きている量は、抗菌薬の後に大きく下がり、栄養の来る下の方だけ少し残ります。(e) 応力はシードとその周りに集まります。上と下で応力が大きくなるのは、時間とともに膨張 α が増えるためで、抗菌薬のせいではありません。抗菌薬あり・なしの比較は次の表で見せます。(d1) が空なのは、抗菌薬がまだ入っていないからです。（約 1.5 分）');
-  const h = img(s, F + (MIX ? 's12m_coupled_3d_mixed_ab.png' : 's12_coupled_3d_separate_ab.png'), 1.4, 1.15, 10.5);
+  const h = img(s, F + (MIX ? 's12m_coupled_3d_mixed_ab.png' : 's12_coupled_3d_separate_ab.png'), 2.05, 1.1, 9.2);
   cap(s, '図 2　抗菌薬ありの' + LABEL + '．上段 T* = 0.325（抗菌薬の開始直前），下段 T* = 1．1/8 を除いて表示．'
     + '(a) 菌 A の割合 φ₁/(φ₁+φ₂)，(b) 生存体積分率 Σᵢφ̄ᵢ（(a)(b) は φ₃D > 0.5），(c) 栄養 c，(d) 抗菌薬 a，(e) von Mises 応力（16³）．Python，64³．', 1.15 + h + 0.1); }
 

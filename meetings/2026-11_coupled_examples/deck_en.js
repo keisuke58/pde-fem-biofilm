@@ -106,7 +106,7 @@ for (const c of ['separate', 'mixed']) {
 // 7, 8 results
 for (const c of ['separate', 'mixed']) {
   const s = frame('5. Results: ' + c + ' start with antibiotic');
-  const h = img(s, B + (c === 'separate' ? 's12_coupled_3d_separate_ab.png' : 's12m_coupled_3d_mixed_ab.png'), 1.5, 1.12, 10.3);
+  const h = img(s, B + (c === 'separate' ? 's12_coupled_3d_separate_ab.png' : 's12m_coupled_3d_mixed_ab.png'), 2.05, 1.1, 9.2);
   cap(s, 'Fig. ' + (c === 'separate' ? 3 : 4) + '  ' + (c === 'separate' ? 'Separate' : 'Mixed') + ' start with antibiotic, T* = 0.325 (just before the antibiotic, top) and T* = 1 (bottom), one octant removed. '
     + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5; (c) nutrient c; (d) antibiotic a; (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
 }
