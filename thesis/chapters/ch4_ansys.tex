@@ -622,10 +622,11 @@ both species fields, one of them unused, and a lag of one substep
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_whole_model.pdf}
+  \includegraphics[width=0.6\linewidth]{\ansysfigdir fig1005_whole_model.pdf}
   \caption[Two ways of computing the growth, whole model]{%
-    Element von Mises stress from equation~\eqref{eq:ch5-eq36} against the
-    element's own growth variable, one point per element.}
+    Element von Mises stress, divided by $E$, from equation~\eqref{eq:ch5-eq36} against the
+    element's own growth variable, one point for each of the 512 elements (whole model at $T^*=1.1$, one species,
+    stiffness of Klempt et al.\ 2024). Cosine similarity $1.0000$; red: the median ratio $0.45$.}
   \label{fig:ch5-whole}
 \end{figure}
 

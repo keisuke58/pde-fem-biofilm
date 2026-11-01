@@ -49,7 +49,7 @@
 
 \node[Nfld, below=0.95cm of gp] (fld) {%
   \textbf{Field update} \hfill \textit{after every substep}\\[4pt]
-  nutrient $c$: quasi-static diffusion, solved as a linear system\\[2pt]
+  nutrient $c$: Eq.~35 with $\dot c$ (transient option), one linear solve\\[2pt]
   biofilm $\phi$: explicit update of Eq.~34\\[2pt]
   Laplacian and gradients from the neighbour operator};
 \draw[ar] (gp) -- node[lbl,right,xshift=2pt] {fields} (fld);

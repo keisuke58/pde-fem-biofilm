@@ -109,19 +109,18 @@ def fig_whole():
     assert (e1 == e2).all()
     cos = float(q1 @ q2 / (np.linalg.norm(q1) * np.linalg.norm(q2)))
     ratio = float(np.median(q2[q1 > 1e-3 * q1.max()] / q1[q1 > 1e-3 * q1.max()]))
-    fig, ax0 = plt.subplots(figsize=(6.2, 4.6))
-    ax = [ax0]
+    figstyle.apply()
+    fig, ax = plt.subplots(figsize=(3.8, 2.9), constrained_layout=True)   # printed at 0.6 of the text width
     m = (q1 > 0) & (q2 > 0)
-    ax[0].loglog(q1[m], q2[m], ".", ms=3, alpha=0.5)
     lo, hi = q1[m].min(), q1[m].max()
-    ax[0].plot([lo, hi], [lo, hi], "k--", lw=1, label="1 : 1")
-    ax[0].plot([lo, hi], [ratio * lo, ratio * hi], "r-", lw=1, label=f"{ratio:.2f} : 1 (median)")
-    ax[0].set(xlabel="von Mises$/E$, Eq. 36 in the material routine",
-              ylabel="von Mises$/E$, the element's own growth variable",
-              title=f"{len(q1)} elements, cosine similarity {cos:.4f}")
-    ax[0].legend(fontsize=10)
-    fig.suptitle(r"Whole model at $T^*$ = 1.1, one species; Klempt 2024 Table 2: $k_\alpha$ = 1e-3, $E$ = 10 Pa, $\nu$ = 0.49, $E \propto \phi^2$", y=1.0, fontsize=10)
-    fig.savefig(OUT / "fig1005_whole_model.png"); fig.savefig(OUT / "fig1005_whole_model.pdf")
+    ax.loglog([lo, hi], [lo, hi], "k--", lw=0.9, label="1 : 1")
+    ax.loglog([lo, hi], [ratio * lo, ratio * hi], "-", color="#c92a2a", lw=0.9, label=f"{ratio:.2f} : 1 (median)")
+    ax.loglog(q1[m], q2[m], "o", ms=2.2, color="#1f4e8c", mec="none", alpha=0.7, label=f"{len(q1)} elements")
+    ax.set_xlabel(r"$\sigma_\mathrm{vM}/E$, growth law (4.5) in the material routine")
+    ax.set_ylabel(r"$\sigma_\mathrm{vM}/E$, element's own growth variable")
+    ax.legend(frameon=False, loc="upper left")
+    ax.grid(True, which="major", lw=0.3, alpha=0.5)
+    fig.savefig(OUT / "fig1005_whole_model.png", dpi=600); fig.savefig(OUT / "fig1005_whole_model.pdf")
     plt.close(fig)
     return cos, ratio, float(q1.max()), float(q2.max())
 
