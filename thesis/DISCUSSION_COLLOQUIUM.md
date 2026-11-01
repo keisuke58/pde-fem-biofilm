@@ -552,3 +552,7 @@ identified CH entries).
 3. "The largest $\phi_{3D}$ in the seed still rises with the grid (0.60, 0.69, 0.73)": the recorded
    quantity in the result files is the maximum over the whole domain at the end of the run. Fine if the
    maximum lies in the seed, which the figures suggest; the sentence could say "in the domain".
+
+
+## Update 30 Oct (192^3 without antibiotic, A-97)
+All four examples of `tab:ch5-gci` now have 64^3/128^3/192^3. Without antibiotic: separate vM 6.57e-4 Pa (GCI 0.1 %), growth 9.17e-4 (0.4 %); mixed vM 4.86e-4 (31 %), growth 8.74e-4 (4.2 %). Where this file says 6.55 (GCI 0.7 %), 4.50 (29 %) or 8.56, read 6.57 (0.1 %), 4.86 (31 %) and 8.74. The antibiotic effect on the separate stress is -2.3 % (6.57 -> 6.42), unchanged in substance.

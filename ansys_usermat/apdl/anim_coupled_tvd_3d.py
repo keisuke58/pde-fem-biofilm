@@ -10,6 +10,7 @@ mathtext). A demonstration, not a thesis figure.
   inherit: newly colonised points take the phi-weighted mean state of their colonised neighbours (default: the start
            state by position, the rule of the ANSYS runs); obst: the four rigid columns of Klempt 2024 Sect. 4.3;
   k26c4:   the four species of Klempt 2026 Table 2, case 4; pulse: the antibiotic in pulses of the same dose (A-71);
+  transc:  the runs with dc/dt in Eq. 35 (--transient-c 1e8), as the thesis figures; use with inhliv.
   fine:    coupling step 0.0025 and stress on 32^3 (A-90; run with --dtc 0.0025 --nm 32).
 """
 import sys
@@ -36,9 +37,10 @@ INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' l
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
+TRANSC = "transc" in OPT          # Eq. 35 with dc/dt (--transient-c 1e8), the runs of the thesis figures (29 Oct)
 FINE = "fine" in OPT              # A-90: coupling step 0.0025 (A-89) and the stress on a 32^3 mesh
 TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
-       f"_snapsvm{'_nm32' if FINE else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
+       f"_snapsvm{'_nm32' if FINE else ''}{'_transc1e+08' if TRANSC else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
        f"{'_obstcolumns' if OBST else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
@@ -51,14 +53,16 @@ CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
 # field, mesh, colour map, range, title, colour-bar label; mesh: "bio" phi_3D > 0.5, "living" bio and sum phibar > 0.01,
 # "cube" all, "ab" a > 0.01, "stress" the stress mesh (values near 0 are left out, i.e. transparent)
 GROUP = "species 1, 2" if K26C4 else "species 1"
-PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"(a) share of group A", r"$\phi_A/(\phi_A+\phi_B)$"),
+GRP = "group" if K26C4 else "species"     # two species: the notation of the thesis and the slides, phi_1/(phi_1+phi_2)
+PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
+           r"$\phi_A/(\phi_A+\phi_B)$" if K26C4 else r"$\phi_1/(\phi_1+\phi_2)$"),
           ("L", "living", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$"),
           ("vm", "stress", "magma_r", (0, VMAX), r"(e) von Mises stress", r"$\sigma_\mathrm{vM}$ [$10^{-4}$ Pa]")]
 B_WHERE = r"four small blocks at the edges along $z$ ($|x|, |y| > 0.75$ mm)"
 if CASE.startswith("separate"):
-    START = rf"Separate start: group A in the centre seed, group B in {B_WHERE}. "
+    START = rf"Separate start: {GRP} A in the centre seed, {GRP} B in {B_WHERE}. "
 else:
     START = r"Mixed start: all species in equal amounts together in the centre seed. "
 START += (r"New biofilm takes the living composition of its neighbours and starts alive." if INHLIV else
@@ -75,9 +79,9 @@ CAPTION = "\n".join([
     r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term"
     + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
     r"Point model: " + MODEL + ". " + START,
-    r"(a) Share of group A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
-    r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the bottom layer $y < -0.75$ mm, "
-    r"consumed by the living biomass.",
+    rf"(a) Share of {GRP} A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
+    r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
+    r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
     r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), " + AB + r". "
     r"One octant ($x, y, z > 0$) is removed to show the inside.",
     r"(e) Stress. Growth: $\mathbf{F}_g = \alpha\mathbf{I}$, $\dot\alpha = k_\alpha\phi_{3D}$ (Eq. 36), small strain: eigenstrain "
@@ -87,8 +91,8 @@ CAPTION = "\n".join([
     + ("\n" + r"Growth follows all biomass $\phi_{3D}$, dead included, so the stress keeps rising after the antibiotic."
        if FINE else "")
     + (r" Grey: four rigid columns (Klempt et al. 2024, Sect. 4.3), no biofilm and no flux in them." if OBST else ""),
-    r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $K = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
-    r"$d = 10^8$ mm$^2$/$T^*$ and $g\,l^2/d = 1$ for $c$ and $a$, $\phi_{\min} = 10^{-3}$ (Klempt et al. 2024, Table 2, "
+    r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $k = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
+    r"$d = 10^8$ mm$^2$/$T^*$ and $g\,\ell^2/d = 1$ for $c$ and $a$, $\phi_{\min} = 10^{-3}$ (Klempt et al. 2024, Table 2, "
     r"converted to the 2 mm cube); $T^* = 1$ is the duration of the point model's data."])
 
 
@@ -137,7 +141,7 @@ W = 0.2
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
 ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}_5panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}_5panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:

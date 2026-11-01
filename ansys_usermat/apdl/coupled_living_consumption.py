@@ -39,6 +39,16 @@ Antibiotic from T* = 0.5; each example also without antibiotic.
     python ansys_usermat/apdl/coupled_living_consumption.py [--nf 32]
         -> ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption.json, figdata/coupled_living_<case>.npz,
            assets/fig_coupled_living_consumption.pdf/.png
+
+Validation against the measured biofilm volume (30 Oct 2026, papers/coupling_paper/VALIDATION_PLAN.ja.md): the
+calibrated five-species point model of Chapter 3 (--eco-file abaqus_composition/eco_cal5_<CH|CS|DH|DS>.txt, written by
+write_eco_cfg.py from Tmcmc202601 final_theta_MAP) in a flat layer (--only layer, --layer-h0), T* = 1 = day 1 to day 21
+(--eco-steps, --eco-presteps; see the options), the volume history hist["phi_total_mm3"] and the mean living fraction
+hist["living_mean"]; results in results/2026-10-validation/, post-processing validation_volume.py, 0D check
+validation_0d_check.py:
+    python ansys_usermat/apdl/coupled_living_consumption.py --nf 32 --fast --fortran --only layer --front 1 --gc 1
+        --phi-min 0.001 --tvd --wall-grad mirror --transient-c 1e8 --dtc 0.0025
+        --eco-file abaqus_composition/eco_cal5_DH.txt [--growth-living-energy] [--layer-h0 0.125]
 """
 import json
 import math
@@ -219,9 +229,55 @@ if K26C3:
     CASE = dict(n=4, A=[[1.0, 5.0, 5.0, 5.0], [5.0, 1.0, 3.0, 3.0], [5.0, 3.0, 1.0, 2.0], [5.0, 3.0, 2.0, 1.0]],
                 b=[10.0, 2.0, 1.0, 0.01] if K26C4 else [0.4, 0.3, 0.2, 0.1], eta=[0.8, 1.0, 1.5, 2.0],
                 phi_init=[0.02] * 4, c_star=100.0, alpha_star=10.0, dt=1.0e-4, steps=1500)
+# --eco-file PATH (30 Oct 2026, validation against Heine et al. 2025): the point model from a file of
+# abaqus_composition/write_eco_cfg.py (n_active / c* alpha* / eta(5) / theta(20) / phi_init v1..v5 / newton N TOL),
+# e.g. the calibrated five-species MAP of Chapter 3 (Tmcmc202601 final_theta_MAP/<C>.json, c* = 25, alpha* = 0, eta = 1,
+# phi_init_state of phi_init.json, newton 12 1e-20 = the calibration pipeline's Newton control). A = theta as
+# ecology_native.f reads it. Time link: the calibration integrates 2500 steps of 1e-4 and places day d at step
+# round(d * 0.95 * 0.25 / 21 / 1e-4) (estimate_commensal_static.convert_days_to_model_time): day 1 = step 113,
+# day 21 = step 2375. T* = 1 spans day 1 to day 21, so the point model covers --eco-steps 2262 steps of 1e-4 in T* = 1
+# (s = 0.2262) and starts from the calibration's state at day 1: phi_init advanced by --eco-presteps 113 steps at
+# c* (c = 1, a = 0), as the calibration itself does (it has no nutrient field). Both defaults are that mapping.
+ECO_FILE = _opt("--eco-file", None, str)
+ECO_STEPS = _opt("--eco-steps", 2262, int)
+ECO_PRESTEPS = _opt("--eco-presteps", 113, int)
+
+
+def read_eco_file(path):
+    """the point-model file -> CASE dict (n, A (5x5 from theta as ecology_native.f), b, eta, phi_init, c_star, alpha_star)"""
+    lines = [l for l in Path(path).read_text().splitlines() if l.strip()]
+    n = int(lines[0].split()[0])
+    cs, als = (float(v) for v in lines[1].split()[:2])
+    eta = [float(v) for v in lines[2].split()[:5]]
+    th = [float(v) for v in lines[3].split()[:20]]
+    assert len(th) == 20, path
+    phi_init = None
+    for l in lines[4:]:
+        w = l.split()
+        if w[0] == "phi_init":
+            phi_init = [float(v) for v in w[1:6]]
+    assert phi_init is not None, f"{path}: no phi_init line"
+    A = [[0.0] * 5 for _ in range(5)]
+    pairs = {(0, 0): 0, (0, 1): 1, (1, 1): 2, (2, 2): 5, (2, 3): 6, (3, 3): 7, (0, 2): 10, (0, 3): 11, (1, 2): 12,
+             (1, 3): 13, (4, 4): 14, (0, 4): 16, (1, 4): 17, (2, 4): 18, (3, 4): 19}
+    for (i, j), k in pairs.items():
+        A[i][j] = A[j][i] = th[k]
+    b = [th[3], th[4], th[8], th[9], th[15]]
+    return dict(n=n, A=[r[:n] for r in A[:n]], b=b[:n], eta=eta[:n], phi_init=phi_init[:n], c_star=cs,
+                alpha_star=als, dt=1.0e-4, steps=ECO_STEPS, theta=th)
+
+
+if ECO_FILE:
+    CASE = read_eco_file(ECO_FILE)
 N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
 S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
+# --example layer (30 Oct 2026): a flat biofilm layer on the wall y = -BOX/2, --layer-h0 F = its thickness as a fraction
+# of BOX (cells whose centre lies below -BOX/2 + F BOX; default 0.25), phi = 1 inside, uniform composition from the
+# point-model file (start state above), nutrient held at c = 1 on the opposite wall y = +BOX/2, zero flux through the
+# four other walls (with --fast the two symmetry planes x = 0, z = 0 are exact for a laterally uniform layer). No
+# antibiotic. The layer's normal is the code's nutrient axis y (the plan calls it z).
+LAYER_H0 = _opt("--layer-h0", 0.25)
 # --box B (27 Oct, the tooth example): edge of the cubic domain in mm; default the 2 mm cube of the examples. All
 # constants stay in mm (beta, r, g/d of the 2 mm conversion), only the grid spacing changes with the box.
 BOX = _opt("--box", W.L)
@@ -311,9 +367,13 @@ if OBSTACLE:
             _m = np.roll(_open, -_s, _a) & _open
             _e = [slice(None)] * 3; _e[_a] = -1 if _s == 1 else 0; _m[tuple(_e)] = False
             NB[_a, _s] = _m
-RES = HERE / "results" / ("2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
+RES = HERE / "results" / ("2026-10-validation" if ECO_FILE else
+                          "2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
 RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
+       + ("" if not ECO_FILE else f"_eco{Path(ECO_FILE).stem.replace('eco_', '')}"
+          + ("" if (ECO_STEPS, ECO_PRESTEPS) == (2262, 113) else f"_st{ECO_STEPS}p{ECO_PRESTEPS}"))
+       + ("" if "--layer-h0" not in sys.argv else f"_h0{LAYER_H0:g}")
        + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}") + ("" if PER_MULT == 1 else f"_per{PER_MULT}")
        + ("" if PICARD == 1 else f"_pic{PICARD}") + ("_iact" if INNER_ACT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
@@ -340,18 +400,22 @@ if FORTRAN:
         _eco = ROOT / "abaqus_composition" / ("eco_klempt2026_t2c4.txt" if K26C4 else "eco_klempt2026_t2c3A1.txt")
         _eco.write_text("4\n100.0 10.0\n" + " ".join(f"{v:g}" for v in CASE["eta"] + [1.0]) + "\n"
                         + " ".join(f"{v:g}" for v in _th) + "\nphi_init 0.02 0.02 0.02 0.02 0.0\nnewton 50 1e-20\n")
-    if "--alpha0" in sys.argv:                  # the same file with alpha*_0 replaced (second line: c*_0 alpha*_0)
+    if "--alpha0" in sys.argv and not ECO_FILE:  # the same file with alpha*_0 replaced (second line: c*_0 alpha*_0)
         _l = _eco.read_text().splitlines()
         _l[1] = f"{_l[1].split()[0]} {ALPHA0:g}"
         _eco = ROOT / "abaqus_composition" / f"{_eco.stem.replace('_a50', '')}_a{ALPHA0:g}.txt"
         _eco.write_text("\n".join(_l) + "\n")
+    if ECO_FILE:                                # the file as given (c*, alpha*, newton control of the file)
+        _eco = Path(ECO_FILE)
     _cst = FN.init(_eco)
-    assert _cst["nact"] == N_SP and _cst["c_star"] == 100.0
+    assert _cst["nact"] == N_SP and _cst["c_star"] == CASE["c_star"]
     assert ALPHA0 is None or _cst["alpha_star"] == ALPHA0
 
 
 # ---------------------------------------------------------------- point model (black box)
 def theta20():
+    if "theta" in CASE:                       # --eco-file: theta as in the file (the Fortran point model reads the same)
+        return jnp.asarray(CASE["theta"], dtype=jnp.float64)
     A, b = CASE["A"], CASE["b"]
     th = [0.0] * 20
     th[0], th[1], th[2], th[3], th[4] = A[0][0], A[0][1], A[1][1], b[0], b[1]
@@ -410,6 +474,23 @@ def start_state(*phis):
     g[5] = 1.0 - sum(phis)
     g[6:11] = 0.999
     return g
+
+
+def eco_start_state():
+    """--eco-file: the file's phi_init (psi = 0.999, gamma = 0, phi_0 = 1 - sum phi as the pipeline's make_initial_state)
+    advanced by ECO_PRESTEPS steps of the file's dt at c = 1, a = 0: the calibration's state at day 1"""
+    g = start_state(*CASE["phi_init"])
+    if ECO_PRESTEPS == 0:
+        return g
+    if FORTRAN:
+        gn, ok = FN.step_lin(g[None], ECO_PRESTEPS * CASE["dt"], ECO_PRESTEPS, 1.0, 1.0, 0.0, 0.0)
+        assert ok.all(), "Fortran point model failed in the pre-steps"
+        return gn[0]
+    p = dict(_P); p["dt_h"] = jnp.asarray(CASE["dt"]); p["c"] = jnp.asarray(CASE["c_star"]); p["alpha"] = jnp.asarray(0.0)
+    gj = jnp.asarray(g)
+    for _ in range(ECO_PRESTEPS):
+        gj = _newton(gj, p)
+    return np.asarray(gj)
 
 
 def group_state(tot, group):
@@ -754,6 +835,10 @@ def run(example, antibiotic):
         assert OBSTACLE == "stl", "the tooth example needs --obstacle stl"
         ring = (SDF >= 0) & (SDF < TOOTH_SEED) & (Z < -BOX / 2 + TOOTH_SEED_H)
         seed, edges = ring & (X < 0), ring & (X > 0)
+    if example == "layer":                        # flat layer on the wall y = -BOX/2 (see --example layer above)
+        assert ECO_FILE, "the layer example takes its composition from --eco-file"
+        seed = Y < -BOX / 2 + LAYER_H0 * BOX - 1e-12
+        edges = np.zeros_like(seed)
     sep = example in ("separate", "tooth")
     seed, edges, X, Y, Z = seed[QS], edges[QS], X[QS], Y[QS], Z[QS]
     phi = (seed | (edges if sep else False)).astype(float)
@@ -766,7 +851,9 @@ def run(example, antibiotic):
                           for i in range(N_SP))
     else:
         MIX_START = tuple([tot / N_SP] * N_SP) if MIX_EQUAL else tuple(CASE["phi_init"])
-    if sep:
+    if example == "layer":
+        G[seed] = eco_start_state()
+    elif sep:
         G[seed] = group_state(tot, GROUP_A)
         G[edges] = group_state(tot, GROUP_B)
     else:
@@ -798,6 +885,8 @@ def run(example, antibiotic):
     on = phi >= PHI_MIN
     if example == "tooth":                        # saliva side: nutrient and antibiotic on the five faces around the crown
         nut, ab = Reaction(LAM_C2, "five"), Reaction(LAM_A2, "five")
+    elif example == "layer":                      # nutrient held on the wall opposite the layer
+        nut, ab = Reaction(LAM_C2, +1), Reaction(LAM_A2, +1)
     else:
         nut, ab = Reaction(LAM_C2, -1), Reaction(LAM_A2, 0 if V2 else +1)
     if ANSYS_BC:
@@ -828,6 +917,12 @@ def run(example, antibiotic):
         return float((ph[:, GROUP_A].sum(1) / ph.sum(1)).mean())
     hist["share_a_seed"].append(shares(seed)); hist["share_a_edges"].append(shares(edges) if sep else np.nan)
     hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
+
+    def totals():
+        """biofilm amount V = int phi_3D dV [mm^3] (full domain) and its phi-weighted mean living fraction sum_i phibar_i"""
+        w = np.clip(phi, 0.0, None)
+        return float(w.sum() * H ** 3 * (4 if FAST else 1)), float((w * L).sum() / max(w.sum(), 1e-30))
+    hist["phi_total_mm3"], hist["living_mean"] = [totals()[0]], [totals()[1]]
     snaps = {}
     t0 = time.time()
     # checkpoint (a cloud container stops when idle): the state is saved every CKPT_SEC seconds and a rerun with the
@@ -987,6 +1082,7 @@ def run(example, antibiotic):
         hist["living_edges"].append(float(L[edges].mean()) if sep else np.nan)
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
+        _v, _lm = totals(); hist["phi_total_mm3"].append(_v); hist["living_mean"].append(_lm)
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
@@ -1016,8 +1112,8 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    if example == "tooth":                      # the film stress is solved by real_tooth_coupled.py (rigid crown)
-        vm = p = np.full((NM,) * 3, np.nan)
+    if example in ("tooth", "layer"):           # tooth: the film stress is solved by real_tooth_coupled.py (rigid crown);
+        vm = p = np.full((NM,) * 3, np.nan)      # layer: no stress needed (volume comparison only)
     else:
         vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
                                efac=efac_nm(G))
@@ -1062,6 +1158,16 @@ def main():
     res = {"setting": {"field": f"{NF}^3", "point_model": "Fritsch et al. 2025 Case I, true parameters",
                        "s": S_LINK, "inner_steps_per_outer": N_SUB, "Lambda2_c": LAM_C2, "Lambda2_a": LAM_A2,
                        "antibiotic_from": T_AB, "phi_min": PHI_MIN}, "runs": R}
+    if ECO_FILE:
+        res["setting"].update(point_model=f"point-model file {Path(ECO_FILE).name} (c* {CASE['c_star']:g}, "
+                              f"alpha* {CASE['alpha_star']:g}, {N_SP} species)", eco_steps=ECO_STEPS,
+                              eco_presteps=ECO_PRESTEPS, eco_dt=CASE["dt"], box_mm=BOX, h_mm=H,
+                              layer_h0_frac=LAYER_H0 if ONLY == "layer" else None, growth_law=(
+                                  "energy (variant A): k_alpha alpha sum phibar in Eq. 34, Eq. 36 x sum phibar"
+                                  if GROWTH_ENERGY else "B (Eq. 36 x sum phibar)" if GROWTH_LIVING else
+                                  "published (Klempt 2024 Eq. 34-36)"), fortran=FORTRAN, transient_c=TRANSIENT_D,
+                              dt_outer=DT_C, tvd=TVD, wall_grad=WALL_GRAD, front=FRONT, r_mm_per_T=R_FRONT,
+                              beta=W.BETA, k_alpha=W.K_ALPHA)
     if CHECK:
         import klempt2026_reproduction as K
         K.DT = CASE["dt"]
