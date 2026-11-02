@@ -163,7 +163,7 @@ for (const c of ['separate', 'mixed']) {
     ...g.map(r => r.map((t, j) => j < 2 ? L(t) : C(t, j === 8 && parseFloat(t) > 10 ? { bold: true, color: ACC } : {})))],
     { x: 0.55, y: 1.85, w: 12.23, colW: [2.4, 2.4, 1.05, 1.05, 1.05, 1.05, 0.9, 1.1, 1.23], fontFace: TM, fontSize: 14, color: INK, rowH: 0.42,
       border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
-  s.addText('The mixed stress converges slowly (p ≈ 0.5): its edge, of width β/v ≈ 0.004 mm, is narrower than a cell up to 192³ (cell Péclet number 1.28). On 256³ (Pe_h = 0.96, with ċ) the mixed stress with antibiotic is 3.63 (equal) and 4.50 × 10⁻⁴ Pa (Fritsch shares); on 128³/192³/256³ p rises to 0.93 and 1.3 and the GCI falls to 13 % and 9 % (extrapolated 4.0 and 4.8 × 10⁻⁴ Pa).',
+  s.addText('The mixed stress converges slowly (p ≈ 0.5): its edge, of width β/v ≈ 0.004 mm, is narrower than a cell up to 192³ (cell Péclet number 1.28). On 256³ (Pe_h = 0.96, with ċ) the mixed stress with antibiotic is 3.63 (equal) and 4.50 × 10⁻⁴ Pa (Fritsch shares); on 128³/192³/256³ p rises to 0.93 and 1.3 and the GCI falls to 13 % and 9 % (extrapolated 4.0 and 4.8 × 10⁻⁴ Pa). Without antibiotic (equal) 256³ gives 4.02 × 10⁻⁴ Pa, GCI 14 %, extrapolated 4.48: 12 % above the run with antibiotic, within the two bands.',
     { x: 0.55, y: 5.75, w: 12.23, h: 1.1, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 12 discussion
