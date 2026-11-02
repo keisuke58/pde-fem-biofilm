@@ -587,6 +587,10 @@ examiners). Check each one before the document is handed over.
   (b) living volume fraction, (c) nutrient c, (d) growth alpha - 1, (e) von Mises stress; the antibiotic panel is replaced by alpha - 1 and its
   onset is written on the frames. Runs for videos need `--snap-every 0.025 --snap-stress` (alpha is then saved at every snapshot);
   `anim_coupled_tvd_3d.py` uses alpha - 1 automatically when it is saved.
+- **A time-history plot with every coupled result (the user, 2 Nov 2026: 「下段の時間変化のグラフいつもほしい」):** next to the 3D
+  figures and videos of an example, give the means over time (seed or biofilm: living volume fraction, shares of the species, nutrient,
+  and for the stress examples alpha - 1 and von Mises), with the antibiotic onset marked. Scripts: `fig_coupled_time_history.py`
+  (two species), `fig_stress_living_over_time.py`, `fig_four_species_shares.py` (four species).
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or
