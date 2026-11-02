@@ -622,10 +622,11 @@ both species fields, one of them unused, and a lag of one substep
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{\ansysfigdir fig1005_whole_model.pdf}
+  \includegraphics[width=0.6\linewidth]{\ansysfigdir fig1005_whole_model.pdf}
   \caption[Two ways of computing the growth, whole model]{%
-    Element von Mises stress from equation~\eqref{eq:ch5-eq36} against the
-    element's own growth variable, one point per element.}
+    Element von Mises stress, divided by $E$, from equation~\eqref{eq:ch5-eq36} against the
+    element's own growth variable, one point for each of the 512 elements (whole model at $T^*=1.1$, one species,
+    stiffness of Klempt et al.\ 2024). Cosine similarity $1.0000$; red: the median ratio $0.45$.}
   \label{fig:ch5-whole}
 \end{figure}
 
@@ -641,7 +642,9 @@ report pressure inside the biofilm and a ring of tension at its edge. Grouped
 by distance from the seed, the mean stress is $-2.5\times10^{-4}$~Pa in the
 seed, $+6.0\times10^{-5}$~Pa in the first layer of elements around it and
 $+1.3\times10^{-6}$~Pa in the second; every element of these two layers is in
-tension. The von Mises stress of this element is $4.7\times10^{-4}$~Pa, the seed
+tension. The colour scale of the hydrostatic stress in Table~3 of Klempt et
+al.~\cite{Klempt2024DiffusionDrivenGrowth} spans $-6.5$ to $+3\times10^{-4}$, labelled MPa; with the shear modulus
+of their Table~2 given in Pa these values are in Pa, the same order as here. The von Mises stress of this element is $4.7\times10^{-4}$~Pa, the seed
 average $5.9\times10^{-4}$~Pa (Table~\ref{tab:ch5-mesh}) and the largest in
 the model, also inside the seed, $7.2\times10^{-4}$~Pa. The element's own growth
 variable gives $0.49$ times the growth and the stress of
@@ -819,9 +822,11 @@ $g\ell^2/d=1$, $E=10$~Pa, $\nu=0.49$, void floor $f=10^{-3}$), and the antibioti
 al.\ 2026 ($\alpha^*_0=100$ from $T^*=1/3$), with the diffusion and uptake of the nutrient. The
 threshold is $\phi_{\min}=0.001$; it is not given by the papers and changes the results by less than
 $1\,\%$ below this value. In the separate example species~A fills the seed of this chapter and
-species~B four small blocks along the edges of the cube; in the mixed example both start in the seed,
-in equal amounts ($\phi_1=\phi_2=0.275$) or in the proportions of Fritsch et al.\ ($0.25$, $0.30$). The
-nutrient is held on the face $y=-1$~mm, the antibiotic on all outer faces. The front term \fterm{} of Eq.~34 is
+species~B four small blocks of $0.25\times0.25\times1.0$~mm along the four edges parallel to $z$, at the height of the
+seed; in the mixed example both start in the seed,
+in equal amounts ($\phi_1=\phi_2=0.275$) or in the proportions of Fritsch et al.\ ($0.25$, $0.30$). As in the
+element's input, the nutrient is held at $c=1$ in the layer of elements (0.25~mm) at the face $y=-1$~mm, and the
+antibiotic at $a=1$ in the outer layer of elements on all faces; elsewhere there is no flux. The front term \fterm{} of Eq.~34 is
 on in every run.
 
 These runs use a finite-volume code in Python that solves the same equations as the element, with the
@@ -893,6 +898,8 @@ size of the two bands together. In the mixed examples it converges slowly, with 
 $1.0$ and a GCI of $19$ to $41\,\%$, so I give the stress there only to within these bands. There the front
 carries intermediate values of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the
 domain still rises with the grid ($0.60$, $0.69$, $0.73$, $0.75$), though by less at each refinement.
+The front term moves this edge along $\mathbf n_c$, and the uptake that sets the nutrient gradient is
+concentrated at the same edge, so the grid has to resolve both the edge and the nutrient gradient around it.
 
 \begin{table}[htbp]
   \centering

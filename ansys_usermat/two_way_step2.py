@@ -183,7 +183,7 @@ def thesis_figure(npz):
         a.set_xlabel(r"$x$ [$\mu$m]"); a.grid(False)
         a.set_xticks([0, 10, 20]); a.set_yticks([0, 10, 20])
     ax[0].set_ylabel(r"$y$ [$\mu$m]"); ax[1].set_yticklabels([])
-    cb = fig.colorbar(im, ax=ax[:2], shrink=0.9, pad=0.02)
+    cb = fig.colorbar(im, ax=ax[:2], shrink=0.9, pad=0.06)   # clear of the x tick labels of (b)
     cb.set_label(r"$\phi$ at $T^*=1$")
     b = ax[2]
     for c, col, lab in (("2sp_case3", "C0", "case 3"), ("2sp_case6", "C3", "case 6")):
@@ -193,7 +193,7 @@ def thesis_figure(npz):
     b.set_xlabel(r"$T^*$"); b.set_ylabel(r"mean $\phi$")
     b.set_title("(c) mean $\\phi$", fontsize=9)
     b.legend(frameon=False, fontsize=7.5, handlelength=1.6)
-    fig.savefig(THESIS_OUT, dpi=300); fig.savefig(THESIS_OUT.with_suffix(".pdf"))
+    fig.savefig(THESIS_OUT, dpi=600); fig.savefig(THESIS_OUT.with_suffix(".pdf"))
     print("wrote", THESIS_OUT)
 
 

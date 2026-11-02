@@ -5,6 +5,7 @@ n^3 cube [-1, 1]^3 mm of the ANSYS decks and the Python reference, with their ex
                               [--p-h-e 0.05 [--gate-form 0|1|2] [--implicit-gate]]   (homeostatic law, PROPS(22:23))
                               [--front-living]                                       (PROPS(24))
                               [--transient-c 1e8]          (Eq. 35 with dc/dt, d in mm^2/T*, PROPS(25); 0: the limit)
+                              [--growth-living]            (growth of the living biomass, PROPS(26))
         layout: sep (seed species A, the four corner blocks species B) or mixeq (seed only, equal start shares)
 
 Set-up as coupled_living_consumption.py --v2 --ansys-bc --start-position --front 1 --phi-min 0.001 --alpha0 100
@@ -60,6 +61,10 @@ ap.add_argument("--front-living", action="store_true", help="28 Oct 2026, Keio e
 ap.add_argument("--transient-c", type=float, default=1e8, metavar="D", help="29 Oct 2026: Eq. 35 and the antibiotic "
                 "field with their time derivative (backward Euler), d in mm^2/T* (Klempt 2024 Table 2: 1e8); 0: the limit d -> "
                 "infinity (the runs before 29 Oct); PROPS(25)")
+ap.add_argument("--growth-living", action="store_true", help="1 Nov 2026, Keio extension, off by default: growth of the "
+                "living biomass (variant A of the coupling paper Section 2.5; coupled_living_consumption.py "
+                "--growth-living-energy): alpha_dot = k_alpha phi_3D sum_i phibar_i and the growth source of Eq. 34 "
+                "k_alpha alpha sum_i phibar_i (living_uel.f90 header); PROPS(26) = 1")
 ap.add_argument("--mms", action="store_true", help="manufactured solution (A-50, mms.py): point model off (L = 1), k_alpha = 0, "
                 "phi and c start from the solution, c = 1 on y = -1 only, no antibiotic; PROPS(19) = 1")
 a = ap.parse_args()
@@ -88,6 +93,8 @@ if a.front_living:
     props += [0.0] * (23 - len(props)) + [1.0]
 if a.transient_c > 0 and not a.mms:
     props += [0.0] * (24 - len(props)) + [a.transient_c]
+if a.growth_living:
+    props += [0.0] * (25 - len(props)) + [1.0]
 
 # cells: seed (wp3 reference) and the four corner blocks at the seed's height (v2)
 cells8 = W.seed_cells_8(ROOT / "ansys_usermat/apdl/results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
@@ -237,4 +244,5 @@ Path(a.out).write_text("\n".join(out) + "\n")
 print(f"wrote {a.out}: {n}^3, {a.layout}, dt {a.dt}, {ninc} increments, n_sub {n_sub}, beta {beta:g}, "
       f"seed {int(seed.sum())} cells, blocks {int(blocks.sum()) if a.layout == 'sep' else 0}"
       + (f", homeostatic law p_h {props[21]:g} Pa form {props[22]:g}" if a.p_h_e > 0 else "")
-      + (", front speed times the living amount" if a.front_living else ""))
+      + (", front speed times the living amount" if a.front_living else "")
+      + (", growth of the living biomass" if a.growth_living else ""))

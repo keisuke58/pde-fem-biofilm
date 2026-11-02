@@ -115,7 +115,7 @@ def fig_stability():
                                  zorder=1, label="predicted limit" if first else None)
                 first = False
     ax.axvline(1 / 6, color="k", lw=0.9, ls="--")
-    ax.text(1 / 6 * 0.95, 1.5, r"$1/6$", ha="right", va="center", rotation=90)
+    ax.text(1 / 6 * 1.06, 2.72, r"$1/6$", ha="left", va="center")          # above the 24^3 row, clear of the points
     ax.axvline(0.5, color="0.5", lw=0.9, ls=":")
     ax.text(0.5 * 0.95, 1.5, r"$1/2$ (Rudolf et al. 2025)", ha="right", va="center", rotation=90,
             color="0.4", fontsize=8)
@@ -127,7 +127,7 @@ def fig_stability():
     ax.legend(loc="upper left", frameon=False, fontsize=8, ncol=5, columnspacing=1.0, handletextpad=0.3)
     fig.tight_layout()
     out = ASSETS / "fig_wp3_stability.png"
-    fig.savefig(out, dpi=200); fig.savefig(Path(out).with_suffix(".pdf"))
+    fig.savefig(out, dpi=600); fig.savefig(Path(out).with_suffix(".pdf"))
     plt.close(fig)
     return out, rows
 

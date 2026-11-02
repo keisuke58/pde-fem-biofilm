@@ -1,44 +1,46 @@
-"""coupled_living_consumption.py -- the coupling agreed with Oliver on 20 Oct 2026 (MEETING_2026-10-20.md), in Python,
-with synthetic data only.
+"""coupled_living_consumption.py -- the coupling agreed with Oliver on 20 Oct 2026 (MEETING_2026-10-20.md), in Python.
+Thesis Ch. 4 (Part 3) and the coupling paper; the main settings are those of the command below.
 
-Macro (3D, Klempt et al. 2024), the Chapter 4 seed problem on the 2 mm cube, NF^3 cells (cell centres stand for the
-quadrature points):
-    d phi/dt   = beta lap phi + k_alpha alpha - penalty            Eq. 34; with --front F also the front term
-                 - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
-                                                                   upwinded
-    d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    dc/dt = d lap c - g phi (sum_i phibar_i) c                     Eq. 35 (--transient-c d; without it quasi-static 0 = ...), consumption by the LIVING
-                                                                   biomass only: phibar_i = phi_i psi_i of the point
-                                                                   model (Klempt et al. 2026; Oliver's form, decided
-                                                                   20 Oct, replacing the normalised share)
-    0 = d_a lap a - g_a phi L a                                    the second nutrient field repurposed for the
-                                                                   antibiotic, same equation
-  c = 1 on the wall y = -1 mm (nutrient), a = 1 on the wall y = +1 mm from T* = T_AB on (antibiotic), zero flux
-  elsewhere; Thiele numbers Lambda^2 = g L^2/d = 4 for both (L = 1 mm).
+Field (3D, Klempt et al. 2024, Eqs. 34-36), the 2 mm cube on NF^3 cells (cell centres; --fast solves one quarter by
+symmetry), finite volumes:
+    d phi_3D/dt = beta lap phi_3D + k_alpha alpha - r c/(k + c) n_c . grad phi_3D      Eq. 34 (front term with --front 1:
+                  (- penalty keeping phi_3D in [0, 1])                                  r = 10 mm/T*, k = 1; --tvd: MUSCL
+                                                                                        + minmod upwind; RK4 inner steps)
+    d alpha/dt  = k_alpha phi_3D                                                        Eq. 36, unchanged
+    dc/dt       = d lap c - g phi_3D (sum_i phibar_i) c                                 Eq. 35 with dc/dt (--transient-c 1e8,
+                                                                                        backward Euler); consumption by the
+                                                                                        living biomass, phibar_i = phi_i psi_i
+    da/dt       = d lap a - g phi_3D (sum_i phibar_i) a                                 antibiotic, same equation
+  With --v2 --ansys-bc (the ANSYS deck): c = 1 held in the element layer at y = -1 mm, a = 1 held in the outer element
+  shell from T* = T_AB (--tab 0.333333), zero flux elsewhere; g l^2/d = 1 (--gc 1, l = 1 mm half edge, Klempt 2024
+  Table 2 converted), the same for a (--gab 1).
 
-Meso (0D point model at every colonised cell): a black box, the equations of Klempt et al. 2026 unchanged, its own
-constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D). Synthetic data: Fritsch et al. 2025 Case I, two species,
-true parameters theta* = [a11, a12, a22, b1, b2] = [1, 0.1, 1, 1, 2], eta = [1, 2], c* = 100, alpha* = 10, 1000 steps
-of 1e-4 (so s = 0.1: T* = 1 spans their run). Inputs per cell, linearly interpolated in time over the inner steps of
-each outer step:
-    c*(t) = 100 c(x, t),   alpha*(t) = 10 a(x, t)
-Output: phi_i, psi_i -> L = sum phi_i psi_i, fed back to the consumption of the next outer step (lagged one step).
+Point model (Klempt et al. 2026, used as published, its own constraint sum phi_i + phi_0 = 1) at every cell with
+phi_3D > phi_min (--phi-min 0.001). Synthetic data: Fritsch et al. 2025 case I, two species, true parameters
+A = [[1, 0.1], [0.1, 1]], b = (1, 2), eta = (1, 2), c*_0 = 100, alpha*_0 = 100 (--alpha0 100, Klempt 2026 case 4);
+1000 steps of 1e-4 span T* = 1, so s = 0.1. Inputs per cell, linearly interpolated in time over the inner steps:
+c* = c*_0 c, alpha* = alpha*_0 a. Output: sum_i phibar_i (variable L in the code), used in the consumption of the next
+outer step (lagged one step). Implicit Euler + Newton, in JAX or (--fortran) the Fortran of the ANSYS build.
 
-Order in an outer step t_{i-1} -> t_i (dT* = 0.025): (1) phi, alpha (independent of the point model); (2) c_i, a_i
-from phi(t_i) and L(t_{i-1}); (3) point models with c*, alpha* interpolated between (c_{i-1}, a_{i-1}) and
-(c_i, a_i); (4) cells newly above phi_min = 0.01 start their point model from the phi-weighted mean state of their
-colonised neighbours (an assumption: the composition is carried into new biofilm from where it grows from);
-(5) L(t_i).
+One outer step t_{i-1} -> t_i (--dtc, 0.025 or 0.0025):
+  (1) phi_3D, alpha (RK4 inner steps); with --transient-c also c in the inner steps, so the front follows it;
+  (2) c_i, a_i from phi_3D(t_i) and sum_i phibar_i(t_{i-1});
+  (3) point models over s dT*, with c*, alpha* interpolated between t_{i-1} and t_i;
+  (4) cells newly above phi_min take the phi_3D-weighted mean state of their colonised neighbours, layer by layer
+      (--inherit-living: with the living composition; an assumption);
+  (5) sum_i phibar_i(t_i).
+At T* = 1 the von Mises stress is solved once on 16^3 hexahedra (B-bar, wp3_stress_reference.py) from phi_3D and
+alpha - 1 averaged per element (--snap-stress: also at every snapshot, for the videos).
 
-Examples (Oliver's sketch): "separate": species A (point-model species 1) in the centre seed (the 32 seed elements of
-Chapter 4), species B in the four vertical edges of the cube (0.25 mm square columns); "mixed": A and B together in
-the centre seed, Fritsch's start (0.25, 0.30). Start amounts: Fritsch's total 0.55; a mono-species point has the other
-species at 1e-6 (the point model clips to 1e-10 and would revive a zero; 1e-6 makes that explicit).
-Antibiotic from T* = 0.5; each example also without antibiotic.
+Examples: "separate": species A in the cross-shaped seed (32 elements of 0.25 mm), species B in four blocks of
+0.25 x 0.25 x 1.0 mm along the edges parallel to z (--v2); "mixed": both in the seed (--mix-equal: 0.275 each, else
+Fritsch's 0.25, 0.30). Each with and without antibiotic (keys separate, separate_ab, mixed, mixed_ab; --only one).
 
-    python ansys_usermat/apdl/coupled_living_consumption.py [--nf 32]
-        -> ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption.json, figdata/coupled_living_<case>.npz,
-           assets/fig_coupled_living_consumption.pdf/.png
+Main run (results/2026-10-3d/README_coupled_living.md; the defaults without options are older bring-up values):
+    python ansys_usermat/apdl/coupled_living_consumption.py --nf 64 --fast --fortran --front 1 --gc 1 --gab 1
+        --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living
+        --transient-c 1e8 [--dtc 0.0025] [--only separate_ab] [--mix-equal]
+    -> results/2026-10-3d/coupled_living_consumption_<tag>.json, figdata/coupled_living_<case><tag>.npz
 
 Validation against the measured biofilm volume (30 Oct 2026, papers/coupling_paper/VALIDATION_PLAN.ja.md): the
 calibrated five-species point model of Chapter 3 (--eco-file abaqus_composition/eco_cal5_<CH|CS|DH|DS>.txt, written by
@@ -136,6 +138,23 @@ if "--gc" in sys.argv:
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
 AB_TOP = "--ab-top" in sys.argv
 C_SINE = "--c-sine" in sys.argv
+# --transport-state (2 Nov, Keio continuation, a change of the model, papers/species_continuum/IDEA.ja.md): the point
+# state of every cell is carried with the biofilm instead of being inherited once by newly reached cells. Each component
+# G_k (phi_i, phi_0, psi_i) is transported as phi_3D G_k with the linear part of Eq. 34 (beta lap and the front term
+# -v . grad, the same upwind scheme); new biofilm (k_alpha alpha) carries the local state; then G = Q/phi_3D. An
+# assumption, the simplest species-resolved form, not from a paper.
+TRANSPORT = "--transport-state" in sys.argv
+# asymmetric variants (2 Nov, Keio continuation; inputs only, the equations are unchanged): --b-one-edge keeps only the block
+# of species B at x > 0.75, y < -0.75 mm (the edge next to the nutrient on the +x side); --seed-shift N moves the seed by N
+# elements of 0.25 mm along x. Both break the mirror symmetry, so they need the full domain (no --fast).
+B_ONE_EDGE = "--b-one-edge" in sys.argv
+# --b-corner: species B only in one cube of 0.25 mm at the corner x > 0.75, y < -0.75, z > 0.75 mm of the box (next to the
+# nutrient layer); same B amounts per cell as the edge blocks.
+B_CORNER = "--b-corner" in sys.argv
+SEED_SHIFT = int(_opt("--seed-shift", 0)) if "--seed-shift" in sys.argv else 0
+assert not ((B_ONE_EDGE or B_CORNER or SEED_SHIFT) and "--fast" in sys.argv), "--b-one-edge / --b-corner / --seed-shift need the full domain (no --fast)"
+# --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
+C_CONST = float(sys.argv[sys.argv.index("--c-const") + 1]) if "--c-const" in sys.argv else None
 # A-71: time course of the held antibiotic value a_b(T*) after T_AB, the same dose (integral of a_b over [T_AB, T_END]) as
 # the constant a_b = 1: const; pulse = 2 for the first half of each period, 0 for the second; sine = 1 + sin(2 pi (T - T_AB) / P)
 AB_SCHED = sys.argv[sys.argv.index("--ab-schedule") + 1] if "--ab-schedule" in sys.argv else "const"
@@ -186,6 +205,19 @@ GROWTH_LIVING = "--growth-living" in sys.argv
 # --growth-living alone is variant B (viscosity eta_alpha / sum_i phibar_i): only Eq. 36 changes.
 GROWTH_ENERGY = "--growth-living-energy" in sys.argv
 GROWTH_LIVING = GROWTH_LIVING or GROWTH_ENERGY
+# --lysis K (1 Nov 2026, Keio continuation, not the thesis model; an assumption of this work): dead biomass dissolves,
+#     d phi_3D/dt = ... - K phi_3D D,   D = sum_i phi_i (1 - psi_i), the dead volume fraction of the point model,
+# K in 1/T*, D of the start of the outer step (0 where no point model has started). For the comparison with the
+# measured biofilm volume (papers/coupling_paper/VALIDATION_PLAN.ja.md), where the volume falls after day 1 in CH and CS.
+LYSIS = float(sys.argv[sys.argv.index("--lysis") + 1]) if "--lysis" in sys.argv else 0.0
+# --erosion V (1 Nov 2026, Keio continuation, an assumption of this work): detachment at the biofilm surface under flow,
+# taken as a retreat of the front at the speed V (mm/T*): the front speed of Eq. 34 becomes r c/(k + c) - V. Inside the
+# biofilm grad phi = 0, so only the surface moves. Meant for the flow conditions (HOBIC: CH, DH) of the volume comparison.
+EROSION = float(sys.argv[sys.argv.index("--erosion") + 1]) if "--erosion" in sys.argv else 0.0
+# --erosion-tau TAU: the detachment fades, V(t) = V exp(-t/TAU) (loosely attached cells leave early); t in T*
+EROSION_TAU = float(sys.argv[sys.argv.index("--erosion-tau") + 1]) if "--erosion-tau" in sys.argv else 0.0
+EROS_NOW = EROSION                                # the speed of the current inner step
+DEAD = None
 # --homeostatic P (Keio continuation, P3; not in the thesis): the homeostatic-pressure growth law of the elements
 # (abaqus_living/README.md, p3/uel/README.md; an assumption of this work, not from a paper). Eq. 36 becomes
 #     d alpha/dt = k_alpha phi_3D g(p),  p = -tr(sigma)/3 (compression positive) of the cell,
@@ -368,7 +400,7 @@ if OBSTACLE:
             _e = [slice(None)] * 3; _e[_a] = -1 if _s == 1 else 0; _m[tuple(_e)] = False
             NB[_a, _s] = _m
 RES = HERE / "results" / ("2026-10-validation" if ECO_FILE else
-                          "2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv) else "2026-10-3d")
+                          "2026-10-3d-case3" if (K26C3 or "--c-sine" in sys.argv or "--c-const" in sys.argv) else "2026-10-3d")
 RES.mkdir(exist_ok=True)
 TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not ECO_FILE else f"_eco{Path(ECO_FILE).stem.replace('eco_', '')}"
@@ -379,7 +411,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if FRONT_EPS2 == 1e-6 else f"_eps2{FRONT_EPS2:g}")
        + ("" if PHI_MIN == 0.01 else f"_phimin{PHI_MIN:g}")
        + ("_check" if CHECK else "") + ("_v2" if V2 else "") + ("_fortran" if FORTRAN else "")
-       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "")
+       + ("_ansysbc" if ANSYS_BC else "") + ("_startpos" if START_POSITION else "") + ("_inhliv" if INHERIT_LIVING else "") + (("_growlivE" if GROWTH_ENERGY else "_growliv") if GROWTH_LIVING else "") + ("_budget" if BUDGET else "") + (f"_lys{LYSIS:g}" if LYSIS else "") + (f"_ero{EROSION:g}" if EROSION else "") + (f"tau{EROSION_TAU:g}" if EROSION and EROSION_TAU else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
@@ -387,8 +419,8 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
-       + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
+       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -569,7 +601,10 @@ def upwind_adv_tvd(u, v):
         mp, mm = _nb(a, 1), _nb(a, -1)
         up_, um_ = np.roll(u, -1, a), np.roll(u, 1, a)
         dp = np.where(mp, up_ - u, 0.0); dm = np.where(mm, u - um_, 0.0)
-        if LIMITER == "mc":                   # monotonized central (van Leer 1977): less clipping than minmod
+        if LIMITER == "superbee":             # Roe's superbee: the most compressive TVD limiter (2 Nov test)
+            ap, am = np.abs(dp), np.abs(dm)
+            sl = np.where(dp * dm > 0, np.sign(dp) * np.maximum(np.minimum(2 * am, ap), np.minimum(am, 2 * ap)), 0.0)
+        elif LIMITER == "mc":                 # monotonized central (van Leer 1977): less clipping than minmod
             sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * np.abs(dp), 2 * np.abs(dm)),
                                                                   0.5 * np.abs(dp + dm)), 0.0)
         else:
@@ -675,6 +710,18 @@ def prolong(u, n):
     return np.repeat(np.repeat(np.repeat(u, f, 0), f, 1), f, 2)
 
 
+def front_vel(c):
+    """the velocity v = r c/(k + c) n_c of the front term (as in front(), for --transport-state)"""
+    g = grad(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
+    sp_ = R_FRONT * c / (K_MONOD + c)
+    if FRONT_LIVING and LIV is not None:
+        sp_ = sp_ * living_speed(LIV)
+    if EROSION:
+        sp_ = sp_ - EROS_NOW
+    return [sp_ * x / nrm for x in g]
+
+
 def front(phi, c):
     """-r c/(k + c) n_c . grad phi (Klempt 2024 Eq. 34 as printed), upwinded"""
     if ARTDIFF:
@@ -684,6 +731,8 @@ def front(phi, c):
     sp_ = R_FRONT * c / (K_MONOD + c)
     if FRONT_LIVING and LIV is not None:
         sp_ = sp_ * living_speed(LIV)
+    if EROSION:                                   # --erosion: detachment, a retreat of the surface at the speed V
+        sp_ = sp_ - EROS_NOW
     return -upwind_adv(phi, [sp_ * x / nrm for x in g])
 
 
@@ -773,7 +822,7 @@ class Reaction:
 def c_supply(T):
     """held nutrient value at T*: 1, or with --c-sine 0.5 + 0.5 sin(500 t), t = S_LINK T* the point-model time
     (Klempt et al. 2026, Table 2, case 3: c* = 50 + 50 sin(500 t) with c* = c*_0 c, c*_0 = 100)"""
-    return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else 1.0
+    return 0.5 + 0.5 * math.sin(500.0 * S_LINK * T) if C_SINE else (1.0 if C_CONST is None else C_CONST)
 
 
 def ab_value(T):
@@ -821,6 +870,9 @@ def neighbours_mean(G, w):
 
 def run(example, antibiotic):
     cells8 = W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
+    if SEED_SHIFT:                                # --seed-shift: the seed moved along x by whole elements
+        cells8 = cells8 + np.array([SEED_SHIFT, 0, 0])
+        assert cells8.min() >= 0 and cells8.max() < 8
     seed = W.seed_mask(NF, cells8)
     ax = -BOX / 2 + (np.arange(NF) + 0.5) * H
     X, Y, Z = np.meshgrid(ax, ax, ax, indexing="ij")
@@ -828,6 +880,10 @@ def run(example, antibiotic):
     if V2:                                        # four small corner blocks at the seed's height
         zmax = np.abs(Z[seed]).max() + 1e-9
         edges = edges & (np.abs(Z) <= zmax)
+    if B_ONE_EDGE:
+        edges = edges & (X > 0) & (Y < 0)
+    if B_CORNER:                                  # one corner cube of 0.25 mm
+        edges = (X > 0.75) & (Y < -0.75) & (Z > 0.75)
     if example == "tooth":
         # the tooth example (--obstacle stl): a cervical ring of biofilm, TOOTH_SEED mm thick on the crown surface and
         # TOOTH_SEED_H mm high from the cervical base; species A on the half x < 0, species B on the half x > 0
@@ -971,9 +1027,13 @@ def run(example, antibiotic):
                 hist.setdefault("gate_min", []).append(float(GATE.min()))
             cf = c
             Lf = L
+            if LYSIS:                                   # --lysis: dead volume fraction of the start of the step
+                globals()["DEAD"] = np.where(on, np.clip((G[..., :N_SP] * (1.0 - G[..., 6:6 + N_SP])).sum(-1), 0.0, 1.0), 0.0)
             ka = 0.0 if MMS else W.K_ALPHA
             for i_in in range(per):
                 tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
+                if EROSION and EROSION_TAU:             # --erosion-tau: fading detachment
+                    globals()["EROS_NOW"] = EROSION * np.exp(-tk / EROSION_TAU)
                 if INNER_ACT:                           # A-89: reached cells consume from the inner step on
                     nw = (phi >= PHI_MIN) & ~on
                     num, den = neighbours_mean(L[..., None], np.where(on, phi, 0.0))
@@ -985,6 +1045,8 @@ def run(example, antibiotic):
                     d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al * (np.clip(Lf, 0.0, 1.0) if GROWTH_ENERGY else 1.0) - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
                     if MECH_K:
                         d = d - MECH_K * ph * ice
+                    if LYSIS:
+                        d = d - LYSIS * ph * DEAD
                     if FRONT:
                         d = d + (front_lw(ph, cf, dt) if LW else front(ph, cf))
                         if SENSOR:
@@ -1011,11 +1073,38 @@ def run(example, antibiotic):
                     k1 = f(phi, alpha, tk)
                     phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
                     continue
+                if TRANSPORT:                               # --transport-state: the point state rides on the RK4 stages
+                    qk = list(range(N_SP)) + [5] + list(range(6, 6 + N_SP))
+                    if i_in == 0:
+                        Q = phi[..., None] * G[..., qk]
+                    G0 = G[..., qk]; vq = front_vel(cf); lq = np.empty_like(phi)
+
+                    def fq(Qs, ph, al):
+                        src = ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                        out = np.empty_like(Qs)
+                        for jq in range(Qs.shape[-1]):
+                            W.laplacian(Qs[..., jq], H, lq)
+                            out[..., jq] = W.BETA * lq - upwind_adv(Qs[..., jq], vq) + src * G0[..., jq]
+                        return out
+                    q1 = fq(Q, phi, alpha)
                 k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
                 k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
                 k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)
+                if TRANSPORT:
+                    q2 = fq(Q + 0.5 * dt * q1, phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
+                    q3 = fq(Q + 0.5 * dt * q2, phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1])
+                    q4 = fq(Q + dt * q3, phi + dt * k3[0], alpha + dt * k3[1])
+                    Q = Q + dt / 6 * (q1 + 2 * q2 + 2 * q3 + q4)
                 phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
                 alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+            if TRANSPORT:                               # carried state wherever the biofilm is
+                okp = phi >= PHI_MIN
+                Gq = Q / np.maximum(phi, 1e-12)[..., None]
+                for jq, kq in enumerate(qk):
+                    lo, hi = (1e-10, 1.0) if kq < 6 else (1e-10, 0.999)
+                    G[..., kq] = np.where(okp, np.clip(Gq[..., jq], lo, hi), G[..., kq])
+                G[..., 5] = np.where(okp, 1.0 - G[..., :N_SP].sum(-1), G[..., 5])   # the point model's constraint
+                on = on | okp
             # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
             if TRANSIENT_D is not None and FRONT:
                 c_new = cf                        # already advanced over the outer step in the inner steps
@@ -1047,6 +1136,8 @@ def run(example, antibiotic):
             c, a = c_new, a_new
             # (4) newly colonised cells inherit the neighbours' state
             new = (phi >= PHI_MIN) & ~on
+            if TRANSPORT:
+                new = np.zeros_like(new)
             if new.any() and START_POSITION:
                 if example == "separate":
                     isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)
@@ -1083,13 +1174,22 @@ def run(example, antibiotic):
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         _v, _lm = totals(); hist["phi_total_mm3"].append(_v); hist["living_mean"].append(_lm)
+        if N_SP > 2:                                # 2 Nov: per species, mean over the biofilm (phi_3D > 0.5) and over the seed:
+            _bio = phi > 0.5                        # volume share phi_i / sum_j phi_j and living phibar_i = phi_i psi_i (JSON)
+            _ph = G[..., :N_SP]; _lv = _ph * G[..., 6:6 + N_SP]; _sh = _ph / np.maximum(_ph.sum(-1, keepdims=True), 1e-30)
+            for _nm, _m in (("bio", _bio & on), ("seed", seed & on)):
+                hist.setdefault(f"share_sp_{_nm}", []).append([float(_sh[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
+                hist.setdefault(f"phibar_sp_{_nm}", []).append([float(_lv[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
-            if example == "tooth":               # alpha at every snapshot for the film stress (real_tooth_coupled.py)
+            if N_SP > 2 and SNAP_EVERY:              # 2 Nov: the share of every species (four-species videos, dominant species)
+                for isp in range(N_SP):
+                    snaps[round(T1, 3)][f"sp{isp}"] = unfold(np.where(on, ph[..., isp] / np.maximum(ph.sum(-1), 1e-30), np.nan)).astype(np.float32)
+            if example == "tooth" or SNAP_EVERY:   # alpha at every snapshot (tooth film stress; videos with alpha - 1, 2 Nov)
                 snaps[round(T1, 3)]["alpha"] = unfold(alpha).copy()
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)
                 vm_s, _ = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),

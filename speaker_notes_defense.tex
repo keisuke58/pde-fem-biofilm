@@ -151,9 +151,16 @@ $-2.5\times10^{-4}$ pascal mean stress, and the first layer of elements around
 it is in tension. This is the ring of tension that Klempt et al.\ report.
 The stresses are small because the stiffness is ten pascal, and they scale
 with it. What carries over is the pattern, not the magnitude.
+How to read it: a uniform growth swells freely and gives no stress. The seed holds biofilm from the start and has
+grown most; the biofilm around it arrived later and has grown less. The seed wants to expand and its surroundings
+hold it back, so the seed is compressed and the first layer around it is stretched, like a heated inclusion in a
+cold plate. The stress is set by the jump of $\alpha$ across the edge, not by the amount of growth.
 \JA 論文の剛性では、シードは圧縮（平均 $-2.5\times10^{-4}$ Pa）、周りの1層目は引張です。
 Klempt らが報告している引張の輪と同じです。応力が小さいのは剛性が 10 Pa だからで、
 剛性に比例します。意味があるのは大きさではなく分布です。
+見方：一様に膨らむだけなら自由に膨らむので応力は出ません。シードは最初からバイオフィルムがあって一番膨らみ、周りは後からバイオフィルムが届いたので
+あまり膨らんでいません。シードは広がろうとし、周りがそれを押さえるので、シードは圧縮、周りの1層目は引張になります
+（冷たい板の中で温めた部分と同じ）。応力を決めるのは成長の量ではなく、縁をまたぐ $\alpha$ の差です。
 \hint{「この大きさに意味はあるか」は聞かれそう（Wangenheim 先生は欠席）。}
 
 \slide{Part 2: convergence and stability}{12:45}
@@ -175,6 +182,9 @@ antibiotic lowers the living fraction of the seed from 0.96 to 0.15 when the spe
 amount of biofilm, and the converged stress changes by about two percent. This is the main result: the
 composition reaches growth and stress only through the nutrient and the front speed $r\,c/(k+c)$, because the
 growth law counts all biomass. A model in which the composition changes the mechanics needs a second path.
+The stress hardly moves because the antibiotic changes neither $\phi_{3D}$ nor the jump of $\alpha$ at the edge of
+the seed. The mixed seed carries less stress because the front carries intermediate values of $\phi_{3D}$, so the
+biofilm around it is softer.
 A point that the biofilm reaches later takes the living composition of its neighbours; this
 is my assumption.
 \JA 第3部では、各 Gauss 点で点モデルを動かします。栄養と抗菌薬を場から受け取り（$c^*=c^*_0c$、$\alpha^*=\alpha^*_0a$）、
@@ -183,6 +193,9 @@ is my assumption.
 バイオフィルムの量は下げないからです。収束した応力も約 2 \% しか変わりません。これが主な結果で、組成は栄養と
 前線の速さ $r\,c/(k+c)$ を通してしか成長と応力に届きません。成長則がすべてのバイオマスを数えるからです。組成で力学を
 変えるには、もう一つの経路が要ります。新しく届いた点は隣の生きている組成を受け継ぐ、というのは私の仮定です。
+応力がほとんど動かないのは、抗菌薬が $\phi_{3D}$ も、シードの縁をまたぐ $\alpha$ の差も変えないからです。混ぜた例の応力が低いのは、
+前線が中間の $\phi_{3D}$ を運び、シードの周りが柔らかいためです。
+\hint{聞かれたら：修論の後、$64^3$ の 51 本で確かめると、剛性をかけた $(\phi_{3D}^2+f)|\nabla\alpha|$ と応力の相関は 0.94（論文に入れた）。栄養が少ないと前線が遅れ、$\alpha$ の差が大きくなって応力が上がる。}
 
 \slide{Part 3: the front term sets the accuracy of the stress}{16:00}
 \EN The front term, minus r c over k plus c times n c dot grad phi 3D, is a strong advection: its cell Peclet

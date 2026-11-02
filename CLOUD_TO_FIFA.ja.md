@@ -4,6 +4,73 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月3日 未明（訂正：全領域の 2 本には `--amg` が要る）
+
+非対称の 64³ が 7 時間で 2/400 ステップだったのは、指示書のコマンドに `--amg` を入れ忘れたため（クラウドの誤り）。`--fast` を外すと、
+`--amg` なしでは場の式を毎回直接法（spsolve）で解くので非常に遅く、メモリも大きい。下の「11月2日 夜」2) と「深夜 その 2」の
+コマンドに `--amg`（全領域で AMG 前処理つき CG、`--fast` と同じ解き方で対称性だけ使わない）を足した。
+- 今の非対称 64³ は止めてよい。順番：superbee の格子列 → 非対称 64³（`--amg`）→ 角に 1 つ（`--amg`）。
+- 時間の目安：1/4 領域の 64³ が約 6 分なので、全領域で約 4 倍＋途中の場の保存で 30〜60 分の見込み。最初の数ステップの速さを見て、
+  遅ければ止めてログに書く。
+- `--b-one-edge` は辺に沿った 1 本の塊の例としてそのまま使う（名前の説明だけ「角ではない、オリバーの要望ではない」と直す）。
+- **動画は fifa で作る**（ユーザー，3 Nov：`figdata/*.npz` は大きくて push できないため）。`git pull` してから，2 本が終わったら：
+  ```
+  cd ~/pde-fem-biofilm   # リポジトリの根から
+  python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc b1edge seedx-1
+  python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc bcorner
+  ```
+  出力：`assets/anim_coupled_tvd_separate_ab_inhliv_b1edge_seedx-1_transc_alpha_5panel.mp4`，`..._inhliv_bcorner_transc_alpha_5panel.mp4`
+  と，それぞれの `_end.png`。動画は `.gitignore` の対象なので `git add -f` で mp4 と png を push（それぞれ 4 MB 前後）。
+  pyvista が無ければ `pip install pyvista imageio-ffmpeg`；画面なしの描画には OSMesa（`libosmesa6`）か `xvfb-run` が要る。
+  どうしても描けなければ，描けなかったことと理由をログに書く（npz は消さない）。クラウドで 16³ の全領域の試しで動作確認済み
+  （読み込み，ファイル名，説明文）。
+
+## 2026年11月2日 深夜 その 2（追加：菌 B を角に 1 つ。superbee の格子列のあと）
+
+非対称の例のもう 1 つ。`--b-one-edge` は辺に沿った 1 本の塊（0.25 × 0.25 × 1.0 mm、角ではない）で、オリバーの要望ではなくこちらで決めた例
+（ログでもそう書く）。今回は菌 B を立方体の角の 0.25 mm の立方体 1 つ（x > 0.75、y < −0.75、z > 0.75 mm、栄養の層の隣）だけに置く
+（`--b-corner`、2 Nov にクラウドで追加。16³ で動作確認済み）。ブランチ・`$B` は「11月2日 夜」と同じ（`git pull` してから）：
+```
+python3 coupled_living_consumption.py --nf 64 --amg $B --transient-c 1e8 --b-corner --only separate_ab --snap-every 0.025 --snap-stress
+```
+- 全領域・途中の場つきなので、メモリは `--b-one-edge` と同じ約 6 GB、時間も同じくらい（約 1.5〜2 時間）。
+- 結果：JSON（`*_bcorner_*nf64*`）を `keio/*` に push、`figdata/*bcorner*.npz` は push せず置き場所を `KEIO_CHAIN_LOG.md` に。
+  ログにシードと B の塊の Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
+
+## 2026年11月2日 深夜（追加：superbee の格子列。非対称の 64³ が終わってから）
+
+superbee の 128³（vM 3.587e−4、α−1 8.495e−4）は minmod の同じ刻みの 128³（3.30e−4、8.32e−4）より +8.7 % / +2.1 %、minmod の 192³（3.52e−4）も超えた。
+superbee の方が速く収束するかを GCI で見るため、同じ設定で 32³、64³、192³ を足す（ブランチ・`$B` は下の「11月2日 夜」と同じ）：
+```
+for N in 32 64 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+done
+```
+- 時間の目安：32³・64³ は数分、192³ は minmod で約 2〜3 時間（IKMHIWI03）。メモリは 128³ で 1.36 GB だったので、192³ は 5 GB 前後の見込み。
+- 結果：JSON（`results/2026-10-3d/` の `*nf{32,64,192}*_tvd_superbee_*`）を `keio/*` に push。
+- `KEIO_CHAIN_LOG.md` に：4 格子のシードの vM と α−1、64/128/192³ からの観測次数 p・外挿値・GCI（Celik 2008、Fs 1.25）を、
+  minmod の値（修論の表 tab:ch5-gci：vM 2.00 / 2.82 / 3.30 / 3.52、α−1 7.42 / 8.04 / 8.32 / 8.42、p 0.43、外挿 4.68、GCI 41 %）と並べて書く。
+- 修論には入れない（結果は確定済み）。論文の検証の節の材料。
+
+## 2026年11月2日 夜（クラウドのメモリが足りず止まった 2 本。急がない）
+
+クラウドでメモリ不足（OOM）で 2 回止まったので fifa で回す。**このブランチのコードが要る**（master にはまだない）：
+```
+git fetch origin claude/plan-next-hxjjve && git checkout -B cloud-1102 origin/claude/plan-next-hxjjve
+pip install pyamg   # 無ければ
+cd ansys_usermat/apdl
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+# 1) 制限関数 superbee の 128³（混合・抗菌薬あり、収束の試し）。約 1 時間
+python3 coupled_living_consumption.py --nf 128 --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+# 2) 非対称の例：菌 B を 1 本の辺だけ（--b-one-edge）＋シードを -x へ 1 要素（--seed-shift -1）。全領域（--fast なし）、動画用の途中の場つき
+python3 coupled_living_consumption.py --nf 64 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab --snap-every 0.025 --snap-stress
+```
+- 2) は全領域の 64³ に 40 コマの場を持つので、メモリは数 GB 要る（クラウドではここで止まった）。
+- 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*nf128*` と `*_b1edge_seedx-1_*`）を `keio/*` のブランチに push。
+  2) の `figdata/*b1edge*.npz` は大きいので push しない（動画はクラウドで作るので、置き場所だけ `KEIO_CHAIN_LOG.md` に書く。
+  可能なら `python3 anim_coupled_tvd_3d.py separate_ab inhliv transc` 相当の動画を fifa で作って mp4 の置き場所を書く。ファイル名の規則が合わなければ無理にしない）。
+- `KEIO_CHAIN_LOG.md` に：1) のシードの vM と α−1（比べる minmod の 128³ は外側の刻み 0.0025 の 3.30e−4 Pa、8.32e−4：修論の表 tab:ch5-gci。4.04e−4、8.72e−4 は刻み 0.025 の値で、比較に使わない。2 Nov 訂正）、2) のシードの Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
+
 ## 2026年10月29日 夜（追加：今の列が終わってから 2 本、論文の表 2 用）
 
 成長則なし（今の式）で、64³・外側の刻み 0.0025 の 2 本。論文の表 2（今は刻み 0.025）を差し替え、成長則の列の 64³ の比較相手にもなる

@@ -20,7 +20,8 @@ Abaqus run is possible here but nothing has been run here yet.
 
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
   scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
-  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
+  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). **Not reachable from 2 Nov 2026 for about a month** (the user, 2 Nov: during the trip;
+  back in Hannover 28 Nov): no new ANSYS runs or instructions to IKMHIWI03 until then; long runs go to fifa or the cloud. Long runs go on detached while the
   user is away. Back up what is not in git before the end of December: `BACKUP_PLAN_2026-12.ja.md` and
   `scripts/backup_untracked_ikmhiwi03.ps1` (dry run by default; `-Go` writes the zips; the Felix and element zips are private).
   **Reachable from the phone (confirmed 21 Oct 2026, during the trip):** the VS Code tunnel of IKMHIWI03 opens in
@@ -227,6 +228,7 @@ this machine's specific workflow.
 - **"Front term" in replies (the user, 25 Oct 2026):** never write 前線項 / front term alone in a reply; always
   write the formula, e.g. the term $-r\,\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi_{3D}$ of Eq. 34
   ($\mathbf n_c=\nabla c/|\nabla c|$). Same for other named terms: give the expression, not only the name.
+- **「バイオフィルム」と書く（the user, 1 Nov 2026: 「必ずバイオフィルムと表現、今後」）:** in Japanese replies, slides and notes write バイオフィルム, never 膜 alone (膜 reads as a membrane). In English: biofilm.
 - **Quiz routine (11 Oct 2026):** when the user says クイズ or テスト, give 5
   questions from `QUIZ_COLLOQUIUM.ja.md` (unseen ones and missed ones first),
   answers only when asked, short one-line answers; log them there.
@@ -352,6 +354,10 @@ this machine's specific workflow.
   other lab projects) after returning in January; offered up to about 20 h/week. Her answer (28 Oct): start in
   January, she checks the procedure (NEDO/JST); hours and tasks follow from her. She also mentioned DC1/PhD; the
   user answered that he plans a job after the master's.
+  **Meeting 2 Nov 2026** (`meetings/2026-11-02_muramatsu/NOTES.ja.md`): return to Japan about 10 Jan 2027 (lab from
+  about 12 Jan); RA from January, two candidates (a JST quantum project, an industry ML project), employment being
+  arranged by her side; next meeting **30 Nov, 17:00 JST**. She asked why the stress looked unsymmetric: it is mirror
+  symmetric in x and z (checked); show uncut views and the point model's antibiotic term next time.
   **Conferences (the user, 28 Oct 2026):** USNCCM19 (Pasadena, 25-29 Jul 2027; abstract by 15 Jan 2027) is the one he
   wants; he prefers it over domestic conferences. Keio spring courses 2027: take report-graded ones so a July exam
   period does not clash with the trip.
@@ -376,6 +382,9 @@ this machine's specific workflow.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.
+- **Prof. Junker, next plans (2 Nov 2026):** HiWi from Japan not possible (LUH HR); he wrote (28 Oct) he would like to continue
+  the work and to discuss the next plans before I leave. Reply sent 2 Nov (cc Meisam): asked for a meeting on the coupling
+  paper, 2027 conferences (USNCCM19, GAMM) and joint work, available 28 Nov - 2 Dec and 10 Dec - early January. **Laura Neumeyer proposed Tue 1 Dec 2026, 12:30 (2 Nov); accepted the same day (in Google Calendar; room to be confirmed).** Tell Assoc. Prof. Muramatsu about it at the 30 Nov meeting.
 - Addresses (from earlier mail): junker@ikm.uni-hannover.de,
   soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
   klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
@@ -568,6 +577,20 @@ examiners). Check each one before the document is handed over.
   save as vector PDF (3D renderings as PNG at 400 dpi), no title in the figure
   (the caption carries it), panel letters (a), (b) matching the caption.
   The body text stays Latin Modern; only the figures are Times.
+- **One orientation for every 3D view of the same example (the user, 1 Nov 2026: "今後気を付けて").** The cube examples are
+  drawn with y up and the camera at (3.6, 2.6, 4.4) (pyvista `camera_position = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]`;
+  matplotlib 3D: plot axes (z, x, y), elev 24.6, azim 39.3, see `ansys_usermat/apdl/fig_setup_separate_ab.py`), the octant
+  x, y, z > 0 removed to show the inside. **Every 3D figure and video carries coordinate axes** (the user, 1 Nov 2026: "必ず座標軸は追加しよう";
+  pyvista `pl.add_axes(...)` as in `fig_coupled_3d_panels.py`, matplotlib 3D with labelled axes). Set-up figures, result figures and videos of one example
+  must match; check a new 3D figure against the existing ones before handing it over.
+- **The five panels of every coupled 3D video (the user, 2 Nov 2026: 「今後もこの5つがいいね」):** (a) share of species A,
+  (b) living volume fraction, (c) nutrient c, (d) growth alpha - 1, (e) von Mises stress; the antibiotic panel is replaced by alpha - 1 and its
+  onset is written on the frames. Runs for videos need `--snap-every 0.025 --snap-stress` (alpha is then saved at every snapshot);
+  `anim_coupled_tvd_3d.py` uses alpha - 1 automatically when it is saved.
+- **A time-history plot with every coupled result (the user, 2 Nov 2026: 「下段の時間変化のグラフいつもほしい」):** next to the 3D
+  figures and videos of an example, give the means over time (seed or biofilm: living volume fraction, shares of the species, nutrient,
+  and for the stress examples alpha - 1 and von Mises), with the antibiotic onset marked. Scripts: `fig_coupled_time_history.py`
+  (two species), `fig_stress_living_over_time.py`, `fig_four_species_shares.py` (four species).
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or

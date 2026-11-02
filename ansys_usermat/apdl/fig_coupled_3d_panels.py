@@ -27,6 +27,7 @@ CASE = sys.argv[1] if len(sys.argv) > 1 else "separate_ab"
 # rule for newly reached points: startpos (by position, the A-75 runs) or inhliv (the neighbours' living composition,
 # the base case from 25 Oct, A-82)
 RULE = sys.argv[2] if len(sys.argv) > 2 else "inhliv"
+ALPHA = "alpha" in sys.argv[3:]   # 2 Nov: panel (d) = growth alpha - 1 instead of the antibiotic, as the videos (slides; thesis keeps a)
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
 Z = np.load(ROOT / "figdata" / (f"coupled_living_{CASE}_nf64_front1_phimin0.001_v2_fortran_ansysbc_{RULE}{MIX}_a100"
                                  f"_gab1_gc1_tab0.333333_snapsvm_transc1e+08_tvd_wgmirror_fast_{CASE}.npz"))
@@ -42,6 +43,9 @@ PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"$\phi_1/(\phi_1+\phi_2)$"),
           ("c", "cube", "Blues", (0.4, 1), r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"$a$"),
           ("vm", "stress", "magma_r", (0, VMAX), r"$\sigma_\mathrm{vM}$ [$10^{-4}$ Pa]")]
+if ALPHA:
+    AMAX = float(np.ceil(1e4 * np.percentile(Z[f"alpha_{times[-1]}"] - 1.0, 99.5)))
+    PANELS[3] = ("am1", "bio", "viridis", (0, AMAX), r"$\alpha - 1$ [$10^{-4}$]")
 
 
 def cube(m):
@@ -54,6 +58,8 @@ def meshes(T):
     g, octant = cube(n)
     for k in ("phi", "shareA", "L", "c", "a"):
         g.cell_data[k] = np.nan_to_num(Z[f"{k}_{T}"], nan=0.0).ravel(order="F")
+    if ALPHA:
+        g.cell_data["am1"] = (1e4 * (Z[f"alpha_{T}"] - 1.0)).ravel(order="F")
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
     g.cell_data["cube"] = (~octant).astype(float)
     g.cell_data["living"] = g.cell_data["bio"] * (g.cell_data["L"] > 0.01)
@@ -82,7 +88,21 @@ def render(mesh, field, cmap, clim):
     return img[max(rows[0] - p, 0):rows[-1] + p, max(cols[0] - p, 0):cols[-1] + p]
 
 
-fig = plt.figure(figsize=(6.3, 3.05))
+def triad(ax):
+    """the coordinate axes as seen from the panels' camera (one per figure, below the panels; y up)"""
+    d = -np.asarray(CAM[0], float); d /= np.linalg.norm(d)            # viewing direction
+    r = np.cross(d, CAM[2]); r /= np.linalg.norm(r); u = np.cross(r, d)
+    for v, lab, col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"), ((0, 0, 1), "z", "#1c3faa")):
+        e = np.array(v, float); px, py = e @ r, e @ u
+        ax.annotate("", xy=(px, py), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=col, lw=1.0, mutation_scale=7))
+        ax.text(1.3 * px, 1.3 * py, f"${lab}$", color=col, fontsize=8, ha="center", va="center")
+    ax.set_xlim(-1.05, 1.05); ax.set_ylim(-0.6, 1.25); ax.set_aspect("equal"); ax.set_axis_off()
+
+
+KH = 3.45 / 3.05                                  # a strip below the colour bars for the axes
+fig = plt.figure(figsize=(6.3, 3.45))
+_add = fig.add_axes
+fig.add_axes = lambda r: _add([r[0], r[1] / KH + (1 - 1 / KH), r[2], r[3] / KH])
 W, H0 = 0.198, 0.375
 for i, T in enumerate(T_SHOW):
     M = meshes(T)
@@ -102,7 +122,8 @@ for i, T in enumerate(T_SHOW):
             c.ax.set_xticklabels([f"{v:g}" for v in np.linspace(clim[0], clim[1], 3)])
             c.ax.tick_params(labelsize=7.5, length=2, pad=1)
             cb.set_xlabel(label, fontsize=8, labelpad=1)
-out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}{'_startpos' if RULE == 'startpos' else ''}.pdf"   # the base case keeps the plain name
+triad(_add([0.0, 0.0, 0.1, 0.12]))
+out = ROOT / "assets" / f"fig_coupled_3d_panels_{CASE}{'_startpos' if RULE == 'startpos' else ''}{'_alpha' if ALPHA else ''}.pdf"   # the base case keeps the plain name
 fig.savefig(out, dpi=400)
 fig.savefig(out.with_suffix(".png"), dpi=400)
 print("wrote", out, "times", T_SHOW, "stress range 0 ..", VMAX)

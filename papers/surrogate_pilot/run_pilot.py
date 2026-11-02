@@ -9,6 +9,8 @@ means at T* = 1 go to runs/; fit_pilot.py fits a Gaussian process and checks it 
     python papers/surrogate_pilot/run_pilot.py [--n 16] [--jobs 4] [--seed 0]            # first design, 32^3 (tag p)
     python papers/surrogate_pilot/run_pilot.py --tag q --n 12 --seed 1 --a0-range 40 150  # more points near the switch
     python papers/surrogate_pilot/run_pilot.py --tag f --nf 64 --reuse papers/surrogate_pilot/design_p.json
+    python papers/surrogate_pilot/run_pilot.py --tag e --nf 64 --reuse papers/surrogate_pilot/design_p.json \
+        --extra=--growth-living-energy      # the growth law of the living biomass (paper Sect. 2.5, variant A)
 """
 import argparse
 import json
@@ -37,11 +39,14 @@ def lhs(n, rng):
     return u
 
 
+EXTRA = []                                         # --extra "...": more solver options, e.g. --growth-living-energy
+
+
 def one(i, a0, gc, nf, tag):
     out = HERE / "runs" / f"{tag}{i:03d}_a{a0:.4g}_gc{gc:.4g}.json"
     if out.exists():
         return out
-    args = ["--nf", str(nf)] + BASE + ["--alpha0", f"{a0:.6g}", "--gc", f"{gc:.6g}"]
+    args = ["--nf", str(nf)] + BASE + EXTRA + ["--alpha0", f"{a0:.6g}", "--gc", f"{gc:.6g}"]
     log = subprocess.run([sys.executable, str(SOLVER), *args], cwd=ROOT, capture_output=True, text=True)
     pre = "" if nf == 32 else f"nf{nf}_"
     made = sorted(RES.glob(f"coupled_living_consumption_{pre}front1_*a{a0:.6g}_gab1_gc{gc:.6g}_*transc1e+08*separate_ab.json"),
@@ -63,7 +68,9 @@ def main():
     ap.add_argument("--tag", default="p", help="file prefix: p = first design (32^3), q = refined (32^3), f = 64^3")
     ap.add_argument("--a0-range", type=float, nargs=2, default=[10.0, 300.0])
     ap.add_argument("--reuse", default=None, help="design.json of an earlier set: run the same points")
+    ap.add_argument("--extra", default="", help="more solver options, e.g. --growth-living-energy (tag e)")
     a = ap.parse_args()
+    EXTRA[:] = a.extra.split()
     (HERE / "runs").mkdir(exist_ok=True)
     if a.reuse:
         d = json.loads(Path(a.reuse).read_text()); a0, gc = np.array(d["alpha0"]), np.array(d["gc"]); a.n = len(a0)
