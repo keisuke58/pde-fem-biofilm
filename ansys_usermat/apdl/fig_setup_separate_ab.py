@@ -65,7 +65,9 @@ def main():
     spb = np.zeros_like(seed) if MIXED else (np.abs(XC) > 0.75) & (np.abs(YC) > 0.75) & (np.abs(ZC) <= zmax)
     shell = (np.abs(XC) > 0.75) | (np.abs(YC) > 0.75) | (np.abs(ZC) > 0.75)
     front = (XC > 0) & (YC > 0) & (ZC > 0)           # the octant towards the camera, removed in (b) and (c)
-    seed, nut, spb, shell, front = (P(v) for v in (seed, nut, spb, shell, front))
+    near = 3.6 * XC + 2.6 * YC > 0                   # blocks of B on the camera side of the seed (camera at (3.6, 2.6, 4.4))
+    spb_back, spb_near = spb & ~near, spb & near
+    seed, nut, spb, shell, front, spb_back, spb_near = (P(v) for v in (seed, nut, spb, shell, front, spb_back, spb_near))
     X, Y, Z = P(Z), P(X), P(Y)                       # plot coordinates
 
     fig = plt.figure(figsize=(16.5, 5.9))
@@ -77,8 +79,11 @@ def main():
         frame(ax)                                    # first, so that with computed_zorder off it lies behind the voxels
         if p == 0:
             ax.computed_zorder = False               # supports drawn on top (the node at (-1, -1, -1) lies behind the seed)
-            ax.voxels(X, Y, Z, spb, facecolors=SPB + "dd", edgecolors="white", linewidth=0.3)
+            # drawn in depth order (computed_zorder is off for the supports): B behind the seed, the seed, B in front
+            ax.voxels(X, Y, Z, spb_back, facecolors=SPB + "dd", edgecolors="white", linewidth=0.3)
             ax.voxels(X, Y, Z, seed, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
+            if spb_near.any():
+                ax.voxels(X, Y, Z, spb_near, facecolors=SPB + "dd", edgecolors="white", linewidth=0.3)
             for (x, y, z), dofs in corners.items():
                 x, y, z = z, x, y                    # plot coordinates
                 ax.scatter([x], [y], [z], s=70, marker="^", color=FIX, depthshade=False, zorder=10)
