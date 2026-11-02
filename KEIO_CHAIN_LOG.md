@@ -921,3 +921,76 @@ Reading (no conclusion beyond the numbers):
 - **GCI of alpha - 1** is 0.5-3.4 % (p 1.2-1.7).
 - **GCI of vM is large** for separate_ab (13-14 %, p 0.64) and for both mixed cases (33 %, p 0.7). There vM still rises by
   20-30 % per refinement, so it is not in the asymptotic range on 32/64/128. Only separate is converged (0.7 %, p 2.3).
+
+## 2026-10-30: 256^3 mixed example with antibiotic, dc/dt (CLOUD_TO_FIFA 30 Oct morning), running
+
+Options as in the instructions (`--nf 256 ... --transient-c 1e8 --only mixed_ab`), run 1 with `--mix-equal`, run 2 with the
+Fritsch shares. Run 1 started 30 Oct 16:33 JST (nohup).
+
+**First steps of run 1** (400 outer steps, dt 0.0025; read from the checkpoint `k_done`, which is written every 120 s):
+- step 0 done after 2 min 50 s, including setup
+- steps 0 to 8 took 1171 s, about **146 s per step**
+- RSS 3.8-4.7 GB, **peak 4.7 GB**
+- So one run takes about 16 h, alone on fifa. The instructions estimated 22-29 h, as 3.2 times IKMHIWI03's 192^3.
+
+**Run 2 started beside run 1** at 16:57 JST (the user, via the cloud: run both at once if >= 8 cores and >= 10 GB free).
+fifa had 12 cores and 43 GB available (free 10 GB). The chain script of run 1 was stopped so that it does not start run 2
+a second time; run 1 goes on as its own process. The two checkpoints have different names (`_mixeq`), so they do not clash.
+Logs: `~/runs/n256_20261030/` (`chain.log`, `mixeq_ab.out`, `fritsch_ab.out`, `monitor.log`).
+
+## 2026-10-31: 256^3 mixed example with antibiotic, dc/dt: done
+
+Both runs ran in parallel on fifa and ended with no error. Run 1 finished 31 Oct 08:29 JST (57276 s, 15.9 h); its exit code
+was not captured, because its chain script had been stopped (see 30 Oct), but the `.out` has the final line and `.err` is
+empty. Run 2 finished 31 Oct 09:46 JST (60521 s, 16.8 h) with exit 0.
+
+| shares | sum phibar | share A | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- |
+| equal (`--mix-equal`) | 0.0378 | 0.6055 | 0.9726 | 8.4728e-4 | 3.6327e-4 |
+| Fritsch | 0.0370 | 0.5065 | 0.9729 | 8.4486e-4 | 4.5012e-4 |
+
+The vM of the equal-share run still rises with the grid. With the cloud's 32/64/128/192^3 values (2.00/2.82/3.30/3.52e-4,
+CLOUD_TO_FIFA 30 Oct morning), the steps are +0.22e-4 (128 to 192) and +0.11e-4 (192 to 256).
+The GCI is computed with Celik 2008 (Fs 1.25), with the iteration for unequal refinement ratios:
+
+| grids | p | GCI | extrapolated vM |
+| --- | --- | --- | --- |
+| 64/128/256 | 0.53 | 25.9 % | 4.38e-4 |
+| 128/192/256 | 0.93 | 12.6 % | 4.00e-4 |
+
+So at 256^3, where the cell Peclet number is 0.96 by the instructions' estimate, the vM is still not in the asymptotic
+range, although the order rises toward 1 on the finest three grids. No lower-grid run of the Fritsch shares with dc/dt
+is in `results/2026-10-3d/`, so that run has no grid series. The JSONs are in `results/2026-10-3d/` (`_nf256_`).
+
+## 2026-11-02: surrogate pilot, the 12 remaining points at 128^3 (CLOUD_TO_FIFA 1 Nov night)
+
+Command: `python3 papers/surrogate_pilot/run_pilot.py --tag g --nf 128 --reuse papers/surrogate_pilot/design_g_in.json --jobs 11`.
+`--jobs 11` is 12 cores minus the 256^3 run that was running beside it. The run started 1 Nov 23:47 JST, ended 2 Nov 01:28 JST,
+exit 0; all 12 points report "done".
+- **Time per run** (from the finish times of the JSONs): 55-59 min for the 11 that ran together (12 processes on 12 cores).
+  The 12th started when the first one finished and took 46 min.
+- **Memory per run**: RSS about 1.1 GB, peak 1.23 GB (sampled once a minute).
+
+Files: `papers/surrogate_pilot/runs/g000..g011_*.json` and `papers/surrogate_pilot/design_g.json`, which the script wrote.
+The analysis of the ratios is left to the cloud.
+The 256^3 mixed run without antibiotic (1 Nov) is still running; its report follows.
+
+## 2026-11-02: 256^3 mixed (equal shares) without antibiotic, dc/dt (CLOUD_TO_FIFA 1 Nov): done
+
+Started 1 Nov 22:45 JST and ended 2 Nov 15:10 JST, exit 0, `.err` empty, 59039 s (16.4 h). The 128^3 surrogate pilot runs
+(11 jobs) ran beside it from 23:47 to 01:28.
+
+Seed means at the end: sum phibar 0.9608, share A 0.8540, c 0.6047, alpha - 1 8.5038e-4, **vM 4.0167e-4 Pa**.
+
+vM against the grid. The coarser values are the limit values of `tab:ch5-gci` (2.13/3.08/3.65/3.89e-4 at 32/64/128/192^3);
+dc/dt and the limit differ by less than 0.1 %. The steps are +0.24e-4 (128 to 192) and +0.13e-4 (192 to 256).
+GCI by Celik 2008 (Fs 1.25), with the iteration for unequal ratios:
+
+| grids | p | GCI | extrapolated vM |
+| --- | --- | --- | --- |
+| 128/192/256 | 0.85 | 14.3 % | 4.48e-4 |
+| 64/128/256 | 0.64 | 20.6 % | 4.68e-4 |
+
+Against the antibiotic run at 256^3 (3.6327e-4, 31 Oct), the run without antibiotic is **10.6 % higher in vM**
+(ratio 1.106). The alpha - 1 is 8.504e-4 here and 8.473e-4 with antibiotic.
+File: `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf256_..._mixeq_..._transc1e+08_..._mixed.json`.
