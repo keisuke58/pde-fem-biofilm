@@ -103,7 +103,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   bullets(s, ['Finite volumes, cell centres, 64³ (a quarter of the cube by symmetry)',
     'Front term: second-order upwind (MUSCL, minmod limiter)',
     'Time: RK4 for φ₃D and α; backward Euler for Eq. 35 (with ċ); implicit Euler with Newton in the point model',
-    'Staggered coupling; Σᵢφ̄ᵢ in the uptake lags one step',
+    'Staggered coupling; Σᵢφ̄ᵢ in the uptake lags one step; c* = c*₀c and α* = α*₀a linear in time over the point model\'s inner steps',
     'Stress: 16³ hexahedra, B-bar, small strain',
     'Wall time, one core, 400 steps: 64³ about 5 min, 128³ about 1 h, 192³ about 3.3 h'],
     { x: 8.85, y: 1.8, w: 4.0, h: 5.0, fontSize: 14, paraSpaceAfter: 7 }); }
