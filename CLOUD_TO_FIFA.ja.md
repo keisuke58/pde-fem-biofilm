@@ -4,6 +4,25 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月2日 夜（クラウドのメモリが足りず止まった 2 本。急がない）
+
+クラウドでメモリ不足（OOM）で 2 回止まったので fifa で回す。**このブランチのコードが要る**（master にはまだない）：
+```
+git fetch origin claude/plan-next-hxjjve && git checkout -B cloud-1102 origin/claude/plan-next-hxjjve
+pip install pyamg   # 無ければ
+cd ansys_usermat/apdl
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+# 1) 制限関数 superbee の 128³（混合・抗菌薬あり、収束の試し）。約 1 時間
+python3 coupled_living_consumption.py --nf 128 --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+# 2) 非対称の例：菌 B を 1 本の辺だけ（--b-one-edge）＋シードを -x へ 1 要素（--seed-shift -1）。全領域（--fast なし）、動画用の途中の場つき
+python3 coupled_living_consumption.py --nf 64 $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab --snap-every 0.025 --snap-stress
+```
+- 2) は全領域の 64³ に 40 コマの場を持つので、メモリは数 GB 要る（クラウドではここで止まった）。
+- 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*nf128*` と `*_b1edge_seedx-1_*`）を `keio/*` のブランチに push。
+  2) の `figdata/*b1edge*.npz` は大きいので push しない（動画はクラウドで作るので、置き場所だけ `KEIO_CHAIN_LOG.md` に書く。
+  可能なら `python3 anim_coupled_tvd_3d.py separate_ab inhliv transc` 相当の動画を fifa で作って mp4 の置き場所を書く。ファイル名の規則が合わなければ無理にしない）。
+- `KEIO_CHAIN_LOG.md` に：1) のシードの vM と α−1（minmod の 128³ は 4.04e−4 Pa、8.72e−4）、2) のシードの Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
+
 ## 2026年10月29日 夜（追加：今の列が終わってから 2 本、論文の表 2 用）
 
 成長則なし（今の式）で、64³・外側の刻み 0.0025 の 2 本。論文の表 2（今は刻み 0.025）を差し替え、成長則の列の 64³ の比較相手にもなる
