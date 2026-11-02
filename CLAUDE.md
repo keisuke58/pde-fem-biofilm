@@ -384,7 +384,7 @@ this machine's specific workflow.
   Soleimani and Dr.-Ing. Hendrik Geisler.
 - **Prof. Junker, next plans (2 Nov 2026):** HiWi from Japan not possible (LUH HR); he wrote (28 Oct) he would like to continue
   the work and to discuss the next plans before I leave. Reply sent 2 Nov (cc Meisam): asked for a meeting on the coupling
-  paper, 2027 conferences (USNCCM19, GAMM) and joint work, available 28 Nov - 2 Dec and 10 Dec - early January. Waiting.
+  paper, 2027 conferences (USNCCM19, GAMM) and joint work, available 28 Nov - 2 Dec and 10 Dec - early January. **Laura Neumeyer proposed Tue 1 Dec 2026, 12:30 (2 Nov); reply accepting it drafted in Gmail.** Tell Assoc. Prof. Muramatsu about it at the 30 Nov meeting.
 - Addresses (from earlier mail): junker@ikm.uni-hannover.de,
   soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
   klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail

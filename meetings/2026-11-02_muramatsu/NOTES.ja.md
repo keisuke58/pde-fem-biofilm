@@ -47,3 +47,4 @@
 - 冒頭に「前回の補足」2 枚：(1) 対称性（`assets/fig_uncut_views.png`，`assets/fig_symmetry_sections.png`），
   (2) 応力の読みの訂正（`assets/fig_stress_living_over_time.png`：抗菌薬の後も応力は増え続ける）．
 - 4 枚目に点モデルと抗菌薬の効き方（前回の質問「抗菌薬はどこで φ₃D に効くのか」への答え）．
+- 口頭で伝える：翌日 12/1（火）12:30 に Junker 先生（Meisam 同席）と今後の相談（連成の論文，2027 年の学会 USNCCM19・GAMM，共同研究）．日程は Neumeyer さんの提案（2 Nov）．
