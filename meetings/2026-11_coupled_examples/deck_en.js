@@ -6,8 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const R = path.resolve(__dirname, '../..') + '/';
 const B = __dirname + '/build/', EQ = B + 'eq/';
-const vid = (c) => R + 'assets/anim_coupled_tvd_' + c + '_ab_inhliv_transc_5panel.mp4';
-const poster = (c) => R + 'assets/anim_coupled_tvd_' + c + '_ab_inhliv_transc_5panel_end.png';
+const vid = (c) => R + 'assets/anim_coupled_tvd_' + c + '_ab_inhliv_transc_alpha_5panel.mp4';   // panel (d) = alpha - 1 (2 Nov)
+const poster = (c) => R + 'assets/anim_coupled_tvd_' + c + '_ab_inhliv_transc_alpha_5panel_end.png';
 
 const pres = new pptxgen(); pres.layout = 'LAYOUT_WIDE'; pres.author = 'Keisuke Nishioka';
 pres.title = 'Two species with an antibiotic in the coupled growth model';
@@ -108,9 +108,11 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'Wall time, one core, 400 steps: 64³ about 5 min, 128³ about 1 h, 192³ about 3.3 h'],
     { x: 8.85, y: 1.8, w: 4.0, h: 5.0, fontSize: 14, paraSpaceAfter: 7 }); }
 
-// 5, 6 set-up
-for (const c of ['separate', 'mixed']) {
-  const s = frame('4. Initial and boundary conditions: ' + c + ' start');
+// 4-9: example 1 (separate start), then example 2 (mixed start): set-up, results, video
+['separate', 'mixed'].forEach((c, k) => {
+  const ex = 'Example ' + (k + 1) + ', ' + c + ' start';
+  {
+  const s = frame((4 + 3 * k) + '. ' + ex + ': initial and boundary conditions');
   const h = img(s, R + 'assets/fig_setup_' + c + '_ab.png', 1.6, 1.08, 10.1);
   const y0 = 1.08 + h + 0.05;
   const c_ = (t, o = {}) => ({ text: t, options: Object.assign({ align: 'left', valign: 'middle' }, o) });
@@ -120,37 +122,34 @@ for (const c of ['separate', 'mixed']) {
     [c_('displacement u', { bold: true }), c_('three corner nodes (▲: ux, uy, uz / uy, uz / uz)'), c_('0'), c_('—'), c_('free swelling')]],
     { x: 0.55, y: y0, w: 12.23, colW: [1.6, 5.2, 0.95, 2.4, 2.08], fontFace: TM, fontSize: 12.5, color: INK, rowH: 0.33,
       border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
-  cap(s, 'Fig. ' + (c === 'separate' ? 1 : 2) + '  ' + (c === 'separate'
+  cap(s, 'Fig. ' + (3 * k + 1) + '  ' + (c === 'separate'
     ? 'Separate start: species A in the seed (32 elements of 0.25 mm, 0.5 mm³), species B in four blocks of 0.25 × 0.25 × 1.0 mm along the edges parallel to z (z = −0.5 to 0.5 mm, 0.25 mm³ in all).'
     : 'Mixed start: species A and B in equal amounts (φ₁ = φ₂ = 0.275) in the seed (32 elements of 0.25 mm, 0.5 mm³).')
     + ' c and a diffuse inward from the held layers and are taken up by the living biomass (Eq. 35). Drawn on 8³ elements; the runs use 64³ cells.', y0 + 1.42);
-}
-
-// 7, 8 results
-for (const c of ['separate', 'mixed']) {
-  const s = frame('5. Results: ' + c + ' start with antibiotic');
+  }
+  {
+  const s = frame((5 + 3 * k) + '. ' + ex + ': results with antibiotic');
   const h = img(s, B + (c === 'separate' ? 's12_coupled_3d_separate_ab.png' : 's12m_coupled_3d_mixed_ab.png'), 2.05, 1.1, 9.2);
-  cap(s, 'Fig. ' + (c === 'separate' ? 3 : 4) + '  ' + (c === 'separate' ? 'Separate' : 'Mixed') + ' start with antibiotic, T* = 0.325 (just before the antibiotic, top) and T* = 1 (bottom), one octant removed. '
+  cap(s, 'Fig. ' + (3 * k + 2) + '  ' + (c === 'separate' ? 'Separate' : 'Mixed') + ' start with antibiotic, T* = 0.325 (just before the antibiotic, top) and T* = 1 (bottom), one octant removed. '
     + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5; (c) nutrient c; (d) antibiotic a; (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
-}
-
-// 9, 10 videos
-['separate', 'mixed'].forEach((c, k) => {
-  const s = frame('6. Time evolution: ' + c + ' start (T* = 0 to 1)');
+  }
+  {
+  const s = frame((6 + 3 * k) + '. ' + ex + ': time evolution (T* = 0 to 1)');
   const [pw, ph] = pngSize(poster(c)); const w = 12.2, hh = w * ph / pw;
   if (fs.existsSync(vid(c))) s.addMedia({ type: 'video', path: vid(c), cover: 'data:image/png;base64,' + fs.readFileSync(poster(c)).toString('base64'), x: 0.57, y: 1.3, w, h: hh });
   else s.addImage({ path: poster(c), x: 0.57, y: 1.3, w, h: hh });
-  cap(s, 'Fig. ' + (5 + k) + '  The run of Fig. ' + (3 + k) + ' over time (40 frames, panels as there; the caption is part of the video). Click to play.', 1.3 + hh + 0.15);
+  cap(s, 'Fig. ' + (3 * k + 3) + '  The run of Fig. ' + (3 * k + 2) + ' over time (40 frames; panel (d) shows the growth α − 1 instead of the antibiotic, whose onset is marked on the frames; the caption is part of the video). Click to play.', 1.3 + hh + 0.15);
+  }
 });
 
 // 11 time history
-{ const s = frame('7. Seed means over time');
+{ const s = frame('10. Seed means over time');
   const h = img(s, R + 'assets/fig_coupled_time_history.png', 0.9, 1.25, 11.5);
   cap(s, 'Fig. 7  Means over the seed for both starts, with (dashed) and without (solid) antibiotic: (a) living volume fraction Σᵢφ̄ᵢ, '
     + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1.', 1.25 + h + 0.1); }
 
 // 10 seed means
-{ const s = frame('8. Seed means at T* = 1');
+{ const s = frame('11. Seed means at T* = 1');
   s.addText('Table 1  Means over the seed. Living fraction, share and nutrient on 64³ cells (outer step 0.025); growth and stress extrapolated from 64³/128³/192³ (outer step 0.0025), GCI in brackets.',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.55, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
   const rows = [
@@ -168,7 +167,7 @@ for (const c of ['separate', 'mixed']) {
     { x: 0.8, y: 5.45, w: 11.75, h: 1.2, fontFace: TM, fontSize: 17, color: INK, isTextBox: true, margin: 0, valign: 'middle' }); }
 
 // 11 grid convergence
-{ const s = frame('9. Grid convergence of growth and stress');
+{ const s = frame('12. Grid convergence of growth and stress');
   s.addText('Table 2  Seed means on 32³ to 192³ cells, observed order p, extrapolated value and GCI of the finest grid (Celik et al. 2008, three grids 64³/128³/192³).',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.55, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
   const g = [
@@ -188,7 +187,7 @@ for (const c of ['separate', 'mixed']) {
     { x: 0.55, y: 5.75, w: 12.23, h: 1.1, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 12 discussion
-{ const s = frame('10. Discussion');
+{ const s = frame('13. Discussion');
   bullets(s, [
     'The composition reaches the stress only through the nutrient and the front speed r c/(k+c). The growth law, Eq. 36, counts all biomass, living or dead, so a large change of the living fraction leaves growth and stress almost unchanged.',
     'The stress is set not by the amount of growth but by its mismatch in stiff biofilm, (φ₃D²+f)|∇α| (correlation 0.94 over 51 runs on 64³). α records when the front arrived, so a lower nutrient and a slower front leave a larger difference between the seed and its surroundings and a higher stress. The mixed seed carries less because the biofilm around it is softer (intermediate φ₃D).',

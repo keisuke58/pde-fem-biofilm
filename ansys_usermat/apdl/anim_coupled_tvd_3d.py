@@ -87,6 +87,7 @@ CAPTION = "\n".join([
     rf"(a) Share of {GRP} A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
+    r"Inside that layer $\nabla c = 0$, so the front term does not act and biofilm enters it by diffusion only (the gap at the bottom).",
     (r"(d) Growth $\alpha - 1$ where $\phi_{3D} > 0.5$. Antibiotic $a$ (not shown) on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), "
      if ALPHA else r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), ") + AB + r". "
     r"One octant ($x, y, z > 0$) is removed to show the inside.",
