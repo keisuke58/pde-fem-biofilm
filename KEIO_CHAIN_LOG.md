@@ -974,3 +974,23 @@ exit 0; all 12 points report "done".
 Files: `papers/surrogate_pilot/runs/g000..g011_*.json` and `papers/surrogate_pilot/design_g.json`, which the script wrote.
 The analysis of the ratios is left to the cloud.
 The 256^3 mixed run without antibiotic (1 Nov) is still running; its report follows.
+
+## 2026-11-02: 256^3 mixed (equal shares) without antibiotic, dc/dt (CLOUD_TO_FIFA 1 Nov): done
+
+Started 1 Nov 22:45 JST and ended 2 Nov 15:10 JST, exit 0, `.err` empty, 59039 s (16.4 h). The 128^3 surrogate pilot runs
+(11 jobs) ran beside it from 23:47 to 01:28.
+
+Seed means at the end: sum phibar 0.9608, share A 0.8540, c 0.6047, alpha - 1 8.5038e-4, **vM 4.0167e-4 Pa**.
+
+vM against the grid. The coarser values are the limit values of `tab:ch5-gci` (2.13/3.08/3.65/3.89e-4 at 32/64/128/192^3);
+dc/dt and the limit differ by less than 0.1 %. The steps are +0.24e-4 (128 to 192) and +0.13e-4 (192 to 256).
+GCI by Celik 2008 (Fs 1.25), with the iteration for unequal ratios:
+
+| grids | p | GCI | extrapolated vM |
+| --- | --- | --- | --- |
+| 128/192/256 | 0.85 | 14.3 % | 4.48e-4 |
+| 64/128/256 | 0.64 | 20.6 % | 4.68e-4 |
+
+Against the antibiotic run at 256^3 (3.6327e-4, 31 Oct), the run without antibiotic is **10.6 % higher in vM**
+(ratio 1.106). The alpha - 1 is 8.504e-4 here and 8.473e-4 with antibiotic.
+File: `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf256_..._mixeq_..._transc1e+08_..._mixed.json`.
