@@ -1,44 +1,46 @@
-"""coupled_living_consumption.py -- the coupling agreed with Oliver on 20 Oct 2026 (MEETING_2026-10-20.md), in Python,
-with synthetic data only.
+"""coupled_living_consumption.py -- the coupling agreed with Oliver on 20 Oct 2026 (MEETING_2026-10-20.md), in Python.
+Thesis Ch. 4 (Part 3) and the coupling paper; the main settings are those of the command below.
 
-Macro (3D, Klempt et al. 2024), the Chapter 4 seed problem on the 2 mm cube, NF^3 cells (cell centres stand for the
-quadrature points):
-    d phi/dt   = beta lap phi + k_alpha alpha - penalty            Eq. 34; with --front F also the front term
-                 - r c/(k + c) n_c . grad phi                        as printed (r = F x Table 2 converted, k = 1),
-                                                                   upwinded
-    d alpha/dt = k_alpha phi                                       Eq. 36, unchanged
-    dc/dt = d lap c - g phi (sum_i phibar_i) c                     Eq. 35 (--transient-c d; without it quasi-static 0 = ...), consumption by the LIVING
-                                                                   biomass only: phibar_i = phi_i psi_i of the point
-                                                                   model (Klempt et al. 2026; Oliver's form, decided
-                                                                   20 Oct, replacing the normalised share)
-    0 = d_a lap a - g_a phi L a                                    the second nutrient field repurposed for the
-                                                                   antibiotic, same equation
-  c = 1 on the wall y = -1 mm (nutrient), a = 1 on the wall y = +1 mm from T* = T_AB on (antibiotic), zero flux
-  elsewhere; Thiele numbers Lambda^2 = g L^2/d = 4 for both (L = 1 mm).
+Field (3D, Klempt et al. 2024, Eqs. 34-36), the 2 mm cube on NF^3 cells (cell centres; --fast solves one quarter by
+symmetry), finite volumes:
+    d phi_3D/dt = beta lap phi_3D + k_alpha alpha - r c/(k + c) n_c . grad phi_3D      Eq. 34 (front term with --front 1:
+                  (- penalty keeping phi_3D in [0, 1])                                  r = 10 mm/T*, k = 1; --tvd: MUSCL
+                                                                                        + minmod upwind; RK4 inner steps)
+    d alpha/dt  = k_alpha phi_3D                                                        Eq. 36, unchanged
+    dc/dt       = d lap c - g phi_3D (sum_i phibar_i) c                                 Eq. 35 with dc/dt (--transient-c 1e8,
+                                                                                        backward Euler); consumption by the
+                                                                                        living biomass, phibar_i = phi_i psi_i
+    da/dt       = d lap a - g phi_3D (sum_i phibar_i) a                                 antibiotic, same equation
+  With --v2 --ansys-bc (the ANSYS deck): c = 1 held in the element layer at y = -1 mm, a = 1 held in the outer element
+  shell from T* = T_AB (--tab 0.333333), zero flux elsewhere; g l^2/d = 1 (--gc 1, l = 1 mm half edge, Klempt 2024
+  Table 2 converted), the same for a (--gab 1).
 
-Meso (0D point model at every colonised cell): a black box, the equations of Klempt et al. 2026 unchanged, its own
-constraint sum phi_i + phi_0 = 1 (no phi_0 = 1 - phi_3D). Synthetic data: Fritsch et al. 2025 Case I, two species,
-true parameters theta* = [a11, a12, a22, b1, b2] = [1, 0.1, 1, 1, 2], eta = [1, 2], c* = 100, alpha* = 10, 1000 steps
-of 1e-4 (so s = 0.1: T* = 1 spans their run). Inputs per cell, linearly interpolated in time over the inner steps of
-each outer step:
-    c*(t) = 100 c(x, t),   alpha*(t) = 10 a(x, t)
-Output: phi_i, psi_i -> L = sum phi_i psi_i, fed back to the consumption of the next outer step (lagged one step).
+Point model (Klempt et al. 2026, used as published, its own constraint sum phi_i + phi_0 = 1) at every cell with
+phi_3D > phi_min (--phi-min 0.001). Synthetic data: Fritsch et al. 2025 case I, two species, true parameters
+A = [[1, 0.1], [0.1, 1]], b = (1, 2), eta = (1, 2), c*_0 = 100, alpha*_0 = 100 (--alpha0 100, Klempt 2026 case 4);
+1000 steps of 1e-4 span T* = 1, so s = 0.1. Inputs per cell, linearly interpolated in time over the inner steps:
+c* = c*_0 c, alpha* = alpha*_0 a. Output: sum_i phibar_i (variable L in the code), used in the consumption of the next
+outer step (lagged one step). Implicit Euler + Newton, in JAX or (--fortran) the Fortran of the ANSYS build.
 
-Order in an outer step t_{i-1} -> t_i (dT* = 0.025): (1) phi, alpha (independent of the point model); (2) c_i, a_i
-from phi(t_i) and L(t_{i-1}); (3) point models with c*, alpha* interpolated between (c_{i-1}, a_{i-1}) and
-(c_i, a_i); (4) cells newly above phi_min = 0.01 start their point model from the phi-weighted mean state of their
-colonised neighbours (an assumption: the composition is carried into new biofilm from where it grows from);
-(5) L(t_i).
+One outer step t_{i-1} -> t_i (--dtc, 0.025 or 0.0025):
+  (1) phi_3D, alpha (RK4 inner steps); with --transient-c also c in the inner steps, so the front follows it;
+  (2) c_i, a_i from phi_3D(t_i) and sum_i phibar_i(t_{i-1});
+  (3) point models over s dT*, with c*, alpha* interpolated between t_{i-1} and t_i;
+  (4) cells newly above phi_min take the phi_3D-weighted mean state of their colonised neighbours, layer by layer
+      (--inherit-living: with the living composition; an assumption);
+  (5) sum_i phibar_i(t_i).
+At T* = 1 the von Mises stress is solved once on 16^3 hexahedra (B-bar, wp3_stress_reference.py) from phi_3D and
+alpha - 1 averaged per element (--snap-stress: also at every snapshot, for the videos).
 
-Examples (Oliver's sketch): "separate": species A (point-model species 1) in the centre seed (the 32 seed elements of
-Chapter 4), species B in the four vertical edges of the cube (0.25 mm square columns); "mixed": A and B together in
-the centre seed, Fritsch's start (0.25, 0.30). Start amounts: Fritsch's total 0.55; a mono-species point has the other
-species at 1e-6 (the point model clips to 1e-10 and would revive a zero; 1e-6 makes that explicit).
-Antibiotic from T* = 0.5; each example also without antibiotic.
+Examples: "separate": species A in the cross-shaped seed (32 elements of 0.25 mm), species B in four blocks of
+0.25 x 0.25 x 1.0 mm along the edges parallel to z (--v2); "mixed": both in the seed (--mix-equal: 0.275 each, else
+Fritsch's 0.25, 0.30). Each with and without antibiotic (keys separate, separate_ab, mixed, mixed_ab; --only one).
 
-    python ansys_usermat/apdl/coupled_living_consumption.py [--nf 32]
-        -> ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption.json, figdata/coupled_living_<case>.npz,
-           assets/fig_coupled_living_consumption.pdf/.png
+Main run (results/2026-10-3d/README_coupled_living.md; the defaults without options are older bring-up values):
+    python ansys_usermat/apdl/coupled_living_consumption.py --nf 64 --fast --fortran --front 1 --gc 1 --gab 1
+        --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living
+        --transient-c 1e8 [--dtc 0.0025] [--only separate_ab] [--mix-equal]
+    -> results/2026-10-3d/coupled_living_consumption_<tag>.json, figdata/coupled_living_<case><tag>.npz
 
 Validation against the measured biofilm volume (30 Oct 2026, papers/coupling_paper/VALIDATION_PLAN.ja.md): the
 calibrated five-species point model of Chapter 3 (--eco-file abaqus_composition/eco_cal5_<CH|CS|DH|DS>.txt, written by
