@@ -583,6 +583,10 @@ examiners). Check each one before the document is handed over.
   x, y, z > 0 removed to show the inside. **Every 3D figure and video carries coordinate axes** (the user, 1 Nov 2026: "必ず座標軸は追加しよう";
   pyvista `pl.add_axes(...)` as in `fig_coupled_3d_panels.py`, matplotlib 3D with labelled axes). Set-up figures, result figures and videos of one example
   must match; check a new 3D figure against the existing ones before handing it over.
+- **The five panels of every coupled 3D video (the user, 2 Nov 2026: 「今後もこの5つがいいね」):** (a) share of species A,
+  (b) living volume fraction, (c) nutrient c, (d) growth alpha - 1, (e) von Mises stress; the antibiotic panel is replaced by alpha - 1 and its
+  onset is written on the frames. Runs for videos need `--snap-every 0.025 --snap-stress` (alpha is then saved at every snapshot);
+  `anim_coupled_tvd_3d.py` uses alpha - 1 automatically when it is saved.
 - **Build and check before handing over.** Keep the deck at 20 pages or
   fewer, with no LaTeX errors and no overfull frames, and look at the
   rendered pages. The build is `build_slides.ps1` on IKMHIWI03, or

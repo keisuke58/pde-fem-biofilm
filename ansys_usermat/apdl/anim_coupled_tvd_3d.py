@@ -33,7 +33,7 @@ figstyle.apply()
 CASE = sys.argv[1]
 OPT = set(sys.argv[2:])
 INHERIT, OBST, K26C4, PULSE = ("inherit" in OPT), ("obst" in OPT), ("k26c4" in OPT), ("pulse" in OPT)
-ALPHA = "alpha" in OPT            # 2 Nov: a sixth panel with the growth alpha - 1 (needs alpha at every snapshot)
+ALPHA = None                      # set after loading: alpha - 1 replaces the antibiotic panel whenever alpha is saved at every snapshot (the standard from 2 Nov; "noalpha" keeps a)
 INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' living composition, fresh psi (A-82)
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
@@ -45,6 +45,7 @@ TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansys
        f"{'_obstcolumns' if OBST else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
+ALPHA = ("noalpha" not in OPT) and all(f"alpha_{t}" in Z.files for t in times)
 n = Z[f"phi_{times[0]}"].shape[0]
 nm = Z[f"vm16_{times[0]}"].shape[0]
 VMAX = 1e4 * max(np.percentile(Z[f"vm16_{T}"], 99.5) for T in times)   # one colour range over the video, 1e-4 Pa
