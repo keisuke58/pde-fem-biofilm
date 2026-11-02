@@ -33,6 +33,7 @@ figstyle.apply()
 CASE = sys.argv[1]
 OPT = set(sys.argv[2:])
 INHERIT, OBST, K26C4, PULSE = ("inherit" in OPT), ("obst" in OPT), ("k26c4" in OPT), ("pulse" in OPT)
+ALPHA = "alpha" in OPT            # 2 Nov: a sixth panel with the growth alpha - 1 (needs alpha at every snapshot)
 INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' living composition, fresh psi (A-82)
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
@@ -60,6 +61,9 @@ PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$"),
           ("vm", "stress", "magma_r", (0, VMAX), r"(e) von Mises stress", r"$\sigma_\mathrm{vM}$ [$10^{-4}$ Pa]")]
+if ALPHA:
+    AMAX = float(np.ceil(1e4 * np.percentile(Z[f"alpha_{times[-1]}"] - 1.0, 99.5)))
+    PANELS[3] = ("am1", "bio", "viridis", (0, AMAX), r"(d) growth $\alpha - 1$", r"$\alpha - 1$ [$10^{-4}$]")   # replaces a
 B_WHERE = r"four small blocks at the edges along $z$ ($|x|, |y| > 0.75$ mm)"
 if CASE.startswith("separate"):
     START = rf"Separate start: {GRP} A in the centre seed, {GRP} B in {B_WHERE}. "
@@ -82,7 +86,8 @@ CAPTION = "\n".join([
     rf"(a) Share of {GRP} A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
-    r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), " + AB + r". "
+    (r"(d) Growth $\alpha - 1$ where $\phi_{3D} > 0.5$. Antibiotic $a$ (not shown) on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), "
+     if ALPHA else r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), ") + AB + r". "
     r"One octant ($x, y, z > 0$) is removed to show the inside.",
     r"(e) Stress. Growth: $\mathbf{F}_g = \alpha\mathbf{I}$, $\dot\alpha = k_\alpha\phi_{3D}$ (Eq. 36), small strain: eigenstrain "
     r"$(\alpha - 1)\mathbf{I}$. Constitutive law: $\sigma = E(\phi_{3D})\,\mathbb{C}(\nu) : (\varepsilon - (\alpha - 1)\mathbf{I})$, "
@@ -111,6 +116,8 @@ def grid(T):
     g, octant, solid = cube_grid(n)
     for k in ("phi", "shareA", "L", "c", "a"):
         g.cell_data[k] = np.nan_to_num(Z[f"{k}_{T}"], nan=0.0).ravel(order="F")
+    if ALPHA:
+        g.cell_data["am1"] = (1e4 * (Z[f"alpha_{T}"] - 1.0)).ravel(order="F")
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
     g.cell_data["cube"] = (~octant & ~solid).astype(float)
     g.cell_data["living"] = (g.cell_data["bio"] * (g.cell_data["L"] > 0.01)).astype(float)
@@ -136,9 +143,10 @@ def view(mesh, field, cmap, clim):
     return img
 
 
-fig = plt.figure(figsize=(20, 6.8), dpi=160)                  # 3200 x 1088 px (multiples of 16)
-W = 0.2
-ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(5)]
+NP = len(PANELS)
+fig = plt.figure(figsize=(24 if NP == 6 else 20, 6.8), dpi=160)                  # 3200 x 1088 px (multiples of 16)
+W = 1.0 / NP
+ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(NP)]
 # coordinate axes as seen from the panels' camera, once, in the free lower right corner (y up)
 _tx = fig.add_axes([0.905, 0.01, 0.09, 0.2])
 _d = -np.asarray(CAM[0], float); _d /= np.linalg.norm(_d)
@@ -148,9 +156,9 @@ for _v, _lab, _col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"),
     _tx.annotate("", xy=(_e @ _r, _e @ _u), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=_col, lw=2, mutation_scale=16))
     _tx.text(1.3 * (_e @ _r), 1.3 * (_e @ _u), f"${_lab}$", color=_col, fontsize=16, ha="center", va="center")
 _tx.set_xlim(-1.05, 1.05); _tx.set_ylim(-0.6, 1.25); _tx.set_aspect("equal"); _tx.set_axis_off()
-ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(5)]
+ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(NP)]
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}_5panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}{'_alpha' if ALPHA else ''}_{NP}panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
@@ -173,6 +181,9 @@ for T in times:
     for t in list(fig.texts):
         t.remove()
     fig.text(0.996, 0.975, rf"$T^* = {T:.3f}$", ha="right", va="top", fontsize=15)
+    if CASE.endswith("_ab") and T >= 1 / 3 - 1e-9:   # 2 Nov: mark the antibiotic onset (its panel is replaced by alpha - 1)
+        fig.text(0.996, 0.935, (r"antibiotic in pulses from $T^* = 1/3$" if PULSE else r"antibiotic $a = 1$ on the outer shell from $T^* = 1/3$"),
+                 ha="right", va="top", fontsize=12, color="#a61e1e")
     fig.text(0.008, 0.29, CAPTION, ha="left", va="top", fontsize=11.5, linespacing=1.5)
     fig.canvas.draw()
     img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
