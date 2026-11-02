@@ -72,17 +72,20 @@ const kvid = (c) => A + 'anim_coupled_tvd_' + c + '_ab_inhliv_k26c4_transc_alpha
   const r = (a, b, c) => [L(a, { bold: true }), L(b), L(c)];
   s.addTable([[H(''), H('two-species examples'), H('four-species case')],
     r('point-model case', 'Fritsch et al. 2025, case I', 'Klempt et al. 2026, Table 2, case 4'),
+    r('interaction matrix A', '[[1, 0.1], [0.1, 1]]', '[[1, 5, 5, 5], [5, 1, 3, 3], [5, 3, 1, 2], [5, 3, 2, 1]]'),
+    r('viscosities η', '(1, 2)', '(0.8, 1, 1.5, 2)'),
     r('antibiotic sensitivities b', '(1, 2)', '(10, 2, 1, 0.01)'),
+    r('start amounts φᵢ (point model)', '(0.25, 0.30)', '0.02 each'),
     r('time link s', '0.10 (1000 steps)', '0.15 (1500 steps)'),
     r('inner steps per outer step 0.0025', '25', '38'),
     r('separate start', 'A in the seed, B in the edge blocks', 'species 1, 2 in the seed, 3, 4 in the edge blocks'),
     r('mixed start', 'A and B in equal amounts (0.275 each)', 'all four in equal amounts (0.02 each)'),
     r('run time, 64³ (quarter domain)', '170–350 s', '350–470 s (memory about the same)')],
-    { x: 0.55, y: 1.25, w: 12.23, colW: [3.6, 4.0, 4.63], fontFace: TM, fontSize: 14, color: INK, rowH: 0.4, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+    { x: 0.55, y: 1.2, w: 12.23, colW: [3.6, 3.7, 4.93], fontFace: TM, fontSize: 13, color: INK, rowH: 0.36, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
   bullets(s, [
     'Unchanged: the field equations (Klempt et al. 2024, Eqs. 34–36), the constants, the grid, the boundary conditions, the antibiotic from T* = 1/3 (α*₀ = 100) and c*₀ = 100.',
     'The uptake g φ₃D (Σᵢφ̄ᵢ) c keeps its form; the sum runs over four species instead of two.'],
-    { x: 0.75, y: 4.85, w: 11.8, h: 1.9, fontSize: 16 }); }
+    { x: 0.75, y: 5.45, w: 11.8, h: 1.45, fontSize: 15 }); }
 
 // 3, 4 videos
 for (const [c, lab] of [['separate', 'separate start'], ['mixed', 'mixed start']]) {
