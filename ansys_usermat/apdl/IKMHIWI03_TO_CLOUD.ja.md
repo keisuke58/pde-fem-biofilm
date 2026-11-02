@@ -3300,3 +3300,15 @@ A-66：`make_living_deck.py --lw-sensor auto`（r h/8 を格子から）、`veri
   （A-98 の表、day18/day19 と各 ANSYS のログ、製造解の誤差）と結果の JSON を自動で commit・push する**（このブランチ、修論のファイルは触らない）。
   手で確かめていない数値なので、読むときは注意。A-98/A-99 の正式な追記はユーザーが戻ってから。
 - 再起動（Windows の更新など）があれば待ち行列は消える。そのときは報告が来ない。
+
+### 2 日 夕方：day19（A-99）は全部失敗、day19b でやり直し
+
+- A-98 は 15:12 に自動で push 済み（f96c0c9）。混合（等量）も ċ 付きと極限の差は α−1 +0.002 %、vM +0.006 %、A の割合 +0.016 %。
+- **day19 の ANSYS 5 本は各 20 秒で失敗**（`AUTO_REPORT_A98_A99.md` の FAILED）。原因：スケジュールタスクから起動すると、1 プロセスの DMP 起動
+  （`-np 1` だけ）が mpiexec「unable to create process ... ANSYS.EXE (error code 5)」で止まる。`-smp -np 1` なら動く。
+  `run_living.ps1 -Smp` を追加（b5d96e4）。me8_8 をセッションから従来の起動で、タスクから `-smp -np 1` で回し、場・応力の CSV は差 0（ビット一致）。
+- **`F:\auto_night\day19b.ps1`（タスク biofilm_day19b、17:50 開始）が 5 本を `-Smp` でやり直し、自分で待機を防ぎ、終わると
+  `results/2026-10-living/AUTO_REPORT_A99.md` と JSON を push する。** me8_8 は完了：製造解の L2 誤差 φ 1.260e−3、c 1.035e−3
+  （係数 1 の mt8_8 は 9.47e−4、8.95e−4。角と辺の重みを広げると 8³ では誤差が大きい。収束は 16³/24³ を待つ）。
+- 同時に git 管理外のバックアップ（`backup_untracked_ikmhiwi03.ps1 -Go -Rst -Figdata`、優先度 低）を `F:\backup_2026-12` に書いている
+  （ログ `F:\auto_night\backup_go.log`）。
