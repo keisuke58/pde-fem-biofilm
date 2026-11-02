@@ -592,7 +592,10 @@ def upwind_adv_tvd(u, v):
         mp, mm = _nb(a, 1), _nb(a, -1)
         up_, um_ = np.roll(u, -1, a), np.roll(u, 1, a)
         dp = np.where(mp, up_ - u, 0.0); dm = np.where(mm, u - um_, 0.0)
-        if LIMITER == "mc":                   # monotonized central (van Leer 1977): less clipping than minmod
+        if LIMITER == "superbee":             # Roe's superbee: the most compressive TVD limiter (2 Nov test)
+            ap, am = np.abs(dp), np.abs(dm)
+            sl = np.where(dp * dm > 0, np.sign(dp) * np.maximum(np.minimum(2 * am, ap), np.minimum(am, 2 * ap)), 0.0)
+        elif LIMITER == "mc":                 # monotonized central (van Leer 1977): less clipping than minmod
             sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * np.abs(dp), 2 * np.abs(dm)),
                                                                   0.5 * np.abs(dp + dm)), 0.0)
         else:
