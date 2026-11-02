@@ -55,7 +55,7 @@ CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
 GROUP = "species 1, 2" if K26C4 else "species 1"
 GRP = "group" if K26C4 else "species"     # two species: the notation of the thesis and the slides, phi_1/(phi_1+phi_2)
 PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
-           r"$\phi_A/(\phi_A+\phi_B)$" if K26C4 else r"$\phi_1/(\phi_1+\phi_2)$"),
+           r"$(\phi_1+\phi_2)/\Sigma_i\phi_i$" if K26C4 else r"$\phi_1/(\phi_1+\phi_2)$"),
           ("L", "living", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$"),
@@ -78,7 +78,7 @@ CAPTION = "\n".join([
     r"Coupled growth model: Klempt et al. 2024, Eqs. 34$-$36, front term on ($r = 10$ mm/$T^*$), with the point model of "
     r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term"
     + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
-    r"Point model: " + MODEL + ". " + START,
+    *((r"Point model: " + MODEL + ".", START) if K26C4 else (r"Point model: " + MODEL + ". " + START,)),
     rf"(a) Share of {GRP} A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
