@@ -123,7 +123,7 @@ const bcTable = (s, rows, y) => { const c_ = (t, o = {}) => ({ text: t, options:
     'The coupled model runs in the geometries of Klempt et al. 2024 without any change of the equations or constants.',
     'Rigid bars restrain the swelling: the seed stress rises about tenfold (separate start), the composition of the seed hardly changes.',
     'In the maze the biofilm keeps spreading after the antibiotic, because the front speed r c/(k+c) depends on the nutrient only; dead biofilm spreads too.',
-    'Whether the living biomass recovers in the maze depends on the state given to newly reached cells (0.35 against 0.04 at T* = 60). The point model has no transport, so this rule is an assumption of the coupling; a species-resolved continuum with a material velocity would replace it.'],
+    'Whether the living biomass recovers in the maze depends on the state given to newly reached cells (0.35 against 0.04 at T* = 60). The point model has no transport, so this rule is an assumption of the coupling. In this model the biofilm spreads by the front term, not by material flow (the growth-driven velocity is about 10⁻³ of the front speed), so even a species-resolved continuum would need such a rule at the edge.'],
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
 
 // 8 references
