@@ -61,6 +61,26 @@ function pngSize(p) { const b = fs.readFileSync(p); return [b.readUInt32BE(16), 
     + '式に現れない定数：ℂ は等方の弾性テンソル（ポアソン比 ν），点モデルは φ₃D > φ_min の点でのみ動かし，場の 1 ステップ ΔT* あたり s ΔT* 進める，g は立方体の半辺 ℓ = 1 mm で無次元化して gℓ²/d と書く（表 3）．', 1.4 + h + 0.25);
 }
 
+// 2b point model and where the antibiotic acts
+{ const s = frame('2. 支配方程式（続き）：点モデルと抗菌薬の効き方');
+  s.addNotes('場の式 34〜36 には抗菌薬 a は入っていません。抗菌薬は点モデルの中で効きます。点モデルは Klempt 2026 の式 16〜18 で、各点の菌の体積分率 φᵢ と生存率 ψᵢ を、栄養 c* と抗菌薬 α* から計算します。赤い項、マイナス α* bᵢ ψᵢ が抗菌薬で、生存率 ψᵢ を下げます。下の式のとおり、ψᵢ の変化の速さは栄養の項 c* Aᵢᵢ/ηᵢ と抗菌薬の項 α* bᵢ/(ηᵢ φᵢ²) の差で、菌が少ない点ほど早く死にます。場に戻るのは生きている量 Σφ̄ = Σφᵢψᵢ だけで、これが式 35 の消費を下げ、栄養 c が増え、前線の速さ r c/(k+c) が上がります。φ₃D は死んだ菌も含む量なので、抗菌薬では減りません。なお、場の α は成長、点モデルの α* は抗菌薬の強さで、記号は論文どおりですが別の量です。（約 1.5 分）');
+  const h = img(s, EQ + 'point.png', 0.55, 1.3, 6.9);
+  cap(s, 'Klempt et al. 2026 の式 16〜18 を整理した形（バリア項は省略）．φᵢ・ψᵢ：菌 i の体積分率と生存率，φ̄ᵢ = φᵢψᵢ，φ₀：空き，γ：制約の乗数，A：相互作用，bᵢ：抗菌薬への感度，ηᵢ：粘性．'
+    + '赤：抗菌薬の項．下の式は 1 種が点を占める場合の ψᵢ の変化の速さ（菌が少ないほど速く死ぬ）．'
+    + 'α*（抗菌薬の強さ，点モデル）と α（成長，式 36）は別の量．', 1.3 + h + 0.25, 0.55, 6.9);
+  const steps = ['抗菌薬の場 a（外側の殻から，T* ≥ 1/3）', 'α* = α*₀ a を点モデルへ', '式 17 の −α* bᵢ ψᵢ で生存率 ψᵢ が下がる',
+    '生存体積分率 Σᵢφ̄ᵢ = Σᵢφᵢψᵢ が下がる', '式 35 の消費 g φ₃D (Σᵢφ̄ᵢ) c が減り，栄養 c が増える', '前線の速さ r c/(k+c) が上がる（式 34）'];
+  const X = 7.85, W = 4.93, H = 0.55, G = 0.22;
+  s.addText('抗菌薬が場に効く道筋', { x: X, y: 1.25, w: W, h: 0.4, fontFace: JP, fontSize: 15, bold: true, color: NAVY, isTextBox: true, margin: 0 });
+  steps.forEach((t, i) => {
+    const y = 1.7 + i * (H + G);
+    s.addShape(pres.shapes.RECTANGLE, { x: X, y, w: W, h: H, fill: { color: i === 2 ? 'FBEAEA' : LIGHT }, line: { color: i === 2 ? ACC : RULE, width: 0.75 } });
+    s.addText(t, { x: X + 0.12, y, w: W - 0.24, h: H, fontFace: JP, fontSize: 13, color: INK, valign: 'middle', isTextBox: true, margin: 0 });
+    if (i < steps.length - 1) s.addShape(pres.shapes.LINE, { x: X + W / 2, y: y + H, w: 0, h: G, line: { color: NAVY, width: 1.25, endArrowType: 'triangle' } });
+  });
+  s.addText('φ₃D（死んだ菌も含む量）には抗菌薬の項がないので，抗菌薬では減らない．', { x: X, y: 1.7 + 6 * (H + G) - 0.12, w: W, h: 0.6, fontFace: JP, fontSize: 12.5, color: ACC, isTextBox: true, margin: 0, valign: 'top' });
+}
+
 // 4 constants
 { const s = frame('3. 材料定数と数値条件'); s.addNotes('定数はすべて論文の値です。Klempt 2024 の表 2 を 2 mm の立方体に換算しました。この研究で決めたのは、空隙の剛性の下限 f と、点モデルを始める閾値の 2 つで、どちらも収束を確かめています。数値は有限体積の 64³、前線の項は 2 次の風上差分、栄養は後退オイラーです。（約 1 分）');
   const H = (t) => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, align: 'center' } });

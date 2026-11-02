@@ -7,7 +7,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"; B="$HERE/build"
 mkdir -p "$B/eq"
-for f in eqs vm gci pe; do
+for f in eqs point vm gci pe; do
   (cd "$B/eq" && pdflatex -interaction=nonstopmode "$HERE/eq/$f.tex" >/dev/null && pdftoppm -png -r 600 -singlefile "$f.pdf" "$f")
 done
 pdftoppm -png -r 600 -singlefile "$ROOT/assets/fig_coupled_3d_panels_separate_ab.pdf" "$B/s12_coupled_3d_separate_ab"
