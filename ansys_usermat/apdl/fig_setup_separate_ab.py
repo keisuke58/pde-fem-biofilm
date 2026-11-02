@@ -97,7 +97,7 @@ def main():
         else:
             ax.voxels(X, Y, Z, shell & ~front, facecolors=AB + "1a", edgecolors=AB + "66", linewidth=0.25)
             ax.voxels(X, Y, Z, seed & ~front, facecolors=seedc + "dd", edgecolors="white", linewidth=0.3)
-        ax.set_title(titles[p], fontsize=14, y=0.97)
+        ax.set_title(titles[p], fontsize=14, y=1.06)
     handles = [plt.Rectangle((0, 0), 1, 1, fc=seedc), plt.Rectangle((0, 0), 1, 1, fc=SPB),
                plt.Rectangle((0, 0), 1, 1, fc=NUTR, alpha=0.6), plt.Rectangle((0, 0), 1, 1, fc=AB, alpha=0.3),
                plt.Line2D([], [], marker="^", ls="", color=FIX)]
@@ -112,7 +112,7 @@ def main():
     fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 0.0), ncol=3, fontsize=12, frameon=False)
     fig.text(0.5, 0.155, "$y$ points up, as in the 3D results and the videos.  (b), (c): octant $x, y, z > 0$ removed.  Zero flux of $c$ and $a$ elsewhere; "
              "no other displacement constraints (free swelling).", ha="center", fontsize=12, color=INK)
-    fig.subplots_adjust(left=0.0, right=1.0, top=0.93, bottom=0.27, wspace=-0.05)
+    fig.subplots_adjust(left=0.0, right=1.0, top=0.9, bottom=0.27, wspace=-0.05)
     fig.savefig(OUT, dpi=300, bbox_inches="tight", pad_inches=0.05)
     fig.savefig(OUT.with_suffix(".pdf"), bbox_inches="tight", pad_inches=0.05)
     print("wrote", OUT, "| seed", int(seed.sum()), "| B", int(spb.sum()), "| nutrient", int(nut.sum()),
