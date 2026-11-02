@@ -1175,6 +1175,9 @@ def run(example, antibiotic):
             shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
             snaps[round(T1, 3)] = dict(phi=unfold(phi).copy(), c=unfold(c).copy(), a=unfold(a).copy(),
                                        L=unfold(L).copy(), shareA=unfold(shA).copy())
+            if N_SP > 2 and SNAP_EVERY:              # 2 Nov: the share of every species (four-species videos, dominant species)
+                for isp in range(N_SP):
+                    snaps[round(T1, 3)][f"sp{isp}"] = unfold(np.where(on, ph[..., isp] / np.maximum(ph.sum(-1), 1e-30), np.nan)).astype(np.float32)
             if example == "tooth" or SNAP_EVERY:   # alpha at every snapshot (tooth film stress; videos with alpha - 1, 2 Nov)
                 snaps[round(T1, 3)]["alpha"] = unfold(alpha).copy()
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)

@@ -46,6 +46,8 @@ TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansys
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 ALPHA = ("noalpha" not in OPT) and all(f"alpha_{t}" in Z.files for t in times)
+DOM = K26C4 and all(f"sp0_{t}" in Z.files for t in times)   # 2 Nov: panel (a) = dominant species of four, coloured
+SPC = np.array([[59, 91, 219], [116, 192, 252], [201, 42, 42], [245, 159, 0]], float)   # species 1..4
 n = Z[f"phi_{times[0]}"].shape[0]
 nm = Z[f"vm16_{times[0]}"].shape[0]
 VMAX = 1e4 * max(np.percentile(Z[f"vm16_{T}"], 99.5) for T in times)   # one colour range over the video, 1e-4 Pa
@@ -62,6 +64,8 @@ PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"(d) antibiotic $a$", r"$a$"),
           ("vm", "stress", "magma_r", (0, VMAX), r"(e) von Mises stress", r"$\sigma_\mathrm{vM}$ [$10^{-4}$ Pa]")]
+if DOM:
+    PANELS[0] = ("dom", "bio", None, None, r"(a) dominant species", r"darker: larger share $\phi_i/\Sigma_j\phi_j$")
 if ALPHA:
     AMAX = float(np.ceil(1e4 * np.percentile(Z[f"alpha_{times[-1]}"] - 1.0, 99.5)))
     PANELS[3] = ("am1", "bio", "viridis", (0, AMAX), r"(d) growth $\alpha - 1$", r"$\alpha - 1$ [$10^{-4}$]")   # replaces a
@@ -84,7 +88,7 @@ CAPTION = "\n".join([
     r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term"
     + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
     *((r"Point model: " + MODEL + ".", START) if K26C4 else (r"Point model: " + MODEL + ". " + START,)),
-    rf"(a) Share of {GRP} A (blue: A, red: B) and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
+    (r"(a) Dominant species (colour), darker where its share is larger," if DOM else rf"(a) Share of {GRP} A (blue: A, red: B)") + rf" and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
     r"Inside that layer $\nabla c = 0$, so the front term does not act and biofilm enters it by diffusion only (the gap at the bottom).",
@@ -118,6 +122,10 @@ def grid(T):
     g, octant, solid = cube_grid(n)
     for k in ("phi", "shareA", "L", "c", "a"):
         g.cell_data[k] = np.nan_to_num(Z[f"{k}_{T}"], nan=0.0).ravel(order="F")
+    if DOM:
+        sh = np.stack([np.nan_to_num(Z[f"sp{i}_{T}"]).ravel(order="F") for i in range(4)], 1)
+        top = sh.argmax(1); w = np.clip((sh.max(1) - 0.25) / 0.75, 0, 1)[:, None]   # 0.25 (all equal) .. 1 (one species)
+        g.cell_data["dom"] = (255 - w * (255 - SPC[top])).astype(np.uint8)
     if ALPHA:
         g.cell_data["am1"] = (1e4 * (Z[f"alpha_{T}"] - 1.0)).ravel(order="F")
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
@@ -134,7 +142,10 @@ def view(mesh, field, cmap, clim):
     pl = pv.Plotter(off_screen=True, window_size=(900, 820))
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
     if mesh.n_cells:
-        pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
+        if field == "dom":
+            pl.add_mesh(mesh, scalars=field, rgb=True, show_scalar_bar=False, **LIT)
+        else:
+            pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
     if OBST:
         for lo, hi in BOXES:
             pl.add_mesh(pv.Box((lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])), color=(0.55, 0.55, 0.55), **LIT)
@@ -173,6 +184,15 @@ for T in times:
         ax.imshow(view(meshes[mesh], field, cmap, clim))
         ax.set_axis_off()
         ax.set_title(title, fontsize=13, loc="left")
+        if field == "dom":                 # four colour boxes instead of a colour bar
+            for i in range(4):
+                cb.add_patch(plt.Rectangle((i, 0), 0.92, 1, color=SPC[i] / 255))
+                cb.text(i + 0.46, 0.5, f"{i + 1}", ha="center", va="center", fontsize=10, color="white")
+            cb.set_xlim(0, 4); cb.set_ylim(0, 1); cb.set_xticks([]); cb.set_yticks([])
+            for sp_ in cb.spines.values():
+                sp_.set_visible(False)
+            cb.set_xlabel("species  (" + label + ")", fontsize=12, labelpad=2)
+            continue
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(*clim))
         c = fig.colorbar(sm, cax=cb, orientation="horizontal")
         c.set_ticks(np.linspace(clim[0], clim[1], 3))
