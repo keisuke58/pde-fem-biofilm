@@ -63,6 +63,27 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     + 'Constants not shown: ℂ is the isotropic elasticity tensor (Poisson ratio ν); the point model runs only where φ₃D > φ_min and advances s ΔT* per field step ΔT*; '
     + 'g is given as gℓ²/d with the half edge ℓ = 1 mm of the cube.', 1.4 + h + 0.2); }
 
+// 2b point model and where the antibiotic acts
+{ const s = frame('2. Governing equations (cont.): the point model and the antibiotic');
+  const h = img(s, EQ + 'point.png', 0.55, 1.3, 6.9);
+  cap(s, 'Eqs. 16 to 18 of Klempt et al. 2026, rearranged (barrier terms omitted). φᵢ, ψᵢ: volume and living fraction of species i, φ̄ᵢ = φᵢψᵢ, '
+    + 'φ₀: void, γ: multiplier of the constraint, A: interactions, bᵢ: sensitivity to the antibiotic, ηᵢ: viscosity. Red: the antibiotic term. '
+    + 'Last line: rate of ψᵢ when one species fills its point; a thinly present species dies fast. α* (antibiotic, point model) and α (growth, Eq. 36) are different quantities.',
+    1.3 + h + 0.25, 0.55, 6.9);
+  const steps = ['antibiotic field a (outer shell, T* ≥ 1/3)', 'α* = α*₀ a passed to the point model', 'the term −α* bᵢ ψᵢ of Eq. 17 lowers ψᵢ',
+    'living volume fraction Σᵢφ̄ᵢ = Σᵢφᵢψᵢ falls', 'uptake g φ₃D (Σᵢφ̄ᵢ) c of Eq. 35 falls, nutrient c rises', 'front speed r c/(k+c) rises (Eq. 34)'];
+  const X = 7.85, W = 4.93, Hb = 0.55, G = 0.22;
+  s.addText('How the antibiotic reaches the field', { x: X, y: 1.25, w: W, h: 0.4, fontFace: TM, fontSize: 17, bold: true, color: NAVY, isTextBox: true, margin: 0 });
+  steps.forEach((t, i) => {
+    const y = 1.7 + i * (Hb + G);
+    s.addShape(pres.shapes.RECTANGLE, { x: X, y, w: W, h: Hb, fill: { color: i === 2 ? 'FBEAEA' : LIGHT }, line: { color: i === 2 ? ACC : RULE, width: 0.75 } });
+    s.addText(t, { x: X + 0.12, y, w: W - 0.24, h: Hb, fontFace: TM, fontSize: 14, color: INK, valign: 'middle', isTextBox: true, margin: 0 });
+    if (i < steps.length - 1) s.addShape(pres.shapes.LINE, { x: X + W / 2, y: y + Hb, w: 0, h: G, line: { color: NAVY, width: 1.25, endArrowType: 'triangle' } });
+  });
+  s.addText('φ₃D (living and dead biomass) has no antibiotic term, so the antibiotic does not remove biofilm.',
+    { x: X, y: 1.7 + 6 * (Hb + G) - 0.12, w: W, h: 0.6, fontFace: TM, fontSize: 13, color: ACC, isTextBox: true, margin: 0, valign: 'top' });
+}
+
 // 4 constants
 { const s = frame('3. Constants and numerics');
   const rows = [[H('symbol'), H('value'), H('meaning'), H('source')],
