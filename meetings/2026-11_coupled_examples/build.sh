@@ -24,5 +24,6 @@ case "${1:-all}" in
   en) node "$HERE/deck_en.js" ;;
   ja) node "$HERE/deck_ja.js" separate; node "$HERE/deck_ja.js" mixed ;;
   geom) node "$HERE/deck_geom_en.js" ;;
-  *)  node "$HERE/deck_en.js"; node "$HERE/deck_ja.js" separate; node "$HERE/deck_ja.js" mixed; node "$HERE/deck_geom_en.js" ;;
+  k26c4) node "$HERE/deck_k26c4_en.js" ;;
+  *)  node "$HERE/deck_en.js"; node "$HERE/deck_ja.js" separate; node "$HERE/deck_ja.js" mixed; node "$HERE/deck_geom_en.js"; node "$HERE/deck_k26c4_en.js" ;;
 esac
