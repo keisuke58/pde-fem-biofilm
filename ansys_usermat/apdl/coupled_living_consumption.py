@@ -148,8 +148,11 @@ TRANSPORT = "--transport-state" in sys.argv
 # of species B at x > 0.75, y < -0.75 mm (the edge next to the nutrient on the +x side); --seed-shift N moves the seed by N
 # elements of 0.25 mm along x. Both break the mirror symmetry, so they need the full domain (no --fast).
 B_ONE_EDGE = "--b-one-edge" in sys.argv
+# --b-corner: species B only in one cube of 0.25 mm at the corner x > 0.75, y < -0.75, z > 0.75 mm of the box (next to the
+# nutrient layer); same B amounts per cell as the edge blocks.
+B_CORNER = "--b-corner" in sys.argv
 SEED_SHIFT = int(_opt("--seed-shift", 0)) if "--seed-shift" in sys.argv else 0
-assert not ((B_ONE_EDGE or SEED_SHIFT) and "--fast" in sys.argv), "--b-one-edge / --seed-shift need the full domain (no --fast)"
+assert not ((B_ONE_EDGE or B_CORNER or SEED_SHIFT) and "--fast" in sys.argv), "--b-one-edge / --b-corner / --seed-shift need the full domain (no --fast)"
 # --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
 C_CONST = float(sys.argv[sys.argv.index("--c-const") + 1]) if "--c-const" in sys.argv else None
 # A-71: time course of the held antibiotic value a_b(T*) after T_AB, the same dose (integral of a_b over [T_AB, T_END]) as
@@ -417,7 +420,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -879,6 +882,8 @@ def run(example, antibiotic):
         edges = edges & (np.abs(Z) <= zmax)
     if B_ONE_EDGE:
         edges = edges & (X > 0) & (Y < 0)
+    if B_CORNER:                                  # one corner cube of 0.25 mm
+        edges = (X > 0.75) & (Y < -0.75) & (Z > 0.75)
     if example == "tooth":
         # the tooth example (--obstacle stl): a cervical ring of biofilm, TOOTH_SEED mm thick on the crown surface and
         # TOOTH_SEED_H mm high from the cervical base; species A on the half x < 0, species B on the half x > 0

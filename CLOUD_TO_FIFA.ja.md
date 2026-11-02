@@ -4,6 +4,18 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月2日 深夜 その 2（追加：菌 B を角に 1 つ。superbee の格子列のあと）
+
+非対称の例のもう 1 つ。`--b-one-edge` は辺に沿った 1 本の塊（0.25 × 0.25 × 1.0 mm、角ではない）で、オリバーの要望ではなくこちらで決めた例
+（ログでもそう書く）。今回は菌 B を立方体の角の 0.25 mm の立方体 1 つ（x > 0.75、y < −0.75、z > 0.75 mm、栄養の層の隣）だけに置く
+（`--b-corner`、2 Nov にクラウドで追加。16³ で動作確認済み）。ブランチ・`$B` は「11月2日 夜」と同じ（`git pull` してから）：
+```
+python3 coupled_living_consumption.py --nf 64 $B --transient-c 1e8 --b-corner --only separate_ab --snap-every 0.025 --snap-stress
+```
+- 全領域・途中の場つきなので、メモリは `--b-one-edge` と同じ約 6 GB、時間も同じくらい（約 1.5〜2 時間）。
+- 結果：JSON（`*_bcorner_*nf64*`）を `keio/*` に push、`figdata/*bcorner*.npz` は push せず置き場所を `KEIO_CHAIN_LOG.md` に。
+  ログにシードと B の塊の Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
+
 ## 2026年11月2日 深夜（追加：superbee の格子列。非対称の 64³ が終わってから）
 
 superbee の 128³（vM 3.587e−4、α−1 8.495e−4）は minmod の同じ刻みの 128³（3.30e−4、8.32e−4）より +8.7 % / +2.1 %、minmod の 192³（3.52e−4）も超えた。
