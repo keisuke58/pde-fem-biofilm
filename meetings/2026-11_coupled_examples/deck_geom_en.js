@@ -34,8 +34,8 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 
 
 const A = R + 'assets/';
-const obstVid = [A + 'anim_coupled_tvd_separate_ab_inhliv_obst_transc_alpha_5panel.mp4', A + 'anim_coupled_tvd_separate_ab_obst_5panel.mp4'].find((p) => fs.existsSync(p));
-const obstPoster = obstVid ? obstVid.replace('.mp4', '_end.png') : A + 'anim_coupled_tvd_separate_ab_obst_5panel_end.png';
+const obstVid = A + 'anim_coupled_tvd_separate_ab_inhliv_obst_transc_alpha_5panel.mp4';
+const obstPoster = obstVid.replace('.mp4', '_end.png');
 const vidSlide = (s, v, poster, y, w, hmax = 9) => { const [pw, ph] = pngSize(poster); if (w * ph / pw > hmax) w = hmax * pw / ph; const hh = w * ph / pw; const x = (13.33 - w) / 2;
   if (v && fs.existsSync(v)) s.addMedia({ type: 'video', path: v, cover: 'data:image/png;base64,' + fs.readFileSync(poster).toString('base64'), x, y, w, h: hh });
   else s.addImage({ path: poster, x, y, w, h: hh }); return hh; };

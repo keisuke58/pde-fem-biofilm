@@ -16,7 +16,7 @@ pdftoppm -png -r 400 -singlefile "$ROOT/assets/fig_obstacle_columns_3d.pdf" "$B/
 pdftoppm -png -r 400 -singlefile "$ROOT/assets/fig_maze_k24_h4.pdf" "$B/geom_maze"
 for c in separate mixed; do
   [ -f "$ROOT/assets/fig_setup_${c}_ab.png" ] || python3 "$ROOT/ansys_usermat/apdl/fig_setup_separate_ab.py" $([ $c = mixed ] && echo mixed)
-  [ -f "$ROOT/assets/anim_coupled_tvd_${c}_ab_inhliv_transc_5panel.mp4" ] || python3 "$ROOT/ansys_usermat/apdl/anim_coupled_tvd_3d.py" ${c}_ab inhliv transc
+  [ -f "$ROOT/assets/anim_coupled_tvd_${c}_ab_inhliv_transc_alpha_5panel.mp4" ] || python3 "$ROOT/ansys_usermat/apdl/anim_coupled_tvd_3d.py" ${c}_ab inhliv transc
 done
 [ -d "$B/node_modules/pptxgenjs" ] || (cd "$B" && npm install --silent pptxgenjs >/dev/null)
 export NODE_PATH="$B/node_modules"
