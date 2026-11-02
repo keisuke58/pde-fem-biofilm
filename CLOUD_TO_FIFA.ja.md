@@ -21,7 +21,7 @@ python3 coupled_living_consumption.py --nf 64 $B --transient-c 1e8 --b-one-edge 
 - 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*nf128*` と `*_b1edge_seedx-1_*`）を `keio/*` のブランチに push。
   2) の `figdata/*b1edge*.npz` は大きいので push しない（動画はクラウドで作るので、置き場所だけ `KEIO_CHAIN_LOG.md` に書く。
   可能なら `python3 anim_coupled_tvd_3d.py separate_ab inhliv transc` 相当の動画を fifa で作って mp4 の置き場所を書く。ファイル名の規則が合わなければ無理にしない）。
-- `KEIO_CHAIN_LOG.md` に：1) のシードの vM と α−1（minmod の 128³ は 4.04e−4 Pa、8.72e−4）、2) のシードの Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
+- `KEIO_CHAIN_LOG.md` に：1) のシードの vM と α−1（比べる minmod の 128³ は外側の刻み 0.0025 の 3.30e−4 Pa、8.32e−4：修論の表 tab:ch5-gci。4.04e−4、8.72e−4 は刻み 0.025 の値で、比較に使わない。2 Nov 訂正）、2) のシードの Σφ̄ᵢ、A の割合、c、α−1、vM と時間。
 
 ## 2026年10月29日 夜（追加：今の列が終わってから 2 本、論文の表 2 用）
 
