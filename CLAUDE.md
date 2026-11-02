@@ -20,7 +20,8 @@ Abaqus run is possible here but nothing has been run here yet.
 
 - **IKMHIWI03** (Windows, LUH): everything below about ANSYS, `F:\`, PowerShell
   scripts and Portable Git applies. **Available until the end of December 2026** (the user, 21 Oct 2026;
-  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). Long runs go on detached while the
+  only interrupted by a trip; this replaces "only until 21 Oct" of 20 Oct). **Not reachable from 2 Nov 2026 for about a month** (the user, 2 Nov: during the trip;
+  back in Hannover 28 Nov): no new ANSYS runs or instructions to IKMHIWI03 until then; long runs go to fifa or the cloud. Long runs go on detached while the
   user is away. Back up what is not in git before the end of December: `BACKUP_PLAN_2026-12.ja.md` and
   `scripts/backup_untracked_ikmhiwi03.ps1` (dry run by default; `-Go` writes the zips; the Felix and element zips are private).
   **Reachable from the phone (confirmed 21 Oct 2026, during the trip):** the VS Code tunnel of IKMHIWI03 opens in
