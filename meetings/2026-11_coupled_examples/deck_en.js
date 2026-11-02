@@ -131,7 +131,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   const s = frame((5 + 3 * k) + '. ' + ex + ': results with antibiotic');
   const h = img(s, B + (c === 'separate' ? 's12_coupled_3d_separate_ab.png' : 's12m_coupled_3d_mixed_ab.png'), 2.05, 1.1, 9.2);
   cap(s, 'Fig. ' + (3 * k + 2) + '  ' + (c === 'separate' ? 'Separate' : 'Mixed') + ' start with antibiotic, T* = 0.325 (just before the antibiotic, top) and T* = 1 (bottom), one octant removed. '
-    + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5; (c) nutrient c; (d) antibiotic a; (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
+    + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5; (c) nutrient c; (d) growth α − 1 where φ₃D > 0.5 (as in the video); (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
   }
   {
   const s = frame((6 + 3 * k) + '. ' + ex + ': time evolution (T* = 0 to 1)');

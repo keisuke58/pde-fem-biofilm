@@ -10,8 +10,8 @@ mkdir -p "$B/eq"
 for f in eqs point vm gci pe; do
   (cd "$B/eq" && pdflatex -interaction=nonstopmode "$HERE/eq/$f.tex" >/dev/null && pdftoppm -png -r 600 -singlefile "$f.pdf" "$f")
 done
-pdftoppm -png -r 600 -singlefile "$ROOT/assets/fig_coupled_3d_panels_separate_ab.pdf" "$B/s12_coupled_3d_separate_ab"
-pdftoppm -png -r 600 -singlefile "$ROOT/assets/fig_coupled_3d_panels_mixed_ab.pdf" "$B/s12m_coupled_3d_mixed_ab"
+pdftoppm -png -r 600 -singlefile "$ROOT/assets/fig_coupled_3d_panels_separate_ab_alpha.pdf" "$B/s12_coupled_3d_separate_ab"
+pdftoppm -png -r 600 -singlefile "$ROOT/assets/fig_coupled_3d_panels_mixed_ab_alpha.pdf" "$B/s12m_coupled_3d_mixed_ab"
 for c in separate mixed; do
   [ -f "$ROOT/assets/fig_setup_${c}_ab.png" ] || python3 "$ROOT/ansys_usermat/apdl/fig_setup_separate_ab.py" $([ $c = mixed ] && echo mixed)
   [ -f "$ROOT/assets/anim_coupled_tvd_${c}_ab_inhliv_transc_5panel.mp4" ] || python3 "$ROOT/ansys_usermat/apdl/anim_coupled_tvd_3d.py" ${c}_ab inhliv transc
