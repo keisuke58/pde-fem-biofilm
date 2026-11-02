@@ -138,6 +138,12 @@ if "--gc" in sys.argv:
 TRANSIENT_D = float(sys.argv[sys.argv.index("--transient-c") + 1]) if "--transient-c" in sys.argv else None
 AB_TOP = "--ab-top" in sys.argv
 C_SINE = "--c-sine" in sys.argv
+# --transport-state (2 Nov, Keio continuation, a change of the model, papers/species_continuum/IDEA.ja.md): the point
+# state of every cell is carried with the biofilm instead of being inherited once by newly reached cells. Each component
+# G_k (phi_i, phi_0, psi_i) is transported as phi_3D G_k with the linear part of Eq. 34 (beta lap and the front term
+# -v . grad, the same upwind scheme); new biofilm (k_alpha alpha) carries the local state; then G = Q/phi_3D. An
+# assumption, the simplest species-resolved form, not from a paper.
+TRANSPORT = "--transport-state" in sys.argv
 # --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
 C_CONST = float(sys.argv[sys.argv.index("--c-const") + 1]) if "--c-const" in sys.argv else None
 # A-71: time course of the held antibiotic value a_b(T*) after T_AB, the same dose (integral of a_b over [T_AB, T_END]) as
@@ -405,7 +411,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("_transport" if TRANSPORT else "") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -690,6 +696,18 @@ def prolong(u, n):
     the right inverse of wp3_reference.block_mean"""
     f = n // u.shape[0]
     return np.repeat(np.repeat(np.repeat(u, f, 0), f, 1), f, 2)
+
+
+def front_vel(c):
+    """the velocity v = r c/(k + c) n_c of the front term (as in front(), for --transport-state)"""
+    g = grad(c)
+    nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + FRONT_EPS2)
+    sp_ = R_FRONT * c / (K_MONOD + c)
+    if FRONT_LIVING and LIV is not None:
+        sp_ = sp_ * living_speed(LIV)
+    if EROSION:
+        sp_ = sp_ - EROS_NOW
+    return [sp_ * x / nrm for x in g]
 
 
 def front(phi, c):
@@ -1036,11 +1054,38 @@ def run(example, antibiotic):
                     k1 = f(phi, alpha, tk)
                     phi = phi + dt * k1[0]; alpha = alpha + dt * k1[1]
                     continue
+                if TRANSPORT:                               # --transport-state: the point state rides on the RK4 stages
+                    qk = list(range(N_SP)) + [5] + list(range(6, 6 + N_SP))
+                    if i_in == 0:
+                        Q = phi[..., None] * G[..., qk]
+                    G0 = G[..., qk]; vq = front_vel(cf); lq = np.empty_like(phi)
+
+                    def fq(Qs, ph, al):
+                        src = ka * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+                        out = np.empty_like(Qs)
+                        for jq in range(Qs.shape[-1]):
+                            W.laplacian(Qs[..., jq], H, lq)
+                            out[..., jq] = W.BETA * lq - upwind_adv(Qs[..., jq], vq) + src * G0[..., jq]
+                        return out
+                    q1 = fq(Q, phi, alpha)
                 k1 = f(phi, alpha, tk); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], tk + 0.5 * dt)
                 k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], tk + 0.5 * dt)
                 k4 = f(phi + dt * k3[0], alpha + dt * k3[1], tk + dt)
+                if TRANSPORT:
+                    q2 = fq(Q + 0.5 * dt * q1, phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1])
+                    q3 = fq(Q + 0.5 * dt * q2, phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1])
+                    q4 = fq(Q + dt * q3, phi + dt * k3[0], alpha + dt * k3[1])
+                    Q = Q + dt / 6 * (q1 + 2 * q2 + 2 * q3 + q4)
                 phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
                 alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+            if TRANSPORT:                               # carried state wherever the biofilm is
+                okp = phi >= PHI_MIN
+                Gq = Q / np.maximum(phi, 1e-12)[..., None]
+                for jq, kq in enumerate(qk):
+                    lo, hi = (1e-10, 1.0) if kq < 6 else (1e-10, 0.999)
+                    G[..., kq] = np.where(okp, np.clip(Gq[..., jq], lo, hi), G[..., kq])
+                G[..., 5] = np.where(okp, 1.0 - G[..., :N_SP].sum(-1), G[..., 5])   # the point model's constraint
+                on = on | okp
             # (2) nutrient and antibiotic at t_i, with L(t_{i-1})
             if TRANSIENT_D is not None and FRONT:
                 c_new = cf                        # already advanced over the outer step in the inner steps
@@ -1072,6 +1117,8 @@ def run(example, antibiotic):
             c, a = c_new, a_new
             # (4) newly colonised cells inherit the neighbours' state
             new = (phi >= PHI_MIN) & ~on
+            if TRANSPORT:
+                new = np.zeros_like(new)
             if new.any() and START_POSITION:
                 if example == "separate":
                     isb = (np.abs(X) > 0.5625) & (np.abs(Y) > 0.5625)

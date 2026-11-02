@@ -49,6 +49,12 @@ AB = "--ab" in sys.argv
 # default: the phi-weighted mean state of their colonised neighbours
 FRESH = "--fresh-start" in sys.argv
 LIVING = "--inherit-living" in sys.argv   # inherit the living composition with a fresh psi (25 Oct)
+# --transport-state (2 Nov, Keio continuation, a change of the model): the point state of every cell is carried with
+# the biofilm instead of being inherited once. Each component G_k is transported as phi_3D G_k with the linear part of
+# Eq. 34 (beta lap and the front term -v . grad), new biofilm (k_alpha alpha) carries the local state; then G = Q/phi_3D.
+# The species-resolved idea of papers/species_continuum/IDEA.ja.md in its simplest form (an assumption, not from a paper).
+TRANSPORT = "--transport-state" in sys.argv
+QK = (0, 1, 5, 6, 7)                      # phi_1, phi_2, phi_0, psi_1, psi_2 (the two active species)
 TRANSIENT_C = "--transient-c" in sys.argv  # 29 Oct: Eq. 35 and the antibiotic field with dc/dt (backward Euler, d = D_NUT)
 SEED = _opt("--seed", 1, int)
 # Klempt 2024 Table 6 (maze), the rest Table 2
@@ -60,7 +66,7 @@ T_AB = T_END / 3.0
 START = (0.25, 0.30)                  # Fritsch case I, both species in the colony
 R_OUT, WALL, R_HUB, R_NUT = 280.0, 10.0, 30.0, 20.0
 MAZE_FILE = _opt("--maze-file", None, str)   # A-61: the maze read off Fig. 11 (abaqus_living/maze_k24.txt, 4 um cells)
-TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("_inhliv" if LIVING else "") + ("" if "--snaps" not in sys.argv else "_snaps") + ("_transc" if TRANSIENT_C else "")
+TAG = f"h{H:g}_tend{T_END:g}" + ("_ab" if AB else "") + ("" if SEED == 1 else f"_seed{SEED}") + ("_k24fig" if MAZE_FILE else "") + ("_fresh" if FRESH else "") + ("_inhliv" if LIVING else "") + ("" if "--snaps" not in sys.argv else "_snaps") + ("_transc" if TRANSIENT_C else "") + ("_transport" if TRANSPORT else "")
 
 
 # ---------------------------------------------------------------- maze
@@ -249,15 +255,26 @@ def main():
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
     eps2 = (1e-9) ** 2                          # regularisation of |grad c| [1/um]^2
 
-    def front(ph, cf):
+    def vel(cf):
         g = O.grad(cf)
         nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + eps2)
         sp_ = R_FRONT * cf / (K_MONOD + cf)
-        return -O.upwind(ph, [sp_ * x / nrm for x in g])
+        return [sp_ * x / nrm for x in g]
+
+    def front(ph, cf):
+        return -O.upwind(ph, vel(cf))
 
     def f(ph, al, cf):
         d = BETA * O.lap(ph) + K_ALPHA * al - PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0)) + front(ph, cf)
         return np.where(open_, d, 0.0), np.where(open_, K_ALPHA * ph, 0.0)
+
+    def fq(Q, ph, al, v, G0):
+        """--transport-state: d(phi G_k)/dt = beta lap(phi G_k) - v . grad(phi G_k) + (k_alpha alpha - penalty) G_k"""
+        src = K_ALPHA * al - PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+        out = np.empty_like(Q)
+        for j in range(Q.shape[-1]):
+            out[..., j] = np.where(open_, BETA * O.lap(Q[..., j]) - O.upwind(Q[..., j], v) + src * G0[..., j], 0.0)
+        return out
     snaps, hist = {}, dict(t=[0.0], colonised=[int(on.sum())], reach_um=[], living_mean=[], c_mean=[])
     path_r = np.hypot(X, Y)
     nsteps = int(round(T_END / DT_C))
@@ -265,6 +282,8 @@ def main():
     t0 = time.time()
     print(f"maze: {K} rings, sectors {nsec}, grid {shp}, open cells {int(open_.sum())}, dt {dt:.2e} x {per}",
           flush=True)
+    k_first = True
+    Q = None
     for k in range(nsteps):
         T1 = (k + 1) * DT_C
         cf = c
@@ -273,10 +292,32 @@ def main():
                 cf = O.solve(phi, Lv, nut, 1.0)
             elif j > 0:                          # c of the inner time t_j from t_{j-1}; at j = 0 the end value c
                 cf = O.solve(phi, Lv, nut, 1.0, cf, dt)
+            if TRANSPORT:                        # the point state rides on the same RK4 stages (velocity of this step)
+                v = vel(cf)
+                Q = phi[..., None] * G[..., QK] if j == 0 and k_first else Q
+                k_first = False
+                q1 = fq(Q, phi, alpha, v, G[..., QK])
             k1 = f(phi, alpha, cf); k2 = f(phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1], cf)
             k3 = f(phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], cf); k4 = f(phi + dt * k3[0], alpha + dt * k3[1], cf)
+            if TRANSPORT:
+                p2, a2 = phi + 0.5 * dt * k1[0], alpha + 0.5 * dt * k1[1]
+                q2 = fq(Q + 0.5 * dt * q1, p2, a2, v, G[..., QK])
+                q3 = fq(Q + 0.5 * dt * q2, phi + 0.5 * dt * k2[0], alpha + 0.5 * dt * k2[1], v, G[..., QK])
+                q4 = fq(Q + dt * q3, phi + dt * k3[0], alpha + dt * k3[1], v, G[..., QK])
+                Q = Q + dt / 6 * (q1 + 2 * q2 + 2 * q3 + q4)
             phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
             alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        if TRANSPORT:                            # carried state where the biofilm is; then the point models as before
+            okp = open_ & (phi >= PHI_MIN)
+            Gq = Q / np.maximum(phi, 1e-12)[..., None]
+            Gq[..., :2] = np.clip(Gq[..., :2], 1e-10, 1.0); Gq[..., 3:] = np.clip(Gq[..., 3:], 1e-10, 0.999)
+            Gq[..., 2] = 1.0 - Gq[..., 0] - Gq[..., 1]             # phi_0 from the point model's own constraint
+            for jj, kk in enumerate(QK):
+                if kk == 5:
+                    G[..., kk] = np.where(okp, Gq[..., 2], G[..., kk])
+                else:
+                    G[..., kk] = np.where(okp, Gq[..., jj], G[..., kk])
+            on = on | okp
         av = 1.0 if (AB and T1 > T_AB + 1e-12) else 0.0
         if TRANSIENT_C:
             c_new = O.solve(phi, Lv, nut, 1.0, cf, dt)
@@ -292,7 +333,11 @@ def main():
             assert okf.all(), "point model failed"
         G = Gf.reshape(shp + (12,))
         c, a = c_new, a_new
+        if TRANSPORT:                            # Q follows the point models' update
+            Q = phi[..., None] * G[..., QK]
         new = (phi >= PHI_MIN) & ~on & open_
+        if TRANSPORT:
+            new = np.zeros_like(new)
         if new.any() and FRESH:                # --fresh-start: the colony's start state (the Abaqus element, layout 2)
             G[new] = start_state(*START)
             on = on | new
