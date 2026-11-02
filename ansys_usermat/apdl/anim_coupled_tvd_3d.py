@@ -50,7 +50,7 @@ DOM = K26C4 and all(f"sp0_{t}" in Z.files for t in times)   # 2 Nov: panel (a) =
 SPC = np.array([[59, 91, 219], [116, 192, 252], [201, 42, 42], [245, 159, 0]], float)   # species 1..4
 n = Z[f"phi_{times[0]}"].shape[0]
 nm = Z[f"vm16_{times[0]}"].shape[0]
-VMAX = 1e4 * max(np.percentile(Z[f"vm16_{T}"], 99.5) for T in times)   # one colour range over the video, 1e-4 Pa
+VMAX = 1e4 * max(np.nanpercentile(Z[f"vm16_{T}"], 99.5) for T in times)   # nan: the elements of the rigid bars   # one colour range over the video, 1e-4 Pa
 VMAX = float(2 * np.ceil(VMAX / 2))                      # even, so the middle tick is a whole number
 LIT = dict(ambient=0.45, diffuse=0.6, specular=0.0)   # light shading, colours close to the colour bar
 CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
@@ -97,11 +97,12 @@ CAPTION = "\n".join([
     r"One octant ($x, y, z > 0$) is removed to show the inside.",
     r"(e) Stress. Growth: $\mathbf{F}_g = \alpha\mathbf{I}$, $\dot\alpha = k_\alpha\phi_{3D}$ (Eq. 36), small strain: eigenstrain "
     r"$(\alpha - 1)\mathbf{I}$. Constitutive law: $\sigma = E(\phi_{3D})\,\mathbb{C}(\nu) : (\varepsilon - (\alpha - 1)\mathbf{I})$, "
-    r"$E(\phi_{3D}) = 10$ Pa $(\phi_{3D}^2 + 10^{-3})$, $\nu = 0.49$. Equilibrium: $\nabla\cdot\sigma = \mathbf{0}$, free cube "
-    r"(rigid-body motion constrained), $" + str(nm) + r"^3$ hexahedra. Shown: $\sigma_\mathrm{vM} = (\frac{3}{2}\,s : s)^{1/2}$."
+    r"$E(\phi_{3D}) = 10$ Pa $(\phi_{3D}^2 + 10^{-3})$, $\nu = 0.49$. Equilibrium: $\nabla\cdot\sigma = \mathbf{0}$, "
+    + (r"frictionless contact with the rigid columns (no other supports), $" if OBST else r"free cube (rigid-body motion constrained), $")
+    + str(nm) + r"^3$ hexahedra. Shown: $\sigma_\mathrm{vM} = (\frac{3}{2}\,s : s)^{1/2}$."
     + ("\n" + r"Growth follows all biomass $\phi_{3D}$, dead included, so the stress keeps rising after the antibiotic."
        if FINE else "")
-    + (r" Grey: four rigid columns (Klempt et al. 2024, Sect. 4.3), no biofilm and no flux in them." if OBST else ""),
+    + ("\n" + r"Grey: four rigid columns (Klempt et al. 2024, Sect. 4.3), no biofilm and no flux in them." if OBST else ""),
     r"Constants: $\beta = 0.02$ mm$^2$/$T^*$, $r = 10$ mm/$T^*$, $k = 1$, $k_\alpha = 10^{-3}$/$T^*$, "
     r"$d = 10^8$ mm$^2$/$T^*$ and $g\,\ell^2/d = 1$ for $c$ and $a$, $\phi_{\min} = 10^{-3}$ (Klempt et al. 2024, Table 2, "
     r"converted to the 2 mm cube); $T^* = 1$ is the duration of the point model's data."])
@@ -133,7 +134,7 @@ def grid(T):
     g.cell_data["living"] = (g.cell_data["bio"] * (g.cell_data["L"] > 0.01)).astype(float)
     g.cell_data["ab"] = (g.cell_data["cube"] * (g.cell_data["a"] > 0.01)).astype(float)
     s, octant_s, solid_s = cube_grid(nm)
-    s.cell_data["vm"] = 1e4 * Z[f"vm16_{T}"].ravel(order="F")
+    s.cell_data["vm"] = 1e4 * np.nan_to_num(Z[f"vm16_{T}"]).ravel(order="F")
     s.cell_data["stress"] = (~octant_s & ~solid_s).astype(float)
     return g, s
 
@@ -202,7 +203,7 @@ for T in times:
             cb.set_xlim(0, 4); cb.set_ylim(0, 1); cb.set_xticks([]); cb.set_yticks([])
             for sp_ in cb.spines.values():
                 sp_.set_visible(False)
-            cb.set_xlabel("species  (" + label + ")", fontsize=12, labelpad=2)
+            cb.set_xlabel(f"({'abcde'[k]})  species  (" + label + ")", fontsize=12, labelpad=2)
             continue
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(*clim))
         c = fig.colorbar(sm, cax=cb, orientation="horizontal")
@@ -210,7 +211,7 @@ for T in times:
         if field == "vm":
             c.ax.set_xticklabels([f"{v:g}" for v in np.linspace(clim[0], clim[1], 3)])
         c.ax.tick_params(labelsize=10)
-        cb.set_xlabel(label, fontsize=12, labelpad=2)
+        cb.set_xlabel(f"({'abcde'[k]})  " + label, fontsize=12, labelpad=2)   # panel letter with the colour bar (2 Nov)
     for t in list(fig.texts):
         t.remove()
     fig.text(0.996, 0.975, rf"$T^* = {T:.3f}$", ha="right", va="top", fontsize=15)
