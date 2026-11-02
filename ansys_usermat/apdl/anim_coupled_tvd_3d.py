@@ -38,11 +38,17 @@ INHLIV = "inhliv" in OPT          # the base rule from 25 Oct: the neighbours' l
 BOXES = [((-1.0, -0.125, lo), (1.0, 0.125, hi)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))] + \
         [((-0.125, lo, -1.0), (0.125, hi, 1.0)) for lo, hi in ((-0.75, -0.5), (0.5, 0.75))]
 MIX = "_mixeq" if CASE.startswith("mixed") else ""
+# asymmetric runs (2-3 Nov, full domain with --amg): b1edge = B only in the edge block x > 0.75, y < -0.75 mm; bcorner = B only
+# in the corner cube x > 0.75, y < -0.75, z > 0.75 mm; seedx-1 = the seed moved by one element (0.25 mm) towards -x
+B1EDGE, BCORNER = ("b1edge" in OPT), ("bcorner" in OPT)
+SEEDX = next((o[5:] for o in OPT if o.startswith("seedx")), "")
+ASYM = ("_b1edge" if B1EDGE else "") + ("_bcorner" if BCORNER else "") + (f"_seedx{SEEDX}" if SEEDX else "")
+FULL = bool(ASYM)
 TRANSC = "transc" in OPT          # Eq. 35 with dc/dt (--transient-c 1e8), the runs of the thesis figures (29 Oct)
 FINE = "fine" in OPT              # A-90: coupling step 0.0025 (A-89) and the stress on a 32^3 mesh
 TAG = (f"_nf64_front1{'_dtc0.0025' if FINE else ''}_phimin0.001_v2_fortran_ansysbc{'_inhliv' if INHLIV else ('' if INHERIT else '_startpos')}{MIX}_a100_gab1_gc1_tab0.333333"
-       f"_snapsvm{'_nm32' if FINE else ''}{'_transc1e+08' if TRANSC else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}_tvd_wgmirror_fast"
-       f"{'_obstcolumns' if OBST else ''}")
+       f"_snapsvm{'_nm32' if FINE else ''}{'_transc1e+08' if TRANSC else ''}{'_k26c4' if K26C4 else ''}{'_abpulse0.2222' if PULSE else ''}{ASYM}_tvd_wgmirror"
+       f"{'' if FULL else '_fast'}{'_obstcolumns' if OBST else ''}{'_amg' if FULL else ''}")
 Z = np.load(ROOT / ("figdata") / f"coupled_living_{CASE}{TAG}_{CASE}.npz")
 times = sorted({float(k.split("_", 1)[1]) for k in Z.files if k.startswith("phi_")})
 ALPHA = ("noalpha" not in OPT) and all(f"alpha_{t}" in Z.files for t in times)
@@ -69,7 +75,11 @@ if DOM:
 if ALPHA:
     AMAX = float(np.ceil(1e4 * np.percentile(Z[f"alpha_{times[-1]}"] - 1.0, 99.5)))
     PANELS[3] = ("am1", "bio", "viridis", (0, AMAX), r"(d) growth $\alpha - 1$", r"$\alpha - 1$ [$10^{-4}$]")   # replaces a
-B_WHERE = r"four small blocks at the edges along $z$ ($|x|, |y| > 0.75$ mm)"
+B_WHERE = (r"one block along the edge $x > 0.75$, $y < -0.75$ mm" if B1EDGE else
+           r"one cube of 0.25 mm at the corner $x > 0.75$, $y < -0.75$, $z > 0.75$ mm" if BCORNER else
+           r"four small blocks at the edges along $z$ ($|x|, |y| > 0.75$ mm)")
+if SEEDX:
+    B_WHERE += rf" (seed moved by {abs(int(SEEDX)) * 0.25:g} mm towards {'-' if int(SEEDX) < 0 else '+'}$x$)"
 if CASE.startswith("separate"):
     START = rf"Separate start: {GRP} A in the centre seed, {GRP} B in {B_WHERE}. "
 else:
@@ -183,7 +193,7 @@ if HIST:                                  # seed means over all frames (from the
         HS["am1"] = [_mean("alpha", T, _s64) - 1.0 for T in times]
     ax_h = fig.add_axes([0.835, 0.47, 0.15, 0.38])
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}{'_alpha' if ALPHA else ''}{'_hist' if HIST else ''}_{NP}panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{ASYM}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}{'_alpha' if ALPHA else ''}{'_hist' if HIST else ''}_{NP}panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:

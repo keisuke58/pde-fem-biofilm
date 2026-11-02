@@ -13,6 +13,17 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 - 時間の目安：1/4 領域の 64³ が約 6 分なので、全領域で約 4 倍＋途中の場の保存で 30〜60 分の見込み。最初の数ステップの速さを見て、
   遅ければ止めてログに書く。
 - `--b-one-edge` は辺に沿った 1 本の塊の例としてそのまま使う（名前の説明だけ「角ではない、オリバーの要望ではない」と直す）。
+- **動画は fifa で作る**（ユーザー，3 Nov：`figdata/*.npz` は大きくて push できないため）。`git pull` してから，2 本が終わったら：
+  ```
+  cd ~/pde-fem-biofilm   # リポジトリの根から
+  python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc b1edge seedx-1
+  python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc bcorner
+  ```
+  出力：`assets/anim_coupled_tvd_separate_ab_inhliv_b1edge_seedx-1_transc_alpha_5panel.mp4`，`..._inhliv_bcorner_transc_alpha_5panel.mp4`
+  と，それぞれの `_end.png`。動画は `.gitignore` の対象なので `git add -f` で mp4 と png を push（それぞれ 4 MB 前後）。
+  pyvista が無ければ `pip install pyvista imageio-ffmpeg`；画面なしの描画には OSMesa（`libosmesa6`）か `xvfb-run` が要る。
+  どうしても描けなければ，描けなかったことと理由をログに書く（npz は消さない）。クラウドで 16³ の全領域の試しで動作確認済み
+  （読み込み，ファイル名，説明文）。
 
 ## 2026年11月2日 深夜 その 2（追加：菌 B を角に 1 つ。superbee の格子列のあと）
 
