@@ -4,13 +4,23 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月3日 未明（訂正：全領域の 2 本には `--amg` が要る）
+
+非対称の 64³ が 7 時間で 2/400 ステップだったのは、指示書のコマンドに `--amg` を入れ忘れたため（クラウドの誤り）。`--fast` を外すと、
+`--amg` なしでは場の式を毎回直接法（spsolve）で解くので非常に遅く、メモリも大きい。下の「11月2日 夜」2) と「深夜 その 2」の
+コマンドに `--amg`（全領域で AMG 前処理つき CG、`--fast` と同じ解き方で対称性だけ使わない）を足した。
+- 今の非対称 64³ は止めてよい。順番：superbee の格子列 → 非対称 64³（`--amg`）→ 角に 1 つ（`--amg`）。
+- 時間の目安：1/4 領域の 64³ が約 6 分なので、全領域で約 4 倍＋途中の場の保存で 30〜60 分の見込み。最初の数ステップの速さを見て、
+  遅ければ止めてログに書く。
+- `--b-one-edge` は辺に沿った 1 本の塊の例としてそのまま使う（名前の説明だけ「角ではない、オリバーの要望ではない」と直す）。
+
 ## 2026年11月2日 深夜 その 2（追加：菌 B を角に 1 つ。superbee の格子列のあと）
 
 非対称の例のもう 1 つ。`--b-one-edge` は辺に沿った 1 本の塊（0.25 × 0.25 × 1.0 mm、角ではない）で、オリバーの要望ではなくこちらで決めた例
 （ログでもそう書く）。今回は菌 B を立方体の角の 0.25 mm の立方体 1 つ（x > 0.75、y < −0.75、z > 0.75 mm、栄養の層の隣）だけに置く
 （`--b-corner`、2 Nov にクラウドで追加。16³ で動作確認済み）。ブランチ・`$B` は「11月2日 夜」と同じ（`git pull` してから）：
 ```
-python3 coupled_living_consumption.py --nf 64 $B --transient-c 1e8 --b-corner --only separate_ab --snap-every 0.025 --snap-stress
+python3 coupled_living_consumption.py --nf 64 --amg $B --transient-c 1e8 --b-corner --only separate_ab --snap-every 0.025 --snap-stress
 ```
 - 全領域・途中の場つきなので、メモリは `--b-one-edge` と同じ約 6 GB、時間も同じくらい（約 1.5〜2 時間）。
 - 結果：JSON（`*_bcorner_*nf64*`）を `keio/*` に push、`figdata/*bcorner*.npz` は push せず置き場所を `KEIO_CHAIN_LOG.md` に。
@@ -42,7 +52,7 @@ B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.00
 # 1) 制限関数 superbee の 128³（混合・抗菌薬あり、収束の試し）。約 1 時間
 python3 coupled_living_consumption.py --nf 128 --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
 # 2) 非対称の例：菌 B を 1 本の辺だけ（--b-one-edge）＋シードを -x へ 1 要素（--seed-shift -1）。全領域（--fast なし）、動画用の途中の場つき
-python3 coupled_living_consumption.py --nf 64 $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab --snap-every 0.025 --snap-stress
+python3 coupled_living_consumption.py --nf 64 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab --snap-every 0.025 --snap-stress
 ```
 - 2) は全領域の 64³ に 40 コマの場を持つので、メモリは数 GB 要る（クラウドではここで止まった）。
 - 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*nf128*` と `*_b1edge_seedx-1_*`）を `keio/*` のブランチに push。
