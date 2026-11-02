@@ -1169,6 +1169,12 @@ def run(example, antibiotic):
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         _v, _lm = totals(); hist["phi_total_mm3"].append(_v); hist["living_mean"].append(_lm)
+        if N_SP > 2:                                # 2 Nov: per species, mean over the biofilm (phi_3D > 0.5) and over the seed:
+            _bio = phi > 0.5                        # volume share phi_i / sum_j phi_j and living phibar_i = phi_i psi_i (JSON)
+            _ph = G[..., :N_SP]; _lv = _ph * G[..., 6:6 + N_SP]; _sh = _ph / np.maximum(_ph.sum(-1, keepdims=True), 1e-30)
+            for _nm, _m in (("bio", _bio & on), ("seed", seed & on)):
+                hist.setdefault(f"share_sp_{_nm}", []).append([float(_sh[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
+                hist.setdefault(f"phibar_sp_{_nm}", []).append([float(_lv[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
