@@ -157,8 +157,9 @@ def view(mesh, field, cmap, clim):
 
 
 NP = len(PANELS)
-fig = plt.figure(figsize=(24 if NP == 6 else 20, 6.8), dpi=160)                  # 3200 x 1088 px (multiples of 16)
-W = 1.0 / NP
+HIST = "hist" in OPT               # 2 Nov (option): a small time-history plot of the seed means at the right, drawn up to the frame
+fig = plt.figure(figsize=((24 if NP == 6 else 20) + (5 if HIST else 0), 6.8), dpi=160)    # 3200 x 1088 px (4000 with hist)
+W = (0.8 if HIST else 1.0) / NP
 ax_img = [fig.add_axes([0.004 + W * k, 0.40, W - 0.008, 0.545]) for k in range(NP)]
 # coordinate axes as seen from the panels' camera, once, in the free lower right corner (y up)
 _tx = fig.add_axes([0.905, 0.01, 0.09, 0.2])
@@ -169,9 +170,19 @@ for _v, _lab, _col in (((1, 0, 0), "x", "#d9480f"), ((0, 1, 0), "y", "#2b8a3e"),
     _tx.annotate("", xy=(_e @ _r, _e @ _u), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", color=_col, lw=2, mutation_scale=16))
     _tx.text(1.3 * (_e @ _r), 1.3 * (_e @ _u), f"${_lab}$", color=_col, fontsize=16, ha="center", va="center")
 _tx.set_xlim(-1.05, 1.05); _tx.set_ylim(-0.6, 1.25); _tx.set_aspect("equal"); _tx.set_axis_off()
-ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06, 0.018]) for k in range(NP)]
+ax_bar = [fig.add_axes([0.03 + W * k, 0.37, W - 0.06 * (0.8 if HIST else 1.0), 0.018]) for k in range(NP)]
+if HIST:                                  # seed means over all frames (from the snapshots), normalised where they are not fractions
+    import wp3_reference as _W
+    _c8 = _W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
+    _s64, _s16 = _W.seed_mask(n, _c8), _W.seed_mask(nm, _c8)
+    _mean = lambda k, T, m: float(np.nanmean(np.where(m, np.nan_to_num(Z[f"{k}_{T}"]), np.nan)))
+    HS = {"living": [_mean("L", T, _s64) for T in times], "c": [_mean("c", T, _s64) for T in times],
+          "share": [_mean("shareA", T, _s64) for T in times], "vm": [_mean("vm16", T, _s16) for T in times]}
+    if ALPHA:
+        HS["am1"] = [_mean("alpha", T, _s64) - 1.0 for T in times]
+    ax_h = fig.add_axes([0.835, 0.47, 0.15, 0.38])
 name = (f"anim_coupled_tvd_{CASE}{'_inhliv' if INHLIV else ''}{'_inherit' if INHERIT else ''}{'_obst' if OBST else ''}{'_k26c4' if K26C4 else ''}"
-        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}{'_alpha' if ALPHA else ''}_{NP}panel")     # the earlier four-panel videos keep their names
+        f"{'_pulse' if PULSE else ''}{'_fine' if FINE else ''}{'_transc' if TRANSC else ''}{'_alpha' if ALPHA else ''}{'_hist' if HIST else ''}_{NP}panel")     # the earlier four-panel videos keep their names
 out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
@@ -207,6 +218,17 @@ for T in times:
         fig.text(0.996, 0.935, (r"antibiotic in pulses from $T^* = 1/3$" if PULSE else r"antibiotic $a = 1$ on the outer shell from $T^* = 1/3$"),
                  ha="right", va="top", fontsize=12, color="#a61e1e")
     fig.text(0.008, 0.29, CAPTION, ha="left", va="top", fontsize=10.5 if K26C4 else 11.5, linespacing=1.4 if K26C4 else 1.5)   # four species: one line more
+    if HIST:
+        ax_h.clear(); kk = times.index(T) + 1
+        for key, lab, col, scale in (("living", r"$\Sigma_i\bar\phi_i$", "#2b8a3e", 1.0), ("share", "share of A", "#495057", 1.0), ("c", "$c$", "#1c7ed6", 1.0),
+                                     ("am1", r"$(\alpha-1)/\max$", "#7950f2", None), ("vm", r"$\sigma_\mathrm{vM}/\max$", "#c2255c", None)):
+            if key not in HS:
+                continue
+            v = np.array(HS[key]); v = v / (np.nanmax(v) if scale is None else scale)
+            ax_h.plot(times[:kk], v[:kk], color=col, lw=1.8, label=lab)
+        ax_h.axvline(1 / 3, color="0.5", ls=":", lw=0.8)
+        ax_h.set_xlim(0, 1); ax_h.set_ylim(0, 1.05); ax_h.set_xlabel("$T^*$", fontsize=12); ax_h.tick_params(labelsize=10)
+        ax_h.set_title("seed means", fontsize=13, loc="left"); ax_h.legend(frameon=False, fontsize=9.5, loc="upper left", bbox_to_anchor=(0, -0.22), ncol=2)
     fig.canvas.draw()
     img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
     for _ in range(9 if T == times[-1] else 1):
