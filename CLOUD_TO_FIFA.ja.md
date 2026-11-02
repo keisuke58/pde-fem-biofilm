@@ -4,6 +4,21 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月2日 深夜（追加：superbee の格子列。非対称の 64³ が終わってから）
+
+superbee の 128³（vM 3.587e−4、α−1 8.495e−4）は minmod の同じ刻みの 128³（3.30e−4、8.32e−4）より +8.7 % / +2.1 %、minmod の 192³（3.52e−4）も超えた。
+superbee の方が速く収束するかを GCI で見るため、同じ設定で 32³、64³、192³ を足す（ブランチ・`$B` は下の「11月2日 夜」と同じ）：
+```
+for N in 32 64 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+done
+```
+- 時間の目安：32³・64³ は数分、192³ は minmod で約 2〜3 時間（IKMHIWI03）。メモリは 128³ で 1.36 GB だったので、192³ は 5 GB 前後の見込み。
+- 結果：JSON（`results/2026-10-3d/` の `*nf{32,64,192}*_tvd_superbee_*`）を `keio/*` に push。
+- `KEIO_CHAIN_LOG.md` に：4 格子のシードの vM と α−1、64/128/192³ からの観測次数 p・外挿値・GCI（Celik 2008、Fs 1.25）を、
+  minmod の値（修論の表 tab:ch5-gci：vM 2.00 / 2.82 / 3.30 / 3.52、α−1 7.42 / 8.04 / 8.32 / 8.42、p 0.43、外挿 4.68、GCI 41 %）と並べて書く。
+- 修論には入れない（結果は確定済み）。論文の検証の節の材料。
+
 ## 2026年11月2日 夜（クラウドのメモリが足りず止まった 2 本。急がない）
 
 クラウドでメモリ不足（OOM）で 2 回止まったので fifa で回す。**このブランチのコードが要る**（master にはまだない）：
