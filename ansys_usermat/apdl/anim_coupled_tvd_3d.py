@@ -206,7 +206,7 @@ for T in times:
     if CASE.endswith("_ab") and T >= 1 / 3 - 1e-9:   # 2 Nov: mark the antibiotic onset (its panel is replaced by alpha - 1)
         fig.text(0.996, 0.935, (r"antibiotic in pulses from $T^* = 1/3$" if PULSE else r"antibiotic $a = 1$ on the outer shell from $T^* = 1/3$"),
                  ha="right", va="top", fontsize=12, color="#a61e1e")
-    fig.text(0.008, 0.29, CAPTION, ha="left", va="top", fontsize=11.5, linespacing=1.5)
+    fig.text(0.008, 0.29, CAPTION, ha="left", va="top", fontsize=10.5 if K26C4 else 11.5, linespacing=1.4 if K26C4 else 1.5)   # four species: one line more
     fig.canvas.draw()
     img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
     for _ in range(9 if T == times[-1] else 1):
