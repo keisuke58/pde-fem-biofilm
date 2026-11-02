@@ -41,3 +41,9 @@
    種ごとに場を持たせて運ぶモデル（種を分けた連続体）は可能で，今後の課題．今回は 2 つの論文の式を変えずにつなぐことを優先した．
 5. 合っていた答え：φ₃D は生死の合計，点モデルは陰解法 + ニュートン法，上下の非対称は栄養が下からだけ来るため，
    x と z は反対側から見れば対称（断面図 `assets/fig_symmetry_sections.png` で確認済み）．
+
+## 11/30 の準備（2 Nov）
+- 発表するもの：混合配置の日本語版 `report_mixed_ab_academic.pptx`（`bash meetings/2026-11_coupled_examples/build.sh ja`，14 枚）．
+- 冒頭に「前回の補足」2 枚：(1) 対称性（`assets/fig_uncut_views.png`，`assets/fig_symmetry_sections.png`），
+  (2) 応力の読みの訂正（`assets/fig_stress_living_over_time.png`：抗菌薬の後も応力は増え続ける）．
+- 4 枚目に点モデルと抗菌薬の効き方（前回の質問「抗菌薬はどこで φ₃D に効くのか」への答え）．
