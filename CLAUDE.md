@@ -382,6 +382,9 @@ this machine's specific workflow.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
   Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
   Soleimani and Dr.-Ing. Hendrik Geisler.
+- **Prof. Junker, next plans (2 Nov 2026):** HiWi from Japan not possible (LUH HR); he wrote (28 Oct) he would like to continue
+  the work and to discuss the next plans before I leave. Reply sent 2 Nov (cc Meisam): asked for a meeting on the coupling
+  paper, 2027 conferences (USNCCM19, GAMM) and joint work, available 28 Nov - 2 Dec and 10 Dec - early January. Waiting.
 - Addresses (from earlier mail): junker@ikm.uni-hannover.de,
   soleimani@ikm.uni-hannover.de, geisler@ikm.uni-hannover.de,
   klempt@ikm.uni-hannover.de (Felix Klempt). The colloquium draft in Gmail
