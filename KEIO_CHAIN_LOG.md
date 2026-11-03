@@ -994,3 +994,56 @@ GCI by Celik 2008 (Fs 1.25), with the iteration for unequal ratios:
 Against the antibiotic run at 256^3 (3.6327e-4, 31 Oct), the run without antibiotic is **10.6 % higher in vM**
 (ratio 1.106). The alpha - 1 is 8.504e-4 here and 8.473e-4 with antibiotic.
 File: `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf256_..._mixeq_..._transc1e+08_..._mixed.json`.
+
+## 2026-11-03: CLOUD_TO_FIFA 2 Nov night, late night, late night part 2, 3 Nov early morning (superbee, asymmetric 64^3), fifa
+
+Branch `claude/plan-next-hxjjve`, run in a separate worktree (`~/IKM_Hiwi/wt_cloud1102`, branch `cloud-1102`), so
+the main checkout stayed on `keio/uel-implant`. The superbee 128^3 run and the first asymmetric 64^3 run went in parallel.
+The first start of the superbee 128^3 run failed after 2 s: both runs built `libecology_native.so` in the fresh worktree
+at the same moment. It was restarted alone.
+**First asymmetric 64^3 run, without `--amg`: stopped.** Started 2 Nov 23:44 and stopped by hand 3 Nov 06:41 JST (the user
+agreed), after 6 h 57 min at 2 of 400 outer steps (100 % of one core, RSS 7.3 GB). Without `--fast` and without `--amg` the
+fields are solved directly (spsolve) on the full domain. The cloud's 3 Nov early-morning correction added `--amg`.
+Order after that: superbee 32/64/192^3, then the edge run and the corner run with `--amg`, one at a time. Each `--amg` run
+had a speed guard: stop if fewer than 15 of 400 steps were done after 15 min.
+The worktree was fast-forwarded to `42234db` and then `6ac609e`; the solver changes add output for more than 2 species and
+the option `--b-corner` (off by default), so they do not touch the other runs.
+This section was written by a script (`~/runs/cloud1102/report.py`) when the runs had finished.
+
+**2) Asymmetric example, B along one edge** (`--b-one-edge --seed-shift -1 --amg`). B is kept only in the block along one vertical edge of the box (0.25 x 0.25 x 1.0 mm at x > 0.75, y < -0.75 mm): one edge block, not a corner. The cloud chose this example; it was not Oliver's request.
+Both runs: `--nf 64`, full domain, `--transient-c 1e8 --only separate_ab --snap-every 0.025 --snap-stress`.
+Wall time 17:22.38, peak RSS 1.35 GB. b1edge64amg speed check: 32 of 400 steps after 900 s.
+- Seed means at the end: sum phibar 0.1559, share A 0.9518, c 0.9181, alpha - 1 8.2161e-04, vM 3.9396e-04 Pa.
+- B block (the JSON's `edges`) at the end: sum phibar 0.0412, share A 0.0530. The JSON has no c, alpha - 1 or vM for the B block.
+JSON: `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm_transc1e+08_b1edge_seedx-1_tvd_wgmirror_amg_separate_ab.json`.
+Fields for the video (not pushed, on fifa): `/home/nishioka/IKM_Hiwi/wt_cloud1102/figdata/coupled_living_separate_ab_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm_transc1e+08_b1edge_seedx-1_tvd_wgmirror_amg_separate_ab.npz` (261 MB).
+No video was made on fifa (left to the cloud).
+
+**Part 2: B in one corner** (`--b-corner --amg`). B is only in one cube of 0.25 mm at the corner x > 0.75, y < -0.75, z > 0.75 mm of the box, next to the nutrient layer.
+Both runs: `--nf 64`, full domain, `--transient-c 1e8 --only separate_ab --snap-every 0.025 --snap-stress`.
+Wall time 17:25.14, peak RSS 1.36 GB. bcorner64amg speed check: 31 of 400 steps after 900 s.
+- Seed means at the end: sum phibar 0.1579, share A 0.9520, c 0.9170, alpha - 1 8.3385e-04, vM 3.4117e-04 Pa.
+- B block (the JSON's `edges`) at the end: sum phibar 0.0412, share A 0.0530. The JSON has no c, alpha - 1 or vM for the B block.
+JSON: `ansys_usermat/apdl/results/2026-10-3d/coupled_living_consumption_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm_transc1e+08_bcorner_tvd_wgmirror_amg_separate_ab.json`.
+Fields for the video (not pushed, on fifa): `/home/nishioka/IKM_Hiwi/wt_cloud1102/figdata/coupled_living_separate_ab_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm_transc1e+08_bcorner_tvd_wgmirror_amg_separate_ab.npz` (317 MB).
+No video was made on fifa (left to the cloud).
+
+**1) and late night: superbee grid series** (mixed, equal shares, antibiotic, `--dtc 0.0025`, `--fast`). minmod: `tab:ch5-gci`.
+
+| grid | vM superbee | vM minmod | alpha - 1 superbee | alpha - 1 minmod | wall time, peak RSS (superbee) |
+| --- | --- | --- | --- | --- | --- |
+| 32^3 | 2.3875e-04 | 2.00e-04 | 7.7879e-04 | 7.42e-04 | 0:42.70, 0.55 GB |
+| 64^3 | 3.2841e-04 | 2.82e-04 | 8.3666e-04 | 8.04e-04 | 5:05.19, 0.63 GB |
+| 128^3 | 3.5866e-04 | 3.30e-04 | 8.4946e-04 | 8.32e-04 | 1:00:45, 1.30 GB |
+| 192^3 | 3.6745e-04 | 3.52e-04 | 8.5125e-04 | 8.42e-04 | 5:09:23, 3.22 GB |
+
+GCI by Celik 2008 (Fs 1.25) on 64/128/192^3 (r21 = 1.5, r32 = 2):
+
+| quantity | limiter | p | GCI | extrapolated |
+| --- | --- | --- | --- | --- |
+| vM | superbee | 1.24 | 4.6 % | 3.809e-04 |
+| vM | minmod | 0.44 | 40.1 % | 4.648e-04 |
+| alpha - 1 | superbee | 2.46 | 0.2 % | 8.523e-04 |
+| alpha - 1 | minmod | 0.88 | 3.5 % | 8.653e-04 |
+
+(The cloud's minmod figures, p 0.43, extrapolated 4.68 and GCI 41 %, come from a different grid triple; the row above uses 64/128/192^3 for both limiters.)
