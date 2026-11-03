@@ -6,7 +6,7 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ## 2026年11月3日 昼（動画 1 本の作り直し。急がない）
 
-辺の 1 本の動画の説明文が右にはみ出していたので、スクリプトを直した（始め方の文を 1 行にした）。`git pull origin master` の後、
+辺の 1 本の動画の説明文が右にはみ出していたので、スクリプトを直した（始め方の文を 1 行にした）。`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` の後、
 ```
 python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc b1edge seedx-1
 ```
