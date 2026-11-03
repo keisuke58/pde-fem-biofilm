@@ -1047,3 +1047,8 @@ GCI by Celik 2008 (Fs 1.25) on 64/128/192^3 (r21 = 1.5, r32 = 2):
 | alpha - 1 | minmod | 0.88 | 3.5 % | 8.653e-04 |
 
 (The cloud's minmod figures, p 0.43, extrapolated 4.68 and GCI 41 %, come from a different grid triple; the row above uses 64/128/192^3 for both limiters.)
+
+**Videos (fifa, 2026-11-03).** Rendered off screen with pyvista 0.49.2 / VTK 9.7.1 under xvfb-run, in a separate
+venv (`~/IKM_Hiwi/.venv_render`), so the solver venv was not changed:
+- Video `b1edge seedx-1`: `assets/anim_coupled_tvd_separate_ab_inhliv_b1edge_seedx-1_transc_alpha_5panel.mp4` (4.4M) and `_end.png`, 70 s.
+- Video `bcorner`: `assets/anim_coupled_tvd_separate_ab_inhliv_bcorner_transc_alpha_5panel.mp4` (4.2M) and `_end.png`, 68 s.
