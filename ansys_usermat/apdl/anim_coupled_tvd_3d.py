@@ -97,7 +97,7 @@ CAPTION = "\n".join([
     r"Coupled growth model: Klempt et al. 2024, Eqs. 34$-$36, front term on ($r = 10$ mm/$T^*$), with the point model of "
     r"Klempt et al. 2026 at every point; 2 mm cube, $64^3$ finite volumes, TVD front term"
     + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
-    *((r"Point model: " + MODEL + ".", START) if K26C4 else (r"Point model: " + MODEL + ". " + START,)),
+    *((r"Point model: " + MODEL + ".", START) if (K26C4 or FULL) else (r"Point model: " + MODEL + ". " + START,)),
     (r"(a) Dominant species (colour), darker where its share is larger," if DOM else rf"(a) Share of {GRP} A (blue: A, red: B)") + rf" and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
