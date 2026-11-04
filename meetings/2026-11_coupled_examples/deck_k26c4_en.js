@@ -114,8 +114,13 @@ for (const [c, lab] of [['separate', 'separate start'], ['mixed', 'mixed start']
     [L('seed: α − 1  /  von Mises at T* = 1', { bold: true }), C('—'), C('9.1 × 10⁻⁴  /  6.5 × 10⁻⁴ Pa'), C('8.4 × 10⁻⁴  /  3.5 × 10⁻⁴ Pa')]],
     { x: 0.55, y: 1.1 + h + 0.6, w: 12.23, colW: [3.9, 2.5, 2.9, 2.93], fontFace: TM, fontSize: 13, color: INK, rowH: 0.34, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } }); }
 
+// 6b seed means over time
+{ const s = frame('7. Seed means over time');
+  const h = img(s, A + 'fig_four_species_time_history.png', 0.9, 1.2, 11.5);
+  cap(s, 'Seed means of (a) the living volume fraction Σᵢφ̄ᵢ, (b) the nutrient c, (c) the growth α − 1 and (d) the von Mises stress over time, separate start solid, mixed start dashed. Dotted line: antibiotic from T* = 1/3. The living biomass drops at the onset and recovers as species 4 takes over; the nutrient rises at the onset, as fewer living cells consume it; the growth and the stress keep rising.', 1.2 + h + 0.15); }
+
 // 7 summary
-{ const s = frame('7. Summary');
+{ const s = frame('8. Summary');
   bullets(s, [
     'The four-species case runs in the coupled cube examples without any change of the equations; only the point-model case and its time link differ from the two-species examples.',
     'All four species coexist until the antibiotic; afterwards species 4 (b₄ = 0.01) takes over in both starts, as in the point model alone.',
