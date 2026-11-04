@@ -20,9 +20,14 @@ for N in 64 128; do for M in 32 64; do
   python3 coupled_living_consumption.py --nf $N --nm $M --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
 done; done
 python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+# c) WENO5（4 Nov にクラウドで追加，--limiter weno5，障害物とは組めない）。32³ で superbee より +4 %，16³→32³ の比は
+#    minmod・superbee 1.79 に対して 1.71。混合・抗菌薬ありの格子列を 11/3 の superbee と同じ設定で（--transient-c なし）
+for N in 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter weno5 --mix-equal --only mixed_ab --dtc 0.0025
+done
 ```
 
-報告：a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は場の格子 × 応力の格子の vM と α − 1 の表（--nm 16 は既存の JSON），192³ を足した増え方（比）。
+報告：c) は 32〜192³ の vM と α − 1，GCI（64/128/192³，Celik，Fs 1.25）を superbee と並べて。a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は場の格子 × 応力の格子の vM と α − 1 の表（--nm 16 は既存の JSON），192³ を足した増え方（比）。
 JSON は `results/2026-11-amr/` と `results/2026-10-3d/` に出る。いつもどおり `keio/cloud-1102` へ push．
 
 
