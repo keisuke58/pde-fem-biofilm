@@ -567,8 +567,24 @@ IKMHIWI03 では回せない）。
   書くだけでよい（自分では実行しない）。
 - 10月8日、ユーザーが `git push lab origin/master:main` で #64 まで lab に送った（同期済み）。
 - **lab に送るときは、ローカルの master を通さない**（fifa のローカル master は clone 以来古いまま）：
-  `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。
----
+  `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。---
+
+## 2026年11月4日 その 7（その 6 を推奨の細かくする範囲で。その 6 をまだ始めていなければ，その 6 の代わりにこちら）
+
+ブランチと手順は「その 6」と同じ（merge のあと `cd ansys_usermat/apdl`）。クラウドで，段ごとの範囲（`--tag-tol-levels 0.01,0.1 --dilate-levels 2,2
+--tag-phi-range 1e-4,0.2`）にすると 32³ 土台 3 段で最も細かい段が 55 % から 35 % に減り，一様 128³ との差は +1.8 %（既定 +1.3 %）。64³ 土台
+（256³ 相当）で同じことを確かめる。その 6 がもう走っているなら止めず，こちらは空いてから。同時 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3 --tag-tol-levels 0.01,0.1 --dilate-levels 2,2 --tag-phi-range 1e-4,0.2"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：その 6 と同じ（α − 1，vM，時間，最も細かい段の割合，メモリの最大）。その 6 と並べられれば並べる。JSON は名前に `_tolL0.01-0.1_dilL2-2_pr0.0001-0.2`。
+
 
 ## 2026年11月4日 その 6（AMR の 3 段で 256³ 相当。混合の等量と Fritsch の割合。急がない）
 

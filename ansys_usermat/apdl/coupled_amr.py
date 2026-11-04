@@ -91,6 +91,25 @@ would do better):
             same face terms per level, assembled in global index space: level l T = 1/(2^l H^2), coarse-fine
             1/(3 2^(l-1) H^2), held face 2/(2^l H^2), volume 8^-l; two-grid preconditioner onto the base).
             --generic runs the two-level case through this code (agreement with the default path 3e-13).
+  tagging   --tag-tol-levels a,b and --dilate-levels m,n (4 Nov): the tolerance and the dilation per level (level 1,
+  per level level 2, ...; a missing entry takes --tag-tol / --dilate, so the default is unchanged). The nesting margin
+            of level l is max(its dilation, 2) cells of level l-1. --tag-grad-alpha x: a cell is also tagged where a
+            neighbour's alpha differs by more than x (every level). --tag-phi-range lo,hi: a cell is also tagged
+            where lo < phi_3D < hi (every level): the head of the tail, where the cells are colonised at phi_min and
+            the point model's resolution sets the living fraction of the uptake. --tag-moving x: only the tags
+            where the base phi_3D changed by more than x per T* since the last retagging are kept (every level), so
+            a static layer (the step at the nutrient boundary after the sweep) is not refined.
+            Found at base 16, three levels, against uniform 64^3 (4 Nov): the seed stress needs the finest level
+            wherever the tail of phi_3D has a neighbour difference above about 0.1 on the level-1 field (gradient
+            above ~1.6/mm), so the finest coverage cannot go much below 40-45 % of the domain: tolerances 0.01/0.1
+            with dilations 2/1 give +0.9 % at 47 %, 0.01/0.2 with 2/2 and --tag-phi-range 1e-4,0.2 give +0.2 % at
+            45 %, 0.01/0.2 with 2/1 give +2.6 % at 33 %, 0.01/0.3 +10 % at 28 %. --tag-grad-alpha 1e-4 makes it
+            worse (+3.5 % at 37 %), --tag-moving 1 drops the static step at the nutrient boundary and gives -4 %.
+            Base 32, three levels, against uniform 128^3 (3.30e-4 Pa): the default 0.01/2 gives +1.3 % at 55 %;
+            0.01/0.1 with 2/2 and --tag-phi-range 1e-4,0.2 gives +1.8 % at 35 % (the recommended setting), 0.01/0.05
+            with 2/1 and the range +1.5 % at 40 %; without the range 0.01/0.05 with 2/1 gives +9 % at 36 % (the head
+            of the tail, phi_3D < 0.05, has a gradient below the tolerance there, and its coarse point model raises
+            the stress), 0.01/0.1 with 2/1 and the range +2.7 % at 32 %.
 
     python ansys_usermat/apdl/coupled_amr.py --nf 32 --example mixed_ab --mix-equal [--no-refine]
         [--block 4 --dilate 2 --retag 1 --tag-tol 0.01] [--dtc 0.025] [--transient-c 1e8] [--c-fine | --c-composite]
@@ -136,6 +155,16 @@ def parse(argv=None):
     ap.add_argument("--dilate", type=int, default=2, help="dilation of the tagged cells, base cells")
     ap.add_argument("--retag", type=int, default=1, help="inner steps between retaggings")
     ap.add_argument("--tag-tol", type=float, default=0.01, help="tag a base cell when a neighbour differs by more")
+    ap.add_argument("--tag-tol-levels", default="", help="per-level tolerance 'a,b' (level 1, level 2, ...); a "
+                    "missing entry falls back to --tag-tol")
+    ap.add_argument("--dilate-levels", default="", help="per-level dilation 'm,n' (level 1, level 2, ...) in cells "
+                    "of the next coarser level; a missing entry falls back to --dilate")
+    ap.add_argument("--tag-grad-alpha", type=float, default=None, help="also tag where a neighbour's alpha differs "
+                    "by more than this (every level; the seed stress follows the gradient of alpha)")
+    ap.add_argument("--tag-phi-range", default="", help="'lo,hi': also tag the cells with lo < phi_3D < hi (every "
+                    "level), i.e. the head of the tail where the cells are colonised (phi_min)")
+    ap.add_argument("--tag-moving", type=float, default=None, help="keep only the tags where the base phi_3D changed "
+                    "by more than this per T* since the last retagging (the moving edge; a static layer is dropped)")
     ap.add_argument("--dtc", type=float, default=0.025, help="outer (coupling) step")
     ap.add_argument("--tend", type=float, default=1.0)
     ap.add_argument("--phi-min", type=float, default=0.001)
@@ -1095,24 +1124,63 @@ def run(o):
         n0, n1, n2 = SHAPE
         return u2.reshape(n0, 2, n1, 2, n2, 2).mean(axis=(1, 3, 5))
 
+    # per-level tolerance and dilation (--tag-tol-levels, --dilate-levels); missing entries: --tag-tol, --dilate
+    def per_level(txt, default, cast):
+        vals = [cast(x) for x in txt.split(",") if x.strip()]
+        return lambda l: vals[l - 1] if l - 1 < len(vals) else default
+    tol_lv = per_level(o.tag_tol_levels, o.tag_tol, float)
+    dil_lv = per_level(o.dilate_levels, o.dilate, int)
+    phi_rng = tuple(float(x) for x in o.tag_phi_range.split(",")) if o.tag_phi_range else None
+    mv = dict(phi=None, t=0.0, mask=None)                        # --tag-moving: base phi_3D at the last retagging
+
+    def moving_mask(t_now):
+        """base cells whose phi_3D changed by more than --tag-moving per T* since the last retagging (all at first)"""
+        if mv["phi"] is None or t_now <= mv["t"]:
+            mv["mask"] = np.ones(SHAPE, bool)
+        else:
+            mv["mask"] = np.abs(phi - mv["phi"]) / (t_now - mv["t"]) > o.tag_moving
+        mv["phi"], mv["t"] = phi.copy(), t_now
+
+    def up_mask(l):
+        """the moving mask on the global cell grid of level l-1"""
+        m = mv["mask"]
+        for a_ in range(3):
+            m = np.repeat(m, 2 ** (l - 1), a_)
+        return m
+
+    def dilate_tags(t, ndil):
+        return maximum_filter(t.astype(np.uint8), size=2 * ndil + 1, mode="constant", cval=0) > 0 if ndil > 0 else t
+
     def tag_blocks(phc):
         d = np.zeros(SHAPE)
         for a_ in range(3):
             up = pad_mirror(phc[None], a_, 1)
             d = np.maximum(d, np.abs(along(up, a_, slice(2, None))[0] - phc))
             d = np.maximum(d, np.abs(along(up, a_, slice(0, -2))[0] - phc))
-        t = d > o.tag_tol
-        if o.dilate > 0:
-            t = maximum_filter(t.astype(np.uint8), size=2 * o.dilate + 1, mode="constant", cval=0) > 0
+        t = d > tol_lv(1)
+        if o.tag_grad_alpha is not None:                         # second criterion: neighbour differences of alpha
+            da = np.zeros(SHAPE)
+            for a_ in range(3):
+                up = pad_mirror(alpha[None], a_, 1)
+                da = np.maximum(da, np.abs(along(up, a_, slice(2, None))[0] - alpha))
+                da = np.maximum(da, np.abs(along(up, a_, slice(0, -2))[0] - alpha))
+            t |= da > o.tag_grad_alpha
+        if phi_rng is not None:                                  # the colonisation front: phi_3D in (lo, hi)
+            t |= (phc > phi_rng[0]) & (phc < phi_rng[1])
+        if o.tag_moving is not None:
+            t &= mv["mask"]
+        t = dilate_tags(t, dil_lv(1))
         return t.reshape(lev.NB[0], B, lev.NB[1], B, lev.NB[2], B).any(axis=(1, 3, 5))
 
     unc = np.ones(SHAPE, bool)                                   # base cells not covered by a block
     faces_crs = []                                               # (axis, side) with coarse-fine faces (--reflux)
     retagged = [False]                                           # blocks changed since the last nutrient solve
 
-    def retag(cfield):
+    def retag(cfield, t_now=0.0):
         """new active set from the base phi_3D; the carried fine fields and the bookkeeping that depends on it"""
         retagged[0] = True
+        if o.tag_moving is not None:
+            moving_mask(t_now)
         if ML:
             return retag_ml(cfield)
         smooth = dict(c=cfield, a=a, **(dict(c0=c) if o.point_fine else {})) if o.c_composite else None
@@ -1252,22 +1320,31 @@ def run(o):
             out.append(LV[l].stack_slopes(fields[l], fields[l - 1], out[l - 1], limited))
         return out
 
-    def tag_level(l, cphi, sc_all):
-        """tags of level l on the global cell grid of level l-1 (neighbour differences of its field > tag-tol,
-        ghosts from level l-2, dilated by --dilate cells); None when level l-1 has no block"""
+    def tag_level(l, cphi, sc_all, cal=None, sca_all=None):
+        """tags of level l on the global cell grid of level l-1 (neighbour differences of its field > the level's
+        tolerance, ghosts from level l-2, dilated by the level's dilation); cal, sca_all: the alpha fields and
+        their slopes for --tag-grad-alpha; None when level l-1 has no block"""
         pv = LV[l - 1]
         if not pv.nb:
             return None
-        F, d = pv.Fphi, np.zeros(pv.Fphi.shape)
-        for a_ in range(3):
-            up = pv.padded(F, a_, cphi[l - 2], sc_all[l - 2])
-            d = np.maximum(d, np.abs(along(up, a_, slice(3, -1)) - F))
-            d = np.maximum(d, np.abs(along(up, a_, slice(1, -3)) - F))
+
+        def ndiff(F, ch, sc):
+            d = np.zeros(F.shape)
+            for a_ in range(3):
+                up = pv.padded(F, a_, ch[l - 2], sc[l - 2])
+                d = np.maximum(d, np.abs(along(up, a_, slice(3, -1)) - F))
+                d = np.maximum(d, np.abs(along(up, a_, slice(1, -3)) - F))
+            return d
+        t = ndiff(pv.Fphi, cphi, sc_all) > tol_lv(l)
+        if o.tag_grad_alpha is not None:
+            t |= ndiff(pv.Fal, cal, sca_all) > o.tag_grad_alpha
+        if phi_rng is not None:
+            t |= (pv.Fphi > phi_rng[0]) & (pv.Fphi < phi_rng[1])
         tg = np.zeros(LV[l].shape, bool)
-        tg[pv.FI, pv.FJ, pv.FK] = d > o.tag_tol
-        if o.dilate > 0:
-            tg = maximum_filter(tg.astype(np.uint8), size=2 * o.dilate + 1, mode="constant", cval=0) > 0
-        return tg
+        tg[pv.FI, pv.FJ, pv.FK] = t
+        if o.tag_moving is not None:
+            tg &= up_mask(l)
+        return dilate_tags(tg, dil_lv(l))
 
     def retag_ml(cfield):
         """new active sets of every level: own tags (level 1 from the base phi_3D, level l from the field of
@@ -1275,9 +1352,13 @@ def run(o):
         l-1, must lie in level-(l-1) blocks); then set_active from level 1 up, each level prolonging the new one"""
         cphi = [phi] + [x.Fphi for x in LVS]
         sc_all = ctx_slopes(cphi[:-1], True)
+        cal, sca_all = None, None
+        if o.tag_grad_alpha is not None:
+            cal = [alpha] + [x.Fal for x in LVS]
+            sca_all = ctx_slopes(cal[:-1], True)
         own = {1: tag_blocks(phi)}
         for l in range(2, NL):
-            tg = tag_level(l, cphi, sc_all)
+            tg = tag_level(l, cphi, sc_all, cal, sca_all)
             lv = LV[l]
             own[l] = np.zeros(lv.NB, bool) if tg is None else tg.reshape(
                 lv.NB[0], B, lv.NB[1], B, lv.NB[2], B).any(axis=(1, 3, 5))
@@ -1286,7 +1367,7 @@ def run(o):
         for l in range(NL - 1, 1, -1):                           # nesting into level l-1
             lv, pv = LV[l], LV[l - 1]
             cov = np.repeat(np.repeat(np.repeat(act[l], B, 0), B, 1), B, 2)   # cells of level l-1 under level l
-            M = max(o.dilate, 2)
+            M = max(dil_lv(l), 2)                                # margin in cells of level l-1, as the dilation
             cov = maximum_filter(cov.astype(np.uint8), size=2 * M + 1, mode="constant", cval=0) > 0
             nest = cov.reshape(pv.NB[0], 2 * B, pv.NB[1], 2 * B, pv.NB[2], 2 * B).any(axis=(1, 3, 5))
             act[l - 1] = own[l - 1] | nest
@@ -1603,7 +1684,7 @@ def run(o):
             # (0) retag: the edge moves, the blocks follow (base grid carries the restricted fine values)
             if refine and nstep_total % o.retag == 0 and nstep_total > 0:
                 t_ = time.time()
-                retag(cf)
+                retag(cf, nstep_total * dt)
                 FLf = lev.FL if o.point_fine else None
                 tm["retag"] += time.time() - t_
             # nutrient of this inner step on the base grid, the front velocity on both levels
@@ -1945,6 +2026,11 @@ def run(o):
         del hist["level1_cells"]
     fc = np.array(hist["fine_cells"], float)
     setting = dict(base=f"{NF}^3", refine=refine, block=B, dilate=o.dilate, retag=o.retag, tag_tol=o.tag_tol,
+                   **({} if not (o.tag_tol_levels or o.dilate_levels or o.tag_grad_alpha is not None or phi_rng
+                                 or o.tag_moving is not None)
+                      else dict(tag_tol_levels=[tol_lv(l) for l in range(1, NL)],
+                                dilate_levels=[dil_lv(l) for l in range(1, NL)], tag_grad_alpha=o.tag_grad_alpha,
+                                tag_phi_range=phi_rng, tag_moving=o.tag_moving)),
                    dt_inner=dt, inner_per_outer=per, dtc=DT_C, phi_min=o.phi_min, front=o.front, r=R_FRONT,
                    gc=o.gc, gab=o.gab, alpha0=o.alpha0, tab=T_AB, transient_c=o.transient_c, mix_equal=o.mix_equal,
                    example=o.example, wall_s=wall, timing_s=tm, fine_cells_mean=float(fc.mean()),
@@ -1969,6 +2055,11 @@ def run(o):
     RES.mkdir(exist_ok=True)
     name = (f"amr_nf{NF}" + ("_norefine" if not refine else f"_B{B}D{o.dilate}R{o.retag}")
             + ("" if o.tag_tol == 0.01 else f"_tol{o.tag_tol:g}") + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}")
+            + ("" if not o.tag_tol_levels else "_tolL" + o.tag_tol_levels.replace(",", "-"))
+            + ("" if not o.dilate_levels else "_dilL" + o.dilate_levels.replace(",", "-"))
+            + ("" if o.tag_grad_alpha is None else f"_ga{o.tag_grad_alpha:g}")
+            + ("" if phi_rng is None else f"_pr{phi_rng[0]:g}-{phi_rng[1]:g}")
+            + ("" if o.tag_moving is None else f"_mv{o.tag_moving:g}")
             + ("" if o.transient_c is None else f"_transc{o.transient_c:g}") + ("_cfinebasephi" if o.c_fine_basephi else "_cfine" if o.c_fine else "")
             + ("_ccompnolat" if o.c_composite_nolateral else "_ccomp" if o.c_composite else "")
             + ("_reflux" if o.reflux else "") + ("_subcyc" if o.subcycle else "") + ("_pointfine" if o.point_fine else "")
