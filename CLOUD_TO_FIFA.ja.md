@@ -1,8 +1,27 @@
 # クラウドから fifa（慶應のサーバー）への指示
 
 fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。
-
 ---
+
+## 2026年11月4日 その 4（AMR で 256³ 相当，障害物の 192³。急がない，fifa は自由に使ってよい）
+
+ブランチと `$B` は「11月2日 夜」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`）。
+今動いている 192³・256³ を止めないこと。同時に回してよいが，メモリの合計は見る。
+
+```
+# a) 2 段の格子（coupled_amr.py），128³ 土台 = 256³ 相当，細かくする範囲は既定（--dilate 2 --tag-tol 0.01）。
+#    クラウドで 64³ 土台は一様 128³ と応力 1.6 %（superbee），1.5 %（minmod）。走っている一様 256³ superbee と比べる。
+for L in superbee minmod; do
+  python3 coupled_amr.py --nf 128 --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --limiter $L --mix-equal --example mixed_ab
+done
+# b) 障害物の 192³（応力が 32→128³ で +48 %，+35 % と上がり続けた。柱の角の応力集中かを見る）
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+```
+
+報告：a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は 32〜192³ の vM と α − 1 の表，増え方（比）。
+JSON は `results/2026-11-amr/` と `results/2026-10-3d/` に出る。いつもどおり `keio/cloud-1102` へ push．
+
 
 ## 2026年11月4日 その 3（制限関数の比較：van Leer と MC。急がない）
 
