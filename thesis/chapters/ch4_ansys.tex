@@ -887,8 +887,9 @@ steps used.
 
 \paragraph{Growth and stress.} The growth $\alpha-1$ hardly depends on the composition: Eq.~36 is
 unchanged, and the antibiotic lowers the living fraction but not $\phi_{3D}$. The composition reaches
-the stress through the nutrient and the front term \fterm{}, and the mixed seed carries about half the stress of
-the separate one because its edge is less sharp. Table~\ref{tab:ch5-gci} gives the grid series with the
+the stress through the nutrient and the front term \fterm{}, and the mixed seed carries less stress than
+the separate one because its edge is less sharp (with antibiotic, extrapolated: $3.81$ with superbee against
+$6.42\times10^{-4}$~Pa, a ratio of about $0.6$). Table~\ref{tab:ch5-gci} gives the grid series with the
 three-grid index of Celik et al.~\cite{Celik2008GCI} (safety factor $1.25$) at an outer time step of
 $0.0025$; all series go to $192^3$. The growth converges with a GCI of $0.4$ to $4.3\,\%$ in all
 examples. The seed stress is set by the jump of $\alpha$ across the edge of the seed, which the front sharpens. In
@@ -900,13 +901,29 @@ carries intermediate values of $\phi_{3D}$ at a nearly discontinuous edge, and t
 domain still rises with the grid ($0.60$, $0.69$, $0.73$, $0.75$), though by less at each refinement.
 The front term moves this edge along $\mathbf n_c$, and the uptake that sets the nutrient gradient is
 concentrated at the same edge, so the grid has to resolve both the edge and the nutrient gradient around it.
+Part of the slow convergence is the numerical diffusion of the minmod limiter (Figure~\ref{fig:ch5-limiters}). With the
+superbee limiter, which keeps the edge sharper, the mixed seed stress with antibiotic converges with an observed
+order of $1.2$ and a GCI of $4.6\,\%$ to $3.81\times10^{-4}$~Pa (last rows of Table~\ref{tab:ch5-gci}); the MC and
+van Leer limiters lie close to minmod, and a WENO5 reconstruction~\cite{JiangShu1996} gives $4\,\%$ more than superbee
+on $32^3$. In the separate example, where minmod converges, superbee gives the same stress within about $1\,\%$.
+A compressive limiter can also steepen an edge beyond the solution, so I keep minmod as the main scheme and take the
+two limiters together as the bounds of the mixed stress.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.62\linewidth]{fig_limiter_grid.pdf}
+  \caption[Seed stress of the mixed example for five reconstructions]{Seed von Mises stress of the mixed example with
+    antibiotic against the grid ($N^3$ cells, outer time step $0.0025$) for five reconstructions of the front term.
+    Open symbols: extrapolation from $64^3$, $128^3$, $192^3$ with the observed order $p$.}
+  \label{fig:ch5-limiters}
+\end{figure}
 
 \begin{table}[htbp]
   \centering
   \caption[Grid convergence of growth and stress]{Seed means at $T^*=1$, outer time step $0.0025$: grid
     series, observed order $p$, extrapolated value (extrap.) and GCI from the three finest grids
     $64^3$, $128^3$, $192^3$; antib.: with antibiotic. Mixed: equal amounts unless the start
-    fractions $(\phi_1,\phi_2)$ are given.}
+    fractions $(\phi_1,\phi_2)$ are given. Minmod limiter unless superbee is stated.}
   \label{tab:ch5-gci}
   \small
   \setlength{\tabcolsep}{2.4pt}
@@ -924,6 +941,9 @@ concentrated at the same edge, so the grid has to resolve both the edge and the 
     mixed & von Mises [$10^{-4}$~Pa] & $2.13$ & $3.08$ & $3.65$ & $3.89$ & $0.55$ & $4.86$ & $31\,\%$ \\
     mixed $(0.25,0.30)$, antib. & $\alpha-1$ [$10^{-4}$] & $7.42$ & $8.04$ & $8.31$ & $8.40$ & $0.93$ & $8.61$ & $3.1\,\%$ \\
     mixed $(0.25,0.30)$, antib. & von Mises [$10^{-4}$~Pa] & $2.01$ & $2.96$ & $4.01$ & $4.35$ & $1.0$ & $5.01$ & $19\,\%$ \\
+    \midrule
+    mixed, antib., superbee & $\alpha-1$ [$10^{-4}$] & $7.79$ & $8.37$ & $8.49$ & $8.51$ & $2.5$ & $8.52$ & $0.2\,\%$ \\
+    mixed, antib., superbee & von Mises [$10^{-4}$~Pa] & $2.39$ & $3.28$ & $3.59$ & $3.67$ & $1.2$ & $3.81$ & $4.6\,\%$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1000,7 +1020,9 @@ $k_\alpha=10^{-6}\,T^{*-1}$), the nutrient held in the centre, the colony of bot
 the point model of the two-species examples. With the antibiotic, $a=1$ is held at the entrance from
 $T^*=20$. The model is two-dimensional, so it gives no stress. The biofilm follows the corridors, also into
 dead ends, and approaches the centre (Figure~\ref{fig:ch5-maze}); at $T^*=60$ the nearest point with
-$\phi_{3D}\ge0.5$ is $42~\mu$m from the centre without antibiotic and $133~\mu$m with it. The living volume
+$\phi_{3D}\ge0.5$ is about $40~\mu$m from the centre with and without antibiotic (on $4$, $2$ and $1~\mu$m
+cells $39$ to $43~\mu$m; only the run with antibiotic on $4~\mu$m cells gives $133~\mu$m, where a single
+cell decides this distance). The living volume
 fraction of the colonised region is $0.92$ without antibiotic. With the antibiotic it falls to $0.12$ at
 $T^*=24$ and recovers to $0.35$ at $T^*=60$, because the biofilm keeps spreading and the newly reached points
 take the living composition of their neighbours. With the start state for new points it stays at $0.04$.

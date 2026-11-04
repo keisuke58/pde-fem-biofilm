@@ -109,7 +109,7 @@ const bcTable = (s, rows, y) => { const c_ = (t, o = {}) => ({ text: t, options:
   const h = img(s, B + 'geom_maze.png', 2.4, 1.15, 8.5);
   cap(s, 'Fig. 2  The maze of Fig. 11 of Klempt et al. 2024, read off the figure (560 µm across), 2D with 4 µm cells, constants of their Table 6 (β = 10 µm²/T*, r = 200 µm/T*, k_α = 10⁻⁶ T*⁻¹). '
     + 'Nutrient held in the centre, the colony of both species at the entrance. φ₃D at T* = 12, 24, 36 and 60, (a) without and (b) with the antibiotic held at the entrance from T* = 20. '
-    + 'At T* = 60 the nearest point with φ₃D ≥ 0.5 is 42 µm from the centre without and 133 µm with the antibiotic.', 1.15 + h + 0.1); }
+    + 'At T* = 60 the nearest point with φ₃D ≥ 0.5 is about 40 µm from the centre with and without the antibiotic (39 to 43 µm on 4, 2 and 1 µm cells; 133 µm only with antibiotic on 4 µm cells, where one cell decides it).', 1.15 + h + 0.1); }
 
 // 6 maze: the rule for new cells
 { const s = frame('6. Maze with antibiotic: the rule for newly reached cells decides');
