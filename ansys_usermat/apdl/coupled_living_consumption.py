@@ -175,6 +175,7 @@ ANSYS_BC = "--ansys-bc" in sys.argv
 START_POSITION = "--start-position" in sys.argv
 INHERIT_LIVING = "--inherit-living" in sys.argv     # see living_start()
 LIMITER = sys.argv[sys.argv.index("--limiter") + 1] if "--limiter" in sys.argv else "minmod"   # TVD slope limiter (A-83)
+assert LIMITER in ("minmod", "mc", "vanleer", "superbee"), f"unknown --limiter {LIMITER} (minmod, mc, vanleer, superbee)"
 # --mech-feedback K (Keio continuation, not in the thesis; the thesis model is frozen): the mechanical term of
 # Klempt et al. 2024, Eq. 30, phi mu (I : C_e - 3), that their Eq. 34 drops, divided by eta_phi:
 # dphi/dt = ... - K phi (I : C_e - 3), K = mu / eta_phi [1/T*] (not given by the paper, a sensitivity parameter).
@@ -604,6 +605,8 @@ def upwind_adv_tvd(u, v):
         if LIMITER == "superbee":             # Roe's superbee: the most compressive TVD limiter (2 Nov test)
             ap, am = np.abs(dp), np.abs(dm)
             sl = np.where(dp * dm > 0, np.sign(dp) * np.maximum(np.minimum(2 * am, ap), np.minimum(am, 2 * ap)), 0.0)
+        elif LIMITER == "vanleer":            # van Leer's harmonic limiter (4 Nov): smooth, between minmod and MC
+            sl = np.where(dp * dm > 0, 2.0 * dp * dm / np.where(dp + dm == 0, 1.0, dp + dm), 0.0)
         elif LIMITER == "mc":                 # monotonized central (van Leer 1977): less clipping than minmod
             sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * np.abs(dp), 2 * np.abs(dm)),
                                                                   0.5 * np.abs(dp + dm)), 0.0)

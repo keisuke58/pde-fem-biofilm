@@ -4,6 +4,24 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月4日 その 3（制限関数の比較：van Leer と MC。急がない）
+
+minmod（拡散が大きい）と superbee（縁を最も鋭く保つ）の間の 2 つを足し，混合の応力が制限関数でどこに落ち着くかを見る。
+`--limiter vanleer` は 11/4 にクラウドで追加（調和平均の van Leer），`mc` は前からある。知らない名前を渡すと止まるようにした
+（前は黙って minmod になっていた）。`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと：
+```
+cd ansys_usermat/apdl
+for L in vanleer mc; do
+  for N in 32 64 128 192; do
+    python3 coupled_living_consumption.py --nf $N --fast $B --limiter $L --mix-equal --only mixed_ab --dtc 0.0025
+  done
+done
+```
+- 条件は 11/3 の superbee の列と同じ（`--transient-c` なし）。16³ の試し（クラウド）では種子の vM が
+  minmod 1.11，van Leer 1.21，MC 1.29，superbee 1.34e−4 Pa の順（拡散の大きい順に低い）。
+- ログ：4 つの制限関数の 4 格子の vM と α−1，64/128/192³ からの p・外挿・GCI を 1 つの表に。外挿値が 4 つでどこまでそろうか
+  （そろえば，混合の応力は制限関数によらず決まる）。
+
 ## 2026年11月4日 その 2（格子の収束：四種，障害物，迷路。急がない，fifa は自由に使ってよい）
 
 修論に入れるかを決める前に，格子を細かくして結果が変わらないかを確かめる。ブランチと `$B` は「11月2日 夜」と同じ。どれも
