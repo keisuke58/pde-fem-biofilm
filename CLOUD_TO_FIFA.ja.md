@@ -27,6 +27,19 @@ done
     抗菌薬あり・なしの外挿値の差と，二つの GCI の和を並べて書く（差が和より大きければ「抗菌薬の効果が分かれた」）。
   - 2) の 64/128³ の vM と α−1 を minmod（修論の表：vM 6.000/6.284e−4，α−1 8.931/9.112e−4）と並べる。
 - 修論には入れない。論文の付録の表の材料。
+- **追加（ユーザー，4 Nov：fifa はたくさん使ってよい）**：上の 1)・2) と並行して次も回す。同時に回すのは空いている CPU とメモリの範囲で
+  （1 本あたり 192³ で約 3.2 GB，256³ は minmod の実績で見積もる）。
+  ```
+  # 3) 混合・Fritsch の割合（0.25, 0.30，--mix-equal なし）・抗菌薬あり。修論の表の最後の 2 行の superbee 版
+  for N in 32 64 128 192; do
+    python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --only mixed_ab --dtc 0.0025
+  done
+  # 4) 混合・等量・抗菌薬ありの 256³（superbee が本当に収束しているかの確認。192³ で 3.67e−4 Pa）
+  python3 coupled_living_consumption.py --nf 256 --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+  ```
+  - ログ：3) は minmod（修論の表：vM 2.01/2.96/4.01/4.35e−4，外挿 5.01e−4，GCI 19 %）と並べる。4) は 128/192/256³ で p・外挿・GCI を出し，
+    64/128/192³ の値（3.81e−4，4.6 %）と比べる。
+  - 終わったものから push してよい（全部を待たなくてよい）。
 
 ## 2026年11月3日 昼（動画 1 本の作り直し。急がない）
 
