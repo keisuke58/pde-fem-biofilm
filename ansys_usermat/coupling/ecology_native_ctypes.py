@@ -6,10 +6,15 @@ code itself, as in ANSYS.
     import ecology_native_ctypes as F
     F.init("abaqus_composition/eco_fritsch_2sp_a50.txt")     # sets BIOFILM_ECO_CASE, builds and loads
     Gnew, ok = F.step_lin(G, dt, n_sub, c0, c1, a0, a1)     # G: (n, 12); dt = s dT* per increment
+
+ECO_THREADS=k (environment, default 1): step_lin splits the points into k chunks and runs them in k threads (ctypes
+releases the GIL; the Fortran only reads its module constants after init, locals on the stack via -frecursive).
+Each point is computed alone, so the result is the same to the last bit for any k.
 """
 import ctypes
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -22,11 +27,11 @@ CONST = {}
 
 def build(force=False):
     src = [HERE / "ecology_native.f", HERE / "ecology_native_capi.f90"]
-    if LIB.exists() and not force and LIB.stat().st_mtime > max(p.stat().st_mtime for p in src):
+    if LIB.exists() and not force and LIB.stat().st_mtime > max(p.stat().st_mtime for p in src + [Path(__file__)]):
         return LIB
     tmp = HERE / "_build_ecology_native"
     tmp.mkdir(exist_ok=True)
-    subprocess.run(["gfortran", "-O2", "-fPIC", "-shared", "-J", str(tmp), *map(str, src), "-o", str(LIB)],
+    subprocess.run(["gfortran", "-O2", "-frecursive", "-fPIC", "-shared", "-J", str(tmp), *map(str, src), "-o", str(LIB)],
                    check=True, cwd=tmp)
     return LIB
 
@@ -48,16 +53,37 @@ def init(case_file):
     return dict(CONST)
 
 
+THREADS = max(1, int(os.environ.get("ECO_THREADS", "1")))
+_pool = None
+
+
+def _ptr(a, off, T=ctypes.c_double):
+    return ctypes.cast(ctypes.c_void_p(a.ctypes.data + int(off)), ctypes.POINTER(T))
+
+
+def _lin(G, th, dt, n_sub, arr, out, ok, lo, hi):
+    m = int(hi - lo)
+    if m <= 0:
+        return
+    _lib.eco_capi_lin(ctypes.c_int(m), _ptr(G, 96 * lo), _ptr(th, 0), ctypes.c_double(dt), ctypes.c_int(int(n_sub)),
+                      *[_ptr(x, 8 * lo) for x in arr], _ptr(out, 96 * lo), _ptr(ok, 4 * lo, ctypes.c_int))
+
+
 def step_lin(G, dt, n_sub, c0, c1, a0, a1):
     """One increment for n points: ANSYS's biofilm_ecology_hook_lin per point. Returns (Gnew (n, 12), ok (n,))."""
+    global _pool
     G = np.asfortranarray(np.asarray(G, float).T)            # (12, n)
     n = G.shape[1]
-    P = ctypes.POINTER(ctypes.c_double)
     arr = [np.ascontiguousarray(np.broadcast_to(np.asarray(x, float), (n,))) for x in (c0, c1, a0, a1)]
     out = np.zeros((12, n), order="F")
     ok = np.zeros(n, dtype=np.int32)
     th = np.ascontiguousarray(CONST["theta"])
-    _lib.eco_capi_lin(ctypes.c_int(n), G.ctypes.data_as(P), th.ctypes.data_as(P), ctypes.c_double(dt),
-                      ctypes.c_int(int(n_sub)), *[x.ctypes.data_as(P) for x in arr], out.ctypes.data_as(P),
-                      ok.ctypes.data_as(ctypes.POINTER(ctypes.c_int)))
+    k = THREADS if n >= 256 * THREADS else 1
+    if k == 1:
+        _lin(G, th, dt, n_sub, arr, out, ok, 0, n)
+    else:
+        if _pool is None:
+            _pool = ThreadPoolExecutor(THREADS)
+        cut = np.linspace(0, n, k + 1).astype(int)
+        list(_pool.map(lambda j: _lin(G, th, dt, n_sub, arr, out, ok, cut[j], cut[j + 1]), range(k)))
     return out.T.copy(), ok
