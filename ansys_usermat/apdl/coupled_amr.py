@@ -30,6 +30,13 @@ would do better):
   nutrient  c and the antibiotic a are solved on the base grid only (d = 1e8 mm^2/T*, quasi-static, smooth); the
             front velocity v = r c/(k + c) n_c is computed on the base grid and interpolated (linear, central slopes)
             to the fine cells. c is solved at every inner (fine) step as in the main script.
+            --c-fine (diagnostic): c on the whole (2N)^3 grid, v from it at the fine spacing. --c-composite (4 Nov):
+            c and a on the composite grid (fine cells in the active blocks, base cells elsewhere; class Composite),
+            one sparse matrix, conservative coarse-fine flux matching with ghost values interpolated from the coarse
+            neighbour, BiCGSTAB + AMG warm started; v on the fine cells from the composite c (ghosts as for phi,
+            central slopes). The base grid carries the restricted means of the fine c, so the point model (still per
+            base cell), the coarse velocity and the histories see the composite solution. Quasi-static (as the main
+            runs); --transient-c keeps dc/dt there too (backward Euler on the composite vector).
   point     the point model runs per BASE cell on the restricted phi_3D (colonisation at phi_3D >= phi_min of the
   model     base cell, inheritance from base neighbours as --inherit-living), so the living fraction, the
             consumption and the composition have the base resolution. Matching the composition was not the aim.
@@ -42,7 +49,7 @@ would do better):
             reproduce its results.
 
     python ansys_usermat/apdl/coupled_amr.py --nf 32 --example mixed_ab --mix-equal [--no-refine]
-        [--block 4 --dilate 2 --retag 1 --tag-tol 0.01] [--dtc 0.025] [--transient-c 1e8]
+        [--block 4 --dilate 2 --retag 1 --tag-tol 0.01] [--dtc 0.025] [--transient-c 1e8] [--c-fine | --c-composite]
     -> results/2026-11-amr/amr_<tag>.json (+ .npz), python coupled_amr.py --table prints the comparison
 Model options have the values of the main runs (--front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min
 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living --fortran) and can be changed as there.
@@ -98,6 +105,11 @@ def parse(argv=None):
                     "phi_3D (prolonged): only the gradient of c is taken at the fine spacing")
     ap.add_argument("--c-fine", action="store_true", help="diagnostic: nutrient and front velocity on the full (2N)^3 "
                     "grid (phi_3D from the two levels, living fraction of the base cell), point model still per base cell")
+    ap.add_argument("--c-composite", action="store_true", help="nutrient and antibiotic on the composite grid (fine "
+                    "cells in the active blocks, base cells elsewhere, class Composite), front velocity on the fine "
+                    "cells from the composite c; point model still per base cell")
+    ap.add_argument("--c-composite-nolateral", action="store_true", help="diagnostic: --c-composite without the "
+                    "lateral interpolation of the ghost values (symmetric matrix, CG)")
     ap.add_argument("--table", action="store_true", help="print the comparison table of results/2026-11-amr")
     return ap.parse_args(argv)
 
@@ -184,10 +196,13 @@ class Level1:
         self.Fphi = np.zeros((0, 2 * B, 2 * B, 2 * B))
         self.Fal = np.zeros((0, 2 * B, 2 * B, 2 * B))
 
-    def set_active(self, active, phc, alc):
-        """new active set: keep the fine data of blocks that stay, prolong (limited) the base grid into new ones"""
+    def set_active(self, active, phc, alc, smooth=None):
+        """new active set: keep the fine data of blocks that stay, prolong (limited) the base grid into new ones;
+        smooth: {name: base field} of smooth fine fields (c, a of --c-composite) carried in self.extra[name] the
+        same way, new blocks by central-slope prolongation"""
         B = self.B
         old_bid, old_phi, old_al = self.bid, self.Fphi, self.Fal
+        old_extra = getattr(self, "extra", {})
         self.active = active
         self.nb = int(active.sum())
         self.bid = -np.ones(self.NB, int)
@@ -208,6 +223,17 @@ class Level1:
             for src, dst in ((phc, self.Fphi), (alc, self.Fal)):
                 s = slopes(src[None], True)
                 dst[sel] = children(src[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
+        self.extra = {}
+        for name, src in (smooth or {}).items():
+            dst = np.empty_like(self.Fphi)
+            if kept.any() and name in old_extra:
+                dst[kept] = old_extra[name][keep[kept]]
+            if (~kept).any():
+                sel = np.flatnonzero(~kept)
+                I, J, K = self.CI[sel], self.CJ[sel], self.CK[sel]
+                s = slopes(src[None], False)
+                dst[sel] = children(src[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
+            self.extra[name] = dst
         # ghost tables per (axis, side): neighbour block, wall or base grid
         self.gh = {}
         for a in range(3):
@@ -262,6 +288,14 @@ class Level1:
 
 
 # ---------------------------------------------------------------- macro fields on the base grid (as the main script)
+def held_faces(side):
+    """faces (axis, index) held at the value: side -1 the y = -1 face (nutrient), 0 every face except the symmetry
+    planes x = 0, z = 0 (antibiotic)"""
+    if side != 0:
+        return [(1, 0 if side < 0 else -1)]
+    return [(a, e) for a in range(3) for e in (0, -1) if not (a in (0, 2) and e == 0)]
+
+
 class Reaction:
     """0 = lap u - q phi L u (quasi-static) or (1/D) du/dt = ..., u held on a face (ghost) or in fixed cells,
     zero flux elsewhere; quarter domain (symmetry planes x = 0, z = 0 are zero-flux)"""
@@ -276,10 +310,8 @@ class Reaction:
                 ok = np.ones(shape, bool)
                 e = [slice(None)] * 3; e[ax] = -1 if sgn == 1 else 0; ok[tuple(e)] = False
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
-        faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
-                                                                 if not (a in (0, 2) and e == 0)]
         b = np.zeros(shape)
-        for ax_, j in faces:
+        for ax_, j in held_faces(side):
             sl = [slice(None)] * 3; sl[ax_] = j
             diag[tuple(sl)] += 2.0; b[tuple(sl)] += 2.0 / h ** 2
         self.A0 = sp.csr_matrix((-np.ones(sum(r.size for r in rows)) / h ** 2,
@@ -317,6 +349,194 @@ class Reaction:
         self._last = sol
         x[fr] = sol
         return x
+
+
+class Composite:
+    """the problem of Reaction on the composite grid of one Level1 (option --c-composite): unknowns on the coarse
+    cells outside the active blocks and on the fine cells inside, one sparse matrix over both. Flux form divided by
+    H^3: sum_faces T (u_i - u_j) + q phi L V_i u_i / H^3 = b_i, T = face area / centre distance / H^3, so coarse-coarse
+    1/H^2 (= Reaction), fine-fine 1/(2 H^2). Coarse-fine face: each of the four fine cells exchanges T = 1/(3 H^2)
+    (centre distance 3H/4) with the coarse value interpolated to its lateral position (ghost value: central slopes
+    from the two lateral coarse neighbours, dropped where one of them is not a coarse cell), and the coarse face
+    flux is the sum of the four fine fluxes (the lateral terms cancel in the sum: conservative). Walls, symmetry
+    planes, held faces and fixed cells as in Reaction (base: the Reaction of the base grid, whose fixed mask and
+    matrix are used). Solver: Krylov (BiCGSTAB; CG when the lateral terms are off and the matrix symmetric), warm
+    started from the previous solution, with a geometric two-grid preconditioner whose setup does not depend on the
+    block pattern: one Gauss-Seidel sweep on the composite matrix, the residual summed onto the base grid
+    (restriction = sum over the 8 children, prolongation = piecewise constant), one AMG V-cycle of the base-grid
+    matrix (Reaction's operator with the restricted reaction term; hierarchy rebuilt every 25 solves), one backward
+    sweep. (An AMG hierarchy of the composite matrix itself would have to be rebuilt whenever the blocks change, at
+    nearly every inner step.) The composite pattern is rebuilt when the active blocks change."""
+
+    def __init__(self, base, side, lev, lateral=True):
+        self.base, self.lev, self.lateral = base, lev, lateral
+        self.shape, self.H, self.q, self.transient = base.shape, base.h, base.q, base.transient
+        self.faces, self.fixed_base = held_faces(side), base.fixed
+        self.key, self._ml, self._n, self.nbuild = None, None, 0, 0
+        self.t = dict(build=0.0, amg=0.0, solve=0.0)
+        self.iters = []
+        fb = self.fixed_base.ravel()
+        self.frb = ~fb
+        self.A0bff = base.A0[self.frb][:, self.frb].tocsr()        # the base operator on its free cells
+
+    @staticmethod
+    def up8(u):
+        """(nb, B, B, B) base values of the blocks -> (nb, 2B, 2B, 2B), each repeated on its 8 children"""
+        return np.repeat(np.repeat(np.repeat(u, 2, 1), 2, 2), 2, 3)
+
+    def _build(self):
+        t0 = time.time()
+        lev, B, sh, H = self.lev, self.lev.B, self.shape, self.H
+        T_cc, T_ff, T_cf = 1 / H ** 2, 1 / (2 * H ** 2), 1 / (3 * H ** 2)
+        cov = np.repeat(np.repeat(np.repeat(lev.active, B, 0), B, 1), B, 2)    # base cells covered by a block
+        self.Mc = ~cov
+        nc = int(self.Mc.sum())
+        idxC = -np.ones(sh, int)
+        idxC[self.Mc] = np.arange(nc)
+        nF = lev.fine_cells()
+        idxF = (nc + np.arange(nF)).reshape((lev.nb,) + (2 * B,) * 3)
+        self.nc, self.n = nc, nc + nF
+        S, Lt = [], []                        # (rows, cols, vals): symmetric part, lateral interpolation terms
+
+        def face(i, j, T):
+            """flux T (u_i - u_j) into the rows of i and j"""
+            i, j = i.ravel(), j.ravel()
+            S.append((np.concatenate([i, j, i, j]), np.concatenate([i, j, j, i]),
+                      np.concatenate([np.full(2 * i.size, T), np.full(2 * i.size, -T)])))
+
+        for a in range(3):
+            i, j = along(idxC[None], a, slice(None, -1))[0], along(idxC[None], a, slice(1, None))[0]
+            ok = (i >= 0) & (j >= 0)
+            face(i[ok], j[ok], T_cc)
+            if lev.nb:
+                face(along(idxF, a, slice(None, -1)), along(idxF, a, slice(1, None)), T_ff)
+                t = lev.gh[a, 1]
+                if t["nbr"].size:             # fine-fine across the face to the next active block
+                    face(along(idxF[t["nbr"]], a, slice(-1, None)), along(idxF[t["nid"]], a, slice(0, 1)), T_ff)
+            lat = [l for l in range(3) if l != a]
+            for side in (0, 1):
+                t = lev.gh[a, side]
+                if not t["crs"].size:
+                    continue
+                I, J, K = t["cidx"]           # the coarse cells across the face (n, ., ., .), size 1 along a
+
+                def up2(u):                   # coarse face layer -> the fine lateral resolution
+                    return np.repeat(np.repeat(u, 2, lat[0] + 1), 2, lat[1] + 1)
+                fl = along(idxF[t["crs"]], a, slice(0, 1) if side == 0 else slice(-1, None))
+                face(up2(idxC[I, J, K]), fl, T_cf)
+                if not self.lateral:
+                    continue
+                for l in lat:                 # ghost = u_c + sgn/8 (u_{c,l+} - u_{c,l-}), sgn = -1 / +1 for the
+                    sgn = np.ones(fl.shape)   # fine cell at -H/4 / +H/4 from the coarse centre along l
+                    ix = [slice(None)] * 4
+                    ix[l + 1] = slice(0, None, 2)
+                    sgn[tuple(ix)] = -1.0
+                    ids = []
+                    for d in (1, -1):
+                        P = [I, J, K]
+                        P[l] = P[l] + d
+                        inside = (P[l] >= 0) & (P[l] < sh[l])
+                        Pc = tuple(np.clip(P[m], 0, sh[m] - 1) for m in range(3))
+                        ids.append(up2(np.where(inside, idxC[Pc], -1)))
+                    ok = (ids[0] >= 0) & (ids[1] >= 0)
+                    for idn, s in zip(ids, (-1.0, 1.0)):      # row f holds -T ghost
+                        Lt.append((fl[ok], idn[ok], s * T_cf * sgn[ok] / 8))
+        n = self.n
+        self.S0 = sp.csr_matrix((np.concatenate([x[2] for x in S]),
+                                 (np.concatenate([x[0] for x in S]), np.concatenate([x[1] for x in S]))), (n, n))
+        self.Lat = sp.csr_matrix((n, n)) if not Lt else sp.csr_matrix(
+            (np.concatenate([x[2] for x in Lt]), (np.concatenate([x[0] for x in Lt]), np.concatenate([x[1] for x in Lt]))),
+            (n, n))
+        # held faces: ghost = 2 value - u, T = area / (half spacing) / H^3: coarse 2/H^2, fine 1/H^2
+        self.d0, self.b0 = np.zeros(n), np.zeros(n)
+        for ax_, j in self.faces:
+            ids = along(idxC[None], ax_, slice(0, 1) if j == 0 else slice(-1, None))[0].ravel()
+            ids = ids[ids >= 0]
+            self.d0[ids] += 2 * T_cc
+            self.b0[ids] += 2 * T_cc
+            t = lev.gh[ax_, 0 if j == 0 else 1]
+            if t["wall"].size:
+                ids = along(idxF[t["wall"]], ax_, slice(0, 1) if j == 0 else slice(-1, None)).ravel()
+                self.d0[ids] += T_cc
+                self.b0[ids] += T_cc
+        self.vol = np.concatenate([np.ones(nc), np.full(nF, 0.125)])
+        self.fixed = np.concatenate([self.fixed_base[self.Mc],
+                                     self.up8(self.fixed_base[lev.CI, lev.CJ, lev.CK]).ravel()])
+        # the free unknowns (fixed cells eliminated, value 1), and the transfer to the base grid
+        f, fr = self.fixed, ~self.fixed
+        self.fr = fr
+        self.S0ff = self.S0[fr][:, fr].tocsr()
+        self.Latff = self.Lat[fr][:, fr].tocsr()
+        self.Afx = (self.S0 + self.Lat)[fr][:, f] @ np.ones(int(f.sum()))      # A_free,fixed * 1
+        idxb = np.arange(int(np.prod(sh))).reshape(sh)
+        parent = np.concatenate([idxb[self.Mc], self.up8(idxb[lev.CI, lev.CJ, lev.CK]).ravel()])
+        P = sp.csr_matrix((np.ones(n), (np.arange(n), parent)), (n, idxb.size))
+        self.R = P.T.tocsr()                                             # sum over the children
+        self.Pf = P[fr][:, self.frb].tocsr()
+        self.Rf = self.Pf.T.tocsr()
+        self.key, self.nbuild = lev.active.copy(), self.nbuild + 1
+        self.t["build"] += time.time() - t0
+
+    def vector(self, ub, Ff):
+        """composite vector from a base field (restricted means under the blocks) and the fine field"""
+        return np.concatenate([ub[self.Mc], Ff.ravel()])
+
+    def solve(self, phc, Fp, Lc, value=1.0, u_prev=None, dtau=None):
+        """phc, Lc: base phi_3D and living fraction; Fp: fine phi_3D; u_prev = (base field, fine field) of the last
+        solution (warm start; previous value of the transient option). Returns (base field with the restricted
+        fine means, fine field)."""
+        import pyamg
+        from pyamg.relaxation.relaxation import gauss_seidel
+        lev = self.lev
+        if self.key is None or not np.array_equal(self.key, lev.active):
+            self._build()
+        if value == 0.0:
+            return np.zeros(self.shape), np.zeros_like(Fp)
+        t0 = time.time()
+        nc, fr = self.nc, self.fr
+        Lf = self.up8(Lc[lev.CI, lev.CJ, lev.CK])             # the living fraction of the base cell
+        r = self.q * np.concatenate([(np.clip(phc, 0, 1) * Lc)[self.Mc], (np.clip(Fp, 0, 1) * Lf).ravel() / 8])
+        x0 = None if u_prev is None else self.vector(*u_prev) / value
+        m = 0.0 if (self.transient is None or u_prev is None) else 1.0 / (self.transient * dtau)
+        d = r + m * self.vol                                   # reaction (and transient) diagonal, fine cells / 8
+        b = self.b0 + (m * self.vol * x0 if m else 0.0)
+        Aff = (self.S0ff + sp.diags((self.d0 + d)[fr]) + self.Latff).tocsr()
+        rhs = b[fr] - self.Afx
+        self._n += 1
+        if self._ml is None or self._n % 25 == 1:             # base-grid AMG, reaction term = sum of the children
+            t1 = time.time()
+            Abff = (self.A0bff + sp.diags((self.base.d0 + self.R @ d)[self.frb])).tocsr()
+            self._ml = pyamg.smoothed_aggregation_solver(Abff, symmetry="symmetric")
+            self.t["amg"] += time.time() - t1
+        Mb, Pf, Rf = self._ml.aspreconditioner(), self.Pf, self.Rf
+
+        def two_grid(rr):
+            rr = np.ascontiguousarray(rr, dtype=np.float64).ravel()
+            xx = np.zeros_like(rr)
+            gauss_seidel(Aff, xx, rr, iterations=1, sweep="forward")
+            xx += Pf @ Mb.matvec(Rf @ (rr - Aff @ xx))
+            gauss_seidel(Aff, xx, rr, iterations=1, sweep="backward")
+            return xx
+        it = [0]
+
+        def cb(*_):
+            it[0] += 1
+        kw = dict(x0=None if x0 is None else x0[fr], rtol=1e-12, maxiter=500, callback=cb,
+                  M=spla.LinearOperator(Aff.shape, matvec=two_grid, dtype=np.float64))
+        sol, info = (spla.bicgstab if self.Latff.nnz else spla.cg)(Aff, rhs, **kw)
+        if info != 0:                                          # stagnation near round-off: finish with GMRES
+            sol, info = spla.gmres(Aff, rhs, x0=sol, rtol=1e-10, restart=50, maxiter=20, M=kw["M"])
+            assert info == 0, "composite nutrient solve did not converge"
+        self.iters.append(it[0])
+        x = np.where(self.fixed, 1.0, 0.0)
+        x[fr] = sol
+        x *= value
+        ub = np.zeros(self.shape)
+        ub[self.Mc] = x[:nc]
+        Ff = x[nc:].reshape(Fp.shape)
+        lev.to_base(Ff, ub)
+        self.t["solve"] += time.time() - t0
+        return ub, Ff
 
 
 def grad_mirror(u, h):
@@ -436,6 +656,14 @@ def run(o):
     per = int(np.ceil(DT_C / dt)); dt = DT_C / per
     lev = Level1(SHAPE, B) if refine else None
     o.c_fine = o.c_fine or o.c_fine_basephi
+    o.c_composite = o.c_composite or o.c_composite_nolateral
+    assert not (o.c_fine and o.c_composite), "--c-fine and --c-composite exclude each other"
+    if o.c_composite:                                            # nutrient and antibiotic on the composite grid
+        if not refine:                                           # (an empty block level: the base grid alone)
+            lev = Level1(SHAPE, B)
+            lev.set_active(np.zeros(lev.NB, bool), phi, alpha, smooth=dict(c=c, a=a))
+        comp = Composite(nut, -1, lev, lateral=not o.c_composite_nolateral)
+        comp_a = Composite(ab, 0, lev, lateral=not o.c_composite_nolateral)
     if o.c_fine:                                                 # diagnostic: the nutrient on the (2N)^3 grid
         assert refine
         SH2 = tuple(2 * s_ for s_ in SHAPE)
@@ -482,11 +710,20 @@ def run(o):
             d = d + W.BETA * lap_axis(up, a_, hf) - adv_axis(up, vf[a_], a_, hf)
         return d, W.K_ALPHA * Fp
 
-    def velocity(cc, h):
-        g = grad_mirror(cc, h)
+    def velocity(cc, h, g=None):
+        """v = r c/(k + c) n_c, n_c = grad c/|grad c|; g: the gradient, else central differences at spacing h"""
+        g = grad_mirror(cc, h) if g is None else g
         nrm = np.sqrt(g[0] ** 2 + g[1] ** 2 + g[2] ** 2 + EPS2)
         sp_ = R_FRONT * cc / (K_MONOD + cc)
         return [sp_ * x / nrm for x in g]
+
+    def grad_fine(Fc, cb):
+        """gradient of the composite c on the fine cells, central differences at hf; ghosts from the neighbouring
+        block, by mirroring at a wall, or by central-slope prolongation of the base field cb (restricted means
+        under the blocks) where the neighbour is coarse"""
+        sc = [s_[0] for s_ in slopes(cb[None], False)]
+        return [(along(up, a_, slice(3, -1)) - along(up, a_, slice(1, -3))) / (2 * hf)
+                for a_, up in ((a_, lev.padded(Fc, a_, cb, sc)) for a_ in range(3))]
 
     def phi_2N():
         p2 = rep2N(phi)
@@ -506,7 +743,7 @@ def run(o):
     t0 = time.time()
     nstep_total = 0
     if refine:
-        lev.set_active(tag_blocks(phi), phi, alpha)
+        lev.set_active(tag_blocks(phi), phi, alpha, smooth=dict(c=c, a=a) if o.c_composite else None)
     for k in range(int(round(o.tend / DT_C))):
         T1 = (k + 1) * DT_C
         cf, Lf = c, L
@@ -514,7 +751,7 @@ def run(o):
             # (0) retag: the edge moves, the blocks follow (base grid carries the restricted fine values)
             if refine and nstep_total % o.retag == 0 and nstep_total > 0:
                 t_ = time.time()
-                lev.set_active(tag_blocks(phi), phi, alpha)
+                lev.set_active(tag_blocks(phi), phi, alpha, smooth=dict(c=cf, a=a) if o.c_composite else None)
                 tm["retag"] += time.time() - t_
             # nutrient of this inner step on the base grid, the front velocity on both levels
             t_ = time.time()
@@ -525,6 +762,10 @@ def run(o):
                 cf = restrict8(cf2)
                 v = [restrict8(x) for x in v2]
                 vf = [x[lev.FI, lev.FJ, lev.FK] for x in v2] if lev.nb else None
+            elif o.c_composite:                                   # c on the composite grid, v on both levels
+                cf, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), dtau=dt)
+                v = velocity(cf, H)
+                vf = velocity(lev.extra["c"], hf, grad_fine(lev.extra["c"], cf)) if (refine and lev.nb) else None
             else:
                 cf = nut.solve(phi, Lf, 1.0, u_prev=cf, dtau=dt)
                 v = velocity(cf, H)
@@ -567,9 +808,15 @@ def run(o):
             c_new = cf
         elif o.c_fine:
             c_new = restrict8(nut2.solve(phi_2N(), L2, 1.0))
+        elif o.c_composite:
+            c_new, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]))
         else:
             c_new = nut.solve(phi, Lf, 1.0, u_prev=c, dtau=DT_C)
-        a_new = ab.solve(phi, Lf, (1.0 if T1 > T_AB + 1e-12 else 0.0) if antibiotic else 0.0, u_prev=a, dtau=DT_C)
+        a_val = (1.0 if T1 > T_AB + 1e-12 else 0.0) if antibiotic else 0.0
+        if o.c_composite:
+            a_new, lev.extra["a"] = comp_a.solve(phi, lev.Fphi, Lf, a_val, u_prev=(a, lev.extra["a"]), dtau=DT_C)
+        else:
+            a_new = ab.solve(phi, Lf, a_val, u_prev=a, dtau=DT_C)
         tm["nutrient"] += time.time() - t_
         t_ = time.time()
         idx = np.flatnonzero(on.ravel())
@@ -635,6 +882,10 @@ def run(o):
                    example=o.example, wall_s=wall, timing_s=tm, fine_cells_mean=float(fc.mean()),
                    fine_cells_max=int(fc.max()), fine_fraction_of_2N_mean=float(fc.mean() / (8 * phi.size)),
                    base_cells_quarter=int(phi.size), uniform_2N_cells_quarter=int(8 * phi.size))
+    if o.c_composite:
+        setting["composite"] = dict(lateral=not o.c_composite_nolateral, timing_s=comp.t, timing_a_s=comp_a.t,
+                                    iters_mean=float(np.mean(comp.iters)), iters_max=int(np.max(comp.iters)),
+                                    unknowns_last=comp.n, pattern_builds=comp.nbuild, solves=comp._n)
     print(f"[{o.example}] {wall:.0f} s; seed: living {hist['living_seed'][-1]:.4f}, alpha-1 {hist['seed_am1']:.4e}, "
           f"vM {hist['seed_vm_Pa']:.4e} Pa; fine cells mean {fc.mean():.0f} (max {int(fc.max())}, "
           f"{100 * fc.mean() / (8 * phi.size):.1f} % of (2N)^3 quarter); timing {{"
@@ -643,6 +894,7 @@ def run(o):
     name = (f"amr_nf{NF}" + ("_norefine" if not refine else f"_B{B}D{o.dilate}R{o.retag}")
             + ("" if o.tag_tol == 0.01 else f"_tol{o.tag_tol:g}") + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}")
             + ("" if o.transient_c is None else f"_transc{o.transient_c:g}") + ("_cfinebasephi" if o.c_fine_basephi else "_cfine" if o.c_fine else "")
+            + ("_ccompnolat" if o.c_composite_nolateral else "_ccomp" if o.c_composite else "")
             + ("_mixeq" if o.mix_equal else "")
             + (f"_{o.tag}" if o.tag else "") + f"_{o.example}")
     (RES / f"{name}.json").write_text(json.dumps(dict(setting=setting, hist=hist), indent=1, default=float) + "\n")
