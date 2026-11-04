@@ -38,11 +38,32 @@ would do better):
             cells from the composite c (ghosts as for phi, central slopes). The base grid carries the restricted
             means of the fine c, so the point model (still per base cell), the coarse velocity and the histories see
             the composite solution. Quasi-static (as the main runs); --transient-c keeps dc/dt there too (backward
-            Euler on the composite vector). Not done: no flux correction of phi at the coarse-fine faces, no
-            subcycling, point model per base cell.
+            Euler on the composite vector). --lat-all (4 Nov): the lateral interpolation of the ghost value also
+            where a lateral neighbour of the coarse cell lies in a block (mean of its 8 children) or outside the
+            domain (mirror); without it those ghosts are first order (a linear field is then exact on every fine
+            row away from the walls).
   point     the point model runs per BASE cell on the restricted phi_3D (colonisation at phi_3D >= phi_min of the
   model     base cell, inheritance from base neighbours as --inherit-living), so the living fraction, the
             consumption and the composition have the base resolution. Matching the composition was not the aim.
+            --point-fine (4 Nov, needs --c-composite): the point model also per fine cell inside the active blocks,
+            with c and a of the composite grid; colonisation and inheritance per fine cell (neighbours in the block,
+            in the next block, or the coarse cell across a block face); new blocks copy the base state onto the 8
+            children, the base cells under a block carry the restricted state (means of phi_i, phi_0, psi_i
+            weighted by phi_i so that sum_i phibar_i is conserved, on if any child is on), which a dropped block
+            leaves behind. The living fraction of the uptake then has the fine resolution in the blocks.
+  reflux    --reflux (4 Nov): flux correction at the coarse-fine faces. The coarse cell next to a block replaces its
+            own face terms by those of the four fine cells on that face: the diffusion flux beta (phi_f - phi_g)/hf
+            (phi_g the prolonged ghost; mean of the four, so the sum of the fine fluxes enters the coarse cell:
+            conservative) and, for the non-conservative front term v_c . grad phi, the MUSCL face value (mean of the
+            four upwind face values of the fine cells, with the coarse cell's v_c). Applied per RK stage; the base
+            stage values under the blocks are the restricted fine stage values. The diffusion term's volume
+            integral over the composite grid (hist diffusion_drift) is then round-off instead of ~1e-5 of the volume.
+  subcycle  --subcycle (4 Nov, implies --reflux): the base grid, the nutrient solve and the velocities take steps of
+            2 dt (the number of fine steps per outer step is made even), the fine blocks two steps of dt with the
+            ghost values interpolated linearly in time between the base grid before and after its step, v frozen;
+            then restriction and the refluxing with the RK-weighted time integrals of the face terms (Berger-Colella).
+            At 32^3 (one fine step of 0.0025 per outer step) this halves the fine step instead of doubling the coarse
+            one, so the saving appears from 64^3 on.
   stress    at T* = 1 phi_3D and alpha - 1 are written on the equivalent uniform (2N)^3 grid (fine blocks where
             active, limited linear prolongation of the base grid elsewhere), unfolded to the full cube, averaged per
             element of the 16^3 stress mesh and solved with wp3_stress_reference.solve_fields, as the main script.
@@ -53,7 +74,10 @@ would do better):
 
     python ansys_usermat/apdl/coupled_amr.py --nf 32 --example mixed_ab --mix-equal [--no-refine]
         [--block 4 --dilate 2 --retag 1 --tag-tol 0.01] [--dtc 0.025] [--transient-c 1e8] [--c-fine | --c-composite]
+        [--limiter minmod] [--reflux] [--subcycle] [--point-fine] [--lat-all]
     -> results/2026-11-amr/amr_<tag>.json (+ .npz), python coupled_amr.py --table prints the comparison
+    All four options of 4 Nov are off by default and the default path is unchanged (the composite Krylov solve is
+    not bitwise reproducible from run to run, about 1e-13 relative, so "unchanged" means agreement at that level).
 Model options have the values of the main runs (--front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min
 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living --fortran) and can be changed as there.
 """
@@ -115,6 +139,17 @@ def parse(argv=None):
                     "lateral interpolation of the ghost values (symmetric matrix, CG)")
     ap.add_argument("--limiter", default="minmod", choices=["minmod", "vanleer", "mc", "superbee"],
                     help="TVD limiter of the front term (prolongation stays minmod)")
+    ap.add_argument("--reflux", action="store_true", help="flux correction of phi_3D at the coarse-fine faces: the "
+                    "coarse cell next to a block takes the mean of the four fine face fluxes (diffusion) and face "
+                    "values (front term) instead of its own; the base grid carries the restricted fine stage values")
+    ap.add_argument("--subcycle", action="store_true", help="the base grid (and the nutrient) take steps of 2 dt, "
+                    "the fine blocks two steps of dt with ghosts interpolated in time; restriction and refluxing after "
+                    "the coarse step (implies --reflux; the number of fine steps per outer step is made even)")
+    ap.add_argument("--point-fine", action="store_true", help="point model per fine cell inside the active blocks "
+                    "(state prolonged piecewise constant into new blocks, restricted conservatively onto the base "
+                    "grid), so the living fraction of the uptake has the fine resolution; needs --c-composite")
+    ap.add_argument("--lat-all", action="store_true", help="--c-composite: lateral interpolation of the ghost values "
+                    "also where a lateral neighbour lies in a block (mean of its children) or outside (mirror)")
     ap.add_argument("--table", action="store_true", help="print the comparison table of results/2026-11-amr")
     return ap.parse_args(argv)
 
@@ -154,9 +189,10 @@ def limited_slope(dp, dm):
     return np.where(dp * dm > 0, np.sign(dp) * np.minimum(ap, am), 0.0)
 
 
-def adv_axis(up, va, a, h):
+def adv_axis(up, va, a, h, faces=False):
     """v_a d u/dx_a, MUSCL face values with minmod slopes, upwind (coupled_living_consumption.upwind_adv_tvd);
-    up padded by 2 along a; with mirror ghosts this equals the main script's wall treatment"""
+    up padded by 2 along a; with mirror ghosts this equals the main script's wall treatment.
+    faces: also return the face extrapolations fr (to the + face) and fl (to the - face) of up[1:-1] (--reflux)"""
     u1 = along(up, a, slice(1, -1))
     dp = along(up, a, slice(2, None)) - u1
     dm = u1 - along(up, a, slice(0, -2))
@@ -165,7 +201,22 @@ def adv_axis(up, va, a, h):
     dP = (along(fr, a, slice(1, -1)) - along(fr, a, slice(0, -2))) / h
     fl = u1 - 0.5 * sl
     dN = (along(fl, a, slice(2, None)) - along(fl, a, slice(1, -1))) / h
-    return np.maximum(va, 0.0) * dP + np.minimum(va, 0.0) * dN
+    out = np.maximum(va, 0.0) * dP + np.minimum(va, 0.0) * dN
+    return (out, fr, fl) if faces else out
+
+
+def mean4(x, a):
+    """mean over the 2 x 2 fine cells of each coarse face: (n, ., ., .), size 1 along a, lateral sizes halved"""
+    for l in range(3):
+        if l != a:
+            sh = x.shape
+            x = x.reshape(sh[:l + 1] + (sh[l + 1] // 2, 2) + sh[l + 2:]).mean(axis=l + 2)
+    return x
+
+
+def up8(u):
+    """(nb, B, B, B, ...) base values of the blocks -> (nb, 2B, 2B, 2B, ...), each repeated on its 8 children"""
+    return np.repeat(np.repeat(np.repeat(u, 2, 1), 2, 2), 2, 3)
 
 
 def slopes(u, limited):
@@ -216,13 +267,15 @@ class Level1:
         self.Fphi = np.zeros((0, 2 * B, 2 * B, 2 * B))
         self.Fal = np.zeros((0, 2 * B, 2 * B, 2 * B))
 
-    def set_active(self, active, phc, alc, smooth=None):
+    def set_active(self, active, phc, alc, smooth=None, point=None):
         """new active set: keep the fine data of blocks that stay, prolong (limited) the base grid into new ones;
         smooth: {name: base field} of smooth fine fields (c, a of --c-composite) carried in self.extra[name] the
-        same way, new blocks by central-slope prolongation"""
+        same way, new blocks by central-slope prolongation; point (--point-fine): dict(G, on, L) of the base grid,
+        the point-model state of new blocks is copied onto the 8 children (self.FG, self.Fon, self.FL)"""
         B = self.B
         old_bid, old_phi, old_al = self.bid, self.Fphi, self.Fal
         old_extra = getattr(self, "extra", {})
+        old_point = (self.FG, self.Fon, self.FL) if hasattr(self, "FG") else None
         self.active = active
         self.nb = int(active.sum())
         self.bid = -np.ones(self.NB, int)
@@ -254,6 +307,18 @@ class Level1:
                 s = slopes(src[None], False)
                 dst[sel] = children(src[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
             self.extra[name] = dst
+        if point is not None:
+            sh = self.Fphi.shape
+            FG, Fon, FL = np.zeros(sh + (12,)), np.zeros(sh, bool), np.zeros(sh)
+            if kept.any() and old_point is not None:
+                for src, dst in zip(old_point, (FG, Fon, FL)):
+                    dst[kept] = src[keep[kept]]
+            if (~kept).any():
+                sel = np.flatnonzero(~kept)
+                I, J, K = self.CI[sel], self.CJ[sel], self.CK[sel]
+                for src, dst in zip((point["G"], point["on"], point["L"]), (FG, Fon, FL)):
+                    dst[sel] = up8(src[I, J, K])
+            self.FG, self.Fon, self.FL = FG, Fon, FL
         # ghost tables per (axis, side): neighbour block, wall or base grid
         self.gh = {}
         for a in range(3):
@@ -288,6 +353,23 @@ class Level1:
     def padded(self, F, a, uc, sc):
         return np.concatenate([self.ghosts(F, a, 0, uc, sc), F, self.ghosts(F, a, 1, uc, sc)], axis=a + 1)
 
+    def padded_pc(self, F, a, uc):
+        """as padded with piecewise-constant coarse ghosts (the point-model state: trailing axes allowed)"""
+        out = []
+        for side in (0, 1):
+            sh = list(F.shape); sh[a + 1] = 2
+            G = np.empty(sh)
+            t = self.gh[a, side]
+            if t["nbr"].size:
+                G[t["nbr"]] = along(F[t["nid"]], a, slice(0, 2) if side else slice(-2, None))
+            if t["wall"].size:
+                G[t["wall"]] = np.flip(along(F[t["wall"]], a, slice(-2, None) if side else slice(0, 2)), axis=a + 1)
+            if t["crs"].size:
+                I, J, K = t["cidx"]
+                G[t["crs"]] = up8(uc[I, J, K])
+            out.append(G)
+        return np.concatenate([out[0], F, out[1]], axis=a + 1)
+
     def restrict(self, F):
         B = self.B
         return F.reshape(self.nb, B, 2, B, 2, B, 2).mean(axis=(2, 4, 6))
@@ -296,6 +378,22 @@ class Level1:
         """write the restricted block means into the base array uc (in place)"""
         if self.nb:
             uc[self.CI, self.CJ, self.CK] = self.restrict(F)
+
+    def restrict_point(self, G, on, L):
+        """--point-fine: the fine point-model state onto the base cells under the blocks (in place): volume
+        fractions phi_i, phi_0 and the multiplier as means of the 8 children, psi_i weighted by phi_i (so that
+        phibar_i = phi_i psi_i is conserved), on where any child is on, L as the mean of the children"""
+        if not self.nb:
+            return
+        B, I, J, K = self.B, self.CI, self.CJ, self.CK
+        r8 = lambda u: u.reshape((self.nb, B, 2, B, 2, B, 2) + u.shape[4:]).mean(axis=(2, 4, 6))  # noqa: E731
+        Gm = r8(self.FG)
+        bar = r8(self.FG[..., :5] * self.FG[..., 6:11])
+        Gm[..., 6:11] = np.where(Gm[..., :5] > 1e-30, bar / np.where(Gm[..., :5] > 1e-30, Gm[..., :5], 1.0),
+                                 Gm[..., 6:11])
+        G[I, J, K] = Gm
+        on[I, J, K] = self.Fon.reshape(self.nb, B, 2, B, 2, B, 2).any(axis=(2, 4, 6))
+        L[I, J, K] = self.restrict(self.FL)
 
     def interp(self, uc):
         """base field -> fine blocks, linear with central slopes (smooth fields: the front velocity)"""
@@ -388,8 +486,8 @@ class Composite:
     sweep. (An AMG hierarchy of the composite matrix itself would have to be rebuilt whenever the blocks change, at
     nearly every inner step.) The composite pattern is rebuilt when the active blocks change."""
 
-    def __init__(self, base, side, lev, lateral=True):
-        self.base, self.lev, self.lateral = base, lev, lateral
+    def __init__(self, base, side, lev, lateral=True, lat_all=False):
+        self.base, self.lev, self.lateral, self.lat_all = base, lev, lateral, lat_all
         self.shape, self.H, self.q, self.transient = base.shape, base.h, base.q, base.transient
         self.faces, self.fixed_base = held_faces(side), base.fixed
         self.key, self._ml, self._n, self.nbuild = None, None, 0, 0
@@ -398,11 +496,6 @@ class Composite:
         fb = self.fixed_base.ravel()
         self.frb = ~fb
         self.A0bff = base.A0[self.frb][:, self.frb].tocsr()        # the base operator on its free cells
-
-    @staticmethod
-    def up8(u):
-        """(nb, B, B, B) base values of the blocks -> (nb, 2B, 2B, 2B), each repeated on its 8 children"""
-        return np.repeat(np.repeat(np.repeat(u, 2, 1), 2, 2), 2, 3)
 
     def _build(self):
         t0 = time.time()
@@ -416,6 +509,11 @@ class Composite:
         nF = lev.fine_cells()
         idxF = (nc + np.arange(nF)).reshape((lev.nb,) + (2 * B,) * 3)
         self.nc, self.n = nc, nc + nF
+        if self.lat_all:                      # the 8 fine ids under every covered base cell (--lat-all)
+            childF = -np.ones(sh + (8,), int)
+            if lev.nb:
+                childF[lev.CI, lev.CJ, lev.CK] = idxF.reshape(lev.nb, B, 2, B, 2, B, 2).transpose(
+                    0, 1, 3, 5, 2, 4, 6).reshape(lev.nb, B, B, B, 8)
         S, Lt = [], []                        # (rows, cols, vals): symmetric part, lateral interpolation terms
 
         def face(i, j, T):
@@ -458,6 +556,18 @@ class Composite:
                         inside = (P[l] >= 0) & (P[l] < sh[l])
                         Pc = tuple(np.clip(P[m], 0, sh[m] - 1) for m in range(3))
                         ids.append(up2(np.where(inside, idxC[Pc], -1)))
+                        if self.lat_all:      # neighbour in a block: mean of its 8 children; outside: mirror (c)
+                            s = -1.0 if d == 1 else 1.0
+                            coef = s * T_cf * sgn / 8
+                            isc, out = ids[-1] >= 0, up2(np.broadcast_to(~inside, I.shape))
+                            Lt.append((fl[isc], ids[-1][isc], coef[isc]))
+                            Lt.append((fl[out], up2(idxC[I, J, K])[out], coef[out]))
+                            ch = up2(childF[Pc])
+                            cov_ = (ch[..., 0] >= 0) & ~out
+                            for m in range(8):
+                                Lt.append((fl[cov_], ch[..., m][cov_], coef[cov_] / 8))
+                    if self.lat_all:
+                        continue
                     ok = (ids[0] >= 0) & (ids[1] >= 0)
                     for idn, s in zip(ids, (-1.0, 1.0)):      # row f holds -T ghost
                         Lt.append((fl[ok], idn[ok], s * T_cf * sgn[ok] / 8))
@@ -481,7 +591,7 @@ class Composite:
                 self.b0[ids] += T_cc
         self.vol = np.concatenate([np.ones(nc), np.full(nF, 0.125)])
         self.fixed = np.concatenate([self.fixed_base[self.Mc],
-                                     self.up8(self.fixed_base[lev.CI, lev.CJ, lev.CK]).ravel()])
+                                     up8(self.fixed_base[lev.CI, lev.CJ, lev.CK]).ravel()])
         # the free unknowns (fixed cells eliminated, value 1), and the transfer to the base grid
         f, fr = self.fixed, ~self.fixed
         self.fr = fr
@@ -489,7 +599,7 @@ class Composite:
         self.Latff = self.Lat[fr][:, fr].tocsr()
         self.Afx = (self.S0 + self.Lat)[fr][:, f] @ np.ones(int(f.sum()))      # A_free,fixed * 1
         idxb = np.arange(int(np.prod(sh))).reshape(sh)
-        parent = np.concatenate([idxb[self.Mc], self.up8(idxb[lev.CI, lev.CJ, lev.CK]).ravel()])
+        parent = np.concatenate([idxb[self.Mc], up8(idxb[lev.CI, lev.CJ, lev.CK]).ravel()])
         P = sp.csr_matrix((np.ones(n), (np.arange(n), parent)), (n, idxb.size))
         self.R = P.T.tocsr()                                             # sum over the children
         self.Pf = P[fr][:, self.frb].tocsr()
@@ -501,10 +611,10 @@ class Composite:
         """composite vector from a base field (restricted means under the blocks) and the fine field"""
         return np.concatenate([ub[self.Mc], Ff.ravel()])
 
-    def solve(self, phc, Fp, Lc, value=1.0, u_prev=None, dtau=None):
+    def solve(self, phc, Fp, Lc, value=1.0, u_prev=None, dtau=None, Lfine=None):
         """phc, Lc: base phi_3D and living fraction; Fp: fine phi_3D; u_prev = (base field, fine field) of the last
-        solution (warm start; previous value of the transient option). Returns (base field with the restricted
-        fine means, fine field)."""
+        solution (warm start; previous value of the transient option); Lfine: the living fraction per fine cell
+        (--point-fine; else that of the base cell). Returns (base field with the restricted fine means, fine field)."""
         import pyamg
         from pyamg.relaxation.relaxation import gauss_seidel
         lev = self.lev
@@ -514,7 +624,7 @@ class Composite:
             return np.zeros(self.shape), np.zeros_like(Fp)
         t0 = time.time()
         nc, fr = self.nc, self.fr
-        Lf = self.up8(Lc[lev.CI, lev.CJ, lev.CK])             # the living fraction of the base cell
+        Lf = up8(Lc[lev.CI, lev.CJ, lev.CK]) if Lfine is None else Lfine   # living fraction of the base cell
         r = self.q * np.concatenate([(np.clip(phc, 0, 1) * Lc)[self.Mc], (np.clip(Fp, 0, 1) * Lf).ravel() / 8])
         x0 = None if u_prev is None else self.vector(*u_prev) / value
         m = 0.0 if (self.transient is None or u_prev is None) else 1.0 / (self.transient * dtau)
@@ -673,17 +783,24 @@ def run(o):
     dt = 0.15 * hf * hf / W.BETA
     dt = min(dt, 0.4 * hf / (R_FRONT / (1 + K_MONOD)))
     dt = min(dt, 2.2 / (12 * W.BETA / hf ** 2 + 2 * R_FRONT / (1 + K_MONOD) / hf))
-    per = int(np.ceil(DT_C / dt)); dt = DT_C / per
+    per = int(np.ceil(DT_C / dt))
+    if o.subcycle:                                               # the base grid takes 2 dt: an even number of dt
+        assert refine, "--subcycle needs the refined grid"
+        o.reflux = True
+        per = 2 * int(np.ceil(per / 2))
+    dt = DT_C / per
     lev = Level1(SHAPE, B) if refine else None
     o.c_fine = o.c_fine or o.c_fine_basephi
     o.c_composite = o.c_composite or o.c_composite_nolateral
     assert not (o.c_fine and o.c_composite), "--c-fine and --c-composite exclude each other"
+    assert not o.point_fine or (o.c_composite and refine), "--point-fine needs --c-composite on the refined grid"
+    assert not o.reflux or refine, "--reflux needs the refined grid"
     if o.c_composite:                                            # nutrient and antibiotic on the composite grid
         if not refine:                                           # (an empty block level: the base grid alone)
             lev = Level1(SHAPE, B)
             lev.set_active(np.zeros(lev.NB, bool), phi, alpha, smooth=dict(c=c, a=a))
-        comp = Composite(nut, -1, lev, lateral=not o.c_composite_nolateral)
-        comp_a = Composite(ab, 0, lev, lateral=not o.c_composite_nolateral)
+        comp = Composite(nut, -1, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
+        comp_a = Composite(ab, 0, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
     if o.c_fine:                                                 # diagnostic: the nutrient on the (2N)^3 grid
         assert refine
         SH2 = tuple(2 * s_ for s_ in SHAPE)
@@ -714,21 +831,81 @@ def run(o):
             t = maximum_filter(t.astype(np.uint8), size=2 * o.dilate + 1, mode="constant", cval=0) > 0
         return t.reshape(lev.NB[0], B, lev.NB[1], B, lev.NB[2], B).any(axis=(1, 3, 5))
 
-    def rhs_base(ph, al, v):
-        """Eq. 34 and 36 on the base grid (stack of one block, mirror ghosts)"""
+    unc = np.ones(SHAPE, bool)                                   # base cells not covered by a block
+    faces_crs = []                                               # (axis, side) with coarse-fine faces (--reflux)
+
+    def retag(cfield):
+        """new active set from the base phi_3D; the carried fine fields and the bookkeeping that depends on it"""
+        smooth = dict(c=cfield, a=a, **(dict(c0=c) if o.point_fine else {})) if o.c_composite else None
+        lev.set_active(tag_blocks(phi), phi, alpha, smooth=smooth,
+                       point=dict(G=G, on=on, L=L) if o.point_fine else None)
+        unc[:] = ~np.repeat(np.repeat(np.repeat(lev.active, B, 0), B, 1), B, 2)
+        faces_crs[:] = [(a_, sd) for a_ in range(3) for sd in (0, 1) if lev.gh[a_, sd]["crs"].size] if o.reflux else []
+
+    def rhs_base(ph, al, v, faces=False):
+        """Eq. 34 and 36 on the base grid (stack of one block, mirror ghosts); also the face extrapolations of the
+        front term per axis (faces, --reflux) and the volume rate of the diffusion term over the uncovered cells"""
         d = W.K_ALPHA * al - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
+        fr_, fl_ = [], []
         for a_ in range(3):
             up = pad_mirror(ph[None], a_, 2)
-            d = d + (W.BETA * lap_axis(up, a_, H) - adv_axis(up, v[a_][None], a_, H))[0]
-        return d, W.K_ALPHA * ph
+            lt = W.BETA * lap_axis(up, a_, H)
+            at = adv_axis(up, v[a_][None], a_, H, faces)
+            if faces:
+                at, r_, l_ = at
+                fr_.append(r_[0]); fl_.append(l_[0])
+            d = d + (lt - at)[0]
+            dsum = lt[0] if a_ == 0 else dsum + lt[0]
+        return d, W.K_ALPHA * ph, (fr_, fl_), float(dsum[unc].sum()) * H ** 3
 
-    def rhs_fine(Fp, Fa, phc, vf):
+    def rhs_fine(Fp, Fa, phc, vf, faces=False):
+        """as rhs_base on the fine blocks, ghosts from phc; faces: (padded phi, fr, fl) per axis"""
         d = W.K_ALPHA * Fa - W.PENALTY * (np.maximum(Fp - 1, 0) + np.minimum(Fp, 0))
         sc = [s_[0] for s_ in slopes(phc[None], True)]
+        fd = []
         for a_ in range(3):
             up = lev.padded(Fp, a_, phc, sc)
-            d = d + W.BETA * lap_axis(up, a_, hf) - adv_axis(up, vf[a_], a_, hf)
-        return d, W.K_ALPHA * Fp
+            lt = W.BETA * lap_axis(up, a_, hf)
+            at = adv_axis(up, vf[a_], a_, hf, faces)
+            if faces:
+                at, r_, l_ = at
+                fd.append((up, r_, l_))
+            d = d + lt - at
+            dsum = lt if a_ == 0 else dsum + lt
+        return d, W.K_ALPHA * Fp, fd, float(dsum.sum()) * hf ** 3
+
+    def shift(I, J, K, a_, e):
+        P = [I, J, K]; P[a_] = P[a_] + e
+        return tuple(P)
+
+    def coarse_iface(a_, side, ph, v, fr_, fl_):
+        """--reflux: the coarse cells c across face (a_, side) of the blocks with a coarse neighbour there, and this
+        face's contribution to d phi/dt of c as the base grid computes it: diffusion flux into c / H, front term
+        -v_c s phi_face / H (s = +1 at the + face of c); returns (index, diffusion part, front part)"""
+        I, J, K = lev.gh[a_, side]["cidx"]
+        b = shift(I, J, K, a_, 1 if side == 0 else -1)           # the covered neighbour of c
+        s = 1.0 if side == 0 else -1.0
+        vc = v[a_][I, J, K]
+        c1, b1 = shift(I, J, K, a_, 1), shift(*b, a_, 1)         # fr, fl are padded by one along a_
+        phiF = np.where(vc > 0, fr_[a_][c1 if side == 0 else b1], fl_[a_][b1 if side == 0 else c1])
+        return (I, J, K), W.BETA * (ph[b] - ph[I, J, K]) / H / H, -vc * s * phiF / H
+
+    def fine_iface(a_, side, fd, vf, vc):
+        """--reflux: the same contribution from the fine side: mean of the four fine face fluxes (into c) / H and
+        of the four fine face values with v_c, for the blocks whose neighbour across the face is coarse"""
+        crs = lev.gh[a_, side]["crs"]
+        up, pr, pl = fd[a_]
+        upc = up[crs]
+        s = 1.0 if side == 0 else -1.0
+        if side == 0:                                            # ghost g1 | fine f0 at the - face of the block
+            g1, f0 = along(upc, a_, slice(1, 2)), along(upc, a_, slice(2, 3))
+            vff = along(vf[a_][crs], a_, slice(0, 1))
+            phiF = np.where(vff > 0, along(pr[crs], a_, slice(0, 1)), along(pl[crs], a_, slice(1, 2)))
+        else:
+            g1, f0 = along(upc, a_, slice(-2, -1)), along(upc, a_, slice(-3, -2))
+            vff = along(vf[a_][crs], a_, slice(-1, None))
+            phiF = np.where(vff > 0, along(pr[crs], a_, slice(-2, -1)), along(pl[crs], a_, slice(-1, None)))
+        return mean4(-W.BETA * (g1 - f0) / hf, a_) / H, -vc * s * mean4(phiF, a_) / H
 
     def velocity(cc, h, g=None):
         """v = r c/(k + c) n_c, n_c = grad c/|grad c|; g: the gradient, else central differences at spacing h"""
@@ -755,23 +932,53 @@ def run(o):
         ph = G[m][:, :N_SP]
         return float((ph[:, 0] / ph.sum(1)).mean())
 
+    def fill_fine():
+        """--point-fine: colonise fine cells at phi_3D >= phi_min from their colonised neighbours (fine, or the
+        coarse cell across a block face, piecewise constant), weights phi_3D as neighbours_mean; True if any"""
+        if not lev.nb:
+            return False
+        Fnew = (lev.Fphi >= o.phi_min) & ~lev.Fon
+        if not Fnew.any():
+            return False
+        wb, wf = np.where(on, phi, 0.0), np.where(lev.Fon, lev.Fphi, 0.0)
+        num, den = np.zeros(lev.FG.shape), np.zeros(lev.Fon.shape)
+        for a_ in range(3):
+            wp, gp = lev.padded_pc(wf, a_, wb), lev.padded_pc(lev.FG, a_, G)
+            for sl in (slice(1, -3), slice(3, -1)):              # the - and + neighbour (padded by 2)
+                wn = along(wp, a_, sl)
+                den += wn
+                num += wn[..., None] * along(gp, a_, sl)
+        fill = Fnew & (den > 0)
+        if not fill.any():
+            return False
+        gs = living_start(num[fill] / den[fill][:, None])
+        gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+        gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
+        lev.FG[fill] = gs
+        lev.Fon |= fill
+        return True
+
     hist = dict(t=[0.0], living_seed=[float(L[seed].mean())], share_a_seed=[shares(seed)],
                 c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum()) * 4],
-                fine_cells=[], active_blocks=[], phi_max=[], phi_min=[])
+                fine_cells=[], active_blocks=[], phi_max=[], phi_min=[], vol=[float(phi.sum()) * H ** 3])
+    drift = 0.0                        # time integral of the diffusion term over the composite grid (volume drift)
     tm = dict(base=0.0, fine=0.0, nutrient=0.0, point=0.0, retag=0.0, restrict=0.0)
     snaps = {}
     t0 = time.time()
     nstep_total = 0
+    nsub = 2 if o.subcycle else 1
     if refine:
-        lev.set_active(tag_blocks(phi), phi, alpha, smooth=dict(c=c, a=a) if o.c_composite else None)
+        retag(c)
     for k in range(int(round(o.tend / DT_C))):
         T1 = (k + 1) * DT_C
         cf, Lf = c, L
-        for i_in in range(per):
+        FLf = lev.FL if o.point_fine else None
+        for i_in in range(0, per, nsub):
             # (0) retag: the edge moves, the blocks follow (base grid carries the restricted fine values)
             if refine and nstep_total % o.retag == 0 and nstep_total > 0:
                 t_ = time.time()
-                lev.set_active(tag_blocks(phi), phi, alpha, smooth=dict(c=cf, a=a) if o.c_composite else None)
+                retag(cf)
+                FLf = lev.FL if o.point_fine else None
                 tm["retag"] += time.time() - t_
             # nutrient of this inner step on the base grid, the front velocity on both levels
             t_ = time.time()
@@ -783,7 +990,8 @@ def run(o):
                 v = [restrict8(x) for x in v2]
                 vf = [x[lev.FI, lev.FJ, lev.FK] for x in v2] if lev.nb else None
             elif o.c_composite:                                   # c on the composite grid, v on both levels
-                cf, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), dtau=dt)
+                cf, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), dtau=dt,
+                                                Lfine=FLf)
                 v = velocity(cf, H)
                 vf = velocity(lev.extra["c"], hf, grad_fine(lev.extra["c"], cf)) if (refine and lev.nb) else None
             else:
@@ -792,36 +1000,103 @@ def run(o):
                 vf = [lev.interp(x) for x in v] if (refine and lev.nb) else None
             tm["nutrient"] += time.time() - t_
 
-            def f(ph, al, Fp, Fa):
-                t1 = time.time()
-                dc = rhs_base(ph, al, v)
-                tm["base"] += time.time() - t1
-                if vf is None:
-                    return dc, (None, None)
-                t1 = time.time()
-                df = rhs_fine(Fp, Fa, ph, vf)
-                tm["fine"] += time.time() - t1
-                return dc, df
+            if o.subcycle:
+                # (1a) the base grid alone, one step of 2 dt (v frozen); the time integral of the interface terms
+                #      of the coarse cells next to the blocks is kept for the refluxing
+                dt2 = 2 * dt
+                ph0 = phi
+                acc = {key: [lev.gh[key]["cidx"], 0.0, 0.0] for key in faces_crs}   # index, correction, diffusion
 
-            Fp, Fa = (lev.Fphi, lev.Fal) if vf is not None else (None, None)
-            k1c, k1f = f(phi, alpha, Fp, Fa)
-            st = lambda kc, kf, w: (phi + w * dt * kc[0], alpha + w * dt * kc[1],  # noqa: E731
-                                    None if vf is None else Fp + w * dt * kf[0],
-                                    None if vf is None else Fa + w * dt * kf[1])
-            k2c, k2f = f(*st(k1c, k1f, 0.5))
-            k3c, k3f = f(*st(k2c, k2f, 0.5))
-            k4c, k4f = f(*st(k3c, k3f, 1.0))
-            phi = phi + dt / 6 * (k1c[0] + 2 * k2c[0] + 2 * k3c[0] + k4c[0])
-            alpha = alpha + dt / 6 * (k1c[1] + 2 * k2c[1] + 2 * k3c[1] + k4c[1])
-            if vf is not None:
-                t_ = time.time()
-                lev.Fphi = Fp + dt / 6 * (k1f[0] + 2 * k2f[0] + 2 * k3f[0] + k4f[0])
-                lev.Fal = Fa + dt / 6 * (k1f[1] + 2 * k2f[1] + 2 * k3f[1] + k4f[1])
-                lev.to_base(lev.Fphi, phi); lev.to_base(lev.Fal, alpha)
-                tm["restrict"] += time.time() - t_
-            hist["fine_cells"].append(lev.fine_cells() if refine else 0)
-            hist["active_blocks"].append(lev.nb if refine else 0)
-            nstep_total += 1
+                def fc_(ph, al, wgt):
+                    t1 = time.time()
+                    dc, dal, fc, dif = rhs_base(ph, al, v, bool(acc))
+                    for key, ac in acc.items():
+                        _, Tcd, Tca = coarse_iface(*key, ph, v, *fc)
+                        ac[1] = ac[1] - wgt * dt2 * (Tcd + Tca); ac[2] = ac[2] - wgt * dt2 * Tcd
+                    tm["base"] += time.time() - t1
+                    return dc, dal, dif
+                k1 = fc_(phi, alpha, 1 / 6)
+                k2 = fc_(phi + 0.5 * dt2 * k1[0], alpha + 0.5 * dt2 * k1[1], 2 / 6)
+                k3 = fc_(phi + 0.5 * dt2 * k2[0], alpha + 0.5 * dt2 * k2[1], 2 / 6)
+                k4 = fc_(phi + dt2 * k3[0], alpha + dt2 * k3[1], 1 / 6)
+                phi = phi + dt2 / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+                alpha = alpha + dt2 / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+                drift += dt2 / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+                if vf is not None:
+                    # (1b) the fine blocks, two steps of dt, ghosts from the base grid interpolated in time
+                    Fp, Fa = lev.Fphi, lev.Fal
+                    vcf = {key: v[key[0]][ac[0]] for key, ac in acc.items()}
+                    for j in (0, 1):
+                        def ff(Fp_, Fa_, w, wgt):
+                            t1 = time.time()
+                            th = (j + w) / 2
+                            ph = ph0 if th == 0 else phi if th == 1 else (1 - th) * ph0 + th * phi
+                            df, dfa, fd, dif = rhs_fine(Fp_, Fa_, ph, vf, bool(acc))
+                            for key, ac in acc.items():
+                                Tfd, Tfa = fine_iface(*key, fd, vf, vcf[key])
+                                ac[1] = ac[1] + wgt * dt * (Tfd + Tfa); ac[2] = ac[2] + wgt * dt * Tfd
+                            tm["fine"] += time.time() - t1
+                            return df, dfa, dif
+                        k1 = ff(Fp, Fa, 0.0, 1 / 6)
+                        k2 = ff(Fp + 0.5 * dt * k1[0], Fa + 0.5 * dt * k1[1], 0.5, 2 / 6)
+                        k3 = ff(Fp + 0.5 * dt * k2[0], Fa + 0.5 * dt * k2[1], 0.5, 2 / 6)
+                        k4 = ff(Fp + dt * k3[0], Fa + dt * k3[1], 1.0, 1 / 6)
+                        Fp = Fp + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+                        Fa = Fa + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+                        drift += dt / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+                    # (1c) restriction, then the refluxing of the coarse cells next to the blocks
+                    t_ = time.time()
+                    lev.Fphi, lev.Fal = Fp, Fa
+                    lev.to_base(lev.Fphi, phi); lev.to_base(lev.Fal, alpha)
+                    for idx, corr, cd in acc.values():
+                        phi[idx] += corr
+                        drift += float(np.sum(cd)) * H ** 3
+                    tm["restrict"] += time.time() - t_
+            else:
+                # (1) both levels with the same step dt and the same RK4 stages
+                def f(ph, al, Fp, Fa):
+                    t1 = time.time()
+                    dc, dal, fc, dif = rhs_base(ph, al, v, o.reflux and vf is not None)
+                    tm["base"] += time.time() - t1
+                    if vf is None:
+                        return (dc, dal), (None, None), dif
+                    t1 = time.time()
+                    df, dfa, fd, dif_f = rhs_fine(Fp, Fa, ph, vf, o.reflux)
+                    for key in faces_crs:                  # --reflux: the fine face fluxes replace the coarse ones
+                        idx, Tcd, Tca = coarse_iface(*key, ph, v, *fc)
+                        Tfd, Tfa = fine_iface(*key, fd, vf, v[key[0]][idx])
+                        dc[idx] += (Tfd - Tcd) + (Tfa - Tca)
+                        dif += float((Tfd - Tcd).sum()) * H ** 3
+                    tm["fine"] += time.time() - t1
+                    return (dc, dal), (df, dfa), dif + dif_f
+
+                Fp, Fa = (lev.Fphi, lev.Fal) if vf is not None else (None, None)
+
+                def st(kc, kf, w):
+                    ph, al = phi + w * dt * kc[0], alpha + w * dt * kc[1]
+                    if vf is None:
+                        return ph, al, None, None
+                    Fp_, Fa_ = Fp + w * dt * kf[0], Fa + w * dt * kf[1]
+                    if o.reflux:                           # the base grid carries the fine stage means
+                        lev.to_base(Fp_, ph); lev.to_base(Fa_, al)
+                    return ph, al, Fp_, Fa_
+                k1c, k1f, d1 = f(phi, alpha, Fp, Fa)
+                k2c, k2f, d2 = f(*st(k1c, k1f, 0.5))
+                k3c, k3f, d3 = f(*st(k2c, k2f, 0.5))
+                k4c, k4f, d4 = f(*st(k3c, k3f, 1.0))
+                phi = phi + dt / 6 * (k1c[0] + 2 * k2c[0] + 2 * k3c[0] + k4c[0])
+                alpha = alpha + dt / 6 * (k1c[1] + 2 * k2c[1] + 2 * k3c[1] + k4c[1])
+                drift += dt / 6 * (d1 + 2 * d2 + 2 * d3 + d4)
+                if vf is not None:
+                    t_ = time.time()
+                    lev.Fphi = Fp + dt / 6 * (k1f[0] + 2 * k2f[0] + 2 * k3f[0] + k4f[0])
+                    lev.Fal = Fa + dt / 6 * (k1f[1] + 2 * k2f[1] + 2 * k3f[1] + k4f[1])
+                    lev.to_base(lev.Fphi, phi); lev.to_base(lev.Fal, alpha)
+                    tm["restrict"] += time.time() - t_
+            for _ in range(nsub):
+                hist["fine_cells"].append(lev.fine_cells() if refine else 0)
+                hist["active_blocks"].append(lev.nb if refine else 0)
+            nstep_total += nsub
         # (2) nutrient and antibiotic at t_i with L(t_{i-1}); (3) point models; (4) inheritance; (5) living
         t_ = time.time()
         if o.transient_c is not None:
@@ -829,36 +1104,76 @@ def run(o):
         elif o.c_fine:
             c_new = restrict8(nut2.solve(phi_2N(), L2, 1.0))
         elif o.c_composite:
-            c_new, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]))
+            c_new, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), Lfine=FLf)
         else:
             c_new = nut.solve(phi, Lf, 1.0, u_prev=c, dtau=DT_C)
         a_val = (1.0 if T1 > T_AB + 1e-12 else 0.0) if antibiotic else 0.0
         if o.c_composite:
-            a_new, lev.extra["a"] = comp_a.solve(phi, lev.Fphi, Lf, a_val, u_prev=(a, lev.extra["a"]), dtau=DT_C)
+            aF0 = lev.extra["a"]                                  # the fine antibiotic of the last outer step
+            a_new, lev.extra["a"] = comp_a.solve(phi, lev.Fphi, Lf, a_val, u_prev=(a, lev.extra["a"]), dtau=DT_C,
+                                                 Lfine=FLf)
         else:
             a_new = ab.solve(phi, Lf, a_val, u_prev=a, dtau=DT_C)
         tm["nutrient"] += time.time() - t_
         t_ = time.time()
-        idx = np.flatnonzero(on.ravel())
-        Gf = G.reshape(-1, 12)
-        Gf[idx], okf = FN.step_lin(Gf[idx], S_LINK * DT_C, N_SUB, c.ravel()[idx], c_new.ravel()[idx],
-                                   a.ravel()[idx], a_new.ravel()[idx])
-        assert okf.all(), "Fortran point model failed"
-        G = Gf.reshape(SHAPE + (12,))
-        c, a = c_new, a_new
-        while True:
-            new = (phi >= o.phi_min) & ~on
-            num, den = neighbours_mean(G, np.where(on, phi, 0.0))
-            fill = new & (den > 0)
-            if not fill.any():
-                break
-            gs = living_start(num[fill] / den[fill][:, None])
-            gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
-            gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
-            G[fill] = gs
-            on = on | fill
-        L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
+        if o.point_fine:
+            # the point model per uncovered base cell and per fine cell of the blocks (c, a of both levels)
+            ib, i_f = np.flatnonzero((on & unc).ravel()), np.flatnonzero(lev.Fon.ravel())
+            Gf, FGf = G.reshape(-1, 12), lev.FG.reshape(-1, 12)
+            cat = lambda ub, uf: np.concatenate([ub.ravel()[ib], uf.ravel()[i_f]])  # noqa: E731
+            Gall, okf = FN.step_lin(np.concatenate([Gf[ib], FGf[i_f]]), S_LINK * DT_C, N_SUB,
+                                    cat(c, lev.extra["c0"]), cat(c_new, lev.extra["c"]), cat(a, aF0),
+                                    cat(a_new, lev.extra["a"]))
+            assert okf.all(), "Fortran point model failed"
+            Gf[ib], FGf[i_f] = Gall[:ib.size], Gall[ib.size:]
+            G = Gf.reshape(SHAPE + (12,))
+            lev.extra["c0"] = lev.extra["c"].copy()
+            c, a = c_new, a_new
+
+            def sync():                                           # fine state -> base cells under the blocks
+                lev.FL = np.where(lev.Fon, living(FGf).reshape(lev.Fon.shape), 0.0)
+                lev.restrict_point(G, on, L)
+            sync()
+            while True:                                           # colonisation on both levels until nothing new
+                changed = fill_fine()
+                if changed:
+                    sync()
+                new = (phi >= o.phi_min) & ~on & unc
+                num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                fill = new & (den > 0)
+                if fill.any():
+                    gs = living_start(num[fill] / den[fill][:, None])
+                    gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+                    gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
+                    G[fill] = gs
+                    on = on | fill
+                    changed = True
+                if not changed:
+                    break
+            L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
+            sync()
+        else:
+            idx = np.flatnonzero(on.ravel())
+            Gf = G.reshape(-1, 12)
+            Gf[idx], okf = FN.step_lin(Gf[idx], S_LINK * DT_C, N_SUB, c.ravel()[idx], c_new.ravel()[idx],
+                                       a.ravel()[idx], a_new.ravel()[idx])
+            assert okf.all(), "Fortran point model failed"
+            G = Gf.reshape(SHAPE + (12,))
+            c, a = c_new, a_new
+            while True:
+                new = (phi >= o.phi_min) & ~on
+                num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                fill = new & (den > 0)
+                if not fill.any():
+                    break
+                gs = living_start(num[fill] / den[fill][:, None])
+                gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+                gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
+                G[fill] = gs
+                on = on | fill
+            L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
         tm["point"] += time.time() - t_
+        hist["vol"].append(float(phi.sum()) * H ** 3)
         hist["t"].append(T1); hist["living_seed"].append(float(L[seed].mean()))
         hist["share_a_seed"].append(shares(seed))
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
@@ -895,13 +1210,17 @@ def run(o):
     hist["seed_am1_2N"] = float((al2 - 1)[W.seed_mask(2 * NF if refine else NF, cells8)[
         (slice(phi2.shape[0], None), slice(None), slice(phi2.shape[2], None))]].mean())
     hist["seed_state_end"] = G[seed].mean(0).tolist()
+    hist["diffusion_drift"] = drift                     # volume integral of the diffusion term over the run
+    hist["vol_end"] = hist["vol"][-1]
     fc = np.array(hist["fine_cells"], float)
     setting = dict(base=f"{NF}^3", refine=refine, block=B, dilate=o.dilate, retag=o.retag, tag_tol=o.tag_tol,
                    dt_inner=dt, inner_per_outer=per, dtc=DT_C, phi_min=o.phi_min, front=o.front, r=R_FRONT,
                    gc=o.gc, gab=o.gab, alpha0=o.alpha0, tab=T_AB, transient_c=o.transient_c, mix_equal=o.mix_equal,
                    example=o.example, wall_s=wall, timing_s=tm, fine_cells_mean=float(fc.mean()),
                    fine_cells_max=int(fc.max()), fine_fraction_of_2N_mean=float(fc.mean() / (8 * phi.size)),
-                   base_cells_quarter=int(phi.size), uniform_2N_cells_quarter=int(8 * phi.size))
+                   base_cells_quarter=int(phi.size), uniform_2N_cells_quarter=int(8 * phi.size),
+                   limiter=o.limiter, reflux=bool(o.reflux), subcycle=bool(o.subcycle), point_fine=bool(o.point_fine),
+                   lat_all=bool(o.lat_all), fine_point_cells_end=int(lev.Fon.sum()) if o.point_fine else 0)
     if o.c_composite:
         setting["composite"] = dict(lateral=not o.c_composite_nolateral, timing_s=comp.t, timing_a_s=comp_a.t,
                                     iters_mean=float(np.mean(comp.iters)), iters_max=int(np.max(comp.iters)),
@@ -909,12 +1228,15 @@ def run(o):
     print(f"[{o.example}] {wall:.0f} s; seed: living {hist['living_seed'][-1]:.4f}, alpha-1 {hist['seed_am1']:.4e}, "
           f"vM {hist['seed_vm_Pa']:.4e} Pa; fine cells mean {fc.mean():.0f} (max {int(fc.max())}, "
           f"{100 * fc.mean() / (8 * phi.size):.1f} % of (2N)^3 quarter); timing {{"
-          + ", ".join(f"{k_}: {v_:.0f}" for k_, v_ in tm.items()) + "}", flush=True)
+          + ", ".join(f"{k_}: {v_:.0f}" for k_, v_ in tm.items()) + "}"
+          + f"; diffusion drift {drift:.3e} of volume {hist['vol_end']:.4e} mm^3", flush=True)
     RES.mkdir(exist_ok=True)
     name = (f"amr_nf{NF}" + ("_norefine" if not refine else f"_B{B}D{o.dilate}R{o.retag}")
             + ("" if o.tag_tol == 0.01 else f"_tol{o.tag_tol:g}") + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}")
             + ("" if o.transient_c is None else f"_transc{o.transient_c:g}") + ("_cfinebasephi" if o.c_fine_basephi else "_cfine" if o.c_fine else "")
             + ("_ccompnolat" if o.c_composite_nolateral else "_ccomp" if o.c_composite else "")
+            + ("_reflux" if o.reflux else "") + ("_subcyc" if o.subcycle else "") + ("_pointfine" if o.point_fine else "")
+            + ("_latall" if o.lat_all else "")
             + ("" if o.limiter == "minmod" else f"_{o.limiter}") + ("_mixeq" if o.mix_equal else "")
             + (f"_{o.tag}" if o.tag else "") + f"_{o.example}")
     (RES / f"{name}.json").write_text(json.dumps(dict(setting=setting, hist=hist), indent=1, default=float) + "\n")
