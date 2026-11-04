@@ -1,7 +1,23 @@
 # クラウドから fifa（慶應のサーバー）への指示
 
-fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。
----
+fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。---
+
+## 2026年11月4日 その 5（AMR の 3 段と，栄養を k 刻みおき。急がない）
+
+ブランチと手順は「その 4」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+点モデルは `ECO_THREADS=k` で k 本に分けて回せる（結果は最後の桁まで同じ）。空いているコア数に合わせる（ほかのジョブと合わせて超えないこと）。
+
+```
+O="--example mixed_ab --mix-equal --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all"
+# a) 32³ 土台，3 段 = 128³ 相当。一様 128³（minmod 3.30e-4 / 8.32e-4，superbee 3.587e-4 / 8.495e-4）と比べる
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O --limiter superbee
+# b) 64³ 土台，栄養を k 刻みおき（k = 1 が基準）
+for K in 1 2 4; do ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --transient-c 1e8 --c-every $K; done
+```
+
+報告：シードの α − 1，vM，時間（ログの最後の行の内訳も），いちばん細かいセルの平均。JSON は `results/2026-11-amr/`（名前に `_L3`，`_cev2` など）。
+
 
 ## 2026年11月4日 その 4（AMR で 256³ 相当，障害物の 192³。急がない，fifa は自由に使ってよい）
 
@@ -14,12 +30,20 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 for L in superbee minmod; do
   python3 coupled_amr.py --nf 128 --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --limiter $L --mix-equal --example mixed_ab
 done
-# b) 障害物の 192³（応力が 32→128³ で +48 %，+35 % と上がり続けた。柱の角の応力集中かを見る）
+# b) 障害物：応力が 32→128³ で +48 %，+35 % と上がり続けた。応力の格子はどれも既定の 16³（--nm 16）なので，
+#    角の応力集中ではなく柱の近くの場が原因のはず。応力の格子を変えて切り分ける（場は 64³ と 128³）。
+for N in 64 128; do for M in 32 64; do
+  python3 coupled_living_consumption.py --nf $N --nm $M --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+done; done
 python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
-python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+# c) WENO5（4 Nov にクラウドで追加，--limiter weno5，障害物とは組めない）。32³ で superbee より +4 %，16³→32³ の比は
+#    minmod・superbee 1.79 に対して 1.71。混合・抗菌薬ありの格子列を 11/3 の superbee と同じ設定で（--transient-c なし）
+for N in 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter weno5 --mix-equal --only mixed_ab --dtc 0.0025
+done
 ```
 
-報告：a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は 32〜192³ の vM と α − 1 の表，増え方（比）。
+報告：c) は 32〜192³ の vM と α − 1，GCI（64/128/192³，Celik，Fs 1.25）を superbee と並べて。a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は場の格子 × 応力の格子の vM と α − 1 の表（--nm 16 は既存の JSON），192³ を足した増え方（比）。
 JSON は `results/2026-11-amr/` と `results/2026-10-3d/` に出る。いつもどおり `keio/cloud-1102` へ push．
 
 
