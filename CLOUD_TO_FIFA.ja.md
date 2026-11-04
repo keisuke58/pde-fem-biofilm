@@ -568,8 +568,25 @@ IKMHIWI03 では回せない）。
 - 10月8日、ユーザーが `git push lab origin/master:main` で #64 まで lab に送った（同期済み）。
 - **lab に送るときは、ローカルの master を通さない**（fifa のローカル master は clone 以来古いまま）：
   `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。
-
 ---
+
+## 2026年11月4日 その 6（AMR の 3 段で 256³ 相当。混合の等量と Fritsch の割合。急がない）
+
+ブランチと手順は「その 5」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+「その 5」で 32³ 土台の 3 段（128³ 相当）が一様 128³ と 1.3 % で合ったので，64³ 土台の 3 段（256³ 相当）で混合の応力の収束を確かめる。
+`--mix-equal` なしは Fritsch の割合（0.25, 0.30）。今動いている 192³・256³ は止めないこと。メモリの合計を見て，同時は 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：4 本のシードの α − 1，vM，時間，いちばん細かいセルの平均の割合とメモリの最大。一様の 64/128/192³ と並べて，64/128/256³ 相当と
+128/192/256³ 相当の 2 組で次数と GCI（Celik，Fs 1.25）。JSON は `results/2026-11-amr/`（名前に `_L3`）。
+
 
 ## 2026年10月8日（村松研の git ができた）
 
