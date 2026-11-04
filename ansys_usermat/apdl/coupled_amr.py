@@ -113,6 +113,8 @@ def parse(argv=None):
                     "cells from the composite c; point model still per base cell")
     ap.add_argument("--c-composite-nolateral", action="store_true", help="diagnostic: --c-composite without the "
                     "lateral interpolation of the ghost values (symmetric matrix, CG)")
+    ap.add_argument("--limiter", default="minmod", choices=["minmod", "vanleer", "mc", "superbee"],
+                    help="TVD limiter of the front term (prolongation stays minmod)")
     ap.add_argument("--table", action="store_true", help="print the comparison table of results/2026-11-amr")
     return ap.parse_args(argv)
 
@@ -137,13 +139,28 @@ def lap_axis(up, a, h):
     return (along(up, a, slice(3, -1)) - 2.0 * along(up, a, slice(2, -2)) + along(up, a, slice(1, -3))) / (h * h)
 
 
+LIMITER = "minmod"   # set from --limiter in main(); the same four limiters as coupled_living_consumption.py
+
+
+def limited_slope(dp, dm):
+    """TVD slope of the front term: minmod (default), van Leer, MC or superbee, as in the main script"""
+    ap, am = np.abs(dp), np.abs(dm)
+    if LIMITER == "superbee":
+        return np.where(dp * dm > 0, np.sign(dp) * np.maximum(np.minimum(2 * am, ap), np.minimum(am, 2 * ap)), 0.0)
+    if LIMITER == "mc":
+        return np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * ap, 2 * am), 0.5 * np.abs(dp + dm)), 0.0)
+    if LIMITER == "vanleer":
+        return np.where(dp * dm > 0, 2.0 * dp * dm / np.where(dp + dm == 0, 1.0, dp + dm), 0.0)
+    return np.where(dp * dm > 0, np.sign(dp) * np.minimum(ap, am), 0.0)
+
+
 def adv_axis(up, va, a, h):
     """v_a d u/dx_a, MUSCL face values with minmod slopes, upwind (coupled_living_consumption.upwind_adv_tvd);
     up padded by 2 along a; with mirror ghosts this equals the main script's wall treatment"""
     u1 = along(up, a, slice(1, -1))
     dp = along(up, a, slice(2, None)) - u1
     dm = u1 - along(up, a, slice(0, -2))
-    sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.abs(dp), np.abs(dm)), 0.0)
+    sl = limited_slope(dp, dm)
     fr = u1 + 0.5 * sl
     dP = (along(fr, a, slice(1, -1)) - along(fr, a, slice(0, -2))) / h
     fl = u1 - 0.5 * sl
@@ -898,7 +915,7 @@ def run(o):
             + ("" if o.tag_tol == 0.01 else f"_tol{o.tag_tol:g}") + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}")
             + ("" if o.transient_c is None else f"_transc{o.transient_c:g}") + ("_cfinebasephi" if o.c_fine_basephi else "_cfine" if o.c_fine else "")
             + ("_ccompnolat" if o.c_composite_nolateral else "_ccomp" if o.c_composite else "")
-            + ("_mixeq" if o.mix_equal else "")
+            + ("" if o.limiter == "minmod" else f"_{o.limiter}") + ("_mixeq" if o.mix_equal else "")
             + (f"_{o.tag}" if o.tag else "") + f"_{o.example}")
     (RES / f"{name}.json").write_text(json.dumps(dict(setting=setting, hist=hist), indent=1, default=float) + "\n")
     np.savez_compressed(RES / f"{name}.npz", phi=phi, alpha=alpha, c=c, a=a, L=L, vm16=vm, p16=p,
@@ -933,6 +950,7 @@ def table():
 
 if __name__ == "__main__":
     o = parse()
+    LIMITER = o.limiter
     if o.table:
         table()
     else:
