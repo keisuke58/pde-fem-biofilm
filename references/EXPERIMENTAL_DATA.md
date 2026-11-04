@@ -1,10 +1,21 @@
-# Experimental data for comparison (search of 4 Nov 2026; to read in full before use)
+# Experimental data for comparison (search of 4 Nov 2026)
 
 Collected for the Keio continuation (KEIO_PLAN.ja.md 0b, idea 4: compare the model with measurements). Values are as
 reported in the abstracts or snippets; check the full texts before quoting them. The model stresses scale linearly with
 the stiffness E (thesis: E = 10 Pa from Klempt et al. 2024, stresses of order 1e-4 Pa).
 
-## Stiffness of oral biofilms
+## Saved in this folder (CC BY 4.0; credit in THIRD_PARTY.md)
+| file | paper | data taken from the full text |
+|---|---|---|
+| `Pattem2018_oral_biofilm_AFM_SciRep.pdf/.txt` | Pattem et al. 2018, Sci. Rep. 8:5691, doi:10.1038/s41598-018-23798-1 | microcosm oral biofilms on hydroxyapatite, AFM (Hertz, nu = 0.5). Young's modulus, two populations: **day 3**: 14.35 ± 1.75 to 41.05 ± 0.97 kPa (0.1 % sucrose, nutrient-poor), 0.55 ± 0.02 to 2.57 ± 0.17 kPa (5 % sucrose, nutrient-rich); **day 5**: 1.17 ± 0.08 to 46.07 ± 1.87 kPa and 0.56 ± 0.06 to 6.66 ± 0.46 kPa. No significant change between day 3 and 5 within a group. More sucrose: softer, more adhesive. |
+| `Granicher2021_CHX_multispecies_FrontMicrobiol.pdf/.txt` | Gränicher et al. 2021, Front. Microbiol. 12:741863 | six-species supragingival biofilm (Zurich model: S. mutans OMZ 918, S. oralis OMZ 607, A. oris OMZ 745, V. dispar OMZ 493, F. nucleatum, C. albicans), 64 h; chlorhexidine 0.05, 0.1 and 0.2 %, with and without DNase I / proteinase K pretreatment; CFU per species (Fig. 1) and CLSM live/dead. A dose-response end point per species, not a time course. |
+| `Geisel2022_biofilm_wrinkling_eLife.txt` (text only, PDF 12 MB: https://elifesciences.org/articles/76027) | Geisel et al. 2022, eLife 11:e76027 | P. aeruginosa in a microfluidic channel; growth under lateral confinement -> compressive stress -> buckling-delamination (critical stress after Hutchinson et al. 1992); wall shear stress 0.1 Pa, far below the biofilm shear modulus. |
+
+Use for the model: Pattem gives the stiffness range (the model's 10 Pa is 50 to 4000 times lower; the stress scales with E);
+the sucrose dependence is a natural test of a composition- or nutrient-dependent stiffness (idea 2 of KEIO_PLAN 0b).
+Gränicher gives per-species survival under an antiseptic dose, a candidate end point for the point model's antibiotic term.
+
+## Stiffness of oral biofilms (from the search)
 | source | what | value | note |
 |---|---|---|---|
 | Pattem et al. 2018 (already cited in the thesis) | oral biofilm, AFM | 0.6 to 41 kPa | depends on the sucrose supply |

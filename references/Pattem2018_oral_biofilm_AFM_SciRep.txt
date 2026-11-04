@@ -1,0 +1,608 @@
+                                                                                                          www.nature.com/scientificreports
+
+
+
+
+                        OPEN          A Multi-scale Biophysical Approach
+                                      to Develop Structure-Property
+                                      Relationships in Oral Biofilms
+Received: 28 November 2017            J. Pattem1, M. Davrandi2, S. Aguayo1, E. Allan2, D. Spratt2 & L. Bozec1
+Accepted: 19 March 2018
+Published: xx xx xxxx                 Over the last 5–10 years, optical coherence tomography (OCT) and atomic force microscopy (AFM)
+                                      have been individually applied to monitor the morphological and mechanical properties of various
+                                      single-species biofilms respectively. This investigation looked to combine OCT and AFM as a multi-
+                                      scale approach to understand the role sucrose concentration and age play in the morphological and
+                                      mechanical properties of oral, microcosm biofilms, in-vitro. Biofilms with low (0.1% w/v) and high
+                                      (5% w/v) sucrose concentrations were grown on hydroxyapatite (HAP) discs from pooled human
+                                      saliva and incubated for 3 and 5 days. Distinct mesoscale features of biofilms such as regions of low
+                                      and high extracellular polymeric substances (EPS) were identified through observations made by
+                                      OCT. Mechanical analysis revealed increasing sucrose concentration decreased Young’s modulus and
+                                      increased cantilever adhesion (p < 0.0001), relative to the biofilm. Increasing age was found to decrease
+                                      adhesion only (p < 0.0001). This was due to mechanical interactions between the indenter and the
+                                      biofilm increasing as a function of increased EPS content, due to increasing sucrose. An expected
+                                      decrease in EPS cantilever contact decreased adhesion due to bacteria proliferation with biofilm
+                                      age. The application OCT and AFM revealed new structure-property relationships in oral biofilms,
+                                      unattainable if the techniques were used independently.
+
+
+                                      Oral biofilms are complex microbial communities1, embedded in a matrix of extracellular polymeric substances
+                                      (EPS)2,3. EPS accounts for up to 90% of a biofilms’ total mass4,5, consisting of polymers, mainly extracellular
+                                      DNA (eDNA), polysaccharides, proteins and lipids of bacterial and salivary origin2,6. Its’ role is to provide a
+                                      protective sheath7, encapsulating the multi-species bacterial complex, proliferating into distinct morphotypes,
+                                      such as bulbous micro-colonies, maintaining its structural integrity7. Oral biofilm formation is a hierarchical
+                                      process8, consisting of surface attachment by primary bacterial colonizers, such as streptococci9. This is followed
+                                      by subsequent attachment of secondary, later and bridging colonizers, such as Actinomyces, Veillonella and fuso-
+                                      bacterium respectively8,9.
+                                          A biofilms hierarchical nature8 is an important feature to consider when contemplating how to analysis of
+                                      their morphological and mechanical properties. During formation and proliferation, a biofilms’ structural range
+                                      extends from single molecular EPS constituents to bulbous micro-colonies and finally, fully formed mesoscale
+                                      surface coverings4. Applying techniques that span a range of length scales, are capable of in-vitro analysis and pre-
+                                      serve biofilm structural and mechanical integrity are vital in the development of structure-property relationships.
+                                          Traditionally, binding assays such as fluorescence staining have enabled researchers to extensively investigate
+                                      a biofilms microbiology with increasing detail since the 1980′s10,11. Since then, characterizing this multi-layered
+                                      and multi-colonial bacterial community has led to the biological mapping of this complex, hierarchical struc-
+                                      ture12. From a structural perspective, common characterization methods include scanning electron microscopy
+                                      (SEM)13–15 and confocal laser scanning microscopy (CLSM)15,16. These techniques only provide basic morphology
+                                      and quantitative live – dead ratios respectively16. While these techniques can yield 3D structural information, they
+                                      can be damaging to the specimen17 and do not provide any mechanical information.
+                                          Over the last 5 years, investigators have increasingly utilized atomic force microscopy (AFM) to obtain
+                                      mechanical information from a variety of single-species biofilms, under several in-vitro conditions18–20. Through
+                                      non-destructive indentation, low applied force and known indenter geometry, mechanical properties such as
+                                      elastic modulus, Young’s modulus and adhesion can be obtained from generated force-displacement curves21.
+
+                                      1
+                                       Biomaterials and Tissue Engineering, Eastman Dental Institute, University College London, London, UK. 2Microbial
+                                      Diseases, Eastman Dental Institute, University College London, London, UK. Correspondence and requests for
+                                      materials should be addressed to J.P. (email: j.pattem@ucl.ac.uk)
+
+
+        SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                              1
+www.nature.com/scientificreports/
+
+
+                              Advances in AFM technology have allowed users to perform indentations on a specimen in a point-wise array,
+                              generating both morphological and mechanical properties simultaneously, termed, force-volume imaging
+                              (FVI)22. It has been used to determine the morpho-mechanical profiles of single bacterial species and cells with
+                              success23,24.
+                                  To non-destructively observe biofilm structure, investigators have increasingly utilized optical coherence
+                              tomography (OCT)25–27. OCT is a versatile tool for medical imaging and has been used to resolve 2D and 3D
+                              images of biological structures since its invention in 199126–28. OCT provides depth-resolved analysis of backscat-
+                              tered light via an interferometer27 using a low-coherence light source, such as a near-infrared probe beam. This is
+                              traversed across a surface of interest and is possible to resolve image depths of several centimeters, with a lateral
+                              and axial pixel resolution of <5 µm26,27. OCT provides non-invasive, label-free and real-time in-vitro characteri-
+                              zation of biofilms. Scattering or grey-level intensity profiles can be produced29 enabling certain aspects of biofilms
+                              such as voids and microcolonies to be determined with respect to depth26. The application of OCT to biofilms
+                              is not new. OCT’s imaging and scattering intensity capabilities have been applied to wide range of fields from
+                              waste-water treatment systems27, biofouling in bioreactors27 to ex-vivo oral biofilms30. Investigators have focussed
+                              applying OCT on mechanisms of biofilm attachment26 and detachment under various flow conditions25,27 and on
+                              a variety of surfaces30. OCT has enabled mixed species biofilm mass to be quantified on differing dental materials
+                              during growth30. It has also been used to assess biofilm removal strategies such as chlorohexidine, revealing a
+                              collapse of biofilm structure in semi-real-time31.
+                                  While OCT and AFM have been individually applied to monitor the morphological and mechanical proper-
+                              ties of single species biofilms respectively, there have been no reports on using OCT and AFM in a combinatorial
+                              approach on proliferated, multi-species biofilms. With investigators focussing on the microbiological changes of
+                              biofilms with regard to sucrose and age6,32,33, nothing has been reported on what these factors play in their bio-
+                              physical characteristics. This is of particular interest to the dental community, producing biofilms on mineralized
+                              surfaces as reflected by dental plaque in the oral cavity6.
+                                  The aim of this investigation is to apply OCT and AFM to determine the meso- and micro-scale morpholog-
+                              ical and nano-mechanical properties of oral biofilms under physiological conditions. Furthermore, to determine
+                              if this approach can be used to develop structure-property relationships in multi-species biofilms, with regard to
+                              increasing sucrose and age.
+
+                              Materials and Methods
+                              Hydroxyapatite substrates.         Nine, 5 mm diameter HAP discs were fabricated from <75 µm particle size
+                              HAP (Sigma-Aldrich, UK) using a pressing die under 2 Tonne (George E. Moore & Sons Ltd, UK). These were
+                              randomly assigned into 2 groups, with group 1 containing 5 specimens and group 2 containing 4. Group 1 speci-
+                              mens were biofilm-free and were used to monitor HAP surface morphology. HAP disc morphology was analyzed
+                              using average roughness (Ra) for normality (p > 0.05). Group 2 specimens were used to monitor biofilms using
+                              methods described below.
+
+                              Biofilm Formation. Microcosm biofilms were grown on group 2 HAP discs using a feed batch culture
+                              approach. Sterilized HAP discs were placed horizontally in a 96-well plate (Nunc Nunclon Delta). Biofilms were
+                              formed on HAP discs from stimulated, pooled human saliva (n = 15) using two different growth media previously
+                              termed nutrient poor and nutrient rich.
+                                  These are composed of the following. Nutrient poor (NP) was artificial saliva based, containing 1 g/L of
+                              lab-lemco, 2 g/L of yeast extract, 5 g/L of protease peptone, 2.5 g/L of mucin from porcine stomach (Type III),
+                              0.35 g/L of sodium chloride, 0.2 g/L of calcium chloride and 0.2 g/L potassium chloride. After autoclaving, 1.25 mL
+                              of filter sterilized (0.22 µm) 40% (w/v) urea solution and 2 mL of filter sterilized (0.22 µm) 50% (w/v) sucrose solu-
+                              tion were added per litre. Nutrient rich (NR) was based on Brain Hearth Infusion (BHI) containing 37 g/L of BHI
+                              powder and 2.5 g/L of mucin from porcine stomach (Type III) in 900 mL dH2O. After autoclaving, 100 mL of filter
+                              sterilized (0.22 µm) 50% (w/v) sucrose solution was added. All materials were sourced from Sigma-Aldrich, UK.
+                                  Pooled human saliva (1 ml) was inoculated in 7 ml of NP with 0.1% (w/v) sucrose and NR with 5% (w/v)
+                              sucrose. 180 µL aliquots of both inoculum were added to the wells and incubated at 37 °C in 5% CO2, for a total of
+                              120 h. Each growth media was replaced by pipetting at 24 h intervals. Biofilm specimens grown in either nutrient
+                              poor or nutrient rich conditions were collected at 72 h (D3) and 120 h (D5) for analysis.
+
+                              Optical Coherence Tomography. VivoSight Multi-Beam Swept Source OCT system (Michelson
+                              Diagnostics Ltd, UK) was used to observe the cross-sectional morphology of each biofilm covered HAP disc,
+                              including 1 HAP biofilm free surface. This system uses a class I laser (λ = 1305 nm) and scans at a rate of 10 kHz.
+                              The default scanning volume was set to 6 × 6 mm and approximately 2 mm deep. For each samples, a total of 500
+                              B-scans were recorded over that volume. Each B-scan was recorded 10 µm apart and with a pixel size of 4.53 µm.
+                              Specimens were attached to a 35 mm petri dish (Thermofisher, UK) using perfluoropolyether lubricant (Fomblin,
+                              UK) and submerged in phosphate buffered saline (PBS) (Lonza Biowhittiker, UK) for 1 hour before analysis.
+
+                              AFM Imaging. A JPK Nanowizard 1 AFM (JPK Instruments Ltd, Germany) was used to obtain example
+                              50 × 50 µm, 10 × 10 µm and 3 × 3 µm AFM images from each biofilm covered HAP disc under PBS conditions.
+                              These were conducted using MSNL-10 cantilevers (Bruker Ltd, France) after 1 hour in PBS.
+
+                              AFM Probe modification and Force-Volume Imaging. A JPK Nanowizard 1 AFM (JPK Instruments
+                              Ltd, Berlin) was used to functionalize NPO-10 tip-less cantilevers (Bruker Ltd, France). Cantilevers were
+                              modified with 10 µm borosilicate spheres (Whitehouse Scientific, UK) using a UV curing resin (Loctite, UK).
+                              Successfully glass sphere attached cantilevers were cured under UV light (λ = 400 nm) for 5 minutes. Successfully
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                               2
+www.nature.com/scientificreports/
+
+
+                              functionalized cantilevers were calibrated before analysis generating a spring constant of 0.36 ± 0.18 N/m.
+                              Imaging and mechanical analysis was performed by AFM operating in force-volume imaging (FVI) mode.
+                                  AFM FVI was used to monitor 2.5 × 2.5 µm areas of each biofilm covered HAP disc under PBS conditions.
+                              These were conducted using 10 µm borosilicate bead functionalized NPO-10 cantilevers to determine the
+                              mechanical properties of individual bacteria and EPS after 1 hour in PBS.
+                                  AFM FVI was performed on at total of 9 separate areas of 80 × 80 µm, on each biofilm covered disc, at least
+                              2 mm apart, at a resolution of 16 × 16. Consequently, only 3 separate areas were successful generating 768 inden-
+                              tations per sub-group, across the total biofilm covered HAP disc. FVI’s were conducted on specimens after 1 hour
+                              PBS hydration and monitored under PBS hydrated conditions. 80 × 80 µm force volume images were randomly
+                              selected from the 3 successful FVI’s and a normalised coloured scale bar was applied.
+                                  Young’s modulus (kPa) and adhesion (N) were obtained from individual force distance curves, using dedi-
+                              cated software (JPK Instruments, Ltd). Young’s modulus of specimens were extracted using the Hertz model34 for
+                              a spherical indenter, where force is related to the indentation depth from the Equations 1, 2 and 3
+                                                                       E      a. a + R . R R + a     
+                                                               F=                         ln     − aR
+                                                                    1 − ν. ν      2         R−a                                               (1)
+
+                                                                                   a R+a
+                                                                              ∂=    ln
+                                                                                   2 R−a                                                          (2)
+
+                                                                                 a = √R∂                                                          (3)
+                              where, R is the indenter radius, E is Young’s modulus, ∂ is indenter depth, v is Poisson’s ratio which is 0.5 . The
+                                                                                                                                             35
+
+                              Hertz model is used as it has been extensively applied to biofilm mechanical analysis using AFM18–20. Adhesion
+                              force was obtained from the deflection distance of the cantilever and the cantilever spring constant using
+                              Equation 4,
+                                                                                 F = k . ΔL                                                       (4)
+                              where, F is force in nN, k is the cantilever spring constant and ΔL is the deflection distance in nm .36
+
+
+                              OCT Image Extraction and Analysis.            Selected B-scans were chosen randomly from each 500 B-scan
+                              image stack. Grey intensity profiling was conducted by extracting a vertical scattering profile (A-scan) using
+                              ImageJ software37.
+
+                              AFM Data Extraction, Statistics, and Analysis. Morphological analysis was conducted on 5 biofilm-free
+                              HAP discs monitoring two different 80 × 80 µm areas per sample using average roughness (Ra). The analysis was
+                              conducted using dedicated software to determine if they were normally distribute using a Shapiro-Wilk normality
+                              test. Biofilm covered HAP disc Young’s modulus (kPa) and adhesion (nN) were obtained from each sucrose and
+                              age subgroup using dedicated software (JPK Instruments Ltd, Germany). Mechanical data were tested for nor-
+                              mality using a Shapiro-Wilk test and significant differences were analyzed using a series of Kruskal-Wallis 1-Way
+                              ANOVAs, with a Dunn’s multiple comparison procedures in terms of sucrose concentration and age at p < 0.0001.
+
+                              Results and Discussion
+                              Mesoscale Morphological Characterization.                     OCT imaging and scattering intensity profiling were
+                              applied to biofilms cultivated on HAP discs with increasing sucrose concentration and age, under static PBS
+                              conditions. Biofilm specimens were analyzed at room temperature (22 °C) on the day of extraction from the
+                              well plate. Figure 1(a) shows a typical OCT cross-sectional B-scan of a nutrient-rich, day 5 biofilm (NRD5) on a
+                              HAP disc. The biofilm exhibits a heterogeneous morphology, characteristic of in-vitro and ex-vivo oral biofilms30.
+                              Figure 1(b) and (c) shows the corresponding signal intensity from selected dashed regions on Fig. 1(a). This is the
+                              intensity of light back-scattered from the sample27. Areas of high-density backscatter more light than those of low
+                              density27. Areas of varying density are exhibited by the grey scale in the image. Low and high-density regions in
+                              Fig. 1(b) denoted by (o) and (Δ) respectively are visually different, indicating differences in the biofilms bacterial
+                              density19,20. Conversely, in Fig. 1(c), there is only a high-density region (Δ), further highlighting a biofilms mor-
+                              phological heterogeneity30. Considering the limitations of OCT, areas of low visual scattering do not necessarily
+                              represent unapparent biofilm structure. Here, we hypothesize that areas of low optical density have a high EPS to
+                              bacteria ratio, while areas of low density have a high bacteria to EPS ratio. The corresponding vertical scattering
+                              intensity profile in Fig. 1(b) is characterized by a high EPS to bacteria ratio region with low scattering intensity
+                              (o). This is then followed by a high bacteria to EPS ratio region with greater scattering intensity (Δ). Taking into
+                              consideration the heterogeneous cross-sectional morphology of biofilms, it is possible to differentiate regions of
+                              high and low EPS to bacteria ratio regions across the surface using OCT and scattering intensity profiles at the
+                              mesoscale27,30.
+                                  Figure 2(a–e) shows selected B-scans of HAP, NP and NR cultured biofilms at 3 and 5 days of age respectively.
+                              Their corresponding scattering intensity profiles are also shown with variations in bacterial density. Figure 2(a) of
+                              an HAP disc shows a peak intensity in the scattering profile at the surface of HAP, as reflected in Fig. 1(a) and (b).
+                              Nutrient-poor biofilms shown in Fig. 2(b,c) exhibit an increase in biofilm deposition with age26, characterized by
+                              the cross-sectional B-scan. Figure 2(b) of nutrient-poor day 3 biofilm exhibits low growth, with interstitial spac-
+                              ing between clusters of bacteria on the HAP substrate. Variations in the bacterial density of nutrient-poor day 5
+                              in Fig. 2(c) can also be observed. A high EPS to bacteria ratio region is situated directly above a high bacteria to
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                                3
+www.nature.com/scientificreports/
+
+
+
+
+                              Figure 1. Showing (a) a typical OCT cross-section slice from NR-D5, (b) the corresponding vertical scattering
+                              profile selected from the right-hand dashed region of (a), (c) the corresponding vertical scattering profile
+                              selected from the left-hand dashed region of (a). (d) shows a 50 × 50 µm image of the boxed area on the NR-D5
+                              biofilm in (a), (e) a 10 × 10 µm area selected from the boxed bottom right corner of (d) and (f) a 3 × 3 µm image
+                              from the left-hand boxed area of (e).
+
+
+
+                              EPS ratio region. Nutrient-rich biofilms at 3 and 5 days age shown in Fig. 2(d) and (e) exhibit similar morphology,
+                              with some lifting occurring at 3 days in Fig. 2(d). Intensity variation, such as low and high EPS to bacteria ratio
+                              regions can be observed in the corresponding intensity profiles. It is clear from Fig. 2(a–e) that OCT provides
+                              utility in monitoring biofilms at the mesoscale level, identifying bacterial deposition and structural variance with
+                              regard to changes in sucrose concentration and age.
+                                  Other complementary techniques such as confocal laser scanning microscopy (CLSM)25,26 and scanning elec-
+                              tron microscopy (SEM)30 have been used to monitor biofilms. These have been utilized to resolve other features
+                              such as individual bacteria and EPS at smaller length scales38,39. These techniques can be destructive to the biofilm
+                              through staining and fixing and may affect their mechanical integrity. One ought to characterize smaller-scale
+                              features such as individual bacteria and EPS using AFM. This also provides a non-destructive approach, capable
+                              of analysis under physiological conditions, with no sample preparation.
+                                  Biofilms are by their very nature are heterogeneous as a function of surface location and depth 40.
+                              Cross-sectional analysis of surface and subsurface features by OCT can provide valuable information on where to
+                              land an AFM probe for effective analysis. As AFM image formation and mechanical analysis are conducted blind,
+                              it can be very difficult and time-consuming to locate appropriate areas. For example, Fig. 2(b) shows biofilm areas
+                              partially detached from the surface. Accessing any morpho-mechanical information on these areas of high heter-
+                              ogeneity will be extremely difficult when using AFM. Allowing OCT to provide a snapshot cross-sectional view
+                              of biofilms assists effective AFM topographical and mechanical analysis.
+
+                              Nanoscale Morphological Characterisation.                  AFM is a powerful tool to image biofilms and bacteria
+                              under physiological conditions, at the micro to nanoscale41–43. Figure 1(d) shows a typical 50 × 50 µm image of a
+                              nutrient-rich biofilm at 3 days of age. At this scale, bacteria can be identified across the entire analyzed surface.
+                              The biofilm exhibits a heterogeneous morphology with varying heights denoted by the grey scale. Figure 1(e)
+                              shows a 10 × 10 µm taken from the lower right-hand region of Fig. 1(d). Individual bacteria can be identified
+                              due to their different morphological characteristics. It is clear that the biofilm is multispecies, for example,
+                              streptococci and Fusobacterium can be recognized due to their short and elongated morphology respectively44.
+                              Figure 1(f) shows a 3 × 3 µm Z-drive image taken from the left-hand side of Fig. 1(e). Bacteria are observable,
+                              covered with a layer EPS, which is also prominent at the periphery, encapsulating the biofilm4. The application of
+                              AFM to determine the morphological nature of varying biofilms has provided utility in resolving surface features
+                              at the single bacteria and composite level45–47. Topographical AFM imaging has enabled researchers to resolve
+                              the surface features of individual bacterial species45–47, including their characteristics relative to changes in the
+                              environment47. AFM provides access to the biophysical properties of individual species. It is a significant com-
+                              petitor to other techniques in its ability to resolve bacteria and biofilm features, under physiologically relevant
+                              conditions.
+
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                              4
+www.nature.com/scientificreports/
+
+
+
+
+                              Figure 2. Showing left OCT imaging and right, corresponding scattering intensity profiles of (a) control HAP,
+                              (b) NPD3, (c) NPD5, (d) NRD3 and (e) NRD5. White lines on left show area selected for scattering intensity
+                              profiling. Scattering intensity graphs are highlighted with locations of * (hydroxyapatite), Δ (high density
+                              biofilm) and ο (low density biofilm).
+
+
+
+                                  AFM imaging in FVI mode was applied to biofilms cultivated on HAP discs with increasing sucrose concen-
+                              tration and age, under static PBS conditions. Biofilm specimens were analyzed at room temperature (22 °C) on the
+                              day they were extracted from the well plate. FVI is a point-wise force-curved based imaging method, generating
+                              a force curve at each pixel from a chosen resolution23,48. Height images are extracted from the maximum inden-
+                              tation force in each force curve21,23, generating a topographic height map. Variations in height (cantilever move-
+                              ment) are an indicator of morphological heterogeneity at the microscale. Figure 3(a) shows an example 3 × 3 µm
+                              FVI height image of a nutrient-rich day 3 biofilm under physiological conditions. Numerous bacteria are clearly
+                              visible, due to their protrusion from the surface, denoted by the grey-scale.
+                                  Example normalized FVI height maps of nutrient-poor and nutrient-rich biofilms at 3 and 5 days of age are
+                              shown in Fig. 4(a–d) respectively. The cantilever heights during non-destructive contact are shown to increase,
+                              moving from 3 to 5 days of age, in both nutrient poor and nutrient-rich biofilms, shown in Fig. 4(a,b) and (c,d)
+                              respectively. This shows that an increase in both age and sucrose concentration produces biofilms with a more het-
+                              erogeneous morphological profile at this scale, like those found in OCT imaging at the mesoscale. Investigators
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                           5
+www.nature.com/scientificreports/
+
+
+
+
+                              Figure 3. Showing 3 × 3 µm AFM FVI maps of (a) topography, (b) elastic modulus (nN/µm) and (c) adhesion
+                              (nN) of a nutrient rich day 3 biofilm.
+
+
+
+                              have focussed on the topography of varying single-species biofilms, showing variations in profile heights and
+                              roughness43. Here, these were found to change under varying culture conditions.
+
+                              Nanomechanical Properties of Biofilms: Young’s Modulus. The advantage of AFM FVI is its capability to both
+                              image and obtain biofilm mechanical properties of a specimen simultaneously48. Corresponding elastic modulus
+                              maps for Fig. 3(a) are shown in Fig. 3(b). Elastic modulus is obtained from the slope of the retract curve during
+                              its phase shift and is defined as the resistance to indentation by an applied force21. Applying contact mechanics
+                              models such as Hertz, Young’s modulus, a measure of specimen elasticity21 can be obtained.
+                                  Mechanical variation with respect to indentation location23 is apparent in Fig. 3(b), shown by the elastic mod-
+                              ulus grey scale. Indentation occurring on the bacteria surface show higher elastic modulus compared to those
+                              between bacteria. As EPS is secreted from bacteria, at this level it is assumed it will be most prominent between
+                              opposing bacteria, as shown in Fig. 1(e). Figure 3(b) shows that EPS is lower in elastic modulus compared to
+                              bacteria.
+                                  Young’s modulus histograms of nutrient-poor and rich at 3 and 5 days of age are shown in Fig. 4(a–d). These
+                              were taken by combining all data collected from 3 areas at least 2 mm apart on each disc, at a resolution of
+                              16 × 16, generating n = 768 individual force-distance curves. Increasing sucrose concentration was shown to
+                              significantly decrease Young’s modulus at both stages of age (p < 0.0001). Binomial distributions are appar-
+                              ent in the histograms, indicating contact mechanics variations between the indenter and low and high bacte-
+                              ria density regions respectively. Nutrient-poor and rich at day 3 decreased in Young’s modulus from between
+                              14.35 ± 1.75–41.05 ± 0.97 kPa to 0.55 ± 0.02–2.57 ± 0.17 kPa (P < 0.0001), shown in Fig. 4(a) and (c) respec-
+                              tively shown in Table 1. At day 5, Young’s modulus decreased from between 1.17 ± 0.08–46.07 ± 1.87 kPa to
+                              0.56 ± 0.06–6.66 ± 0.46 kPa (p < 0.0001), shown in Fig. 4(b) and (d) and Table 1 respectively. There was no signif-
+                              icant difference in Young’s modulus between each age within nutrient poor and nutrient-rich groups, exhibiting p
+                              values of p = 0.8678 and p = 0.0028 respectively. Young’s modulus values obtained here coincide with previously
+                              reported data on single species biofilms18–20,49,50. Mixed species biofilms with high sucrose concentrations studied
+                              here reflect similar mechanical properties to single species biofilms under similar conditions18,19,49,50. This maybe
+                              a consequence of streptococci dominating the bacterial community with the introduction of sucrose51. Also, bio-
+                              films were produced under aerobic conditions but in the presence of CO2, reflecting the in-vivo environment. As
+                              the biofilm matures, the proportion of obligate anaerobic species may have increased, reflecting similar mechan-
+                              ical properties to those found in single-species biofilms.
+                                  Nutrient poor biofilms exhibited secondary distributions in Young’s modulus of 41.05 ± 0.97 kPa and
+                              46.07 ± 1.87 kPa respectively shown in Table 1. Increasing sucrose concentration reduced the Young’s modulus
+                              to 2.57 ± 0.17 kPa and 6.66 ± 0.46 kPa respectively shown in Table 1. A decrease in Young’s modulus associated
+                              with an increase in sucrose concentration can be explained by an increase in the bacteria’s production of EPS52,53.
+                              As sucrose is broken down by oral bacteria, it acts as a substrate for the synthesis of EPS by glucosyltransferases
+                              (GTFs)54. Consequently, increasing the EPS content will impact the contact mechanics variations occurring
+                              between the AFM cantilever and the biofilm under investigation. As bacteria are more rigid structures than EPS55,
+                              also shown in Fig. 3(b), low sucrose culture conditions are expected to have more EPS-free bacteria interacting
+                              with the cantilever. This results in higher composite Young’s modulus, evident in Young’s modulus histograms of
+                              nutrient-poor day 3 and 5 in Fig. 3(a) and (b) respectively.
+
+                              Nanomechanical Properties of Biofilms: Adhesion. Corresponding adhesion maps for Fig. 3(a) are shown in
+                              Fig. 3(c). Adhesion, defined as the force required to remove the cantilever from the surface21, is obtained from
+                              the pull off region of the retract curve21,56. As in the elastic modulus map shown in Fig. 3(b), adhesive variation
+                              with respect to indentation location is apparent, shown in Fig. 3(c). Figure 3(c) shows higher adhesion between
+                              bacteria compared to the bacteria surface, indicative of EPS. Adhesion analysis was applied to the same force
+                              curves as in Young’s modulus calculations. Increasing sucrose concentration increased overall cantilever adhe-
+                              sion between nutrient poor and nutrient-rich groups at both 3 and 5 days (p < 0.0001). Table 1 shows biofilm
+                              adhesion increased with increasing sucrose (p < 0.0001). Increasing age was shown to decrease adhesion within
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                              6
+www.nature.com/scientificreports/
+
+
+
+
+                              Figure 4. Showing example 80 × 80 µm FVI Images at a resolution of 16 × 16 with their corresponding Young’s
+                              modulus and adhesion histograms of (a) NP D3, (b) NP D5, (c) NR D3 and (d) NR D5.
+
+
+
+                                              Young’s Modulus (kPa)   Young’s Modulus (kPa)   Adhesion (nN)   Adhesion (nN)
+                               Distribution   1st                     2nd                     1st             2nd
+                               NP D3          14.35 ± 1.75            41.05 ± 0.97            0.13 ± 0.01     0.51 ± 0.04
+                               NP D5           1.17 ± 0.08            46.07 ± 1.87            0.12 ± 0.00     0.39 ± 0.02
+                               NR D3           0.55 ± 0.02             2.57 ± 0.17            0.60 ± 0.02      1.5 ± 0.16
+                               NR D5           0.56 ± 0.06             6.66 ± 0.46            0.08 ± 0.00     0.39 ± 0.02
+
+                              Table 1. Showing the 1st and second Young’s modulus (kPa) and adhesion (N) distributions of NP and NR
+                              biofilms at 3 and 5 days age.
+
+
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                     7
+www.nature.com/scientificreports/
+
+
+                              the nutrient-poor group at 5 days shown in Table 1. This was also found to decrease in the nutrient rich group at
+                              5 days (p < 0.0001).
+                                  Adhesion values obtained here coincide with previously reported data on singles species bacteria36,49,50,56. One
+                              study used sharp indenters and monitored the specimen in the air, leading to a reduction in the EPS water content
+                              and increased density of constituents. Other studies have obtained similar mechanical properties for both early
+                              stage and mature biofilms49. That particular investigation obtained significant differences in adhesion between
+                              differing strains of P. aueruginosa. While maturation was a key factor49, the nutrient composition did not differ
+                              and only 10 force plots were analysed per group.
+                                  Increasing sucrose concentration increased biofilm adhesion, while age decreased it. An increase in adhesion
+                              with increasing sucrose concentration can be associated with the increased production of EPS interacting with the
+                              cantilever. As a biofilms mechanical properties are dominated by EPS57, it can be assumed the superficial adhesion
+                              of a biofilm to the AFM cantilever is also dominated by EPS. Increased EPS – cantilever contact increased the
+                              force required to remove the cantilever from the surface shown in Table 1. The effect of age decreasing adhesion
+                              may be associated with bacteria proliferation in the biofilm. Increased bacteria content i.e increased bacterial
+                              density will increase the interactions between the indenter and bacteria. Therefore, reducing the pull of forces as
+                              fewer EPS interactions on the cantilever are occurring.
+
+                              Merits of a Multi-scale Analysis Approach. A biofilms hierarchical nature requires analysis techniques
+                              that complement its structural properties, spanning from the single bacteria to mesoscale level. These techniques
+                              must be non-destructive and allow for analysis under in-vitro physiological conditions. This is vital when devel-
+                              oping structure-property relationships in biofilms as their formation, proliferation, and maturation span this
+                              large range2–6.
+                                  Here, OCT revealed side on views of biofilms at the mesoscale allowing depth analysis, unattainable by AFM.
+                              While nutrient-poor biofilms exhibited differences in morphology, nutrient-rich were morphologically similar.
+                              AFM’s ability to complement morphology with micro to nanoscale mechanical properties revealed differences in
+                              contact mechanics occurring between the indenter, bacteria, and EPS, unattainable by OCT. These were found to
+                              change as a function of the biofilms culture conditions.
+                                  It must be noted that an average of 9 areas were monitored per specimen for successful mechanical analysis. In
+                              terms of elucidating mechanical properties from biofilms, the ability to land a modified cantilever onto its surface
+                              is extremely difficult, especially under physiological conditions. This is due to the biofilms morphological hetero-
+                              geneity58 and extremely soft ultra-structure18–20, particularly in low bacteria density and high EPS content regions.
+                              Meaning, very small indentation forces and high cantilever z-lengths are required when moving from one inden-
+                              tation to another. Low applied forces (~6 nN) used in this investigation enabled the mechanical response to be
+                              solely that of the biofilm surface, as large forces would have indented below the contact point, resulting in dis-
+                              ruption of the structure. Not only this, monitoring large 80 × 80 µm areas as conducted here over-shadowed the
+                              mechanical effect of biofilm constituents such as bacterial species, providing a composite average value. The use
+                              of low indentation forces and large spherical tips enabled non-destructive probing of each biofilm. Monitoring
+                              relatively large analysis areas enabled the elastic response to be representative of the bulk structure.
+                                  Only the structural morphology and mechanical properties of biofilms were the focus of this study, while
+                              bacterial taxa, their spatial distribution and EPS content were not. Future studies may wish to use already
+                              well-characterized biofilms such as those developed using the Zurich biofilm model59. This may enable their
+                              morpho-mechanical response to be associated with potential markers in bacterial population. Techniques such
+                              as fluorescence in-situ hybridization (FISH) and CLSM have been used to characterize the spatial distribution
+                              of bacteria in oral biofilms, targeting specific bacteria via 16S rRNA sequences60. Furthermore, as EPS is the
+                              principal determinant in the mechanical response of biofilms57, identifying shifts in EPS chemistry may identify
+                              chemical markers changing the overall biophysical properties of biofilms. Although, to determine their morpho-
+                              logical and mechanical response to the chemical changes at the composite level, this must be conducted either
+                              separately, using a separate set of specimens, or under in-vitro conditions. Techniques using specimen staining
+                              can be damaging to the biofilm17, while others destroy the specimen during preparation such as transmission
+                              electron microscopy (TEM)61.
+                                  The aim of this investigation was to determine if OCT and AFM could be used as a multi-scale approach to
+                              develop structure-property relationships in oral biofilms, in-vitro. This was successfully applied and was able
+                              to monitor a significant morphological and mechanical response as a function of biofilm culture conditions.
+                              These techniques and applied methodology can now be used in the future to determine and further existing
+                              structure-property relationships in biofilm growth, proliferation, and maturation. This is the first study of its
+                              kind into developing a non-destructive, multi-scale approach and is not restricted to the type of biofilm under
+                              investigation, nor the in-vitro physiological conditions in which researchers wish to investigate. This approach
+                              can be applied to a range of biofilms types such as those found in waste-water treatment systems, bio-reactors,
+                              catheters and those found in the oral cavity. Varying physiological conditions can also be applied to reflect specific
+                              environments, which include chemical strategies to remove biofilms, even under flow.
+
+                              Conclusion
+                              Developing effective characterization methods to nondestructively analyze multispecies biofilms in-vitro is a step
+                              forward in identifying structure-property relationships. While the literature is well established on the role sucrose
+                              and age play in a biofilms microbiology and chemistry, much less is known on how these factors influence the
+                              mesoscale morphology and mechanical properties. It was found that increasing sucrose concentration increased
+                              biofilm deposition and significantly reduced Young’s modulus. It also increased the adhesion of oral biofilms,
+                              while increasing age was shown to decrease adhesion only. This was associated with increasing EPS to bacteria
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                               8
+www.nature.com/scientificreports/
+
+
+                              ratios due to sucrose and decreasing this ratio due to aging. This analysis approach is not restricted to the type
+                              of biofilm under investigation, nor the in-vitro conditions in which future researchers wish to investigate. This
+                              approach can now be used in future to elucidate the effect of potential removal strategies.
+
+                              References
+                               1. Marsh, P. D. Dental plaque as a biofilm and a microbial community–implications for health and disease. BMC Oral health. 6(1), 1
+                                  (2006).
+                               2. Whitchurch, C. B., Tolker-Nielsen, T., Ragas, P. C. & Mattick, J. S. Extracellular DNA required for bacterial biofilm formation.
+                                  Science. 295(5559), 1487–1487 (2002).
+                               3. Costerton, J. W., Stewart, P. S. & Greenberg, E. P. Bacterial biofilms: a common cause of persistent infections. Science. 284(5418),
+                                  1318–1322 (1999).
+                               4. Flemming, H. C. & Wingender, J. The biofilm matrix. Nature Reviews Microbiology. 8(9), 623–633 (2010).
+                               5. Karatan, E. & Watnick, P. Signals, regulatory networks, and materials that build and break bacterial biofilms. Microbiology and
+                                  Molecular Biology Reviews. 73(2), 310–347 (2009).
+                               6. Pratten, J., Wilson, M. & Spratt, D. A. Characterization of in vitro oral bacterial biofilms by traditional and molecular methods. Oral
+                                  microbiology and immunology. 18(1), 45–49 (2003).
+                               7. Wingender, J., Neu, T.R. and Flemming, H.C. eds., Microbial extracellular polymeric substances: characterization, structure and
+                                  function. Springer Science & Business Media (2012).
+                               8. O’Toole, G., Kaplan, H. B. & Kolter, R. Biofilm formation as microbial development. Annual Reviews in Microbiology. 54(1), 49–79
+                                  (2000).
+                               9. Kolenbrander, P. E., Andersen, R. N. & Moore, L. V. Intrageneric coaggregation among strains of human oral bacteria: potential role
+                                  in primary colonization of the tooth surface. Applied and environmental microbiology. 56(12), 3890–3894 (1990).
+                              10. Rittman, B. E. & McCarty, P. L. Model of steady-state biofilm kinetics. Biotechnology and Bioengineering. 22, 2343–2357 (1980).
+                              11. Hope, C. K. & Wilson, M. Cell viability within oral biofilms. Biofilm Communities: Order fromChaos? (2003). Cardiff, BioLine
+                                  269–284 (2017).
+                              12. Araujo, J. C. et al. Comparison of hexamethyldisilazane and critical point drying treatments for SEM analysis of anaerobic biofilms
+                                  and granular sludge. Journal of Electron Microscopy 52(4), 429–433 (2003).
+                              13. James, G. A. et al. Biofilms in chronic wounds. Wound Repair and Regeneration. 16(1), 37–44 (2008).
+                              14. Chandra, J., Mukherjee, P. K. & Ghannoum, M. A. In vitro growth and analysis of Candida biofilms. Nature protocols. 3(12),
+                                  1909–1924 (2008).
+                              15. Shen, Y., Qian, W., Chung, C., Olsen, I. & Haapasalo, M. Evaluation of the effect of two chlorhexidine preparations on biofilm
+                                  bacteria in vitro: a three-dimensional quantitative analysis. Journal of endodontics. 35(7), 981–985 (2009).
+                              16. Kuehn, M. et al. Automated Confocal Laser Scanning Microscopy and Semiautomated Image Processing for Analysis of Biofilms.
+                                  Applied and Environmental Microbiology. 64(11), 4115–4127 (1998).
+                              17. Kania, R. E. et al. Characterization of mucosal biofilms on human adenoid tissues. The Laryngoscope. 118(1), 128–134 (2008).
+                              18. Kundukad, B. et al. Mechanical properties of the superficial biofilm layer determine the architecture of biofilms. Soft matter 12, 5718
+                                  (2016).
+                              19. Baniasadi, M. et al. Nanoindentation of Pseudomonas aeruginosa bacterial biofilm using atomic force microscopy. Materials
+                                  Research Express. 1(4), 045411 (2014).
+                              20. Asally, M. et al. Localized cell death focuses mechanical forces during 3D patterning in a biofilm. Proceedings of the National
+                                  Academy of Sciences. 109(46), 18891–18896 (2012).
+                              21. Butt, H. J., Cappella, B. & Kappl, M. Force measurements with the atomic force microscope: Technique, interpretation and
+                                  applications. Surface science reports. 59(1), 1–152 (2005).
+                              22. Heinz, W. F. & Hoh, J. H. Spatially resolved force spectroscopy of biological surfaces using the atomic force microscope. Trends in
+                                  Biotechnology 17(4), 143–150 (1999).
+                              23. Gaboriaud, F., Parcha, B. S., Gee, M. L., Holden, J. A. & Strugnell, R. A. Spatially resolved force spectroscopy of bacterial surfaces
+                                  using force-volume imaging. Colloids and Surface B:Biointerfaces. 62(2), 206–213 (2008).
+                              24. Schaer-Zammaretti, P. & Ubbink, J. Imaging of lactic acid bacteria with AFM–elasticity and adhesion maps and their relationship to
+                                  biological and structural data. Ultramicroscopy. 97(1–4), 199–208 (2003).
+                              25. Wagner, M., Taherzadeh, D., Haisch, C. & Horn, H. Investigation of the mesoscale structure and volumetric features of biofilms
+                                  using optical coherence tomography. Biotechnology and bioengineering. 107(5), 844–853 (2010).
+                              26. Xi, C., Marks, D., Schlachter, S., Luo, W. & Boppart, S. A. High-resolution three-dimensional imaging of biofilm development using
+                                  optical coherence tomography. Journal of Biomedical Optics 11(3), 034001–034001 (2006).
+                              27. Haisch, C. & Niessner, R. Visualisation of transient processes in biofilms by optical coherence tomography. Water Research. 41(11),
+                                  2467–2472 (2007).
+                              28. Huang, D. et al. Optical coherence tomography. Science (New York, NY) 254(5035), 1178 (1991).
+                              29. Povazay, B. et al. Enhanced visualization of choroidal vessels using ultrahigh resolution ophthalmic OCT at 1050 nm. Optics Express.
+                                  11(17), 1980–1986 (2003).
+                              30. Lenton, P., Rudney, J., Chen, R., Fok, A. & Aparicio, C. Imaging in vivo secondary caries and ex vivo dental biofilms using cross-
+                                  polarization optical coherence tomography. Dental Materials. 28(7), 792–800 (2012).
+                              31. Rasmussen, K., Reilly, C., Li, Y. & Jones, R. S. Real-time imaging of anti-biofilm effects using CP-OCT. Biotechnology and
+                                  Bioengineering. 113(1), 198–205 (2016).
+                              32. Leme, A. P., Koo, H., Bellato, C. M., Bedi, G. & Cury, J. A. The role of sucrose in cariogenic dental biofilm formation—new insight.
+                                  Journal of Dental Research. 85(10), 878–887 (2006).
+                              33. Klein, M. I. et al. Structural and molecular basis of the role of starch and sucrose in Streptococcus mutans biofilm development.
+                                  Applied and Environmental Microbiology. 75(3), 837–841 (2009).
+                              34. Thomas, G., Burnham, N. A., Camesano, T. A. & Wen, Q. Measuring the mechanical properties of living cells using atomic force
+                                  microscopy. Journal of Visualized Experiments. 76, 50497 (2013).
+                              35. Tuson, H. H. et al. Measuring the stiffness of bacterial cells from growth rates in hydrogels of tunable elasticity. Molecular
+                                  Microbiology. 84(5), 874–891 (2012).
+                              36. Fang, H. H. P., Chan, K. & Xu, L. Quantification of bacterial adhesion forces using atomic force microscopy (AFM). Journal of
+                                  Microbiological Methods. 4, 89–97 (2000).
+                              37. Schneider, C. A., Rasband, W. S. & Eliceiri, K. W. 2012. NIH Image to ImageJ: 25 years of image analysis. Nature Methods. 9(7),
+                                  671–675 (2000).
+                              38. Schaudinn, C. et al. Imaging Of Endodontic Biofilms by Combined Microscopy (FISH/CLSM – SEM). Journal Of Microscopy. 235,
+                                  124–127 (2009).
+                              39. Harrison, J. J. et al. The use of microscopy and three-dimensional visualization to evaluate the structure of microbial biofilms
+                                  cultivated in the Calgary Biofilm Device. Biological Procedures Online. 8, 194–215 (2006).
+                              40. Wimpenny, J., Manz, W. & Szewzyk, U. Heterogeneity in biofilms. FEMS Microbiology Reviews. 24, 661–671 (2000).
+
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                                                    9
+www.nature.com/scientificreports/
+
+
+                              41. Kregiel, D. & Antolak, H. Biofilms in Beverage Industry, Microbial Biofilms - Importance and Applications, Dr. Dharumadurai
+                                  Dhanasekaran (Ed.), InTech (2016).
+                              42. Wright, C. J., Shah, M. K., Powell, L. C. & Armstrong, I. Application of AFM from microbial cell to biofilm. Scanning. 32, 134–149
+                                  (2010).
+                              43. Auerbach, I. D., Sorensen, C., Hansma, H. G. & Holden, P. A. Physical Morphology and Surface Properties of Unsaturated
+                                  Pseudomonas putida Biofilms. Journal of Bacteriology. 182(13), 3809–3815 (2000).
+                              44. Kolenbrander, P. E. & London, J. Adhere today, here tomorrow: oral bacterial adherence. Journal of Bacteriology. 175(11), 3247–3252
+                                  (1993).
+                              45. Doktycz, M. J. et al. AFM imaging of bacteria in liquid media immobilized on gelatin coated mica surfaces. Ultramicroscopy. 97(1-4),
+                                  209–216 (2003).
+                              46. Osiro, D. et al. Measuring bacterial cells size with AFM. Brazilian Journal of Microbiology. 43(1), 341–347 (2012).
+                              47. Camesano, T. A., Natan, M. J. & Logan, B. E. Observations of Changes in Bacterial Cell Morphology Using Tapping Mode Atomic
+                                  Force Microscopy. Langmuir. 16(10), 4563–4572 (2000).
+                              48. Polyakov, P. et al. Automated Force Volume Image Processing for Biological Samples. PLoS ONE. 9(4), e18887 (2011).
+                              49. Lau, P. C., Dutcher, J. R., Beveridge, T. J. & Lam, J. S. Absolute quantitation of bacterial biofilm adhesion and viscoelasticity by
+                                  microbead force spectroscopy. Biophysical Journal. 96(7), 2935–2948 (2009).
+                              50. Mosier, A. P., Kaloyeros, A. E. & Cady, N. C. A novel microfluidic device for the in situ optical and mechanical analysis of bacterial.
+                                  Journal of Microbiological Methods. 91(1), 198–204 (2012).
+                              51. Mattos-Graner, R. O., Smith, D. J., King, W. F. & Mayer, M. P. A. Water-insoluble glucan synthesis by mutans streptococcal strains
+                                  correlates with caries incidence in 12-to 30-month-old children. Journal of Dental Research. 79(6), 1371–1377 (2000).
+                              52. Tenuta, L. M. A., Ricomini Filho, A. P., Del Bel Cury, A. A. & Cury, J. A. Effect of sucrose on the selection of mutans streptococci and
+                                  lactobacilli in dental biofilm formed in situ. Caries Research. 40(6), 546–549 (2006).
+                              53. Aires, C. P., Tabchoury, C. P. M., Del Bel Cury, A. A., Koo, H. & Cury, J. A. Effect of sucrose concentration on dental biofilm formed
+                                  in situ and on enamel demineralization. Caries Research. 40(1), 28–32 (2005).
+                              54. Hamada, S., Tai, S. & Slade, H. D. Binding of glycosyltransferase and glucan synthesis by Streptococcus mutans and other bacteria.
+                                  Infect Immun. 21(1), 213–220 (1978).
+                              55. Chen, Y., Norde, W., van der Mei, H. C. & Busscher, H. J. Bacterial cell surface deformation under external loading. MBio 3(6),
+                                  e00378–12 (2012).
+                              56. Aguayo, S., Donos, N., Spratt, D. & Bozec, L. Nanoadhesion of Staphylococcus aureus onto Titanium Implant Surfaces. Journal of
+                                  Dental Research. 94(8), 1078–1084 (2015).
+                              57. Galy, O. et al. Mapping of bacterial biofilm local mechanics by magnetic microparticle actuation. Journal of Biophysics 103,
+                                  1400–1408 (2012).
+                              58. Zijnge, V. et al. Oral biofilm architecture on natural teeth. PloS ONE 5(2), 9321 (2010).
+                              59. Guggenheim, B., Guggenheim, M., Gmür, R., Giertsen, E. & Thurnheer, T. Application of the Zürich Biofilm Model to Problems of
+                                  Cariology. Caries Research. 38, 212–222 (2004).
+                              60. Thurneer, T., Gmur, R. & Guggenheim, B. Multiplex FISH analysis of a six-species bacterial biofilm. Journal of Microbiological
+                                  Methods. 56(1), 37–47 (2004).
+                              61. Mayer, J., Giannuzzi, L., Kamino, T. & Michael, J. TEM Sample Preparation and FIB-Induced Damage. MRS Bulletin 32(5), 400–407
+                                  (2007).
+
+                              Acknowledgements
+                              This study was a collaboration between association with the University College London’s’ Eastman Dental
+                              Institute of Biomaterials and Tissue Engineering and Microbial Diseases department.
+
+                              Author Contributions
+                              Dr. Pattem conducted the experimental work, analysis and wrote the main manuscript text, including the
+                              preparation of all figures and tables. Mr. Davrandi produced the dental plaque biofilms on all hydroxyapatite
+                              discs. Dr. Aguayo aided in the training of AFM cantilever modification and critically reviewed the manuscript. Dr.
+                              Bozec, Dr. Allan and Prof Spratt are the principle investigators, aiding in critically reviewing of the manuscript.
+
+                              Additional Information
+                              Competing Interests: The authors declare no competing interests.
+                              Publisher's note: Springer Nature remains neutral with regard to jurisdictional claims in published maps and
+                              institutional affiliations.
+                                            Open Access This article is licensed under a Creative Commons Attribution 4.0 International
+                                            License, which permits use, sharing, adaptation, distribution and reproduction in any medium or
+                              format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Cre-
+                              ative Commons license, and indicate if changes were made. The images or other third party material in this
+                              article are included in the article’s Creative Commons license, unless indicated otherwise in a credit line to the
+                              material. If material is not included in the article’s Creative Commons license and your intended use is not per-
+                              mitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the
+                              copyright holder. To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.
+
+                              © The Author(s) 2018
+
+
+
+
+SCIEnTIfIC REPOrtS | (2018) 8:5691 | DOI:10.1038/s41598-018-23798-1                                                                                                   10
+
