@@ -1,7 +1,23 @@
 # クラウドから fifa（慶應のサーバー）への指示
 
-fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。
----
+fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。---
+
+## 2026年11月4日 その 5（AMR の 3 段と，栄養を k 刻みおき。急がない）
+
+ブランチと手順は「その 4」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+点モデルは `ECO_THREADS=k` で k 本に分けて回せる（結果は最後の桁まで同じ）。空いているコア数に合わせる（ほかのジョブと合わせて超えないこと）。
+
+```
+O="--example mixed_ab --mix-equal --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all"
+# a) 32³ 土台，3 段 = 128³ 相当。一様 128³（minmod 3.30e-4 / 8.32e-4，superbee 3.587e-4 / 8.495e-4）と比べる
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O --limiter superbee
+# b) 64³ 土台，栄養を k 刻みおき（k = 1 が基準）
+for K in 1 2 4; do ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --transient-c 1e8 --c-every $K; done
+```
+
+報告：シードの α − 1，vM，時間（ログの最後の行の内訳も），いちばん細かいセルの平均。JSON は `results/2026-11-amr/`（名前に `_L3`，`_cev2` など）。
+
 
 ## 2026年11月4日 その 4（AMR で 256³ 相当，障害物の 192³。急がない，fifa は自由に使ってよい）
 

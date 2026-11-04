@@ -71,6 +71,26 @@ would do better):
             the base grid.
   check     --no-refine gives the uniform N^3 scheme of the main script (same stencils, same time step) and must
             reproduce its results.
+  c-every   --c-every k (4 Nov, off = 1): the nutrient (base or composite) is solved only every k-th pass of the
+            inner loop; in between c, v and v_f stay (new blocks take the velocity from their prolonged c). With
+            --transient-c the point model of an outer step without a solve sees the last solved c as c1 (at 32^3
+            with dtc 0.0025 one pass = one outer step, so k = 2 solves every second outer step); the transient
+            term then spans the k passes. Without --transient-c the end-of-step solve is kept, so only the
+            inner velocities are affected. An approximation, for the timing question.
+  levels    --levels 3 (4 Nov): a third level (4N) of blocks of B^3 level-1 cells inside the level-1 blocks,
+            through the same Level1 class with the level-1 storage as parent (index tuples instead of base
+            indices; ghosts of level l from the stage field of level l-1, whose slopes use its own ghosts from
+            level l-2). Tagging of level 2 by the same criterion on the level-1 field (ghosts from the base),
+            dilated by --dilate level-1 cells; nesting: the level-1 active set is widened so that every level-2
+            block has a margin of max(dilate, 2) level-1 cells (the finest tags first, then set_active from
+            level 1 up, each new level prolonged from the one below). Restriction finest-down after every step;
+            --reflux at both interfaces; --subcycle recursive (base nsub = 4 dt, level 1 two steps of 2 dt, level
+            2 two steps of dt inside each, ghosts linear in time within the parent's step, reflux after each
+            parent step); --point-fine per cell of the finest level present (level-1 cells under level 2 carry
+            the restricted state); --c-composite over all three levels in one matrix (class CompositeML, the
+            same face terms per level, assembled in global index space: level l T = 1/(2^l H^2), coarse-fine
+            1/(3 2^(l-1) H^2), held face 2/(2^l H^2), volume 8^-l; two-grid preconditioner onto the base).
+            --generic runs the two-level case through this code (agreement with the default path 3e-13).
 
     python ansys_usermat/apdl/coupled_amr.py --nf 32 --example mixed_ab --mix-equal [--no-refine]
         [--block 4 --dilate 2 --retag 1 --tag-tol 0.01] [--dtc 0.025] [--transient-c 1e8] [--c-fine | --c-composite]
@@ -150,6 +170,13 @@ def parse(argv=None):
                     "grid), so the living fraction of the uptake has the fine resolution; needs --c-composite")
     ap.add_argument("--lat-all", action="store_true", help="--c-composite: lateral interpolation of the ghost values "
                     "also where a lateral neighbour lies in a block (mean of its children) or outside (mirror)")
+    ap.add_argument("--c-every", type=int, default=1, help="solve the nutrient every k-th inner step only and keep "
+                    "c (and the front velocity) fixed in between (approximation; the point model then sees the "
+                    "last solved c at the end of an outer step without a solve)")
+    ap.add_argument("--levels", type=int, default=2, choices=[2, 3], help="3: a third level (4N) inside the "
+                    "level-1 blocks, tagged on the level-1 field, nested with a margin of max(dilate, 2) level-1 cells")
+    ap.add_argument("--generic", action="store_true", help="check: run the two-level case through the multi-level "
+                    "code of --levels 3 (agreement with the default path to the Krylov tolerance)")
     ap.add_argument("--table", action="store_true", help="print the comparison table of results/2026-11-amr")
     return ap.parse_args(argv)
 
@@ -254,25 +281,47 @@ def region_index(origins, off, size):
     return I, J, K
 
 
-class Level1:
-    """the refined blocks: fine data Fphi, Fal (nb, 2B, 2B, 2B), block bookkeeping and ghost tables"""
+def base_slopes(u, limited):
+    """slopes of a base-grid field (mirror ghosts), per axis"""
+    return [s_[0] for s_ in slopes(u[None], limited)]
 
-    def __init__(self, shape, B):
+
+class Level1:
+    """the refined blocks: fine data Fphi, Fal (nb, 2B, 2B, 2B), block bookkeeping and ghost tables.
+    parent None: the blocks refine the base grid (shape = the base grid). parent = a Level1 (--levels 3): the blocks
+    refine B^3 cells of that level (shape = its global cell grid, twice the base grid); parent cells are then
+    addressed in the parent's block storage (index tuples from pidx), everything else is the same."""
+
+    def __init__(self, shape, B, parent=None):
         assert all(s % B == 0 for s in shape), (shape, B)
         self.B = B
         self.NB = tuple(s // B for s in shape)
+        self.shape = tuple(shape)
+        self.parent = parent
         self.active = np.zeros(self.NB, bool)
         self.bid = -np.ones(self.NB, int)
         self.nb = 0
         self.Fphi = np.zeros((0, 2 * B, 2 * B, 2 * B))
         self.Fal = np.zeros((0, 2 * B, 2 * B, 2 * B))
+        self.unc = np.ones(self.Fphi.shape, bool)       # cells not covered by a finer level
+        self.glob = None                                 # global cell index -> position in the block storage
 
-    def set_active(self, active, phc, alc, smooth=None, point=None):
+    def pidx(self, I, J, K):
+        """global parent-cell indices -> index tuple into the parent's storage (the base grid: unchanged)"""
+        if self.parent is None:
+            return (I, J, K)
+        g = self.parent.glob[I, J, K]
+        assert (g >= 0).all(), "a refined block reaches outside the next coarser level (nesting)"
+        return np.unravel_index(g, self.parent.Fphi.shape)
+
+    def set_active(self, active, phc, alc, smooth=None, point=None, psl=None):
         """new active set: keep the fine data of blocks that stay, prolong (limited) the base grid into new ones;
         smooth: {name: base field} of smooth fine fields (c, a of --c-composite) carried in self.extra[name] the
         same way, new blocks by central-slope prolongation; point (--point-fine): dict(G, on, L) of the base grid,
-        the point-model state of new blocks is copied onto the 8 children (self.FG, self.Fon, self.FL)"""
+        the point-model state of new blocks is copied onto the 8 children (self.FG, self.Fon, self.FL);
+        psl(field, limited): slopes of a parent field (default: the base grid with mirror ghosts)"""
         B = self.B
+        psl = base_slopes if psl is None else psl
         old_bid, old_phi, old_al = self.bid, self.Fphi, self.Fal
         old_extra = getattr(self, "extra", {})
         old_point = (self.FG, self.Fon, self.FL) if hasattr(self, "FG") else None
@@ -283,19 +332,23 @@ class Level1:
         self.bc = np.argwhere(active)                               # block coordinates (nb, 3)
         self.origins = self.bc * B
         self.CI, self.CJ, self.CK = region_index(self.origins, (0, 0, 0), (B, B, B))
+        self.Cidx = self.pidx(self.CI, self.CJ, self.CK)             # the parent cells in the parent's storage
         self.FI, self.FJ, self.FK = region_index(2 * self.origins, (0, 0, 0), (2 * B,) * 3)   # on the (2N)^3 grid
         self.Fphi = np.empty((self.nb, 2 * B, 2 * B, 2 * B))
         self.Fal = np.empty_like(self.Fphi)
+        self.unc = np.ones(self.Fphi.shape, bool)
+        self.glob = -np.ones(tuple(2 * s for s in self.shape), int)
+        self.glob[self.FI, self.FJ, self.FK] = np.arange(self.Fphi.size).reshape(self.Fphi.shape)
         keep = old_bid[active]                                       # old id per new block (-1: new)
         kept = keep >= 0
         self.Fphi[kept] = old_phi[keep[kept]]
         self.Fal[kept] = old_al[keep[kept]]
         if (~kept).any():
             sel = np.flatnonzero(~kept)
-            I, J, K = self.CI[sel], self.CJ[sel], self.CK[sel]
+            ix = tuple(x[sel] for x in self.Cidx)
             for src, dst in ((phc, self.Fphi), (alc, self.Fal)):
-                s = slopes(src[None], True)
-                dst[sel] = children(src[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
+                s = psl(src, True)
+                dst[sel] = children(src[ix], s[0][ix], s[1][ix], s[2][ix])
         self.extra = {}
         for name, src in (smooth or {}).items():
             dst = np.empty_like(self.Fphi)
@@ -303,9 +356,9 @@ class Level1:
                 dst[kept] = old_extra[name][keep[kept]]
             if (~kept).any():
                 sel = np.flatnonzero(~kept)
-                I, J, K = self.CI[sel], self.CJ[sel], self.CK[sel]
-                s = slopes(src[None], False)
-                dst[sel] = children(src[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
+                ix = tuple(x[sel] for x in self.Cidx)
+                s = psl(src, False)
+                dst[sel] = children(src[ix], s[0][ix], s[1][ix], s[2][ix])
             self.extra[name] = dst
         if point is not None:
             sh = self.Fphi.shape
@@ -315,9 +368,9 @@ class Level1:
                     dst[kept] = src[keep[kept]]
             if (~kept).any():
                 sel = np.flatnonzero(~kept)
-                I, J, K = self.CI[sel], self.CJ[sel], self.CK[sel]
+                ix = tuple(x[sel] for x in self.Cidx)
                 for src, dst in zip((point["G"], point["on"], point["L"]), (FG, Fon, FL)):
-                    dst[sel] = up8(src[I, J, K])
+                    dst[sel] = up8(src[ix])
             self.FG, self.Fon, self.FL = FG, Fon, FL
         # ghost tables per (axis, side): neighbour block, wall or base grid
         self.gh = {}
@@ -332,8 +385,10 @@ class Level1:
                 crs = np.flatnonzero(inside & (nid < 0))
                 off = [0, 0, 0]; off[a] = B if side else -1
                 size = [B, B, B]; size[a] = 1
-                self.gh[a, side] = dict(nbr=nbr, nid=nid[nbr], wall=wall, crs=crs,
-                                        cidx=region_index(self.origins[crs], off, size))
+                gidx = region_index(self.origins[crs], off, size)
+                bg = list(gidx); bg[a] = bg[a] + (1 if side == 0 else -1)      # the covered cell next to it
+                self.gh[a, side] = dict(nbr=nbr, nid=nid[nbr], wall=wall, crs=crs, cidx=self.pidx(*gidx),
+                                        gidx=gidx, bidx=self.pidx(*bg))
 
     def ghosts(self, F, a, side, uc, sc):
         """two ghost layers of the fine stage array F on face (a, side); uc, sc: base stage array and its slopes"""
@@ -346,9 +401,23 @@ class Level1:
         if t["wall"].size:
             G[t["wall"]] = np.flip(along(F[t["wall"]], a, slice(-2, None) if side else slice(0, 2)), axis=a + 1)
         if t["crs"].size:
-            I, J, K = t["cidx"]
-            G[t["crs"]] = children(uc[I, J, K], sc[0][I, J, K], sc[1][I, J, K], sc[2][I, J, K])
+            ix = t["cidx"]
+            G[t["crs"]] = children(uc[ix], sc[0][ix], sc[1][ix], sc[2][ix])
         return G
+
+    def stack_slopes(self, F, uc, sc, limited):
+        """slopes of the fine field F per axis with ghosts from the parent (uc, sc): the parent slopes of the next
+        finer level (--levels 3)"""
+        out = []
+        for a in range(3):
+            up = self.padded(F, a, uc, sc)
+            dp = along(up, a, slice(3, -1)) - along(up, a, slice(2, -2))
+            dm = along(up, a, slice(2, -2)) - along(up, a, slice(1, -3))
+            if limited:
+                out.append(np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.abs(dp), np.abs(dm)), 0.0))
+            else:
+                out.append(0.5 * (dp + dm))
+        return out
 
     def padded(self, F, a, uc, sc):
         return np.concatenate([self.ghosts(F, a, 0, uc, sc), F, self.ghosts(F, a, 1, uc, sc)], axis=a + 1)
@@ -365,8 +434,7 @@ class Level1:
             if t["wall"].size:
                 G[t["wall"]] = np.flip(along(F[t["wall"]], a, slice(-2, None) if side else slice(0, 2)), axis=a + 1)
             if t["crs"].size:
-                I, J, K = t["cidx"]
-                G[t["crs"]] = up8(uc[I, J, K])
+                G[t["crs"]] = up8(uc[t["cidx"]])
             out.append(G)
         return np.concatenate([out[0], F, out[1]], axis=a + 1)
 
@@ -377,7 +445,7 @@ class Level1:
     def to_base(self, F, uc):
         """write the restricted block means into the base array uc (in place)"""
         if self.nb:
-            uc[self.CI, self.CJ, self.CK] = self.restrict(F)
+            uc[self.Cidx] = self.restrict(F)
 
     def restrict_point(self, G, on, L):
         """--point-fine: the fine point-model state onto the base cells under the blocks (in place): volume
@@ -385,21 +453,22 @@ class Level1:
         phibar_i = phi_i psi_i is conserved), on where any child is on, L as the mean of the children"""
         if not self.nb:
             return
-        B, I, J, K = self.B, self.CI, self.CJ, self.CK
+        B, ix = self.B, self.Cidx
         r8 = lambda u: u.reshape((self.nb, B, 2, B, 2, B, 2) + u.shape[4:]).mean(axis=(2, 4, 6))  # noqa: E731
         Gm = r8(self.FG)
         bar = r8(self.FG[..., :5] * self.FG[..., 6:11])
         Gm[..., 6:11] = np.where(Gm[..., :5] > 1e-30, bar / np.where(Gm[..., :5] > 1e-30, Gm[..., :5], 1.0),
                                  Gm[..., 6:11])
-        G[I, J, K] = Gm
-        on[I, J, K] = self.Fon.reshape(self.nb, B, 2, B, 2, B, 2).any(axis=(2, 4, 6))
-        L[I, J, K] = self.restrict(self.FL)
+        G[ix] = Gm
+        on[ix] = self.Fon.reshape(self.nb, B, 2, B, 2, B, 2).any(axis=(2, 4, 6))
+        L[ix] = self.restrict(self.FL)
 
-    def interp(self, uc):
-        """base field -> fine blocks, linear with central slopes (smooth fields: the front velocity)"""
-        s = slopes(uc[None], False)
-        I, J, K = self.CI, self.CJ, self.CK
-        return children(uc[I, J, K], s[0][0][I, J, K], s[1][0][I, J, K], s[2][0][I, J, K])
+    def interp(self, uc, sc=None):
+        """base field -> fine blocks, linear with central slopes (smooth fields: the front velocity); sc: the
+        parent slopes when the parent is a block level"""
+        s = base_slopes(uc, False) if sc is None else sc
+        ix = self.Cidx
+        return children(uc[ix], s[0][ix], s[1][ix], s[2][ix])
 
     def fine_cells(self):
         return self.nb * (2 * self.B) ** 3
@@ -669,6 +738,195 @@ class Composite:
         return ub, Ff
 
 
+class CompositeML:
+    """Composite over several block levels (--levels 3, or --generic): the unknowns are the base cells not covered by
+    level 1, the level-1 cells not covered by level 2, and the level-2 cells, assembled in the global index space of
+    each level with the same face terms as Composite: level l cells exchange T = 1/(2^l H^2), a level-(l-1)/level-l
+    face T = 1/(3 2^(l-1) H^2) with the ghost value interpolated from the lateral coarse neighbours (also where
+    one of them is covered, mean of its children, or outside, mirror, with --lat-all), a held face 2/(2^l H^2),
+    cell volume 8^-l. The coarse cell across a coarse-fine face must lie on the next coarser level (nesting).
+    Solver and two-grid preconditioner as Composite; the entries are assembled in another order, so the two-level
+    results of Composite are reproduced to the Krylov tolerance (about 1e-13), not bitwise."""
+
+    def __init__(self, base, side, levels, lateral=True, lat_all=False):
+        self.base, self.levels, self.lateral, self.lat_all = base, levels, lateral, lat_all
+        self.shape, self.H, self.q, self.transient = base.shape, base.h, base.q, base.transient
+        self.faces, self.fixed_base = held_faces(side), base.fixed
+        self.key, self._ml, self._n, self.nbuild = None, None, 0, 0
+        self.t = dict(build=0.0, amg=0.0, solve=0.0)
+        self.iters = []
+        self.frb = ~self.fixed_base.ravel()
+        self.A0bff = base.A0[self.frb][:, self.frb].tocsr()
+
+    def _build(self):
+        t0 = time.time()
+        H, sh, NL = self.H, self.shape, len(self.levels) + 1
+        S, Lt = [], []
+
+        def face(i, j, T):
+            i, j = i.ravel(), j.ravel()
+            S.append((np.concatenate([i, j, i, j]), np.concatenate([i, j, j, i]),
+                      np.concatenate([np.full(2 * i.size, T), np.full(2 * i.size, -T)])))
+        # ids of the unknowns per level on the level's global grid (-1: not on this level, or covered)
+        cid, self.unk, self.off, n = [], [], [], 0
+        for l in range(NL):
+            g = -np.ones(tuple(s * 2 ** l for s in sh), int)
+            if l == 0:
+                m = np.ones(sh, bool)
+                if self.levels:
+                    m[self.levels[0].CI, self.levels[0].CJ, self.levels[0].CK] = False
+                g[m] = n + np.arange(int(m.sum()))
+            else:
+                lev = self.levels[l - 1]
+                m = lev.unc
+                g[lev.FI[m], lev.FJ[m], lev.FK[m]] = n + np.arange(int(m.sum()))
+            cid.append(g); self.unk.append(m); self.off.append(n); n += int(m.sum())
+        self.n = n
+        self.vol, self.fixed, parent = np.zeros(n), np.zeros(n, bool), np.zeros(n, int)
+        self.d0, self.b0 = np.zeros(n), np.zeros(n)
+        for l in range(NL):
+            g, T_ll = cid[l], 1.0 / (2 ** l * H ** 2)
+            gs = g.shape
+            pos = np.argwhere(g >= 0)                          # (nU, 3) global cell indices of the unknowns
+            ids = g[tuple(pos.T)]
+            self.vol[ids] = 8.0 ** (-l)
+            anc = tuple((pos // 2 ** l).T)                     # the base cell above
+            self.fixed[ids] = self.fixed_base[anc]
+            parent[ids] = np.ravel_multi_index(anc, sh)
+            for a in range(3):                                 # faces between the cells of this level
+                i, j = along(g[None], a, slice(None, -1))[0], along(g[None], a, slice(1, None))[0]
+                ok = (i >= 0) & (j >= 0)
+                face(i[ok], j[ok], T_ll)
+            for ax_, j in self.faces:                          # held faces: ghost = 2 value - u
+                e = along(g[None], ax_, slice(0, 1) if j == 0 else slice(-1, None))[0].ravel()
+                e = e[e >= 0]
+                self.d0[e] += 2 * T_ll; self.b0[e] += 2 * T_ll
+            if l == 0:
+                continue
+            gp, T_cf = cid[l - 1], 1.0 / (3 * 2 ** (l - 1) * H ** 2)
+            for a in range(3):
+                for side in (0, 1):
+                    nb = pos.copy(); nb[:, a] += 1 if side else -1
+                    inside = (nb[:, a] >= 0) & (nb[:, a] < gs[a])
+                    nbc = tuple(np.clip(nb, 0, np.array(gs) - 1).T)
+                    gn = np.where(inside, g[nbc], 0)
+                    # the neighbour is a coarse cell (not in this level's storage; a neighbour covered by the
+                    # next finer level is that level's coarse-fine face)
+                    sel = inside & (gn < 0) & (self.levels[l - 1].glob[nbc] < 0)
+                    if not sel.any():
+                        continue
+                    f, p = ids[sel], nb[sel] // 2
+                    pid = gp[tuple(p.T)]
+                    assert (pid >= 0).all(), "coarse-fine face without a cell on the next coarser level"
+                    face(f, pid, T_cf)
+                    if not self.lateral:
+                        continue
+                    for lat in [x for x in range(3) if x != a]:
+                        sgn = np.where(pos[sel][:, lat] % 2 == 0, -1.0, 1.0)   # fine cell at -h/4 or +h/4
+                        qids = []
+                        for d in (1, -1):
+                            q = p.copy(); q[:, lat] += d
+                            ins = (q[:, lat] >= 0) & (q[:, lat] < gp.shape[lat])
+                            qc = np.clip(q, 0, np.array(gp.shape) - 1)
+                            qid = np.where(ins, gp[tuple(qc.T)], -1)
+                            qids.append(qid)
+                            if not self.lat_all:
+                                continue
+                            coef = (-1.0 if d == 1 else 1.0) * T_cf * sgn / 8
+                            isc = qid >= 0
+                            Lt.append((f[isc], qid[isc], coef[isc]))
+                            Lt.append((f[~ins], pid[~ins], coef[~ins]))
+                            cov = ins & (qid < 0)              # covered by this level: mean of its 8 children
+                            if cov.any():
+                                for m in range(8):
+                                    ch = 2 * q[cov] + np.array([(m >> 2) & 1, (m >> 1) & 1, m & 1])
+                                    chid = g[tuple(ch.T)]
+                                    assert (chid >= 0).all(), "lateral neighbour covered by two levels (nesting)"
+                                    Lt.append((f[cov], chid, coef[cov] / 8))
+                        if self.lat_all:
+                            continue
+                        ok = (qids[0] >= 0) & (qids[1] >= 0)
+                        for qid, s in zip(qids, (-1.0, 1.0)):
+                            Lt.append((f[ok], qid[ok], s * T_cf * sgn[ok] / 8))
+        self.S0 = sp.csr_matrix((np.concatenate([x[2] for x in S]),
+                                 (np.concatenate([x[0] for x in S]), np.concatenate([x[1] for x in S]))), (n, n))
+        self.Lat = sp.csr_matrix((n, n)) if not Lt else sp.csr_matrix(
+            (np.concatenate([x[2] for x in Lt]), (np.concatenate([x[0] for x in Lt]), np.concatenate([x[1] for x in Lt]))),
+            (n, n))
+        f, fr = self.fixed, ~self.fixed
+        self.fr = fr
+        self.S0ff = self.S0[fr][:, fr].tocsr()
+        self.Latff = self.Lat[fr][:, fr].tocsr()
+        self.Afx = (self.S0 + self.Lat)[fr][:, f] @ np.ones(int(f.sum()))
+        P = sp.csr_matrix((np.ones(n), (np.arange(n), parent)), (n, int(np.prod(sh))))
+        self.R = P.T.tocsr()
+        self.Pf = P[fr][:, self.frb].tocsr()
+        self.Rf = self.Pf.T.tocsr()
+        self.key, self.nbuild = [lev.active.copy() for lev in self.levels], self.nbuild + 1
+        self.t["build"] += time.time() - t0
+
+    def vector(self, fields):
+        """composite vector from the fields per level (base, level 1, ...)"""
+        return np.concatenate([u[m] for u, m in zip(fields, self.unk)])
+
+    def solve(self, phis, Ls, value=1.0, u_prev=None, dtau=None):
+        """phis, Ls: phi_3D and living fraction per level (base, level 1, ...); u_prev: the fields per level of the
+        last solution. Returns the fields per level, the coarser ones carrying the restricted means of the finer."""
+        import pyamg
+        from pyamg.relaxation.relaxation import gauss_seidel
+        if self.key is None or any(not np.array_equal(k, lev.active) for k, lev in zip(self.key, self.levels)):
+            self._build()
+        if value == 0.0:
+            return [np.zeros_like(p) for p in phis]
+        t0 = time.time()
+        fr = self.fr
+        r = self.q * self.vector([np.clip(p, 0, 1) * Lv for p, Lv in zip(phis, Ls)]) * self.vol
+        x0 = None if u_prev is None else self.vector(u_prev) / value
+        m = 0.0 if (self.transient is None or u_prev is None) else 1.0 / (self.transient * dtau)
+        d = r + m * self.vol
+        b = self.b0 + (m * self.vol * x0 if m else 0.0)
+        Aff = (self.S0ff + sp.diags((self.d0 + d)[fr]) + self.Latff).tocsr()
+        rhs = b[fr] - self.Afx
+        self._n += 1
+        if self._ml is None or self._n % 25 == 1:
+            t1 = time.time()
+            Abff = (self.A0bff + sp.diags((self.base.d0 + self.R @ d)[self.frb])).tocsr()
+            self._ml = pyamg.smoothed_aggregation_solver(Abff, symmetry="symmetric")
+            self.t["amg"] += time.time() - t1
+        Mb, Pf, Rf = self._ml.aspreconditioner(), self.Pf, self.Rf
+
+        def two_grid(rr):
+            rr = np.ascontiguousarray(rr, dtype=np.float64).ravel()
+            xx = np.zeros_like(rr)
+            gauss_seidel(Aff, xx, rr, iterations=1, sweep="forward")
+            xx += Pf @ Mb.matvec(Rf @ (rr - Aff @ xx))
+            gauss_seidel(Aff, xx, rr, iterations=1, sweep="backward")
+            return xx
+        it = [0]
+
+        def cb(*_):
+            it[0] += 1
+        kw = dict(x0=None if x0 is None else x0[fr], rtol=1e-12, maxiter=500, callback=cb,
+                  M=spla.LinearOperator(Aff.shape, matvec=two_grid, dtype=np.float64))
+        sol, info = (spla.bicgstab if self.Latff.nnz else spla.cg)(Aff, rhs, **kw)
+        if info != 0:
+            sol, info = spla.gmres(Aff, rhs, x0=sol, rtol=1e-10, restart=50, maxiter=20, M=kw["M"])
+            assert info == 0, "composite nutrient solve did not converge"
+        self.iters.append(it[0])
+        x = np.where(self.fixed, 1.0, 0.0)
+        x[fr] = sol
+        x *= value
+        out = []
+        for l, (p, mk) in enumerate(zip(phis, self.unk)):
+            u = np.zeros_like(p)
+            u[mk] = x[self.off[l]:self.off[l] + int(mk.sum())]
+            out.append(u)
+        for l in range(len(self.levels), 0, -1):              # the coarser levels carry the restricted means
+            self.levels[l - 1].to_base(out[l], out[l - 1])
+        self.t["solve"] += time.time() - t0
+        return out
+
+
 def grad_mirror(u, h):
     """central differences with mirror ghosts (= the main script's grad with --wall-grad mirror and --fast)"""
     out = []
@@ -732,9 +990,11 @@ def run(o):
     NF, B = o.nf, o.block
     assert NF % 16 == 0, "N must be a multiple of 16 (seed and stress mesh)"
     refine = not o.no_refine
+    ML = refine and (o.levels >= 3 or o.generic)                 # the multi-level code path (--levels 3)
+    NL = o.levels if ML else 2                                   # number of levels, the base grid included
     BOX = W.L
     H = BOX / NF
-    hf = H / 2 if refine else H
+    hf = H / 2 ** (NL - 1) if refine else H                      # the finest spacing
     SHAPE = (NF // 2, NF, NF // 2)
     QS = (slice(NF // 2, None), slice(None), slice(NF // 2, None))
     R_FRONT = o.front * 100.0e-3 * (2.0 / 20.0e-3)
@@ -784,23 +1044,38 @@ def run(o):
     dt = min(dt, 0.4 * hf / (R_FRONT / (1 + K_MONOD)))
     dt = min(dt, 2.2 / (12 * W.BETA / hf ** 2 + 2 * R_FRONT / (1 + K_MONOD) / hf))
     per = int(np.ceil(DT_C / dt))
-    if o.subcycle:                                               # the base grid takes 2 dt: an even number of dt
+    nsub = 2 ** (NL - 1) if o.subcycle else 1                    # finest steps per pass of the inner loop
+    if o.subcycle:                                               # the base grid takes nsub dt: a multiple of nsub
         assert refine, "--subcycle needs the refined grid"
         o.reflux = True
-        per = 2 * int(np.ceil(per / 2))
+        per = nsub * int(np.ceil(per / nsub))
     dt = DT_C / per
-    lev = Level1(SHAPE, B) if refine else None
+    # the block levels: LV[l] refines B^3 cells of level l-1 (LV[0] = None is the base grid); lev = level 1
+    LV = [None]
+    for l in range(1, NL if refine else 1):
+        LV.append(Level1(tuple(2 ** (l - 1) * s_ for s_ in SHAPE), B, parent=None if l == 1 else LV[l - 1]))
+    LVS = LV[1:]
+    lev = LV[1] if refine else None
+    hfs = [H / 2 ** l for l in range(NL)]                        # spacing per level
+    NF3 = 8 ** (NL - 1) * int(np.prod(SHAPE))                    # cells of the uniform finest grid (quarter)
     o.c_fine = o.c_fine or o.c_fine_basephi
     o.c_composite = o.c_composite or o.c_composite_nolateral
     assert not (o.c_fine and o.c_composite), "--c-fine and --c-composite exclude each other"
     assert not o.point_fine or (o.c_composite and refine), "--point-fine needs --c-composite on the refined grid"
     assert not o.reflux or refine, "--reflux needs the refined grid"
+    assert not (ML and o.c_fine), "--levels 3 does not support --c-fine"
+    assert o.c_every >= 1 and not (o.c_fine and o.c_every > 1), "--c-every needs the base or composite nutrient"
+    assert o.levels == 2 or refine, "--levels 3 needs the refined grid"
     if o.c_composite:                                            # nutrient and antibiotic on the composite grid
         if not refine:                                           # (an empty block level: the base grid alone)
             lev = Level1(SHAPE, B)
             lev.set_active(np.zeros(lev.NB, bool), phi, alpha, smooth=dict(c=c, a=a))
-        comp = Composite(nut, -1, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
-        comp_a = Composite(ab, 0, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
+        if ML:
+            comp = CompositeML(nut, -1, LVS, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
+            comp_a = CompositeML(ab, 0, LVS, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
+        else:
+            comp = Composite(nut, -1, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
+            comp_a = Composite(ab, 0, lev, lateral=not o.c_composite_nolateral, lat_all=o.lat_all)
     if o.c_fine:                                                 # diagnostic: the nutrient on the (2N)^3 grid
         assert refine
         SH2 = tuple(2 * s_ for s_ in SHAPE)
@@ -833,9 +1108,13 @@ def run(o):
 
     unc = np.ones(SHAPE, bool)                                   # base cells not covered by a block
     faces_crs = []                                               # (axis, side) with coarse-fine faces (--reflux)
+    retagged = [False]                                           # blocks changed since the last nutrient solve
 
     def retag(cfield):
         """new active set from the base phi_3D; the carried fine fields and the bookkeeping that depends on it"""
+        retagged[0] = True
+        if ML:
+            return retag_ml(cfield)
         smooth = dict(c=cfield, a=a, **(dict(c0=c) if o.point_fine else {})) if o.c_composite else None
         lev.set_active(tag_blocks(phi), phi, alpha, smooth=smooth,
                        point=dict(G=G, on=on, L=L) if o.point_fine else None)
@@ -958,15 +1237,362 @@ def run(o):
         lev.Fon |= fill
         return True
 
+    # ---------------------------------------------------------------- multi-level path (--levels 3, --generic)
+    # Every block level l refines B^3 cells of level l-1 through the same Level1 class; the ghost values of level l
+    # come from the stage field of level l-1, whose slopes need its own ghosts from level l-2 (ctx_slopes).
+    faces_ml = {}                                                # level -> [(axis, side)] with coarse-fine faces
+    VF = [None]                                                  # front velocity per level (v on the base)
+
+    def ctx_slopes(fields, limited):
+        """slopes per level of fields[0..] (base first), stopping at the first empty level"""
+        out = [base_slopes(fields[0], limited)]
+        for l in range(1, len(fields)):
+            if fields[l] is None or LV[l].nb == 0:
+                break
+            out.append(LV[l].stack_slopes(fields[l], fields[l - 1], out[l - 1], limited))
+        return out
+
+    def tag_level(l, cphi, sc_all):
+        """tags of level l on the global cell grid of level l-1 (neighbour differences of its field > tag-tol,
+        ghosts from level l-2, dilated by --dilate cells); None when level l-1 has no block"""
+        pv = LV[l - 1]
+        if not pv.nb:
+            return None
+        F, d = pv.Fphi, np.zeros(pv.Fphi.shape)
+        for a_ in range(3):
+            up = pv.padded(F, a_, cphi[l - 2], sc_all[l - 2])
+            d = np.maximum(d, np.abs(along(up, a_, slice(3, -1)) - F))
+            d = np.maximum(d, np.abs(along(up, a_, slice(1, -3)) - F))
+        tg = np.zeros(LV[l].shape, bool)
+        tg[pv.FI, pv.FJ, pv.FK] = d > o.tag_tol
+        if o.dilate > 0:
+            tg = maximum_filter(tg.astype(np.uint8), size=2 * o.dilate + 1, mode="constant", cval=0) > 0
+        return tg
+
+    def retag_ml(cfield):
+        """new active sets of every level: own tags (level 1 from the base phi_3D, level l from the field of
+        level l-1), then nesting from the finest down (a level-l block, dilated by max(dilate, 2) cells of level
+        l-1, must lie in level-(l-1) blocks); then set_active from level 1 up, each level prolonging the new one"""
+        cphi = [phi] + [x.Fphi for x in LVS]
+        sc_all = ctx_slopes(cphi[:-1], True)
+        own = {1: tag_blocks(phi)}
+        for l in range(2, NL):
+            tg = tag_level(l, cphi, sc_all)
+            lv = LV[l]
+            own[l] = np.zeros(lv.NB, bool) if tg is None else tg.reshape(
+                lv.NB[0], B, lv.NB[1], B, lv.NB[2], B).any(axis=(1, 3, 5))
+            own[l, "cells"] = tg
+        act = {NL - 1: own[NL - 1]}
+        for l in range(NL - 1, 1, -1):                           # nesting into level l-1
+            lv, pv = LV[l], LV[l - 1]
+            cov = np.repeat(np.repeat(np.repeat(act[l], B, 0), B, 1), B, 2)   # cells of level l-1 under level l
+            M = max(o.dilate, 2)
+            cov = maximum_filter(cov.astype(np.uint8), size=2 * M + 1, mode="constant", cval=0) > 0
+            nest = cov.reshape(pv.NB[0], 2 * B, pv.NB[1], 2 * B, pv.NB[2], 2 * B).any(axis=(1, 3, 5))
+            act[l - 1] = own[l - 1] | nest
+        for l in range(1, NL):
+            lv = LV[l]
+            pf = o.point_fine
+            if l == 1:
+                smooth = dict(c=cfield, a=a, **(dict(c0=c) if pf else {})) if o.c_composite else None
+                lv.set_active(act[1], phi, alpha, smooth=smooth, point=dict(G=G, on=on, L=L) if pf else None)
+                unc[:] = ~np.repeat(np.repeat(np.repeat(lv.active, B, 0), B, 1), B, 2)
+            else:
+                pv = LV[l - 1]
+                chains = {id(pv.Fphi): [phi] + [x.Fphi for x in LVS[:l - 1]],
+                          id(pv.Fal): [alpha] + [x.Fal for x in LVS[:l - 1]]}
+                smooth = None
+                if o.c_composite:
+                    smooth = dict(pv.extra)
+                    for name, b0 in (("c", cfield), ("a", a), ("c0", c)):
+                        if name in pv.extra:
+                            chains[id(pv.extra[name])] = [b0] + [x.extra[name] for x in LVS[:l - 1]]
+
+                def psl(src, lim, chains=chains, l=l):
+                    return ctx_slopes(chains[id(src)], lim)[l - 1]
+                lv.set_active(act[l], pv.Fphi, pv.Fal, smooth=smooth,
+                              point=dict(G=pv.FG, on=pv.Fon, L=pv.FL) if pf else None, psl=psl)
+                pv.unc[:] = True
+                if lv.nb:
+                    pv.unc[lv.Cidx] = False
+            faces_ml[l] = [(a_, sd) for a_ in range(3) for sd in (0, 1) if lv.gh[a_, sd]["crs"].size] if o.reflux else []
+
+    def level_living(Lf):
+        """living fraction per level for the nutrient solve: the fine state (--point-fine) or the parent's"""
+        Ls = [Lf]
+        for lv in LVS:
+            Ls.append(lv.FL if o.point_fine else up8(Ls[-1][lv.Cidx]))
+        return Ls
+
+    def velocities_ml(cf):
+        """v on the base and per level: from the composite c (ghosts from the next coarser level) or interpolated"""
+        out = [velocity(cf, H)]
+        if o.c_composite:
+            cs = [cf] + [lv.extra["c"] for lv in LVS]
+            scs = ctx_slopes(cs[:-1], False)
+            for l in range(1, NL):
+                if not LV[l].nb:
+                    out.append(None); continue
+                g = [(along(up, a_, slice(3, -1)) - along(up, a_, slice(1, -3))) / (2 * hfs[l])
+                     for a_, up in ((a_, LV[l].padded(cs[l], a_, cs[l - 1], scs[l - 1])) for a_ in range(3))]
+                out.append(velocity(cs[l], hfs[l], g))
+        else:
+            for l in range(1, NL):
+                if not LV[l].nb:
+                    out.append(None); continue
+                vl = []
+                for a_ in range(3):
+                    ch = [x[a_] for x in out[:l]]
+                    vl.append(LV[l].interp(ch[-1], None if l == 1 else ctx_slopes(ch, False)[l - 1]))
+                out.append(vl)
+        return out
+
+    def rhs_fine_ml(l, Fp, Fa, phc, sc, vfl, faces=False):
+        """rhs_fine on level l with the ghosts from (phc, sc) of level l-1; the diffusion volume rate over the
+        cells not covered by level l+1"""
+        lv, h = LV[l], hfs[l]
+        d = W.K_ALPHA * Fa - W.PENALTY * (np.maximum(Fp - 1, 0) + np.minimum(Fp, 0))
+        fd = []
+        for a_ in range(3):
+            up = lv.padded(Fp, a_, phc, sc)
+            lt = W.BETA * lap_axis(up, a_, h)
+            at = adv_axis(up, vfl[a_], a_, h, faces)
+            if faces:
+                at, r_, l_ = at
+                fd.append((up, r_, l_))
+            d = d + lt - at
+            dsum = lt if a_ == 0 else dsum + lt
+        return d, W.K_ALPHA * Fp, fd, float(dsum[lv.unc].sum()) * h ** 3
+
+    def shiftt(idx, a_, e):
+        """shift an index tuple (3 or 4 arrays) along grid axis a_"""
+        P = list(idx); k_ = len(P) - 3 + a_
+        P[k_] = P[k_] + e
+        return tuple(P)
+
+    def coarse_iface_ml(lf, a_, side, ph, v_, fr_, fl_, hc):
+        """coarse_iface for the coarse level under the fine level lf (index tuples into the coarse storage)"""
+        idx, b = lf.gh[a_, side]["cidx"], lf.gh[a_, side]["bidx"]      # the coarse cell, its covered neighbour
+        s = 1.0 if side == 0 else -1.0
+        vc = v_[a_][idx]
+        c1, b1 = shiftt(idx, a_, 1), shiftt(b, a_, 1)
+        phiF = np.where(vc > 0, fr_[a_][c1 if side == 0 else b1], fl_[a_][b1 if side == 0 else c1])
+        return idx, W.BETA * (ph[b] - ph[idx]) / hc / hc, -vc * s * phiF / hc
+
+    def fine_iface_ml(l, a_, side, fd, vfl, vc):
+        """fine_iface for level l (spacing hfs[l]) towards the coarse cells of level l-1"""
+        lv, h, hc = LV[l], hfs[l], hfs[l - 1]
+        crs = lv.gh[a_, side]["crs"]
+        up, pr, pl = fd[a_]
+        upc = up[crs]
+        s = 1.0 if side == 0 else -1.0
+        if side == 0:
+            g1, f0 = along(upc, a_, slice(1, 2)), along(upc, a_, slice(2, 3))
+            vff = along(vfl[a_][crs], a_, slice(0, 1))
+            phiF = np.where(vff > 0, along(pr[crs], a_, slice(0, 1)), along(pl[crs], a_, slice(1, 2)))
+        else:
+            g1, f0 = along(upc, a_, slice(-2, -1)), along(upc, a_, slice(-3, -2))
+            vff = along(vfl[a_][crs], a_, slice(-1, None))
+            phiF = np.where(vff > 0, along(pr[crs], a_, slice(-2, -1)), along(pl[crs], a_, slice(-1, None)))
+        return mean4(-W.BETA * (g1 - f0) / h, a_) / hc, -vc * s * mean4(phiF, a_) / hc
+
+    def faces_of(l, fcs):
+        """(fr list, fl list) of level l from the rhs output (the base: (fr, fl); a block level: [(up, fr, fl)])"""
+        return fcs if l == 0 else ([x[1] for x in fcs], [x[2] for x in fcs])
+
+    def step_ml():
+        """one step dt of all levels with the same RK4 stages (the non-subcycled multi-level step)"""
+        nonlocal phi, alpha, drift
+
+        def f(flds):
+            phs = [x[0] for x in flds]
+            sc = ctx_slopes(phs[:-1], True)
+            t1 = time.time()
+            dc, dal, fc, dif = rhs_base(phs[0], flds[0][1], VF[0], o.reflux and LV[1].nb > 0)
+            tm["base"] += time.time() - t1
+            out, fcs = [[dc, dal]], [fc]
+            t1 = time.time()
+            for l in range(1, NL):
+                lv = LV[l]
+                if not lv.nb:
+                    out.append([None, None]); fcs.append(None); continue
+                df, dfa, fd, dif_f = rhs_fine_ml(l, flds[l][0], flds[l][1], phs[l - 1], sc[l - 1], VF[l], o.reflux)
+                if o.reflux:                                   # the fine face fluxes replace the coarse ones
+                    frc, flc = faces_of(l - 1, fcs[l - 1])
+                    for key in faces_ml[l]:
+                        idx, Tcd, Tca = coarse_iface_ml(lv, *key, phs[l - 1], VF[l - 1], frc, flc, hfs[l - 1])
+                        Tfd, Tfa = fine_iface_ml(l, *key, fd, VF[l], VF[l - 1][key[0]][idx])
+                        out[l - 1][0][idx] += (Tfd - Tcd) + (Tfa - Tca)
+                        dif += float((Tfd - Tcd).sum()) * hfs[l - 1] ** 3
+                out.append([df, dfa]); fcs.append(fd); dif += dif_f
+            tm["fine"] += time.time() - t1
+            return out, dif
+
+        def st(F0, ks, w):
+            new = [[F0[l][0] + w * dt * ks[l][0], F0[l][1] + w * dt * ks[l][1]] if F0[l][0] is not None
+                   else [None, None] for l in range(NL)]
+            if o.reflux:                                       # the coarser levels carry the fine stage means
+                for l in range(NL - 1, 0, -1):
+                    if new[l][0] is not None:
+                        LV[l].to_base(new[l][0], new[l - 1][0]); LV[l].to_base(new[l][1], new[l - 1][1])
+            return new
+        F0 = [[phi, alpha]] + [[lv.Fphi, lv.Fal] if lv.nb else [None, None] for lv in LVS]
+        k1, d1 = f(F0)
+        k2, d2 = f(st(F0, k1, 0.5))
+        k3, d3 = f(st(F0, k2, 0.5))
+        k4, d4 = f(st(F0, k3, 1.0))
+        new = [[F0[l][i] + dt / 6 * (k1[l][i] + 2 * k2[l][i] + 2 * k3[l][i] + k4[l][i]) for i in (0, 1)]
+               if F0[l][0] is not None else [None, None] for l in range(NL)]
+        phi, alpha = new[0]
+        drift += dt / 6 * (d1 + 2 * d2 + 2 * d3 + d4)
+        t_ = time.time()
+        for l in range(NL - 1, 0, -1):
+            if new[l][0] is not None:
+                LV[l].Fphi, LV[l].Fal = new[l]
+                LV[l].to_base(LV[l].Fphi, new[l - 1][0]); LV[l].to_base(LV[l].Fal, new[l - 1][1])
+        tm["restrict"] += time.time() - t_
+
+    def step_sub_ml():
+        """the subcycled multi-level step (Berger-Colella): the base takes nsub dt alone, level l two steps of
+        dt 2^(NL-1-l) inside each step of level l-1 with ghosts interpolated in time, v frozen; after each
+        step of level l the restriction of level l+1 and the refluxing of its coarse-fine faces with the
+        RK-weighted time integrals of the face terms (acc[l]: the (l-1, l) interface)"""
+        nonlocal phi, alpha, drift
+        dts = [dt * 2 ** (NL - 1 - l) for l in range(NL)]
+        acc = {l: {key: [LV[l].gh[key]["cidx"], 0.0, 0.0] for key in faces_ml[l]} for l in range(1, NL)}
+        ph0 = phi
+
+        def fc_(ph, al, wgt):
+            t1 = time.time()
+            dc, dal, fc, dif = rhs_base(ph, al, VF[0], bool(acc[1]))
+            for key, ac in acc[1].items():
+                _, Tcd, Tca = coarse_iface_ml(LV[1], *key, ph, VF[0], *fc, H)
+                ac[1] = ac[1] - wgt * dts[0] * (Tcd + Tca); ac[2] = ac[2] - wgt * dts[0] * Tcd
+            tm["base"] += time.time() - t1
+            return dc, dal, dif
+        k1 = fc_(phi, alpha, 1 / 6)
+        k2 = fc_(phi + 0.5 * dts[0] * k1[0], alpha + 0.5 * dts[0] * k1[1], 2 / 6)
+        k3 = fc_(phi + 0.5 * dts[0] * k2[0], alpha + 0.5 * dts[0] * k2[1], 2 / 6)
+        k4 = fc_(phi + dts[0] * k3[0], alpha + dts[0] * k3[1], 1 / 6)
+        phi = phi + dts[0] / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+        alpha = alpha + dts[0] / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        drift += dts[0] / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+
+        def ctx_at(l, j, w, pairs, js):
+            """fields of levels 0..l-1 at stage w of step j of level l (linear in time within each step)"""
+            out, t = [None] * l, (j + w) / 2
+            for m in range(l - 1, -1, -1):
+                b, a_ = pairs[m]
+                out[m] = b if t == 0 else a_ if t == 1 else (1 - t) * b + t * a_
+                t = (js[m] + t) / 2
+            return out
+
+        def advance(l, pairs, js):
+            """level l: two steps of dts[l] inside the current step of level l-1; pairs[m] = (before, after) of
+            level m's current step, js[m] its step index within level m-1's step"""
+            nonlocal drift
+            lv = LV[l]
+            Fp, Fa = lv.Fphi, lv.Fal
+            up_acc = acc[l]
+            vc_up = {key: VF[l - 1][key[0]][ac[0]] for key, ac in up_acc.items()}
+            for j in (0, 1):
+                Fp0 = Fp
+                dn_acc = ({key: [LV[l + 1].gh[key]["cidx"], 0.0, 0.0] for key in faces_ml[l + 1]}
+                          if l + 1 < NL and LV[l + 1].nb else {})
+
+                def ff(Fp_, Fa_, w, wgt):
+                    t1 = time.time()
+                    ctx = ctx_at(l, j, w, pairs, js)
+                    sc = ctx_slopes(ctx, True)
+                    df, dfa, fd, dif = rhs_fine_ml(l, Fp_, Fa_, ctx[l - 1], sc[l - 1], VF[l],
+                                                   bool(up_acc) or bool(dn_acc))
+                    for key, ac in up_acc.items():
+                        Tfd, Tfa = fine_iface_ml(l, *key, fd, VF[l], vc_up[key])
+                        ac[1] = ac[1] + wgt * dts[l] * (Tfd + Tfa); ac[2] = ac[2] + wgt * dts[l] * Tfd
+                    if dn_acc:
+                        frc, flc = faces_of(l, fd)
+                        for key, ac in dn_acc.items():
+                            _, Tcd, Tca = coarse_iface_ml(LV[l + 1], *key, Fp_, VF[l], frc, flc, hfs[l])
+                            ac[1] = ac[1] - wgt * dts[l] * (Tcd + Tca); ac[2] = ac[2] - wgt * dts[l] * Tcd
+                    tm["fine"] += time.time() - t1
+                    return df, dfa, dif
+                k1 = ff(Fp, Fa, 0.0, 1 / 6)
+                k2 = ff(Fp + 0.5 * dts[l] * k1[0], Fa + 0.5 * dts[l] * k1[1], 0.5, 2 / 6)
+                k3 = ff(Fp + 0.5 * dts[l] * k2[0], Fa + 0.5 * dts[l] * k2[1], 0.5, 2 / 6)
+                k4 = ff(Fp + dts[l] * k3[0], Fa + dts[l] * k3[1], 1.0, 1 / 6)
+                Fp = Fp + dts[l] / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+                Fa = Fa + dts[l] / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+                drift += dts[l] / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
+                if dn_acc:
+                    acc[l + 1] = dn_acc
+                    advance(l + 1, pairs + [(Fp0, Fp)], js + [j])
+                    t_ = time.time()
+                    LV[l + 1].to_base(LV[l + 1].Fphi, Fp); LV[l + 1].to_base(LV[l + 1].Fal, Fa)
+                    for idx, corr, cd in dn_acc.values():
+                        Fp[idx] += corr
+                        drift += float(np.sum(cd)) * hfs[l] ** 3
+                    tm["restrict"] += time.time() - t_
+            lv.Fphi, lv.Fal = Fp, Fa
+        if LV[1].nb:
+            advance(1, [(ph0, phi)], [0])
+            t_ = time.time()
+            LV[1].to_base(LV[1].Fphi, phi); LV[1].to_base(LV[1].Fal, alpha)
+            for idx, corr, cd in acc[1].values():
+                phi[idx] += corr
+                drift += float(np.sum(cd)) * H ** 3
+            tm["restrict"] += time.time() - t_
+
+    def parent_point(l):
+        return (G, on, L) if l == 1 else (LV[l - 1].FG, LV[l - 1].Fon, LV[l - 1].FL)
+
+    def sync_ml():
+        """fine point-model state -> living fraction per level, then restricted onto the next coarser level"""
+        for lv in LVS:
+            lv.FL = np.where(lv.Fon, living(lv.FG.reshape(-1, 12)).reshape(lv.Fon.shape), 0.0)
+        for l in range(NL - 1, 0, -1):
+            LV[l].restrict_point(*parent_point(l))
+
+    def fill_fine_ml(l):
+        """fill_fine on level l: colonise its uncovered cells from neighbours on the level or the parent cell"""
+        lv = LV[l]
+        if not lv.nb:
+            return False
+        Fnew = (lv.Fphi >= o.phi_min) & ~lv.Fon & lv.unc
+        if not Fnew.any():
+            return False
+        if l == 1:
+            wb, Gb = np.where(on, phi, 0.0), G
+        else:
+            wb, Gb = np.where(LV[l - 1].Fon, LV[l - 1].Fphi, 0.0), LV[l - 1].FG
+        wf = np.where(lv.Fon, lv.Fphi, 0.0)
+        num, den = np.zeros(lv.FG.shape), np.zeros(lv.Fon.shape)
+        for a_ in range(3):
+            wp, gp = lv.padded_pc(wf, a_, wb), lv.padded_pc(lv.FG, a_, Gb)
+            for sl in (slice(1, -3), slice(3, -1)):
+                wn = along(wp, a_, sl)
+                den += wn
+                num += wn[..., None] * along(gp, a_, sl)
+        fill = Fnew & (den > 0)
+        if not fill.any():
+            return False
+        gs = living_start(num[fill] / den[fill][:, None])
+        gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+        gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
+        lv.FG[fill] = gs
+        lv.Fon |= fill
+        return True
+
     hist = dict(t=[0.0], living_seed=[float(L[seed].mean())], share_a_seed=[shares(seed)],
                 c_seed=[float(c[seed].mean())], a_seed=[0.0], colonised=[int(on.sum()) * 4],
-                fine_cells=[], active_blocks=[], phi_max=[], phi_min=[], vol=[float(phi.sum()) * H ** 3])
+                fine_cells=[], active_blocks=[], phi_max=[], phi_min=[], vol=[float(phi.sum()) * H ** 3],
+                level1_cells=[])
     drift = 0.0                        # time integral of the diffusion term over the composite grid (volume drift)
     tm = dict(base=0.0, fine=0.0, nutrient=0.0, point=0.0, retag=0.0, restrict=0.0)
     snaps = {}
     t0 = time.time()
     nstep_total = 0
-    nsub = 2 if o.subcycle else 1
+    npass = 0                          # passes of the inner loop (--c-every counts them)
+    fine_lev = LV[NL - 1] if refine else None                    # the finest level
     if refine:
         retag(c)
     for k in range(int(round(o.tend / DT_C))):
@@ -981,8 +1607,31 @@ def run(o):
                 FLf = lev.FL if o.point_fine else None
                 tm["retag"] += time.time() - t_
             # nutrient of this inner step on the base grid, the front velocity on both levels
+            # (--c-every k: only every k-th pass; in between c and v stay, the velocity of new blocks is taken
+            # from the prolonged c; the transient term then spans the k passes)
             t_ = time.time()
-            if o.c_fine:                                          # diagnostic: c and v on the (2N)^3 grid
+            solve_now = npass % o.c_every == 0
+            dtau_c = dt if o.c_every == 1 else dt * nsub * o.c_every
+            if ML:
+                if solve_now:
+                    if o.c_composite:
+                        cs = comp.solve([phi] + [lv.Fphi for lv in LVS], level_living(Lf), 1.0,
+                                        u_prev=[cf] + [lv.extra["c"] for lv in LVS], dtau=dtau_c)
+                        cf = cs[0]
+                        for l in range(1, NL):
+                            LV[l].extra["c"] = cs[l]
+                    else:
+                        cf = nut.solve(phi, Lf, 1.0, u_prev=cf, dtau=dtau_c)
+                if solve_now or retagged[0]:
+                    VF[:] = velocities_ml(cf)
+                    v, vf = VF[0], VF[1]
+            elif not solve_now:
+                if retagged[0] and refine and lev.nb:
+                    vf = (velocity(lev.extra["c"], hf, grad_fine(lev.extra["c"], cf)) if o.c_composite
+                          else [lev.interp(x) for x in v])
+                elif retagged[0]:
+                    vf = None
+            elif o.c_fine:                                        # diagnostic: c and v on the (2N)^3 grid
                 L2 = np.repeat(np.repeat(np.repeat(Lf, 2, 0), 2, 1), 2, 2)     # living fraction of the base cell
                 cf2 = nut2.solve(phi_2N(), L2, 1.0, u_prev=cf2 if i_in or k else None, dtau=dt)
                 v2 = velocity(cf2, hf)
@@ -990,17 +1639,24 @@ def run(o):
                 v = [restrict8(x) for x in v2]
                 vf = [x[lev.FI, lev.FJ, lev.FK] for x in v2] if lev.nb else None
             elif o.c_composite:                                   # c on the composite grid, v on both levels
-                cf, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), dtau=dt,
+                cf, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), dtau=dtau_c,
                                                 Lfine=FLf)
                 v = velocity(cf, H)
                 vf = velocity(lev.extra["c"], hf, grad_fine(lev.extra["c"], cf)) if (refine and lev.nb) else None
             else:
-                cf = nut.solve(phi, Lf, 1.0, u_prev=cf, dtau=dt)
+                cf = nut.solve(phi, Lf, 1.0, u_prev=cf, dtau=dtau_c)
                 v = velocity(cf, H)
                 vf = [lev.interp(x) for x in v] if (refine and lev.nb) else None
+            retagged[0] = False
+            npass += 1
             tm["nutrient"] += time.time() - t_
 
-            if o.subcycle:
+            if ML:
+                if o.subcycle:
+                    step_sub_ml()
+                else:
+                    step_ml()
+            elif o.subcycle:
                 # (1a) the base grid alone, one step of 2 dt (v frozen); the time integral of the interface terms
                 #      of the coarse cells next to the blocks is kept for the refluxing
                 dt2 = 2 * dt
@@ -1094,12 +1750,35 @@ def run(o):
                     lev.to_base(lev.Fphi, phi); lev.to_base(lev.Fal, alpha)
                     tm["restrict"] += time.time() - t_
             for _ in range(nsub):
-                hist["fine_cells"].append(lev.fine_cells() if refine else 0)
-                hist["active_blocks"].append(lev.nb if refine else 0)
+                hist["fine_cells"].append(fine_lev.fine_cells() if refine else 0)
+                hist["active_blocks"].append(fine_lev.nb if refine else 0)
+                if ML:
+                    hist["level1_cells"].append(LV[1].fine_cells())
             nstep_total += nsub
         # (2) nutrient and antibiotic at t_i with L(t_{i-1}); (3) point models; (4) inheritance; (5) living
         t_ = time.time()
-        if o.transient_c is not None:
+        a_val = (1.0 if T1 > T_AB + 1e-12 else 0.0) if antibiotic else 0.0
+        if ML:
+            Ls = level_living(Lf)
+            phis = [phi] + [lv.Fphi for lv in LVS]
+            if o.transient_c is not None:
+                c_new = cf
+            elif o.c_composite:
+                cs = comp.solve(phis, Ls, 1.0, u_prev=[cf] + [lv.extra["c"] for lv in LVS])
+                c_new = cs[0]
+                for l in range(1, NL):
+                    LV[l].extra["c"] = cs[l]
+            else:
+                c_new = nut.solve(phi, Lf, 1.0, u_prev=c, dtau=DT_C)
+            if o.c_composite:
+                aF0 = [lv.extra["a"] for lv in LVS]               # the fine antibiotic of the last outer step
+                as_ = comp_a.solve(phis, Ls, a_val, u_prev=[a] + aF0, dtau=DT_C)
+                a_new = as_[0]
+                for l in range(1, NL):
+                    LV[l].extra["a"] = as_[l]
+            else:
+                a_new = ab.solve(phi, Lf, a_val, u_prev=a, dtau=DT_C)
+        elif o.transient_c is not None:
             c_new = cf
         elif o.c_fine:
             c_new = restrict8(nut2.solve(phi_2N(), L2, 1.0))
@@ -1107,8 +1786,9 @@ def run(o):
             c_new, lev.extra["c"] = comp.solve(phi, lev.Fphi, Lf, 1.0, u_prev=(cf, lev.extra["c"]), Lfine=FLf)
         else:
             c_new = nut.solve(phi, Lf, 1.0, u_prev=c, dtau=DT_C)
-        a_val = (1.0 if T1 > T_AB + 1e-12 else 0.0) if antibiotic else 0.0
-        if o.c_composite:
+        if ML:
+            pass
+        elif o.c_composite:
             aF0 = lev.extra["a"]                                  # the fine antibiotic of the last outer step
             a_new, lev.extra["a"] = comp_a.solve(phi, lev.Fphi, Lf, a_val, u_prev=(a, lev.extra["a"]), dtau=DT_C,
                                                  Lfine=FLf)
@@ -1116,7 +1796,48 @@ def run(o):
             a_new = ab.solve(phi, Lf, a_val, u_prev=a, dtau=DT_C)
         tm["nutrient"] += time.time() - t_
         t_ = time.time()
-        if o.point_fine:
+        if ML and o.point_fine:
+            # the point model per uncovered cell of every level (c, a of the level)
+            parts = [(G.reshape(-1, 12), np.flatnonzero((on & unc).ravel()), c, c_new, a, a_new)]
+            for l in range(1, NL):
+                lv = LV[l]
+                parts.append((lv.FG.reshape(-1, 12), np.flatnonzero((lv.Fon & lv.unc).ravel()), lv.extra["c0"],
+                              lv.extra["c"], aF0[l - 1], lv.extra["a"]))
+            cat = lambda i_: np.concatenate([p[i_].ravel()[p[1]] for p in parts])  # noqa: E731
+            Gall, okf = FN.step_lin(np.concatenate([p[0][p[1]] for p in parts]), S_LINK * DT_C, N_SUB,
+                                    cat(2), cat(3), cat(4), cat(5))
+            assert okf.all(), "Fortran point model failed"
+            n0 = 0
+            for p in parts:
+                p[0][p[1]] = Gall[n0:n0 + p[1].size]
+                n0 += p[1].size
+            G = parts[0][0].reshape(SHAPE + (12,))
+            for lv in LVS:
+                lv.extra["c0"] = lv.extra["c"].copy()
+            c, a = c_new, a_new
+            sync_ml()
+            while True:                                           # colonisation on every level until nothing new
+                changed = False
+                for l in range(NL - 1, 0, -1):
+                    if fill_fine_ml(l):
+                        changed = True
+                if changed:
+                    sync_ml()
+                new = (phi >= o.phi_min) & ~on & unc
+                num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                fill = new & (den > 0)
+                if fill.any():
+                    gs = living_start(num[fill] / den[fill][:, None])
+                    gs[:, :N_SP] = np.clip(gs[:, :N_SP], 1e-10, None)
+                    gs[:, 5] = 1.0 - gs[:, :N_SP].sum(1)
+                    G[fill] = gs
+                    on = on | fill
+                    changed = True
+                if not changed:
+                    break
+            L = np.where(on, living(G.reshape(-1, 12)).reshape(SHAPE), 0.0)
+            sync_ml()
+        elif o.point_fine:
             # the point model per uncovered base cell and per fine cell of the blocks (c, a of both levels)
             ib, i_f = np.flatnonzero((on & unc).ravel()), np.flatnonzero(lev.Fon.ravel())
             Gf, FGf = G.reshape(-1, 12), lev.FG.reshape(-1, 12)
@@ -1183,14 +1904,22 @@ def run(o):
             snaps[f"phi_{T1:.3f}"] = phi.copy()
             if refine:
                 snaps[f"active_{T1:.3f}"] = lev.active.copy()
+            if ML and NL == 3:
+                snaps[f"active2_{T1:.3f}"] = LV[2].active.copy()
         if (k + 1) % 4 == 0 or k == 0:
             nfc = hist["fine_cells"][-1]
             print(f"  T* {T1:.3f}  {time.time() - t0:6.0f} s  colonised {int(on.sum()) * 4}  "
-                  f"living seed {L[seed].mean():.4f}  fine cells {nfc} ({lev.nb if refine else 0} blocks, "
-                    f"{100 * nfc / (8 * phi.size):.0f} % of (2N)^3)", flush=True)
+                  f"living seed {L[seed].mean():.4f}  fine cells {nfc} ({fine_lev.nb if refine else 0} blocks, "
+                    f"{100 * nfc / NF3:.0f} % of (2N)^3)", flush=True)
     wall = time.time() - t0
     # the equivalent uniform (2N)^3 representation and the stress on the 16^3 mesh
-    if refine:
+    if ML:                             # level by level: prolong (limited), then the blocks of the next level
+        phi2, al2 = phi, alpha
+        for lv in LVS:
+            phi2 = children(phi2, *base_slopes(phi2, True)); al2 = children(al2, *base_slopes(al2, True))
+            if lv.nb:
+                phi2[lv.FI, lv.FJ, lv.FK] = lv.Fphi; al2[lv.FI, lv.FJ, lv.FK] = lv.Fal
+    elif refine:
         s = slopes(phi[None], True); phi2 = children(phi, s[0][0], s[1][0], s[2][0])
         s = slopes(alpha[None], True); al2 = children(alpha, s[0][0], s[1][0], s[2][0])
         if lev.nb:
@@ -1207,29 +1936,36 @@ def run(o):
     seed16 = S.seed_mask(NM, cells8)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
     hist["seed_vm_max_Pa"] = float(vm[seed16].max()); hist["seed_p_Pa"] = float(p[seed16].mean())
-    hist["seed_am1_2N"] = float((al2 - 1)[W.seed_mask(2 * NF if refine else NF, cells8)[
+    hist["seed_am1_2N"] = float((al2 - 1)[W.seed_mask(2 ** (NL - 1) * NF if refine else NF, cells8)[
         (slice(phi2.shape[0], None), slice(None), slice(phi2.shape[2], None))]].mean())
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["diffusion_drift"] = drift                     # volume integral of the diffusion term over the run
     hist["vol_end"] = hist["vol"][-1]
+    if not ML:
+        del hist["level1_cells"]
     fc = np.array(hist["fine_cells"], float)
     setting = dict(base=f"{NF}^3", refine=refine, block=B, dilate=o.dilate, retag=o.retag, tag_tol=o.tag_tol,
                    dt_inner=dt, inner_per_outer=per, dtc=DT_C, phi_min=o.phi_min, front=o.front, r=R_FRONT,
                    gc=o.gc, gab=o.gab, alpha0=o.alpha0, tab=T_AB, transient_c=o.transient_c, mix_equal=o.mix_equal,
                    example=o.example, wall_s=wall, timing_s=tm, fine_cells_mean=float(fc.mean()),
-                   fine_cells_max=int(fc.max()), fine_fraction_of_2N_mean=float(fc.mean() / (8 * phi.size)),
-                   base_cells_quarter=int(phi.size), uniform_2N_cells_quarter=int(8 * phi.size),
+                   fine_cells_max=int(fc.max()), fine_fraction_of_2N_mean=float(fc.mean() / NF3),
+                   base_cells_quarter=int(phi.size), uniform_2N_cells_quarter=int(NF3),
                    limiter=o.limiter, reflux=bool(o.reflux), subcycle=bool(o.subcycle), point_fine=bool(o.point_fine),
                    lat_all=bool(o.lat_all), fine_point_cells_end=int(lev.Fon.sum()) if o.point_fine else 0)
+    if ML or o.c_every > 1:
+        setting.update(levels=NL, c_every=o.c_every, generic=bool(o.generic),
+                       level_cells_mean=([float(np.mean(hist["level1_cells"]))] if NL == 3 else []) + [float(fc.mean())],
+                       nutrient_solves_inner=int(np.ceil(npass / o.c_every)))
     if o.c_composite:
         setting["composite"] = dict(lateral=not o.c_composite_nolateral, timing_s=comp.t, timing_a_s=comp_a.t,
                                     iters_mean=float(np.mean(comp.iters)), iters_max=int(np.max(comp.iters)),
                                     unknowns_last=comp.n, pattern_builds=comp.nbuild, solves=comp._n)
     print(f"[{o.example}] {wall:.0f} s; seed: living {hist['living_seed'][-1]:.4f}, alpha-1 {hist['seed_am1']:.4e}, "
           f"vM {hist['seed_vm_Pa']:.4e} Pa; fine cells mean {fc.mean():.0f} (max {int(fc.max())}, "
-          f"{100 * fc.mean() / (8 * phi.size):.1f} % of (2N)^3 quarter); timing {{"
+          f"{100 * fc.mean() / NF3:.1f} % of (2N)^3 quarter); timing {{"
           + ", ".join(f"{k_}: {v_:.0f}" for k_, v_ in tm.items()) + "}"
-          + f"; diffusion drift {drift:.3e} of volume {hist['vol_end']:.4e} mm^3", flush=True)
+          + f"; diffusion drift {drift:.3e} of volume {hist['vol_end']:.4e} mm^3"
+          + (f"; level-1 cells mean {np.mean(hist['level1_cells']):.0f}" if ML else ""), flush=True)
     RES.mkdir(exist_ok=True)
     name = (f"amr_nf{NF}" + ("_norefine" if not refine else f"_B{B}D{o.dilate}R{o.retag}")
             + ("" if o.tag_tol == 0.01 else f"_tol{o.tag_tol:g}") + ("" if DT_C == 0.025 else f"_dtc{DT_C:g}")
@@ -1237,6 +1973,8 @@ def run(o):
             + ("_ccompnolat" if o.c_composite_nolateral else "_ccomp" if o.c_composite else "")
             + ("_reflux" if o.reflux else "") + ("_subcyc" if o.subcycle else "") + ("_pointfine" if o.point_fine else "")
             + ("_latall" if o.lat_all else "")
+            + ("" if NL == 2 else f"_L{NL}") + ("_generic" if o.generic else "")
+            + ("" if o.c_every == 1 else f"_cev{o.c_every}")
             + ("" if o.limiter == "minmod" else f"_{o.limiter}") + ("_mixeq" if o.mix_equal else "")
             + (f"_{o.tag}" if o.tag else "") + f"_{o.example}")
     (RES / f"{name}.json").write_text(json.dumps(dict(setting=setting, hist=hist), indent=1, default=float) + "\n")
