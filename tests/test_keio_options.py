@@ -12,7 +12,7 @@ _SRC = Path(__file__).resolve().parents[1] / "ansys_usermat" / "apdl" / "coupled
 def _fn(name):
     tree = ast.parse(_SRC.read_text(encoding="utf-8"))
     fn = next(f for f in tree.body if isinstance(f, ast.FunctionDef) and f.name == name)
-    ns = {"np": np}
+    ns = {"np": np, "FRONT_ELL": 0.0}   # --front-living-ell off (A-95), as by default
     exec(compile(ast.Module(body=[fn], type_ignores=[]), str(_SRC), "exec"), ns)
     return ns[name]
 
