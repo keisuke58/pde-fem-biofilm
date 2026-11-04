@@ -33,10 +33,13 @@ would do better):
             --c-fine (diagnostic): c on the whole (2N)^3 grid, v from it at the fine spacing. --c-composite (4 Nov):
             c and a on the composite grid (fine cells in the active blocks, base cells elsewhere; class Composite),
             one sparse matrix, conservative coarse-fine flux matching with ghost values interpolated from the coarse
-            neighbour, BiCGSTAB + AMG warm started; v on the fine cells from the composite c (ghosts as for phi,
-            central slopes). The base grid carries the restricted means of the fine c, so the point model (still per
-            base cell), the coarse velocity and the histories see the composite solution. Quasi-static (as the main
-            runs); --transient-c keeps dc/dt there too (backward Euler on the composite vector).
+            neighbour, BiCGSTAB warm started with a two-grid preconditioner (Gauss-Seidel on the composite grid, one
+            AMG V-cycle on the base grid, so nothing expensive is rebuilt when the blocks change); v on the fine
+            cells from the composite c (ghosts as for phi, central slopes). The base grid carries the restricted
+            means of the fine c, so the point model (still per base cell), the coarse velocity and the histories see
+            the composite solution. Quasi-static (as the main runs); --transient-c keeps dc/dt there too (backward
+            Euler on the composite vector). Not done: no flux correction of phi at the coarse-fine faces, no
+            subcycling, point model per base cell.
   point     the point model runs per BASE cell on the restricted phi_3D (colonisation at phi_3D >= phi_min of the
   model     base cell, inheritance from base neighbours as --inherit-living), so the living fraction, the
             consumption and the composition have the base resolution. Matching the composition was not the aim.
