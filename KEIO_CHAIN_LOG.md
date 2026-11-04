@@ -1065,3 +1065,62 @@ All runs as separate PBS jobs (1 core each) on the compute nodes, started 4 Nov 
 | `sep_ab_128` | 128^3 | 6.3382e-04 | 9.2092e-04 | 4:51:07, 1.27 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_separate_ab.json` |
 
 
+
+## 2026-11-04 (evening): CLOUD_TO_FIFA 4 Nov part 2 c), part 3 and part 5 (fifa)
+
+**Part 2 c) maze** (`maze_coupled_2d.py --tend 60 --maze-file ../../abaqus_living/maze_k24.txt --transient-c`,
+with and without `--ab`). Values at T* = 20 and 60; area = colonised cells x h^2.
+
+| h [um] | antibiotic | T* | reach [um] | living mean | c mean | area [um^2] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 | no | 20 | 71 | 0.9383 | 0.2078 | 46928 |
+| 4 | no | 60 | 42 | 0.9194 | 0.1119 | 72384 |
+| 2 | no | 20 | 68 | 0.9359 | 0.2012 | 48320 |
+| 2 | no | 60 | 40 | 0.9176 | 0.1101 | 74448 |
+| 1 | no | 20 | 67 | 0.9350 | 0.1983 | 47924 |
+| 1 | no | 60 | 39 | 0.9179 | 0.1099 | 75793 |
+| 4 | yes | 20 | 71 | 0.9383 | 0.2078 | 46928 |
+| 4 | yes | 60 | 133 | 0.3467 | 0.4070 | 73408 |
+| 2 | yes | 20 | 68 | 0.9359 | 0.2012 | 48320 |
+| 2 | yes | 60 | 43 | 0.3408 | 0.3902 | 74928 |
+| 1 | yes | 20 | 67 | 0.9350 | 0.1983 | 47924 |
+| 1 | yes | 60 | 42 | 0.3259 | 0.3827 | 78812 |
+
+Reading (maze): at T* = 20 the reach is 71 / 68 / 67 um for h = 4 / 2 / 1 um, the living mean 0.938 / 0.936 / 0.935 and the
+area 46 900 / 48 300 / 47 900 um^2, so here the three cells agree to within 6 %. The cloud's check of 4 Nov had 65, 195 and
+71 um at T* = 20; fifa's runs do not show the 195 um. The one outlier is the reach with antibiotic at T* = 60 for h = 4 um
+(133 um against 43 and 42 um): 'reach' is the smallest path distance of a cell with phi >= 0.5, so one far cell is
+enough to change it; the area and the living mean agree (73 400 / 74 900 / 78 800 um^2, 0.347 / 0.341 / 0.326).
+
+**Part 3: four limiters** (mixed, equal shares, antibiotic, `--dtc 0.0025 --fast`, no `--transient-c`; minmod = the
+thesis series, superbee = 3 Nov, van Leer and MC = this run).
+
+| limiter | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 32 / 64 / 128 / 192^3 [1e-4] | vM: p, extrapolated, GCI (64/128/192) | alpha - 1: p, extrapolated, GCI |
+| --- | --- | --- | --- | --- |
+| minmod | 1.998 / 2.815 / 3.300* / 3.520 | 7.422 / 8.040 / 8.320* / 8.421 | 0.46, 4.5883e-04, 38.0 % | 0.86, 8.6613e-04, 3.6 % |
+| vanleer | 2.156 / 2.985 / 3.404 / 3.579 | 7.585 / 8.168 / 8.383 / 8.458 | 0.60, 4.2143e-04, 22.2 % | 0.92, 8.6246e-04, 2.5 % |
+| mc | 2.264 / 3.071 / 3.439 / 3.609 | 7.687 / 8.230 / 8.405 / 8.475 | 0.43, 4.5018e-04, 30.9 % | 0.69, 8.6912e-04, 3.2 % |
+| superbee | 2.387 / 3.284 / 3.587 / 3.675 | 7.788 / 8.367 / 8.495 / 8.513 | 1.24, 3.8095e-04, 4.6 % | 2.46, 8.5230e-04, 0.2 % |
+
+* thesis table value (tab:ch5-gci); fifa has no minmod 128^3 JSON with step 0.0025.
+Extrapolated seed vM of the four limiters: 3.809e-04 to 4.588e-04 Pa (spread 20.4 % of the lowest); GCIs minmod 38.0 %, vanleer 22.2 %, mc 30.9 %, superbee 4.6 %.
+
+Reading (limiters): the four extrapolated values do not agree (3.81 to 4.59e-4 Pa, 20 % apart), but only superbee is in
+the asymptotic range on 64/128/192^3 (p 1.24, GCI 4.6 %); minmod, van Leer and MC have p 0.43-0.60 and GCI 22-38 %, so their
+extrapolations are not reliable. On each grid the order is minmod < van Leer < MC < superbee, and the gaps shrink with
+refinement (192^3: 3.52 / 3.58 / 3.61 / 3.68e-4). alpha - 1 agrees within 1 % at 192^3 for all four.
+
+**Part 5: AMR** (`coupled_amr.py`, mixed, equal shares, antibiotic; `ECO_THREADS=4`, 4 cores each).
+
+| run | seed alpha - 1 | seed vM [Pa] | against | wall [s] | time split [s] (base / fine / nutrient / point / retag / restrict) | finest cells, mean share of (2N)^3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| L3 minmod (32^3 base, 3 levels = 128^3) | 8.3450e-04 | 3.3417e-04 | uniform 128^3 minmod: alpha - 1 +0.30 %, vM +1.26 % | 4970 | 8 / 1089 / 2127 / 1593 / 55 / 57 | 54.7 % |
+| L3 superbee | 8.5246e-04 | 3.6321e-04 | uniform 128^3 superbee: alpha - 1 +0.35 %, vM +1.26 % | 2341 | 3 / 594 / 978 / 693 / 26 / 22 | 54.7 % |
+| 64^3 base, c every 1 step | 8.3520e-04 | 3.3509e-04 | (reference) | 1702 | 20 / 270 / 630 / 741 / 17 / 11 | 54.7 % |
+| 64^3 base, c every 2 steps | 8.4225e-04 | 3.4588e-04 | k = 1: alpha - 1 +0.84 %, vM +3.22 % | 852 | 12 / 182 / 246 / 385 / 12 / 5 | 54.7 % |
+| 64^3 base, c every 4 steps | 8.5560e-04 | 3.6660e-04 | k = 1: alpha - 1 +2.44 %, vM +9.40 % | 787 | 12 / 181 / 182 / 384 / 12 / 5 | 54.6 % |
+
+Reading (AMR): 3 levels on a 32^3 base give the uniform 128^3 within 0.3 % (alpha - 1) and 1.3 % (vM) for both limiters.
+Updating the nutrient every 2 / 4 steps halves the wall time (1702 -> 852 / 787 s) but moves vM by +3.2 / +9.4 %.
+For the 3-level runs the 'share of (2N)^3' is the share of the finest level against a uniform grid of twice the base.
+Part 4 a) (128^3 base), the obstacle runs of part 4 b) and WENO5 192^3 are still running; their tables follow.
