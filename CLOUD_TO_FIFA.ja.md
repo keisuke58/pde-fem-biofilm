@@ -40,6 +40,16 @@ done
   - ログ：3) は minmod（修論の表：vM 2.01/2.96/4.01/4.35e−4，外挿 5.01e−4，GCI 19 %）と並べる。4) は 128/192/256³ で p・外挿・GCI を出し，
     64/128/192³ の値（3.81e−4，4.6 %）と比べる。
   - 終わったものから push してよい（全部を待たなくてよい）。
+- **追加 2（ユーザー，4 Nov：非対称の例を修論に入れる）**：非対称の 2 本の 128³（全領域，`--amg`，途中の場は保存しない）。64³ の結果
+  （種子の vM 3.94e−4 と 3.41e−4，対称の 5.69e−4 より 31 % と 40 % 低い）が格子を細かくしても同じ傾向かを確かめる。
+  比べる対称の例も同じ設定で 128³（全領域でなく `--fast` でよい：全領域と 7 桁一致を確認済み）。
+  ```
+  python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab
+  python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-corner --only separate_ab
+  python3 coupled_living_consumption.py --nf 128 --fast $B --transient-c 1e8 --only separate_ab
+  ```
+  - 外側の刻みは 64³ の非対称と同じ既定値（`--dtc` なし）。メモリは 1/4 領域の 128³ が 1.3 GB なので全領域で 5 GB 前後の見込み。
+  - ログ：3 本の種子の Σφ̄ᵢ，A の割合，c，α−1，vM と，対称に対する差（%）を 64³ と並べる。
 
 ## 2026年11月3日 昼（動画 1 本の作り直し。急がない）
 
