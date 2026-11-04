@@ -1251,13 +1251,16 @@ def table():
     rows = []
     for f in sorted(RES.glob("amr_*.json")):
         d = json.loads(f.read_text()); s, h = d["setting"], d["hist"]
-        rows.append((f.stem, s["base"], "uniform" if not s["refine"] else f"B{s['block']} D{s['dilate']}",
+        opts = " ".join(k for k in ("reflux", "subcycle", "point_fine", "lat_all") if s.get(k)) or "-"
+        rows.append((f.stem, s["base"], "uniform" if not s["refine"] else f"B{s['block']} D{s['dilate']}", opts,
                      h["living_seed"][-1], h["seed_am1"], h["seed_vm_Pa"], s["wall_s"], s["fine_cells_mean"],
-                     s["fine_cells_max"]))
-    print("| run | base | grid | seed living | seed alpha-1 | seed vM [Pa] | wall [s] | fine cells mean | max |")
-    print("|---|---|---|---|---|---|---|---|---|")
+                     s["fine_cells_max"], h.get("diffusion_drift", float("nan"))))
+    print("| run | base | grid | options | seed living | seed alpha-1 | seed vM [Pa] | wall [s] | fine cells mean | max "
+          "| diffusion drift [mm^3] |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|")
     for r in rows:
-        print(f"| {r[0]} | {r[1]} | {r[2]} | {r[3]:.4f} | {r[4]:.4e} | {r[5]:.4e} | {r[6]:.0f} | {r[7]:.0f} | {r[8]} |")
+        print(f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]:.4f} | {r[5]:.4e} | {r[6]:.4e} | {r[7]:.0f} | {r[8]:.0f} | "
+              f"{r[9]} | {r[10]:.1e} |")
     ref = HERE / "results" / "2026-10-3d"
     pat = "coupled_living_consumption{nf}_front1_phimin0.001_v2_fortran_ansysbc_inhliv{mx}_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_{k}.json"
     print("\nuniform runs of the main script (dtc 0.025):")
