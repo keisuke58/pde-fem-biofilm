@@ -27,6 +27,9 @@ for H in 4 2 1; do
 done
 ```
 - `--obstacle columns` は全例と同じく `--fast` で回せる（柱は x と z で鏡映対称）。
+- **superbee も（ユーザー，4 Nov）**：a) と b) を `--limiter superbee` を足して同じ格子でもう 1 回ずつ回す（minmod と superbee の両方の列を作る）。
+  迷路のコード（`maze_coupled_2d.py`）には制限関数の選択がないので c) は今のまま。ログでは minmod と superbee の列を並べ，
+  混合の応力で superbee の方が速く収束するか（2 種のときは GCI 41 % → 4.6 %）を書く。
 - 迷路の 1 µm は時間がかかる（セル数 16 倍，時間刻みも小さい）。途中で止まったら止まった時刻をログに書く。
 - 結果：JSON を `keio/cloud-1102` に push（終わったものから）。
 - `KEIO_CHAIN_LOG.md` に：
