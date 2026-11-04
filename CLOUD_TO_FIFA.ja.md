@@ -4,6 +4,30 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月4日（追加：superbee の続き 2 本。急がない，今夜中に終われば十分）
+
+superbee の格子列（11/3）で混合・抗菌薬ありの応力が GCI 4.6 % まで収束した。残る 2 つを足す。ブランチと `$B` は「11月2日 夜」と同じ
+（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと，`cd ansys_usermat/apdl`）。
+11/3 の superbee の列と比べられるよう，`--transient-c` は付けない（11/3 の列も付けていない）。
+```
+# 1) 混合・抗菌薬なし（--only mixed）。抗菌薬の効果が帯から出るかを見る。192³ は約 5 時間
+for N in 32 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --mix-equal --only mixed --dtc 0.0025
+done
+# 2) 分離・抗菌薬あり（--only separate_ab）。収束している例で制限関数を変えても同じ答えかの確認
+for N in 64 128; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --only separate_ab --dtc 0.0025
+done
+```
+- 順番は 2) を先に（約 1.5 時間），その後 1)。
+- 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*`）を `keio/cloud-1102` に push。
+- `KEIO_CHAIN_LOG.md` に：
+  - 1) の 4 格子のシードの vM と α−1，64/128/192³ からの p・外挿値・GCI（Celik 2008，Fs 1.25）。比べる相手は 11/3 の superbee・抗菌薬あり
+    （vM 2.39/3.28/3.59/3.67e−4，外挿 3.81e−4，GCI 4.6 %）と minmod・抗菌薬なし（修論の表 tab:ch5-gci：3.08/3.65/3.89e−4 on 64/128/192³）。
+    抗菌薬あり・なしの外挿値の差と，二つの GCI の和を並べて書く（差が和より大きければ「抗菌薬の効果が分かれた」）。
+  - 2) の 64/128³ の vM と α−1 を minmod（修論の表：vM 6.000/6.284e−4，α−1 8.931/9.112e−4）と並べる。
+- 修論には入れない。論文の付録の表の材料。
+
 ## 2026年11月3日 昼（動画 1 本の作り直し。急がない）
 
 辺の 1 本の動画の説明文が右にはみ出していたので、スクリプトを直した（始め方の文を 1 行にした）。`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` の後、
