@@ -4,6 +4,38 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月4日 その 2（格子の収束：四種，障害物，迷路。急がない，fifa は自由に使ってよい）
+
+修論に入れるかを決める前に，格子を細かくして結果が変わらないかを確かめる。ブランチと `$B` は「11月2日 夜」と同じ。どれも
+Eq. 35 は ċ あり（`--transient-c 1e8`，迷路は `--transient-c`），外側の刻みは格子の収束の表と同じ 0.0025。同時に回してよい。
+```
+cd ansys_usermat/apdl
+# a) 四種（Klempt 2026 case 4），分離と混合（等量），抗菌薬あり。192³ は 2 種の約 1.5〜2 倍の時間
+for N in 32 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --case k26c4 --transient-c 1e8 --dtc 0.0025 --only separate_ab
+  python3 coupled_living_consumption.py --nf $N --fast $B --case k26c4 --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+done
+# b) 障害物（剛体の柱 4 本），分離と混合（等量），抗菌薬あり
+for N in 32 64 128; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+  python3 coupled_living_consumption.py --nf $N --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+done
+# c) 迷路（2 次元，Klempt 2024 Fig. 11），セル 4，2，1 µm，T* = 60，抗菌薬あり・なし
+for H in 4 2 1; do
+  python3 maze_coupled_2d.py --h $H --tend 60 --maze-file ../../abaqus_living/maze_k24.txt --transient-c
+  python3 maze_coupled_2d.py --h $H --tend 60 --ab --maze-file ../../abaqus_living/maze_k24.txt --transient-c
+done
+```
+- `--obstacle columns` は全例と同じく `--fast` で回せる（柱は x と z で鏡映対称）。
+- 迷路の 1 µm は時間がかかる（セル数 16 倍，時間刻みも小さい）。途中で止まったら止まった時刻をログに書く。
+- 結果：JSON を `keio/cloud-1102` に push（終わったものから）。
+- `KEIO_CHAIN_LOG.md` に：
+  - a)，b)：種子の Σφ̄ᵢ，A の割合（四種は種ごとの φ̄ᵢ の最後の値も），c，α−1，vM を格子ごとに。3 格子以上そろったものは p・外挿・GCI。
+  - c)：T* = 20 と 60 の前線の届いた距離（`reach_um`），生きている量（`living_mean`），栄養（`c_mean`），バイオフィルムの面積
+    （`colonised` × h²）をセルごとに。11/4 にクラウドで見たところ，T* = 20 の届いた距離は h = 1，2，4 µm で 65，195，71 µm と
+    そろっていない（壁の幅 10 µm をセル何個で表すかの影響と思われる）。同じことが起きるか，起きるならどの量はそろうかを書く。
+- 修論に入れるかはユーザーが 12 月に決める。
+
 ## 2026年11月4日（追加：superbee の続き 2 本。急がない，今夜中に終われば十分）
 
 superbee の格子列（11/3）で混合・抗菌薬ありの応力が GCI 4.6 % まで収束した。残る 2 つを足す。ブランチと `$B` は「11月2日 夜」と同じ
