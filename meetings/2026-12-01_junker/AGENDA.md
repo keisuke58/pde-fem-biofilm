@@ -3,7 +3,7 @@
 One page to hand over. Purpose: the next plans after the thesis (the reply of 2 Nov).
 
 ## 1. Since the thesis draft (2 min)
-- Coupled point model in the growth field: two-species examples, four species (Klempt et al. 2026, case 4), rigid bars,
+- Coupled point model in the growth field: two-species examples, rigid bars,
   maze, asymmetric starts.
 - Numerics: with a compressive limiter (superbee) the mixed seed stress converges with a GCI of about 5 % instead of
   about 40 %.
