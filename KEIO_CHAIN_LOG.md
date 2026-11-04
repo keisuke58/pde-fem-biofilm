@@ -1052,3 +1052,16 @@ GCI by Celik 2008 (Fs 1.25) on 64/128/192^3 (r21 = 1.5, r32 = 2):
 venv (`~/IKM_Hiwi/.venv_render`), so the solver venv was not changed:
 - Video `b1edge seedx-1`: `assets/anim_coupled_tvd_separate_ab_inhliv_b1edge_seedx-1_transc_alpha_5panel.mp4` (4.4M) and `_end.png`, 70 s.
 - Video `bcorner`: `assets/anim_coupled_tvd_separate_ab_inhliv_bcorner_transc_alpha_5panel.mp4` (4.2M) and `_end.png`, 68 s.
+
+## 2026-11-04: CLOUD_TO_FIFA 4 Nov, superbee runs (fifa, written by ~/runs/sb1104/watch.py)
+
+All runs as separate PBS jobs (1 core each) on the compute nodes, started 4 Nov 08:52 JST, in parallel.
+
+**2) separate, antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: minmod (thesis table): vM 6.000 / 6.284e-4, alpha - 1 8.931 / 9.112e-4 on 64 / 128^3.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `sep_ab_64` | 64^3 | 6.1223e-04 | 9.1614e-04 | 25:10.61, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_separate_ab.json` |
+| `sep_ab_128` | 128^3 | 6.3382e-04 | 9.2092e-04 | 4:51:07, 1.27 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_separate_ab.json` |
+
+
