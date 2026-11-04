@@ -181,3 +181,8 @@ with the credit above, for non-commercial research use. The dataset archive asks
 citation of the work above. Only this one derived crown is in the repository; the original OpenJaw STL files
 and the meshes built from them are **not** redistributed (they stay on the Keio server). Provenance checked
 on 16 Oct 2026 (`KEIO_CHAIN_LOG.md`).
+
+## Experimental papers (added 4 Nov 2026), CC BY 4.0
+- `references/Pattem2018_oral_biofilm_AFM_SciRep.pdf` (+ text): J. Pattem, M. Davrandi, S. Aguayo, E. Allan, D. Spratt, L. Bozec, A multi-scale biophysical approach to develop structure-property relationships in oral biofilms, Scientific Reports 8, 5691 (2018), doi:10.1038/s41598-018-23798-1. CC BY 4.0.
+- `references/Granicher2021_CHX_multispecies_FrontMicrobiol.pdf` (+ text): K. A. Gränicher, L. Karygianni, T. Attin, T. Thurnheer, Low concentrations of chlorhexidine inhibit the formation and structural integrity of enzyme-treated multispecies oral biofilms, Frontiers in Microbiology 12, 741863 (2021), doi:10.3389/fmicb.2021.741863. CC BY 4.0.
+- `references/Geisel2022_biofilm_wrinkling_eLife.txt` (text extraction): S. Geisel, E. Secchi, J. Vermant, The role of surface adhesion on the macroscopic wrinkling of biofilms, eLife 11, e76027 (2022). CC BY 4.0.

@@ -1,0 +1,996 @@
+                                                                                         RESEARCH ARTICLE
+
+
+
+
+                                    The role of surface adhesion on the
+                                    macroscopic wrinkling of biofilms
+                                    Steffen Geisel1, Eleonora Secchi2*, Jan Vermant1*
+                                    1
+                                     Laboratory for Soft Materials, Department of Materials, ETH Zurich, Zurich,
+                                    Switzerland; 2Department of Civil, Environmental and Geomatic Engineering, ETH
+                                    Zurich, Zurich, Switzerland
+
+
+
+                                    Abstract Biofilms, bacterial communities of cells encased by a self-­produced matrix, exhibit a
+                                    variety of three-­dimensional structures. Specifically, channel networks formed within the bulk of
+                                    the biofilm have been identified to play an important role in the colonies' viability by promoting
+                                    the transport of nutrients and chemicals. Here, we study channel formation and focus on the role
+                                    of the adhesion of the biofilm matrix to the substrate in Pseudomonas aeruginosa biofilms grown
+                                    under constant flow in microfluidic channels. We perform phase contrast and confocal laser scanning
+                                    microscopy to examine the development of the biofilm structure as a function of the substrates'
+                                    surface energy. The formation of the wrinkles and folds is triggered by a mechanical buckling
+                                    instability, controlled by biofilm growth rate and the film’s adhesion to the substrate. The three-­
+                                    dimensional folding gives rise to hollow channels that rapidly increase the effective volume occu-
+                                    pied by the biofilm and facilitate bacterial movement inside them. The experiments and analysis on
+                                    mechanical instabilities for the relevant case of a bacterial biofilm grown during flow enable us to
+                                    predict and control the biofilm morphology.
+
+
+
+                                    Editor's evaluation
+*For correspondence:                The wrinkling of growing biofilms is considered in this paper experimentally in a clever set of exper-
+esecchi@ethz.ch (ES);               iments in a microfluidic setup that reveals aspects of the onset of the wrinkling instability and the
+jan.vermant@mat.ethz.ch (JV)        formation of hollow channels within which bacteria move. Variations in the adhesive properties of
+Competing interest: The authors     the underlying surface are shown to affect the instability.
+declare that no competing
+interests exist.
+
+Funding: See page 15
+Received: 01 December 2021
+                                    Introduction
+Preprinted: 10 December 2021        Bacteria predominantly exist in biofilms, surface-­attached aggregates of cells (Nadell et al., 2017;
+Accepted: 01 June 2022              Flemming et al., 2016; Flemming and Wuertz, 2019). In biofilms, the cells are enclosed in auto-
+Published: 20 June 2022             produced, strongly hydrated extracellular polymeric substances (EPS), which form the extracellular
+                                    matrix. The EPS consists of polysaccharides, the most abundant component, proteins, nucleic acids,
+Reviewing Editor: Raymond
+                                    and lipids (Lasa, 2006; Frølund et al., 1996; Flemming and Wingender, 2010). The matrix plays
+E Goldstein, University of
+Cambridge, United Kingdom           different roles: its viscoelastic nature provides mechanical stability to the biofilm, while its physical
+                                    chemistry is responsible for the adhesion to the surface and internal cohesion (Costerton et al., 1987;
+‍ ‍Copyright Geisel et al. This     Hall-­Stoodley et al., 2004). Additionally, not only mechanical and chemical but also the matrix's
+article is distributed under the
+                                    structural properties contribute to the exceptional viability of the bacterial community in the biofilm
+terms of the Creative Commons
+Attribution License, which
+                                    lifestyle (Epstein et al., 2011; Okegbe et al., 2014; Madsen et al., 2015). However, the mechanistic
+permits unrestricted use and        understanding of how environmental conditions and the characteristics of the surfaces on which they
+redistribution provided that the    grow affect the biofilm structure is still limited.
+original author and source are          Bacterial biofilms are found in a vast range of environments and applications, ranging from biore-
+credited.                           mediation (Ghosh et al., 2019) to biomedical (Badal et al., 2020; Bixler and Bhushan, 2012) and
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                         1 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                  Physics of Living Systems
+
+                                    industrial fouling (Schultz et al., 2011). In most settings, the biofilm forms on a solid surface while
+                                    being exposed to fluid flow. Hydrodynamic conditions control mass transfer, which in turn controls the
+                                    transport of nutrients, metabolic products, and signal molecules (Purevdorj et al., 2002; Krsmanovic
+                                    et al., 2021; Conrad and Poling-­Skutvik, 2018). Fluid flow also exerts drag forces on the biofilm and
+                                    shapes its structure (Stoodley et al., 1998; Stoodley et al., 1999; Pearce et al., 2019; Hartmann
+                                    et al., 2019). Under strong flows, bacteria often form biofilm streamers in the shape of long, filamen-
+                                    tous structures; while, under weak flow conditions, some bacteria form surface-­attached colonies with
+                                    ripple-­like structures (Rusconi et al., 2011; Rusconi et al., 2010; Purevdorj et al., 2002; Drescher
+                                    et al., 2013). However, it is unclear what mechanisms govern the structure evolution under flow, which
+                                    is most often present. Therefore, understanding biofilm morphogenesis under hydrodynamically rele-
+                                    vant conditions is of crucial importance both from the biological and engineering standpoint.
+                                        Some biofilms exhibit three-­dimensional morphologies characterized by the presence of folds
+                                    and wrinkles that have been proposed to improve the viability of the biofilm due to improved
+                                    uptake and transport of oxygen and nutrients (Wilking et al., 2012; Kempes et al., 2014). Many
+                                    experimental studies focused on static biofilm-­agar systems to characterize the mechanical contri-
+                                    butions to the formation of these 3D structures (Asally et al., 2012; Yan et al., 2019). However,
+                                    a biofilm grown on agar induces additional complexities, as biological and mechanical contribu-
+                                    tions are tightly interconnected. Additionally, it may not be as relevant for biofilms occurring in
+                                    industrial or natural environments where fluid flow and solid substrates are often present. Biofilms
+                                    grown on agar are characterized by substantial heterogeneity in nutrient availability, generated
+                                    by the diffusive nature of nutrient transport within the agar, which leads to differences in growth
+                                    rates and subsequent mechanical stresses across the biofilm (Stewart, 2003; Wilking et al., 2011).
+                                    Moreover, the complexities associated with the motion near the contact line complicate matters
+                                    further. Theoretical and experimental studies found that, in particular, an anisotropic growth may
+                                    be the driving force for folding in colonies with moderate adhesion to the substrates (Ben Amar
+                                    and Wu, 2014; Espeso et al., 2015; Fei et al., 2020). Additionally, how the biofilm colony can
+                                    spread across the agar plate as the biofilm is governed by a complex interplay with bulk and inter-
+                                    facial (Marangoni) stresses (Verstraeten et al., 2008; Seminara et al., 2012; Srinivasan et al.,
+                                    2019). Growth gradients and colony spreading are relatively poorly understood processes that
+                                    involve both biological as well as mechanical effects and hence make biofilm on agar not ideal
+                                    as a model system to isolate the effects of mechanical contributions alone (Zhang et al., 2016b;
+                                    Fauvart et al., 2012; Gingichashvili et al., 2020). In this study, we aim to deconvolute the inter-
+                                    play between mechanical forces and biological contributions, such as inhomogeneous growth of
+                                    the microorganisms, by laterally confining the biofilm to control its spreading and provide it with
+                                    a controlled, homogeneous, and constant supply of nutrients in a microfluidic channel. The goal
+                                    is to advance the understanding of simple mechanical contributions to folding and wrinkling of
+                                    biofilms further.
+                                        The effects of mechanical stresses on the formation of three-­dimensional morphologies are well
+                                    understood in several eukaryotic systems, including ripple-­      shaped leaves or the fingerprints of
+                                    humans. Often these structures are developed due to bonded layers of biomaterial and cells that
+                                    grow at different rates (Liang and Mahadevan, 2011; Kücken and Newell, 2004; Savin et al., 2011).
+                                    Similar morphologies with an origin in mechanical instabilities have been investigated in thin-­film
+                                    studies, when elastic films are attached to a stiff substrate and compressive stresses are induced
+                                    chemically or thermally (Hutchinson et al., 1992; Chung et al., 2011; Cerda and Mahadevan, 2003).
+                                    Common characteristics of these biological and artificial examples are adhesion between the layers
+                                    and a mechanical strain mismatch. The consequently induced compressive stress leads to various
+                                    morphologies such as wrinkles, folds, or delaminated blisters (Wang and Zhao, 2015). Although
+                                    the structures found in bacterial biofilms show many qualitative similarities, only recently the links
+                                    between folds in biofilms and mechanical instabilities have been investigated. Recent studies found
+                                    that the adhesive strength and friction between biofilm and substrate might play a role in virulence
+                                    as well as the structural evolution of the biofilm (Fei et al., 2020; Cont et al., 2020). However, many
+                                    experimental studies use agar as a substrate where adhesion appears to be spatially and temporally
+                                    heterogeneous (Gingichashvili et al., 2020). Therefore, systematic investigations of the interplay
+                                    between adhesive strength and fold formation are needed to better understand the mechanical insta-
+                                    bilities that govern biofilm morphology.
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                        2 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                          Physics of Living Systems
+
+                                       In this work, we report on the structural evolution of confined biofilms grown under well-­controlled
+                                    flow conditions. We investigated the basic mechanism of biofilm folding and wrinkling under well-­
+                                    defined conditions relevant to environmental, industrial, and medical settings. We show for the first
+                                    time how wrinkling of a P. aeruginosa PAO1 biofilm creates hollow channels occupied by motile
+                                    bacteria. Our results indicate that for a laterally confined biofilm, growth on a solid substrate induces
+                                    compressive stresses that are the key driving force for buckling-­delamination that governs the forma-
+                                    tion of channel networks. The process of buckling-­delamination is expected to depend on the material
+                                    properties of the biofilm, growth-­induced compressive stresses, and the adhesive strength between
+                                    the biofilm and the solid substrate. Experimentally, we can readily control the biofilm adhesion to the
+                                    substrate. Consequently, the biofilm morphology can be spatially controlled and patterned, giving
+                                    unprecedented control over the macroscale structure and the average thickness of the biofilm.
+
+
+
+                                    Results
+                                    Wrinkle formation at the solid-liquid interface
+                                    P. aeruginosa biofilms grown on a solid surface are exposed to controlled flow in a microfluidic device.
+                                    They form wrinkles that span the entire biofilm. The microfluidic device consists of a simple rectan-
+                                    gular channel, made of polydimethylsiloxane (PDMS) bonded onto a glass slide and mounted onto
+                                    an inverted microscope. The channel is ‍500 µm‍ wide, 100   ‍ µm‍ high, and 1‍ .5 cm ‍ long (Figure 1a). The
+                                    microfluidic channel was filled with a PAO1 bacterial suspension at O       ‍ D600 = 0.2‍ and left at rest for 1
+                                    hr before the flow of fresh culture medium was started. We use a positive displacement syringe pump
+                                    to control the flow of the nutrient solution at an average flow rate of ‍0.3 ml h−1‍resulting in an average
+                                    velocity of 1‍ .7 mm s−1‍. This leads to an average wall shear stress of ‍0.1 Pa ‍, several orders of magnitude
+                                    lower than the elastic shear modulus of P. aeruginosa biofilms reported in the literature (Lieleg et al.,
+                                    2011; Secchi et al., 2022). Bacterial cells exposed to the flow of nutrients first grow as a uniform
+                                    layer of increasing thickness on the PDMS. No significant biofilm formation is observed on the glass
+                                    within the timeframe of our experiments. As the biofilm grown on the PDMS reaches a thickness of
+                                    10
+                                    ‍ µm‍to ‍20 µm‍after 48–72 hr, the biofilm develops a pattern of folds and wrinkles (Figure 1—video
+                                    1). The pattern is qualitatively similar to the structures observed in previous studies, where the biofilm
+                                    was grown under static conditions on agar plates (Kempes et al., 2014; Yan et al., 2019). The initial
+                                    wrinkle formation starts with small wrinkles that start to appear throughout the biofilm and are visible
+                                    in the phase-­contrast images of Figure 1b panel II. The wrinkles typically have a size of 10     ‍ µm‍to ‍30 µm‍
+                                    in diameter when they can first be identified. The wrinkles evolve over several hours into an intercon-
+                                    nected pattern visible as dark lines in the phase-­contrast time-­lapse images of Figure 1b. In the final
+                                    stage of their development, the individual wrinkles have a width of ‍20 µm‍to ‍30 µm‍and the connected
+                                    network spans the whole biofilm. It can be noted that the presence of wrinkles and voids increases
+                                    the effective average thickness of the biofilm. The wrinkle formation process, the wrinkle size, and the
+                                    effective thickness increase was qualitatively reproducible over more than 20 experiments, whereas
+                                    the number of wrinkles is subject to some biological variability.
+                                        The temporal evolution of the structure can be divided into three distinct stages. We define the
+                                    stages by quantifying the number of individual isolated wrinkles ‍N ‍ and the length of the longest
+                                    connected wrinkle ‍L ‍. The low magnification phase-­contrast images were binarized and subsequently
+                                    skeletonized (for details, see section Skeletonization of channel networks) to extract the desired
+                                    parameters, namely the number of isolated wrinkles ‍N ‍ and the length of the longest wrinkle ‍L ‍
+                                    (Figure 1b and c). The first stage starts shortly before the first wrinkles appear, which is 49 hr after the
+                                    start of the nutrient flow, and lasts 6.5 hr. The first stage is characterized by a substantial increase in
+                                    the number of isolated wrinkles, while the length of the longest wrinkle remains small (‍L < 0.65 mm ‍).
+                                    In the optical observation, at this stage, many small and isolated wrinkles develop evenly throughout
+                                    the biofilm. In the second phase, which lasts approximately 3.5 hr, the number of isolated wrinkles
+                                    decreases because they start to merge and form longer, interconnected paths. This results in a few
+                                    remaining wrinkles with a considerable length in the order of 8‍ mm‍ that form a highly connected
+                                    network throughout the biofilm. Finally, in the third phase, the biofilm structure reaches a steady state
+                                    where the longest wrinkle does not grow in length anymore and the number of unconnected wrinkles
+                                    stays consistently low. This final stage has been observed to last at least 5 hr, while the whole process
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                3 of 19
+            Research article﻿﻿﻿﻿﻿﻿                                                                                                   Physics of Living Systems
+
+
+
+
+Figure 1. Temporal and structural evolution of wrinkles in P. aeruginosa PAO1 biofilms grown in flow. (a) Schematic representations of the microfluidic
+device, the wrinkle network in the biofilm and a side view of a single wrinkle. (b) Time evolution of the wrinkled structure in the biofilm. Images were
+taken in phase contrast. (c) Number of individual wrinkles, ‍N ‍(red) and the length of the longest connected wrinkle ‍L ‍(in ‍mm ‍, blue). The evolution of the
+wrinkled biofilm can be divided into three distinct stages. Many small, isolated wrinkles appear in the first stage. The wrinkles connect to form a network
+in the second stage. In the third stage, the biofilm has reached a steady state.
+The online version of this article includes the following video for figure 1:
+Figure 1—video 1. Timelapse video of the wrinkle formation from a flat biofilm to the completely develop wrinkle network.
+https://elifesciences.org/articles/76027/figures#fig1video1
+
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                            4 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                               Physics of Living Systems
+
+
+
+
+Figure 2. Three dimensional structure of the biofilm wrinkles. (a) Laser-­scanning confocal microscopy images of a biofilm that developed a channel
+network, stained with a GFP-­labelled Concanavalin A lectin stain. The three images show slices in the x-­y-­plane, starting ‍39 µm ‍away from the PDMS
+surface. The second image is taken ‍32 µm ‍and the third image ‍25 µm ‍away from the PDMS substrate. (b) Close up of the biofilm channel shown in panel
+(a). The white, dotted lines indicate the walls of the biofilm channel. (c) Cross-­section and close up of a channel along the cutting plane indicated in
+panel (a).
+
+
+
+
+                                     of biofilm wrinkling proceeds over 9–10 hr once the first wrinkles appear and until a steady state is
+                                     reached.
+
+                                     Wrinkles create three-dimensional channels
+                                     Detailed imaging of fluorescently labeled biofilm with confocal laser scanning microscopy reveals the
+                                     three-­dimensional topology of the wrinkles. We stain the polysaccharide component of the biofilm
+                                     matrix with GFP-­fluorescent Concanavalin A and use confocal microscopy to image biofilm wrinkles
+                                     in the x-­y-­plane at different distances from the PDMS substrate (Figure 2a). The first image shows
+                                     the very top of a wrinkle, ‍39 µm‍ away from the PDMS. As we move closer to the biofilm's base, the
+                                     extent of the network becomes visible, with connected wrinkles reaching across the whole field of
+                                     view of ‍200 µm.‍ To visualise the topography of the biofilm, consider a simple piece of fabric on a solid
+                                     substrate. If the fabric gets pushed together, it locally separates from the substrate to form a three-­
+                                     dimensional pattern with folds and wrinkles that resemble the biofilm.
+                                        The analogy of a wrinkled fabric can be extended to the internal structure of the biofilm wrinkles.
+                                     The wrinkles consist of hollow channels that detach from the substrate during their formation. A
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                      5 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                      Physics of Living Systems
+
+                                    close-­up image of a wrinkle ‍25 µm‍ away from the PDMS (Figure 2b) allows us to define the walls of
+                                    the wrinkle, which are rich in biofilm matrix according to the strong fluorescent signal. In contrast, the
+                                    center of the wrinkle does not show a fluorescent signal and is therefore devoid of any biofilm matrix.
+                                    This result demonstrates that the wrinkles create hollow channels with walls made out of biofilm
+                                    matrix, and in the remaining course of this paper, we will refer to this as a channel network. In order
+                                    to form a channel network, the biofilm locally needs to detach and buckle away from the substrate. A
+                                    vertical slice through a confocal volume along the x-­z-­plane (Figure 2c) shows that the channel height
+                                    is substantially greater than the thickness of the original biofilm layer. Furthermore, no biofilm matrix
+                                    was detected on the PDMS substrate at the location of the channel. This indicates that the biofilm fully
+                                    detaches from the substrate, similar to our analogy where the fabric separates from the substrate to
+                                    form a pattern of wrinkles and folds. This delamination between the biofilm and the PDMS substrate
+                                    allows us to identify buckling-­delamination as the underlying mechanism driving the formation of a
+                                    channel network throughout the biofilm.
+
+                                    Buckling-Delamination as the driving force for channel formation
+                                    The growth of the biofilm in a confined environment acts as the driving force for the buckling insta-
+                                    bility, which leads to the formation of the channel network. In our experiments, we control the nutrient
+                                    availability – and therefore the growth rate of the biofilm – in a biofilm on a solid, planar surface.
+                                    As reported in Figure 3a, a biofilm is first grown under standard experimental conditions with a
+                                    constant flow of nutrients. Seven hours after the appearance of the first channels, the nutrient solu-
+                                    tion is replaced with a salt solution of equal salinity but devoid of any nutrients. After 18 hr without
+                                    any nutrient supply, the salt solution is replaced again with the nutrient-­rich solution the biofilm was
+                                    initially grown in and supplied nutrients for an additional 24 hr. The evolution of the number of isolated
+                                    channels, ‍N ,‍ as a function of time and nutrient availability (Figure 3a) demonstrates that the steep
+                                    increase in ‍N ‍is abruptly interrupted when the biofilm is no longer supplied with nutrients. An increase
+                                    or change in ‍N ‍only occurs when nutrients are present. The channel formation restarts as the nutrient
+                                    solution is reintroduced in the microfluidic channel and continues, as shown in Figure 3a (right panel).
+                                    The switch from a nutrient-­rich to a nutrient-­depleted solution inhibits biofilm growth reproducibly
+                                    without changing any environmental conditions such as flow velocity, temperature, and salinity. There-
+                                    fore, we can unambiguously identify biofilm growth as the key driving force for the formation of a
+                                    channel network.
+                                        The structural analysis of the channels and identifying the biofilm growth as the driving force
+                                    controlling channel formation lead us to conclude that a buckling-­delamination process governs
+                                    channel formation. Velankar et al., 2012 analyzed the swelling-­induced buckling of a thin elastic film
+                                    loosely bound to a stiff substrate. The same approach can be applied to the formation of a biofilm
+                                    as schematically depicted in Figure 3b. In the initial stage, Figure 3b–I, the surface is populated by
+                                    bacteria that grow and form a biofilm. The growth of the biofilm within the constrained space of a
+                                    microfluidic channel results in compressive stresses ‍σ ,‍ which are presumed to be uniform and equi-­
+                                    biaxial (Figure 3b–II). The biofilm is assumed to have isotropic mechanical properties with Young’s
+                                    modulus ‍Ef ,‍ Poisson’s ratio ‍νf ‍ and thickness ‍h.‍ We now consider a circular, delaminated blister with
+                                    radius ‍R,‍ where the adhesion between the film and the substrate is minimal (Figure 3b–III). In the
+                                    unbuckled state, the energy release rate of the interface crack is zero and the blister will not grow.
+                                    Only when the film buckles away from the substrate, the crack driving force will be nonzero. The
+                                    critical stress when the film buckles away from the substrate is given by Hutchinson et al., 1992 as
+                                                                                                     ( )2
+                                                                                             E        h
+                                                                               σc = 1.2235 1−νf 2     R     .                                (1)
+                                    	﻿‍                                                          f           ‍
+
+                                        The biofilm will buckle away from the substrate for stresses greater than ‍σc ‍.
+                                        Analysis of the microscopy images described in section wrinkle formation at the solid-­liquid inter-
+                                    face showed that the initial delaminated blisters are ‍5 µm‍ to 15  ‍ µm‍ in radius and the height of the
+                                    homogeneous, non-­wrinkled biofilm is 10   ‍ µm ‍ to  20
+                                                                                          ‍  µm .
+                                                                                                ‍ In order to estimate the magnitude of the
+                                    critical compressive stress ‍σc ‍ needed to delaminate such an elastic film, we choose ‍R = 10 µm‍ and
+                                    ‍h = 15 µm.‍ The elastic shear modulus of P. aeruginosa biofilms has been found to be of the order
+                                    of ‍∼1000 Pa ‍ and, similarly to previous studies, we assume ‍νf ‍ to be 0.45 (Kundukad et al., 2016;
+                                    Lieleg et al., 2011). These values give a critical stress of ‍σc ≈3500 Pa ‍needed for the biofilm to buckle
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                            6 of 19
+            Research article﻿﻿﻿﻿﻿﻿                                                                                                  Physics of Living Systems
+
+
+
+
+Figure 3. Growth controls the formation of channels through buckling-­delamination. (a) Phase-­contrast images of the experiment conducted to
+investigate the role of biofilm growth in channel formation. At ‍t =55 h ‍the nutrient solution is replaced with a nutrient-­depleted salt solution to stop
+growth. At ‍t =73 h ‍the salt solution is replaced with the original nutrient solution. The graph shows the number of channels, ‍N ‍, as a function of time
+and nutrient availability. (b) Schematic representation of the buckling-­delamination mechanism during channel formation in P. aeruginosa biofilm in a
+microfluidic device.
+
+
+
+                                       away from the substrate. Previous experimental studies have reported that P. aeruginosa biofilms are
+                                       indeed capable of exerting stresses in the kPa-­range during growth (Chew et al., 2016).
+                                            Once buckled, the criterion for subsequent growth of the delaminated blister is dependent on
+                                       the driving force for crack propagation, the energy release rate ‍G ‍. The elastic energy per unit area
+                                       stored in the unbuckled film is equal to ‍G0 = (1 − νf )hσ 2 /Ef .‍ The ratio ‍G/G0 ,‍ so the crack driving force
+                                       ‍G ‍normalized by the elastic energy stored in the unbuckled film ‍G0,‍ depends only on the compressive
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                          7 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                           Physics of Living Systems
+
+                                    stress ‍σ ‍, the critical compressive stress ‍σc ‍and the Poisson’s ratio ‍νf ‍of the material in the film and can
+                                    be expressed as
+                                                                                            [        ( σc )2 ]
+                                                                                  G
+                                    	﻿‍                                           G0 = c2       1−     σ      ‍
+                                                                                                                                                   (2)
+
+
+                                        where ‍c2 = [1 + 0.9021(1 − νf )]−1.‍ So the energy release rate ‍G ‍, which drives crack propagation,
+                                    increases monotonically with ‍σ /σc ,‍ approaching ‍G0.‍ Therefore, the crack propagation's driving force
+                                    increases with the growth-­induced stress ‍σ ‍. This theoretical assessment shows that the growth-­induced
+                                    compressive stress and the observed size of the initial delaminated blisters are sufficient to induce and
+                                    drive buckling-­delamination of biofilms. Additionally, delamination and the advance of the interface
+                                    crack are dependent on the interface toughness ‍Γ‍, defined as the resistance to the propagation of an
+                                    interface crack. This interface toughness ‍Γ‍depends on the deformation mode, which remains essen-
+                                    tially constant as we always have delamination, and is proportional to the adhesive strength between
+                                    the biofilm and the substrate (Vella et al., 2009). The adhesive strength can be readily varied in our
+                                    experiments and provides a critical way to interrogate the mechanism at play, and is controllable
+                                    through modification of the surface free energy of the PDMS as detailed in section Biofilm adhesion
+                                    controls channel formation. The dependency of the growth of the blister on the surface free energy of
+                                    the PDMS and hence the adhesion strength between the biofilm and the substrate provides evidence
+                                    for the underlying delamination mechanism. The interface crack will not grow when the resistance to
+                                    crack propagation, ‍Γ‍, is greater than the crack driving force, ‍G ‍, and vice versa.
+                                        To summarize, the initial buckling of the biofilm is determined by the mechanical properties of
+                                    the biofilm itself and the compressive stress ‍σ ‍ generated by the growth and volume expansion of
+                                    the biofilm confined between two walls. However, the growth can simply be isotropic, in contrast to
+                                    biofilms on agar, where complex differences in growth rate have been proposed to induce compres-
+                                    sive stresses (Ben Amar and Wu, 2014; Espeso et al., 2015; Fei et al., 2020). Once buckled, the
+                                    subsequent growth is governed by an interplay of compressive stress and interface toughness ‍Γ(ψ)‍.
+                                    To this end, sufficiently high stress and low adhesion of the biofilm lead to buckling delamination
+                                    with the formation of a connected network of stable channels. The mechanism is quite simple and
+                                    seems to rationalize the presence of such wrinkled biofilms. Additionally, the adhesive strength can
+                                    be controlled by manipulating the substrate alone, which may allow us to prevent or arrest wrinkle
+                                    formation without changing the material properties of the biofilms.
+
+                                    Biofilm adhesion controls channel formation
+                                    Our results show that the adhesive strength between the biofilm and the substrate plays a crucial
+                                    role in buckling-­delamination, leading to channel formation. By tuning the interaction between the
+                                    biofilm and the substrate, we can induce or impede delamination and channel formation with unprec-
+                                    edented control and reproducibility. The adhesion between single bacteria and a substrate can be
+                                    controlled by changing the surface free energy of the substrate, as bacteria preferably adhere to
+                                    surfaces with a high surface free energy (Zhao et al., 2005; Callow and Fletcher, 1994). We increase
+                                    the surface free energy of PDMS from ‍γ =23 mN m−1,‍ Figure 4a left panel, to ‍γ =37 mN m−1‍ (more
+                                    hydrophilic), Figure 4a right panel, by adding small amounts of a PEG-­PDMS block-­copolymer to
+                                    the PDMS mixture, following Gökaltun et al., 2019. Two biofilms were grown on substrates with
+                                    these different surface free energies under otherwise identical conditions (Figure 4a). The biofilm
+                                    grown on low surface free energy PDMS (left) undergoes clear buckling-­delamination and develops
+                                    a channel network. The biofilm grown on high surface free energy PDMS (right) does not undergo
+                                    buckling-­delamination and remains homogeneously adherent to the PDMS substrate. These results
+                                    show that channel formation can be suppressed by increasing the surface free energy of the substrate
+                                    and, consequently, the adhesion strength between the biofilm and the substrate. We vary the surface
+                                    free energy of the substrate through chemical modifications (Figure 4) or physical modifications with
+                                    oxygen plasma treatment (Figure 4—figure supplement 1) with identical results. We hypothesize
+                                    that the overall increase in adhesion strength leads to smaller blisters where the biofilm can delami-
+                                    nate. According to section Buckling-­Delamination as the driving force for channel formation, a smaller
+                                    radius ‍R‍ of the initial delaminated blister leads to a quadratic increase in the critical compressive
+                                    stress ‍σc ‍ needed for buckling. Assuming the smallest possible delaminated blister is at the single-­
+                                    cell level, ‍σc ‍ becomes two orders of magnitude higher than stresses previously observed in biofilms
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                 8 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                               Physics of Living Systems
+
+
+
+
+Figure 4. Adhesive strength between the biofilm and the substrate governs channel formation. (a) Reconstructions from laser-­scanning confocal
+                                                                                                                                        −1
+microscopy images of the biofilm. The biofilms are either grown on a low surface free energy PDMS substrate (left, ‍γPDMS =23 mN m ‍) or on a high
+                                                             −1
+surface free energy PDMS substrate (right, ‍γPDMS =37 mN m ).  ‍ (b) Average  effective biofilm thickness as a function of time and surface free energy.
+The average thickness of biofilm grown on a low surface free energy PDMS substrate (red) and on a high surface free energy PDMS substrate (blue).
+Figure 4 continued on next page
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                      9 of 19
+            Research article﻿﻿﻿﻿﻿﻿                                                                                           Physics of Living Systems
+
+Figure 4 continued
+(c) The image sequence shows a biofilm that is grown on a patterned PDMS substrate in the same microfluidic channel. On the left, the substrate has a
+low surface free energy, while on the right it has a high surface free energy.
+The online version of this article includes the following figure supplement(s) for figure 4:
+Figure supplement 1. The surface free energy of the substrate can be changed through a physical process.
+
+
+
+
+                                       during growth (Chew et al., 2016). This suggests that in the case of strongly adhering biofilms, the
+                                       compressive stress may not be sufficient to initiate buckling and supports the experimental finding
+                                       that no buckling is observed in Figure 4a, right panel.
+                                          In the next step, we monitor the effective biofilm thickness measured from the PDMS surface
+                                       to the top of the biofilm layer over time and find that, as a channel network is formed, the average
+                                       biofilm thickness increases substantially and at a greater rate compared to a biofilm where no chan-
+                                       nels are formed. We obtained the effective average thickness of the biofilm by fluorescently labeling
+                                       the eDNA component of the biofilm matrix with propidium iodide and measuring the thickness in
+                                       the z-­direction with a confocal microscope from the PDMS substrate to the top of the biofilm at the
+                                       biofilm-­liquid interface. Figure 4b compares the average, effective thickness of a biofilm grown on
+                                       a high surface free energy substrate to a biofilm grown on a low surface free energy substrate. After
+                                       30–48 hr, the latter develops a channel network, and its effective thickness increases substantially. The
+                                       biofilm thickness increases further with time until after 72 hr, the biofilm has reached a total thickness
+                                       of roughly ‍90 µm‍and takes up almost the whole 100 ‍ µm-‍ ­high microfluidic channel. On the other hand,
+                                       the biofilm grown on high surface energy PDMS does not develop a channel network. The biofilm
+                                       thickness increases continuously, but slower than in the case of a channel-­forming biofilm. After 72 hr,
+                                       the biofilm has a mean thickness of ‍40 µm,‍ less than half of the microfluidic channel height. The illus-
+                                       trations in Figure 4b clarify that the increase in effective thickness during channel formation does not
+                                       necessarily correspond to an increase in growth rate or biomass compared to the non-­buckled biofilm,
+                                       as water-­filled channels primarily constitute the additional volume.
+                                          The relation between surface free energy and buckling-­delamination allows us to control the
+                                       biofilm morphology depending on the substrate’s surface free energy. The biofilm morphology can
+                                       be controlled locally by solely adjusting the surface free energy of the substrate with a spatial resolu-
+                                       tion in the millimeter range (Figure 4c). We produced a microfluidic channel consisting of alternating,
+                                       millimeter-­long sections made of low and high-­surface free energy surfaces. The biofilm grown in this
+                                       patterned PDMS channel exhibits a patterned morphology that mirrors the patterning of the surface
+                                       free energy of the PDMS: the biofilm grown on the low surface free energy PDMS forms a channel
+                                       network, while the one grown on the high surface free energy PDMS forms a flat biofilm, with nutrient
+                                       conditions being evidently equal. Remarkably, the morphological change is as abrupt as the change in
+                                       surface free energy. The increase in surface free energy leads to an increase in adhesion strength and
+                                       hence interface toughness (‍Γ‍). A stronger adhesion between the biofilm and the substrate leads to
+                                       greater resistance against crack propagation (see section Buckling-­Delamination as the driving force
+                                       for channel formation). If the resistance becomes larger than the driving force, crack propagation is
+                                       no longer possible, and buckling is arrested. This can be achieved by simply increasing the surface
+                                       free energy of the substrate and, therefore, the adhesion strength between the biofilm and the PDMS.
+                                       These experimental results show, for the first time, how basic material properties of the substrate,
+                                       which moreover are easy to modulate, can be used to reliably control the biofilm morphology without
+                                       changing growth conditions or biofilm composition or even enforce a patterned structure and provide
+                                       a critical way to interrogate the mechanism at play.
+
+                                       Bacterial movement inside the channel network
+                                       The channel network is devoid of any biofilm matrix and densely populated by actively motile bacteria,
+                                       as shown by the movie of bacteria swimming in a channel Figure 5—video 1. The bacterial motion
+                                       shows no preferential direction, and high-­speed images can be used to calculate a spatially resolved
+                                       time-­correlation coefficient (Secchi et al., 2013). Bacterial motion leads to frequent local changes
+                                       in the image intensity on a timescale related to the bacterial swimming speed (see section Spatially
+                                       resolved degree of correlation for details). Therefore, we calculate the time and space correlation
+                                       of the intensity of the image over regions of interest located in the channel and use the degree of
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                 10 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                     Physics of Living Systems
+
+                                    correlation as a representation of bacteria motility. By computing the degree of correlation of the
+                                    image over time and retaining the spatial resolution, we can identify higher and lower bacterial activity
+                                    areas. Figure 5a shows the activity maps and the corresponding brightfield images at different stages
+                                    of the biofilm development. The first stage corresponds to a time of 72 hr after the start of the exper-
+                                    iment and shows the biofilm, roughly one hour before it starts to form a channel network. The activity
+                                    map shows a uniformly high degree of correlation and, therefore, no detectable bacteria movement.
+                                    Nine hours later, the channel network is fully developed according to the bright-­field micrograph, and
+                                    the activity map shows large, active areas with a low degree of correlation. It becomes clear that areas
+                                    with detectable bacteria movement are highly localized and distinct from inactive areas. A comparison
+                                    between the activity map and the biofilm microstructure, as shown in the bright-­field micrographs,
+                                    reveals that the active areas are exclusively found inside the channels of the biofilm. These results
+                                    indicate that the hollow channel network gets populated by motile bacteria as the channels form.
+                                        As the biofilm matures, the bacterial activity diminishes until it can not be detected anymore
+                                    (Figure 5a, right panel), without any structural changes in the biofilm. Previous studies on biofilm
+                                    dispersal have described a mode of dispersal known as seeding dispersal, where a large number of
+                                    single bacteria are released from hollow cavities formed inside the biofilm colony (Kaplan, 2010).
+                                    In non-­mucoid PAO1 biofilms, these hollow cavities are filled with motile, planktonic cells before a
+                                    breach in the biofilm wall releases the cells into the surrounding medium (Purevdorj-­Gage et al.,
+                                    2005). In our case, we observe that the channels get filled with planktonic cells. However, we do
+                                    not observe any dispersal; the channel walls were not eroded and remain intact. The right panel in
+                                    Figure 5a shows the same section of the biofilm two hours after the maximum movement inside
+                                    the channels is detected. The activity map shows that the previously active areas have changed into
+                                    areas with a high degree of correlation and hence no detectable bacterial activity. The corresponding
+                                    phase-­contrast image reveals that the decrease in bacterial motility comes without a dispersal event
+                                    nor deformation or structural changes of the biofilm. We hypothesize that this decrease in bacterial
+                                    motility is attributable to a renewed surface colonization and subsequent biofilm formation of the
+                                    planktonic cells in the channels.
+                                        The swimming speed of the motile bacteria inside the channel network is not affected by the fluid
+                                    flow surrounding the biofilm. Since previous studies suggested that channels in biofilm introduce flow
+                                    to overcome diffusion-­limited transport of nutrients (Wilking et al., 2012), we verified if the nutrient
+                                    flow could induce advective transport inside the channel network. To this end, we performed differen-
+                                    tial dynamic microscopy (DDM) to extract the average bacterial swimming speed of the bacteria inside
+                                    the channels (Bayles et al., 2016; Wilson et al., 2011). The details of DDM are explained by Cerbino
+                                    and Trappe, 2008 and are summarized in the methods-­section Differential Dynamic Microscopy. The
+                                    average bacterial swimming speed was measured as a function of the mean flow rates of the nutrient
+                                    solution surrounding the biofilm. The results in Figure 5c show no clear dependency of the average
+                                    bacterial swimming speed inside the channels from the flow velocity of the nutrient solution, despite
+                                    the flow velocity of nutrients varying from ‍0 mm s−1‍to 1‍ 1.1 mm s−1‍and being three orders of magnitude
+                                    larger than the bacterial swimming speed. In addition, the average value of the swimming speed (20
+                                    to ‍30 µm s−1‍) corresponds to values previously reported in the literature for P. aeruginosa PAO1 in
+                                    suspension (Khong et al., 2021). These findings indicate that the bulk flow surrounding the biofilm
+                                    does not introduce advection inside the biofilm, and therefore the channels consist of a closed biofilm
+                                    matrix layer populated by motile bacteria.
+
+
+                                    Discussion
+                                    We reported for the first time the structural evolution of biofilm grown on a solid substrate exposed
+                                    to fluid flow in a microfluidic device. A buckling-­delamination process governs the formation of three-­
+                                    dimensional hollow channels. Experimentally, we show that the biofilm morphology is determined
+                                    by the isotropic growth of the biofilm in a confined space and the adhesion between the biofilm and
+                                    the solid substrate. These findings give unprecedented control over the biofilm morphology through
+                                    basic physical parameters such as adhesive strength to the substrate and nutrient concentration.
+                                       Our results show that biofilm growth is the key driving force for buckling-­delamination that
+                                    leads to the formation of channels. The continuous growth of a biofilm in a confined space induces
+                                    compressive stresses that initiate buckling of the biofilm. Previous studies have identified growth-­
+                                    induced compressive stresses to play a role in the wrinkling of biofilm grown on agar plates (Asally
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                         11 of 19
+            Research article﻿﻿﻿﻿﻿﻿                                                                                           Physics of Living Systems
+
+
+
+
+Figure 5. Hollow channels are populated by motile bacteria. (a) Bacterial movement inside the channel network visualized using a spatially resolved,
+normalized degree of correlation. A low degree of correlation corresponds to an active region. The brightfield images show the corresponding structure
+of the biofilm. (b) Differential Dynamic Microscopy is used to quantify the bacterial swimming speed inside the biofilm channels. The swimming speed
+is measured at varying fluid flow speeds inside the microfluidic device. The two microscopy images show a close up of the bacterial biofilm at two
+different fluid flow velocities. The errorbars indicate the standard deviation from the mean swim speed. The videos of the bacteria motion can be found
+in Figure 5—video 2 and Figure 5—video 3.
+The online version of this article includes the following video for figure 5:
+Figure 5 continued on next page
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                  12 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                     Physics of Living Systems
+
+Figure 5 continued
+Figure 5—video 1. Video of the bacterial movement inside the biofilm channels.
+https://elifesciences.org/articles/76027/figures#fig5video1
+Figure 5—video 2. Video of bacteria movement with no surrounding fluid flow.
+https://elifesciences.org/articles/76027/figures#fig5video2
+Figure 5—video 3. Video of bacteria movement with a surrounding fluid flow velocity of .
+https://elifesciences.org/articles/76027/figures#fig5video3
+
+
+
+
+                                    et al., 2012; Yan et al., 2019; Ben Amar and Wu, 2014; Espeso et al., 2015; Fei et al., 2020). In
+                                    these systems, the diffusion-­limited transport of nutrients exclusively from the bottom of the biofilm
+                                    can lead to gradients in growth rate. In combination with weak adhesion to the agar, the spatial
+                                    differences in growth rate may induce compressive stresses that initiate wrinkling. In our case, the
+                                    introduction of moderate fluid flow increases nutrient flux at the surface of the biofilm and therefore
+                                    minimizes nutrient gradients in the bulk of thin biofilms (Krsmanovic et al., 2021). Therefore, we
+                                    can assume a uniform biofilm in x-­y direction and minimal growth gradients in the z-­direction, even
+                                    though local heterogeneities in growth can still occur. These findings also show that in the simple
+                                    system of confined growth of a uniform biofilm, compressive stresses are high enough to induce
+                                    buckling and channel formation, a result that has recently been seen in bacterial pellicles by Qin
+                                    et al., 2021.
+                                        This work emphasizes the importance of mechanical instabilities in biofilm wrinkling and elucidates
+                                    the dependence of the channel formation process on the adhesive strength between the biofilm and
+                                    the solid substrate. In our system, the biofilm delaminates and buckles away from the substrate to
+                                    form a channel network. Previous studies found that wrinkled biofilms often exhibit a layered structure
+                                    where the top layer wrinkles and the bottom layer stays bonded to the agar plate (Yan et al., 2019;
+                                    Zhang et al., 2016a; Zhang et al., 2017). However, we observe biofilm delamination directly from
+                                    the substrate without any intermediate layer. This further confirms that our experimental setup leads
+                                    to the formation of homogeneous, non-­layered biofilms. Additionally, we showed experimentally
+                                    that an increase in adhesive strength between the biofilm and the substrate impedes channel forma-
+                                    tion, as the biofilm can no longer delaminate. This understanding gives us full control over biofilm
+                                    morphology: we patterned and predicted the biofilm structure based on the surface free energy of
+                                    the PDMS substrate.
+                                        Many recent studies focused on static biofilm-­agar systems to describe and understand the mechan-
+                                    ical contributions to the structural evolution of biofilms. However, nutrient gradients, spreading and
+                                    swarming of colonies, or the mechanical response of the substrate complicate the analysis and may
+                                    convolute the purely mechanical contributions with biological responses of the microorganisms. We
+                                    show that, within well-­defined microfluidic systems, it is possible to isolate the mechanical contribu-
+                                    tions from the biofilm structure and control them without changing any biological parameter. Further-
+                                    more, we hypothesize that our findings are general and applicable to other bacterial species as our
+                                    growth conditions - fluid flow and the presence of solid substrates – are often found in the biofilms
+                                    habitats. This might open up new strategies for biofilm control and contribute to a more holistic view
+                                    of biofilm formation and evolution.
+
+
+
+                                    Materials and methods
+                                    Culture conditions and growth in the microfluidic device
+                                                                                                                         −1
+                                    Pseudomonas aeruginosa PAO1 wild-­type (WT) was grown in tryptone broth (10    ‍ g l ‍Tryptone, micro-
+                                                                              −1
+                                    biologically tested, Sigma Aldrich, ‍5 g l ‍ NaCl) in an orbital shaker overnight at 37. The overnight
+                                    culture was then diluted 1:100 in tryptone broth (TB) and grown for 2 hr until OD600 reached the value
+                                    of 0.2. The bacterial suspension was then diluted 1:10 and used to inoculate the microfluidic channel.
+                                       The microfluidic channel was inoculated by withdrawing ‍600 µl ‍of bacterial suspension from a 2 mL
+                                    Eppendorf tube. The bacteria were left undisturbed for 1 hr before fresh media was flown using the
+                                    syringe pump. For all microfluidic experiments, a diluted 1:10 tryptone broth (1‍ g l−1‍Tryptone, ‍5 g l−1‍
+                                    NaCl) was used as the growth medium and the temperature was kept constant at ‍25 ◦ C ‍.
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                         13 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                     Physics of Living Systems
+
+                                    Microfluidic device
+                                    Rectangular microfluidic channels were fabricated using standard soft lithography techniques (Xia
+                                    and Whitesides, 1998). First, microchannel molds were prepared by depositing SU-­8 2,150 (Micro-
+                                    Chem Corp., Newton, MA) on silicon wafers via photolithography. Next, polydimethylsiloxane (PDMS;
+                                    Sylgard 184 Silicone Elastomer Kit, Dow Corning, Midland, MI) was prepared and cast on the molds.
+                                    After curing for 24 hr at 8‍ 0 ◦ C ‍, PDMS microchannels were plasma-­sealed onto a clean glass slide. The
+                                    PDMS channels were flushed with ‍2 ml ‍of fresh media before each experiment. Flow was driven by a
+                                    syringe pump (Standard PHD Ultra syringe pump, Harvard Aparatus), and the flow velociy was held
+                                    constant at 1‍ .7 mm s−1‍during the experiment.
+                                       Hydrophilic PDMS with 0.5% dimethylsiloxan-­ethyleneoxide blockcopolymer (DBE-­712, Gelest,
+                                    Morrisville, PA) was produced according to Gökaltun et al., 2019. Casting and plasma bonding were
+                                    carried out as described above. The patterned microfluidic channel was produced by first casting
+                                    hydrophobic PDMS onto the molds and curing the PDMS as described above. Then, millimeter-­long
+                                    sections were cut out with a precision blade without removing the PDMS from the mold. The removed
+                                    sections were filled with hydrophilic PDMS. Finally, the patterned channels were cured and bonded to
+                                    a glass slide as described above.
+                                       The surface free energies of the hydrophilic and hydrophic PDMS were determined with the
+                                    Owens-­Wendt-­Method (Owens and Wendt, 1969), where the contact angles of known liquids with
+                                    the substrate are used to determine the unknown surface free energy of the substrate. To that extent,
+                                    the contact angles of Nitromethane (‍γL =36.8 mN m−1,‍ Jańczuk and Białlopiotrowicz, 1989) Hexade-
+                                    cane (‍γL =26.35 mN m−1‍, Jańczuk et al., 1993) and Water (‍γL =72.8 mN m−1‍, Zhang et al., 2019) on
+                                    hydrophilic and hydrophobic PDMS were measured.
+
+
+                                    Staining procedures
+                                    Staining with a propidium iodide solution was performed to measure the thickness of the biofilm. We
+                                    produced the staining solution by mixing propidium iodide (Sigma Aldrich) with the nutrient medium
+                                    to a final concentration of ‍5 M‍ and flowed the solution for the entire experiment duration. GFP-­
+                                    labelled Concanavalin A (Sigma Aldrich) was used to visualize the three-­dimensional structure. The
+                                                                                                                  −1
+                                    stain was dissolved in the nutrient solution to a final concentration of 100
+                                                                                                             ‍ g l ‍. The biofilm was incu-
+                                    bated for 20 min with the staining solution before being washed with a fresh nutrient solution.
+
+
+                                    Visualization
+                                    Light microscopy images were taken on Nikon Eclipse Ti2-­A in phase-­contrast configuration, equipped
+                                    with a Hamamatsu ImageEM-­X2 CCD camera and a 20 x objective. For timelapse images, we used
+                                    the microscope control software µManager (Stuurman et al., 2007) and acquired an image every
+                                    5 min. The phase-­contrast images were analysed with the software Fiji (Schindelin et al., 2012). Fiji
+                                    was also used to produce the three-­dimensional renderings of the biofilm from the confocal images
+                                    using the temporal color code function. For the fluorescent visualizations, we used a Nikon Eclipes
+                                    T1 inverted microscope coupled with a Yokogawa CSU-­W1-­T2 confocal scanner unit and equipped
+                                    with an Andor iXon Ultra EMCCD camera. The images were acquired with a 60 x water immersion
+                                    objective with N.A. of 1.20. We used Imaris (Bitplane) for analysing and producing cross-­sections of
+                                    the z-­stacks.
+
+
+                                    Skeletonization of channel networks
+                                    The quantitative analysis of the channel network formation was performed using Fiji and Matlab
+                                    (version 9.7.0 (R2019b)). Natick, Massachusetts: The MathWorks Inc, 2019. As a first step, the bright-
+                                    field timelapse images were binarized with Fiji. Otsu’s method (Otsu, 1979) was used to determine
+                                    the thresholding value of the last image of the timelapse, and this thresholding value was used to
+                                    binarize all images. Next, the binarized images were imported into Matlab and objects smaller than
+                                    5 pixels were removed and a morphological opening operation was performed with Matlabs own
+                                    function bwareaopen before the resulting images were skeletonized using Matlab skeletonization
+                                    command bwskel. Finally, the Matlab function bwlabel was used to label all connected components
+                                    of the skeletonized image and extract the longest connected path and the total number of wrinkles.
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                         14 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                              Physics of Living Systems
+
+                                    Differential dynamic microscopy
+                                    Images were acquired at 2000 frames per second with the Fastcam UX100 (Photron, Japan) high-­
+                                    speed camera on the Nikon Eclipse Ti2-­A microscope in brightfield mode. Differential Dynamic
+                                    Microscopy (DDM) was performed according to Cerbino and Trappe, 2008 using a custom code
+                                    written in Matlab. Subsequent fitting and bacterial swimming speed extraction was performed as
+                                    described by Wilson et al., 2011. The theory of DDM is described in detail by Cerbino and Trappe,
+                                    2008. In short, we calculate the difference between images of our time-­lapse recording of the motile
+                                    bacteria at different time intervals. From the Fourier transform of the image difference, we obtain the
+                                    intensity correlation function related to the bacterial local dynamics. Analyzing and fitting the correla-
+                                    tion function allows us to extract the diffusive and active contributions of the bacterial movement and
+                                    hence gives us a good estimation of the swimming speed of bacteria.
+
+                                    Spatially resolved degree of correlation
+                                    Images were acquired at 1000 frames per second with the Fastcam UX100 (Photron, Japan) high-­speed
+                                    camera on the Nikon Eclipse Ti2-­A microscope in brightfield mode. The spatially resolved correlation
+                                    coefficient ‍cI (τ ; t, r)‍between two images taken at times ‍t ‍and ‍t + τ ‍was calculated according to Secchi
+                                    et al., 2013
+                                                                                                  ⟨I (t)I (t+τ )⟩
+                                                                               cI (τ ; t, r) = ⟨I (t)⟩
+                                                                                                   p     p        r
+                                                                                                                      − 1.                           (3)
+                                    	﻿‍                                                          p     r ⟨Ip (t+τ )⟩r     ‍
+                                                                                        th
+                                         ‍Ip‍is the image intensity measured by the ‍p ‍ pixel and ⟨...⟩
+                                                                                                   ‍ r ‍ denotes an average over all pixels
+                                     within a region of interest centered around ‍r ‍. The images were subdivided into regions of interest of
+                                     ‍2.5 × 2.5 µm‍. The degree of space-­time correlation was calculated between two images which were
+                                    1‍ s‍apart and averaged over the regions of interest. This correlation coefficient was calculated for 200
+                                     images with the same timestep and averaged.
+
+
+                                    Acknowledgements
+                                    The authors acknowledge Matteo Brizzioli, Giovanni Savorana and Dr. Alexandra Bayles for their
+                                    contributions to the DDM code and analysis; Dr. Kirill "Hipster" Feldman and Ela Burmeister for their
+                                    valuable experimental support and the ScopeM facility at ETH Zurich for providing excellent equip-
+                                    ment and support. E S acknowledges support from SNSF PRIMA grant 179,834.
+
+
+
+                                    Additional information
+
+                                    Funding
+                                    Funder                      Grant reference number              Author
+
+                                    Schweizerischer             179834                              Eleonora Secchi
+                                    Nationalfonds zur
+                                    Förderung der
+                                    Wissenschaftlichen
+                                    Forschung
+
+                                    The funders had no role in study design, data collection and interpretation, or the
+                                    decision to submit the work for publication.
+
+
+                                    Author contributions
+                                    Steffen Geisel, Conceptualization, Investigation, Methodology, Visualization, Writing - original draft,
+                                    Writing - review and editing; Eleonora Secchi, Investigation, Methodology, Supervision, Writing - orig-
+                                    inal draft, Writing - review and editing; Jan Vermant, Conceptualization, Funding acquisition, Supervi-
+                                    sion, Writing - original draft, Writing - review and editing
+
+                                    Author ORCIDs
+                                    Steffen Geisel ‍ ‍http://orcid.org/0000-0002-1121-3103
+                                    Eleonora Secchi ‍ ‍http://orcid.org/0000-0002-0949-9085
+                                    Jan Vermant ‍ ‍http://orcid.org/0000-0002-0352-0656
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                  15 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                         Physics of Living Systems
+
+                                    Decision letter and Author response
+                                    Decision letter https://doi.org/10.7554/eLife.76027.sa1
+                                    Author response https://doi.org/10.7554/eLife.76027.sa2
+
+
+
+                                    Additional files
+                                    Supplementary files
+                                    •  Transparent reporting form
+
+                                    Data availability
+                                    The raw data of the graphs in Figures 1, 3, 4 and 5 are made available through a Dryad repository
+                                    as timelapse and High-­Speed images. The Matlab Codes for Skeletonization (Figure 1), DDM and
+                                    Correlation calculations (Figure 5) are made available in the same repository. The link to the repos-
+                                    itory can be found in the Materials and Methods section or under: https://doi.org/10.5061/dryad.​
+                                    vq83bk3tn.
+
+                                    The following dataset was generated:
+
+                                    Author(s)             Year       Dataset title               Dataset URL           Database and Identifier
+
+                                    Geisel S, Secchi E,   2022       Data from: The role of      https://​doi.​org/​   Dryad Digital Repository,
+                                    Vermant J                        surface adhesion on the     10.​5061/​dryad.​     10.5061/dryad.vq83bk3tn
+                                                                     macroscopic wrinkling of    vq83bk3tn
+                                                                     biofilms
+
+
+
+
+                                    References
+                                    Asally M, Kittisopikul M, Rué P, Du Y, Hu Z, Çağatay T, Robinson AB, Lu H, Garcia-­Ojalvo J, Süel GM. 2012.
+                                      Localized cell death focuses mechanical forces during 3D patterning in a biofilm. PNAS 109:18891–18896.
+                                      DOI: https://doi.org/10.1073/pnas.1212429109, PMID: 23012477
+                                    Badal D, Jayarani AV, Kollaran MA, Kumar A, Singh V. 2020. Pseudomonas aeruginosa biofilm formation on
+                                      endotracheal tubes requires multiple two-­component systems. Journal of Medical Microbiology 69:906–919.
+                                      DOI: https://doi.org/10.1099/jmm.0.001199, PMID: 32459613
+                                    Bayles AV, Squires TM, Helgeson ME. 2016. Dark-­field differential dynamic microscopy. Soft Matter 12:2440–
+                                      2452. DOI: https://doi.org/10.1039/c5sm02576a, PMID: 26822331
+                                    Ben Amar M, Wu M. 2014. Patterns in biofilms: From contour undulations to fold focussing. EPL (Europhysics
+                                      Letters) 108:38003. DOI: https://doi.org/10.1209/0295-5075/108/38003
+                                    Bixler GD, Bhushan B. 2012. Review article: Biofouling: Lessons from nature. Philosophical Transactions of the
+                                      Royal Society A: Mathematical, Physical and Engineering Sciences 370:2381–2417 PMID: 22509063.,
+                                    Callow ME, Fletcher RL. 1994. The influence of low surface energy materials on bioadhesion — a review.
+                                      International Biodeterioration & Biodegradation 34:333–348. DOI: https://doi.org/10.1016/0964-8305(94)​
+                                      90092-2
+                                    Cerbino R, Trappe V. 2008. Differential dynamic microscopy: probing wave vector dependent dynamics with a
+                                      microscope. Physical Review Letters 100:1–4. DOI: https://doi.org/10.1103/PhysRevLett.100.188102, PMID:
+                                      18518417
+                                    Cerda E, Mahadevan L. 2003. Geometry and physics of wrinkling. Physical Review Letters 90:074302. DOI:
+                                      https://doi.org/10.1103/PhysRevLett.90.074302, PMID: 12633231
+                                    Chew SC, Kundukad B, Teh WK, Doyle P, Yang L, Rice SA, Kjelleberg S. 2016. Mechanical signatures of microbial
+                                      biofilms in micropillar-­embedded growth chambers. Soft Matter 12:5224–5232. DOI: https://doi.org/10.1039/​
+                                      c5sm02755a, PMID: 27191395
+                                    Chung JY, Nolte AJ, Stafford CM. 2011. Surface wrinkling: A versatile platform for measuring thin-­film
+                                      properties. Advanced Materials (Deerfield Beach, Fla.) 23:349–368. DOI: https://doi.org/10.1002/adma.​
+                                      201001759, PMID: 20814918
+                                    Conrad JC, Poling-­Skutvik R. 2018. Confined Flow: Consequences and Implications for Bacteria and Biofilms.
+                                      Annual Review of Chemical and Biomolecular Engineering 9:175–200. DOI: https://doi.org/10.1146/annurev-​
+                                      chembioeng-060817-084006, PMID: 29561646
+                                    Cont A, Rossy T, Al-­Mayyah Z, Persat A. 2020. Biofilms deform soft surfaces and disrupt epithelia. eLife
+                                      9:e56533. DOI: https://doi.org/10.7554/eLife.56533, PMID: 33025904
+                                    Costerton JW, Cheng KJ, Geesey GG, Ladd TI, Nickel JC, Dasgupta M, Marrie TJ. 1987. Bacterial biofilms in
+                                      nature and disease. Annual Review of Microbiology 41:435–464. DOI: https://doi.org/10.1146/annurev.mi.41.​
+                                      100187.002251, PMID: 3318676
+
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                              16 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                           Physics of Living Systems
+
+                                    Drescher K, Shen Y, Bassler BL, Stone HA. 2013. Biofilm streamers cause catastrophic disruption of flow with
+                                      consequences for environmental and medical systems. PNAS 110:4345–4350. DOI: https://doi.org/10.1073/​
+                                      pnas.1300321110, PMID: 23401501
+                                    Epstein AK, Pokroy B, Seminara A, Aizenberg J. 2011. Bacterial biofilm shows persistent resistance to liquid
+                                      wetting and gas penetration. PNAS 108:995–1000. DOI: https://doi.org/10.1073/pnas.1011033108, PMID:
+                                      21191101
+                                    Espeso DR, Carpio A, Einarsson B. 2015. Differential growth of wrinkled biofilms. Physical Review. E, Statistical,
+                                      Nonlinear, and Soft Matter Physics 91:1–17. DOI: https://doi.org/10.1103/PhysRevE.91.022710, PMID:
+                                      25768534
+                                    Fauvart M, Phillips P, Bachaspatimayum D, Verstraeten N, Fransaer J, Michiels J, Vermant J. 2012. Surface
+                                      tension gradient control of bacterial swarming in colonies of Pseudomonas aeruginosa. Soft Matter 8:70–76.
+                                      DOI: https://doi.org/10.1039/C1SM06002C
+                                    Fei C, Mao S, Yan J, Alert R, Stone HA, Bassler BL, Wingreen NS, Košmrlj A. 2020. Nonuniform growth and
+                                      surface friction determine bacterial biofilm morphology on soft substrates. PNAS 117:7622–7632. DOI: https://​
+                                      doi.org/10.1073/pnas.1919607117, PMID: 32193350
+                                    Flemming HC, Wingender J. 2010. The biofilm matrix. Nature Reviews. Microbiology 8:623–633. DOI: https://​
+                                      doi.org/10.1038/nrmicro2415, PMID: 20676145
+                                    Flemming HC, Wingender J, Szewzyk U, Steinberg P, Rice SA, Kjelleberg S. 2016. Biofilms: an emergent form of
+                                      bacterial life. Nature Reviews. Microbiology 14:563–575. DOI: https://doi.org/10.1038/nrmicro.2016.94, PMID:
+                                      27510863
+                                    Flemming HC, Wuertz S. 2019. Bacteria and archaea on Earth and their abundance in biofilms. Nature Reviews.
+                                      Microbiology 17:247–260. DOI: https://doi.org/10.1038/s41579-019-0158-9, PMID: 30760902
+                                    Frølund B, Palmgren R, Keiding K, Nielsen PH. 1996. Extraction of extracellular polymers from activated sludge
+                                      using a cation exchange resin. Water Research 30:1749–1758. DOI: https://doi.org/10.1016/0043-1354(95)​
+                                      00323-1
+                                    Ghosh T, Ngo TD, Kumar A, Ayranci C, Tang T. 2019. Cleaning carbohydrate impurities from lignin using
+                                      Pseudomonas fluorescens . Green Chemistry 21:1648–1659. DOI: https://doi.org/10.1039/C8GC03341B
+                                    Gingichashvili S, Feuerstein O, Steinberg D. 2020. Topography and Expansion Patterns at the Biofilm-­Agar
+                                      Interface in Bacillus subtilis Biofilms. Microorganisms 9:1–14. DOI: https://doi.org/10.3390/microorganisms90​
+                                      10084, PMID: 33396528
+                                    Gökaltun A, Kang YBA, Yarmush ML, Usta OB, Asatekin A. 2019. Simple Surface Modification of
+                                      Poly(dimethylsiloxane) via Surface Segregating Smart Polymers for Biomicrofluidics. Scientific Reports 9:1–14.
+                                      DOI: https://doi.org/10.1038/s41598-019-43625-5, PMID: 31089162
+                                    Hall-­Stoodley L, Costerton JW, Stoodley P. 2004. Bacterial biofilms: from the natural environment to infectious
+                                      diseases. Nature Reviews. Microbiology 2:95–108. DOI: https://doi.org/10.1038/nrmicro821, PMID: 15040259
+                                    Hartmann R, Singh PK, Pearce P, Mok R, Song B, Díaz-­Pascual F, Dunkel J, Drescher K. 2019. Emergence of
+                                      three-­dimensional order and structure in growing biofilms. Nature Physics 15:251–256. DOI: https://doi.org/10.​
+                                      1038/s41567-018-0356-9, PMID: 31156716
+                                    Hutchinson JW, Thouless MD, Liniger EG. 1992. Growth and configurational stability of circular, buckling-­driven
+                                      film delaminations. Acta Metallurgica et Materialia 40:295–308. DOI: https://doi.org/10.1016/0956-7151(92)​
+                                      90304-W
+                                    Jańczuk B, Białlopiotrowicz T. 1989. Surface free-­energy components of liquids and low energy solids and
+                                      contact angles. Journal of Colloid and Interface Science 127:189–204. DOI: https://doi.org/10.1016/0021-​
+                                      9797(89)90019-2
+                                    Jańczuk B, Wójcik W, Zdziennicka A. 1993. Determination of the Components of the Surface Tension of Some
+                                      Liquids from Interfacial Liquid-­Liquid Tension Measurements. Journal of Colloid and Interface Science 157:384–
+                                      393. DOI: https://doi.org/10.1006/jcis.1993.1200
+                                    Kaplan JB. 2010. Biofilm dispersal: mechanisms, clinical implications, and potential therapeutic uses. Journal of
+                                      Dental Research 89:205–218. DOI: https://doi.org/10.1177/0022034509359403, PMID: 20139339
+                                    Kempes CP, Okegbe C, Mears-­Clarke Z, Follows MJ, Dietrich LEP. 2014. Morphological optimization for access
+                                      to dual oxidants in biofilms. PNAS 111:208–213. DOI: https://doi.org/10.1073/pnas.1315521110, PMID:
+                                      24335705
+                                    Khong NZJ, Zeng Y, Lai SK, Koh CG, Liang ZX, Chiam KH, Li HY. 2021. Dynamic swimming pattern of
+                                      Pseudomonas aeruginosa near a vertical wall during initial attachment stages of biofilm formation. Scientific
+                                      Reports 11:1–11. DOI: https://doi.org/10.1038/s41598-021-81621-w, PMID: 33479476
+                                    Kim B, K Peterson ETK, Papautsky I. 2004. Long-­term stability of plasma oxidized PDMS surfaces. Annual
+                                      International Conference of the IEEE Engineering in Medicine and Biology Society. 5013–5016. DOI: https://​
+                                      doi.org/10.1109/IEMBS.2004.1404385, PMID: 17271441
+                                    Krsmanovic M, Biswas D, Ali H, Kumar A, Ghosh R, Dickerson AK. 2021. Hydrodynamics and surface properties
+                                      influence biofilm proliferation. Advances in Colloid and Interface Science 288:102336. DOI: https://doi.org/10.​
+                                      1016/j.cis.2020.102336, PMID: 33421727
+                                    Kücken M, Newell AC. 2004. A model for fingerprint formation. Europhysics Letters (EPL) 68:141–146. DOI:
+                                      https://doi.org/10.1209/epl/i2004-10161-2
+                                    Kundukad B, Seviour T, Liang Y, Rice SA, Kjelleberg S, Doyle PS. 2016. Mechanical properties of the superficial
+                                      biofilm layer determine the architecture of biofilms. Soft Matter 12:5718–5726. DOI: https://doi.org/10.1039/​
+                                      C6SM00687F, PMID: 27273453
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                17 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                            Physics of Living Systems
+
+                                    Lasa I. 2006. Towards the identification of the common features of bacterial biofilm development. International
+                                      Microbiology 9:21–28 PMID: 16636986.,
+                                    Liang H, Mahadevan L. 2011. Growth, geometry, and mechanics of a blooming lily. PNAS 108:5516–5521. DOI:
+                                      https://doi.org/10.1073/pnas.1007808108, PMID: 21422290
+                                    Lieleg O, Caldara M, Baumgärtel R, Ribbeck K. 2011. Mechanical robustness of Pseudomonas aeruginosa
+                                      biofilms. Soft Matter 7:3307. DOI: https://doi.org/10.1039/c0sm01467b, PMID: 21760831
+                                    Madsen JS, Lin Y-­C, Squyres GR, Price-­Whelan A, de Santiago Torio A, Song A, Cornell WC, Sørensen SJ,
+                                      Xavier JB, Dietrich LEP. 2015. Facultative control of matrix production optimizes competitive fitness in
+                                      Pseudomonas aeruginosa PA14 biofilm models. Applied and Environmental Microbiology 81:8414–8426. DOI:
+                                      https://doi.org/10.1128/AEM.02628-15, PMID: 26431965
+                                    Nadell CD, Ricaurte D, Yan J, Drescher K, Bassler BL. 2017. Flow environment and matrix structure interact to
+                                      determine spatial competition in Pseudomonas aeruginosa biofilms. eLife 6:e21855. DOI: https://doi.org/10.​
+                                      7554/eLife.21855, PMID: 28084994
+                                    Okegbe C, Price-­Whelan A, Dietrich LEP. 2014. Redox-­driven regulation of microbial community morphogenesis.
+                                      Current Opinion in Microbiology 18:39–45. DOI: https://doi.org/10.1016/j.mib.2014.01.006, PMID: 24607644
+                                    Otsu N. 1979. A Threshold Selection Method from Gray-­Level Histograms. IEEE Transactions on Systems, Man,
+                                      and Cybernetics 9:62–66. DOI: https://doi.org/10.1109/TSMC.1979.4310076
+                                    Owens DK, Wendt RC. 1969. Estimation of the surface free energy of polymers. Journal of Applied Polymer
+                                      Science 13:1741–1747. DOI: https://doi.org/10.1002/app.1969.070130815
+                                    Pearce P, Song B, Skinner DJ, Mok R, Hartmann R, Singh PK, Jeckel H, Oishi JS, Drescher K, Dunkel J. 2019.
+                                      Flow-­Induced Symmetry Breaking in Growing Bacterial Biofilms. Physical Review Letters 123:258101. DOI:
+                                      https://doi.org/10.1103/PhysRevLett.123.258101, PMID: 31922766
+                                    Purevdorj B, Costerton JW, Stoodley P. 2002. Influence of hydrodynamics and cell signaling on the structure and
+                                      behavior of Pseudomonas aeruginosa biofilms. Applied and Environmental Microbiology 68:4457–4464. DOI:
+                                      https://doi.org/10.1128/AEM.68.9.4457-4464.2002, PMID: 12200300
+                                    Purevdorj-­Gage B, Costerton WJ, Stoodley P. 2005. Phenotypic differentiation and seeding dispersal in
+                                      non-­mucoid and mucoid Pseudomonas aeruginosa biofilms. Microbiology (Reading, England) 151:1569–1576.
+                                      DOI: https://doi.org/10.1099/mic.0.27536-0, PMID: 15870466
+                                    Qin B, Fei C, Wang B, Stone HA, Wingreen NS, Bassler BL. 2021. Hierarchical transitions and fractal wrinkling
+                                      drive bacterial pellicle morphogenesis. PNAS 118:e2023504118. DOI: https://doi.org/10.1073/pnas.​
+                                      2023504118, PMID: 33972433
+                                    Rusconi R, Lecuyer S, Guglielmini L, Stone HA. 2010. Laminar flow around corners triggers the formation of
+                                      biofilm streamers. Journal of the Royal Society, Interface 7:1293–1299. DOI: https://doi.org/10.1098/rsif.2010.​
+                                      0096, PMID: 20356880
+                                    Rusconi R, Lecuyer S, Autrusson N, Guglielmini L, Stone HA. 2011. Secondary flow as a mechanism for the
+                                      formation of biofilm streamers. Biophysical Journal 100:1392–1399. DOI: https://doi.org/10.1016/j.bpj.2011.​
+                                      01.065, PMID: 21402020
+                                    Savin T, Kurpios NA, Shyer AE, Florescu P, Liang H, Mahadevan L, Tabin CJ. 2011. On the growth and form of
+                                      the gut. Nature 476:57–62. DOI: https://doi.org/10.1038/nature10277, PMID: 21814276
+                                    Schindelin J, Arganda-­Carreras I, Frise E, Kaynig V, Longair M, Pietzsch T, Preibisch S, Rueden C, Saalfeld S,
+                                      Schmid B, Tinevez JY, White DJ, Hartenstein V, Eliceiri K, Tomancak P, Cardona A. 2012. Fiji: an open-­source
+                                      platform for biological-­image analysis. Nature Methods 9:676–682. DOI: https://doi.org/10.1038/nmeth.2019,
+                                      PMID: 22743772
+                                    Schultz MP, Bendick JA, Holm ER, Hertel WM. 2011. Economic impact of biofouling on a naval surface ship.
+                                      Biofouling 27:87–98. DOI: https://doi.org/10.1080/08927014.2010.542809, PMID: 21161774
+                                    Secchi E, Roversi T, Buzzaccaro S, Piazza L, Piazza R. 2013. Biopolymer gels with “physical” cross-­links: gelation
+                                      kinetics, aging, heterogeneous dynamics, and macroscopic mechanical properties. Soft Matter 9:3931. DOI:
+                                      https://doi.org/10.1039/c3sm27153f
+                                    Secchi E, Savorana G, Vitale A, Eberl L, Stocker R, Rusconi R. 2022. The structural role of bacterial eDNA in the
+                                      formation of biofilm streamers. PNAS 119:1–10. DOI: https://doi.org/10.1073/pnas.2113723119, PMID:
+                                      35290120
+                                    Seminara A, Angelini TE, Wilking JN, Vlamakis H, Ebrahim S, Kolter R, Weitz DA, Brenner MP. 2012. Osmotic
+                                      spreading of Bacillus subtilis biofilms driven by an extracellular matrix. PNAS 109:1116–1121. DOI: https://doi.​
+                                      org/10.1073/pnas.1109261108, PMID: 22232655
+                                    Srinivasan S, Kaplan CN, Mahadevan L. 2019. A multiphase theory for spreading microbial swarms and films.
+                                      eLife 8:e42697. DOI: https://doi.org/10.7554/eLife.42697, PMID: 31038122
+                                    Stewart PS. 2003. Diffusion in biofilms: Why is diffusion an important process. Journal of Bacteriology 185:1485–
+                                      1491.
+                                    Stoodley P, Dodds I, Boyle JD, Lappin-­Scott HM. 1998. Influence of hydrodynamics and nutrients on biofilm
+                                      structure. Journal of Applied Microbiology 85 Suppl 1:19S-28S. DOI: https://doi.org/10.1111/j.1365-2672.​
+                                      1998.tb05279.x, PMID: 21182689
+                                    Stoodley P, Lewandowski Z, Boyle JD, Lappin-­Scott HM. 1999. The formation of migratory ripples in a mixed
+                                      species bacterial biofilm growing in turbulent flow. Environmental Microbiology 1:447–455. DOI: https://doi.​
+                                      org/10.1046/j.1462-2920.1999.00055.x, PMID: 11207765
+                                    Stuurman N, Amdodaj N, Vale R. 2007. μManager: Open Source Software for Light Microscope Imaging.
+                                      Microscopy Today 15:42–43. DOI: https://doi.org/10.1017/S1551929500055541
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                                 18 of 19
+           Research article﻿﻿﻿﻿﻿﻿                                                                                          Physics of Living Systems
+
+                                    Velankar SS, Lai V, Vaia RA. 2012. Swelling-­induced delamination causes folding of surface-­tethered polymer
+                                      gels. ACS Applied Materials & Interfaces 4:24–29. DOI: https://doi.org/10.1021/am201428m, PMID: 22200108
+                                    Vella D, Bico J, Boudaoud A, Roman B, Reis PM. 2009. The macroscopic delamination of thin films from elastic
+                                      substrates. PNAS 106:10901–10906. DOI: https://doi.org/10.1073/pnas.0902160106, PMID: 19556551
+                                    Verstraeten N, Braeken K, Debkumari B, Fauvart M, Fransaer J, Vermant J, Michiels J. 2008. Living on a surface:
+                                      swarming and biofilm formation. Trends in Microbiology 16:496–506. DOI: https://doi.org/10.1016/j.tim.2008.​
+                                      07.004, PMID: 18775660
+                                    Wang Q, Zhao X. 2015. A three-­dimensional phase diagram of growth-­induced surface instabilities. Scientific
+                                      Reports 5:1–10. DOI: https://doi.org/10.1038/srep08887, PMID: 25748825
+                                    Wilking JN, Angelini TE, Seminara A, Brenner MP, Weitz DA. 2011. Biofilms as complex fluids. MRS Bulletin
+                                      36:385–391. DOI: https://doi.org/10.1557/mrs.2011.71
+                                    Wilking JN, Zaburdaev V, De Volder M, Losick R, Brenner MP, Weitz DA. 2012. Liquid transport facilitated by
+                                      channels in Bacillus subtilis biofilms. PNAS 110:848–852. DOI: https://doi.org/10.1073/pnas.1216376110,
+                                      PMID: 23271809
+                                    Wilson LG, Martinez VA, Schwarz-­Linek J, Tailleur J, Bryant G, Pusey PN, Poon WCK. 2011. Differential Dynamic
+                                      Microscopy of Bacterial Motility. Physical Review Letters 106:7–10. DOI: https://doi.org/10.1103/PhysRevLett.​
+                                      106.018101, PMID: 21231772
+                                    Xia Y, Whitesides GM. 1998. Soft Lithography. Angewandte Chemie (International Ed. in English) 37:550–575.
+                                      DOI: https://doi.org/10.1002/(SICI)1521-3773(19980316)37:5<550::AID-ANIE550>3.0.CO;2-G, PMID:
+                                      29711088
+                                    Yan J, Fei C, Mao S, Moreau A, Wingreen NS, Košmrlj A, Stone HA, Bassler BL. 2019. Mechanical instability and
+                                      interfacial energy drive biofilm morphogenesis. eLife 8:e43920. DOI: https://doi.org/10.7554/eLife.43920,
+                                      PMID: 30848725
+                                    Zhang C, Li B, Huang X, Ni Y, Feng XQ. 2016a. Morphomechanics of bacterial biofilms undergoing anisotropic
+                                      differential growth. Applied Physics Letters 109:143701. DOI: https://doi.org/10.1063/1.4963780
+                                    Zhang X, Wang X, Nie K, Li M, Sun Q. 2016b. Simulation of Bacillus subtilis biofilm growth on agar plate by
+                                      diffusion-­reaction based continuum model. Physical Biology 13:046002. DOI: https://doi.org/10.1088/1478-​
+                                      3975/13/4/046002, PMID: 27434099
+                                    Zhang C, Li B, Tang JY, Wang XL, Qin Z, Feng XQ. 2017. Experimental and theoretical studies on the
+                                      morphogenesis of bacterial biofilms. Soft Matter 13:7389–7397. DOI: https://doi.org/10.1039/c7sm01593c,
+                                      PMID: 28951912
+                                    Zhang Z, Wang W, Korpacz AN, Dufour CR, Weiland ZJ, Lambert CR, Timko MT. 2019. Binary Liquid Mixture
+                                      Contact-­Angle Measurements for Precise Estimation of Surface Free Energy. Langmuir 35:12317–12325. DOI:
+                                      https://doi.org/10.1021/acs.langmuir.9b01252, PMID: 31433195
+                                    Zhao Q, Liu Y, Wang C, Wang S, Müller-­Steinhagen H. 2005. Effect of surface free energy on the adhesion of
+                                      biofouling and crystalline fouling. Chemical Engineering Science 60:4858–4865. DOI: https://doi.org/10.1016/j.​
+                                      ces.2005.04.006
+
+
+
+
+Geisel et al. eLife 2022;11:e76027. DOI: https://doi.org/10.7554/eLife.76027                                                               19 of 19
+
