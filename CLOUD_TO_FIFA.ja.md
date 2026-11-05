@@ -1,6 +1,61 @@
 # クラウドから fifa（慶應のサーバー）への指示
 
-fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。---
+fifa の Claude は、チェーンを始める前に `git pull origin master` してこのファイルを読む。新しい項目が上に足される。
+
+---
+
+## 2026年11月5日 その 8（superbee の混合を 256³ 相当で確かめる。AMR 2 段 128³ 土台。急がない）
+
+ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。128³ 土台の 2 段（既定の範囲）は一様 256³ と minmod で 0.4 % 合った
+（その 4 a）。superbee の混合（抗菌薬なし，Fritsch の割合）は 192³ まで GCI 2.5 %，1.5 % で収束したので，256³ 相当の 4 点目で確かめる。
+抗菌薬あり（等量）はその 4 a で済み（3.752e-4）。今動いているもの（256³，その 7）は止めないこと。同時 2 本まで。
+
+```
+O="--nf 128 --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --limiter superbee"
+ECO_THREADS=4 python3 coupled_amr.py $O --example mixed --mix-equal      # 抗菌薬なし，等量
+ECO_THREADS=4 python3 coupled_amr.py $O --example mixed_ab               # 抗菌薬あり，Fritsch の割合
+```
+
+報告：シードの α − 1，vM，時間，細かいセルの平均の割合，メモリの最大。一様の superbee（64/128/192³）と並べ，128/192/256³ 相当の 3 点で次数と GCI
+（Celik，Fs 1.25，r = 1.5 と 4/3）。JSON は `results/2026-11-amr/`（名前に `_superbee`，抗菌薬なしは `_mixed.json`）。
+
+---
+
+## 2026年11月4日 その 7（その 6 を推奨の細かくする範囲で。その 6 をまだ始めていなければ，その 6 の代わりにこちら）
+
+ブランチと手順は「その 6」と同じ（merge のあと `cd ansys_usermat/apdl`）。クラウドで，段ごとの範囲（`--tag-tol-levels 0.01,0.1 --dilate-levels 2,2
+--tag-phi-range 1e-4,0.2`）にすると 32³ 土台 3 段で最も細かい段が 55 % から 35 % に減り，一様 128³ との差は +1.8 %（既定 +1.3 %）。64³ 土台
+（256³ 相当）で同じことを確かめる。その 6 がもう走っているなら止めず，こちらは空いてから。同時 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3 --tag-tol-levels 0.01,0.1 --dilate-levels 2,2 --tag-phi-range 1e-4,0.2"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：その 6 と同じ（α − 1，vM，時間，最も細かい段の割合，メモリの最大）。その 6 と並べられれば並べる。JSON は名前に `_tolL0.01-0.1_dilL2-2_pr0.0001-0.2`。
+
+
+## 2026年11月4日 その 6（AMR の 3 段で 256³ 相当。混合の等量と Fritsch の割合。急がない）
+
+ブランチと手順は「その 5」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+「その 5」で 32³ 土台の 3 段（128³ 相当）が一様 128³ と 1.3 % で合ったので，64³ 土台の 3 段（256³ 相当）で混合の応力の収束を確かめる。
+`--mix-equal` なしは Fritsch の割合（0.25, 0.30）。今動いている 192³・256³ は止めないこと。メモリの合計を見て，同時は 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：4 本のシードの α − 1，vM，時間，いちばん細かいセルの平均の割合とメモリの最大。一様の 64/128/192³ と並べて，64/128/256³ 相当と
+128/192/256³ 相当の 2 組で次数と GCI（Celik，Fs 1.25）。JSON は `results/2026-11-amr/`（名前に `_L3`）。
+
+---
 
 ## 2026年11月4日 その 5（AMR の 3 段と，栄養を k 刻みおき。急がない）
 
@@ -568,26 +623,6 @@ IKMHIWI03 では回せない）。
 - 10月8日、ユーザーが `git push lab origin/master:main` で #64 まで lab に送った（同期済み）。
 - **lab に送るときは、ローカルの master を通さない**（fifa のローカル master は clone 以来古いまま）：
   `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。
----
-
-## 2026年11月4日 その 6（AMR の 3 段で 256³ 相当。混合の等量と Fritsch の割合。急がない）
-
-ブランチと手順は「その 5」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
-「その 5」で 32³ 土台の 3 段（128³ 相当）が一様 128³ と 1.3 % で合ったので，64³ 土台の 3 段（256³ 相当）で混合の応力の収束を確かめる。
-`--mix-equal` なしは Fritsch の割合（0.25, 0.30）。今動いている 192³・256³ は止めないこと。メモリの合計を見て，同時は 2 本まで。
-
-```
-O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3"
-for L in superbee minmod; do
-  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
-  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
-done
-```
-
-報告：4 本のシードの α − 1，vM，時間，いちばん細かいセルの平均の割合とメモリの最大。一様の 64/128/192³ と並べて，64/128/256³ 相当と
-128/192/256³ 相当の 2 組で次数と GCI（Celik，Fs 1.25）。JSON は `results/2026-11-amr/`（名前に `_L3`）。
-
-
 ## 2026年10月8日（村松研の git ができた）
 
 ユーザーが村松研の組織に **`mmc-research-group/nishioka-biofilm-fem`**（private、空、既定ブランチ `main`）を作った。

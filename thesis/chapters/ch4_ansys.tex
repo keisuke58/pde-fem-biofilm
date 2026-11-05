@@ -904,8 +904,8 @@ concentrated at the same edge, so the grid has to resolve both the edge and the 
 Part of the slow convergence is the numerical diffusion of the minmod limiter (Figure~\ref{fig:ch5-limiters}). With the
 superbee limiter, which keeps the edge sharper, the mixed seed stress with antibiotic converges with an observed
 order of $1.2$ and a GCI of $4.6\,\%$ to $3.81\times10^{-4}$~Pa (last rows of Table~\ref{tab:ch5-gci}); the MC and
-van Leer limiters lie close to minmod, and a WENO5 reconstruction~\cite{JiangShu1996} gives $4\,\%$ more than superbee
-on $32^3$. In the separate example, where minmod converges, superbee gives the same stress within about $1\,\%$.
+van Leer limiters lie close to minmod, and a WENO5 reconstruction~\cite{JiangShu1996} lies between MC and superbee
+on $64^3$ and $128^3$. In the separate example, where minmod converges, superbee gives the same stress within about $1\,\%$.
 A compressive limiter can also steepen an edge beyond the solution, so I keep minmod as the main scheme and take the
 two limiters together as the bounds of the mixed stress.
 

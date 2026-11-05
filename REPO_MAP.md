@@ -160,4 +160,6 @@ Historical notes live under [`archive/`](archive/); the root scripts, reports an
 | `BACKUP_PLAN_2026-12.ja.md` | what to back up from IKMHIWI03 before the end of December (`scripts/backup_untracked_ikmhiwi03.ps1`) |
 | `DAILY_REPORT_TRIP.ja.md` | daily reports written while the user was travelling (21-24 Oct) |
 | `archive/MAIL_DRAFT_NEIGHBOURS_2026-10-21.md` | draft mail about the neighbour choice of the element (not sent) |
+| `MAIL_DRAFT_OLIVER_2026-11-04.md` | draft mail to Oliver with the results of the agreed coupling (not sent) |
+| `TODO_2026-11.ja.md` | to-do list for November 2026 (trip, dated items, fifa runs, work in progress) |
 | `speaker_notes_3d_demo.md` | speaker notes for the 3D demonstration videos |
