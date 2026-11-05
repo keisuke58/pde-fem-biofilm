@@ -663,3 +663,66 @@ deleted.
 from `eb82384`), `scripts/keio_runs/20261017a_cube_g6.json` and
 `scripts/keio_runs/NEXT.json` (the new decision), `KEIO_CHAIN_LOG.md` (this
 entry).
+
+---
+
+## 2026-11-05: idle tick, and a finding about this branch itself
+
+**What I checked.** `abaqus_composition/results_keio_1008/` holds the same
+seventeen files it held after the previous entry (17 Oct); none of the six
+jobs of chain `20261017a` (`nf8_c6_g6`, `fr8_c6_g6`, `cs16_c6_g6`,
+`cs24_c6_g6` and the rest of `20261017a_cube_g6.json`) have a result file,
+so that chain has not run. `NEXT.json` still holds exactly that chain, under
+the same name, unchanged since it was written. By the rule at the end of my
+instructions ("if no new results have appeared and `NEXT.json` already
+holds a chain that has not run yet, change nothing, commit nothing, and say
+so"), this round would ordinarily be a pure no-op.
+
+**The more important thing I found.** This branch itself looks abandoned,
+not merely idle. `keio/fifa-first-run`'s own tip is still `e7ba6a9` (17 Oct),
+and nothing has pushed to it since. Over the same period, `master` has kept
+moving under a different mechanism: direct instruction files
+(`CLOUD_TO_FIFA.ja.md`) that the cloud session writes and fifa reads and
+runs by hand, with results committed straight to `master` (and to other
+`keio/*` branches - `keio/uel-implant`, `keio/cloud-1102`), not through this
+branch's `scripts/keio_runs/NEXT.json` + `run_chain_keio.py` manifest loop
+at all. `master`'s own `KEIO_CHAIN_LOG.md` carries the same narrative up to
+and including "third decision, chain `20261008d`" and then switches straight
+to `CLOUD_TO_FIFA`-labelled entries (16 Oct onward); it never received this
+branch's next two commits (`907d838`, "verify fig7_low next", and `e7ba6a9`,
+today's starting point). The two histories diverged there and were never
+reconciled - I did not try to reconcile them now, per the instruction to
+stop and write down a divergence rather than merge or rebase across it.
+Concretely: fifa has run 256^3 mixed examples with and without antibiotic
+(31 Oct, 2 Nov), a 12-point surrogate-pilot batch at 128^3 (2 Nov), and UEL
+implant-sector convergence work, all in the eighteen days since this
+branch's last commit, none of it going through `NEXT.json` on this branch.
+
+**PR #58's two open questions, for the record.** Both were already answered
+in this log's first two entries (7-8 Oct), before this branch and `master`
+diverged: (1) pin fifa's own versions rather than raise them - done, in
+`requirements.txt` commit `ac94d34` (numpy 2.4.2, matplotlib 3.10.8, pytest
+9.0.2); (2) the hand-off's branch reference - already corrected in
+`KEIO_SERVER_HANDOFF.ja.md` section 1 to name `master`, with a note that
+`claude/plan-next-hxjjve` only carries IKMHIWI03's automatic ANSYS-JSON
+export commit. There is nothing new to decide on either question; I did not
+re-answer them a second time.
+
+**What I chose, and why.** Nothing new queued. Queuing another chain behind
+`20261017a` on a branch that nothing currently reads would not move the
+thesis or papers forward; it would just be more unread work sitting in
+`NEXT.json`. The chain already queued there may still be worth running - it
+is the natural continuation of the WP1 mesh-convergence family - but whether
+to run it through this branch's manifest mechanism, or to fold it into a
+`CLOUD_TO_FIFA.ja.md` instruction on `master` instead (the mechanism that
+has actually been moving work since mid-October), is a choice about this
+loop's own plumbing, not about physics or the paper plan, so I am leaving it
+for a human to decide rather than picking one side myself.
+
+**Not touched.** `master`, every other branch, `scripts/run_chain_keio.py`,
+`scripts/keio_runs/*.json` (including `NEXT.json`), `KEIO_SERVER_HANDOFF.ja.md`,
+`KEIO_PLAN.ja.md` and `KEIO_SERVER_ENV.ja.md` are all unchanged this round.
+Nothing from `F:\felix_private`, Felix's code or theory, or Oliver's ANSYS
+sources appears anywhere in what I read.
+
+**Files committed this round.** `KEIO_CHAIN_LOG.md` (this entry) only.
