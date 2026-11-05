@@ -1124,3 +1124,28 @@ Reading (AMR): 3 levels on a 32^3 base give the uniform 128^3 within 0.3 % (alph
 Updating the nutrient every 2 / 4 steps halves the wall time (1702 -> 852 / 787 s) but moves vM by +3.2 / +9.4 %.
 For the 3-level runs the 'share of (2N)^3' is the share of the finest level against a uniform grid of twice the base.
 Part 4 a) (128^3 base), the obstacle runs of part 4 b) and WENO5 192^3 are still running; their tables follow.
+**1) mixed, equal shares, no antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: superbee with antibiotic (3 Nov): vM 2.39/3.28/3.59/3.67e-4, extrapolated 3.81e-4, GCI 4.6 %; minmod without antibiotic (thesis table): 3.08/3.65/3.89e-4 on 64/128/192^3.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `mix_32` | 32^3 | 2.5729e-04 | 7.8406e-04 | 1:03.91, 0.53 GB | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_64` | 64^3 | 3.6361e-04 | 8.4145e-04 | 22:56.76, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_128` | 128^3 | 3.9919e-04 | 8.5317e-04 | 4:39:29, 1.22 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_192` | 192^3 | 4.0721e-04 | 8.5458e-04 | 19:22:53, 3.00 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+
+- 64/128/192^3 vM: p 1.67, extrapolated 4.1551e-04, GCI 2.5 %
+- 64/128/192^3 alpha - 1: p 2.71, extrapolated 8.5529e-04, GCI 0.1 %
+- Antibiotic effect on vM (superbee, extrapolated): without 4.155e-04, with 3.81e-4 (3 Nov); difference 3.451e-05 = 9.1 % of the value with antibiotic; sum of the two GCIs 2.5 + 4.6 = 7.1 %. The difference is larger than the sum: the antibiotic effect is resolved.
+
+**3) mixed, Fritsch shares, antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: minmod (thesis table): vM 2.01/2.96/4.01/4.35e-4, extrapolated 5.01e-4, GCI 19 %.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `frab_32` | 32^3 | 2.3930e-04 | 7.7838e-04 | 1:02.32, 0.53 GB | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_64` | 64^3 | 3.4551e-04 | 8.3647e-04 | 21:45.40, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_128` | 128^3 | 4.4056e-04 | 8.4851e-04 | 4:37:37, 1.29 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_192` | 192^3 | 4.5174e-04 | 8.4887e-04 | 19:39:23, 3.23 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+
+- 64/128/192^3 vM: p 2.75, extrapolated 4.5721e-04, GCI 1.5 %
+- 64/128/192^3 alpha - 1: p 4.90, extrapolated 8.4893e-04, GCI 0.0 %
+
