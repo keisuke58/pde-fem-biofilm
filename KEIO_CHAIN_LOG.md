@@ -1149,3 +1149,12 @@ Part 4 a) (128^3 base), the obstacle runs of part 4 b) and WENO5 192^3 are still
 - 64/128/192^3 vM: p 2.75, extrapolated 4.5721e-04, GCI 1.5 %
 - 64/128/192^3 alpha - 1: p 4.90, extrapolated 8.4893e-04, GCI 0.0 %
 
+**4) mixed, equal shares, antibiotic, 256^3** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: superbee equal shares with antibiotic (3 Nov): 64/128/192^3 extrapolated 3.81e-4, GCI 4.6 %; 192^3 vM 3.67e-4.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `mixab_256` | 256^3 | 3.7574e-04 | 8.5427e-04 | 31:07:48, 6.72 GB | `coupled_living_consumption_nf256_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+
+- 128/192/256^3 vM (128 and 192 from 3 Nov): p 1.27, extrapolated 3.9457e-04, GCI 6.3 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
+- 128/192/256^3 alpha - 1 (128 and 192 from 3 Nov): p 4.02, extrapolated 8.5566e-04, GCI 0.2 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
+
