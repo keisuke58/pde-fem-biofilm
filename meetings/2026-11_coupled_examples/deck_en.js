@@ -150,7 +150,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 
 // 10 seed means
 { const s = frame('11. Seed means at T* = 1');
-  s.addText('Table 1  Means over the seed. Living fraction, share and nutrient on 64³ cells (outer step 0.025); growth and stress extrapolated from 64³/128³/192³ (outer step 0.0025), GCI in brackets. ¹ Mixed stress with the superbee limiter.',
+  s.addText('Table 1  Means over the seed. Living fraction, share and nutrient on 64³ cells (outer step 0.025); growth and stress extrapolated from 64³/128³/192³ (outer step 0.0025), GCI in brackets. ¹ Mixed stress with the superbee limiter, extrapolated from 128³/192³/256³.',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.55, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
   const rows = [
     [H('quantity'), H('separate'), H('separate, antibiotic'), H('mixed'), H('mixed, antibiotic')],
@@ -158,12 +158,12 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     [L('share φ₁/(φ₁+φ₂)'), C('0.978'), C('0.951'), C('0.859'), C('0.610')],
     [L('nutrient c'), C('0.536'), C('0.911'), C('0.608'), C('0.973')],
     [L('growth α − 1 [10⁻⁴]'), C('9.17 (0.4 %)'), C('9.19 (0.5 %)'), C('8.74 (4.2 %)'), C('8.71 (4.3 %)')],
-    [L('von Mises stress [10⁻⁴ Pa]'), C('6.57 (0.1 %)'), C('6.42 (1.4 %)', { bold: true, color: ACC }), C('4.16 (2.5 %) ¹'), C('3.81 (4.6 %) ¹')]];
+    [L('von Mises stress [10⁻⁴ Pa]'), C('6.57 (0.1 %)'), C('6.42 (1.4 %)', { bold: true, color: ACC }), C('4.26 (2.4 %) ¹'), C('3.95 (6.3 %) ¹')]];
   s.addTable(rows, { x: 0.55, y: 1.85, w: 12.23, colW: [3.43, 2.2, 2.2, 2.2, 2.2], fontFace: TM, fontSize: 16, color: INK, rowH: 0.55,
     border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
   s.addShape(pres.shapes.RECTANGLE, { x: 0.55, y: 5.4, w: 12.23, h: 1.3, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
   s.addText('The antibiotic lowers the living volume fraction by 84 % (separate) and 96 % (mixed). The growth changes by less than 0.3 %. '
-    + 'The stress of the separate start falls by 2 %, more than its GCI. In the mixed start (superbee) the antibiotic lowers it by 8 %, just beyond the two GCIs together (7 %).',
+    + 'The stress of the separate start falls by 2 %, more than its GCI. In the mixed start (superbee) the 7 % difference is about the two GCIs together (9 %).',
     { x: 0.8, y: 5.45, w: 11.75, h: 1.2, fontFace: TM, fontSize: 17, color: INK, isTextBox: true, margin: 0, valign: 'middle' }); }
 
 // 11 grid convergence
@@ -182,7 +182,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     ...g.map(r => r.map((t, j) => j < 2 ? L(t) : C(t, j === 8 && parseFloat(t) > 10 ? { bold: true, color: ACC } : {})))],
     { x: 0.55, y: 1.85, w: 12.23, colW: [2.4, 2.4, 1.05, 1.05, 1.05, 1.05, 0.9, 1.1, 1.23], fontFace: TM, fontSize: 14, color: INK, rowH: 0.42,
       border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
-  s.addText('Stress in von Mises [10⁻⁴ Pa]. The mixed stress needs a sharp edge: its width β/v ≈ 0.004 mm is narrower than a cell up to 192³ (cell Péclet number 1.28), and the minmod limiter smears it. With the less diffusive superbee limiter it converges with p = 1.2 and a GCI of 4.6 % (extrapolated 3.81 × 10⁻⁴ Pa); superbee on 192³ (3.67) is close to minmod on 256³ (3.63). In the separate start, where minmod converges, superbee agrees within about 1 %.',
+  s.addText('Stress in von Mises [10⁻⁴ Pa]. The mixed stress needs a sharp edge: its width β/v ≈ 0.004 mm is narrower than a cell up to 192³ (cell Péclet number 1.28), and the minmod limiter smears it. With the less diffusive superbee limiter it converges with p = 1.2 and a GCI of 4.6 % (extrapolated 3.81 × 10⁻⁴ Pa); 256³ gives 3.76, and 128³/192³/256³ extrapolate to 3.95 (GCI 6.3 %). In the separate start, where minmod converges, superbee agrees within about 1 %.',
     { x: 0.55, y: 5.75, w: 12.23, h: 1.1, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 12 discussion

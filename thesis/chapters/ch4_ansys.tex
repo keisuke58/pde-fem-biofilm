@@ -903,7 +903,8 @@ The front term moves this edge along $\mathbf n_c$, and the uptake that sets the
 concentrated at the same edge, so the grid has to resolve both the edge and the nutrient gradient around it.
 Part of the slow convergence is the numerical diffusion of the minmod limiter (Figure~\ref{fig:ch5-limiters}). With the
 superbee limiter, which keeps the edge sharper, the mixed seed stress with antibiotic converges with an observed
-order of $1.2$ and a GCI of $4.6\,\%$ to $3.81\times10^{-4}$~Pa (last rows of Table~\ref{tab:ch5-gci}); the MC and
+order of $1.2$ and a GCI of $4.6\,\%$ to $3.81\times10^{-4}$~Pa (last rows of Table~\ref{tab:ch5-gci}; on $256^3$ it
+gives $3.76$, and $128^3$ to $256^3$ extrapolate to $3.95\times10^{-4}$~Pa with a GCI of $6.3\,\%$); the MC and
 van Leer limiters lie close to minmod, and a WENO5 reconstruction~\cite{JiangShu1996} lies between MC and superbee
 on $64^3$ and $128^3$. In the separate example, where minmod converges, superbee gives the same stress within about $1\,\%$.
 A compressive limiter can also steepen an edge beyond the solution, so I keep minmod as the main scheme and take the
