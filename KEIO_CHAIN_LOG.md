@@ -1052,3 +1052,182 @@ GCI by Celik 2008 (Fs 1.25) on 64/128/192^3 (r21 = 1.5, r32 = 2):
 venv (`~/IKM_Hiwi/.venv_render`), so the solver venv was not changed:
 - Video `b1edge seedx-1`: `assets/anim_coupled_tvd_separate_ab_inhliv_b1edge_seedx-1_transc_alpha_5panel.mp4` (4.4M) and `_end.png`, 70 s.
 - Video `bcorner`: `assets/anim_coupled_tvd_separate_ab_inhliv_bcorner_transc_alpha_5panel.mp4` (4.2M) and `_end.png`, 68 s.
+
+## 2026-11-04: CLOUD_TO_FIFA 4 Nov, superbee runs (fifa, written by ~/runs/sb1104/watch.py)
+
+All runs as separate PBS jobs (1 core each) on the compute nodes, started 4 Nov 08:52 JST, in parallel.
+
+**2) separate, antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: minmod (thesis table): vM 6.000 / 6.284e-4, alpha - 1 8.931 / 9.112e-4 on 64 / 128^3.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `sep_ab_64` | 64^3 | 6.1223e-04 | 9.1614e-04 | 25:10.61, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_separate_ab.json` |
+| `sep_ab_128` | 128^3 | 6.3382e-04 | 9.2092e-04 | 4:51:07, 1.27 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_separate_ab.json` |
+
+
+
+## 2026-11-04 (evening): CLOUD_TO_FIFA 4 Nov part 2 c), part 3 and part 5 (fifa)
+
+**Part 2 c) maze** (`maze_coupled_2d.py --tend 60 --maze-file ../../abaqus_living/maze_k24.txt --transient-c`,
+with and without `--ab`). Values at T* = 20 and 60; area = colonised cells x h^2.
+
+| h [um] | antibiotic | T* | reach [um] | living mean | c mean | area [um^2] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 | no | 20 | 71 | 0.9383 | 0.2078 | 46928 |
+| 4 | no | 60 | 42 | 0.9194 | 0.1119 | 72384 |
+| 2 | no | 20 | 68 | 0.9359 | 0.2012 | 48320 |
+| 2 | no | 60 | 40 | 0.9176 | 0.1101 | 74448 |
+| 1 | no | 20 | 67 | 0.9350 | 0.1983 | 47924 |
+| 1 | no | 60 | 39 | 0.9179 | 0.1099 | 75793 |
+| 4 | yes | 20 | 71 | 0.9383 | 0.2078 | 46928 |
+| 4 | yes | 60 | 133 | 0.3467 | 0.4070 | 73408 |
+| 2 | yes | 20 | 68 | 0.9359 | 0.2012 | 48320 |
+| 2 | yes | 60 | 43 | 0.3408 | 0.3902 | 74928 |
+| 1 | yes | 20 | 67 | 0.9350 | 0.1983 | 47924 |
+| 1 | yes | 60 | 42 | 0.3259 | 0.3827 | 78812 |
+
+Reading (maze): at T* = 20 the reach is 71 / 68 / 67 um for h = 4 / 2 / 1 um, the living mean 0.938 / 0.936 / 0.935 and the
+area 46 900 / 48 300 / 47 900 um^2, so here the three cells agree to within 6 %. The cloud's check of 4 Nov had 65, 195 and
+71 um at T* = 20; fifa's runs do not show the 195 um. The one outlier is the reach with antibiotic at T* = 60 for h = 4 um
+(133 um against 43 and 42 um): 'reach' is the smallest path distance of a cell with phi >= 0.5, so one far cell is
+enough to change it; the area and the living mean agree (73 400 / 74 900 / 78 800 um^2, 0.347 / 0.341 / 0.326).
+
+**Part 3: four limiters** (mixed, equal shares, antibiotic, `--dtc 0.0025 --fast`, no `--transient-c`; minmod = the
+thesis series, superbee = 3 Nov, van Leer and MC = this run).
+
+| limiter | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 32 / 64 / 128 / 192^3 [1e-4] | vM: p, extrapolated, GCI (64/128/192) | alpha - 1: p, extrapolated, GCI |
+| --- | --- | --- | --- | --- |
+| minmod | 1.998 / 2.815 / 3.300* / 3.520 | 7.422 / 8.040 / 8.320* / 8.421 | 0.46, 4.5883e-04, 38.0 % | 0.86, 8.6613e-04, 3.6 % |
+| vanleer | 2.156 / 2.985 / 3.404 / 3.579 | 7.585 / 8.168 / 8.383 / 8.458 | 0.60, 4.2143e-04, 22.2 % | 0.92, 8.6246e-04, 2.5 % |
+| mc | 2.264 / 3.071 / 3.439 / 3.609 | 7.687 / 8.230 / 8.405 / 8.475 | 0.43, 4.5018e-04, 30.9 % | 0.69, 8.6912e-04, 3.2 % |
+| superbee | 2.387 / 3.284 / 3.587 / 3.675 | 7.788 / 8.367 / 8.495 / 8.513 | 1.24, 3.8095e-04, 4.6 % | 2.46, 8.5230e-04, 0.2 % |
+
+* thesis table value (tab:ch5-gci); fifa has no minmod 128^3 JSON with step 0.0025.
+Extrapolated seed vM of the four limiters: 3.809e-04 to 4.588e-04 Pa (spread 20.4 % of the lowest); GCIs minmod 38.0 %, vanleer 22.2 %, mc 30.9 %, superbee 4.6 %.
+
+Reading (limiters): the four extrapolated values do not agree (3.81 to 4.59e-4 Pa, 20 % apart), but only superbee is in
+the asymptotic range on 64/128/192^3 (p 1.24, GCI 4.6 %); minmod, van Leer and MC have p 0.43-0.60 and GCI 22-38 %, so their
+extrapolations are not reliable. On each grid the order is minmod < van Leer < MC < superbee, and the gaps shrink with
+refinement (192^3: 3.52 / 3.58 / 3.61 / 3.68e-4). alpha - 1 agrees within 1 % at 192^3 for all four.
+
+**Part 5: AMR** (`coupled_amr.py`, mixed, equal shares, antibiotic; `ECO_THREADS=4`, 4 cores each).
+
+| run | seed alpha - 1 | seed vM [Pa] | against | wall [s] | time split [s] (base / fine / nutrient / point / retag / restrict) | finest cells, mean share of (2N)^3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| L3 minmod (32^3 base, 3 levels = 128^3) | 8.3450e-04 | 3.3417e-04 | uniform 128^3 minmod: alpha - 1 +0.30 %, vM +1.26 % | 4970 | 8 / 1089 / 2127 / 1593 / 55 / 57 | 54.7 % |
+| L3 superbee | 8.5246e-04 | 3.6321e-04 | uniform 128^3 superbee: alpha - 1 +0.35 %, vM +1.26 % | 2341 | 3 / 594 / 978 / 693 / 26 / 22 | 54.7 % |
+| 64^3 base, c every 1 step | 8.3520e-04 | 3.3509e-04 | (reference) | 1702 | 20 / 270 / 630 / 741 / 17 / 11 | 54.7 % |
+| 64^3 base, c every 2 steps | 8.4225e-04 | 3.4588e-04 | k = 1: alpha - 1 +0.84 %, vM +3.22 % | 852 | 12 / 182 / 246 / 385 / 12 / 5 | 54.7 % |
+| 64^3 base, c every 4 steps | 8.5560e-04 | 3.6660e-04 | k = 1: alpha - 1 +2.44 %, vM +9.40 % | 787 | 12 / 181 / 182 / 384 / 12 / 5 | 54.6 % |
+
+Reading (AMR): 3 levels on a 32^3 base give the uniform 128^3 within 0.3 % (alpha - 1) and 1.3 % (vM) for both limiters.
+Updating the nutrient every 2 / 4 steps halves the wall time (1702 -> 852 / 787 s) but moves vM by +3.2 / +9.4 %.
+For the 3-level runs the 'share of (2N)^3' is the share of the finest level against a uniform grid of twice the base.
+Part 4 a) (128^3 base), the obstacle runs of part 4 b) and WENO5 192^3 are still running; their tables follow.
+**1) mixed, equal shares, no antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: superbee with antibiotic (3 Nov): vM 2.39/3.28/3.59/3.67e-4, extrapolated 3.81e-4, GCI 4.6 %; minmod without antibiotic (thesis table): 3.08/3.65/3.89e-4 on 64/128/192^3.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `mix_32` | 32^3 | 2.5729e-04 | 7.8406e-04 | 1:03.91, 0.53 GB | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_64` | 64^3 | 3.6361e-04 | 8.4145e-04 | 22:56.76, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_128` | 128^3 | 3.9919e-04 | 8.5317e-04 | 4:39:29, 1.22 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+| `mix_192` | 192^3 | 4.0721e-04 | 8.5458e-04 | 19:22:53, 3.00 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed.json` |
+
+- 64/128/192^3 vM: p 1.67, extrapolated 4.1551e-04, GCI 2.5 %
+- 64/128/192^3 alpha - 1: p 2.71, extrapolated 8.5529e-04, GCI 0.1 %
+- Antibiotic effect on vM (superbee, extrapolated): without 4.155e-04, with 3.81e-4 (3 Nov); difference 3.451e-05 = 9.1 % of the value with antibiotic; sum of the two GCIs 2.5 + 4.6 = 7.1 %. The difference is larger than the sum: the antibiotic effect is resolved.
+
+**3) mixed, Fritsch shares, antibiotic** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: minmod (thesis table): vM 2.01/2.96/4.01/4.35e-4, extrapolated 5.01e-4, GCI 19 %.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `frab_32` | 32^3 | 2.3930e-04 | 7.7838e-04 | 1:02.32, 0.53 GB | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_64` | 64^3 | 3.4551e-04 | 8.3647e-04 | 21:45.40, 0.61 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_128` | 128^3 | 4.4056e-04 | 8.4851e-04 | 4:37:37, 1.29 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+| `frab_192` | 192^3 | 4.5174e-04 | 8.4887e-04 | 19:39:23, 3.23 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+
+- 64/128/192^3 vM: p 2.75, extrapolated 4.5721e-04, GCI 1.5 %
+- 64/128/192^3 alpha - 1: p 4.90, extrapolated 8.4893e-04, GCI 0.0 %
+
+**4) mixed, equal shares, antibiotic, 256^3** (`--limiter superbee --dtc 0.0025 --fast`, no `--transient-c`). Compare: superbee equal shares with antibiotic (3 Nov): 64/128/192^3 extrapolated 3.81e-4, GCI 4.6 %; 192^3 vM 3.67e-4.
+
+| run | grid | seed vM [Pa] | seed alpha - 1 | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| `mixab_256` | 256^3 | 3.7574e-04 | 8.5427e-04 | 31:07:48, 6.72 GB | `coupled_living_consumption_nf256_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_superbee_wgmirror_fast_mixed_ab.json` |
+
+- 128/192/256^3 vM (128 and 192 from 3 Nov): p 1.27, extrapolated 3.9457e-04, GCI 6.3 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
+- 128/192/256^3 alpha - 1 (128 and 192 from 3 Nov): p 4.02, extrapolated 8.5566e-04, GCI 0.2 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
+
+
+## 2026-11-06: CLOUD_TO_FIFA 4 Nov part 2 a) four species, part 2 b) and part 4 b) obstacle (fifa)
+
+All with `--transient-c 1e8 --dtc 0.0025 --fast`, the common `$B`; one PBS job per run.
+
+**Part 2 a) four species** (`--case k26c4`, Klempt 2026 case 4), antibiotic; separate and mixed (equal shares).
+
+*separate_ab, minmod*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.7677 | 0.1708 | 0.0022 / 0.0072 / 0.0017 / 0.7565 | 0.5888 | 8.8456e-04 | 7.0312e-04 |
+| 64^3 | 0.7715 | 0.1671 | 0.0021 / 0.0071 / 0.0017 / 0.7606 | 0.5947 | 9.1065e-04 | 6.5833e-04 |
+| 128^3 | 0.7740 | 0.1648 | 0.0021 / 0.0070 / 0.0017 / 0.7631 | 0.5981 | 9.2028e-04 | 6.5202e-04 |
+| 192^3 | 0.7749 | 0.1639 | 0.0020 / 0.0070 / 0.0017 / 0.7641 | 0.5992 | 9.2289e-04 | 6.5204e-04 |
+
+- 64/128/192^3 vM: not monotone; alpha - 1: p 1.36, extrapolated 9.2644e-04, GCI 0.5 %
+
+*separate_ab, superbee*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.7666 | 0.1719 | 0.0023 / 0.0072 / 0.0017 / 0.7554 | 0.5890 | 9.0982e-04 | 6.9826e-04 |
+| 64^3 | 0.7710 | 0.1676 | 0.0021 / 0.0071 / 0.0017 / 0.7601 | 0.5949 | 9.2847e-04 | 6.5507e-04 |
+| 128^3 | 0.7738 | 0.1649 | 0.0021 / 0.0070 / 0.0017 / 0.7630 | 0.5983 | 9.2907e-04 | 6.5172e-04 |
+| 192^3 | 0.7748 | 0.1639 | 0.0020 / 0.0070 / 0.0017 / 0.7641 | 0.5994 | 9.2779e-04 | 6.5192e-04 |
+
+- 64/128/192^3 vM: not monotone; alpha - 1: not monotone
+
+*mixed_ab, minmod*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.8358 | 0.1066 | 0.0006 / 0.0061 / 0.0015 / 0.8277 | 0.6676 | 7.6446e-04 | 2.2861e-04 |
+| 64^3 | 0.8208 | 0.1203 | 0.0008 / 0.0066 / 0.0015 / 0.8119 | 0.6459 | 8.3839e-04 | 3.4324e-04 |
+| 128^3 | 0.8122 | 0.1281 | 0.0010 / 0.0067 / 0.0016 / 0.8029 | 0.6345 | 8.7960e-04 | 4.2853e-04 |
+| 192^3 | 0.8100 | 0.1301 | 0.0010 / 0.0067 / 0.0016 / 0.8006 | 0.6316 | 8.9150e-04 | 4.5716e-04 |
+
+- 64/128/192^3 vM: p 0.99, extrapolated 5.1530e-04, GCI 15.9 %; alpha - 1: p 1.25, extrapolated 9.0959e-04, GCI 2.5 %
+
+*mixed_ab, superbee*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.8279 | 0.1141 | 0.0007 / 0.0065 / 0.0015 / 0.8193 | 0.6578 | 7.9898e-04 | 2.6904e-04 |
+| 64^3 | 0.8132 | 0.1273 | 0.0010 / 0.0067 / 0.0016 / 0.8039 | 0.6372 | 8.6803e-04 | 3.9313e-04 |
+| 128^3 | 0.8078 | 0.1322 | 0.0011 / 0.0068 / 0.0016 / 0.7983 | 0.6293 | 8.9714e-04 | 4.6397e-04 |
+| 192^3 | 0.8074 | 0.1326 | 0.0011 / 0.0067 / 0.0016 / 0.7979 | 0.6285 | 9.0199e-04 | 4.7885e-04 |
+
+- 64/128/192^3 vM: p 1.79, extrapolated 4.9281e-04, GCI 3.6 %; alpha - 1: p 2.18, extrapolated 9.0541e-04, GCI 0.5 %
+
+Reading (four species): the separate example is converged: vM 6.520 / 6.520e-4 at 128 / 192^3 with either limiter
+("not monotone" only because the change is below the last digits), alpha - 1 within 0.5 %. The mixed example still
+rises: minmod 4.29 -> 4.57e-4 (GCI 15.9 %), superbee 4.64 -> 4.79e-4 (p 1.79, extrapolated 4.93e-4, GCI 3.6 %), as in
+the two-species mixed example; species 4 holds 97-99 % of the living amount in both.
+
+**Part 2 b) / part 4 b) obstacle** (`--obstacle columns`, four rigid columns), antibiotic. `nm` = stress mesh (`--nm`, default 16).
+
+| case | limiter | nm | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 32 / 64 / 128 / 192^3 [1e-4] | vM 64/128/192^3 | alpha - 1 64/128/192^3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| separate_ab | minmod | 16 | 25.228 / 37.309 / 50.363 / 53.965 | 6.916 / 7.294 / 7.641 / 7.732 | p 1.33, extrapolated 5.9023e-03, GCI 11.7 % | p 1.42, extrapolated 7.8488e-04, GCI 1.9 % |
+| separate_ab | minmod | 32 | - / 36.121 / 48.738 / - | - / 7.294 / 7.641 / - | - | - |
+| separate_ab | superbee | 16 | 26.890 / 42.120 / 54.557 / - | 7.068 / 7.515 / 7.789 / - | - | - |
+| mixed_ab | minmod | 16 | 9.334 / 16.136 / 22.115 / 24.579 | 5.854 / 6.445 / 6.828 / 6.967 | p 0.63, extrapolated 3.3082e-03, GCI 43.2 % | p 0.84, extrapolated 7.3103e-04, GCI 6.2 % |
+| mixed_ab | superbee | 16 | 11.316 / 19.806 / 24.930 / - | 6.135 / 6.759 / 7.016 / - | - | - |
+
+- Stress mesh 32^3 against 16^3 (separate, minmod): vM lower by 3 % at both 64^3 and 128^3 fields, so the rise with the
+  field grid comes from the fields near the columns, not from the stress mesh (as the cloud expected).
+- `--nm 64` (separate, minmod, fields 64^3 and 128^3): both runs finished the field part (1297 s, 14 710 s) and were killed
+  (signal 9) in the stress solve at 36.5 GB and 43.5 GB peak RSS; no JSON. The 64^3 one died at 4 Nov about 20:46 JST, just
+  before frontale01's pbs_mom logged a shutdown (20:47:21); the memory pressure of this job may have been part of it.
+- The obstacle 192^3 mixed run (minmod) was dropped from the instructions later but had already started; it is reported here.
+
