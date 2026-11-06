@@ -20,6 +20,19 @@ ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --fast $B --transie
 - 3 本目の対称（`--fast`，1/4 領域）は全領域と 7 桁一致を確認済み。同じ名前の JSON がもうあれば回さなくてよい。
 - 報告：3 本の種子の Σφ̄ᵢ，A の割合，c，α − 1，vM，時間，メモリの最大と，対称に対する差（%）を 64³ の値と並べた表。JSON は `results/2026-10-3d/`。
 
+**その 9 の追加（fifa の提案 1 と 2，6 Nov に了承）**：非対称の 3 本が終わってから，1 本 1 コア。
+
+```
+# 1) 障害物，superbee 192³（分離と混合）。minmod の混合は GCI 43 %；superbee で 64/128/192³ の GCI がどう変わるか
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --limiter superbee --only separate_ab
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --limiter superbee --mix-equal --only mixed_ab
+# 2) 混合，minmod，一様 128³（4 つの limiter の表で修論の値だけだった欄。比べる他の欄と同じく --transient-c なし）
+python3 coupled_living_consumption.py --nf 128 --fast $B --mix-equal --only mixed_ab --dtc 0.0025
+```
+
+- 提案 3（障害物の応力格子 64³）は回さない（32³ で応力格子が原因でないことは 3 % で確認済み）。
+- 報告：1) は 32/64/128/192³ の vM と α − 1，64/128/192³ の次数・外挿・GCI を minmod と並べる。2) は 4 つの limiter の表を fifa の値だけで埋めた版。
+
 ---
 
 ## 2026年11月5日 その 8（superbee の混合を 256³ 相当で確かめる。AMR 2 段 128³ 土台。急がない）
