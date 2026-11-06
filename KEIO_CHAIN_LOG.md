@@ -1231,3 +1231,20 @@ the two-species mixed example; species 4 holds 97-99 % of the living amount in b
   before frontale01's pbs_mom logged a shutdown (20:47:21); the memory pressure of this job may have been part of it.
 - The obstacle 192^3 mixed run (minmod) was dropped from the instructions later but had already started; it is reported here.
 
+
+## 2026-11-06: CLOUD_TO_FIFA 6 Nov part 9, asymmetric starts at 128^3 (fifa)
+
+Common `$B`, `--transient-c 1e8 --only separate_ab`, the default outer step (no `--dtc`, as the 64^3 asymmetric runs),
+`--nm 16`. One PBS job per run, 4 cores, `ECO_THREADS=4`.
+
+| run | grid | sum phibar | share A | c | alpha - 1 | vM [Pa] | vM vs symmetric | wall, peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| B along one edge (`--b-one-edge --seed-shift -1`, full domain, `--amg`) | 64^3 | 0.1559 | 0.9518 | 0.9181 | 8.2161e-04 | 3.9396e-04 | -30.7 % | (earlier run) |
+| B along one edge (`--b-one-edge --seed-shift -1`, full domain, `--amg`) | 128^3 | 0.1509 | 0.9511 | 0.9154 | 8.6208e-04 | 4.8719e-04 | -17.4 % | 3:44:18, 3.57 GB |
+| B in one corner (`--b-corner`, full domain, `--amg`) | 64^3 | 0.1579 | 0.9520 | 0.9170 | 8.3385e-04 | 3.4117e-04 | -40.0 % | (earlier run) |
+| B in one corner (`--b-corner`, full domain, `--amg`) | 128^3 | 0.1530 | 0.9514 | 0.9143 | 8.7502e-04 | 4.2911e-04 | -27.3 % | 3:41:36, 3.55 GB |
+| symmetric (`--fast`, quarter domain) | 64^3 | 0.1516 | 0.9511 | 0.9114 | 8.9517e-04 | 5.6871e-04 | - | (earlier run) |
+| symmetric (`--fast`, quarter domain) | 128^3 | 0.1520 | 0.9512 | 0.9110 | 9.1594e-04 | 5.9009e-04 | - | 54:02.01, 1.28 GB |
+
+The 64^3 asymmetric rows are the 3 Nov `--amg` runs (with `--snap-every 0.025 --snap-stress`); the instructions quote
+3.94e-4 and 3.41e-4 against the symmetric 5.69e-4 (-31 % and -40 %).
