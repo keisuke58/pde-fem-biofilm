@@ -1158,3 +1158,76 @@ Part 4 a) (128^3 base), the obstacle runs of part 4 b) and WENO5 192^3 are still
 - 128/192/256^3 vM (128 and 192 from 3 Nov): p 1.27, extrapolated 3.9457e-04, GCI 6.3 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
 - 128/192/256^3 alpha - 1 (128 and 192 from 3 Nov): p 4.02, extrapolated 8.5566e-04, GCI 0.2 %; 64/128/192^3 vM: extrapolated 3.81e-4, GCI 4.6 %
 
+
+## 2026-11-06: CLOUD_TO_FIFA 4 Nov part 2 a) four species, part 2 b) and part 4 b) obstacle (fifa)
+
+All with `--transient-c 1e8 --dtc 0.0025 --fast`, the common `$B`; one PBS job per run.
+
+**Part 2 a) four species** (`--case k26c4`, Klempt 2026 case 4), antibiotic; separate and mixed (equal shares).
+
+*separate_ab, minmod*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.7677 | 0.1708 | 0.0022 / 0.0072 / 0.0017 / 0.7565 | 0.5888 | 8.8456e-04 | 7.0312e-04 |
+| 64^3 | 0.7715 | 0.1671 | 0.0021 / 0.0071 / 0.0017 / 0.7606 | 0.5947 | 9.1065e-04 | 6.5833e-04 |
+| 128^3 | 0.7740 | 0.1648 | 0.0021 / 0.0070 / 0.0017 / 0.7631 | 0.5981 | 9.2028e-04 | 6.5202e-04 |
+| 192^3 | 0.7749 | 0.1639 | 0.0020 / 0.0070 / 0.0017 / 0.7641 | 0.5992 | 9.2289e-04 | 6.5204e-04 |
+
+- 64/128/192^3 vM: not monotone; alpha - 1: p 1.36, extrapolated 9.2644e-04, GCI 0.5 %
+
+*separate_ab, superbee*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.7666 | 0.1719 | 0.0023 / 0.0072 / 0.0017 / 0.7554 | 0.5890 | 9.0982e-04 | 6.9826e-04 |
+| 64^3 | 0.7710 | 0.1676 | 0.0021 / 0.0071 / 0.0017 / 0.7601 | 0.5949 | 9.2847e-04 | 6.5507e-04 |
+| 128^3 | 0.7738 | 0.1649 | 0.0021 / 0.0070 / 0.0017 / 0.7630 | 0.5983 | 9.2907e-04 | 6.5172e-04 |
+| 192^3 | 0.7748 | 0.1639 | 0.0020 / 0.0070 / 0.0017 / 0.7641 | 0.5994 | 9.2779e-04 | 6.5192e-04 |
+
+- 64/128/192^3 vM: not monotone; alpha - 1: not monotone
+
+*mixed_ab, minmod*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.8358 | 0.1066 | 0.0006 / 0.0061 / 0.0015 / 0.8277 | 0.6676 | 7.6446e-04 | 2.2861e-04 |
+| 64^3 | 0.8208 | 0.1203 | 0.0008 / 0.0066 / 0.0015 / 0.8119 | 0.6459 | 8.3839e-04 | 3.4324e-04 |
+| 128^3 | 0.8122 | 0.1281 | 0.0010 / 0.0067 / 0.0016 / 0.8029 | 0.6345 | 8.7960e-04 | 4.2853e-04 |
+| 192^3 | 0.8100 | 0.1301 | 0.0010 / 0.0067 / 0.0016 / 0.8006 | 0.6316 | 8.9150e-04 | 4.5716e-04 |
+
+- 64/128/192^3 vM: p 0.99, extrapolated 5.1530e-04, GCI 15.9 %; alpha - 1: p 1.25, extrapolated 9.0959e-04, GCI 2.5 %
+
+*mixed_ab, superbee*
+
+| grid | sum phibar | share A | phibar_i (species 1-4) | c | alpha - 1 | vM [Pa] |
+| --- | --- | --- | --- | --- | --- | --- |
+| 32^3 | 0.8279 | 0.1141 | 0.0007 / 0.0065 / 0.0015 / 0.8193 | 0.6578 | 7.9898e-04 | 2.6904e-04 |
+| 64^3 | 0.8132 | 0.1273 | 0.0010 / 0.0067 / 0.0016 / 0.8039 | 0.6372 | 8.6803e-04 | 3.9313e-04 |
+| 128^3 | 0.8078 | 0.1322 | 0.0011 / 0.0068 / 0.0016 / 0.7983 | 0.6293 | 8.9714e-04 | 4.6397e-04 |
+| 192^3 | 0.8074 | 0.1326 | 0.0011 / 0.0067 / 0.0016 / 0.7979 | 0.6285 | 9.0199e-04 | 4.7885e-04 |
+
+- 64/128/192^3 vM: p 1.79, extrapolated 4.9281e-04, GCI 3.6 %; alpha - 1: p 2.18, extrapolated 9.0541e-04, GCI 0.5 %
+
+Reading (four species): the separate example is converged: vM 6.520 / 6.520e-4 at 128 / 192^3 with either limiter
+("not monotone" only because the change is below the last digits), alpha - 1 within 0.5 %. The mixed example still
+rises: minmod 4.29 -> 4.57e-4 (GCI 15.9 %), superbee 4.64 -> 4.79e-4 (p 1.79, extrapolated 4.93e-4, GCI 3.6 %), as in
+the two-species mixed example; species 4 holds 97-99 % of the living amount in both.
+
+**Part 2 b) / part 4 b) obstacle** (`--obstacle columns`, four rigid columns), antibiotic. `nm` = stress mesh (`--nm`, default 16).
+
+| case | limiter | nm | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 32 / 64 / 128 / 192^3 [1e-4] | vM 64/128/192^3 | alpha - 1 64/128/192^3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| separate_ab | minmod | 16 | 25.228 / 37.309 / 50.363 / 53.965 | 6.916 / 7.294 / 7.641 / 7.732 | p 1.33, extrapolated 5.9023e-03, GCI 11.7 % | p 1.42, extrapolated 7.8488e-04, GCI 1.9 % |
+| separate_ab | minmod | 32 | - / 36.121 / 48.738 / - | - / 7.294 / 7.641 / - | - | - |
+| separate_ab | superbee | 16 | 26.890 / 42.120 / 54.557 / - | 7.068 / 7.515 / 7.789 / - | - | - |
+| mixed_ab | minmod | 16 | 9.334 / 16.136 / 22.115 / 24.579 | 5.854 / 6.445 / 6.828 / 6.967 | p 0.63, extrapolated 3.3082e-03, GCI 43.2 % | p 0.84, extrapolated 7.3103e-04, GCI 6.2 % |
+| mixed_ab | superbee | 16 | 11.316 / 19.806 / 24.930 / - | 6.135 / 6.759 / 7.016 / - | - | - |
+
+- Stress mesh 32^3 against 16^3 (separate, minmod): vM lower by 3 % at both 64^3 and 128^3 fields, so the rise with the
+  field grid comes from the fields near the columns, not from the stress mesh (as the cloud expected).
+- `--nm 64` (separate, minmod, fields 64^3 and 128^3): both runs finished the field part (1297 s, 14 710 s) and were killed
+  (signal 9) in the stress solve at 36.5 GB and 43.5 GB peak RSS; no JSON. The 64^3 one died at 4 Nov about 20:46 JST, just
+  before frontale01's pbs_mom logged a shutdown (20:47:21); the memory pressure of this job may have been part of it.
+- The obstacle 192^3 mixed run (minmod) was dropped from the instructions later but had already started; it is reported here.
+
