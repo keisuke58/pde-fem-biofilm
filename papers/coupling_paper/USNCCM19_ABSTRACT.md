@@ -1,4 +1,4 @@
-# USNCCM19 abstract (draft, 4 Nov 2026)
+# USNCCM19 abstract (draft, 4 Nov 2026; numbers updated 6 Nov)
 
 Conference: 19th U.S. National Congress on Computational Mechanics, Pasadena, 25-29 July 2027. Abstract due 15 Jan 2027.
 Check the word limit and the minisymposium (biomechanics / multiphysics / growth) on the conference site before submitting;
@@ -20,7 +20,7 @@ multiplicative split with an isotropic growth tensor.
 The coupled model is solved in a finite-volume code and in a user element in ANSYS and verified with uniform fields
 (agreement with the point model alone to round-off), manufactured solutions and grid series. The front term is
 advection dominated, so the stress requires a second-order upwind treatment; with a compressive limiter the stress of
-a mixed start converges with a grid convergence index of about 5 % instead of about 40 %.
+a mixed start converges with a grid convergence index of about 6 % instead of about 40 % (grids up to 256^3).
 
 In two-species examples an antibiotic lowers the living volume fraction of the seed by 84 to 96 %, while growth and
 stress change by a few per cent: the growth counts dead biomass as well, and the stress follows the
@@ -29,6 +29,6 @@ only through the nutrient and the front speed. Where a second species starts, by
 up to 40 %. The results show which paths a composition-dependent mechanics of biofilms would need.
 
 ## Notes
-- "up to 40 %": the asymmetric starts, 64^3 only so far; keep the sentence only if the 128^3 check (fifa, 4 Nov) confirms it.
-- "about 5 %": superbee grid series 32-192^3 (fifa, 3 Nov), 256^3 check running.
+- "up to 40 %": the asymmetric starts, 64^3 only so far; keep the sentence only if the 128^3 check confirms it (CLOUD_TO_FIFA part 9, 6 Nov; part "追加 2" of 4 Nov was not run).
+- "about 6 %": superbee, mixed with antibiotic, 128/192/256^3: extrapolated 3.95e-4 Pa, GCI 6.3 % (64/128/192^3: 4.6 %); minmod GCI 41 %.
 - No Felix material; Abaqus not named (third code) to keep the abstract short.
