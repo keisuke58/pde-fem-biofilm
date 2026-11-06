@@ -1248,3 +1248,28 @@ Common `$B`, `--transient-c 1e8 --only separate_ab`, the default outer step (no 
 
 The 64^3 asymmetric rows are the 3 Nov `--amg` runs (with `--snap-every 0.025 --snap-stress`); the instructions quote
 3.94e-4 and 3.41e-4 against the symmetric 5.69e-4 (-31 % and -40 %).
+
+## 2026-11-07: CLOUD_TO_FIFA 6 Nov part 9 addition (fifa proposals 1 and 2)
+
+**1) Obstacle, superbee 192^3** (`--obstacle columns --transient-c 1e8 --dtc 0.0025 --fast`, stress mesh 16^3), against minmod.
+
+| case | limiter | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 32 / 64 / 128 / 192^3 [1e-4] | vM 64/128/192^3 | alpha - 1 64/128/192^3 |
+| --- | --- | --- | --- | --- | --- |
+| separate_ab | minmod | 25.228 / 37.309 / 50.363 / 53.965 | 6.916 / 7.294 / 7.641 / 7.732 | p 1.33, extrapolated 5.9023e-03, GCI 11.7 % | p 1.42, extrapolated 7.8488e-04, GCI 1.9 % |
+| separate_ab | superbee | 26.890 / 42.120 / 54.557 / 56.967 | 7.068 / 7.515 / 7.789 / 7.827 | p 1.92, extrapolated 5.9007e-03, GCI 4.5 % | p 2.49, extrapolated 7.8485e-04, GCI 0.3 % |
+| mixed_ab | minmod | 9.334 / 16.136 / 22.115 / 24.579 | 5.854 / 6.445 / 6.828 / 6.967 | p 0.63, extrapolated 3.3082e-03, GCI 43.2 % | p 0.84, extrapolated 7.3103e-04, GCI 6.2 % |
+| mixed_ab | superbee | 11.316 / 19.806 / 24.930 / 26.052 | 6.135 / 6.759 / 7.016 / 7.062 | p 1.72, extrapolated 2.7167e-03, GCI 5.3 % | p 2.06, extrapolated 7.0971e-04, GCI 0.6 % |
+
+Wall time, peak RSS: `ob_sb_sep_192` 8:29:24, 3.14 GB; `ob_sb_mix_192` 7:20:24, 3.15 GB
+
+**2) Four limiters, mixed, equal shares, antibiotic**, all from fifa JSONs (minmod 128^3 now run on fifa;
+no `--transient-c`, `--dtc 0.0025`).
+
+| limiter | vM 32 / 64 / 128 / 192^3 [1e-4 Pa] | alpha - 1 [1e-4] | vM 64/128/192^3 | alpha - 1 64/128/192^3 |
+| --- | --- | --- | --- | --- |
+| minmod | 1.998 / 2.815 / 3.298 / 3.520 | 7.422 / 8.040 / 8.316 / 8.421 | p 0.43, extrapolated 4.6746e-04, GCI 41.0 % | p 0.77, extrapolated 8.7094e-04, GCI 4.3 % |
+| vanleer | 2.156 / 2.985 / 3.404 / 3.579 | 7.585 / 8.168 / 8.383 / 8.458 | p 0.60, extrapolated 4.2143e-04, GCI 22.2 % | p 0.92, extrapolated 8.6246e-04, GCI 2.5 % |
+| mc | 2.264 / 3.071 / 3.439 / 3.609 | 7.687 / 8.230 / 8.405 / 8.475 | p 0.43, extrapolated 4.5018e-04, GCI 30.9 % | p 0.69, extrapolated 8.6912e-04, GCI 3.2 % |
+| superbee | 2.387 / 3.284 / 3.587 / 3.675 | 7.788 / 8.367 / 8.495 / 8.513 | p 1.24, extrapolated 3.8095e-04, GCI 4.6 % | p 2.46, extrapolated 8.5230e-04, GCI 0.2 % |
+
+minmod 128^3 on fifa: 1:27:44, 1.27 GB; the thesis table had vM 3.30e-4, alpha - 1 8.32e-4 for this cell.
