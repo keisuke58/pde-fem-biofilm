@@ -4,6 +4,24 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月6日 その 9（非対称の 2 本を 128³ で。4 Nov の「追加 2」がまだなので。急がない）
+
+ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。修論と論文には非対称の例を 64³ の値で入れている
+（種子の vM 3.94e−4 と 3.41e−4，対称の 5.69e−4 より 31 % と 40 % 低い）。この差が 128³ でも残るかを確かめる。同時 3 本まで，1 本 4 スレッド。
+
+```
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-corner --only separate_ab
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --fast $B --transient-c 1e8 --only separate_ab
+```
+
+- 外側の刻みは 64³ の非対称と同じ既定値（`--dtc` なし）。全領域の 128³ は 5 GB 前後の見込み。`--nm` は既定（16）のまま。
+- 3 本目の対称（`--fast`，1/4 領域）は全領域と 7 桁一致を確認済み。同じ名前の JSON がもうあれば回さなくてよい。
+- 報告：3 本の種子の Σφ̄ᵢ，A の割合，c，α − 1，vM，時間，メモリの最大と，対称に対する差（%）を 64³ の値と並べた表。JSON は `results/2026-10-3d/`。
+
+---
+
 ## 2026年11月5日 その 8（superbee の混合を 256³ 相当で確かめる。AMR 2 段 128³ 土台。急がない）
 
 ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。128³ 土台の 2 段（既定の範囲）は一様 256³ と minmod で 0.4 % 合った
