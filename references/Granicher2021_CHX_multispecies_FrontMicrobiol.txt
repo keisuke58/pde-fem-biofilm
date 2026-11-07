@@ -1,0 +1,582 @@
+                                                                                                                                                    ORIGINAL RESEARCH
+                                                                                                                                              published: 28 September 2021
+                                                                                                                                           doi: 10.3389/fmicb.2021.741863
+
+
+
+
+                                              Low Concentrations of Chlorhexidine
+                                              Inhibit the Formation and Structural
+                                              Integrity of Enzyme-Treated
+                                              Multispecies Oral Biofilms
+                                              Kay Andrin Gränicher , Lamprini Karygianni , Thomas Attin and Thomas Thurnheer *
+
+                                              Clinic of Conservative and Preventive Dentistry, Center of Dental Medicine, University of Zurich, Zurich, Switzerland
+
+
+
+                                              The self-produced matrix of biofilms, consisting of extracellular polymeric substances,
+                                              plays an important role in biofilm adhesion to surfaces and the structural integrity of
+                                              biofilms. In dentistry, biofilms cause multiple diseases such as caries, periodontitis, and
+                           Edited by:
+                                              pulpitis. Disruption of these biofilms adhering to dental hard tissues may pose a major
+                        Fabian Cieplik,
+             University Medical Center        challenge since biofilms show higher tolerance to antimicrobials and antibiotics than
+               Regensburg, Germany            planktonic cells. In this study, the effect of low concentrations of chlorhexidine (CHX) on
+                      Reviewed by:            enzyme-treated multispecies oral biofilm was investigated in an in vitro model. Six-species
+              Prasanna Neelakantan,
+  The University of Hong Kong, Hong           biofilms were enzymatically treated by anaerobic growth in a medium containing DNase
+                    Kong, SAR China           I and proteinase K. Biofilms were exposed to a low concentration of CHX at defined time
+                      Tim Verspecht,
+                                              points. After 64 h, biofilms were either harvested and quantified by cultural analyses or
+                 KU Leuven, Belgium
+                                              stained for confocal laser scanning microscopy (CLSM) analyses using either Live/Dead
+                *Correspondence:
+                  Thomas Thurnheer            kit or different fluorescent dyes. A mixture of YoPro1 and SYTOX™ Green, Fluorescent
+       thomas.thurnheer@zzm.uzh.ch            Brightener 28 (Calcofluor), and SYPRO™ Ruby Protein Gel Stain was used to stain total
+                  Specialty section:
+                                              DNA, exopolysaccharides, and extracellular proteins, respectively. Extracellular DNA
+        This article was submitted to         (eDNA) was visualized via an indirect immunofluorescence assay (Mouse anti-DNA IgG,
+       Antimicrobials, Resistance and         Goat anti-Mouse IgG, Streptavidin-Cy3). Overall, the total colony-forming units significantly
+                       Chemotherapy,
+               a section of the journal       decreased after combined treatment with a low concentration of CHX and enzymes
+             Frontiers in Microbiology        compared to the group treated with CHX alone (p < 0.001). These findings also apply to
+            Received: 15 July 2021            five species individually (Streptococcus mutans, Streptococcus oralis, Actinomyces oris,
+         Accepted: 30 August 2021
+     Published: 28 September 2021
+                                              Veillonella dispar, and Candida albicans) occurring in the biofilms, with Fusobacterium
+                              Citation:
+                                              nucleatum being the only exception. Furthermore, CLSM images showed less dense
+           Gränicher KA, Karygianni L,        biofilms and a reduction in cell numbers after combined treatment compared to the group
+  Attin T and Thurnheer T (2021) Low          without enzymes. The combination of enzymes capable of disturbing the matrix integrity
+      Concentrations of Chlorhexidine
+  Inhibit the Formation and Structural        with antimicrobial agents thus appears to be a promising approach for biofilm disruption
+            Integrity of Enzyme-Treated       and killing.
+             Multispecies Oral Biofilms.
+          Front. Microbiol. 12:741863.        Keywords: multispecies oral biofilm, chlorhexidine, proteinase K, DNase I, extracellular polymeric substances,
+    doi: 10.3389/fmicb.2021.741863            confocal laser scanning microscopy
+
+
+
+Frontiers in Microbiology | www.frontiersin.org                                       1                                         September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                     Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+INTRODUCTION                                                              significant range. Another study showed that treatment of
+                                                                          S. aureus biofilms with proteinase K can reduce early microbial
+Biofilms are defined as matrix-enclosed bacterial populations             adhesion, enhance dispersal of bacterial cells, and increase
+adherent to each other and/or to surfaces or interfaces (Costerton        susceptibility toward different antibiotics (Kumar Shukla and
+et al., 1995). In dentistry, biofilms cause multiple oral diseases,       Rao, 2013). In a recently published study, we tested the
+such as periodontitis or caries, which constitute the most                combined effects of DNase I and proteinase K as examples
+prevalent infectious oral diseases and the main causes of tooth           of “anti-matrix” agents on a multispecies oral biofilm
+loss (Sanz et al., 2017). Initially, the bacterial cells adhere to        (Karygianni et al., 2020a). In that study, it was shown that
+the pellicle-coated tooth surface via different receptor proteins         the combined application of DNase I and proteinase K had
+(Kolenbrander et al., 2010). The cells in a biofilm are embedded          an impact on the reduction in total colony-forming units
+in a self-produced matrix consisting of extracellular polymeric           (CFU) and on the biofilm structure. The aim of the current
+substances (EPS) such as exopolysaccharides, proteins,                    study was to investigate the effects of CHX on DNase I/
+extracellular DNA (eDNA), and lipids (Flemming and Wingender,             proteinase K-treated biofilms, thereby combining antimicrobial
+2010). The functions of a biofilm matrix are diverse and include          agents with “anti-matrix” agents using the “Zurich biofilm
+adhesion to biotic and abiotic surfaces, cohesion, scaffolding,           model.” Thus, in addition to matrix-degrading enzymes,
+and protection against antimicrobials and dispersal (Flemming,            biofilms were exposed to high (≥0.1%) and low (<0.1%)
+2016; Flemming et al., 2016). Another key function of the                 concentrations of CHX (Serrano et al., 2015). We therefore
+biofilm matrix is to retain nutrients and water to prevent                quantified CFU and visualized the biofilms with the aid of
+desiccation (Marsh, 2005). In our work, we focused on two                 confocal laser scanning microscopy (CLSM) to show alterations
+EPS, namely, eDNA and proteins, that both serve as matrix                 in structure and composition in multispecies oral biofilms.
+components. Many studies show that eDNA plays an important                To the best of our knowledge, the combined effect of DNase
+role in structural stability in an early phase of biofilm formation       I, proteinase K, and CHX has never been studied so far in
+(Whitchurch et al., 2002; Schlafer et al., 2017). The eDNA                an oral in vitro multispecies biofilm. The null hypothesis of
+forms nanofibers connecting cells to the substrate or other               this study was that there is no difference in microbial
+cells in the biofilm, thereby mechanically stabilizing the biofilm        growth between enzyme-treated biofilms and untreated
+(Liao et al., 2014). There is evidence that eDNA is released              biofilms when exposed to high (≥0.1%) and low (<0.1%)
+via membrane vesicles upon activation of different mechanisms,            concentrations of CHX.
+including cell lysis and active secretion (Jakubovics et al., 2013;
+Liao et al., 2014). It is also known that bacteria in biofilms
+are more resistant to antimicrobial agents than in the planktonic         MATERIALS AND METHODS
+phase, which can be attributed to different mechanisms
+(Flemming et al., 2016). For example, due to its negative charge,         Formation of Multispecies Supragingival
+eDNA can bind cationic antimicrobials, such as chlorhexidine              Biofilms
+(CHX; Okshevsky and Meyer, 2015). Another mechanism of                    The formation of the biofilm, consisting of six species of
+biofilm tolerance toward CHX is the upregulation of multidrug             microorganisms typically found in supragingival biofilms, was
+efflux pumps, which are membrane proteins containing multiple             performed in vitro as previously described in detail (Shapiro
+transmembrane domains that allow for the elimination of                   et al., 2002; Thurnheer et al., 2003, 2006, 2014). In brief,
+antimicrobials and antibiotics from the cytoplasm. These proteins         S. mutans OMZ 918, Streptococcus oralis OMZ 607, Actinomyces
+have been found in Gram-positive Staphylococcus aureus and                oris OMZ 745, Veillonella dispar OMZ 493, Fusobacterium
+in Gram-negative Pseudomonas aeruginosa (Cieplik et al., 2019).           nucleatum OMZ 598, and Candida albicans OMZ 110 were
+The diverse functions of matrix proteins have been shown in               used for biofilm formation. All strains were maintained on
+several studies and include, for example, the binding of eDNA             Columbia blood agar (CBA). Prior to the commencement of
+(Kavanaugh et al., 2019) or scaffolding the matrix by forming             the biofilm experiments, all strains were transferred into
+amyloid fibers (Romero and Kolter, 2014; Erskine et al., 2018).           modified fluid universal medium (mFUM; Gmür and
+    Using enzymes or other agents for the disruption of the               Guggenheim, 1983) and anaerobically incubated at 37°C for
+biofilm matrix could be a promising approach to control                   two cycles of precultures (16 and 8 h, respectively). For the
+biofilms in the future (Jakubovics et al., 2013; Kostakioti               production of the inoculum, all strains were adjusted to a
+et al., 2013; Nguyen et al., 2014). This could lead to new                defined optical density (OD) at 550 nm (OD550 = 1.0) and
+treatment approaches, especially in the fields of cariology,              mixed in equal volumes (1 ml).
+periodontology, endodontology, or even prosthodontics, by                    The experimental biofilms were grown in 24-well
+altering biofilm architecture and thereby making biofilms                 polystyrene cell culture plates on sintered hydroxyapatite
+more susceptible to antimicrobials – even in low concentrations.          disks (Ø 9 mm; Clarkson Chromatography Products, Inc.
+For example, treatment with DNase I can significantly reduce              South Williamsport, PA 17702, United States) that were
+P. aeruginosa and Streptococcus mutans biofilm growth                     preconditioned in 800 μl of pasteurized whole unstimulated
+(Whitchurch et al., 2002; Liao et al., 2014). Schlafer et al.             pooled human saliva (termed “saliva” in the following) from
+(2017) showed that DNase I treatment of biofilms grown in                 donors of the division of Clinical Oral Microbiology and
+vivo can reduce the biovolume of biofilms in a statistically              Immunology at the University of Zurich with their consent
+
+
+Frontiers in Microbiology | www.frontiersin.org                       2                                September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                            Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+and incubated at room temperature for 4 h while gently                                         Culture Analyses and CFU Counting
+shaking at 95 rpm to enable pellicle formation on the disks.                                   For culture analyses, the disks were placed in a tube and
+The detailed procedure for the collection and processing                                       vortexed vigorously for 1 min in 1 ml of 0.9% NaCl to harvest
+of the saliva was previously described elsewhere (Guggenheim                                   the adherent biofilms. After vortexing, the harvested biofilms
+et al., 2001).                                                                                 were sonicated at 30 W for 5 s (Sonifier B-12, Branson Ultrasonic,
+   In order to disrupt the biofilm matrix and to prevent biofilm                               Urdorf, Switzerland) to ensure that the microorganisms were
+formation, DNase I (from bovine pancreas; Sigma-Aldrich,                                       dispersed. The resulting bacterial suspensions were serially
+Buchs, Switzerland), proteinase K (from Engyodontium album;                                    diluted in 0.9% NaCl. Of each dilution, 50 μl aliquots were
+Sigma-Aldrich), and chlorhexidine digluconate solution (CHX,                                   plated on CBA (Oxoid Ltd., Basingstoke, United Kingdom)
+Sigma-Aldrich) were used. The experimental setup involved                                      supplemented with 5% whole human blood to estimate total
+four treatment groups, with each group being divided into                                      CFUs. Selective agars were used to determine the CFUs of
+two subgroups whose growth medium contained either no                                          the species in the biofilm as described earlier (Guggenheim
+enzymes or DNase I + proteinase K (Table 1): group A was                                       et al., 2001; Klinke et al., 2011). In brief, CBA plates were
+treated with 0.05% CHX, group B with 0.1% CHX; group C                                         used to obtain total bacterial counts and to enumerate A. oris
+with 0.2% CHX, and group D was not treated and served as                                       and V. dispar. Differential counting of S. mutans and S. oralis
+the negative control. The timing of exposure and incubation                                    was performed using Mitis Salivarius Agar (Difco Laboratories,
+time as well as enzyme concentrations were optimized in                                        Inc., Detroit, MI) supplemented with 0.001% (w/v) sodium
+preliminary experiments (data not shown). The growth medium                                    tellurite, whereas selective growth of F. nucleatum was achieved
+contained 70% saliva and 30% mFUM supplemented with                                            with Fastidious Anaerobe Agar (Chemie Brunschwig, Basel,
+Sørensen’s buffer (pH 7.2). For those biofilms treated with                                    Switzerland). Lastly, BIGGY Agar (BBL, Becton Dickinson,
+DNase I and proteinase K, a stock solution of each enzyme                                      Allschwil, Switzerland) was used to enumerate C. albicans. Agar
+was added to the media resulting in a final concentration of                                   plates were incubated, either anaerobically for CBA and Fastidious
+0.002 mg/ml for DNase I and 0.1 mg/ml for proteinase K. The                                    Anaerobe Agar plates or aerobically plus 10% CO2 for BIGGY
+carbohydrate concentration of mFUM was 0.3% glucose (w/v;                                      and Mitis agar plates, at 37°C for 72 h. Species were identified
+0–16 h of biofilm cultivation) or 0.15% glucose and 0.15% sucrose                              through observation of colony morphology using a stereo loupe.
+(16–64 h). To initiate a biofilm experiment, disks were covered                                Finally, phase-contrast microscopic identification of cells from
+with 1.6 ml of growth medium and 200 μl of inoculum prior                                      selected colonies was performed.
+to anaerobic incubation at 37°C. The growth medium was
+changed after 16 and 40 h. After 16, 20, and 24 h, and after
+40, 44, and 48 h, the disks were placed in 1 ml CHX in the                                     Staining of the Biofilm for CLSM Analysis
+respective concentration for 1 min (see treatment groups in                                    Two different staining methods were used to visualize the
+Table 1). To remove the non-adherent microorganisms and                                        biofilm. The first involved staining the total bacteria and various
+remaining CHX, the biofilms were washed by consecutively                                       matrix components such as extracellular DNA (eDNA),
+dipping them three times in 2 ml saline before putting them                                    extracellular polysaccharides (EPS), and extracellular proteins,
+back into the medium.                                                                          whereas the second aimed to visualize either intact or ruptured
+   After 64 h of biofilm growth, the biofilms were washed as                                   cell membranes using the LIVE/DEAD™ BacLight™ Bacterial
+described and harvested for culture analyses or proceeded to                                   Viability Kit.
+staining and CLSM (see below).                                                                     Prior to staining the total bacteria and matrix components,
+                                                                                               the biofilms were fixed in 1 ml of 4% paraformaldehyde +
+                                                                                               RNase inhibitor (RNAi; Sigma-Aldrich) for 2 h at 4–8°C. After
+                                                                                               fixation, disks were washed in 500 μl 0.9% NaCl + RNAi and
+TABLE 1 | Arrangement of the biofilms into eight different treatment groups.
+                                                                                               dabbed off on a paper towel. Total DNA was stained with
+Group                Growth medium                           Treatmenta                        a mixture of 3 μM YoPro 1 iodide (Thermo Fisher Scientific,
+                     supplement                                                                Basel, Switzerland) and 15 μM SYTOX™ Green (Thermo
+                                                                                               Fisher Scientific) in nanopure water for 30 min in the dark
+A1                   No enzymes                              0.05% CHX
+                                                                                               at room temperature. Extracellular polysaccharides were stained
+A2                   0.002 mg/ml DNase I plus                0.05% CHX
+                     0.1 mg/ml proteinase K
+                                                                                               by incubating biofilms with Fluorescent Brightener 28
+B1                   No enzymes                              0.1% CHX                          (Calcofluor; Sigma-Aldrich; 10 μg/ml solution in 10 mM
+B2                   0.002 mg/ml DNase I plus                0.1% CHX                          sodium phosphate, pH 7.5) for 30 min in the dark at room
+                     0.1 mg/ml proteinase K                                                    temperature. Extracellular DNA (eDNA) was visualized using
+C1                   No enzymes                              0.2% CHX
+                                                                                               an indirect immunofluorescence assay (Mouse anti-DNA IgG
+C2                   0.002 mg/ml DNase I plus                0.2% CHX
+                     0.1 mg/ml proteinase K                                                    (Sigma-Aldrich), Goat anti-Mouse IgG (Thermo Fisher
+D1                   no enzymes                                   –                            Scientific), and Streptavidin-Cy3 (GeneTex, Luzern, Switzerland)
+D2                   0.002 mg/ml DNase I plus                     –                            according to the manufacturer’s recommendations, while
+                     0.1 mg/ml proteinase K                                                    extracellular proteins were stained with SYPRO™ Ruby Protein
+a
+ CHX treatment was performed at six different time points (16, 20, 24, 40, 44, 48 h) for       Gel Stain (Thermo Fisher Scientific) according to the
+1 min each.                                                                                    manufacturer’s protocols.
+
+
+Frontiers in Microbiology | www.frontiersin.org                                            3                                 September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                             Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+   Biofilms stained with the LIVE/DEAD™ BacLight™ Bacterial
+Viability Kit (L7007; Thermo Fisher Scientific) were not fixed
+prior to staining. The biofilms were dyed with SYTO9 and
+propidium iodide following the manufacturer’s instructions.
+   After staining, the samples were washed and embedded
+upside down on chamber slides in 50 μl of Mowiol (Thurnheer
+et al., 2003).
+
+Confocal Laser Scanning Microscopy
+CLSM was conducted using a Leica TCS SP5 microscope (Leica
+Microsystems, Wetzlar, Germany) provided by the Center for
+Microscopy and Image Analysis of the University of Zurich.
+For the imaging of the biofilms on hydroxyapatite, the slightly
+modified procedure, as described previously (Zehnder et al.,
+2017), was performed. In brief, the lasers used were a UV
+laser at 405 nm excitation, an Argon laser at 488 nm excitation,
+a DPSS diode laser at 561 nm, and a Helium-Neon laser at
+633 nm excitation. Furthermore, filters were adjusted at
+420–470 nm to detect Calcofluor, at 495–555 nm for YoPro1/
+SYTOX™ Green and SYTO9, at 575–620 nm for Cy3 and
+propidium iodide, and at 650–720 nm for SYPRO™ Ruby
+Protein Gel Stain. To visualize total bacteria and matrix
+                                                                          FIGURE 1 | Box plots illustrating the colony-forming units (CFUs) of six-
+components, an x100 oil immersion objective (numerical aperture
+                                                                          species oral biofilms after simultaneous exposure to 0.002 mg/ml DNase
+1.4) was used, and biofilms were scanned sequentially in steps            I + 0.1 mg/ml proteinase K (light blue), to 0.002 mg/ml DNase I + 0.1 mg/ml
+of 0.5 μm thickness. LIVE/DEAD-stained biofilms were examined             proteinase K + 0.05% chlorhexidine (CHX; pink), to 0.05% CHX (red), and to
+using an x63 oil immersion objective (numerical aperture 1.4),            0.2% CHX (positive control; green). Untreated biofilms were tested as a
+and biofilms were scanned sequentially in steps of 0.29 μm                negative control (dark blue). Data for biofilms treated with proteinase K and
+                                                                          DNase I alone were taken from the study of Karygianni et al. (2020a),
+thickness. Finally, the images were processed using Imaris 64
+                                                                          following the same protocol of biofilm formation. The statistical significance
+8.4.1 (Bitplane, Zurich, Switzerland).                                    level is indicated with asterisks (***p < 0.001).
+
+
+Statistical Analysis
+All experiments were conducted twice in triplicate, resulting            p < 0.0001) compared to those of biofilms treated with 0.05%
+in n = 6 samples in each group. Two-way ANOVA was used                   CHX alone (mean, 6.44 ± 0.93 log10 CFU). The same effect was
+to analyze the difference in bacterial cells per biofilm between         measured for five individual microbial species (log10 CFU and
+the control group (standard six-species biofilm) and the different       p-values listed in Table 2). The only exception was F. nucleatum
+treatments with either CHX in different concentrations alone             (mean, 2.58 ± 1.11log10 CFU, p = 0.208), for which no significant
+or in combination with DNase I/proteinase K. Tukey’s multiple            reduction compared to the 0.05% CHX-treated biofilm (mean,
+comparisons test was used for correction. Missing values were            3.51 ± 1.93 log10 CFU) was observed. Compared to the control
+ascribed to the lowest detection limit value of the assay to             (7.95 ± 0.17 log10 CFU, p < 0.0001), a significant reduction in
+allow for logarithmic transformation. Statistics were implemented        F. nucleatum after biofilm treatment with 0.05% CHX alone
+using GraphPad Prism software (version 7; La Jolla, CA,                  was achieved.
+United States) to compare the species’ total cell counts within             Biofilms treated with 0.2% CHX were used as a positive
+the different biofilm formations. The significance level was set         control, and no microbial growth was detected in this group.
+at p < 0.05.                                                             Data from the biofilms treated with 0.1% CHX are not shown
+                                                                         in Figure 1 because there was no significant difference between
+                                                                         this group and the positive control.
+
+RESULTS
+                                                                         CLSM Images Show Loss of Density and
+Combined Treatment With CHX and DNase                                    Disturbance of Structural Integrity of the
+I/Proteinase K Reduces Biofilm Formation                                 Biofilms After Combined Treatment With
+Figure 1 shows the combined effect of CHX and enzymatic                  CHX and DNase I/Proteinase K
+treatment with proteinase K and DNase I on the log10 CFU                 Representative CLSM images of fluorescently stained biofilms
+counts of supragingival biofilms consisting of six species grown         after enzymatic, antimicrobial (CHX), or combined treatment
+for 64 h in vitro. The use of 0.05% CHX together with 0.002 mg/          are shown in Figure 2. Panels indicated with majuscules
+ml DNase I and 0.1 mg/ml proteinase K resulted in a significant          (A–E) are maximal projections of Z stacks, while those
+decrease in total microbial counts (mean, 3.88 ± 1.09 log10 CFU;         indicated with minuscules (a–e) are 3D reconstructions of
+
+
+Frontiers in Microbiology | www.frontiersin.org                      4                                        September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                    Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+TABLE 2 | Mean log10 CFU counts of the whole biofilm (total CFU) and the six microorganisms used in the biofilm model when treated with 0.05% CHX compared to
+the combined treatment with enzymes plus 0.05% CHX alone (n = 6).
+
+Microorganism                                           0.05% CHX                         0.002 mg/ml DNase I + 0.1 mg/ml proteinase K + 0.05% CHX
+
+                                                   Mean log10 CFU ± SD                    Mean log10 CFU ± SD                                 p
+
+Total CFU                                               6.44 ± 0.93                            3.88 ± 1.09                                <0.0001
+A. oris                                                 6.01 ± 1.01                            3.35 ± 0.96                                <0.0001
+V. dispar                                               5.69 ± 1.35                            3.46 ± 1.23                                <0.0001
+F. nucleatum                                            3.51 ± 1.93                            2.58 ± 1.11                                0.2080
+S. mutans                                               5.05 ± 2.78                            2.74 ± 0.97                                <0.0001
+S. oralis                                               5.44 ± 1.19                            3.39 ± 1.02                                <0.0001
+C. albicans                                             1.98 ± 1.25                            0.22 ± 0.53                                0.0008
+
+
+
+the respective Z stacks. Total DNA appears green due to                            evident reduction in cell density after the combined treatment,
+staining with a mixture of YoPro 1 iodide and SYTOX™                               with only a few undamaged cells being visible. Similar results
+Green, whereas extracellular polysaccharides appear blue due                       are shown in panels 3C/3c when compared to panels 3D/3d.
+to staining with Calcofluor. Extracellular DNA (eDNA) was                          The biofilms in 3C/3c were treated with 0.1% CHX, while
+stained with Cy3-streptavidin labeled anti-DNA-antibody and                        biofilms in panels 3D/3d were treated with the same concentration
+appears red, while extracellular proteins were stained purple                      of CHX (0.1%) in addition to DNase I and proteinase K.
+with SYPRO™ Ruby. Panels 2A/2a represent the untreated                             Panels 3D/3d show only a few cell aggregates, as the density
+biofilms. They show dense, intact biofilms with some protein                       of bacterial cells seems to decrease with the combined enzymatic
+clusters. Enzymatically treated biofilms (0.002 mg/ml DNase                        and antimicrobial treatment. As the CFU counts were already
+I plus 0.1 mg/ml proteinase K) are shown in panels 2B/2b.                          below detection level, the boxplots for these two treatment
+From the results, it is apparent that the treatment with both                      groups are not shown in Figure 1. Panels 3E/3e show biofilms
+enzymes (DNase I, proteinase K) resulted in less dense biofilm                     in the positive control group (0.2% CHX). Here, some adherent
+masses with less visible protein clusters compared to the                          bacterial cells are visible, although most of them appear to
+untreated biofilms. Panels 2C/2c depict biofilms treated with                      have membrane defects. This finding is confirmed by the CFU
+0.5% CHX, and panels 2D/2d show biofilms treated with                              counts for the positive control, which were also below the
+0.5% CHX, 0.002 mg/ml DNase I and 0.1 mg/ml proteinase                             detection level.
+K. The density of the biofilms appears to decrease after
+treatment with the lowest concentration of CHX (0.05%) and
+even more after combined treatment with the lowest                                 DISCUSSION
+concentrations of CHX and DNase I/proteinase K. Interestingly,
+                                                                                   In a previous study (Karygianni et al., 2020a) using the same
+the number of extracellular polysaccharides appears to decrease
+                                                                                   biofilm model, a low but significant effect of 0.002 mg/ml
+as the density of cells consecutively decreases in panels
+                                                                                   DNase I and 0.1 mg/ml proteinase K on total CFU counts
+2B-D/2b-2d, respectively, although we did not use any
+                                                                                   of multispecies supragingival biofilms was shown. However,
+polysaccharide digesting enzymes in the experiments. Panels
+                                                                                   the same enzymatic treatment had a positive effect on the
+2E/2e represent the biofilms treated with 0.2% CHX (positive
+                                                                                   growth of S. mutans and a mild, but significant, increase in
+control), which show practically no more cells and proteins.
+                                                                                   S. oralis growth when compared to the untreated group
+                                                                                   (negative control). In the present study, we went further by
+Live/Dead Staining Shows a Reduction in                                            aiming to demonstrate for the first time – to our knowledge
+Cell Numbers After Combined Treatment                                              – the combined effect of different concentrations of CHX
+With CHX and DNase I/Proteinase K                                                  (0.05, 0.1, and 0.2%) with the enzyme DNase I (0.002 mg/ml)
+Figure 3 shows representative CLSM images of biofilms stained                      and proteinase K (0.1 mg/ml) on a six-species in vitro biofilm,
+with the Live/Dead BacLight Bacterial Viability Kit to visualize                   the so-called “Zurich biofilm model.” The application of EPS
+the relative viability of bacterial populations according to the                   matrix-digesting enzymes in combination with antimicrobial
+membrane integrity of the cells. The dye SYTO 9 can penetrate                      agents seems to be a promising approach to control biofilm
+cells with both intact and compromised membranes, staining                         activity (Koo et al., 2017). Hence, the objective of our
+them green, while propidium iodide (PI) only penetrates cells                      experiments was to mechanically destabilize the biofilms with
+with damaged membranes, staining them red. Panels indicated                        the applied enzymes and simultaneously kill the microbes
+with majuscules (A–E) are maximal projections of Z stacks,                         by applying low concentrations of CHX. The combined treatment
+while those indicated with minuscules (a–e) are 3D                                 with DNase I/proteinase K and the lowest concentration of
+reconstructions of the respective Z stacks. Panels 3A/3a represent                 CHX (0.05%) tested led to a significant reduction in total
+biofilms treated with 0.5% CHX alone, while panels 3B/3b                           microbial counts and CFU counts of five out of the six species
+represent biofilms treated with a combination of 0.5% CHX,                         compared to the biofilms treated with 0.05% CHX alone.
+0.002 mg/ml DNase I and 0.1 mg/ml proteinase K. There is an                        The only exception was observed in the species F. nucleatum,
+
+
+Frontiers in Microbiology | www.frontiersin.org                                5                                     September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                          Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+  FIGURE 2 | Confocal laser scanning microscopy (CLSM) Z-stack maximum projections (A–E) and 3D reconstructions (a–e) of biofilms grown on HA disks after
+  treatment with or without CHX and/or DNase I + proteinase K. Total DNA (green) was stained with a mixture of YoPro 1 and SYTOX™ Green. Extracellular
+  polysaccharides (blue) were stained with Calcofluor. Extracellular DNA (eDNA; red) was stained with Cy3-streptavidin labeled anti-DNA-antibody, and extracellular
+  proteins (purple) were stained with SYPRO™ Ruby.
+
+
+
+which was already significantly inhibited after CHX (0.05%)                               Confocal microscopy (CLSM) images showed that combined
+treatment alone, but not after the combined treatment with                             treatment resulted in less dense biofilms, even after treatment
+both DNase I/proteinase K and 0.05% CHX.                                               with a low CHX concentration of 0.05%. CLSM images are
+
+
+Frontiers in Microbiology | www.frontiersin.org                                    6                                        September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                          Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+  FIGURE 3 | Confocal laser scanning microscopy (CLSM) Z-stack maximum projections (A–E) and 3D reconstructions (a–e) of biofilms grown on HA disks after
+  treatment with or without CHX and/or DNase I + proteinase K. Biofilms were stained with the LIVE/DEAD BacLight Bacterial Viability Kit to visualize the relative
+  viability of bacterial populations according to the membrane integrity of the cell. SYTO 9 can penetrate cells with both intact and compromised membranes (green),
+  while propidium iodide only penetrates cells with damaged membranes (red). Scale-bar: 20 µm.
+
+
+
+
+a useful tool to visualize the extracellular matrix of biofilms                        combined enzymatic and antimicrobial treatment resulted in
+because they can depict the matrix in a fully hydrated state                           a reduction of microbial counts and a drastic alteration of
+(Schlafer and Meyer, 2017). Overall, it can be stated that the                         the structural integrity within the examined biofilms. In contrast,
+
+
+Frontiers in Microbiology | www.frontiersin.org                                    7                                       September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                         Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+Ali Mohammed et al. (2013) found no significant effect of                   2012). Nguyen and Burrows (2014) showed that DNase I can
+proteinase K or DNase I on the formation and dispersion of                  reduce the biofilms of L. monocytogenes when present during
+biofilms consisting of F. nucleatum and Porphyromonas gingivalis            its formation. Bovine DNase I was also able to reduce the
+grown in a static biofilm model in polystyrene microtiter plates,           formation of S. mutans biofilms grown on HA disks by more
+although they used much higher concentrations of each enzyme                than 1 log CFU (Liao et al., 2014). Furthermore, rhDNase I can
+(0.125, 0.25, 0.5 and 1 mg/ml).                                             be used clinically in patients with cystic fibrosis to digest
+    It is well established that biofilms are more resistant to              neutrophile-derived DNA in order to liquefy their sputum and
+antibiotics, and antimicrobial agents such as CHX, than planktonic          thereby enhance its clearance (Shak et al., 1990; Suri, 2005;
+cells (Flemming and Wingender, 2010; Xiao et al., 2012). It                 Manzenreiter et al., 2012). Moreover, a single center clinical
+appears that ionic interactions hinder the positively charged               study tested the use of nebulized dornase alfa together with
+CHX from diffusing through the negatively charged EPS matrix                albuterol (a bronchodilator agent) on five mechanically ventilated
+(Hope and Wilson, 2004). For example, Guiot et al. (2002)                   patients diagnosed with COVID-19, resulting in reduced oxygen
+showed that Lactobacillus lactis and Stenotrophonas maltophilia             requirement. The patients were all successfully extubated afterward
+biofilms form a barrier to the diffusion of cationic particles. In          and could be discharged from the hospital (Weber et al., 2020).
+another study, Xiao et al. (2012) examined the effect of 0.12%                  The combined use of proteinase K and CHX was already
+CHX on multispecies biofilms formed with gtfBC null mutant                  shown to significantly reduce the viable counts of bacteria in
+strains of S. mutans, resulting in rapid killing of these biofilms.         a multispecies endodontic biofilm model using different irrigation
+The genes gtfB and gtfC code for glucosyltransferases B or C,               protocols for root canals when compared to the control groups
+respectively (GTF B or GTF C), while the former produces                    that were either untreated or treated with saline (Niazi
+water-insoluble glucans and the latter produces both water-soluble          et al., 2015).
+and insoluble glucans (Aoki et al., 1986; Hanada and Kuramitsu,                 Using the outlined methodology, we demonstrated that the
+1988). In the present study, the extracellular polysaccharides              combination of matrix-digesting enzymes with antimicrobial
+were not a direct target of the treatment, but by reducing a                agents is a promising approach for biofilm disruption and
+large part of the biofilm, extracellular polysaccharides and EPS,           killing and the null hypothesis of the research was thus disproved.
+in general, are also eliminated. This is particularly evident in                A wide application of the presented approach is conceivable,
+Figures 2B–D/b–d. The number of adherent microbial cells                    especially in the field of dentistry, where for example in daily
+decreases because of the treatment with DNase I/proteinase K,               hygiene procedures for removable prosthesis, a combination
+which consequently leads to a decreased production of extracellular         of enzymatic and biocidal treatment would be interesting. Some
+polysaccharides. The diffusion of CHX into the biofilms is thus             studies showed that a combination of chemical methods and
+facilitated, resulting in the elimination of the remaining microbes.        brushing to clean dentures is more effective than brushing
+The synergistic effect between CHX in low concentrations (0.5%)             alone (Baba et al., 2018; Papadiochou and Polyzois, 2018). It
+and DNase I/proteinase K is indicated in Figure 1, which shows              would be interesting to see how the treatment approach to
+the significant reduction in the total CFU counts and the CFU               reduce biofilms described here would affect denture materials
+counts of A. oris, V. dispar, S. mutans, S. oralis, and C. albicans         and whether other biocidal compounds, such as sodium
+compared to the treatment with 0.5% CHX alone. These findings               hypochlorite, have the same or an even better effect. These
+indicate that the EPS of a biofilm matrix plays an important                aspects need to be investigated in further trials. Another
+role in protecting the biofilm against antimicrobial agents, making         potential use of enzymes for biofilm disruption in the field
+it an interesting target for antibiofilm therapy (Karygianni et al.,        of dentistry was described by Niazi et al. (2014) when they
+2020b). In another approach for developing a combined antibiofilm           investigated the effects of enzymatic irrigation of an
+therapy, the susceptibility to four different antibiotics of biofilms       endodontic biofilm.
+formed by Streptococcus agalactiae, Streptococcus pyogenes, and                 Further experiments are also required to examine the clinical
+S. oralis grown on porous sintered glass beads was examined                 applicability of the approach we developed, especially regarding
+by Gonzalez Moreno et al. (2017). It was shown that pre-treatment           whether there are any adverse effects when the enzymes are
+of biofilms with proteinase K increased their susceptibility to             administered intraorally.
+lower concentrations of the tested antibiotics compared to biofilms
+treated with antibiotics alone. Previously, it was shown that
+proteinase K can change the composition of the EPS matrix of                DATA AVAILABILITY STATEMENT
+S. aureus biofilms, particularly by decreasing the number of
+proteins, and even the amount of eDNA (Shukla and Rao, 2017).               The raw data supporting the conclusions of this article will
+Furthermore, proteinase K can disperse established biofilms of              be made available by the authors, without undue reservation.
+Listeria monocytogenes by attacking proteins of the matrix used
+to adhere to a surface (Nguyen and Burrows, 2014). On the
+other hand, both bovine DNase I and recombinant human                       AUTHOR CONTRIBUTIONS
+DNase I (rhDNase I, dornase alfa) were shown to inhibit biofilm
+formation of S. aureus and Staphylococcus epidermidis, disperse             KG conducted the experiments, analyzed the data, and wrote
+preformed biofilms of S. aureus, and increase their sensitivity             the manuscript. TA critically reviewed the manuscript. LK and
+to biocide killing in vitro (Izano et al., 2008; Kaplan et al.,             TT conceived the idea for this manuscript, were involved in
+
+
+Frontiers in Microbiology | www.frontiersin.org                         8                                 September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                                 Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+
+the data analysis, and critically reviewed the manuscript. All                             ACKNOWLEDGMENTS
+authors read and approved the final manuscript.
+                                                                                           We would like to thank Patricia Martín Pérez for her outstanding
+                                                                                           assistance during the experiments and for the confocal microscopy
+FUNDING                                                                                    and data analyses. We also thank the Center of Microscopy
+                                                                                           and Image Analysis (ZMB) of the University of Zurich for
+This study was supported by institutional funds from the                                   providing the confocal laser scanning microscope (CLSM) used
+University of Zurich.                                                                      for the experiments.
+
+
+                                                                                           Jakubovics, N. S., Shields, R. C., Rajarajan, N., and Burgess, J. G. (2013). Life
+REFERENCES                                                                                    after death: the critical role of extracellular DNA in microbial biofilms.
+                                                                                              Lett. Appl. Microbiol. 57, 467–475. doi: 10.1111/lam.12134
+Ali Mohammed, M. M., Nerland, A. H., Al-Haroni, M., and Bakken, V. (2013).
+                                                                                           Kaplan, J. B., LoVetri, K., Cardona, S. T., Madhyastha, S., Sadovskaya, I.,
+   Characterization of extracellular polymeric matrix, and treatment of
+                                                                                              Jabbouri, S., et al. (2012). Recombinant human DNase I decreases biofilm
+   Fusobacterium nucleatum and Porphyromonas gingivalis biofilms with DNase I
+                                                                                              and increases antimicrobial susceptibility in staphylococci. J. Antibiot. 65,
+   and proteinase K. J. Oral Microbiol. 5:20015. doi: 10.3402/jom.v5i0.20015
+                                                                                              73–77. doi: 10.1038/ja.2011.113
+Aoki, H., Shiroza, T., Hayakawa, M., Sato, S., and Kuramitsu, H. K. (1986).
+                                                                                           Karygianni, L., Attin, T., and Thurnheer, T. (2020a). Combined DNase and
+   Cloning of a Streptococcus mutans glucosyltransferase gene coding for insoluble
+                                                                                              proteinase treatment interferes with composition and structural integrity of
+   glucan synthesis. Infect. Immun. 53, 587–594. doi: 10.1128/iai.53.3.587-594.1986
+                                                                                              multispecies oral biofilms. J. Clin. Med. 9:983. doi: 10.3390/jcm9040983
+Baba, Y., Sato, Y., Owada, G., and Minakuchi, S. (2018). Effectiveness of a
+                                                                                           Karygianni, L., Ren, Z., Koo, H., and Thurnheer, T. (2020b). Biofilm matrixome:
+   combination denture-cleaning method versus a mechanical method: comparison
+                                                                                              extracellular components in structured microbial communities. Trends
+   of denture cleanliness, patient satisfaction, and oral health-related quality
+                                                                                              Microbiol. 28, 668–681. doi: 10.1016/j.tim.2020.03.016
+   of life. J. Prosthodont. Res. 62, 353–358. doi: 10.1016/j.jpor.2018.01.005
+                                                                                           Kavanaugh, J. S., Flack, C. E., Lister, J., Ricker, E. B., Ibberson, C. B., Jenul, C.,
+Cieplik, F., Jakubovics, N. S., Buchalla, W., Maisch, T., Hellwig, E., and                    et al. (2019). Identification of extracellular DNA-binding proteins in the
+   Al-Ahmad, A. (2019). Resistance toward chlorhexidine in oral bacteria – is                 biofilm matrix. MBio 10:e01137-19. doi: 10.1128/mBio.01137-19
+   there cause for concern? Front. Microbiol. 10:587. doi: 10.3389/fmicb.2019.00587        Klinke, T., Guggenheim, B., Klimm, W., and Thurnheer, T. (2011). Dental
+Costerton, J. W., Lewandowski, Z., Caldwell, D. E., Korber, D. R., and                        caries in rats associated with Candida albicans. Caries Res. 45, 100–106.
+   Lappin-Scott, H. M. (1995). Microbial biofilms. Annu. Rev. Microbiol. 49,                  doi: 10.1159/000324809
+   711–745. doi: 10.1146/annurev.mi.49.100195.003431                                       Kolenbrander, P. E., Palmer, R. J., Periasamy, S., and Jakubovics, N. S. (2010).
+Erskine, E., MacPhee, C. E., and Stanley-Wall, N. R. (2018). Functional amyloid               Oral multispecies biofilm development and the key role of cell-cell distance.
+   and other protein fibers in the biofilm matrix. J. Mol. Biol. 430, 3642–3656.              Nat. Rev. Microbiol. 8, 471–480. doi: 10.1038/nrmicro2381
+   doi: 10.1016/j.jmb.2018.07.026                                                          Koo, H., Allan, R. N., Howlin, R. P., Stoodley, P., and Hall-Stoodley, L. (2017).
+Flemming, H.-C. (2016). EPS-then and now. Microorganisms 4, 41. doi: 10.3390/                 Targeting microbial biofilms: current and prospective therapeutic strategies.
+   microorganisms4040041                                                                      Nat. Rev. Microbiol. 15, 740–755. doi: 10.1038/nrmicro.2017.99
+Flemming, H.-C., and Wingender, J. (2010). The biofilm matrix. Nat. Rev.                   Kostakioti, M., Hadjifrangiskou, M., and Hultgren, S. J. (2013). Bacterial biofilms:
+   Microbiol. 8, 623–633. doi: 10.1038/nrmicro2415                                            development, dispersal, and therapeutic strategies in the dawn of the
+Flemming, H.-C., Wingender, J., Szewzyk, U., Steinberg, P., Rice, S. A., and                  postantibiotic era. Cold Spring Harb. Perspect. Med. 3:a010306. doi: 10.1101/
+   Kjelleberg, S. (2016). Biofilms: an emergent form of bacterial life. Nat. Rev.             cshperspect.a010306
+   Microbiol. 14, 563–575. doi: 10.1038/nrmicro.2016.94                                    Kumar Shukla, S., and Rao, T. S. (2013). Dispersal of Bap-mediated Staphylococcus
+Gmür, R., and Guggenheim, B. (1983). Antigenic heterogeneity of Bacteroides                   aureus biofilm by proteinase K. J. Antibiot. 66, 55–60. doi: 10.1038/ja.2012.98
+   intermedius as recognized by monoclonal antibodies. Infect. Immun. 42,                  Liao, S., Klein, M. I., Heim, K. P., Fan, Y., Bitoun, J. P., Ahn, S.-J., et al.
+   459–470. doi: 10.1128/iai.42.2.459-470.1983                                                (2014). Streptococcus mutans extracellular DNA is upregulated during growth
+Gonzalez Moreno, M., Trampuz, A., and Di Luca, M. (2017). Synergistic antibiotic              in biofilms, actively released via membrane vesicles, and influenced by
+   activity against planktonic and biofilm-embedded Streptococcus agalactiae,                 components of the protein secretion machinery. J. Bacteriol. 196, 2355–2366.
+   Streptococcus pyogenes and Streptococcus oralis. J. Antimicrob. Chemother.                 doi: 10.1128/JB.01493-14
+   72, 3085–3092. doi: 10.1093/jac/dkx265                                                  Manzenreiter, R., Kienberger, F., Marcos, V., Schilcher, K., Krautgartner, W. D.,
+Guggenheim, B., Giertsen, E., Schüpbach, P., and Shapiro, S. (2001). Validation               Obermayer, A., et al. (2012). Ultrastructural characterization of cystic fibrosis
+   of an in vitro biofilm model of supragingival plaque. J. Dent. Res. 80,                    sputum using atomic force and scanning electron microscopy. J. Cyst. Fibros.
+   363–370. doi: 10.1177/00220345010800011201                                                 11, 84–92. doi: 10.1016/j.jcf.2011.09.008
+Guiot, E., Georges, P., Brun, A., Fontaine-Aupart, M. P., Bellon-Fontaine, M. N.,          Marsh, P. D. (2005). Dental plaque: biological significance of a biofilm and
+   and Briandet, R. (2002). Heterogeneity of diffusion inside microbial biofilms              community life-style. J. Clin. Periodontol. 32(Suppl. 6), 7–15. doi: 10.1111/j.
+   determined by fluorescence correlation spectroscopy under two-photon                       1600-051X.2005.00790.x
+   excitation.          Photochem.          Photobiol.           75:570.        doi:       Nguyen, U. T., and Burrows, L. L. (2014). DNase I and proteinase K impair
+   10.1562/0031-8655(2002)075<0570:HODIMB>2.0.CO;2                                            Listeria monocytogenes biofilm formation and induce dispersal of pre-existing
+Hanada, N., and Kuramitsu, H. K. (1988). Isolation and characterization of                    biofilms. Int. J. Food Microbiol. 187, 26–32. doi: 10.1016/j.
+   the Streptococcus mutans gtfC gene, coding for synthesis of both soluble                   ijfoodmicro.2014.06.025
+   and insoluble glucans. Infect. Immun. 56, 1999–2005. doi: 10.1128/                      Nguyen, P. T. M., Falsetta, M. L., Hwang, G., Gonzalez-Begne, M., and Koo, H.
+   iai.56.8.1999-2005.1988                                                                    (2014). α-Mangostin disrupts the development of Streptococcus mutans biofilms
+Hope, C. K., and Wilson, M. (2004). Analysis of the effects of chlorhexidine                  and facilitates its mechanical removal. PLoS One 9:e111312. doi: 10.1371/
+   on oral biofilm vitality and structure based on viability profiling and an                 journal.pone.0111312
+   indicator of membrane integrity. Antimicrob. Agents Chemother. 48, 1461–1468.           Niazi, S. A., Al-Ali, W. M., Patel, S., Foschi, F., and Mannocci, F. (2015).
+   doi: 10.1128/AAC.48.5.1461-1468.2004                                                       Synergistic effect of 2% chlorhexidine combined with proteolytic enzymes
+Izano, E. A., Amarante, M. A., Kher, W. B., and Kaplan, J. B. (2008). Differential            on biofilm disruption and killing. Int. Endod. J. 48, 1157–1167. doi: 10.1111/
+   roles of poly-N-acetylglucosamine surface polysaccharide and extracellular                 iej.12420
+   DNA in Staphylococcus aureus and Staphylococcus epidermidis biofilms.                   Niazi, S. A., Clark, D., Do, T., Gilbert, S. C., Foschi, F., Mannocci, F., et al.
+   Appl. Environ. Microbiol. 74, 470–476. doi: 10.1128/AEM.02073-07                           (2014). The effectiveness of enzymic irrigation in removing a nutrient-stressed
+
+
+
+Frontiers in Microbiology | www.frontiersin.org                                        9                                          September 2021 | Volume 12 | Article 741863
+Gränicher et al.                                                                                                                 Chlorhexidine Inhibition of Multispecies Biofilms
+
+
+
+   endodontic multispecies biofilm. Int. Endod. J. 47, 756–768. doi: 10.1111/                 plaque. Appl. Environ. Microbiol. 69, 1702–1709. doi: 10.1128/
+   iej.12214                                                                                  AEM.69.3.1702-1709.2003
+Okshevsky, M., and Meyer, R. L. (2015). The role of extracellular DNA in the               Thurnheer, T., Rohrer, E., Belibasakis, G. N., Attin, T., and Schmidlin, P. R.
+   establishment, maintenance and perpetuation of bacterial biofilms. Crit. Rev.              (2014). Static biofilm removal around ultrasonic tips in vitro. Clin. Oral
+   Microbiol. 41, 341–352. doi: 10.3109/1040841X.2013.841639                                  Investig. 18, 1779–1784. doi: 10.1007/s00784-013-1157-2
+Papadiochou, S., and Polyzois, G. (2018). Hygiene practices in removable                   Thurnheer, T., van der Ploeg, J. R., Giertsen, E., and Guggenheim, B. (2006).
+   prosthodontics: A systematic review. Int. J. Dent. Hyg. 16, 179–201. doi:                  Effects of Streptococcus mutans gtfC deficiency on mixed oral biofilms in vitro.
+   10.1111/idh.12323                                                                          Caries Res. 40, 163–171. doi: 10.1159/000091065
+Romero, D., and Kolter, R. (2014). Functional amyloids in bacteria. Int. Microbiol.        Weber, A. G., Chau, A. S., Egeblad, M., Barnes, B. J., and Janowitz, T. (2020).
+   17, 65–73. doi: 10.2436/20.1501.01.208                                                     Nebulized in-line endotracheal dornase alfa and albuterol administered to
+Sanz, M., Beighton, D., Curtis, M. A., Cury, J. A., Dige, I., Dommisch, H.,                   mechanically ventilated COVID-19 patients: a case series. Mol. Med. 26:91.
+   et al. (2017). Role of microbial biofilms in the maintenance of oral health                doi: 10.1186/s10020-020-00215-w
+   and in the development of dental caries and periodontal diseases. Consensus             Whitchurch, C. B., Tolker-Nielsen, T., Ragas, P. C., and Mattick, J. S. (2002).
+   report of group 1 of the joint EFP/ORCA workshop on the boundaries                         Extracellular DNA required for bacterial biofilm formation. Science 295:1487.
+   between caries and periodontal disease. J. Clin. Periodontol. 44(Suppl. 18),               doi: 10.1126/science.295.5559.1487
+   S5–S11. doi: 10.1111/jcpe.12682                                                         Xiao, J., Klein, M. I., Falsetta, M. L., Lu, B., Delahunty, C. M., Yates, J. R.,
+Schlafer, S., and Meyer, R. L. (2017). Confocal microscopy imaging of the                     et al. (2012). The exopolysaccharide matrix modulates the interaction between
+   biofilm matrix. J. Microbiol. Methods 138, 50–59. doi: 10.1016/j.                          3D architecture and virulence of a mixed-species oral biofilm. PLoS Pathog.
+   mimet.2016.03.002                                                                          8:e1002623. doi: 10.1371/journal.ppat.1002623
+Schlafer, S., Meyer, R. L., Dige, I., and Regina, V. R. (2017). Extracellular DNA          Zehnder, M., Rechenberg, D.-K., Thurnheer, T., Lüthi-Schaller, H., and
+   contributes to dental biofilm stability. Caries Res. 51, 436–442. doi:                     Belibasakis, G. N. (2017). FISHing for gutta-percha-adhered biofilms in
+   10.1159/000477447                                                                          purulent post-treatment apical periodontitis. Mol. Oral Microbiol. 32, 226–235.
+Serrano, J., Escribano, M., Roldán, S., Martín, C., and Herrera, D. (2015).                   doi: 10.1111/omi.12166
+   Efficacy of adjunctive anti-plaque chemical agents in managing gingivitis:
+   a systematic review and meta-analysis. J. Clin. Periodontol. 42(Suppl. 16),             Conflict of Interest: The authors declare that the research was conducted in
+   S106–S138. doi: 10.1111/jcpe.12331                                                      the absence of any commercial or financial relationships that could be construed
+Shak, S., Capon, D. J., Hellmiss, R., Marsters, S. A., and Baker, C. L. (1990).            as a potential conflict of interest.
+   Recombinant human DNase I reduces the viscosity of cystic fibrosis
+   sputum. Proc. Natl. Acad. Sci. U. S. A. 87, 9188–9192. doi: 10.1073/pnas.               Publisher’s Note: All claims expressed in this article are solely those of the
+   87.23.9188                                                                              authors and do not necessarily represent those of their affiliated organizations,
+Shapiro, S., Giertsen, E., and Guggenheim, B. (2002). An in vitro oral biofilm             or those of the publisher, the editors and the reviewers. Any product that may
+   model for comparing the efficacy of antimicrobial mouthrinses. CRE 36,                  be evaluated in this article, or claim that may be made by its manufacturer, is
+   93–100. doi: 10.1159/000057866                                                          not guaranteed or endorsed by the publisher.
+Shukla, S. K., and Rao, T. S. (2017). Staphylococcus aureus biofilm removal
+   by targeting biofilm-associated extracellular proteins. Indian J. Med. Res.             Copyright © 2021 Gränicher, Karygianni, Attin and Thurnheer. This is an open-
+   146, S1–S8. doi: 10.4103/ijmr.IJMR_410_15                                               access article distributed under the terms of the Creative Commons Attribution
+Suri, R. (2005). The use of human deoxyribonuclease (rhDNase) in the management            License (CC BY). The use, distribution or reproduction in other forums is permitted,
+   of cystic fibrosis. BioDrugs 19, 135–144. doi: 10.2165/00063030-                        provided the original author(s) and the copyright owner(s) are credited and that
+   200519030-00001                                                                         the original publication in this journal is cited, in accordance with accepted academic
+Thurnheer, T., Gmür, R., Shapiro, S., and Guggenheim, B. (2003). Mass                      practice. No use, distribution or reproduction is permitted which does not comply
+   transport of macromolecules within an in vitro model of supragingival                   with these terms.
+
+
+
+
+Frontiers in Microbiology | www.frontiersin.org                                       10                                           September 2021 | Volume 12 | Article 741863
+

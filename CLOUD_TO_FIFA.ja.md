@@ -4,6 +4,257 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月7日 その 10（B を A にした確認の 192³。急がない。非対称の 192³ が終わってから）
+
+`git pull origin claude/plan-next-hxjjve`（新しい選択肢 `--b-as-a`：B の塊を同じ場所・同じ φ₃D のまま菌 A で始める）。64³ で対称より
+vM +14 %（6.50 対 5.69e−4）。128³ はクラウドで回している。192³ を 1 本，4 コア：
+
+```
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 192 --fast $B --transient-c 1e8 --b-as-a --only separate_ab
+```
+
+報告：種子の Σφ̄ᵢ，A の割合，c，α − 1，vM，T* = 1 の ∫φ₃D dV（`phi_total_mm3` の最後）と，対称の 192³（5.967e−4）に対する差（%）。
+
+---
+
+## 2026年11月6日 その 9（非対称の 2 本を 128³ で。4 Nov の「追加 2」がまだなので。急がない）
+
+ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。修論と論文には非対称の例を 64³ の値で入れている
+（種子の vM 3.94e−4 と 3.41e−4，対称の 5.69e−4 より 31 % と 40 % 低い）。この差が 128³ でも残るかを確かめる。同時 3 本まで，1 本 4 スレッド。
+
+```
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-corner --only separate_ab
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 128 --fast $B --transient-c 1e8 --only separate_ab
+```
+
+- 外側の刻みは 64³ の非対称と同じ既定値（`--dtc` なし）。全領域の 128³ は 5 GB 前後の見込み。`--nm` は既定（16）のまま。
+- 3 本目の対称（`--fast`，1/4 領域）は全領域と 7 桁一致を確認済み。同じ名前の JSON がもうあれば回さなくてよい。
+- 報告：3 本の種子の Σφ̄ᵢ，A の割合，c，α − 1，vM，時間，メモリの最大と，対称に対する差（%）を 64³ の値と並べた表。JSON は `results/2026-10-3d/`。
+
+**その 9 の追加（fifa の提案 1 と 2，6 Nov に了承）**：非対称の 3 本が終わってから，1 本 1 コア。
+
+```
+# 1) 障害物，superbee 192³（分離と混合）。minmod の混合は GCI 43 %；superbee で 64/128/192³ の GCI がどう変わるか
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --limiter superbee --only separate_ab
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --limiter superbee --mix-equal --only mixed_ab
+# 2) 混合，minmod，一様 128³（4 つの limiter の表で修論の値だけだった欄。比べる他の欄と同じく --transient-c なし）
+python3 coupled_living_consumption.py --nf 128 --fast $B --mix-equal --only mixed_ab --dtc 0.0025
+```
+
+- 提案 3（障害物の応力格子 64³）は回さない（32³ で応力格子が原因でないことは 3 % で確認済み）。
+- 報告：1) は 32/64/128/192³ の vM と α − 1，64/128/192³ の次数・外挿・GCI を minmod と並べる。2) は 4 つの limiter の表を fifa の値だけで埋めた版。
+
+---
+
+## 2026年11月5日 その 8（superbee の混合を 256³ 相当で確かめる。AMR 2 段 128³ 土台。急がない）
+
+ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。128³ 土台の 2 段（既定の範囲）は一様 256³ と minmod で 0.4 % 合った
+（その 4 a）。superbee の混合（抗菌薬なし，Fritsch の割合）は 192³ まで GCI 2.5 %，1.5 % で収束したので，256³ 相当の 4 点目で確かめる。
+抗菌薬あり（等量）はその 4 a で済み（3.752e-4）。今動いているもの（256³，その 7）は止めないこと。同時 2 本まで。
+
+```
+O="--nf 128 --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --limiter superbee"
+ECO_THREADS=4 python3 coupled_amr.py $O --example mixed --mix-equal      # 抗菌薬なし，等量
+ECO_THREADS=4 python3 coupled_amr.py $O --example mixed_ab               # 抗菌薬あり，Fritsch の割合
+```
+
+報告：シードの α − 1，vM，時間，細かいセルの平均の割合，メモリの最大。一様の superbee（64/128/192³）と並べ，128/192/256³ 相当の 3 点で次数と GCI
+（Celik，Fs 1.25，r = 1.5 と 4/3）。JSON は `results/2026-11-amr/`（名前に `_superbee`，抗菌薬なしは `_mixed.json`）。
+
+---
+
+## 2026年11月4日 その 7（その 6 を推奨の細かくする範囲で。その 6 をまだ始めていなければ，その 6 の代わりにこちら）
+
+ブランチと手順は「その 6」と同じ（merge のあと `cd ansys_usermat/apdl`）。クラウドで，段ごとの範囲（`--tag-tol-levels 0.01,0.1 --dilate-levels 2,2
+--tag-phi-range 1e-4,0.2`）にすると 32³ 土台 3 段で最も細かい段が 55 % から 35 % に減り，一様 128³ との差は +1.8 %（既定 +1.3 %）。64³ 土台
+（256³ 相当）で同じことを確かめる。その 6 がもう走っているなら止めず，こちらは空いてから。同時 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3 --tag-tol-levels 0.01,0.1 --dilate-levels 2,2 --tag-phi-range 1e-4,0.2"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：その 6 と同じ（α − 1，vM，時間，最も細かい段の割合，メモリの最大）。その 6 と並べられれば並べる。JSON は名前に `_tolL0.01-0.1_dilL2-2_pr0.0001-0.2`。
+
+
+## 2026年11月4日 その 6（AMR の 3 段で 256³ 相当。混合の等量と Fritsch の割合。急がない）
+
+ブランチと手順は「その 5」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+「その 5」で 32³ 土台の 3 段（128³ 相当）が一様 128³ と 1.3 % で合ったので，64³ 土台の 3 段（256³ 相当）で混合の応力の収束を確かめる。
+`--mix-equal` なしは Fritsch の割合（0.25, 0.30）。今動いている 192³・256³ は止めないこと。メモリの合計を見て，同時は 2 本まで。
+
+```
+O="--example mixed_ab --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --levels 3"
+for L in superbee minmod; do
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --mix-equal --limiter $L
+  ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --limiter $L
+done
+```
+
+報告：4 本のシードの α − 1，vM，時間，いちばん細かいセルの平均の割合とメモリの最大。一様の 64/128/192³ と並べて，64/128/256³ 相当と
+128/192/256³ 相当の 2 組で次数と GCI（Celik，Fs 1.25）。JSON は `results/2026-11-amr/`（名前に `_L3`）。
+
+---
+
+## 2026年11月4日 その 5（AMR の 3 段と，栄養を k 刻みおき。急がない）
+
+ブランチと手順は「その 4」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve`，`cd ansys_usermat/apdl`）。
+点モデルは `ECO_THREADS=k` で k 本に分けて回せる（結果は最後の桁まで同じ）。空いているコア数に合わせる（ほかのジョブと合わせて超えないこと）。
+
+```
+O="--example mixed_ab --mix-equal --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all"
+# a) 32³ 土台，3 段 = 128³ 相当。一様 128³（minmod 3.30e-4 / 8.32e-4，superbee 3.587e-4 / 8.495e-4）と比べる
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O
+ECO_THREADS=4 python3 coupled_amr.py --nf 32 --levels 3 $O --limiter superbee
+# b) 64³ 土台，栄養を k 刻みおき（k = 1 が基準）
+for K in 1 2 4; do ECO_THREADS=4 python3 coupled_amr.py --nf 64 $O --transient-c 1e8 --c-every $K; done
+```
+
+報告：シードの α − 1，vM，時間（ログの最後の行の内訳も），いちばん細かいセルの平均。JSON は `results/2026-11-amr/`（名前に `_L3`，`_cev2` など）。
+
+
+## 2026年11月4日 その 4（AMR で 256³ 相当，障害物の 192³。急がない，fifa は自由に使ってよい）
+
+ブランチと `$B` は「11月2日 夜」と同じ（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`）。
+今動いている 192³・256³ を止めないこと。同時に回してよいが，メモリの合計は見る。
+
+```
+# a) 2 段の格子（coupled_amr.py），128³ 土台 = 256³ 相当，細かくする範囲は既定（--dilate 2 --tag-tol 0.01）。
+#    クラウドで 64³ 土台は一様 128³ と応力 1.6 %（superbee），1.5 %（minmod）。走っている一様 256³ superbee と比べる。
+for L in superbee minmod; do
+  python3 coupled_amr.py --nf 128 --dtc 0.0025 --c-composite --reflux --subcycle --point-fine --lat-all --limiter $L --mix-equal --example mixed_ab
+done
+# b) 障害物：応力が 32→128³ で +48 %，+35 % と上がり続けた。応力の格子はどれも既定の 16³（--nm 16）なので，
+#    角の応力集中ではなく柱の近くの場が原因のはず。応力の格子を変えて切り分ける（場は 64³ と 128³）。
+for N in 64 128; do for M in 32 64; do
+  python3 coupled_living_consumption.py --nf $N --nm $M --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+done; done
+python3 coupled_living_consumption.py --nf 192 --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+# c) WENO5（4 Nov にクラウドで追加，--limiter weno5，障害物とは組めない）。32³ で superbee より +4 %，16³→32³ の比は
+#    minmod・superbee 1.79 に対して 1.71。混合・抗菌薬ありの格子列を 11/3 の superbee と同じ設定で（--transient-c なし）
+for N in 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter weno5 --mix-equal --only mixed_ab --dtc 0.0025
+done
+```
+
+報告：c) は 32〜192³ の vM と α − 1，GCI（64/128/192³，Celik，Fs 1.25）を superbee と並べて。a) はシードの α − 1，vM，時間，細かいセルの平均の割合（ログの最後の行）。b) は場の格子 × 応力の格子の vM と α − 1 の表（--nm 16 は既存の JSON），192³ を足した増え方（比）。
+JSON は `results/2026-11-amr/` と `results/2026-10-3d/` に出る。いつもどおり `keio/cloud-1102` へ push．
+
+
+## 2026年11月4日 その 3（制限関数の比較：van Leer と MC。急がない）
+
+minmod（拡散が大きい）と superbee（縁を最も鋭く保つ）の間の 2 つを足し，混合の応力が制限関数でどこに落ち着くかを見る。
+`--limiter vanleer` は 11/4 にクラウドで追加（調和平均の van Leer），`mc` は前からある。知らない名前を渡すと止まるようにした
+（前は黙って minmod になっていた）。`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと：
+```
+cd ansys_usermat/apdl
+for L in vanleer mc; do
+  for N in 32 64 128 192; do
+    python3 coupled_living_consumption.py --nf $N --fast $B --limiter $L --mix-equal --only mixed_ab --dtc 0.0025
+  done
+done
+```
+- 条件は 11/3 の superbee の列と同じ（`--transient-c` なし）。16³ の試し（クラウド）では種子の vM が
+  minmod 1.11，van Leer 1.21，MC 1.29，superbee 1.34e−4 Pa の順（拡散の大きい順に低い）。
+- ログ：4 つの制限関数の 4 格子の vM と α−1，64/128/192³ からの p・外挿・GCI を 1 つの表に。外挿値が 4 つでどこまでそろうか
+  （そろえば，混合の応力は制限関数によらず決まる）。
+
+## 2026年11月4日 その 2（格子の収束：四種，障害物，迷路。急がない，fifa は自由に使ってよい）
+
+修論に入れるかを決める前に，格子を細かくして結果が変わらないかを確かめる。ブランチと `$B` は「11月2日 夜」と同じ。どれも
+Eq. 35 は ċ あり（`--transient-c 1e8`，迷路は `--transient-c`），外側の刻みは格子の収束の表と同じ 0.0025。同時に回してよい。
+```
+cd ansys_usermat/apdl
+# a) 四種（Klempt 2026 case 4），分離と混合（等量），抗菌薬あり。192³ は 2 種の約 1.5〜2 倍の時間
+for N in 32 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --case k26c4 --transient-c 1e8 --dtc 0.0025 --only separate_ab
+  python3 coupled_living_consumption.py --nf $N --fast $B --case k26c4 --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+done
+# b) 障害物（剛体の柱 4 本），分離と混合（等量），抗菌薬あり
+for N in 32 64 128; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --only separate_ab
+  python3 coupled_living_consumption.py --nf $N --fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025 --mix-equal --only mixed_ab
+done
+# c) 迷路（2 次元，Klempt 2024 Fig. 11），セル 4，2，1 µm，T* = 60，抗菌薬あり・なし
+for H in 4 2 1; do
+  python3 maze_coupled_2d.py --h $H --tend 60 --maze-file ../../abaqus_living/maze_k24.txt --transient-c
+  python3 maze_coupled_2d.py --h $H --tend 60 --ab --maze-file ../../abaqus_living/maze_k24.txt --transient-c
+done
+```
+- `--obstacle columns` は全例と同じく `--fast` で回せる（柱は x と z で鏡映対称）。
+- **superbee も（ユーザー，4 Nov）**：a) と b) を `--limiter superbee` を足して同じ格子でもう 1 回ずつ回す（minmod と superbee の両方の列を作る）。
+  迷路のコード（`maze_coupled_2d.py`）には制限関数の選択がないので c) は今のまま。ログでは minmod と superbee の列を並べ，
+  混合の応力で superbee の方が速く収束するか（2 種のときは GCI 41 % → 4.6 %）を書く。
+- 迷路の 1 µm は時間がかかる（セル数 16 倍，時間刻みも小さい）。途中で止まったら止まった時刻をログに書く。
+- 結果：JSON を `keio/cloud-1102` に push（終わったものから）。
+- `KEIO_CHAIN_LOG.md` に：
+  - a)，b)：種子の Σφ̄ᵢ，A の割合（四種は種ごとの φ̄ᵢ の最後の値も），c，α−1，vM を格子ごとに。3 格子以上そろったものは p・外挿・GCI。
+  - c)：T* = 20 と 60 の前線の届いた距離（`reach_um`），生きている量（`living_mean`），栄養（`c_mean`），バイオフィルムの面積
+    （`colonised` × h²）をセルごとに。11/4 にクラウドで見たところ，T* = 20 の届いた距離は h = 1，2，4 µm で 65，195，71 µm と
+    そろっていない（壁の幅 10 µm をセル何個で表すかの影響と思われる）。同じことが起きるか，起きるならどの量はそろうかを書く。
+- 修論に入れるかはユーザーが 12 月に決める。
+
+## 2026年11月4日（追加：superbee の続き 2 本。急がない，今夜中に終われば十分）
+
+superbee の格子列（11/3）で混合・抗菌薬ありの応力が GCI 4.6 % まで収束した。残る 2 つを足す。ブランチと `$B` は「11月2日 夜」と同じ
+（`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` のあと，`cd ansys_usermat/apdl`）。
+11/3 の superbee の列と比べられるよう，`--transient-c` は付けない（11/3 の列も付けていない）。
+```
+# 1) 混合・抗菌薬なし（--only mixed）。抗菌薬の効果が帯から出るかを見る。192³ は約 5 時間
+for N in 32 64 128 192; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --mix-equal --only mixed --dtc 0.0025
+done
+# 2) 分離・抗菌薬あり（--only separate_ab）。収束している例で制限関数を変えても同じ答えかの確認
+for N in 64 128; do
+  python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --only separate_ab --dtc 0.0025
+done
+```
+- 順番は 2) を先に（約 1.5 時間），その後 1)。
+- 結果：JSON（`results/2026-10-3d/` の `*_tvd_superbee_*`）を `keio/cloud-1102` に push。
+- `KEIO_CHAIN_LOG.md` に：
+  - 1) の 4 格子のシードの vM と α−1，64/128/192³ からの p・外挿値・GCI（Celik 2008，Fs 1.25）。比べる相手は 11/3 の superbee・抗菌薬あり
+    （vM 2.39/3.28/3.59/3.67e−4，外挿 3.81e−4，GCI 4.6 %）と minmod・抗菌薬なし（修論の表 tab:ch5-gci：3.08/3.65/3.89e−4 on 64/128/192³）。
+    抗菌薬あり・なしの外挿値の差と，二つの GCI の和を並べて書く（差が和より大きければ「抗菌薬の効果が分かれた」）。
+  - 2) の 64/128³ の vM と α−1 を minmod（修論の表：vM 6.000/6.284e−4，α−1 8.931/9.112e−4）と並べる。
+- 修論には入れない。論文の付録の表の材料。
+- **追加（ユーザー，4 Nov：fifa はたくさん使ってよい）**：上の 1)・2) と並行して次も回す。同時に回すのは空いている CPU とメモリの範囲で
+  （1 本あたり 192³ で約 3.2 GB，256³ は minmod の実績で見積もる）。
+  ```
+  # 3) 混合・Fritsch の割合（0.25, 0.30，--mix-equal なし）・抗菌薬あり。修論の表の最後の 2 行の superbee 版
+  for N in 32 64 128 192; do
+    python3 coupled_living_consumption.py --nf $N --fast $B --limiter superbee --only mixed_ab --dtc 0.0025
+  done
+  # 4) 混合・等量・抗菌薬ありの 256³（superbee が本当に収束しているかの確認。192³ で 3.67e−4 Pa）
+  python3 coupled_living_consumption.py --nf 256 --fast $B --limiter superbee --mix-equal --only mixed_ab --dtc 0.0025
+  ```
+  - ログ：3) は minmod（修論の表：vM 2.01/2.96/4.01/4.35e−4，外挿 5.01e−4，GCI 19 %）と並べる。4) は 128/192/256³ で p・外挿・GCI を出し，
+    64/128/192³ の値（3.81e−4，4.6 %）と比べる。
+  - 終わったものから push してよい（全部を待たなくてよい）。
+- **追加 2（ユーザー，4 Nov：非対称の例を修論に入れる）**：非対称の 2 本の 128³（全領域，`--amg`，途中の場は保存しない）。64³ の結果
+  （種子の vM 3.94e−4 と 3.41e−4，対称の 5.69e−4 より 31 % と 40 % 低い）が格子を細かくしても同じ傾向かを確かめる。
+  比べる対称の例も同じ設定で 128³（全領域でなく `--fast` でよい：全領域と 7 桁一致を確認済み）。
+  ```
+  python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-one-edge --seed-shift -1 --only separate_ab
+  python3 coupled_living_consumption.py --nf 128 --amg $B --transient-c 1e8 --b-corner --only separate_ab
+  python3 coupled_living_consumption.py --nf 128 --fast $B --transient-c 1e8 --only separate_ab
+  ```
+  - 外側の刻みは 64³ の非対称と同じ既定値（`--dtc` なし）。メモリは 1/4 領域の 128³ が 1.3 GB なので全領域で 5 GB 前後の見込み。
+  - ログ：3 本の種子の Σφ̄ᵢ，A の割合，c，α−1，vM と，対称に対する差（%）を 64³ と並べる。
+
+## 2026年11月3日 昼（動画 1 本の作り直し。急がない）
+
+辺の 1 本の動画の説明文が右にはみ出していたので、スクリプトを直した（始め方の文を 1 行にした）。`git fetch origin claude/plan-next-hxjjve && git merge origin/claude/plan-next-hxjjve` の後、
+```
+python3 ansys_usermat/apdl/anim_coupled_tvd_3d.py separate_ab inhliv transc b1edge seedx-1
+```
+だけを作り直して、mp4 と `_end.png` を `git add -f` で push（角の動画はそのままでよい）。
+
 ## 2026年11月3日 未明（訂正：全領域の 2 本には `--amg` が要る）
 
 非対称の 64³ が 7 時間で 2/400 ステップだったのは、指示書のコマンドに `--amg` を入れ忘れたため（クラウドの誤り）。`--fast` を外すと、
@@ -417,9 +668,6 @@ IKMHIWI03 では回せない）。
 - 10月8日、ユーザーが `git push lab origin/master:main` で #64 まで lab に送った（同期済み）。
 - **lab に送るときは、ローカルの master を通さない**（fifa のローカル master は clone 以来古いまま）：
   `git fetch origin master && git push lab origin/master:main`（fast-forward、force は不要）。
-
----
-
 ## 2026年10月8日（村松研の git ができた）
 
 ユーザーが村松研の組織に **`mmc-research-group/nishioka-biofilm-fem`**（private、空、既定ブランチ `main`）を作った。

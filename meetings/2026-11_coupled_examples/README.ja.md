@@ -2,7 +2,7 @@
 
 - `deck_en.js`：英語版、分離と混合を 1 つにまとめたもの（16 枚）。**オリバー、Meisam、Felix に再来週ごろ（11 月中旬）送る**（ユーザー、1 Nov）。
 - **オリバーへ（2 Nov 決定）**：`deck_en.js`（18 枚）と `deck_geom_en.js`（障害物・迷路，10 枚）を金曜 6 Nov ごろ送り，9 Nov（月）午後にオンラインで話す（微熱のため対面をやめた）．
-- **四種の例（Klempt 2026 case 4）は 12 月に送る**（ユーザー，2 Nov）．結果だけのスライド `deck_k26c4_en.js`（8 枚，`build.sh k26c4` → `build/four_species_en.pptx`）．材料：`assets/anim_coupled_tvd_*_ab_inhliv_k26c4_transc_alpha_5panel.mp4`，`assets/fig_four_species_shares_*.png`，`assets/fig_four_species_living_vs_0d.png`．
+- **四種の例（Klempt 2026 case 4）は温存する**（ユーザー，4 Nov：来年 6 月ごろに出してよい結果．12 月には送らない，修論にも入れない；2 Nov の「12 月に送る」を置き換え）．結果だけのスライド `deck_k26c4_en.js`（8 枚，`build.sh k26c4` → `build/four_species_en.pptx`）．材料：`assets/anim_coupled_tvd_*_ab_inhliv_k26c4_transc_alpha_5panel.mp4`，`assets/fig_four_species_shares_*.png`，`assets/fig_four_species_living_vs_0d.png`．
 - `deck_ja.js`：日本語版、例ごとに 1 つ（11 枚、発表者ノートつき）。分離の方は 2 Nov に村松先生へ発表。
 - 作り方：`bash meetings/2026-11_coupled_examples/build.sh [en|ja|all]` → `build/`（git に入れない）。
   式の画像は `eq/*.tex`、図は `assets/fig_setup_*_ab.png`（`ansys_usermat/apdl/fig_setup_separate_ab.py [mixed]`）と

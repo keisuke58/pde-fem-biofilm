@@ -151,6 +151,9 @@ B_ONE_EDGE = "--b-one-edge" in sys.argv
 # --b-corner: species B only in one cube of 0.25 mm at the corner x > 0.75, y < -0.75, z > 0.75 mm of the box (next to the
 # nutrient layer); same B amounts per cell as the edge blocks.
 B_CORNER = "--b-corner" in sys.argv
+# --b-as-a: the blocks of species B start as species A (same phi_3D, only the species changed); a check of what the start
+# position of B does (7 Nov)
+B_AS_A = "--b-as-a" in sys.argv
 SEED_SHIFT = int(_opt("--seed-shift", 0)) if "--seed-shift" in sys.argv else 0
 assert not ((B_ONE_EDGE or B_CORNER or SEED_SHIFT) and "--fast" in sys.argv), "--b-one-edge / --b-corner / --seed-shift need the full domain (no --fast)"
 # --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
@@ -175,6 +178,11 @@ ANSYS_BC = "--ansys-bc" in sys.argv
 START_POSITION = "--start-position" in sys.argv
 INHERIT_LIVING = "--inherit-living" in sys.argv     # see living_start()
 LIMITER = sys.argv[sys.argv.index("--limiter") + 1] if "--limiter" in sys.argv else "minmod"   # TVD slope limiter (A-83)
+# --limiter weno5 (4 Nov 2026): fifth-order WENO face reconstruction (Jiang and Shu 1996) of the front term instead of
+# the MUSCL slopes: a non-compressive high-order bound next to minmod (diffusive) and superbee (compressive); the same
+# upwinded, non-conservative form v . grad phi, the walls and the symmetry planes of --fast as mirror ghost cells.
+assert LIMITER in ("minmod", "mc", "vanleer", "superbee", "weno5"), f"unknown --limiter {LIMITER} (minmod, mc, vanleer, superbee, weno5)"
+WENO_EPS, WENO_D = 1e-6, (0.1, 0.6, 0.3)   # Jiang-Shu regularisation and linear weights of the three substencils
 # --mech-feedback K (Keio continuation, not in the thesis; the thesis model is frozen): the mechanical term of
 # Klempt et al. 2024, Eq. 30, phi mu (I : C_e - 3), that their Eq. 34 drops, divided by eta_phi:
 # dphi/dt = ... - K phi (I : C_e - 3), K = mu / eta_phi [1/T*] (not given by the paper, a sensitivity parameter).
@@ -386,6 +394,7 @@ def box_mask(n, boxes):
 
 
 BOXES = obstacle_boxes(OBSTACLE) if OBSTACLE else None
+assert not (LIMITER == "weno5" and OBSTACLE), "--limiter weno5 is not combined with --obstacle (its stencil has no obstacle ghost cells)"
 if OBSTACLE == "stl":
     SDF = tooth_sdf(NF)
     OBST = (SDF < 0)[QS]
@@ -420,7 +429,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("_basa" if B_AS_A else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -594,8 +603,51 @@ def _nb(a, s_):
     return m
 
 
+def _weno5_face(a0, a1, a2, a3, a4):
+    """WENO5 (Jiang and Shu 1996) value at the face between cells a2 and a3 from the five cells a0..a4, biased towards
+    a0..a2 (the upwind side); eps = 1e-6, linear weights 1/10, 6/10, 3/10"""
+    p0 = (2.0 * a0 - 7.0 * a1 + 11.0 * a2) / 6.0
+    p1 = (-a1 + 5.0 * a2 + 2.0 * a3) / 6.0
+    p2 = (2.0 * a2 + 5.0 * a3 - a4) / 6.0
+    b0 = 13.0 / 12.0 * (a0 - 2.0 * a1 + a2) ** 2 + 0.25 * (a0 - 4.0 * a1 + 3.0 * a2) ** 2
+    b1 = 13.0 / 12.0 * (a1 - 2.0 * a2 + a3) ** 2 + 0.25 * (a1 - a3) ** 2
+    b2 = 13.0 / 12.0 * (a2 - 2.0 * a3 + a4) ** 2 + 0.25 * (3.0 * a2 - 4.0 * a3 + a4) ** 2
+    w0 = WENO_D[0] / (WENO_EPS + b0) ** 2
+    w1 = WENO_D[1] / (WENO_EPS + b1) ** 2
+    w2 = WENO_D[2] / (WENO_EPS + b2) ** 2
+    return (w0 * p0 + w1 * p1 + w2 * p2) / (w0 + w1 + w2)
+
+
+def upwind_adv_weno5(u, v):
+    """v . grad u with WENO5 face values, upwind (--limiter weno5). Three ghost cells per side, mirrored (zero-flux ghost
+    at the walls, as --wall-grad mirror; the symmetry planes of --fast are mirrors anyway); the derivative into a wall is
+    zero in the wall cell as in the MUSCL and first-order forms. No obstacles (asserted at the start)."""
+    out = np.zeros_like(u)
+    for a in range(3):
+        n = u.shape[a]
+        pw = [(0, 0)] * 3; pw[a] = (3, 3)
+        P = np.pad(u, pw, mode="symmetric")          # ghosts u_{-1} = u_0, u_{-2} = u_1, u_{-3} = u_2 (both ends)
+        sl = []                                       # sl[k]: cell f - 3 + k for the n + 1 faces f = i + 1/2, i = -1 .. n-1
+        for k in range(6):
+            e = [slice(None)] * 3; e[a] = slice(k, k + n + 1); sl.append(P[tuple(e)])
+        lo = [slice(None)] * 3; lo[a] = slice(0, n)
+        hi = [slice(None)] * 3; hi[a] = slice(1, n + 1)
+        # v > 0: faces from the left, u_{i+1/2}^- from u_{i-2} .. u_{i+2}; (u_{i+1/2}^- - u_{i-1/2}^-) / H
+        fm = _weno5_face(sl[0], sl[1], sl[2], sl[3], sl[4])
+        dP = (fm[tuple(hi)] - fm[tuple(lo)]) / H
+        # v < 0: faces from the right, u_{i+1/2}^+ from u_{i+3} .. u_{i-1} (the mirrored stencil)
+        fp = _weno5_face(sl[5], sl[4], sl[3], sl[2], sl[1])
+        dN = (fp[tuple(hi)] - fp[tuple(lo)]) / H
+        e = [slice(None)] * 3; e[a] = 0; dP[tuple(e)] = 0.0       # zero derivative into the wall (and symmetry plane)
+        e[a] = -1; dN[tuple(e)] = 0.0
+        out += np.maximum(v[a], 0) * dP + np.minimum(v[a], 0) * dN
+    return out
+
+
 def upwind_adv_tvd(u, v):
     """v . grad u with MUSCL face values (minmod slopes), upwind; zero derivative into walls as the first-order form"""
+    if LIMITER == "weno5":
+        return upwind_adv_weno5(u, v)
     out = np.zeros_like(u)
     for a in range(3):
         mp, mm = _nb(a, 1), _nb(a, -1)
@@ -604,6 +656,8 @@ def upwind_adv_tvd(u, v):
         if LIMITER == "superbee":             # Roe's superbee: the most compressive TVD limiter (2 Nov test)
             ap, am = np.abs(dp), np.abs(dm)
             sl = np.where(dp * dm > 0, np.sign(dp) * np.maximum(np.minimum(2 * am, ap), np.minimum(am, 2 * ap)), 0.0)
+        elif LIMITER == "vanleer":            # van Leer's harmonic limiter (4 Nov): smooth, between minmod and MC
+            sl = np.where(dp * dm > 0, 2.0 * dp * dm / np.where(dp + dm == 0, 1.0, dp + dm), 0.0)
         elif LIMITER == "mc":                 # monotonized central (van Leer 1977): less clipping than minmod
             sl = np.where(dp * dm > 0, np.sign(dp) * np.minimum(np.minimum(2 * np.abs(dp), 2 * np.abs(dm)),
                                                                   0.5 * np.abs(dp + dm)), 0.0)
@@ -911,7 +965,7 @@ def run(example, antibiotic):
         G[seed] = eco_start_state()
     elif sep:
         G[seed] = group_state(tot, GROUP_A)
-        G[edges] = group_state(tot, GROUP_B)
+        G[edges] = group_state(tot, GROUP_A if B_AS_A else GROUP_B)
     else:
         G[seed] = start_state(*MIX_START)
     if INIT_NODAL:
