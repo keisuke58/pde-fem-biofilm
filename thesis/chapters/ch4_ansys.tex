@@ -1027,7 +1027,18 @@ only in one cube of $0.25$~mm at a corner. The composition and the nutrient of t
 seed von Mises stress is lower by $31$ and $40\,\%$ on $64^3$ and by $17$ and $27\,\%$ on $128^3$ ($4.87$ and
 $4.29$ against $5.90\times10^{-4}$~Pa). The symmetric stress is converged (GCI $2.3\,\%$ on $64^3$ to $192^3$),
 the asymmetric ones still rise by $22$ to $26\,\%$ per refinement, so the size of the gap is not yet known; that
-where species~B starts changes the seed stress much more than its composition holds on both grids.
+where species~B starts changes the seed stress much more than its composition holds on both grids (Figure~\ref{fig:ch5-asym}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig_asymmetric_starts.pdf}
+  \caption[Asymmetric starts]{Separate example with antibiotic at $T^*=1$, Python, $64^3$ (rows 2 and 3 on the full domain); one
+    octant removed. Rows: (1)~the symmetric example, (2)~species~B only in the block along one edge, seed moved
+    by one element towards $-x$, (3)~species~B only in one corner cube. Columns: (a)~share of species~A and
+    (b)~growth $\alpha-1$ where $\phi_{3D}>0.5$, (c)~von Mises stress on the $16^3$ stress mesh. One colour range
+    per column.}
+  \label{fig:ch5-asym}
+\end{figure}
 
 \paragraph{Maze.} The maze of Fig.~11 of the paper, read off the figure ($560~\mu$m across), in two dimensions
 with $4~\mu$m cells, the constants of Table~6 of the paper ($\beta=10~\mu$m$^2/T^*$, $r=200~\mu$m$/T^*$,
