@@ -1284,4 +1284,12 @@ Same commands as part 9 with `--nf 192` (asymmetric: full domain, `--amg`; symme
 | B in one corner | 3.412 / 4.291 / - | -40.0 % / -27.3 % / - | - | ? |
 | symmetric | 5.687 / 5.901 / 5.967 | - | p 1.14, 6.0784e-04, GCI 2.3 % | 3:32:05, 3.22 GB |
 
-Difference of the extrapolated values to the symmetric one: .
+**The two asymmetric 192^3 runs were stopped (the user agreed, 7 Nov 17:4x JST).** After 16 h 55 min they had done only
+24 and 25 of 400 outer steps: about 42 min per step against 33 s at 128^3 (cells x3.4). CPU time / wall time was 1.44 on 4
+cores and peak RSS 10.9 GB, so it is not memory or the node; the full-domain AMG-CG (`--amg`) seems to scale badly at 192^3
+(not investigated). At that rate the runs would have needed about 11 days. Their checkpoints (`figdata/ckpt/*nf192*b1edge*`,
+`*nf192*bcorner*`, k_done 24 / 25) are kept, so they can resume with the same options.
+What can be said from 64 and 128^3: the asymmetric starts stay below the symmetric one (-17 % and -27 % at 128^3) but the gap
+shrinks with the grid (from -31 % and -40 % at 64^3), and the asymmetric vM rises by 22-26 % from 64 to 128^3 against 4 % for
+the symmetric run, so the 64^3 gap in the thesis and the paper is not grid-converged. The symmetric run is converged
+(5.69 / 5.90 / 5.97e-4, GCI 2.3 %).
