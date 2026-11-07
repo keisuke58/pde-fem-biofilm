@@ -1273,3 +1273,15 @@ no `--transient-c`, `--dtc 0.0025`).
 | superbee | 2.387 / 3.284 / 3.587 / 3.675 | 7.788 / 8.367 / 8.495 / 8.513 | p 1.24, extrapolated 3.8095e-04, GCI 4.6 % | p 2.46, extrapolated 8.5230e-04, GCI 0.2 % |
 
 minmod 128^3 on fifa: 1:27:44, 1.27 GB; the thesis table had vM 3.30e-4, alpha - 1 8.32e-4 for this cell.
+
+## 2026-11-07/08: part 9 at 192^3 (fifa addition with the user's OK, 7 Nov; not in the instructions)
+
+Same commands as part 9 with `--nf 192` (asymmetric: full domain, `--amg`; symmetric: `--fast`); 4 cores each, `ECO_THREADS=4`.
+
+| run | vM 64 / 128 / 192^3 [1e-4 Pa] | vs symmetric 64 / 128 / 192^3 | vM 64/128/192^3: p, extrapolated, GCI | wall, peak RSS (192^3) |
+| --- | --- | --- | --- | --- |
+| B along one edge | 3.940 / 4.872 / - | -30.7 % / -17.4 % / - | - | ? |
+| B in one corner | 3.412 / 4.291 / - | -40.0 % / -27.3 % / - | - | ? |
+| symmetric | 5.687 / 5.901 / 5.967 | - | p 1.14, 6.0784e-04, GCI 2.3 % | 3:32:05, 3.22 GB |
+
+Difference of the extrapolated values to the symmetric one: .
