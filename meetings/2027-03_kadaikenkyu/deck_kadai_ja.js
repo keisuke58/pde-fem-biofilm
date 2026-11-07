@@ -155,7 +155,7 @@ function stat(s, x, y, big, small) {
   s.addShape(pres.shapes.RECTANGLE, { x: 0.55, y: 4.55, w: 12.23, h: 1.75, fill: { color: LIGHT }, line: { color: LIGHT } });
   s.addText([{ text: '今後（慶應での修士研究）', options: { bold: true, color: NAVY, breakLine: true } },
     { text: '組成から応力へ：生きている菌から成長する式，菌種や生死で変わる硬さ，実際の歯・インプラントの形での応力．', options: { breakLine: true } },
-    { text: '連成の論文の投稿（2027 年），USNCCM19（2027 年 7 月）での発表．' }],
+    { text: '連成の内容を論文にまとめて投稿する（2027 年）．' }],
     { x: 0.8, y: 4.65, w: 11.8, h: 1.6, fontFace: JP, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 4 });
   s.addNotes('まとめます。点モデルの相互作用をデータから推定し、どの成分がデータで決まるかを示しました。次に、成長の式を有限要素に組み込み、点モデルを各積分点で動かして場と連成しました。抗菌薬は生きている量を大きく下げますが、成長と応力はほとんど変えません。今後は慶應での修士研究として、組成が応力に届く道、つまり生きている菌から成長する式や、菌種で変わる硬さ、実際の歯の形での応力に取り組みます。以上です。');
 }
