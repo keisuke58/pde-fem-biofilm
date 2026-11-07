@@ -25,10 +25,10 @@ a mixed start converges with a grid convergence index of about 6 % instead of ab
 In two-species examples an antibiotic lowers the living volume fraction of the seed by 84 to 96 %, while growth and
 stress change by a few per cent: the growth counts dead biomass as well, and the stress follows the
 stiffness-weighted gradient of the growth (correlation 0.94 over 51 runs). The composition reaches the mechanics
-only through the nutrient and the front speed. Where the biomass starts and which species it is, by contrast, change the seed stress by
-about 10 to 30 %. The results show which paths a composition-dependent mechanics of biofilms would need.
+only through the nutrient and the front speed. Where the biomass starts and which species it is change the converged seed stress by
+5 to 13 %. The results show which paths a composition-dependent mechanics of biofilms would need.
 
 ## Notes
-- "about 10 to 30 %": B as A at the same places +14 % (64^3), +8 % (128^3) (7 Nov); asymmetric starts, -31/-40 % on 64^3, -17/-27 % on 128^3 (fifa part 9, 7 Nov); the gap shrinks with the grid. 192^3 running; recheck the number before submitting.
+- "5 to 13 %": extrapolated 64-192^3 (8 Nov): asymmetric -6 / -13 % (GCI 13 / 18 %), B as A +4.5 % (GCI 0.2 %). On one grid the gaps looked larger (-31/-40 % on 64^3).
 - "about 6 %": superbee, mixed with antibiotic, 128/192/256^3: extrapolated 3.95e-4 Pa, GCI 6.3 % (64/128/192^3: 4.6 %); minmod GCI 41 %.
 - No Felix material; Abaqus not named (third code) to keep the abstract short.

@@ -1024,17 +1024,18 @@ separate example with antibiotic break this symmetry (full domain, outer step $0
 block along one edge ($x>0.75$, $y<-0.75$~mm) with the seed moved by one element towards $-x$, and species~B
 only in one cube of $0.25$~mm at a corner. The composition and the nutrient of the seed hardly change
 ($\sum_i\bar\phi_i=0.151$ and $0.153$ against $0.152$ on $128^3$), and the growth is $6$ and $4\,\%$ lower. The
-seed von Mises stress is lower by $31$ and $40\,\%$ on $64^3$ and by $17$ and $27\,\%$ on $128^3$ ($4.87$ and
-$4.29$ against $5.90\times10^{-4}$~Pa). The symmetric stress is converged (GCI $2.3\,\%$ on $64^3$ to $192^3$),
-the asymmetric ones still rise by $22$ to $26\,\%$ per refinement, so the size of the gap is not yet known.
-The variants also start with less biomass: three of the four blocks of species~B are left out (start
-$\int\phi_{3D}\,dV=0.56$ and $0.52$ against $0.75$~mm$^3$), and at $T^*=1$ the biofilm holds $5.81$ and $5.99$
-against $7.39$~mm$^3$ ($128^3$), so the stiff biofilm around the seed is thinner. A check separates
-the species from the biomass: with the four blocks started as species~A instead of~B (the same $\phi_{3D}$) the
-seed stress is $14\,\%$ higher than in the symmetric example on $64^3$ and $8\,\%$ on $128^3$ ($6.37$ against
-$5.90\times10^{-4}$~Pa), and the biofilm at $T^*=1$ is $5$ and $3\,\%$ larger, since the species reaches growth only through the nutrient and the front.
-Where the biomass starts and which species it is both change the seed stress much more than the composition
-of the seed (Figure~\ref{fig:ch5-asym}).
+seed von Mises stress is lower by $31$ and $40\,\%$ on $64^3$, $17$ and $27\,\%$ on $128^3$ and $13$ and $23\,\%$
+on $192^3$. Extrapolated from the three grids it is $5.71$ and $5.28\times10^{-4}$~Pa (GCI $13$ and $18\,\%$)
+against $6.08\times10^{-4}$~Pa for the symmetric example (GCI $2.3\,\%$), $6$ and $13\,\%$ lower, which is within
+the grid uncertainty of the asymmetric runs. The variants also start with less biomass: three of the four blocks
+of species~B are left out (start $\int\phi_{3D}\,dV=0.56$ and $0.52$ against $0.75$~mm$^3$), and at $T^*=1$ the
+biofilm holds $5.81$ and $5.99$ against $7.39$~mm$^3$ ($128^3$). With the four blocks started as species~A instead
+of~B (the same $\phi_{3D}$) the seed stress is $14$, $8$ and $6.5\,\%$ higher than in the symmetric example on the
+three grids, and $4.5\,\%$ higher after extrapolation ($6.35\times10^{-4}$~Pa, GCI $0.2\,\%$), since the species
+reaches growth only through the nutrient and the front. On the converged values, where the biomass starts and which
+species it is change the seed stress by a few to about ten per cent, while the composition of the seed hardly
+changes (Figure~\ref{fig:ch5-asym}). The large differences on one grid came mostly from the slower convergence of
+the asymmetric runs.
 
 \begin{figure}[htbp]
   \centering

@@ -488,14 +488,14 @@ minmod では格子とともに上がり続けた（GCI 12\%，43\%）が，supe
 応力の格子を $16^3$ から $32^3$ にしても 3\% しか変わらないので，上昇の原因は柱の近くの場である．
 
 菌種 B の置き方を変えた例（図\,\ref{fig:asym}）では，種子の組成と成長はほとんど変わらないが，
-応力は対称の例より 17\%，27\% 低い（$128^3$）．ただしこの 2 例は始めのバイオフィルムの量も 25--31\% 少ない．
-同じ位置・同じ量のまま B を A に替えると応力は 8\% 高くなる（$128^3$）．
-バイオフィルムがどこにどれだけあるかと，それがどの菌種かの両方が，種子の組成よりずっと大きく応力を変える．
-非対称の例の差は $64^3$ から $128^3$ で縮んでおり，まだ格子に収束していない．
+応力の差は格子とともに縮み（$64^3$ で 31\%，40\%，$192^3$ で 13\%，23\% 低い），3 つの格子から外挿すると
+対称の例より 6\%，13\% 低い（GCI 13\%，18\%）．この 2 例は始めのバイオフィルムの量も 25--31\% 少ない．
+同じ位置・同じ量のまま B を A に替えると，外挿した応力は 4.5\% 高い（GCI 0.2\%）．
+収束した値でみると，バイオフィルムの置き方と菌種は応力を数\% から 1 割ほど変え，種子の組成はほとんど変えない．
 
 \begin{figure}[tb]
   \centering
-  \includegraphics[width=\linewidth]{fig_asymmetric_starts.png}
+  \includegraphics[width=0.78\linewidth]{fig_asymmetric_starts.png}
   \caption{\textbf{菌種 B の置き方}（分けた例，抗菌薬あり，$64^3$）．上から対称，辺に 1 本（種子を $-x$ へ 1 要素），角に 1 つ．
     (a) 始めの配置と境界条件，(b) $T^*=1$ の成長 $\alpha-1$，(c) $z=0$ 断面の von Mises 応力（白線が種子）．}
   \label{fig:asym}
@@ -515,7 +515,7 @@ $6.752\times10^{-4}$ である．
 
 \begin{figure}[tb]
   \centering
-  \includegraphics[width=\linewidth]{fig_thesis_cal5.png}
+  \includegraphics[width=0.9\linewidth]{fig_thesis_cal5.png}
   \caption{\textbf{較正した 5 菌種の点モデルを要素の中で動かした結果}（CH，$8^3$，シードの Gauss 点）．
     (a) 割合 $\phi_i/\sum_j\phi_j$，(b) 生きた体積分率 $\phi_i\psi_i$ とその和．}
   \label{fig:five}
