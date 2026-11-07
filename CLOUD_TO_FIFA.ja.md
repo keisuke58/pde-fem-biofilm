@@ -4,6 +4,20 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月7日 その 10（B を A にした確認の 192³。急がない。非対称の 192³ が終わってから）
+
+`git pull origin claude/plan-next-hxjjve`（新しい選択肢 `--b-as-a`：B の塊を同じ場所・同じ φ₃D のまま菌 A で始める）。64³ で対称より
+vM +14 %（6.50 対 5.69e−4）。128³ はクラウドで回している。192³ を 1 本，4 コア：
+
+```
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living"
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 192 --fast $B --transient-c 1e8 --b-as-a --only separate_ab
+```
+
+報告：種子の Σφ̄ᵢ，A の割合，c，α − 1，vM，T* = 1 の ∫φ₃D dV（`phi_total_mm3` の最後）と，対称の 192³（5.967e−4）に対する差（%）。
+
+---
+
 ## 2026年11月6日 その 9（非対称の 2 本を 128³ で。4 Nov の「追加 2」がまだなので。急がない）
 
 ブランチと手順は「その 7」と同じ（merge のあと `cd ansys_usermat/apdl`）。修論と論文には非対称の例を 64³ の値で入れている
