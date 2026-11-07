@@ -322,6 +322,21 @@ LAYER_H0 = _opt("--layer-h0", 0.25)
 # constants stay in mm (beta, r, g/d of the 2 mm conversion), only the grid spacing changes with the box.
 BOX = _opt("--box", W.L)
 TOOTH_SEED, TOOTH_SEED_H = _opt("--tooth-seed", 0.25), _opt("--tooth-seed-h", 1.0)   # the tooth example's ring, mm
+# --window mixed|layered (7 Nov 2026, papers/coupling_paper/REAL_TOOTH_WINDOW.ja.md): the example "window" (keys
+# window, window_ab; --only window_ab), a cubic window of edge BOX at the cervical -x flank of the crown at physical
+# size. The code's lengths are those of the 2 mm cube (Klempt 2024's 20 um cube x 100, so 1 code mm = 10 um), hence
+# --stl-scale 100 scales the crown STL to the same units and --box 30 is a window of 300 um. Placement: the window
+# centre is the point of the crown surface with the smallest x at BOX/2 above the crown's lowest z (the capped
+# cervical base), so the bottom face z = -BOX/2 is the plane of the cervical base (the gingiva side) and the crown
+# occupies part of the +x side. Start film: the cells with 0 <= SDF < FILM_H0 (--film-h0, code mm; 2 = 20 um) over
+# the whole window, "mixed" with Fritsch's start shares, "layered" with A where SDF < FILM_H0/2 and B outside.
+# Fields: c = 1 (and a = 1 from T_AB) held on the face x = -BOX/2 (the saliva side), zero flux through the other
+# five faces (cut faces and gingiva) and the crown. The film stress: real_tooth_coupled.py --window (roller faces).
+WINDOW = _opt("--window", None, str)
+assert WINDOW in (None, "mixed", "layered"), f"--window takes mixed or layered, not {WINDOW}"
+STL_SCALE = _opt("--stl-scale", 1.0)
+FILM_H0 = _opt("--film-h0", 2.0)
+WIN_INFO = {}                                # placement of the window on the crown (filled by crown_mesh)
 AMG = "--amg" in sys.argv                   # AMG-preconditioned CG for the fields on the full domain (as --fast without the symmetry)
 H = BOX / NF
 NM = NM if NF % NM == 0 else NF              # stress mesh 16^3 when it divides the field grid, else the field grid (8^3, 24^3)
@@ -358,16 +373,45 @@ STL_PATH = ROOT / "tier2b_real" / "_crown_real_watertight.stl"
 SDF = None
 
 
+def crown_mesh():
+    """the crown surface (pyvista) scaled by STL_SCALE and placed as above; with --window placed so that the window
+    [-BOX/2, BOX/2]^3 sits at the cervical -x flank (WIN_INFO records the placement)"""
+    import pyvista as pv
+    m = pv.read(STL_PATH).triangulate().clean()
+    P = np.asarray(m.points) * STL_SCALE
+    lo, hi = P.min(0), P.max(0)
+    if WINDOW:
+        zc = lo[2] + BOX / 2                                    # window centre: BOX/2 above the cervical base
+        m.points = P
+        ring = np.asarray(m.slice(normal=(0, 0, 1), origin=(0, 0, zc)).points)
+        i = int(ring[:, 0].argmin())                            # the -x flank: the smallest x of the crown at that height
+        shift = np.array([ring[i, 0], ring[i, 1], zc])
+        # flank slope: the smallest x of the crown at the top and the bottom of the window (dx per dz)
+        xs = []
+        for z_ in (lo[2] + 0.25 * BOX, lo[2] + 0.75 * BOX):
+            r_ = np.asarray(m.slice(normal=(0, 0, 1), origin=(0, 0, z_)).points)
+            xs.append(float(r_[:, 0].min()))
+        WIN_INFO.update(stl_scale=STL_SCALE, centre_in_scaled_stl=shift.tolist(), crown_bounds_scaled=[lo.tolist(), hi.tolist()],
+                        flank_dx_per_dz=(xs[1] - xs[0]) / (0.5 * BOX), box=BOX)
+    else:
+        shift = np.array([0.5 * (lo[0] + hi[0]), 0.5 * (lo[1] + hi[1]), lo[2] + BOX / 2])
+    m.points = P - shift
+    return m
+
+
 def tooth_sdf(n):
     """signed distance of the n^3 cell centres to the crown surface (negative inside), crown placed as above"""
     import pyvista as pv
-    m = pv.read(STL_PATH).triangulate().clean()
-    P = np.asarray(m.points)
-    lo, hi = P.min(0), P.max(0)
-    m.points = P - np.array([0.5 * (lo[0] + hi[0]), 0.5 * (lo[1] + hi[1]), lo[2] + BOX / 2])
+    m = crown_mesh()
     h = BOX / n
     g = pv.ImageData(dimensions=(n,) * 3, spacing=(h,) * 3, origin=(-BOX / 2 + 0.5 * h,) * 3)
     d = np.asarray(g.compute_implicit_distance(m)["implicit_distance"])
+    if WINDOW:
+        # the sign of the implicit distance is wrong where the cap of the cervical base is the closest surface (7 Nov,
+        # a layer of "outside" cells inside the crown just above the cap): take the sign from the point-in-closed-
+        # surface test instead (the window example only; the crown example keeps its earlier results)
+        inside = np.asarray(g.select_enclosed_points(m, tolerance=0.0, check_surface=False)["SelectedPoints"]) > 0
+        d = np.where(inside, -np.abs(d), np.abs(d))
     return d.reshape((n,) * 3, order="F").astype(np.float64)
 
 
@@ -430,6 +474,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("_basa" if B_AS_A else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("" if not WINDOW else f"_win{WINDOW}") + ("" if STL_SCALE == 1.0 else f"_stlx{STL_SCALE:g}") + ("" if "--film-h0" not in sys.argv else f"_filmh0{FILM_H0:g}")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -805,6 +850,8 @@ class Reaction:
                 rows.append(idx[ok]); cols.append(np.roll(idx, -sgn, ax)[ok]); diag += ok
         if side == "five":                    # the tooth example: all outer faces except the bottom z = -BOX/2
             faces = [(a, e) for a in range(3) for e in (0, -1) if not (a == 2 and e == 0)]
+        elif side == "xminus":                # the window example: the saliva face x = -BOX/2 only
+            faces = [(0, 0)]
         else:
             faces = [(1, 0 if side < 0 else -1)] if side != 0 else [(a, e) for a in range(3) for e in (0, -1)
                                                                      if not (FAST and a in (0, 2) and e == 0)]
@@ -922,6 +969,34 @@ def neighbours_mean(G, w):
     return num, den
 
 
+def tooth_area():
+    """area of the crown surface inside the window as the voxel body exposes it: faces between a tooth cell and an open
+    cell, times h^2 (the staircase overestimates a flat inclined surface by up to |n_x| + |n_y| + |n_z|)"""
+    n_faces = 0
+    for a_ in range(3):
+        for s_ in (1, -1):
+            m_ = ~OBST & np.roll(OBST, -s_, a_)
+            e_ = [slice(None)] * 3; e_[a_] = -1 if s_ == 1 else 0; m_[tuple(e_)] = False
+            n_faces += int(m_.sum())
+    return n_faces * H * H
+
+
+def film_record(hist, phi, alpha, c, a, L, G, on):
+    """the window example: means over the film (phi_3D > 0.5, not tooth) at the end of an outer step, its thickness
+    (volume over the crown area, and the largest distance of a film cell from the crown)"""
+    film = (phi > 0.5) & ~OBST
+    ph = G[..., :N_SP]
+    shA = ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30)
+    f = hist.setdefault("film", {})
+    for k_, v_ in (("cells", int(film.sum())), ("share_a", float(np.nanmean(shA[film & on])) if (film & on).any() else None),
+                   ("living", float(L[film].mean()) if film.any() else None), ("c", float(c[film].mean()) if film.any() else None),
+                   ("a", float(a[film].mean()) if film.any() else None), ("am1", float((alpha - 1)[film].mean()) if film.any() else None),
+                   ("volume_mm3", float(film.sum() * H ** 3)), ("thickness_mean_mm", float(film.sum() * H ** 3 / tooth_area())),
+                   ("sdf_max_mm", float(SDF[film].max()) if film.any() else 0.0),
+                   ("c_min", float(c[film].min()) if film.any() else None)):
+        f.setdefault(k_, []).append(v_)
+
+
 def run(example, antibiotic):
     cells8 = W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json")
     if SEED_SHIFT:                                # --seed-shift: the seed moved along x by whole elements
@@ -949,7 +1024,16 @@ def run(example, antibiotic):
         assert ECO_FILE, "the layer example takes its composition from --eco-file"
         seed = Y < -BOX / 2 + LAYER_H0 * BOX - 1e-12
         edges = np.zeros_like(seed)
-    sep = example in ("separate", "tooth")
+    if example == "window":
+        # the cervical window (--window): a film FILM_H0 thick on the crown surface over the whole window; mixed:
+        # one film with the mixed start ("seed"); layered: A on the inner half ("seed"), B on the outer half ("edges")
+        assert OBSTACLE == "stl" and WINDOW, "the window example needs --obstacle stl --window mixed|layered"
+        film0 = (SDF >= 0) & (SDF < FILM_H0)
+        if WINDOW == "layered":
+            seed, edges = film0 & (SDF < 0.5 * FILM_H0), film0 & (SDF >= 0.5 * FILM_H0)
+        else:
+            seed, edges = film0, np.zeros_like(film0)
+    sep = example in ("separate", "tooth") or (example == "window" and WINDOW == "layered")
     seed, edges, X, Y, Z = seed[QS], edges[QS], X[QS], Y[QS], Z[QS]
     phi = (seed | (edges if sep else False)).astype(float)
     alpha = np.ones_like(phi)
@@ -995,6 +1079,8 @@ def run(example, antibiotic):
     on = phi >= PHI_MIN
     if example == "tooth":                        # saliva side: nutrient and antibiotic on the five faces around the crown
         nut, ab = Reaction(LAM_C2, "five"), Reaction(LAM_A2, "five")
+    elif example == "window":                     # saliva side: the face x = -BOX/2 farthest from the crown
+        nut, ab = Reaction(LAM_C2, "xminus"), Reaction(LAM_A2, "xminus")
     elif example == "layer":                      # nutrient held on the wall opposite the layer
         nut, ab = Reaction(LAM_C2, +1), Reaction(LAM_A2, +1)
     else:
@@ -1228,6 +1314,8 @@ def run(example, antibiotic):
         hist["c_seed"].append(float(c[seed].mean())); hist["a_seed"].append(float(a[seed].mean()))
         hist["colonised"].append(int(on.sum()) * (4 if FAST else 1))
         _v, _lm = totals(); hist["phi_total_mm3"].append(_v); hist["living_mean"].append(_lm)
+        if example == "window":
+            film_record(hist, phi, alpha, c, a, L, G, on)
         if N_SP > 2:                                # 2 Nov: per species, mean over the biofilm (phi_3D > 0.5) and over the seed:
             _bio = phi > 0.5                        # volume share phi_i / sum_j phi_j and living phibar_i = phi_i psi_i (JSON)
             _ph = G[..., :N_SP]; _lv = _ph * G[..., 6:6 + N_SP]; _sh = _ph / np.maximum(_ph.sum(-1, keepdims=True), 1e-30)
@@ -1235,6 +1323,7 @@ def run(example, antibiotic):
                 hist.setdefault(f"share_sp_{_nm}", []).append([float(_sh[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
                 hist.setdefault(f"phibar_sp_{_nm}", []).append([float(_lv[..., i][_m].mean()) if _m.any() else None for i in range(N_SP)])
         if (abs(T1 - T_AB) < 1e-9 or abs(T1 - T_END) < 1e-9
+                or (example == "window" and T_AB < T1 < T_AB + DT_C - 1e-9)   # the first outer step after the onset
                 or (SNAP_EVERY and abs(T1 / SNAP_EVERY - round(T1 / SNAP_EVERY)) < 1e-6)):
             ph = G[..., :N_SP]
             shA = np.where(on, ph[..., GROUP_A].sum(-1) / np.maximum(ph.sum(-1), 1e-30), np.nan)   # share of group A
@@ -1243,7 +1332,7 @@ def run(example, antibiotic):
             if N_SP > 2 and SNAP_EVERY:              # 2 Nov: the share of every species (four-species videos, dominant species)
                 for isp in range(N_SP):
                     snaps[round(T1, 3)][f"sp{isp}"] = unfold(np.where(on, ph[..., isp] / np.maximum(ph.sum(-1), 1e-30), np.nan)).astype(np.float32)
-            if example == "tooth" or SNAP_EVERY:   # alpha at every snapshot (tooth film stress; videos with alpha - 1, 2 Nov)
+            if example in ("tooth", "window") or SNAP_EVERY:   # alpha at every snapshot (tooth film stress; videos with alpha - 1, 2 Nov)
                 snaps[round(T1, 3)]["alpha"] = unfold(alpha).copy()
             if "--snap-stress" in sys.argv:          # von Mises on the stress mesh at every snapshot (videos)
                 vm_s, _ = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
@@ -1266,7 +1355,7 @@ def run(example, antibiotic):
     hist["seed_state_end"] = G[seed].mean(0).tolist()
     hist["seed_state_spread"] = float(np.abs(G[seed] - G[seed].mean(0)).max())
     seed16 = S.seed_mask(NM, cells8)
-    if example in ("tooth", "layer"):           # tooth: the film stress is solved by real_tooth_coupled.py (rigid crown);
+    if example in ("tooth", "layer", "window"):   # tooth, window: the film stress is solved by real_tooth_coupled.py (rigid crown);
         vm = p = np.full((NM,) * 3, np.nan)      # layer: no stress needed (volume comparison only)
     else:
         vm, p = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM), obstacles=BOXES,
@@ -1276,10 +1365,13 @@ def run(example, antibiotic):
     if OBSTACLE:
         snaps.setdefault(round(T_END, 3), {}).update(vm16=vm, p16=p, obst=unfold(OBST).astype(np.int8))
         hist["contact"] = getattr(S, "LAST_CONTACT", None)
-    if example == "tooth":
+    if example in ("tooth", "window"):
         snaps[round(T_END, 3)].update(sdf=SDF.copy(), seed=unfold(seed).astype(np.int8), edges=unfold(edges).astype(np.int8))
         hist["tooth"] = dict(box_mm=BOX, h_mm=H, seed_thickness_mm=TOOTH_SEED, seed_height_mm=TOOTH_SEED_H,
                              tooth_cells=int(OBST.sum()), open_cells=int((~OBST).sum()))
+    if example == "window":
+        hist["tooth"].update(window=WINDOW, film_h0_mm=FILM_H0, film_cells_start=int((seed | edges).sum()),
+                             film_cells_per_thickness=FILM_H0 / H, tooth_area_mm2=float(tooth_area()), **WIN_INFO)
     hist["seed_am1"] = float((alpha - 1)[seed].mean()); hist["seed_vm_Pa"] = float(vm[seed16].mean())
     if HOMEO:                                   # pressure (compression positive) and gate of the end state
         hist["seed_p_Pa"] = float(-np.nan_to_num(p)[seed16].mean())
@@ -1304,6 +1396,8 @@ def main():
         keys = ["mixed_ab"]
     elif ONLY:
         keys = [ONLY]
+    elif WINDOW:
+        keys = ["window_ab", "window"]
     for key in keys:
             ex, abx = key.replace("_ab", ""), key.endswith("_ab")
             R[key], SN[key] = run(ex, abx)
