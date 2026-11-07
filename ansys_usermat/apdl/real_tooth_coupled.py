@@ -48,9 +48,11 @@ NF = _opt("--nf", 80, int)
 BOX = _opt("--box", 10.0)
 CASES = _opt("--cases", "tooth_ab,tooth", str).split(",")
 RATIOS = [float(x) for x in _opt("--ratios", "1,2", str).split(",")]
-OPTS = "front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_obststl_box10_amg"
+# --opts: the run's option tag between nf<NF>_ and _<case> (7 Nov: the runs with dc/dt and superbee are
+# ..._tab0.333333_transc1e+08_tvd_superbee_wgmirror_obststl_box10_amg)
+OPTS = _opt("--opts", "front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_tvd_wgmirror_obststl_box10_amg", str)
 RES = HERE / "results" / "2026-10-3d"
-OUT_JSON = RES / "real_tooth_coupled.json"
+OUT_JSON = RES / ("real_tooth_coupled.json" if "--opts" not in sys.argv else f"real_tooth_coupled_{OPTS.split('_tab0.333333_')[-1]}.json")
 FILM_PHI = 0.5
 # the submodel's geometry constants are module globals: the box and a "band" of 1 mm above the cervical base
 for mod in (RS, RC):
