@@ -43,12 +43,9 @@ and its Coupling into a Finite Element Growth Framework
 
 \author{%
 西岡佳祐（82519093）\thanks{慶應義塾大学 大学院 理工学研究科 開放環境科学専攻
-(E-mail: keisuke58@keio.jp)}
-，
-村松眞由\thanks{慶應義塾大学 大学院 理工学研究科
-(E-mail: muramatsu@mech.keio.ac.jp)}%
+(E-mail: keisuke58@keio.jp)}%
 }
-\endauthor{Keisuke Nishioka, Mayu Muramatsu}
+\endauthor{Keisuke Nishioka}
 
 \abstract{
 A point model of a multi-species biofilm describes how the composition at one
@@ -286,7 +283,7 @@ $A_{ij}<0$ は抑制（競合）を意味する．
 %%=================================================================
 \section{GPU 加速 TMCMC による相互作用の推定}
 %%=================================================================
-本節と次節の推定は，投稿中の論文に基づく\footnote{K.~Nishioka ほか，``Identifiability of species interactions in a living
+第 3 節から第 5 節の推定は，次の投稿済みの論文の内容に基づく\footnote{K.~Nishioka ほか，``Identifiability of species interactions in a living
 material: Bayesian calibration of an extended Hamilton principle multiphase model''，
 \textit{Extreme Mechanics Letters}（2026 年 10 月投稿，査読中，EML-D-26-00377）．}．
 
@@ -376,6 +373,9 @@ $R^2=0.71$（RMSE 0.097）で追った．CH では水準は合うが変動は追
 %%=================================================================
 \section{バイオフィルム有限要素への組み込み\label{sec:fem_coupling}}
 %%=================================================================
+本節の連成は，投稿予定の論文にまとめている\footnote{K.~Nishioka ほか，``Coupling a multi-species point model to a
+continuum biofilm growth model: verification and the effect of the composition on growth and stress''（仮題），
+学術誌へ 2027 年に投稿予定．}．
 
 \subsection{枠組みと追加したもの}
 
@@ -534,6 +534,7 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
 \paragraph{謝辞}
 本研究は LUH 連続体力学研究所での修士論文の一部であり，
 Philipp Junker 教授，Meisam Soleimani 博士，Hendrik Geisler 博士の指導を受けた．
+慶應義塾大学の村松眞由准教授には本研究全体の指導をいただいた．
 実験データは Nils Heine 氏ほか（NIFE/MHH）から提供いただいた．
 ここに感謝の意を表する．
 

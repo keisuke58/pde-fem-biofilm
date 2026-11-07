@@ -372,8 +372,9 @@ this machine's specific workflow.
   announcement (7 Oct 2026): no presentation meeting.** Submit the report
   (A4, about 6 pages or more, Japanese or English) and a 5-minute recorded
   PowerPoint talk by **12 Mar 2027 (Fri) 16:00 JST**; in Google Calendar with
-  reminders. A report based on a submitted or published single-author paper
-  must state the paper's details (e.g. a footnote). Keio student number
+  reminders. The report itself is single-author (「単著」の課題研究報告書); when it reports the
+  content of a planned, submitted, accepted or published paper, the paper's details go into the report (e.g. a
+  footnote) (K-LMS wording checked 7 Nov 2026; an earlier note here read "single-author" as the paper). Keio student number
   82519093, 開放環境科学専攻. The report itself:
   `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
   (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).

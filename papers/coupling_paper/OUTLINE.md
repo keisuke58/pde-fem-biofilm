@@ -20,13 +20,14 @@ biomass, verification in two implementations, and what the composition does to g
 | Felix Klempt (IKM) | the growth model (Klempt et al. 2024) and the point model (Klempt et al. 2026) | co-author? his unpublished two-species work stays out |
 | Dr. Meisam Soleimani (IKM) | supervision, model (Klempt 2024 co-author) | co-author |
 | Prof. Junker (IKM) | head of the institute, Klempt 2024/2026 co-author | ask Meisam whether to include |
-| Assoc. Prof. Mayu Muramatsu (Keio) | Keio supervisor | co-author (the user, 21 Oct); consent asked on 2 Nov; matters for the Keio master (single-author rule of the report: a co-authored paper is cited, not used as the report basis) |
+| Assoc. Prof. Mayu Muramatsu (Keio) | Keio supervisor | co-author (the user, 21 Oct); consent asked on 2 Nov; matters for the Keio master (the report is single-author and cites this paper in a footnote; not a reason to drop co-authors; was: a co-authored paper is cited, not used as the report basis) |
 
 Proposed authors (the user, 29 Oct: these six; to agree with Meisam in Jan 2027): K. Nishioka, Oliver [surname],
 F. Klempt, M. Muramatsu, M. Soleimani, P. Junker.
 
-Open: the Keio 課題研究報告 says a report "based on a submitted or published single-author paper" must state it; a
-co-authored paper is still fine to publish, but check with Assoc. Prof. Muramatsu how it counts for the Keio side.
+Keio 課題研究報告 (K-LMS wording, checked 7 Nov 2026): the report is single-author; if it reports the content of a
+paper planned, submitted, accepted or published, the paper's details go into the report (e.g. a footnote). So this
+co-authored paper can be the basis of the report, with a footnote (done in `keio_report/`, 7 Nov).
 Felix's confidential two-species theory and code are not used; only the published 2024 and 2026 models.
 
 ## Target journals (in order)
