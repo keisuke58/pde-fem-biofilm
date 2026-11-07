@@ -33,12 +33,12 @@
 
 % ***** 日本語タイトル *****
 \title{
-Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と\\
-有限要素成長解析への組み込み
+拡張 Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と\\
+連続体成長モデルとの連成
 }
 \endtitle{
-Bayesian Calibration of a Hamilton-Principle Multi-Species Biofilm Model\\
-and its Coupling into a Finite Element Growth Framework
+Bayesian Calibration of an Extended-Hamilton-Principle Multi-Species Biofilm Model\\
+and its Coupling to a Continuum Growth Model
 }
 
 \author{%
@@ -462,6 +462,38 @@ ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入っ�
     A の割合，生きている量 $\sum_i\bar\phi_i$，栄養 $c$，抗菌薬 $a$，von Mises 応力．}
   \label{fig:3d}
 \end{figure*}
+
+\subsection{制限関数，局所細分化，形状（2026 年 11 月）}
+
+前線の項の 2 次の扱いには傾きの制限関数が要る．minmod，van Leer，MC，superbee の 4 つを
+$32^3$--$192^3$ で比べると，混ぜた例の応力の GCI は順に 41，22，31，4.6\% であり，
+数値拡散の最も小さい superbee だけが漸近域に入った（$256^3$ を加えた $128^3$--$256^3$ で 6.3\%）．
+5 次の WENO 再構成も試したが，$192^3$ までの GCI は 18\% で superbee に及ばない．
+成長 $\alpha-1$ はどの制限関数でも 0.2--4.3\% で収束する．
+
+細かい格子の計算時間を抑えるため，前線の近くだけを細かくする 2 段の局所細分化を作った．
+栄養は粗い格子と細かい格子を合わせた一つの系で解き，境界の流束を合わせ（reflux），
+細かい格子では時間刻みも分けて進め，点モデルは細かいセルで動かす．
+$128^3$ を土台とする $256^3$ 相当の計算は，一様な $256^3$ の応力に 0.1\%（superbee）で一致した．
+3 段にすると，前線の尾（$\phi$ が $10^{-4}$--$0.2$ の範囲）を細かく保つ条件を加えても 2--3\% の差が残る．
+
+Klempt 2024 の剛な 4 本の柱を置くと，種子の応力は柱のない場合の約 8 倍（分けた例），7 倍（混ぜた例）になる．
+minmod では格子とともに上がり続けた（GCI 12\%，43\%）が，superbee では 4.5\%，5.3\% で収束した．
+応力の格子を $16^3$ から $32^3$ にしても 3\% しか変わらないので，上昇の原因は柱の近くの場である．
+
+菌種 B の置き方を変えた例（図\,\ref{fig:asym}）では，種子の組成と成長はほとんど変わらないが，
+応力は対称の例より 17\%，27\% 低い（$128^3$）．ただしこの 2 例は始めのバイオフィルムの量も 25--31\% 少ない．
+同じ位置・同じ量のまま B を A に替えると応力は 8\% 高くなる（$128^3$）．
+バイオフィルムがどこにどれだけあるかと，それがどの菌種かの両方が，種子の組成よりずっと大きく応力を変える．
+非対称の例の差は $64^3$ から $128^3$ で縮んでおり，まだ格子に収束していない．
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_asymmetric_starts.png}
+  \caption{\textbf{菌種 B の置き方}（分けた例，抗菌薬あり，$64^3$）．上から対称，辺に 1 本（種子を $-x$ へ 1 要素），角に 1 つ．
+    (a) 始めの配置と境界条件，(b) $T^*=1$ の成長 $\alpha-1$，(c) $z=0$ 断面の von Mises 応力（白線が種子）．}
+  \label{fig:asym}
+\end{figure}
 
 \subsection{較正した 5 菌種の組み込み}
 

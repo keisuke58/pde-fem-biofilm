@@ -4,7 +4,15 @@
 
 ## 題目
 
-Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と有限要素成長解析への組み込み
+拡張 Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と連続体成長モデルとの連成
+（Bayesian Calibration of an Extended-Hamilton-Principle Multi-Species Biofilm Model and its Coupling to a Continuum Growth Model）
+— 7 Nov に報告書に入れた（旧：「…と有限要素成長解析への組み込み」）．
+
+ほかの案（先生と相談）：
+- 拡張 Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と有限要素による成長・応力解析
+  （Bayesian Calibration of a Multi-Species Biofilm Model and Finite Element Analysis of Growth and Stress）
+- 多菌種バイオフィルムの点モデルの Bayes 推定と三次元成長場との連成解析
+  （Bayesian Calibration of a Multi-Species Biofilm Point Model and its Coupling to a Three-Dimensional Growth Field）
 
 ## 要旨（案）
 
@@ -20,13 +28,14 @@ JAX による GPU 計算で CPU の約 150 倍の速さとなり，各段を 3 �
 成長と組成は格子を細かくすると数 % 以内に収束し，応力は前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の
 2 次の扱いで GCI 1.4 %（分けた例），6.3 %（混ぜた例）で求まった．力学は一方向の連成であり，結果は検証済みだが実験との照合はしていない．
 
-## 構成（今の 7 ページのまま）
+## 構成（7 ページ）
 
 1. 研究背景・目的（Heine らの実験，点モデルと場のモデル）
 2. 多菌種バイオフィルム連続体モデル（Klempt 2024，拡張 Hamilton 原理，支配方程式）
 3. GPU 加速 TMCMC による相互作用の推定（データ，尤度，4 段階）
 4. 推定結果（フィット，データが決める相互作用，推定に使っていないデータでの確認）
-5. 有限要素への組み込み（ANSYS 材料ルーチン，点モデルとの連成，2 菌種と抗菌薬，格子収束）
+5. 有限要素への組み込み（ANSYS 材料ルーチン，点モデルとの連成，2 菌種と抗菌薬，格子収束，
+   11 月の結果：制限関数，局所細分化，剛な柱，菌種 B の置き方）
 6. 結論
 
 ## 5 分の録画（案）
@@ -41,6 +50,7 @@ JAX による GPU 計算で CPU の約 150 倍の速さとなり，各段を 3 �
 
 ## 先生に確かめたいこと
 
+- 題目（上の 3 案）．
 - 推定と連成の 2 本柱のままでよいか（どちらかに絞るか）．
 - 単著にして先生を謝辞に移したこと，脚注の書き方（「K. Nishioka ほか」でよいか，共著者を全員書くか）でよいか．
 - 連成の論文は仮題・投稿予定のまま書いてよいか．
