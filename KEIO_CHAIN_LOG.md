@@ -1300,3 +1300,26 @@ step against 5.5 min at 128^3 (x7.6, plausible for 3.4 times the cells), not '11
 of the solver, not committed) also showed the full-domain AMG-CG is fine at 192^3: about 20 CG iterations per solve, no
 fallback to the direct solve, setup 27 s and CG 39 s against 6 s and 10 s at 128^3. Both runs were resumed from their
 checkpoints (steps 25 and 26) with the same options; their table follows when they finish.
+
+## 2026-11-07/08: part 9 at 192^3 (fifa addition with the user's OK, 7 Nov; not in the instructions)
+
+Same commands as part 9 with `--nf 192` (asymmetric: full domain, `--amg`; symmetric: `--fast`); 4 cores each, `ECO_THREADS=4`.
+
+| run | vM 64 / 128 / 192^3 [1e-4 Pa] | vs symmetric 64 / 128 / 192^3 | vM 64/128/192^3: p, extrapolated, GCI | wall, peak RSS (192^3) |
+| --- | --- | --- | --- | --- |
+| B along one edge | 3.940 / 4.872 / 5.168 | -30.7 % / -17.4 % / -13.4 % | p 1.08, 5.7062e-04, GCI 13.0 % | ? |
+| B in one corner | 3.412 / 4.291 / 4.598 | -40.0 % / -27.3 % / -22.9 % | p 0.92, 5.2792e-04, GCI 18.5 % | ? |
+| symmetric | 5.687 / 5.901 / 5.967 | - | p 1.14, 6.0784e-04, GCI 2.3 % | 3:32:05, 3.22 GB |
+
+Difference of the extrapolated values to the symmetric one: B along one edge -6.1 %, B in one corner -13.1 %.
+
+## 2026-11-08: CLOUD_TO_FIFA 7 Nov part 10, B started as A at 192^3 (fifa)
+
+`--nf 192 --fast $B --transient-c 1e8 --b-as-a --only separate_ab`, one PBS job, 4 cores, `ECO_THREADS=4`.
+
+| run | grid | sum phibar | share A | c | alpha - 1 | vM [Pa] | int phi_3D dV at T* = 1 [mm^3] | vM vs symmetric | wall, peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| B as A | 64^3 | 0.1309 | 0.9484 | 0.9068 | 9.0771e-04 | 6.4996e-04 | 7.5927 | +14.3 % |  |
+| symmetric | 64^3 | 0.1516 | 0.9511 | 0.9114 | 8.9517e-04 | 5.6871e-04 | 7.2351 | - |  |
+| B as A | 192^3 | 0.1323 | 0.9486 | 0.9079 | 9.2247e-04 | 6.3574e-04 | 7.5806 | +6.5 % | 3:55:18, 3.20 GB |
+| symmetric | 192^3 | 0.1521 | 0.9512 | 0.9110 | 9.2132e-04 | 5.9666e-04 | 7.4262 | - |  |
