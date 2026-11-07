@@ -4,27 +4,27 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
-## 2026年11月7日 その 11（実形状：大臼歯の冠の格子の列。今の標準の設定で。その 9・10 と並べてよい，同時 3 本まで）
+## 2026年11月7日 その 11（書き直し，7 Nov 夜）：歯頸部の窓の格子の列。最初に書いた 10 mm の冠の列は取りやめ（回さない）
 
-`git pull origin claude/plan-next-hxjjve`（`real_tooth_coupled.py` に `--opts` を足した）のあと `cd ansys_usermat/apdl`。
-論文の冠の例（40³・80³，minmod，dc/dt なし）を，今の標準（`--transient-c 1e8`，superbee）で 80³・120³・160³ に揃える。
-箱は 10 mm（h = 0.125，0.083，0.0625 mm），外側の刻みは論文と同じ既定 0.025（`--dtc` なし），全領域 `--amg`。
-40³ はクラウドで回している。1 本 4 スレッド。160³ は 192³ の全領域（10.9 GB，42 分/刻み × 40）より小さく，16 時間前後の見込み。
+`git pull origin claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`。冠の例は，実寸の歯頸部の窓（一辺 300 µm，Klempt 2024 Table 2 の定数を
+実寸で，始めの膜 20 µm，唾液はよく混ざったものとして φ₃D < 0.05 で c = 1）に変えた。設定は `papers/coupling_paper/REAL_TOOTH_WINDOW.ja.md`，
+結果は `results/2026-10-3d/TOOTH_WINDOW.md`（64³・128³ はクラウドで済み）。192³ の混合・抗菌薬ありはクラウドで回している。
+fifa には残りの 192³ 2 本と 256³ 1 本を頼む。1 本 4 スレッド，同時 3 本まで（その 9・10 と並べてよい）。
 
 ```
-T="--front 1 --phi-min 0.001 --v2 --fortran --inherit-living --alpha0 100 --gab 1 --gc 1 --tab 0.333333 --tvd --limiter superbee --transient-c 1e8 --obstacle stl --box 10 --amg"
-for N in 80 120 160; do ECO_THREADS=4 python3 coupled_living_consumption.py --nf $N $T --only tooth_ab; done   # 3 本を別ジョブで並べてよい
-ECO_THREADS=4 python3 coupled_living_consumption.py --nf 80 $T --only tooth      # 抗菌薬なし，80³ だけ
-# 応力（バイオフィルムだけを切り出した下位モデル，h = h_f と 2 h_f）：場が終わったものから
-O=front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_superbee_wgmirror_obststl_box10_amg
-for N in 80 120 160; do python3 real_tooth_coupled.py --nf $N --opts $O --cases tooth_ab; done
-python3 real_tooth_coupled.py --nf 80 --opts $O --cases tooth
+W="--front 1 --phi-min 0.001 --v2 --fortran --inherit-living --alpha0 100 --gab 1 --gc 1 --tab 0.333333 --tvd --limiter superbee --transient-c 1e8 --amg --obstacle stl --stl-scale 100 --box 30 --saliva-mixed 0.05"
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 192 $W --window layered --only window_ab    # 約 1.3 h，7 GB
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 192 $W --window mixed --only window         # 抗菌薬なし
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 256 $W --window mixed --only window_ab      # 4〜5 h，17 GB 前後の見込み
+# 応力（場が終わったものから）
+O=front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_superbee_wgmirror_obststl_win%s_stlx100_salmix0.05_box30_amg
+python3 real_tooth_coupled.py --window --nf 192 --box 30 --cases window_ab --ratios 1,2 --opts $(printf $O layered)
+python3 real_tooth_coupled.py --window --nf 192 --box 30 --cases window --ratios 1,2 --opts $(printf $O mixed)
+python3 real_tooth_coupled.py --window --nf 256 --box 30 --cases window_ab --ratios 2 --opts $(printf $O mixed)   # h_f が重ければ 2 h_f だけ
 ```
 
-- 160³ の応力（h = h_f）が重すぎれば `--ratios 2` だけでよい。
-- 報告：格子ごとにバイオフィルムの平均（A の割合，Σᵢφ̄ᵢ，c，a，α − 1，von Mises）を T* = 1/3 と 1 で，80/120/160³ の次数・外挿・GCI（α − 1 と vM），
-  時間とメモリの最大。JSON は `results/2026-10-3d/`（場）と `real_tooth_coupled_transc1e+08_tvd_superbee_wgmirror_obststl_box10_amg.json`（応力）。
-  `figdata/*.npz` は push しない。
+- 報告：`TOOTH_WINDOW.md` の表と同じ列（A の割合，Σᵢφ̄ᵢ，c，a，α − 1，厚さ，von Mises）を T* = 0.35 と 1 で，64/128/192³（と 128/192/256³）の次数・外挿・GCI，
+  時間とメモリの最大。JSON は push，`figdata/*.npz` は push しない。
 
 ---
 
