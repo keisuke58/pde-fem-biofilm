@@ -78,6 +78,12 @@ Biofilm, Hamilton's Principle, TMCMC, Bayesian Inference, Growth Mechanics,
 Finite Element Method, ANSYS User Material
 }
 
+% 図のまわりの余白を詰める（7 Nov）
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{3pt}
 \begin{document}
 
 \renewcommand{\myaffil}{%
@@ -104,14 +110,11 @@ Day 1/3/6/10/15/21 の菌種別体積分率を CLSM 定量化した．
 疾患型 HOBIC 条件（DH）では
 病原性 \textit{Pg}（W83 株）が後期に急増する
 インプラント周囲炎型サージが観察されたが，
-その力学機構---すなわち菌種間の相互促進・競合の強度と符号---は
-実験データのみからは直接決定できない\cite{heine2025}．
-
-\textbf{本研究の問い：}
-Heine ら観測データから，5 菌種の相互作用を記述する
-対称行列 $\mathbf{A}\in\mathbb{R}^{5\times5}$ の 15 パラメータを
-定量的に推定できるか？またその事後分布から
-Commensal/Dysbiotic 間でどのような力学的差異が浮かび上がるか？
+その仕組み，すなわち菌種間の促進と競合の強さと符号は，
+実験データだけからは直接決められない\cite{heine2025}．
+そこで本研究では，Heine らの観測データから，5 菌種の相互作用を表す
+対称行列 $\mathbf{A}\in\mathbb{R}^{5\times5}$ の 15 成分をどこまで推定できるか，
+また共生と疾患型の条件でその推定値がどう違うかを調べる．
 
 \subsection{アプローチ}
 
@@ -140,7 +143,7 @@ Klempt ら\cite{klempt2026}は拡張ハミルトン原理\cite{junker2021}の
         バイオフィルムの有限要素に組み込む（第 6 節）
     \item 点モデルを各 Gauss 点で動かし，栄養と抗菌薬で場と結ぶ（第 6 節）
 \end{enumerate}
-本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 10 月提出）の内容に基づく．
+本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 12 月提出予定）の内容に基づく．
 
 %%=================================================================
 \section{多種バイオフィルム連続体モデル}
