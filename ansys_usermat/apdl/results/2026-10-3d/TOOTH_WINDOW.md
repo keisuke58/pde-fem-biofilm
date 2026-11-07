@@ -137,3 +137,108 @@ zero flux and u_z = 0 on the gingiva face z = -W/2; the crown rigid (u = 0), no 
 x < 0, y < 0, z > 0 is removed; z is vertical (the camera of the cube examples with y and z exchanged, so that the open
 side faces the viewer). (c) The layered start: species A on the inner 10 um, B on the outer 10 um. (d) The section
 y = 0 at T* = 0 with the boundary conditions on its edges; scale bar 100 um.
+
+---
+
+# Variant 2 (7 Nov 2026, the user's decision): the saliva well mixed, `--saliva-mixed 0.05`
+
+The results above hold the nutrient only on the face x = -W/2 (variant 1, diffusion through 280 um of still
+saliva; kept for comparison). The paper uses this variant: the saliva is well mixed, so at the start of every outer
+step the open cells (not tooth) with phi_3D < phi_s = 0.05 hold c = 1 and, from T* = 1/3, a = 1 (Dirichlet cells, the
+fixed-cell mechanism of `--ansys-bc`), in addition to the face x = -W/2. A boundary condition that follows the film
+surface; the equations are unchanged. Tag `_salmix0.05` (`hist["saliva_mixed"]`, `hist["saliva_cells"]` per step).
+The AMG hierarchy of the field solves is rebuilt whenever the fixed set changes (every outer step here).
+
+    python ansys_usermat/apdl/coupled_living_consumption.py --nf 64 --front 1 --phi-min 0.001 --v2 --fortran \
+        --inherit-living --alpha0 100 --gab 1 --gc 1 --tab 0.333333 --tvd --limiter superbee --transient-c 1e8 --amg \
+        --obstacle stl --stl-scale 100 --box 30 --saliva-mixed 0.05 --window mixed --only window_ab
+    python ansys_usermat/apdl/real_tooth_coupled.py --window --nf 64 --box 30 --cases window_ab \
+        --opts front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_superbee_wgmirror_obststl_winmixed_stlx100_salmix0.05_box30_amg
+    python ansys_usermat/apdl/fig_tooth_window_section.py --nf 64 --window mixed --saliva-mixed 0.05 [--case window]
+        -> assets/fig_tooth_window_section_<comp>_nf<NF>_salmix0.05[_noab].png
+
+**phi_s sensitivity (64^3, mixed with antibiotic, T* = 1):** phi_s = 0.05: thickness 61.4 um, living 0.201, c 0.224,
+share A 0.606, film vM 13.11 mPa; phi_s = 0.01: 60.0 um, 0.191, 0.221, 0.594, 13.21 mPa, i.e. 2 % in the thickness and
+5 % in the living fraction (the cells between phi = 0.01 and 0.05 are the outermost layer of the front, where the
+nutrient is already 0.85). phi_s = 0.05 is used (the same threshold as the dropped elements of the stress mesh).
+
+**Does the film feel the saliva face?** No. At T* = 1 the film (phi_3D > 0.5) is 61 um thick (max 70 um) and the
+colonised front (phi_3D > 0.05) reaches 74 um from the crown; the saliva face is 150-180 um from the crown. The front
+is diffuse (phi decays from 0.5 to 0.05 over about 15-25 um); the stress mesh (phi > 0.05) extends to the front. No
+W = 400 um run was needed. The front moves at 30-40 um/T* (not 100 um/T*): c at the phi = 0.5 cells is 0.5-0.6 (0.76 in
+the front cells, 0.2 in the film), so r c/(k + c) is 3-4 mm/T* there, and the thickness is measured at phi = 0.5.
+
+## Numbers, variant 2 (film = phi_3D > 0.5 and not tooth; thickness by column count; stress h = h_f, [2 h_f])
+
+| run | T* | film cells | share A | sum phibar | c (min) | a | alpha - 1 | thickness um (min-max) | vM film [mPa] | vM p95 / max |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 64^3 mixed, antibiotic | 0.35 | 30 963 | 0.492 | 0.653 | 0.214 (0.037) | 0.208 | 2.8e-4 | 35.4 (32.8-42.2) | 5.34 [4.72] | 8.27 / 12.5 |
+| 64^3 mixed, antibiotic | 1 | 53 676 | 0.606 | 0.201 | 0.224 (0.120) | 0.217 | 6.7e-4 | 61.4 (56.2-70.3) | 13.11 [12.14] | 22.7 / 34.4 |
+| 64^3 layered, antibiotic | 0.35 | 30 958 | 0.301 | 0.714 | 0.211 (0.034) | 0.205 | 2.8e-4 | 35.4 (32.8-42.2) | 5.33 [4.72] | 8.27 / 12.5 |
+| 64^3 layered, antibiotic | 1 | 52 125 | 0.195 | 0.307 | 0.198 (0.013) | 0.195 | 6.7e-4 | 59.7 (46.9-70.3) | 12.69 [11.70] | 22.8 / 34.7 |
+| 64^3 mixed, no antibiotic | 0.35 | 30 963 | 0.503 | 0.741 | 0.214 (0.037) | 0 | 2.8e-4 | 35.4 (32.8-42.2) | 5.34 [4.72] | 8.27 / 12.5 |
+| 64^3 mixed, no antibiotic | 1 | 47 881 | 0.556 | 0.808 | 0.062 (0.002) | 0 | 7.0e-4 | 54.8 (46.9-65.6) | 13.06 [11.98] | 22.9 / 34.9 |
+| 128^3 mixed, antibiotic | 0.35 | 257 930 | 0.497 | 0.677 | 0.237 (0.036) | 0.234 | 2.7e-4 | 36.9 (32.8-42.2) | 5.32 [5.04] | 7.85 / 12.0 |
+| 128^3 mixed, antibiotic | 1 | 449 476 | 0.647 | 0.284 | 0.195 (0.085) | 0.192 | 6.6e-4 | 64.3 (58.6-75.0) | 13.03 [12.57] | 21.6 / 34.0 |
+| 128^3 layered, antibiotic | 0.35 | 257 607 | 0.288 | 0.745 | 0.234 (0.033) | 0.231 | 2.7e-4 | 36.9 (32.8-42.2) | 5.32 [5.04] | 7.85 / 12.0 |
+| 128^3 layered, antibiotic | 1 | 446 978 | 0.183 | 0.321 | 0.224 (0.011) | 0.223 | 6.6e-4 | 63.9 (53.9-75.0) | 12.81 [12.35] | 21.6 / 34.0 |
+| 128^3 mixed, no antibiotic | 0.35 | 257 930 | 0.509 | 0.769 | 0.237 (0.036) | 0 | 2.7e-04 | 36.9 (32.8-42.2) | 5.32 [5.04] | 7.9 / 12.0 |
+| 128^3 mixed, no antibiotic | 1 | 422 140 | 0.583 | 0.827 | 0.087 (0.002) | 0 | 6.8e-04 | 60.4 (49.2-70.3) | 13.03 [12.55] | 21.7 / 34.0 |
+
+Von Mises by distance from the crown at T* = 1 (mixed with antibiotic): 64^3 21.3 / 19.6 / 17.0 / 12.1 / 6.8 / 2.0 mPa,
+128^3 20.5 / 19.8 / 17.4 / 12.9 / 8.2 / 2.8 mPa for 0-10 / 10-20 / ... / 50-60 um: the old layers (first 30 um) carry
+alpha - 1 and 17-21 mPa, the new ones little. The maximum sits at the bottom corner of the window where the roller faces
+y = -W/2 and z = -W/2 meet the crown (a model corner), as in variant 1.
+
+**64^3 vs 128^3 (T* = 1):** thickness 61.4 -> 64.3 um (mixed, +5 %), 59.7 -> 63.9 (layered), 54.8 -> 60 (no
+antibiotic); film vM 13.11 -> 13.03 mPa (-1 %), 12.69 -> 12.81 (layered); living fraction 0.20 -> 0.28 (mixed with
+antibiotic), 0.31 -> 0.32 (layered), 0.81 -> 0.83 (no antibiotic); film c 0.224 -> 0.195 (mixed), 0.198 -> 0.224
+(layered), 0.062 -> 0.087 (no antibiotic); share A 0.61 -> 0.65 (mixed), 0.195 -> 0.183 (layered). At the onset
+(T* = 0.35) the two grids agree within 4 % in every column. The thickness and the stress are converged to about 5 %;
+the living fraction of the mixed film with antibiotic (0.20 -> 0.28) is the least converged number (it depends on the
+nutrient in the inner film, depletion length 10 um = 2 cells at 64^3, 4 at 128^3). 192^3 is not run (about 1.3 h per
+run and 7 GB by the scaling of the table below).
+
+Readings (both grids): the layered start keeps the inner A layer living (0.32 at T* = 1 against 0.28 mixed; the inner
+layer's c_min 0.01 against 0.09, the antibiotic reaches it later), the share of A in the film grows with antibiotic in
+the mixed start (0.50 -> 0.65: B dies faster) and falls in the layered start (the outer B layer is colonised first);
+without antibiotic the film stays 0.83 living, consumes the nutrient (c 0.09 in the film) and grows more slowly (60
+against 64 um), the known limitation that the dead film keeps spreading.
+
+**Film thickness over time, 128^3** (as the 64^3 table above):
+
+| run | T* = 0.1 | 0.25 | 0.35 | 0.5 | 0.75 | 1 |
+|---|---|---|---|---|---|---|
+| 128^3 mixed, antibiotic | 25 (0.60) | 33 (0.72) | 37 (0.68) | 43 (0.12) | 55 (0.19) | 64 (0.28) |
+| 128^3 layered, antibiotic | 25 (0.63) | 33 (0.74) | 37 (0.74) | 43 (0.59) | 53 (0.42) | 64 (0.32) |
+| 128^3 mixed, no antibiotic | 25 (0.60) | 33 (0.72) | 37 (0.77) | 43 (0.80) | 52 (0.82) | 60 (0.83) |
+
+## Timing and memory, variant 2 (4 cores, ECO_THREADS=4; the AMG hierarchy rebuilt every outer step)
+
+| grid | run | wall | max RSS |
+|---|---|---|---|
+| 64^3 | mixed, antibiotic | 114 s | 0.67 GB |
+| 64^3 | mixed, antibiotic, phi_s = 0.01 | 98 s | 0.67 GB |
+| 64^3 | layered, antibiotic | 101 s | 0.67 GB |
+| 64^3 | mixed, no antibiotic | 83 s | 0.64 GB |
+| 128^3 | mixed, antibiotic | 1211 s (20 min) | 2.7 GB |
+| 128^3 | layered, antibiotic | 1153 s | 2.7 GB |
+| 128^3 | mixed, no antibiotic | 1079 s | 2.4 GB |
+
+Stress (h = h_f): 64^3 10-16 s (116k-198k dof), 128^3 83-175 s (0.86-1.54 M dof, 50 CG iterations); 2 h_f 1-17 s.
+
+Figures of variant 2: `assets/fig_tooth_window_section_{mixed,layered}_nf{64,128}_salmix0.05.png`,
+`assets/fig_tooth_window_section_mixed_nf{64,128}_salmix0.05_noab.png`; the set-up figure
+`assets/fig_tooth_window_setup.pdf/.png` now names the saliva condition (phi_3D < 0.05 and the face x = -W/2: c = 1,
+a = 1 from T* = 1/3; free). Caption (b): "... c = 1 and, from T* = 1/3, a = 1 in the saliva (the open cells with
+phi_3D < 0.05) and on the face x = -W/2 (free in the mechanics); ..." (the rest as the caption above).
+
+**Film thickness over time** (column count, phi_3D > 0.5, in um; in brackets the film's living fraction sum_i phibar_i;
+start 20 um; the antibiotic from T* = 1/3). For the later comparison with plaque: 15 um at 1 day, 50 um at 7 days
+(Al-Ahmad et al. 2007), so T* = 1 of this run corresponds to a few days of growth from a 1-day film.
+
+| run | T* = 0.1 | 0.25 | 0.35 | 0.5 | 0.75 | 1 |
+|---|---|---|---|---|---|---|
+| 64^3 mixed, antibiotic | 25 (0.59) | 31 (0.68) | 35 (0.65) | 40 (0.12) | 53 (0.11) | 61 (0.20) |
+| 64^3 layered, antibiotic | 25 (0.62) | 31 (0.71) | 35 (0.71) | 40 (0.58) | 50 (0.41) | 60 (0.31) |
+| 64^3 mixed, no antibiotic | 25 (0.59) | 31 (0.68) | 35 (0.74) | 40 (0.78) | 49 (0.80) | 55 (0.81) |

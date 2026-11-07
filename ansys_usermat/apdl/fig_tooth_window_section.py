@@ -4,8 +4,8 @@ the section y = 0 of a window run (coupled_living_consumption.py --obstacle stl 
 (species A, B of the layered start), (b) phi_3D at T* = 1 (and the film at the antibiotic onset as a contour),
 (c) von Mises stress of the film at T* = 1 (h = h_f). Lengths in um (1 code mm = 10 um). Times (figstyle), no title.
 
-    python ansys_usermat/apdl/fig_tooth_window_section.py --nf 64 --window mixed [--case window_ab] [--opts <tag>]
-        -> assets/fig_tooth_window_section_<window>_nf<NF>[_noab].png
+    python ansys_usermat/apdl/fig_tooth_window_section.py --nf 64 --window mixed [--case window_ab] [--saliva-mixed 0.05] [--box 30] [--opts <tag>]
+        -> assets/fig_tooth_window_section_<window>_nf<NF>[_salmix<PHI_S>][_box<B>][_noab].png
 """
 import sys
 from pathlib import Path
@@ -33,8 +33,9 @@ NF = _opt("--nf", 64, int)
 WINDOW = _opt("--window", "mixed", str)
 CASE = _opt("--case", "window_ab", str)
 BOX = _opt("--box", 30.0)
+SAL = _opt("--saliva-mixed", None)               # the runs with the well-mixed saliva (tag _salmix<PHI_S>)
 OPTS = _opt("--opts", "front1_phimin0.001_v2_fortran_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_superbee_wgmirror"
-            f"_obststl_win{WINDOW}_stlx100_box30_amg", str)
+            f"_obststl_win{WINDOW}_stlx100{'' if SAL is None else f'_salmix{SAL:g}'}_box{BOX:g}_amg", str)
 UM = 10.0                                            # um per code mm
 Z = np.load(ROOT / "figdata" / f"coupled_living_{CASE}_nf{NF}_{OPTS}_{CASE}.npz")
 times = sorted({float(f.split("_", 1)[1]) for f in Z.files if f.startswith("phi_")})
@@ -84,6 +85,6 @@ vmax = float(np.ceil(np.nanpercentile(vm, 99)))
 im = ax.pcolormesh(ev[0], ev[2], vm[:, jv, :].T, cmap="magma_r", vmin=0, vmax=vmax, shading="flat", rasterized=True)
 fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03, label=r"$\sigma_\mathrm{vM}$ [mPa]")
 ax.set_title(f"(c) von Mises at $T^* = {T_END:g}$", fontsize=8, loc="left")
-out = ROOT / "assets" / f"fig_tooth_window_section_{WINDOW}_nf{NF}{'' if CASE.endswith('_ab') else '_noab'}.png"
+out = ROOT / "assets" / f"fig_tooth_window_section_{WINDOW}_nf{NF}{'' if SAL is None else f'_salmix{SAL:g}'}{'' if BOX == 30 else f'_box{BOX:g}'}{'' if CASE.endswith('_ab') else '_noab'}.png"
 fig.savefig(out, dpi=300)
 print("wrote", out)

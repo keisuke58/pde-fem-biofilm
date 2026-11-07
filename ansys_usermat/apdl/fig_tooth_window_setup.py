@@ -5,7 +5,8 @@ solver itself (the module is imported with the run's options; crown_mesh, SDF, O
 
 (a) the crown (tier2b_real/_crown_real_watertight.stl, Open-Full-Jaw, Gholamalizadeh et al. 2022) with the window
     at the cervical -x flank; (b) the window in 3D: the crown (voxel body of the field grid) in grey, the start film
-    of the mixed start, the octant x < 0, y < 0, z > 0 removed, the faces with their boundary conditions; (c) the
+    of the mixed start, the octant x < 0, y < 0, z > 0 removed, the faces with their boundary conditions (the saliva,
+    the open cells with phi_3D < 0.05 (--saliva-mixed 0.05) and the face x = -W/2, holds c = 1 and a = 1); (c) the
     layered start (A on the inner half, B on the outer half); (d) the section y = 0 at the start with the boundary
     conditions on the edges. Lengths in um (1 code mm = 10 um). The solver's z is vertical and is drawn up: the
     camera of the cube examples ((3.6, 2.6, 4.4) with y up) with y and z exchanged and x, y mirrored, so that the
@@ -169,7 +170,7 @@ ax.imshow(RB.img, interpolation="none"); ax.set_axis_off()
 ax.text(-0.25, 1.0, "(b)", transform=ax.transAxes, va="bottom", fontsize=8)
 lab = dict(fontsize=7, ha="center", va="center", textcoords="axes fraction", annotation_clip=False)
 arr = dict(arrowstyle="-|>", lw=0.7, color="0.25", shrinkB=2)
-ax.annotate("saliva face $x=-W/2$:\n$c=1$, $a=1$ from $T^*=1/3$;\nfree", xy=pb["saliva"], xytext=(-0.17, 0.38),
+ax.annotate("saliva ($\\phi_{3D}<0.05$)\nand the face $x=-W/2$:\n$c=1$, $a=1$ from $T^*=1/3$;\nfree", xy=pb["saliva"], xytext=(-0.17, 0.38),
             arrowprops=arr, color=COL["saliva"], **lab)
 ax.annotate("gingiva $z=-W/2$:\nzero flux, $u_z=0$", xy=pb["gingiva"], xytext=(0.0, -0.08), arrowprops=arr, color="#9c6a35", **lab)
 ax.annotate("cut faces $y=\\pm W/2$:\nzero flux, roller ($u_y=0$)", xy=pb["cut_y"], xytext=(0.62, -0.08),
@@ -203,12 +204,12 @@ ax.spines["top"].set_visible(True); ax.spines["right"].set_visible(True)
 for sp, col in (("left", COL["saliva"]), ("bottom", "#9c6a35"), ("top", COL["cut"])):
     ax.spines[sp].set_color(col); ax.spines[sp].set_linewidth(2.0)
 ax.text(0.0, 1.10, "(d)  section $y=0$, $T^*=0$", transform=ax.transAxes, va="bottom", fontsize=8)
-ax.text(-0.30, 0.5, "$c=1$, $a=1$ ($T^*\\geq 1/3$); free", transform=ax.transAxes, rotation=90, ha="center", va="center",
+ax.text(-0.30, 0.5, "saliva and face: $c=1$, $a=1$ ($T^*\\geq 1/3$); free", transform=ax.transAxes, rotation=90, ha="center", va="center",
         fontsize=7, color=COL["saliva"])
 ax.text(0.5, -0.18, "gingiva: zero flux, $u_z=0$", transform=ax.transAxes, ha="center", va="top", fontsize=7, color="#9c6a35")
 ax.text(0.5, 1.02, "cut: zero flux, $u_z=0$", transform=ax.transAxes, ha="center", va="bottom", fontsize=7, color=COL["cut"])
 ax.text(85, 60, "crown\nrigid, no flux", fontsize=7, ha="center", va="center", color="0.3")
-ax.text(-95, 60, "saliva", fontsize=7, ha="center", va="center", color="0.3")
+ax.text(-82, 85, "saliva\n($\\phi_{3D}<0.05$: $c=1$)", fontsize=7, ha="center", va="center", color="0.3")
 ax.text(-60, -95, "film\n20 $\\mu$m", fontsize=7, ha="right", va="center", color="0.2")
 ax.annotate("", xy=(-10, -95), xytext=(-55, -95), arrowprops=dict(arrowstyle="-|>", lw=0.6, color="0.2"))
 ax.plot([-140, -40], [-138, -138], color="k", lw=1.5); ax.text(-90, -132, "100 $\\mu$m", fontsize=7, ha="center", va="bottom")

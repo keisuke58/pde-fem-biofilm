@@ -337,6 +337,11 @@ assert WINDOW in (None, "mixed", "layered"), f"--window takes mixed or layered, 
 STL_SCALE = _opt("--stl-scale", 1.0)
 FILM_H0 = _opt("--film-h0", 2.0)
 WIN_INFO = {}                                # placement of the window on the crown (filled by crown_mesh)
+# --saliva-mixed PHI_S (7 Nov 2026, the user's decision: the saliva is well mixed): at the start of every outer step the
+# open cells (not tooth) with phi_3D < PHI_S are saliva and hold c = 1 and, from the onset, a = 1 (Dirichlet cells, the
+# fixed-cell mechanism of --ansys-bc), in addition to the face x = -BOX/2. A boundary condition that follows the film
+# surface; the equations are unchanged. Window example only.
+SALIVA_MIXED = _opt("--saliva-mixed", None)
 AMG = "--amg" in sys.argv                   # AMG-preconditioned CG for the fields on the full domain (as --fast without the symmetry)
 H = BOX / NF
 NM = NM if NF % NM == 0 else NF              # stress mesh 16^3 when it divides the field grid, else the field grid (8^3, 24^3)
@@ -474,7 +479,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
        + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("_basa" if B_AS_A else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
-       + ("" if not WINDOW else f"_win{WINDOW}") + ("" if STL_SCALE == 1.0 else f"_stlx{STL_SCALE:g}") + ("" if "--film-h0" not in sys.argv else f"_filmh0{FILM_H0:g}")
+       + ("" if not WINDOW else f"_win{WINDOW}") + ("" if STL_SCALE == 1.0 else f"_stlx{STL_SCALE:g}") + ("" if "--film-h0" not in sys.argv else f"_filmh0{FILM_H0:g}") + ("" if SALIVA_MIXED is None else f"_salmix{SALIVA_MIXED:g}")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -909,6 +914,8 @@ class Reaction:
         Aff = A[fr][:, fr].tocsr()
         rhs = b[fr] - A[fr][:, f] @ x[f] if f.any() else b[fr]
         self._n = getattr(self, "_n", 0) + 1
+        if getattr(self, "_fmask", None) is None or not np.array_equal(self._fmask, f):   # the fixed cells changed
+            self._fmask, self._ml, self._last = f.copy(), None, None                         # (--saliva-mixed): rebuild
         if getattr(self, "_ml", None) is None or self._n % 25 == 1:
             self._ml = pyamg.smoothed_aggregation_solver(Aff, symmetry="symmetric")
         x0 = getattr(self, "_last", None)
@@ -1094,6 +1101,17 @@ def run(example, antibiotic):
     if MMS:
         L = np.ones_like(phi)
     src_c = (lambda tt: S_c(X, Y, Z, tt)) if MMS else (lambda tt: None)
+
+    def saliva(hist=None):
+        """--saliva-mixed: the open cells below PHI_S hold c = 1 (a = 1 after the onset) during the next outer step"""
+        if SALIVA_MIXED is None:
+            return
+        assert example == "window", "--saliva-mixed is an option of the window example"
+        sal = (phi < SALIVA_MIXED) & ~OBST
+        nut.fixed = ab.fixed = sal
+        if hist is not None:
+            hist.setdefault("saliva_cells", []).append(int(sal.sum()))
+    saliva()
     c = nut.solve(phi, L, c_supply(0.0), src=src_c(0.0))
     a = ab.solve(phi, L, 1.0) if (antibiotic and T_AB < 0) else np.zeros_like(phi)
     lap = np.empty_like(phi)
@@ -1139,8 +1157,12 @@ def run(example, antibiotic):
             k0 = int(z["k_done"]) + 1
         print(f"[{example}, antibiotic {antibiotic}] resumed from the checkpoint after step {k0}", flush=True)
     t_ck = time.time()
+    if SALIVA_MIXED is not None:
+        hist["saliva_mixed"] = dict(phi_s=SALIVA_MIXED, rule="open cells with phi_3D < phi_s at the start of the outer step "
+                                    "hold c = 1 and a = 1 (after the onset), plus the face x = -BOX/2")
     for k in range(k0, int(round(T_END / DT_C))):
         T1 = (k + 1) * DT_C
+        saliva(hist)
         # --picard N (A-89): solve the outer step N times; from the second pass on, the fields use the mean of the
         # living fraction at the start and at the end of the step (trapezoid) instead of the start value alone
         if PICARD > 1:
