@@ -1312,3 +1312,14 @@ Same commands as part 9 with `--nf 192` (asymmetric: full domain, `--amg`; symme
 | symmetric | 5.687 / 5.901 / 5.967 | - | p 1.14, 6.0784e-04, GCI 2.3 % | 3:32:05, 3.22 GB |
 
 Difference of the extrapolated values to the symmetric one: B along one edge -6.1 %, B in one corner -13.1 %.
+
+## 2026-11-08: CLOUD_TO_FIFA 7 Nov part 10, B started as A at 192^3 (fifa)
+
+`--nf 192 --fast $B --transient-c 1e8 --b-as-a --only separate_ab`, one PBS job, 4 cores, `ECO_THREADS=4`.
+
+| run | grid | sum phibar | share A | c | alpha - 1 | vM [Pa] | int phi_3D dV at T* = 1 [mm^3] | vM vs symmetric | wall, peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| B as A | 64^3 | 0.1309 | 0.9484 | 0.9068 | 9.0771e-04 | 6.4996e-04 | 7.5927 | +14.3 % |  |
+| symmetric | 64^3 | 0.1516 | 0.9511 | 0.9114 | 8.9517e-04 | 5.6871e-04 | 7.2351 | - |  |
+| B as A | 192^3 | 0.1323 | 0.9486 | 0.9079 | 9.2247e-04 | 6.3574e-04 | 7.5806 | +6.5 % | 3:55:18, 3.20 GB |
+| symmetric | 192^3 | 0.1521 | 0.9512 | 0.9110 | 9.2132e-04 | 5.9666e-04 | 7.4262 | - |  |
