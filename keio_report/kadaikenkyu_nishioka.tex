@@ -6,7 +6,7 @@
 \urlstyle{rm}
 
 \usepackage{amsmath,times,txfonts,bm}
-\usepackage[ipaex]{pxchfon}          % 和文: IPAex 明朝・ゴシック
+\usepackage[haranoaji]{pxchfon}      % 和文: 原ノ味明朝・角ゴシック（OpenType，文字の対応表つきで埋め込む）
 \usepackage[scaled=0.92]{helvet}     % 見出しの欧文: Helvetica 系
 \makeatletter                        % 見出しをゴシック・サンセリフの太字に
 \def\section{\@startsection {section}{1}{\z@}{2.5ex plus -.1ex minus -.1ex}{.001ex plus .1ex}{\reset@font\normalsize\gtfamily\sffamily\bfseries}}
@@ -33,12 +33,12 @@
 
 % ***** 日本語タイトル *****
 \title{
-Hamilton 原理に基づく多菌種バイオフィルムモデルの Bayes 推定と\\
-有限要素成長解析への組み込み
+拡張ハミルトン原理に基づく多菌種バイオフィルムモデルの\\
+ベイズ推定と連続体成長モデルとの連成
 }
 \endtitle{
-Bayesian Calibration of a Hamilton-Principle Multi-Species Biofilm Model\\
-and its Coupling into a Finite Element Growth Framework
+Bayesian Calibration of an Extended-Hamilton-Principle Multi-Species Biofilm Model\\
+and its Coupling to a Continuum Growth Model
 }
 
 \author{%
@@ -78,6 +78,12 @@ Biofilm, Hamilton's Principle, TMCMC, Bayesian Inference, Growth Mechanics,
 Finite Element Method, ANSYS User Material
 }
 
+% 図のまわりの余白を詰める（7 Nov）
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{3pt}
 \begin{document}
 
 \renewcommand{\myaffil}{%
@@ -104,18 +110,15 @@ Day 1/3/6/10/15/21 の菌種別体積分率を CLSM 定量化した．
 疾患型 HOBIC 条件（DH）では
 病原性 \textit{Pg}（W83 株）が後期に急増する
 インプラント周囲炎型サージが観察されたが，
-その力学機構---すなわち菌種間の相互促進・競合の強度と符号---は
-実験データのみからは直接決定できない\cite{heine2025}．
-
-\textbf{本研究の問い：}
-Heine ら観測データから，5 菌種の相互作用を記述する
-対称行列 $\mathbf{A}\in\mathbb{R}^{5\times5}$ の 15 パラメータを
-定量的に推定できるか？またその事後分布から
-Commensal/Dysbiotic 間でどのような力学的差異が浮かび上がるか？
+その仕組み，すなわち菌種間の促進と競合の強さと符号は，
+実験データだけからは直接決められない\cite{heine2025}．
+そこで本研究では，Heine らの観測データから，5 菌種の相互作用を表す
+対称行列 $\mathbf{A}\in\mathbb{R}^{5\times5}$ の 15 成分をどこまで推定できるか，
+また共生と疾患型の条件でその推定値がどう違うかを調べる．
 
 \subsection{アプローチ}
 
-Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
+Klempt ら\cite{klempt2026}は拡張ハミルトン原理\cite{junker2021}の
 停留条件 $\delta\mathcal{H}=0$ から，
 菌種の体積分率 $\phi_i$ と生存率 $\psi_i$ が
 相互作用行列 $\mathbf{A}$ を介して連動する材料点モデル（点モデル）を導出した．
@@ -140,7 +143,7 @@ Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
         バイオフィルムの有限要素に組み込む（第 6 節）
     \item 点モデルを各 Gauss 点で動かし，栄養と抗菌薬で場と結ぶ（第 6 節）
 \end{enumerate}
-本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 10 月提出）の内容に基づく．
+本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 12 月提出予定）の内容に基づく．
 
 %%=================================================================
 \section{多種バイオフィルム連続体モデル}
@@ -148,7 +151,7 @@ Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
 
 \subsection{Klempt (2024) の単種有限変形モデル}\label{ssec:klempt24}
 
-Klempt ら\cite{klempt2024}は Hamilton 原理に基づく
+Klempt ら\cite{klempt2024}は ハミルトン原理に基づく
 単種バイオフィルムの有限変形連続体モデルを提案した．
 成長を弾性変形から分離する乗法分解
 \begin{equation}
@@ -167,7 +170,7 @@ Klempt ら\cite{klempt2024}は Hamilton 原理に基づく
   \label{eq:psi_klempt}
 \end{equation}
 と定義した（$\mu$: せん断弾性率，$\bar\beta$: 界面正則化，$\bar k_\alpha$: 成長連成係数）．
-Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）は
+ハミルトン原理の停留条件から得られる支配方程式（Eq.\,34--36）は
 \begin{equation}
   \dot\phi = \beta\nabla^2\phi + k_\alpha\alpha - r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi,\quad
   0 = d\nabla^2 c - g\phi,\quad
@@ -185,10 +188,10 @@ Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）
 Klempt ら\cite{klempt2026}は同じ原理から下節の多菌種の点モデルを導出した．
 本研究では成長の式（式\,\eqref{eq:klempt34} の第 3 式）を ANSYS の材料ルーチンに実装する（§6）．
 
-\subsection{拡張 Hamilton 原理}\label{ssec:hamilton}
+\subsection{拡張ハミルトン原理}\label{ssec:hamilton}
 
 Klempt ら\cite{klempt2026}は Junker・Balzani\cite{junker2021}の
-拡張 Hamilton 原理をバイオフィルム多種系に適用した．
+拡張ハミルトン原理をバイオフィルム多種系に適用した．
 Helmholtz 自由エネルギー $\mathcal{G}$，
 体積制約 $\mathcal{C}$，
 散逸ポテンシャル $\mathcal{D}$ を含む汎関数
@@ -286,6 +289,9 @@ $A_{ij}<0$ は抑制（競合）を意味する．
 %%=================================================================
 \section{GPU 加速 TMCMC による相互作用の推定}
 %%=================================================================
+第 3 節から第 5 節の推定は，次の投稿済みの論文の内容に基づく\footnote{K.~Nishioka ほか，``Identifiability of species interactions in a living
+material: Bayesian calibration of an extended Hamilton principle multiphase model''，
+\textit{Extreme Mechanics Letters}（2026 年 10 月投稿，査読中，EML-D-26-00377）．}．
 
 \subsection{実験データと尤度}
 
@@ -373,6 +379,10 @@ $R^2=0.71$（RMSE 0.097）で追った．CH では水準は合うが変動は追
 %%=================================================================
 \section{バイオフィルム有限要素への組み込み\label{sec:fem_coupling}}
 %%=================================================================
+% 連成の論文が未定のあいだはコメントアウト（ユーザー，7 Nov 2026）
+% 本節の連成は，投稿予定の論文にまとめている\footnote{K.~Nishioka ほか，``Coupling a multi-species point model to a
+% continuum biofilm growth model: verification and the effect of the composition on growth and stress''（仮題），
+% 学術誌へ 2027 年に投稿予定．}．
 
 \subsection{枠組みと追加したもの}
 
@@ -397,7 +407,7 @@ $\mathbf F_g=\alpha\mathbf I$，$\mathbf F_e=\mathbf F\mathbf F_g^{-1}$ から
 
 \begin{figure*}[tb]
   \centering
-    \includegraphics[width=0.80\textwidth]{fig_coupling_schematic_agreed.png}
+  \includegraphics[width=\textwidth]{fig_coupling_schematic_agreed.png}
   \caption{\textbf{連成の構成．}
     場（Klempt 2024）が栄養と抗菌薬を点モデル（Klempt 2026）に渡し，
     点モデルの生きている量がその消費を決める．成長と応力は場の量 $\phi$ から求める．}
@@ -446,8 +456,9 @@ $8^3$，$16^3$，$24^3$ の要素で 3\% 以内に一致した．
 
 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ はセルのペクレ数が約 31（$16^3$）の移流で，中心差分では振動する．
 2 次の風上差分（TVD）を用いると，成長は $32^3$--$192^3$ で GCI 5\% 以内に収束した．
-種の応力は遅く，外挿値は分けた例で $6.4\times10^{-4}$\,Pa（GCI 1.4\%），混ぜた例で
-$4.7\times10^{-4}$\,Pa（GCI 41\%）である．
+種の応力は遅く，外挿値は分けた例で $6.4\times10^{-4}$\,Pa（GCI 1.4\%）である．
+混ぜた例は minmod 制限関数では GCI 41\% と収束が遅いが，数値拡散の小さい superbee 制限関数では
+$128^3$--$256^3$ で $3.95\times10^{-4}$\,Pa（GCI 6.3\%）に収束した．
 ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入った．
 
 \begin{figure*}[tb]
@@ -457,6 +468,38 @@ ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入っ�
     A の割合，生きている量 $\sum_i\bar\phi_i$，栄養 $c$，抗菌薬 $a$，von Mises 応力．}
   \label{fig:3d}
 \end{figure*}
+
+\subsection{制限関数，局所細分化，形状（2026 年 11 月）}
+
+前線の項の 2 次の扱いには傾きの制限関数が要る．minmod，van Leer，MC，superbee の 4 つを
+$32^3$--$192^3$ で比べると，混ぜた例の応力の GCI は順に 41，22，31，4.6\% であり，
+数値拡散の最も小さい superbee だけが漸近域に入った（$256^3$ を加えた $128^3$--$256^3$ で 6.3\%）．
+5 次の WENO 再構成も試したが，$192^3$ までの GCI は 18\% で superbee に及ばない．
+成長 $\alpha-1$ はどの制限関数でも 0.2--4.3\% で収束する．
+
+細かい格子の計算時間を抑えるため，前線の近くだけを細かくする 2 段の局所細分化を作った．
+栄養は粗い格子と細かい格子を合わせた一つの系で解き，境界の流束を合わせ（reflux），
+細かい格子では時間刻みも分けて進め，点モデルは細かいセルで動かす．
+$128^3$ を土台とする $256^3$ 相当の計算は，一様な $256^3$ の応力に 0.1\%（superbee）で一致した．
+3 段にすると，前線の尾（$\phi$ が $10^{-4}$--$0.2$ の範囲）を細かく保つ条件を加えても 2--3\% の差が残る．
+
+Klempt 2024 の剛な 4 本の柱を置くと，種子の応力は柱のない場合の約 8 倍（分けた例），7 倍（混ぜた例）になる．
+minmod では格子とともに上がり続けた（GCI 12\%，43\%）が，superbee では 4.5\%，5.3\% で収束した．
+応力の格子を $16^3$ から $32^3$ にしても 3\% しか変わらないので，上昇の原因は柱の近くの場である．
+
+菌種 B の置き方を変えた例（図\,\ref{fig:asym}）では，種子の組成と成長はほとんど変わらないが，
+応力は対称の例より 17\%，27\% 低い（$128^3$）．ただしこの 2 例は始めのバイオフィルムの量も 25--31\% 少ない．
+同じ位置・同じ量のまま B を A に替えると応力は 8\% 高くなる（$128^3$）．
+バイオフィルムがどこにどれだけあるかと，それがどの菌種かの両方が，種子の組成よりずっと大きく応力を変える．
+非対称の例の差は $64^3$ から $128^3$ で縮んでおり，まだ格子に収束していない．
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_asymmetric_starts.png}
+  \caption{\textbf{菌種 B の置き方}（分けた例，抗菌薬あり，$64^3$）．上から対称，辺に 1 本（種子を $-x$ へ 1 要素），角に 1 つ．
+    (a) 始めの配置と境界条件，(b) $T^*=1$ の成長 $\alpha-1$，(c) $z=0$ 断面の von Mises 応力（白線が種子）．}
+  \label{fig:asym}
+\end{figure}
 
 \subsection{較正した 5 菌種の組み込み}
 
@@ -482,7 +525,7 @@ $6.752\times10^{-4}$ である．
 \section{考察}
 %%=================================================================
 
-\subsection{Hamilton 原理による対称性の利点}
+\subsection{ハミルトン原理による対称性の利点}
 
 $\mathbf{A}$ の対称性は自由エネルギーの二次形式から自動的に従う．
 非対称を仮定すると推定するパラメータは 25 個となり，各条件の観測 25 個に対して識別できない．
@@ -512,7 +555,7 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
 \section{結論}
 %%=================================================================
 
-拡張 Hamilton 原理に基づく多菌種の点モデルと成長の場のモデルを，
+拡張ハミルトン原理に基づく多菌種の点モデルと成長の場のモデルを，
 推定と有限要素解析の両面から結び付けた．主な成果を以下に示す．
 
 \begin{enumerate}
@@ -523,7 +566,7 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
         閉じた形の解と厳密解で検証して，バイオフィルムの有限要素に組み込んだ．
     \item 点モデルを各 Gauss 点で論文どおりに動かし，栄養と抗菌薬で場と結んだ．
         抗菌薬は種の生きている量を $0.96$ から $0.15$（混ぜた例で $0.04$）に下げ，成長はほとんど変えない．
-  \item 成長と組成は格子で数\% 以内に収束し，応力は 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の 2 次の扱いで GCI 8--26\% で求まった．
+  \item 成長と組成は格子で数\% 以内に収束し，応力は 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の 2 次の扱いで，分けた例は GCI 1.4\%，混ぜた例は superbee 制限関数で GCI 6.3\% で求まった．
   \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}
 

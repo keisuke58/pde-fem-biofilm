@@ -246,7 +246,7 @@ def _neighbours(mask):
 # ---------------------------------------------------------------- the solve
 def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, margin=MARGIN, crop_thr=CROP_PHI,
                    void="keep", void_thr=VOID_PHI, interp="pc", tooth_mode="voxel", rigid=True, tol=1e-10,
-                   chunk=32768, keep_fields=False, u_bc=None, region=None, verbose=True):
+                   chunk=32768, keep_fields=False, u_bc=None, region=None, roller=None, verbose=True):
     """Stress of the film on a uniform hex8 mesh of element size h (a multiple or an integer fraction of the field
     cell h_f) on the crop box around the film (box = None: the bounding box of phi > crop_thr plus the margin;
     box = "full": the whole cube, h must then divide L). void: "keep" (E = 10 Pa (phi^2 + 1e-3) everywhere outside
@@ -260,6 +260,10 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
     of a coarser solve of a box that contains this one (the npz of a level): the nodes on the faces of this box that
     belong to active elements get the displacement interpolated trilinearly from it (cut-boundary submodel).
     region: callable (X, Y, Z) -> mask that restricts the measures to a sub-region of the film.
+    roller (7 Nov 2026, the cervical window): dict face -> component, e.g. {"y-": 1, "y+": 1, "z-": 2, "z+": 2}, the
+    displacement component held at zero on the nodes of that face of the domain cube (x-, x+, y-, y+, z-, z+), where
+    the mesh box reaches it (the cut faces of the window: u_n = 0, the other components free). The other faces of
+    the mesh stay free. Default None: as before (only the tooth nodes, or the bottom face when not rigid, are held).
     Returns dict(measures, solver, seconds, mesh, vm, p, tooth, active, w_film, ...)."""
     import pyamg
     t_start = time.time()
@@ -350,6 +354,19 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
             assert axb[k][0] - 1e-9 <= pts[:, k].min() and pts[:, k].max() <= axb[k][-1] + 1e-9, "sub-box outside u_bc"
         up = RegularGridInterpolator(axb, ub, bounds_error=False, fill_value=None)(pts).ravel()  # (npresc, 3) -> dofs
         fixed |= presc
+    # roller faces: one displacement component held on the nodes of a domain face (per-dof constraint)
+    fixc = np.zeros((np.prod(nn), 3), bool)
+    nroll = 0
+    if roller:
+        for key, comp in roller.items():
+            axk, side = "xyz".index(key[0]), key[1]
+            assert side in "+-" and comp in (0, 1, 2), roller
+            if (box[axk][0] == 0 if side == "-" else box[axk][1] == nf):   # the mesh reaches that face of the domain
+                sl = [slice(None)] * 3; sl[axk] = 0 if side == "-" else -1
+                fn = idx[tuple(sl)].ravel()
+                fixc[fn, comp] = True
+                nroll += int((used[fn] & ~fixed[fn]).sum())
+    fixc[fixed] = True
     # components of active nodes without a fixed node would float: drop them (none expected)
     freen = used & ~fixed
     if freen.sum() == 0:
@@ -378,19 +395,18 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
     del A, An, G
     # --- assembly on the free dofs, in chunks
     Ke0, fe0, B0, D, mvec = S.element_matrices(h, NU, False)
-    nfree = int(freen.sum())
-    nmap = np.full(np.prod(nn), -1, np.int64); nmap[freen] = np.arange(nfree)
+    freed = used[:, None] & ~fixc                       # free dofs (node-major, component-minor, as before)
+    nfree = int(freed.sum())
+    dmap = np.full((np.prod(nn), 3), -1, np.int64); dmap[freed] = np.arange(nfree)
     dofs = (3 * conn[:, :, None] + np.arange(3)[None, None, :]).reshape(ne, 24)
-    nm = nmap[conn]
-    fd = np.where(nm[:, :, None] >= 0, 3 * nm[:, :, None] + np.arange(3), -1).reshape(ne, 24).astype(np.int32)
-    del nm
+    fd = dmap[conn].reshape(ne, 24).astype(np.int32)
     npresc = int(presc.sum())
     if npresc:
         pmap = np.full(np.prod(nn), -1, np.int64); pmap[presc] = np.arange(npresc)
         pm = pmap[conn]
         pd = np.where(pm[:, :, None] >= 0, 3 * pm[:, :, None] + np.arange(3), -1).reshape(ne, 24).astype(np.int32)
         del pm
-    F = np.zeros(3 * nfree)
+    F = np.zeros(nfree)
     fe = fe0[None] * (Ee * eps0)[:, None]
     ok = fd >= 0
     np.add.at(F, fd[ok], fe[ok])
@@ -401,12 +417,12 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
         cols = np.tile(d, (1, 24)).ravel()
         val = (Ke0[None] * Ee[c0:c0 + chunk, None, None]).ravel()
         keep = (rows >= 0) & (cols >= 0)
-        Kc = sp.csr_matrix((val[keep], (rows[keep], cols[keep])), shape=(3 * nfree,) * 2)
+        Kc = sp.csr_matrix((val[keep], (rows[keep], cols[keep])), shape=(nfree,) * 2)
         Kff = Kc if Kff is None else Kff + Kc
         if npresc:                                      # F -= K_fp u_p
             pcols = np.tile(pd[c0:c0 + chunk], (1, 24)).ravel()
             kp = (rows >= 0) & (pcols >= 0)
-            Kfp = sp.csr_matrix((val[kp], (rows[kp], pcols[kp])), shape=(3 * nfree, 3 * npresc))
+            Kfp = sp.csr_matrix((val[kp], (rows[kp], pcols[kp])), shape=(nfree, 3 * npresc))
             F -= Kfp @ up
             del pcols, kp, Kfp
         del rows, cols, val, keep, Kc
@@ -415,12 +431,15 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
     # --- solve
     t0 = time.time()
     Xn, Yn, Zn = np.meshgrid(*[M.origin[k] + np.arange(nn[k]) * h for k in range(3)], indexing="ij")
-    P = np.stack([Xn.ravel()[freen], Yn.ravel()[freen], Zn.ravel()[freen]], 1)
-    B = np.zeros((3 * nfree, 6))
-    B[0::3, 0] = 1; B[1::3, 1] = 1; B[2::3, 2] = 1
-    B[0::3, 3] = -P[:, 1]; B[1::3, 3] = P[:, 0]
-    B[1::3, 4] = -P[:, 2]; B[2::3, 4] = P[:, 1]
-    B[0::3, 5] = P[:, 2]; B[2::3, 5] = -P[:, 0]
+    anyf = freed.any(1)                                 # rigid-body modes per node, then the free components
+    P = np.stack([Xn.ravel()[anyf], Yn.ravel()[anyf], Zn.ravel()[anyf]], 1)
+    Bn = np.zeros((int(anyf.sum()), 3, 6))
+    Bn[:, 0, 0] = 1; Bn[:, 1, 1] = 1; Bn[:, 2, 2] = 1
+    Bn[:, 0, 3] = -P[:, 1]; Bn[:, 1, 3] = P[:, 0]
+    Bn[:, 1, 4] = -P[:, 2]; Bn[:, 2, 4] = P[:, 1]
+    Bn[:, 0, 5] = P[:, 2]; Bn[:, 2, 5] = -P[:, 0]
+    B = Bn[freed[anyf]]
+    del Bn
     ml = pyamg.smoothed_aggregation_solver(Kff, B=B, max_coarse=1000, coarse_solver="splu")
     t_setup = time.time() - t0
     res = []
@@ -430,8 +449,7 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
     del ml, B, P
     # --- stresses
     u = np.zeros(3 * np.prod(nn))
-    fr = np.where(freen)[0]
-    u[(3 * fr[:, None] + np.arange(3)).ravel()] = uf
+    u.reshape(-1, 3)[freed] = uf
     if npresc:
         pr_ = np.where(presc)[0]
         u[(3 * pr_[:, None] + np.arange(3)).ravel()] = up
@@ -446,16 +464,16 @@ def solve_submodel(phi, am1, h, *, tooth=None, sdf=None, h_f=None, box=None, mar
         pr[sl] = p
     VM = np.full(M.shape, np.nan); VM.ravel()[ea] = vm
     PR = np.full(M.shape, np.nan); PR.ravel()[ea] = pr
-    solver = {"solver": "pyamg smoothed aggregation + cg", "dof": int(3 * nfree), "iterations": len(res),
+    solver = {"solver": "pyamg smoothed aggregation + cg", "dof": int(nfree), "iterations": len(res),
               "relative residual": rel, "seconds prepare": t_prep, "seconds assembly": t_asm,
               "seconds setup": t_setup, "seconds solve": t_solve, "elements": int(ne), "floating dropped": floating,
-              "prescribed nodes": npresc}
+              "prescribed nodes": npresc, "roller nodes": nroll}
     meas = measures(M, VM, PR, tooth_e, active, w, d_el)
     meas.update({"h": h, "h/h_f": ratio, "box cells": [list(b) for b in box], "box mm": box_mm(box, h_f),
                  "mesh": list(M.shape), "elements in box": int(np.prod(M.shape)), "tooth elements": int(tooth_e.sum()),
                  "active elements": int(ne), "gap elements": int(gap.sum()), "void": void, "void thr": void_thr,
                  "interp": interp, "tooth mode": tooth_mode, "rigid": rigid, "cut boundary": u_bc is not None,
-                 "region": region is not None})
+                 "region": region is not None, "roller": roller})
     out = {"measures": meas, "solver": solver, "seconds": time.time() - t_start, "mesh": M, "vm": VM, "p": PR,
            "tooth": tooth_e, "active": active, "w_film": w["film"], "sdf_el": d_el}
     if keep_fields:
