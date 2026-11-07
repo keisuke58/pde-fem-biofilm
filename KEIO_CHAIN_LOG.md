@@ -1293,3 +1293,10 @@ What can be said from 64 and 128^3: the asymmetric starts stay below the symmetr
 shrinks with the grid (from -31 % and -40 % at 64^3), and the asymmetric vM rises by 22-26 % from 64 to 128^3 against 4 % for
 the symmetric run, so the 64^3 gap in the thesis and the paper is not grid-converged. The symmetric run is converged
 (5.69 / 5.90 / 5.97e-4, GCI 2.3 %).
+
+**Correction (7 Nov evening):** the stop above was a mistake by fifa. These runs use the default outer step 0.025 (no
+`--dtc`), so they have 40 outer steps, not 400: at the stop they had done 24 and 25 of 40 (about 60 %), at about 42 min per
+step against 5.5 min at 128^3 (x7.6, plausible for 3.4 times the cells), not '11 days'. A short instrumented check (copy
+of the solver, not committed) also showed the full-domain AMG-CG is fine at 192^3: about 20 CG iterations per solve, no
+fallback to the direct solve, setup 27 s and CG 39 s against 6 s and 10 s at 128^3. Both runs were resumed from their
+checkpoints (steps 25 and 26) with the same options; their table follows when they finish.
