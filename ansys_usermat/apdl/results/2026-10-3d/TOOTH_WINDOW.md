@@ -304,3 +304,7 @@ less than the point model alone at c = 1: S. oralis stays dominant (living share
 which takes over in the calibration, stays at 0.09 (0.42 alone). The film's position in the field changes the predicted
 composition. The two time links disagree: with the calibration's link (T* = 1 = 20 days) the film grows 29 um in 20 days,
 slower than in situ plaque (35 um in 6 days, see above). 128^3 below when it finishes.
+
+128^3 (22 min): film at T* = 1 phibar (So, An, Vei, Fn, Pg) = 0.398, 0.041, 0.091, 0.012, 0.006 (sum 0.548; living shares
+0.73, 0.08, 0.17, 0.02, 0.01), c 0.13, thickness 49 um; 64^3: shares 0.69, 0.09, 0.19, 0.02, 0.01, c 0.10, 45 um. The finding
+(So stays dominant, An does not take over) holds on both grids; the shares change by up to 4 points between them.
