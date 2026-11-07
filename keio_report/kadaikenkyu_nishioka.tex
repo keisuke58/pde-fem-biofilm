@@ -112,7 +112,7 @@ Commensal/Dysbiotic 間でどのような力学的差異が浮かび上がるか
 
 \subsection{アプローチ}
 
-Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
+Klempt ら\cite{klempt2026}は拡張ハミルトン原理\cite{junker2021}の
 停留条件 $\delta\mathcal{H}=0$ から，
 菌種の体積分率 $\phi_i$ と生存率 $\psi_i$ が
 相互作用行列 $\mathbf{A}$ を介して連動する材料点モデル（点モデル）を導出した．
@@ -145,7 +145,7 @@ Klempt ら\cite{klempt2026}は拡張 Hamilton 原理\cite{junker2021}の
 
 \subsection{Klempt (2024) の単種有限変形モデル}\label{ssec:klempt24}
 
-Klempt ら\cite{klempt2024}は Hamilton 原理に基づく
+Klempt ら\cite{klempt2024}は ハミルトン原理に基づく
 単種バイオフィルムの有限変形連続体モデルを提案した．
 成長を弾性変形から分離する乗法分解
 \begin{equation}
@@ -164,7 +164,7 @@ Klempt ら\cite{klempt2024}は Hamilton 原理に基づく
   \label{eq:psi_klempt}
 \end{equation}
 と定義した（$\mu$: せん断弾性率，$\bar\beta$: 界面正則化，$\bar k_\alpha$: 成長連成係数）．
-Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）は
+ハミルトン原理の停留条件から得られる支配方程式（Eq.\,34--36）は
 \begin{equation}
   \dot\phi = \beta\nabla^2\phi + k_\alpha\alpha - r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi,\quad
   0 = d\nabla^2 c - g\phi,\quad
@@ -182,10 +182,10 @@ Hamilton 原理の停留条件から得られる支配方程式（Eq.\,34--36）
 Klempt ら\cite{klempt2026}は同じ原理から下節の多菌種の点モデルを導出した．
 本研究では成長の式（式\,\eqref{eq:klempt34} の第 3 式）を ANSYS の材料ルーチンに実装する（§6）．
 
-\subsection{拡張 Hamilton 原理}\label{ssec:hamilton}
+\subsection{拡張ハミルトン原理}\label{ssec:hamilton}
 
 Klempt ら\cite{klempt2026}は Junker・Balzani\cite{junker2021}の
-拡張 Hamilton 原理をバイオフィルム多種系に適用した．
+拡張ハミルトン原理をバイオフィルム多種系に適用した．
 Helmholtz 自由エネルギー $\mathcal{G}$，
 体積制約 $\mathcal{C}$，
 散逸ポテンシャル $\mathcal{D}$ を含む汎関数
@@ -519,7 +519,7 @@ $6.752\times10^{-4}$ である．
 \section{考察}
 %%=================================================================
 
-\subsection{Hamilton 原理による対称性の利点}
+\subsection{ハミルトン原理による対称性の利点}
 
 $\mathbf{A}$ の対称性は自由エネルギーの二次形式から自動的に従う．
 非対称を仮定すると推定するパラメータは 25 個となり，各条件の観測 25 個に対して識別できない．
@@ -549,7 +549,7 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
 \section{結論}
 %%=================================================================
 
-拡張 Hamilton 原理に基づく多菌種の点モデルと成長の場のモデルを，
+拡張ハミルトン原理に基づく多菌種の点モデルと成長の場のモデルを，
 推定と有限要素解析の両面から結び付けた．主な成果を以下に示す．
 
 \begin{enumerate}
