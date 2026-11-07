@@ -242,3 +242,17 @@ start 20 um; the antibiotic from T* = 1/3). For the later comparison with plaque
 | 64^3 mixed, antibiotic | 25 (0.59) | 31 (0.68) | 35 (0.65) | 40 (0.12) | 53 (0.11) | 61 (0.20) |
 | 64^3 layered, antibiotic | 25 (0.62) | 31 (0.71) | 35 (0.71) | 40 (0.58) | 50 (0.41) | 60 (0.31) |
 | 64^3 mixed, no antibiotic | 25 (0.59) | 31 (0.68) | 35 (0.74) | 40 (0.78) | 49 (0.80) | 55 (0.81) |
+
+## Variant 2 on 192^3 (mixed, antibiotic; cloud, 7 Nov)
+
+Field 4879 s (83 min, 4 cores). Stress at h = h_f ran out of memory at T* = 1 (about 5 M dof); at 2 h_f it is fine.
+
+| grid | thickness um | sum phibar | share A | alpha-1 [1e-4] | vM film mPa (2 h_f) |
+|---|---|---|---|---|---|
+| 64^3 | 61.4 | 0.201 | 0.606 | 6.70 | 12.14 |
+| 128^3 | 64.3 | 0.284 | 0.647 | 6.60 | 12.57 |
+| 192^3 | 65.8 | 0.320 | 0.666 | 6.58 | 12.67 |
+
+64/128/192^3: vM p 1.55, extrapolated 12.79 mPa, GCI 1.2 %; alpha - 1 GCI 0.5 %; sum phibar p 0.54, extrapolated 0.47,
+GCI 58 % (not converged: the 10 um depletion length is 2-6 cells); share A p 0.42, GCI 19 %; thickness by column count not in
+the asymptotic range. 256^3 asked of fifa (CLOUD_TO_FIFA part 11, rewritten).
