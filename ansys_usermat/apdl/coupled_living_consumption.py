@@ -151,6 +151,9 @@ B_ONE_EDGE = "--b-one-edge" in sys.argv
 # --b-corner: species B only in one cube of 0.25 mm at the corner x > 0.75, y < -0.75, z > 0.75 mm of the box (next to the
 # nutrient layer); same B amounts per cell as the edge blocks.
 B_CORNER = "--b-corner" in sys.argv
+# --b-as-a: the blocks of species B start as species A (same phi_3D, only the species changed); a check of what the start
+# position of B does (7 Nov)
+B_AS_A = "--b-as-a" in sys.argv
 SEED_SHIFT = int(_opt("--seed-shift", 0)) if "--seed-shift" in sys.argv else 0
 assert not ((B_ONE_EDGE or B_CORNER or SEED_SHIFT) and "--fast" in sys.argv), "--b-one-edge / --b-corner / --seed-shift need the full domain (no --fast)"
 # --c-const V: hold the nutrient at V instead of 1 (V = 0.5: the time mean of --c-sine, to separate the mean from the wave)
@@ -426,7 +429,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
-       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
+       + ("_transport" if TRANSPORT else "") + ("_b1edge" if B_ONE_EDGE else "") + ("_bcorner" if B_CORNER else "") + ("_basa" if B_AS_A else "") + ("" if not SEED_SHIFT else f"_seedx{SEED_SHIFT:+d}") + ("_tvd" if TVD else "") + ("" if LIMITER == "minmod" else f"_{LIMITER}") + ("_lw" if LW else "") + ("_sensor" if SENSOR else "") + ("" if SENSOR_POW == 1.0 else f"{SENSOR_POW:g}") + ("_mms" if MMS else "") + ("_initnodal" if INIT_NODAL else "") + ("_artdiff" if ARTDIFF else "") + ("" if ART_H is None else f"_arth{ART_H:g}") + ("" if WALL_GRAD == "onesided" else f"_wg{WALL_GRAD}") + ("_fast" if FAST else "") + (f"_obst{OBSTACLE}" if OBSTACLE else "")
        + ("" if BOX == W.L else f"_box{BOX:g}") + ("_amg" if AMG else "") + (f"_{ONLY}" if ONLY else ""))
 if FORTRAN:
     import ecology_native_ctypes as FN
@@ -962,7 +965,7 @@ def run(example, antibiotic):
         G[seed] = eco_start_state()
     elif sep:
         G[seed] = group_state(tot, GROUP_A)
-        G[edges] = group_state(tot, GROUP_B)
+        G[edges] = group_state(tot, GROUP_A if B_AS_A else GROUP_B)
     else:
         G[seed] = start_state(*MIX_START)
     if INIT_NODAL:
