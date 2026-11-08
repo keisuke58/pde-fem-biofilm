@@ -189,6 +189,14 @@ WENO_EPS, WENO_D = 1e-6, (0.1, 0.6, 0.3)   # Jiang-Shu regularisation and linear
 # I : C_e - 3 = 2 tr(eps_e) for small strains, from the stress mesh (NM^3) at the start of each outer step (lag of
 # one outer step).
 MECH_K = _opt("--mech-feedback", 0.0)
+# --mech-exp (8 Nov 2026): the term -K phi (I:C_e - 3) is linear in phi with a coefficient fixed over the outer step, so it is
+# integrated exactly by Strang splitting around each RK4 step (phi *= exp(-K ice dt/2) before and after) instead of inside
+# RK4, where it is unstable once K |I:C_e - 3| dt exceeds about 2.8 (the rigid bars at K = 1e5, 32^3).
+MECH_EXP = "--mech-exp" in sys.argv
+# --mech-phi-min M (8 Nov 2026): the term acts only in cells with phi_3D >= M (0.05 = the threshold below which the film
+# stress drops elements). The void has the floor stiffness E f (f = 1e-3) and strains strongly under confinement; there the
+# relative rate K (I:C_e - 3) does not depend on phi, so a tiny phi grows exponentially (the rigid bars at K = 1e5 diverge).
+MECH_PHI_MIN = _opt("--mech-phi-min", 0.0)
 # --front-living (Keio continuation, changes Eq. 34; not in the thesis): the front speed r c/(k + c) is multiplied by
 # the living volume fraction sum_i phibar_i, taken as the largest value of the cell and its six neighbours, so that a
 # front of dead biofilm does not advance (thesis limitation: dead biofilm keeps spreading after the antibiotic).
@@ -473,7 +481,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
@@ -1182,6 +1190,8 @@ def run(example, antibiotic):
                                          obstacles=BOXES, efac=efac_nm(G))
             if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
                 ice = 2.0 * prolong(np.nan_to_num(S.LAST_TRE), NF)[QS]
+                if MECH_PHI_MIN:
+                    ice = np.where(phi >= MECH_PHI_MIN, ice, 0.0)
                 hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
             if HOMEO:                                   # --homeostatic: explicit gate from p of the start of the step
                 p_cell = -prolong(np.nan_to_num(p_nm), NF)[QS]        # compression positive, per cell
@@ -1207,7 +1217,7 @@ def run(example, antibiotic):
                 def f(ph, al, tt):
                     (lap_obst(ph, lap) if OBSTACLE else W.laplacian(ph, H, lap))
                     d = (W.BETA + (R_FRONT * (H if ART_H is None else ART_H) / 4.0 if ARTDIFF else 0.0)) * lap + ka * al * (np.clip(Lf, 0.0, 1.0) if GROWTH_ENERGY else 1.0) - W.PENALTY * (np.maximum(ph - 1, 0) + np.minimum(ph, 0))
-                    if MECH_K:
+                    if MECH_K and not MECH_EXP:
                         d = d - MECH_K * ph * ice
                     if LYSIS:
                         d = d - LYSIS * ph * DEAD
@@ -1224,6 +1234,8 @@ def run(example, antibiotic):
                         d = np.where(OBST, 0.0, d)
                         return d, np.where(OBST, 0.0, da)
                     return d, da
+                if MECH_K and MECH_EXP:                     # --mech-exp: first half of the exact factor
+                    phi = phi * np.exp(-0.5 * dt * MECH_K * ice)
                 if BUDGET:                                  # --budget: volume integrals of the terms of Eq. 34 (start of step)
                     lap_b = np.empty_like(phi)
                     (lap_obst(phi, lap_b) if OBSTACLE else W.laplacian(phi, H, lap_b))
@@ -1260,6 +1272,8 @@ def run(example, antibiotic):
                     q4 = fq(Q + dt * q3, phi + dt * k3[0], alpha + dt * k3[1])
                     Q = Q + dt / 6 * (q1 + 2 * q2 + 2 * q3 + q4)
                 phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
+                if MECH_K and MECH_EXP:                     # --mech-exp: second half
+                    phi = phi * np.exp(-0.5 * dt * MECH_K * ice)
                 alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
             if TRANSPORT:                               # carried state wherever the biofilm is
                 okp = phi >= PHI_MIN
