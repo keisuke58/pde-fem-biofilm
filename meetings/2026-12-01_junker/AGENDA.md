@@ -11,7 +11,8 @@ One page to hand over. Purpose: the next plans after the thesis (the reply of 2 
 ## 2. Coupling paper
 - Draft of 27 pages (verification, examples). Target: Biomechanics and Modeling in Mechanobiology, or Archive of
   Applied Mechanics.
-- To decide: authors (proposal: K. Nishioka, O. Höchel, F. Klempt, M. Muramatsu, M. Soleimani, P. Junker), journal,
+- To decide: authors by contribution (table in `papers/coupling_paper/OUTLINE.md`; proposal so far: K. Nishioka, O. Höchel, F. Klempt,
+  M. Muramatsu, M. Soleimani, P. Junker), journal,
   submission in January or February 2027, who reads the draft first.
 
 ## 3. Conferences 2027
