@@ -23,13 +23,14 @@ sys.path.insert(0, str(HERE.parent))
 import figstyle  # noqa: E402
 figstyle.apply()
 ap = argparse.ArgumentParser()
-ap.add_argument("--nf", type=int, default=32); ap.add_argument("--obst", action="store_true"); ap.add_argument("--K", default="100000"); ap.add_argument("--t", default="1.0"); ap.add_argument("--exp", action="store_true")
+ap.add_argument("--nf", type=int, default=32); ap.add_argument("--obst", action="store_true"); ap.add_argument("--K", default="100000"); ap.add_argument("--t", default="1.0"); ap.add_argument("--exp", action="store_true"); ap.add_argument("--m1", default=None); ap.add_argument("--clip", action="store_true")
 A = ap.parse_args()
 nf = "" if A.nf == 32 else f"_nf{A.nf}"
-base = f"coupled_living_separate_ab{nf}_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm{{m}}_transc1e+08_tvd_superbee_wgmirror_fast{{o}}_separate_ab.npz"
+base = f"coupled_living_separate_ab{nf}_front1_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snapsvm{{m}}{{c}}_transc1e+08_tvd_superbee_wgmirror_fast{{o}}_separate_ab.npz"
 O = "_obstcolumns" if A.obst else ""
-Z0 = np.load(ROOT / "figdata" / base.format(m="", o=O))
-Z1 = np.load(ROOT / "figdata" / base.format(m=f"_mech{A.K}" + ("exp" if A.exp else ""), o=O))
+C = "_clip" if A.clip else ""
+Z0 = np.load(ROOT / "figdata" / base.format(m="", o=O, c=C))
+Z1 = np.load(ROOT / "figdata" / base.format(m=(A.m1 if A.m1 else f"_mech{A.K}" + ("exp" if A.exp else "")), o=O, c=C))
 t = A.t
 n = Z0[f"phi_{t}"].shape[0]; k = n // 2
 nm = Z0[f"p16_{t}"].shape[0]; km = nm // 2
@@ -53,6 +54,6 @@ for Z, lab, ls in ((Z0, "without", "-"), (Z1, f"K = {float(A.K):g}", "--")):
 ax[3].set_title(r"(d) $\sigma_\mathrm{vM}$ at $y=0$ [$10^{-4}$ Pa]", fontsize=7.5, loc="left")
 ax[3].set_xlabel("$x$ [mm]", fontsize=7); ax[3].tick_params(labelsize=6); ax[3].legend(frameon=False, fontsize=6)
 fig.tight_layout()
-out = ROOT / "assets" / f"fig_mech_feedback_section{nf}{'_bars' if A.obst else ''}_K{A.K}{'exp' if A.exp else ''}"
+out = ROOT / "assets" / f"fig_mech_feedback_section{nf}{'_bars' if A.obst else ''}_K{A.K}{'exp' if A.exp else ''}{'_clip' if A.clip else ''}"
 fig.savefig(out.with_suffix(".png"), dpi=300); fig.savefig(out.with_suffix(".pdf"))
 print("wrote", out, "dphi range", float(dphi.min()), float(dphi.max()), "p range", float(p0.min()), float(p0.max()))

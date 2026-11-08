@@ -197,6 +197,10 @@ MECH_EXP = "--mech-exp" in sys.argv
 # stress drops elements). The void has the floor stiffness E f (f = 1e-3) and strains strongly under confinement; there the
 # relative rate K (I:C_e - 3) does not depend on phi, so a tiny phi grows exponentially (the rigid bars at K = 1e5 diverge).
 MECH_PHI_MIN = _opt("--mech-phi-min", 0.0)
+# --phi-clip (8 Nov 2026, Keio continuation; changes the model): phi_3D is clipped to [0, 1] after every inner step. With the
+# Eq. 30 term the elastic energy (mu/2) phi^2 (I:C_e - 3) has no lower bound in phi under compression, and the penalty of
+# Eq. 34 (5 /T*) is too weak at K = 1e5 (the rigid bars diverge, phi_3D > 2); the clip is the simplest hard bound.
+PHI_CLIP = "--phi-clip" in sys.argv
 # --front-living (Keio continuation, changes Eq. 34; not in the thesis): the front speed r c/(k + c) is multiplied by
 # the living volume fraction sum_i phibar_i, taken as the largest value of the cell and its six neighbours, so that a
 # front of dead biofilm does not advance (thesis limitation: dead biofilm keeps spreading after the antibiotic).
@@ -481,7 +485,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
@@ -1274,6 +1278,8 @@ def run(example, antibiotic):
                 phi = phi + dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0])
                 if MECH_K and MECH_EXP:                     # --mech-exp: second half
                     phi = phi * np.exp(-0.5 * dt * MECH_K * ice)
+                if PHI_CLIP:
+                    phi = np.clip(phi, 0.0, 1.0)
                 alpha = alpha + dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
             if TRANSPORT:                               # carried state wherever the biofilm is
                 okp = phi >= PHI_MIN
