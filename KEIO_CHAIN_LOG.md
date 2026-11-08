@@ -1323,3 +1323,73 @@ Difference of the extrapolated values to the symmetric one: B along one edge -6.
 | symmetric | 64^3 | 0.1516 | 0.9511 | 0.9114 | 8.9517e-04 | 5.6871e-04 | 7.2351 | - |  |
 | B as A | 192^3 | 0.1323 | 0.9486 | 0.9079 | 9.2247e-04 | 6.3574e-04 | 7.5806 | +6.5 % | 3:55:18, 3.20 GB |
 | symmetric | 192^3 | 0.1521 | 0.9512 | 0.9110 | 9.2132e-04 | 5.9666e-04 | 7.4262 | - |  |
+
+## 2026-11-08: CLOUD_TO_FIFA 7 Nov part 11 (rewritten), cervical window 192^3 and 256^3 (fifa)
+
+One PBS job per run, 4 cores, `ECO_THREADS=4`: the field (`--nf N $W --window ... --only ...`), then the film stress
+(`real_tooth_coupled.py --window`) in the same job. 64/128^3 and 192^3 mixed with antibiotic are the cloud's values
+(read from the same stress JSONs). Means over the film; vM film mean at h = h_f (in brackets 2 h_f).
+
+| run | grid | T* | share A | sum phibar | c (min) | a | alpha - 1 | thickness mean (min-max) [um] | vM film [mPa] |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| mixed, antibiotic | 64^3 | 0.35 | 0.492 | 0.653 | 0.214 (0.037) | 0.208 | 2.8e-04 | 35.4 (32.8-42.2) | 5.34 (4.72) |
+| mixed, antibiotic | 64^3 | 1 | 0.606 | 0.201 | 0.224 (0.120) | 0.217 | 6.7e-04 | 61.4 (56.2-70.3) | 13.11 (12.14) |
+| mixed, antibiotic | 128^3 | 0.35 | 0.497 | 0.677 | 0.237 (0.036) | 0.234 | 2.7e-04 | 36.9 (32.8-42.2) | 5.32 (5.04) |
+| mixed, antibiotic | 128^3 | 1 | 0.647 | 0.284 | 0.195 (0.085) | 0.192 | 6.6e-04 | 64.3 (58.6-75.0) | 13.03 (12.57) |
+| mixed, antibiotic | 192^3 | 0.35 | 0.498 | 0.682 | 0.260 (0.040) | 0.258 | 2.7e-04 | 36.8 (34.4-42.2) | - (5.20) |
+| mixed, antibiotic | 192^3 | 1 | 0.666 | 0.320 | 0.192 (0.073) | 0.190 | 6.6e-04 | 65.8 (62.5-76.6) | - (12.67) |
+| mixed, antibiotic | 256^3 | 0.35 | 0.500 | 0.683 | 0.307 (0.055) | 0.307 | 2.7e-04 | 36.1 (35.2-41.0) | - (5.28) |
+| mixed, antibiotic | 256^3 | 1 | 0.693 | 0.365 | 0.233 (0.093) | 0.232 | 6.5e-04 | 66.5 (65.6-71.5) | - (12.69) |
+| layered, antibiotic | 64^3 | 0.35 | 0.301 | 0.714 | 0.211 (0.034) | 0.205 | 2.8e-04 | 35.4 (32.8-42.2) | 5.33 (4.72) |
+| layered, antibiotic | 64^3 | 1 | 0.195 | 0.307 | 0.198 (0.013) | 0.195 | 6.7e-04 | 59.7 (46.9-70.3) | 12.69 (11.70) |
+| layered, antibiotic | 128^3 | 0.35 | 0.288 | 0.745 | 0.234 (0.033) | 0.231 | 2.7e-04 | 36.9 (32.8-42.2) | 5.32 (5.04) |
+| layered, antibiotic | 128^3 | 1 | 0.183 | 0.321 | 0.224 (0.011) | 0.223 | 6.6e-04 | 63.9 (53.9-75.0) | 12.81 (12.35) |
+| layered, antibiotic | 192^3 | 0.35 | 0.287 | 0.757 | 0.257 (0.036) | 0.255 | 2.7e-04 | 36.8 (34.4-42.2) | 5.38 (5.20) |
+| layered, antibiotic | 192^3 | 1 | 0.178 | 0.339 | 0.234 (0.010) | 0.232 | 6.5e-04 | 65.8 (60.9-76.6) | 12.84 (12.54) |
+| mixed, no antibiotic | 64^3 | 0.35 | 0.503 | 0.741 | 0.214 (0.037) | 0.000 | 2.8e-04 | 35.4 (32.8-42.2) | 5.34 (4.72) |
+| mixed, no antibiotic | 64^3 | 1 | 0.556 | 0.808 | 0.062 (0.002) | 0.000 | 7.0e-04 | 54.8 (46.9-65.6) | 13.06 (11.98) |
+| mixed, no antibiotic | 128^3 | 0.35 | 0.509 | 0.769 | 0.237 (0.036) | 0.000 | 2.7e-04 | 36.9 (32.8-42.2) | 5.32 (5.04) |
+| mixed, no antibiotic | 128^3 | 1 | 0.583 | 0.827 | 0.087 (0.002) | 0.000 | 6.8e-04 | 60.4 (49.2-70.3) | 13.03 (12.55) |
+| mixed, no antibiotic | 192^3 | 0.35 | 0.511 | 0.782 | 0.260 (0.040) | 0.000 | 2.7e-04 | 36.8 (34.4-42.2) | 5.38 (5.20) |
+| mixed, no antibiotic | 192^3 | 1 | 0.595 | 0.838 | 0.108 (0.002) | 0.000 | 6.6e-04 | 63.7 (56.2-75.0) | 12.91 (12.61) |
+
+Order, extrapolated value and GCI (Celik, Fs 1.25):
+
+- mixed, antibiotic, T* = 0.35, sum phibar, 64/128/192^3: p 1.81, extrapolated 0.6869, GCI 0.9 %
+- mixed, antibiotic, T* = 0.35, sum phibar, 128/192/256^3: p 3.65, extrapolated 0.6836, GCI 0.1 %
+- mixed, antibiotic, T* = 0.35, film c, 64/128/192^3: p 2.07, extrapolated 0.2768, GCI 8.2 %
+- mixed, antibiotic, T* = 0.35, film c, 128/192/256^3: p 5.12, extrapolated 0.3211, GCI 5.7 %
+- mixed, antibiotic, T* = 0.35, thickness, 64/128/192^3: not monotone
+- mixed, antibiotic, T* = 0.35, thickness, 128/192/256^3: p 11.13, extrapolated 3.609, GCI 0.1 %
+- mixed, antibiotic, T* = 0.35, vM (2 h_f), 64/128/192^3: p 0.27, extrapolated 0.006595, GCI 33.6 %
+- mixed, antibiotic, T* = 0.35, vM (2 h_f), 128/192/256^3: p 0.82, extrapolated 0.0056, GCI 7.5 %
+- mixed, antibiotic, T* = 1, sum phibar, 64/128/192^3: p 0.52, extrapolated 0.4767, GCI 61.1 %
+- mixed, antibiotic, T* = 1, sum phibar, 128/192/256^3: p 2.54, extrapolated 0.4072, GCI 14.3 %
+- mixed, antibiotic, T* = 1, film c, 64/128/192^3: p 3.32, extrapolated 0.1914, GCI 0.6 %
+- mixed, antibiotic, T* = 1, film c, 128/192/256^3: not monotone
+- mixed, antibiotic, T* = 1, thickness, 64/128/192^3: p 0.17, extrapolated 8.753, GCI 41.2 %
+- mixed, antibiotic, T* = 1, thickness, 128/192/256^3: p 1.52, extrapolated 6.763, GCI 2.2 %
+- mixed, antibiotic, T* = 1, vM (2 h_f), 64/128/192^3: p 1.58, extrapolated 0.01279, GCI 1.1 %
+- mixed, antibiotic, T* = 1, vM (2 h_f), 128/192/256^3: p 4.43, extrapolated 0.01269, GCI 0.1 %
+- layered, antibiotic, T* = 0.35, sum phibar, 64/128/192^3: p 0.60, extrapolated 0.8029, GCI 7.5 %
+- layered, antibiotic, T* = 0.35, film c, 64/128/192^3: p 2.19, extrapolated 0.2726, GCI 7.7 %
+- layered, antibiotic, T* = 0.35, thickness, 64/128/192^3: not monotone
+- layered, antibiotic, T* = 0.35, vM (h_f), 64/128/192^3: not monotone
+- layered, antibiotic, T* = 0.35, vM (2 h_f), 64/128/192^3: p 0.36, extrapolated 0.006195, GCI 24.0 %
+- layered, antibiotic, T* = 1, sum phibar, 64/128/192^3: p 3.27, extrapolated 0.3455, GCI 2.3 %
+- layered, antibiotic, T* = 1, film c, 64/128/192^3: p 0.84, extrapolated 0.2577, GCI 12.6 %
+- layered, antibiotic, T* = 1, thickness, 64/128/192^3: p 0.50, extrapolated 7.417, GCI 15.8 %
+- layered, antibiotic, T* = 1, vM (h_f), 64/128/192^3: p 1.61, extrapolated 0.01286, GCI 0.3 %
+- layered, antibiotic, T* = 1, vM (2 h_f), 64/128/192^3: p 1.21, extrapolated 0.01284, GCI 3.0 %
+- mixed, no antibiotic, T* = 0.35, sum phibar, 64/128/192^3: p 0.54, extrapolated 0.8308, GCI 7.9 %
+- mixed, no antibiotic, T* = 0.35, film c, 64/128/192^3: p 2.07, extrapolated 0.2768, GCI 8.2 %
+- mixed, no antibiotic, T* = 0.35, thickness, 64/128/192^3: not monotone
+- mixed, no antibiotic, T* = 0.35, vM (h_f), 64/128/192^3: not monotone
+- mixed, no antibiotic, T* = 0.35, vM (2 h_f), 64/128/192^3: p 0.27, extrapolated 0.006595, GCI 33.6 %
+- mixed, no antibiotic, T* = 1, sum phibar, 64/128/192^3: p 0.08, extrapolated 1.166, GCI 48.9 %
+- mixed, no antibiotic, T* = 1, film c, 64/128/192^3: p 1.33, extrapolated 0.1365, GCI 33.6 %
+- mixed, no antibiotic, T* = 1, thickness, 64/128/192^3: p 0.00, extrapolated 1017, GCI 19842.6 %
+- mixed, no antibiotic, T* = 1, vM (h_f), 64/128/192^3: p 12.24, extrapolated 0.01291, GCI 0.0 %
+- mixed, no antibiotic, T* = 1, vM (2 h_f), 64/128/192^3: p 2.87, extrapolated 0.01264, GCI 0.3 %
+
+Wall time and peak RSS (field; stress): `tw_lay_192` 1:58:51, 7.3 GB; 18:01.92, 18.4 GB; `tw_mix_192` 1:39:42, 6.6 GB; 20:24.73, 18.7 GB; `tw_ab_256` 5:17:23, 15.6 GB; 3:14.52, 5.5 GB

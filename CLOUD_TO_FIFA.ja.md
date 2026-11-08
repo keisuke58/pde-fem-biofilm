@@ -4,6 +4,30 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月8日 その 12（慶應の修論の軸：Klempt 2024 式 30 の力学の項の K の掃引。急がない）
+
+`git pull origin claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`。式 30 の項 φμ(I:C_e − 3)/η_φ を戻す `--mech-feedback K`
+（K = μ/η_φ，η_φ は論文にないので掃引；`KEIO_PLAN.ja.md` 0b'）。応力は外側ステップの始めに 16³ の応力格子で解く（1 ステップ遅れ）。
+クラウドの 32³（外側の刻み 0.025）：K = 1e5 で種子の vM −26 %，α − 1 −4.6 %（5.48 → 4.08e−4 Pa，8.85 → 8.44e−4）；32³ で 110 s（K なし 11 s）。
+1 本 4 スレッド，同時 3 本まで（その 11 が残っていれば並べてよい）。外側の刻みは既定 0.025。
+
+```
+B="--fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --limiter superbee --wall-grad mirror --v2 --ansys-bc --inherit-living --transient-c 1e8"
+# 1) 64³ と 128³：K = 0（参照）, 1e3, 1e4, 3e4, 1e5, 3e5, 1e6；分けた例と混合（等量）の両方
+for N in 64 128; do for K in 0 1000 10000 30000 100000 300000 1000000; do
+  M=$([ $K -gt 0 ] && echo "--mech-feedback $K")
+  ECO_THREADS=4 python3 coupled_living_consumption.py --nf $N --fast $B $M --only separate_ab
+  ECO_THREADS=4 python3 coupled_living_consumption.py --nf $N --fast $B $M --mix-equal --only mixed_ab
+done; done
+# 2) 192³：K = 0, 1e4, 1e5, 1e6 の分けた例と混合（K = 0 の 192³ は superbee・transc の既存 JSON があれば回さない）
+# 3) 刻みの確認：128³，分けた例，K = 1e5 を --dtc 0.0125 で 1 本
+```
+
+- 報告：K ごとに種子の Σφ̄ᵢ，A の割合，c，α − 1，vM と，K = 0 に対する差（%）を 64/128/192³ で並べた表。K = 1e5 と 1e6 は 64/128/192³ の次数・外挿・GCI。
+  「どの K から α − 1 や vM が 1 % 以上変わるか」の境目を一行で。時間とメモリの最大。JSON は push。
+
+---
+
 ## 2026年11月7日 その 11（書き直し，7 Nov 夜）：歯頸部の窓の格子の列。最初に書いた 10 mm の冠の列は取りやめ（回さない）
 
 `git pull origin claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`。冠の例は，実寸の歯頸部の窓（一辺 300 µm，Klempt 2024 Table 2 の定数を

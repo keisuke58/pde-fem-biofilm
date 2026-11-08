@@ -256,3 +256,64 @@ Field 4879 s (83 min, 4 cores). Stress at h = h_f ran out of memory at T* = 1 (a
 64/128/192^3: vM p 1.55, extrapolated 12.79 mPa, GCI 1.2 %; alpha - 1 GCI 0.5 %; sum phibar p 0.54, extrapolated 0.47,
 GCI 58 % (not converged: the 10 um depletion length is 2-6 cells); share A p 0.42, GCI 19 %; thickness by column count not in
 the asymptotic range. 256^3 asked of fifa (CLOUD_TO_FIFA part 11, rewritten).
+
+## Time scale from the film thickness (8 Nov)
+
+`ansys_usermat/apdl/fig_tooth_window_thickness.py` -> `assets/fig_tooth_window_thickness.pdf/.png`. Thickness = film
+(phi_3D > 0.5) volume per tooth area, from hist "film" "thickness_mean_mm" (code mm x 10 = um); it starts at 18 um
+(the 20 um start film on the voxel wall) and grows nearly linearly. In situ plaque on enamel: about 15 um after one day and
+50 um after seven (Al-Ahmad et al. 2007), i.e. about 5.8 um per day.
+
+| run (variant 2) | slope T* = 0.5-1 [um/T*] | days per T* | T* at 50 um | thickness at T* = 1 [um] |
+|---|---|---|---|---|
+| 128^3 mixed, antibiotic | 32.5 | 5.6 | 0.96 | 50.5 |
+| 192^3 mixed, antibiotic | 34.3 | 5.9 | 0.92 | 51.7 |
+| 128^3 layered, antibiotic | 32.8 | 5.6 | 0.97 | 50.2 |
+| 128^3 mixed, no antibiotic | 28.0 | 4.8 | 0.98 | 47.4 |
+
+Reading: with the constants of Klempt et al. 2024 at their own size, the film grows like an in situ plaque if one T* is
+about five to six days; the film of 18 um at the start then corresponds to about day 1.5 and the end (50 um) to about
+day 7. Two straight lines through two measured points: an order of magnitude, not a calibration. (The earlier column-count
+thickness of 64 um is the largest extent across the film, the volume per area is the mean.)
+
+## Calibrated five species in the window (8 Nov)
+
+`--eco-file abaqus_composition/eco_cal5_CH.txt` (the CH MAP of Chapter 3, Heine et al. 2025 data: c* = 25, alpha* = 0, so no
+antibiotic), the film starting from the calibration's state at day 1 in every film cell (new branch in
+coupled_living_consumption.py: window with --eco-file and the mixed composition), time link of the calibration
+(T* = 1 = day 1 to day 21, --eco-steps 2262). `--v2` is left out (it only sets the cube's antibiotic and alpha*_0 = 50,
+which the file's alpha* = 0 forbids). Results in `results/2026-10-validation/` (the solver writes --eco-file runs there).
+
+```
+ECO_THREADS=4 python3 coupled_living_consumption.py --nf 64 --front 1 --phi-min 0.001 --fortran --inherit-living --gc 1 --tvd \
+  --limiter superbee --transient-c 1e8 --amg --obstacle stl --stl-scale 100 --box 30 --saliva-mixed 0.05 --window mixed \
+  --eco-file ../../abaqus_composition/eco_cal5_CH.txt --only window          # 64^3: 2 min
+```
+
+Film living fractions phibar_i (So, An, Vei, Fn, Pg) and their sum, 64^3, against the point model alone at c = 1
+(check_0d.json, the calibration's own trajectory):
+
+| | So | An | Vei | Fn | Pg | sum | film c | thickness um |
+|---|---|---|---|---|---|---|---|---|
+| film, T* = 0 (day 1) | 0.613 | 0.006 | 0.065 | 0.053 | 0.002 | 0.739 | 0.46 | 16 |
+| film, T* = 1 (day 21) | 0.386 | 0.048 | 0.109 | 0.013 | 0.007 | 0.562 | 0.10 | 45 |
+| point model alone, day 21 | 0.141 | 0.212 | 0.154 | 0.002 | 0.002 | 0.511 | 1 | - |
+
+Reading: in the film the nutrient is 0.1 (depletion length 10 um, film 45 um), so the calibrated community changes much
+less than the point model alone at c = 1: S. oralis stays dominant (living share 0.69 against 0.28) and A. naeslundii,
+which takes over in the calibration, stays at 0.09 (0.42 alone). The film's position in the field changes the predicted
+composition. The two time links disagree: with the calibration's link (T* = 1 = 20 days) the film grows 29 um in 20 days,
+slower than in situ plaque (35 um in 6 days, see above). 128^3 below when it finishes.
+
+128^3 (22 min): film at T* = 1 phibar (So, An, Vei, Fn, Pg) = 0.398, 0.041, 0.091, 0.012, 0.006 (sum 0.548; living shares
+0.73, 0.08, 0.17, 0.02, 0.01), c 0.13, thickness 49 um; 64^3: shares 0.69, 0.09, 0.19, 0.02, 0.01, c 0.10, 45 um. The finding
+(So stays dominant, An does not take over) holds on both grids; the shares change by up to 4 points between them.
+
+## fifa part 11: 192^3 (layered; mixed without antibiotic) and 256^3 (mixed, antibiotic), 8 Nov
+
+Table and GCIs in KEIO_CHAIN_LOG.md (8 Nov). In short: the film stress converges (mixed, antibiotic, 2 h_f: 12.57, 12.67,
+12.69 mPa on 128/192/256^3, GCI 0.1 %; layered 0.3 %; no antibiotic 0.3 %); the living fraction converges in the layered
+film (0.307, 0.321, 0.339 on 64-192^3; extrapolated 0.346, GCI 2.3 %) but not in the mixed film with antibiotic: 0.201,
+0.284, 0.320, 0.365 on 64-256^3, the increments growing per cell size (the 128/192/256^3 "GCI 14 %" is not meaningful).
+Without antibiotic the mixed film's living fraction (0.81, 0.83, 0.84) does not reach the asymptotic range either.
+Paper: stress converged, layered living fraction converged, mixed living fraction only bounded below (0.37).

@@ -1052,7 +1052,9 @@ def run(example, antibiotic):
                           for i in range(N_SP))
     else:
         MIX_START = tuple([tot / N_SP] * N_SP) if MIX_EQUAL else tuple(CASE["phi_init"])
-    if example == "layer":
+    if example == "layer" or (example == "window" and ECO_FILE and not sep):
+        # layer; window with --eco-file (8 Nov): the film starts from the file's state at day 1 (e.g. the calibrated
+        # five-species MAP of Heine et al. 2025 data), the same state in every film cell
         G[seed] = eco_start_state()
     elif sep:
         G[seed] = group_state(tot, GROUP_A)

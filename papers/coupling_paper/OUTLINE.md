@@ -30,6 +30,28 @@ paper planned, submitted, accepted or published, the paper's details go into the
 co-authored paper can be the basis of the report, with a footnote (done in `keio_report/`, 7 Nov).
 Felix's confidential two-species theory and code are not used; only the published 2024 and 2026 models.
 
+## Authorship by contribution (8 Nov 2026)
+
+Assoc. Prof. Muramatsu (8 Nov): the roles of the LUH colleagues follow what they actually contributed. Applied as:
+- Coupling paper (this one; the LUH thesis work and its verification): a CRediT table below, filled with each person, then the
+  author list follows from it. To agree on 1 Dec with Prof. Junker and Dr. Soleimani.
+- Keio thesis papers (deformation coupling via Eq. 30, more strains, obstacles/maze/real tooth applications): led from Keio
+  (K. Nishioka, M. Muramatsu); LUH colleagues are co-authors where they contribute (e.g. the element, advice on Eq. 30),
+  otherwise cited or acknowledged.
+- HiWi work (qPCR data of Felix's father, Bayesian identification): an LUH paper; not in the LUH thesis, the Keio report or
+  the Keio thesis.
+
+| person | conceptualisation | methodology / model | software | validation | data | writing / review | supervision |
+|---|---|---|---|---|---|---|---|
+| K. Nishioka | x | x | x | x | | x | |
+| O. Höchel | coupling scheme (20 Oct) | element (NEM) | element code | | | review? | |
+| F. Klempt | | published models (2024, 2026) | | | | review? | |
+| M. Soleimani | | | | | | review | x |
+| P. Junker | | | | | | review? | x (institute) |
+| M. Muramatsu | | | | | | review? | x (Keio) |
+
+(Fill in after asking each person; "?" = to confirm.)
+
 ## Target journals (in order)
 1. Biomechanics and Modeling in Mechanobiology (where Klempt et al. 2024 appeared)
 2. Archive of Applied Mechanics (where Klempt et al. 2026 appeared)
