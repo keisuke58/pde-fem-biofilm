@@ -308,3 +308,12 @@ slower than in situ plaque (35 um in 6 days, see above). 128^3 below when it fin
 128^3 (22 min): film at T* = 1 phibar (So, An, Vei, Fn, Pg) = 0.398, 0.041, 0.091, 0.012, 0.006 (sum 0.548; living shares
 0.73, 0.08, 0.17, 0.02, 0.01), c 0.13, thickness 49 um; 64^3: shares 0.69, 0.09, 0.19, 0.02, 0.01, c 0.10, 45 um. The finding
 (So stays dominant, An does not take over) holds on both grids; the shares change by up to 4 points between them.
+
+## fifa part 11: 192^3 (layered; mixed without antibiotic) and 256^3 (mixed, antibiotic), 8 Nov
+
+Table and GCIs in KEIO_CHAIN_LOG.md (8 Nov). In short: the film stress converges (mixed, antibiotic, 2 h_f: 12.57, 12.67,
+12.69 mPa on 128/192/256^3, GCI 0.1 %; layered 0.3 %; no antibiotic 0.3 %); the living fraction converges in the layered
+film (0.307, 0.321, 0.339 on 64-192^3; extrapolated 0.346, GCI 2.3 %) but not in the mixed film with antibiotic: 0.201,
+0.284, 0.320, 0.365 on 64-256^3, the increments growing per cell size (the 128/192/256^3 "GCI 14 %" is not meaningful).
+Without antibiotic the mixed film's living fraction (0.81, 0.83, 0.84) does not reach the asymptotic range either.
+Paper: stress converged, layered living fraction converged, mixed living fraction only bounded below (0.37).
