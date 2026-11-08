@@ -4,6 +4,13 @@
 
 ## 題目
 
+**8 Nov（村松先生の依頼）**：慶應の修論につながる報告書にするため，「連成モデルの応用」と「力学連成」を含む題目に変更．
+報告書の案：拡張ハミルトン原理に基づく多菌種バイオフィルム連成モデルの構築 ―連成モデルの応用と力学連成に向けて―
+（A Coupled Multi-Species Biofilm Model Based on the Extended Hamilton Principle: Towards Applications of the Coupled Model and Mechanical Coupling）．
+アブストラクト，緒言（1.3 節の末尾），結言，「限界と慶應での展開」を，結果を (i) 応用と (ii) 力学連成の土台として書き直した．詳細は次回相談．
+
+以前の題目：
+
 拡張ハミルトン原理に基づく多菌種バイオフィルムモデルのベイズ推定と連続体成長モデルとの連成
 （Bayesian Calibration of an Extended-Hamilton-Principle Multi-Species Biofilm Model and its Coupling to a Continuum Growth Model）
 — 7 Nov にこの題目案で先生に報告した（ユーザー）．報告書にも入れた（旧：「…と有限要素成長解析への組み込み」）．
