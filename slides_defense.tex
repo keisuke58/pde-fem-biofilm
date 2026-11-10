@@ -793,4 +793,16 @@ to $0.88$; superbee keeps the edges sharpest and slightly steepens the smooth pe
 \takeaway{The front term \fterm{} moves a sharp edge; superbee keeps it sharp, so the mixed stress converges on coarser grids than with minmod.}
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Backup 18: what is solved where}
+\centering
+\includegraphics[width=\linewidth,height=0.50\textheight,keepaspectratio]{assets/fig_matrix_structure.png}\\[2pt]
+\small\raggedright
+Patterns drawn for $4^3$ elements. (a) ANSYS solves only the displacements (3 per node) with the stiffness matrix.
+(b) The element updates $\phi_{3D}$, $c$ and $a$ at its Gauss points explicitly, each from its 30 neighbours (NEM):
+a sparse product, no solve. (c) The point model has no spatial derivative, so its 12 unknowns are internal variables of
+each Gauss point, solved there by Newton's method (backward Euler, exact Jacobian, LU), like a plastic strain.
+\takeaway{Species add no unknowns to the global matrix: they are solved point by point, inside the material routine.}
+\end{frame}
+
 \end{document}
