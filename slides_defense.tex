@@ -766,4 +766,16 @@ Video: \texttt{assets/anim\_cal5\_ch.mp4}.
 \takeaway{\textit{S.~oralis} falls from $0.74$ to $0.56$ and the living fraction from $0.81$ to $0.24$, while growth and stress do not depend on the composition (one-way coupling).}
 \end{frame}
 
+% --------------------------------------------------------
+\begin{frame}{Backup 17: slope limiters for the front term}
+\centering
+\includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{assets/fig_limiters_general.png}\\[2pt]
+\small\raggedright
+(a) Limiter $\psi(r)$ against the ratio $r$ of successive gradients; grey: the second-order TVD region of Sweby (1984),
+bounded by minmod below and superbee above. (b) Textbook test, not the biofilm model: $u_t+u_x=0$, 100 cells, MUSCL
+reconstruction, upwind flux, SSP Runge--Kutta 3, CFL $0.4$, one period. Minmod smears the edges and clips the smooth peak
+to $0.88$; superbee keeps the edges sharpest and slightly steepens the smooth peak.
+\takeaway{The front term \fterm{} moves a sharp edge; superbee keeps it sharp, so the mixed stress converges on coarser grids than with minmod.}
+\end{frame}
+
 \end{document}
