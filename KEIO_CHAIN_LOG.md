@@ -1458,3 +1458,13 @@ Wall time and peak RSS (field; stress): `tw_lay_192` 1:58:51, 7.3 GB; 18:01.92, 
 **Step check**: 128^3, separate, K = 1e5, `--dtc 0.0125`: alpha - 1 8.9150e-04, vM 5.0687e-04 (against the default step 0.025: -0.27 %, +7.87 %); 1:06:58, 1.34 GB.
 
 **Where alpha - 1 or vM first changes by 1 % or more** (against K = 0): separate 64^3: from K = 30000; separate 128^3: from K = 30000; separate 192^3: from K = 100000; mixed, equal shares 64^3: from K = 10000; mixed, equal shares 128^3: from K = 10000; mixed, equal shares 192^3: from K = 10000.
+
+**Notes to the part 12 table (fifa, 10 Nov):**
+- "no JSON" rows are runs that diverged, not runs left out: K = 3e5 separate (64^3: NaN, `ValueError: array must not
+  contain infs or NaNs`; 128^3: killed by the 12 GB memory guard at 15.6 GB) and K = 1e6 on every grid (64/128^3: NaN;
+  192^3: memory to 33 / 44 GB and killed by the OOM killer, which also stopped frontale03's pbs_mom on 9 Nov). K = 3e5
+  mixed ran through. With the default outer step 0.025, K dt = 7.5e3 and 2.5e4 for these, against 2.5e3 for K = 1e5.
+- The step check is not small: at K = 1e5 (separate, 128^3) halving the outer step changes vM by +7.9 % (alpha - 1
+  -0.3 %), so the K = 1e5 vM values carry a time-step error of that size (the mechanical term lags one outer step).
+- 192^3 has no K = 3e4 run (the instructions list 0, 1e4, 1e5, 1e6 there), so "separate 192^3: from K = 100000" means
+  only that K = 1e4 stays below 1 %.
