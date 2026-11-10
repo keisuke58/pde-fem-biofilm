@@ -75,7 +75,21 @@ resulting stresses consistently within an existing finite element framework.
 % --------------------------------------------------------
 \begin{frame}{Approach}
 \centering
-\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{assets/fig_coupling_schematic_agreed.png}
+\includegraphics[width=\linewidth,height=0.50\textheight,keepaspectratio]{assets/fig_coupling_schematic_agreed.png}\\[2pt]
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\cbox{p1}{1.05cm}{\scriptsize\textbf{\color{p1}1. Calibration}\\ which of the 15 interactions the data
+determine (TMCMC, 4 conditions, 3 seeds)}
+\end{column}
+\begin{column}{0.32\textwidth}
+\cbox{p2}{1.05cm}{\scriptsize\textbf{\color{p2}2. Growth law in ANSYS}\\ $\mathbf F_g=\alpha\mathbf I$ as a user
+material, verified against an exact solution}
+\end{column}
+\begin{column}{0.32\textwidth}
+\cbox{p3}{1.05cm}{\scriptsize\textbf{\color{p3}3. Coupling}\\ composition reaches the stress only through
+nutrient and front speed; grid error known}
+\end{column}
+\end{columns}
 \takeaway{The point model runs unchanged at every Gauss point; nutrient and antibiotic come from the
 fields, and only living biomass consumes them.}
 \end{frame}
