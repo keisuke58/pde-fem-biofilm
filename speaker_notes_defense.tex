@@ -202,11 +202,12 @@ is my assumption.
 number is about thirty on the sixteen-cube mesh. A constant added diffusion keeps it stable but gives only a
 quarter of the converged stress; a second-order upwind scheme is needed. With it, on grids up to one hundred and
 ninety-two cubed, the growth converges within four and a half percent and the separate stress within one and a
-half; the mixed stress converges slowly, within twenty to forty percent. The IKM element with upwind gradients
+half; the mixed stress converges slowly with the minmod limiter, within twenty to forty percent, and within
+about five percent with the superbee limiter, which keeps the edge sharper. The IKM element with upwind gradients
 lies inside the band.
 \JA 前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi_{3D}$ は強い移流で、$16^3$ でセルのペクレ数が約 30 あります。一定の人工拡散で
 安定にはなりますが、応力は収束値の 4 分の 1 しか出ません。2 次の風上法が要ります。それを使うと $192^3$ まで、成長は 4.5 \% 未満、
-分けた例の応力は 1.5 \% 未満で収束し、混ぜた例の応力は遅く 20〜40 \% です。IKM の要素は upwind の勾配でこの幅に入ります。
+分けた例の応力は 1.5 \% 未満で収束し、混ぜた例の応力は minmod では遅く 20〜40 \%，端を鋭く保つ superbee では約 5 \% です。IKM の要素は upwind の勾配でこの幅に入ります。
 
 \slide{Part 3: rigid bars and a maze}{17:15}
 \EN Two geometries from the 2024 paper. Four rigid bars restrain the swelling: the biofilm grows around them, and the

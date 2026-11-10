@@ -296,7 +296,8 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 \begin{itemize}\setlength{\itemsep}{3pt}
   \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a constant added diffusion gives a quarter of
         the converged stress, a second-order upwind scheme is needed
-  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$, mixed stress $19$ to $41\,\%$
+  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$; mixed stress $19$ to $41\,\%$
+        with minmod, $4.6\,\%$ with the superbee limiter, which keeps the edge sharper (Backup 17)
   \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
 \end{itemize}
 \end{column}
