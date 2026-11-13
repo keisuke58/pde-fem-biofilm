@@ -62,13 +62,13 @@ Table~\ref{tab:heine_rmse}.
 \REQUIRE Data $\yobs$ (viable and total composition, live fraction), $N_p$ particles, prior box $B$, GPU device
 \ENSURE MAP $\hat{\btheta}$ and posterior samples of every stage
 \STATE $\triangleright$ \textbf{One TMCMC run on a box $B$ with likelihood $p(\yobs\mid\btheta)$}
-\STATE draw $\{\btheta_j\}$ in $B$; $\beta_0\leftarrow0$
-\WHILE{$\beta_m<1$}
-  \STATE find $\beta_{m+1}$ such that the coefficient of variation of the weights equals its target, by bisection
-  \STATE weights $w_j\leftarrow p(\yobs\mid\btheta_j)^{\beta_{m+1}-\beta_m}$; resample $\propto w_j$
-  \STATE estimate the weighted covariance $\hat{\boldsymbol\Sigma}^{(m)}$
-  \FOR{$k=1$ \TO $n_{\mathrm{mut}}$}
-    \STATE propose a random-walk step scaled by $\hat{\boldsymbol\Sigma}^{(m)}$ or a differential-evolution step, alternately
+\STATE draw $\{\btheta_k\}$ in $B$; $q_0\leftarrow0$
+\WHILE{$q_j<1$}
+  \STATE find $q_{j+1}$ such that the coefficient of variation of the weights equals its target, by bisection
+  \STATE weights $w_k\leftarrow p(\yobs\mid\btheta_k)^{q_{j+1}-q_j}$; resample $\propto w_k$
+  \STATE estimate the weighted covariance $\hat{\boldsymbol\Sigma}^{(j)}$
+  \FOR{$m=1$ \TO $n_{\mathrm{mut}}$}
+    \STATE propose a random-walk step scaled by $\hat{\boldsymbol\Sigma}^{(j)}$ or a differential-evolution step, alternately
     \STATE reject proposals outside $B$ without solving the model
     \STATE evaluate all $N_p$ likelihoods at once via \texttt{jax.vmap} on the GPU; accept or reject (Metropolis--Hastings)
   \ENDFOR
@@ -85,7 +85,7 @@ Table~\ref{tab:heine_rmse}.
 
 \paragraph{Settings.}
 Table~\ref{tab:app_np} lists the particles and mutation steps of every
-stage; the gauge is $c^*=25$.
+stage; the seeds are $42$, $123$ and $7$, and the scale is fixed by $c^*=25$.
 
 \begin{table}[htbp]
   \centering\small
@@ -104,6 +104,6 @@ stage; the gauge is $c^*=25$.
   condition; DH stage~(iv) did not meet criterion~(e) and is not used.}
   \label{tab:app_np}
 \end{table}
-The acceptance criteria, the definition of an identified entry and the
+The acceptance criteria, the classification of the entries and the
 treatment of entries with several posterior modes are given in
 Section~\ref{sec:heine_gpu}.

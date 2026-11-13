@@ -14,7 +14,7 @@ It is linked to the multi-species communities that colonise the implant surface:
 
 The oral microbiome comprises more than 700 taxa that interact through mutualism, competition and metabolic cross-feeding~\cite{Kolenbrander2010OralMultispecies, Dewhirst2010HOMD}.
 In a healthy host the community is dominated by early colonisers such as \textit{Streptococcus oralis} (\textit{So}) and \textit{Actinomyces naeslundii} (\textit{An}).
-A perturbation can shift it to a dysbiotic state in which late colonisers, most notably the low-abundance keystone pathogen \textit{Pg}~\cite{Hajishengallis2014Polymicrobial}, sustain a positive feedback loop with the immune system~\cite{Marsh2003Dental}.
+A change of the environment can shift it to a dysbiotic state~\cite{Marsh2003Dental} in which late colonisers gain ground, most notably the low-abundance keystone pathogen \textit{Pg}~\cite{Hajishengallis2014Polymicrobial}.
 
 A biofilm is also a mechanical body.
 It grows on a surface, and where it grows unevenly, or against a stiff substrate, it carries stresses that bear on detachment and on the loading of the tissue beneath.
@@ -36,7 +36,7 @@ Its $n^2$ interaction coefficients are poorly determined by typical time-course 
 
 The extended Hamilton principle~\cite{JunkerBalzani2021ExtendedHamilton} derives the evolution of a biofilm from an energy and a dissipation functional.
 Applied to a material point with several species, it gives the point model of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}: volume fractions $\phi_i$ and viabilities $\psi_i$, the living fraction $\bar\phi_i=\phi_i\psi_i$, a symmetric interaction matrix $A_{ij}$ and a nutrient level $c^*$.
-Only the symmetric part of $A_{ij}$ enters the quadratic energy, so the matrix is taken symmetric, which reduces the number of interaction coefficients to $n(n+1)/2$, 15 for five species.
+The symmetric matrix has $n(n+1)/2$ coefficients, 15 for five species (Section~\ref{sec:theory_point}).
 The model describes how the composition at one point evolves in time; it has no space.
 
 \subsection{Estimating the interactions}
@@ -51,7 +51,7 @@ Where data are sparse, the signs of the interactions can be fixed beforehand fro
 Continuum models of biofilm growth describe the biofilm as a field.
 In the model of Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}, also derived from the extended Hamilton principle, a biofilm field $\phi(\mathbf X,t)$ spreads towards a diffusing nutrient $c(\mathbf X,t)$, and the local growth enters the kinematics through the split $\mathbf F=\mathbf F_e\mathbf F_g$ with $\mathbf F_g=\alpha\mathbf I$.
 Where the growth is uneven or constrained, the elastic part $\mathbf F_e$ carries stress.
-The authors solve this model with a user element in ANSYS, and an earlier comparison of growth models showed pressure inside a growing biofilm and tension at its edge~\cite{Klempt2023NumericalComparison}. The same variational approach has been combined with experiments on \textit{Pg} biofilms on titanium~\cite{Mukherjee2025PgTitanium} and applied to tissue growth and turnover in atherosclerosis~\cite{Soleimani2025Atherosclerosis}.
+The authors solve this model with a user element in ANSYS and report pressure inside the growing biofilm and a ring of tension at its outer edge; an earlier study compared growth models of this kind~\cite{Klempt2023NumericalComparison}. The same variational approach has been combined with experiments on \textit{Pg} biofilms on titanium~\cite{Mukherjee2025PgTitanium} and applied to tissue growth and turnover in atherosclerosis~\cite{Soleimani2025Atherosclerosis}.
 The field model has one biofilm variable; it does not say which species the biofilm consists of.
 
 \section{Objectives and Thesis Structure}
@@ -67,7 +67,7 @@ Figure~\ref{fig:intro_overview} shows how the parts fit together.
   \centering
   \includegraphics[width=\linewidth]{\ansysfigdir fig_coupling_schematic_agreed_thesis.png}
   \caption[Overview of the coupling]{Overview of this work. (1) The fields of
-    Klempt et al.\ 2024 in the IKM element: the biofilm $\phi_{3D}$, the
+    Klempt et al.\ 2024 in the IKM element: the biofilm $\phi_{3D}$ (the field $\phi$ of that model), the
     nutrient $c$ and, in the element's second nutrient field, an antibiotic
     $a$. (2) One copy of the point model of Klempt et al.\ 2026 at every Gauss
     point, used as published with its own constraint; it receives $c^*$ and
@@ -75,7 +75,7 @@ Figure~\ref{fig:intro_overview} shows how the parts fit together.
     fraction $\sum_i\bar\phi_i$ scales the consumption of $c$ and $a$, and $c$
     enters the spreading of $\phi_{3D}$. (3) The growth $\alpha$ and the stresses
     follow from $\phi_{3D}$ (Eq.~36 of Klempt et al.\ 2024). The inset in (2) is
-    computed (synthetic two-species case of Fritsch et al., antibiotic with
+    computed (synthetic two-species case of Fritsch et al.~\cite{Fritsch2025BayesianMicrofilms}, antibiotic with
     $\alpha^*_0=100$ from $T^*=1/3$); the stress pattern in (3) is a sketch.}
   \label{fig:intro_overview}
 \end{figure}
@@ -84,17 +84,17 @@ I make three contributions:
 \begin{enumerate}
   \item \emph{A calibrated point model} (Chapter~\ref{ch:heine}).
     The 15 interaction coefficients of a five-species point model are estimated with TMCMC from the in-vitro time courses of Heine et al.~\cite{Heine2025PeriImplant} under four conditions (commensal and dysbiotic, static and in a HOBIC flow reactor).
-    A final section shows how sign constraints from metabolic models carry the same model to sparse in-vivo data; this part was done during an internship.
+    A final section shows how sign constraints from metabolic models make a related model, the replicator form with a symmetric interaction matrix, identifiable from sparse in-vivo data; this part was done during an internship.
   \item \emph{A growth law in the finite element framework} (Chapter~\ref{ch:ansys}).
     The growth kinematics $\mathbf F_g=\alpha\mathbf I$ is implemented as an ANSYS user material, verified against closed-form solutions, and coupled to the element's biofilm field through the growth equation of Klempt et al.\ 2024 at every Gauss point.
   \item \emph{The point model at every Gauss point} (Chapter~\ref{ch:ansys}).
     The point model of Klempt et al.\ 2026 runs, unchanged, at every Gauss point; it receives the nutrient and an antibiotic from fields of the element, and its living biomass sets the consumption of both.
     The coupled point model reproduces the point model alone, and the time of both models is linked through the duration of the data.
-    Two-species examples with an antibiotic are verified on refined grids and against the element.
+    Two-species examples with an antibiotic are computed on refined grids with a finite-volume implementation of the same equations and compared with the element.
 \end{enumerate}
 
-The thesis covers one and two species, for which the papers give numbers to check against.
-More species and a coupling in which the composition acts back on growth and stiffness are left to the continuation of this work at Keio University.
+The coupled examples cover one and two species, for which the papers give numbers to check against; the calibrated five-species model is shown once in the element (Section~\ref{sec:ch5-five}).
+More species in space, a coupling in which the composition acts on the stiffness, and one in which the stress acts on the growth are left to the continuation of this work at Keio University.
 
 Chapter~\ref{ch:theory} sets out the background: the extended Hamilton principle, the field model of Klempt et al.\ 2024, the point model of Klempt et al.\ 2026 and Bayesian inference with TMCMC.
 Chapter~\ref{ch:heine} calibrates the point model.

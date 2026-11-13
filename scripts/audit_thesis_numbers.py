@@ -322,7 +322,6 @@ check("bars: seed vM mixed without bars (32^3)", "2.1\\times10^{-4}", mix[0]["se
 check("bars: 'about ten times'", "10", bars_s["seed_vm_Pa"] / sep[0]["seed_vm_Pa"], tol=1.0)
 check("bars: alpha-1 lower, separate [%]", "9", (1 - bars_s["seed_am1"] / sep[0]["seed_am1"]) * 100)
 check("bars: alpha-1 lower, mixed [%]", "21", (1 - bars_m["seed_am1"] / mix[0]["seed_am1"]) * 100)
-check("bars: 32^3 stress 14 % above the extrapolated value", "14", (sep[0]["seed_vm_Pa"] * 1e4 / gci(*[h["seed_vm_Pa"] * 1e4 for h in sep])[1] - 1) * 100)
 
 # 14. maze (Python, 2D, 4 um cells) -------------------------------------------------------------------------
 MZ = RES / "2026-10-maze"
@@ -371,8 +370,8 @@ mix_ab_64 = json.loads((D3 / f"coupled_living_consumption_nf64_front1_phimin0.00
 check("time step: mixed+ab 0.025 about 15 % above 0.0025 (3.23 vs 2.82)", "15", (mix_ab_64["seed_vm_Pa"] * 1e4 / ab_mix["vm"][1] - 1) * 100, tol=0.6, note="%")
 sep_64 = json.loads((D3 / f"coupled_living_consumption_{base}tvd_wgmirror_fast_separate.json").read_text())["runs"]["separate"]
 mix_64 = json.loads((D3 / "coupled_living_consumption_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_tvd_wgmirror_fast_mixed.json").read_text())["runs"]["mixed"]
-check("time step: without antibiotic, separate 2.5 %", "2.5", abs(sep[1]["seed_vm_Pa"] / sep_64["seed_vm_Pa"] - 1) * 100, tol=0.1, note="%")
-check("time step: without antibiotic, mixed 12 %", "12", abs(mix[1]["seed_vm_Pa"] / mix_64["seed_vm_Pa"] - 1) * 100, tol=0.6, note="%")
+check("time step: without antibiotic, separate: 0.025 gives 2.5 % less than 0.0025", "2.5", abs(sep_64["seed_vm_Pa"] / sep[1]["seed_vm_Pa"] - 1) * 100, tol=0.1, note="%")
+check("time step: without antibiotic, mixed: 0.025 gives 14 % more than 0.0025", "14", abs(mix_64["seed_vm_Pa"] / mix[1]["seed_vm_Pa"] - 1) * 100, tol=0.6, note="%")
 # composition and alpha-1 between outer steps 0.02 and 0.0025 (A-89 and the files): the text must cover the largest change
 comp_change = max(abs(ts[0.0025][0] / ts[0.02][0] - 1), abs(ab_mix["vm"][1] * 0 + mix[1]["share_a_seed"][-1] / mix_64["share_a_seed"][-1] - 1),
                   abs(mix[1]["c_seed"][-1] / mix_64["c_seed"][-1] - 1)) * 100
