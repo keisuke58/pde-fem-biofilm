@@ -33,12 +33,12 @@
 
 % ***** 日本語タイトル *****
 \title{
-拡張ハミルトン原理に基づく多菌種バイオフィルムモデルの\\
-ベイズ推定と連続体成長モデルとの連成
+多菌種バイオフィルム連成モデルの\\
+応用と力学連成への展開
 }
 \endtitle{
-Bayesian Calibration of an Extended-Hamilton-Principle Multi-Species Biofilm Model\\
-and its Coupling to a Continuum Growth Model
+Applications of a Coupled Multi-Species Biofilm Model\\
+and its Extension to Mechanical Coupling
 }
 
 \author{%
@@ -70,12 +70,16 @@ antibiotic lowers the living fraction of the seed from 0.96 to 0.15, or to 0.04
 when the species start mixed, while the growth changes little. Growth and
 composition converge on refined grids; the stress needs a second-order
 treatment of the front term. The mechanics is coupled one way, and the results
-are verified, not validated.
+are verified, not validated. These results are the basis of the two themes
+that follow at Keio: applications of the coupled model to confined and real
+geometries (obstacles, the surface of a tooth) and more strains, and a
+mechanical coupling in which the stress acts back on the growth through the
+mechanical term that the growth model omits.
 }
 
 \keywords{
 Biofilm, Hamilton's Principle, TMCMC, Bayesian Inference, Growth Mechanics,
-Finite Element Method, ANSYS User Material
+Finite Element Method, Mechanical Coupling
 }
 
 % 図のまわりの余白を詰める（7 Nov）
@@ -144,6 +148,11 @@ Klempt ら\cite{klempt2026}は拡張ハミルトン原理\cite{junker2021}の
     \item 点モデルを各 Gauss 点で動かし，栄養と抗菌薬で場と結ぶ（第 6 節）
 \end{enumerate}
 本報告は LUH 連続体力学研究所でのダブルディグリーの修士論文（2026 年 12 月提出予定）の内容に基づく．
+
+慶應での修士研究では，この連成モデルを土台として次の 2 つに取り組む．
+(i) 連成モデルの応用：障害物や実際の歯の表面など，閉じ込めのある形状と実寸の形状への適用，および菌株の数を増やした拡張．
+(ii) 力学連成：成長モデルで省かれている力学の項（Klempt 2024 の式 30）を戻し，応力が成長に効く双方向の連成．
+本報告の結果は，その 2 つのための土台（推定した組成，連成の実装，数値の検証）として位置付ける．
 
 %%=================================================================
 \section{多種バイオフィルム連続体モデル}
@@ -340,7 +349,7 @@ CS では組成と生存率を同時には合わせられず，生存率の誤�
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.85\textwidth]{eml_fit.pdf}
+  \includegraphics[width=0.75\textwidth]{eml_fit.pdf}
   \caption{\textbf{事後予測（4 条件 $\times$ 5 菌種）．} 線：最終段の MAP（実線：生きている菌の組成，
     点線：全菌の組成），帯：事後予測区間，点と箱：実測．DH は段 (iii)．}
   \label{fig:fit}
@@ -360,7 +369,7 @@ CS では組成と生存率を同時には合わせられず，生存率の誤�
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.85\textwidth]{eml_ident.pdf}
+  \includegraphics[width=0.75\textwidth]{eml_ident.pdf}
   \caption{\textbf{データが決める成分}（最終段，3 シードを合わせた）．色と数字：識別できた成分の事後中央値，
     斜線：符号のみ，灰色：識別できない．右：同じ成分のネットワーク（赤：協力，青：競合）．}
   \label{fig:ident}
@@ -463,7 +472,7 @@ ANSYS の要素（風上の勾配）も同じ式を解き，この幅に入っ�
 
 \begin{figure*}[tb]
   \centering
-  \includegraphics[width=0.85\textwidth]{fig_coupled_3d_panels_separate_ab.png}
+  \includegraphics[width=0.72\textwidth]{fig_coupled_3d_panels_separate_ab.png}
   \caption{\textbf{分けて置いた例，抗菌薬あり}（$64^3$，上 $T^*=0.325$，下 $T^*=1$）．
     A の割合，生きている量 $\sum_i\bar\phi_i$，栄養 $c$，抗菌薬 $a$，von Mises 応力．}
   \label{fig:3d}
@@ -547,9 +556,10 @@ $\mathbf{A}$ の対称性は自由エネルギーの二次形式から自動的�
 また検証（verification）は行ったが，実験との比較（validation）は行っていない．
 $\beta$ は換算した仮定の値であり，応力の大きさは弾性率に比例する．
 
-慶應では，(1) Klempt 2024 の Eq.\,30 にある力学の項を戻す「応力から成長へ」の連成と，
-(2) 同じ問題を ANSYS（NEM，陽解法）と Abaqus（通常の有限要素，陰解法）で解く数値面の比較を中心に続ける．
-Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fortran に移して 4--9 倍速くした．
+慶應では，(i) 連成モデルの応用（閉じ込めのある形状，実際の歯の表面，菌株の数の拡張）と，
+(ii) 力学連成（Klempt 2024 の式 30 の力学の項を戻し，応力を成長に戻す）を進める．
+(ii) の予備計算では，自由に育つ例で項が応力を下げる一方，剛な柱で閉じ込めた例では圧縮がバイオフィルムの量を増やす正の帰還となり，
+弾性エネルギーの形の扱いが課題であることが分かった．
 
 %%=================================================================
 \section{結論}
@@ -569,6 +579,9 @@ Abaqus 版は $48^3$ までメッシュ収束を確かめ，点モデルを Fort
   \item 成長と組成は格子で数\% 以内に収束し，応力は 前線の項 $-r\frac{c}{k+c}\,\mathbf n_c\cdot\nabla\phi$ の 2 次の扱いで，分けた例は GCI 1.4\%，混ぜた例は superbee 制限関数で GCI 6.3\% で求まった．
   \item 較正した 5 菌種の点モデルを，同じ連成で要素の中で動かした．
 \end{enumerate}
+これらは，慶應での (i) 連成モデルの応用と (ii) 力学連成の土台である．
+推定した組成は多菌株への拡張の出発点となり，検証した連成の実装と格子収束の結果は，
+閉じ込めのある形状や実際の歯の表面での解析，および応力を成長に戻す双方向の連成にそのまま用いる．
 
 \paragraph{謝辞}
 本研究は LUH 連続体力学研究所での修士論文の一部であり，

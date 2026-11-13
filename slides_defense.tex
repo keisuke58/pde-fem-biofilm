@@ -75,7 +75,21 @@ resulting stresses consistently within an existing finite element framework.
 % --------------------------------------------------------
 \begin{frame}{Approach}
 \centering
-\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{assets/fig_coupling_schematic_agreed.png}
+\includegraphics[width=\linewidth,height=0.50\textheight,keepaspectratio]{assets/fig_coupling_schematic_agreed.png}\\[2pt]
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\cbox{p1}{1.05cm}{\scriptsize\textbf{\color{p1}1. Calibration}\\ which of the 15 interactions the data
+determine (TMCMC, 4 conditions, 3 seeds)}
+\end{column}
+\begin{column}{0.32\textwidth}
+\cbox{p2}{1.05cm}{\scriptsize\textbf{\color{p2}2. Growth law in ANSYS}\\ $\mathbf F_g=\alpha\mathbf I$ as a user
+material, verified against an exact solution}
+\end{column}
+\begin{column}{0.32\textwidth}
+\cbox{p3}{1.05cm}{\scriptsize\textbf{\color{p3}3. Coupling}\\ composition reaches the stress only through
+nutrient and front speed; grid error known}
+\end{column}
+\end{columns}
 \takeaway{The point model runs unchanged at every Gauss point; nutrient and antibiotic come from the
 fields, and only living biomass consumes them.}
 \end{frame}
@@ -296,7 +310,8 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 \begin{itemize}\setlength{\itemsep}{3pt}
   \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a constant added diffusion gives a quarter of
         the converged stress, a second-order upwind scheme is needed
-  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$, mixed stress $19$ to $41\,\%$
+  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$; mixed stress $19$ to $41\,\%$
+        with minmod, $4.6\,\%$ with the superbee limiter, which keeps the edge sharper (Backup 17)
   \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), inside the band
 \end{itemize}
 \end{column}
@@ -764,6 +779,45 @@ The run of Section~4 (commensal flow condition, final MAP, Day-1 start, one-way 
 ($8^3$ in the thesis: $6.75\times10^{-4}$, $4.68\times10^{-4}$\,Pa); shares within $0.01$ of the $8^3$ run.
 Video: \texttt{assets/anim\_cal5\_ch.mp4}.
 \takeaway{\textit{S.~oralis} falls from $0.74$ to $0.56$ and the living fraction from $0.81$ to $0.24$, while growth and stress do not depend on the composition (one-way coupling).}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 17: slope limiters for the front term}
+\centering
+\includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{assets/fig_limiters_general.png}\\[2pt]
+\small\raggedright
+(a) Limiter $\psi(r)$ against the ratio $r$ of successive gradients; grey: the second-order TVD region of Sweby (1984),
+bounded by minmod below and superbee above. (b) Textbook test, not the biofilm model: $u_t+u_x=0$, 100 cells, MUSCL
+reconstruction, upwind flux, SSP Runge--Kutta 3, CFL $0.4$, one period. Minmod smears the edges and clips the smooth peak
+to $0.88$; superbee keeps the edges sharpest and slightly steepens the smooth peak.
+\takeaway{The front term \fterm{} moves a sharp edge; superbee keeps it sharp, so the mixed stress converges on coarser grids than with minmod.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Backup 18: what is solved where, in one step}
+\small
+\cbox{p2}{1.45cm}{\textbf{\color{p2}1. Mechanics: nodes, global matrix (ANSYS, Newton)}\\[-4pt]
+\[
+\mathbf K_T\,\Delta\mathbf u=\mathbf f_{\mathrm{ext}}-\mathbf f_{\mathrm{int}}(\mathbf u),\qquad
+\mathbf f_{\mathrm{int}}=\textstyle\sum_e\int_{\Omega_e}\mathbf B^{\mathrm T}\bm\sigma\,dV,\qquad
+\bm\sigma\ \text{from}\ \mathbf F_e=\mathbf F\mathbf F_g^{-1},\ \mathbf F_g=\alpha\mathbf I
+\]}\\[3pt]
+\cbox{p1}{2.35cm}{\textbf{\color{p1}2. Fields: Gauss points $p$, explicit, no solve}\\[-6pt]
+\[
+\begin{aligned}
+\phi_p^{n+1}&=\phi_p^n+\Delta t\Big[\beta\textstyle\sum_q L_{pq}\phi_q+k_\alpha\alpha_p
+ -r\frac{c_p}{k+c_p}\,\mathbf n_c\cdot\sum_q\mathbf G_{pq}\phi_q\Big]\\[-2pt]
+c_p^{n+1}&=c_p^n+\Delta t\Big[d\textstyle\sum_q L_{pq}c_q-g\,\phi_p\big(\sum_i\bar\phi_i\big)_p\,c_p\Big]\qquad(a\ \text{alike})
+\end{aligned}
+\]
+\vspace{-4pt}\scriptsize $L_{pq}$, $\mathbf G_{pq}$: Laplacian and gradient weights from the 30 neighbours (NEM)}\\[3pt]
+\cbox{c3}{1.3cm}{\textbf{\color{c3}3. Point model: each Gauss point alone, $12\times12$ (Newton, backward Euler)}\\[-4pt]
+\[
+\mathbf R(\mathbf x_p^{n+1};\,c^*,\alpha^*)=\mathbf 0,\qquad
+\mathbf J\,\Delta\mathbf x=-\mathbf R,\quad \mathbf J=\partial\mathbf R/\partial\mathbf x,\qquad
+\mathbf x=(\phi_1..\phi_5,\phi_0,\psi_1..\psi_5,\gamma)
+\]}
+\takeaway{Only $\mathbf K_T$ is a global matrix; the fields need products, the point model a small matrix per point, like a plastic strain.}
 \end{frame}
 
 \end{document}
