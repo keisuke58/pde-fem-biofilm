@@ -101,9 +101,9 @@ The thesis keeps that only in the outlook (user's decision, 15 Oct).
 GCI 8.3 %, "within the uncertainty".)
 
 **(1) Observation.** Separate example, seed von Mises stress extrapolated to the grid limit
-(`tab:ch5-gci`): $6.55\times10^{-4}$ Pa without (from $32^3$, $64^3$, $128^3$, GCI 0.7 %) and
+(`tab:ch5-gci`): $6.57\times10^{-4}$ Pa without (from $64^3$, $128^3$, $192^3$, GCI 0.1 %) and
 $6.42\times10^{-4}$ Pa with the antibiotic (from $64^3$, $128^3$, $192^3$, GCI 1.4 %). The difference is
-2 %, about the two bands together ($\pm0.05$ and $\pm0.09\times10^{-4}$ Pa): at the limit of what the grids
+2 %, slightly more than the two bands together ($\pm0.01$ and $\pm0.09\times10^{-4}$ Pa): at the limit of what the grids
 resolve. On one grid the difference is about 10 %: $6.73$ against $6.00\times10^{-4}$ Pa on $64^3$ at the
 step $0.0025$, $6.56$ against $5.68\times10^{-4}$ Pa at the step $0.025$ (`tab:ch5-two-species`). The two
 series run in opposite directions: $7.44,\ 6.73,\ 6.585$ (falling, $p=2.3$) without, $5.52,\ 6.00,\ 6.28,\
@@ -141,7 +141,7 @@ without antibiotic, because phi 3D is about one there. So the edge moves, but th
 Numerically, on a single grid I see 10 percent, but the two cases converge from opposite sides: without the
 antibiotic the stress falls with refinement, with it the stress rises. A comparison on one grid compares
 two different discretisation errors. After extrapolation, with up to 192 cubed cells, the two values are
-6.55 and 6.42 times ten to the minus four pascal, with bands of 0.7 and 1.4 percent. The antibiotic lowers
+6.57 and 6.42 times ten to the minus four pascal, with bands of 0.1 and 1.4 percent. The antibiotic lowers
 the converged stress by about 2 percent, which is about what the grids can resolve."
 
 **(3) Spoken, JA.** 「抗菌薬は生きている菌の大半を取り除くので、消費される栄養が減り、シードの栄養は 0.54 から 0.91
@@ -149,7 +149,7 @@ the converged stress by about 2 percent, which is about what the grids can resol
 シードの応力はシードの縁での $\alpha$ の段差で決まり、シードの中の $\alpha$ は抗菌薬のあるなしでほぼ同じです（そこでは
 $\phi_{3D}\approx1$ だから）。縁は動きますが、段差の高さは変わりません。数値的には、一つの格子で見ると 10 % の差が出ますが、
 二つの場合は反対側から収束します。抗菌薬なしは細かくすると下がり、ありは上がる。一つの格子での比較は、二つの
-違う離散化誤差を比べていることになります。$192^3$ まで使って外挿すると $6.55$ と $6.42\times10^{-4}$ Pa、幅は 0.7 % と
+違う離散化誤差を比べていることになります。$192^3$ まで使って外挿すると $6.57$ と $6.42\times10^{-4}$ Pa、幅は 0.1 % と
 1.4 %。抗菌薬は収束した応力を約 2 % 下げ、これは格子で見分けられる限界と同程度です。」
 
 **(4) Follow-up.** *"Why trust an extrapolation with an observed order below one?"* For the separate
@@ -163,8 +163,8 @@ of 19 to 41 %. The sign of a one-grid difference is not robust; the band is.
 ## 3. Why the mixed seed carries about half the stress of the separate one
 
 **(1) Observation.** Seed von Mises stress at $T^*=1$: $3.50$ against $6.56\times10^{-4}$ Pa ($64^3$,
-step 0.025, `tab:ch5-two-species`), ratio 0.53; extrapolated $4.50$ against $6.55\times10^{-4}$ Pa,
-ratio 0.69 (`tab:ch5-gci`). The mixed growth is 7 % lower ($8.56$ against $9.16\times10^{-4}$). The
+step 0.025, `tab:ch5-two-species`), ratio 0.53; extrapolated $4.86$ against $6.57\times10^{-4}$ Pa,
+ratio 0.74 (`tab:ch5-gci`, minmod). The mixed growth is 5 % lower ($8.74$ against $9.17\times10^{-4}$). The
 largest $\phi_{3D}$ in the domain at the end rises with the grid, $0.60,\ 0.69,\ 0.73,\ 0.75$ on $32^3$, $64^3$,
 $128^3$, $192^3$ (mixed with the Fritsch start fractions and antibiotic); the thesis: "the front carries intermediate values of $\phi_{3D}$ at a nearly discontinuous
 edge", and the stress "is set by the jump of $\alpha$ across the edge of the seed, which the front
@@ -216,12 +216,15 @@ between a half and two thirds after extrapolation".
 
 ## 4. Why the stress converges slowly but the growth fast
 
-**(1) Observation.** Growth: GCI 0.5 to 4.3 % in all examples, observed orders 0.8 to 1.7. Stress: 0.7 %
-(separate, no antibiotic, $p=2.3$), 1.4 % (with antibiotic, $p=1.6$, $192^3$), 19 to 41 % (mixed, $p=0.4$ to $1.0$).
+**(1) Observation.** Growth: GCI 0.4 to 4.3 % in all examples, observed orders 0.8 to 1.7. Stress: 0.1 %
+(separate, no antibiotic, $p=3.1$; 0.2 % with the formal order 2), 1.4 % (with antibiotic, $p=1.6$, $192^3$), 19 to
+41 % (mixed, minmod up to $192^3$, $p=0.4$ to $1.0$); mixed with antibiotic: superbee 4.6 % ($3.81\times10^{-4}$ Pa), and
+with $256^3$ minmod $3.99$ (GCI 12 %) and superbee $3.95\times10^{-4}$ Pa (GCI 6.3 %).
 Cell Péclet number $r h/(2\beta)$ about 31 on $16^3$ (§4.7.1). With a constant added diffusion $r h/4$ the
 element's seed stress on $16^3$ is about a quarter of the converged value; with upwind gradients it is
 $2.14,\ 4.56,\ 5.15\times10^{-4}$ Pa on $8^3$, $16^3$, $24^3$, extrapolated $5.8\times10^{-4}$ Pa (GCI
-16.5 %), inside the band of the second-order schemes. In the one-species seed problem the growth converges
+16.5 %), 10 % below the extrapolated Python value ($6.42\times10^{-4}$ Pa), which lies within the element's own
+uncertainty; its growth extrapolates to $8.68\times10^{-4}$, 6 % below Python ($9.19\times10^{-4}$). In the one-species seed problem the growth converges
 with an observed order of 1.7 in $h$ and the stress "only to about first order, because the stiffness jumps
 at the surface of the seed" (§4.7).
 
@@ -256,7 +259,7 @@ advection: its cell Péclet number is about 31 on the 16 cubed grid, so a centra
 needs stabilisation. A constant added diffusion of r h over four stabilises it, but on 16 cubed that is
 sixteen times beta, with a diffusion length of about half a millimetre, and the seed stress comes out at a
 quarter of the converged value. With a second-order upwind scheme the diffusion is added only at the edge,
-and the stress converges: 0.7 percent without antibiotic, 1.4 percent with it, and 19 to 41 percent for the
+and the stress converges: 0.1 percent without antibiotic, 1.4 percent with it, and 19 to 41 percent for the
 mixed seeds, whose edge is nearly discontinuous."
 
 **(3) Spoken, JA.** 「成長量と応力の収束が違うのは、量の種類が違うからです。シードの成長量は積分、$k_\alpha$ と
@@ -264,7 +267,7 @@ $\phi_{3D}$ の時間積分で、積分はならされた縁を許します。�
 縁は段差を直接下げるので、応力は精度の次数を一つ失います。縁を動かすのは式 34 の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi_{3D}$
 で、これは移流です。セルのペクレ数は $16^3$ で約 31、中心差分は振動するので安定化が要ります。一定の人工拡散 $rh/4$ で
 安定にはなりますが、$16^3$ では $\beta$ の 16 倍、拡散の長さが約 0.5 mm で、シードの応力は収束値の 4 分の 1 になります。
-2 次の風上法では縁でだけ拡散を足すので、応力が収束します。抗菌薬なしで 0.7 %、ありで 1.4 %、縁がほぼ不連続な混ぜた
+2 次の風上法では縁でだけ拡散を足すので、応力が収束します。抗菌薬なしで 0.1 %、ありで 1.4 %、縁がほぼ不連続な混ぜた
 シードで 19〜41 % です。」
 
 **(4) Follow-up.** *"Why not an implicit or a Galerkin scheme in the element?"* The explicit NEM update
@@ -521,7 +524,7 @@ identified CH entries).
 | growth with/without antibiotic | $9.19/9.16$ (separate), $8.71/8.56\times10^{-4}$ (mixed) | `tab:ch5-gci` |
 | living fraction of the seed | $0.965\to0.152$, $0.961\to0.038$ | `tab:ch5-two-species` |
 | nutrient in the seed | $0.536\to0.911$, $0.608\to0.973$ | `tab:ch5-two-species` |
-| seed stress, extrapolated (without/with) | $6.55/6.42\times10^{-4}$ Pa (separate), $4.50/4.68$ (mixed) | `tab:ch5-gci` |
+| seed stress, extrapolated (without/with) | $6.57/6.42\times10^{-4}$ Pa (separate), $4.86/4.67$ (mixed, minmod) | `tab:ch5-gci` |
 | GCI growth / stress | 0.5 to 4.3 % / 0.7, 1.4, 19 to 41 % | `tab:ch5-gci` |
 | one grid, antibiotic effect | $6.73\to6.00$ ($64^3$, 0.0025); $6.56\to5.68$ (0.025) | tables |
 | cell Péclet number | $rh/(2\beta)\approx31$ on $16^3$ | §4.7.1 |
