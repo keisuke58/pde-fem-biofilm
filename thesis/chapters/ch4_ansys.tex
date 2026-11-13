@@ -1009,11 +1009,10 @@ biofilm and no nutrient, and the biofilm slides along them without friction. All
 Section~\ref{sec:ch5-two-species} (outer step $0.0025$, minmod unless stated). The biofilm grows around the bars
 and closes behind them, and by $T^*=0.2$ it fills the cube between them (Figure~\ref{fig:ch5-bars}). The
 composition of the seed hardly changes. The bars restrain the swelling. Without antibiotic the separate seed
-carries a von Mises stress of $7.1$ and $7.3\times10^{-3}$~Pa on $32^3$ and $64^3$, against $7.4$ and
-$6.7\times10^{-4}$~Pa without bars on the same grids, about ten times more; the mixed seed carries
+carries a von Mises stress of $7.1$, $7.3$ and $7.3\times10^{-3}$~Pa on $32^3$, $64^3$ and $128^3$, against $7.4$,
+$6.7$ and $6.6\times10^{-4}$~Pa without bars on the same grids, about ten times more; the mixed seed carries
 $9.5\times10^{-4}$ against $2.1\times10^{-4}$~Pa on $32^3$. The growth $\alpha-1$ of the seed is $9$ and
 $21\,\%$ lower on $32^3$.
-% 128^3 without antibiotic: to be added
 With antibiotic the stress with bars is low on coarse grids and rises with the grid: with the minmod limiter the
 separate seed gives $2.52$, $3.73$, $5.04$ and $5.40\times10^{-3}$~Pa on $32^3$ to $192^3$ (GCI $12\,\%$) and the
 mixed seed $0.93$, $1.61$, $2.21$ and $2.46\times10^{-3}$~Pa (GCI $43\,\%$). With the superbee limiter the series
@@ -1021,7 +1020,7 @@ converge: $5.90\times10^{-3}$~Pa (GCI $4.5\,\%$, the same limit as with minmod) 
 (GCI $5.3\,\%$). The stress is solved on $16^3$ elements in every run, and a $32^3$ stress mesh changes it by
 $3\,\%$ only, so the rise comes from the fields next to the bars. The factor of $2.8$ between the separate runs
 without and with antibiotic on $32^3$ is therefore mostly resolution: the extrapolated value with antibiotic is
-about a fifth below the $64^3$ value without ($5.9$ against $7.3\times10^{-3}$~Pa). On the extrapolated values
+about a fifth below the value without, which hardly changes with the grid ($5.9$ against $7.3\times10^{-3}$~Pa). On the extrapolated values
 with antibiotic the bars raise the seed stress about nine times in the separate example ($5.90\times10^{-3}$
 against $6.42\times10^{-4}$~Pa) and about seven times in the mixed one ($2.72\times10^{-3}$ against
 $3.81\times10^{-4}$~Pa, both with superbee).
