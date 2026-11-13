@@ -4,6 +4,25 @@ fifa の Claude は、チェーンを始める前に `git pull origin master` �
 
 ---
 
+## 2026年11月13日 その 13（剛な柱の例，抗菌薬なしの格子の列。修論の 1 文のため。小さい）
+
+`git pull origin claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`。修論 4 章の柱の例で，抗菌薬なしは 32³ と 64³ しかない
+（分けた例の種子の von Mises 7.14e−3，7.31e−3 Pa；抗菌薬ありは 2.52，3.73，5.04，5.40e−3 Pa で外挿 5.9e−3）。抗菌薬なしが格子でほぼ
+収束していることを 128³・192³ で確かめる。設定は抗菌薬ありの列と同じ（minmod，外側の刻み 0.0025，dc/dt）。
+
+```
+B="--fast --fortran --front 1 --gc 1 --gab 1 --alpha0 100 --tab 0.333333 --phi-min 0.001 --tvd --wall-grad mirror --v2 --ansys-bc --inherit-living --transient-c 1e8 --dtc 0.0025 --obstacle columns"
+# 1) 分けた例，抗菌薬なし：128³（クラウドでも回しているが，環境の再起動で止まることがあるので fifa でも），192³
+for N in 128 192; do ECO_THREADS=4 python3 coupled_living_consumption.py --nf $N $B --only separate; done
+# 2) 混ぜた例（等量），抗菌薬なし：64³，128³，192³（今は 32³ の 9.46e−4 Pa だけ）
+for N in 64 128 192; do ECO_THREADS=4 python3 coupled_living_consumption.py --nf $N $B --mix-equal --only mixed; done
+```
+
+- 報告：種子の α − 1 と von Mises を 32〜192³ で並べた表（32³ と分けた例の 64³ は既存の JSON），次数・外挿・GCI，時間とメモリ。JSON は push。
+- 急がない。1 本 4 スレッド，同時 3 本まで。
+
+---
+
 ## 2026年11月8日 その 12（慶應の修論の軸：Klempt 2024 式 30 の力学の項の K の掃引。急がない）
 
 `git pull origin claude/plan-next-hxjjve` のあと `cd ansys_usermat/apdl`。式 30 の項 φμ(I:C_e − 3)/η_φ を戻す `--mech-feedback K`
