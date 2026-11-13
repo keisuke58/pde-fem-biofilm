@@ -12,7 +12,8 @@ the extended Hamilton principle (Section~\ref{sec:theory_hamilton}). The field
 model of Klempt et al.\ 2024 describes a single biofilm phase that grows in
 space and carries stress (Section~\ref{sec:theory_field}); the point model of
 Klempt et al.\ 2026 describes the composition of several species at one
-material point (Section~\ref{sec:theory_point}). Section~\ref{sec:theory_link}
+material point (Section~\ref{sec:theory_point}), related to the replicator
+equation in Section~\ref{sec:theory_replicator}. Section~\ref{sec:theory_link}
 states how the two are combined in this thesis, and
 Sections~\ref{sec:theory_tmcmc} and~\ref{sec:theory_fba} cover Bayesian
 inference with TMCMC and the metabolic sign prior.
@@ -42,7 +43,7 @@ non-conservative forces. Stationarity with respect to $\mathbf u$ gives the
 balance of linear momentum in weak form; stationarity with respect to each
 internal variable gives its evolution equation. A model is then fixed by
 choosing the energy, the source and the dissipation function.
-For the point model of Chapter~\ref{ch:heine}, which has no displacement field,
+For the point model of Section~\ref{sec:theory_point}, which has no displacement field,
 the principle reduces to its local form, the principle of the minimum of the
 dissipation potential~\cite{junker2014principle, hackl1997generalized}:
 $\dot\Psi+\Delta+C\to\operatorname{stat}$ with respect to the rates of the
@@ -105,8 +106,7 @@ with the unit vectors $\mathbf n_{\nabla\phi}=\nabla_X\phi/\|\nabla_X\phi\|$
 and $\mathbf n_{\nabla c}=\nabla_X c/\|\nabla_X c\|$. The factor
 $\|\nabla_X\phi\|$ restricts this growth to the interface between biofilm and
 void. Consumption is linear in the biofilm as printed (Eq.~24),
-$g^*_c=\bar g\,\phi$; the authors confirmed that their implementation uses
-$\bar g\,\phi\,c$ (see below).
+$g^*_c=\bar g\,\phi$; this is a misprint for $\bar g\,\phi\,c$ (see below).
 
 \subsection{Evolution equations}
 
@@ -125,16 +125,17 @@ bar, the equations are, as printed (Eqs.~34--36),
   &\dot\alpha-k_\alpha\,\phi=0,
    \label{eq:theory_alpha}
 \end{align}
-with zero-flux conditions for $\phi$ and $c$ on the boundary. The authors confirmed
-that their implementation uses the consumption $g\,\phi\,c$ instead of the printed
-$g\,\phi$, so that the nutrient equation in the form used for the implementation is
+with zero-flux conditions for $\phi$ and $c$ on the boundary. One of the authors, who
+computed the published examples, confirmed that the consumption is $g\,\phi\,c$ and the
+printed $g\,\phi$ a misprint (Appendix~\ref{app:klempt2024}), so that the nutrient equation is
 \begin{equation}
   \dot c-d\,\nabla_X^2 c+g\,\phi\,c=0.
   \label{eq:theory_c_impl}
 \end{equation}
-The one-species runs of Chapter~\ref{ch:ansys} use the printed form~\eqref{eq:theory_c}; the
-two-species examples use~\eqref{eq:theory_c_impl}, with the consumption scaled by the living volume
-fraction of the point model. Time is
+The one-species runs of Chapter~\ref{ch:ansys} use the printed form~\eqref{eq:theory_c}; their front
+term is switched off, so the nutrient, and with it the form of the consumption, does not act on $\phi$
+and $\alpha$ there. The two-species examples use~\eqref{eq:theory_c_impl}, with the
+consumption scaled by the living volume fraction of the point model. Time is
 normalised and written in units of $T^*$. The parameters of Table~2 of the paper are listed in
 Table~\ref{tab:theory_klempt2024}.
 
@@ -159,7 +160,7 @@ Table~\ref{tab:theory_klempt2024}.
   \end{tabular}
 \end{table}
 
-Three points of the paper are relevant here.
+Four points of the paper are relevant here.
 \begin{itemize}
   \item \emph{The law for $\alpha$.} Equation~\eqref{eq:theory_alpha} lets the
         biofilm expand wherever it is present. The algorithm in Table~1 of the
@@ -180,9 +181,8 @@ Three points of the paper are relevant here.
         nutrient rather than enlarging it, and the published curves of mean
         $\phi$ are not reached. My reproduction of the paper's test cases
         needs growth on both faces of the colony and a consumption
-        proportional to $\phi c$ (Appendix~\ref{app:klempt2024}). The authors
-        confirmed the consumption $g\,\phi\,c$; their answers are given in
-        the appendix.
+        proportional to $\phi c$; the authors' answers are given in
+        Appendix~\ref{app:klempt2024}.
 \end{itemize}
 
 %=======================================================================
@@ -247,13 +247,16 @@ $\dot\phi_i$, $\dot\psi_i$, $\dot\phi_0$ and to $\gamma$ give
   \label{eq:gov_void}
 \end{align}
 The equation for $\psi_i$ has no $\gamma$, because $\psi_i$ does not appear in
-the constraint. The paper prints Eq.~17 with a $+\gamma$; with it, even the
+the constraint. The paper prints Eq.~17 with a $+\gamma$. With it, even the
 two-species examples of the paper are not reproduced; without it, all fourteen
-examples are (Section~\ref{sec:theory_point_check}).
+examples are (Section~\ref{sec:theory_point_check}). The paper does not print the
+equation for $\phi_0$; the first of~\eqref{eq:gov_void} is my reading, a term
+$\tfrac12\eta_0\dot\phi_0^2$ with $\eta_0=1$ in $\Delta$, and it is the one with
+which the examples are reproduced.
 
 The system~\eqref{eq:gov_phi}--\eqref{eq:gov_void} has $2n+2$ unknowns. It is
-integrated with the implicit Euler method and Newton iterations; a barrier term
-$K_p/[x^2(1-x)^2]$, which diverges at $x=0$ and $x=1$, with $K_p=\eta_i\times10^{-4}$ keeps $\phi_i$, $\psi_i$ and $\phi_0$
+integrated with the implicit Euler method and Newton iterations; the derivative of a barrier function
+$K_p/[x^2(1-x)^2]$, which diverges at $x=0$ and $x=1$, with $K_p=\eta_i\times10^{-4}$ ($\eta_0=1$ for $\phi_0$), keeps $\phi_i$, $\psi_i$ and $\phi_0$
 inside $(0,1)$ and is omitted above. Numerical treatments that keep such
 constraints satisfied in constitutive models are compared by Bode et
 al.~\cite{Bode2025ConstraintConforming}.
@@ -304,12 +307,12 @@ simplex. For a symmetric $\bA$, \eqref{eq:replicator} is a gradient flow of
 $W(\bphi)=\tfrac12\bphi^{\rm T}\bA\bphi$ with respect to the Shahshahani metric
 $g_{ij}=\delta_{ij}/\phi_i$, and $W$ increases monotonically~\cite{Hofbauer1998EGT, Shahshahani1979}.
 The point model uses a constant viscosity instead of this $\phi_i$-weighted
-metric; with $\psi_i\equiv1$ its well-mixed limit is the affine projection
-$\dot\phi_i\propto(\bA\bphi)_i-\langle\bA\bphi\rangle$. The two have the same
-fixed points and the same sign structure.
+metric; with $\psi_i\equiv1$ and without $\phi_0$ it reduces to
+$\dot\phi_i\propto(\bA\bphi)_i-\langle\bA\bphi\rangle$, which has the same
+interior fixed points as~\eqref{eq:replicator}.
 
 Compared with the generalised Lotka--Volterra model~\eqref{eq:glv}, the
-replicator form has a symmetric $\bA$ with $n(n+1)/2$ coefficients and keeps
+replicator form with a symmetric $\bA$ has $n(n+1)/2$ coefficients and keeps
 $\sum_i\phi_i=1$ without a separate normalisation. Its interior fixed points
 satisfy $(\bA\bphi^*)_i=\bphi^{*\rm T}\bA\bphi^*$ for every $i$ with
 $\phi^*_i>0$. If $\bA$ is negative definite on the tangent space
@@ -327,13 +330,15 @@ model distinguishes species but has no space. Klempt et al.\ 2024 drop the
 mechanical term in the equation for $\phi$, so in their model the stress does
 not act back on growth. I combine the two models as follows:
 \begin{itemize}
-  \item the field model, solved by the element, gives the biofilm $\phi_{3D}$,
+  \item the field model, solved by the element, gives the biofilm $\phi_{3D}$
+        (the field $\phi$ of Section~\ref{sec:theory_field}, written $\phi_{3D}$ from
+        here on to distinguish it from the $\phi_i$ of the point model),
         the nutrient $c$ and, in its second nutrient field, an antibiotic, and
         through Eq.~\eqref{eq:theory_alpha} the growth $\alpha$ and the stress;
   \item the point model runs, unchanged, at every Gauss point; it receives the
         nutrient and the antibiotic from the fields and returns $\phi_i$ and
         $\psi_i$;
-  \item only its living biomass, $\sum_i\phi_i\psi_i$, consumes the nutrient and
+  \item only its living biomass, $\sum_i\bar\phi_i$, consumes the nutrient and
         takes up the antibiotic, and the nutrient steers the spreading of
         $\phi_{3D}$ through the front term \fterm{}.
 \end{itemize}
@@ -355,49 +360,54 @@ $\btheta \in \Real^{15}$, Bayesian inference seeks the posterior distribution
   \label{eq:bayes}
 \end{equation}
 with the likelihood $\mathcal{L}(\mathbf{y} \mid \btheta)$ and the prior
-$p(\btheta)$. I use a Gaussian likelihood with isotropic noise,
+$p(\btheta)$. The likelihood is Gaussian in the measured fractions; in its simplest
+form, with one noise level $\sigma$,
 \begin{equation}
   \mathcal{L}(\mathbf{y} \mid \btheta)
-  = \prod_{t,i} \mathcal{N}\!\left(y_{t,i} \mid \hat\phi_i(t;\btheta),\,\sigma^2\right),
+  = \prod_{t,i} \mathcal{N}\!\left(y_{t,i} \mid \hat y_i(t;\btheta),\,\sigma^2\right),
 \end{equation}
-where $\hat\phi_i(t;\btheta)$ is the solution of the point model at time $t$.
+where $\hat y_i(t;\btheta)$ is the fraction of species $i$ predicted by the point model at time $t$.
+The form used for the data of Heine et al., with two composition channels, the live fraction,
+weights and standard deviations from the replicates, is given in Section~\ref{sec:heine_likelihood}.
 
 \subsection{Transitional Markov chain Monte Carlo}
 
 TMCMC~\cite{ChingChen2007TMCMC, Betz2016TMCMC} constructs a sequence of
 intermediate distributions between the prior and the posterior through a
-tempering schedule $0 = \tau_0 < \tau_1 < \cdots < \tau_J = 1$,
+tempering schedule $0 = q_0 < q_1 < \cdots < q_J = 1$,
 \begin{equation}
-  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{\tau_j}\,p(\btheta).
+  p_j(\btheta) \propto \mathcal{L}(\mathbf{y} \mid \btheta)^{q_j}\,p(\btheta).
   \label{eq:tmcmc_intermediate}
 \end{equation}
 At each stage $j$ the samples are weighted by
-$w_j^{(k)} \propto \mathcal{L}^{\tau_j - \tau_{j-1}}$, resampled, and moved
-by short Metropolis--Hastings chains. The next exponent $\tau_j$ is chosen so
+$\mathcal{L}^{q_j - q_{j-1}}$, resampled, and moved
+by $n_{\mathrm{mut}}$ Metropolis--Hastings steps. The next exponent $q_j$ is chosen so
 that the coefficient of variation of the weights stays at a target value,
-typically $c_v=1$.
+typically $1$.
 
 \paragraph{Computation on the GPU.}
 The cost lies in the forward model, evaluated for every sample at every stage.
 I compile the point model with JAX~\cite{jax2018github} and evaluate the whole
 ensemble, $N_p = 5{,}000$ to $20{,}000$ particles at the final stage, in one batched call
-(\texttt{jax.vmap}). This is about 150 times faster than the CPU baseline
-(Section~\ref{sec:heine_gpu}).
+(\texttt{jax.vmap}). This is about 150 times faster than on a 12-core CPU at matched
+settings (Section~\ref{sec:heine_gpu}).
 
 \paragraph{Narrowed priors.}
-For the multimodal posterior of the dysbiotic condition I run TMCMC twice: the
-mean and standard deviation of the first posterior define a narrower prior for
-the second run.
+The inference runs in stages: the uniform prior box of a stage is narrowed to the
+posterior mean $\pm4$ standard deviations of the stage before
+(Section~\ref{sec:heine_twophase}).
 
 \paragraph{Identifiability.}
 To see which parameters the data determine, I use the ratio
 \begin{equation}
-  r_i \;=\; \frac{\sigma_{\mathrm{post},i}}{\Delta_{\mathrm{prior},i}}
+  \rho_i \;=\; \frac{\sigma_{\mathrm{post},i}}{\sigma_{\mathrm{prior},i}},
+  \qquad \sigma_{\mathrm{prior},i}=\frac{u_i-l_i}{\sqrt{12}},
   \label{eq:effdim}
 \end{equation}
-of the posterior standard deviation of $\theta_i$ to its prior width. A value
-$r_i \ll 1$ means the data constrain $\theta_i$; $r_i \to 1$ means the prior
-does. Chapter~\ref{ch:heine} uses this ratio, with the threshold $0.8$ relative to a uniform prior, to classify the entries as identified or not.
+of the posterior standard deviation of $\theta_i$ to that of its uniform prior on
+$[l_i,u_i]$. A value $\rho_i \ll 1$ means the data constrain $\theta_i$; $\rho_i \to 1$
+means the prior does. An entry counts as determined by the data when $\rho_i<0.8$;
+Chapter~\ref{ch:heine} gives the classes.
 
 %=======================================================================
 \section{Metabolic Sign Priors}
@@ -427,7 +437,6 @@ penalty on coefficients of the wrong sign,
 \end{equation}
 with the weight $\lambda_S$, and leaves coefficients of the right sign free. Only the sign is used, not the
 magnitude: predicted interaction strengths of genome-scale models agree poorly
-with measured ones, while their signs carry useful
-information~\cite{Rath2024GEMReliability}, and no derivation links metabolic
+with measured ones~\cite{Rath2024GEMReliability}, and no derivation links metabolic
 fluxes to the dimensionless coefficients of $\bA$~\cite{Marsland2020MiCRM, Mustri2025GLVABreakdown}.
 Section~\ref{sec:heine_signprior} applies this prior to in-vivo data.
