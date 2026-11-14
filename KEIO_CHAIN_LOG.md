@@ -1482,3 +1482,30 @@ The full table with 192^3 and the GCI follows when the two 192^3 runs end.
 | mixed | 32^3 | 5.9171e-04 | 9.4572e-04 | (existing) |
 | mixed | 64^3 | 6.5086e-04 | 1.6332e-03 | 9:10.18, 0.60 GB |
 | mixed | 128^3 | 6.8845e-04 | 2.2323e-03 | 1:59:14, 1.17 GB |
+
+## 2026-11-14/15: CLOUD_TO_FIFA 13 Nov part 13, rigid bars without antibiotic (fifa)
+
+`--fast $B --obstacle columns --transient-c 1e8 --dtc 0.0025` (minmod, as the column with antibiotic), one PBS job per
+run, 4 cores, `ECO_THREADS=4`, at most 3 at a time. 32^3 (both) and 64^3 (separate) are the existing JSONs.
+
+| case | grid | seed alpha - 1 | seed vM [Pa] | wall, peak RSS | JSON |
+| --- | --- | --- | --- | --- | --- |
+| separate | 32^3 | 7.9555e-04 | 7.1433e-03 | (existing) | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_snaps_transc1e+08_tvd_wgmirror_fast_obstcolumns_separate.json` |
+| separate | 64^3 | 8.1037e-04 | 7.3112e-03 | (existing) | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_separate.json` |
+| separate | 128^3 | 8.1684e-04 | 7.2760e-03 | 2:18:26, 1.16 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_separate.json` |
+| separate | 192^3 | 8.1903e-04 | 7.3176e-03 | 15:44:55, 2.95 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_separate.json` |
+| mixed | 32^3 | 5.9171e-04 | 9.4572e-04 | (existing) | `coupled_living_consumption_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_snaps_transc1e+08_tvd_wgmirror_fast_obstcolumns_mixed.json` |
+| mixed | 64^3 | 6.5086e-04 | 1.6332e-03 | 9:10.18, 0.60 GB | `coupled_living_consumption_nf64_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_mixed.json` |
+| mixed | 128^3 | 6.8845e-04 | 2.2323e-03 | 1:59:14, 1.17 GB | `coupled_living_consumption_nf128_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_mixed.json` |
+| mixed | 192^3 | 7.0215e-04 | 2.4793e-03 | 16:43:35, 2.96 GB | `coupled_living_consumption_nf192_front1_dtc0.0025_phimin0.001_v2_fortran_ansysbc_inhliv_mixeq_a100_gab1_gc1_tab0.333333_transc1e+08_tvd_wgmirror_fast_obstcolumns_mixed.json` |
+
+Order, extrapolated value, GCI (Celik, Fs 1.25):
+
+- separate, alpha - 1, 32/64/128^3: p 1.20, extrapolated 8.2184e-04, GCI 0.8 %
+- separate, vM, 32/64/128^3: not monotone
+- separate, alpha - 1, 64/128/192^3: p 0.97, extrapolated 8.2362e-04, GCI 0.7 %
+- separate, vM, 64/128/192^3: not monotone
+- mixed, alpha - 1, 32/64/128^3: p 0.65, extrapolated 7.5398e-04, GCI 11.9 %
+- mixed, vM, 32/64/128^3: p 0.20, extrapolated 6.2974e-03, GCI 227.6 %
+- mixed, alpha - 1, 64/128/192^3: p 0.84, extrapolated 7.3577e-04, GCI 6.0 %
+- mixed, vM, 64/128/192^3: p 0.63, extrapolated 3.3316e-03, GCI 43.0 %
