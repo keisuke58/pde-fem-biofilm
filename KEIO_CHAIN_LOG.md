@@ -1468,3 +1468,17 @@ Wall time and peak RSS (field; stress): `tw_lay_192` 1:58:51, 7.3 GB; 18:01.92, 
   -0.3 %), so the K = 1e5 vM values carry a time-step error of that size (the mechanical term lags one outer step).
 - 192^3 has no K = 3e4 run (the instructions list 0, 1e4, 1e5, 1e6 there), so "separate 192^3: from K = 100000" means
   only that K = 1e4 stays below 1 %.
+
+## 2026-11-14: CLOUD_TO_FIFA 13 Nov part 13, interim (fifa; 3 of 5 runs, 192^3 still running)
+
+Same set-up as the column with antibiotic (minmod, `--dtc 0.0025`, `--transient-c 1e8`, `--obstacle columns`); 4 cores each.
+The full table with 192^3 and the GCI follows when the two 192^3 runs end.
+
+| case | grid | seed alpha - 1 | seed vM [Pa] | wall, peak RSS |
+| --- | --- | --- | --- | --- |
+| separate | 32^3 | 7.9555e-04 | 7.1433e-03 | (existing) |
+| separate | 64^3 | 8.1037e-04 | 7.3112e-03 | (existing) |
+| separate | 128^3 | 8.1684e-04 | 7.2760e-03 | 2:18:26, 1.16 GB |
+| mixed | 32^3 | 5.9171e-04 | 9.4572e-04 | (existing) |
+| mixed | 64^3 | 6.5086e-04 | 1.6332e-03 | 9:10.18, 0.60 GB |
+| mixed | 128^3 | 6.8845e-04 | 2.2323e-03 | 1:59:14, 1.17 GB |
