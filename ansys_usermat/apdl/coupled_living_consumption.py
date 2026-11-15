@@ -193,6 +193,10 @@ MECH_K = _opt("--mech-feedback", 0.0)
 # integrated exactly by Strang splitting around each RK4 step (phi *= exp(-K ice dt/2) before and after) instead of inside
 # RK4, where it is unstable once K |I:C_e - 3| dt exceeds about 2.8 (the rigid bars at K = 1e5, 32^3).
 MECH_EXP = "--mech-exp" in sys.argv
+# --mech-refresh N: the stress (and with it I:C_e - 3) is solved N times per outer step, at equally spaced inner steps, instead
+# of once at its start, so the mechanical term lags DT_C / N instead of DT_C (fifa part 12: at K = 1e5 halving the outer step
+# changed the seed stress by 8 %). Only the term's input changes; N = 1 is the old behaviour.
+MECH_REFRESH = int(_opt("--mech-refresh", 1))
 # --mech-phi-min M (8 Nov 2026): the term acts only in cells with phi_3D >= M (0.05 = the threshold below which the film
 # stress drops elements). The void has the floor stiffness E f (f = 1e-3) and strains strongly under confinement; there the
 # relative rate K (I:C_e - 3) does not depend on phi, so a tiny phi grows exponentially (the rigid bars at K = 1e5 diverge).
@@ -485,7 +489,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("_mixeq" if MIX_EQUAL else "") + ("" if T_END == 1.0 else f"_tend{T_END:g}")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
-       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
+       + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"rf{MECH_REFRESH}" if MECH_REFRESH > 1 else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
@@ -1192,10 +1196,14 @@ def run(example, antibiotic):
             if MECH_K or HOMEO:                         # stress of the start of the outer step (one solve for both)
                 _, p_nm = S.solve_fields(NM, W.block_mean(unfold(phi), NM), W.block_mean(unfold(alpha) - 1, NM),
                                          obstacles=BOXES, efac=efac_nm(G))
+            def mech_ice(phi_, alpha_, solve=True):     # I : C_e - 3 per cell from the given state
+                if solve:
+                    S.solve_fields(NM, W.block_mean(unfold(phi_), NM), W.block_mean(unfold(alpha_) - 1, NM),
+                                   obstacles=BOXES, efac=efac_nm(G))
+                ice_ = 2.0 * prolong(np.nan_to_num(S.LAST_TRE), NF)[QS]
+                return np.where(phi_ >= MECH_PHI_MIN, ice_, 0.0) if MECH_PHI_MIN else ice_
             if MECH_K:                                  # --mech-feedback: I : C_e - 3 from the current state
-                ice = 2.0 * prolong(np.nan_to_num(S.LAST_TRE), NF)[QS]
-                if MECH_PHI_MIN:
-                    ice = np.where(phi >= MECH_PHI_MIN, ice, 0.0)
+                ice = mech_ice(phi, alpha, solve=False)
                 hist.setdefault("mech_term_max", []).append(float(np.abs(MECH_K * phi * ice).max()))
             if HOMEO:                                   # --homeostatic: explicit gate from p of the start of the step
                 p_cell = -prolong(np.nan_to_num(p_nm), NF)[QS]        # compression positive, per cell
@@ -1210,6 +1218,8 @@ def run(example, antibiotic):
             ka = 0.0 if MMS else W.K_ALPHA
             for i_in in range(per):
                 tk = k * DT_C + i_in * dt                   # time at the start of this inner step (MMS sources)
+                if MECH_K and MECH_REFRESH > 1 and i_in > 0 and (i_in * MECH_REFRESH) % per < MECH_REFRESH:
+                    ice = mech_ice(phi, alpha)              # --mech-refresh: stress of the current inner state
                 if EROSION and EROSION_TAU:             # --erosion-tau: fading detachment
                     globals()["EROS_NOW"] = EROSION * np.exp(-tk / EROSION_TAU)
                 if INNER_ACT:                           # A-89: reached cells consume from the inner step on

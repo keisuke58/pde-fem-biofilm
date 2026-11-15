@@ -15,10 +15,10 @@ with TMCMC from the in-vitro time courses of Heine et al.\ under four
 conditions. Compiled with JAX, the forward model runs about 150 times faster
 on the GPU than on the CPU, which makes posteriors with up to $20{,}000$ particles routine. Every stage was
 repeated with three seeds and checked against convergence criteria; CS, CH and DS
-meet them at every final stage; in DH the last stage split across seeds, and DH
+meet them at the final stage; in DH the last stage split across seeds, and DH
 is reported from the stage before. The data
 determine $5$, $6$, $9$ and $8$ of the $15$ entries in the four conditions, and the
-pH, which was not used in the inference, serves as a check. With a metabolic sign prior, the same type of model
+pH, which was not used in the inference, serves as a check. With a metabolic sign prior, a related replicator model
 also predicts sparse in-vivo data of ten patients out of sample.
 
 \paragraph{A growth law in the finite element framework (Chapter~\ref{ch:ansys}).}
@@ -26,11 +26,11 @@ The growth kinematics $\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, of Klempt et
 al.\ 2024 was implemented as an ANSYS user material and verified against
 closed-form solutions. It was coupled to the biofilm field of the IKM element
 through the growth equation $\dot\alpha=k_\alpha\phi$ at every Gauss point.
-Inside ANSYS, the coupled run follows the exact solution of a gradient-free
-region to $3\times10^{-11}$ in $\alpha$. With the published parameters the
+Inside ANSYS, the coupled run follows the exact solution of its time-stepping
+scheme in a gradient-free region to $3\times10^{-11}$ in $\alpha$. With the published parameters the
 growth in the seeded element reaches $\alpha-1=8.9\times10^{-4}$ at $T^*=1.1$
-and the seeded region is compressed; a finer model of the same problem
-predicts, on average, tension in the surrounding material, consistent with the
+and the seeded region is compressed, with the two layers of elements around it
+in tension, consistent with the
 ring of tension reported by Klempt et al.~\cite{Klempt2024DiffusionDrivenGrowth}.
 
 \paragraph{The composition at every Gauss point (Chapter~\ref{ch:ansys}).}
@@ -41,12 +41,16 @@ of the biofilm through the nutrient and the front term \fterm{}. With uniform fi
 coupled point model reproduces the point model alone to round-off. In two-species
 examples with synthetic data an antibiotic lowers the living volume fraction of the
 seed from $0.96$ to $0.15$ when the species start separately and to $0.04$ when they
-start mixed, while the growth changes by less than $2\,\%$. The growth converges on
+start mixed, while the growth changes by less than $2\,\%$. These examples are computed with
+a finite-volume implementation of the same equations, which reaches finer grids, and compared with the
+element. The growth converges on
 refined grids with a GCI below $5\,\%$; the seed stress needs a second-order
-treatment of the front term \fterm{} and converges more slowly, with a GCI of $1.4\,\%$ in the
-separate ($0.1\,\%$ without antibiotic) and $19$ to $41\,\%$ in the mixed examples. The ANSYS element solves the same
-equations; its growth agrees with these values within $4\,\%$, and its extrapolated seed stress lies
-within the band of the Python schemes.
+treatment of the front term \fterm{} and reaches a GCI of $1.4\,\%$ when the species start
+separately ($0.1\,\%$ without antibiotic), of $19$ to $41\,\%$ for a mixed start with the minmod limiter on
+grids up to $192^3$, and $4.6\,\%$ with the less diffusive superbee limiter; with $256^3$ both limiters give
+about $4.0\times10^{-4}$~Pa within about $10\,\%$. The ANSYS element solves the same
+equations: its extrapolated growth is $6\,\%$ below these values, and its extrapolated seed stress
+($5.8\times10^{-4}$~Pa, GCI $16.5\,\%$) agrees with them within its own grid uncertainty.
 
 Together these steps connect a calibrated description of what a biofilm
 consists of with a finite element description of how it grows and what
@@ -97,19 +101,20 @@ the measured rise in DH through a regression on the predicted fractions
 data (case~I of Fritsch et al.~\cite{Fritsch2025BayesianMicrofilms}) with the
 antibiotic of Klempt et al.~\cite{Klempt2026ContinuumBacterialGrowth}, since the
 calibration data contain no antibiotic. The calibrated
-five-species point model also runs in the element with the same coupling
+five-species point model has so far been run in the element only with the earlier one-way
+coupling, in which growth and stress do not depend on the composition
 (Section~\ref{sec:ch5-five}).
 
 \paragraph{What the stresses mean.} With the stiffness of Klempt et
 al.~\cite{Klempt2024DiffusionDrivenGrowth} the stresses are of order
-$10^{-4}$~Pa and scale with the stiffness. What carries over is their pattern:
+$10^{-4}$ to $10^{-3}$~Pa and scale with the stiffness. What carries over is their pattern:
 the seeded region is compressed and the surrounding material is under tension,
 as in the comparison of growth models by Klempt et
 al.~\cite{Klempt2023NumericalComparison} and in the ring of tension of the 2024
 paper. Measured stiffnesses of oral biofilms lie in the kPa range, for example
 $0.6$ to $41$~kPa by atomic force microscopy, depending on the sucrose
 supply~\cite{Pattem2018}; as the stresses scale linearly with $E$, a stiffness
-of $10$~kPa gives stresses of order $0.1$~Pa. A statement about the magnitude
+of $10$~kPa gives stresses of order $0.1$ to $1$~Pa. A statement about the magnitude
 in an oral biofilm needs that stiffness together with a measured stress, which
 this work does not have.
 
@@ -122,7 +127,8 @@ remove the step limit; whether it is also more accurate for the same cost is the
 interaction matrix symmetric. A symmetric matrix cannot describe one species
 feeding another without the reverse, which the metabolic literature reports for
 several of the pairs. In this work the symmetric model reproduces the
-in-vitro time courses and the rise of the pH in DH; whether a directed term is needed
+in-vitro time courses, with two reservations (in CS the composition and the live fraction cannot both be
+matched, and in DH the total-count composition has an RMSE of $0.159$), and the rise of the pH in DH; whether a directed term is needed
 for in-vivo data is open.
 
 \section{Limitations}
@@ -140,7 +146,14 @@ for in-vivo data is open.
   \item \emph{Front term \fterm{}.} The front term \fterm{} needs a second-order upwind
         treatment, and the seed stress converges slowly when the species start
         mixed. Its speed depends on the nutrient only, so dead biofilm keeps
-        spreading after an antibiotic. The stiffness counts dead biomass as well.
+        spreading after an antibiotic. The stiffness counts dead biomass as well, and Eq.~36 is driven by
+        $\phi_{3D}$, so dead biomass keeps growing: this is why the antibiotic changes the growth by less than $2\,\%$.
+  \item \emph{Confined cube.} With the front speed of the paper the biofilm fills almost the whole cube at
+        $T^*=1$ ($7.4$ of $8$~mm$^3$), so the seed stress is that of a confined cube and depends on the wall conditions.
+  \item \emph{Two codes.} The coupled results come from the finite-volume code, with small-strain mechanics on a
+        $16^3$ stress mesh, two species and synthetic data; the element reaches $24^3$ without a second-order
+        treatment of the front term \fterm{}. The seed stress depends on the outer step ($6\,\%$ lower and $15\,\%$
+        higher at $0.025$ than at $0.0025$).
   \item \emph{No transport of the composition.} The point model has no space; the
         composition moves with the biofilm only through the start values of newly
         reached points, which take the living composition of their neighbours.
@@ -161,7 +174,7 @@ for in-vivo data is open.
         the seed is $0.7\,\%$ above a finite-volume reference solution of the same
         problem, and the seed stress lies about $2\,\%$ below a finer solution of
         the same mechanics on up to $48^3$ elements. With the published parameters the stresses
-        are of order $10^{-4}$~Pa.
+        are of order $10^{-4}$ to $10^{-3}$~Pa.
   \item \emph{Data.} The calibration rests on five species under four
         conditions in vitro and ten patients in vivo. The commensal and
         dysbiotic consortia used different \textit{P.~gingivalis} strains, so
@@ -184,7 +197,7 @@ in order of how well the literature supports them.
         calibrated for CH in the element (Section~\ref{sec:ch5-five}), the
         stress does not depend on the composition. When
         $\alpha$ grows instead with the living biomass
-        $\sum_i\phi_i\psi_i$ of the point model, at a rate chosen (not taken
+        $\sum_i\bar\phi_i$ of the point model, at a rate chosen (not taken
         from a paper) so that the mean growth of the seed at $T^*=1$ equals
         that of Eq.~36 of Klempt et al.\ 2024, the mean von Mises stress of the
         seed is $7\,\%$ lower. Growth from the living biomass follows classical
@@ -200,7 +213,7 @@ in order of how well the literature supports them.
         on the living biomass would close the loop further, and would stop dead
         biofilm from spreading after an antibiotic. In the earlier one-way
         computations (Section~\ref{sec:ch5-outlook-python}) species-dependent
-        spreading changes the amount of biofilm at $T^*=1$ by up to $8\,\%$.
+        spreading changes the amount of biofilm at $T^*=1$ by up to $8\,\%$ (rate contrast $\delta=1/3$).
   \item \emph{Composition into stiffness and stress into growth.} Species-specific
         stiffness and stress-dependent growth would let the composition reach
         the stress directly and the stress act back. Both need parameters that
@@ -211,6 +224,7 @@ in order of how well the literature supports them.
         does this at a much lower cost than Monte Carlo sampling.
   \item \emph{A test of the inferred network.} The calibrated matrices predict
         that removing \textit{F.~nucleatum} from the dysbiotic flow-reactor
-        consortium reduces the late increase of \textit{P.~gingivalis} to
-        about a quarter; a co-culture without it would test this.
+        consortium lowers the day-21 to day-15 ratio of \textit{P.~gingivalis} from about $12$ to $3.0$.
+        The prediction rests on $a_{45}$, whose sign is not determined in DH; a co-culture without
+        \textit{F.~nucleatum} would test it.
 \end{enumerate}

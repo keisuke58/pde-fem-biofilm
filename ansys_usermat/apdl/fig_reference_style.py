@@ -181,19 +181,29 @@ def fig_limiters():
         r = json.load(open(f))["runs"]["mixed_ab"]
         v = r["seed_vm_Pa"]
         data[k][nf] = (v[-1] if isinstance(v, list) else v) * 1e4
-    # minmod: the rows of the grid table (tab:gci of the paper); its files carry other variants with the same name parts
-    data["minmod"] = {32: 2.00, 64: 2.82, 128: 3.30, 192: 3.52, 256: 3.63}
+    # minmod: seed_vm_Pa of the files (nf64_|nf128_|nf192_)...inhliv_mixeq_..._tvd_wgmirror_fast_mixed_ab.json (32^3: no nf)
+    # and nf256_..._mixeq_transc1e+08_tvd_...; set by hand because the glob also matches variants with the same name parts
+    data["minmod"] = {32: 1.9977, 64: 2.8151, 128: 3.2977, 192: 3.5196, 256: 3.6327}
     fig, ax = plt.subplots(figsize=(0.62 * W, 0.42 * W))
+    labels = []
     for k, (lab, mk, c) in lim.items():
         g = sorted(data[k])
         if not g:
             continue
         ax.plot([1 / n for n in g], [data[k][n] for n in g], marker=mk, color=c, lw=1.0, ms=3.5, label=lab)
         if all(n in data[k] for n in (64, 128, 192)):
+            # the same three grids as the grid table of the thesis (tab:ch5-gci)
             p, ext = _gci(data[k][64], data[k][128], data[k][192])
             ax.plot([0], [ext], marker=mk, mfc="white", color=c, ms=4.5, clip_on=False)
-            ax.annotate(f"{ext:.2f} ($p$ = {p:.2f})", (0, ext), xytext=(4, 0), textcoords="offset points",
-                        fontsize=6.5, color=c, va="center")
+            labels.append((ext, p, c))
+    # labels of the extrapolated values, moved apart where two values are closer than one text line
+    labels.sort()
+    ytext = []
+    for ext, p, c in labels:
+        ytext.append(max(ext, ytext[-1] + 0.13) if ytext else ext)
+    for (ext, p, c), yt in zip(labels, ytext):
+        ax.annotate(f"{ext:.2f} ($p$ = {p:.2f})", (0, ext), xytext=(0.0011, yt), textcoords="data",
+                    fontsize=6.5, color=c, va="center")
     ax.set_xlim(0, 1 / 30)
     ax.set_xticks([0, 1 / 256, 1 / 128, 1 / 64, 1 / 32])
     ax.set_xticklabels(["0", "1/256", "1/128", "1/64", "1/32"])

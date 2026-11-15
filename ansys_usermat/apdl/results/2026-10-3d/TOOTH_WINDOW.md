@@ -317,3 +317,19 @@ film (0.307, 0.321, 0.339 on 64-192^3; extrapolated 0.346, GCI 2.3 %) but not in
 0.284, 0.320, 0.365 on 64-256^3, the increments growing per cell size (the 128/192/256^3 "GCI 14 %" is not meaningful).
 Without antibiotic the mixed film's living fraction (0.81, 0.83, 0.84) does not reach the asymptotic range either.
 Paper: stress converged, layered living fraction converged, mixed living fraction only bounded below (0.37).
+
+## Stress with measured stiffness (13 Nov 2026)
+
+The mechanics is one way and the strains are small, so at a given growth field the stress is proportional to E.
+The model uses E = 10 Pa (Klempt 2024); AFM on oral biofilms gives 0.6 to 41 kPa (Pattem et al. 2018,
+`references/EXPERIMENTAL_DATA.md`). The table rescales the computed von Mises stresses; nothing is recomputed, and the growth
+field is assumed unchanged (no feedback of the stress on growth).
+
+| example | E = 10 Pa (computed) | E = 0.6 kPa | E = 14 kPa | E = 41 kPa |
+|---|---|---|---|---|
+| cube, separate seed (extrapolated) | 0.6 mPa | 36 mPa | 0.85 Pa | 2.5 Pa |
+| cube, mixed seed (superbee, extrapolated) | 0.38 mPa | 23 mPa | 0.53 Pa | 1.6 Pa |
+| cervical window, biofilm mean | 13 mPa | 0.76 Pa | 18 Pa | 52 Pa |
+
+So with measured stiffness the stresses are of the order of 0.02 to 50 Pa, still far below the contact pressures at which
+confined microbes slow their growth (about 1 MPa for yeast, Delarue et al. 2016).

@@ -36,8 +36,9 @@ difference over $T^*\in[0,1]$.
 
 Solved as printed, the front term of Eq.~\eqref{eq:theory_phi} moves the seed
 towards the nutrient rather than enlarging it: the factor
-$\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}$ is positive on the face of
-the colony that looks towards the nutrient and negative on the other, so one
+$\mathbf n_{\nabla\phi}\cdot\mathbf n_{\nabla c}$ is negative on the face of
+the colony that looks towards the nutrient, where the term then increases $\phi$,
+and positive on the other, where it decreases $\phi$, so one
 face grows while the other recedes. The mean $\phi$ of Fig.~4 is not reached
 with any numerical variant tried (seed held fixed, no limiter, a second-order
 upwind scheme), nor with any time scale. Two further observations point the
@@ -49,7 +50,7 @@ printed term drives it towards it.
 The consumption term gives a clean check. With the consumption
 $g\,\phi\,c$, proportional to the nutrient, the steady nutrient level of
 case 4.2 ``high'' is $\tanh(2)/2=0.482$, against $0.489$ in the paper. The
-printed form $g\,\phi$ gives $0.139$.
+printed form $g\,\phi$ gives about $0.14$ (negative values set to zero).
 
 \section{What reproduces the curves}
 
@@ -73,7 +74,8 @@ $0.032$, so the curves do not determine $w$ precisely.
   \centering
   \caption[Reproduction of Klempt et al.\ 2024, mean curves]{RMS difference
     between the reproduction and the curves of Klempt et al.\ 2024 (mean
-    $\phi$ and mean $c$, averaged), with the changes listed in the text.}
+    $\phi$ and mean $c$, averaged), with the changes listed in the text. The
+    time scale is that of $w=0.5$; for $w=0$ the best values are $2$, $10$ and $4$.}
   \label{tab:app_klempt_rms}
   \begin{tabular}{lccc}
     \hline
@@ -125,8 +127,8 @@ current volume is $\alpha^3$ times the reference volume; with
 $\alpha-1\le0.01$ at $T^*=1$ the volume-weighted means of $\phi$ and $c$
 differ from the plain ones by at most $0.001$. The mechanical term of the
 $\phi$ equation, which the paper drops, would be of order $10^4$ to $10^6$
-per $T^*$ after division by the viscosity $\eta_\phi=10^{-10}$ (the paper gives no unit), against a
-growth term of about $500$ per $T^*$; kept, it would stop the growth that
+per $T^*$ after division by the viscosity $\eta_\phi=10^{-10}$ (the paper gives this value without a unit), against a
+growth term of at most $\|\nabla_X\phi\|\,r\,c/(k+c)\le50$ per $T^*$ on the $1~\mu$m grid, times $s_T$; kept, it would stop the growth that
 every figure shows.
 
 The pressure plotted in Table~3 of the paper (of order $10^{-4}$~MPa) is
@@ -138,7 +140,7 @@ linearly with $E$.
 
 \section{Questions to the authors and their answers}
 
-I sent these questions to the first author on 3 and 5 October 2026 and
+I sent questions on the points above to the first author on 3 and 5 October 2026 and
 received his answers on 5 October. They settle some points and leave others
 open:
 \begin{itemize}
@@ -156,7 +158,7 @@ open:
   \item \emph{Consumption.} He recalled $g\,\phi$, as printed, but was not
         certain. The steady nutrient level of case 4.2 ``high'' (0.489 in
         the paper) follows from $g\,\phi\,c$ and not from $g\,\phi$
-        (0.482 against 0.139, see above). Dr.\ Soleimani, who computed the
+        (0.482 against about 0.14, see above). Dr.\ Soleimani, who computed the
         published examples, confirmed on 6 October 2026 that $g\,\phi\,c$
         is correct. The consumption term of Eq.~35 is therefore
         $g\,\phi\,c$, as in the reproduction.
@@ -175,7 +177,7 @@ open:
         rescales them without changing any comparison.
 \end{itemize}
 Whether $\alpha$ follows Eq.~36 or the update of Table~1
-(Section~\ref{sec:theory_field}) remains to be asked. The first author has
+(Section~\ref{sec:theory_field}) is not settled by the paper or these answers. The first author has
 offered his implementation; comparing it with the reproduction is part of
 the continuation of this work. His implementation is ongoing work, part of a
 dissertation in preparation, and is not reproduced here.

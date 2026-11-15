@@ -139,16 +139,16 @@ et al.\ (2024) and the multi-species point model of Klempt et al.\ (2026).
 
 First, the 15 interaction coefficients of a five-species point model are
 estimated with transitional Markov chain Monte Carlo from in-vitro time courses
-under four conditions. Compiled with JAX, the forward model runs about 150 times
+under four conditions. Compiled with JAX, the inference runs about 150 times
 faster on the GPU than on the CPU; every stage is repeated with three seeds, and
 the result states which of the 15 coefficients the data determine. A metabolic sign prior
-carries the same type of model to sparse in-vivo data.
+makes a related replicator model identifiable from sparse in-vivo data.
 
 Second, the growth kinematics $\bF=\bF_e\bF_g$ with $\bF_g=\alpha\bI$ is
 implemented as an ANSYS user material, verified against closed-form solutions,
 and coupled to the element's biofilm field through the growth equation at
 every Gauss point. Inside ANSYS the coupled run follows the exact solution of
-a gradient-free region to $3\times10^{-11}$ in $\alpha$.
+its time-stepping scheme in a gradient-free region to $3\times10^{-11}$ in $\alpha$.
 
 Third, the point model runs, unchanged, at every Gauss point. It receives the
 nutrient and an antibiotic from fields of the element, interpolated in time, and
@@ -157,9 +157,11 @@ reaches the spreading of the biofilm. With uniform fields the coupled point mode
 reproduces the point model alone to round-off. The antibiotic is shown with
 synthetic data, since the calibration data contain none: it lowers the living
 volume fraction of a two-species seed from $0.96$ to $0.15$, or to $0.04$ when the
-species start mixed, while the growth changes little. The growth converges on
+species start mixed, while the growth changes little. These examples are computed
+with a finite-volume implementation of the same equations, which reaches finer
+grids, and compared with the element. The growth converges on
 refined grids within a few percent; the stress needs a second-order treatment
-of the front term \fterm{} and reaches a GCI of at most $1.4\,\%$ when the species start separately and $19$ to $41\,\%$ when they start mixed.
+of the front term \fterm{} and reaches a GCI of at most $1.4\,\%$ when the species start separately, of $19$ to $41\,\%$ for a mixed start with the minmod limiter on grids up to $192^3$, and $4.6\,\%$ with the less diffusive superbee limiter.
 
 The coupling has been verified, but not yet validated against measurements. A
 coupling in which the composition acts on the stiffness is left to the
@@ -171,24 +173,54 @@ continuation of this work.
 \newpage
 \chapter*{Zusammenfassung}
 \addcontentsline{toc}{chapter}{Zusammenfassung}
-% DRAFT, 3 Oct 2026: Übersetzung der englischen Kurzfassung; vor Abgabe Korrektur lesen.
-Ein Punktmodell eines Mehrspezies-Biofilms beschreibt die zeitliche Entwicklung
-der Zusammensetzung an einem Materialpunkt, aber nicht den Raum. Ein
-kontinuumsmechanisches Wachstumsmodell beschreibt, wo ein Biofilm wächst und
-welche Spannungen er trägt, unterscheidet aber keine Spezies. In dieser Arbeit
-wird das Punktmodell in ein bestehendes Finite-Elemente-Framework, das
-Biofilm-Element des Instituts für Kontinuumsmechanik in ANSYS, eingebunden,
-sodass Zusammensetzung, Wachstum und Spannung gemeinsam berechnet werden.
+% Übersetzung der englischen Kurzfassung (Stand 13 Nov 2026); bei Änderungen am Abstract nachziehen.
+Ein Punktmodell eines Mehrspezies-Biofilms beschreibt, wie sich die
+Zusammensetzung an einem Materialpunkt zeitlich entwickelt, besitzt aber keine
+räumliche Auflösung. Ein kontinuumsmechanisches Wachstumsmodell beschreibt, wo
+ein Biofilm wächst und welche Spannungen er trägt, unterscheidet aber keine
+Spezies. Diese Arbeit bindet das Punktmodell in eine bestehende
+Finite-Elemente-Umgebung ein, das Biofilm-Element des Instituts für
+Kontinuumsmechanik in ANSYS, sodass Zusammensetzung, Wachstum und Spannung
+gemeinsam berechnet werden können. Beide Modelle folgen aus dem erweiterten
+Hamilton-Prinzip: das Wachstumsfeld von Klempt et al.\ (2024) und das
+Mehrspezies-Punktmodell von Klempt et al.\ (2026).
 
 Erstens werden die 15 Interaktionskoeffizienten eines Fünf-Spezies-Punktmodells
 mit Transitional Markov Chain Monte Carlo aus In-vitro-Zeitreihen unter vier
-Bedingungen geschätzt; das Ergebnis gibt an, welche der 15 Koeffizienten die
-Daten bestimmen. Zweitens wird die Wachstumskinematik
-$\bF=\bF_e\bF_g$, $\bF_g=\alpha\bI$, als ANSYS-Materialroutine implementiert,
-gegen geschlossene Lösungen verifiziert und an jedem Gaußpunkt an das
-Biofilmfeld des Elements gekoppelt. Drittens läuft für zwei Spezies das
-Punktmodell an jedem Gaußpunkt: das Feld bestimmt die Menge, das Punktmodell die
-Zusammensetzung. Die Kopplung ist einseitig und verifiziert, nicht validiert.
+Bedingungen geschätzt. Mit JAX kompiliert läuft die Inferenz auf der GPU etwa
+150-mal schneller als auf der CPU; jede Stufe wird mit drei Startwerten des
+Zufallsgenerators wiederholt, und das Ergebnis gibt an, welche der 15
+Koeffizienten durch die Daten bestimmt sind. Ein metabolischer Vorzeichen-Prior
+macht ein verwandtes Replikatormodell aus spärlichen In-vivo-Daten
+identifizierbar.
+
+Zweitens wird die Wachstumskinematik $\bF=\bF_e\bF_g$ mit $\bF_g=\alpha\bI$ als
+ANSYS-Materialroutine implementiert, anhand analytischer Lösungen verifiziert
+und an jedem Gaußpunkt über die Wachstumsgleichung an das Biofilmfeld des
+Elements gekoppelt. In ANSYS folgt die gekoppelte Rechnung in einem
+gradientenfreien Gebiet der exakten Lösung ihres Zeitschrittverfahrens bis auf
+$3\times10^{-11}$ in $\alpha$.
+
+Drittens läuft das Punktmodell unverändert an jedem Gaußpunkt. Es erhält den
+Nährstoff und ein Antibiotikum aus Feldern des Elements, in der Zeit
+interpoliert, und nur seine lebende Biomasse verbraucht beide; über den
+Nährstoff wirkt die Zusammensetzung auf die Ausbreitung des Biofilms. Bei
+homogenen Feldern gibt das gekoppelte Punktmodell das Punktmodell allein bis auf
+Rundungsfehler wieder. Das Antibiotikum wird mit synthetischen Daten gezeigt, da
+die Kalibrierdaten keines enthalten: Es senkt den lebenden Volumenanteil eines
+Zwei-Spezies-Keims von $0{,}96$ auf $0{,}15$, bei gemischtem Start auf $0{,}04$,
+während sich das Wachstum kaum ändert. Diese Beispiele sind mit einer
+Finite-Volumen-Implementierung derselben Gleichungen berechnet, die feinere
+Gitter erreicht, und mit dem Element verglichen. Das Wachstum konvergiert bei
+Gitterverfeinerung auf wenige Prozent; die Spannung erfordert eine Behandlung
+zweiter Ordnung des Frontterms \fterm{} und erreicht einen GCI von höchstens
+$1{,}4\,\%$ bei getrenntem Start, von $19$ bis $41\,\%$ bei gemischtem Start mit
+dem Minmod-Limiter auf Gittern bis $192^3$ und von $4{,}6\,\%$ mit dem weniger
+diffusiven Superbee-Limiter.
+
+Die Kopplung ist verifiziert, aber noch nicht anhand von Messungen validiert.
+Eine Kopplung, bei der die Zusammensetzung auf die Steifigkeit wirkt, bleibt der
+Fortsetzung dieser Arbeit vorbehalten.
 \fi % end disabled German Zusammenfassung
 
 \newpage
@@ -282,9 +314,10 @@ $c^*_0$, $c_{\rm ref}$ & nutrient level of the point model at the reference conc
 \medskip\noindent\textbf{Calibration (Chapter~\ref{ch:heine})}\\[2pt]
 \begin{tabular}{@{}p{0.2\linewidth}p{0.75\linewidth}@{}}
 $\btheta$, $n_\theta$ & parameter vector, number of parameters ($15$)\\
-$\tau_j$ & tempering exponent of stage $j$\\
-$c_v$ & target coefficient of variation of the weights\\
-$N_p$, $K$ & number of samples, mutation steps per stage\\
+$q_j$ & tempering exponent of stage $j=0,\dots,J$, $q_0=0$, $q_J=1$\\
+$N_p$, $n_{\mathrm{mut}}$ & number of particles, mutation steps per stage\\
+$w_{ik}$, $\lambda_\psi$ & weights of the likelihood, weight of its live-fraction term\\
+$\rho_i$ & identifiability ratio $\sigma_{\mathrm{post},i}/\sigma_{\mathrm{prior},i}$\\
 $s_p$ & proposal scale\\
 $\mathbf S$, $\lambda_S$ & sign prior from metabolic models, weight of its penalty\\
 \end{tabular}
