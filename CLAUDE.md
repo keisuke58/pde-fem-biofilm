@@ -62,9 +62,11 @@ Abaqus run is possible here but nothing has been run here yet.
 - `ansys_usermat/` — ANSYS USERMAT (Fortran) port of the Klempt growth model,
   cross-checked against the Abaqus UMAT. `usermat_biofilm.f` is the core;
   `crosscheck/` compares ANSYS vs Abaqus outputs; `coupling/` is a
-  Python-material-server coupling shim. `apdl/` (closed-form growth
-  verification deck + RUNBOOK) lands via PR #29 — not yet pulled into this
-  working tree as of 2026-08-19.
+  Python-material-server coupling shim and the point model in Fortran
+  (`ecology_native.f`). `apdl/` holds the verification decks and RUNBOOK, the
+  run scripts for IKMHIWI03, the Python coupling code
+  (`coupled_living_consumption.py`), the figure scripts `fig_*.py` and the
+  results (`results/`, guides in `results/2026-10-3d/*.md`).
 - `JAXFEM/` — JAX PDE solver for the growth/composition field, TMCMC
   calibration, posterior propagation.
 - `ch5_flow/`, `umat_flow/` — thesis chapter LaTeX + associated flow/UMAT docs.
@@ -98,9 +100,8 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   custom `ANSYS.exe` (linked against `usermat_biofilm.f`) at `F:\biofilm_upf`
   runs real decks and reproduces the closed-form reference exactly
   (`t_growth_constrained.dat`: SX=SY=SZ=−1.0193e−04, SVAR(10)=0.05, 0 errors).
-  **There is no `run_apdl.ps1` in this repo** — despite an earlier version of
-  this doc claiming one — `git log --all -- run_apdl.ps1` finds no commit
-  that ever added it. Invoke ANSYS directly, from a writable working
+  The wrapper is `ansys_usermat/apdl/run_apdl.ps1` (table below; there is none
+  at the repository root). To invoke ANSYS directly, use a writable working
   directory (`F:\biofilm_upf`, never `C:`):
   ```bat
   "%AWP_ROOT222%\ANSYS\bin\winx64\ANSYS222.exe" -b -custom .\ANSYS.exe ^
@@ -117,7 +118,7 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
   `/auto`, so the USERMAT work arrays sit in static storage shared by the
   threads (three `-np 4` runs gave three answers, one did not converge);
   `link_v222.ps1` builds use `/auto` and agree to 1e−15
-  (`IKMHIWI03_TO_CLOUD.ja.md`). Do not use it for new runs. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
+  (`ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md`). Do not use it for new runs. The current build is `F:\biofilm_upf_kusepy\ANSYS.exe`
   (usermat_biofilm.f + Python/ecology bridge with n_sub, via
   `link_v222.ps1`), safe with `-smp -np 4/8`. When relinking,
   `usermat_py_hook.f` must be compiled **before** `usermat_biofilm.f`, or
@@ -156,7 +157,7 @@ Full hardware/license/product inventory: `ANSYS_ENVIRONMENT.md`. Summary:
 - **Coupling agreed with Oliver (20 Oct 2026):** `F:\biofilm_upf_living` = the cal5d1
   sources plus usermat mode 11 (point model as a black box, c* and alpha* interpolated)
   and Oliver's USSFin/USolBeg with LIVING_CONS / FRONT_GRAD / NUT2_TSTART (changes
-  described in `IKMHIWI03_TO_CLOUD.ja.md` A-19, never committed). Decks
+  described in `ansys_usermat/apdl/IKMHIWI03_TO_CLOUD.ja.md` A-19, never committed). Decks
   `make_living_deck.py`, runs `run_living.ps1` (-np 1). **21 Oct (A-22):** the living share was read only once in USSFin (inside its
   initialisation); fixed in `F:\biofilm_upf_living4`. All earlier living runs (`lv8_`, `v2_`, `v2s_`, `sens_`) used a
   frozen L and are not to be used; the fixed runs are `v2f_*`, `fsens_*`. Hand-off for another PC:
@@ -324,8 +325,8 @@ this machine's specific workflow.
   over keep their wording.
 - **Thesis draft sent to Meisam on 9 Oct 2026** (first hand-over, 85 pages,
   "Draft of my master's thesis"; comments asked by 15 Oct, Chapter 4 and
-  Section 5.1 named). Content freeze 12 Oct. Submission moved to 13 Nov 2026
-  (decided 13 Oct, quality first; official deadline mid-Feb 2027). Do not send
+  Section 5.1 named). Content freeze 12 Oct. The submission is the PDF in December (see "Printing
+  and submission" below; official deadline mid-Feb 2027). Do not send
   him a second draft; reply to his comments only.
 - **Chapter 3 replaced (12 Oct 2026, user's decision).** The old Ch. 3 used
   runs from March/April whose configurations were not kept (pH possibly in the
@@ -376,13 +377,13 @@ this machine's specific workflow.
   content of a planned, submitted, accepted or published paper, the paper's details go into the report (e.g. a
   footnote) (K-LMS wording checked 7 Nov 2026; an earlier note here read "single-author" as the paper). Keio student number
   82519093, 開放環境科学専攻. The report itself:
-  `luh_summer_2026/1050_Keio/kadaikenkyu2026/kadaikenkyu_nishioka.tex`
-  (updated to the thesis content on 6 Oct, branch claude/kadaikenkyu-update).
+  `keio_report/kadaikenkyu_nishioka.tex` in this repository (7 pages, title and framing of 8 Nov;
+  the older copy in the private repository `luh_summer_2026` is no longer edited).
 - **Grading (MPO 2024, `thesis/admin/`):** only the thesis is graded (mean of
   the two examiners); the colloquium is a Studienleistung, pass or fail.
 - Examiners as registered: Prof. Junker (IKM) first, Dr.-Ing. Matthias
-  Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Prof.
-  Soleimani and Dr.-Ing. Hendrik Geisler.
+  Wangenheim (IDS, wangenheim@ids.uni-hannover.de) second; supervisors Dr.-Ing.
+  Meisam Soleimani and Dr.-Ing. Hendrik Geisler.
 - **Prof. Junker, next plans (2 Nov 2026):** HiWi from Japan not possible (LUH HR); he wrote (28 Oct) he would like to continue
   the work and to discuss the next plans before I leave. Reply sent 2 Nov (cc Meisam): asked for a meeting on the coupling
   paper, 2027 conferences (USNCCM19, GAMM) and joint work, available 28 Nov - 2 Dec and 10 Dec - early January. **Laura Neumeyer proposed Tue 1 Dec 2026, 12:30 (2 Nov); accepted the same day (in Google Calendar; room to be confirmed).** Tell Assoc. Prof. Muramatsu about it at the 30 Nov meeting.
@@ -405,15 +406,27 @@ this machine's specific workflow.
   the assessments.
   **19 Oct:** Dr. Wangenheim (second examiner) will not attend the colloquium
   (his mail); the committee is the usual IKM members.
-- **Printing and submission (updated 20 Oct 2026):** Dr. Soleimani (mail of 20 Oct): the PDF may be submitted up to
-  24 hours before the colloquium (by 15 Dec, 13:00), the printed copies afterwards; print at the university (cheap),
-  ask Timo Rabing (IKM, rabing@ikm.uni-hannover.de; mail sent 20 Oct, no reply; follow-up sent 29 Oct). Mail draft for the PDF to Meisam: `thesis/MAIL_DRAFT_MEISAM_SUBMISSION.md`. Plan: **thesis finished by 4 Nov 2026, using only the results available by then; nothing added after** (27 Oct: **no more new results at all** after the existing ones are in the slides and the speaker notes; the time goes into discussing the results and checking them for rigour) (28 Oct: the 192^3 runs with antibiotic are in; **the last addition is 192^3 without antibiotic, if done by 3 Nov morning; after that the thesis results are fixed**) **The thesis PDF stays at 90 pages or fewer, all included (the user, 28 Oct; 86 now): check `pdfinfo thesis/main.pdf` after every change.** **November results may go into the thesis (the user, 4 Nov 2026; replaces "no more new results" of 27-28 Oct):** e.g. the superbee grid series (mixed stress GCI 41 % -> 4.6 %), added after the 256^3 check, as two table rows and a few sentences, with minmod kept as the main scheme; the asymmetric starts (papers/coupling_paper/ASYMMETRIC.ja.md) go in too, the four-species example is kept back (the user, 4 Nov: results to publish around June 2027; not in the thesis, not sent in December), obstacles and maze are undecided; the model stays frozen and the PDF at 90 pages or fewer. **Moved back to December (the user, 4 Nov 2026): the read-through and the PDF to Meisam are done in December (PDF by 15 Dec, 13:00); the mid-November plan below is superseded.** **Submission moved earlier (the user, 28 Oct): send the PDF to Meisam during the New York trip (13-20 Nov), after the read-through of 3-4 Nov** (the user, 28 Oct; first said early November), so the 6-week grading starts early (grade about late December to early January instead of late January to February); no separate question beforehand (the user): ask in the same mail that sends the PDF whether the grading starts from it and anything else is needed. Printed copies still in December. **Travel 3 Nov - 10 Dec 2026 (the user's itinerary of 29 Oct):** Portugal 3-10 Nov, New York/Boston 11-18 Nov,
-  Berlin 19-21 Nov, Greece 21-28 Nov, Hannover 28 Nov - 2 Dec, Egypt 3-10 Dec; back in Hannover 10 Dec. He works on the
-  thesis, research and job search during the trip too (the user), so the read-through can be done on the road; colloquium rehearsal in Hannover
-  28 Nov - 2 Dec and 10-15 Dec; IKMHIWI03 backup (`-Go`) in 28 Nov - 2 Dec or after 10 Dec. (the user, 24 Oct; replaces the internal deadline of 13 Nov; trip 11/13-20). Earlier plan: **13 Nov was the internal deadline**
-  (finished; sent early only if I judge it complete, as the submission version, not a draft); last check in Hannover from 10 Dec, two copies printed at the university on
-  Fri 11 Dec, PDF and copies to him on **Mon 14 Dec**. Asked him on 20 Oct whether the PDF counts as the formal submission; **his answer (20 Oct, 18:39): "you only need to send a PDF to me. that's it"** (no examination office, no separate notice to Prof. Junker). Details in
-  `thesis/README.md`.
+- **Printing and submission (current plan, decided 4 Nov 2026):** the read-through and the PDF to Dr. Soleimani are done in
+  December. The PDF goes to him by **15 Dec, 13:00** (24 hours before the colloquium); the printed copies follow afterwards.
+  His answer of 20 Oct on the formal submission: "you only need to send a PDF to me. that's it" (no examination office, no
+  separate notice to Prof. Junker). Ask in the mail that sends the PDF whether the grading starts from it and whether anything
+  else is needed (draft: `thesis/MAIL_DRAFT_MEISAM_SUBMISSION.md`). Printing at the university: ask Timo Rabing (IKM,
+  rabing@ikm.uni-hannover.de; mails of 20 and 29 Oct, no reply yet).
+  - **The thesis PDF stays at 90 pages or fewer, all included (the user, 28 Oct; 89 on 15 Nov): check `pdfinfo thesis/main.pdf`
+    after every change.**
+  - **November results may go into the thesis (the user, 4 Nov):** the superbee grid series and the asymmetric starts are in;
+    minmod stays the main scheme; the model stays frozen. The four-species example is kept back (to publish around June 2027;
+    not in the thesis, not sent in December).
+  - **Thesis check of 13 Nov:** `thesis/REVIEW_2026-11-13.md` lists the findings; the fixes are applied, and the points that
+    need the EML records or the user are listed at its end for the December read-through. The user stopped further thesis work
+    on 13 Nov ("ストップ修論"): change the thesis only when asked.
+  - **No more convergence runs (the user, 15 Nov: 「収束はもういいや完璧」):** do not start or request further grid, time-step or
+    limiter series.
+  - **Travel 3 Nov - 10 Dec 2026:** Portugal 3-10 Nov, New York/Boston 11-18 Nov, Berlin 19-21 Nov, Greece 21-28 Nov, Hannover
+    28 Nov - 2 Dec, Egypt 3-10 Dec; back in Hannover 10 Dec. He works on the thesis, research and job search during the trip.
+    Colloquium rehearsal in Hannover 28 Nov - 2 Dec and 10-15 Dec; IKMHIWI03 backup (`-Go`) in 28 Nov - 2 Dec or after 10 Dec.
+  - Superseded plans, no longer valid: finishing by 4 Nov with no new results, sending the PDF during the New York trip, the
+    internal deadline of 13 Nov, the hand-over on 14 Dec. Details and history: `thesis/README.md`.
 
 - **Coupling agreed with Oliver, into the thesis (20 Oct 2026, user's decision):** `MEETING_2026-10-20.md`.
   - **Model frozen (the user, 21 Oct 2026):** the equations below (Klempt 2024 Eqs. 34-36 with dc/dt and g phi c,
@@ -462,6 +475,16 @@ this machine's specific workflow.
   the existing Outlook paragraph (Ch. 6, with Wanner and Gujer 1986); the antibiotic
   runs, the volume test and the predictions stay in the meeting summary, the notes and
   the Keio continuation.
+- **Keio continuation, state of 15 Nov 2026** (not thesis material; plan in `KEIO_PLAN.ja.md`):
+  - growth from the living biomass, $\dot\alpha=k_\alpha\phi_{3D}\sum_i\bar\phi_i$:
+    `ansys_usermat/apdl/results/2026-10-3d/GROWTH_LIVING.md`, deck `meetings/keio_living_growth/`;
+  - the mechanical term $-K\phi_{3D}(\mathbf I:\mathbf C_e-3)$ of Klempt 2024 Eq. 30 (two-way coupling):
+    `ansys_usermat/apdl/results/2026-10-3d/MECH_K_SWEEP.md`, deck `meetings/keio_deformation/`; its form is to be
+    discussed with Felix Klempt before building on it;
+  - the cervical window on a real tooth: `ansys_usermat/apdl/results/2026-10-3d/TOOTH_WINDOW.md`;
+  - the Keio report and its talk: `keio_report/`, `meetings/2027-03_kadaikenkyu/`.
+  Results kept back from Oliver for now (the user, 6-9 Nov): the window, the Eq. 30 term, the K sweep, the asymmetric
+  starts and the four-species example.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 
