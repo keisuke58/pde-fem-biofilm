@@ -21,7 +21,7 @@ von Mises stress at T* = 1/3 (antibiotic onset) and T* = 1.
 
     python ansys_usermat/apdl/real_tooth_coupled.py [--nf 80] [--box 10] [--cases tooth_ab,tooth]
         -> ansys_usermat/apdl/results/2026-10-3d/real_tooth_coupled.json (merged per run),
-           figdata/real_tooth_coupled_stress_<case>_nf<NF>_T<T>_h<ratio>.npz
+           figdata/real_tooth_coupled_stress_<case>_nf<NF>_T<T>_h<ratio>[_<tag of --opts>].npz
 
 The cervical window (7 Nov 2026, papers/coupling_paper/REAL_TOOTH_WINDOW.ja.md; the runs of coupled_living_consumption.py
 --obstacle stl --window mixed|layered --stl-scale 100 --box 30 --only window_ab): --window adds the roller faces of
@@ -78,6 +78,13 @@ def npz_path(case):
 
 def json_path(case):
     return RES / f"coupled_living_consumption_nf{NF}_{OPTS}_{case}.json"
+
+
+def stress_path(case, T, ratio):
+    """stress field of one run; with --opts the run's own tag is part of the name (until 20 Nov 2026 it was not, so the
+    mixed, layered and saliva variants of the window overwrote each other's file)"""
+    tag = "" if "--opts" not in sys.argv else "_" + OPTS.split("_tab0.333333_")[-1]
+    return ROOT / "figdata" / f"real_tooth_coupled_stress_{case}_nf{NF}_T{T}_h{ratio:g}{tag}.npz"
 
 
 def film_numbers(z, T, obst, seedA, seedB):
@@ -138,7 +145,7 @@ def stress(z, T, obst, sdf, case, ratio):
     r = RS.solve_submodel(phi, am1, h=ratio * h_f, tooth=obst, sdf=sdf, h_f=h_f, void="drop", void_thr=0.05,
                           rigid=True, tol=1e-9, verbose=True, roller=ROLLER)
     M = r["mesh"]
-    np.savez_compressed(ROOT / "figdata" / f"real_tooth_coupled_stress_{case}_nf{NF}_T{T}_h{ratio:g}.npz",
+    np.savez_compressed(stress_path(case, T, ratio),
                         vm=r["vm"].astype(np.float32), p=r["p"].astype(np.float32), active=r["active"],
                         tooth=r["tooth"], origin=M.origin, h=M.h, box=np.array(M.box))
     m = r["measures"]

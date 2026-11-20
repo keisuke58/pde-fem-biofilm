@@ -64,6 +64,37 @@ What this shows:
 4. **Clipping phi_3D to [0, 1] removes the runaway but changes the answer** (K = 1e5: stress -30 to -35 % instead of -21 to
    -26 %) and at 3e5 the result still depends strongly on the step. It is a change of the model, not a fix.
 
+## 2b. Where the step dependence comes from (code review of 20 Nov)
+
+Point 2 above ("not converged in the outer step") is corrected here. Halving the outer step also halves the inner step,
+because the number of Runge-Kutta steps per outer step is rounded up (32^3: 5, 3, 2 inner steps at outer step 0.025, 0.0125,
+0.00625), and the nutrient is solved once per inner step and held over its four stages. Seed von Mises in 1e-4 Pa, 32^3,
+superbee, separate example with antibiotic:
+
+| variant | K = 0 | K = 1e5 | change |
+|---|---|---|---|
+| outer step 0.025 | 5.481 | 4.076 | -25.6 % |
+| outer step 0.0125 | 5.598 | 4.304 | -23.1 % |
+| outer step 0.025, twice the inner steps | 5.546 | 4.291 | -22.6 % |
+| outer step 0.025, four times the inner steps | 5.586 | 4.411 | -21.0 % |
+| nutrient solved at every Runge-Kutta stage, outer step 0.025 | 5.638 | 4.552 | -19.3 % |
+| same, twice the inner steps | 5.633 | 4.541 | -19.4 % |
+| same, outer step 0.0125 | 5.731 | 4.731 | -17.4 % |
+| minmod, outer step 0.025 | 5.360 | 4.910 | -8.4 % |
+| minmod, outer step 0.025, twice the inner steps | 5.420 | 5.106 | -5.8 % |
+
+- Most of the dependence is the inner step: with the nutrient solved at every stage it disappears (-19.3 against -19.4 %),
+  and the K = 0 stress itself moves by +2.9 %. The term amplifies an error of the base scheme that is first order in the
+  inner step; it is not a property of the term.
+- About 1.9 points per halving of the outer step remain. They are there at K = 0 too (+1.6 % per halving) and come from the
+  living volume fraction and the colonisation being one outer step late, not from the lag of $\mathbf I:\mathbf C_e-3$
+  (solving the stress more often moves the value the other way).
+- The fine grids of the sweep are less exposed, because the inner step shrinks with the cell size.
+- Two further cautions for the size of the effect: on 32^3 it depends on the limiter (superbee -25.6 %, minmod -8.4 %), and
+  the coefficient of the term is constant on each element of the 16^3 stress mesh while the field grid is refined, so the
+  stress change is not expected to converge cleanly with the field grid alone.
+- `--mech-refresh N` solves min(N, inner steps) times per outer step; with one inner step it does nothing.
+
 ## 3. Reading
 
 - Up to K of about 3e4 the term is a small, well-behaved correction (below 3.5 % in alpha - 1, below 3 % in the stress).
