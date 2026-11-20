@@ -264,12 +264,16 @@ the asymptotic range. 256^3 asked of fifa (CLOUD_TO_FIFA part 11, rewritten).
 (the 20 um start film on the voxel wall) and grows nearly linearly. In situ plaque on enamel: about 15 um after one day and
 50 um after seven (Al-Ahmad et al. 2007), i.e. about 5.8 um per day.
 
+(Corrected 20 Nov 2026: the thickness is recorded at the end of each outer step and was plotted one step, 0.025 T*,
+too early; the slopes change by at most 0.5 um/T*, the times at 50 um by about 0.03. The first recorded value, 18 um, is at
+T* = 0.025.)
+
 | run (variant 2) | slope T* = 0.5-1 [um/T*] | days per T* | T* at 50 um | thickness at T* = 1 [um] |
 |---|---|---|---|---|
-| 128^3 mixed, antibiotic | 32.5 | 5.6 | 0.96 | 50.5 |
-| 192^3 mixed, antibiotic | 34.3 | 5.9 | 0.92 | 51.7 |
-| 128^3 layered, antibiotic | 32.8 | 5.6 | 0.97 | 50.2 |
-| 128^3 mixed, no antibiotic | 28.0 | 4.8 | 0.98 | 47.4 |
+| 128^3 mixed, antibiotic | 33.0 | 5.7 | 0.99 | 50.5 |
+| 192^3 mixed, antibiotic | 34.4 | 5.9 | 0.95 | 51.7 |
+| 128^3 layered, antibiotic | 32.9 | 5.6 | 0.99 | 50.2 |
+| 128^3 mixed, no antibiotic | 28.1 | 4.8 | not reached (47 um at T* = 1) | 47.4 |
 
 Reading: with the constants of Klempt et al. 2024 at their own size, the film grows like an in situ plaque if one T* is
 about five to six days; the film of 18 um at the start then corresponds to about day 1.5 and the end (50 um) to about

@@ -100,6 +100,16 @@ WALL_GRAD = sys.argv[sys.argv.index("--wall-grad") + 1] if "--wall-grad" in sys.
 assert WALL_GRAD in ("onesided", "mirror", "zero"), WALL_GRAD
 R_FRONT = FRONT * 100.0e-3 * (2.0 / 20.0e-3)  # Table 2 r = 100 um/T* on the 20 um cube -> 10 mm/T* on the 2 mm cube
 K_MONOD = 1.0
+def _commit():
+    """short hash of the checked-out commit ('' outside git), stored with every result"""
+    try:
+        import subprocess
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=Path(__file__).resolve().parent,
+                              capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        return ""
+
+
 def _opt(name, default, cast=float):
     return cast(sys.argv[sys.argv.index(name) + 1]) if name in sys.argv else default
 
@@ -327,7 +337,9 @@ if ECO_FILE:
     CASE = read_eco_file(ECO_FILE)
 N_SP = CASE.get("n", 2)
 GROUP_A = [0, 1] if N_SP == 4 else [0]
-S_LINK = CASE["steps"] * CASE["dt"] / T_END  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3)
+S_LINK = CASE["steps"] * CASE["dt"]  # 0.1: T* = 1 spans the 1000 steps (0.15 and 1500 for k26c3), whatever --tend
+# (until 20 Nov 2026 this was divided by T_END, so the runs tagged _tend<T> have s = 0.1 / T: at T_END = 2 the point model
+# ran at half speed, at 0.05 twenty times too fast; they are not comparable with the T_END = 1 runs at the same T*)
 # --example layer (30 Oct 2026): a flat biofilm layer on the wall y = -BOX/2, --layer-h0 F = its thickness as a fraction
 # of BOX (cells whose centre lies below -BOX/2 + F BOX; default 0.25), phi = 1 inside, uniform composition from the
 # point-model file (start state above), nutrient held at c = 1 on the opposite wall y = +BOX/2, zero flux through the
@@ -490,6 +502,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--alpha0" not in sys.argv else f"_a{ALPHA0:g}") + ("" if "--gab" not in sys.argv else f"_gab{LAM_A2:g}")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"rf{MECH_REFRESH}" if MECH_REFRESH > 1 else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
+       + (f"_ts{TOOTH_SEED:g}" if "--tooth-seed" in sys.argv else "") + (f"_tsh{TOOTH_SEED_H:g}" if "--tooth-seed-h" in sys.argv else "")
        + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
@@ -567,7 +580,7 @@ def _one_point(g, c0, c1, a0, a1):
     def body(gg, w):
         p = dict(_P)
         p["c"] = CASE["c_star"] * ((1 - w) * c0 + w * c1)
-        p["alpha"] = (ALPHA0 or CASE["alpha_star"]) * ((1 - w) * a0 + w * a1)
+        p["alpha"] = (ALPHA0 if "--alpha0" in sys.argv or ALPHA0 else CASE["alpha_star"]) * ((1 - w) * a0 + w * a1)
         return _newton(gg, p), None
     return jax.lax.scan(body, g, FRAC)[0]
 
@@ -1162,6 +1175,13 @@ def run(example, antibiotic):
     ckpt = ROOT / "figdata" / "ckpt" / f"{example}{'_ab' if antibiotic else ''}{TAG}.npz"
     ckpt.parent.mkdir(parents=True, exist_ok=True)
     k0 = 0
+    argv_now = json.dumps(sys.argv[1:])
+    if ckpt.exists():
+        with np.load(ckpt, allow_pickle=False) as z:   # a checkpoint of another command line (or an older one) is not resumed
+            same = "argv" in z.files and str(z["argv"]) == argv_now
+        if not same:
+            print(f"[{example}, antibiotic {antibiotic}] checkpoint {ckpt.name} is from other options: ignored", flush=True)
+            ckpt.unlink()
     if ckpt.exists():
         # closed after reading: on Windows an open file cannot be replaced by the next checkpoint (WinError 5)
         with np.load(ckpt, allow_pickle=False) as z:
@@ -1396,7 +1416,7 @@ def run(example, antibiotic):
             tmp = ckpt.with_suffix(".tmp.npz")
             if os.environ.get("CKPT_INPLACE") and ckpt.exists():   # little disk: drop the old one first
                 ckpt.unlink()
-            np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G,
+            np.savez(tmp, k_done=k, phi=phi, alpha=alpha, c=c, a=a, L=L, on=on, G=G, argv=argv_now,
                      hist=json.dumps(hist, default=float),
                      **{f"snap|{T}|{f}": v for T, dd in snaps.items() for f, v in dd.items()})
             os.replace(tmp, ckpt)
@@ -1459,7 +1479,8 @@ def main():
                                 **{f"{k}_{T}": v for T, d in SN[key].items() for k, v in d.items()})
     res = {"setting": {"field": f"{NF}^3", "point_model": "Fritsch et al. 2025 Case I, true parameters",
                        "s": S_LINK, "inner_steps_per_outer": N_SUB, "Lambda2_c": LAM_C2, "Lambda2_a": LAM_A2,
-                       "antibiotic_from": T_AB, "phi_min": PHI_MIN}, "runs": R}
+                       "antibiotic_from": T_AB, "phi_min": PHI_MIN, "argv": sys.argv[1:], "commit": _commit()},
+           "runs": R}
     if ECO_FILE:
         res["setting"].update(point_model=f"point-model file {Path(ECO_FILE).name} (c* {CASE['c_star']:g}, "
                               f"alpha* {CASE['alpha_star']:g}, {N_SP} species)", eco_steps=ECO_STEPS,

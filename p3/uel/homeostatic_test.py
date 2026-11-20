@@ -63,7 +63,10 @@ def frozen_svars():
 
 def setup(support):
     nodes, elems = cube()
-    U = np.zeros(NDN * len(nodes)); U[3::NDN] = 1.0; U[4::NDN] = 1.0
+    # phi is prescribed 1e-12 below 1, not at 1: the barrier term 2 K_phi / (1 - phi)^3 of the phi rows is infinite
+    # at phi = 1, and since 29 Oct 2026 UEL rejects a non-finite residual (PNEWDT 0.25) although these rows belong to
+    # prescribed dofs here. The closed forms below keep phi = 1; the difference is 3e-12 relative.
+    U = np.zeros(NDN * len(nodes)); U[3::NDN] = 1.0 - 1e-12; U[4::NDN] = 1.0
     fixed = np.zeros(len(U), bool); fixed[3::NDN] = fixed[4::NDN] = True
     if support == "all":
         for d in range(3):

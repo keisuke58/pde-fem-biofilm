@@ -45,7 +45,13 @@ seed, edges = Z[f"seed_{T_END}"].astype(bool), Z[f"edges_{T_END}"].astype(bool)
 H = BOX / NF
 j = NF // 2                                          # the cell layer just above y = 0
 e = (-BOX / 2 + np.arange(NF + 1) * H) * UM          # cell edges in um
-st = np.load(ROOT / "figdata" / f"real_tooth_coupled_stress_{CASE}_nf{NF}_T{T_END}_h1.npz")
+# the stress file carries the run's tag (everything after _tab0.333333_); the untagged name is that of the runs
+# before 20 Nov 2026, in which the window variants overwrote each other's file
+_st = ROOT / "figdata" / f"real_tooth_coupled_stress_{CASE}_nf{NF}_T{T_END}_h1_{OPTS.split('_tab0.333333_')[-1]}.npz"
+if not _st.exists():
+    _st = ROOT / "figdata" / f"real_tooth_coupled_stress_{CASE}_nf{NF}_T{T_END}_h1.npz"
+    print("warning: untagged stress file", _st.name, "(may belong to another variant of the window; rerun real_tooth_coupled.py --opts ...)")
+st = np.load(_st)
 vm = np.where(st["active"], np.nan_to_num(st["vm"].astype(float)), np.nan) * 1e3   # mPa
 o, hs, bx = st["origin"], float(st["h"]), st["box"]
 jv = int(round((0.0 - o[1]) / hs))                   # stress elements above y = 0
