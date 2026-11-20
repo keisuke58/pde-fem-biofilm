@@ -483,7 +483,12 @@ this machine's specific workflow.
     discussed with Felix Klempt before building on it;
   - the cervical window on a real tooth: `ansys_usermat/apdl/results/2026-10-3d/TOOTH_WINDOW.md`;
   - the Keio report and its talk: `keio_report/`, `meetings/2027-03_kadaikenkyu/`.
-  Results kept back from Oliver for now (the user, 6-9 Nov): the window, the Eq. 30 term, the K sweep, the asymmetric
+- **Review of the implementation (20 Nov 2026):** `ansys_usermat/apdl/IMPLEMENTATION_REVIEW_2026-11-20.md`. Nothing found that
+  changes results of the main configuration. Runs of `coupled_living_consumption.py` tagged `_tend<T>` from before that day
+  used a time link divided by T and are not comparable with the T_END = 1 runs. Result files now store the command line and
+  the commit (`setting.argv`, `setting.commit`). Run `pytest tests/` after code changes: the suite had not been run between
+  4 and 20 Nov and 12 tests of the user element were failing unnoticed (test-side causes, fixed).
+- Results kept back from Oliver for now (the user, 6-9 Nov): the window, the Eq. 30 term, the K sweep, the asymmetric
   starts and the four-species example.
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
