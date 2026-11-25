@@ -226,6 +226,54 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to discuss whether this is worth pursuing.'],
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
 
+// 14-18: answers to the questions of the meeting of 25 Nov (added the same day)
+{ const s = frame('14. The nutrient at the start: c = 0, as in your element');
+  const h = img(s, R + 'assets/fig_c_start_zero.png', 0.55, 1.15, 7.6);
+  cap(s, 'Fig. 8  (a) c filling the cube from c = 0 (held layer at 1), separate start, start state, small backward-Euler steps. (b) Seed nutrient over the run for the two starts of c (outer step 0.025, with antibiotic).', 1.15 + h + 0.08, 0.55, 7.6);
+  bullets(s, [
+    'c diffuses through the whole cube, inside and outside the biofilm (Eq. 35). With d = 10⁸ mm²/T* (Klempt 2024, Table 2, converted) the cube fills in about 10⁻⁷ T*.',
+    'From c = 0 the seed mean is within 1 % of the start used so far (0.93) at T* = 7.5·10⁻⁸, long before the first outer step (0.025).',
+    'At T* = 1 the seed values agree within 0.4 % (living fraction, c, α − 1, von Mises); the share of A in the mixed start by 1 % (0.610 / 0.603).',
+    'Your element also starts from c = 0 outside the supply layer; there c = 1 everywhere gave the same results to three digits.'],
+    { x: 8.4, y: 1.2, w: 4.4, h: 5.6, fontSize: 15 }); }
+{ const s = frame('15. Interpretation from the point model alone');
+  const h = img(s, R + 'assets/fig_point_model_survival.png', 0.55, 1.15, 7.6);
+  cap(s, 'Fig. 9  Point model alone, Fritsch case I. (a) Living fraction under the antibiotic for different starts and nutrient levels c (c* = 100 c). (b) Share of A without antibiotic for three choices of η.', 1.15 + h + 0.08, 0.55, 7.6);
+  bullets(s, [
+    'A overtakes B before the antibiotic because η = (1, 2): B changes half as fast. With η equal or swapped, B wins (share of A 0.01). b has no effect without antibiotic.',
+    'B is twice as sensitive to the antibiotic, b = (1, 2).',
+    'Under α* = 100 a point keeps living biomass only if it is dominated by A and has nutrient near 1: 0.57 at c = 1, 0.17 at c = 0.85, 0.06 at c = 0.7. B alone or A and B together die at any c (0.04).',
+    'Mixed start (−96 %): every seed point holds B, so the seed dies. Separate start (−84 %): the lower part of the A seed is next to the nutrient supply and survives.'],
+    { x: 8.4, y: 1.2, w: 4.4, h: 5.6, fontSize: 15 }); }
+{ const s = frame('16. Where the living biomass survives, seen from below');
+  img(s, R + 'assets/fig_coupled_bottom_view.png', 0.55, 1.1, 5.85);
+  bullets(s, [
+    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer.',
+    'Separate start: the living biomass is in the lower part of the A region, next to the nutrient. These points were species A before the antibiotic (99 % started before T* = 0.3).',
+    'Mixed start: only 140 cells at the lower vertical edges stay alive. They were reached by the front just after the antibiotic onset (T* = 0.35 to 0.375) and started from the living composition of their neighbours, which by then was mostly A (share 0.98), and alive.',
+    'So the survivors at the edges follow from the start rule of new points (Appendix B), an assumption of this work.'],
+    { x: 6.7, y: 1.2, w: 6.1, h: 5.6, fontSize: 15 }); }
+{ const s = frame('17. Volume of each species in the cube');
+  const h = img(s, R + 'assets/fig_species_volumes.png', 0.55, 1.15, 8.0);
+  cap(s, 'Fig. 10  V_i = ∫ φ₃D φᵢ/(φ₁+φ₂) dV (all biomass of species i, dead included; V_A + V_B = ∫ φ₃D dV) and the living volume ∫ φ₃D Σᵢφ̄ᵢ dV, with antibiotic, 64³. Cube 8 mm³.', 1.15 + h + 0.08, 0.55, 8.0);
+  s.addTable([[H(''), H('V_A'), H('V_B'), H('living')],
+    [L('separate, T* = 0.325'), C('3.22'), C('2.50'), C('5.29')], [L('separate, T* = 1'), C('4.40'), C('2.84'), C('1.07')],
+    [L('mixed, T* = 0.325'), C('2.93'), C('1.93'), C('4.58')], [L('mixed, T* = 1'), C('3.42'), C('2.08'), C('0.22')]],
+    { x: 8.85, y: 1.25, w: 3.93, colW: [1.75, 0.72, 0.72, 0.74], fontFace: TM, fontSize: 13, color: INK, rowH: 0.42, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  bullets(s, [
+    'In mm³. A takes more space than B in both starts.',
+    'After the antibiotic the volumes still grow a little while the living volume falls: dead biomass keeps its space (the point you raised about φ rising while ψ falls).'],
+    { x: 8.85, y: 3.55, w: 3.93, h: 3.3, fontSize: 14 }); }
+{ const s = frame('18. The antibiotic field');
+  const pv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel_end.png', vv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel.mp4';
+  const [pw, ph] = pngSize(pv); const w = 12.2, hh = w * ph / pw;
+  if (fs.existsSync(vv)) s.addMedia({ type: 'video', path: vv, cover: 'data:image/png;base64,' + fs.readFileSync(pv).toString('base64'), x: 0.57, y: 1.2, w, h: hh });
+  else s.addImage({ path: pv, x: 0.57, y: 1.2, w, h: hh });
+  bullets(s, [
+    'The video of Fig. 3 with panel (d) showing the antibiotic a instead of α − 1. a is held at 1 in the outer shell of elements from T* = 1/3 and taken up by the living biomass (same equation as c).',
+    'With the same d as the nutrient, a is above 0.89 everywhere from the first outer step after the onset (minimum 0.91 separate, 0.90 mixed at T* = 0.35; 0.98 and 1.00 at T* = 1), so the field looks almost uniform. The point models differ mainly by their composition and nutrient, not by the dose.'],
+    { x: 0.75, y: 1.2 + hh + 0.15, w: 11.9, h: 6.85 - 1.35 - hh, fontSize: 15 }); }
+
 // 13 appendix notation
 { const s = frame('Appendix A. Notation');
   const rows = [[H('symbol'), H('meaning'), H('symbol'), H('meaning')],
@@ -383,6 +431,16 @@ const NOTES = [
  'このスライドは，あなたの要素と私の Python コードの比較です．どちらも同じ式を，分けた例・抗菌薬ありで解いています．要素は 8³，16³，24³ の要素で，前線の項には風上寄りの勾配を使っています．Python は 64³ から 192³ のセルです．要素の応力は外挿で 5.8×10⁻⁴ Pa，格子の不確かさは 16.5 % です．Python の値は 6.4 で 10 % 高く，要素の不確かさの中に入ります．なので両者は合っています．成長は要素のほうが 6 % 低いです．要素は 24³ までしか回らないので，このスライドの格子の列は Python のものを使いました．もう 1 点，風上寄りの勾配の代わりに一定の人工拡散を使うと，応力はこの約 4 分の 1 しか出ません．前線の項には 2 次の扱いが必要です．'],
 ['Why does the stress hardly change? The growth law, Equation 36, counts all biomass, living or dead. So when bacteria die, the biofilm still grows. The composition reaches the stress only through the nutrient and the front speed. The stress itself is set by the difference in growth between the seed and the stiff biofilm around it. For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to hear your opinion: is this worth pursuing in the next step?',
  'なぜ応力がほとんど変わらないのか．成長の式 36 は，生きている菌も死んだ菌も同じに数えます．なので菌が死んでも，バイオフィルムは成長を続けます．組成は，栄養と前線の速さを通してしか応力に届きません．応力そのものは，種子と周りの硬いバイオフィルムとの成長の差で決まります．組成が力学に直接効くには，生きている量で成長を決めるような 2 本目の道が必要です．次の段階でこれを進める価値があるか，意見を聞きたいです．'],
+['You asked about the nutrient at the start. Here I start from c equals zero everywhere except the held layer, as your element does. The left panel shows how the nutrient fills the cube from zero: because d is ten to the eight, the seed reaches its value of about 0.93 within about ten to the minus seven T star, long before my first outer step. The right panel shows the seed nutrient over the whole run for the two starts; they lie on top of each other. At the end the seed values agree within 0.4 percent, and the share in the mixed start within one percent. In your element, starting from one everywhere also gave the same results to three digits.',
+ 'あなたが聞いた最初の栄養についてです．ここでは，あなたの要素と同じく，固定した層以外を c = 0 から始めました．左は c = 0 から栄養が立方体を満たす様子です．d = 10⁸ なので，種子は約 10⁻⁷ T* で 0.93 くらいになり，最初の外側のステップよりずっと前です．右は二つの始め方での種子の栄養で，重なっています．最後の種子の値は 0.4 % 以内，混ぜた例の割合は 1 % 以内で一致します．あなたの要素でも，全部 1 から始めた場合と 3 桁同じでした．'],
+['To interpret the numbers, this slide uses the point model alone. On the right, without antibiotic, species A overtakes B because B has the larger eta and changes more slowly; with equal or swapped eta, B wins. On the left, under the antibiotic, a point keeps living biomass only if it is dominated by A and has nutrient close to one. B alone, or A and B together, die at any nutrient level. That explains the two numbers: in the mixed start every seed point holds B and dies, minus 96 percent; in the separate start the lower part of the A seed sits next to the nutrient supply and survives, minus 84 percent.',
+ '数字の解釈のために，点モデルだけを使います．右は抗菌薬なしで，B の η が大きく変化が遅いので A が B を追い越します．η を同じにするか入れ替えると B が勝ちます．左は抗菌薬ありで，生きている菌が残るのは A が多く栄養が 1 に近い点だけです．B だけ，あるいは A と B が一緒の点は，栄養によらず死にます．これで二つの数字が説明できます．混ぜた例は種子のどの点にも B がいて死にます（−96 %）．分けた例は A の種子の下の部分が栄養の入口の隣にあって生き残ります（−84 %）．'],
+['You asked to see the cube from below. In the separate start the living biomass is in the lower part of the A region, next to the nutrient; these points were already A before the antibiotic. In the mixed start only a few cells at the lower edges stay alive. They were reached by the front just after the antibiotic started, and they took the living composition of their neighbours, which by then was mostly A, and started alive. So these survivors come from the start rule of new points, which is an assumption.',
+ '下から見た図です．分けた例では，生きている菌は A の領域の下の部分，栄養の隣にあります．これらの点は抗菌薬の前から A でした．混ぜた例では，下の縁の少しのセルだけが生きています．抗菌薬が始まった直後に前線が届いた点で，その時にはほとんど A になっていた隣の生きている組成を受け継ぎ，生きた状態から始まりました．なので，この生き残りは新しい点の始め方の規則から来ていて，これは仮定です．'],
+['You asked for the volume of each species. Species A takes more space than B in both starts. After the antibiotic, the species volumes still grow a little while the living volume falls: the dead biomass keeps its space. This is the point you raised about phi rising while psi falls.',
+ '菌種ごとの体積です．どちらの例でも A のほうが B より大きな体積を占めます．抗菌薬のあと，生きている体積は減りますが，菌種の体積は少し増え続けます．死んだ菌が場所を占めたままだからです．あなたが指摘した，ψ が下がるときに φ が増える点です．'],
+['Here is the antibiotic field, the same video with the antibiotic in panel d. It is held at one in the outer shell from T star one third. Because it diffuses as fast as the nutrient, it is above about 0.9 everywhere right after the onset, and close to one at the end, so the field looks almost uniform. The points differ mainly by their composition and nutrient, not by the dose.',
+ '抗菌薬の場です．同じ動画で，パネル d に抗菌薬を出しました．T* = 1/3 から外側の層で 1 に固定しています．栄養と同じ速さで拡散するので，始まった直後からどこでも約 0.9 以上，最後はほぼ 1 になり，ほとんど一様に見えます．点ごとの違いは主に組成と栄養から来ていて，抗菌薬の量からではありません．'],
 ['This appendix lists the notation of the growth field and of the point model, in case you have questions about a symbol.',
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid.',
