@@ -199,7 +199,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     { x: 0.55, y: 5.75, w: 12.23, h: 1.1, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 12b the element against the Python code (added 25 Nov; same run as the thesis, Ch. 4)
-{ const s = frame('12b. Your element and the Python code');
+{ const s = frame('12b. The IKM element and the Python code');
   s.addText('Separate start with antibiotic, seed means at T* = 1. Both solve the same equations (Eqs. 34 to 36 with the coupling of this work).',
     { x: 0.55, y: 1.2, w: 12.23, h: 0.5, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0 });
   s.addTable([[H(''), H('IKM element (ANSYS)'), H('Python, finite volumes')],
@@ -227,14 +227,14 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
 
 // 14-18: answers to the questions of the meeting of 25 Nov (added the same day)
-{ const s = frame('14. The nutrient at the start: c = 0, as in your element');
+{ const s = frame('14. The nutrient at the start: c = 0, as in the IKM element');
   const h = img(s, R + 'assets/fig_c_start_zero.png', 0.55, 1.15, 7.6);
   cap(s, 'Fig. 8  (a) c filling the cube from c = 0 (held layer at 1), separate start, start state, small backward-Euler steps. (b) Seed nutrient over the run for the two starts of c (outer step 0.025, with antibiotic).', 1.15 + h + 0.08, 0.55, 7.6);
   bullets(s, [
     'c diffuses through the whole cube, inside and outside the biofilm (Eq. 35). With d = 10⁸ mm²/T* (Klempt 2024, Table 2, converted) the cube fills in about 10⁻⁷ T*.',
     'From c = 0 the seed mean is within 1 % of the start used so far (0.93) at T* = 7.5·10⁻⁸, long before the first outer step (0.025).',
     'At T* = 1 the seed values agree within 0.4 % (living fraction, c, α − 1, von Mises); the share of A in the mixed start by 1 % (0.610 / 0.603).',
-    'Your element also starts from c = 0 outside the supply layer; there c = 1 everywhere gave the same results to three digits.'],
+    'The IKM element also starts from c = 0 outside the supply layer; there c = 1 everywhere gave the same results to three digits.'],
     { x: 8.4, y: 1.2, w: 4.4, h: 5.6, fontSize: 15 }); }
 { const s = frame('15. Interpretation from the point model alone');
   const h = img(s, R + 'assets/fig_point_model_survival.png', 0.55, 1.15, 7.6);
@@ -262,7 +262,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     { x: 8.85, y: 1.25, w: 3.93, colW: [1.75, 0.72, 0.72, 0.74], fontFace: TM, fontSize: 13, color: INK, rowH: 0.42, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
   bullets(s, [
     'In mm³. A takes more space than B in both starts.',
-    'After the antibiotic the volumes still grow a little while the living volume falls: dead biomass keeps its space (the point you raised about φ rising while ψ falls).'],
+    'After the antibiotic the volumes still grow a little while the living volume falls: dead biomass keeps its space (φ rising while ψ falls).'],
     { x: 8.85, y: 3.55, w: 3.93, h: 3.3, fontSize: 14 }); }
 { const s = frame('18. The antibiotic field');
   const pv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel_end.png', vv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel.mp4';
@@ -287,7 +287,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'With the antibiotic the difference is large (living −84 % / −96 %), and the field model alone cannot represent it.'],
     { x: 9.25, y: 3.35, w: 3.53, h: 3.5, fontSize: 13 }); }
 
-{ const s = frame('20. Your filter: start from all started points within a radius R');
+{ const s = frame('20. Start of new points from all started points within a radius R');
   const h = img(s, R + 'assets/fig_inherit_radius.png', 0.55, 1.1, 7.7);
   cap(s, 'Fig. 12  Separate start with antibiotic, T* = 1, slice z = 0 through the seed and two B blocks, where φ₃D > 0.5. A new cell takes the φ₃D-weighted mean of its started neighbours (six faces) or of all started cells within R. 64³.', 1.1 + h + 0.06, 0.55, 7.7);
   s.addTable([[H(''), H('6 neigh.'), H('R = 0.1'), H('R = 0.2')],
@@ -342,7 +342,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   s.addShape(pres.shapes.RECTANGLE, { x: 0.55, y: 1.25, w: 5.6, h: 5.55, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
   s.addText([
     { text: 'Region', options: { bold: true, color: NAVY, breakLine: true } },
-    { text: 'The initial seed of your deck: 32 elements of 0.25 mm in the centre (|x|, |y|, |z| < 0.5 mm; 4, 12, 12, 4 elements per layer in y), 0.5 mm³ = 6 % of the cube. 512 cells per element on 64³. The region is fixed in time.', options: { breakLine: true } },
+    { text: 'The initial seed of the ANSYS deck: 32 elements of 0.25 mm in the centre (|x|, |y|, |z| < 0.5 mm; 4, 12, 12, 4 elements per layer in y), 0.5 mm³ = 6 % of the cube. 512 cells per element on 64³. The region is fixed in time.', options: { breakLine: true } },
     { text: 'Mean', options: { bold: true, color: NAVY, breakLine: true } },
     { text: 'Plain mean over the seed cells, not weighted by φ₃D: c, a and Σᵢφ̄ᵢ directly; the share as the mean of φ₁/(φ₁+φ₂) per cell; α − 1 per cell; von Mises per element of the 16³ stress mesh (256 seed elements).', options: { breakLine: true } },
     { text: 'Times', options: { bold: true, color: NAVY, breakLine: true } },
