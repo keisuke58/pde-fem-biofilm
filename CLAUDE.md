@@ -558,6 +558,10 @@ examiners). Check each one before the document is handed over.
     a new sentence.
   - Keep bold to a few key numbers.
   - State the result plainly and let the numbers carry it.
+- **Every result comes with its interpretation (the user, 25 Nov 2026, after Oliver: "we need an interpretation, otherwise it is
+  just throwing numbers").** In slides, notes, documents and replies, say why a number comes out as it does (the mechanism, with
+  the evidence that shows it, e.g. a point-model check or a comparison run) and what it means, not only the number. Mark an
+  explanation that is not yet checked as such.
 - **Klempt et al. 2024 is the reference this work follows.** The paper is in
   the repository: `references/Klempt2024_Hamilton_biofilm_growth_BMMB.pdf`
   (CC BY 4.0; searchable text in the `.txt` next to it). Check the model,
