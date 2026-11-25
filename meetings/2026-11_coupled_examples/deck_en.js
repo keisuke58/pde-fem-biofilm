@@ -287,6 +287,33 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     { text: 'The φ₃D-weighted mean differs from the seed mean by 0.02 or less. The shapes of the curves and their order do not depend on the choice.', options: { bullet: true } }],
     { x: 6.45, y: 4.2, w: 6.33, h: 2.5, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 6 }); }
 
+// appendix B (cont.): how a newly reached point starts, and where A and B meet (added 25 Nov)
+{ const s = frame('Appendix B (cont.). How a new point starts: where A and B meet');
+  const BLUE = '3B5BDB', RED = 'C92A2A', MIX = '8E5BA8';
+  const box = (x, y, col, t1, t2) => {
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: 1.7, h: 1.25, rectRadius: 0.08, fill: { color: col }, line: { color: col, width: 0.5 } });
+    s.addText([{ text: t1, options: { bold: true, fontSize: 17, breakLine: true } }, { text: t2, options: { fontSize: 13 } }],
+      { x, y: y + 0.12, w: 1.7, h: 1.0, fontFace: TM, color: 'FFFFFF', align: 'center', valign: 'middle', isTextBox: true, margin: 0 }); };
+  const row = (y, label, cl, tl, cr, tr, cp, tp) => {
+    s.addText(label, { x: 0.55, y: y - 0.5, w: 6.4, h: 0.4, fontFace: TM, fontSize: 15, bold: true, color: NAVY, isTextBox: true, margin: 0 });
+    box(0.7, y, cl, tl[0], tl[1]); box(2.85, y, cp, tp[0], tp[1]); box(5.0, y, cr, tr[0], tr[1]);
+    for (const [x1, x2] of [[2.4, 2.85], [5.0, 4.55]])
+      s.addShape(pres.shapes.LINE, { x: Math.min(x1, x2), y: y + 0.62, w: Math.abs(x2 - x1), h: 0, flipH: x2 < x1,
+        line: { color: GREY, width: 1.5, endArrowType: 'triangle' } }); };
+  row(1.75, '(a) inside one region: the new point P starts as that species', BLUE, ['A', 'started'], BLUE, ['A', 'started'], BLUE, ['P = A', 'B at 10⁻⁶']);
+  row(3.85, '(b) where the regions meet: P starts as a mixture', BLUE, ['A', 'started'], RED, ['B', 'started'], MIX, ['P = A + B', 'mean of both']);
+  s.addText('Arrows: P takes the φ₃D-weighted mean of its started neighbours (6 neighbours on the grid).',
+    { x: 0.55, y: 5.4, w: 6.4, h: 0.6, fontFace: TM, fontSize: 13, color: GREY, isTextBox: true, margin: 0 });
+  s.addShape(pres.shapes.RECTANGLE, { x: 7.25, y: 1.25, w: 5.53, h: 5.55, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
+  s.addText([
+    { text: 'Rule (Python, the main runs)', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The point model of P starts when φ₃D there exceeds φ_min = 0.001. Its start state is the φ₃D-weighted mean of its started neighbours: their amount, and the shares of their living biomass φ̄ᵢ/Σⱼφ̄ⱼ (dead biomass is not passed on); ψᵢ = 0.999.', options: { breakLine: true } },
+    { text: 'Consequences', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Species do not move: only φ₃D, c and a are transported. A mixed start occurs only at the border between the A and B regions. After the start, P exchanges nothing with its neighbours; the point model decides the competition. Every point model carries both species; a single species means the other at 10⁻⁶.', options: { breakLine: true } },
+    { text: 'ANSYS runs', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The material routine cannot see the other Gauss points, so the start is set by position: B where |x|, |y| > 0.5625 mm, A elsewhere. No mixed start there.' }],
+    { x: 7.5, y: 1.4, w: 5.05, h: 5.3, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 5 }); }
+
 // appendix C: a nutrient supply that oscillates in time (added 25 Nov; not in the thesis). Kept back for now (the user,
 // 25 Nov): built only with WITH_SINE=1 in the environment.
 const WITH_SINE = !!process.env.WITH_SINE;
@@ -362,6 +389,8 @@ const NOTES = [
  '付録：報告した 3 つの量の定義です．von Mises 応力，Celik らの格子収束指標（GCI），そしてバイオフィルムの端が格子で解像できているかを示すセルのペクレ数です．'],
 ['This appendix says where the seed means come from. All the means in Tables 1 and 2 and in Figure 7 are plain means over the initial seed of your deck: the thirty-two elements in the centre, half a cubic millimetre, about six percent of the cube. The region does not move with the biofilm, so every curve compares the same material. I do not weight by phi 3D. The table shows the nutrient averaged in three ways. Inside the seed c is higher at the lower end, near the held layer, and the spread is largest around T star one third. A mean over the whole cube is two to five hundredths higher, because it includes the layer held at one. A phi-weighted mean is within two hundredths of the seed mean. So the choice does not change the shapes of the curves or their order.',
  '付録：種子での平均の定義です．表 1，2 と図 7 の平均は全部，あなたの deck の最初の種子での，重みなしの平均です．中央の 32 要素，0.5 mm³ で，立方体の約 6 % です．この領域はバイオフィルムが広がっても動かないので，どの曲線も同じ場所を比べています．φ₃D の重みは付けていません．表は栄養 c を 3 通りで平均したものです．種子の中では，固定した層に近い下の端で c が高く，ばらつきは T* = 1/3 ごろに一番大きくなります．立方体全体の平均は，1 に固定した層を含むので 0.02〜0.05 高くなります．φ₃D の重み付き平均は種子の平均と 0.02 以内です．なので平均の取り方を変えても，曲線の形と順番は変わりません．'],
+['This appendix shows how a point starts when the biofilm reaches it. Species are never transported: only phi 3D, the nutrient and the antibiotic move. When phi 3D at a new point P exceeds phi min, its point model starts from the phi-weighted mean of its neighbours that have already started, with their living composition. Inside one region, all neighbours are A, so P starts as A, with B at ten to the minus six. Only where the A region and the B region meet does P have neighbours of both, and then it starts as a mixture. After that, P exchanges nothing with its neighbours, and its own point model decides the competition. In the ANSYS runs the material routine cannot see the other Gauss points, so there the start is set by position, and no point starts mixed.',
+ '付録：バイオフィルムが新しい点に届いたとき，その点がどう始まるかです．菌種は運ばれません．動くのは φ₃D，栄養，抗菌薬だけです．新しい点 P で φ₃D が φ_min を超えると，P の点モデルは，すでに始まっている隣の点の φ₃D 重み付き平均（生きている菌の組成）から始まります．一つの領域の中では隣は全部 A なので，P は A で始まります（B は 10⁻⁶）．A の領域と B の領域が出会うところだけ，P の隣に両方があり，混ざって始まります．そのあと P は隣と何もやり取りせず，P の点モデルが競争を決めます．ANSYS の計算では，材料ルーチンから他の Gauss 点が見えないので，位置で始まりを決めていて，混ざって始まる点はありません．'],
 ['These are the references. Thank you very much for your attention. I am happy to answer questions.',
  '参考文献です．ご清聴ありがとうございました．質問があればどうぞ．']];
 const SINE_NOTE = ['This appendix shows a nutrient supply that oscillates in time, in the form of case three of the 2026 paper: c star equals fifty plus fifty times the sine of five hundred t. The species are again Fritsch case one, without antibiotic. The top row is the point model alone. With the sine, the curves have small ripples, and they follow closely the curves with a constant c star of fifty, which is the mean of the sine. The bottom row is the coupled model. The nutrient at the seed oscillates, but the living fraction and the share of species A are almost the same as with the constant mean. In the table, halving the nutrient lowers the growth by ten percent but raises the stress by about thirty percent, because the front becomes slower and the edge stays sharp. The sine and its mean agree within one percent. So at this period, the oscillation acts like its mean.',
