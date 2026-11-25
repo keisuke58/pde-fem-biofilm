@@ -1,6 +1,7 @@
 """fig_coupled_bottom_view.py -- the two coupled examples with antibiotic seen from below (Oliver, 25 Nov 2026: where does
 species A survive?). T* = 1, 64^3, the snapshots of the videos. Rows: separate start, mixed start. Columns: (a) share
-phi_1/(phi_1+phi_2) and (b) living volume fraction sum_i phibar_i where phi_3D > 0.5, as in the videos, but with the
+phi_1/(phi_1+phi_2) and (b) living volume fraction sum_i phibar_i where phi_3D > 0.5 (dead biofilm, sum_i phibar_i < 0.1,
+as a translucent grey shell), as in the videos, but with the
 camera below the cube (the nutrient enters through the bottom layer y < -0.75 mm). One octant (x, y, z > 0, at the top)
 is removed as in the other views; it is hidden from below.
 
@@ -35,11 +36,21 @@ def render(z, field, cmap, T):
     octant = (cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0)
     for k in ("phi", field):
         g.cell_data[k] = np.nan_to_num(z[f"{k}_{T}"], nan=0.0).ravel(order="F")
-    g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
+    bio = (g.cell_data["phi"] > 0.5) & ~octant
+    if field == "L":                          # 25 Nov: dead biofilm (sum phibar < 0.1) as a translucent grey shell
+        g.cell_data["bio"] = (bio & (g.cell_data["L"] >= 0.1)).astype(float)
+        g.cell_data["dead"] = (bio & (g.cell_data["L"] < 0.1)).astype(float)
+    else:
+        g.cell_data["bio"] = bio.astype(float)
     m = g.threshold(0.5, scalars="bio")
     pl = pv.Plotter(off_screen=True, window_size=(900, 820))
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
-    pl.add_mesh(m, scalars=field, cmap=cmap, clim=(0, 1), show_scalar_bar=False, **LIT)
+    if m.n_cells:
+        pl.add_mesh(m, scalars=field, cmap=cmap, clim=(0, 1), show_scalar_bar=False, **LIT)
+    if field == "L":
+        d = g.threshold(0.5, scalars="dead")
+        if d.n_cells:
+            pl.add_mesh(d.extract_surface(), color=(0.55, 0.55, 0.55), opacity=0.12, **LIT)
     pl.add_axes(line_width=3, labels_off=False)
     pl.camera_position = CAM
     pl.camera.zoom(0.98)

@@ -248,7 +248,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 { const s = frame('16. Where the living biomass survives, seen from below');
   img(s, R + 'assets/fig_coupled_bottom_view.png', 0.55, 1.1, 5.85);
   bullets(s, [
-    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer.',
+    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer. In (b) translucent grey is dead biofilm (Σᵢφ̄ᵢ < 0.1), green the living part.',
     'Separate start: the living biomass is in the lower part of the A region, next to the nutrient. These points were species A before the antibiotic (99 % started before T* = 0.3).',
     'Mixed start: only 140 cells at the lower vertical edges stay alive. They were reached by the front just after the antibiotic onset (T* = 0.35 to 0.375) and started from the living composition of their neighbours, which by then was mostly A (share 0.98), and alive.',
     'So the survivors at the edges follow from the start rule of new points (Appendix B), an assumption of this work.'],
