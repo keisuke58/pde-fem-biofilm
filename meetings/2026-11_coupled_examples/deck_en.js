@@ -186,6 +186,24 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   s.addText('Stress in von Mises [10⁻⁴ Pa]. The mixed stress needs a sharp edge: its width β/v ≈ 0.004 mm is narrower than a cell up to 192³ (cell Péclet number 1.28), and the minmod limiter smears it. With the less diffusive superbee limiter it converges with p = 1.2 and a GCI of 4.6 % (extrapolated 3.81 × 10⁻⁴ Pa); 256³ gives 3.76, and 128³/192³/256³ extrapolate to 3.95 (GCI 6.3 %). In the separate start, where minmod converges, superbee agrees within about 1 %.',
     { x: 0.55, y: 5.75, w: 12.23, h: 1.1, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top' }); }
 
+// 12b the element against the Python code (added 25 Nov; same run as the thesis, Ch. 4)
+{ const s = frame('12b. Your element and the Python code');
+  s.addText('Separate start with antibiotic, seed means at T* = 1. Both solve the same equations (Eqs. 34 to 36 with the coupling of this work).',
+    { x: 0.55, y: 1.2, w: 12.23, h: 0.5, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0 });
+  s.addTable([[H(''), H('IKM element (ANSYS)'), H('Python, finite volumes')],
+    [L('grids'), C('8³, 16³, 24³ elements'), C('64³, 128³, 192³ cells')],
+    [L('front term −r c/(k+c) n_c·∇φ₃D'), C('upwind-biased gradients (MLS)'), C('MUSCL, minmod limiter')],
+    [L('growth α − 1 [10⁻⁴]'), C('6.38, 8.01, 8.36  →  8.68 (4.8 %)'), C('8.93, 9.11, 9.15  →  9.19 (0.5 %)')],
+    [L('von Mises stress [10⁻⁴ Pa]'), C('2.14, 4.56, 5.15  →  5.8 (16.5 %)'), C('6.00, 6.28, 6.35  →  6.42 (1.4 %)', { bold: true, color: ACC })]],
+    { x: 0.55, y: 1.8, w: 12.23, colW: [3.8, 4.2, 4.23], fontFace: TM, fontSize: 15, color: INK, rowH: 0.55,
+      border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  cap(s, 'Values on the three grids, then the extrapolated value with its GCI in brackets (Celik et al. 2008).', 4.6);
+  bullets(s, [
+    'The stress of the element is 10 % below the Python value; the Python value lies inside the element\'s uncertainty of 16.5 %. The growth of the element is 6 % lower.',
+    'The element reaches 24³ only, so the grid series of this deck come from the Python code, which solves the same equations on finer grids.',
+    'With a constant added diffusion r h/4 in place of the upwind gradients, the element gives about a quarter of this stress on 16³: the front term needs a second-order treatment.'],
+    { x: 0.75, y: 5.05, w: 11.8, h: 1.9, fontSize: 15, paraSpaceAfter: 6 }); }
+
 // 12 discussion
 { const s = frame('13. Discussion');
   bullets(s, [
@@ -271,6 +289,8 @@ const NOTES = [
  'この表が主な結果です．上の行は 64³ の値です．抗菌薬で生きている量は，分けた例で 84 %，混ぜた例で 96 % 下がります．下の 2 行は 3 つの格子から外挿した成長と応力で，括弧の中が格子の不確かさです．成長の変化は 0.3 % 未満です．分けた例の応力は 2 % 下がり，これは不確かさより大きいです．混ぜた例の差は 7 % で，2 つの不確かさを合わせたくらいの大きさです．つまり，組成が大きく変わっても，力学はほとんど変わりません．'],
 ['This table shows the grid convergence from thirty-two cubed to one hundred and ninety-two cubed. The growth converges well in both examples, with uncertainties below five percent. The stress of the separate start converges very well, with 1.4 percent with antibiotic. The stress of the mixed start is harder: its edge is narrower than a cell, and the minmod limiter smears it. With the less diffusive superbee limiter it converges, with an uncertainty of about five percent. On two hundred and fifty-six cubed both limiters give about 4.0 times ten to the minus four pascal.',
  '32³ から 192³ までの格子収束の表です．成長はどちらの例もよく収束し，不確かさは 5 % 未満です．分けた例の応力はとてもよく収束し，抗菌薬ありで 1.4 % です．混ぜた例の応力は難しく，端がセルより細いため，minmod の制限関数ではなまってしまいます．拡散の少ない superbee を使うと収束し，不確かさは約 5 % です．256³ では，2 つの制限関数がどちらも約 4.0 × 10⁻⁴ Pa を出します．'],
+['This slide compares your element with my Python code. Both solve the same equations, for the separate start with antibiotic. Your element runs on eight, sixteen and twenty-four cubed elements, with upwind-biased gradients for the front term. The Python code runs on sixty-four to one hundred and ninety-two cubed cells. The stress of the element extrapolates to 5.8 times ten to the minus four pascal, with a grid uncertainty of 16.5 percent. The Python value is 6.4, ten percent higher, and it lies inside the uncertainty of the element. So the two agree. The growth of the element is six percent lower. Because the element reaches only twenty-four cubed, I took the grid series of this deck from the Python code. One more point: with a constant added diffusion instead of the upwind gradients, the stress is only about a quarter of this value, so the front term needs a second-order treatment.',
+ 'このスライドは，あなたの要素と私の Python コードの比較です．どちらも同じ式を，分けた例・抗菌薬ありで解いています．要素は 8³，16³，24³ の要素で，前線の項には風上寄りの勾配を使っています．Python は 64³ から 192³ のセルです．要素の応力は外挿で 5.8×10⁻⁴ Pa，格子の不確かさは 16.5 % です．Python の値は 6.4 で 10 % 高く，要素の不確かさの中に入ります．なので両者は合っています．成長は要素のほうが 6 % 低いです．要素は 24³ までしか回らないので，このスライドの格子の列は Python のものを使いました．もう 1 点，風上寄りの勾配の代わりに一定の人工拡散を使うと，応力はこの約 4 分の 1 しか出ません．前線の項には 2 次の扱いが必要です．'],
 ['Why does the stress hardly change? The growth law, Equation 36, counts all biomass, living or dead. So when bacteria die, the biofilm still grows. The composition reaches the stress only through the nutrient and the front speed. The stress itself is set by the difference in growth between the seed and the stiff biofilm around it. For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to hear your opinion: is this worth pursuing in the next step?',
  'なぜ応力がほとんど変わらないのか．成長の式 36 は，生きている菌も死んだ菌も同じに数えます．なので菌が死んでも，バイオフィルムは成長を続けます．組成は，栄養と前線の速さを通してしか応力に届きません．応力そのものは，種子と周りの硬いバイオフィルムとの成長の差で決まります．組成が力学に直接効くには，生きている量で成長を決めるような 2 本目の道が必要です．次の段階でこれを進める価値があるか，意見を聞きたいです．'],
 ['This appendix lists the notation of the growth field and of the point model, in case you have questions about a symbol.',
