@@ -358,7 +358,7 @@ this machine's specific workflow.
   **Meeting 2 Nov 2026** (`meetings/2026-11-02_muramatsu/NOTES.ja.md`): return to Japan about 10 Jan 2027 (lab from
   about 12 Jan); RA from January, two candidates (a JST quantum project, an industry ML project), employment being
   arranged by her side; next meeting **30 Nov, 17:00 JST**. She asked why the stress looked unsymmetric: it is mirror
-  symmetric in x and z (checked); show uncut views and the point model's antibiotic term next time.
+  symmetric in x and z (checked); the uncut views and the point model's antibiotic term were already sent to her (the user, 25 Nov), do not prepare them again.
   **Conferences (the user, 28 Oct 2026):** USNCCM19 (Pasadena, 25-29 Jul 2027; abstract by 15 Jan 2027) is the one he
   wants; he prefers it over domestic conferences. Keio spring courses 2027: take report-graded ones so a July exam
   period does not clash with the trip.
