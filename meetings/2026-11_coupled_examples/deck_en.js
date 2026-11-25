@@ -159,7 +159,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 { const s = frame('10. Seed means over time');
   const h = img(s, R + 'assets/fig_coupled_time_history.png', 0.9, 1.25, 11.5);
   cap(s, 'Fig. 7  Means over the seed for both starts, with (dashed) and without (solid) antibiotic: (a) living volume fraction Σᵢφ̄ᵢ, '
-    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1.', 1.25 + h + 0.1); }
+    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1. Seed means: Appendix B.', 1.25 + h + 0.1); }
 
 // 10 seed means
 { const s = frame('11. Seed means at T* = 1');
@@ -250,7 +250,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
       { x: x + 0.2, y: 2.1 + h, w: w - 0.4, h: 4.6 - h, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 6 }); };
   col(0.55, 3.75, 'von Mises stress', 'vm.png', 3.35, [
     's is the deviatoric stress; σ_vM vanishes for a uniform swelling.',
-    'Tables 1 and 2 give the mean over the seed (the 32 elements of the start).']);
+    'Tables 1 and 2 give the mean over the seed (the 32 elements of the start; next slide).']);
   col(4.45, 4.5, 'Grid convergence index', 'gci.png', 4.1, [
     'Celik et al. 2008, three grids 1, 2, 3 = 192³, 128³, 64³, safety factor 1.25.',
     'p is the observed order (solved iteratively), f_ext the extrapolated value.',
@@ -259,6 +259,33 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'v is the speed of the front term −r c/(k+c) n_c·∇φ₃D (r = 10 mm/T*, k = 1, c ≈ 0.96); N cells per edge.',
     'Edge width of the biofilm about β/v ≈ 0.004 mm.',
     'For Pe_h > 1 the edge is narrower than a cell and the limiter lowers the order. 128³: 1.9, 192³: 1.28, 256³: 0.96.']); }
+
+// appendix B (cont.): the seed means of Tables 1, 2 and Fig. 7 (added 25 Nov; numbers from the 64^3 snapshots of the
+// separate start with antibiotic, figdata/coupled_living_separate_ab_nf64_..._snapsvm_transc1e+08_..._separate_ab.npz)
+{ const s = frame('Appendix B (cont.). The seed means');
+  s.addShape(pres.shapes.RECTANGLE, { x: 0.55, y: 1.25, w: 5.6, h: 5.55, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
+  s.addText([
+    { text: 'Region', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The initial seed of your deck: 32 elements of 0.25 mm in the centre (|x|, |y|, |z| < 0.5 mm; 4, 12, 12, 4 elements per layer in y), 0.5 mm³ = 6 % of the cube. 512 cells per element on 64³. The region is fixed in time.', options: { breakLine: true } },
+    { text: 'Mean', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Plain mean over the seed cells, not weighted by φ₃D: c, a and Σᵢφ̄ᵢ directly; the share as the mean of φ₁/(φ₁+φ₂) per cell; α − 1 per cell; von Mises per element of the 16³ stress mesh (256 seed elements).', options: { breakLine: true } },
+    { text: 'Times', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Every outer step (0.025), from T* = 0. The quarter domain (symmetry in x and z) gives the same means as the full cube.' }],
+    { x: 0.8, y: 1.4, w: 5.1, h: 5.3, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 5 });
+  s.addText('Table B1  Nutrient c averaged in three ways, separate start with antibiotic, 64³.',
+    { x: 6.45, y: 1.25, w: 6.33, h: 0.4, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
+  s.addTable([[H('T*'), H('seed (Fig. 7)'), H('range in the seed'), H('whole cube'), H('φ₃D-weighted')],
+    [C('0.025'), C('0.93', { bold: true }), C('0.91 – 0.97'), C('0.96'), C('0.94')],
+    [C('0.325'), C('0.60', { bold: true }), C('0.45 – 0.81'), C('0.65'), C('0.58')],
+    [C('0.5'), C('0.71', { bold: true }), C('0.63 – 0.86'), C('0.76'), C('0.73')],
+    [C('1.0'), C('0.91', { bold: true }), C('0.89 – 0.95'), C('0.93'), C('0.92')]],
+    { x: 6.45, y: 1.7, w: 6.33, colW: [0.8, 1.35, 1.6, 1.25, 1.33], fontFace: TM, fontSize: 14, color: INK, rowH: 0.45,
+      border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  s.addText([
+    { text: 'Inside the seed c is higher at the lower end, towards the held layer; the range is widest near T* = 1/3.', options: { bullet: true, breakLine: true } },
+    { text: 'The whole-cube mean is 0.02 to 0.05 higher, as it includes the held layer (c = 1, one eighth of the cube).', options: { bullet: true, breakLine: true } },
+    { text: 'The φ₃D-weighted mean differs from the seed mean by 0.02 or less. The shapes of the curves and their order do not depend on the choice.', options: { bullet: true } }],
+    { x: 6.45, y: 4.2, w: 6.33, h: 2.5, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 6 }); }
 
 // appendix C: a nutrient supply that oscillates in time (added 25 Nov; not in the thesis). Kept back for now (the user,
 // 25 Nov): built only with WITH_SINE=1 in the environment.
@@ -333,6 +360,8 @@ const NOTES = [
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid.',
  '付録：報告した 3 つの量の定義です．von Mises 応力，Celik らの格子収束指標（GCI），そしてバイオフィルムの端が格子で解像できているかを示すセルのペクレ数です．'],
+['This appendix says where the seed means come from. All the means in Tables 1 and 2 and in Figure 7 are plain means over the initial seed of your deck: the thirty-two elements in the centre, half a cubic millimetre, about six percent of the cube. The region does not move with the biofilm, so every curve compares the same material. I do not weight by phi 3D. The table shows the nutrient averaged in three ways. Inside the seed c is higher at the lower end, near the held layer, and the spread is largest around T star one third. A mean over the whole cube is two to five hundredths higher, because it includes the layer held at one. A phi-weighted mean is within two hundredths of the seed mean. So the choice does not change the shapes of the curves or their order.',
+ '付録：種子での平均の定義です．表 1，2 と図 7 の平均は全部，あなたの deck の最初の種子での，重みなしの平均です．中央の 32 要素，0.5 mm³ で，立方体の約 6 % です．この領域はバイオフィルムが広がっても動かないので，どの曲線も同じ場所を比べています．φ₃D の重みは付けていません．表は栄養 c を 3 通りで平均したものです．種子の中では，固定した層に近い下の端で c が高く，ばらつきは T* = 1/3 ごろに一番大きくなります．立方体全体の平均は，1 に固定した層を含むので 0.02〜0.05 高くなります．φ₃D の重み付き平均は種子の平均と 0.02 以内です．なので平均の取り方を変えても，曲線の形と順番は変わりません．'],
 ['These are the references. Thank you very much for your attention. I am happy to answer questions.',
  '参考文献です．ご清聴ありがとうございました．質問があればどうぞ．']];
 const SINE_NOTE = ['This appendix shows a nutrient supply that oscillates in time, in the form of case three of the 2026 paper: c star equals fifty plus fifty times the sine of five hundred t. The species are again Fritsch case one, without antibiotic. The top row is the point model alone. With the sine, the curves have small ripples, and they follow closely the curves with a constant c star of fifty, which is the mean of the sine. The bottom row is the coupled model. The nutrient at the seed oscillates, but the living fraction and the share of species A are almost the same as with the constant mean. In the table, halving the nutrient lowers the growth by ten percent but raises the stress by about thirty percent, because the front becomes slower and the edge stays sharp. The sine and its mean agree within one percent. So at this period, the oscillation acts like its mean.',
