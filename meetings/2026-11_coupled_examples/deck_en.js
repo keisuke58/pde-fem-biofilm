@@ -85,6 +85,18 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     { x: X, y: 1.7 + 6 * (Hb + G) - 0.12, w: W, h: 0.6, fontFace: TM, fontSize: 13, color: ACC, isTextBox: true, margin: 0, valign: 'top' });
 }
 
+// 2c the point model alone: Fritsch case I (added 25 Nov)
+{ const s = frame('2. Governing equations (cont.): the point model alone, Fritsch et al. 2025, case I');
+  const h = img(s, R + 'assets/fig_fritsch_case1.png', 1.55, 1.15, 10.2);
+  cap(s, 'The point model alone (no field), with the true parameters of case I: A = [[1, 0.1], [0.1, 1]], b = (1, 2), η = (1, 2), start φ = (0.25, 0.30), '
+    + 'c* = 100, 1000 steps of 10⁻⁴ (T* = 1 is the whole run, s = 0.1). Solid: volume fraction φᵢ; dashed: living volume fraction φ̄ᵢ = φᵢψᵢ; dotted: Σᵢφ̄ᵢ. '
+    + '(a) no antibiotic; (b) the antibiotic of the coupled examples, α* = 100 from T* = 1/3 (Klempt et al. 2026, case 4); (c) case I as published, α* = 10 from the start.',
+    1.15 + h + 0.08);
+  bullets(s, [
+    'Without antibiotic, species A takes over (end φ₁ = 0.97, φ₂ = 0.02); both stay alive.',
+    'With α* = 100 from T* = 1/3 (the setting of all coupled examples), both die within about 0.1 T*: Σᵢφ̄ᵢ falls from 0.96 to 0.04, while φ₁, φ₂ stay (0.51, 0.42).'],
+    { x: 0.75, y: 1.15 + h + 0.82, w: 11.8, h: 6.9 - (1.15 + h + 0.82), fontSize: 14, paraSpaceAfter: 4 }); }
+
 // 4 constants
 { const s = frame('3. Constants and numerics');
   const rows = [[H('symbol'), H('value'), H('meaning'), H('source')],
@@ -269,6 +281,8 @@ const NOTES = [
  '支配方程式です．2024 年の論文の式 34〜36 です．式 34 はバイオフィルムの量 φ₃D で，拡散，成長の源，そしてバイオフィルムの端を栄養の方へ動かす前線の項があります．式 35 は栄養で，拡散して消費されます．式 36 は成長 α で，膨らみ，つまり応力のもとになります．この研究で変えたのは式 35 だけで，消費に点モデルの生きている体積分率を掛けています．つまり生きている菌だけが栄養を使います．抗菌薬も栄養と同じ式に従います．点モデルそのものは論文のまま使っています．'],
 ['On the left is the point model, Equations 16 to 18 of the 2026 paper. Each species has a volume fraction phi i and a live share psi i. The antibiotic term is shown in red: it lowers the live share of each species. On the right is the chain of effects. The antibiotic field gives alpha star to the point model. The live shares fall, so the living volume fraction falls. Then less nutrient is taken up, so the nutrient rises, and the front speed r c over k plus c becomes larger. One important point: phi 3D, the amount of biofilm, has no antibiotic term. So the antibiotic kills bacteria, but it does not remove biofilm.',
  '左は点モデルで，2026 年の論文の式 16〜18 です．各菌種に体積分率 φᵢ と，生きている割合 ψᵢ があります．赤が抗菌薬の項で，各菌種の生きている割合を下げます．右は効き方の流れです．抗菌薬の場から点モデルに α* が渡ります．生きている割合が下がり，生きている体積分率が下がります．すると栄養の消費が減り，栄養が増え，前線の速さ r c/(k+c) が大きくなります．大事な点として，バイオフィルムの量 φ₃D には抗菌薬の項がありません．抗菌薬は菌を殺しますが，バイオフィルムそのものは減らしません．'],
+['Before the coupled examples, this slide shows the point model alone, without any field. These are the species data of the examples: Fritsch and co-workers, case one, with the true parameters. The solid lines are the volume fractions of the two species, the dashed lines are the living parts, and the dotted line is the total living fraction. In panel a, without antibiotic, species A takes over, and both stay alive. In panel b, the antibiotic of the coupled examples starts at one third with a strength of one hundred. Both species die within about a tenth of T star: the living fraction falls from 0.96 to 0.04. But the volume fractions stay, because dead bacteria are still there. Panel c is case one as published, with a weak antibiotic from the start. In the coupled examples, panel b is what happens at each point of the seed.',
+ '連成の例の前に，点モデルだけ（場なし）の結果を見せます．例で使う菌のデータ，Fritsch らの case I で，真のパラメータです．実線が 2 つの菌種の体積分率，破線がそのうち生きている部分，点線が生きている体積分率の合計です．(a) 抗菌薬なしでは菌 A が勝ち，両方とも生きたままです．(b) は連成の例と同じ抗菌薬で，T* = 1/3 から強さ 100 です．約 0.1 T* で両方とも死に，生きている量は 0.96 から 0.04 に下がります．ただ，死んだ菌も残るので体積分率はそのままです．(c) は論文どおりの case I で，弱い抗菌薬が最初からかかります．連成の例では，種子の各点で (b) が起きています．'],
 ['These are the constants. Almost all of them are from Table 2 of the 2024 paper, converted to the two millimetre cube: the diffusion beta, the front speed r, the growth rate, the diffusion and uptake of the nutrient, and the stiffness. The point-model values are from Fritsch, case one, and the antibiotic strength and onset are from case four of the 2026 paper. Only two values are mine: the stiffness floor f of the empty space, and the threshold phi min at which a point model starts. I checked both, and they change the results very little. On the right are the numerics: finite volumes, a second-order upwind scheme for the front term, Runge-Kutta in time, and the stress on sixteen cubed hexahedral elements.',
  '定数の一覧です．ほとんどは 2024 年の論文の表 2 の値を 2 mm の立方体に換算したものです．拡散 β，前線の速さ r，成長の速さ，栄養の拡散と消費，硬さです．点モデルの値は Fritsch の case I，抗菌薬の強さと開始時刻は 2026 年の論文の case 4 から取りました．私が決めた値は 2 つだけで，空いた所の硬さの下限 f と，点モデルを始める閾値 φ_min です．どちらも結果にほとんど影響しないことを確かめました．右は数値解法で，有限体積法，前線の項に 2 次の風上法，時間は Runge-Kutta，応力は 16³ の六面体要素で解きます．'],
 ['This is the first example, the separate start. Species A is in the seed in the centre, which is thirty-two elements of a quarter millimetre. Species B is in four small blocks along the edges parallel to z. The nutrient comes from the bottom face, the layer at y equals minus one millimetre. The antibiotic comes from all six outer faces, from T star equals one third; before that it is zero. For the mechanics, only three corner nodes are fixed, so the cube can swell freely.',
