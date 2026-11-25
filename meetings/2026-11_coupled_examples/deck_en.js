@@ -14,9 +14,10 @@ pres.title = 'Two species with an antibiotic in the coupled growth model';
 const NAVY = '1E3A5F', INK = '1F2933', GREY = '5F6B7A', RULE = '8A99AD', ACC = 'A61E1E', LIGHT = 'F3F5F8';
 const TM = 'Times New Roman';
 let n = 0;
+const SL = [];   // every slide in order, for the speaker notes at the end
 
 function frame(title) {
-  const s = pres.addSlide(); n += 1; s.background = { color: 'FFFFFF' };
+  const s = pres.addSlide(); n += 1; SL.push(s); s.background = { color: 'FFFFFF' };
   s.addText(title, { x: 0.55, y: 0.32, w: 12.2, h: 0.6, fontFace: TM, fontSize: 26, bold: true, color: NAVY, isTextBox: true, margin: 0 });
   s.addShape(pres.shapes.LINE, { x: 0.55, y: 0.98, w: 12.23, h: 0, line: { color: NAVY, width: 1.25 } });
   s.addShape(pres.shapes.LINE, { x: 0.55, y: 7.0, w: 12.23, h: 0, line: { color: RULE, width: 0.5 } });
@@ -34,7 +35,7 @@ const C = (t, o = {}) => ({ text: t, options: Object.assign({ align: 'center' },
 const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 
 // 1 title
-{ const s = pres.addSlide(); n += 1; s.background = { color: 'FFFFFF' };
+{ const s = pres.addSlide(); n += 1; SL.push(s); s.background = { color: 'FFFFFF' };
   s.addShape(pres.shapes.LINE, { x: 0.9, y: 2.0, w: 11.5, h: 0, line: { color: NAVY, width: 1.5 } });
   s.addText('Two species with an antibiotic in the coupled growth model', { x: 0.9, y: 2.2, w: 11.5, h: 0.7, fontFace: TM, fontSize: 32, bold: true, color: NAVY, isTextBox: true, margin: 0, fit: 'shrink' });
   s.addText('Separate and mixed start: set-up, results and grid convergence', { x: 0.9, y: 3.0, w: 11.5, h: 0.6, fontFace: TM, fontSize: 22, color: INK, isTextBox: true, margin: 0 });
@@ -238,5 +239,47 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'I. B. Celik, U. Ghia, P. J. Roache, C. J. Freitas, H. Coleman, P. E. Raad: Procedure for estimation and reporting of uncertainty due to discretization in CFD applications. J. Fluids Eng. 130, 078001 (2008). doi:10.1115/1.2960953'];
   s.addText(refs.map((t, i) => ({ text: '[' + (i + 1) + ']  ' + t, options: { breakLine: i < refs.length - 1 } })),
     { x: 0.75, y: 1.4, w: 11.8, h: 5.2, fontFace: TM, fontSize: 16, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 14 }); }
+
+
+// Speaker notes: a simple English text to read aloud, then the Japanese meaning (one entry per slide, in order).
+const NOTES = [
+['Thank you for your time. I will show two examples of the coupled model: two bacterial species and an antibiotic. For each example I show the set-up, the results and the grid convergence.',
+ 'お時間ありがとうございます．連成モデルの例を 2 つ見せます．2 種類の菌と抗菌薬の例です．それぞれ，設定，結果，格子収束の順に説明します．'],
+['I put the point model of Klempt and co-workers, 2026, at every integration point. I couple it to the biofilm field of the 2024 paper through a nutrient and an antibiotic. The question is simple: if the antibiotic changes the composition, how much do the growth and the stress change? The domain is a two millimetre cube. The species data are synthetic, from Fritsch, case one. There are two starts: separate and mixed. I report means over the seed, and I extrapolate growth and stress from three grids.',
+ 'Klempt ら 2026 の点モデルを各積分点に置き，2024 年の論文のバイオフィルムの場と，栄養と抗菌薬を通してつなぎます．問いは，抗菌薬で組成が変わると，成長と応力がどれだけ変わるか，です．領域は 2 mm の立方体，菌のデータは Fritsch の case I の合成データです．始め方は「分けた例」と「混ぜた例」の 2 つ．種子の平均を示し，成長と応力は 3 つの格子から外挿します．'],
+['These are the equations of the 2024 paper, Equations 34 to 36. The only change of this work is in Equation 35: the uptake of the nutrient is weighted by the living volume fraction. The antibiotic follows the same equation as the nutrient. The point model is used as published.',
+ '2024 年の論文の式 34〜36 です．この研究で変えたのは式 35 だけで，栄養の消費に生きている体積分率を掛けています．抗菌薬も栄養と同じ式に従います．点モデルは論文のまま使っています．'],
+['On the left is the point model. The antibiotic term is in red: it lowers the live share psi of each species. On the right is the chain: the antibiotic lowers the living fraction, so less nutrient is taken up, so the nutrient rises, and the front becomes faster. Note that the antibiotic does not remove biofilm, because phi 3D has no antibiotic term.',
+ '左が点モデルで，赤が抗菌薬の項です．各菌種の生きている割合 ψ を下げます．右はその流れです．抗菌薬で生きている量が減る，栄養の消費が減る，栄養が増える，前線が速くなる．なお，φ₃D には抗菌薬の項がないので，抗菌薬はバイオフィルムそのものは減らしません．'],
+['These are the constants. Almost all are from the 2024 paper, converted to the two millimetre cube. Two values are mine: the stiffness floor f and the threshold phi min, and both are checked. On the right are the numerics: finite volumes, a second-order upwind scheme for the front term, and the stress on sixteen cubed elements.',
+ '定数の一覧です．ほとんどは 2024 年の論文の値を 2 mm の立方体に換算したものです．私が決めた値は，硬さの下限 f と，点モデルを始める閾値 φ_min の 2 つで，どちらも影響を確かめています．右は数値解法です．有限体積法，前線の項には 2 次の風上法，応力は 16³ の要素で解きます．'],
+['This is the first example, the separate start. Species A is in the seed, and species B is in four small blocks along the edges. The nutrient comes from the bottom face. The antibiotic comes from all outer faces, from T star equals one third. The cube can swell freely.',
+ '1 つ目の例，分けた例です．種子に菌 A，辺に沿った 4 つの小さなブロックに菌 B を置きます．栄養は下の面から，抗菌薬は T* = 1/3 から外側のすべての面から入ります．立方体は自由に膨らめます．'],
+['These are the results with antibiotic. The top row is just before the antibiotic, the bottom row is at the end. From left to right: the share of species A, the living fraction, the nutrient, the growth, and the stress. The living fraction falls strongly after the antibiotic.',
+ '抗菌薬ありの結果です．上の段が抗菌薬の直前，下の段が最後です．左から，菌 A の割合，生きている量，栄養，成長，応力です．抗菌薬のあと，生きている量が大きく下がります．'],
+['This video shows the same run over time. You can click to play it.',
+ '同じ計算の時間変化の動画です．クリックすると再生できます．'],
+['This is the second example, the mixed start. Both species are in the seed in equal amounts. The boundary conditions are the same as in the first example.',
+ '2 つ目の例，混ぜた例です．種子に 2 つの菌種を同じ量ずつ置きます．境界条件は 1 つ目の例と同じです．'],
+['These are the results of the mixed start with antibiotic, in the same layout as before. Here both species meet the antibiotic in the seed, so the living fraction falls even further.',
+ '混ぜた例の抗菌薬ありの結果で，並べ方は前と同じです．こちらは両方の菌種が種子の中で抗菌薬に当たるので，生きている量がさらに下がります．'],
+['And this is the video of the mixed start.',
+ '混ぜた例の動画です．'],
+['These curves show the seed means over time, with and without antibiotic. After the antibiotic, the living fraction drops, and the nutrient rises, because less is taken up.',
+ '種子の平均の時間変化です．抗菌薬ありとなしを比べています．抗菌薬のあと，生きている量が下がり，消費が減るので栄養が上がります．'],
+['This table is the main result. The antibiotic lowers the living fraction by 84 percent in the separate start and by 96 percent in the mixed start. But the growth changes by less than 0.3 percent, and the stress only by a few percent.',
+ 'この表が主な結果です．抗菌薬で生きている量は，分けた例で 84 %，混ぜた例で 96 % 下がります．しかし成長の変化は 0.3 % 未満，応力の変化も数 % だけです．'],
+['This table shows the grid convergence. Growth converges well in both examples. The stress of the separate start converges well too. The mixed stress needs a sharp edge, so I use the superbee limiter; with it the uncertainty is about five percent.',
+ '格子収束の表です．成長はどちらの例もよく収束します．分けた例の応力もよく収束します．混ぜた例の応力は鋭い端が必要なので superbee の制限関数を使い，そうすると不確かさは約 5 % です．'],
+['Why does the stress hardly change? Because the growth law, Equation 36, counts all biomass, living or dead. So the composition reaches the stress only through the nutrient and the front speed. For the composition to act on the mechanics directly, the model needs a second path, for example growth driven by the living biomass. I would like to hear your opinion on this.',
+ 'なぜ応力がほとんど変わらないのか．成長の式 36 が，生きている菌も死んだ菌も同じに数えるからです．そのため組成は，栄養と前線の速さを通してしか応力に届きません．組成が力学に直接効くには，生きている量で成長を決めるような，2 本目の道が必要です．これについて意見を聞きたいです．'],
+['This appendix lists the notation, in case you have questions.',
+ '付録：記号の一覧です．質問があったときに使います．'],
+['This appendix defines the von Mises stress, the grid convergence index and the cell Péclet number.',
+ '付録：von Mises 応力，格子収束指標（GCI），セルのペクレ数の定義です．'],
+['These are the references. Thank you.',
+ '参考文献です．ありがとうございました．']];
+if (NOTES.length !== SL.length) throw new Error('notes ' + NOTES.length + ' for ' + SL.length + ' slides');
+SL.forEach((sl, i) => sl.addNotes('EN: ' + NOTES[i][0] + '\n\nJA: ' + NOTES[i][1]));
 
 pres.writeFile({ fileName: B + 'coupled_examples_en.pptx' }).then(f => console.log('ok', f, n, 'slides'));
