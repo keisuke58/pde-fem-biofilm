@@ -43,6 +43,11 @@ PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), r"$\phi_1/(\phi_1+\phi_2)$"),
           ("c", "cube", "Blues", (0.4, 1), r"$c$"),
           ("a", "ab", "Reds", (0, 1), r"$a$"),
           ("vm", "stress", "magma_r", (0, VMAX), r"$\sigma_\mathrm{vM}$ [$10^{-4}$ Pa]")]
+# 25 Nov (slides, with "alpha" only; the thesis figures keep the old drawing): dead biofilm (sum phibar < 0.1) as a
+# translucent grey shell in (a) and (b), the living part in colour, as in the videos
+DEAD = ALPHA
+if DEAD:
+    PANELS[0] = ("shareA", "biol", "coolwarm_r", (0, 1), PANELS[0][4])
 if ALPHA:
     AMAX = float(np.ceil(1e4 * np.percentile(Z[f"alpha_{times[-1]}"] - 1.0, 99.5)))
     PANELS[3] = ("am1", "bio", "viridis", (0, AMAX), r"$\alpha - 1$ [$10^{-4}$]")
@@ -62,22 +67,26 @@ def meshes(T):
         g.cell_data["am1"] = (1e4 * (Z[f"alpha_{T}"] - 1.0)).ravel(order="F")
     g.cell_data["bio"] = ((g.cell_data["phi"] > 0.5) & ~octant).astype(float)
     g.cell_data["cube"] = (~octant).astype(float)
-    g.cell_data["living"] = g.cell_data["bio"] * (g.cell_data["L"] > 0.01)
+    g.cell_data["living"] = g.cell_data["bio"] * (g.cell_data["L"] >= (0.1 if DEAD else 0.01))
+    g.cell_data["biol"] = g.cell_data["living"]
+    g.cell_data["dead"] = g.cell_data["bio"] * (g.cell_data["L"] < 0.1)
     g.cell_data["ab"] = g.cell_data["cube"] * (g.cell_data["a"] > 0.01)
     s, octs = cube(nm)
     s.cell_data["vm"] = 1e4 * Z[f"vm16_{T}"].ravel(order="F")
     s.cell_data["stress"] = (~octs).astype(float)
-    out = {m: g.threshold(0.5, scalars=m) for m in ("bio", "living", "cube", "ab")}
+    out = {m: g.threshold(0.5, scalars=m) for m in ("bio", "biol", "living", "dead", "cube", "ab")}
     out["stress"] = s.threshold(0.5, scalars="stress")
     return out
 
 
-def render(mesh, field, cmap, clim):
+def render(mesh, field, cmap, clim, dead=None):
     pl = pv.Plotter(off_screen=True, window_size=(1600, 1520))
     pl.enable_anti_aliasing("ssaa")
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey", line_width=3)
     if mesh.n_cells:
         pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
+    if dead is not None and dead.n_cells:
+        pl.add_mesh(dead.extract_surface(), color=(0.55, 0.55, 0.55), opacity=0.12, **LIT)
     pl.camera_position = CAM
     pl.camera.zoom(0.9)   # the whole cube in view, the front corner included
     img = pl.screenshot(return_img=True)
@@ -108,7 +117,7 @@ for i, T in enumerate(T_SHOW):
     M = meshes(T)
     for k, (field, mesh, cmap, clim, label) in enumerate(PANELS):
         ax = fig.add_axes([0.01 + W * k, 0.555 - 0.415 * i, W - 0.004, H0])
-        ax.imshow(render(M[mesh], field, cmap, clim), interpolation="none")   # PDF keeps the full render
+        ax.imshow(render(M[mesh], field, cmap, clim, dead=M["dead"] if (DEAD and field in ("L", "shareA")) else None), interpolation="none")   # PDF keeps the full render
         ax.set_axis_off()
         ax.text(0.0, 1.0, f"({'abcde'[k]}{i + 1})", transform=ax.transAxes, va="bottom", fontsize=8)
         if k == 0:

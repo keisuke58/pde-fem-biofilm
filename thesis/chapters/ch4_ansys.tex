@@ -337,7 +337,8 @@ time-step series below, $24^3$ still follows the first-order trend at $\lambda=0
   \includegraphics[width=\linewidth]{../ch5_flow/flow_oliver_solution_loop_print.pdf}
   \caption[Partner framework solution loop]{%
     Solution loop of the partner framework, traced from its source, and the
-    point at which the growth law of this chapter attaches.}
+    points at which this work attaches: the growth law and the point model in the material
+    routine, and the uptake in the field update, with the quantities passed between them (red).}
   \label{fig:partner-loop}
 \end{figure}
 
@@ -528,12 +529,14 @@ divided in the ratio of their living volume fractions $\bar\phi_i=\phi_i\psi_i$,
 alive ($\psi_i=0.999$, $\gamma=0$). I chose this rule because the biofilm spreads through the growth of
 its living cells. The papers do not fix it; the alternative of starting from the seed composition at the
 nearer seed is compared in Section~\ref{sec:ch5-results}. The point model has no transport between
-points, so the composition moves with the biofilm only through this rule.
+points, so the composition moves with the biofilm only through this rule. Two biofilms of different
+composition therefore mix only where they grow into each other, in the points that start between them;
+inside biofilm whose points have already started, the compositions do not mix.
 
 \paragraph{Assumptions.} The coupling rests on choices that neither paper fixes, each with its
 sensitivity in Section~\ref{sec:ch5-results}: the linear interpolation of $c^*$ and $\alpha^*$ in time
-and their lag of one increment; $\sum_i\bar\phi_i$ taken from the previous increment; the start values of newly reached points; the
-threshold $\phi_{\min}$; and, for the examples, the uptake of the antibiotic.
+and their lag of one increment; $\sum_i\bar\phi_i$ taken from the previous increment; the start values of newly reached points, and with them the
+limited mixing of biofilms that grow into each other; the threshold $\phi_{\min}$; and, for the examples, the uptake of the antibiotic.
 
 \paragraph{The complete step.} Algorithm~\ref{alg:ch5-coupled} collects one increment of the coupled
 run. ANSYS solves the equilibrium $\operatorname{div}\boldsymbol\sigma=\mathbf 0$ by Newton's method;

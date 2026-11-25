@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Seed means over time for the two coupled examples (separate and mixed start, equal amounts), with and without
-antibiotic: (a) living volume fraction sum_i phibar_i, (b) share phi_1/(phi_1+phi_2), (c) nutrient c. The runs of
+antibiotic: (a) living volume fraction sum_i phibar_i, (b) share phi_1/(phi_1+phi_2), (c) nutrient c; shaded in (c): the range of c
+within the seed for the runs with antibiotic (from the snapshots of the video runs). The runs of
 thesis Table tab:ch5-two-species (Python, 64^3, outer step 0.025, results/2026-10-3d). Printed width 16 cm, Times.
 
     python ansys_usermat/apdl/fig_coupled_time_history.py   -> assets/fig_coupled_time_history.png / .pdf
@@ -25,6 +26,25 @@ CASES = [("separate", "", "separate", "#3b5bdb", "-"), ("separate, antibiotic", 
 OUT = ROOT / "assets" / "fig_coupled_time_history.png"
 
 
+def seed_range(mix, ex):
+    """min and max of c over the seed cells at every snapshot of the video run of the same example (with dc/dt, agrees
+    with the plotted run within 0.1 %), or None when there are no snapshots (the runs without antibiotic)"""
+    import numpy as np
+    sys.path.insert(0, str(HERE))
+    import wp3_reference as W
+    f = ROOT / "figdata" / (f"coupled_living_{ex}_nf64_front1_phimin0.001_v2_fortran_ansysbc_inhliv_{mix}a100_gab1_gc1_tab0.333333"
+                            f"_snapsvm_transc1e+08_tvd_wgmirror_fast_{ex}.npz")
+    if not f.exists():
+        return None
+    z = np.load(f)
+    seed = W.seed_mask(64, W.seed_cells_8(HERE / "results/2026-10-wp3_fix/wp3c_n8_dt00125.json"))
+    ts = sorted({float(k[2:]) for k in z.files if k.startswith("c_")})
+    key = lambda t: next(k for k in z.files if k.startswith("c_") and abs(float(k[2:]) - t) < 1e-9)   # noqa: E731
+    lo = [float(z[key(t)][seed].min()) for t in ts]
+    hi = [float(z[key(t)][seed].max()) for t in ts]
+    return ts, lo, hi
+
+
 def main():
     figstyle.apply()
     fig, axs = plt.subplots(1, 3, figsize=(6.3, 2.2), constrained_layout=True)
@@ -34,6 +54,9 @@ def main():
         r = json.loads((RES / P.format(mix, ex)).read_text())["runs"][ex]
         for ax, (k, _, _) in zip(axs, keys):
             ax.plot(r["t"], r[k], color=col, ls=ls, lw=1.3, label=lab)
+        band = seed_range(mix, ex)
+        if band is not None:                      # 25 Nov: range of c within the seed (runs with antibiotic, snapshots)
+            axs[2].fill_between(*band, color=col, alpha=0.15, lw=0)
     for i, (ax, (_, yl, lim)) in enumerate(zip(axs, keys)):
         ax.axvline(1 / 3, color="0.55", lw=0.7, ls=":")
         ax.set_xlim(0, 1); ax.set_ylim(*lim); ax.set_xlabel(r"$T^*$"); ax.set_ylabel(yl)

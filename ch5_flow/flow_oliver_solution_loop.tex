@@ -42,7 +42,7 @@
 % ── the staggered loop ──────────────────────────────────────────────
 \node[Ngp, below=0.95cm of beg] (gp) {%
   \textbf{Material routine} \hfill \textit{every Gauss point, every iteration}\\[4pt]
-  read the state of the point ($\phi$, $c$)\\[2pt]
+  read the state of the point ($\phi_{3D}$, $c$, $a$)\\[2pt]
   hyperelastic law $\rightarrow$ stress $\bm\sigma$ and tangent\\[2pt]
   store the updated state};
 \draw[ar] (beg) -- node[lbl,right,xshift=2pt] {mechanics} (gp);
@@ -50,7 +50,8 @@
 \node[Nfld, below=0.95cm of gp] (fld) {%
   \textbf{Field update} \hfill \textit{after every substep}\\[4pt]
   nutrient $c$: Eq.~35 with $\dot c$ (transient option), one linear solve\\[2pt]
-  biofilm $\phi$: explicit update of Eq.~34\\[2pt]
+  antibiotic $a$: the second nutrient field, same equation\\[2pt]
+  biofilm $\phi_{3D}$: explicit update of Eq.~34\\[2pt]
   Laplacian and gradients from the neighbour operator};
 \draw[ar] (gp) -- node[lbl,right,xshift=2pt] {fields} (fld);
 
@@ -59,18 +60,21 @@
   {next substep} (gp.west);
 
 % ── attachment point of this work ───────────────────────────────────
-\node[Nours, right=1.15cm of gp] (ours) {%
+\node[Nours, right=1.15cm of gp, yshift=0.35cm] (ours) {%
   \textbf{added in this work}\\[4pt]
-  \small growth $\dot\alpha=k_\alpha\phi$ (Klempt 2024, Eq.~36) and
-  $\mathbf F_g=\alpha\mathbf I$ over the elastic law\\[3pt]
-  \small for two species, the point model (Klempt 2026) at every Gauss point};
+  \small growth $\dot\alpha=k_\alpha\phi_{3D}$ (Eq.~36), $\mathbf F_g=\alpha\mathbf I$\\[3pt]
+  \small point model (Klempt 2026): in $c^*=c^*_0c$, $\alpha^*=\alpha^*_0a$
+  (interpolated in time), out $\phi_i$, $\psi_i$, $\sum_i\bar\phi_i$};
 \draw[ar, draw=red!65!black, very thick] (ours) -- (gp);
+\node[Nours, right=1.15cm of fld, text width=6.4cm] (oursf) {%
+  \textbf{added in this work}\\[4pt]
+  \small uptake $g\,\phi_{3D}\,(\sum_i\bar\phi_i)\,c$ in Eq.~35, the same for $a$};
+\draw[ar, draw=red!65!black, very thick] (oursf) -- (fld);
+\draw[ar, draw=red!65!black] (ours.south) -- node[lbl, right, xshift=2pt, text=red!65!black] {$\sum_i\bar\phi_i$} (oursf.north);
 
 % ── annotation ──────────────────────────────────────────────────────
-\node[note, right=1.15cm of fld, yshift=0.1cm] (n1) {%
-  Staggered: ANSYS solves the mechanics, the framework updates the fields,
-  and the two alternate substep by substep.\\[3pt]
-  $\phi$ and $c$ are not ANSYS degrees of freedom: they are stored at the
-  integration points by the framework.};
+\node[note, below=0.2cm of oursf] (n1) {%
+  Staggered: mechanics and fields alternate substep by substep; $\phi_{3D}$, $c$, $a$ are stored at the
+  integration points, not ANSYS degrees of freedom.};
 
 \end{tikzpicture}
