@@ -144,7 +144,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
   const s = frame((5 + 3 * k) + '. ' + ex + ': results with antibiotic');
   const h = img(s, B + (c === 'separate' ? 's12_coupled_3d_separate_ab.png' : 's12m_coupled_3d_mixed_ab.png'), 2.05, 1.1, 9.2);
   cap(s, 'Fig. ' + (3 * k + 2) + '  ' + (c === 'separate' ? 'Separate' : 'Mixed') + ' start with antibiotic, T* = 0.325 (just before the antibiotic, top) and T* = 1 (bottom), one octant removed. '
-    + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5; (c) nutrient c; (d) growth α − 1 where φ₃D > 0.5 (as in the video); (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
+    + '(a) share φ₁/(φ₁+φ₂) and (b) living volume fraction Σᵢφ̄ᵢ where φ₃D > 0.5 (translucent grey: dead biofilm, Σᵢφ̄ᵢ < 0.1); (c) nutrient c; (d) growth α − 1 where φ₃D > 0.5 (as in the video); (e) von Mises stress on 16³ elements. 64³ cells.', 1.12 + h + 0.08);
   }
   {
   const s = frame((6 + 3 * k) + '. ' + ex + ': time evolution (T* = 0 to 1)');
@@ -159,7 +159,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 { const s = frame('10. Seed means over time');
   const h = img(s, R + 'assets/fig_coupled_time_history.png', 0.9, 1.25, 11.5);
   cap(s, 'Fig. 7  Means over the seed for both starts, with (dashed) and without (solid) antibiotic: (a) living volume fraction Σᵢφ̄ᵢ, '
-    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1. Seed means: Appendix B.', 1.25 + h + 0.1); }
+    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). Shaded in (c): the range of c within the seed (runs with antibiotic). 64³ cells, outer step 0.025, the runs of Table 1. Seed means: Appendix B.', 1.25 + h + 0.1); }
 
 // 10 seed means
 { const s = frame('11. Seed means at T* = 1');
@@ -248,7 +248,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 { const s = frame('16. Where the living biomass survives, seen from below');
   img(s, R + 'assets/fig_coupled_bottom_view.png', 0.55, 1.1, 5.85);
   bullets(s, [
-    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer. In (b) translucent grey is dead biofilm (Σᵢφ̄ᵢ < 0.1), green the living part.',
+    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer. Translucent grey is dead biofilm (Σᵢφ̄ᵢ < 0.1). Blue frame: the layer where c is held; inside it ∇c = 0, so the biofilm enters by diffusion only and its edge is stepped (the rings).',
     'Separate start: the living biomass is in the lower part of the A region, next to the nutrient. These points were species A before the antibiotic (99 % started before T* = 0.3).',
     'Mixed start: only 140 cells at the lower vertical edges stay alive. They were reached by the front just after the antibiotic onset (T* = 0.35 to 0.375) and started from the living composition of their neighbours, which by then was mostly A (share 0.98), and alive.',
     'So the survivors at the edges follow from the start rule of new points (Appendix B), an assumption of this work.'],

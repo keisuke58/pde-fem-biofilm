@@ -3,7 +3,9 @@ species A survive?). T* = 1, 64^3, the snapshots of the videos. Rows: separate s
 phi_1/(phi_1+phi_2) and (b) living volume fraction sum_i phibar_i where phi_3D > 0.5 (dead biofilm, sum_i phibar_i < 0.1,
 as a translucent grey shell), as in the videos, but with the
 camera below the cube (the nutrient enters through the bottom layer y < -0.75 mm). One octant (x, y, z > 0, at the top)
-is removed as in the other views; it is hidden from below.
+is removed as in the other views; it is hidden from below. Dead biofilm (sum phibar < 0.1): translucent grey in both
+columns. Blue frame: the layer y < -0.75 mm where c is held at 1; inside it grad c = 0, the front term does not act and
+the biofilm enters by diffusion only, so phi_3D falls towards the bottom and the edge of phi_3D > 0.5 is stepped (rings).
 
     python ansys_usermat/apdl/fig_coupled_bottom_view.py -> assets/fig_coupled_bottom_view.png
 """
@@ -34,20 +36,19 @@ def render(z, field, cmap, T):
     g = pv.ImageData(dimensions=(n + 1,) * 3, spacing=(2.0 / n,) * 3, origin=(-1.0,) * 3)
     cc = g.cell_centers().points
     octant = (cc[:, 0] > 0) & (cc[:, 1] > 0) & (cc[:, 2] > 0)
-    for k in ("phi", field):
+    for k in ("phi", "L", field):
         g.cell_data[k] = np.nan_to_num(z[f"{k}_{T}"], nan=0.0).ravel(order="F")
     bio = (g.cell_data["phi"] > 0.5) & ~octant
-    if field == "L":                          # 25 Nov: dead biofilm (sum phibar < 0.1) as a translucent grey shell
+    if True:                                  # 25 Nov: dead biofilm (sum phibar < 0.1) as a translucent grey shell, (a) and (b)
         g.cell_data["bio"] = (bio & (g.cell_data["L"] >= 0.1)).astype(float)
         g.cell_data["dead"] = (bio & (g.cell_data["L"] < 0.1)).astype(float)
-    else:
-        g.cell_data["bio"] = bio.astype(float)
     m = g.threshold(0.5, scalars="bio")
     pl = pv.Plotter(off_screen=True, window_size=(900, 820))
     pl.add_mesh(pv.Box((-1, 1, -1, 1, -1, 1)).outline(), color="grey")
     if m.n_cells:
         pl.add_mesh(m, scalars=field, cmap=cmap, clim=(0, 1), show_scalar_bar=False, **LIT)
-    if field == "L":
+    pl.add_mesh(pv.Box((-1, 1, -1, -0.75, -1, 1)).outline(), color="#1c7ed6", line_width=4)   # layer where c is held at 1
+    if True:
         d = g.threshold(0.5, scalars="dead")
         if d.n_cells:
             pl.add_mesh(d.extract_surface(), color=(0.55, 0.55, 0.55), opacity=0.12, **LIT)

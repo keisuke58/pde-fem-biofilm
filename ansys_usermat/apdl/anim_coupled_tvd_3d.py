@@ -66,12 +66,13 @@ LIT = dict(ambient=0.45, diffuse=0.6, specular=0.0)   # light shading, colours c
 # told apart; "nodead" keeps the old drawing (living > 0.01 in colour)
 LIV_MIN = 0.01 if "nodead" in OPT else 0.1
 C_LEVELS = [] if "nolines" in OPT else [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99]
+A_LEVELS = [] if "nolines" in OPT else [0.9, 0.95, 0.98, 0.99]          # antibiotic panel (25 Nov): a is 0.9 .. 1
 CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
 # field, mesh, colour map, range, title, colour-bar label; mesh: "bio" phi_3D > 0.5, "living" bio and sum phibar > 0.01,
 # "cube" all, "ab" a > 0.01, "stress" the stress mesh (values near 0 are left out, i.e. transparent)
 GROUP = "species 1, 2" if K26C4 else "species 1"
 GRP = "group" if K26C4 else "species"     # two species: the notation of the thesis and the slides, phi_1/(phi_1+phi_2)
-PANELS = [("shareA", "bio", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
+PANELS = [("shareA", "biol", "coolwarm_r", (0, 1), rf"(a) share of {GRP} A",
            r"$(\phi_1+\phi_2)/\Sigma_i\phi_i$" if K26C4 else r"$\phi_1/(\phi_1+\phi_2)$"),
           ("L", "living", "Greens", (0, 1), r"(b) living volume fraction", r"$\Sigma_i\,\bar\phi_i$"),
           ("c", "cube", "Blues", (0.4, 1), r"(c) nutrient $c$", r"$c$"),
@@ -108,8 +109,8 @@ CAPTION = "\n".join([
     (r"(a) Dominant species (colour), darker where its share is larger," if DOM else rf"(a) Share of {GRP} A (blue: A, red: B)") + rf" and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
     r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), zero flux elsewhere, "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
-    ("" if "nodead" in OPT else r"In (b) dead biofilm ($\Sigma_i\bar\phi_i < 0.1$) is a translucent grey shell. ")
-    + (r"Orange lines: $c$ = " + ", ".join(f"{v:g}" for v in C_LEVELS) + ". " if C_LEVELS else "")
+    ("" if "nodead" in OPT else r"In (a) and (b) dead biofilm ($\Sigma_i\bar\phi_i < 0.1$) is a translucent grey shell. ")
+    + (r"Orange lines: $c$ = " + ", ".join(f"{v:g}" for v in C_LEVELS) + (r" (and $a$ = " + ", ".join(f"{v:g}" for v in A_LEVELS) + ")" if not ALPHA else "") + ". " if C_LEVELS else "")
     + r"Inside that layer $\nabla c = 0$, so the front term does not act and biofilm enters it by diffusion only (the gap at the bottom).",
     (r"(d) Growth $\alpha - 1$ where $\phi_{3D} > 0.5$. Antibiotic $a$ (not shown) on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), "
      if ALPHA else r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), ") + AB + r". "
@@ -152,6 +153,7 @@ def grid(T):
     g.cell_data["cube"] = (~octant & ~solid).astype(float)
     g.cell_data["living"] = (g.cell_data["bio"] * (g.cell_data["L"] >= LIV_MIN)).astype(float)
     g.cell_data["dead"] = (g.cell_data["bio"] * (g.cell_data["L"] < LIV_MIN)).astype(float)
+    g.cell_data["biol"] = g.cell_data["bio"] if "nodead" in OPT else g.cell_data["living"]   # panel (a): living biofilm in colour
     g.cell_data["ab"] = (g.cell_data["cube"] * (g.cell_data["a"] > 0.01)).astype(float)
     s, octant_s, solid_s = cube_grid(nm)
     s.cell_data["vm"] = 1e4 * np.nan_to_num(Z[f"vm16_{T}"]).ravel(order="F")
@@ -167,9 +169,10 @@ def view(mesh, field, cmap, clim, dead=None):
             pl.add_mesh(mesh, scalars=field, rgb=True, show_scalar_bar=False, **LIT)
         else:
             pl.add_mesh(mesh, scalars=field, cmap=cmap, clim=clim, show_scalar_bar=False, **LIT)
-        if field == "c" and C_LEVELS:
+        lev = {"c": C_LEVELS, "a": A_LEVELS}.get(field)
+        if lev:
             surf = mesh.extract_surface().cell_data_to_point_data()
-            lines = surf.contour(isosurfaces=C_LEVELS, scalars="c")
+            lines = surf.contour(isosurfaces=lev, scalars=field)
             if lines.n_points:
                 pl.add_mesh(lines, color="#f59f00", line_width=3.5)   # orange: visible on dark blue and on white
     if dead is not None and dead.n_cells and "nodead" not in OPT:
@@ -215,12 +218,12 @@ out = ROOT / "assets" / f"{name}.mp4"
 movie = imageio.get_writer(str(out), fps=8, quality=9)
 for T in times:
     g, s = grid(T)
-    meshes = {m: g.threshold(0.5, scalars=m) for m in ("bio", "living", "dead", "cube", "ab")}
+    meshes = {m: g.threshold(0.5, scalars=m) for m in ("bio", "biol", "living", "dead", "cube", "ab")}
     meshes["stress"] = s.threshold(0.5, scalars="stress")
     for k, (field, mesh, cmap, clim, title, label) in enumerate(PANELS):
         ax, cb = ax_img[k], ax_bar[k]
         ax.clear(); cb.clear()
-        ax.imshow(view(meshes[mesh], field, cmap, clim, dead=meshes["dead"] if field == "L" else None))
+        ax.imshow(view(meshes[mesh], field, cmap, clim, dead=meshes["dead"] if field in ("L", "shareA") else None))
         ax.set_axis_off()
         ax.set_title(title, fontsize=13, loc="left")
         if field == "dom":                 # four colour boxes instead of a colour bar
