@@ -152,6 +152,11 @@ C_SINE = "--c-sine" in sys.argv
 # start, USolBeg), instead of the solution of Eq. 35 for the start state; needs --transient-c. Also records how c fills the
 # cube from c = 0 with small backward-Euler steps (hist["c_fill"], a diagnostic on a copy; the run itself starts from 0)
 C_INIT_ZERO = "--c-init-zero" in sys.argv
+# --living-one (25 Nov, Oliver: compare with the field model of Klempt 2024 alone): the uptake of c and a uses
+# sum_i phibar_i = 1, i.e. g phi_3D c as in Klempt 2024 (Eq. 35 with the misprint corrected). The point models still run
+# (their composition is recorded) but do not act on the fields; phi_3D, c, alpha and the stress are those of the field
+# model alone. The antibiotic then has no effect on the fields.
+LIVING_ONE = "--living-one" in sys.argv
 # --transport-state (2 Nov, Keio continuation, a change of the model, papers/species_continuum/IDEA.ja.md): the point
 # state of every cell is carried with the biofilm instead of being inherited once by newly reached cells. Each component
 # G_k (phi_i, phi_0, psi_i) is transported as phi_3D G_k with the linear part of Eq. 34 (beta lap and the front term
@@ -507,7 +512,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"rf{MECH_REFRESH}" if MECH_REFRESH > 1 else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + (f"_ts{TOOTH_SEED:g}" if "--tooth-seed" in sys.argv else "") + (f"_tsh{TOOTH_SEED_H:g}" if "--tooth-seed-h" in sys.argv else "")
-       + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}") + ("_c0zero" if C_INIT_ZERO else "")
+       + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}") + ("_c0zero" if C_INIT_ZERO else "") + ("_l1" if LIVING_ONE else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
@@ -922,6 +927,8 @@ class Reaction:
     def solve(self, phi, L, value=1.0, u_prev=None, dtau=None, src=None):
         if value == 0.0:
             return np.zeros(SHAPE)
+        if LIVING_ONE:
+            L = np.ones_like(phi)
         m = 0.0 if (TRANSIENT_D is None or u_prev is None) else 1.0 / (TRANSIENT_D * dtau)
         A = (self.A0 + sp.diags(self.d0 + m + self.q * (np.clip(phi, 0, 1) * L).ravel())).tocsr()
         b = self.b.copy() + (m * u_prev.ravel() / value if m else 0.0)

@@ -274,6 +274,19 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'With the same d as the nutrient, a is above 0.89 everywhere from the first outer step after the onset (minimum 0.91 separate, 0.90 mixed at T* = 0.35; 0.98 and 1.00 at T* = 1), so the field looks almost uniform. The point models differ mainly by their composition and nutrient, not by the dose.'],
     { x: 0.75, y: 1.2 + hh + 0.15, w: 11.9, h: 6.85 - 1.35 - hh, fontSize: 15 }); }
 
+{ const s = frame('19. The coupled model against the field model of Klempt 2024 alone');
+  const h = img(s, R + 'assets/fig_field_alone_vs_coupled.png', 0.55, 1.15, 8.4);
+  cap(s, 'Fig. 11  Without antibiotic, 64³ (the runs of Table 1). Field model alone: uptake g φ₃D c (Σᵢφ̄ᵢ = 1); coupled: g φ₃D (Σᵢφ̄ᵢ) c. (a) Seed nutrient, (b) volume reached by the biofilm, (c) living fraction of the coupled run.', 1.15 + h + 0.08, 0.55, 8.4);
+  s.addTable([[H('seed, T* = 1'), H('separate'), H('mixed')],
+    [L('c'), C('−1.7 %'), C('−1.8 %')], [L('α − 1'), C('−0.6 %'), C('+1.3 %')], [L('von Mises'), C('+4.2 %'), C('+6.6 %')]],
+    { x: 9.25, y: 1.25, w: 3.53, colW: [1.45, 1.04, 1.04], fontFace: TM, fontSize: 13, color: INK, rowH: 0.42, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  s.addText('field model alone relative to coupled', { x: 9.25, y: 2.95, w: 3.53, h: 0.3, fontFace: TM, fontSize: 11, color: GREY, isTextBox: true, margin: 0 });
+  bullets(s, [
+    'Without antibiotic the living fraction is about 0.96 from T* ≈ 0.25 on, so the two uptakes differ mainly in the first quarter, while Σᵢφ̄ᵢ rises from 0.55.',
+    'The field model alone takes up more nutrient early (seed c 0.70 against 0.76 at T* = 0.1); the end values differ by 2 % in c and 1 % in growth, the stress by 4 to 7 %.',
+    'With the antibiotic the difference is large (living −84 % / −96 %), and the field model alone cannot represent it.'],
+    { x: 9.25, y: 3.35, w: 3.53, h: 3.5, fontSize: 13 }); }
+
 // 13 appendix notation
 { const s = frame('Appendix A. Notation');
   const rows = [[H('symbol'), H('meaning'), H('symbol'), H('meaning')],
@@ -441,6 +454,8 @@ const NOTES = [
  '菌種ごとの体積です．どちらの例でも A のほうが B より大きな体積を占めます．抗菌薬のあと，生きている体積は減りますが，菌種の体積は少し増え続けます．死んだ菌が場所を占めたままだからです．あなたが指摘した，ψ が下がるときに φ が増える点です．'],
 ['Here is the antibiotic field, the same video with the antibiotic in panel d. It is held at one in the outer shell from T star one third. Because it diffuses as fast as the nutrient, it is above about 0.9 everywhere right after the onset, and close to one at the end, so the field looks almost uniform. The points differ mainly by their composition and nutrient, not by the dose.',
  '抗菌薬の場です．同じ動画で，パネル d に抗菌薬を出しました．T* = 1/3 から外側の層で 1 に固定しています．栄養と同じ速さで拡散するので，始まった直後からどこでも約 0.9 以上，最後はほぼ 1 になり，ほとんど一様に見えます．点ごとの違いは主に組成と栄養から来ていて，抗菌薬の量からではありません．'],
+['You suggested comparing with the field model of the 2024 paper alone. Here the uptake uses a living fraction of one everywhere, which is the 2024 form g phi c, against the coupled model, both without antibiotic. Without antibiotic the living fraction is about 0.96 after the first quarter, so the two runs differ mainly at the start: the field model alone takes up more nutrient early. At the end the nutrient differs by about two percent, the growth by about one percent and the stress by four to seven percent. With the antibiotic the difference is large, and that is what the field model alone cannot describe.',
+ '2024 年の場のモデルだけとの比較の提案に答えたものです．どこでも生きている量を 1 にした食べ方（2024 年の g φ c）と，連成モデルを，どちらも抗菌薬なしで比べました．抗菌薬なしでは最初の 1/4 を過ぎると生きている量が約 0.96 なので，違いは主に始めの部分です．場のモデルだけの方が，始めに栄養を多く食べます．最後の値は栄養で約 2 %，成長で約 1 %，応力で 4〜7 % 違います．抗菌薬があると違いは大きく，それは場のモデルだけでは表せません．'],
 ['This appendix lists the notation of the growth field and of the point model, in case you have questions about a symbol.',
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid.',
