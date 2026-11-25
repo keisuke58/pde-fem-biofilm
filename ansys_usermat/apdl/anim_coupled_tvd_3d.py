@@ -61,7 +61,7 @@ VMAX = float(2 * np.ceil(VMAX / 2))                      # even, so the middle t
 LIT = dict(ambient=0.45, diffuse=0.6, specular=0.0)   # light shading, colours close to the colour bar
 # 25 Nov: lines of constant c on the nutrient panel, so the gradient from the held bottom layer is visible while c is
 # still close to 1 everywhere (early frames: 0.93..1 is one shade on the colour range 0.4..1); "nolines" leaves them out
-C_LEVELS = [] if "nolines" in OPT else [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98]
+C_LEVELS = [] if "nolines" in OPT else [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99]
 CAM = [(3.6, 2.6, 4.4), (0, 0, 0), (0, 1, 0)]
 # field, mesh, colour map, range, title, colour-bar label; mesh: "bio" phi_3D > 0.5, "living" bio and sum phibar > 0.01,
 # "cube" all, "ab" a > 0.01, "stress" the stress mesh (values near 0 are left out, i.e. transparent)
@@ -102,10 +102,10 @@ CAPTION = "\n".join([
     + (r", coupling step $\Delta T^* = 0.0025$." if FINE else "."),
     *((r"Point model: " + MODEL + ".", START) if (K26C4 or FULL) else (r"Point model: " + MODEL + ". " + START,)),
     (r"(a) Dominant species (colour), darker where its share is larger," if DOM else rf"(a) Share of {GRP} A (blue: A, red: B)") + rf" and (b) living volume fraction $\Sigma_i\,\bar\phi_i$, $\bar\phi_i=\phi_i\psi_i$, "
-    r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), zero flux elsewhere; "
-    + (r"lines at $c$ = " + ", ".join(f"{v:g}" for v in C_LEVELS) + "; " if C_LEVELS else "") +
+    r"both where the biofilm $\phi_{3D} > 0.5$. (c) Nutrient $c$, held at 1 in the layer on $y = -1$ mm ($y < -0.75$ mm), zero flux elsewhere, "
     r"consumed by the living biomass: $\dot c = d\,\nabla^2 c - g\,\phi_{3D}(\Sigma_i\,\bar\phi_i)\,c$ (Eq. 35, backward Euler).",
-    r"Inside that layer $\nabla c = 0$, so the front term does not act and biofilm enters it by diffusion only (the gap at the bottom).",
+    (r"Orange lines: $c$ = " + ", ".join(f"{v:g}" for v in C_LEVELS) + ". " if C_LEVELS else "")
+    + r"Inside that layer $\nabla c = 0$, so the front term does not act and biofilm enters it by diffusion only (the gap at the bottom).",
     (r"(d) Growth $\alpha - 1$ where $\phi_{3D} > 0.5$. Antibiotic $a$ (not shown) on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), "
      if ALPHA else r"(d) Antibiotic $a$ on the outer shell from $T^* = 1/3$ ($\alpha^*_0 = 100$), ") + AB + r". "
     r"One octant ($x, y, z > 0$) is removed to show the inside.",
@@ -165,7 +165,7 @@ def view(mesh, field, cmap, clim):
             surf = mesh.extract_surface().cell_data_to_point_data()
             lines = surf.contour(isosurfaces=C_LEVELS, scalars="c")
             if lines.n_points:
-                pl.add_mesh(lines, color="black", line_width=2.0)
+                pl.add_mesh(lines, color="#f59f00", line_width=3.5)   # orange: visible on dark blue and on white
     if OBST:
         for lo, hi in BOXES:
             pl.add_mesh(pv.Box((lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])), color=(0.55, 0.55, 0.55), **LIT)
