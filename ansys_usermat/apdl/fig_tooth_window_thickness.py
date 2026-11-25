@@ -33,8 +33,7 @@ def series(nf, w, case):
     r = list(d["runs"].values())[0]
     t = np.asarray(r["t"], float)
     h = 10.0 * np.asarray(r["film"]["thickness_mean_mm"], float)   # um
-    n = min(len(t), len(h))
-    return t[:n], h[:n]
+    return t[len(t) - len(h):], h          # the film is recorded at the end of each outer step: t starts at 0, h at t[1]
 
 
 fig, ax = plt.subplots(figsize=(3.3, 2.4))
