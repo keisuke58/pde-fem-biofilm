@@ -489,7 +489,8 @@ this machine's specific workflow.
   the commit (`setting.argv`, `setting.commit`). Run `pytest tests/` after code changes: the suite had not been run between
   4 and 20 Nov and 12 tests of the user element were failing unnoticed (test-side causes, fixed).
 - Results kept back from Oliver for now (the user, 6-9 Nov): the window, the Eq. 30 term, the K sweep, the asymmetric
-  starts and the four-species example.
+  starts and the four-species example; also the nutrient supply oscillating in time (the user, 25 Nov; figure
+  `assets/fig_nutrient_sine.png`, appendix C of the coupled-examples deck, built only with `WITH_SINE=1`).
 
 ## Felix Klempt's code and dissertation chapter (6 Oct 2026): confidential
 

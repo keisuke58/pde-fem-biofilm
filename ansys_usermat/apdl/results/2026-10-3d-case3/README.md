@@ -40,3 +40,11 @@ the boundary conditions, the antibiotic from T* = 1/3 (alpha*_0 = 100) and c*_0 
   (1.5-2x, from the 38 instead of 25 inner steps); memory about the same.
 - End values (T* = 1): seed living 0.76 / 0.80 (separate / mixed), phibar_4 over the biofilm 0.75 / 0.79 against 0.93
   for the point model alone (c ~ 0.6 in the seed), seed von Mises 6.5e-4 / 3.5e-4 Pa. Deck: `meetings/2026-11_coupled_examples/deck_k26c4_en.js`.
+
+## Four species with the oscillating nutrient (25 Nov 2026, kept back)
+
+`nf64_..._dtc0.005_..._inhliv_..._transc1e+08_k26c3A1{,_csine,_cconst0.5}_tvd_wgmirror_fast_separate.json`: case 3 of
+Klempt 2026 (A without the 1/2), separate start, no antibiotic, held nutrient 1 / 0.5 + 0.5 sin(500 t) / 0.5, outer step
+0.005. Seed at T* = 1: living 0.972 / 0.954 / 0.965, share of species 1+2 0.673 / 0.673 / 0.674, alpha - 1 9.00 / 7.94 /
+8.04e-4, von Mises 6.88 / 8.89 / 9.11e-4 Pa. As with two species, the sine behaves like its mean (within 1-3 %); halving
+c lowers growth by about 11 % and raises the stress by about 30 %. Figure: `fig_nutrient_sine_4sp.py`.

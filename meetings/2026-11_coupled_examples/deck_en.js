@@ -159,7 +159,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
 { const s = frame('10. Seed means over time');
   const h = img(s, R + 'assets/fig_coupled_time_history.png', 0.9, 1.25, 11.5);
   cap(s, 'Fig. 7  Means over the seed for both starts, with (dashed) and without (solid) antibiotic: (a) living volume fraction Σᵢφ̄ᵢ, '
-    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1.', 1.25 + h + 0.1); }
+    + '(b) share φ₁/(φ₁+φ₂), (c) nutrient c. The antibiotic acts from T* = 1/3 (dotted). 64³ cells, outer step 0.025, the runs of Table 1. Seed means: Appendix B.', 1.25 + h + 0.1); }
 
 // 10 seed means
 { const s = frame('11. Seed means at T* = 1');
@@ -226,6 +226,67 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to discuss whether this is worth pursuing.'],
     { x: 0.75, y: 1.35, w: 11.8, h: 5.4 }); }
 
+// 14-18: answers to the questions of the meeting of 25 Nov (added the same day)
+{ const s = frame('14. The nutrient at the start: c = 0, as in your element');
+  const h = img(s, R + 'assets/fig_c_start_zero.png', 0.55, 1.15, 7.6);
+  cap(s, 'Fig. 8  (a) c filling the cube from c = 0 (held layer at 1), separate start, start state, small backward-Euler steps. (b) Seed nutrient over the run for the two starts of c (outer step 0.025, with antibiotic).', 1.15 + h + 0.08, 0.55, 7.6);
+  bullets(s, [
+    'c diffuses through the whole cube, inside and outside the biofilm (Eq. 35). With d = 10⁸ mm²/T* (Klempt 2024, Table 2, converted) the cube fills in about 10⁻⁷ T*.',
+    'From c = 0 the seed mean is within 1 % of the start used so far (0.93) at T* = 7.5·10⁻⁸, long before the first outer step (0.025).',
+    'At T* = 1 the seed values agree within 0.4 % (living fraction, c, α − 1, von Mises); the share of A in the mixed start by 1 % (0.610 / 0.603).',
+    'Your element also starts from c = 0 outside the supply layer; there c = 1 everywhere gave the same results to three digits.'],
+    { x: 8.4, y: 1.2, w: 4.4, h: 5.6, fontSize: 15 }); }
+{ const s = frame('15. Interpretation from the point model alone');
+  const h = img(s, R + 'assets/fig_point_model_survival.png', 0.55, 1.15, 7.6);
+  cap(s, 'Fig. 9  Point model alone, Fritsch case I. (a) Living fraction under the antibiotic for different starts and nutrient levels c (c* = 100 c). (b) Share of A without antibiotic for three choices of η.', 1.15 + h + 0.08, 0.55, 7.6);
+  bullets(s, [
+    'A overtakes B before the antibiotic because η = (1, 2): B changes half as fast. With η equal or swapped, B wins (share of A 0.01). b has no effect without antibiotic.',
+    'B is twice as sensitive to the antibiotic, b = (1, 2).',
+    'Under α* = 100 a point keeps living biomass only if it is dominated by A and has nutrient near 1: 0.57 at c = 1, 0.17 at c = 0.85, 0.06 at c = 0.7. B alone or A and B together die at any c (0.04).',
+    'Mixed start (−96 %): every seed point holds B, so the seed dies. Separate start (−84 %): the lower part of the A seed is next to the nutrient supply and survives.'],
+    { x: 8.4, y: 1.2, w: 4.4, h: 5.6, fontSize: 15 }); }
+{ const s = frame('16. Where the living biomass survives, seen from below');
+  img(s, R + 'assets/fig_coupled_bottom_view.png', 0.55, 1.1, 5.85);
+  bullets(s, [
+    'T* = 1, the camera below the cube; the nutrient enters through the bottom layer.',
+    'Separate start: the living biomass is in the lower part of the A region, next to the nutrient. These points were species A before the antibiotic (99 % started before T* = 0.3).',
+    'Mixed start: only 140 cells at the lower vertical edges stay alive. They were reached by the front just after the antibiotic onset (T* = 0.35 to 0.375) and started from the living composition of their neighbours, which by then was mostly A (share 0.98), and alive.',
+    'So the survivors at the edges follow from the start rule of new points (Appendix B), an assumption of this work.'],
+    { x: 6.7, y: 1.2, w: 6.1, h: 5.6, fontSize: 15 }); }
+{ const s = frame('17. Volume of each species in the cube');
+  const h = img(s, R + 'assets/fig_species_volumes.png', 0.55, 1.15, 8.0);
+  cap(s, 'Fig. 10  V_i = ∫ φ₃D φᵢ/(φ₁+φ₂) dV (all biomass of species i, dead included; V_A + V_B = ∫ φ₃D dV) and the living volume ∫ φ₃D Σᵢφ̄ᵢ dV, with antibiotic, 64³. Cube 8 mm³.', 1.15 + h + 0.08, 0.55, 8.0);
+  s.addTable([[H(''), H('V_A'), H('V_B'), H('living')],
+    [L('separate, T* = 0.325'), C('3.22'), C('2.50'), C('5.29')], [L('separate, T* = 1'), C('4.40'), C('2.84'), C('1.07')],
+    [L('mixed, T* = 0.325'), C('2.93'), C('1.93'), C('4.58')], [L('mixed, T* = 1'), C('3.42'), C('2.08'), C('0.22')]],
+    { x: 8.85, y: 1.25, w: 3.93, colW: [1.75, 0.72, 0.72, 0.74], fontFace: TM, fontSize: 13, color: INK, rowH: 0.42, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  bullets(s, [
+    'In mm³. A takes more space than B in both starts.',
+    'After the antibiotic the volumes still grow a little while the living volume falls: dead biomass keeps its space (the point you raised about φ rising while ψ falls).'],
+    { x: 8.85, y: 3.55, w: 3.93, h: 3.3, fontSize: 14 }); }
+{ const s = frame('18. The antibiotic field');
+  const pv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel_end.png', vv = R + 'assets/anim_coupled_tvd_separate_ab_inhliv_transc_5panel.mp4';
+  const [pw, ph] = pngSize(pv); const w = 12.2, hh = w * ph / pw;
+  if (fs.existsSync(vv)) s.addMedia({ type: 'video', path: vv, cover: 'data:image/png;base64,' + fs.readFileSync(pv).toString('base64'), x: 0.57, y: 1.2, w, h: hh });
+  else s.addImage({ path: pv, x: 0.57, y: 1.2, w, h: hh });
+  bullets(s, [
+    'The video of Fig. 3 with panel (d) showing the antibiotic a instead of α − 1. a is held at 1 in the outer shell of elements from T* = 1/3 and taken up by the living biomass (same equation as c).',
+    'With the same d as the nutrient, a is above 0.89 everywhere from the first outer step after the onset (minimum 0.91 separate, 0.90 mixed at T* = 0.35; 0.98 and 1.00 at T* = 1), so the field looks almost uniform. The point models differ mainly by their composition and nutrient, not by the dose.'],
+    { x: 0.75, y: 1.2 + hh + 0.15, w: 11.9, h: 6.85 - 1.35 - hh, fontSize: 15 }); }
+
+{ const s = frame('19. The coupled model against the field model of Klempt 2024 alone');
+  const h = img(s, R + 'assets/fig_field_alone_vs_coupled.png', 0.55, 1.15, 8.4);
+  cap(s, 'Fig. 11  Without antibiotic, 64³ (the runs of Table 1). Field model alone: uptake g φ₃D c (Σᵢφ̄ᵢ = 1); coupled: g φ₃D (Σᵢφ̄ᵢ) c. (a) Seed nutrient, (b) volume reached by the biofilm, (c) living fraction of the coupled run.', 1.15 + h + 0.08, 0.55, 8.4);
+  s.addTable([[H('seed, T* = 1'), H('separate'), H('mixed')],
+    [L('c'), C('−1.7 %'), C('−1.8 %')], [L('α − 1'), C('−0.6 %'), C('+1.3 %')], [L('von Mises'), C('+4.2 %'), C('+6.6 %')]],
+    { x: 9.25, y: 1.25, w: 3.53, colW: [1.45, 1.04, 1.04], fontFace: TM, fontSize: 13, color: INK, rowH: 0.42, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  s.addText('field model alone relative to coupled', { x: 9.25, y: 2.95, w: 3.53, h: 0.3, fontFace: TM, fontSize: 11, color: GREY, isTextBox: true, margin: 0 });
+  bullets(s, [
+    'Without antibiotic the living fraction is about 0.96 from T* ≈ 0.25 on, so the two uptakes differ mainly in the first quarter, while Σᵢφ̄ᵢ rises from 0.55.',
+    'The field model alone takes up more nutrient early (seed c 0.70 against 0.76 at T* = 0.1); the end values differ by 2 % in c and 1 % in growth, the stress by 4 to 7 %.',
+    'With the antibiotic the difference is large (living −84 % / −96 %), and the field model alone cannot represent it.'],
+    { x: 9.25, y: 3.35, w: 3.53, h: 3.5, fontSize: 13 }); }
+
 // 13 appendix notation
 { const s = frame('Appendix A. Notation');
   const rows = [[H('symbol'), H('meaning'), H('symbol'), H('meaning')],
@@ -250,7 +311,7 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
       { x: x + 0.2, y: 2.1 + h, w: w - 0.4, h: 4.6 - h, fontFace: TM, fontSize: 14, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 6 }); };
   col(0.55, 3.75, 'von Mises stress', 'vm.png', 3.35, [
     's is the deviatoric stress; σ_vM vanishes for a uniform swelling.',
-    'Tables 1 and 2 give the mean over the seed (the 32 elements of the start).']);
+    'Tables 1 and 2 give the mean over the seed (the 32 elements of the start; next slide).']);
   col(4.45, 4.5, 'Grid convergence index', 'gci.png', 4.1, [
     'Celik et al. 2008, three grids 1, 2, 3 = 192³, 128³, 64³, safety factor 1.25.',
     'p is the observed order (solved iteratively), f_ext the extrapolated value.',
@@ -259,6 +320,82 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'v is the speed of the front term −r c/(k+c) n_c·∇φ₃D (r = 10 mm/T*, k = 1, c ≈ 0.96); N cells per edge.',
     'Edge width of the biofilm about β/v ≈ 0.004 mm.',
     'For Pe_h > 1 the edge is narrower than a cell and the limiter lowers the order. 128³: 1.9, 192³: 1.28, 256³: 0.96.']); }
+
+// appendix B (cont.): the seed means of Tables 1, 2 and Fig. 7 (added 25 Nov; numbers from the 64^3 snapshots of the
+// separate start with antibiotic, figdata/coupled_living_separate_ab_nf64_..._snapsvm_transc1e+08_..._separate_ab.npz)
+{ const s = frame('Appendix B (cont.). The seed means');
+  s.addShape(pres.shapes.RECTANGLE, { x: 0.55, y: 1.25, w: 5.6, h: 5.55, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
+  s.addText([
+    { text: 'Region', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The initial seed of your deck: 32 elements of 0.25 mm in the centre (|x|, |y|, |z| < 0.5 mm; 4, 12, 12, 4 elements per layer in y), 0.5 mm³ = 6 % of the cube. 512 cells per element on 64³. The region is fixed in time.', options: { breakLine: true } },
+    { text: 'Mean', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Plain mean over the seed cells, not weighted by φ₃D: c, a and Σᵢφ̄ᵢ directly; the share as the mean of φ₁/(φ₁+φ₂) per cell; α − 1 per cell; von Mises per element of the 16³ stress mesh (256 seed elements).', options: { breakLine: true } },
+    { text: 'Times', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Every outer step (0.025), from T* = 0. The quarter domain (symmetry in x and z) gives the same means as the full cube.' }],
+    { x: 0.8, y: 1.4, w: 5.1, h: 5.3, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 5 });
+  s.addText('Table B1  Nutrient c averaged in three ways, separate start with antibiotic, 64³.',
+    { x: 6.45, y: 1.25, w: 6.33, h: 0.4, fontFace: TM, fontSize: 13, color: INK, isTextBox: true, margin: 0 });
+  s.addTable([[H('T*'), H('seed (Fig. 7)'), H('range in the seed'), H('whole cube'), H('φ₃D-weighted')],
+    [C('0.025'), C('0.93', { bold: true }), C('0.91 – 0.97'), C('0.96'), C('0.94')],
+    [C('0.325'), C('0.60', { bold: true }), C('0.45 – 0.81'), C('0.65'), C('0.58')],
+    [C('0.5'), C('0.71', { bold: true }), C('0.63 – 0.86'), C('0.76'), C('0.73')],
+    [C('1.0'), C('0.91', { bold: true }), C('0.89 – 0.95'), C('0.93'), C('0.92')]],
+    { x: 6.45, y: 1.7, w: 6.33, colW: [0.8, 1.35, 1.6, 1.25, 1.33], fontFace: TM, fontSize: 14, color: INK, rowH: 0.45,
+      border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  s.addText([
+    { text: 'Inside the seed c is higher at the lower end, towards the held layer; the range is widest near T* = 1/3.', options: { bullet: true, breakLine: true } },
+    { text: 'The whole-cube mean is 0.02 to 0.05 higher, as it includes the held layer (c = 1, one eighth of the cube).', options: { bullet: true, breakLine: true } },
+    { text: 'The φ₃D-weighted mean differs from the seed mean by 0.02 or less. The shapes of the curves and their order do not depend on the choice.', options: { bullet: true } }],
+    { x: 6.45, y: 4.2, w: 6.33, h: 2.5, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 6 }); }
+
+// appendix B (cont.): how a newly reached point starts, and where A and B meet (added 25 Nov)
+{ const s = frame('Appendix B (cont.). How a new point starts: where A and B meet');
+  const BLUE = '3B5BDB', RED = 'C92A2A', MIX = '8E5BA8';
+  const box = (x, y, col, t1, t2) => {
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: 1.7, h: 1.25, rectRadius: 0.08, fill: { color: col }, line: { color: col, width: 0.5 } });
+    s.addText([{ text: t1, options: { bold: true, fontSize: 17, breakLine: true } }, { text: t2, options: { fontSize: 13 } }],
+      { x, y: y + 0.12, w: 1.7, h: 1.0, fontFace: TM, color: 'FFFFFF', align: 'center', valign: 'middle', isTextBox: true, margin: 0 }); };
+  const row = (y, label, cl, tl, cr, tr, cp, tp) => {
+    s.addText(label, { x: 0.55, y: y - 0.5, w: 6.4, h: 0.4, fontFace: TM, fontSize: 15, bold: true, color: NAVY, isTextBox: true, margin: 0 });
+    box(0.7, y, cl, tl[0], tl[1]); box(2.85, y, cp, tp[0], tp[1]); box(5.0, y, cr, tr[0], tr[1]);
+    for (const [x1, x2] of [[2.4, 2.85], [5.0, 4.55]])
+      s.addShape(pres.shapes.LINE, { x: Math.min(x1, x2), y: y + 0.62, w: Math.abs(x2 - x1), h: 0, flipH: x2 < x1,
+        line: { color: GREY, width: 1.5, endArrowType: 'triangle' } }); };
+  row(1.75, '(a) inside one region: the new point P starts as that species', BLUE, ['A', 'started'], BLUE, ['A', 'started'], BLUE, ['P = A', 'B at 10⁻⁶']);
+  row(3.85, '(b) where the regions meet: P starts as a mixture', BLUE, ['A', 'started'], RED, ['B', 'started'], MIX, ['P = A + B', 'mean of both']);
+  s.addText('Arrows: P takes the φ₃D-weighted mean of its started neighbours (6 neighbours on the grid).',
+    { x: 0.55, y: 5.4, w: 6.4, h: 0.6, fontFace: TM, fontSize: 13, color: GREY, isTextBox: true, margin: 0 });
+  s.addShape(pres.shapes.RECTANGLE, { x: 7.25, y: 1.25, w: 5.53, h: 5.55, fill: { color: LIGHT }, line: { color: 'D5DCE5', width: 0.5 } });
+  s.addText([
+    { text: 'Rule (Python, the main runs)', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The point model of P starts when φ₃D there exceeds φ_min = 0.001. Its start state is the φ₃D-weighted mean of its started neighbours: their amount, and the shares of their living biomass φ̄ᵢ/Σⱼφ̄ⱼ (dead biomass is not passed on); ψᵢ = 0.999.', options: { breakLine: true } },
+    { text: 'Consequences', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'Species do not move: only φ₃D, c and a are transported. A mixed start occurs only at the border between the A and B regions. After the start, P exchanges nothing with its neighbours; the point model decides the competition. Every point model carries both species; a single species means the other at 10⁻⁶.', options: { breakLine: true } },
+    { text: 'ANSYS runs', options: { bold: true, color: NAVY, breakLine: true } },
+    { text: 'The material routine cannot see the other Gauss points, so the start is set by position: B where |x|, |y| > 0.5625 mm, A elsewhere. No mixed start there.' }],
+    { x: 7.5, y: 1.4, w: 5.05, h: 5.3, fontFace: TM, fontSize: 15, color: INK, isTextBox: true, margin: 0, valign: 'top', paraSpaceAfter: 5 }); }
+
+// appendix C: a nutrient supply that oscillates in time (added 25 Nov; not in the thesis). Kept back for now (the user,
+// 25 Nov): built only with WITH_SINE=1 in the environment.
+const WITH_SINE = !!process.env.WITH_SINE;
+if (WITH_SINE) { const s = frame('Appendix C. A nutrient supply that oscillates in time');
+  img(s, R + 'assets/fig_nutrient_sine.png', 0.55, 1.25, 7.4);
+
+  s.addTable([[H(''), H('α − 1 [10⁻⁴]'), H('von Mises [10⁻⁴ Pa]')],
+    [L('c* = 100'), C('9.06'), C('6.57')],
+    [L('c* = 50 + 50 sin(500 t)'), C('8.15  (−10 %)'), C('8.49  (+29 %)')],
+    [L('c* = 50'), C('8.24  (−9 %)'), C('8.57  (+31 %)')]],
+    { x: 8.2, y: 1.25, w: 4.58, colW: [1.9, 1.3, 1.38], fontFace: TM, fontSize: 12.5, color: INK, rowH: 0.42,
+      border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  cap(s, 'Seed means at T* = 1, coupled, 64³.', 3.05, 8.2, 4.58);
+  bullets(s, [
+    'Half the nutrient: growth −10 %, but stress +30 %. The front r c/(k+c) is slower and leaves a sharper edge.',
+    'The sine and its mean give the same result within 1 %: at this period the oscillation acts as its mean.',
+    'In the point model alone the sine leaves small ripples, and species B survives in both cases with c* = 50.'],
+    { x: 8.2, y: 3.45, w: 4.58, h: 2.3, fontSize: 13, paraSpaceAfter: 5 });
+  s.addText('Fritsch case I, no antibiotic. Top: point model alone; bottom: coupled, separate start, 64³, seed means. t is the point-model time (Klempt et al. 2026, case 3). '
+    + 'The held value is updated once per outer step of 0.025 T*, five values per period of 0.126 T*.',
+    { x: 8.2, y: 5.8, w: 4.58, h: 1.1, fontFace: TM, fontSize: 11, color: GREY, isTextBox: true, margin: 0, valign: 'top' }); }
 
 // 15 references
 { const s = frame('References');
@@ -307,12 +444,31 @@ const NOTES = [
  'このスライドは，あなたの要素と私の Python コードの比較です．どちらも同じ式を，分けた例・抗菌薬ありで解いています．要素は 8³，16³，24³ の要素で，前線の項には風上寄りの勾配を使っています．Python は 64³ から 192³ のセルです．要素の応力は外挿で 5.8×10⁻⁴ Pa，格子の不確かさは 16.5 % です．Python の値は 6.4 で 10 % 高く，要素の不確かさの中に入ります．なので両者は合っています．成長は要素のほうが 6 % 低いです．要素は 24³ までしか回らないので，このスライドの格子の列は Python のものを使いました．もう 1 点，風上寄りの勾配の代わりに一定の人工拡散を使うと，応力はこの約 4 分の 1 しか出ません．前線の項には 2 次の扱いが必要です．'],
 ['Why does the stress hardly change? The growth law, Equation 36, counts all biomass, living or dead. So when bacteria die, the biofilm still grows. The composition reaches the stress only through the nutrient and the front speed. The stress itself is set by the difference in growth between the seed and the stiff biofilm around it. For the composition to act on the mechanics directly, the model needs a second path, for example a growth law driven by the living biomass. I would like to hear your opinion: is this worth pursuing in the next step?',
  'なぜ応力がほとんど変わらないのか．成長の式 36 は，生きている菌も死んだ菌も同じに数えます．なので菌が死んでも，バイオフィルムは成長を続けます．組成は，栄養と前線の速さを通してしか応力に届きません．応力そのものは，種子と周りの硬いバイオフィルムとの成長の差で決まります．組成が力学に直接効くには，生きている量で成長を決めるような 2 本目の道が必要です．次の段階でこれを進める価値があるか，意見を聞きたいです．'],
+['You asked about the nutrient at the start. Here I start from c equals zero everywhere except the held layer, as your element does. The left panel shows how the nutrient fills the cube from zero: because d is ten to the eight, the seed reaches its value of about 0.93 within about ten to the minus seven T star, long before my first outer step. The right panel shows the seed nutrient over the whole run for the two starts; they lie on top of each other. At the end the seed values agree within 0.4 percent, and the share in the mixed start within one percent. In your element, starting from one everywhere also gave the same results to three digits.',
+ 'あなたが聞いた最初の栄養についてです．ここでは，あなたの要素と同じく，固定した層以外を c = 0 から始めました．左は c = 0 から栄養が立方体を満たす様子です．d = 10⁸ なので，種子は約 10⁻⁷ T* で 0.93 くらいになり，最初の外側のステップよりずっと前です．右は二つの始め方での種子の栄養で，重なっています．最後の種子の値は 0.4 % 以内，混ぜた例の割合は 1 % 以内で一致します．あなたの要素でも，全部 1 から始めた場合と 3 桁同じでした．'],
+['To interpret the numbers, this slide uses the point model alone. On the right, without antibiotic, species A overtakes B because B has the larger eta and changes more slowly; with equal or swapped eta, B wins. On the left, under the antibiotic, a point keeps living biomass only if it is dominated by A and has nutrient close to one. B alone, or A and B together, die at any nutrient level. That explains the two numbers: in the mixed start every seed point holds B and dies, minus 96 percent; in the separate start the lower part of the A seed sits next to the nutrient supply and survives, minus 84 percent.',
+ '数字の解釈のために，点モデルだけを使います．右は抗菌薬なしで，B の η が大きく変化が遅いので A が B を追い越します．η を同じにするか入れ替えると B が勝ちます．左は抗菌薬ありで，生きている菌が残るのは A が多く栄養が 1 に近い点だけです．B だけ，あるいは A と B が一緒の点は，栄養によらず死にます．これで二つの数字が説明できます．混ぜた例は種子のどの点にも B がいて死にます（−96 %）．分けた例は A の種子の下の部分が栄養の入口の隣にあって生き残ります（−84 %）．'],
+['You asked to see the cube from below. In the separate start the living biomass is in the lower part of the A region, next to the nutrient; these points were already A before the antibiotic. In the mixed start only a few cells at the lower edges stay alive. They were reached by the front just after the antibiotic started, and they took the living composition of their neighbours, which by then was mostly A, and started alive. So these survivors come from the start rule of new points, which is an assumption.',
+ '下から見た図です．分けた例では，生きている菌は A の領域の下の部分，栄養の隣にあります．これらの点は抗菌薬の前から A でした．混ぜた例では，下の縁の少しのセルだけが生きています．抗菌薬が始まった直後に前線が届いた点で，その時にはほとんど A になっていた隣の生きている組成を受け継ぎ，生きた状態から始まりました．なので，この生き残りは新しい点の始め方の規則から来ていて，これは仮定です．'],
+['You asked for the volume of each species. Species A takes more space than B in both starts. After the antibiotic, the species volumes still grow a little while the living volume falls: the dead biomass keeps its space. This is the point you raised about phi rising while psi falls.',
+ '菌種ごとの体積です．どちらの例でも A のほうが B より大きな体積を占めます．抗菌薬のあと，生きている体積は減りますが，菌種の体積は少し増え続けます．死んだ菌が場所を占めたままだからです．あなたが指摘した，ψ が下がるときに φ が増える点です．'],
+['Here is the antibiotic field, the same video with the antibiotic in panel d. It is held at one in the outer shell from T star one third. Because it diffuses as fast as the nutrient, it is above about 0.9 everywhere right after the onset, and close to one at the end, so the field looks almost uniform. The points differ mainly by their composition and nutrient, not by the dose.',
+ '抗菌薬の場です．同じ動画で，パネル d に抗菌薬を出しました．T* = 1/3 から外側の層で 1 に固定しています．栄養と同じ速さで拡散するので，始まった直後からどこでも約 0.9 以上，最後はほぼ 1 になり，ほとんど一様に見えます．点ごとの違いは主に組成と栄養から来ていて，抗菌薬の量からではありません．'],
+['You suggested comparing with the field model of the 2024 paper alone. Here the uptake uses a living fraction of one everywhere, which is the 2024 form g phi c, against the coupled model, both without antibiotic. Without antibiotic the living fraction is about 0.96 after the first quarter, so the two runs differ mainly at the start: the field model alone takes up more nutrient early. At the end the nutrient differs by about two percent, the growth by about one percent and the stress by four to seven percent. With the antibiotic the difference is large, and that is what the field model alone cannot describe.',
+ '2024 年の場のモデルだけとの比較の提案に答えたものです．どこでも生きている量を 1 にした食べ方（2024 年の g φ c）と，連成モデルを，どちらも抗菌薬なしで比べました．抗菌薬なしでは最初の 1/4 を過ぎると生きている量が約 0.96 なので，違いは主に始めの部分です．場のモデルだけの方が，始めに栄養を多く食べます．最後の値は栄養で約 2 %，成長で約 1 %，応力で 4〜7 % 違います．抗菌薬があると違いは大きく，それは場のモデルだけでは表せません．'],
 ['This appendix lists the notation of the growth field and of the point model, in case you have questions about a symbol.',
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid.',
  '付録：報告した 3 つの量の定義です．von Mises 応力，Celik らの格子収束指標（GCI），そしてバイオフィルムの端が格子で解像できているかを示すセルのペクレ数です．'],
+['This appendix says where the seed means come from. All the means in Tables 1 and 2 and in Figure 7 are plain means over the initial seed of your deck: the thirty-two elements in the centre, half a cubic millimetre, about six percent of the cube. The region does not move with the biofilm, so every curve compares the same material. I do not weight by phi 3D. The table shows the nutrient averaged in three ways. Inside the seed c is higher at the lower end, near the held layer, and the spread is largest around T star one third. A mean over the whole cube is two to five hundredths higher, because it includes the layer held at one. A phi-weighted mean is within two hundredths of the seed mean. So the choice does not change the shapes of the curves or their order.',
+ '付録：種子での平均の定義です．表 1，2 と図 7 の平均は全部，あなたの deck の最初の種子での，重みなしの平均です．中央の 32 要素，0.5 mm³ で，立方体の約 6 % です．この領域はバイオフィルムが広がっても動かないので，どの曲線も同じ場所を比べています．φ₃D の重みは付けていません．表は栄養 c を 3 通りで平均したものです．種子の中では，固定した層に近い下の端で c が高く，ばらつきは T* = 1/3 ごろに一番大きくなります．立方体全体の平均は，1 に固定した層を含むので 0.02〜0.05 高くなります．φ₃D の重み付き平均は種子の平均と 0.02 以内です．なので平均の取り方を変えても，曲線の形と順番は変わりません．'],
+['This appendix shows how a point starts when the biofilm reaches it. Species are never transported: only phi 3D, the nutrient and the antibiotic move. When phi 3D at a new point P exceeds phi min, its point model starts from the phi-weighted mean of its neighbours that have already started, with their living composition. Inside one region, all neighbours are A, so P starts as A, with B at ten to the minus six. Only where the A region and the B region meet does P have neighbours of both, and then it starts as a mixture. After that, P exchanges nothing with its neighbours, and its own point model decides the competition. In the ANSYS runs the material routine cannot see the other Gauss points, so there the start is set by position, and no point starts mixed.',
+ '付録：バイオフィルムが新しい点に届いたとき，その点がどう始まるかです．菌種は運ばれません．動くのは φ₃D，栄養，抗菌薬だけです．新しい点 P で φ₃D が φ_min を超えると，P の点モデルは，すでに始まっている隣の点の φ₃D 重み付き平均（生きている菌の組成）から始まります．一つの領域の中では隣は全部 A なので，P は A で始まります（B は 10⁻⁶）．A の領域と B の領域が出会うところだけ，P の隣に両方があり，混ざって始まります．そのあと P は隣と何もやり取りせず，P の点モデルが競争を決めます．ANSYS の計算では，材料ルーチンから他の Gauss 点が見えないので，位置で始まりを決めていて，混ざって始まる点はありません．'],
 ['These are the references. Thank you very much for your attention. I am happy to answer questions.',
  '参考文献です．ご清聴ありがとうございました．質問があればどうぞ．']];
+const SINE_NOTE = ['This appendix shows a nutrient supply that oscillates in time, in the form of case three of the 2026 paper: c star equals fifty plus fifty times the sine of five hundred t. The species are again Fritsch case one, without antibiotic. The top row is the point model alone. With the sine, the curves have small ripples, and they follow closely the curves with a constant c star of fifty, which is the mean of the sine. The bottom row is the coupled model. The nutrient at the seed oscillates, but the living fraction and the share of species A are almost the same as with the constant mean. In the table, halving the nutrient lowers the growth by ten percent but raises the stress by about thirty percent, because the front becomes slower and the edge stays sharp. The sine and its mean agree within one percent. So at this period, the oscillation acts like its mean.',
+ '付録：栄養を時間で振る例です．2026 年の論文の case 3 の形で，c* = 50 + 50 sin(500 t) です．菌は同じ Fritsch case I で，抗菌薬はありません．上の段は点モデルだけです．正弦にすると曲線に小さな波が乗りますが，正弦の平均である c* = 50 の一定のときとほぼ同じ曲線になります．下の段は連成モデルです．種子の栄養は振れますが，生きている量と菌 A の割合は，平均の一定のときとほぼ同じです．表を見ると，栄養を半分にすると成長は 10 % 下がるのに，応力は約 30 % 上がります．前線が遅くなり，端が鋭いまま残るからです．正弦とその平均は 1 % 以内で一致します．つまりこの周期では，振動は平均として効きます．'];
+if (WITH_SINE) NOTES.splice(NOTES.length - 1, 0, SINE_NOTE);
 if (NOTES.length !== SL.length) throw new Error('notes ' + NOTES.length + ' for ' + SL.length + ' slides');
 SL.forEach((sl, i) => sl.addNotes('EN: ' + NOTES[i][0] + '\n\nJA: ' + NOTES[i][1]));
 
