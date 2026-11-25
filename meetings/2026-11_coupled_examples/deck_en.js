@@ -260,8 +260,10 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'Edge width of the biofilm about β/v ≈ 0.004 mm.',
     'For Pe_h > 1 the edge is narrower than a cell and the limiter lowers the order. 128³: 1.9, 192³: 1.28, 256³: 0.96.']); }
 
-// appendix C: a nutrient supply that oscillates in time (added 25 Nov; not in the thesis)
-{ const s = frame('Appendix C. A nutrient supply that oscillates in time');
+// appendix C: a nutrient supply that oscillates in time (added 25 Nov; not in the thesis). Kept back for now (the user,
+// 25 Nov): built only with WITH_SINE=1 in the environment.
+const WITH_SINE = !!process.env.WITH_SINE;
+if (WITH_SINE) { const s = frame('Appendix C. A nutrient supply that oscillates in time');
   img(s, R + 'assets/fig_nutrient_sine.png', 0.55, 1.25, 7.4);
 
   s.addTable([[H(''), H('α − 1 [10⁻⁴]'), H('von Mises [10⁻⁴ Pa]')],
@@ -331,10 +333,11 @@ const NOTES = [
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid.',
  '付録：報告した 3 つの量の定義です．von Mises 応力，Celik らの格子収束指標（GCI），そしてバイオフィルムの端が格子で解像できているかを示すセルのペクレ数です．'],
-['This appendix shows a nutrient supply that oscillates in time, in the form of case three of the 2026 paper: c star equals fifty plus fifty times the sine of five hundred t. The species are again Fritsch case one, without antibiotic. The top row is the point model alone. With the sine, the curves have small ripples, and they follow closely the curves with a constant c star of fifty, which is the mean of the sine. The bottom row is the coupled model. The nutrient at the seed oscillates, but the living fraction and the share of species A are almost the same as with the constant mean. In the table, halving the nutrient lowers the growth by ten percent but raises the stress by about thirty percent, because the front becomes slower and the edge stays sharp. The sine and its mean agree within one percent. So at this period, the oscillation acts like its mean.',
- '付録：栄養を時間で振る例です．2026 年の論文の case 3 の形で，c* = 50 + 50 sin(500 t) です．菌は同じ Fritsch case I で，抗菌薬はありません．上の段は点モデルだけです．正弦にすると曲線に小さな波が乗りますが，正弦の平均である c* = 50 の一定のときとほぼ同じ曲線になります．下の段は連成モデルです．種子の栄養は振れますが，生きている量と菌 A の割合は，平均の一定のときとほぼ同じです．表を見ると，栄養を半分にすると成長は 10 % 下がるのに，応力は約 30 % 上がります．前線が遅くなり，端が鋭いまま残るからです．正弦とその平均は 1 % 以内で一致します．つまりこの周期では，振動は平均として効きます．'],
 ['These are the references. Thank you very much for your attention. I am happy to answer questions.',
  '参考文献です．ご清聴ありがとうございました．質問があればどうぞ．']];
+const SINE_NOTE = ['This appendix shows a nutrient supply that oscillates in time, in the form of case three of the 2026 paper: c star equals fifty plus fifty times the sine of five hundred t. The species are again Fritsch case one, without antibiotic. The top row is the point model alone. With the sine, the curves have small ripples, and they follow closely the curves with a constant c star of fifty, which is the mean of the sine. The bottom row is the coupled model. The nutrient at the seed oscillates, but the living fraction and the share of species A are almost the same as with the constant mean. In the table, halving the nutrient lowers the growth by ten percent but raises the stress by about thirty percent, because the front becomes slower and the edge stays sharp. The sine and its mean agree within one percent. So at this period, the oscillation acts like its mean.',
+ '付録：栄養を時間で振る例です．2026 年の論文の case 3 の形で，c* = 50 + 50 sin(500 t) です．菌は同じ Fritsch case I で，抗菌薬はありません．上の段は点モデルだけです．正弦にすると曲線に小さな波が乗りますが，正弦の平均である c* = 50 の一定のときとほぼ同じ曲線になります．下の段は連成モデルです．種子の栄養は振れますが，生きている量と菌 A の割合は，平均の一定のときとほぼ同じです．表を見ると，栄養を半分にすると成長は 10 % 下がるのに，応力は約 30 % 上がります．前線が遅くなり，端が鋭いまま残るからです．正弦とその平均は 1 % 以内で一致します．つまりこの周期では，振動は平均として効きます．'];
+if (WITH_SINE) NOTES.splice(NOTES.length - 1, 0, SINE_NOTE);
 if (NOTES.length !== SL.length) throw new Error('notes ' + NOTES.length + ' for ' + SL.length + ' slides');
 SL.forEach((sl, i) => sl.addNotes('EN: ' + NOTES[i][0] + '\n\nJA: ' + NOTES[i][1]));
 
