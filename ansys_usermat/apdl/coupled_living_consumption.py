@@ -157,6 +157,10 @@ C_INIT_ZERO = "--c-init-zero" in sys.argv
 # (their composition is recorded) but do not act on the fields; phi_3D, c, alpha and the stress are those of the field
 # model alone. The antibiotic then has no effect on the fields.
 LIVING_ONE = "--living-one" in sys.argv
+# --inherit-radius R (25 Nov, Oliver's filter): a newly reached cell takes the phi_3D-weighted mean state of all started
+# cells within the distance R [mm] (centre to centre) instead of its six face neighbours; the living composition as with
+# --inherit-living. Only at the start of a cell, never in started biofilm. R < h falls back to the six neighbours.
+INHERIT_RADIUS = float(_opt("--inherit-radius", 0.0)) if "--inherit-radius" in sys.argv else 0.0
 # --transport-state (2 Nov, Keio continuation, a change of the model, papers/species_continuum/IDEA.ja.md): the point
 # state of every cell is carried with the biofilm instead of being inherited once by newly reached cells. Each component
 # G_k (phi_i, phi_0, psi_i) is transported as phi_3D G_k with the linear part of Eq. 34 (beta lap and the front term
@@ -512,7 +516,7 @@ TAG = (("" if NF == 32 else f"_nf{NF}") + (f"_front{FRONT:g}" if FRONT else "")
        + ("" if "--gc" not in sys.argv else f"_gc{LAM_C2:g}") + ("" if MIX_SHARE is None else f"_share{MIX_SHARE:g}")
        + ("" if "--tab" not in sys.argv else f"_tab{T_AB:g}") + ("" if SNAP_EVERY is None else ("_snapsvm" if "--snap-stress" in sys.argv else "_snaps")) + ("" if "--nm" not in sys.argv else f"_nm{NM}") + ("_abtop" if AB_TOP else "") + ("" if not MECH_K else f"_mech{MECH_K:g}" + ("exp" if MECH_EXP else "") + (f"rf{MECH_REFRESH}" if MECH_REFRESH > 1 else "") + (f"pm{MECH_PHI_MIN:g}" if MECH_PHI_MIN else "")) + ("_clip" if PHI_CLIP else "") + (("_frontliv" + (f"ell{FRONT_ELL:g}" if FRONT_ELL else "")) if FRONT_LIVING else "")
        + (f"_ts{TOOTH_SEED:g}" if "--tooth-seed" in sys.argv else "") + (f"_tsh{TOOTH_SEED_H:g}" if "--tooth-seed-h" in sys.argv else "")
-       + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}") + ("_c0zero" if C_INIT_ZERO else "") + ("_l1" if LIVING_ONE else "")
+       + ("" if not STIFF_SPECIES else "_stiff" + "-".join(f"{m:g}" for m in STIFF_SPECIES)) + ("" if TRANSIENT_D is None else f"_transc{TRANSIENT_D:g}") + ("_c0zero" if C_INIT_ZERO else "") + ("_l1" if LIVING_ONE else "") + (f"_inhr{INHERIT_RADIUS:g}" if INHERIT_RADIUS else "")
        + ("" if not HOMEO else f"_homeo{HOMEO:g}" + ("" if GATE_FORM == 0 else f"f{GATE_FORM}"))
        + ("" if os.environ.get("VOID_FLOOR") is None else f"_void{float(os.environ['VOID_FLOOR']):g}")
        + (("_k26c4" if K26C4 else "_k26c3A1") if K26C3 else "") + ("_csine" if "--c-sine" in sys.argv else "") + ("" if C_CONST is None else f"_cconst{C_CONST:g}") + ("" if AB_SCHED == "const" and "--ab-period" not in sys.argv else f"_ab{AB_SCHED}{AB_PERIOD:.4g}")
@@ -1004,6 +1008,32 @@ def living_start(gs):
     return out
 
 
+def radius_mean(G, w):
+    """--inherit-radius: phi_3D-weighted sum of the states of all cells within INHERIT_RADIUS (w = weight per cell, 0 where
+    not started), the cell itself excluded; FFT convolution with a ball. With --fast the planes x = 0 and z = 0 (low side
+    of axes 0 and 2) are mirror planes, all other faces are walls."""
+    from scipy.signal import fftconvolve
+    k = int(np.floor(INHERIT_RADIUS / H + 1e-9))
+    if k < 1:
+        return neighbours_mean(G, w)
+    ax_ = np.arange(-k, k + 1)
+    KX, KY, KZ = np.meshgrid(ax_, ax_, ax_, indexing="ij")
+    ker = ((KX ** 2 + KY ** 2 + KZ ** 2) * H * H <= INHERIT_RADIUS ** 2 + 1e-12).astype(float)
+    ker[k, k, k] = 0.0
+
+    def conv(u):
+        if FAST:
+            u = np.pad(u, [(k, 0), (0, 0), (k, 0)], mode="symmetric")
+            u = np.pad(u, [(0, k), (k, k), (0, k)], mode="constant")
+        else:
+            u = np.pad(u, [(k, k)] * 3, mode="constant")
+        return fftconvolve(u, ker, mode="same")[k:-k, k:-k, k:-k]
+    den = np.clip(conv(w), 0.0, None)
+    den[den < 1e-12] = 0.0
+    num = np.stack([conv(w * G[..., j]) for j in range(G.shape[-1])], -1)
+    return num, den
+
+
 def neighbours_mean(G, w):
     """phi-weighted mean of the 6-neighbour states (w = weight per cell, 0 where not colonised)."""
     num = np.zeros_like(G); den = np.zeros(G.shape[:3])
@@ -1389,7 +1419,7 @@ def run(example, antibiotic):
                 # can move several cells in one outer step; one layer per step left cells without a point model, 24 Oct)
                 while True:
                     new = (phi >= PHI_MIN) & ~on
-                    num, den = neighbours_mean(G, np.where(on, phi, 0.0))
+                    num, den = (radius_mean if INHERIT_RADIUS else neighbours_mean)(G, np.where(on, phi, 0.0))
                     fill = new & (den > 0)
                     if not fill.any():
                         break

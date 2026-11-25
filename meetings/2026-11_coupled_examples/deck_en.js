@@ -287,6 +287,21 @@ const L = (t, o = {}) => C(t, Object.assign({ align: 'left' }, o));
     'With the antibiotic the difference is large (living −84 % / −96 %), and the field model alone cannot represent it.'],
     { x: 9.25, y: 3.35, w: 3.53, h: 3.5, fontSize: 13 }); }
 
+{ const s = frame('20. Your filter: start from all started points within a radius R');
+  const h = img(s, R + 'assets/fig_inherit_radius.png', 0.55, 1.1, 7.7);
+  cap(s, 'Fig. 12  Separate start with antibiotic, T* = 1, slice z = 0 through the seed and two B blocks, where φ₃D > 0.5. A new cell takes the φ₃D-weighted mean of its started neighbours (six faces) or of all started cells within R. 64³.', 1.1 + h + 0.06, 0.55, 7.7);
+  s.addTable([[H(''), H('6 neigh.'), H('R = 0.1'), H('R = 0.2')],
+    [L('mixed border¹'), C('0.9 %'), C('1.8 %'), C('3.1 %')], [L('seed living'), C('0.152'), C('0.154'), C('0.157')],
+    [L('seed α − 1 [10⁻⁴]'), C('8.95'), C('8.95'), C('8.95')], [L('seed vM [10⁻⁴ Pa]'), C('5.68'), C('5.67'), C('5.65')]],
+    { x: 8.5, y: 1.2, w: 4.28, colW: [1.6, 0.89, 0.89, 0.9], fontFace: TM, fontSize: 12, color: INK, rowH: 0.4, border: { type: 'solid', pt: 0.5, color: 'B8C2CF' } });
+  s.addText('¹ biofilm cells with a share between 0.3 and 0.7', { x: 8.5, y: 3.3, w: 4.28, h: 0.3, fontFace: TM, fontSize: 10, color: GREY, isTextBox: true, margin: 0 });
+  bullets(s, [
+    'A new option of the Python code, R given as input; it acts only when a cell starts, never in started biofilm.',
+    'The border between A and B becomes wider and smoother (0.9 % → 3.1 % of the cells); the seed values change by less than 3 % (living) and 1 % (growth, stress).',
+    'Mixed start: unchanged (all points hold both species from the start); the 140 surviving edge cells remain.',
+    'Inside started biofilm the species still do not mix; that would need transport of the species, i.e. a change of the model.'],
+    { x: 8.5, y: 3.7, w: 4.28, h: 3.2, fontSize: 13 }); }
+
 // 13 appendix notation
 { const s = frame('Appendix A. Notation');
   const rows = [[H('symbol'), H('meaning'), H('symbol'), H('meaning')],
@@ -456,6 +471,8 @@ const NOTES = [
  '抗菌薬の場です．同じ動画で，パネル d に抗菌薬を出しました．T* = 1/3 から外側の層で 1 に固定しています．栄養と同じ速さで拡散するので，始まった直後からどこでも約 0.9 以上，最後はほぼ 1 になり，ほとんど一様に見えます．点ごとの違いは主に組成と栄養から来ていて，抗菌薬の量からではありません．なので，生き残りはスライド 15 のように組成と栄養だけで説明できます．'],
 ['You suggested comparing with the field model of the 2024 paper alone. Here the uptake uses a living fraction of one everywhere, which is the 2024 form g phi c, against the coupled model, both without antibiotic. Without antibiotic the living fraction is about 0.96 after the first quarter, so the two runs differ mainly at the start: the field model alone takes up more nutrient early. At the end the nutrient differs by about two percent, the growth by about one percent and the stress by four to seven percent. With the antibiotic the difference is large, and that is what the field model alone cannot describe.',
  '2024 年の場のモデルだけとの比較の提案に答えたものです．どこでも生きている量を 1 にした食べ方（2024 年の g φ c）と，連成モデルを，どちらも抗菌薬なしで比べました．抗菌薬なしでは最初の 1/4 を過ぎると生きている量が約 0.96 なので，違いは主に始めの部分です．場のモデルだけの方が，始めに栄養を多く食べます．最後の値は栄養で約 2 %，成長で約 1 %，応力で 4〜7 % 違います．抗菌薬があると違いは大きく，それは場のモデルだけでは表せません．'],
+['You suggested a filter for the points where two biofilms meet. My rule already takes the mean of the six neighbours; here I extended it to all started cells within a radius R, as you proposed, with R as an input. It acts only when a cell starts, never in biofilm that has already started. The slice through the seed shows the border between A and B: with R equal to 0.1 and 0.2 millimetres it becomes wider and smoother, and the fraction of mixed cells grows from about one to three percent. The seed values change by less than three percent in the living fraction and by less than one percent in growth and stress. In the mixed start nothing changes, because every point holds both species from the start. Mixing inside started biofilm would need transport of the species, which is a change of the model; I state it as an assumption in the thesis.',
+ 'あなたが提案した，二つのバイオフィルムが出会う点のフィルターです．私の規則はもともと 6 つの隣の平均を取っていて，ここではそれを，あなたの案どおり半径 R の中の始まっている全部のセルに広げ，R を入力にしました．働くのはセルが始まるときだけで，すでに始まったバイオフィルムの中では働きません．種子を通る断面で A と B の境目を見ると，R = 0.1 と 0.2 mm で境目が広く滑らかになり，混ざったセルの割合は約 1 % から 3 % に増えます．種子の値の変化は，生きている量で 3 % 未満，成長と応力で 1 % 未満です．混ぜた例は最初から全部の点が両方の種を持つので変わりません．始まった内部で混ざるには菌種を運ぶ式が必要で，モデルを変えることになるので，修論では仮定として書いています．'],
 ['This appendix lists the notation of the growth field and of the point model, in case you have questions about a symbol. Phi 3D is the biofilm of the field; phi i, psi i and the living part phi bar i belong to the point model; c and a are the nutrient and the antibiotic, and c star and alpha star are what the point model receives from them.',
  '付録：成長の場と点モデルの記号の一覧です．記号について質問があったときに使います．φ₃D は場のバイオフィルム，φᵢ，ψᵢ と生きている部分 φ̄ᵢ は点モデルの量，c と a は栄養と抗菌薬で，c* と α* は点モデルがそこから受け取る値です．'],
 ['This appendix defines the three quantities I report: the von Mises stress, the grid convergence index of Celik and co-workers, and the cell Péclet number, which tells whether the edge of the biofilm is resolved by the grid. The von Mises stress is the mean over the seed. The GCI uses three grids; a small observed order gives a large GCI, which is why the mixed stress has the largest uncertainty. The Péclet number falls below one only at two hundred and fifty-six cubed, so on the grids I use the edge is sharper than a cell and the limiter lowers the order.',
