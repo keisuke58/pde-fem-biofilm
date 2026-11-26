@@ -212,14 +212,18 @@ gives a stress ten percent below the Python value, which lies within the element
 安定にはなりますが、応力は収束値の 4 分の 1 しか出ません。2 次の風上法が要ります。それを使うと $192^3$ まで、成長は 4.5 \% 未満、
 分けた例の応力は 1.5 \% 未満で収束し、混ぜた例の応力は minmod では遅く 20〜40 \%，端を鋭く保つ superbee では約 5 \% です。IKM の要素は upwind の勾配で Python の値より 10 \% 低く，Python の値は要素自身の不確かさ（約 16 \%）の中に入ります。
 
-\slide{Part 3: rigid bars and a maze}{17:15}
-\EN Two geometries from the 2024 paper. Four rigid bars restrain the swelling: the biofilm grows around them, and the
-seed stress is about ten times higher. In the maze, the biofilm follows the corridors. After the antibiotic it
-recovers only if newly reached points take the living composition of their neighbours: 0.35 against 0.04. The papers
-leave this rule open, so I state it as an assumption.
-\JA 2024 年の論文の2つの形です。4本の硬い柱は膨張を抑え、バイオフィルムは柱を回り込み、種の応力は約 10 倍に
-なります。迷路ではバイオフィルムが通路に沿って広がります。抗菌薬の後に回復するのは、新しく届いた点が隣の生きて
-いる組成を受け継ぐときだけです（0.35 対 0.04）。論文はこのルールを決めていないので、仮定として示します。
+\slide{Part 3: where the living biomass survives}{17:15}
+\EN Here the cube is seen from below, where the nutrient enters. Green is living biomass, grey is dead. The point
+model explains the pattern. The antibiotic lowers only the living fraction psi, faster for the more sensitive species
+B, and the nutrient term works against it. Run alone, a point survives only if it is mostly species A and has nutrient
+close to one. In the mixed start every seed point holds B, so the whole seed dies; in the separate start the part of
+the A seed next to the nutrient supply survives. Without antibiotic the coupled model stays within a few percent of the
+field model of the 2024 paper alone; the difference that matters appears with the antibiotic.
+\JA 立方体を下から見た図で，栄養はここから入ります．緑が生きている菌，灰色が死んだバイオフィルムです．この分布は点モデルで
+説明できます．抗菌薬が下げるのは生きている割合 $\psi$ だけで，感度の大きい B ほど速く，栄養の項がそれに逆らいます．点モデルだけで
+計算すると，生き残るのは A が多く栄養が 1 に近い点だけです．混ぜた例では種子のどの点にも B がいるので種子全体が死に，分けた例では
+栄養の入口に近い A の種子の部分が生き残ります．抗菌薬がなければ，連成モデルは 2024 年の場のモデルだけと数 \% しか違わず，
+意味のある違いは抗菌薬があるときに出ます．
 
 \slide{Limitations}{18:15}
 \EN The main limitations. This is verification, not validation: no measured

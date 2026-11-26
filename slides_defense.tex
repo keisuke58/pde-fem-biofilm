@@ -320,28 +320,27 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 3: rigid bars and a maze}
+\begin{frame}{Part 3: where the living biomass survives}
 \begin{columns}[c]
-\begin{column}{0.5\textwidth}
+\begin{column}{0.55\textwidth}
 \centering
-\includegraphics[width=\linewidth]{fig_obstacle_columns_3d.pdf}\\[1pt]
-\raggedright\scriptsize Four rigid bars after Klempt et al.\ 2024, Fig.~9; surface $\phi_{3D}$ at $T^*=0.05$ to $0.2$
+\includegraphics[width=\linewidth]{fig_thesis_bottom_view.pdf}\\[1pt]
+\raggedright\scriptsize $\sum_i\bar\phi_i$ at $T^*=1$ seen from below: (a) separate, (b) mixed start. Grey: dead
+biofilm; blue frame: layer where $c$ is held
 \end{column}
-\begin{column}{0.48\textwidth}
-\centering
-\includegraphics[width=\linewidth]{papers/coupling_paper/fig_maze_rules.pdf}\\[1pt]
-\raggedright\scriptsize Maze of Klempt et al.\ 2024, Fig.~11, antibiotic from $T^*=20$: new points take the
-neighbours' state (a) or the start state (b); living fraction over time (c)
+\begin{column}{0.43\textwidth}
+\small
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item The antibiotic lowers only $\psi_i$, faster for the more sensitive species (B, $b_2=2b_1$); the nutrient
+        term works against it
+  \item Point model alone: a point survives only if it is mostly A \emph{and} has nutrient near~1
+  \item Mixed start: every seed point holds B, so the seed dies; separate start: the A seed next to the nutrient
+        supply survives
+  \item Without antibiotic the coupled model stays within a few percent of the field model alone
+\end{itemize}
 \end{column}
 \end{columns}
-\vspace{2pt}
-\small
-\begin{itemize}\setlength{\itemsep}{1pt}
-  \item Bars restrain the swelling: seed von Mises about ten times higher ($32^3$, separate start)
-  \item Maze: the rule for new points decides recovery after the antibiotic, $0.35$ against $0.04$
-        (\textcolor{warn}{assumption})
-\end{itemize}
-\takeaway{Geometry changes the stress; the start state of new points decides whether the biofilm recovers.}
+\takeaway{Survival needs the right species and the nutrient; the field model alone cannot describe it.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -613,11 +612,13 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
   \item \textbf{Time step} (outer step $0.025\to0.0025$): composition and $\alpha-1$ within $3$ and $0.3\,\%$;
         stress $-6\,\%$ (separate) and $+15\,\%$ (mixed) at $0.025$, so the stress is taken at the small step
   \item \textbf{Start values of new points}: neighbours' living composition against the seed composition, a few
-        percent in the cube; in the maze of Klempt et al.\ 2024 recovery after the antibiotic ($0.35$) or not ($0.04$)
+        percent in the cube; a mean over all started points within $0.2$~mm widens the border of A and B, seed
+        values within $3\,\%$
   \item \textbf{Antibiotic over time} (constant, pulses, sine, same dose): growth $0.1\,\%$, stress $0.8\,\%$;
         the living fraction follows the dose (pulsed: recovers $0.17\to0.30$)
   \item \textbf{Nutrient diffusivity}: with $\dot c$ and $d$ of Table~2 the fields adjust in $4\times10^{-8}\,T^*$; only a value eight orders
-        smaller changes the result
+        smaller changes the result; starting from $c=0$ outside the held layer, as the element does, changes the seed values
+        by less than $1\,\%$
   \item \textbf{Stress mesh}: $16^3$ against $64^3$ elements, $0.2\,\%$
 \end{itemize}
 \takeaway{The composition is robust; the stress depends on the time step and on how the front term \fterm{} is discretised.}
