@@ -969,7 +969,7 @@ The coupling of Section~\ref{sec:ch5-composition} takes the number of species
 as a parameter, so the point model calibrated in Chapter~\ref{ch:heine} runs in the element without changes to the
 routine. I used the MAP of the commensal flow condition (CH), with $c^*=25$ and no antibiotic, started from its calibrated
 Day-1 state, in which \textit{S.~oralis} dominates. The run predates the coupling of Section~\ref{sec:ch5-composition}:
-it uses the one-way setting of the earlier computations (Section~\ref{sec:ch5-outlook-python}), without the front term
+it uses an earlier one-way setting, in which the composition is scaled to the amount of the field, without the front term
 \fterm{} and without the uptake by the living biomass. The composition therefore cannot act on the fields, and the growth
 and the stress are the same as for two species or for equal start shares, to all printed digits.
 
@@ -1043,6 +1043,8 @@ the implementation of this chapter.
 \end{itemize}
 
 %-----------------------------------------------------------------------
+% Commented out on 26 Nov 2026 (the user: about 80 pages, less text); restore by deleting \iffalse and \fi.
+\iffalse
 \section{Earlier one-way computations}
 \label{sec:ch5-outlook}
 \label{sec:ch5-outlook-python}
@@ -1131,4 +1133,4 @@ growth (Appendix~\ref{app:klempt2024}). This step needs a different growth law
 and realistic stress levels.
 
 Of these steps, step~2 changes the results most.
-
+\fi
