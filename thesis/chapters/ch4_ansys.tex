@@ -829,7 +829,9 @@ species~B four small blocks of $0.25\times0.25\times1.0$~mm along the four edges
 seed; in the mixed example both start in the seed,
 in equal amounts ($\phi_1=\phi_2=0.275$) or in the proportions of Fritsch et al.\ ($0.25$, $0.30$). As in the
 element's input, the nutrient is held at $c=1$ in the layer of elements (0.25~mm) at the face $y=-1$~mm, and the
-antibiotic at $a=1$ in the outer layer of elements on all faces; elsewhere there is no flux. The front term \fterm{} of Eq.~34 is
+antibiotic at $a=1$ in the outer layer of elements on all faces; elsewhere there is no flux. The nutrient starts from the solution
+of Eq.~35 for the start state; starting it from $c=0$ outside the held layer, as the element does, changes the
+seed values by less than $1\,\%$, because with this $d$ it fills the cube within about $10^{-7}\,T^*$. The front term \fterm{} of Eq.~34 is
 on in every run.
 
 These runs use a finite-volume code in Python that solves the same equations as the element, with the
@@ -842,14 +844,17 @@ order $h/r$ of Section~\ref{sec:ch5-coupling}.
 The stress is solved on a $16^3$ hexahedral mesh with the element's integration, in small strain: $\boldsymbol\sigma=E_0(\phi_{3D}^2+f)\,\mathbb C(\nu):(\boldsymbol\varepsilon-(\alpha-1)\mathbf I)$, the linearisation of the neo-Hookean law of the element ($\alpha-1\sim10^{-3}$); solving the same
 $64^3$ field on $32^3$ and $64^3$ elements changes the seed von Mises stress by $0.2\,\%$.
 
-\paragraph{Composition.} Table~\ref{tab:ch5-two-species} gives the seed means at $T^*=1$, and
-Figures~\ref{fig:ch5-3d} and~\ref{fig:ch5-3d-mixed} the separate and the mixed example with antibiotic. Without antibiotic the living volume
-fraction of the seed stays near $0.96$; the antibiotic lowers it to $0.15$ when the species start
-separately and to $0.04$ when they start mixed. Species~B is removed first: its nutrient term $c^*A_{22}/\eta_2$ is half that of A, while the
-antibiotic term per viscosity, $\alpha^*b_i/\eta_i$, is the same for both. Where
-the nutrient is low, A dies as well, because the point model compares $c^*=c^*_0c$ with $\alpha^*b_i$.
-Living volume fraction, shares and nutrient change by less than $4\,\%$ between the grids and the time
-steps used.
+\paragraph{Composition.} Without antibiotic the seed stays almost fully alive; the antibiotic kills most of it, and more so
+when the species start mixed (Table~\ref{tab:ch5-two-species}: living volume fraction $0.15$ separate, $0.04$ mixed;
+Figures~\ref{fig:ch5-3d} and~\ref{fig:ch5-3d-mixed}). The point model alone explains the difference. The antibiotic lowers
+only $\psi_i$ (Eq.~\eqref{eq:ch5-point}), the faster the larger the sensitivity $b_i$ and the smaller the amount $\phi_i$
+of the species in its point, and the nutrient term $c^*A_{ii}/\eta_i$ works against it. Species~B is twice as sensitive
+as A. A point therefore keeps living biomass only where it is dominated by A and the nutrient is close to one: run alone
+with $c=1$, such a point keeps more than half of its living fraction, at $c=0.7$ almost none, and a point holding both
+species dies at any nutrient level. In the mixed start every seed point holds B, so the whole seed dies; in the separate
+start the lower part of the A seed, next to the nutrient supply, survives. Before the antibiotic, A overtakes B in the
+mixed seed because B changes more slowly ($\eta_2=2\eta_1$); with equal $\eta_i$, B would win. The composition changes
+by less than $4\,\%$ between the grids and time steps used.
 
 \begin{table}[htbp]
   \centering
@@ -890,34 +895,19 @@ steps used.
   \label{fig:ch5-3d-mixed}
 \end{figure}
 
-\paragraph{Growth and stress.} The growth $\alpha-1$ hardly depends on the composition: Eq.~36 is
-unchanged, and the antibiotic lowers the living fraction but not $\phi_{3D}$. The composition reaches
-the stress through the nutrient and the front term \fterm{}, and the mixed seed carries less stress than
-the separate one because its edge is less sharp (with antibiotic, extrapolated: about $4.0$ against
-$6.42\times10^{-4}$~Pa, a ratio of about $0.6$). Table~\ref{tab:ch5-gci} gives the grid series with the
-three-grid index of Celik et al.~\cite{Celik2008GCI} (safety factor $1.25$) at an outer time step of
-$0.0025$, from $64^3$, $128^3$ and $192^3$. The growth converges with a GCI of $0.4$ to $4.3\,\%$ in all
-examples. The seed stress is set by the jump of $\alpha$ across the edge of the seed, which the front sharpens. In
-the separate example it converges, with a GCI of $0.1\,\%$ without and $1.4\,\%$ with the antibiotic (without, the
-observed order $3.1$ exceeds the formal order; with order $2$ the GCI is $0.2\,\%$); the
-antibiotic lowers the extrapolated stress from $6.57$ to $6.42\times10^{-4}$~Pa, by $2\,\%$, slightly more than
-the two bands together. In the mixed examples it converges slowly with the minmod limiter, with an observed order
-of $0.4$ to $1.0$ and a GCI of $19$ to $41\,\%$. There the front
-carries intermediate values of $\phi_{3D}$ at a nearly discontinuous edge, and the largest $\phi_{3D}$ in the
-seed still rises with the grid ($0.60$, $0.69$, $0.73$, $0.75$ on $32^3$ to $192^3$), though by less at each
-refinement. The front term moves this edge along $\mathbf n_c$, and the uptake that sets the nutrient gradient is
-concentrated at the same edge, so the grid has to resolve both the edge and the nutrient gradient around it.
-Part of the slow convergence is the numerical diffusion of the minmod limiter (Figure~\ref{fig:ch5-limiters}). With the
-superbee limiter, which keeps the edge sharper, the mixed seed stress with antibiotic converges with an observed
-order of $1.2$ and a GCI of $4.6\,\%$ to $3.81\times10^{-4}$~Pa (last rows of Table~\ref{tab:ch5-gci}); on $256^3$ it
-gives $3.76$, and $128^3$ to $256^3$ extrapolate to $3.95\times10^{-4}$~Pa with a GCI of $6.3\,\%$. With minmod,
-$256^3$ gives $3.63$, and $128^3$ to $256^3$ extrapolate to $3.99\times10^{-4}$~Pa (order $0.95$, GCI $12\,\%$): the
-two limiters agree on about $4.0\times10^{-4}$~Pa within about $10\,\%$. The MC and
-van Leer limiters lie close to minmod, and a WENO5 reconstruction~\cite{JiangShu1996} lies between MC and superbee
-on $64^3$ to $192^3$. In the separate example, where minmod converges, superbee gives the same stress within about
-$1\,\%$ on $128^3$. A compressive limiter can also steepen an edge beyond the solution, so I keep minmod as the main
-scheme and use superbee as a check: up to $192^3$ the two extrapolations, $3.81$ and $4.67\times10^{-4}$~Pa, bound
-the mixed stress with antibiotic, and with $256^3$ they close to $3.95$ and $3.99\times10^{-4}$~Pa.
+\paragraph{Growth and stress.} The growth $\alpha-1$ hardly depends on the composition, because Eq.~36 counts all
+biomass $\phi_{3D}$, living or dead, and the antibiotic removes none. The composition reaches the stress only through the
+nutrient and the front term \fterm{}. The stress is set by the jump of $\alpha$ across the edge of the seed, which the front
+sharpens, so the mixed seed, whose edge is less sharp, carries about $0.6$ times the stress of the separate one. The
+antibiotic lowers the stress of the separate seed by $2\,\%$, slightly more than its grid uncertainty.
+Table~\ref{tab:ch5-gci} gives the grid series with the three-grid index of Celik et al.~\cite{Celik2008GCI}. The growth
+converges in all examples, and so does the stress of the separate example. The stress of the mixed example converges
+slowly with the minmod limiter: there the front carries intermediate values of $\phi_{3D}$ at a nearly discontinuous
+edge, and the uptake that sets the nutrient gradient sits at the same edge, so the grid has to resolve both. Part of
+this is the numerical diffusion of minmod (Figure~\ref{fig:ch5-limiters}). The superbee limiter, which keeps the edge
+sharper, converges faster, and on $256^3$ the two limiters agree on about $4.0\times10^{-4}$~Pa within about $10\,\%$;
+the MC and van Leer limiters and a WENO5 reconstruction~\cite{JiangShu1996} lie between them. A compressive limiter can
+also steepen an edge beyond the solution, so I keep minmod as the main scheme and superbee as a check.
 
 \begin{figure}[htbp]
   \centering
@@ -959,43 +949,36 @@ the mixed stress with antibiotic, and with $256^3$ they close to $3.95$ and $3.9
   \end{tabular}
 \end{table}
 
-\paragraph{Time step.} The point model advances once per outer step of the field. The composition
-changes by less than $4\,\%$ between outer steps of $0.02$ and $0.0025$ (with an integer number of inner
-steps), and $\alpha-1$ by less than $0.3\,\%$ in the separate and $3\,\%$ in the mixed example. The stress
-does not: in the separate example the step $0.025$ of
-Table~\ref{tab:ch5-two-species} gives about $6\,\%$ less than the limit, which first-order
-extrapolation puts at about $6.07\times10^{-4}$~Pa on $64^3$; in the mixed example it gives about
-$15\,\%$ more ($3.23$ against $2.82\times10^{-4}$~Pa at $0.0025$). The inner steps of the point model,
-the one-increment lag of $\sum_i\bar\phi_i$ and the regularisation of the front direction
-($\varepsilon^2=10^{-6}$ against $10^{-8}$, $0.1\,\%$) are not the cause. The sensitivity comes from the front direction $\mathbf n_c$: after the onset the living volume fraction is small, $\nabla c$ is weak and $\mathbf n_c$ responds to small changes of the consumption, so a hundred times larger $\varepsilon^2=10^{-4}$ lowers the mixed stress by $30\,\%$; the value used is converged. Without antibiotic the step $0.025$
-gives $2.5\,\%$ less (separate) and $14\,\%$ more (mixed) than $0.0025$. I therefore take the growth and the
-stress from the grid series at the small step.
+\paragraph{Time step.} The point model advances once per outer step of the field. The composition and the growth hardly
+depend on this step, the stress does: the outer step $0.025$ of Table~\ref{tab:ch5-two-species} gives about $6\,\%$ less
+stress than the limit in the separate and $15\,\%$ more in the mixed example. The cause is the front direction
+$\mathbf n_c$. After the onset the living biomass is small, so $\nabla c$ is weak and $\mathbf n_c$ responds to small
+changes of the uptake; a hundred times larger regularisation of $\mathbf n_c$ lowers the mixed stress by $30\,\%$, and the
+value used is converged. The inner steps of the point model and the lag of $\sum_i\bar\phi_i$ are not the cause. I
+therefore take the growth and the stress from the grid series at the outer step $0.0025$.
 
-\paragraph{Antibiotic over time.} With the same total dose given constantly, in pulses or as a sine
-from $T^*=1/3$, $\alpha-1$ and the stress change by less than $1\,\%$ ($64^3$), while the living volume
-fraction follows the dose: in the last pause of the pulsed dose it recovers from $0.17$ to $0.34$ in the
-separate example, and the next pulse brings it to $0.30$ at $T^*=1$. How the dose is given acts on the composition and the living biomass, hardly on the mechanics.
+\paragraph{Antibiotic over time.} Giving the same total dose constantly, in pulses or as a sine changes growth and stress
+by less than $1\,\%$, while the living biomass follows the dose and recovers in the pauses of the pulsed dose. How the
+dose is given acts on the living biomass and the composition, hardly on the mechanics, for the reason above: the growth
+counts dead biomass too.
 
-\paragraph{Start values of newly reached points.} With the start values of the nearer seed instead of
-the neighbours' living composition, the seed values of the cube examples differ by a few percent (living
-volume fraction $0.147$ against $0.152$ in the separate example with antibiotic). In the maze of Klempt et
-al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule decides whether it
-recovers (Section~\ref{sec:ch5-geometry}).
+\paragraph{Start values of newly reached points.} With the start values of the nearer seed instead of the neighbours'
+living composition, the seed values of the cube examples change by a few percent only, because the seed itself starts at
+$T^*=0$ and feels the rule only through its surroundings. Taking the mean over all started points within a radius of up to
+$0.2$~mm instead of the six neighbours widens the border where A and B mix, but changes the seed values by less than
+$3\,\%$. In the maze of Klempt et al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule
+decides whether it recovers (Section~\ref{sec:ch5-geometry}).
 
 \paragraph{The element.} The ANSYS element solves the same equations with its own discretisation
-(Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it, without
-changing its equations: the surface points take the value of the nearest Gauss point instead of a
-distance-weighted mean, the Laplacian is used in a conservative form, and the neighbours of the fit are
-chosen by distance instead of by element number. Before, $\phi_{3D}$ leaked through the walls of the cube. Its growth extrapolates to
-$8.68\times10^{-4}$ ($8^3$ to $24^3$, GCI $4.8\,\%$), $6\,\%$ below the Python value of Table~\ref{tab:ch5-gci}. Its
-stress depends on how the front term \fterm{} is stabilised: with a constant added diffusion
-$r h/4$ the seed stress on $16^3$ is about a quarter of the extrapolated Python value, and with upwind gradients it
-is $2.14$, $4.56$ and $5.15\times10^{-4}$~Pa on $8^3$, $16^3$ and $24^3$, extrapolated
-$5.8\times10^{-4}$~Pa (GCI $16.5\,\%$). This is $10\,\%$ below the extrapolated Python value
-($6.42\times10^{-4}$~Pa), which lies within the element's own uncertainty. The
-element runs the point model in every increment of $0.00125$, so its outer-step error is small; it reads
-$\sum_i\bar\phi_i$ at the end of the same increment, the Python code from the previous one. I take
-the values of this section from the Python code, which reaches finer grids.
+(Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it without changing its
+equations: the surface points take the value of the nearest Gauss point instead of a distance-weighted mean, the
+Laplacian is used in a conservative form, and the neighbours of the fit are chosen by distance instead of by element
+number. Before, $\phi_{3D}$ leaked through the walls of the cube. Its growth extrapolates to $6\,\%$ below the Python value.
+Its stress depends on how the front term \fterm{} is stabilised: a constant added diffusion smears the edge and gives only
+about a quarter of the Python stress on $16^3$, while upwind gradients extrapolate ($8^3$ to $24^3$) to $10\,\%$ below the
+Python value, within the element's own uncertainty of about $17\,\%$. The element advances the point model in every
+increment and reads $\sum_i\bar\phi_i$ at the end of the same increment, so its outer-step error is small. I take the
+values of this section from the Python code, which reaches finer grids.
 
 % Source: coupled_living_consumption.py --obstacle columns (32^3, 25 Oct, results/2026-10-3d/*obstcolumns*dtc0.0025*inhliv*),
 % fig_obstacle_columns_3d.py; maze: maze_coupled_2d.py, results/2026-10-maze/maze_h4_tend60*_k24fig*.json, fig_maze_k24.py.
