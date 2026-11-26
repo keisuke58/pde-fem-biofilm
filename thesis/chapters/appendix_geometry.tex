@@ -1,0 +1,98 @@
+% Moved out of Chapter 4 on 26 Nov 2026 (the user): the geometry examples of the coupled model, unchanged.
+% Source: coupled_living_consumption.py --obstacle columns (32^3, 25 Oct, results/2026-10-3d/*obstcolumns*dtc0.0025*inhliv*),
+% fig_obstacle_columns_3d.py; maze: maze_coupled_2d.py, results/2026-10-maze/maze_h4_tend60*_k24fig*.json, fig_maze_k24.py.
+\section{The coupled model on the geometries of the paper, and asymmetric starts}
+\label{sec:ch5-geometry}
+
+Klempt et al.\ 2024 also grow the biofilm against rigid obstacles (their Section~4.3) and through a maze
+(Section~4.4). I repeated both with the coupled model of Chapter~\ref{ch:ansys} in the Python code, without antibiotic
+unless stated.
+
+\paragraph{Rigid bars.} Four bars after Fig.~9 of the paper, with positions read off the sketch: two along
+$x$ and two along $z$, each $0.25$~mm square, between $0.5$ and $0.75$~mm from the centre. They hold no
+biofilm and no nutrient, and the biofilm slides along them without friction. All other settings are those of
+Section~\ref{sec:ch5-two-species} (outer step $0.0025$, minmod unless stated). The biofilm grows around the bars
+and closes behind them, and by $T^*=0.2$ it fills the cube between them (Figure~\ref{fig:ch5-bars}). The
+composition of the seed hardly changes. The bars restrain the swelling. Without antibiotic the separate seed
+carries a von Mises stress of $7.1$, $7.3$ and $7.3\times10^{-3}$~Pa on $32^3$, $64^3$ and $128^3$, against $7.4$,
+$6.7$ and $6.6\times10^{-4}$~Pa without bars on the same grids, about ten times more; the mixed seed carries
+$9.5\times10^{-4}$ against $2.1\times10^{-4}$~Pa on $32^3$. The growth $\alpha-1$ of the seed is $9$ and
+$21\,\%$ lower on $32^3$.
+With antibiotic the stress with bars is low on coarse grids and rises with the grid: with the minmod limiter the
+separate seed gives $2.52$, $3.73$, $5.04$ and $5.40\times10^{-3}$~Pa on $32^3$ to $192^3$ (GCI $12\,\%$) and the
+mixed seed $0.93$, $1.61$, $2.21$ and $2.46\times10^{-3}$~Pa (GCI $43\,\%$). With the superbee limiter the series
+converge: $5.90\times10^{-3}$~Pa (GCI $4.5\,\%$, the same limit as with minmod) and $2.72\times10^{-3}$~Pa
+(GCI $5.3\,\%$). The stress is solved on $16^3$ elements in every run, and a $32^3$ stress mesh changes it by
+$3\,\%$ only, so the rise comes from the fields next to the bars. The factor of $2.8$ between the separate runs
+without and with antibiotic on $32^3$ is therefore mostly resolution: the extrapolated value with antibiotic is
+about a fifth below the value without, which hardly changes with the grid ($5.9$ against $7.3\times10^{-3}$~Pa). On the extrapolated values
+with antibiotic the bars raise the seed stress about nine times in the separate example ($5.90\times10^{-3}$
+against $6.42\times10^{-4}$~Pa) and about seven times in the mixed one ($2.72\times10^{-3}$ against
+$3.81\times10^{-4}$~Pa, both with superbee).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_obstacle_columns_3d.pdf}
+  \caption[Growth against rigid bars]{Growth against four rigid bars (dark grey), after Fig.~9 of Klempt et
+    al.\ 2024, Python, $32^3$, no antibiotic. (a)~Set-up: start biomass (red) and nutrient supply on the face
+    $y=-1$~mm (green). (b)--(d)~Surface $\phi_{3D}=0.5$ (separate example) and $0.2$ (mixed example, whose front
+    carries lower values of $\phi_{3D}$) at $T^*=0.05$, $0.1$ and $0.2$.}
+  \label{fig:ch5-bars}
+\end{figure}
+
+\paragraph{Asymmetric starts.} The examples above are mirror symmetric in $x$ and $z$. Two variants of the
+separate example with antibiotic break this symmetry (full domain, outer step $0.025$): species~B only in the
+block along one edge ($x>0.75$, $y<-0.75$~mm) with the seed moved by one element towards $-x$, and species~B
+only in one cube of $0.25$~mm at a corner. The composition and the nutrient of the seed hardly change
+($\sum_i\bar\phi_i=0.151$ and $0.153$ against $0.152$ on $128^3$), and the growth is $6$ and $4\,\%$ lower. The
+seed von Mises stress is lower by $31$ and $40\,\%$ on $64^3$, $17$ and $27\,\%$ on $128^3$ and $13$ and $23\,\%$
+on $192^3$. Extrapolated from the three grids it is $5.71$ and $5.28\times10^{-4}$~Pa (GCI $13$ and $18\,\%$)
+against $6.08\times10^{-4}$~Pa for the symmetric example at this step (GCI $2.3\,\%$; $6.42\times10^{-4}$~Pa at the
+step $0.0025$ of Table~\ref{tab:ch5-gci}), $6$ and $13\,\%$ lower, which is within
+the grid uncertainty of the asymmetric runs. The variants also start with less biomass: species~B is left out
+except for one block or one cube (start $\int\phi_{3D}\,dV=0.56$ and $0.52$ against $0.75$~mm$^3$), and at $T^*=1$ the
+biofilm holds $5.81$ and $5.99$ against $7.39$~mm$^3$ ($128^3$). With the four blocks started as species~A instead
+of~B (the same $\phi_{3D}$) the seed stress is $14$, $8$ and $6.5\,\%$ higher than in the symmetric example on the
+three grids, and $4.5\,\%$ higher after extrapolation ($6.35\times10^{-4}$~Pa, GCI $0.2\,\%$), since the species
+reaches growth only through the nutrient and the front; the living volume fraction of the seed is then $0.13$
+instead of $0.15$. On the extrapolated values the seed stress changes by at most about $13\,\%$; for the two
+asymmetric starts this is not resolved, only the $4.5\,\%$ of the run with species~A in the blocks is
+(Figure~\ref{fig:ch5-asym}). The large differences on one grid came mostly from the slower convergence of
+the asymmetric runs.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig_asymmetric_starts.pdf}
+  \caption[Asymmetric starts]{Asymmetric starts of the separate example with antibiotic, Python, $64^3$ (rows 2
+    and 3 on the full domain). Rows: (1)~the symmetric example, (2)~species~B only in the block along one edge, seed
+    moved by one element towards $-x$, (3)~species~B only in one corner cube. (a)~Start and boundary conditions:
+    nutrient held at $c=1$ in the layer $y<-0.75$~mm, antibiotic held at $a=1$ on the outer shell of elements
+    from $T^*=1/3$, no flux elsewhere. (b)~Growth $\alpha-1$ where $\phi_{3D}>0.5$ at $T^*=1$, one octant removed.
+    (c)~Von Mises stress at $T^*=1$ in the section $z=0$ ($16^3$ stress mesh), seed outline in white. One colour
+    range per column.}
+  \label{fig:ch5-asym}
+\end{figure}
+
+\paragraph{Maze.} The maze of Fig.~11 of the paper, read off the figure ($560~\mu$m across), in two dimensions
+with $4~\mu$m cells, the constants of Table~6 of the paper ($\beta=10~\mu$m$^2/T^*$, $r=200~\mu$m$/T^*$,
+$k_\alpha=10^{-6}\,T^{*-1}$), the nutrient held in the centre, the colony of both species at the entrance and
+the point model of the two-species examples. With the antibiotic, $a=1$ is held at the entrance from
+$T^*=20$. The model is two-dimensional, so it gives no stress. The biofilm follows the corridors, also into
+dead ends, and approaches the centre (Figure~\ref{fig:ch5-maze}); at $T^*=60$ the nearest point with
+$\phi_{3D}\ge0.5$ is about $40~\mu$m from the centre with and without antibiotic (on $4$, $2$ and $1~\mu$m
+cells $39$ to $43~\mu$m; only the run with antibiotic on $4~\mu$m cells gives $133~\mu$m, where a single
+cell decides this distance). The living volume
+fraction of the colonised region is $0.92$ without antibiotic. With the antibiotic it falls to $0.12$ at
+$T^*=24$ and recovers to $0.35$ at $T^*=60$, because the biofilm keeps spreading and the newly reached points
+take the living composition of their neighbours. With the start state for new points it stays at $0.04$.
+In this geometry the rule for new points decides whether the biofilm recovers.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_maze_k24_h4.pdf}
+  \caption[Growth through the maze]{The maze of Klempt et al.\ 2024, Fig.~11, with the coupled model (Python,
+    two dimensions, $4~\mu$m cells): $\phi_{3D}$ at $T^*=12$, $24$, $36$ and $60$, (a)~without and (b)~with the
+    antibiotic at the entrance from $T^*=20$. Walls white, nutrient source outlined in red.}
+  \label{fig:ch5-maze}
+\end{figure}
+
