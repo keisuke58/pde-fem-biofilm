@@ -791,7 +791,7 @@ of the species in its point, and the nutrient term $c^*A_{ii}/\eta_i$ works agai
 as A. A point therefore keeps living biomass only where it is dominated by A and the nutrient is close to one: run alone
 with $c=1$, such a point keeps more than half of its living fraction, at $c=0.7$ almost none, and a point holding both
 species dies at any nutrient level. In the mixed start every seed point holds B, so the whole seed dies; in the separate
-start the lower part of the A seed, next to the nutrient supply, survives. Before the antibiotic, A overtakes B in the
+start the lower part of the A seed, next to the nutrient supply, survives (Figure~\ref{fig:ch5-bottom}). Before the antibiotic, A overtakes B in the
 mixed seed because B changes more slowly ($\eta_2=2\eta_1$); with equal $\eta_i$, B would win. The composition changes
 by less than $4\,\%$ between the grids and time steps used.
 
@@ -832,6 +832,15 @@ by less than $4\,\%$ between the grids and time steps used.
     Mixed example (equal amounts) with antibiotic, panels as in Figure~\ref{fig:ch5-3d}. Both species start in
     the seed; the living volume fraction falls almost everywhere after the antibiotic.}
   \label{fig:ch5-3d-mixed}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{\ansysfigdir fig_thesis_bottom_view.pdf}
+  \caption[Where the living biomass survives]{Living volume fraction $\sum_i\bar\phi_i$ at $T^*=1$ with antibiotic, seen
+    from below (unlike the other 3D views): (a)~separate, (b)~mixed example, $64^3$. Green: biofilm with
+    $\sum_i\bar\phi_i\ge0.1$; translucent grey: dead biofilm; blue frame: the layer where $c$ is held at~$1$.}
+  \label{fig:ch5-bottom}
 \end{figure}
 
 \paragraph{Growth and stress.} The growth $\alpha-1$ hardly depends on the composition, because Eq.~36 counts all
