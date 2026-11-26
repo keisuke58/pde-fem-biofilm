@@ -905,8 +905,10 @@ counts dead biomass too.
 living composition, the seed values of the cube examples change by a few percent only, because the seed itself starts at
 $T^*=0$ and feels the rule only through its surroundings. Taking the mean over all started points within a radius of up to
 $0.2$~mm instead of the six neighbours widens the border where A and B mix, but changes the seed values by less than
-$3\,\%$. In the maze of Klempt et al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule
-decides whether it recovers (Appendix~\ref{sec:ch5-geometry}).
+$3\,\%$.
+% Commented out with Appendix C.6 (the user, 26 Nov 2026):
+% In the maze of Klempt et al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule
+% decides whether it recovers (Appendix~\ref{sec:ch5-geometry}).
 
 \paragraph{The element.} The ANSYS element solves the same equations with its own discretisation
 (Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it without changing its
@@ -919,8 +921,10 @@ Python value, within the element's own uncertainty of about $17\,\%$. The elemen
 increment and reads $\sum_i\bar\phi_i$ at the end of the same increment, so its outer-step error is small. I take the
 values of this section from the Python code, which reaches finer grids.
 
-Further examples with geometry, rigid bars after Klempt et al.\ 2024, Sect.~4.3, two asymmetric starts and the maze
-of their Sect.~4.4, are in Appendix~\ref{sec:ch5-geometry}.
+% Commented out with Appendix C.6 (the user, 26 Nov 2026):
+% Further examples with geometry, rigid bars after Klempt et al.\ 2024, Sect.~4.3, two asymmetric starts and the maze
+% of their Sect.~4.4, are in Appendix~\ref{sec:ch5-geometry}.
+
 
 \subsection{The calibrated five-species model in the element}
 \label{sec:ch5-five}
@@ -1001,7 +1005,7 @@ the implementation of this chapter.
       about $10^{-3}$ up to $T^*=1$, and with the published stiffness the
       largest von Mises stress of the one-species example is about $7\times10^{-4}$~Pa ($0.7$~Pa with
       $E=10$~kPa, the value suggested by the paper's first author). In the coupled examples it exceeds
-      $2\times10^{-3}$~Pa next to the walls (Figure~\ref{fig:ch5-3d-mixed}), and the seed mean between rigid bars reaches $6\times10^{-3}$~Pa.
+      $2\times10^{-3}$~Pa next to the walls (Figure~\ref{fig:ch5-3d-mixed}).% (with Appendix C.6:) and the seed mean between rigid bars reaches 6e-3 Pa.
 \end{itemize}
 
 %-----------------------------------------------------------------------
