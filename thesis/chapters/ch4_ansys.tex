@@ -910,6 +910,28 @@ $3\,\%$.
 % In the maze of Klempt et al.\ 2024, Fig.~11, where the biofilm keeps spreading after the antibiotic, the rule
 % decides whether it recovers (Appendix~\ref{sec:ch5-geometry}).
 
+\paragraph{Asymmetric starts.} The examples above are mirror symmetric in $x$ and $z$. Two variants of the separate
+example with antibiotic break this symmetry: species~B only in the block along one edge, with the seed moved by one
+element, and species~B only in one corner cube (Figure~\ref{fig:ch5-asym}). The seed hardly notices: its composition,
+nutrient and growth stay within a few percent, because it grows from its own species~A and the nutrient comes from below
+in every case. Its stress is lower on each grid, but the asymmetric runs converge more slowly, and after extrapolation the
+difference, at most about $13\,\%$, lies within their grid uncertainty; the larger differences on a single grid come mostly
+from this slower convergence. Starting the four blocks as species~A instead of B, with the same $\phi_{3D}$, raises the
+seed stress by $4.5\,\%$, a resolved change, since the species reaches the growth only through the nutrient and the front.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig_asymmetric_starts.pdf}
+  \caption[Asymmetric starts]{Asymmetric starts of the separate example with antibiotic, Python, $64^3$ (rows 2
+    and 3 on the full domain). Rows: (1)~the symmetric example, (2)~species~B only in the block along one edge, seed
+    moved by one element towards $-x$, (3)~species~B only in one corner cube. (a)~Start and boundary conditions:
+    nutrient held at $c=1$ in the layer $y<-0.75$~mm, antibiotic held at $a=1$ on the outer shell of elements
+    from $T^*=1/3$, no flux elsewhere. (b)~Growth $\alpha-1$ where $\phi_{3D}>0.5$ at $T^*=1$, one octant removed.
+    (c)~Von Mises stress at $T^*=1$ in the section $z=0$ ($16^3$ stress mesh), seed outline in white. One colour
+    range per column.}
+  \label{fig:ch5-asym}
+\end{figure}
+
 \paragraph{The element.} The ANSYS element solves the same equations with its own discretisation
 (Section~\ref{sec:ch5-coupling}). For these runs I corrected three numerical details of it without changing its
 equations: the surface points take the value of the nearest Gauss point instead of a distance-weighted mean, the
