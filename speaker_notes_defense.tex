@@ -22,8 +22,9 @@
 \begin{document}
 {\Large\bfseries Speaker script --- master's thesis colloquium, 16 December 2026}\\[2pt]
 Prof.\ Junker, Dr.\ Soleimani, Dr.\ Geisler and the IKM members (Dr.\ Wangenheim does not attend).
-16 slides plus a 3-slide appendix, about 20 minutes. The times are the
-running total at the end of each slide.
+14 slides, then the appendix (A--J) and the backup slides for questions, about 20 minutes. The times are the
+running total at the end of each slide. Every result is said with its reason; numbers that are not on the slide
+are in the grey hints, for questions only.
 
 % ------------------------------------------------------------------
 \slide{Title}{0:30}
@@ -36,7 +37,7 @@ together.
 研究所のバイオフィルム要素に組み込み、組成・成長・応力を一緒に計算できるようにする、
 というものです。
 
-\slide{Motivation and objective}{1:30}
+\slide{Motivation and objective}{2:00}
 \EN Peri-implantitis affects about one in five implant patients. It is driven
 by multi-species biofilms, and a shift towards pathobionts such as
 \textit{Porphyromonas gingivalis} goes with disease. A biofilm is also a
@@ -45,14 +46,19 @@ carries stresses. Two kinds of model exist. A point model describes the
 composition, but has no space. A growth field describes space and stress, but
 does not distinguish species. The objective of this thesis is to compute both
 consistently within a framework that already works.
+Why both at once: with only one of them, the question whether a change in the composition changes the mechanics
+cannot even be asked. A point model has no stress, and a growth field has no species. Putting them in one
+computation makes that question computable, and the answer turns out to be informative.
 \JA インプラント周囲炎は、インプラント患者の約5人に1人に起きます。原因は多菌種の
 バイオフィルムで、\textit{P.~gingivalis} のような病原性の菌が増えると悪化します。
 バイオフィルムは力学的な物体でもあり、成長が不均一だったり硬い面に押し付けられたり
 すると応力を持ちます。モデルは2種類あります。点モデルは組成を表すが空間がない。
 成長場は空間と応力を表すが菌種を区別しない。この2つを、すでに動いている枠組みの中で
 一緒に計算することが、この修論の目的です。
+なぜ両方を一度に：片方だけでは「組成が変わると力学が変わるか」という問いそのものが立てられません。点モデルには応力がなく、
+成長場には菌種がないからです。1つの計算に入れると、その問いが計算でき、答えにも意味があることが分かりました。
 
-\slide{Approach}{2:30}
+\slide{Approach}{3:30}
 \EN This is the whole work on one slide. On the left, the fields of Klempt
 et al.\ 2024 in the IKM element: the biofilm, the nutrient and, in the
 element's second nutrient field, an antibiotic. In the middle, one copy of the
@@ -72,7 +78,7 @@ only through the nutrient and the front speed.
 組成は栄養と前線の速さを通してだけ応力に届く．
 \hint{最初の「何をしたか」を30秒で言えるようにしておく。}
 
-\slide{Both models from the extended Hamilton principle}{4:00}
+\slide{Both models from the extended Hamilton principle}{5:00}
 \EN Both models come from the extended Hamilton principle. The growth field
 has the biofilm variable $\phi$, the nutrient $c$ and the growth $\alpha$,
 with $\mathbf F=\mathbf F_e\mathbf F_g$ and $\mathbf F_g=\alpha\mathbf I$;
@@ -81,62 +87,93 @@ displacement, so the principle reduces to its local form, the principle of
 the minimum of the dissipation potential: free energy rate plus dissipation
 plus constraint, stationary with respect to the rates and the multiplier. One
 consequence is that the interaction matrix $\mathbf A$ is symmetric.
+Why this matters for the coupling: because both come from the same principle, the point model enters the element
+as a local evolution law at each Gauss point, solved there like a plastic strain, with no new global unknowns.
 \JA どちらのモデルも拡張 Hamilton 原理から出ます。成長場は $\phi$、$c$、$\alpha$ を持ち、
 $\mathbf F_g=\alpha\mathbf I$、応力は弾性部分からだけ出ます。点モデルには変位がないので、
 原理はその局所形、最小散逸ポテンシャルの原理になります。結果として相互作用行列
 $\mathbf A$ は対称です。
+連成にとっての意味：同じ原理から出るので、点モデルは各 Gauss 点の局所的な発展則として要素に入ります。塑性ひずみと同じように
+その点で解き、全体の未知数は増えません。
 \hint{Junker 先生はここを聞く。$\Psi$, $\Delta$, $C$ を板書できるように。}
 
-\slide{Part 1: Bayesian calibration of the point model}{5:30}
+\slide{Part 1: Bayesian calibration of the point model}{6:45}
 \EN The first part calibrates the point model. Heine et al.\ cultured five
 species under four conditions, commensal or dysbiotic, static or in a flow
 reactor, and measured the composition from day 1 to day 21. I estimated the
 15 interaction coefficients for each condition with transitional Markov chain
 Monte Carlo, and accepted a result only when independent runs agreed. The
-lines here are the fits against the measured points.
+lines here are the fits against the measured points. They follow the measured composition in all four conditions.
+The one weak spot is the commensal static condition: there the composition and the live fraction cannot both be
+matched. Giving the live fraction more weight makes the composition worse, and even a fit to the composition alone
+does not improve it. So this is a limit of the model in that condition, not of the sampler, and I report the
+compromise rather than tune the weights for one condition.
 \JA 第1部は点モデルの較正です。Heine らの5菌種・4条件のデータを使い、各条件で15個の
 相互作用係数を TMCMC で推定しました。独立な実行が一致したものだけ使っています。
+線が当てはめで、4 条件とも測った組成に沿います。弱いのは常在・静置（CS）だけで、組成と生存率を両方は合わせられません。
+生存率の重みを上げると組成が悪くなり、組成だけに合わせても良くなりません。つまりサンプラーではなくこの条件でのモデルの限界で、
+1 条件のために重みを調整せず、折り合いのまま報告しています。
 \hint{聞かれたら：4 段、各 3 seed、判定 (a)〜(e)（Backup 3）。順モデルは JAX で GPU、CPU の約 150 倍速い。}
 
-\slide{Part 1: what the data determine}{7:00}
+\slide{Part 1: what the data determine}{8:45}
 \EN The main result of the calibration is which coefficients the data
-determine: 4, 6, 8 and 9 of the 15 in the four conditions. In the commensal
-conditions only the early colonisers are determined. The pH was not used in
+determine: five and six of the 15 in the commensal conditions, nine and eight in the dysbiotic ones.
+In the commensal conditions only the early colonisers are determined. The reason is in the data: there
+\textit{F.~nucleatum} and \textit{P.~gingivalis} stay below one percent of the community after the first days,
+so the data carry almost no information on their interactions. In the dysbiotic conditions they grow, and their
+interactions become visible. Where both commensal conditions determine a sign, it agrees: streptococci and
+\textit{Veillonella} support each other, in line with lactate cross-feeding, although the coefficient is an
+effective one, not a measurement of that mechanism. The pH was not used in
 the inference; it serves as a check and is followed in the dysbiotic flow
 condition. In the model, removing \textit{F.~nucleatum} removes the late growth
-of \textit{P.~gingivalis}, which a co-culture could test.
-\JA 較正の主な結果は、15 個の係数のうちデータで決まるものがどれかです。4 条件で 4、6、8、9 個
-でした。常在の条件では、初期に定着する菌の間だけが決まります。pH は推定に使っておらず、
+of \textit{P.~gingivalis}, which a co-culture could test. \textit{F.~nucleatum} is known as the bridge between
+early and late colonisers, so the model and the biology point the same way; whether it holds is for an experiment
+without it.
+\JA 較正の主な結果は、15 個の係数のうちデータで決まるものがどれかです。常在の条件で 5 と 6 個、dysbiotic で 9 と 8 個
+でした。常在の条件では、初期に定着する菌の間だけが決まります。理由はデータにあり、常在では \textit{F.~nucleatum} と
+\textit{P.~gingivalis} が最初の数日の後は群集の 1 \% 未満なので、その相互作用の情報がほとんどありません。dysbiotic では
+増えるので見えるようになります。常在の 2 条件で符号が決まる係数は一致し、レンサ球菌と \textit{Veillonella} は助け合います
+（乳酸のやり取りと整合。ただし係数は実効的なもので、その仕組みを測ったものではない）。pH は推定に使っておらず、
 確認に使いました。dysbiotic の流れ条件では実測に沿います。モデルで \textit{F.~nucleatum} を
-除くと、終盤の \textit{P.~gingivalis} の増加が消えます。これは共培養で確かめられます。
+除くと、終盤の \textit{P.~gingivalis} の増加が消えます。これは共培養で確かめられます。\textit{F.~nucleatum} は初期と後期の菌の橋渡し役として知られているので、モデルと生物学は
+同じ向きを指します。正しいかどうかは、それを除いた実験で確かめることです。
+\hint{聞かれたら：$a_{45}$ は DS、DH とも決まるが 90 \% 区間は 0 を含む（符号は未定）。CS 5 個のほかに符号だけ 1 個。}
 
-\slide{Part 2: the growth law inside the IKM element}{9:45}
+\slide{Part 2: the growth law inside the IKM element}{10:30}
 \EN The second part brings the growth law into the IKM element in ANSYS. This is the solution loop of the element.
 Its fields for $\phi_{3D}$, the nutrient and the antibiotic are unchanged. What I added sits at every Gauss point:
 the growth law, Eq.~36, gives $\alpha$, $\alpha$ gives $\mathbf F_g$, and that gives the stress, with the stiffness of
 Klempt et al.\ 2024. With two species, the point model also runs there: it receives the nutrient and the antibiotic,
 and it returns the living volume fraction, which sets the uptake. The diffusion coefficient $\beta$ is Table~2
 converted to this cube, an assumption, and the void floor $f$ is my addition.
+Why inside this element and not a new code: the element already solves the fields with the Neighbored Element
+Method and is used at the institute. With the growth law at its Gauss points, the stress comes from the same mesh
+and the same time step as the fields, with nothing passed between programs.
 \JA 第2部は成長則を ANSYS の IKM 要素に入れた部分です。これは要素の解法ループです。$\phi_{3D}$、栄養、抗菌薬の場は
 そのままで、私が足したのは各 Gauss 点の部分です。成長則 Eq.~36 で $\alpha$、$\alpha$ から $\mathbf F_g$、そこから応力
 （剛性は Klempt 2024）。2菌種では点モデルもそこで動き、栄養と抗菌薬を受け取って、生きている体積分率を返します。それが
 消費を決めます。$\beta$ は Table~2 の換算で仮定、空隙の下限 $f$ は私が足したものです。
+なぜ新しいコードでなくこの要素か：要素はすでに Neighbored Element Method で場を解き、研究所で使われています。その Gauss 点に
+成長則を置けば、応力は場と同じメッシュ・同じ時間刻みから出て、プログラムの間で何も受け渡しません。
 \hint{要素自身の $\alpha$ を使わない理由（2つの種の場の平均で、1種では半分）は聞かれたら。付録 F。}
 
-\slide{Part 2: verification and the stress pattern}{11:00}
-\EN Two checks. Where $\phi$ has no gradient, the equations have an exact solution, and ANSYS follows the exact
+\slide{Part 2: verification and the stress pattern}{12:15}
+\EN Two checks. Where $\phi$ has no gradient, the field equation becomes an ordinary differential equation at
+every point, so any difference from its solution is an error of the implementation, not of the mesh. There the
+equations have an exact solution, and ANSYS follows the exact
 solution of its time integration to $3\times10^{-11}$ in $\alpha$. With the published stiffness, the seed is compressed
 and the first layer around it is stretched: the ring of tension of Klempt et al. The reason: the seed held biofilm
 from the start and has grown most; the biofilm around it arrived later and has grown less, so it holds the seed back.
 The stress is set by the jump of $\alpha$ across the edge, not by the amount of growth. The errors in space and time
 are measured, and every run lies below the stability limit I derived; the details are in the appendix.
-\JA 確認は2つ。勾配がないところでは厳密解があり、ANSYS は時間積分の厳密解に $\alpha$ で $3\times10^{-11}$ まで一致します。
+\JA 確認は2つ。勾配がないところでは場の式が各点の常微分方程式になるので、その解との差は
+メッシュではなく実装の誤りです。そこには厳密解があり、ANSYS は時間積分の厳密解に $\alpha$ で $3\times10^{-11}$ まで一致します。
 論文の剛性では、シードは圧縮、周りの1層目は引張で、Klempt らの引張の輪です。理由：シードは最初からバイオフィルムがあって
 一番膨らみ、周りは後から届いたのであまり膨らまず、シードを押さえます。応力を決めるのは成長の量ではなく、縁をまたぐ
 $\alpha$ の差です。空間と時間の誤差は測ってあり、すべての実行は導いた安定の上限の下です。詳しくは付録に。
 \hint{数値を聞かれたら付録 H（応力の表）、付録 I（$24^3$ で 0.7 \%）、付録 D（上限）。応力が小さいのは $E=10$~Pa だから、比例する。}
 
-\slide{Part 3: two species with nutrient and antibiotic}{14:00}
+\slide{Part 3: two species with nutrient and antibiotic}{14:45}
 \EN The third part puts the point model at every Gauss point. It receives the nutrient and an antibiotic from
 the fields, $c^*=c^*_0c$ and $\alpha^*=\alpha^*_0a$, and only its living biomass consumes them: the uptake is
 $g\,\phi_{3D}\sum_i\bar\phi_i\,c$, and the same for $a$. This is the whole coupling; $\alpha$ still follows
@@ -168,23 +205,32 @@ B, and the nutrient term works against it. Run alone, a point survives only if i
 close to one. In the mixed start every seed point holds B, so the whole seed dies; in the separate start the part of
 the A seed next to the nutrient supply survives. Without antibiotic the coupled model stays within a few percent of the
 field model of the 2024 paper alone; the difference that matters appears with the antibiotic.
+This is what the coupling adds: whether a region survives depends on the species at that point and on the nutrient
+that reaches it. The field model has one biofilm phase, so it cannot tell living from dead biomass.
 \JA 立方体を下から見た図で，栄養はここから入ります．緑が生きている菌，灰色が死んだバイオフィルムです．この分布は点モデルで
 説明できます．抗菌薬が下げるのは生きている割合 $\psi$ だけで，感度の大きい B ほど速く，栄養の項がそれに逆らいます．点モデルだけで
 計算すると，生き残るのは A が多く栄養が 1 に近い点だけです．混ぜた例では種子のどの点にも B がいるので種子全体が死に，分けた例では
 栄養の入口に近い A の種子の部分が生き残ります．抗菌薬がなければ，連成モデルは 2024 年の場のモデルだけと数 \% しか違わず，
 意味のある違いは抗菌薬があるときに出ます．
+これが連成で加わるものです．ある場所が生き残るかは，その点の菌種と，そこに届く栄養で決まります．場のモデルはバイオフィルムの相が1つなので，
+生きている菌と死んだ菌を区別できません．
+\hint{混ぜた例の端に残る生きた点：抗菌薬の開始後に届いた点で、隣の生きている組成を受け継いだため（始めのルールの影響、仮定）。}
 
-\slide{Limitations}{18:00}
+\slide{Limitations}{18:15}
 \EN The main limitations. This is verification, not validation: no measured
 stress of a growing oral biofilm was available. The mechanics is coupled one way: the stress does not act back
 on growth, and the composition does not act on the stiffness. The front speed depends on the nutrient only, so
 dead biofilm keeps spreading after the antibiotic. Some values are assumptions, each with its sensitivity. The
 calibrated five species have run in the element only with an earlier one-way coupling. And a symmetric matrix
-cannot describe directed interactions.
+cannot describe directed interactions. The first two set the next steps: a measured stress to validate against,
+and a path by which the composition or the stress acts on the mechanics; Part 3 showed that without such a path the
+composition cannot change the stress.
 \JA 主な限界です。検証はしたが妥当性確認はしていない（応力の測定値がない）。力学は片方向で、応力は成長に
 戻らず、組成は硬さに効かない。前線の速さ $r\,c/(k+c)$ は栄養だけで決まるので、抗菌薬の後も死んだバイオフィルムが広がる。
 いくつかの値は仮定で、それぞれ感度を示した。較正した5菌種は、前の片方向の連成でしか要素に入れていない。
 対称な行列は向きのある相互作用を表せない。
+最初の2つが次の課題を決めます：比べるための応力の測定値と、組成や応力が力学に効く経路です。第3部で、その経路がなければ
+組成は応力を変えられないことが分かりました。
 \hint{限界はこちらから先に言う。聞かれる前に言えば強い。}
 
 \slide{Conclusions and outlook}{20:00}
