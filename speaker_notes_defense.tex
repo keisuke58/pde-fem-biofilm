@@ -265,8 +265,8 @@ Short answers; open the slide, say the first sentence, then point to the number.
 \JA 発表の記号の一覧です。$\phi$ はバイオフィルムの量、$\alpha$ は成長の変数で成長は $\alpha-1$、$\phi_i$ と $\psi_i$ は各菌種の体積分率と生存率です。
 
 \slide{Appendix B: growth field and mechanics}{Q}
-\EN Stress comes only from the elastic part. The stiffness is that of Klempt et al.\ 2024, ten pascal; the consumption term is $g\phi c$, as in the authors' implementation, not $g\phi$ as printed.
-\JA 応力は弾性部分からだけ出ます。剛性は論文の 10 Pa。消費項は印刷の $g\phi$ ではなく、著者の実装どおり $g\phi c$ です。
+\EN Stress comes only from the elastic part. The stiffness is that of Klempt et al.\ 2024, ten pascal. The fields follow Eqs.~34 to 36 with the front term switched on, and only the living biomass consumes: $g\,\phi_{3D}(\sum_i\bar\phi_i)\,c$; the printed $g\phi$ is a misprint, the authors' implementation has $g\phi c$.
+\JA 応力は弾性部分からだけ出ます。剛性は論文の 10 Pa。場は Eq.~34〜36 で、前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi_{3D}$ を入れ、消費は生きている菌だけ、$g\,\phi_{3D}(\sum_i\bar\phi_i)\,c$ です。印刷の $g\phi$ は誤植で、著者の実装は $g\phi c$ です。
 
 \slide{Appendix C: point model and one coupled substep}{Q}
 \EN In one substep the element updates $\phi$, each Gauss point updates $\alpha$ and the stress, and where the biofilm is present the point model advances by $s\,\Delta t$ with the local nutrient and antibiotic; the element then advances the fields with the consumption of the living biomass.
