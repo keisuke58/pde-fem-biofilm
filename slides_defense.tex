@@ -52,8 +52,7 @@
 \begin{columns}[T]
 \begin{column}{0.55\textwidth}
 \begin{itemize}
-  \item Peri-implantitis affects about one in five implant patients
-        (prevalence 22\,\% and 19.5\,\% in two meta-analyses)
+  \item Peri-implantitis affects about one in five implant patients (two meta-analyses)
   \item It is driven by multi-species biofilms; a shift towards pathobionts
         such as \textit{P.~gingivalis} goes with disease
   \item A biofilm is also a mechanical body: where it grows unevenly or
@@ -152,10 +151,10 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
         (commensal / dysbiotic, static / flow), days 1--21
   \item 15 coefficients $a_{ij}$ per condition, effective and undirected
   \item TMCMC in four stages, three seeds each, with convergence checks
-  \item JAX on the GPU: about 150 times faster than the CPU
+  \item Forward model in JAX on the GPU
 \end{itemize}
 \vspace{2pt}
-\cbox{c3}{1.2cm}{\small\textbf{\color{c3}Fit:} RMSE $0.03$ to $0.18$; in CS composition and live fraction cannot both be matched}
+\cbox{c3}{1.2cm}{\small\textbf{\color{c3}Fit:} composition close in all four; in CS composition and live fraction not both matched}
 \end{column}
 \end{columns}
 \end{frame}
@@ -183,93 +182,30 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: implementation of the growth law in ANSYS}
-\centering
-\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{v222_closed_form.png}\\[3pt]
+\begin{frame}{Part 2: the growth law inside the IKM element}
 \begin{columns}[T]
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Material}{ANSYS user material, $\mathbf F_g=\alpha\mathbf I$, neo-Hookean}
+\begin{column}{0.58\textwidth}
+\centering
+\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{../ch5_flow/flow_oliver_solution_loop_print.pdf}
 \end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Stiffness (Klempt et al.\ 2024)}{$E(\phi)=(\phi^2+f)E$, $E=10$~Pa, $\nu=0.49$; $f=10^{-3}$ (this work)}
-\end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Check (one element)}{free: zero stress; constrained: $-1.0193\times10^{-4}$~MPa, as predicted}
+\begin{column}{0.4\textwidth}
+\factbox{p3}{Unchanged}{the element's fields $\phi_{3D}$, $c$, $a$ (NEM, explicit); $\beta$ of Table~2 converted to the cube (\textcolor{warn}{assumption})}\\[4pt]
+\factbox{p1}{Added at every Gauss point}{$\dot\alpha=k_\alpha\phi_{3D}$ (Eq.~36) $\to\mathbf F_g=\alpha\mathbf I\to$ stress, $E(\phi)=(\phi^2+f)E$, $E=10$~Pa}\\[4pt]
+\factbox{p2}{Two species}{the point model receives $c^*$, $\alpha^*$ and returns $\sum_i\bar\phi_i$ for the uptake $g\,\phi_{3D}(\sum_i\bar\phi_i)\,c$}
 \end{column}
 \end{columns}
-\takeaway{The implementation reproduces the closed-form solutions for free (stress-free) and constrained growth.}
+\takeaway{The field formulation of the element is kept; the growth law and the point model are added at the Gauss points.}
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Part 2: coupling to the IKM element}
+\begin{frame}{Part 2: verification and the stress pattern}
 \centering
-\includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{fig_model_setup.png}\\[3pt]
-\begin{columns}[T]
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Model}{2~mm cube, $8^3$ SOLID185 (B-bar), seed of 32 elements; also $16^3$, $24^3$}
-\end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p3}{Unchanged}{the element's field $\phi$ (NEM); $\beta=0.02$~mm$^2/T^*$, converted (\textcolor{warn}{assumption})}
-\end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p1}{Added in this work}{$\dot\alpha=k_\alpha\phi$ at every Gauss point (Eq.~36) $\to\mathbf F_g\to$ stress}
-\end{column}
-\end{columns}
-\takeaway{The field formulation of the element is retained; only the growth law at the Gauss points is added.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Part 2: verification against an exact solution}
-\centering
-\includegraphics[width=0.95\linewidth,height=0.64\textheight,keepaspectratio]{fig1005_exact.png}
-\takeaway{Where $\phi$ has no gradient, $\phi=\sinh(k_\alpha t)$ and $\alpha-1=\cosh(k_\alpha t)-1$:
-the coupled ANSYS solution agrees with the exact solution of the time integration to $3\times10^{-11}$ in $\alpha$.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Part 2: growth-induced stresses with the published stiffness}
-\begin{columns}[T]
-\begin{column}{0.6\textwidth}
-\centering
-\includegraphics[width=0.98\linewidth,height=0.5\textheight,keepaspectratio]{fig_element_beta002.png}\\[2pt]
-\raggedright\small Left: von Mises stress of the seeded element and its largest
-neighbour; right: $\alpha-1$; solid: Eq.~36 at the Gauss points, dashed: the
-element's own growth variable.
-\end{column}
-\begin{column}{0.38\textwidth}
-\small At $T^*=1.1$ on $16^3$ elements:\\[5pt]
-\footnotesize
-\begin{tabular}{@{}l@{\hspace{3pt}}r@{}}
-\toprule
-mean stress, seed & $-2.5\times10^{-4}$~Pa\\
-mean stress, first layer & $+6.0\times10^{-5}$~Pa\\
-mean stress, second layer & $+1.3\times10^{-6}$~Pa\\
-von Mises, seed mean & $5.9\times10^{-4}$~Pa\\
-$\alpha-1$ in the seed & $8.9\times10^{-4}$\\
-\bottomrule
-\end{tabular}\\[8pt]
-\small Stresses scale with $E=10$~Pa.
-\end{column}
-\end{columns}
-\takeaway{The seed is under compression and the surrounding material under tension, consistent with the ring of tension reported by Klempt et al.\ 2024.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Part 2: convergence and stability}
-\centering
-\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
-\begin{columns}[T]
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Time step $\Delta t$ [$T^*$]}{error about $1\,\%$}
-\end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ measured against a reference: $0.7\,\%$ on $24^3$}
-\end{column}
-\begin{column}{0.32\textwidth}
-\factbox{p2}{Stability}{limit of the element derived and confirmed; all runs below it (Appendix~D)}
-\end{column}
-\end{columns}
-\takeaway{The errors are measured, not estimated, and every run lies within the derived stability limit.}
+\includegraphics[width=0.8\linewidth,height=0.26\textheight,keepaspectratio]{fig1005_exact.png}\\[1pt]
+\small (a) no gradient of $\phi$: ANSYS follows the exact solution of the time integration\\[3pt]
+\includegraphics[width=0.8\linewidth,height=0.26\textheight,keepaspectratio]{fig_element_beta002.png}\\[1pt]
+\small (b) published stiffness, von Mises stress and $\alpha-1$: the seed is compressed, the first layer stretched (Appendix~H)\\[2pt]
+\footnotesize Errors measured against references, every run below the derived stability limit (Appendix~D--I).
+\takeaway{The implementation does what the equations say, and the stress shows the ring of tension of Klempt et al.\ 2024.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -286,9 +222,9 @@ von Mises stress; $64^3$, one octant removed
 \begin{itemize}\setlength{\itemsep}{3pt}
   \item Synthetic data (Fritsch et al.\ 2025, case~I), all constants from the papers; antibiotic from $T^*=1/3$,
         $\alpha^*_0=100$
-  \item Living fraction of the seed: separate $0.96\to0.15$, mixed $0.96\to0.04$
-  \item Growth changes by less than $2\,\%$ and the converged seed stress by about $2\,\%$: the antibiotic lowers the
-        living fraction, not $\phi_{3D}$
+  \item The antibiotic kills most of the seed, the mixed seed almost entirely
+  \item Growth and stress hardly change: the antibiotic lowers the living fraction, not $\phi_{3D}$, and not the
+        jump of $\alpha$ at the edge
   \item New points take the living composition of their neighbours (\textcolor{warn}{assumption})
 \end{itemize}
 \end{column}
@@ -308,11 +244,11 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 \begin{column}{0.42\textwidth}
 \small
 \begin{itemize}\setlength{\itemsep}{3pt}
-  \item Front term \fterm{}: cell P\'eclet number $\approx31$ on $16^3$; a constant added diffusion gives a quarter of
-        the converged stress, a second-order upwind scheme is needed
-  \item With it, up to $192^3$: growth GCI below $4.5\,\%$, separate stress $1.4\,\%$; mixed stress $19$ to $41\,\%$
-        with minmod, $4.6\,\%$ with the superbee limiter, which keeps the edge sharper (Backup 17)
-  \item The IKM element with upwind gradients: $5.8\times10^{-4}$~Pa (GCI $16.5\,\%$), $10\,\%$ below the Python value, which lies within the element's uncertainty
+  \item Front term \fterm{}: transport dominates on the scale of a cell, so a constant added diffusion smears the
+        edge of the seed and gives only \textbf{a quarter} of the stress; a second-order upwind scheme is needed
+  \item With it, growth and the stress of the separate start converge to a few percent; the mixed start, with a sharp
+        edge inside the seed, keeps a larger error, smaller with the superbee limiter (Backup 17)
+  \item The IKM element with upwind gradients agrees with the Python value within its grid uncertainty
 \end{itemize}
 \end{column}
 \end{columns}
@@ -515,6 +451,96 @@ the NEM fit with its weight width $\beta^*=0.2$~mm fixed in millimetres gives $0
 and, depending on which equidistant points enter the 30 neighbours, $0.12$--$0.14$ on $16^3$ and
 $0.12$--$0.16$ on $24^3$. Runs to $T^*=5$ (black edge) confirm it; runs to $T^*=1.1$ are too short
 to show an instability near the limit.
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix E: implementation of the growth law in ANSYS}
+\centering
+\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{v222_closed_form.png}\\[3pt]
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Material}{ANSYS user material, $\mathbf F_g=\alpha\mathbf I$, neo-Hookean}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Stiffness (Klempt et al.\ 2024)}{$E(\phi)=(\phi^2+f)E$, $E=10$~Pa, $\nu=0.49$; $f=10^{-3}$ (this work)}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Check (one element)}{free: zero stress; constrained: $-1.0193\times10^{-4}$~MPa, as predicted}
+\end{column}
+\end{columns}
+\takeaway{The implementation reproduces the closed-form solutions for free (stress-free) and constrained growth.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix F: the example model}
+\centering
+\includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{fig_model_setup.png}\\[3pt]
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Model}{2~mm cube, $8^3$ SOLID185 (B-bar), seed of 32 elements; also $16^3$, $24^3$}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p3}{Unchanged}{the element's field $\phi$ (NEM); $\beta=0.02$~mm$^2/T^*$, converted (\textcolor{warn}{assumption})}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p1}{Added in this work}{$\dot\alpha=k_\alpha\phi$ at every Gauss point (Eq.~36) $\to\mathbf F_g\to$ stress}
+\end{column}
+\end{columns}
+\takeaway{The field formulation of the element is retained; only the growth law at the Gauss points is added.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix G: verification against an exact solution}
+\centering
+\includegraphics[width=0.95\linewidth,height=0.64\textheight,keepaspectratio]{fig1005_exact.png}
+\takeaway{Where $\phi$ has no gradient, $\phi=\sinh(k_\alpha t)$ and $\alpha-1=\cosh(k_\alpha t)-1$:
+the coupled ANSYS solution agrees with the exact solution of the time integration to $3\times10^{-11}$ in $\alpha$.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix H: growth-induced stresses with the published stiffness}
+\begin{columns}[T]
+\begin{column}{0.6\textwidth}
+\centering
+\includegraphics[width=0.98\linewidth,height=0.5\textheight,keepaspectratio]{fig_element_beta002.png}\\[2pt]
+\raggedright\small Left: von Mises stress of the seeded element and its largest
+neighbour; right: $\alpha-1$; solid: Eq.~36 at the Gauss points, dashed: the
+element's own growth variable.
+\end{column}
+\begin{column}{0.38\textwidth}
+\small At $T^*=1.1$ on $16^3$ elements:\\[5pt]
+\footnotesize
+\begin{tabular}{@{}l@{\hspace{3pt}}r@{}}
+\toprule
+mean stress, seed & $-2.5\times10^{-4}$~Pa\\
+mean stress, first layer & $+6.0\times10^{-5}$~Pa\\
+mean stress, second layer & $+1.3\times10^{-6}$~Pa\\
+von Mises, seed mean & $5.9\times10^{-4}$~Pa\\
+$\alpha-1$ in the seed & $8.9\times10^{-4}$\\
+\bottomrule
+\end{tabular}\\[8pt]
+\small Stresses scale with $E=10$~Pa.
+\end{column}
+\end{columns}
+\takeaway{The seed is under compression and the surrounding material under tension, consistent with the ring of tension reported by Klempt et al.\ 2024.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix I: convergence and stability}
+\centering
+\includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Time step $\Delta t$ [$T^*$]}{error about $1\,\%$}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Element size $h$ [mm]}{error of $\alpha-1$ measured against a reference: $0.7\,\%$ on $24^3$}
+\end{column}
+\begin{column}{0.32\textwidth}
+\factbox{p2}{Stability}{limit of the element derived and confirmed; all runs below it (Appendix~D)}
+\end{column}
+\end{columns}
+\takeaway{The errors are measured, not estimated, and every run lies within the derived stability limit.}
 \end{frame}
 
 % ========================================================
