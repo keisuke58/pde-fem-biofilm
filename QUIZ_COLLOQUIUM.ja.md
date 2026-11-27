@@ -265,6 +265,23 @@
 | M6 | Do the species diffuse between points? | No. The point model has no spatial term, and I use it as published. The composition is carried with the biofilm: a point newly reached by the biofilm takes the composition of its colonised neighbours, which is an assumption. Species-wise diffusion is future work. ／ しない。点モデルには空間の項がなく，公表どおりに使っている。組成はバイオフィルムと一緒に運ばれる：新しく届いた点は，すでに菌のいる隣の点の組成を引き継ぐ（仮定）。菌種ごとの拡散は今後の課題 |
 | M7 | What does the superbee limiter do, compared with minmod? | Both keep the second-order upwind scheme free of new extrema. Minmod is the most diffusive limiter of the second-order region and smears the edge of the biofilm; superbee is the least diffusive and keeps it sharp. The mixed stress then converges with a grid uncertainty of 4.6 % instead of 19 to 41 %. ／ どちらも 2 次の風上法に新しい極値を作らせない。minmod は 2 次の範囲で最も拡散が強く，バイオフィルムの端がなまる。superbee は最も拡散が弱く，端を鋭く保つ。混ぜた例の応力の格子の不確かさが 19〜41 % から 4.6 % になる |
 
+## N. 11月25日の Oliver の質問と付録の使い方（11月27日、日本語と英語）
+
+「開く」は `slides_defense.pdf` の目次（Questions: index of the appendix）から押すボタン。
+
+| 番号 | 質問 | 答え（EN ／ JA） | 開く |
+|---|---|---|---|
+| N1 | How do the two models touch at a Gauss point? | The fields give the point model two numbers, the nutrient level c star and the antibiotic level alpha star. The point model gives back one number, the living volume fraction, which sets how much nutrient and antibiotic are consumed. Growth and stress still follow from the biofilm field. ／ 場から点モデルへ渡すのは 2 つ（栄養 $c^*=c^*_0c$，抗菌薬 $\alpha^*=\alpha^*_0a$）。点モデルから返すのは 1 つ，生きている体積分率 $\sum_i\bar\phi_i$ で，これが栄養と抗菌薬の消費 $g\,\phi_{3D}(\sum_i\bar\phi_i)\,c$ を決める。成長と応力はバイオフィルムの場から決まる | C |
+| N2 | What happens at a point that the biofilm reaches for the first time? | The point model there starts from the mean state of its six face neighbours that already hold biofilm, weighted by their amount of biofilm. It takes their living composition, with fresh viability. This is my assumption. A wider average over a radius changes the seed values by less than three percent. ／ その点の点モデルは，すでにバイオフィルムのある 6 つの面の隣の平均（バイオフィルムの量で重み付け）から始める。生きている組成を受け継ぎ，生存率は新しく始める。これは私の仮定。半径で広く平均しても，シードの値の変化は 3 % 未満 | Backup 5 |
+| N3 | Why is the nutrient already everywhere at the start? What if it starts from zero? | The nutrient diffuses very fast compared with growth: with the diffusivity of the paper it fills the cube in about ten to the minus seven of the time unit. Starting from zero changes the results by less than one percent. ／ 栄養の拡散が成長よりずっと速いから。論文の拡散係数では，立方体を約 $10^{-7}\,T^*$ で満たす。0 から始めても結果の変化は 1 % 未満 | Backup 5 |
+| N4 | Why does the antibiotic hardly change the stress? | The antibiotic lowers the living fraction, not the amount of biofilm, and the growth law counts all biomass. The stress is set by the jump of alpha across the edge of the seed, and the antibiotic does not change that jump. ／ 抗菌薬が下げるのは生きている割合で，バイオフィルムの量ではない。成長則はすべてのバイオマスを数える。応力はシードの縁をまたぐ $\alpha$ の差で決まり，抗菌薬はその差を変えない | 本編 Part 3 |
+| N5 | Why does species A survive near the bottom in the separate start? | In the point model the antibiotic lowers only the viability, twice as fast for B, and the nutrient term works against it. Run alone, a point survives only if it is mostly A and the nutrient is close to one. That is the part of the A seed next to the nutrient supply. ／ 点モデルでは抗菌薬は生存率だけを下げ，B は 2 倍速い。栄養の項がそれに逆らう。点モデルだけで計算すると，生き残るのは A が多く栄養が 1 に近い点だけ。それが栄養の入口に近い A のシードの部分 | 本編 Part 3（下から見た図） |
+| N6 | How different is your coupled model from the field model of 2024 alone? | Without antibiotic, only a few percent. The difference that matters appears with the antibiotic: the field model has one biofilm phase and cannot tell living from dead biomass. ／ 抗菌薬がなければ数 % だけ。意味のある違いは抗菌薬があるときに出る。場のモデルはバイオフィルムの相が 1 つで，生きた菌と死んだ菌を区別できない | 本編 Part 3 |
+| N7 | Why is a constant added diffusion not enough for the front term? | It keeps the scheme stable but smears the edge of the seed. The stress is set by the jump of alpha across that edge, so only a quarter of the converged stress is left. A second-order upwind scheme keeps the edge sharp. ／ 安定にはなるが，シードの縁がぼける。応力は縁をまたぐ $\alpha$ の差で決まるので，収束値の 4 分の 1 しか出ない。2 次の風上法で縁を鋭く保つ（前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi_{3D}$） | J |
+| N8 | Why are the fine-grid results from Python and not from ANSYS? | The grid study needs up to one hundred and ninety-two cubed cells, which the element cannot run in ANSYS. The Python code solves the same equations, and I checked it against the element: with upwind gradients the element agrees within its own grid uncertainty. ／ 格子の検討には $192^3$ まで要り，ANSYS の要素では回せない。Python は同じ式を解き，要素と比べて確かめた：upwind の勾配を使うと，要素は自身の格子の不確かさの範囲で一致する | J |
+| N9 | Is the stress field symmetric? It looks unsymmetric in the figure. | It is mirror symmetric in x and z; the difference between the two halves is about ten to the minus nine. The figure looks unsymmetric because one octant is removed to show the inside. ／ x と z について鏡像対称で，左右の差は約 $10^{-9}$。図は中を見せるために 8 分の 1 を切り取っているので，非対称に見える | 本編 Part 3 |
+| N10 | Why did you verify where the field has no gradient? | There the field equation becomes an ordinary differential equation at every point with an exact solution, so any difference is an error of the implementation, not of the mesh. ／ そこでは場の式が各点の常微分方程式になり，厳密解がある。差があれば，メッシュではなく実装の誤り | G |
+
 ## 記録
 
 | 日付 | 出した問題 | 答えられなかった問題 |
@@ -283,3 +300,4 @@
 | 10月21日 | A8, B3, C8, D6, A7（再出題） | （答え待ち） |
 | 10月27日 | K1〜K17 を追加（`thesis/DISCUSSION_COLLOQUIUM.md` の追加質問、読む用） | （読む用） |
 | 11月4日 | L1〜L12 を追加（11月に話した内容、読む用） | （読む用） |
+| 11月27日 | Q&A：N1〜N10 を追加して表示（Oliver の質問，付録の目次から開く練習） | （読む用） |
