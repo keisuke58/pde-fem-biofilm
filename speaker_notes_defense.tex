@@ -256,6 +256,10 @@ Thank you.
 {\large\bfseries Appendix and backup slides (only when asked)}\par
 Short answers; open the slide, say the first sentence, then point to the number.
 
+\slide{Questions: index of the appendix}{---}
+\JA 質問のときはこのページを出し、ボタンで付録へ。各付録の右下の「index」で戻る。
+\hint{理論・力学は左上（Junker 先生）、要素への実装は中央（Soleimani 先生、Geisler 先生）、較正と精度は右。}
+
 \slide{Appendix A: notation}{Q}
 \EN These are all symbols of the talk. $\phi$ is the amount of biofilm, $\alpha$ the growth variable with growth $\alpha-1$, and $\phi_i$, $\psi_i$ the fraction and viability of each species.
 \JA 発表の記号の一覧です。$\phi$ はバイオフィルムの量、$\alpha$ は成長の変数で成長は $\alpha-1$、$\phi_i$ と $\psi_i$ は各菌種の体積分率と生存率です。
@@ -396,9 +400,5 @@ with the Python value within its own grid uncertainty.
 \slide{Backup 11: reproduction of Klempt et al.\ 2024}{Q}
 \EN Test case 4.1 is reproduced with the parameters of Table~2, with stated departures from the printed equations: the consumption $g\phi c$ and the front term $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$.
 \JA test case 4.1 は Table~2 の値で再現できました。ただし印刷された式とは違う点があり、消費項 $g\phi c$ と前線の項 $-r\frac{c}{k+c}\mathbf n_c\cdot\nabla\phi$ について修論に明記しています。
-
-\slide{Backup 12: solution loop of the element framework}{Q}
-\EN The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced by the element after each substep.
-\JA 材料ルーチンは各 Gauss 点・各反復で呼ばれ、$\phi$ と $c$ の場は各サブステップの後に要素が進めます。
 
 \end{document}

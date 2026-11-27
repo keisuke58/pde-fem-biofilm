@@ -315,9 +315,56 @@ biofilm; blue frame: layer where $c$ is held
 \end{itemize}
 \end{frame}
 
-\appendix
 % --------------------------------------------------------
-\begin{frame}{Appendix A: notation}
+\begin{frame}[label=qindex]{Questions: index of the appendix}
+\footnotesize
+\begin{columns}[T]
+\begin{column}{0.32\textwidth}
+{\color{p2}\textbf{Theory and mechanics}}\\[1pt]
+\hyperlink{appA}{\beamergotobutton{A notation}}\\[0pt]
+\hyperlink{appB}{\beamergotobutton{B growth field, mechanics}}\\[0pt]
+\hyperlink{appC}{\beamergotobutton{C point model, one substep}}\\[0pt]
+\hyperlink{bk1}{\beamergotobutton{1 stationarity conditions}}\\[0pt]
+\hyperlink{appD}{\beamergotobutton{D stability limit}}\\[0pt]
+\hyperlink{bk9}{\beamergotobutton{9 mesh, incompressibility}}\\[0pt]
+\hyperlink{bk17}{\beamergotobutton{17 what is solved where}}\\[5pt]
+{\color{warn}\textbf{Outlook}}\\[1pt]
+\hyperlink{bk13}{\beamergotobutton{13 wall, homeostatic pressure}}\\[0pt]
+\hyperlink{bk14}{\beamergotobutton{14 a real molar}}\\[5pt]
+\end{column}
+\begin{column}{0.32\textwidth}
+{\color{p1}\textbf{Implementation in the element}}\\[1pt]
+\hyperlink{appE}{\beamergotobutton{E growth law in ANSYS}}\\[0pt]
+\hyperlink{appF}{\beamergotobutton{F example model}}\\[0pt]
+\hyperlink{appG}{\beamergotobutton{G exact solution}}\\[0pt]
+\hyperlink{appH}{\beamergotobutton{H stresses}}\\[0pt]
+\hyperlink{bk7}{\beamergotobutton{7 two growth laws}}\\[0pt]
+\hyperlink{bk8}{\beamergotobutton{8 Eq.~36 vs element}}\\[0pt]
+\hyperlink{bk10}{\beamergotobutton{10 surface points}}\\[0pt]
+\hyperlink{bk11}{\beamergotobutton{11 Klempt 2024, case 4.1}}\\[0pt]
+\hyperlink{bk12}{\beamergotobutton{12 verification in 3D}}\\[5pt]
+\end{column}
+\begin{column}{0.32\textwidth}
+{\color{c3}\textbf{Calibration}}\\[1pt]
+\hyperlink{bk2}{\beamergotobutton{2 symmetric vs asymmetric}}\\[0pt]
+\hyperlink{bk3}{\beamergotobutton{3 stages and seeds}}\\[0pt]
+\hyperlink{bk4}{\beamergotobutton{4 posteriors}}\\[0pt]
+\hyperlink{bk15}{\beamergotobutton{15 five species in the element}}\\[5pt]
+{\color{p3}\textbf{Accuracy and sensitivity}}\\[1pt]
+\hyperlink{appI}{\beamergotobutton{I convergence}}\\[0pt]
+\hyperlink{appJ}{\beamergotobutton{J front term}}\\[0pt]
+\hyperlink{bk5}{\beamergotobutton{5 coupled examples}}\\[0pt]
+\hyperlink{bk6}{\beamergotobutton{6 $\beta$}}\\[0pt]
+\hyperlink{bk16}{\beamergotobutton{16 slope limiters}}\\[5pt]
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\appendix
+\setbeamertemplate{navigation symbols}{\hyperlink{qindex}{\beamerreturnbutton{index}}}
+% --------------------------------------------------------
+\begin{frame}[label=appA]{Appendix A: notation}
 \scriptsize
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
@@ -363,7 +410,7 @@ $\lambda=\beta\Delta t/h^2$ & stability measure\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix B: growth field and mechanics}
+\begin{frame}[label=appB]{Appendix B: growth field and mechanics}
 \small
 \textbf{Kinematics.} $\mathbf F=\mathbf F_e\mathbf F_g$ with isotropic
 $\mathbf F_g=\alpha\mathbf I$. Stress comes only from $\mathbf F_e$. A body
@@ -391,7 +438,7 @@ decks in mm and MPa, stresses quoted in Pa.\\[3pt]
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix C: point model and one coupled substep}
+\begin{frame}[label=appC]{Appendix C: point model and one coupled substep}
 \small
 \textbf{Point model} (Klempt et al.\ 2026), per species $i$, no space:
 \[
@@ -417,7 +464,7 @@ implicit Euler and Newton, $\Delta t=10^{-4}$.\\[4pt]
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix D: stability of the explicit field update}
+\begin{frame}[label=appD]{Appendix D: stability of the explicit field update}
 \centering
 \includegraphics[width=0.95\linewidth,height=0.55\textheight,keepaspectratio]{fig_wp3_stability.png}\\
 \small $\lambda=\beta\Delta t/h^2$; grey: the limit from a Bloch analysis of the NEM
@@ -430,7 +477,7 @@ to show an instability near the limit.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix E: implementation of the growth law in ANSYS}
+\begin{frame}[label=appE]{Appendix E: implementation of the growth law in ANSYS}
 \centering
 \includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{v222_closed_form.png}\\[3pt]
 \begin{columns}[T]
@@ -448,7 +495,7 @@ to show an instability near the limit.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix F: the example model}
+\begin{frame}[label=appF]{Appendix F: the example model}
 \centering
 \includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{fig_model_setup.png}\\[3pt]
 \begin{columns}[T]
@@ -466,7 +513,7 @@ to show an instability near the limit.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix G: verification against an exact solution}
+\begin{frame}[label=appG]{Appendix G: verification against an exact solution}
 \centering
 \includegraphics[width=0.95\linewidth,height=0.64\textheight,keepaspectratio]{fig1005_exact.png}
 \takeaway{Where $\phi$ has no gradient, $\phi=\sinh(k_\alpha t)$ and $\alpha-1=\cosh(k_\alpha t)-1$:
@@ -474,7 +521,7 @@ the coupled ANSYS solution agrees with the exact solution of the time integratio
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix H: growth-induced stresses with the published stiffness}
+\begin{frame}[label=appH]{Appendix H: growth-induced stresses with the published stiffness}
 \begin{columns}[T]
 \begin{column}{0.6\textwidth}
 \centering
@@ -502,7 +549,7 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix I: convergence and stability}
+\begin{frame}[label=appI]{Appendix I: convergence and stability}
 \centering
 \includegraphics[width=\linewidth,height=0.47\textheight,keepaspectratio]{fig_wp3_convergence.png}\\[3pt]
 \begin{columns}[T]
@@ -520,7 +567,7 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Appendix J: the front term sets the accuracy of the stress}
+\begin{frame}[label=appJ]{Appendix J: the front term sets the accuracy of the stress}
 \begin{columns}[T]
 \begin{column}{0.56\textwidth}
 \centering
@@ -534,7 +581,7 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
   \item Front term \fterm{}: transport dominates on the scale of a cell, so a constant added diffusion smears the
         edge of the seed and gives only \textbf{a quarter} of the stress; a second-order upwind scheme is needed
   \item With it, growth and the stress of the separate start converge to a few percent; the mixed start, with a sharp
-        edge inside the seed, keeps a larger error, smaller with the superbee limiter (Backup 17)
+        edge inside the seed, keeps a larger error, smaller with the superbee limiter (Backup 16)
   \item The IKM element with upwind gradients agrees with the Python value within its grid uncertainty
 \end{itemize}
 \end{column}
@@ -545,7 +592,7 @@ open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ wit
 % ========================================================
 % Backup slides (questions)
 % --------------------------------------------------------
-\begin{frame}{Backup 1: stationarity conditions of the point model}
+\begin{frame}[label=bk1]{Backup 1: stationarity conditions of the point model}
 \small
 $\dot\Psi+\Delta+C\to\operatorname{stat}$ with respect to $\dot\phi_i$, $\dot\psi_i$, $\dot\phi_0$ and $\gamma$, where
 \[
@@ -572,7 +619,7 @@ gives, with $\bar\phi_i=\phi_i\psi_i$ and $\dot{\bar\phi}_i=\dot\phi_i\psi_i+\ph
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 2: symmetric interactions compared with an asymmetric model}
+\begin{frame}[label=bk2]{Backup 2: symmetric interactions compared with an asymmetric model}
 \small
 \begin{columns}[T]
 \begin{column}{0.58\textwidth}
@@ -602,7 +649,7 @@ $\sum_i\phi_i=1$ & enforced afterwards & exact\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 3: four stages and three seeds}
+\begin{frame}[label=bk3]{Backup 3: four stages and three seeds}
 \centering
 \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{eml_seed_maps.pdf}\\[4pt]
 \small\raggedright
@@ -613,7 +660,7 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 4: posterior distributions of the interactions}
+\begin{frame}[label=bk4]{Backup 4: posterior distributions of the interactions}
 \begin{columns}[c]
 \begin{column}{0.6\textwidth}
 \centering
@@ -631,7 +678,7 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 5: sensitivity of the coupled examples}
+\begin{frame}[label=bk5]{Backup 5: sensitivity of the coupled examples}
 \small
 \begin{itemize}\setlength{\itemsep}{5pt}
   \item \textbf{Time step} (outer step $0.025\to0.0025$): composition and $\alpha-1$ within $3$ and $0.3\,\%$;
@@ -650,7 +697,7 @@ and the seeds agree in $\max\ln\mathcal L$ and in the medians.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 6: sensitivity to the diffusion coefficient $\beta$}
+\begin{frame}[label=bk6]{Backup 6: sensitivity to the diffusion coefficient $\beta$}
 \small
 Mean stress in the seed at $T^*=1.1$ [Pa]\\[4pt]
 \centering
@@ -673,7 +720,7 @@ $16^3$ & $-3.9\times10^{-4}$ & $-3.4\times10^{-4}$ & $-2.5\times10^{-4}$ & $-1.2
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 7: the two growth laws of Klempt et al.\ 2024}
+\begin{frame}[label=bk7]{Backup 7: the two growth laws of Klempt et al.\ 2024}
 \centering
 \includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{fig_klempt2024_alpha_law.png}\\[2pt]
 \small\raggedright
@@ -684,7 +731,7 @@ from the start grows only under Eq.~36.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 8: Eq.~36 against the element's own growth variable}
+\begin{frame}[label=bk8]{Backup 8: Eq.~36 against the element's own growth variable}
 \begin{columns}[T]
 \begin{column}{0.5\textwidth}
 \centering
@@ -706,7 +753,7 @@ from the start grows only under Eq.~36.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 9: mesh and incompressibility}
+\begin{frame}[label=bk9]{Backup 9: mesh and incompressibility}
 \small
 \begin{itemize}
   \item Python, same mechanical problem on $8^3$, $16^3$, $32^3$ linear hexahedra:
@@ -725,7 +772,7 @@ from the start grows only under Eq.~36.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 10: correction of the surface points of the element}
+\begin{frame}[label=bk10]{Backup 10: correction of the surface points of the element}
 \small
 \begin{itemize}
   \item In the element, $\phi$ at the surface points was not updated and stayed $0$:
@@ -748,7 +795,7 @@ $\beta=0.1$, $8^3$ & $+6.7\,\%$ & $-30\,\%$ & $0.5\,\%$\\
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 11: reproduction of Klempt et al.\ 2024, test case 4.1}
+\begin{frame}[label=bk11]{Backup 11: reproduction of Klempt et al.\ 2024, test case 4.1}
 \centering
 \includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{fig_klempt2024_fig3_blend.png}\\[2pt]
 \small\raggedright
@@ -758,14 +805,7 @@ authors' implementation (printed: $g\phi$), front term \fterm{} with an isotropi
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 12: solution loop of the element framework}
-\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{flow_oliver_solution_loop.png}
-\takeaway{The material routine is called at every Gauss point and iteration; the fields $\phi$ and $c$ are advanced after each substep.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Backup 13: the verification problem in 3D}
+\begin{frame}[label=bk12]{Backup 12: the verification problem in 3D}
 \centering
 \includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{assets/anim_wp3_seed_3d.png}\\[2pt]
 \small\raggedright
@@ -775,7 +815,7 @@ $E=10$\,Pa. Field: reference solution on $48^3$; stress: $16^3$. Video: \texttt{
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 14: outlook, stress at a wall and a homeostatic-pressure law}
+\begin{frame}[label=bk13]{Backup 13: outlook, stress at a wall and a homeostatic-pressure law}
 \centering
 \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{assets/anim_law_3d.png}\\[2pt]
 \small\raggedright
@@ -785,7 +825,7 @@ $g=\min(1,\max(0,1-p/p_h))$; $p_h=3.3$\,mPa chosen by me. Video: \texttt{assets/
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 15: outlook, a biofilm on a real molar}
+\begin{frame}[label=bk14]{Backup 14: outlook, a biofilm on a real molar}
 \centering
 \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{assets/anim_real_tooth_resolved_base_3d.png}\\[2pt]
 \small\raggedright
@@ -796,7 +836,7 @@ a 0.5\,mm film near the gum line. Resolved with six elements across the film, th
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 16: the calibrated five-species model in the element, over time}
+\begin{frame}[label=bk15]{Backup 15: the calibrated five-species model in the element, over time}
 \centering
 \includegraphics[width=\linewidth,height=0.52\textheight,keepaspectratio]{assets/anim_cal5_ch.png}\\[2pt]
 \small\raggedright
@@ -808,7 +848,7 @@ Video: \texttt{assets/anim\_cal5\_ch.mp4}.
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 17: slope limiters for the front term}
+\begin{frame}[label=bk16]{Backup 16: slope limiters for the front term}
 \centering
 \includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{assets/fig_limiters_general.png}\\[2pt]
 \small\raggedright
@@ -820,7 +860,7 @@ to $0.88$; superbee keeps the edges sharpest and slightly steepens the smooth pe
 \end{frame}
 
 % --------------------------------------------------------
-\begin{frame}{Backup 18: what is solved where, in one step}
+\begin{frame}[label=bk17]{Backup 17: what is solved where, in one step}
 \small
 \cbox{p2}{1.45cm}{\textbf{\color{p2}1. Mechanics: nodes, global matrix (ANSYS, Newton)}\\[-4pt]
 \[
