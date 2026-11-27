@@ -78,7 +78,7 @@ resulting stresses consistently within an existing finite element framework.
 \begin{columns}[T]
 \begin{column}{0.32\textwidth}
 \cbox{p1}{1.05cm}{\scriptsize\textbf{\color{p1}1. Calibration}\\ which of the 15 interactions the data
-determine (TMCMC, 4 conditions, 3 seeds)}
+determine (TMCMC, 4 conditions)}
 \end{column}
 \begin{column}{0.32\textwidth}
 \cbox{p2}{1.05cm}{\scriptsize\textbf{\color{p2}2. Growth law in ANSYS}\\ $\mathbf F_g=\alpha\mathbf I$ as a user
@@ -86,7 +86,7 @@ material, verified against an exact solution}
 \end{column}
 \begin{column}{0.32\textwidth}
 \cbox{p3}{1.05cm}{\scriptsize\textbf{\color{p3}3. Coupling}\\ composition reaches the stress only through
-nutrient and front speed; grid error known}
+nutrient and front speed}
 \end{column}
 \end{columns}
 \takeaway{The point model runs unchanged at every Gauss point; nutrient and antibiotic come from the
@@ -150,8 +150,7 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
   \item Heine et al.\ (2025): five species, four conditions
         (commensal / dysbiotic, static / flow), days 1--21
   \item 15 coefficients $a_{ij}$ per condition, effective and undirected
-  \item TMCMC in four stages, three seeds each, with convergence checks
-  \item Forward model in JAX on the GPU
+  \item TMCMC, accepted only when independent runs agree
 \end{itemize}
 \vspace{2pt}
 \cbox{c3}{1.2cm}{\small\textbf{\color{c3}Fit:} composition close in all four; in CS composition and live fraction not both matched}
@@ -204,7 +203,7 @@ $\gamma$: Lagrange multiplier of $\sum_{l=0}^n\phi_l=1$ ($\phi_0$: void)}
 \small (a) no gradient of $\phi$: ANSYS follows the exact solution of the time integration\\[3pt]
 \includegraphics[width=0.8\linewidth,height=0.26\textheight,keepaspectratio]{fig_element_beta002.png}\\[1pt]
 \small (b) published stiffness, von Mises stress and $\alpha-1$: the seed is compressed, the first layer stretched (Appendix~H)\\[2pt]
-\footnotesize Errors measured against references, every run below the derived stability limit (Appendix~D--I).
+\footnotesize Errors in space and time measured, every run below the stability limit (Appendix~D--J).
 \takeaway{The implementation does what the equations say, and the stress shows the ring of tension of Klempt et al.\ 2024.}
 \end{frame}
 
@@ -230,29 +229,6 @@ von Mises stress; $64^3$, one octant removed
 \end{column}
 \end{columns}
 \takeaway{The composition reaches growth and stress only through the nutrient and the front speed $r\,c/(k+c)$.}
-\end{frame}
-
-% --------------------------------------------------------
-\begin{frame}{Part 3: the front term sets the accuracy of the stress}
-\begin{columns}[T]
-\begin{column}{0.56\textwidth}
-\centering
-\includegraphics[width=\linewidth]{papers/coupling_paper/fig_grid_examples.pdf}\\[2pt]
-\raggedright\scriptsize Seed means at $T^*=1$ against the cell size, all examples, outer step $0.0025$;
-open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ with antibiotic)
-\end{column}
-\begin{column}{0.42\textwidth}
-\small
-\begin{itemize}\setlength{\itemsep}{3pt}
-  \item Front term \fterm{}: transport dominates on the scale of a cell, so a constant added diffusion smears the
-        edge of the seed and gives only \textbf{a quarter} of the stress; a second-order upwind scheme is needed
-  \item With it, growth and the stress of the separate start converge to a few percent; the mixed start, with a sharp
-        edge inside the seed, keeps a larger error, smaller with the superbee limiter (Backup 17)
-  \item The IKM element with upwind gradients agrees with the Python value within its grid uncertainty
-\end{itemize}
-\end{column}
-\end{columns}
-\takeaway{The stress needs a second-order treatment of the front term; with it the grid error is known.}
 \end{frame}
 
 % --------------------------------------------------------
@@ -541,6 +517,29 @@ $\alpha-1$ in the seed & $8.9\times10^{-4}$\\
 \end{column}
 \end{columns}
 \takeaway{The errors are measured, not estimated, and every run lies within the derived stability limit.}
+\end{frame}
+
+% --------------------------------------------------------
+\begin{frame}{Appendix J: the front term sets the accuracy of the stress}
+\begin{columns}[T]
+\begin{column}{0.56\textwidth}
+\centering
+\includegraphics[width=\linewidth]{papers/coupling_paper/fig_grid_examples.pdf}\\[2pt]
+\raggedright\scriptsize Seed means at $T^*=1$ against the cell size, all examples, outer step $0.0025$;
+open symbols: extrapolation (three finest grids, Celik et al.\ 2008; $192^3$ with antibiotic)
+\end{column}
+\begin{column}{0.42\textwidth}
+\small
+\begin{itemize}\setlength{\itemsep}{3pt}
+  \item Front term \fterm{}: transport dominates on the scale of a cell, so a constant added diffusion smears the
+        edge of the seed and gives only \textbf{a quarter} of the stress; a second-order upwind scheme is needed
+  \item With it, growth and the stress of the separate start converge to a few percent; the mixed start, with a sharp
+        edge inside the seed, keeps a larger error, smaller with the superbee limiter (Backup 17)
+  \item The IKM element with upwind gradients agrees with the Python value within its grid uncertainty
+\end{itemize}
+\end{column}
+\end{columns}
+\takeaway{The stress needs a second-order treatment of the front term; with it the grid error is known.}
 \end{frame}
 
 % ========================================================
